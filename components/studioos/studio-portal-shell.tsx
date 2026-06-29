@@ -8,6 +8,7 @@ import { signOutAction } from "@/app/actions";
 import { LanguageSwitcher, LanguageSwitcherFallback } from "@/components/language-switcher";
 import { Button } from "@/components/ui/button";
 import { studioNav, studioOS } from "@/lib/studioos/vocabulary";
+import { creatorPortalRoutes } from "@/lib/studioos/creator-portal-routes";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import type { CreatorNotification } from "@/lib/notification-types";
@@ -24,7 +25,8 @@ import {
   Settings,
   Shield,
   Sparkles,
-  Upload
+  Upload,
+  Inbox
 } from "lucide-react";
 
 type NavItem = {
@@ -38,9 +40,15 @@ type NavItem = {
 const navItems: NavItem[] = [
   { href: "/studio/profile", labelKey: "home", icon: Home, requiresCertification: false },
   { href: "/studio/deposit", labelKey: "deposit", icon: Shield, requiresCertification: false },
-  { href: "/studio", labelKey: "dashboard", icon: LayoutDashboard, requiresCertification: true },
-  { href: "/workspace/studio", labelKey: "reviewRoom", icon: Clapperboard, requiresCertification: true },
-  { href: "/studio/delivery", labelKey: "upload", icon: Upload, requiresCertification: true },
+  { href: creatorPortalRoutes.dashboard, labelKey: "dashboard", icon: LayoutDashboard, requiresCertification: true },
+  {
+    href: creatorPortalRoutes.invitations,
+    labelKey: "invitations",
+    icon: Inbox,
+    requiresCertification: true
+  },
+  { href: creatorPortalRoutes.reviewHub, labelKey: "reviewRoom", icon: Clapperboard, requiresCertification: true },
+  { href: creatorPortalRoutes.delivery, labelKey: "upload", icon: Upload, requiresCertification: true },
   { href: "/studio/income", labelKey: "income", icon: Receipt, requiresCertification: true },
   {
     href: "/studio/messages",
@@ -109,20 +117,25 @@ export function StudioPortalShell({
     }
     if (item.labelKey === "upload") {
       return (
-        pathname === "/studio/delivery" ||
-        pathname.startsWith("/studio/delivery/") ||
+        pathname === creatorPortalRoutes.delivery ||
+        pathname.startsWith(`${creatorPortalRoutes.delivery}/`) ||
         pathname === "/studio/upload" ||
         pathname.startsWith("/studio/review/")
       );
     }
+    if (item.labelKey === "invitations") {
+      return pathname === creatorPortalRoutes.invitations;
+    }
     return (
       pathname === href ||
-      (href === "/studio" && (pathname === "/studio" || pathname.startsWith("/studio/projects"))) ||
-      (href !== "/studio" &&
-        href !== "/workspace/studio" &&
+      (href === creatorPortalRoutes.dashboard &&
+        (pathname === creatorPortalRoutes.dashboard || pathname.startsWith("/studio/projects"))) ||
+      (href !== creatorPortalRoutes.dashboard &&
+        href !== creatorPortalRoutes.reviewHub &&
         (pathname === href || pathname.startsWith(`${href}/`))) ||
-      (href === "/workspace/studio" &&
-        (pathname.startsWith("/workspace/studio") ||
+      (href === creatorPortalRoutes.reviewHub &&
+        (pathname === creatorPortalRoutes.reviewHub ||
+          pathname.startsWith("/studio/review") ||
           /\/workspace\/projects\/[^/]+\/review$/.test(pathname)))
     );
   }

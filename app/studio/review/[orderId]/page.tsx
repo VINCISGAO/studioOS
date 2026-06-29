@@ -1,9 +1,10 @@
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { getCurrentCreator } from "@/lib/creator-session";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
-import { getOrder } from "@/lib/order-service";
+import { resolveMvpReviewProjectForOrder } from "@/lib/mvp/campaign-review-bridge";
+import { getDeliverables, getOrder } from "@/lib/order-service";
 
-export default async function StudioReviewPage({
+export default async function StudioReviewOrderPage({
   params,
   searchParams
 }: {
@@ -19,8 +20,11 @@ export default async function StudioReviewPage({
 
   const order = await getOrder(orderId);
   if (!order || order.creator_id !== creator.id) {
-    redirect(withLocale("/studio/delivery", locale));
+    notFound();
   }
 
-  redirect(withLocale(`/creator/orders/${orderId}/review-upload`, locale));
+  const deliverables = await getDeliverables(orderId);
+  const mvpProjectId = await resolveMvpReviewProjectForOrder(order, { deliverables });
+
+  redirect(withLocale(`/workspace/projects/${mvpProjectId}/review`, locale));
 }

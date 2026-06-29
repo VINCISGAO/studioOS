@@ -44,6 +44,7 @@
     "sprint6b:verify": "tsx scripts/sprint6b-verify.ts",
     "sprint11:verify": "tsx scripts/sprint11-verify.ts",
     "sprint12:verify": "tsx scripts/sprint12-verify.ts",
+    "sprint13:verify": "tsx scripts/sprint13-verify.ts",
     "membership:verify": "tsx scripts/membership-verify.ts",
     "membership:expire": "tsx scripts/membership-expiration.ts",
     "backup:project": "node scripts/backup/project-backup.mjs",

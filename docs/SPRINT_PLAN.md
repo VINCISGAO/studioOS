@@ -16,7 +16,7 @@
 | **10** | AI Gateway + Queue | 异步 AI、成本追踪 | ✅ |
 | **11** | Design System 落地 | Token 统一、组件库 | ✅ |
 | **12** | Campaign Wizard 7 步 | 断点续填、WebSocket 进度 | ✅ |
-| **13** | Creator Portal 统一 | 接单、交付、审片 | ⏳ |
+| **13** | Creator Portal 统一 | 接单、交付、审片 | ✅ |
 | **14** | Brand Portal 统一 | 项目中心、审片、结算 | ⏳ |
 | **15** | Admin + Dispute + Audit | 仲裁、日志、Feature Flag | ⏳ |
 | **16** | Security + Signed URL + RBAC | 权限矩阵、Rate Limit | ⏳ |
@@ -296,6 +296,28 @@ npm run sprint12:verify
 npm run typecheck
 # 浏览器: /brand/projects/new?project={id}&step=1
 # Step 4 观察分析进度 SSE；Step 7 观察匹配进度
+```
+
+## Sprint 13 — Creator Portal 统一 ✅
+
+- [x] `features/creator/` — `CreatorPortalService` + Prisma invitations/campaigns
+- [x] `lib/studioos/creator-portal-routes.ts` — canonical `/studio/*` routes
+- [x] `GET /api/v1/me/creator/portal` — dashboard API
+- [x] `/studio/invitations` — accept / decline project invitations
+- [x] `/studio/review` — unified review hub (replaces `/workspace/studio`)
+- [x] `/studio/review/[orderId]` — canonical review entry (no `/creator/orders/...` hop)
+- [x] Legacy redirects — `/creator/orders/*`, `/workspace/studio` → `/studio/*`
+- [x] `StudioPortalShell` nav — Invitations + Review center under `/studio`
+
+### Sprint 13 本地验收
+
+```bash
+npm run db:seed
+npm run sprint13:verify
+npm run typecheck
+# 浏览器: /studio (dashboard + invitations)
+# /studio/invitations · /studio/review · /studio/delivery
+# 登录: creator.nova@adbridge.test / TempAdBridge2026!
 ```
 
 ## 开发结束检查

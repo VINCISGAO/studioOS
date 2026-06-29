@@ -19,6 +19,7 @@ import { CreatorAvatar } from "@/components/creator/creator-profile-ui";
 import { Button } from "@/components/ui/button";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
+import { creatorPortalRoutes } from "@/lib/studioos/creator-portal-routes";
 import { tCertified } from "@/lib/studioos/deposit-copy";
 import type { Creator } from "@/lib/types";
 import type { StoredOrder } from "@/lib/order-types";
@@ -301,7 +302,7 @@ export function StudioWorkspaceDashboard({
             </button>
             {primaryOrder ? (
               <Button asChild className="h-10 rounded-xl bg-indigo-600 px-4 hover:bg-indigo-700">
-                <Link href={withLocale(`/studio/projects/${primaryOrder.id}`, locale)}>
+                <Link href={withLocale(creatorPortalRoutes.project(primaryOrder.id), locale)}>
                   <Plus className="h-4 w-4" />
                   {t.enterStudio}
                 </Link>
@@ -346,7 +347,18 @@ export function StudioWorkspaceDashboard({
                         size="sm"
                         className="rounded-xl border-zinc-200 bg-white"
                       >
-                        <Link href={withLocale(`/studio/projects/${order.id}`, locale)} className="gap-2">
+                        <Link href={withLocale(creatorPortalRoutes.review(order.id), locale)} className="gap-2">
+                          <Clapperboard className="h-4 w-4" />
+                          {locale === "zh" ? "审片" : "Review"}
+                        </Link>
+                      </Button>
+                      <Button
+                        asChild
+                        variant="outline"
+                        size="sm"
+                        className="rounded-xl border-zinc-200 bg-white"
+                      >
+                        <Link href={withLocale(creatorPortalRoutes.project(order.id), locale)} className="gap-2">
                           {orderActionLabel(order.status, locale)}
                           <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
                         </Link>

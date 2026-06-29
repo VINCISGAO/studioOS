@@ -8,7 +8,12 @@ export function isStudioPathAlwaysAllowed(pathname: string) {
 }
 
 export function isWorkspaceStudioPath(pathname: string) {
-  return pathname === "/workspace/studio" || pathname.startsWith("/workspace/studio/");
+  return (
+    pathname === "/studio/review" ||
+    pathname.startsWith("/studio/review/") ||
+    pathname === "/workspace/studio" ||
+    pathname.startsWith("/workspace/studio/")
+  );
 }
 
 export function isStudioFeaturePath(pathname: string) {

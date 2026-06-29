@@ -43,6 +43,26 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Legacy creator order routes → unified /studio portal
+  if (pathname.startsWith("/creator/orders/")) {
+    const match = pathname.match(/^\/creator\/orders\/([^/]+)(?:\/review-upload)?\/?$/);
+    if (match?.[1]) {
+      const orderId = match[1];
+      const target = pathname.endsWith("/review-upload")
+        ? `/studio/review/${orderId}`
+        : `/studio/projects/${orderId}`;
+      const url = withLang(request.nextUrl.clone(), request);
+      url.pathname = target;
+      return NextResponse.redirect(url);
+    }
+  }
+
+  if (pathname === "/workspace/studio" || pathname.startsWith("/workspace/studio/")) {
+    const url = withLang(request.nextUrl.clone(), request);
+    url.pathname = "/studio/review";
+    return NextResponse.redirect(url);
+  }
+
   function nextWithPathHeaders() {
     const requestHeaders = new Headers(request.headers);
     requestHeaders.set("x-pathname", pathname);
