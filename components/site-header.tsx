@@ -1,0 +1,100 @@
+import Link from "next/link";
+import { cookies, headers } from "next/headers";
+import { Sparkles } from "lucide-react";
+import { signOutAction } from "@/app/actions";
+import { LanguageSwitcher } from "@/components/language-switcher";
+import { Button } from "@/components/ui/button";
+import { DEMO_SESSION_COOKIE } from "@/lib/auth-config";
+import { parseDemoSession } from "@/lib/demo-auth";
+import type { Locale } from "@/lib/i18n";
+import { withLocale } from "@/lib/i18n";
+import { studioOS } from "@/lib/studioos/vocabulary";
+
+const navText = {
+  en: {
+    studios: "Studios",
+    howItWorks: "How it works",
+    pricing: "Pricing",
+    signIn: "Sign in",
+    signOut: "Sign out",
+    brandPortal: "Brand portal",
+    studioPortal: "Studio portal",
+    admin: "Admin"
+  },
+  zh: {
+    studios: "Studio 作品库",
+    howItWorks: "如何运作",
+    pricing: "价格",
+    signIn: "登录",
+    signOut: "退出",
+    brandPortal: "Brand 门户",
+    studioPortal: "创作者",
+    admin: "管理后台"
+  }
+};
+
+async function getNavSession() {
+  const cookieStore = await cookies();
+  const session = parseDemoSession(cookieStore.get(DEMO_SESSION_COOKIE)?.value);
+  return { session };
+}
+
+export async function SiteHeader({ locale }: { locale: Locale }) {
+  const t = navText[locale];
+  const headerList = await headers();
+  const pathname = headerList.get("x-pathname") ?? "/";
+  const search = headerList.get("x-search") ?? "";
+  const { session } = await getNavSession();
+
+  const accountLink = !session
+    ? { href: "/login?role=brand", label: t.signIn }
+    : session.role === "client"
+      ? { href: "/brand", label: t.brandPortal }
+      : session.role === "creator"
+        ? { href: "/studio", label: t.studioPortal }
+        : { href: "/admin", label: t.admin };
+
+  const links = [
+    { href: "/creators", label: t.studios },
+    { href: "/how-it-works", label: t.howItWorks },
+    { href: "/pricing", label: t.pricing },
+    accountLink
+  ];
+
+  return (
+    <header className="sticky top-0 z-40 border-b bg-background/85 backdrop-blur">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        <Link href={withLocale("/", locale)} className="flex items-center gap-2 text-sm font-semibold">
+          <span className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground shadow-sm">
+            <Sparkles className="h-4 w-4" />
+          </span>
+          <span className="text-base">{studioOS.productName}</span>
+        </Link>
+
+        <nav className="hidden items-center gap-1 rounded-md border bg-white/70 p-1 text-sm text-muted-foreground shadow-sm backdrop-blur md:flex">
+          {links.map((link) => (
+            <Link key={link.href} href={withLocale(link.href, locale)} className="hover:text-foreground">
+              <span className="block rounded px-3 py-1.5 hover:bg-white">{link.label}</span>
+            </Link>
+          ))}
+        </nav>
+
+        <div className="flex items-center gap-2">
+          <LanguageSwitcher locale={locale} pathname={pathname} search={search} />
+          {session ? (
+            <form action={signOutAction}>
+              <input type="hidden" name="lang" value={locale} />
+              <Button type="submit" variant="outline" size="sm">
+                {t.signOut}
+              </Button>
+            </form>
+          ) : (
+            <Button asChild size="sm" variant="outline" className="md:hidden">
+              <Link href={withLocale("/login?role=brand", locale)}>{t.signIn}</Link>
+            </Button>
+          )}
+        </div>
+      </div>
+    </header>
+  );
+}

@@ -1,0 +1,119 @@
+import type { StoredOrder } from "@/lib/order-types";
+import type { StoredProject } from "@/lib/project-types";
+import { canDeleteOrder } from "@/lib/order-service";
+import { projectCta, projectHref, canDeleteProject } from "@/lib/project-service";
+import { brandCampaignHref } from "@/lib/studioos/brand-campaign-display";
+import { normalizeCampaignStatus, type CampaignProjectStatus } from "@/lib/studioos/project-status";
+
+export type BrandDashboardMetrics = {
+  projectCount: number;
+  adsDelivered: number;
+  avgProductionDays: number;
+  monthSpend: number;
+};
+
+export function computeBrandMetrics(
+  orders: StoredOrder[],
+  projects: StoredProject[] = []
+): BrandDashboardMetrics {
+  const completedOrders = orders.filter((o) => o.status === "completed");
+  const completedProjects = projects.filter((p) => p.status === "completed");
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const monthSpend = orders
+    .filter((o) => o.payment_status !== "unpaid" && o.paid_at && new Date(o.paid_at) >= monthStart)
+    .reduce((sum, o) => sum + o.amount, 0);
+
+  const activeProjects = projects.filter((p) => !["completed", "cancelled"].includes(p.status));
+  const activeOrders = orders.filter((o) => !["completed", "cancelled"].includes(o.status));
+
+  return {
+    projectCount: activeProjects.length + activeOrders.length,
+    adsDelivered: completedOrders.length + completedProjects.length,
+    avgProductionDays: completedOrders.length ? 2.8 : 0,
+    monthSpend
+  };
+}
+
+export type BrandProjectRow = {
+  id: string;
+  kind: "campaign" | "order";
+  name: string;
+  status: CampaignProjectStatus | string;
+  updatedAt: string;
+  href: string;
+  cta: string;
+  category?: string;
+  budgetRange?: string;
+  deadline?: string;
+  wizardStep?: number;
+  progress?: number;
+  canDelete?: boolean;
+  phase: "draft" | "active" | "done";
+};
+
+function projectPhase(status: string): BrandProjectRow["phase"] {
+  const normalized = normalizeCampaignStatus(status);
+  if (normalized === "draft") return "draft";
+  if (["delivered", "completed", "cancelled"].includes(normalized)) return "done";
+  return "active";
+}
+
+export function toBrandProjectRows(
+  orders: StoredOrder[],
+  projects: StoredProject[],
+  locale: "en" | "zh"
+): BrandProjectRow[] {
+  const campaignRows: BrandProjectRow[] = projects.map((project) => {
+    const status = normalizeCampaignStatus(project.status);
+    return {
+    id: project.id,
+    kind: "campaign",
+    name: project.title || project.product_name || project.campaign_goal || project.company_name,
+    status,
+    updatedAt: project.updated_at ?? project.created_at,
+    href: projectHref(project),
+    cta: projectCta(project, locale),
+    category: project.category || undefined,
+    budgetRange: project.budget_range || undefined,
+    deadline: project.deadline || undefined,
+    wizardStep: status === "draft" ? project.wizard_step : undefined,
+    progress:
+      status === "draft"
+        ? Math.round((project.wizard_completed_steps.length / 6) * 100)
+        : undefined,
+    canDelete: canDeleteProject(status),
+    phase: projectPhase(status)
+  };
+  });
+
+  const orderRows: BrandProjectRow[] = orders
+    .filter((order) => !order.project_id)
+    .map((order) => ({
+      id: order.id,
+      kind: "order",
+      name: order.title || order.company_name,
+      status: order.status,
+      updatedAt: order.completed_at ?? order.paid_at ?? order.created_at,
+      href: brandCampaignHref({
+        id: order.id,
+        kind: "order",
+        status: order.status,
+        projectId: order.project_id
+      }),
+      cta:
+        order.status === "waiting_payment"
+          ? locale === "zh"
+            ? "去付款"
+            : "Pay now"
+          : locale === "zh"
+            ? "打开订单"
+            : "Open order",
+      phase: projectPhase(order.status),
+      canDelete: canDeleteOrder(order)
+    }));
+
+  return [...campaignRows, ...orderRows].sort(
+    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+  );
+}

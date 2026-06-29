@@ -1,0 +1,125 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 99%;
+    --foreground: 240 10% 4%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 4%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 4%;
+    --primary: 240 10% 4%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 5% 96%;
+    --secondary-foreground: 240 6% 10%;
+    --muted: 240 5% 96%;
+    --muted-foreground: 240 4% 46%;
+    --accent: 210 20% 96%;
+    --accent-foreground: 240 6% 10%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 6% 90%;
+    --input: 240 6% 90%;
+    --ring: 240 10% 4%;
+    --radius: 0.5rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .login-field:-webkit-autofill,
+  .login-field:-webkit-autofill:hover,
+  .login-field:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px #f9fafb inset;
+    -webkit-text-fill-color: #18181b;
+    transition: background-color 9999s ease-out 0s;
+  }
+
+  .login-page-bg {
+    background:
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99, 102, 241, 0.07), transparent 55%),
+      radial-gradient(ellipse 60% 40% at 100% 100%, rgba(16, 185, 129, 0.05), transparent 50%),
+      radial-gradient(ellipse 50% 30% at 0% 80%, rgba(0, 0, 0, 0.03), transparent 45%);
+  }
+
+  .login-field-dark:-webkit-autofill,
+  .login-field-dark:-webkit-autofill:hover,
+  .login-field-dark:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.04) inset;
+    -webkit-text-fill-color: #fafafa;
+    transition: background-color 9999s ease-out 0s;
+  }
+
+  .luxury-grid {
+    background-image:
+      linear-gradient(to right, rgba(15, 15, 18, 0.06) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(15, 15, 18, 0.06) 1px, transparent 1px);
+    background-size: 44px 44px;
+  }
+
+  .glass-panel {
+    background: rgba(255, 255, 255, 0.78);
+    backdrop-filter: blur(18px);
+  }
+
+  .brand-radar-sweep {
+    animation: brand-radar-spin 3s linear infinite;
+    transform-origin: center center;
+  }
+
+  .brand-radar-blip {
+    animation: brand-radar-blip 2.4s ease-in-out infinite;
+  }
+
+  .brand-radar-core {
+    animation: brand-radar-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes brand-radar-spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes brand-radar-blip {
+    0%,
+    100% {
+      opacity: 0.15;
+      transform: translate(-50%, -50%) scale(0.6);
+    }
+    50% {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+  }
+
+  @keyframes brand-radar-pulse {
+    0%,
+    100% {
+      opacity: 0.7;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.35);
+    }
+  }
+
+}
