@@ -1,6 +1,7 @@
-import { randomBytes } from "crypto";
-import { promises as fs } from "fs";
 import path from "path";
+import { canPersistLocalDataStore } from "@/lib/can-persist-local-store";
+import { getMemoryStore, writeDataJson, cacheDataJson } from "@/lib/serverless-store";
+import { promises as fs } from "fs";
 
 const queues = new Map<string, Promise<unknown>>();
 
@@ -18,28 +19,45 @@ function enqueue<T>(key: string, task: () => Promise<T>): Promise<T> {
   return next;
 }
 
-/** Serialize writes per file and use unique temp paths to avoid ENOENT races. */
-export async function writeJsonFileAtomic(filePath: string, data: unknown): Promise<void> {
-  return enqueue(`write:${filePath}`, async () => {
-    await fs.mkdir(path.dirname(filePath), { recursive: true });
-    const tempPath = `${filePath}.tmp.${process.pid}.${randomBytes(6).toString("hex")}`;
-    await fs.writeFile(tempPath, JSON.stringify(data, null, 2), "utf8");
-    try {
-      await fs.rename(tempPath, filePath);
-    } catch (error) {
-      await fs.unlink(tempPath).catch(() => undefined);
-      throw error;
-    }
-  });
-}
-
-export async function readJsonFile<T>(filePath: string): Promise<T | null> {
+async function readJsonFromDisk<T>(filePath: string): Promise<T | null> {
   try {
     const raw = await fs.readFile(filePath, "utf8");
     return JSON.parse(raw) as T;
   } catch {
     return null;
   }
+}
+
+function bundledSeedPath(fileName: string) {
+  return path.join(process.cwd(), "seed", fileName);
+}
+
+/** Serialize writes per file; on Vercel updates in-memory store only. */
+export async function writeJsonFileAtomic(filePath: string, data: unknown): Promise<void> {
+  return enqueue(`write:${filePath}`, async () => {
+    await writeDataJson(filePath, data);
+  });
+}
+
+export async function readJsonFile<T>(filePath: string): Promise<T | null> {
+  const fromMemory = getMemoryStore<T>(filePath);
+  if (fromMemory != null) {
+    return fromMemory;
+  }
+
+  if (canPersistLocalDataStore()) {
+    const fromDisk = await readJsonFromDisk<T>(filePath);
+    if (fromDisk != null) {
+      cacheDataJson(filePath, fromDisk);
+      return fromDisk;
+    }
+  }
+
+  const fromSeed = await readJsonFromDisk<T>(bundledSeedPath(path.basename(filePath)));
+  if (fromSeed != null) {
+    cacheDataJson(filePath, fromSeed);
+  }
+  return fromSeed;
 }
 
 type SerializedStoreReader<T> = (() => Promise<T>) & {

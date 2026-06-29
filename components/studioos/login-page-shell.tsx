@@ -15,7 +15,6 @@ import { LoginLanguageSwitcher } from "@/components/studioos/login-language-swit
 import { LoginSocialButtons } from "@/components/studioos/login-social-buttons";
 import { LoginWorkspace } from "@/components/studioos/login-workspace";
 import { MarketingHomeLink } from "@/components/studioos/marketing-home-link";
-import type { DemoUser } from "@/lib/demo-auth";
 import type { Locale } from "@/lib/i18n";
 import { getLoginVisual, type LoginRole } from "@/lib/studioos/login-theme";
 import { studioOS, formatHeroHeadlineLine1 } from "@/lib/studioos/vocabulary";
@@ -71,8 +70,6 @@ type LoginPageShellProps = {
   error?: string;
   errorCode?: string;
   demoMode: boolean;
-  demoAccounts: DemoUser[];
-  adminAccount?: DemoUser;
   t: LoginPageCopy;
 };
 
@@ -378,18 +375,18 @@ export function LoginPageShell({
             <div className={cn("rounded-[1.35rem] p-5 sm:p-8 lg:p-9", visual.card)}>
               <h2
                 className={cn(
-                  "hidden text-xl font-semibold tracking-[-0.03em] sm:text-[1.65rem] lg:block",
+                  "text-xl font-semibold tracking-[-0.03em] sm:text-[1.65rem]",
                   visual.cardTitle
                 )}
               >
                 {desktopCardTitle}
               </h2>
-              <p className={cn("mt-1 hidden text-[13px] leading-5 sm:text-sm lg:block", visual.cardMuted)}>
+              <p className={cn("mt-1 text-[13px] leading-5 sm:text-sm", visual.cardMuted)}>
                 {cardSubtitle}
               </p>
 
               <nav
-                className={cn("mt-0 grid grid-cols-2 gap-1 rounded-xl lg:mt-7", visual.tabWrap)}
+                className={cn("mt-5 grid grid-cols-2 gap-1 rounded-xl sm:mt-6", visual.tabWrap)}
                 aria-label={locale === "zh" ? "登录身份" : "Sign-in role"}
               >
                 <RoleTab

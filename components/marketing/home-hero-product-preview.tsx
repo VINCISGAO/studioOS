@@ -1,14 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   BarChart3,
   CheckCircle2,
   ChevronRight,
   FolderKanban,
   Sparkles,
-  Users
+  Users,
+  type LucideIcon
 } from "lucide-react";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
@@ -53,6 +54,14 @@ const copy = {
 export function HomeHeroProductPreview({ locale }: { locale: Locale }) {
   const t = copy[locale];
   const [progress, setProgress] = useState(4);
+  const [tilt, setTilt] = useState({ x: 0, y: 0 });
+  const frameRef = useRef<HTMLDivElement>(null);
+
+  const navItems: { icon: LucideIcon; label: string; active: boolean }[] = [
+    { icon: FolderKanban, label: t.projects, active: true },
+    { icon: Users, label: t.matching, active: false },
+    { icon: BarChart3, label: t.analytics, active: false }
+  ];
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -61,11 +70,32 @@ export function HomeHeroProductPreview({ locale }: { locale: Locale }) {
     return () => window.clearInterval(timer);
   }, []);
 
-  return (
-    <div className="relative">
-      <div className="pointer-events-none absolute -inset-6 rounded-[28px] bg-gradient-to-b from-white/[0.12] to-transparent opacity-60 blur-3xl" />
+  function handleMove(event: React.MouseEvent<HTMLDivElement>) {
+    const node = frameRef.current;
+    if (!node) return;
+    const rect = node.getBoundingClientRect();
+    const px = (event.clientX - rect.left) / rect.width - 0.5;
+    const py = (event.clientY - rect.top) / rect.height - 0.5;
+    setTilt({ x: py * -6, y: px * 8 });
+  }
 
-      <div className="relative overflow-hidden rounded-2xl border border-white/[0.12] bg-[#0c0c0e] shadow-[0_0_0_1px_rgba(255,255,255,0.04),0_40px_80px_-32px_rgba(0,0,0,0.85)] ring-1 ring-white/[0.06]">
+  function handleLeave() {
+    setTilt({ x: 0, y: 0 });
+  }
+
+  return (
+    <div className="relative [perspective:1400px]">
+      <div className="pointer-events-none absolute -inset-12 rounded-[40px] bg-white/[0.04] blur-3xl" />
+
+      <div
+        ref={frameRef}
+        onMouseMove={handleMove}
+        onMouseLeave={handleLeave}
+        className="relative overflow-hidden rounded-xl border border-white/[0.08] bg-[#080808] shadow-[0_56px_120px_-40px_rgba(0,0,0,0.95)] transition-transform duration-700 ease-out will-change-transform"
+        style={{
+          transform: `rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`
+        }}
+      >
         <div className="flex items-center gap-2 border-b border-white/[0.08] bg-[#111113] px-4 py-3">
           <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" />
           <span className="h-2.5 w-2.5 rounded-full bg-[#febc2e]" />
@@ -82,11 +112,7 @@ export function HomeHeroProductPreview({ locale }: { locale: Locale }) {
               {t.workspace}
             </p>
             <nav className="mt-3 space-y-0.5">
-              {[
-                [FolderKanban, t.projects, true],
-                [Users, t.matching, false],
-                [BarChart3, t.analytics, false]
-              ].map(([Icon, label, active]) => (
+              {navItems.map(({ icon: Icon, label, active }) => (
                 <div
                   key={String(label)}
                   className={`flex items-center gap-2 rounded-lg px-2.5 py-2 text-xs transition ${
@@ -142,9 +168,7 @@ export function HomeHeroProductPreview({ locale }: { locale: Locale }) {
             <div className="mt-4 overflow-hidden rounded-xl border border-white/[0.08] bg-white/[0.02]">
               <div className="flex items-center justify-between border-b border-white/[0.06] px-3 py-2 text-[10px] text-zinc-500">
                 <span>{t.pipeline}</span>
-                <span>
-                  {progress}/6
-                </span>
+                <span>{progress}/6</span>
               </div>
               <div className="px-3 pt-3">
                 <div className="flex gap-1">

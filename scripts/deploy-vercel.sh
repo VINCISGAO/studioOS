@@ -16,7 +16,10 @@ echo "==> Production build"
 npm run build
 
 echo "==> Deploy (production)"
-vercel deploy --prod "$@"
+if [[ -f .vercel/project.json ]]; then
+  echo "    Linked project: $(cat .vercel/project.json)"
+fi
+vercel deploy --prod --name studio-os-adbridge "$@"
 
 echo ""
 echo "Done. Set env vars in Vercel dashboard (Project → Settings → Environment Variables):"

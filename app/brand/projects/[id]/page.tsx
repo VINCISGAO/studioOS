@@ -46,6 +46,10 @@ export default async function BrandProjectHubPage({
   const activeTab: HubTab =
     tabParam && validTabs.has(tabParam as HubTab) ? (tabParam as HubTab) : defaultTab(project.status);
 
+  if (activeTab === "review") {
+    redirect(withLocale(`/brand/projects/${id}/review`, locale));
+  }
+
   const linkedOrder = await getOrderForProject(id);
   const deliverables = linkedOrder ? await getDeliverables(linkedOrder.id) : [];
   const reviewComments = linkedOrder ? await listReviewComments(linkedOrder.id) : [];

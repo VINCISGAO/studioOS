@@ -43,9 +43,14 @@ create table if not exists public.review_projects (
   description text not null default '',
   brand_name text not null,
   status text not null default 'draft'
-    check (status in ('draft', 'in_review', 'revision', 'approved', 'delivered')),
+    check (status in ('draft', 'in_review', 'revision', 'pending_settlement', 'settled', 'approved', 'delivered')),
   created_by uuid not null references public.profiles(id) on delete cascade,
   assigned_studio_id uuid references public.profiles(id) on delete set null,
+  review_approved_at timestamptz,
+  settled_at timestamptz,
+  master_file_url text,
+  master_file_name text,
+  master_uploaded_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

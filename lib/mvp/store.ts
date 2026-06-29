@@ -148,6 +148,64 @@ export async function updateProjectStatus(id: string, status: ProjectStatus): Pr
   return file.fileUpdateProjectStatus(id, status);
 }
 
+export async function approveReview(id: string): Promise<ReviewProject | null> {
+  if (hasSupabaseConfig()) {
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from("review_projects")
+      .update({
+        status: "pending_settlement",
+        review_approved_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .eq("id", id)
+      .select("*")
+      .single();
+    return (data as ReviewProject) ?? null;
+  }
+  return file.fileApproveReview(id);
+}
+
+export async function releaseSettlement(id: string): Promise<ReviewProject | null> {
+  if (hasSupabaseConfig()) {
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from("review_projects")
+      .update({
+        status: "settled",
+        settled_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .eq("id", id)
+      .select("*")
+      .single();
+    return (data as ReviewProject) ?? null;
+  }
+  return file.fileReleaseSettlement(id);
+}
+
+export async function setMasterFile(
+  id: string,
+  input: { file_url: string; file_name: string }
+): Promise<ReviewProject | null> {
+  if (hasSupabaseConfig()) {
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from("review_projects")
+      .update({
+        master_file_url: input.file_url,
+        master_file_name: input.file_name,
+        master_uploaded_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .eq("id", id)
+      .select("*")
+      .single();
+    return (data as ReviewProject) ?? null;
+  }
+  return file.fileSetMasterFile(id, input);
+}
+
 export async function getReviewBundle(projectId: string): Promise<ReviewBundle | null> {
   const project = await getProject(projectId);
   if (!project) return null;
@@ -206,7 +264,10 @@ export async function addVideoVersion(input: {
       .select("*")
       .single();
     if (error) throw error;
-    await updateProjectStatus(input.project_id, "in_review");
+    const project = await getProject(input.project_id);
+    if (project && project.status !== "pending_settlement" && project.status !== "settled") {
+      await updateProjectStatus(input.project_id, "in_review");
+    }
     return data as VideoVersion;
   }
   return file.fileAddVersion(input);
@@ -218,6 +279,12 @@ export async function addComment(input: {
   user_id: string;
   timestamp_seconds: number;
   comment_text: string;
+  annotation_type?: VideoComment["annotation_type"];
+  pos_x?: number | null;
+  pos_y?: number | null;
+  width?: number | null;
+  height?: number | null;
+  color?: string | null;
 }): Promise<VideoComment> {
   if (hasSupabaseConfig()) {
     const supabase = await createClient();
@@ -229,6 +296,12 @@ export async function addComment(input: {
         user_id: input.user_id,
         timestamp_seconds: input.timestamp_seconds,
         comment_text: input.comment_text,
+        annotation_type: input.annotation_type ?? null,
+        pos_x: input.pos_x ?? null,
+        pos_y: input.pos_y ?? null,
+        width: input.width ?? null,
+        height: input.height ?? null,
+        color: input.color ?? null,
         status: "open"
       })
       .select("*")
@@ -275,7 +348,7 @@ export async function getAdminStats() {
   return file.fileCountAll();
 }
 
-export { fileSaveLocalVideo } from "@/lib/mvp/store-file";
+export { fileSaveLocalVideo, fileSaveLocalMaster } from "@/lib/mvp/store-file";
 
 export async function uploadToSupabaseStorage(
   projectId: string,
@@ -293,4 +366,21 @@ export async function uploadToSupabaseStorage(
   if (error) throw error;
   const { data } = supabase.storage.from("review-videos").getPublicUrl(filePath);
   return { file_url: data.publicUrl, file_path: filePath };
+}
+
+export async function uploadMasterToSupabaseStorage(
+  projectId: string,
+  file: File
+): Promise<{ file_url: string; file_path: string; file_name: string }> {
+  const supabase = await createClient();
+  const safeName = file.name.replace(/[^\w.\-()]/g, "_") || "master.mp4";
+  const filePath = `${projectId}/master_${Date.now()}_${safeName}`;
+  const buffer = await file.arrayBuffer();
+  const { error } = await supabase.storage.from("review-videos").upload(filePath, buffer, {
+    contentType: "video/mp4",
+    upsert: false
+  });
+  if (error) throw error;
+  const { data } = supabase.storage.from("review-videos").getPublicUrl(filePath);
+  return { file_url: data.publicUrl, file_path: filePath, file_name: safeName };
 }

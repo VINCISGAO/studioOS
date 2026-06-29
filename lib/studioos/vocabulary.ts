@@ -13,19 +13,19 @@ export const studioOS = {
   },
   heroHeadline: {
     en: {
-      line1: "Lowest budget",
-      line2: "Hollywood-level ads",
+      line1: "Hollywood-level ads,",
+      line2: "at the lowest budget",
       highlight: "Hollywood-level"
     },
     zh: {
-      line1: "最低的预算",
-      line2: "好莱坞级别的广告",
+      line1: "最低的预算，",
+      line2: "的广告",
       highlight: "好莱坞级别"
     }
   },
   slogan: {
-    en: "StudioOS is building the infrastructure that connects global brands with the next generation of AI-powered creative production.",
-    zh: "StudioOS 正在构建连接全球品牌与下一代 AI 驱动创意制作的基础设施。"
+    en: "We connect expensive overseas ad production demand with China's top creator productivity — cinematic commercials at a fraction of the cost.",
+    zh: "把国外昂贵广告制作需求，与中国优秀创作者的高效生产力连接起来，让品牌用更低成本获得电影级广告。"
   }
 } as const;
 

@@ -103,7 +103,7 @@ export default async function CreatorOrderPage({ params, searchParams }: Creator
           <div className="flex flex-wrap items-center gap-2">
             <StatusBadge status={order.status} locale={locale} />
             <Button asChild variant="outline" size="sm">
-              <Link href={withLocale(`/studio/review/${order.id}`, locale)}>
+              <Link href={withLocale(`/creator/orders/${order.id}/review-upload`, locale)}>
                 <Clapperboard className="h-4 w-4" /> {t.review}
               </Link>
             </Button>
@@ -171,17 +171,13 @@ export default async function CreatorOrderPage({ params, searchParams }: Creator
                 </p>
               ) : (
                 <p className="mt-6 text-sm text-muted-foreground">
-                  {order.status === "review"
-                    ? locale === "zh"
-                      ? "已提交，等待品牌方审核。"
-                      : "Submitted. Waiting for brand review."
-                    : locale === "zh"
-                      ? "当前阶段不可提交交付。"
-                      : "Delivery submission is not available in the current stage."}
+                  {locale === "zh"
+                    ? "当前阶段不可提交交付。"
+                    : "Delivery submission is not available in the current stage."}
                 </p>
               )}
               <Button asChild className="mt-4">
-                <Link href={withLocale(`/studio/review/${order.id}`, locale)}>
+                <Link href={withLocale(`/creator/orders/${order.id}/review-upload`, locale)}>
                   <UploadCloud className="h-4 w-4" /> {t.review}
                 </Link>
               </Button>

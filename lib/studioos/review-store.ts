@@ -1,5 +1,4 @@
-import { promises as fs } from "fs";
-import path from "path";
+import { dataStorePath, readDataJson, writeDataJson } from "@/lib/serverless-store";
 
 export type ReviewCommentStatus = "open" | "resolved";
 
@@ -7,10 +6,15 @@ export type ReviewComment = {
   id: string;
   order_id: string;
   version: number;
+  /** Playback position in seconds (supports decimals). */
   timestamp_sec: number;
   body: string;
+  /** Normalized click position on video frame, 0–1. */
+  pos_x?: number | null;
+  pos_y?: number | null;
   issue_type?: string | null;
   author: "brand" | "studio";
+  created_by?: string | null;
   status: ReviewCommentStatus;
   created_at: string;
   resolved_at: string | null;
@@ -20,8 +24,7 @@ type ReviewStore = {
   comments: ReviewComment[];
 };
 
-const STORE_DIR = path.join(process.cwd(), ".data");
-const STORE_PATH = path.join(STORE_DIR, "review-store.json");
+const STORE_PATH = dataStorePath("review-store.json");
 const DEMO_ORDER_ID = "ord_demo_nova_active";
 const DEMO_ARC_ORDER_ID = "ord_demo_arc_nova";
 
@@ -45,10 +48,13 @@ function migrateComment(raw: Record<string, unknown>): ReviewComment {
     id: String(raw.id),
     order_id: String(raw.order_id),
     version: Number(raw.version ?? 1) || 1,
-    timestamp_sec: Number(raw.timestamp_sec ?? 0),
-    body,
+    timestamp_sec: Number(raw.timestamp_sec ?? raw.time_seconds ?? 0),
+    body: String(raw.body ?? raw.content ?? ""),
+    pos_x: raw.pos_x != null ? Number(raw.pos_x) : null,
+    pos_y: raw.pos_y != null ? Number(raw.pos_y) : null,
     issue_type: issueType,
     author: raw.author === "studio" ? "studio" : "brand",
+    created_by: raw.created_by != null ? String(raw.created_by) : null,
     status: raw.status === "resolved" ? "resolved" : "open",
     created_at: String(raw.created_at ?? new Date().toISOString()),
     resolved_at: raw.resolved_at ? String(raw.resolved_at) : null
@@ -63,9 +69,11 @@ function seedCommentsForOrder(orderId: string): ReviewComment[] {
         id: "rev_demo_arc_1",
         order_id: orderId,
         version: 1,
-        timestamp_sec: 4,
-        body: "Logo should be larger.",
-        issue_type: "Logo",
+        timestamp_sec: 2,
+        body: "Logo 放大一点",
+        pos_x: 0.38,
+        pos_y: 0.22,
+        issue_type: null,
         author: "brand",
         status: "open",
         created_at: now,
@@ -75,9 +83,25 @@ function seedCommentsForOrder(orderId: string): ReviewComment[] {
         id: "rev_demo_arc_2",
         order_id: orderId,
         version: 1,
-        timestamp_sec: 12,
-        body: "CTA should match the summer campaign lockup.",
-        issue_type: "CTA",
+        timestamp_sec: 8,
+        body: "产品镜头切慢一点",
+        pos_x: 0.55,
+        pos_y: 0.48,
+        issue_type: null,
+        author: "brand",
+        status: "open",
+        created_at: now,
+        resolved_at: null
+      },
+      {
+        id: "rev_demo_arc_3",
+        order_id: orderId,
+        version: 1,
+        timestamp_sec: 21,
+        body: "字幕颜色太浅",
+        pos_x: 0.42,
+        pos_y: 0.72,
+        issue_type: null,
         author: "brand",
         status: "open",
         created_at: now,
@@ -92,8 +116,10 @@ function seedCommentsForOrder(orderId: string): ReviewComment[] {
       order_id: orderId,
       version: 1,
       timestamp_sec: 2,
-      body: "Logo should be larger.",
-      issue_type: "Logo",
+      body: "Logo 放大一点",
+      pos_x: 0.35,
+      pos_y: 0.18,
+      issue_type: null,
       author: "brand",
       status: "open",
       created_at: now,
@@ -104,8 +130,10 @@ function seedCommentsForOrder(orderId: string): ReviewComment[] {
       order_id: orderId,
       version: 1,
       timestamp_sec: 7,
-      body: "Music feels too quiet under the voiceover.",
-      issue_type: "Music",
+      body: "音乐再响一点",
+      pos_x: 0.62,
+      pos_y: 0.55,
+      issue_type: null,
       author: "brand",
       status: "resolved",
       created_at: now,
@@ -119,35 +147,27 @@ function seedComments(): ReviewComment[] {
 }
 
 async function writeStore(store: ReviewStore) {
-  await fs.mkdir(STORE_DIR, { recursive: true });
-  const tempPath = `${STORE_PATH}.tmp`;
-  await fs.writeFile(tempPath, JSON.stringify(store, null, 2), "utf8");
-  await fs.rename(tempPath, STORE_PATH);
+  await writeDataJson(STORE_PATH, store);
 }
 
 async function readStore(): Promise<ReviewStore> {
-  try {
-    const raw = await fs.readFile(STORE_PATH, "utf8");
-    const parsed = JSON.parse(raw) as { comments: Record<string, unknown>[] };
-    let migrated = false;
-    const comments = (parsed.comments ?? []).map((item) => {
-      const next = migrateComment(item);
-      if (JSON.stringify(item) !== JSON.stringify(next)) {
-        migrated = true;
-      }
-      return next;
-    });
-
-    const store = ensureDemoComments({ comments });
-    if (migrated || store.comments.length !== comments.length) {
-      await writeStore(store);
+  const parsed = await readDataJson<{ comments: Record<string, unknown>[] }>(STORE_PATH, () => ({
+    comments: seedComments()
+  }));
+  let migrated = false;
+  const comments = (parsed.comments ?? []).map((item) => {
+    const next = migrateComment(item);
+    if (JSON.stringify(item) !== JSON.stringify(next)) {
+      migrated = true;
     }
-    return store;
-  } catch {
-    const seeded = ensureDemoComments({ comments: seedComments() });
-    await writeStore(seeded);
-    return seeded;
+    return next;
+  });
+
+  const store = ensureDemoComments({ comments });
+  if (migrated || store.comments.length !== comments.length) {
+    await writeStore(store);
   }
+  return store;
 }
 
 function ensureDemoComments(store: ReviewStore): ReviewStore {
@@ -171,18 +191,24 @@ export async function addReviewComment(input: {
   version: number;
   timestamp_sec: number;
   body: string;
+  pos_x?: number | null;
+  pos_y?: number | null;
   issue_type?: string | null;
   author?: ReviewComment["author"];
+  created_by?: string | null;
 }): Promise<ReviewComment> {
   const store = await readStore();
   const comment: ReviewComment = {
     id: createId(),
     order_id: input.order_id,
     version: input.version,
-    timestamp_sec: Math.max(0, Math.floor(input.timestamp_sec)),
+    timestamp_sec: Math.max(0, input.timestamp_sec),
     body: input.body.trim(),
+    pos_x: input.pos_x ?? null,
+    pos_y: input.pos_y ?? null,
     issue_type: input.issue_type?.trim() || inferIssueType(input.body),
     author: input.author ?? "brand",
+    created_by: input.created_by ?? null,
     status: "open",
     created_at: new Date().toISOString(),
     resolved_at: null

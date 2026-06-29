@@ -1,7 +1,8 @@
-import { NextResponse } from "next/server";
-import { HERO_VIDEO_SRC } from "@/lib/hero-video";
+import { homeHeroBgResponse } from "@/lib/studioos/home-hero-bg-asset";
 
-/** @deprecated Prefer static {HERO_VIDEO_SRC} — kept for old bookmarks. */
-export async function GET(request: Request) {
-  return NextResponse.redirect(new URL(HERO_VIDEO_SRC, request.url), 308);
+export const runtime = "nodejs";
+
+/** @deprecated Prefer /api/home-hero-bg — kept for old bookmarks. */
+export async function GET() {
+  return homeHeroBgResponse();
 }

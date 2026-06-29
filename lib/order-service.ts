@@ -1,5 +1,3 @@
-import { promises as fs } from "fs";
-import path from "path";
 import type {
   CreateQuoteInput,
   OrderStore,
@@ -9,6 +7,7 @@ import type {
 } from "@/lib/order-types";
 import { createSerializedStoreReader, writeJsonFileAtomic } from "@/lib/json-file-store";
 import { getProject } from "@/lib/project-service";
+import { readDataJson, dataStorePath } from "@/lib/serverless-store";
 import {
   syncProjectAfterApproval,
   syncProjectAfterDeliverable,
@@ -16,8 +15,7 @@ import {
   syncProjectFromOrderEvent
 } from "@/lib/studioos/project-order-sync";
 
-const STORE_DIR = path.join(process.cwd(), ".data");
-const STORE_PATH = path.join(STORE_DIR, "order-store.json");
+const STORE_PATH = dataStorePath("order-store.json");
 const PLATFORM_FEE_RATE = 0.2;
 const DEMO_ARC_PROJECT_ID = "proj_demo_arc_nova";
 const DEMO_ARC_ORDER_ID = "ord_demo_arc_nova";
@@ -162,48 +160,46 @@ function ensureDemoReviewDeliverable(store: OrderStore): OrderStore {
   return store;
 }
 
-async function readStoreInner(): Promise<OrderStore> {
-  try {
-    const raw = await fs.readFile(STORE_PATH, "utf8");
-    const parsed = JSON.parse(raw) as OrderStore;
-    let migrated = false;
-    for (const order of parsed.orders) {
-      if (order.project_id === undefined) {
-        order.project_id = null;
-        migrated = true;
-      }
-    }
-    let next = ensureDemoIncomeOrders(parsed);
-    const beforeArcOrder = parsed.orders.find((item) => item.id === DEMO_ARC_ORDER_ID);
-    next = ensureDemoArcNovaOrder(next);
-    const afterArcOrder = next.orders.find((item) => item.id === DEMO_ARC_ORDER_ID);
-    next = ensureDemoUploadOrder(next);
-    next = ensureDemoReviewDeliverable(next);
-    const arcOrderChanged =
-      Boolean(afterArcOrder) &&
-      (!beforeArcOrder ||
-        beforeArcOrder.project_id !== afterArcOrder.project_id ||
-        beforeArcOrder.status !== afterArcOrder.status);
-    if (
-      migrated ||
-      next.orders.length !== parsed.orders.length ||
-      next.deliverables.length !== parsed.deliverables.length ||
-      arcOrderChanged
-    ) {
-      await writeStore(next);
-    }
-    return next;
-  } catch {
-    let     seeded = ensureDemoIncomeOrders(emptyStore());
-    for (const order of seeded.orders) {
-      order.project_id = order.project_id ?? null;
-    }
-    seeded = ensureDemoArcNovaOrder(seeded);
-    seeded = ensureDemoUploadOrder(seeded);
-    seeded = ensureDemoReviewDeliverable(seeded);
-    await writeStore(seeded);
-    return seeded;
+async function seedOrderStore(): Promise<OrderStore> {
+  let seeded = ensureDemoIncomeOrders(emptyStore());
+  for (const order of seeded.orders) {
+    order.project_id = order.project_id ?? null;
   }
+  seeded = ensureDemoArcNovaOrder(seeded);
+  seeded = ensureDemoUploadOrder(seeded);
+  seeded = ensureDemoReviewDeliverable(seeded);
+  return seeded;
+}
+
+async function readStoreInner(): Promise<OrderStore> {
+  const parsed = await readDataJson<OrderStore>(STORE_PATH, seedOrderStore);
+  let migrated = false;
+  for (const order of parsed.orders) {
+    if (order.project_id === undefined) {
+      order.project_id = null;
+      migrated = true;
+    }
+  }
+  let next = ensureDemoIncomeOrders(parsed);
+  const beforeArcOrder = parsed.orders.find((item) => item.id === DEMO_ARC_ORDER_ID);
+  next = ensureDemoArcNovaOrder(next);
+  const afterArcOrder = next.orders.find((item) => item.id === DEMO_ARC_ORDER_ID);
+  next = ensureDemoUploadOrder(next);
+  next = ensureDemoReviewDeliverable(next);
+  const arcOrderChanged =
+    Boolean(afterArcOrder) &&
+    (!beforeArcOrder ||
+      beforeArcOrder.project_id !== afterArcOrder.project_id ||
+      beforeArcOrder.status !== afterArcOrder.status);
+  if (
+    migrated ||
+    next.orders.length !== parsed.orders.length ||
+    next.deliverables.length !== parsed.deliverables.length ||
+    arcOrderChanged
+  ) {
+    await writeStore(next);
+  }
+  return next;
 }
 
 const readStore = createSerializedStoreReader(readStoreInner);
@@ -500,8 +496,9 @@ export async function reassignQuotesToInquiry(
 
 export async function listOrdersForClient(clientEmail: string): Promise<StoredOrder[]> {
   const store = await readStore();
+  const normalized = clientEmail.toLowerCase();
   return store.orders
-    .filter((item) => item.client_email === clientEmail)
+    .filter((item) => item.client_email.toLowerCase() === normalized)
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 }
 
@@ -636,6 +633,35 @@ export function canDeleteOrder(_order: Pick<StoredOrder, "status" | "payment_sta
   return true;
 }
 
+export async function deleteOrdersForProjectId(
+  projectId: string,
+  clientEmail: string
+): Promise<string[]> {
+  const store = await readStore();
+  const normalized = clientEmail.toLowerCase();
+  const removed: string[] = [];
+
+  store.orders = store.orders.filter((item) => {
+    if (item.project_id !== projectId || item.client_email.toLowerCase() !== normalized) {
+      return true;
+    }
+    removed.push(item.id);
+    return false;
+  });
+
+  if (!removed.length) {
+    return removed;
+  }
+
+  store.deliverables = store.deliverables.filter((item) => !removed.includes(item.order_id));
+  for (const orderId of removed) {
+    dismissDemoOrder(store, orderId);
+  }
+  await writeStore(store);
+  readStore.invalidate?.();
+  return removed;
+}
+
 export async function deleteOrderForClient(
   orderId: string,
   clientEmail: string
@@ -654,5 +680,6 @@ export async function deleteOrderForClient(
   store.deliverables = store.deliverables.filter((item) => item.order_id !== orderId);
   dismissDemoOrder(store, orderId);
   await writeStore(store);
+  readStore.invalidate?.();
   return { ok: true };
 }

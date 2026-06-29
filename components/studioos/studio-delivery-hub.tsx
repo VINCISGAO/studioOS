@@ -5,11 +5,9 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { DeliveryUploadPanel } from "@/components/studioos/delivery-upload-panel";
 import { DeliverableNotesBlock } from "@/components/studioos/deliverable-notes-block";
-import { DeliveryStatusStepper } from "@/components/studioos/delivery-status-stepper";
 import { IntegrationStatus } from "@/components/studioos/integration-status";
 import { QualityCenterPanel } from "@/components/studioos/quality-center-panel";
 import { StatusBadge } from "@/components/status-badge";
-import { VideoReviewPlayer } from "@/components/studioos/video-review-player";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -353,35 +351,44 @@ export function StudioDeliveryHub({
           </section>
 
           {hasVersions ? (
-            <section className="rounded-2xl border border-zinc-200/80 bg-white p-4 sm:p-6">
-              <VideoReviewPlayer
-                locale={locale}
-                orderId={selected.order.id}
-                role="studio"
-                versions={selected.deliverables}
-                initialComments={selected.comments}
-                initialVersion={latestVersion}
-                canUpload={canUpload}
-                layout="workspace"
-                brandName={selected.order.company_name || selected.order.client_name}
-                brandEmail={selected.order.client_email}
-                sessionId={sessionIdFromOrder(selected.order.id)}
-                sidebar={
-                  <div className="space-y-4">
-                    <DeliveryStatusStepper
-                      locale={locale}
-                      status={selected.order.status}
-                      hasVersions={hasVersions}
-                      openComments={selected.openComments}
-                    />
-                    {canUpload ? (
-                      <Button asChild className="w-full rounded-full bg-violet-600 hover:bg-violet-700">
-                        <a href="#upload-review-version">{t.sendNewVersion}</a>
-                      </Button>
-                    ) : null}
+            <section className="overflow-hidden rounded-2xl border border-zinc-800 bg-[#0d0d0d]">
+              <div className="flex flex-col gap-4 border-b border-white/10 p-5 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">
+                    {locale === "zh" ? "审片中心" : "Review center"}
+                  </p>
+                  <p className="mt-1 text-sm text-zinc-300">
+                    {locale === "zh"
+                      ? "Frame.io 风格全屏审片 — 时间码评论、版本管理、批准流程"
+                      : "Full-screen Frame.io-style review — timecoded comments, versions, approval"}
+                  </p>
+                </div>
+                <Button asChild size="lg" className="rounded-lg bg-white text-black hover:bg-zinc-200">
+                  <Link href={withLocale(`/creator/orders/${selected.order.id}/review-upload`, locale)}>
+                    {t.openReview}
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+              {sortedDeliverables[0]?.file_url ? (
+                <div className="relative aspect-video bg-black">
+                  <video
+                    src={sortedDeliverables[0].file_url}
+                    className="h-full w-full object-contain opacity-80"
+                    muted
+                    playsInline
+                    preload="metadata"
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Button asChild size="lg" className="rounded-full bg-white/10 text-white backdrop-blur hover:bg-white/20">
+                      <Link href={withLocale(`/creator/orders/${selected.order.id}/review-upload`, locale)}>
+                        <Clapperboard className="h-5 w-5" />
+                        {t.openReview}
+                      </Link>
+                    </Button>
                   </div>
-                }
-              />
+                </div>
+              ) : null}
             </section>
           ) : (
             <section className="rounded-2xl border border-zinc-200/80 bg-white p-6 sm:p-8">
@@ -435,7 +442,7 @@ export function StudioDeliveryHub({
                         {t.submitted} · {formatDate(item.created_at)}
                       </p>
                       <Button asChild size="sm" variant="ghost" className="mt-2 h-8 px-0 text-violet-700">
-                        <Link href={withLocale(`/studio/review/${selected.order.id}?version=${item.version}`, locale)}>
+                        <Link href={withLocale(`/creator/orders/${selected.order.id}/review-upload`, locale)}>
                           {t.openReview} <ArrowRight className="h-3.5 w-3.5" />
                         </Link>
                       </Button>

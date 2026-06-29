@@ -1,14 +1,12 @@
-import { promises as fs } from "fs";
-import path from "path";
 import type { CreatorNotification, CreatorNotificationType, NotificationStore } from "@/lib/notification-types";
 import { createSerializedStoreReader, writeJsonFileAtomic } from "@/lib/json-file-store";
+import { readDataJson, dataStorePath } from "@/lib/serverless-store";
 import { getProject } from "@/lib/project-service";
 import { getConfirmedBriefText } from "@/lib/studioos/confirmed-brief";
 import { buildProjectRequirementsText } from "@/lib/studioos/project-brief-format";
 import type { Locale } from "@/lib/i18n";
 
-const STORE_DIR = path.join(process.cwd(), ".data");
-const STORE_PATH = path.join(STORE_DIR, "notification-store.json");
+const STORE_PATH = dataStorePath("notification-store.json");
 
 function createId(prefix: string) {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -19,19 +17,12 @@ function emptyStore(): NotificationStore {
 }
 
 async function readStoreInner(): Promise<NotificationStore> {
-  try {
-    const raw = await fs.readFile(STORE_PATH, "utf8");
-    const parsed = JSON.parse(raw) as NotificationStore;
-    const next = ensureDemoNotifications(parsed);
-    if (JSON.stringify(next.notifications) !== JSON.stringify(parsed.notifications)) {
-      await writeStore(next);
-    }
-    return next;
-  } catch {
-    const seeded = ensureDemoNotifications(emptyStore());
-    await writeStore(seeded);
-    return seeded;
+  const parsed = await readDataJson<NotificationStore>(STORE_PATH, () => emptyStore());
+  const next = ensureDemoNotifications(parsed);
+  if (JSON.stringify(next.notifications) !== JSON.stringify(parsed.notifications)) {
+    await writeStore(next);
   }
+  return next;
 }
 
 function ensureDemoNotifications(store: NotificationStore): NotificationStore {

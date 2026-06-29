@@ -1,5 +1,3 @@
-import { promises as fs } from "fs";
-import path from "path";
 import { creators } from "@/lib/data";
 import type { DepositStatus } from "@/lib/types";
 import type { PayoutMethodType } from "@/lib/studioos/withdrawal-types";
@@ -10,9 +8,9 @@ import type {
   DepositPayment,
   DepositStore
 } from "@/lib/studioos/deposit-types";
+import { dataStorePath, readDataJson, writeDataJson } from "@/lib/serverless-store";
 
-const STORE_DIR = path.join(process.cwd(), ".data");
-const STORE_PATH = path.join(STORE_DIR, "deposit-store.json");
+const STORE_PATH = dataStorePath("deposit-store.json");
 
 function createId(prefix: string) {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -34,34 +32,30 @@ function emptyStore(): DepositStore {
   return { creator_overlays: seedOverlays(), payments: [] };
 }
 
-async function readStore(): Promise<DepositStore> {
-  try {
-    const raw = await fs.readFile(STORE_PATH, "utf8");
-    const parsed = JSON.parse(raw) as DepositStore;
-    if (!parsed.creator_overlays) {
-      parsed.creator_overlays = seedOverlays();
-    }
-    for (const creator of creators) {
-      if (!parsed.creator_overlays[creator.id]) {
-        parsed.creator_overlays[creator.id] = {
-          deposit_status: creator.deposit_status ?? "unpaid",
-          deposit_amount: CREATOR_DEPOSIT_USD,
-          paid_at: creator.deposit_status === "paid" ? creator.created_at : null
-        };
-      }
-    }
-    parsed.payments ??= [];
-    return parsed;
-  } catch {
-    const seeded = emptyStore();
-    await writeStore(seeded);
-    return seeded;
+function normalizeStore(parsed: DepositStore): DepositStore {
+  if (!parsed.creator_overlays) {
+    parsed.creator_overlays = seedOverlays();
   }
+  for (const creator of creators) {
+    if (!parsed.creator_overlays[creator.id]) {
+      parsed.creator_overlays[creator.id] = {
+        deposit_status: creator.deposit_status ?? "unpaid",
+        deposit_amount: CREATOR_DEPOSIT_USD,
+        paid_at: creator.deposit_status === "paid" ? creator.created_at : null
+      };
+    }
+  }
+  parsed.payments ??= [];
+  return parsed;
+}
+
+async function readStore(): Promise<DepositStore> {
+  const parsed = await readDataJson<DepositStore>(STORE_PATH, emptyStore);
+  return normalizeStore(parsed);
 }
 
 async function writeStore(store: DepositStore) {
-  await fs.mkdir(STORE_DIR, { recursive: true });
-  await fs.writeFile(STORE_PATH, JSON.stringify(store, null, 2), "utf8");
+  await writeDataJson(STORE_PATH, store);
 }
 
 function isActiveDepositPayment(status: DepositPayment["status"]) {

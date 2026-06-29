@@ -1,0 +1,1047 @@
+// StudioOS — Development Bible Vol 02 + Vol 14
+// Campaign-centric schema. All business data links to Campaign.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  BRAND
+  CREATOR
+  ADMIN
+  SUPPORT
+  SYSTEM
+}
+
+enum UserStatus {
+  ACTIVE
+  PENDING
+  SUSPENDED
+  BANNED
+}
+
+enum CreatorAvailability {
+  AVAILABLE
+  BUSY
+  VACATION
+  OFFLINE
+}
+
+enum CampaignStatus {
+  DRAFT
+  AI_PROCESSING
+  CREATIVE_READY
+  CREATIVE_APPROVED
+  MATCHING
+  INVITATION_SENT
+  CREATOR_ACCEPTED
+  ESCROW_PENDING
+  ESCROW_FUNDED
+  PRODUCING
+  UNDER_REVIEW
+  APPROVED
+  MASTER_UPLOADED
+  SETTLEMENT
+  COMPLETED
+  CANCELLED
+}
+
+enum AssetType {
+  LOGO
+  PRODUCT_IMAGE
+  PRODUCT_VIDEO
+  BRAND_GUIDE
+  FONT
+  MUSIC
+  REFERENCE_VIDEO
+  REFERENCE_IMAGE
+  PDF
+  ZIP
+  OTHER
+}
+
+enum VersionStatus {
+  UPLOADING
+  PROCESSING
+  TRANSCODING
+  GENERATING_HLS
+  AI_ANALYZING
+  READY
+  REVIEWING
+  APPROVED
+  MASTER
+  FAILED
+}
+
+enum ReviewStatus {
+  WAITING
+  READY
+  REVIEWING
+  REVISION_REQUIRED
+  APPROVED
+  LOCKED
+}
+
+enum AnnotationType {
+  CIRCLE
+  RECTANGLE
+  ARROW
+  POINT
+}
+
+enum InvitationStatus {
+  SENT
+  VIEWED
+  ACCEPTED
+  DECLINED
+  COUNTER
+  EXPIRED
+}
+
+enum EscrowStatus {
+  CREATED
+  PAYING
+  HELD
+  PARTIAL_RELEASE
+  FULL_RELEASE
+  CLOSED
+  REFUND
+  DISPUTE
+}
+
+enum TransactionType {
+  ESCROW_DEPOSIT
+  ESCROW_RELEASE
+  PLATFORM_COMMISSION
+  CLIENT_SERVICE_FEE
+  MEMBERSHIP_FEE
+  WITHDRAW_REQUEST
+  WITHDRAW_SUCCESS
+  WITHDRAW_FAILED
+  REFUND
+  CHARGEBACK
+  BONUS
+  PENALTY
+  DISPUTE_FREEZE
+  DISPUTE_RELEASE
+}
+
+enum NotificationChannel {
+  IN_APP
+  EMAIL
+  PUSH
+  WEBHOOK
+  SYSTEM
+}
+
+enum NotificationPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum EventStatus {
+  PENDING
+  PROCESSING
+  SUCCESS
+  FAILED
+  RETRY
+  DEAD_LETTER
+}
+
+enum DisputeStatus {
+  OPEN
+  PROCESSING
+  RESOLVED
+  CLOSED
+}
+
+enum CreatorMembershipPlanType {
+  DEFAULT
+  VERIFIED
+}
+
+enum CreatorMembershipStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+  REFUNDED
+}
+
+enum CreatorMembershipPaymentProvider {
+  STRIPE
+  PAYPAL
+  CRYPTO
+  ADMIN
+  DEMO
+}
+
+enum CreatorMembershipHistoryAction {
+  CREATED
+  ACTIVATED
+  RENEWED
+  EXPIRED
+  DOWNGRADED
+  CANCELLED
+  REFUNDED
+  ADMIN_UPGRADE
+  ADMIN_DOWNGRADE
+  ADMIN_EXTEND
+  UPGRADE_DECLINED
+}
+
+// ─── Users ───────────────────────────────────────────────────────────────────
+
+model User {
+  id            String     @id @default(uuid())
+  email         String     @unique
+  passwordHash  String?    @map("password_hash")
+  role          UserRole
+  status        UserStatus @default(ACTIVE)
+  avatarUrl     String?    @map("avatar_url")
+  fullName      String     @map("full_name")
+  country       String?
+  timezone      String?
+  language      String?    @default("en")
+  emailVerified Boolean    @default(false) @map("email_verified")
+  lastLoginAt   DateTime?  @map("last_login_at")
+  createdAt     DateTime   @default(now()) @map("created_at")
+  updatedAt     DateTime   @updatedAt @map("updated_at")
+  deletedAt     DateTime?  @map("deleted_at")
+
+  brandProfile   BrandProfile?
+  creatorProfile CreatorProfile?
+  brandCampaigns Campaign[]      @relation("BrandCampaigns")
+  creatorCampaigns Campaign[]    @relation("CreatorCampaigns")
+  reviewComments ReviewComment[]
+  activityLogs   ActivityLog[]
+  notifications  Notification[]
+  wallet         Wallet?
+  sentMessages     CommunicationMessage[] @relation("SentMessages")
+  receivedMessages CommunicationMessage[] @relation("ReceivedMessages")
+  aiPreference     AiPreference?
+  brandRelationships    RelationshipDna[] @relation("BrandRelationships")
+  creatorRelationships  RelationshipDna[] @relation("CreatorRelationships")
+  creatorMemberships    CreatorMembership[]
+  creatorEarnings       CreatorEarnings?
+  orderCommissions      OrderCommission[] @relation("CreatorOrderCommissions")
+  membershipHistory     CreatorMembershipHistory[] @relation("CreatorMembershipHistory")
+
+  @@index([role])
+  @@index([status])
+  @@map("users")
+}
+
+model BrandProfile {
+  id                 String   @id @default(uuid())
+  userId             String   @unique @map("user_id")
+  companyName        String   @map("company_name")
+  website            String?
+  logoUrl            String?  @map("logo_url")
+  industry           String?
+  brandDescription   String?  @map("brand_description")
+  creditScore        Int      @default(100) @map("credit_score")
+  completedCampaigns Int      @default(0) @map("completed_campaigns")
+  brandDnaJson       Json?    @map("brand_dna_json")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("brand_profiles")
+}
+
+model CreatorProfile {
+  id                  String              @id @default(uuid())
+  userId              String              @unique @map("user_id")
+  displayName         String              @map("display_name")
+  headline            String?
+  bio                 String?
+  country             String?
+  languagesJson       Json?               @map("languages_json")
+  availability        CreatorAvailability @default(AVAILABLE)
+  hourlyRate          Decimal?            @map("hourly_rate") @db.Decimal(18, 2)
+  minBudget           Decimal?            @map("min_budget") @db.Decimal(18, 2)
+  maxBudget           Decimal?            @map("max_budget") @db.Decimal(18, 2)
+  creditScore         Int                 @default(100) @map("credit_score")
+  aiQualityScore      Int                 @default(80) @map("ai_quality_score")
+  completionRate      Decimal             @default(100) @map("completion_rate") @db.Decimal(5, 2)
+  averageReviewRound  Decimal             @default(1) @map("average_review_round") @db.Decimal(5, 2)
+  averageDeliveryDays Decimal             @default(5) @map("average_delivery_days") @db.Decimal(5, 2)
+  completedCampaigns  Int                 @default(0) @map("completed_campaigns")
+  creatorDnaJson      Json?               @map("creator_dna_json")
+  portfolioCover      String?             @map("portfolio_cover")
+  createdAt           DateTime            @default(now()) @map("created_at")
+  updatedAt           DateTime            @updatedAt @map("updated_at")
+
+  user        User                 @relation(fields: [userId], references: [id])
+  invitations CreatorInvitation[]
+  memberships CreatorMembership[]
+
+  @@map("creator_profiles")
+}
+
+// ─── Campaign (Aggregate Root) ───────────────────────────────────────────────
+
+model Campaign {
+  id               String         @id @default(uuid())
+  brandId          String         @map("brand_id")
+  creatorId        String?        @map("creator_id")
+  title            String
+  description      String?
+  budget           Decimal        @db.Decimal(18, 2)
+  currency         String         @default("USD")
+  deadline         DateTime
+  platform         String?
+  aspectRatio      String?        @map("aspect_ratio")
+  status           CampaignStatus @default(DRAFT)
+  creativeDirection String?       @map("creative_direction")
+  productionBrief  Json?          @map("production_brief")
+  campaignMemoryJson Json?        @map("campaign_memory_json")
+  campaignHealth   Int            @default(100) @map("campaign_health")
+  reviewRound      Int            @default(0) @map("review_round")
+  currentVersion   Int            @default(0) @map("current_version")
+  createdBy        String?        @map("created_by")
+  createdAt        DateTime       @default(now()) @map("created_at")
+  updatedAt        DateTime       @updatedAt @map("updated_at")
+  deletedAt        DateTime?      @map("deleted_at")
+
+  brand         User                @relation("BrandCampaigns", fields: [brandId], references: [id])
+  creator       User?               @relation("CreatorCampaigns", fields: [creatorId], references: [id])
+  assets        CampaignAsset[]
+  versions      CampaignVersion[]
+  comments      ReviewComment[]
+  invitations   CreatorInvitation[]
+  escrow        EscrowPayment?
+  activities    ActivityLog[]
+  notifications Notification[]
+  disputes      Dispute[]
+  messages      CommunicationMessage[]
+  memoryFacts   MemoryFact[]
+  orderCommission OrderCommission?
+
+  @@index([brandId])
+  @@index([creatorId])
+  @@index([status])
+  @@index([deadline])
+  @@index([campaignHealth])
+  @@index([createdAt])
+  @@map("campaigns")
+}
+
+model CampaignAsset {
+  id              String    @id @default(uuid())
+  campaignId      String    @map("campaign_id")
+  uploadedBy      String    @map("uploaded_by")
+  assetType       AssetType @map("asset_type")
+  fileName        String    @map("file_name")
+  fileKey         String    @map("file_key")
+  storageProvider String    @default("r2") @map("storage_provider")
+  mimeType        String    @map("mime_type")
+  fileSize        BigInt    @map("file_size")
+  width           Int?
+  height          Int?
+  duration        Decimal?  @db.Decimal(10, 3)
+  hash            String?
+  previewUrl      String?   @map("preview_url")
+  thumbnailUrl    String?   @map("thumbnail_url")
+  status          String    @default("READY")
+  metadataJson    Json?     @map("metadata_json")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+
+  campaign Campaign @relation(fields: [campaignId], references: [id])
+
+  @@index([campaignId])
+  @@index([assetType])
+  @@map("campaign_assets")
+}
+
+model CampaignVersion {
+  id            String        @id @default(uuid())
+  campaignId    String        @map("campaign_id")
+  versionNumber Int           @map("version_number")
+  uploadedBy    String        @map("uploaded_by")
+  videoKey      String        @map("video_key")
+  videoUrl      String?       @map("video_url")
+  hlsUrl        String?       @map("hls_url")
+  thumbnailUrl  String?       @map("thumbnail_url")
+  duration      Decimal?      @db.Decimal(10, 3)
+  watermark     Boolean       @default(true)
+  status        VersionStatus @default(UPLOADING)
+  reviewRound   Int           @default(0) @map("review_round")
+  reviewStatus  ReviewStatus  @default(WAITING) @map("review_status")
+  reviewScore   Decimal?      @map("review_score") @db.Decimal(5, 2)
+  aiReportJson  Json?         @map("ai_report_json")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+  deletedAt     DateTime?     @map("deleted_at")
+
+  campaign   Campaign          @relation(fields: [campaignId], references: [id])
+  comments   ReviewComment[]
+  annotations ReviewAnnotation[]
+
+  @@unique([campaignId, versionNumber])
+  @@index([campaignId])
+  @@index([status])
+  @@map("campaign_versions")
+}
+
+// ─── Review ──────────────────────────────────────────────────────────────────
+
+model ReviewComment {
+  id         String   @id @default(uuid())
+  campaignId String   @map("campaign_id")
+  versionId  String   @map("version_id")
+  userId     String   @map("user_id")
+  timeSeconds Decimal @map("time_seconds") @db.Decimal(10, 3)
+  comment    String
+  resolved   Boolean  @default(false)
+  resolvedBy String?  @map("resolved_by")
+  resolvedAt DateTime? @map("resolved_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+  deletedAt  DateTime? @map("deleted_at")
+
+  campaign    Campaign           @relation(fields: [campaignId], references: [id])
+  version     CampaignVersion    @relation(fields: [versionId], references: [id])
+  user        User               @relation(fields: [userId], references: [id])
+  annotations ReviewAnnotation[]
+
+  @@index([campaignId])
+  @@index([versionId])
+  @@index([userId])
+  @@map("review_comments")
+}
+
+model ReviewAnnotation {
+  id          String         @id @default(uuid())
+  commentId   String         @map("comment_id")
+  campaignId  String         @map("campaign_id")
+  versionId   String         @map("version_id")
+  type        AnnotationType
+  x           Decimal        @db.Decimal(8, 6)
+  y           Decimal        @db.Decimal(8, 6)
+  width       Decimal        @db.Decimal(8, 6)
+  height      Decimal        @db.Decimal(8, 6)
+  color       String         @default("#FF4D4F")
+  strokeWidth Int            @default(2) @map("stroke_width")
+  createdAt   DateTime       @default(now()) @map("created_at")
+
+  comment ReviewComment   @relation(fields: [commentId], references: [id])
+  version CampaignVersion @relation(fields: [versionId], references: [id])
+
+  @@index([commentId])
+  @@index([versionId])
+  @@map("review_annotations")
+}
+
+// ─── Creator Matching ────────────────────────────────────────────────────────
+
+model CreatorInvitation {
+  id           String           @id @default(uuid())
+  campaignId   String           @map("campaign_id")
+  creatorId    String           @map("creator_id")
+  matchScore   Decimal          @map("match_score") @db.Decimal(5, 2)
+  status       InvitationStatus @default(SENT)
+  counterOffer Decimal?         @map("counter_offer") @db.Decimal(18, 2)
+  respondedAt  DateTime?        @map("responded_at")
+  expiresAt    DateTime?        @map("expires_at")
+  createdAt    DateTime         @default(now()) @map("created_at")
+  updatedAt    DateTime         @updatedAt @map("updated_at")
+
+  campaign Campaign       @relation(fields: [campaignId], references: [id])
+  creator  CreatorProfile @relation(fields: [creatorId], references: [id])
+
+  @@index([campaignId])
+  @@index([creatorId])
+  @@index([status])
+  @@map("creator_invitations")
+}
+
+// ─── Payment & Wallet ────────────────────────────────────────────────────────
+
+model EscrowPayment {
+  id              String       @id @default(uuid())
+  campaignId      String       @unique @map("campaign_id")
+  brandId         String       @map("brand_id")
+  creatorId       String       @map("creator_id")
+  stripePaymentId String?      @map("stripe_payment_id")
+  currency        String       @default("USD")
+  amount          Decimal      @db.Decimal(18, 2)
+  releasedAmount  Decimal      @default(0) @map("released_amount") @db.Decimal(18, 2)
+  remainingAmount Decimal      @map("remaining_amount") @db.Decimal(18, 2)
+  status          EscrowStatus @default(CREATED)
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+
+  campaign Campaign @relation(fields: [campaignId], references: [id])
+
+  @@index([brandId])
+  @@index([creatorId])
+  @@index([status])
+  @@map("escrow_payments")
+}
+
+model Wallet {
+  id               String   @id @default(uuid())
+  userId           String   @unique @map("user_id")
+  currency         String   @default("USD")
+  availableBalance Decimal  @default(0) @map("available_balance") @db.Decimal(18, 2)
+  pendingBalance   Decimal  @default(0) @map("pending_balance") @db.Decimal(18, 2)
+  totalEarned      Decimal  @default(0) @map("total_earned") @db.Decimal(18, 2)
+  totalWithdraw    Decimal  @default(0) @map("total_withdraw") @db.Decimal(18, 2)
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  user         User          @relation(fields: [userId], references: [id])
+  transactions Transaction[]
+
+  @@map("wallets")
+}
+
+model Transaction {
+  id           String          @id @default(uuid())
+  walletId     String          @map("wallet_id")
+  campaignId   String?         @map("campaign_id")
+  type         TransactionType
+  amount       Decimal         @db.Decimal(18, 2)
+  balanceAfter Decimal         @map("balance_after") @db.Decimal(18, 2)
+  description  String?
+  createdAt    DateTime        @default(now()) @map("created_at")
+
+  wallet Wallet @relation(fields: [walletId], references: [id])
+
+  @@index([walletId])
+  @@index([campaignId])
+  @@index([type])
+  @@map("transactions")
+}
+
+// ─── Events & Notifications ──────────────────────────────────────────────────
+
+model DomainEvent {
+  id            String      @id @default(uuid())
+  eventName     String      @map("event_name")
+  aggregateType String      @map("aggregate_type")
+  aggregateId   String      @map("aggregate_id")
+  payloadJson   Json        @map("payload_json")
+  status        EventStatus @default(PENDING)
+  retryCount    Int         @default(0) @map("retry_count")
+  createdAt     DateTime    @default(now()) @map("created_at")
+  processedAt   DateTime?   @map("processed_at")
+
+  @@index([eventName])
+  @@index([aggregateId])
+  @@index([status])
+  @@map("domain_events")
+}
+
+model Notification {
+  id         String               @id @default(uuid())
+  userId     String               @map("user_id")
+  campaignId String?              @map("campaign_id")
+  channel    NotificationChannel  @default(IN_APP)
+  priority   NotificationPriority @default(NORMAL)
+  title      String
+  content    String
+  actionUrl  String?              @map("action_url")
+  isRead     Boolean              @default(false) @map("is_read")
+  isSent     Boolean              @default(false) @map("is_sent")
+  createdAt  DateTime             @default(now()) @map("created_at")
+  readAt     DateTime?            @map("read_at")
+
+  user     User      @relation(fields: [userId], references: [id])
+  campaign Campaign? @relation(fields: [campaignId], references: [id])
+
+  @@index([userId])
+  @@index([campaignId])
+  @@index([isRead])
+  @@map("notifications")
+}
+
+model ActivityLog {
+  id         String   @id @default(uuid())
+  campaignId String   @map("campaign_id")
+  userId     String?  @map("user_id")
+  action     String
+  ip         String?
+  device     String?
+  metadata   Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  campaign Campaign @relation(fields: [campaignId], references: [id])
+  user     User?    @relation(fields: [userId], references: [id])
+
+  @@index([campaignId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("activity_logs")
+}
+
+model Dispute {
+  id        String        @id @default(uuid())
+  campaignId String       @map("campaign_id")
+  openedBy  String        @map("opened_by")
+  reason    String
+  status    DisputeStatus @default(OPEN)
+  adminId   String?       @map("admin_id")
+  result    String?
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
+
+  campaign Campaign @relation(fields: [campaignId], references: [id])
+
+  @@index([campaignId])
+  @@index([status])
+  @@map("disputes")
+}
+
+// ─── Prisma v2 — Vol 18 extended tables ─────────────────────────────────────
+
+enum AiJobStatus {
+  QUEUED
+  RUNNING
+  VALIDATING
+  SUCCESS
+  FAILED
+  RETRYING
+  DEAD
+}
+
+enum QueueJobStatus {
+  WAITING
+  RUNNING
+  SUCCESS
+  FAILED
+  RETRY
+  DEAD
+}
+
+model AiJob {
+  id            String      @id @default(uuid())
+  campaignId    String?     @map("campaign_id")
+  type          String
+  provider      String      @default("openai")
+  status        AiJobStatus @default(QUEUED)
+  inputJson     Json        @map("input_json")
+  outputJson    Json?       @map("output_json")
+  promptVersion String?     @map("prompt_version")
+  tokenInput    Int         @default(0) @map("token_input")
+  tokenOutput   Int         @default(0) @map("token_output")
+  cost          Decimal     @default(0) @db.Decimal(18, 6)
+  latencyMs     Int?        @map("latency_ms")
+  retryCount    Int         @default(0) @map("retry_count")
+  createdAt     DateTime    @default(now()) @map("created_at")
+  completedAt   DateTime?   @map("completed_at")
+
+  @@index([campaignId])
+  @@index([status])
+  @@index([type])
+  @@map("ai_jobs")
+}
+
+model WebhookEvent {
+  id          String   @id @default(uuid())
+  provider    String
+  eventType   String   @map("event_type")
+  payloadJson Json     @map("payload_json")
+  processed   Boolean  @default(false)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([provider])
+  @@index([processed])
+  @@map("webhook_events")
+}
+
+model FeatureFlag {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  enabled   Boolean  @default(false)
+  metadata  Json?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("feature_flags")
+}
+
+model VideoJob {
+  id         String         @id @default(uuid())
+  campaignId String         @map("campaign_id")
+  versionId  String?        @map("version_id")
+  queue      String
+  status     QueueJobStatus @default(WAITING)
+  payloadJson Json          @map("payload_json")
+  retryCount Int            @default(0) @map("retry_count")
+  error      String?
+  startedAt  DateTime?      @map("started_at")
+  finishedAt DateTime?      @map("finished_at")
+  createdAt  DateTime       @default(now()) @map("created_at")
+
+  @@index([campaignId])
+  @@index([status])
+  @@index([queue])
+  @@map("video_jobs")
+}
+
+model QueueJob {
+  id          String         @id @default(uuid())
+  queue       String
+  status      QueueJobStatus @default(WAITING)
+  payloadJson Json           @map("payload_json")
+  retryCount  Int            @default(0) @map("retry_count")
+  error       String?
+  startedAt   DateTime?      @map("started_at")
+  finishedAt  DateTime?      @map("finished_at")
+  createdAt   DateTime       @default(now()) @map("created_at")
+
+  @@index([queue])
+  @@index([status])
+  @@map("queue_jobs")
+}
+
+model WorkerLog {
+  id         String   @id @default(uuid())
+  workerName String   @map("worker_name")
+  jobId      String?  @map("job_id")
+  level      String
+  message    String
+  metadata   Json?
+  durationMs Int?     @map("duration_ms")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([workerName])
+  @@index([jobId])
+  @@map("worker_logs")
+}
+
+model EmailLog {
+  id        String   @id @default(uuid())
+  userId    String?  @map("user_id")
+  toEmail   String   @map("to_email")
+  template  String
+  status    String
+  error     String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([status])
+  @@map("email_logs")
+}
+
+model SessionLog {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  ip        String?
+  device    String?
+  browser   String?
+  country   String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("session_logs")
+}
+
+model StorageFile {
+  id         String   @id @default(uuid())
+  campaignId String?  @map("campaign_id")
+  fileKey    String   @map("file_key")
+  mimeType   String   @map("mime_type")
+  fileSize   BigInt   @map("file_size")
+  provider   String   @default("r2")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([campaignId])
+  @@index([fileKey])
+  @@map("storage_files")
+}
+
+// ─── AI Communication Engine ─────────────────────────────────────────────────
+
+enum CommunicationSourceType {
+  CHAT
+  REVIEW_COMMENT
+  CAMPAIGN_BRIEF
+  CREATIVE_SCRIPT
+  CREATOR_QUOTE
+  PORTFOLIO
+  CONTRACT
+  EMAIL
+  NOTIFICATION
+  DISPUTE
+  SYSTEM
+}
+
+model CommunicationMessage {
+  id                   String                  @id @default(uuid())
+  campaignId           String?                 @map("campaign_id")
+  senderId             String                  @map("sender_id")
+  receiverId           String?                 @map("receiver_id")
+  sourceType           CommunicationSourceType @default(CHAT) @map("source_type")
+  sourceRefId          String?                 @map("source_ref_id")
+  originalLanguage     String                  @map("original_language")
+  targetLanguage       String                  @map("target_language")
+  originalContent      String                  @map("original_content") @db.Text
+  localizedContent     String?                 @map("localized_content") @db.Text
+  summary              String?                 @db.Text
+  todosJson            Json?                   @map("todos_json")
+  detectConfidence     Decimal?                @map("detect_confidence") @db.Decimal(5, 4)
+  translationAvailable Boolean                 @default(true) @map("translation_available")
+  createdAt            DateTime                @default(now()) @map("created_at")
+  updatedAt            DateTime                @updatedAt @map("updated_at")
+  deletedAt            DateTime?               @map("deleted_at")
+
+  campaign         Campaign?                     @relation(fields: [campaignId], references: [id])
+  sender           User                          @relation("SentMessages", fields: [senderId], references: [id])
+  receiver         User?                         @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  translationLogs  CommunicationTranslationLog[]
+
+  @@index([campaignId])
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([sourceType, sourceRefId])
+  @@index([createdAt])
+  @@map("communication_messages")
+}
+
+model CommunicationTranslationLog {
+  id            String   @id @default(uuid())
+  messageId     String   @map("message_id")
+  model         String
+  provider      String
+  sourceLang    String   @map("source_lang")
+  targetLang    String   @map("target_lang")
+  promptVersion String   @map("prompt_version")
+  tokenInput    Int      @default(0) @map("token_input")
+  tokenOutput   Int      @default(0) @map("token_output")
+  cost          Decimal  @default(0) @db.Decimal(18, 6)
+  latencyMs     Int      @default(0) @map("latency_ms")
+  attempt       Int      @default(1)
+  success       Boolean  @default(true)
+  error         String?
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  message CommunicationMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
+  @@index([createdAt])
+  @@map("communication_translation_logs")
+}
+
+// ─── AI Memory (Brand / Creator / Relationship DNA) ───────────────────────────
+
+enum AiTonePreference {
+  PROFESSIONAL
+  LUXURY
+  GEN_Z
+  CORPORATE
+  CASUAL
+}
+
+enum MemoryOwnerType {
+  BRAND
+  CREATOR
+  CAMPAIGN
+  RELATIONSHIP
+}
+
+model AiPreference {
+  userId            String           @id @map("user_id")
+  preferredLanguage String?          @map("preferred_language")
+  alwaysTranslate   Boolean          @default(true) @map("always_translate")
+  neverUseEmojis    Boolean          @default(false) @map("never_use_emojis")
+  tone              AiTonePreference @default(PROFESSIONAL)
+  createdAt         DateTime         @default(now()) @map("created_at")
+  updatedAt         DateTime         @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("ai_preferences")
+}
+
+model MemoryFact {
+  id          String          @id @default(uuid())
+  ownerType   MemoryOwnerType @map("owner_type")
+  brandId     String?         @map("brand_id")
+  creatorId   String?         @map("creator_id")
+  campaignId  String?         @map("campaign_id")
+  category    String
+  factKey     String          @map("fact_key")
+  factValue   String          @map("fact_value") @db.Text
+  confidence  Decimal         @default(0.8) @db.Decimal(5, 4)
+  sourceType  String          @map("source_type")
+  sourceRefId String?         @map("source_ref_id")
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+
+  campaign Campaign? @relation(fields: [campaignId], references: [id])
+
+  @@unique([ownerType, brandId, creatorId, campaignId, category, factKey])
+  @@index([brandId])
+  @@index([creatorId])
+  @@index([campaignId])
+  @@index([ownerType])
+  @@map("memory_facts")
+}
+
+model RelationshipDna {
+  id                  String    @id @default(uuid())
+  brandId             String    @map("brand_id")
+  creatorId           String    @map("creator_id")
+  collaborationCount  Int       @default(0) @map("collaboration_count")
+  avgSatisfaction     Decimal?  @map("avg_satisfaction") @db.Decimal(3, 2)
+  avgReviewRounds     Decimal?  @map("avg_review_rounds") @db.Decimal(5, 2)
+  avgDaysEarly        Decimal?  @map("avg_days_early") @db.Decimal(5, 2)
+  priorityScore       Int       @default(0) @map("priority_score")
+  lastCollaborationAt DateTime? @map("last_collaboration_at")
+  dnaJson             Json?     @map("dna_json")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  brand   User @relation("BrandRelationships", fields: [brandId], references: [id])
+  creator User @relation("CreatorRelationships", fields: [creatorId], references: [id])
+
+  @@unique([brandId, creatorId])
+  @@index([brandId])
+  @@index([creatorId])
+  @@index([priorityScore])
+  @@map("relationship_dna")
+}
+
+// ─── Creator Membership & Commission ─────────────────────────────────────────
+
+model CreatorMembershipPlan {
+  id                         String                    @id @default(uuid())
+  slug                       String                    @unique
+  name                       String
+  planType                   CreatorMembershipPlanType @map("plan_type")
+  annualFee                  Decimal                   @default(0) @map("annual_fee") @db.Decimal(18, 2)
+  creatorCommissionPercentage Decimal                  @map("creator_commission_percentage") @db.Decimal(5, 2)
+  membershipDurationDays     Int                       @default(365) @map("membership_duration_days")
+  benefitsJson               Json                      @default("[]") @map("benefits_json")
+  stripePriceId              String?                   @map("stripe_price_id")
+  isActive                   Boolean                   @default(true) @map("is_active")
+  sortOrder                  Int                       @default(0) @map("sort_order")
+  createdAt                  DateTime                  @default(now()) @map("created_at")
+  updatedAt                  DateTime                  @updatedAt @map("updated_at")
+
+  memberships CreatorMembership[]
+  history     CreatorMembershipHistory[]
+
+  @@index([planType, isActive])
+  @@map("creator_membership_plans")
+}
+
+model CreatorMembership {
+  id              String                         @id @default(uuid())
+  creatorId       String                         @map("creator_id")
+  creatorProfileId String?                       @map("creator_profile_id")
+  planId          String                         @map("plan_id")
+  status          CreatorMembershipStatus        @default(ACTIVE)
+  paymentProvider CreatorMembershipPaymentProvider? @map("payment_provider")
+  startedAt       DateTime                       @map("started_at")
+  expiresAt       DateTime?                      @map("expires_at")
+  paymentId       String?                        @map("payment_id")
+  stripeSessionId String?                        @map("stripe_session_id")
+  amountPaid      Decimal?                       @map("amount_paid") @db.Decimal(18, 2)
+  currency        String                         @default("USD")
+  metadataJson    Json?                          @map("metadata_json")
+  createdAt       DateTime                       @default(now()) @map("created_at")
+  updatedAt       DateTime                       @updatedAt @map("updated_at")
+
+  creator User                  @relation(fields: [creatorId], references: [id])
+  profile CreatorProfile?       @relation(fields: [creatorProfileId], references: [id])
+  plan    CreatorMembershipPlan @relation(fields: [planId], references: [id])
+
+  @@index([creatorId, status])
+  @@index([expiresAt])
+  @@index([planId])
+  @@map("creator_memberships")
+}
+
+model CommissionRule {
+  id                                String   @id @default(uuid())
+  name                              String   @default("default")
+  clientServiceFeePercentage        Decimal  @map("client_service_fee_percentage") @db.Decimal(5, 2)
+  defaultCreatorCommissionPercentage Decimal @map("default_creator_commission_percentage") @db.Decimal(5, 2)
+  verifiedCreatorCommissionPercentage Decimal @map("verified_creator_commission_percentage") @db.Decimal(5, 2)
+  upgradeRevenueThreshold           Decimal  @map("upgrade_revenue_threshold") @db.Decimal(18, 2)
+  upgradeModalEnabled               Boolean  @default(true) @map("upgrade_modal_enabled")
+  clientServiceFeeEnabled           Boolean  @default(true) @map("client_service_fee_enabled")
+  isActive                          Boolean  @default(true) @map("is_active")
+  createdAt                         DateTime @default(now()) @map("created_at")
+  updatedAt                         DateTime @updatedAt @map("updated_at")
+
+  @@index([isActive])
+  @@map("commission_rules")
+}
+
+model OrderCommission {
+  id                            String                    @id @default(uuid())
+  campaignId                    String                    @map("campaign_id")
+  orderId                       String?                   @map("order_id")
+  creatorId                     String                    @map("creator_id")
+  orderAmount                   Decimal                   @map("order_amount") @db.Decimal(18, 2)
+  currency                      String                    @default("USD")
+  clientServiceFeePercentage    Decimal                   @map("client_service_fee_percentage") @db.Decimal(5, 2)
+  clientServiceFeeAmount          Decimal                   @map("client_service_fee_amount") @db.Decimal(18, 2)
+  creatorCommissionPercentage   Decimal                   @map("creator_commission_percentage") @db.Decimal(5, 2)
+  creatorCommissionAmount         Decimal                   @map("creator_commission_amount") @db.Decimal(18, 2)
+  creatorPayoutAmount             Decimal                   @map("creator_payout_amount") @db.Decimal(18, 2)
+  platformTotalRevenue            Decimal                   @map("platform_total_revenue") @db.Decimal(18, 2)
+  creatorMembershipTypeAtOrder    CreatorMembershipPlanType @map("creator_membership_type_at_order_time")
+  commissionRuleId                String?                   @map("commission_rule_id")
+  planId                          String?                   @map("plan_id")
+  settledAt                       DateTime                  @default(now()) @map("settled_at")
+  createdAt                       DateTime                  @default(now()) @map("created_at")
+
+  campaign Campaign @relation(fields: [campaignId], references: [id])
+  creator  User     @relation("CreatorOrderCommissions", fields: [creatorId], references: [id])
+
+  @@unique([campaignId])
+  @@index([creatorId])
+  @@index([settledAt])
+  @@map("order_commissions")
+}
+
+model CreatorEarnings {
+  creatorId            String    @id @map("creator_id")
+  totalSettledRevenue  Decimal   @default(0) @map("total_settled_revenue") @db.Decimal(18, 2)
+  totalPendingRevenue  Decimal   @default(0) @map("total_pending_revenue") @db.Decimal(18, 2)
+  totalWithdrawn       Decimal   @default(0) @map("total_withdrawn") @db.Decimal(18, 2)
+  totalCreatorPayout   Decimal   @default(0) @map("total_creator_payout") @db.Decimal(18, 2)
+  upgradeDeclinedAt    DateTime? @map("upgrade_declined_at")
+  lastUpgradePromptAt  DateTime? @map("last_upgrade_prompt_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+
+  creator User @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+
+  @@map("creator_earnings")
+}
+
+model CreatorMembershipHistory {
+  id        String                         @id @default(uuid())
+  creatorId String                         @map("creator_id")
+  planId    String?                        @map("plan_id")
+  membershipId String?                     @map("membership_id")
+  action    CreatorMembershipHistoryAction
+  actorId   String?                        @map("actor_id")
+  note      String?
+  metadataJson Json?                         @map("metadata_json")
+  createdAt DateTime                       @default(now()) @map("created_at")
+
+  creator User                   @relation("CreatorMembershipHistory", fields: [creatorId], references: [id])
+  plan    CreatorMembershipPlan? @relation(fields: [planId], references: [id])
+
+  @@index([creatorId, createdAt])
+  @@map("creator_membership_history")
+}

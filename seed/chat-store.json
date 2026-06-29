@@ -1,0 +1,53 @@
+{
+  "inquiries": [
+    {
+      "id": "inq_demo_arc_nova",
+      "creator_id": "creator_01",
+      "work_id": "work_1001",
+      "project_id": "proj_demo_arc_nova",
+      "client_name": "Arc & Alloy",
+      "client_email": "client.arc@adbridge.test",
+      "company_name": "Arc & Alloy",
+      "budget_range": "$1,000-$2,500",
+      "message": "We need 3x 9:16 cutdowns for TikTok and Meta summer launch.",
+      "status": "quoted",
+      "created_at": "2026-06-28T10:00:00.000Z"
+    },
+    {
+      "id": "inq_9001",
+      "creator_id": "creator_01",
+      "work_id": "work_1001",
+      "project_id": null,
+      "client_name": "Maya Chen",
+      "client_email": "maya@northline.example",
+      "company_name": "Northline Skincare",
+      "budget_range": "$1,000-$2,500",
+      "message": "Serum launch batch inspired by macro texture work, TikTok-first versions.",
+      "status": "quoted",
+      "created_at": "2026-06-28T08:45:00Z"
+    }
+  ],
+  "messages": [
+    {
+      "id": "inq_demo_arc_nova_m1",
+      "inquiry_id": "inq_demo_arc_nova",
+      "sender": "brand",
+      "body": "We need 3x 9:16 cutdowns for TikTok and Meta summer launch.",
+      "created_at": "2026-06-28T10:00:00.000Z"
+    },
+    {
+      "id": "inq_demo_arc_nova_m2",
+      "inquiry_id": "inq_demo_arc_nova",
+      "sender": "studio",
+      "body": "Got it — we can deliver hero + 2 hook variants within 7 days.",
+      "created_at": "2026-06-28T10:15:00.000Z"
+    },
+    {
+      "id": "inq_9001_m1",
+      "inquiry_id": "inq_9001",
+      "sender": "brand",
+      "body": "Serum launch batch inspired by macro texture work, TikTok-first versions.",
+      "created_at": "2026-06-28T08:45:00Z"
+    }
+  ]
+}

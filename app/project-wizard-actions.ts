@@ -22,6 +22,9 @@ import { getCurrentClientEmail } from "@/lib/client-session";
 import { DEMO_USERS } from "@/lib/demo-auth";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
+import { campaignBridgeService } from "@/features/campaign/campaign-bridge.service";
+import { campaignAssetService } from "@/features/campaign/campaign-asset.service";
+import { getSessionUser } from "@/features/auth/session.service";
 import {
   completeWizardStep,
   createProjectDraft,
@@ -30,6 +33,11 @@ import {
   updateProject
 } from "@/lib/project-service";
 import type { CommercialObjective } from "@/lib/project-types";
+import {
+  emitWizardProgress,
+  runAnalyzingProgress,
+  runMatchingProgress
+} from "@/lib/campaign/wizard-progress.service";
 
 async function requireBrandClient() {
   const email = await getCurrentClientEmail();
@@ -46,7 +54,7 @@ async function requireBrandClient() {
 
 async function requireProject(projectId: string, clientEmail: string) {
   const project = await getProject(projectId);
-  if (!project || project.client_email !== clientEmail) {
+  if (!project || project.client_email.toLowerCase() !== clientEmail.toLowerCase()) {
     throw new Error("Project not found");
   }
   return project;
@@ -80,24 +88,49 @@ export async function ensureProjectDraftAction(formData: FormData) {
     created_by: client.client_email
   });
 
+  await campaignBridgeService.ensurePrismaCampaignOnDraft(project.id);
+
   revalidateWizard(project.id);
   return { ok: true as const, projectId: project.id, wizardStep: 1 };
+}
+
+export async function saveWizardBriefAction(formData: FormData) {
+  const lang = normalizeLang(formData.get("lang"));
+  const client = await requireBrandClient();
+  const projectId = String(formData.get("project_id") ?? "");
+  await requireProject(projectId, client.client_email);
+
+  const category = String(formData.get("category") ?? "").trim();
+  const commercial_objective = String(formData.get("commercial_objective") ?? "") as CommercialObjective;
+  const target_audience = String(formData.get("target_audience") ?? "").trim();
+
+  if (!category || !commercial_objective) {
+    return { ok: false as const, error: lang === "zh" ? "请填写必填项" : "Complete required fields" };
+  }
+
+  await updateProject(projectId, {
+    category,
+    commercial_objective,
+    target_audience
+  });
+
+  await completeWizardStep(projectId, 1);
+  await emitWizardProgress(projectId, { step: 1, phase: "idle" });
+  revalidateWizard(projectId);
+  return { ok: true as const, nextStep: 2 };
 }
 
 export async function saveWizardStep1Action(formData: FormData) {
   const lang = normalizeLang(formData.get("lang"));
   const client = await requireBrandClient();
   const projectId = String(formData.get("project_id") ?? "");
-  const project = await requireProject(projectId, client.client_email);
+  await requireProject(projectId, client.client_email);
 
   const product_name = String(formData.get("product_name") ?? "").trim();
-  const category = String(formData.get("category") ?? "").trim();
-  const commercial_objective = String(formData.get("commercial_objective") ?? "") as CommercialObjective;
   const product_url = String(formData.get("product_url") ?? "").trim();
-  const target_audience = String(formData.get("target_audience") ?? "").trim();
 
-  if (!product_name || !category || !commercial_objective) {
-    return { ok: false as const, error: lang === "zh" ? "请填写必填项" : "Complete required fields" };
+  if (!product_name) {
+    return { ok: false as const, error: lang === "zh" ? "请填写产品名称" : "Enter a product name" };
   }
 
   const hasProduct = await hasProductVisual(projectId);
@@ -111,16 +144,14 @@ export async function saveWizardStep1Action(formData: FormData) {
   await updateProject(projectId, {
     product_name,
     product_url,
-    category,
-    commercial_objective,
-    target_audience,
     title: `${product_name} Campaign`,
     campaign_goal: product_name
   });
 
-  await completeWizardStep(projectId, 1);
+  await completeWizardStep(projectId, 2);
+  await emitWizardProgress(projectId, { step: 2, phase: "idle" });
   revalidateWizard(projectId);
-  return { ok: true as const, nextStep: 2 };
+  return { ok: true as const, nextStep: 3 };
 }
 
 export async function addReferenceAction(formData: FormData) {
@@ -162,9 +193,10 @@ export async function saveWizardStep2Action(formData: FormData) {
   await updateProject(projectId, {
     reference_links: refs.map((item) => item.source_url).join("\n")
   });
-  await completeWizardStep(projectId, 2);
+  await completeWizardStep(projectId, 3);
+  await emitWizardProgress(projectId, { step: 3, phase: "idle" });
   revalidateWizard(projectId);
-  return { ok: true as const, nextStep: 3 };
+  return { ok: true as const, nextStep: 4 };
 }
 
 export async function saveWizardStep3Action(formData: FormData) {
@@ -173,14 +205,23 @@ export async function saveWizardStep3Action(formData: FormData) {
   const projectId = String(formData.get("project_id") ?? "");
   const project = await requireProject(projectId, client.client_email);
 
-  const brief = await ensureCreativeBrief(project);
-  if (!brief.executive_summary) {
-    return { ok: false as const, error: lang === "zh" ? "Brief 生成失败" : "Brief generation failed" };
+  let brief = await getCreativeBrief(projectId);
+
+  try {
+    await runAnalyzingProgress(projectId, lang, async () => {
+      brief = await ensureCreativeBrief(project);
+      if (!brief.executive_summary) {
+        throw new Error(lang === "zh" ? "Brief 生成失败" : "Brief generation failed");
+      }
+      await completeWizardStep(projectId, 4);
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : lang === "zh" ? "分析失败" : "Analysis failed";
+    return { ok: false as const, error: message };
   }
 
-  await completeWizardStep(projectId, 3);
   revalidateWizard(projectId);
-  return { ok: true as const, nextStep: 4, brief };
+  return { ok: true as const, nextStep: 5, brief };
 }
 
 export async function saveWizardStep4Action(formData: FormData) {
@@ -212,9 +253,10 @@ export async function saveWizardStep4Action(formData: FormData) {
     target_platform: aspect_ratios.includes("9:16") ? "TikTok, Meta" : "YouTube, Meta"
   });
 
-  await completeWizardStep(projectId, 4);
+  await completeWizardStep(projectId, 5);
+  await emitWizardProgress(projectId, { step: 5, phase: "idle" });
   revalidateWizard(projectId);
-  return { ok: true as const, nextStep: 5 };
+  return { ok: true as const, nextStep: 6 };
 }
 
 export async function saveWizardStep5Action(formData: FormData) {
@@ -242,9 +284,10 @@ export async function saveWizardStep5Action(formData: FormData) {
     return { ok: false as const, error: lang === "zh" ? "Creative Pack 不完整" : "Creative pack incomplete" };
   }
 
-  await completeWizardStep(projectId, 5);
+  await completeWizardStep(projectId, 6);
+  await emitWizardProgress(projectId, { step: 6, phase: "idle" });
   revalidateWizard(projectId);
-  return { ok: true as const, nextStep: 6, pack };
+  return { ok: true as const, nextStep: 7, pack };
 }
 
 export async function publishProjectAction(formData: FormData) {
@@ -263,15 +306,24 @@ export async function publishProjectAction(formData: FormData) {
     await updateProject(projectId, { title });
   }
 
-  await completeWizardStep(projectId, 6);
+  try {
+    await runMatchingProgress(projectId, lang, async () => {
+      await completeWizardStep(projectId, 7);
 
-  const result = await transitionProject(projectId, "project.publish", {
-    actor_role: "brand",
-    actor_id: client.client_email
-  });
+      const result = await transitionProject(projectId, "project.publish", {
+        actor_role: "brand",
+        actor_id: client.client_email
+      });
 
-  if (!result.ok) {
-    return { ok: false as const, error: result.message, missing: result.code === "PRECONDITION_FAILED" };
+      if (!result.ok) {
+        throw new Error(result.message);
+      }
+
+      await campaignBridgeService.syncPublishToPrisma(projectId);
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : lang === "zh" ? "发布失败" : "Publish failed";
+    return { ok: false as const, error: message };
   }
 
   revalidateWizard(projectId);
@@ -318,6 +370,20 @@ export async function uploadLogoAssetAction(formData: FormData) {
     file_url: saved.url,
     file_name: saved.file_name
   });
+
+  const sessionUser = await getSessionUser();
+  const prismaCampaignId = await campaignBridgeService.ensurePrismaCampaignOnDraft(projectId);
+  if (prismaCampaignId && sessionUser && !sessionUser.id.startsWith("demo_")) {
+    try {
+      await campaignAssetService.uploadLogo(
+        prismaCampaignId,
+        { id: sessionUser.id, role: sessionUser.role },
+        file
+      );
+    } catch (error) {
+      console.error("[uploadLogoAssetAction] prisma logo sync failed", error);
+    }
+  }
 
   revalidateWizard(projectId);
   return { ok: true as const, asset };

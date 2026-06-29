@@ -23,13 +23,21 @@ const copy = {
 export function StudioUserMenu({
   locale,
   initials,
-  name
+  name,
+  profileHref = "/studio/profile",
+  roleLabel,
+  profileMenuLabel
 }: {
   locale: Locale;
   initials: string;
   name?: string;
+  profileHref?: string;
+  roleLabel?: string;
+  profileMenuLabel?: string;
 }) {
   const t = copy[locale];
+  const profileLabel = profileMenuLabel ?? t.profile;
+  const subtitle = roleLabel ?? "Studio";
   const panelRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
 
@@ -71,18 +79,18 @@ export function StudioUserMenu({
           {name ? (
             <div className="border-b border-zinc-100 px-4 py-3">
               <p className="truncate text-sm font-semibold text-zinc-900">{name}</p>
-              <p className="text-xs text-zinc-500">Studio</p>
+              <p className="text-xs text-zinc-500">{subtitle}</p>
             </div>
           ) : null}
           <div className="p-1">
             <Link
-              href={withLocale("/studio/profile", locale)}
+              href={withLocale(profileHref, locale)}
               role="menuitem"
               className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm text-zinc-700 transition hover:bg-zinc-50"
               onClick={() => setOpen(false)}
             >
               <UserRound className="h-4 w-4 text-zinc-400" />
-              {t.profile}
+              {profileLabel}
             </Link>
             <form action={signOutAction}>
               <input type="hidden" name="lang" value={locale} />

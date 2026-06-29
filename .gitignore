@@ -1,8 +1,59 @@
-.next
-node_modules
+# Dependencies
+node_modules/
+
+# Environment & secrets — never commit
 .env
-.env*.local
-dist
-coverage
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+credentials.json
+secrets/
+
+# Build & cache
+.next/
+out/
+dist/
+build/
+coverage/
+.turbo/
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+
+# Logs & runtime data
 *.log
-.data
+npm-debug.log*
+.data/
+.cache/
+
+# OS & editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json.example
+
+# Deploy / hosting
+.vercel/
+
+# Local backups — stored outside repo by default; ignore if created locally
+.studioos-backups/
+backups/
+*.zip
+*.dump
+*.bak
+# Database dump files (not schema migrations)
+Database_Backup_*.sql
+*_Backup_*.sql
+!supabase/migrations/**
+!prisma/migrations/**
+
+# Large / generated media (optional local dev artifacts)
+public/uploads/**/*.mp4
+public/uploads/**/*.mov
+
+# Test artifacts
+playwright-report/
+test-results/

@@ -128,7 +128,7 @@ export function canPublishProject(input: {
   status: CampaignProjectStatus;
   wizard_completed_steps: number[];
 }): { ok: boolean; missing: string[] } {
-  const required = [1, 2, 3, 4, 5];
+  const required = [1, 2, 3, 4, 5, 6];
   const missing = required.filter((step) => !input.wizard_completed_steps.includes(step));
   if (input.status !== "draft") {
     return { ok: false, missing: ["project_not_draft"] };

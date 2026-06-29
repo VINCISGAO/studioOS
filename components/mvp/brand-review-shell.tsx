@@ -34,6 +34,7 @@ export function BrandReviewShell({
   profile,
   notifications = [],
   unreadCount = 0,
+  reviewMode = false,
   children
 }: {
   locale: Locale;
@@ -42,6 +43,8 @@ export function BrandReviewShell({
   profile: MvpProfile;
   notifications?: CreatorNotification[];
   unreadCount?: number;
+  /** Full-height review room — no shell header or main padding */
+  reviewMode?: boolean;
   children: React.ReactNode;
 }) {
   const nav = brandNav[locale];
@@ -65,8 +68,8 @@ export function BrandReviewShell({
   const userInitials = initials(profile.name);
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="flex min-h-screen">
+    <div className={cn("bg-white text-zinc-900", reviewMode ? "h-screen overflow-hidden" : "min-h-screen")}>
+      <div className={cn("flex", reviewMode ? "h-full" : "min-h-screen")}>
         <aside className="hidden w-[248px] shrink-0 flex-col border-r border-zinc-200/80 bg-white lg:flex">
           <div className="flex items-center gap-2.5 px-5 py-5">
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-zinc-900 text-white shadow-sm">
@@ -119,8 +122,8 @@ export function BrandReviewShell({
           </div>
         </aside>
 
-        <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-40 border-b border-zinc-200/80 bg-white/95 backdrop-blur">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+          <header className="sticky top-0 z-40 shrink-0 border-b border-zinc-200/80 bg-white/95 backdrop-blur">
             <div className="flex h-14 items-center justify-end gap-2 px-4 sm:px-6 lg:px-8">
               <Suspense fallback={<LanguageSwitcherFallback locale={locale} />}>
                 <LanguageSwitcher locale={locale} pathname={pathname} search={search} />
@@ -128,10 +131,24 @@ export function BrandReviewShell({
               {notifications.length ? (
                 <StudioNotificationBell locale={locale} notifications={notifications} unreadCount={unreadCount} />
               ) : null}
-              <StudioUserMenu locale={locale} initials={userInitials} name={profile.name} />
+              <StudioUserMenu
+                locale={locale}
+                initials={userInitials}
+                name={profile.name}
+                profileHref={reviewMode ? "/brand/profile" : undefined}
+                roleLabel={reviewMode ? (locale === "zh" ? "品牌方" : "Brand") : undefined}
+                profileMenuLabel={reviewMode ? (locale === "zh" ? "我的主页" : "My page") : undefined}
+              />
             </div>
           </header>
-          <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">{children}</main>
+          <main
+            className={cn(
+              "min-h-0 min-w-0 flex-1",
+              reviewMode ? "flex flex-col overflow-hidden p-0" : "px-4 py-6 sm:px-6 lg:px-8 lg:py-8"
+            )}
+          >
+            {children}
+          </main>
         </div>
       </div>
     </div>

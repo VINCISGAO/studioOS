@@ -26,7 +26,7 @@ export const workspaceCopy = {
       action: "操作",
       review: "进入审片",
       empty: "暂无分配项目。",
-      issuesCount: (n: number, v: number) => `${n} 条待处理 · 已上传 v${v}`
+      issuesCount: (n: number, v: number) => `${n} 条待处理 / 已上传 v${v}`
     }
   },
   brand: {
@@ -46,7 +46,7 @@ export const workspaceCopy = {
       newProject: "新建项目",
       review: "进入审片",
       empty: "还没有项目。新建后即可开始审片。",
-      meta: (v: number | string, n: number) => `最新 v${v} · ${n} 条待处理`
+      meta: (v: number | string, n: number) => `最新 v${v} / ${n} 条待处理`
     }
   },
   review: {
@@ -72,6 +72,8 @@ export const workspaceCopy = {
       requestRevision: "Request revision",
       approveFinal: "Approve final",
       approvedFlash: "Final ad approved. Project marked as approved.",
+      pendingSettlementFlash: "Review approved. Waiting for escrow release before master download.",
+      settledFlash: "Settlement complete. Studio can upload the watermark-free master.",
       revisionFlash: "Revision requested. Studio can upload a new version.",
       commentStatus: { open: "open", resolved: "resolved", reopened: "reopened" }
     },
@@ -79,7 +81,7 @@ export const workspaceCopy = {
       project: "项目",
       brand: "品牌",
       versions: "版本数",
-      issuesMeta: (open: number, resolved: number) => `${open} 条待处理 · ${resolved} 条已解决`,
+      issuesMeta: (open: number, resolved: number) => `${open} 条待处理 / ${resolved} 条已解决`,
       upload: "上传 MP4",
       version: (n: number) => `版本 ${n}`,
       noVideo: "还没有上传视频。",
@@ -97,6 +99,8 @@ export const workspaceCopy = {
       requestRevision: "要求修改",
       approveFinal: "确认定稿",
       approvedFlash: "已定稿，项目状态已更新为已通过。",
+      pendingSettlementFlash: "审片已通过，进入待结算。托管款释放后方可下载母版。",
+      settledFlash: "结算已完成，创作者可上传无水印最终母版。",
       revisionFlash: "已发起修改请求，Studio 可上传新版本。",
       commentStatus: { open: "待处理", resolved: "已解决", reopened: "已重开" }
     }

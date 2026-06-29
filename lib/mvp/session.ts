@@ -1,8 +1,8 @@
 import { cookies } from "next/headers";
-import { DEMO_SESSION_COOKIE } from "@/lib/auth-config";
-import { hasSupabaseConfig } from "@/lib/auth-config";
+import { DEMO_SESSION_COOKIE, hasSupabaseConfig } from "@/lib/auth-config";
 import { DEMO_USERS } from "@/lib/demo-auth";
 import { parseDemoSession } from "@/lib/demo-session";
+import { getSessionMvpProfile } from "@/features/auth/session.service";
 import { createClient } from "@/lib/supabase/server";
 import type { MvpProfile, MvpRole } from "@/lib/mvp/types";
 import {
@@ -55,6 +55,11 @@ export async function getMvpProfile(): Promise<MvpProfile | null> {
       company_name: String(user.user_metadata?.company_name ?? ""),
       created_at: new Date().toISOString()
     };
+  }
+
+  const prismaProfile = await getSessionMvpProfile();
+  if (prismaProfile) {
+    return prismaProfile;
   }
 
   const cookieStore = await cookies();

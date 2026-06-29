@@ -1,0 +1,152 @@
+{
+  "profiles": [
+    {
+      "id": "prof_demo_brand_arc",
+      "email": "client.arc@adbridge.test",
+      "role": "brand",
+      "name": "Arc & Alloy",
+      "company_name": "Arc & Alloy",
+      "created_at": "2026-06-28T10:00:00.000Z"
+    },
+    {
+      "id": "prof_demo_studio_nova",
+      "email": "creator.nova@adbridge.test",
+      "role": "studio",
+      "name": "Nova Motion Studio",
+      "company_name": "Nova Motion Studio",
+      "created_at": "2026-06-28T10:00:00.000Z"
+    },
+    {
+      "id": "prof_demo_admin",
+      "email": "admin@adbridge.test",
+      "role": "admin",
+      "name": "Platform Admin",
+      "company_name": "StudioOS",
+      "created_at": "2026-06-28T10:00:00.000Z"
+    },
+    {
+      "id": "prof_demo_brand_bright",
+      "email": "client.bright@adbridge.test",
+      "role": "brand",
+      "name": "BrightSip",
+      "company_name": "BrightSip",
+      "created_at": "2026-06-28T10:00:00.000Z"
+    }
+  ],
+  "projects": [
+    {
+      "id": "proj_mvp_demo_01",
+      "title": "Summer Glow Campaign",
+      "description": "TikTok · 9:16 · 00:28 — summer travel hero cut.",
+      "brand_name": "Arc & Alloy",
+      "status": "in_review",
+      "created_by": "prof_demo_brand_arc",
+      "assigned_studio_id": "prof_demo_studio_nova",
+      "created_at": "2026-06-28T10:00:00.000Z",
+      "updated_at": "2026-06-28T16:00:00.000Z",
+      "review_approved_at": null,
+      "settled_at": null,
+      "master_file_url": null,
+      "master_file_name": null,
+      "master_uploaded_at": null
+    },
+    {
+      "id": "proj_mvp_demo_02",
+      "title": "Product Demo Batch",
+      "description": "Amazon + YouTube product demo spots.",
+      "brand_name": "BrightSip",
+      "status": "revision",
+      "created_by": "prof_demo_brand_bright",
+      "assigned_studio_id": "prof_demo_studio_nova",
+      "created_at": "2026-06-28T10:00:00.000Z",
+      "updated_at": "2026-06-28T10:00:00.000Z",
+      "review_approved_at": null,
+      "settled_at": null,
+      "master_file_url": null,
+      "master_file_name": null,
+      "master_uploaded_at": null
+    }
+  ],
+  "versions": [
+    {
+      "id": "ver_mvp_demo_v1",
+      "project_id": "proj_mvp_demo_01",
+      "version_number": 1,
+      "file_url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
+      "file_path": "",
+      "uploaded_by": "prof_demo_studio_nova",
+      "created_at": "2026-06-28T10:00:00.000Z"
+    },
+    {
+      "id": "ver_mvp_demo_v2",
+      "project_id": "proj_mvp_demo_01",
+      "version_number": 2,
+      "file_url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
+      "file_path": "",
+      "uploaded_by": "prof_demo_studio_nova",
+      "created_at": "2026-06-28T14:00:00.000Z"
+    },
+    {
+      "id": "ver_mvp_demo_v3",
+      "project_id": "proj_mvp_demo_01",
+      "version_number": 3,
+      "file_url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
+      "file_path": "",
+      "uploaded_by": "prof_demo_studio_nova",
+      "created_at": "2026-06-28T16:00:00.000Z"
+    }
+  ],
+  "comments": [
+    {
+      "id": "cmt_demo_1",
+      "project_id": "proj_mvp_demo_01",
+      "video_version_id": "ver_mvp_demo_v3",
+      "user_id": "prof_demo_brand_arc",
+      "timestamp_seconds": 5.2,
+      "comment_text": "这里转场可以再自然一些。",
+      "annotation_type": "circle",
+      "pos_x": 0.28,
+      "pos_y": 0.35,
+      "width": 0.18,
+      "height": 0.14,
+      "color": "#7C3AED",
+      "status": "open",
+      "created_at": "2026-06-28T10:00:00.000Z",
+      "resolved_at": null
+    },
+    {
+      "id": "cmt_demo_2",
+      "project_id": "proj_mvp_demo_01",
+      "video_version_id": "ver_mvp_demo_v3",
+      "user_id": "prof_demo_brand_arc",
+      "timestamp_seconds": 8.4,
+      "comment_text": "产品再居中一点，LOGO 可以更大。",
+      "annotation_type": "circle",
+      "pos_x": 0.38,
+      "pos_y": 0.32,
+      "width": 0.22,
+      "height": 0.2,
+      "color": "#F59E0B",
+      "status": "open",
+      "created_at": "2026-06-28T10:00:00.000Z",
+      "resolved_at": null
+    },
+    {
+      "id": "cmt_demo_3",
+      "project_id": "proj_mvp_demo_01",
+      "video_version_id": "ver_mvp_demo_v3",
+      "user_id": "prof_demo_brand_arc",
+      "timestamp_seconds": 11.6,
+      "comment_text": "字幕位置再往上移一点，避免被遮挡。",
+      "annotation_type": "circle",
+      "pos_x": 0.42,
+      "pos_y": 0.62,
+      "width": 0.2,
+      "height": 0.12,
+      "color": "#7C3AED",
+      "status": "resolved",
+      "created_at": "2026-06-28T10:00:00.000Z",
+      "resolved_at": "2026-06-28T10:00:00.000Z"
+    }
+  ]
+}

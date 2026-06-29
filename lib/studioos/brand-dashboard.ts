@@ -64,6 +64,8 @@ export function toBrandProjectRows(
   projects: StoredProject[],
   locale: "en" | "zh"
 ): BrandProjectRow[] {
+  const projectIds = new Set(projects.map((project) => project.id));
+
   const campaignRows: BrandProjectRow[] = projects.map((project) => {
     const status = normalizeCampaignStatus(project.status);
     return {
@@ -80,7 +82,7 @@ export function toBrandProjectRows(
     wizardStep: status === "draft" ? project.wizard_step : undefined,
     progress:
       status === "draft"
-        ? Math.round((project.wizard_completed_steps.length / 6) * 100)
+        ? Math.round((project.wizard_completed_steps.length / 7) * 100)
         : undefined,
     canDelete: canDeleteProject(status),
     phase: projectPhase(status)
@@ -88,7 +90,7 @@ export function toBrandProjectRows(
   });
 
   const orderRows: BrandProjectRow[] = orders
-    .filter((order) => !order.project_id)
+    .filter((order) => !order.project_id || !projectIds.has(order.project_id))
     .map((order) => ({
       id: order.id,
       kind: "order",

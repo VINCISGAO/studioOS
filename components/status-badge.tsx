@@ -3,6 +3,18 @@ import type { Locale } from "@/lib/i18n";
 import type { CampaignProjectStatus } from "@/lib/studioos/project-status";
 import type { ProjectStatus } from "@/lib/types";
 import type { OrderStatus } from "@/lib/order-types";
+import { projectStatusLabel } from "@/lib/mvp/review-settlement";
+import type { ProjectStatus as MvpProjectStatus } from "@/lib/mvp/types";
+
+const mvpStatuses = new Set<string>([
+  "draft",
+  "in_review",
+  "revision",
+  "pending_settlement",
+  "settled",
+  "approved",
+  "delivered"
+]);
 
 const legacyLabels: Record<Locale, Record<ProjectStatus, string>> = {
   en: {
@@ -73,6 +85,9 @@ const campaignLabels: Record<Locale, Record<CampaignProjectStatus, string>> = {
 };
 
 function resolveLabel(status: string, locale: Locale): string {
+  if (mvpStatuses.has(status)) {
+    return projectStatusLabel(status as MvpProjectStatus, locale);
+  }
   if (status in campaignLabels[locale]) {
     return campaignLabels[locale][status as CampaignProjectStatus];
   }
@@ -89,7 +104,7 @@ export function StatusBadge({
   status: ProjectStatus | OrderStatus | CampaignProjectStatus | string;
   locale?: Locale;
 }) {
-  const variant = ["delivered", "completed", "paid", "approved", "assigned", "matched"].includes(status)
+  const variant = ["delivered", "completed", "paid", "approved", "assigned", "matched", "settled"].includes(status)
     ? "success"
     : [
           "review",
@@ -99,6 +114,7 @@ export function StatusBadge({
           "in_production",
           "production",
           "in_review",
+          "pending_settlement",
           "disputed",
           "proposal",
           "contract_pending",

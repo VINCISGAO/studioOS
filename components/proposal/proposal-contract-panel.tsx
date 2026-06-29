@@ -13,8 +13,6 @@ import type { StoredInquiry } from "@/lib/chat-types";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import { buildProjectContract } from "@/lib/studioos/project-contract";
-import { formatCurrency } from "@/lib/utils";
-import Link from "next/link";
 import { CheckCircle2, FileText } from "lucide-react";
 
 const copy = {

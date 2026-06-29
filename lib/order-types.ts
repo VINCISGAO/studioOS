@@ -2,6 +2,10 @@ export type QuoteStatus = "pending" | "accepted" | "superseded";
 
 export type OrderPaymentStatus = "unpaid" | "escrowed" | "released" | "refunded";
 
+export function isOrderPaymentEscrowed(status: OrderPaymentStatus) {
+  return status === "escrowed" || status === "released";
+}
+
 export type OrderStatus =
   | "waiting_payment"
   | "in_production"

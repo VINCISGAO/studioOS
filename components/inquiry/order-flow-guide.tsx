@@ -1,5 +1,5 @@
 import { CheckCircle2, Circle, CircleDot } from "lucide-react";
-import type { StoredOrder, StoredQuote } from "@/lib/order-types";
+import { isOrderPaymentEscrowed, type StoredOrder, type StoredQuote } from "@/lib/order-types";
 import type { Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -34,7 +34,7 @@ function resolveBrandSteps(quote: StoredQuote | null, order: StoredOrder | null)
   }
 
   if (order) {
-    const payState: StepState = order.payment_status === "paid" ? "done" : "current";
+    const payState: StepState = isOrderPaymentEscrowed(order.payment_status) ? "done" : "current";
     return [
       { id: "inquiry", ...copy.inquiry, state: "done" },
       { id: "chat", ...copy.chat, state: "done" },
@@ -44,7 +44,7 @@ function resolveBrandSteps(quote: StoredQuote | null, order: StoredOrder | null)
       {
         id: "done",
         ...copy.done,
-        state: order.payment_status === "paid" ? "current" : "upcoming"
+        state: isOrderPaymentEscrowed(order.payment_status) ? "current" : "upcoming"
       }
     ];
   }
@@ -97,8 +97,8 @@ function resolveCreatorSteps(quote: StoredQuote | null, order: StoredOrder | nul
       { id: "chat", ...copy.chat, state: "done" },
       { id: "quote", ...copy.quote, state: "done" },
       { id: "order", ...copy.order, state: "done" },
-      { id: "pay", ...copy.pay, state: order.payment_status === "paid" ? "done" : "current" },
-      { id: "done", ...copy.done, state: order.payment_status === "paid" ? "current" : "upcoming" }
+      { id: "pay", ...copy.pay, state: isOrderPaymentEscrowed(order.payment_status) ? "done" : "current" },
+      { id: "done", ...copy.done, state: isOrderPaymentEscrowed(order.payment_status) ? "current" : "upcoming" }
     ];
   }
 

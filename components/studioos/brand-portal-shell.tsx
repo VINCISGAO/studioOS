@@ -22,20 +22,29 @@ export function BrandPortalShell({
   search: string;
   children: React.ReactNode;
 }) {
+  const isReviewRoom =
+    /\/brand\/projects\/[^/]+\/review/.test(pathname) ||
+    /\/brand\/orders\/[^/]+\/review/.test(pathname);
+
   const focus =
-    pathname.includes("/review") ||
+    !isReviewRoom &&
+    (pathname.includes("/review") ||
     pathname.includes("/projects/new") ||
     pathname.includes("/studios") ||
     pathname.includes("/checkout") ||
-    /\/brand\/projects\/[^/]+$/.test(pathname);
+    /\/brand\/projects\/[^/]+$/.test(pathname));
 
   const onProfile = pathname.includes("/brand/profile");
+
+  if (isReviewRoom) {
+    return <div className="min-h-svh bg-surface-secondary">{children}</div>;
+  }
 
   return (
     <div className={cn("min-h-screen", shellBg)}>
       <header className={cn("sticky top-0 z-40", portalChrome.header)}>
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <MarketingHomeLink locale={locale} className="flex items-center gap-2.5 font-semibold text-zinc-950">
+          <MarketingHomeLink locale={locale} className="flex items-center gap-2.5 font-semibold text-foreground">
             <span className={portalChrome.logo}>
               <Sparkles className="h-4 w-4" />
             </span>
@@ -78,7 +87,7 @@ export function BrandPortalShell({
             <LanguageSwitcher locale={locale} pathname={pathname} search={search} />
             <form action={signOutAction}>
               <input type="hidden" name="lang" value={locale} />
-              <Button type="submit" variant="outline" size="sm" className="border-zinc-200 bg-white text-zinc-700">
+              <Button type="submit" variant="outline" size="sm" className="border-border bg-background text-foreground">
                 {locale === "zh" ? "退出" : "Sign out"}
               </Button>
             </form>

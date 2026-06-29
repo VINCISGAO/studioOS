@@ -1,0 +1,19 @@
+---
+description: Vol 18 — all status changes must use state machines and runTransition
+globs: features/**/*.ts,lib/core/**/*.ts
+alwaysApply: false
+---
+
+# State Machine Rules
+
+- Code: `features/shared/state-machines/`
+- Runner: `lib/core/transition-runner.ts`
+- Docs: `docs/architecture/state-machine.md`
+
+禁止:
+- `campaign.status = "APPROVED"`
+- `if (status === "REVIEWING")` 作为业务分支（UI 展示除外）
+
+必须:
+- `campaignService.transition(id, event, actor)`
+- 非法转换返回 409 INVALID_STATE_TRANSITION

@@ -19,6 +19,8 @@ function revalidateReview(orderId: string, projectId?: string | null) {
   revalidatePath(`/studio/review/${orderId}`);
   revalidatePath(`/studio/projects/${orderId}`);
   revalidatePath(`/creator/orders/${orderId}`);
+  revalidatePath(`/creator/orders/${orderId}/review-upload`);
+  revalidatePath(`/brand/orders/${orderId}/review`);
   if (projectId) {
     revalidatePath(`/brand/projects/${projectId}`);
     revalidatePath(`/brand/projects/${projectId}/review`);
@@ -32,6 +34,10 @@ export async function addReviewCommentAction(formData: FormData) {
   const timestampSec = Number(formData.get("timestamp_sec") ?? 0);
   const body = String(formData.get("body") ?? "").trim();
   const issueType = String(formData.get("issue_type") ?? "").trim() || null;
+  const posXRaw = formData.get("pos_x");
+  const posYRaw = formData.get("pos_y");
+  const posX = posXRaw != null && posXRaw !== "" ? Number(posXRaw) : null;
+  const posY = posYRaw != null && posYRaw !== "" ? Number(posYRaw) : null;
 
   if (!orderId || !body) {
     return { ok: false as const, error: lang === "zh" ? "请输入批注" : "Enter a comment" };
@@ -48,8 +54,11 @@ export async function addReviewCommentAction(formData: FormData) {
     version,
     timestamp_sec: timestampSec,
     body,
+    pos_x: posX,
+    pos_y: posY,
     issue_type: issueType,
-    author: "brand"
+    author: "brand",
+    created_by: clientEmail.toLowerCase()
   });
 
   revalidateReview(orderId, order.project_id);

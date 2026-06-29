@@ -12,7 +12,17 @@ const config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["Inter", "ui-sans-serif", ...fontFamily.sans]
+        sans: [
+          "var(--font-landing-sans)",
+          "var(--font-landing-cjk)",
+          "Inter",
+          "PingFang SC",
+          "Microsoft YaHei",
+          "Noto Sans SC",
+          "ui-sans-serif",
+          ...fontFamily.sans
+        ],
+        serif: ["var(--font-landing-serif)", "Georgia", "serif"]
       },
       colors: {
         border: "hsl(var(--border))",
@@ -47,15 +57,53 @@ const config = {
         card: {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))"
+        },
+        success: {
+          DEFAULT: "hsl(var(--success))",
+          foreground: "hsl(var(--success-foreground))"
+        },
+        warning: {
+          DEFAULT: "hsl(var(--warning))",
+          foreground: "hsl(var(--warning-foreground))"
+        },
+        review: {
+          DEFAULT: "hsl(var(--review))",
+          foreground: "hsl(var(--review-foreground))"
+        },
+        brand: {
+          DEFAULT: "hsl(var(--brand))",
+          foreground: "hsl(var(--brand-foreground))"
+        },
+        studio: {
+          DEFAULT: "hsl(var(--studio))",
+          foreground: "hsl(var(--studio-foreground))"
+        },
+        surface: {
+          primary: "hsl(var(--surface-primary))",
+          secondary: "hsl(var(--surface-secondary))"
         }
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)"
+        sm: "calc(var(--radius) - 4px)",
+        button: "var(--radius-button)",
+        input: "var(--radius-input)",
+        card: "var(--radius-card)",
+        dialog: "var(--radius-dialog)",
+        video: "var(--radius-video)"
+      },
+      spacing: {
+        "sidebar-brand": "var(--sidebar-brand)",
+        "sidebar-compact": "var(--sidebar-compact)"
+      },
+      transitionDuration: {
+        micro: "var(--motion-micro)",
+        page: "var(--motion-page)"
       },
       boxShadow: {
-        luxe: "0 24px 80px rgba(15, 23, 42, 0.08)"
+        luxe: "0 24px 80px rgba(15, 23, 42, 0.08)",
+        sm: "0 1px 3px rgba(0, 0, 0, 0.06)"
       }
     }
   },

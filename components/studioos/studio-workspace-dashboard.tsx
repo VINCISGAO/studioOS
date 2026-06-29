@@ -254,7 +254,12 @@ export function StudioWorkspaceDashboard({
             </div>
           </div>
 
-          <Button asChild variant="outline" size="sm" className="shrink-0 rounded-xl border-zinc-200/80 bg-white/80 backdrop-blur-sm">
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className="shrink-0 rounded-xl border-zinc-200 bg-white text-zinc-900 shadow-sm hover:bg-zinc-50"
+          >
             <Link href={withLocale("/studio/profile", locale)}>
               <Pencil className="h-4 w-4" />
               {t.editProfile}

@@ -1,37 +1,27 @@
-import { promises as fs } from "fs";
-import path from "path";
 import type { CreatorWork } from "@/lib/types";
+import { dataStorePath, readDataJson, writeDataJson } from "@/lib/serverless-store";
 
 type WorksStore = {
   works: CreatorWork[];
   deletedIds: string[];
 };
 
-const STORE_DIR = path.join(process.cwd(), ".data");
-const STORE_PATH = path.join(STORE_DIR, "works-store.json");
+const STORE_PATH = dataStorePath("works-store.json");
 
 function emptyStore(): WorksStore {
   return { works: [], deletedIds: [] };
 }
 
 async function readStore(): Promise<WorksStore> {
-  try {
-    const raw = await fs.readFile(STORE_PATH, "utf8");
-    const parsed = JSON.parse(raw) as WorksStore | { works: CreatorWork[] };
-    if (Array.isArray(parsed.works) && Array.isArray((parsed as WorksStore).deletedIds)) {
-      return parsed as WorksStore;
-    }
-    return { works: parsed.works ?? [], deletedIds: [] };
-  } catch {
-    const seeded = emptyStore();
-    await writeStore(seeded);
-    return seeded;
+  const parsed = await readDataJson<WorksStore | { works: CreatorWork[] }>(STORE_PATH, () => emptyStore());
+  if (Array.isArray(parsed.works) && Array.isArray((parsed as WorksStore).deletedIds)) {
+    return parsed as WorksStore;
   }
+  return { works: parsed.works ?? [], deletedIds: [] };
 }
 
 async function writeStore(store: WorksStore) {
-  await fs.mkdir(STORE_DIR, { recursive: true });
-  await fs.writeFile(STORE_PATH, JSON.stringify(store, null, 2), "utf8");
+  await writeDataJson(STORE_PATH, store);
 }
 
 export async function publishWork(work: CreatorWork): Promise<CreatorWork> {
@@ -58,18 +48,13 @@ export async function setCreatorWorkHidden(
   hidden: boolean
 ): Promise<CreatorWork> {
   const store = await readStore();
-  const normalized = { ...work, creator_id: creatorId, hidden };
   const index = store.works.findIndex((item) => item.id === work.id && item.creator_id === creatorId);
-
   if (index >= 0) {
-    store.works[index] = { ...store.works[index], ...normalized, hidden };
-  } else {
-    store.works = [normalized, ...store.works.filter((item) => item.id !== work.id)];
+    store.works[index] = { ...store.works[index], hidden };
+    await writeStore(store);
+    return store.works[index];
   }
-
-  store.deletedIds = store.deletedIds.filter((id) => id !== work.id);
-  await writeStore(store);
-  return normalized;
+  return work;
 }
 
 export async function deleteCreatorWork(creatorId: string, workId: string): Promise<void> {
@@ -84,4 +69,9 @@ export async function deleteCreatorWork(creatorId: string, workId: string): Prom
 export async function getDeletedWorkIds(): Promise<string[]> {
   const store = await readStore();
   return store.deletedIds;
+}
+
+export async function isWorkDeleted(workId: string): Promise<boolean> {
+  const store = await readStore();
+  return store.deletedIds.includes(workId);
 }

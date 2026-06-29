@@ -1,6 +1,6 @@
-import path from "path";
 import { unstable_cache } from "next/cache";
 import { createSerializedStoreReader, readJsonFile, writeJsonFileAtomic } from "@/lib/json-file-store";
+import { dataStorePath } from "@/lib/serverless-store";
 import {
   baseViewCount,
   type WorkEngagementSnapshot
@@ -14,7 +14,7 @@ export {
   seedWorkViews
 } from "@/lib/work-engagement-utils";
 
-const STORE_PATH = path.join(process.cwd(), ".data", "work-engagement-store.json");
+const STORE_PATH = dataStorePath("work-engagement-store.json");
 
 type WorkEngagementStore = {
   likes: Record<string, string[]>;

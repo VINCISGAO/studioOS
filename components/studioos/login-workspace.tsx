@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import { AlertCircle, ArrowRight, Eye, EyeOff, Lock, Mail } from "lucide-react";
-import { signInAction } from "@/app/actions";
+import { LoginSubmitSpinner } from "@/components/studioos/login-demo-accounts";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { Locale } from "@/lib/i18n";
@@ -40,8 +41,13 @@ export function LoginWorkspace({
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | undefined>(error);
+  const [clientErrorCode, setClientErrorCode] = useState<string | undefined>();
+  const router = useRouter();
 
-  const isWrongRole = errorCode === "wrong-role";
+  const isWrongRole = errorCode === "wrong-role" || clientErrorCode === "wrong-role";
+  const displayError = formError ?? error;
   const visual = getLoginVisual(role);
   const isBrand = role === "brand";
 
@@ -60,14 +66,55 @@ export function LoginWorkspace({
     [isBrand]
   );
 
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSubmitting(true);
+    setFormError(undefined);
+    setClientErrorCode(undefined);
+
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          password,
+          lang: locale,
+          expected_role: role,
+          next: nextPath
+        })
+      });
+
+      const data = (await response.json()) as {
+        ok: boolean;
+        redirectTo?: string;
+        error?: string;
+        errorCode?: string;
+      };
+
+      if (data.ok && data.redirectTo) {
+        router.push(data.redirectTo);
+        router.refresh();
+        return;
+      }
+
+      setClientErrorCode(data.errorCode);
+      setFormError(data.error ?? (locale === "zh" ? "登录失败，请重试。" : "Sign in failed. Please try again."));
+    } catch {
+      setFormError(locale === "zh" ? "网络错误，请稍后重试。" : "Network error. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   return (
     <div className="w-full">
-      <form action={signInAction} className="space-y-4 sm:space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
         <input type="hidden" name="lang" value={locale} />
         <input type="hidden" name="expected_role" value={role} />
         {nextPath ? <input type="hidden" name="next" value={nextPath} /> : null}
 
-        {error ? (
+        {displayError ? (
           <div
             className={cn(
               "flex gap-2.5 rounded-xl border px-3.5 py-2.5 text-[13px] leading-5",
@@ -82,7 +129,7 @@ export function LoginWorkspace({
             role="alert"
           >
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-            <p>{error}</p>
+            <p>{displayError}</p>
           </div>
         ) : null}
 
@@ -155,9 +202,9 @@ export function LoginWorkspace({
           </button>
         </div>
 
-        <Button type="submit" className={cn("gap-2", visual.btn)}>
+        <Button type="submit" disabled={submitting} className={cn("gap-2", visual.btn)}>
           {t.login}
-          <ArrowRight className="h-4 w-4" />
+          {submitting ? <LoginSubmitSpinner visible /> : <ArrowRight className="h-4 w-4" />}
         </Button>
       </form>
     </div>

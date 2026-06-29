@@ -7,6 +7,7 @@ import {
   publishProjectAction,
   removeReferenceAction,
   saveDraftAction,
+  saveWizardBriefAction,
   saveWizardStep1Action,
   saveWizardStep2Action,
   saveWizardStep3Action,
@@ -15,6 +16,8 @@ import {
 } from "@/app/project-wizard-actions";
 import { WizardIntelligenceBanner } from "@/components/studioos/wizard-intelligence-banner";
 import { WizardProductHero } from "@/components/studioos/wizard-product-hero";
+import { WizardProgressPanel } from "@/components/studioos/ui/wizard-progress-panel";
+import { WizardStepper } from "@/components/studioos/ui/wizard-stepper";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,6 +28,11 @@ import type {
   StoredProjectAsset,
   StoredProjectReference
 } from "@/lib/campaign-types";
+import {
+  clampWizardStep,
+  migrateLegacyProjectWizardStep
+} from "@/lib/campaign/wizard-steps";
+import { useWizardProgress } from "@/hooks/use-wizard-progress";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import type { StoredProject } from "@/lib/project-types";
@@ -44,58 +52,24 @@ import {
 
 const STEP_META = {
   en: [
-    {
-      headline: "What are you promoting?",
-      subtitle: "Upload a product photo and tell us the basics — takes about 2 minutes."
-    },
-    {
-      headline: "Show us ads you like",
-      subtitle: "Paste 1–3 reference links from YouTube, TikTok, or Instagram."
-    },
-    {
-      headline: "Here's what we learned",
-      subtitle: "We analyzed your references and drafted a creative direction."
-    },
-    {
-      headline: "Choose your ad specs",
-      subtitle: "Pick style, length, and budget — you can change these later."
-    },
-    {
-      headline: "Review your creative pack",
-      subtitle: "Storyboard and script generated from your brief."
-    },
-    {
-      headline: "Ready to publish?",
-      subtitle: "Publish to start matching with Studios worldwide."
-    }
+    { headline: "What's the goal?", subtitle: "Pick category, objective, and audience — about 1 minute." },
+    { headline: "What are you promoting?", subtitle: "Upload a product photo and tell us the basics." },
+    { headline: "Show us ads you like", subtitle: "Paste 1–3 reference links from YouTube, TikTok, or Instagram." },
+    { headline: "Analyzing your inputs", subtitle: "We analyze references and draft a creative direction." },
+    { headline: "Choose your ad specs", subtitle: "Pick style, length, and budget — you can change these later." },
+    { headline: "Review your creative pack", subtitle: "Storyboard and script generated from your brief." },
+    { headline: "Ready to publish?", subtitle: "Publish to start matching with Studios worldwide." }
   ],
   zh: [
-    {
-      headline: "你要推广什么？",
-      subtitle: "上传产品照片，填几个简单信息就好，大约 2 分钟。"
-    },
-    {
-      headline: "找几条你觉得好的广告",
-      subtitle: "粘贴 1–3 条 YouTube、TikTok 或 Instagram 参考链接。"
-    },
-    {
-      headline: "我们帮你总结了方向",
-      subtitle: "基于参考视频，AI 已生成创意 Brief。"
-    },
-    {
-      headline: "选择广告规格",
-      subtitle: "选风格、时长和预算，之后还可以改。"
-    },
-    {
-      headline: "看看创意方案",
-      subtitle: "根据 Brief 自动生成的分镜和脚本。"
-    },
-    {
-      headline: "确认发布？",
-      subtitle: "发布后系统将为你匹配全球 Studio。"
-    }
+    { headline: "这次广告想达成什么？", subtitle: "选择品类、目标和受众 — 大约 1 分钟。" },
+    { headline: "你要推广什么？", subtitle: "上传产品照片，填几个简单信息。" },
+    { headline: "找几条你觉得好的广告", subtitle: "粘贴 1–3 条 YouTube、TikTok 或 Instagram 参考链接。" },
+    { headline: "正在分析", subtitle: "分析参考视频，生成创意 Brief。" },
+    { headline: "选择广告规格", subtitle: "选风格、时长和预算，之后还可以改。" },
+    { headline: "看看创意方案", subtitle: "根据 Brief 自动生成的分镜和脚本。" },
+    { headline: "确认发布？", subtitle: "发布后系统将为你匹配全球 Studio。" }
   ]
-};
+} as const;
 
 const CATEGORIES = [
   { id: "Beauty", en: "Beauty", zh: "美妆护肤" },
@@ -188,10 +162,15 @@ export function ProjectWizard({
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [step, setStep] = useState(initialStep);
+  const [step, setStep] = useState(clampWizardStep(migrateLegacyProjectWizardStep(initialStep)));
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState(initialData);
   const [showMore, setShowMore] = useState(false);
+  const [analysisStarted, setAnalysisStarted] = useState(false);
+
+  const projectId = data.project?.id;
+  const { draft: progressDraft } = useWizardProgress(projectId, step === 4);
+  const meta = STEP_META[locale][step - 1] ?? STEP_META[locale][0];
 
   const [productName, setProductName] = useState(initialData.project?.product_name ?? "");
   const [productUrl, setProductUrl] = useState(initialData.project?.product_url ?? "");
@@ -208,17 +187,33 @@ export function ProjectWizard({
   const [scriptEdit, setScriptEdit] = useState("");
   const [publishTitle, setPublishTitle] = useState(initialData.project?.title ?? "");
   const [confirmed, setConfirmed] = useState(false);
-  const [analyzing, setAnalyzing] = useState(false);
 
-  const projectId = data.project?.id;
-  const meta = STEP_META[locale][step - 1];
   const logoAsset = data.assets.find((item) => item.type === "logo");
   const productOriginalAsset = data.assets.find((item) => item.type === "product_image_original");
   const productCommercialAsset = data.assets.find((item) => item.type === "product_image");
 
   useEffect(() => {
-    setStep(initialStep);
+    setStep(clampWizardStep(migrateLegacyProjectWizardStep(initialStep)));
   }, [initialStep]);
+
+  useEffect(() => {
+    if (step !== 4 || analysisStarted || data.brief?.executive_summary) return;
+    setAnalysisStarted(true);
+    startTransition(async () => {
+      setError(null);
+      const result = await saveWizardStep3Action(formBase());
+      setAnalysisStarted(false);
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      if (result.brief) {
+        setData((prev) => ({ ...prev, brief: result.brief ?? prev.brief }));
+      }
+      router.refresh();
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
 
   useEffect(() => {
     setData(initialData);
@@ -262,10 +257,28 @@ export function ProjectWizard({
   }
 
   function goToStep(next: number) {
-    setStep(next);
+    const clamped = clampWizardStep(next);
+    setStep(clamped);
     if (projectId) {
-      router.push(withLocale(`/brand/projects/new?project=${projectId}&step=${next}`, locale));
+      router.push(withLocale(`/brand/projects/new?project=${projectId}&step=${clamped}`, locale));
     }
+  }
+
+  function handleBriefContinue() {
+    startTransition(async () => {
+      setError(null);
+      const fd = formBase();
+      fd.set("category", category);
+      fd.set("commercial_objective", objective);
+      fd.set("target_audience", targetAudience);
+      const result = await saveWizardBriefAction(fd);
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      router.refresh();
+      goToStep(2);
+    });
   }
 
   function handleStep1Continue() {
@@ -274,16 +287,13 @@ export function ProjectWizard({
       const fd = formBase();
       fd.set("product_name", productName);
       fd.set("product_url", productUrl);
-      fd.set("category", category);
-      fd.set("commercial_objective", objective);
-      fd.set("target_audience", targetAudience);
       const result = await saveWizardStep1Action(fd);
       if (!result.ok) {
         setError(result.error);
         return;
       }
       router.refresh();
-      goToStep(2);
+      goToStep(3);
     });
   }
 
@@ -306,32 +316,17 @@ export function ProjectWizard({
         setError(result.error);
         return;
       }
-      setAnalyzing(true);
-      const step3 = await saveWizardStep3Action(formBase());
-      setAnalyzing(false);
-      if (!step3.ok) {
-        setError(step3.error);
-        return;
-      }
-      if (step3.brief) {
-        setData((prev) => ({ ...prev, brief: step3.brief ?? prev.brief }));
-      }
       router.refresh();
-      goToStep(3);
+      goToStep(4);
     });
   }
 
   function handleStep3Continue() {
-    startTransition(async () => {
-      setError(null);
-      const result = await saveWizardStep3Action(formBase());
-      if (!result.ok) {
-        setError(result.error);
-        return;
-      }
-      router.refresh();
-      goToStep(4);
-    });
+    if (!data.brief?.executive_summary) {
+      setError(locale === "zh" ? "分析尚未完成" : "Analysis not complete yet");
+      return;
+    }
+    goToStep(5);
   }
 
   function handleStep4Continue() {
@@ -358,7 +353,7 @@ export function ProjectWizard({
         setData((prev) => ({ ...prev, pack: step5.pack ?? prev.pack }));
       }
       router.refresh();
-      goToStep(5);
+      goToStep(6);
     });
   }
 
@@ -376,7 +371,7 @@ export function ProjectWizard({
         setData((prev) => ({ ...prev, pack: step5.pack ?? prev.pack }));
       }
       router.refresh();
-      goToStep(6);
+      goToStep(7);
     });
   }
 
@@ -421,22 +416,9 @@ export function ProjectWizard({
       </div>
 
       <div className="mb-8">
-        <div className="flex items-center justify-between text-xs text-zinc-500">
-          <span>
-            {locale === "zh" ? "第" : "Step"} {step} {locale === "zh" ? "步，共 6 步" : "of 6"}
-          </span>
-          <span>{Math.round((step / 6) * 100)}%</span>
-        </div>
-        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-zinc-100">
-          <div
-            className="h-full rounded-full bg-zinc-900 transition-all duration-300"
-            style={{ width: `${(step / 6) * 100}%` }}
-          />
-        </div>
-        <h1 className="mt-6 text-2xl font-semibold tracking-tight text-zinc-950 sm:text-3xl">
-          {meta.headline}
-        </h1>
-        <p className="mt-2 text-sm leading-7 text-zinc-500">{meta.subtitle}</p>
+        <WizardStepper locale={locale} currentStep={step} compact />
+        <h1 className="mt-6 text-title text-foreground">{meta.headline}</h1>
+        <p className="mt-2 text-body text-muted-foreground">{meta.subtitle}</p>
       </div>
 
       {error ? <p className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p> : null}
@@ -450,28 +432,6 @@ export function ProjectWizard({
       <div className="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)] sm:p-8">
         {step === 1 ? (
           <div className="space-y-8">
-            {projectId ? (
-              <WizardProductHero
-                locale={locale}
-                projectId={projectId}
-                originalAsset={productOriginalAsset}
-                commercialAsset={productCommercialAsset}
-                logoAsset={logoAsset}
-                onUpdated={() => router.refresh()}
-              />
-            ) : null}
-
-            <div className="grid gap-2">
-              <Label htmlFor="product_name">{locale === "zh" ? "产品叫什么？" : "Product name"}</Label>
-              <Input
-                id="product_name"
-                value={productName}
-                onChange={(e) => setProductName(e.target.value)}
-                placeholder={locale === "zh" ? "例如：Northline 保湿精华" : "e.g. Northline Hydrating Serum"}
-                className="h-11"
-              />
-            </div>
-
             <div className="grid gap-3">
               <Label>{locale === "zh" ? "这次广告想达成什么？" : "What's the goal?"}</Label>
               <div className="grid gap-2 sm:grid-cols-2">
@@ -507,60 +467,74 @@ export function ProjectWizard({
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setShowMore((open) => !open)}
-              className="flex w-full items-center justify-between rounded-xl border border-zinc-100 bg-zinc-50/80 px-4 py-3 text-sm text-zinc-600"
-            >
-              <span>{locale === "zh" ? "更多设置（可选）" : "More options (optional)"}</span>
-              <ChevronDown className={cn("h-4 w-4 transition", showMore && "rotate-180")} />
-            </button>
-
-            {showMore ? (
-              <div className="space-y-5 rounded-xl border border-zinc-100 bg-zinc-50/50 p-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="product_url">{locale === "zh" ? "产品链接" : "Product URL"}</Label>
-                  <Input
-                    id="product_url"
-                    type="url"
-                    value={productUrl}
-                    onChange={(e) => setProductUrl(e.target.value)}
-                    placeholder="https://"
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="target_audience">{locale === "zh" ? "目标人群" : "Target audience"}</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {AUDIENCE_PRESETS[locale].map((preset) => (
-                      <button
-                        key={preset}
-                        type="button"
-                        onClick={() => setTargetAudience(preset)}
-                        className={cn(
-                          "rounded-full border px-3 py-1.5 text-xs",
-                          targetAudience === preset
-                            ? "border-zinc-900 bg-zinc-900 text-white"
-                            : "border-zinc-200 text-zinc-600 hover:border-zinc-300"
-                        )}
-                      >
-                        {preset}
-                      </button>
-                    ))}
-                  </div>
-                  <Textarea
-                    id="target_audience"
-                    rows={2}
-                    value={targetAudience}
-                    onChange={(e) => setTargetAudience(e.target.value)}
-                    placeholder={locale === "zh" ? "也可以自己描述…" : "Or describe your audience…"}
-                  />
-                </div>
+            <div className="grid gap-2">
+              <Label htmlFor="target_audience">{locale === "zh" ? "目标人群" : "Target audience"}</Label>
+              <div className="flex flex-wrap gap-2">
+                {AUDIENCE_PRESETS[locale].map((preset) => (
+                  <button
+                    key={preset}
+                    type="button"
+                    onClick={() => setTargetAudience(preset)}
+                    className={cn(
+                      "rounded-full border px-3 py-1.5 text-xs",
+                      targetAudience === preset
+                        ? "border-zinc-900 bg-zinc-900 text-white"
+                        : "border-zinc-200 text-zinc-600 hover:border-zinc-300"
+                    )}
+                  >
+                    {preset}
+                  </button>
+                ))}
               </div>
-            ) : null}
+              <Textarea
+                id="target_audience"
+                rows={2}
+                value={targetAudience}
+                onChange={(e) => setTargetAudience(e.target.value)}
+                placeholder={locale === "zh" ? "也可以自己描述…" : "Or describe your audience…"}
+              />
+            </div>
           </div>
         ) : null}
 
         {step === 2 ? (
+          <div className="space-y-8">
+            {projectId ? (
+              <WizardProductHero
+                locale={locale}
+                projectId={projectId}
+                originalAsset={productOriginalAsset}
+                commercialAsset={productCommercialAsset}
+                logoAsset={logoAsset}
+                onUpdated={() => router.refresh()}
+              />
+            ) : null}
+
+            <div className="grid gap-2">
+              <Label htmlFor="product_name">{locale === "zh" ? "产品叫什么？" : "Product name"}</Label>
+              <Input
+                id="product_name"
+                value={productName}
+                onChange={(e) => setProductName(e.target.value)}
+                placeholder={locale === "zh" ? "例如：Northline 保湿精华" : "e.g. Northline Hydrating Serum"}
+                className="h-11"
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="product_url">{locale === "zh" ? "产品链接（可选）" : "Product URL (optional)"}</Label>
+              <Input
+                id="product_url"
+                type="url"
+                value={productUrl}
+                onChange={(e) => setProductUrl(e.target.value)}
+                placeholder="https://"
+              />
+            </div>
+          </div>
+        ) : null}
+
+        {step === 3 ? (
           <div className="space-y-6">
             <div className="rounded-xl border border-zinc-100 bg-zinc-50/60 p-4">
               <div className="flex items-start gap-3">
@@ -634,14 +608,13 @@ export function ProjectWizard({
           </div>
         ) : null}
 
-        {step === 3 ? (
+        {step === 4 ? (
           <div className="space-y-5">
-            {analyzing ? (
-              <p className="flex items-center gap-2 text-sm text-zinc-600">
-                <Sparkles className="h-4 w-4 animate-pulse" />
-                {locale === "zh" ? "正在分析参考视频…" : "Analyzing references…"}
-              </p>
-            ) : null}
+            <WizardProgressPanel
+              locale={locale}
+              draft={progressDraft}
+              fallbackMessage={locale === "zh" ? "正在分析参考视频…" : "Analyzing references…"}
+            />
             {brief ? (
               <>
                 <div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-800 ring-1 ring-emerald-100">
@@ -670,7 +643,7 @@ export function ProjectWizard({
           </div>
         ) : null}
 
-        {step === 4 ? (
+        {step === 5 ? (
           <div className="space-y-8">
             <div>
               <Label>{locale === "zh" ? "广告风格（选 1–2 个）" : "Ad style (pick 1–2)"}</Label>
@@ -768,7 +741,7 @@ export function ProjectWizard({
           </div>
         ) : null}
 
-        {step === 5 ? (
+        {step === 6 ? (
           <div className="space-y-5">
             <div className="rounded-xl border bg-zinc-50/60 p-5">
               <p className="text-sm font-semibold text-zinc-900">Storyboard</p>
@@ -796,7 +769,7 @@ export function ProjectWizard({
           </div>
         ) : null}
 
-        {step === 6 ? (
+        {step === 7 ? (
           <div className="space-y-6">
             <div className="rounded-xl border bg-zinc-50/60 p-5">
               <div className="flex items-center gap-2 text-sm font-semibold text-zinc-900">
@@ -856,16 +829,21 @@ export function ProjectWizard({
             {locale === "zh" ? "上一步" : "Back"}
           </Button>
 
-          {step < 6 ? (
+          {step < 7 ? (
             <Button
               type="button"
-              disabled={isPending || (step === 1 && !productName.trim())}
+              disabled={
+                isPending ||
+                (step === 2 && !productName.trim()) ||
+                (step === 4 && !brief?.executive_summary)
+              }
               onClick={() => {
-                if (step === 1) handleStep1Continue();
-                else if (step === 2) handleStep2Continue();
-                else if (step === 3) handleStep3Continue();
-                else if (step === 4) handleStep4Continue();
-                else if (step === 5) handleStep5Continue();
+                if (step === 1) handleBriefContinue();
+                else if (step === 2) handleStep1Continue();
+                else if (step === 3) handleStep2Continue();
+                else if (step === 4) handleStep3Continue();
+                else if (step === 5) handleStep4Continue();
+                else if (step === 6) handleStep5Continue();
               }}
               className="min-w-[140px] rounded-full px-6"
             >

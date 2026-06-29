@@ -1,7 +1,7 @@
-import { promises as fs } from "fs";
-import path from "path";
 import { projectApplications, projects as seedProjects } from "@/lib/data";
 import { createSerializedStoreReader, writeJsonFileAtomic } from "@/lib/json-file-store";
+import { getMemoryStore, readDataJson, dataStorePath } from "@/lib/serverless-store";
+import { repairMissingProjects } from "@/lib/studioos/brand-store-repair";
 import { appendProjectEvent } from "@/lib/project-events-service";
 import type {
   CreateProjectDraftInput,
@@ -20,8 +20,7 @@ import {
   type ProjectEventName
 } from "@/lib/studioos/project-status";
 
-const STORE_DIR = path.join(process.cwd(), ".data");
-const STORE_PATH = path.join(STORE_DIR, "project-store.json");
+const STORE_PATH = dataStorePath("project-store.json");
 
 const DEMO_PROJECT_ID = "proj_demo_arc_nova";
 
@@ -302,38 +301,71 @@ function ensureDemoArcNovaProject(store: ProjectStore): ProjectStore {
   return store;
 }
 
+async function seedProjectStore(): Promise<ProjectStore> {
+  let seeded = seedStore();
+  seeded = ensureDemoArcNovaProject(seeded);
+  return seeded;
+}
+
 async function readStoreInner(): Promise<ProjectStore> {
-  try {
-    const raw = await fs.readFile(STORE_PATH, "utf8");
-    const parsed = JSON.parse(raw) as { projects: Record<string, unknown>[]; applications: StoredProjectApplication[] };
-    let migrated = false;
-    const projects = parsed.projects.map((item) => {
-      const next = migrateStoredProject(item);
-      if (JSON.stringify(item) !== JSON.stringify(next)) {
-        migrated = true;
-      }
-      return next;
-    });
-    let store: ProjectStore = { projects, applications: parsed.applications ?? [] };
-    const beforeDemo = store.projects.length;
-    const beforeArcTitle = store.projects.find((item) => item.id === DEMO_PROJECT_ID)?.title;
-    store = ensureDemoArcNovaProject(store);
-    const afterArcStatus = store.projects.find((item) => item.id === DEMO_PROJECT_ID)?.status;
-    const afterArcTitle = store.projects.find((item) => item.id === DEMO_PROJECT_ID)?.title;
-    if (
-      migrated ||
-      store.projects.length !== beforeDemo ||
-      beforeArcStatus !== afterArcStatus ||
-      beforeArcTitle !== afterArcTitle
-    ) {
-      await writeStore(store);
+  const parsed = await readDataJson<{ projects: Record<string, unknown>[]; applications: StoredProjectApplication[]; dismissed_demo_ids?: string[] }>(
+    STORE_PATH,
+    seedProjectStore
+  );
+  let migrated = false;
+  const projects = parsed.projects.map((item) => {
+    const next = migrateStoredProject(item);
+    if (JSON.stringify(item) !== JSON.stringify(next)) {
+      migrated = true;
     }
-    return store;
-  } catch {
-    let seeded = seedStore();
-    seeded = ensureDemoArcNovaProject(seeded);
-    await writeStore(seeded);
-    return seeded;
+    return next;
+  });
+  let store: ProjectStore = {
+    projects,
+    applications: parsed.applications ?? [],
+    dismissed_demo_ids: parsed.dismissed_demo_ids
+  };
+  const beforeDemo = store.projects.length;
+  const beforeArcTitle = store.projects.find((item) => item.id === DEMO_PROJECT_ID)?.title;
+  const beforeArcStatus = store.projects.find((item) => item.id === DEMO_PROJECT_ID)?.status;
+  store = ensureDemoArcNovaProject(store);
+  const repaired = await repairMissingProjects(store);
+  store = repaired.store;
+  const afterArcStatus = store.projects.find((item) => item.id === DEMO_PROJECT_ID)?.status;
+  const afterArcTitle = store.projects.find((item) => item.id === DEMO_PROJECT_ID)?.title;
+  if (
+    migrated ||
+    repaired.changed ||
+    store.projects.length !== beforeDemo ||
+    beforeArcStatus !== afterArcStatus ||
+    beforeArcTitle !== afterArcTitle
+  ) {
+    mergeLatestProjectStore(store);
+    await writeStore(store);
+    readStore.invalidate?.();
+  }
+  return store;
+}
+
+/** Avoid read/migrate writes clobbering concurrent create/update mutations. */
+function mergeLatestProjectStore(store: ProjectStore) {
+  const latest = getMemoryStore<ProjectStore>(STORE_PATH);
+  if (!latest) return;
+
+  const mergedIds = new Set(store.projects.map((item) => item.id));
+  for (const project of latest.projects) {
+    if (!mergedIds.has(project.id)) {
+      store.projects.push(project);
+      mergedIds.add(project.id);
+    }
+  }
+
+  if (latest.dismissed_demo_ids?.length) {
+    const dismissed = new Set(store.dismissed_demo_ids ?? []);
+    for (const id of latest.dismissed_demo_ids) {
+      dismissed.add(id);
+    }
+    store.dismissed_demo_ids = [...dismissed];
   }
 }
 
@@ -448,7 +480,7 @@ export async function completeWizardStep(
 
   const steps = new Set(project.wizard_completed_steps);
   steps.add(step);
-  const wizard_step = Math.max(project.wizard_step, Math.min(6, step + 1));
+  const wizard_step = Math.max(project.wizard_step, Math.min(7, step + 1));
 
   return updateProject(projectId, {
     wizard_completed_steps: [...steps].sort((a, b) => a - b),
@@ -554,6 +586,14 @@ export async function deleteProjectForClient(
   store.projects.splice(index, 1);
   dismissDemoProject(store, projectId);
   await writeStore(store);
+  readStore.invalidate?.();
+
+  try {
+    const { deleteOrdersForProjectId } = await import("@/lib/order-service");
+    await deleteOrdersForProjectId(projectId, normalized);
+  } catch {
+    // Best-effort cleanup — project deletion already persisted.
+  }
 
   try {
     const { purgeProjectCampaignData } = await import("@/lib/campaign-store");
@@ -631,6 +671,19 @@ export async function listApplicationsForProject(projectId: string) {
 export async function listApplicationsForCreator(creatorId: string) {
   const store = await readStore();
   return store.applications.filter((item) => item.creator_id === creatorId);
+}
+
+export async function findCampaignIdByMvpReviewProjectId(mvpProjectId: string): Promise<string | null> {
+  const store = await readStore();
+  const hit = store.projects.find((project) => {
+    const linked = project.settings_json?.mvp_review_project_id;
+    return typeof linked === "string" && linked === mvpProjectId;
+  });
+  if (hit) return hit.id;
+  if (mvpProjectId === "proj_mvp_demo_01") {
+    return DEMO_PROJECT_ID;
+  }
+  return null;
 }
 
 export { DEMO_PROJECT_ID };

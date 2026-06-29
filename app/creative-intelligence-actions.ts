@@ -11,7 +11,7 @@ import {
 } from "@/lib/studioos/creative-performance-store";
 import type { HookType } from "@/lib/studioos/creative-performance-types";
 import { analyzePlatformExport, analyzePlatformScreenshot } from "@/lib/studioos/platform-data-analyzer";
-import type { PlatformAttributionPlatform } from "@/lib/studioos/platform-attribution-types";
+import type { PlatformAttributionPlatform, PlatformAttributionAnalysis } from "@/lib/studioos/platform-attribution-types";
 
 function normalizeLang(raw: FormDataEntryValue | null): Locale {
   return raw === "zh" ? "zh" : "en";
@@ -104,9 +104,7 @@ export async function uploadPlatformAttributionAction(formData: FormData) {
 
   let rawText = pasted;
   let fileName: string | undefined;
-  let analysis:
-    | Awaited<ReturnType<typeof analyzePlatformExport>>
-    | Awaited<ReturnType<typeof analyzePlatformScreenshot>>;
+  let analysis: PlatformAttributionAnalysis | { ok: false; error: string };
 
   const file = formData.get("platform_file");
   if (file instanceof File && file.size > 0) {
@@ -142,7 +140,7 @@ export async function uploadPlatformAttributionAction(formData: FormData) {
     });
   }
 
-  if ("ok" in analysis && analysis.ok === false) {
+  if (!("metrics" in analysis)) {
     return analysis;
   }
 

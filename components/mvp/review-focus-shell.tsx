@@ -41,7 +41,7 @@ export function ReviewFocusShell({
   const reviewLabel = locale === "zh" ? "审片中心" : "Review center";
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white text-zinc-900">
       <header className="sticky top-0 z-50 border-b border-zinc-200/80 bg-white/95 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-[1680px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
           <div className="flex min-w-0 items-center gap-3">

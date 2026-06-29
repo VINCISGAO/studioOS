@@ -1,0 +1,134 @@
+import type { Locale } from "@/lib/i18n";
+import { wizard } from "@/lib/design/tokens";
+
+export const CAMPAIGN_WIZARD_STEP_COUNT = wizard.steps;
+
+export type CampaignWizardStepKey =
+  | "brief"
+  | "product"
+  | "references"
+  | "analysis"
+  | "pack"
+  | "confirm"
+  | "match";
+
+export type CampaignWizardStep = {
+  id: number;
+  key: CampaignWizardStepKey;
+  label: Record<Locale, string>;
+};
+
+export const CAMPAIGN_WIZARD_STEPS: CampaignWizardStep[] = [
+  { id: 1, key: "brief", label: { en: "Brief", zh: "Brief" } },
+  { id: 2, key: "product", label: { en: "Product", zh: "产品" } },
+  { id: 3, key: "references", label: { en: "References", zh: "参考" } },
+  { id: 4, key: "analysis", label: { en: "Analysis", zh: "分析" } },
+  { id: 5, key: "pack", label: { en: "Creative Pack", zh: "创意包" } },
+  { id: 6, key: "confirm", label: { en: "Confirm", zh: "确认" } },
+  { id: 7, key: "match", label: { en: "Match", zh: "匹配" } }
+];
+
+export function clampWizardStep(step: number): number {
+  return Math.min(CAMPAIGN_WIZARD_STEP_COUNT, Math.max(1, Math.floor(step) || 1));
+}
+
+export function completedWizardSteps(currentStep: number): number[] {
+  return CAMPAIGN_WIZARD_STEPS.filter((s) => s.id < currentStep).map((s) => s.id);
+}
+
+export function wizardProgressPercent(currentStep: number): number {
+  return Math.round((clampWizardStep(currentStep) / CAMPAIGN_WIZARD_STEP_COUNT) * 100);
+}
+
+export type WizardPhase = "idle" | "analyzing" | "matching" | "publishing";
+
+export type WizardDraftState = {
+  step: number;
+  completedSteps: number[];
+  updatedAt: string;
+  phase?: WizardPhase;
+  progressMessage?: string;
+  progressPercent?: number;
+};
+
+export function emptyWizardDraft(step = 1): WizardDraftState {
+  const clamped = clampWizardStep(step);
+  return {
+    step: clamped,
+    completedSteps: completedWizardSteps(clamped),
+    updatedAt: new Date().toISOString(),
+    phase: "idle",
+    progressPercent: wizardProgressPercent(clamped)
+  };
+}
+
+/** Map legacy 4-step brand wizard URLs saved before Sprint 12 */
+export function migrateLegacyBrandWizardStep(step: number): number {
+  const map: Record<number, number> = { 1: 1, 2: 4, 3: 6, 4: 7 };
+  return map[step] ?? clampWizardStep(step);
+}
+
+/** Map legacy 6-step project wizard progress */
+export function migrateLegacyProjectWizardStep(step: number): number {
+  if (step <= 6) {
+    const map: Record<number, number> = { 1: 1, 2: 3, 3: 4, 4: 5, 5: 6, 6: 7 };
+    return map[step] ?? clampWizardStep(step);
+  }
+  return clampWizardStep(step);
+}
+
+export function wizardStepMeta(locale: Locale, step: number) {
+  const clamped = clampWizardStep(step);
+  const labels: Record<number, { headline: Record<Locale, string>; subtitle: Record<Locale, string> }> = {
+    1: {
+      headline: { en: "Tell us about your campaign", zh: "告诉我们你想做什么广告" },
+      subtitle: {
+        en: "Describe your idea — AI turns it into a studio-ready brief.",
+        zh: "描述你的想法 — AI 整理成 Studio 能用的 Brief。"
+      }
+    },
+    2: {
+      headline: { en: "What are you promoting?", zh: "你要推广什么？" },
+      subtitle: {
+        en: "Upload a product photo and add basic product info.",
+        zh: "上传产品图并填写基本信息。"
+      }
+    },
+    3: {
+      headline: { en: "Show us ads you like", zh: "找几条你觉得好的广告" },
+      subtitle: {
+        en: "Paste 1–3 reference links — optional but helps matching.",
+        zh: "粘贴 1–3 条参考链接 — 可选，但有助于匹配。"
+      }
+    },
+    4: {
+      headline: { en: "Analyzing your inputs", zh: "正在分析你的输入" },
+      subtitle: {
+        en: "We analyze product, references, and draft your creative direction.",
+        zh: "分析产品、参考视频，并生成创意方向。"
+      }
+    },
+    5: {
+      headline: { en: "Your creative pack is ready", zh: "创意方案已就绪" },
+      subtitle: {
+        en: "Review estimated budget, timeline, and generated pack.",
+        zh: "查看预估预算、工期与创意包。"
+      }
+    },
+    6: {
+      headline: { en: "Confirm your brief", zh: "确认需求表单" },
+      subtitle: {
+        en: "Certify the brief before matching creators.",
+        zh: "确认 Brief 后再进入 Studio 匹配。"
+      }
+    },
+    7: {
+      headline: { en: "Matching Studios", zh: "匹配 Studio" },
+      subtitle: {
+        en: "Finding the best creators for your campaign.",
+        zh: "正在为你匹配最合适的创作者。"
+      }
+    }
+  };
+  return labels[clamped] ?? labels[1]!;
+}

@@ -111,14 +111,15 @@ export async function deleteBrandProjectsAction(formData: FormData) {
   const deletedCount = deletedProjects.length + deletedOrders.length;
 
   if (deletedCount) {
-    revalidatePath("/brand/projects", "page");
     revalidatePath("/brand", "page");
+    revalidatePath("/brand/projects", "page");
   }
 
   if (!deletedCount) {
     return {
       ok: false as const,
-      error: failures[0]?.error ?? (lang === "zh" ? "删除失败" : "Delete failed")
+      error: failures[0]?.error ?? (lang === "zh" ? "删除失败" : "Delete failed"),
+      stale: failures.every((item) => item.error === projectMessages.NOT_FOUND || item.error === orderMessages.NOT_FOUND)
     };
   }
 

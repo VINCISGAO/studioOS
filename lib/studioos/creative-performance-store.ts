@@ -1,5 +1,4 @@
-import { promises as fs } from "fs";
-import path from "path";
+import { writeDataJson, dataStorePath, readDataJson } from "@/lib/serverless-store";
 import type {
   CreativeDnaProfile,
   CreativePerformanceRecord,
@@ -9,8 +8,7 @@ import type {
 import { generateInsightsForOrg } from "@/lib/studioos/insight-engine";
 import { buildDnaProfile } from "@/lib/studioos/creative-dna-service";
 
-const STORE_DIR = path.join(process.cwd(), ".data");
-const STORE_PATH = path.join(STORE_DIR, "creative-performance-store.json");
+const STORE_PATH = dataStorePath("creative-performance-store.json");
 
 const DEMO_ORG_BRIGHT = "client.bright@adbridge.test";
 const DEMO_ORG_ARC = "client.arc@adbridge.test";
@@ -129,10 +127,7 @@ function seedRecords(): CreativePerformanceRecord[] {
 }
 
 async function writeStore(store: PerformanceStore) {
-  await fs.mkdir(STORE_DIR, { recursive: true });
-  const tempPath = `${STORE_PATH}.tmp`;
-  await fs.writeFile(tempPath, JSON.stringify(store, null, 2), "utf8");
-  await fs.rename(tempPath, STORE_PATH);
+  await writeDataJson(STORE_PATH, store);
 }
 
 async function refreshOrgIntelligence(store: PerformanceStore, orgId: string) {
@@ -162,20 +157,13 @@ function ensureDemoStore(store: PerformanceStore): PerformanceStore {
 }
 
 async function readStore(): Promise<PerformanceStore> {
-  try {
-    const raw = await fs.readFile(STORE_PATH, "utf8");
-    let store = JSON.parse(raw) as PerformanceStore;
-    const before = store.records.length;
-    store = ensureDemoStore(store);
-    if (store.records.length !== before) {
-      await writeStore(store);
-    }
-    return store;
-  } catch {
-    let store = ensureDemoStore(emptyStore());
-    await writeStore(store);
-    return store;
+  const store = await readDataJson<PerformanceStore>(STORE_PATH, () => ensureDemoStore(emptyStore()));
+  const before = store.records.length;
+  const next = ensureDemoStore(store);
+  if (next.records.length !== before) {
+    await writeStore(next);
   }
+  return next;
 }
 
 export function orgIdFromEmail(email: string) {

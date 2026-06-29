@@ -1,13 +1,11 @@
-import { promises as fs } from "fs";
-import path from "path";
 import { inquiries as seedInquiries } from "@/lib/data";
 import type { ChatSender, ChatStore, CreateInquiryInput, MessageKind, StoredInquiry, StoredMessage } from "@/lib/chat-types";
 import { getActiveQuoteForPair, getOrderForPair, reassignQuotesToInquiry } from "@/lib/order-service";
 import { allowOffPlatformContacts, isProposalChatLocked } from "@/lib/studioos/project-contract";
 import { contactFilterNotice, filterContactInfo } from "@/lib/studioos/contact-filter";
+import { dataStorePath, readDataJson, writeDataJson } from "@/lib/serverless-store";
 
-const STORE_DIR = path.join(process.cwd(), ".data");
-const STORE_PATH = path.join(STORE_DIR, "chat-store.json");
+const STORE_PATH = dataStorePath("chat-store.json");
 
 function createId(prefix: string) {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -48,21 +46,11 @@ function seedStore(): ChatStore {
 }
 
 async function readStore(): Promise<ChatStore> {
-  try {
-    const raw = await fs.readFile(STORE_PATH, "utf8");
-    return JSON.parse(raw) as ChatStore;
-  } catch {
-    const seeded = seedStore();
-    await writeStore(seeded);
-    return seeded;
-  }
+  return readDataJson(STORE_PATH, seedStore);
 }
 
 async function writeStore(store: ChatStore) {
-  await fs.mkdir(STORE_DIR, { recursive: true });
-  const tempPath = `${STORE_PATH}.tmp`;
-  await fs.writeFile(tempPath, JSON.stringify(store, null, 2), "utf8");
-  await fs.rename(tempPath, STORE_PATH);
+  await writeDataJson(STORE_PATH, store);
 }
 
 export async function createInquiry(input: CreateInquiryInput): Promise<StoredInquiry> {

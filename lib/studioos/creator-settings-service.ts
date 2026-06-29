@@ -19,9 +19,9 @@ import type {
   StoredApiKey,
   StoredCreatorSettings
 } from "@/lib/studioos/creator-settings-types";
-import path from "path";
+import { dataStorePath } from "@/lib/serverless-store";
 
-const STORE_PATH = path.join(process.cwd(), ".data", "creator-settings-store.json");
+const STORE_PATH = dataStorePath("creator-settings-store.json");
 const MAX_DEVICES = 8;
 const MAX_LOGIN_HISTORY = 20;
 

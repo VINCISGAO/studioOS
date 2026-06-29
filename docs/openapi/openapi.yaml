@@ -1,0 +1,353 @@
+openapi: 3.1.0
+info:
+  title: StudioOS API
+  version: 1.0.0
+  description: StudioOS Public API — Development Bible Vol 15
+servers:
+  - url: http://localhost:3000/api/v1
+    description: Local development
+security:
+  - bearerAuth: []
+tags:
+  - name: Campaign
+  - name: Review
+  - name: Version
+  - name: Payment
+paths:
+  /campaigns:
+    get:
+      tags: [Campaign]
+      summary: List campaigns (paginated)
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 20 }
+      responses:
+        "200":
+          description: Success
+    post:
+      tags: [Campaign]
+      summary: Create campaign
+      responses:
+        "201":
+          description: Created
+  /campaigns/{campaignId}:
+    get:
+      tags: [Campaign]
+      summary: Campaign detail
+      parameters:
+        - name: campaignId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Success
+    patch:
+      tags: [Campaign]
+      summary: Update draft campaign
+      responses:
+        "200":
+          description: Success
+  /campaigns/{campaignId}/assets:
+    get:
+      tags: [Campaign]
+      summary: List campaign assets
+      parameters:
+        - name: campaignId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Success
+    post:
+      tags: [Campaign]
+      summary: Upload campaign asset (LOGO)
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file: { type: string, format: binary }
+                asset_type: { type: string, enum: [LOGO] }
+      responses:
+        "201":
+          description: Created
+  /campaigns/{campaignId}/creative:
+    get:
+      tags: [Campaign]
+      summary: Get AI creative directions
+      responses:
+        "200":
+          description: Success
+    post:
+      tags: [Campaign]
+      summary: Generate 3 creative directions
+      responses:
+        "201":
+          description: Created
+  /campaigns/{campaignId}/creative/approve:
+    post:
+      tags: [Campaign]
+      summary: Approve a creative direction
+      responses:
+        "200":
+          description: Success
+  /campaigns/{campaignId}/matches:
+    get:
+      tags: [Campaign]
+      summary: Rank matched creators
+      responses:
+        "200":
+          description: Success
+  /campaigns/{campaignId}/invitations:
+    get:
+      tags: [Campaign]
+      summary: List creator invitations
+      responses:
+        "200":
+          description: Success
+    post:
+      tags: [Campaign]
+      summary: Send creator invitations
+      responses:
+        "201":
+          description: Created
+  /invitations/{invitationId}/accept:
+    post:
+      tags: [Campaign]
+      summary: Creator accepts invitation
+      responses:
+        "200":
+          description: Success
+  /invitations/{invitationId}/decline:
+    post:
+      tags: [Campaign]
+      summary: Creator declines invitation
+      responses:
+        "200":
+          description: Success
+  /versions/{versionId}:
+    get:
+      tags: [Review]
+      summary: Version playback URLs
+      parameters:
+        - name: versionId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Success
+  /versions/{versionId}/comments:
+    get:
+      tags: [Review]
+      summary: List comments for version
+      parameters:
+        - name: versionId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Success
+    post:
+      tags: [Review]
+      summary: Create comment with optional annotation
+      responses:
+        "201":
+          description: Created
+  /campaigns/{campaignId}/review:
+    get:
+      tags: [Review]
+      summary: Full review timeline for campaign
+      responses:
+        "200":
+          description: Success
+  /versions/{versionId}/approve:
+    post:
+      tags: [Review]
+      summary: Approve version
+      responses:
+        "200":
+          description: Success
+  /versions/{versionId}/revision:
+    post:
+      tags: [Review]
+      summary: Request revision
+      responses:
+        "200":
+          description: Success
+  /campaigns/{campaignId}/activity:
+    get:
+      tags: [Campaign]
+      summary: Campaign activity log
+      responses:
+        "200":
+          description: Success
+  /campaigns/{campaignId}/versions/upload/init:
+    post:
+      tags: [Video]
+      summary: Initialize chunked video upload
+      responses:
+        "200":
+          description: Success
+  /campaigns/{campaignId}/versions/upload/{uploadId}/chunk:
+    put:
+      tags: [Video]
+      summary: Upload video chunk
+      responses:
+        "200":
+          description: Success
+  /campaigns/{campaignId}/versions/upload/{uploadId}/complete:
+    post:
+      tags: [Video]
+      summary: Complete chunked upload and enqueue transcode
+      responses:
+        "200":
+          description: Success
+  /versions/{versionId}/processing:
+    get:
+      tags: [Video]
+      summary: Version transcode / processing status
+      responses:
+        "200":
+          description: Success
+  /campaigns/{campaignId}/escrow:
+    get:
+      tags: [Payment]
+      summary: Escrow status for campaign
+      responses:
+        "200":
+          description: Success
+  /campaigns/{campaignId}/checkout:
+    post:
+      tags: [Payment]
+      summary: Start Stripe checkout (or demo mode hint)
+      responses:
+        "200":
+          description: Success
+  /campaigns/{campaignId}/checkout/demo:
+    post:
+      tags: [Payment]
+      summary: Demo escrow payment (local dev)
+      responses:
+        "200":
+          description: Success
+  /webhooks/stripe:
+    post:
+      tags: [Payment]
+      summary: Stripe webhook
+      responses:
+        "200":
+          description: Success
+  /wallet:
+    get:
+      tags: [Wallet]
+      summary: Current user wallet
+      responses:
+        "200":
+          description: Success
+  /wallet/transactions:
+    get:
+      tags: [Wallet]
+      summary: Wallet ledger
+      responses:
+        "200":
+          description: Success
+  /wallet/withdraw:
+    post:
+      tags: [Wallet]
+      summary: Request withdrawal
+      responses:
+        "200":
+          description: Success
+  /wallet/withdraw/{withdrawId}/complete:
+    post:
+      tags: [Wallet]
+      summary: Complete withdrawal (demo)
+      responses:
+        "200":
+          description: Success
+  /campaigns/{campaignId}/settlement/release:
+    post:
+      tags: [Payment]
+      summary: Release escrow to creator wallet
+      responses:
+        "200":
+          description: Success
+  /notifications:
+    get:
+      tags: [Notification]
+      summary: List in-app notifications
+      responses:
+        "200":
+          description: Success
+  /notifications/read-all:
+    post:
+      tags: [Notification]
+      summary: Mark all notifications read
+      responses:
+        "200":
+          description: Success
+  /notifications/{notificationId}/read:
+    patch:
+      tags: [Notification]
+      summary: Mark notification read
+      responses:
+        "200":
+          description: Success
+  /notifications/stream:
+    get:
+      tags: [Notification]
+      summary: SSE notification stream
+      responses:
+        "200":
+          description: text/event-stream
+  /ai/jobs/{jobId}:
+    get:
+      tags: [AI]
+      summary: AI job status and cost
+      responses:
+        "200":
+          description: Success
+  /campaigns/{campaignId}/ai/jobs:
+    get:
+      tags: [AI]
+      summary: AI jobs for campaign
+      responses:
+        "200":
+          description: Success
+  /ai/jobs/process:
+    post:
+      tags: [AI]
+      summary: Process next queued AI job (admin)
+      responses:
+        "200":
+          description: Success
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    SuccessResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        data: { type: object }
+    ErrorResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: false }
+        error:
+          type: object
+          properties:
+            code: { type: string }
+            message: { type: string }

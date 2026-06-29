@@ -73,3 +73,14 @@ export function demoRedirectForRole(role: DemoRole) {
   }
   return "/brand";
 }
+
+/** Google / Apple / Discord map to the first three demo accounts for each role tab. */
+export function demoUserForSocialProvider(
+  provider: "google" | "apple" | "discord",
+  tabRole: "brand" | "creator"
+) {
+  const demoRole = tabRole === "creator" ? "creator" : "client";
+  const accounts = DEMO_USERS.filter((user) => user.role === demoRole);
+  const index = provider === "google" ? 0 : provider === "apple" ? 1 : 2;
+  return accounts[index] ?? accounts[0] ?? null;
+}

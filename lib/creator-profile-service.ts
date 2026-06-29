@@ -1,32 +1,22 @@
-import { promises as fs } from "fs";
-import path from "path";
 import type { Creator } from "@/lib/types";
 import type { CreatorProfileStore, StoredCreatorProfile } from "@/lib/creator-profile-types";
 import { generateCreatorAiTags } from "@/lib/studioos/creator-ai-tags";
 import { normalizeCreatorMinBudget } from "@/lib/studioos/creator-price-preference";
 import type { CreatorWork } from "@/lib/types";
+import { dataStorePath, readDataJson, writeDataJson } from "@/lib/serverless-store";
 
-const STORE_DIR = path.join(process.cwd(), ".data");
-const STORE_PATH = path.join(STORE_DIR, "creator-profile-store.json");
+const STORE_PATH = dataStorePath("creator-profile-store.json");
 
 function emptyStore(): CreatorProfileStore {
   return { profiles: {} };
 }
 
 async function readStore(): Promise<CreatorProfileStore> {
-  try {
-    const raw = await fs.readFile(STORE_PATH, "utf8");
-    return JSON.parse(raw) as CreatorProfileStore;
-  } catch {
-    const seeded = emptyStore();
-    await writeStore(seeded);
-    return seeded;
-  }
+  return readDataJson(STORE_PATH, () => emptyStore());
 }
 
 async function writeStore(store: CreatorProfileStore) {
-  await fs.mkdir(STORE_DIR, { recursive: true });
-  await fs.writeFile(STORE_PATH, JSON.stringify(store, null, 2), "utf8");
+  await writeDataJson(STORE_PATH, store);
 }
 
 export async function getStoredCreatorProfile(creatorId: string): Promise<StoredCreatorProfile | null> {

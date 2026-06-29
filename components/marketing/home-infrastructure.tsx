@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, Bot, Clapperboard, Globe2, ShieldCheck, Sparkles } from "lucide-react";
+import { HomeScrollReveal } from "@/components/marketing/home-scroll-reveal";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 
@@ -80,7 +81,7 @@ export function HomeInfrastructure({ locale }: { locale: Locale }) {
       <div className="relative overflow-hidden rounded-t-[1.75rem] bg-[#fafaf8] shadow-[0_-32px_64px_-24px_rgba(0,0,0,0.45)] ring-1 ring-white/10 sm:rounded-t-[2rem]">
         <section className="bg-white py-24 sm:py-32">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="max-w-2xl">
+        <HomeScrollReveal className="max-w-2xl">
           <p className="text-xs font-medium uppercase tracking-wider text-zinc-400">{t.eyebrow}</p>
           <h2 className="mt-3 text-balance text-3xl font-semibold tracking-tight text-zinc-950 sm:text-4xl lg:text-5xl">
             {t.title}
@@ -92,9 +93,9 @@ export function HomeInfrastructure({ locale }: { locale: Locale }) {
           >
             {t.explore} <ArrowRight className="h-4 w-4" />
           </Link>
-        </div>
+        </HomeScrollReveal>
 
-        <div className="mt-14 grid gap-4 lg:grid-cols-3 lg:grid-rows-2">
+        <HomeScrollReveal delay={1} className="mt-14 grid gap-4 lg:grid-cols-3 lg:grid-rows-2">
           <article className="relative overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 p-8 text-white lg:col-span-2 lg:row-span-2 lg:p-10">
             <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-white/[0.04] blur-3xl" />
             <div className="relative">
@@ -145,7 +146,7 @@ export function HomeInfrastructure({ locale }: { locale: Locale }) {
               <p className="mt-2 text-sm leading-6 text-zinc-500">{body}</p>
             </article>
           ))}
-        </div>
+        </HomeScrollReveal>
           </div>
         </section>
       </div>

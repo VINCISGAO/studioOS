@@ -1,0 +1,13 @@
+---
+description: Database changes — Prisma only, campaign_id required
+globs: prisma/**/*
+alwaysApply: false
+---
+
+# Database Rules
+
+- Schema: `prisma/schema.prisma` is law
+- 新表必须含 `campaign_id`（User/系统表除外）
+- Soft delete: `deleted_at`
+- 金额: `Decimal(18,2)`，禁止 Float
+- Migration: 只新增，不修改历史 migration

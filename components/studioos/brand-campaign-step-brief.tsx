@@ -302,6 +302,8 @@ export function BrandCampaignStepBrief({
   initial,
   initialProductImageUrl,
   initialReferences = [],
+  stepMode = "all",
+  hideTopBar = false,
   isPending,
   error,
   onProductUploaded,
@@ -313,6 +315,8 @@ export function BrandCampaignStepBrief({
   initial: BriefFormState;
   initialProductImageUrl?: string | null;
   initialReferences?: StoredProjectReference[];
+  stepMode?: "brief" | "product" | "references" | "all";
+  hideTopBar?: boolean;
   isPending: boolean;
   error: string | null;
   onProductUploaded?: () => void;
@@ -554,6 +558,51 @@ export function BrandCampaignStepBrief({
   }
 
   function handleContinue() {
+    if (stepMode === "brief") {
+      const hasBrief = form.productDescription.trim() || form.rawSummary.trim();
+      if (!hasBrief) {
+        setLocalError(t.needPolish);
+        return;
+      }
+      if (form.refined && !refinedApplied) {
+        setLocalError(t.needApply);
+        return;
+      }
+      if (!form.aspectRatio) {
+        setAspectRatioError(t.aspectRatioError);
+        setLocalError(t.aspectRatioError);
+        return;
+      }
+      if (budgetCustom.trim()) {
+        const budgetResult = normalizeCustomBudgetInput(budgetCustom, locale);
+        if (!budgetResult.ok) {
+          setBudgetCustomError(budgetResult.message);
+          setLocalError(budgetResult.message);
+          return;
+        }
+      }
+      setLocalError(null);
+      onContinue(form);
+      return;
+    }
+
+    if (stepMode === "product") {
+      const hasVisual = Boolean(form.productUrl.trim()) || productReady;
+      if (!hasVisual) {
+        setLocalError(t.needInput);
+        return;
+      }
+      setLocalError(null);
+      onContinue(form);
+      return;
+    }
+
+    if (stepMode === "references") {
+      setLocalError(null);
+      onContinue(form);
+      return;
+    }
+
     const hasVisual = Boolean(form.productUrl.trim()) || productReady;
     const hasBrief = form.productDescription.trim() || form.rawSummary.trim();
 
@@ -591,9 +640,14 @@ export function BrandCampaignStepBrief({
   const aspectRatioOptions = BRAND_VIDEO_ASPECT_RATIOS[locale];
   const budgetIsCustom = Boolean(budgetCustom.trim()) || !isPresetBudget(form.budgetRange);
 
+  const showBrief = stepMode === "brief" || stepMode === "all";
+  const showProduct = stepMode === "product" || stepMode === "all";
+  const showReferences = stepMode === "references" || stepMode === "all";
+
   return (
     <section className="space-y-8">
       {/* Top bar */}
+      {!hideTopBar && stepMode === "all" ? (
       <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
         <Button asChild variant="ghost" size="sm" className="-ml-2 h-9 gap-2 text-zinc-500 hover:text-zinc-900">
           <Link href={withLocale("/brand", locale)}>
@@ -620,15 +674,19 @@ export function BrandCampaignStepBrief({
           ))}
         </div>
       </div>
+      ) : null}
 
       {/* Page header */}
+      {!hideTopBar && stepMode === "all" ? (
       <div className="space-y-2">
         <p className="text-xs font-medium uppercase tracking-widest text-zinc-400">{t.stepLabel}</p>
         <h1 className="text-3xl font-semibold tracking-tight text-zinc-900 sm:text-4xl">{t.title}</h1>
         <p className="max-w-2xl text-base leading-relaxed text-zinc-500">{t.subtitle}</p>
       </div>
+      ) : null}
 
       {/* ── AI Hero (primary) ── */}
+      {showBrief ? (
       <div className="overflow-hidden rounded-3xl border border-zinc-200/80 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04),0_8px_32px_rgba(99,102,241,0.06)]">
         <div className="border-b border-violet-100/80 bg-gradient-to-r from-violet-50/80 via-white to-indigo-50/60 px-6 py-5 sm:px-8">
           <div className="flex items-start gap-3">
@@ -710,6 +768,44 @@ export function BrandCampaignStepBrief({
                     </OptionChip>
                   ))}
                 </PlanningField>
+              </div>
+
+              <div className="space-y-3 rounded-xl border border-zinc-200 bg-zinc-50/60 p-4">
+                <div className="flex items-start gap-2.5">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-zinc-500 shadow-sm ring-1 ring-zinc-200/80">
+                    <Ratio className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-zinc-900">
+                      {t.aspectRatioTitle}
+                      <span className="ml-1.5 text-red-500">*</span>
+                    </p>
+                    <p className="mt-0.5 text-xs leading-relaxed text-zinc-500">{t.aspectRatioHint}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  {aspectRatioOptions.map((option) => (
+                    <button
+                      key={option.id}
+                      type="button"
+                      disabled={isPending || isPolishing}
+                      onClick={() => {
+                        patch("aspectRatio", option.id);
+                        setAspectRatioError(null);
+                        setLocalError(null);
+                      }}
+                      className={cn(
+                        "rounded-xl border px-3 py-2.5 text-left transition",
+                        form.aspectRatio === option.id
+                          ? "border-zinc-900 bg-zinc-900 text-white shadow-sm"
+                          : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50"
+                      )}
+                    >
+                      <span className="block text-sm font-semibold">{option.label}</span>
+                    </button>
+                  ))}
+                </div>
+                {aspectRatioError ? <p className="text-xs text-red-600">{aspectRatioError}</p> : null}
               </div>
 
               <Button
@@ -802,10 +898,13 @@ export function BrandCampaignStepBrief({
           ) : null}
         </div>
       </div>
+      ) : null}
 
       {/* ── Product + References ── */}
-      <div className="grid gap-6 lg:grid-cols-2">
+      {showProduct || showReferences ? (
+      <div className={cn("grid gap-6", showProduct && showReferences ? "lg:grid-cols-2" : "")}>
         {/* Product */}
+        {showProduct ? (
         <div className="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm">
           <div className="mb-5">
             <h2 className="text-base font-semibold text-zinc-900">{t.productSection}</h2>
@@ -887,10 +986,13 @@ export function BrandCampaignStepBrief({
             </div>
           </div>
         </div>
+        ) : null}
 
-        {/* References */}
+        {/* References + aspect (brief shows aspect in hero; product/references split below) */}
+        {showReferences || (showBrief && !showProduct) ? (
         <div className="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm">
           <div className="space-y-4">
+            {(showBrief && !showProduct) ? (
             <div className="space-y-3 rounded-xl border border-zinc-200 bg-zinc-50/60 p-4">
               <div className="flex items-start gap-2.5">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-zinc-500 shadow-sm ring-1 ring-zinc-200/80">
@@ -936,7 +1038,10 @@ export function BrandCampaignStepBrief({
               </div>
               {aspectRatioError ? <p className="text-xs text-red-600">{aspectRatioError}</p> : null}
             </div>
+            ) : null}
 
+            {showReferences ? (
+            <>
             <div>
               <h2 className="text-base font-semibold text-zinc-900">{t.refsTitle}</h2>
               <p className="mt-1 text-sm text-zinc-500">{t.refsHint}</p>
@@ -997,11 +1102,14 @@ export function BrandCampaignStepBrief({
                 {t.refsEmpty}
               </p>
             )}
+            </>
+            ) : null}
           </div>
         </div>
-      </div>
+      ) : null}
 
       {/* ── Details ── */}
+      {showBrief ? (
       <div className="overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-sm">
         <div className="border-b border-zinc-100 px-6 py-5">
           <p className="text-base font-semibold text-zinc-900">{t.detailsTitle}</p>
@@ -1084,6 +1192,7 @@ export function BrandCampaignStepBrief({
             </QuestionSection>
         </div>
       </div>
+      ) : null}
 
       {/* Footer CTA */}
       <div className="sticky bottom-4 z-10 flex flex-col gap-3 rounded-2xl border border-zinc-200/90 bg-white/95 px-5 py-4 shadow-lg backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between">

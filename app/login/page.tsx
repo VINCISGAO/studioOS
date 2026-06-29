@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { LoginPageShell, type LoginPageCopy } from "@/components/studioos/login-page-shell";
-import { hasSupabaseConfig } from "@/lib/auth-config";
-import { DEMO_USERS, demoRedirectForRole, type DemoRole } from "@/lib/demo-auth";
+import { isDemoLoginUiEnabled } from "@/lib/can-persist-local-store";
+import { demoRedirectForRole, type DemoRole } from "@/lib/demo-auth";
 import { getLocale, type Locale, type SearchParams, withLocale } from "@/lib/i18n";
 import { getCurrentSession } from "@/lib/session-user";
 import type { LoginRole } from "@/lib/studioos/login-theme";
@@ -153,10 +153,6 @@ function resolveLoginRole(raw?: string): LoginRole {
   return raw === "creator" ? "creator" : "brand";
 }
 
-function demoRoleForTab(role: LoginRole): DemoRole {
-  return role === "creator" ? "creator" : "client";
-}
-
 function redirectIfAlreadySignedIn(
   session: { email: string; role: DemoRole } | null,
   role: LoginRole,
@@ -190,6 +186,36 @@ function redirectIfAlreadySignedIn(
   }
 }
 
+function resolveLoginErrorMessage(
+  rawError: string | undefined,
+  t: { configError: string; unsupported: string; wrongRoleHint: string }
+) {
+  if (!rawError) {
+    return undefined;
+  }
+  if (rawError === "auth-config") {
+    return t.configError;
+  }
+  if (rawError === "unsupported-provider") {
+    return t.unsupported;
+  }
+  if (rawError === "wrong-role") {
+    return t.wrongRoleHint;
+  }
+  try {
+    return decodeURIComponent(rawError.replace(/\+/g, " "));
+  } catch {
+    return rawError;
+  }
+}
+
+function resolveLoginErrorCode(rawError: string | undefined) {
+  if (rawError === "wrong-role" || rawError === "auth-config" || rawError === "unsupported-provider") {
+    return rawError;
+  }
+  return undefined;
+}
+
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams;
   const locale = getLocale(params);
@@ -197,24 +223,17 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const role = resolveLoginRole(typeof params.role === "string" ? params.role : undefined);
   const nextPath = typeof params.next === "string" ? params.next : "";
 
-  if (!hasSupabaseConfig()) {
+  const demoMode = isDemoLoginUiEnabled();
+
+  // Only bounce back when middleware sent the user here with ?next= — not when switching brand/creator tabs.
+  if (demoMode && nextPath) {
     const session = await getCurrentSession();
     redirectIfAlreadySignedIn(session, role, nextPath, locale);
   }
   const initialEmail = typeof params.email === "string" ? params.email : "";
-  const demoMode = !hasSupabaseConfig();
-  const errorCode = params.error;
-  const error =
-    errorCode === "auth-config"
-      ? t.configError
-      : errorCode === "unsupported-provider"
-        ? t.unsupported
-        : errorCode === "wrong-role"
-          ? t.wrongRoleHint
-          : errorCode;
-
-  const demoAccounts = DEMO_USERS.filter((user) => user.role === demoRoleForTab(role));
-  const adminAccount = DEMO_USERS.find((user) => user.role === "admin");
+  const rawError = typeof params.error === "string" ? params.error : undefined;
+  const errorCode = resolveLoginErrorCode(rawError);
+  const error = resolveLoginErrorMessage(rawError, t);
 
   return (
     <LoginPageShell
@@ -225,8 +244,6 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       error={error}
       errorCode={errorCode}
       demoMode={demoMode}
-      demoAccounts={demoAccounts}
-      adminAccount={adminAccount}
       t={t}
     />
   );

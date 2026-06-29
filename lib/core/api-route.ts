@@ -1,0 +1,36 @@
+import { NextResponse } from "next/server";
+import { ZodError } from "zod";
+import type { AuthUserDto } from "@/features/auth/auth.service";
+import { getSessionUser } from "@/features/auth/session.service";
+import { appError, isAppError } from "@/lib/core/errors";
+
+export function apiSuccess<T>(data: T, status = 200) {
+  return NextResponse.json({ success: true, data }, { status });
+}
+
+export function apiError(code: string, message: string, status: number) {
+  return NextResponse.json({ success: false, error: { code, message } }, { status });
+}
+
+export function handleRouteError(error: unknown) {
+  if (error instanceof ZodError) {
+    const message = error.errors[0]?.message ?? "Invalid input";
+    return apiError("VALIDATION_ERROR", message, 422);
+  }
+  if (isAppError(error)) {
+    return apiError(error.code, error.message, error.status);
+  }
+  console.error("[api]", error);
+  return apiError("SYSTEM_ERROR", "Internal server error", 500);
+}
+
+export async function requireApiUser(): Promise<AuthUserDto> {
+  const user = await getSessionUser();
+  if (!user) {
+    throw appError("UNAUTHORIZED", "Not authenticated");
+  }
+  if (user.id.startsWith("demo_")) {
+    throw appError("UNAUTHORIZED", "Sign in with a database account (run npm run db:seed)");
+  }
+  return user;
+}

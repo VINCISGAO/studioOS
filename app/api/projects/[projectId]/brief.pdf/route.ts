@@ -51,7 +51,7 @@ export async function GET(request: Request, context: RouteContext) {
 
   const filename = `${(project.title || "brief").replace(/[^\w\-]+/g, "_")}_form.pdf`;
 
-  return new NextResponse(pdf, {
+  return new NextResponse(new Uint8Array(pdf), {
     headers: {
       "Content-Type": "application/pdf",
       "Content-Disposition": `${download ? "attachment" : "inline"}; filename="${filename}"`,

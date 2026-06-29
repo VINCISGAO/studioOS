@@ -23,10 +23,19 @@ function withLang(url: URL, request: NextRequest) {
 }
 
 export async function middleware(request: NextRequest) {
-  const langParam = request.nextUrl.searchParams.get("lang");
-  const savedLang = request.cookies.get(LOCALE_COOKIE)?.value;
   const pathname = request.nextUrl.pathname;
   const isApiRoute = pathname.startsWith("/api/");
+
+  // Fix broken links like /?lang%3Dzh → /?lang=zh
+  const rawSearch = request.nextUrl.search;
+  if (!isApiRoute && (rawSearch === "?lang%3Dzh" || rawSearch === "?lang%3Den")) {
+    const url = request.nextUrl.clone();
+    url.search = rawSearch.includes("zh") ? "?lang=zh" : "?lang=en";
+    return NextResponse.redirect(url);
+  }
+
+  const langParam = request.nextUrl.searchParams.get("lang");
+  const savedLang = request.cookies.get(LOCALE_COOKIE)?.value;
 
   if (!isApiRoute && !langParam && (savedLang === "zh" || savedLang === "en")) {
     const url = request.nextUrl.clone();

@@ -63,8 +63,8 @@ export default async function NewProjectPage({
   ]);
 
   const initialData = { project, assets, references, brief, pack };
-  const rawStep = Number(query.step) || 1;
-  const step = rawStep <= 1 ? 1 : rawStep === 2 ? 2 : rawStep === 3 ? 3 : 4;
+  const rawStep = Number(query.step) || project.wizard_step || 1;
+  const step = Math.min(7, Math.max(1, rawStep));
 
   return (
     <BrandCampaignWizard locale={locale} initialData={initialData} initialStep={step} />

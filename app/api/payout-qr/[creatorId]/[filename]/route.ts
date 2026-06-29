@@ -20,7 +20,7 @@ export async function GET(
     const mime =
       ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : "image/jpeg";
 
-    return new NextResponse(data, {
+    return new NextResponse(new Uint8Array(data), {
       headers: {
         "Content-Type": mime,
         "Cache-Control": "private, max-age=3600"

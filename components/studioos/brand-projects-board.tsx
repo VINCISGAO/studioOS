@@ -284,6 +284,12 @@ export function BrandProjectsBoard({ locale, rows }: Props) {
       const result = await deleteBrandProjectsAction(fd);
 
       if (!result.ok) {
+        if ("stale" in result && result.stale) {
+          setDeleteError(null);
+          setDeleteOpen(false);
+          router.refresh();
+          return;
+        }
         setDeleteError(result.error);
         return;
       }

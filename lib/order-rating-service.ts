@@ -1,9 +1,7 @@
-import { promises as fs } from "fs";
-import path from "path";
 import type { CreatorRatingStats, OrderRatingStore, OrderReview } from "@/lib/order-rating-types";
+import { dataStorePath, readDataJson, writeDataJson } from "@/lib/serverless-store";
 
-const STORE_DIR = path.join(process.cwd(), ".data");
-const STORE_PATH = path.join(STORE_DIR, "order-ratings-store.json");
+const STORE_PATH = dataStorePath("order-ratings-store.json");
 
 function createId(prefix: string) {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -14,19 +12,11 @@ function emptyStore(): OrderRatingStore {
 }
 
 async function readStore(): Promise<OrderRatingStore> {
-  try {
-    const raw = await fs.readFile(STORE_PATH, "utf8");
-    return JSON.parse(raw) as OrderRatingStore;
-  } catch {
-    const seeded = emptyStore();
-    await writeStore(seeded);
-    return seeded;
-  }
+  return readDataJson(STORE_PATH, () => emptyStore());
 }
 
 async function writeStore(store: OrderRatingStore) {
-  await fs.mkdir(STORE_DIR, { recursive: true });
-  await fs.writeFile(STORE_PATH, JSON.stringify(store, null, 2), "utf8");
+  await writeDataJson(STORE_PATH, store);
 }
 
 export async function getOrderReview(orderId: string): Promise<OrderReview | null> {
@@ -51,16 +41,16 @@ export async function createOrderReview(input: {
   }
 
   const review: OrderReview = {
-    id: createId("rev"),
+    id: createId("rating"),
     order_id: input.order_id,
     creator_id: input.creator_id,
     client_email: input.client_email.toLowerCase(),
-    rating: Math.round(input.rating * 10) / 10,
-    comment: input.comment?.trim() ?? "",
+    rating: input.rating,
+    comment: input.comment?.trim() || undefined,
     created_at: new Date().toISOString()
   };
 
-  store.reviews.unshift(review);
+  store.reviews.push(review);
   await writeStore(store);
   return { ok: true, review };
 }
@@ -72,16 +62,9 @@ export async function getCreatorRatingStats(creatorId: string): Promise<CreatorR
     return { average: 0, count: 0 };
   }
 
-  const average = reviews.reduce((sum, item) => sum + item.rating, 0) / reviews.length;
+  const sum = reviews.reduce((total, item) => total + item.rating, 0);
   return {
-    average: Math.round(average * 10) / 10,
+    average: Math.round((sum / reviews.length) * 10) / 10,
     count: reviews.length
   };
-}
-
-export async function listReviewsForCreator(creatorId: string): Promise<OrderReview[]> {
-  const store = await readStore();
-  return store.reviews
-    .filter((item) => item.creator_id === creatorId)
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 }

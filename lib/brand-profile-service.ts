@@ -1,12 +1,10 @@
-import { promises as fs } from "fs";
-import path from "path";
+import { writeDataJson, dataStorePath, readDataJson } from "@/lib/serverless-store";
 import { creators } from "@/lib/data";
 import type { BrandProfileStore, BrandShowcaseAd, StoredBrandProfile } from "@/lib/brand-profile-types";
 import { getDeliverables, listOrdersForClient } from "@/lib/order-service";
 import { listProjectsForClient } from "@/lib/project-service";
 
-const STORE_DIR = path.join(process.cwd(), ".data");
-const STORE_PATH = path.join(STORE_DIR, "brand-profile-store.json");
+const STORE_PATH = dataStorePath("brand-profile-store.json");
 
 function nowIso() {
   return new Date().toISOString();
@@ -26,19 +24,11 @@ function emptyStore(): BrandProfileStore {
 }
 
 async function readStore(): Promise<BrandProfileStore> {
-  try {
-    const raw = await fs.readFile(STORE_PATH, "utf8");
-    return JSON.parse(raw) as BrandProfileStore;
-  } catch {
-    const seeded = emptyStore();
-    await writeStore(seeded);
-    return seeded;
-  }
+  return readDataJson(STORE_PATH, () => emptyStore());
 }
 
 async function writeStore(store: BrandProfileStore) {
-  await fs.mkdir(STORE_DIR, { recursive: true });
-  await fs.writeFile(STORE_PATH, JSON.stringify(store, null, 2), "utf8");
+  await writeDataJson(STORE_PATH, store);
 }
 
 export function isBrandProfileComplete(profile: StoredBrandProfile | null | undefined) {

@@ -26,10 +26,6 @@ export async function resolveCurrentCreatorIdFromEmail(email: string) {
 }
 
 export async function getCurrentCreatorId(): Promise<string | null> {
-  if (hasSupabaseConfig()) {
-    return null;
-  }
-
   const cookieStore = await cookies();
   const session = parseDemoSession(cookieStore.get(DEMO_SESSION_COOKIE)?.value);
 

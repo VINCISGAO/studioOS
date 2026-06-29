@@ -1,21 +1,12 @@
-import dynamic from "next/dynamic";
-import { HomeAudience } from "@/components/marketing/home-audience";
-import { HomeCta } from "@/components/marketing/home-cta";
-import { HomeHero } from "@/components/marketing/home-hero";
-import { HomeInfrastructure } from "@/components/marketing/home-infrastructure";
-import { MarketingShell } from "@/components/marketing/marketing-shell";
+import { HomeLandingPage } from "@/components/marketing/landing/home-landing-page";
+import { creatorWorks } from "@/lib/data";
 import { getLocale, type SearchParams } from "@/lib/i18n";
-import { resolveMarketingPortalHref } from "@/lib/marketing/portal-entry";
+import {
+  resolveMarketingPortalHref,
+  resolveMarketingPortalLabel
+} from "@/lib/marketing/portal-entry";
 import { getCurrentSession } from "@/lib/session-user";
-import { getWorksEngagement } from "@/lib/work-engagement-service";
-import { getFeaturedWorks } from "@/lib/works-catalog";
-
-const HomePortfolioShowcase = dynamic(
-  () => import("@/components/home-portfolio-showcase").then((mod) => mod.HomePortfolioShowcase),
-  {
-    loading: () => <div className="mx-auto h-[28rem] max-w-7xl animate-pulse rounded-2xl bg-zinc-900/40" />
-  }
-);
+import { baseViewCount } from "@/lib/work-engagement-utils";
 
 type HomePageProps = {
   searchParams: Promise<SearchParams>;
@@ -25,27 +16,24 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const locale = getLocale(await searchParams);
   const session = await getCurrentSession();
   const portalHref = resolveMarketingPortalHref(locale, session);
-  const featuredWorks = await getFeaturedWorks(8);
-  const userEmail = session?.email ?? null;
-  const engagement = await getWorksEngagement(
-    featuredWorks.map((work) => work.id),
-    userEmail
+  const portalLabel = resolveMarketingPortalLabel(locale, session);
+
+  const featuredWorks = creatorWorks.filter((work) => !work.hidden).slice(0, 8);
+  const engagement = Object.fromEntries(
+    featuredWorks.map((work) => [
+      work.id,
+      { likeCount: 0, likedByMe: false, views: baseViewCount(work.id) }
+    ])
   );
 
   return (
-    <MarketingShell locale={locale}>
-      <main>
-        <HomeHero locale={locale} portalHref={portalHref} />
-        <HomeInfrastructure locale={locale} />
-        <HomePortfolioShowcase
-          locale={locale}
-          works={featuredWorks}
-          engagement={engagement}
-          isLoggedIn={Boolean(userEmail)}
-        />
-        <HomeAudience locale={locale} />
-        <HomeCta locale={locale} portalHref={portalHref} />
-      </main>
-    </MarketingShell>
+    <HomeLandingPage
+      locale={locale}
+      portalHref={portalHref}
+      portalLabel={portalLabel}
+      featuredWorks={featuredWorks}
+      engagement={engagement}
+      isLoggedIn={Boolean(session)}
+    />
   );
 }

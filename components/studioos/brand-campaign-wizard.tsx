@@ -5,7 +5,9 @@ import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import {
   prepareBrandCampaignAction,
   publishBrandCampaignAction,
-  saveBrandCampaignStep1Action
+  saveBrandCampaignBriefAction,
+  saveBrandCampaignProductAction,
+  saveBrandCampaignReferencesAction
 } from "@/app/brand-campaign-actions";
 import { BrandCampaignConfirmation } from "@/components/studioos/brand-campaign-confirmation";
 import { BrandCreatorMatchRadar } from "@/components/studioos/brand-creator-match-radar";
@@ -13,7 +15,15 @@ import {
   BrandCampaignStepBrief,
   type BriefFormState
 } from "@/components/studioos/brand-campaign-step-brief";
+import { WizardProgressPanel } from "@/components/studioos/ui/wizard-progress-panel";
+import { WizardStepper } from "@/components/studioos/ui/wizard-stepper";
 import { Button } from "@/components/ui/button";
+import { useWizardProgress } from "@/hooks/use-wizard-progress";
+import {
+  clampWizardStep,
+  migrateLegacyBrandWizardStep,
+  wizardStepMeta
+} from "@/lib/campaign/wizard-steps";
 import type {
   StoredCreativeBrief,
   StoredCreativePackItem,
@@ -46,7 +56,7 @@ type WizardData = {
 
 const copy = {
   en: {
-    step2Title: "We've prepared your project.",
+    packTitle: "Your creative pack is ready",
     analyzedProduct: "Product analyzed",
     analyzedRef: "Reference analyzed",
     planReady: "Creative plan ready",
@@ -54,12 +64,11 @@ const copy = {
     delivery: "Delivery",
     continue: "Continue",
     back: "Back",
-    preparing: "Analyzing your inputs…",
     matching: "Matching creators…",
     matchFailed: "Matching failed — try again"
   },
   zh: {
-    step2Title: "项目已为你准备好。",
+    packTitle: "创意方案已就绪",
     analyzedProduct: "产品已分析",
     analyzedRef: "参考已分析",
     planReady: "创意方案就绪",
@@ -67,7 +76,6 @@ const copy = {
     delivery: "交付时间",
     continue: "继续",
     back: "返回",
-    preparing: "正在分析…",
     matching: "正在匹配创作者…",
     matchFailed: "匹配失败，请重试"
   }
@@ -118,6 +126,26 @@ function readStoredQuestionnaire(project: StoredProject): Partial<BriefFormState
   };
 }
 
+function appendBriefForm(fd: FormData, state: BriefFormState) {
+  fd.set("product_name", state.productName);
+  fd.set("product_url", state.productUrl);
+  fd.set("product_description", state.productDescription);
+  fd.set("objective", state.objective);
+  fd.set("audience_description", state.audienceDescription);
+  fd.set("platforms", state.platforms.join(","));
+  fd.set("extra_notes", state.extraNotes);
+  fd.set("raw_summary", state.rawSummary);
+  fd.set("budget_range", state.budgetRange);
+  fd.set("delivery_timeline", state.deliveryTimeline);
+  fd.set("aspect_ratio", state.aspectRatio);
+  if (state.refined) {
+    fd.set("campaign_goal", state.refined.campaign_goal);
+    fd.set("target_audience", state.refined.target_audience);
+    fd.set("title", state.refined.title);
+    fd.set("notes", state.refined.notes);
+  }
+}
+
 export function BrandCampaignWizard({
   locale,
   initialData,
@@ -129,14 +157,18 @@ export function BrandCampaignWizard({
 }) {
   const t = copy[locale];
   const router = useRouter();
-  const [step, setStep] = useState(Math.min(4, Math.max(1, initialStep)));
+  const projectId = initialData.project.id;
+  const migrated = migrateLegacyBrandWizardStep(initialStep);
+  const [step, setStep] = useState(clampWizardStep(migrated));
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [prepared, setPrepared] = useState(initialData.project.wizard_completed_steps.includes(5));
-  const [isMatching, setIsMatching] = useState(initialStep === 4);
+  const [isMatching, setIsMatching] = useState(step === 7);
+  const [analysisStarted, setAnalysisStarted] = useState(false);
   const matchStartedRef = useRef(false);
 
-  const projectId = initialData.project.id;
+  const { draft: progressDraft } = useWizardProgress(projectId, step === 4 || step === 7);
+
   const budget = estimateBudgetRange(initialData.project.budget_range);
   const deliveryTimelineId = resolveDeliveryTimelineFromProject(initialData.project);
   const delivery = estimateDeliveryDays(
@@ -160,17 +192,25 @@ export function BrandCampaignWizard({
       aspectRatio: defaultBrandAspectRatio(),
       ...readStoredQuestionnaire(initialData.project)
     }),
-    [initialData.project, locale]
+    [initialData.project]
   );
 
-  useEffect(() => {
-    if (initialStep >= 2 && initialData.project.wizard_completed_steps.includes(2) && !prepared) {
-      runPrepare();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const meta = wizardStepMeta(locale, step);
+  const productImageUrl = useMemo(() => {
+    const asset = initialData.assets.find(
+      (item) => item.type === "product_image_original" || item.type === "product_image"
+    );
+    return asset?.file_url ?? null;
+  }, [initialData.assets]);
+
+  function goStep(next: number) {
+    const clamped = clampWizardStep(next);
+    router.push(withLocale(`/brand/projects/new?project=${projectId}&step=${clamped}`, locale));
+    setStep(clamped);
+  }
 
   function runPrepare() {
+    setAnalysisStarted(true);
     startTransition(async () => {
       setError(null);
       const fd = new FormData();
@@ -179,62 +219,29 @@ export function BrandCampaignWizard({
       const result = await prepareBrandCampaignAction(fd);
       if (!result.ok) {
         setError(result.error);
+        setAnalysisStarted(false);
         return;
       }
       setPrepared(true);
-      setStep(2);
+      setAnalysisStarted(false);
       router.refresh();
     });
   }
 
-  function goStep(next: number) {
-    router.push(withLocale(`/brand/projects/new?project=${projectId}&step=${next}`, locale));
-    setStep(next);
-  }
+  useEffect(() => {
+    if (step !== 4 || prepared || analysisStarted) return;
+    runPrepare();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, prepared]);
 
-  function handleStep1(state: BriefFormState) {
-    startTransition(async () => {
-      setError(null);
-      const fd = new FormData();
-      fd.set("lang", locale);
-      fd.set("project_id", projectId);
-      fd.set("product_name", state.productName);
-      fd.set("product_url", state.productUrl);
-      fd.set("product_description", state.productDescription);
-      fd.set("objective", state.objective);
-      fd.set("audience_description", state.audienceDescription);
-      fd.set("platforms", state.platforms.join(","));
-      fd.set("extra_notes", state.extraNotes);
-      fd.set("raw_summary", state.rawSummary);
-      fd.set("budget_range", state.budgetRange);
-      fd.set("delivery_timeline", state.deliveryTimeline);
-      fd.set("aspect_ratio", state.aspectRatio);
-      if (state.refined) {
-        fd.set("campaign_goal", state.refined.campaign_goal);
-        fd.set("target_audience", state.refined.target_audience);
-        fd.set("title", state.refined.title);
-        fd.set("notes", state.refined.notes);
-      }
-      const result = await saveBrandCampaignStep1Action(fd);
-      if (!result.ok) {
-        setError(result.error);
-        return;
-      }
-      goStep(2);
-      runPrepare();
-    });
-  }
-
-  const productImageUrl = useMemo(() => {
-    const asset = initialData.assets.find(
-      (item) => item.type === "product_image_original" || item.type === "product_image"
-    );
-    return asset?.file_url ?? null;
-  }, [initialData.assets]);
-
-  function handleProductUploaded() {
-    router.refresh();
-  }
+  useEffect(() => {
+    if (step !== 7 || matchStartedRef.current) return;
+    matchStartedRef.current = true;
+    setIsMatching(true);
+    setError(null);
+    runPublish();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
 
   function runPublish() {
     startTransition(async () => {
@@ -245,40 +252,80 @@ export function BrandCampaignWizard({
       const result = await publishBrandCampaignAction(fd);
       if (result && !result.ok) {
         setIsMatching(false);
+        matchStartedRef.current = false;
         setError(result.error);
       }
     });
   }
 
-  useEffect(() => {
-    if (step !== 4 || matchStartedRef.current) return;
-    matchStartedRef.current = true;
-    setIsMatching(true);
-    setError(null);
+  function saveBrief(state: BriefFormState) {
+    startTransition(async () => {
+      setError(null);
+      const fd = new FormData();
+      fd.set("lang", locale);
+      fd.set("project_id", projectId);
+      appendBriefForm(fd, state);
+      const result = await saveBrandCampaignBriefAction(fd);
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      goStep(2);
+    });
+  }
 
-    const timer = window.setTimeout(() => {
-      runPublish();
-    }, 3000);
+  function saveProduct(state: BriefFormState) {
+    startTransition(async () => {
+      setError(null);
+      const fd = new FormData();
+      fd.set("lang", locale);
+      fd.set("project_id", projectId);
+      fd.set("product_name", state.productName);
+      fd.set("product_url", state.productUrl);
+      const result = await saveBrandCampaignProductAction(fd);
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      goStep(3);
+    });
+  }
 
-    return () => window.clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step]);
+  function saveReferences(state: BriefFormState) {
+    startTransition(async () => {
+      setError(null);
+      const fd = new FormData();
+      fd.set("lang", locale);
+      fd.set("project_id", projectId);
+      appendBriefForm(fd, state);
+      const result = await saveBrandCampaignReferencesAction(fd);
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      goStep(4);
+    });
+  }
+
+  const maxWidth =
+    step === 1 ? "max-w-6xl" : step === 7 ? "max-w-lg" : step === 4 && !prepared ? "max-w-2xl" : "max-w-3xl";
 
   return (
-    <div
-      className={cn(
-        "mx-auto w-full",
-        step === 1 ? "max-w-6xl" : step === 4 ? "max-w-lg" : "max-w-3xl"
-      )}
-    >
-      {step > 1 ? (
+    <div className={cn("mx-auto w-full", maxWidth)}>
+      <div className="mb-8">
+        <WizardStepper locale={locale} currentStep={step} compact={step === 7} />
+        <h1 className="mt-6 text-title text-foreground">{meta.headline[locale]}</h1>
+        <p className="mt-2 text-body text-muted-foreground">{meta.subtitle[locale]}</p>
+      </div>
+
+      {step > 1 && step !== 4 ? (
         <Button
           type="button"
           variant="ghost"
           size="sm"
-          className="mb-6 gap-2 text-zinc-500"
+          className="mb-6 gap-2 text-muted-foreground"
           onClick={() => goStep(step - 1)}
-          disabled={isPending || step === 2 || (step === 4 && isMatching)}
+          disabled={isPending || (step === 7 && isMatching)}
         >
           <ArrowLeft className="h-4 w-4" /> {t.back}
         </Button>
@@ -289,111 +336,132 @@ export function BrandCampaignWizard({
           locale={locale}
           projectId={projectId}
           initial={briefInitial}
-          initialProductImageUrl={productImageUrl}
-          initialReferences={initialData.references}
+          stepMode="brief"
+          hideTopBar
           isPending={isPending}
           error={error}
-          onProductUploaded={handleProductUploaded}
-          onReferencesUpdated={() => router.refresh()}
-          onContinue={handleStep1}
+          onContinue={saveBrief}
         />
       ) : null}
 
       {step === 2 ? (
-        <section className="space-y-8">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">
-              {locale === "zh" ? "第 2 步 / 共 4 步" : "Step 2 / 4"}
-            </p>
-            <h1 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">{t.step2Title}</h1>
-          </div>
-          {isPending && !prepared ? (
-            <div className="flex items-center gap-3 rounded-xl border bg-white p-6 text-sm text-zinc-600">
-              <Loader2 className="h-5 w-5 animate-spin" />
-              {t.preparing}
-            </div>
-          ) : (
+        <BrandCampaignStepBrief
+          locale={locale}
+          projectId={projectId}
+          initial={briefInitial}
+          initialProductImageUrl={productImageUrl}
+          stepMode="product"
+          hideTopBar
+          isPending={isPending}
+          error={error}
+          onProductUploaded={() => router.refresh()}
+          onContinue={saveProduct}
+        />
+      ) : null}
+
+      {step === 3 ? (
+        <BrandCampaignStepBrief
+          locale={locale}
+          projectId={projectId}
+          initial={briefInitial}
+          initialReferences={initialData.references}
+          stepMode="references"
+          hideTopBar
+          isPending={isPending}
+          error={error}
+          onReferencesUpdated={() => router.refresh()}
+          onContinue={saveReferences}
+        />
+      ) : null}
+
+      {step === 4 ? (
+        <section className="space-y-6">
+          <WizardProgressPanel
+            locale={locale}
+            draft={progressDraft}
+            fallbackMessage={locale === "zh" ? "正在分析…" : "Analyzing your inputs…"}
+          />
+          {prepared ? (
             <>
-              <ul className="space-y-3 rounded-2xl border bg-white p-6">
+              <ul className="space-y-3 rounded-card border bg-card p-6">
                 {[t.analyzedProduct, t.analyzedRef, t.planReady].map((label) => (
                   <li key={label} className="flex items-center gap-3 text-sm font-medium">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-success/15 text-success">
                       <Check className="h-3.5 w-3.5" />
                     </span>
                     {label}
                   </li>
                 ))}
               </ul>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="rounded-xl border bg-white p-5">
-                  <p className="text-xs uppercase tracking-wide text-zinc-500">{t.budget}</p>
-                  <p className="mt-2 text-2xl font-semibold">{budget}</p>
-                </div>
-                <div className="rounded-xl border bg-white p-5">
-                  <p className="text-xs uppercase tracking-wide text-zinc-500">{t.delivery}</p>
-                  <p className="mt-2 text-2xl font-semibold">{delivery}</p>
-                </div>
-              </div>
-              {error ? <p className="text-sm text-red-600">{error}</p> : null}
-              <Button
-                type="button"
-                className="h-12 w-full rounded-full"
-                disabled={isPending || !prepared}
-                onClick={() => {
-                  router.refresh();
-                  setStep(3);
-                  goStep(3);
-                }}
-              >
+              {error ? <p className="text-sm text-destructive">{error}</p> : null}
+              <Button type="button" size="lg" className="w-full" disabled={isPending} onClick={() => goStep(5)}>
                 {t.continue} <ArrowRight className="h-4 w-4" />
               </Button>
             </>
-          )}
+          ) : null}
         </section>
       ) : null}
 
-      {step === 3 ? (
+      {step === 5 ? (
+        <section className="space-y-8">
+          <ul className="space-y-3 rounded-card border bg-card p-6">
+            {[t.analyzedProduct, t.analyzedRef, t.planReady].map((label) => (
+              <li key={label} className="flex items-center gap-3 text-sm font-medium">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-success/15 text-success">
+                  <Check className="h-3.5 w-3.5" />
+                </span>
+                {label}
+              </li>
+            ))}
+          </ul>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="rounded-card border bg-card p-5">
+              <p className="text-label text-muted-foreground">{t.budget}</p>
+              <p className="mt-2 text-2xl font-semibold">{budget}</p>
+            </div>
+            <div className="rounded-card border bg-card p-5">
+              <p className="text-label text-muted-foreground">{t.delivery}</p>
+              <p className="mt-2 text-2xl font-semibold">{delivery}</p>
+            </div>
+          </div>
+          <Button type="button" size="lg" className="w-full" onClick={() => goStep(6)}>
+            {t.continue} <ArrowRight className="h-4 w-4" />
+          </Button>
+        </section>
+      ) : null}
+
+      {step === 6 ? (
         <BrandCampaignConfirmation
           locale={locale}
           project={initialData.project}
           onConfirmed={() => {
             matchStartedRef.current = false;
             router.refresh();
-            setStep(4);
-            goStep(4);
+            goStep(7);
           }}
         />
       ) : null}
 
-      {step === 4 ? (
+      {step === 7 ? (
         <section className="space-y-6">
+          <WizardProgressPanel locale={locale} draft={progressDraft} fallbackMessage={t.matching} />
           {isMatching && !error ? (
             <BrandCreatorMatchRadar locale={locale} />
           ) : (
             <>
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">
-                  {locale === "zh" ? "第 4 步 / 共 4 步" : "Step 4 / 4"}
-                </p>
-                <h1 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
-                  {locale === "zh" ? "推荐 Studio" : "Recommended Studios"}
-                </h1>
-              </div>
-              <p className="text-sm text-zinc-500">
-                {locale === "zh"
-                  ? "匹配未完成，请点击继续重试。"
-                  : "Matching did not complete — tap continue to retry."}
+              <p className="text-sm text-muted-foreground">
+                {locale === "zh" ? "匹配未完成，请点击继续重试。" : "Matching did not complete — tap continue to retry."}
               </p>
-              {error ? <p className="text-sm text-red-600">{error}</p> : null}
+              {error ? <p className="text-sm text-destructive">{error}</p> : null}
               <Button
                 type="button"
-                className="h-12 w-full rounded-full"
+                size="lg"
+                className="w-full"
                 disabled={isPending}
                 onClick={() => {
                   matchStartedRef.current = false;
                   setIsMatching(true);
-                  setError(null);
-                  window.setTimeout(() => runPublish(), 3000);
+                  runPublish();
                 }}
               >
                 {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : t.continue}
@@ -401,9 +469,6 @@ export function BrandCampaignWizard({
               </Button>
             </>
           )}
-          {isMatching && isPending ? (
-            <p className="text-center text-xs text-zinc-400">{t.matching}</p>
-          ) : null}
         </section>
       ) : null}
     </div>

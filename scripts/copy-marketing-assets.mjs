@@ -8,6 +8,17 @@ const assetRoot = path.join(
   ".cursor/projects/Users-linkele-Documents-Codex-2026-06-28-build-a-production-ready-mvp-web/assets"
 );
 
+const HERO_CHAT_ASSETS = [
+  "d2c4032c-36cb-4431-8587-17fc9309a920-8e852c55-f1ee-4346-a3fb-976c80e1536b.png",
+  "image-69b788da-eb7b-4171-929e-71a681c747b5.png",
+  "home-hero-bg.png"
+];
+
+const HERO_STUDIO_ASSETS = [
+  "dba0e50a-14b8-4743-a9e5-eb24fd434ce2-ae1f6ab4-b47b-46c2-b30f-0804bf4b0277.png",
+  "image-5de13bfe-b0d6-4f11-b324-365b7986eb78.png"
+];
+
 function copyFirstAvailable({ dest, sources, label }) {
   mkdirSync(path.dirname(dest), { recursive: true });
   const source = sources.find((candidate) => existsSync(candidate));
@@ -22,6 +33,47 @@ function copyFirstAvailable({ dest, sources, label }) {
   copyFileSync(source, dest);
   console.log(`[copy-marketing-assets] ${label} -> ${dest}`);
 }
+
+const heroSources = [
+  path.join(root, "assets/marketing/home-hero-bg.png"),
+  ...HERO_CHAT_ASSETS.map((fileName) => path.join(assetRoot, fileName)),
+  path.join(root, "public/images/home-hero-bg.png")
+];
+
+const heroPublic = path.join(root, "public/images/home-hero-bg.png");
+const heroBundled = path.join(root, "assets/marketing/home-hero-bg.png");
+
+copyFirstAvailable({
+  label: "home hero bg (public)",
+  dest: heroPublic,
+  sources: heroSources
+});
+
+copyFirstAvailable({
+  label: "home hero bg (bundled)",
+  dest: heroBundled,
+  sources: [heroPublic, ...heroSources]
+});
+
+const studioPublic = path.join(root, "public/images/home-hero-studio.png");
+const studioBundled = path.join(root, "assets/marketing/home-hero-studio.png");
+const studioSources = [
+  path.join(root, "assets/marketing/home-hero-studio.png"),
+  ...HERO_STUDIO_ASSETS.map((fileName) => path.join(assetRoot, fileName)),
+  path.join(root, "public/images/home-hero-studio.png")
+];
+
+copyFirstAvailable({
+  label: "home hero studio (public)",
+  dest: studioPublic,
+  sources: studioSources
+});
+
+copyFirstAvailable({
+  label: "home hero studio (bundled)",
+  dest: studioBundled,
+  sources: [studioPublic, ...studioSources]
+});
 
 copyFirstAvailable({
   label: "login space bg",

@@ -1,10 +1,9 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { BrandReviewShell } from "@/components/mvp/brand-review-shell";
 import { AdminPortalShell } from "@/components/studioos/admin-portal-shell";
 import { BrandPortalShell } from "@/components/studioos/brand-portal-shell";
 import { StudioPortalShell } from "@/components/studioos/studio-portal-shell";
-import { ReviewFocusShell } from "@/components/mvp/review-focus-shell";
-import { BrandReviewShell } from "@/components/mvp/brand-review-shell";
 import { getCurrentCreator } from "@/lib/creator-session";
 import {
   hasCompletedCreatorProfile,
@@ -18,7 +17,6 @@ import {
   studioProfileOnboardingPath
 } from "@/lib/studioos/studio-access";
 import { getMvpProfile } from "@/lib/mvp/session";
-import { getReviewBundle } from "@/lib/mvp/store";
 
 export default async function WorkspaceLayout({ children }: { children: React.ReactNode }) {
   const headerList = await headers();
@@ -35,7 +33,6 @@ export default async function WorkspaceLayout({ children }: { children: React.Re
 
   const reviewMatch = pathname.match(/\/workspace\/projects\/([^/]+)\/review$/);
   const isReviewRoom = Boolean(reviewMatch);
-  const reviewProjectId = reviewMatch?.[1];
   const creator = await getCurrentCreator();
   const certificationPaid = hasPaidCreatorDeposit(creator);
   const profileComplete = hasCompletedCreatorProfile(creator);
@@ -59,25 +56,15 @@ export default async function WorkspaceLayout({ children }: { children: React.Re
   }
 
   if (profile && isReviewRoom) {
-    const bundle = reviewProjectId ? await getReviewBundle(reviewProjectId) : null;
-    const projectTitle = bundle ? bundle.project.title : undefined;
-
     if (profile.role === "brand") {
       return (
-        <BrandReviewShell
-          locale={locale}
-          pathname={pathname}
-          search={search}
-          profile={profile}
-          notifications={notifications}
-          unreadCount={unreadCount}
-        >
+        <BrandReviewShell locale={locale} pathname={pathname} search={search} profile={profile} reviewMode>
           {children}
         </BrandReviewShell>
       );
     }
 
-    if (profile.role === "studio" && creator) {
+    if (profile.role === "studio") {
       return (
         <StudioPortalShell
           locale={locale}
@@ -94,21 +81,7 @@ export default async function WorkspaceLayout({ children }: { children: React.Re
       );
     }
 
-    return (
-      <ReviewFocusShell
-        locale={locale}
-        pathname={pathname}
-        search={search}
-        role={profile.role}
-        projectTitle={projectTitle}
-        breadcrumbs={projectTitle}
-        notifications={notifications}
-        unreadCount={unreadCount}
-        showDecisionCta={profile.role === "brand"}
-      >
-        {children}
-      </ReviewFocusShell>
-    );
+    return <div className="flex h-screen flex-col overflow-hidden bg-white text-zinc-900">{children}</div>;
   }
 
   if (profile?.role === "studio") {
@@ -144,5 +117,5 @@ export default async function WorkspaceLayout({ children }: { children: React.Re
     );
   }
 
-  return <div className="min-h-screen bg-white">{children}</div>;
+  return <div className="min-h-screen bg-white text-zinc-900">{children}</div>;
 }

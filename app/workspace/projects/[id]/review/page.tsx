@@ -9,7 +9,7 @@ export default async function ProjectReviewPage({
   searchParams
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<SearchParams & { approved?: string; revision?: string }>;
+  searchParams: Promise<SearchParams & { approved?: string; revision?: string; settled?: string }>;
 }) {
   const [{ id }, query] = await Promise.all([params, searchParams]);
   const locale = getLocale(query);
@@ -27,7 +27,13 @@ export default async function ProjectReviewPage({
   if (!isParticipant) redirect(withLocale("/workspace", locale));
 
   const flash =
-    query.approved === "1" ? ("approved" as const) : query.revision === "1" ? ("revision" as const) : undefined;
+    query.approved === "1"
+      ? ("approved" as const)
+      : query.revision === "1"
+        ? ("revision" as const)
+        : query.settled === "1"
+          ? ("settled" as const)
+          : undefined;
 
   return (
     <ReviewWorkspace

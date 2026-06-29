@@ -6,13 +6,13 @@ import { parseDemoSession } from "@/lib/demo-auth";
 export { brandDraftEmailForSession } from "@/lib/brand-brief-session";
 
 export async function getCurrentClientEmail(): Promise<string | null> {
-  if (!hasSupabaseConfig()) {
-    const cookieStore = await cookies();
-    const session = parseDemoSession(cookieStore.get(DEMO_SESSION_COOKIE)?.value);
-    if (session?.role === "client") {
-      return session.email.toLowerCase();
-    }
+  const cookieStore = await cookies();
+  const session = parseDemoSession(cookieStore.get(DEMO_SESSION_COOKIE)?.value);
+  if (session?.role === "client") {
+    return session.email.toLowerCase();
+  }
 
+  if (!hasSupabaseConfig()) {
     const visitorId = cookieStore.get(VISITOR_COOKIE)?.value;
     if (visitorId) {
       return `${visitorId}@visitor.adbridge.local`;

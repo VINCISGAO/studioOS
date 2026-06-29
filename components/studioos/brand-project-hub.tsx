@@ -52,6 +52,7 @@ const copy = {
     productionWaiting: "Waiting for first draft",
     productionReady: "First draft uploaded",
     openReview: "Open review room",
+    openMessages: "AI Messages",
     viewStudios: "View studio options",
     goCheckout: "View payment details",
     continueWizard: "Continue setup",
@@ -96,6 +97,7 @@ const copy = {
     productionWaiting: "等待初稿上传",
     productionReady: "初稿已上传",
     openReview: "进入审片室",
+    openMessages: "AI 消息",
     viewStudios: "查看推荐团队",
     goCheckout: "查看付款详情",
     continueWizard: "继续填写需求",
@@ -128,6 +130,9 @@ const copy = {
 };
 
 function tabHref(projectId: string, tab: HubTab, locale: Locale) {
+  if (tab === "review") {
+    return withLocale(`/brand/projects/${projectId}/review`, locale);
+  }
   return withLocale(`/brand/projects/${projectId}?tab=${tab}`, locale);
 }
 
@@ -490,6 +495,13 @@ export function BrandProjectHub({
                   </div>
                 </div>
               ) : null}
+
+              <Button asChild variant="outline" className="rounded-xl">
+                <Link href={withLocale(`/brand/projects/${project.id}/communication`, locale)}>
+                  {t.openMessages}
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
 
               {deliverables.length ? (
                 <div className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-5">

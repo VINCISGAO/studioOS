@@ -141,8 +141,8 @@ export function StudioPortalShell({
   const isReviewPage = /\/workspace\/projects\/[^/]+\/review$/.test(pathname);
 
   return (
-    <div className={cn("min-h-screen", isReviewPage ? "bg-white" : "bg-[#f4f7fb]")}>
-      <div className="flex min-h-screen">
+    <div className={cn(isReviewPage ? "h-screen overflow-hidden bg-white" : "min-h-screen bg-[#f4f7fb]")}>
+      <div className={cn("flex", isReviewPage ? "h-full" : "min-h-screen")}>
         <aside className="hidden w-[248px] shrink-0 flex-col border-r border-zinc-200/80 bg-white lg:flex">
           <MarketingHomeLink
             locale={locale}
@@ -220,20 +220,24 @@ export function StudioPortalShell({
           </div>
         </aside>
 
-        <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-40 border-b border-zinc-200/80 bg-white/95 backdrop-blur">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+          <header className="sticky top-0 z-40 shrink-0 border-b border-zinc-200/80 bg-white/95 backdrop-blur">
             <div className="flex h-14 items-center justify-between px-4 sm:px-6 lg:px-8">
-              <div className="flex items-center gap-2 lg:hidden">
-                <MarketingHomeLink locale={locale} className="flex items-center gap-2 font-semibold text-zinc-950">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 text-white">
-                    <Sparkles className="h-4 w-4" />
-                  </span>
-                  {studioOS.productName}
-                </MarketingHomeLink>
-              </div>
-              <div className="hidden lg:block" />
+              {!isReviewPage ? (
+                <div className="flex items-center gap-2 lg:hidden">
+                  <MarketingHomeLink locale={locale} className="flex items-center gap-2 font-semibold text-zinc-950">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 text-white">
+                      <Sparkles className="h-4 w-4" />
+                    </span>
+                    {studioOS.productName}
+                  </MarketingHomeLink>
+                </div>
+              ) : (
+                <div className="hidden lg:block" />
+              )}
+              {!isReviewPage ? <div className="hidden lg:block" /> : null}
 
-              <div className="flex items-center gap-2 sm:gap-3">
+              <div className={cn("flex items-center gap-2 sm:gap-3", isReviewPage && "ml-auto")}>
                 <Suspense fallback={<LanguageSwitcherFallback locale={locale} />}>
                   <LanguageSwitcher locale={locale} pathname={pathname} search={search} />
                 </Suspense>
@@ -248,26 +252,35 @@ export function StudioPortalShell({
               </div>
             </div>
 
-            <div className="border-t border-zinc-100 px-4 py-3 lg:hidden">
-              <PortalMobileNav
-                locale={locale}
-                pathname={pathname}
-                items={navItems.map(({ href, labelKey, icon, requiresCertification }) => ({
-                  id: labelKey,
-                  href:
-                    !certificationPaid && requiresCertification
-                      ? "/studio/deposit"
-                      : certificationPaid && !profileComplete && requiresCertification
-                        ? "/studio/profile?onboarding=1"
-                        : href,
-                  label: nav[labelKey],
-                  icon: requiresCertification && !studioUnlocked ? Lock : icon
-                }))}
-              />
-            </div>
+            {!isReviewPage ? (
+              <div className="border-t border-zinc-100 px-4 py-3 lg:hidden">
+                <PortalMobileNav
+                  locale={locale}
+                  pathname={pathname}
+                  items={navItems.map(({ href, labelKey, icon, requiresCertification }) => ({
+                    id: labelKey,
+                    href:
+                      !certificationPaid && requiresCertification
+                        ? "/studio/deposit"
+                        : certificationPaid && !profileComplete && requiresCertification
+                          ? "/studio/profile?onboarding=1"
+                          : href,
+                    label: nav[labelKey],
+                    icon: requiresCertification && !studioUnlocked ? Lock : icon
+                  }))}
+                />
+              </div>
+            ) : null}
           </header>
 
-          <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">{children}</main>
+          <main
+            className={cn(
+              "min-h-0 min-w-0 flex-1",
+              isReviewPage ? "flex flex-col overflow-hidden p-0" : "px-4 py-6 sm:px-6 lg:px-8 lg:py-8"
+            )}
+          >
+            {children}
+          </main>
         </div>
       </div>
     </div>

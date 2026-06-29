@@ -1,18 +1,14 @@
-import { HERO_VIDEO_SRC } from "@/lib/hero-video";
+import { HERO_BACKGROUND_SRC } from "@/lib/hero-video";
 
 export function LoginBackgroundVideo() {
   return (
     <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden bg-[#09090b]" aria-hidden>
-      <video
-        src={HERO_VIDEO_SRC}
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="auto"
+      <img
+        src={HERO_BACKGROUND_SRC}
+        alt=""
         fetchPriority="high"
-        disablePictureInPicture
-        className="absolute left-1/2 top-1/2 h-full w-full min-h-full min-w-full -translate-x-1/2 -translate-y-1/2 scale-105 object-cover opacity-[0.32]"
+        decoding="async"
+        className="absolute left-1/2 top-1/2 h-full w-full min-h-full min-w-full -translate-x-1/2 -translate-y-1/2 scale-105 object-cover object-center opacity-[0.38]"
         style={{ filter: "saturate(0.9) contrast(1.05) blur(1px)" }}
       />
 

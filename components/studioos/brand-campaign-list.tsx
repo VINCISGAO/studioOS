@@ -70,6 +70,8 @@ const copy = {
     deleted: "Projects deleted",
     deletedOne: "Project deleted",
     deletedPartial: "Some items could not be deleted",
+    staleList:
+      "This list was out of date (often after a dev server restart). Refreshing…",
     clearSelection: "Clear selection",
     selected: "selected",
     selectAll: "Select all deletable",
@@ -101,6 +103,7 @@ const copy = {
     deleted: "已删除",
     deletedOne: "已删除",
     deletedPartial: "部分项目无法删除",
+    staleList: "列表已过期（常见于开发服务器重启后），正在刷新…",
     clearSelection: "取消选择",
     selected: "项已选",
     selectAll: "全选可删项",
@@ -335,6 +338,14 @@ export function BrandCampaignList({
 
       const result = await deleteBrandProjectsAction(fd);
       if (!result.ok) {
+        if ("stale" in result && result.stale) {
+          setDeleteError(t.staleList);
+          setDeleteOpen(false);
+          setPendingDeleteKeys([]);
+          setSelected(new Set());
+          router.refresh();
+          return;
+        }
         setDeleteError(result.error);
         return;
       }

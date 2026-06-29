@@ -2,17 +2,11 @@
 
 import { redirect } from "next/navigation";
 import { cookies, headers } from "next/headers";
+import { performSignIn, recordCreatorSignIn } from "@/lib/auth/sign-in-service";
+import { preferDemoAuth } from "@/lib/can-persist-local-store";
 import { DEMO_SESSION_COOKIE, hasSupabaseConfig } from "@/lib/auth-config";
 import { clearDemoSession, setDemoSession } from "@/lib/demo-auth-server";
-import { demoRedirectForRole, parseDemoSession, DEMO_USERS, type DemoUser } from "@/lib/demo-auth";
-import { getCreatorIdForDemoEmail } from "@/lib/creator-session";
-import {
-  authenticateDemoCreatorEmail,
-  getStoredCreatorSettings,
-  recordCreatorLogin
-} from "@/lib/studioos/creator-settings-service";
-import { creators } from "@/lib/data";
-import { getCreatorById } from "@/lib/creator-service";
+import { demoRedirectForRole, demoUserForSocialProvider, parseDemoSession, DEMO_USERS } from "@/lib/demo-auth";
 import { withLocale, type Locale } from "@/lib/i18n";
 import { getOrCreateOpenInquiry } from "@/lib/chat-service";
 import { getOrCreateVisitorId } from "@/lib/client-session";
@@ -24,68 +18,6 @@ type DemoSocialProvider = "google" | "apple" | "discord";
 
 function normalizeLang(raw: FormDataEntryValue | null): Locale {
   return String(raw ?? "en") === "zh" ? "zh" : "en";
-}
-
-async function authenticateDemoLogin(email: string, password: string): Promise<DemoUser | null> {
-  const normalized = email.trim().toLowerCase();
-  const direct = DEMO_USERS.find((user) => user.email === normalized);
-
-  if (direct) {
-    const creatorId = getCreatorIdForDemoEmail(normalized);
-    if (creatorId) {
-      const seed = creators.find((creator) => creator.id === creatorId);
-      if (seed) {
-        const settings = await getStoredCreatorSettings(creatorId);
-        if (settings?.account_deleted_at) {
-          return null;
-        }
-        const expected = settings?.custom_password ?? direct.password;
-        if (password !== expected) {
-          return null;
-        }
-        return { ...direct, password };
-      }
-    }
-
-    if (direct.password !== password) {
-      return null;
-    }
-    return direct;
-  }
-
-  const aliasAuth = await authenticateDemoCreatorEmail(email, password);
-  if (!aliasAuth) {
-    return null;
-  }
-
-  return {
-    email: aliasAuth.email,
-    password,
-    role: aliasAuth.role,
-    label: aliasAuth.label
-  };
-}
-
-async function recordCreatorSignIn(email: string) {
-  const { resolveCreatorIdByEmail } = await import("@/lib/studioos/creator-settings-service");
-  const creatorId = await resolveCreatorIdByEmail(email);
-  if (!creatorId) {
-    return;
-  }
-
-  const creator = await getCreatorById(creatorId);
-  if (!creator) {
-    return;
-  }
-
-  const headerStore = await headers();
-  await recordCreatorLogin(creatorId, creator, {
-    userAgent: headerStore.get("user-agent") ?? "Unknown",
-    ip:
-      headerStore.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-      headerStore.get("x-real-ip") ??
-      "127.0.0.1"
-  });
 }
 
 async function resolveInquiryClient(lang: Locale) {
@@ -190,48 +122,29 @@ export async function signInAction(formData: FormData) {
   const lang = normalizeLang(formData.get("lang"));
   const email = String(formData.get("email") ?? "");
   const password = String(formData.get("password") ?? "");
-  const expectedRole = String(formData.get("expected_role") ?? "");
+  const expectedRoleRaw = String(formData.get("expected_role") ?? "");
+  const expectedRole = expectedRoleRaw === "creator" ? "creator" : expectedRoleRaw === "brand" ? "brand" : "";
   const nextPath = String(formData.get("next") ?? "").trim();
 
-  if (!hasSupabaseConfig()) {
-    const demoUser = await authenticateDemoLogin(email, password);
-    if (!demoUser) {
-      const roleParam = expectedRole || "brand";
-      redirect(
-        `/login?error=${encodeURIComponent(lang === "zh" ? "邮箱或密码错误" : "Invalid email or password")}&lang=${lang}&role=${roleParam}&email=${encodeURIComponent(email.trim())}`
-      );
-    }
+  const result = await performSignIn({
+    email,
+    password,
+    lang,
+    expectedRole,
+    nextPath
+  });
 
-    if (
-      expectedRole === "brand" &&
-      demoUser.role !== "client" &&
-      demoUser.role !== "admin"
-    ) {
-      redirect(`/login?error=wrong-role&lang=${lang}&role=brand`);
+  if (!result.ok) {
+    const roleParam = result.role ?? (expectedRole || "brand");
+    if (result.errorCode === "wrong-role") {
+      redirect(`/login?error=wrong-role&lang=${lang}&role=${roleParam}`);
     }
-
-    if (expectedRole === "creator" && demoUser.role !== "creator" && demoUser.role !== "admin") {
-      redirect(`/login?error=wrong-role&lang=${lang}&role=creator`);
-    }
-
-    await setDemoSession({ email: demoUser.email, role: demoUser.role });
-    if (demoUser.role === "creator") {
-      await recordCreatorSignIn(demoUser.email);
-    }
-    if (nextPath.startsWith("/")) {
-      redirect(withLocale(nextPath, lang));
-    }
-    redirect(`${demoRedirectForRole(demoUser.role)}?lang=${lang}`);
+    redirect(
+      `/login?error=${encodeURIComponent(result.error)}&lang=${lang}&role=${roleParam}&email=${encodeURIComponent(result.email ?? email.trim())}`
+    );
   }
 
-  const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
-
-  if (error) {
-    redirect(`/login?error=${encodeURIComponent(error.message)}&lang=${lang}`);
-  }
-
-  redirect(`/dashboard?lang=${lang}`);
+  redirect(result.redirectTo);
 }
 
 export async function demoSocialSignInAction(formData: FormData) {
@@ -240,7 +153,7 @@ export async function demoSocialSignInAction(formData: FormData) {
   const expectedRole = String(formData.get("expected_role") ?? "brand");
   const nextPath = String(formData.get("next") ?? "").trim();
 
-  if (hasSupabaseConfig()) {
+  if (!preferDemoAuth()) {
     redirect(`/login?error=unsupported-provider&lang=${lang}&role=${expectedRole}`);
   }
 
@@ -248,10 +161,8 @@ export async function demoSocialSignInAction(formData: FormData) {
     redirect(`/login?error=unsupported-provider&lang=${lang}&role=${expectedRole}`);
   }
 
-  const role = expectedRole === "creator" ? "creator" : "client";
-  const roleAccounts = DEMO_USERS.filter((user) => user.role === role);
-  const index = provider === "google" ? 0 : provider === "apple" ? 1 : 2;
-  const demoUser = roleAccounts[index] ?? roleAccounts[0];
+  const tabRole = expectedRole === "creator" ? "creator" : "brand";
+  const demoUser = demoUserForSocialProvider(provider, tabRole);
 
   if (!demoUser) {
     redirect(
@@ -274,7 +185,7 @@ export async function signUpAction(formData: FormData) {
 
   if (!hasSupabaseConfig()) {
     redirect(
-      `/login?error=${encodeURIComponent("Demo mode uses the preset accounts below. Registration is disabled until Supabase is configured.")}&lang=${lang}&site=global&auth=login`
+      `/login?error=${encodeURIComponent(lang === "zh" ? "演示模式请使用邮箱登录或 Google / Apple / Discord 登录。" : "Demo mode: sign in with email or Google / Apple / Discord.")}&lang=${lang}&site=global&auth=login`
     );
   }
 

@@ -1,3 +1,8 @@
-/** Static hero background — served from /public for zero API hop. */
-export const HERO_VIDEO_SRC = "/videos/home-hero.mp4";
-export const HERO_VIDEO_POSTER = "/videos/home-hero-poster.jpg";
+/** Static hero background — API route resolves file from public/ or bundled assets. */
+export const HERO_BACKGROUND_SRC = "/api/home-hero-bg";
+
+/** @deprecated Renamed to HERO_BACKGROUND_SRC when video was replaced with a static image. */
+export const HERO_VIDEO_SRC = HERO_BACKGROUND_SRC;
+
+/** @deprecated Poster no longer used — background is a single static image. */
+export const HERO_VIDEO_POSTER = HERO_BACKGROUND_SRC;
