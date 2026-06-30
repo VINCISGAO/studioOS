@@ -10,3 +10,8 @@ export const marketingHeadlineFont = Plus_Jakarta_Sans({
 export function marketingHeadlineClassName(locale: "en" | "zh") {
   return locale === "en" ? marketingHeadlineFont.className : undefined;
 }
+
+/** Vertical silver metallic gradient for cinematic hero headlines. */
+export function marketingSilverGradientClassName() {
+  return "bg-[linear-gradient(180deg,#FFFFFF_0%,#ECEEF2_36%,#B8BEC8_100%)] bg-clip-text text-transparent [-webkit-background-clip:text] [-webkit-text-fill-color:transparent]";
+}

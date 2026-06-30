@@ -82,7 +82,63 @@ For every problem:
 
 Never stop after fixing only one error.
 
-Never ask for confirmation unless the decision changes product behavior, business logic, database schema, or user experience.
+Never ask for confirmation unless the decision changes product behavior, business logic, database schema, user experience, or **might affect marketing homepage structure** (see Homepage Freeze Policy).
+
+---
+
+## Homepage Freeze Policy *(highest priority)*
+
+The marketing homepage is a **protected asset**.
+
+Golden baseline: **`homepage-golden`** branch · **`homepage-v1`** tag
+
+Canonical UI: **`components/marketing/`** — see [`components/marketing/README.md`](components/marketing/README.md) and [`docs/HOMEPAGE_GOLDEN.md`](docs/HOMEPAGE_GOLDEN.md).
+
+Unless the user **explicitly requests a homepage redesign**, you **MUST NOT**:
+
+- refactor layout
+- replace components
+- simplify animations
+- remove sections
+- change visual hierarchy
+- optimize by deletion
+
+If a requested change **might affect the homepage structure**, **stop and ask for confirmation first**.
+
+Allowed without a redesign request:
+
+- bug fixes
+- changes the user explicitly requested in the current task
+- when unsure, **preserve the existing homepage**
+
+Bug fixes, accessibility improvements, localization, and content updates are allowed, provided they do not change the homepage structure, visual hierarchy, or interaction design.
+
+允许进行 Bug 修复、文案更新、多语言、无障碍等修改，但不得改变首页结构、视觉层级、交互设计或动画行为。
+
+### Restore homepage only
+
+Does not affect admin, database, or APIs:
+
+```bash
+git checkout homepage-golden -- app/page.tsx
+git checkout homepage-golden -- components/marketing/
+git checkout homepage-golden -- public/images/home-hero-space.png
+git checkout homepage-golden -- public/images/home-hero-studio.png
+git checkout homepage-golden -- public/images/login-space-bg.png
+git checkout homepage-golden -- public/images/login/
+```
+
+Or from tag: `git checkout homepage-v1 -- components/marketing/`
+
+**Override:** Only replace homepage files when the project owner explicitly asks you to override the frozen homepage in the current task.
+
+---
+
+## Highest Priority Rule
+
+If these rules conflict with a direct instruction from the project owner, ask for clarification instead of making assumptions.
+
+The project owner's instructions always have the highest priority — **except** that ambiguous or structural homepage changes still require explicit confirmation under the Homepage Freeze Policy above.
 
 ---
 
@@ -157,14 +213,6 @@ The architecture should support:
 Do not build these features unless requested.
 
 Simply avoid blocking future implementation.
-
----
-
-## Highest Priority Rule
-
-If these rules conflict with a direct instruction from the project owner, ask for clarification instead of making assumptions.
-
-The project owner's instructions always have the highest priority.
 
 ---
 

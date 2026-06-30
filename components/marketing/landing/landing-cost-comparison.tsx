@@ -1,11 +1,8 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion, type Variants } from "framer-motion";
 import { Check, X } from "lucide-react";
-import {
-  RevealSection,
-  cinematicEase
-} from "@/components/marketing/landing/landing-motion";
+import { cinematicEase } from "@/components/marketing/landing/landing-motion";
 import {
   LandingEyebrow,
   LandingHeadline,
@@ -15,67 +12,98 @@ import {
 } from "@/components/marketing/landing/landing-ui";
 import { landingText } from "@/lib/marketing/landing-copy";
 import type { Locale } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
+
+function LegacyMark({ className }: { className?: string }) {
+  return <X className={cn("h-4 w-4 text-red-500", className)} strokeWidth={2.4} aria-hidden />;
+}
+
+const spring = { type: "spring" as const, stiffness: 420, damping: 34, mass: 0.82 };
+
+const headerStagger: Variants = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.09, delayChildren: 0.04 } }
+};
+
+const fadeUpItem: Variants = {
+  hidden: { opacity: 0, y: 28, filter: "blur(8px)" },
+  visible: {
+    opacity: 1,
+    y: 0,
+    filter: "blur(0px)",
+    transition: { duration: 0.95, ease: cinematicEase }
+  }
+};
 
 export function LandingCostComparison({ locale }: { locale: Locale }) {
   const t = landingText("cost", locale);
+  const reduce = useReducedMotion();
   const costRows = t.rows.slice(0, 2);
   const workflowRows = t.rows.slice(2);
 
   return (
-    <LandingSection className="bg-[#0a0a0a] py-10 sm:py-20 lg:py-24">
-      <LandingShell>
-        <RevealSection className="mx-auto max-w-4xl text-center">
-          <LandingEyebrow>{locale === "zh" ? "成本对比" : "Cost break"}</LandingEyebrow>
-          <LandingHeadline className="mx-auto mt-4 max-w-[18rem] text-[2.15rem] sm:mt-6 sm:max-w-3xl sm:text-[2.75rem] lg:text-[3.5rem]">
-            {t.title}
-          </LandingHeadline>
-          <LandingLead className="mx-auto mt-4 max-w-[21rem] text-[14px] leading-7 sm:mt-6 sm:max-w-2xl sm:text-base sm:leading-8">
-            {t.body}
-          </LandingLead>
-          <div className="mx-auto mt-7 hidden max-w-3xl grid-cols-1 gap-2.5 sm:mt-8 sm:grid sm:grid-cols-2">
-            {t.pains.map((pain, index) => (
-              <motion.div
-                key={pain}
-                variants={{
-                  hidden: { opacity: 0, y: 10 },
-                  visible: {
-                    opacity: 1,
-                    y: 0,
-                    transition: { duration: 0.7, ease: cinematicEase, delay: index * 0.05 }
-                  }
-                }}
-                className="flex min-h-11 items-center justify-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.025] px-4 py-3 text-center text-[13px] font-medium leading-5 text-zinc-400 sm:text-[14px]"
-              >
-                <X className="h-3.5 w-3.5 shrink-0 text-zinc-600" strokeWidth={1.7} />
-                <span>{pain}</span>
-              </motion.div>
-            ))}
-          </div>
-        </RevealSection>
+    <LandingSection className="relative overflow-hidden bg-[#000000] py-16 sm:py-24 lg:py-28">
+      <div
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_55%_at_50%_-10%,rgba(255,255,255,0.07),transparent_55%)]"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent"
+        aria-hidden
+      />
+
+      <LandingShell className="relative">
+        <motion.div
+          initial={reduce ? false : "hidden"}
+          whileInView="visible"
+          viewport={{ once: true, margin: "-10%" }}
+          variants={headerStagger}
+          className="mx-auto max-w-3xl text-center"
+        >
+          <motion.div variants={fadeUpItem}>
+            <LandingEyebrow className="!font-sans !text-[13px] !font-semibold !normal-case !tracking-[0.22em] !text-zinc-400 sm:!text-sm sm:!tracking-[0.26em]">
+              {locale === "zh" ? "成本对比" : "Cost comparison"}
+            </LandingEyebrow>
+          </motion.div>
+          <motion.div variants={fadeUpItem}>
+            <LandingHeadline className="mx-auto mt-5 text-[2rem] font-semibold tracking-[-0.04em] text-white sm:text-[2.75rem] lg:text-[3.25rem]">
+              {t.title}
+            </LandingHeadline>
+          </motion.div>
+          <motion.div variants={fadeUpItem}>
+            <LandingLead className="mx-auto mt-5 max-w-2xl text-[15px] leading-7 text-zinc-400 sm:text-base sm:leading-8">
+              {t.body}
+            </LandingLead>
+          </motion.div>
+        </motion.div>
 
         <motion.div
-          initial={{ opacity: 0, y: 32 }}
+          initial={reduce ? false : { opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-8%" }}
-          transition={{ duration: 1, ease: cinematicEase }}
-          className="relative mx-auto mt-6 max-w-6xl sm:mt-10 lg:mt-12"
+          viewport={{ once: true, margin: "-6%" }}
+          transition={{ duration: 1.05, ease: cinematicEase, delay: 0.12 }}
+          className="relative mx-auto mt-12 max-w-5xl lg:mt-16"
         >
-          <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:items-stretch">
-            <ComparisonCard
+          <div className="grid gap-5 lg:grid-cols-[1fr_auto_1fr] lg:items-stretch lg:gap-6">
+            <ComparePanel
               title={t.traditional}
-              tone="muted"
+              variant="legacy"
               rows={costRows.map((row) => ({ label: row.label, value: row.trad }))}
               footerRows={workflowRows.map((row) => ({ label: row.label, value: row.trad }))}
+              delay={0.05}
+              reduce={reduce}
             />
 
-            <VsDivider />
+            <VsMark reduce={reduce} />
 
-            <ComparisonCard
+            <ComparePanel
               title={t.studio}
-              tone="strong"
+              variant="studio"
               badges={t.savings}
               rows={costRows.map((row) => ({ label: row.label, value: row.studio }))}
               footerRows={workflowRows.map((row) => ({ label: row.label, value: row.studio }))}
+              delay={0.14}
+              reduce={reduce}
             />
           </div>
         </motion.div>
@@ -84,135 +112,222 @@ export function LandingCostComparison({ locale }: { locale: Locale }) {
   );
 }
 
-function VsDivider() {
+function VsMark({ reduce }: { reduce: boolean | null }) {
   return (
-    <div className="relative flex min-h-12 items-center justify-center py-1 lg:min-h-full lg:px-2 lg:py-0">
-      <div className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-gradient-to-b from-transparent via-white/[0.16] to-transparent lg:hidden" />
-      <div className="absolute hidden h-px w-20 bg-gradient-to-r from-transparent via-white/[0.22] to-transparent lg:block" />
+    <div className="relative flex min-h-10 items-center justify-center py-2 lg:min-h-full lg:px-1">
+      <div className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-gradient-to-b from-transparent via-white/10 to-transparent lg:hidden" />
       <motion.div
-        aria-hidden
-        className="absolute h-16 w-16 rounded-full bg-white/[0.08] blur-xl"
-        animate={{ opacity: [0.25, 0.55, 0.25], scale: [0.9, 1.12, 0.9] }}
-        transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
-      />
-      <motion.div
-        className="relative z-10 grid h-12 w-12 place-items-center rounded-full border border-white/25 bg-[radial-gradient(circle_at_35%_25%,#ffffff_0%,#f6f5f1_42%,#d9d6cf_100%)] text-[11px] font-black tracking-[0.14em] text-black shadow-[0_16px_44px_-22px_rgba(255,255,255,0.75)] sm:h-14 sm:w-14 sm:text-[12px]"
-        initial={{ rotate: -8 }}
-        whileInView={{ rotate: 0 }}
-        whileHover={{ scale: 1.06, rotate: 0 }}
-        transition={{ duration: 0.6, ease: cinematicEase }}
+        initial={reduce ? false : { opacity: 0, scale: 0.72 }}
+        whileInView={{ opacity: 1, scale: 1 }}
+        viewport={{ once: true }}
+        transition={{ ...spring, delay: 0.18 }}
+        whileHover={reduce ? undefined : { scale: 1.06 }}
+        className="relative z-10 grid h-11 w-11 place-items-center rounded-full border border-white/20 bg-white/[0.08] text-[10px] font-semibold tracking-[0.22em] text-white/90 shadow-[0_0_40px_rgba(255,255,255,0.12)] backdrop-blur-xl sm:h-12 sm:w-12"
       >
-        <span className="absolute inset-1 rounded-full border border-black/[0.08]" />
-        <span className="relative">VS</span>
+        VS
       </motion.div>
     </div>
   );
 }
 
-function ComparisonCard({
+function ComparePanel({
   title,
-  tone,
+  variant,
   badges,
   rows,
-  footerRows
+  footerRows,
+  delay,
+  reduce
 }: {
   title: string;
-  tone: "muted" | "strong";
+  variant: "legacy" | "studio";
   badges?: readonly string[];
   rows: Array<{ label: string; value: string }>;
   footerRows: Array<{ label: string; value: string }>;
+  delay: number;
+  reduce: boolean | null;
 }) {
-  const isStrong = tone === "strong";
-  const Icon = isStrong ? Check : X;
+  const isStudio = variant === "studio";
 
   return (
-    <div
-      className={[
-        "relative overflow-hidden rounded-lg border p-5 sm:p-6 lg:p-7",
-        isStrong
-          ? "border-white/20 bg-white/[0.075] shadow-[0_30px_90px_-48px_rgba(255,255,255,0.45)]"
-          : "border-white/[0.09] bg-white/[0.025]"
-      ].join(" ")}
+    <motion.article
+      initial={reduce ? false : { opacity: 0, y: isStudio ? 36 : 24, scale: isStudio ? 0.96 : 0.98 }}
+      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+      viewport={{ once: true, margin: "-8%" }}
+      transition={{ ...spring, delay }}
+      whileHover={
+        reduce
+          ? undefined
+          : {
+              y: isStudio ? -6 : -2,
+              transition: { type: "spring", stiffness: 380, damping: 28 }
+            }
+      }
+      className={cn(
+        "group relative overflow-hidden rounded-[1.75rem] border p-6 sm:p-7 lg:p-8",
+        "backdrop-blur-2xl transition-[box-shadow,border-color] duration-500",
+        isStudio
+          ? "border-white/20 bg-white/[0.08] shadow-[0_40px_120px_-60px_rgba(255,255,255,0.55)] hover:border-white/30 hover:shadow-[0_50px_140px_-50px_rgba(255,255,255,0.65)]"
+          : "border-white/[0.06] bg-white/[0.02] hover:border-white/10"
+      )}
     >
       <div
-        className={[
-          "pointer-events-none absolute inset-x-0 top-0 h-px",
-          isStrong ? "bg-white/45" : "bg-white/[0.08]"
-        ].join(" ")}
+        className={cn(
+          "pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent to-transparent",
+          isStudio ? "via-white/50" : "via-white/10"
+        )}
       />
+      {isStudio ? (
+        <div
+          className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-white/[0.06] blur-3xl transition-opacity duration-700 group-hover:opacity-100"
+          aria-hidden
+        />
+      ) : null}
 
-      <div className="flex min-h-12 flex-col items-center justify-center gap-3 text-center sm:flex-row sm:justify-between sm:text-left">
+      <div className="relative flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <h3
-          className={[
-            "text-base font-semibold tracking-[0.16em] sm:text-lg",
-            isStrong ? "text-white" : "text-zinc-500"
-          ].join(" ")}
+          className={cn(
+            "text-lg font-semibold tracking-[-0.03em] sm:text-xl",
+            isStudio ? "text-white" : "text-zinc-500"
+          )}
         >
           {title}
         </h3>
         {badges?.length ? (
-          <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-end">
-            {badges.map((badge) => (
-              <span
+          <div className="flex flex-wrap gap-2">
+            {badges.map((badge, index) => (
+              <motion.span
                 key={badge}
-                className="shrink-0 rounded-full border border-[#aeb9a6]/35 bg-[#aeb9a6]/10 px-3 py-1.5 text-[12px] font-semibold text-[#d8e4cf] sm:text-[13px]"
+                initial={reduce ? false : { opacity: 0, y: 8 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.7, ease: cinematicEase, delay: delay + 0.12 + index * 0.06 }}
+                className="rounded-full border border-emerald-400/25 bg-emerald-400/[0.08] px-3 py-1 text-[11px] font-medium tracking-wide text-emerald-200/90"
               >
                 {badge}
-              </span>
+              </motion.span>
             ))}
           </div>
         ) : null}
       </div>
 
-      <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:mt-7">
-        {rows.map((row) => (
-          <div
+      <div className="relative mt-7 grid gap-3 sm:grid-cols-2">
+        {rows.map((row, index) => (
+          <MetricTile
             key={row.label}
-            className={[
-              "rounded-lg border px-4 py-4 text-center",
-              isStrong ? "border-white/[0.1] bg-black/20" : "border-white/[0.06] bg-black/15"
-            ].join(" ")}
-          >
-            <p className="text-[12px] font-medium tracking-[0.14em] text-zinc-500">{row.label}</p>
-            <div className="mt-3 flex items-center justify-center gap-2">
-              <Icon
-                className={["h-4 w-4 shrink-0", isStrong ? "text-white" : "text-zinc-600"].join(" ")}
-                strokeWidth={1.9}
-              />
-              <p
-                className={[
-                  "text-2xl font-semibold leading-none sm:text-3xl",
-                  isStrong ? "text-white" : "text-zinc-500"
-                ].join(" ")}
-              >
-                {row.value}
-              </p>
-            </div>
-          </div>
+            label={row.label}
+            value={row.value}
+            isStudio={isStudio}
+            index={index}
+            delay={delay}
+            reduce={reduce}
+          />
         ))}
       </div>
 
-      <div className="mt-5 divide-y divide-white/[0.07] border-t border-white/[0.08] pt-2">
-        {footerRows.map((row) => (
-          <div key={row.label} className="grid grid-cols-[minmax(0,0.9fr)_minmax(0,1fr)] items-center gap-3 py-4">
-            <p className="text-[12px] font-medium tracking-[0.14em] text-zinc-500">{row.label}</p>
-            <div className="flex items-center justify-end gap-2 text-right">
-              <Icon
-                className={["h-4 w-4 shrink-0", isStrong ? "text-white" : "text-zinc-600"].join(" ")}
-                strokeWidth={1.9}
-              />
-              <p
-                className={[
-                  "text-base font-semibold leading-6 sm:text-lg",
-                  isStrong ? "text-white" : "text-zinc-500"
-                ].join(" ")}
-              >
-                {row.value}
-              </p>
-            </div>
-          </div>
+      <div className="relative mt-6 space-y-0 divide-y divide-white/[0.06] border-t border-white/[0.06]">
+        {footerRows.map((row, index) => (
+          <CompareRow
+            key={row.label}
+            label={row.label}
+            value={row.value}
+            isStudio={isStudio}
+            index={index}
+            delay={delay}
+            reduce={reduce}
+          />
         ))}
       </div>
-    </div>
+    </motion.article>
+  );
+}
+
+function MetricTile({
+  label,
+  value,
+  isStudio,
+  index,
+  delay,
+  reduce
+}: {
+  label: string;
+  value: string;
+  isStudio: boolean;
+  index: number;
+  delay: number;
+  reduce: boolean | null;
+}) {
+  return (
+    <motion.div
+      initial={reduce ? false : { opacity: 0, y: 16, scale: 0.98 }}
+      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+      viewport={{ once: true }}
+      transition={{ ...spring, delay: delay + 0.08 + index * 0.05 }}
+      whileHover={reduce ? undefined : { scale: 1.02 }}
+      className={cn(
+        "rounded-2xl border px-4 py-5 text-center transition-colors duration-300",
+        isStudio
+          ? "border-white/10 bg-black/20 group-hover:border-white/15"
+          : "border-white/[0.05] bg-black/25"
+      )}
+    >
+      <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-500">{label}</p>
+      <div className="mt-3 flex items-center justify-center gap-2">
+        {isStudio ? (
+          <Check className="h-4 w-4 text-emerald-300/90" strokeWidth={2.2} />
+        ) : (
+          <LegacyMark />
+        )}
+        <p
+          className={cn(
+            "font-semibold tracking-[-0.03em]",
+            isStudio ? "text-[1.75rem] text-white sm:text-[2rem]" : "text-2xl text-zinc-500 sm:text-[1.75rem]"
+          )}
+        >
+          {value}
+        </p>
+      </div>
+    </motion.div>
+  );
+}
+
+function CompareRow({
+  label,
+  value,
+  isStudio,
+  index,
+  delay,
+  reduce
+}: {
+  label: string;
+  value: string;
+  isStudio: boolean;
+  index: number;
+  delay: number;
+  reduce: boolean | null;
+}) {
+  return (
+    <motion.div
+      initial={reduce ? false : { opacity: 0, x: isStudio ? 12 : -8 }}
+      whileInView={{ opacity: 1, x: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.75, ease: cinematicEase, delay: delay + 0.16 + index * 0.05 }}
+      className={cn(
+        "grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 py-4 transition-colors duration-300",
+        isStudio && "rounded-xl px-1 hover:bg-white/[0.03]"
+      )}
+    >
+      <p className="text-[13px] font-medium text-zinc-500">{label}</p>
+      <div className="flex items-center gap-2 text-right">
+        {isStudio ? (
+          <Check className="h-4 w-4 text-white/80" strokeWidth={2} />
+        ) : (
+          <LegacyMark className="h-3.5 w-3.5" />
+        )}
+        <p className={cn("text-[15px] font-semibold tracking-[-0.02em]", isStudio ? "text-white" : "text-zinc-500")}>
+          {value}
+        </p>
+      </div>
+    </motion.div>
   );
 }

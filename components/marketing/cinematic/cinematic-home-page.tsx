@@ -45,16 +45,16 @@ export function CinematicHomePage({
           <LandingCostComparison locale={locale} />
         </HomePageScreen>
 
-        <HomePageScreen id="network" className="justify-start bg-[#f7f7f4] py-0">
-          <CinematicNetwork locale={locale} />
+        <HomePageScreen id="work" className="justify-start bg-[#f6f5f1] py-0">
+          <LandingRecentWork locale={locale} works={featuredWorks} engagement={engagement} isLoggedIn={isLoggedIn} />
         </HomePageScreen>
 
         <HomePageScreen id="how-it-works" className="py-0">
           <LandingHowItWorks locale={locale} />
         </HomePageScreen>
 
-        <HomePageScreen id="work" className="justify-start bg-[#f6f5f1] py-0">
-          <LandingRecentWork locale={locale} works={featuredWorks} engagement={engagement} isLoggedIn={isLoggedIn} />
+        <HomePageScreen id="network" className="justify-start bg-[#f7f7f4] py-0">
+          <CinematicNetwork locale={locale} />
         </HomePageScreen>
 
         <HomePageScreen id="escrow" className="py-0">

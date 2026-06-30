@@ -5,4 +5,6 @@ alwaysApply: true
 
 Read [AGENT.md](../../AGENT.md) before making any changes.
 
+**Marketing homepage is frozen.** Read [components/marketing/README.md](../../components/marketing/README.md) before editing anything under `components/marketing/`. Do not redesign, remove animations, or change layout unless explicitly instructed.
+
 Follow the completion requirements there: typecheck, build, and `npm run production:verify` must all pass before a task is done.

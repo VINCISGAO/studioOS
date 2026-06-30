@@ -1,11 +1,12 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import { Clapperboard, FileText, Focus, Play, Shield, Users } from "lucide-react";
 import {
-  MaskRevealLine,
   RevealSection,
-  cinematicEase
+  cinematicEase,
+  staggerContainer,
+  useReducedMotion
 } from "@/components/marketing/landing/landing-motion";
 import {
   LandingEyebrow,
@@ -64,70 +65,136 @@ export function LandingHowItWorks({ locale }: { locale: Locale }) {
 export function LandingWhy({ locale }: { locale: Locale }) {
   const t = landingText("why", locale);
   const icons = [FileText, Users, Shield];
+  const reduce = useReducedMotion();
+  const chainLabel = locale === "zh" ? "进入同一条生产链路" : "Managed inside one production flow";
+
+  const fadeItem: Variants = {
+    hidden: { opacity: 0, y: 28, filter: "blur(8px)" },
+    visible: {
+      opacity: 1,
+      y: 0,
+      filter: "blur(0px)",
+      transition: { duration: 0.9, ease: cinematicEase }
+    }
+  };
+
+  const textStagger: Variants = {
+    hidden: {},
+    visible: { transition: { staggerChildren: 0.08, delayChildren: 0.02 } }
+  };
+
+  const cardShell: Variants = {
+    hidden: { opacity: 0, y: 36, scale: 0.96 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      transition: {
+        type: "spring",
+        stiffness: 320,
+        damping: 32,
+        mass: 0.9,
+        staggerChildren: 0.09,
+        delayChildren: 0.12
+      }
+    }
+  };
+
+  const rowItem: Variants = {
+    hidden: { opacity: 0, x: 20 },
+    visible: {
+      opacity: 1,
+      x: 0,
+      transition: { duration: 0.8, ease: cinematicEase }
+    }
+  };
 
   return (
     <section className="relative overflow-hidden border-y border-black/[0.08] bg-[#f6f5f1] py-14 sm:py-20 lg:py-20">
       <LandingShell className="relative w-full">
-        <RevealSection className="grid gap-10 lg:grid-cols-[minmax(0,0.95fr)_minmax(360px,0.75fr)] lg:items-center">
-          <div>
+        <motion.div
+          initial={reduce ? false : "hidden"}
+          whileInView="visible"
+          viewport={{ once: true, margin: "-10%" }}
+          variants={staggerContainer}
+          className="grid gap-10 lg:grid-cols-[minmax(0,0.95fr)_minmax(360px,0.75fr)] lg:items-center"
+        >
+          <motion.div variants={textStagger}>
             <motion.p
-              variants={{
-                hidden: { opacity: 0, y: 10 },
-                visible: { opacity: 1, y: 0, transition: { duration: 0.75, ease: cinematicEase } }
-              }}
+              variants={fadeItem}
               className="text-[11px] font-semibold uppercase tracking-[0.22em] text-zinc-500"
             >
               {t.eyebrow}
             </motion.p>
             <motion.h2
-              variants={{
-                hidden: { opacity: 0, y: 18 },
-                visible: { opacity: 1, y: 0, transition: { duration: 0.85, ease: cinematicEase, delay: 0.05 } }
-              }}
+              variants={fadeItem}
               className="mt-5 max-w-[56rem] text-[1.8rem] font-semibold leading-[1.08] tracking-tight text-zinc-950 sm:text-[2.35rem] lg:text-[2.75rem]"
             >
               <span className="block">{t.titleLine1}</span>
               <span className="block">{t.titleLine2}</span>
             </motion.h2>
             <motion.p
-              variants={{
-                hidden: { opacity: 0, y: 18 },
-                visible: { opacity: 1, y: 0, transition: { duration: 0.85, ease: cinematicEase, delay: 0.1 } }
-              }}
+              variants={fadeItem}
               className="mt-5 max-w-2xl text-base leading-8 text-zinc-600"
             >
               {t.subtitle}
             </motion.p>
-          </div>
+          </motion.div>
 
           <motion.div
-            variants={{
-              hidden: { opacity: 0, y: 24 },
-              visible: { opacity: 1, y: 0, transition: { duration: 0.9, ease: cinematicEase, delay: 0.15 } }
-            }}
-            className="rounded-lg border border-black/10 bg-white p-3 shadow-sm"
+            variants={cardShell}
+            whileHover={
+              reduce
+                ? undefined
+                : {
+                    y: -5,
+                    boxShadow: "0 28px 70px -36px rgba(0,0,0,0.28)",
+                    transition: { type: "spring", stiffness: 380, damping: 28 }
+                  }
+            }
+            className="rounded-lg border border-black/10 bg-white p-3 shadow-sm transition-[border-color,box-shadow] duration-500 hover:border-black/15"
           >
             {t.items.map((item, index) => {
               const Icon = icons[index] ?? FileText;
               return (
-                <div
+                <motion.div
                   key={item}
-                  className="flex items-center gap-4 border-b border-black/10 px-4 py-4 last:border-b-0"
-                >
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-zinc-950 text-white">
-                    <Icon className="h-4 w-4" strokeWidth={1.8} />
-                  </span>
-                  <div>
-                    <p className="text-sm font-semibold text-zinc-950">{item}</p>
-                    <p className="mt-1 text-xs text-zinc-500">
-                      {locale === "zh" ? "进入同一条生产链路" : "Managed inside one production flow"}
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
+                  variants={rowItem}
+                    whileHover={
+                      reduce
+                        ? undefined
+                        : {
+                            x: 6,
+                            backgroundColor: "rgba(0,0,0,0.025)",
+                            transition: { duration: 0.25 }
+                          }
+                    }
+                    whileTap={reduce ? undefined : { scale: 0.995 }}
+                    className="group flex cursor-default items-center gap-4 border-b border-black/10 px-4 py-4 last:border-b-0"
+                  >
+                    <motion.span
+                      whileHover={
+                        reduce
+                          ? undefined
+                          : { scale: 1.08, rotate: -3, transition: { type: "spring", stiffness: 420, damping: 22 } }
+                      }
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-zinc-950 text-white transition-colors duration-300 group-hover:bg-zinc-800"
+                    >
+                      <Icon className="h-4 w-4" strokeWidth={1.8} />
+                    </motion.span>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-zinc-950 transition-colors duration-300 group-hover:text-zinc-800">
+                        {item}
+                      </p>
+                      <p className="mt-1 text-xs text-zinc-500 transition-colors duration-300 group-hover:text-zinc-600">
+                        {chainLabel}
+                      </p>
+                    </div>
+                  </motion.div>
+                );
+              })}
           </motion.div>
-        </RevealSection>
+        </motion.div>
       </LandingShell>
     </section>
   );

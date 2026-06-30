@@ -19,6 +19,12 @@ const HERO_STUDIO_ASSETS = [
   "image-5de13bfe-b0d6-4f11-b324-365b7986eb78.png"
 ];
 
+const HERO_SPACE_ASSETS = [
+  "f0820f8a-e12b-4141-929a-d24cf32004c5-22c92bbe-cbe7-4d8f-a163-a0e1c155f0be.png",
+  "d2c4032c-36cb-4431-8587-17fc9309a920-8e852c55-f1ee-4346-a3fb-976c80e1536b.png",
+  "image-69b788da-eb7b-4171-929e-71a681c747b5.png"
+];
+
 function copyFirstAvailable({ dest, sources, label }) {
   mkdirSync(path.dirname(dest), { recursive: true });
   const source = sources.find((candidate) => existsSync(candidate));
@@ -73,6 +79,29 @@ copyFirstAvailable({
   label: "home hero studio (bundled)",
   dest: studioBundled,
   sources: [studioPublic, ...studioSources]
+});
+
+const spacePublic = path.join(root, "public/images/home-hero-space.png");
+const spaceBundled = path.join(root, "assets/marketing/home-hero-space.png");
+const spaceSources = [
+  path.join(root, "assets/marketing/home-hero-space.png"),
+  ...HERO_SPACE_ASSETS.flatMap((fileName) => [
+    path.join(assetRoot, fileName),
+    path.join(home, ".cursor/projects/Users-linkele-Projects-studioOS/assets", fileName)
+  ]),
+  path.join(root, "public/images/home-hero-space.png")
+];
+
+copyFirstAvailable({
+  label: "home hero space (public)",
+  dest: spacePublic,
+  sources: spaceSources
+});
+
+copyFirstAvailable({
+  label: "home hero space (bundled)",
+  dest: spaceBundled,
+  sources: [spacePublic, ...spaceSources]
 });
 
 const LOGIN_SPACE_ASSETS = [
