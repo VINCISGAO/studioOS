@@ -18,13 +18,13 @@ function demoRoleToMvp(role: string): MvpRole {
 }
 
 const DEMO_EMAIL_TO_PROFILE: Record<string, string> = {
-  "client.arc@adbridge.test": DEMO_PROFILES.brand,
-  "client.bright@adbridge.test": "prof_demo_brand_bright",
-  "client.north@adbridge.test": "prof_demo_brand_bright",
-  "creator.nova@adbridge.test": DEMO_PROFILES.studio,
-  "creator.signal@adbridge.test": DEMO_PROFILES.studio,
-  "creator.atlas@adbridge.test": DEMO_PROFILES.studio,
-  "admin@adbridge.test": DEMO_PROFILES.admin
+  "client.arc@studioos.test": DEMO_PROFILES.brand,
+  "client.bright@studioos.test": "prof_demo_brand_bright",
+  "client.north@studioos.test": "prof_demo_brand_bright",
+  "creator.nova@studioos.test": DEMO_PROFILES.studio,
+  "creator.signal@studioos.test": DEMO_PROFILES.studio,
+  "creator.atlas@studioos.test": DEMO_PROFILES.studio,
+  "admin@studioos.test": DEMO_PROFILES.admin
 };
 
 export async function getMvpProfile(): Promise<MvpProfile | null> {

@@ -1,5 +1,5 @@
 
-> adbridge@0.1.0 lint
+> studioos@0.1.0 lint
 > next lint --no-cache
 
 `next lint` is deprecated and will be removed in Next.js 16.

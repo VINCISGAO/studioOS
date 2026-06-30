@@ -36,7 +36,7 @@ async function resolveInquiryClient(lang: Locale) {
 
   return {
     client_name: lang === "zh" ? "访客品牌方" : "Guest brand",
-    client_email: `${await getOrCreateVisitorId()}@visitor.adbridge.local`,
+    client_email: `${await getOrCreateVisitorId()}@visitor.studioos.local`,
     company_name: ""
   };
 }

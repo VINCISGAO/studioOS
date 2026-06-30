@@ -10,47 +10,47 @@ export type DemoUser = {
   label: string;
 };
 
-export const DEMO_PASSWORD = "TempAdBridge2026!";
+export const DEMO_PASSWORD = "TempStudioOS2026!";
 
 export const DEMO_USERS: DemoUser[] = [
   {
-    email: "client.arc@adbridge.test",
+    email: "client.arc@studioos.test",
     password: DEMO_PASSWORD,
     role: "client",
     label: "Arc & Alloy (brand)"
   },
   {
-    email: "client.bright@adbridge.test",
+    email: "client.bright@studioos.test",
     password: DEMO_PASSWORD,
     role: "client",
     label: "BrightSip (brand)"
   },
   {
-    email: "client.north@adbridge.test",
+    email: "client.north@studioos.test",
     password: DEMO_PASSWORD,
     role: "client",
     label: "Northline Skincare (brand)"
   },
   {
-    email: "creator.nova@adbridge.test",
+    email: "creator.nova@studioos.test",
     password: DEMO_PASSWORD,
     role: "creator",
     label: "Nova Motion Studio"
   },
   {
-    email: "creator.signal@adbridge.test",
+    email: "creator.signal@studioos.test",
     password: DEMO_PASSWORD,
     role: "creator",
     label: "Signal Frame Lab"
   },
   {
-    email: "creator.atlas@adbridge.test",
+    email: "creator.atlas@studioos.test",
     password: DEMO_PASSWORD,
     role: "creator",
     label: "Atlas UGC Systems"
   },
   {
-    email: "admin@adbridge.test",
+    email: "admin@studioos.test",
     password: DEMO_PASSWORD,
     role: "admin",
     label: "Platform admin"

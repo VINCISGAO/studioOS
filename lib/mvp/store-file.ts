@@ -44,7 +44,7 @@ function seedStore(): MvpStore {
     profiles: [
       {
         id: DEMO_PROFILES.brand,
-        email: "client.arc@adbridge.test",
+        email: "client.arc@studioos.test",
         role: "brand",
         name: "Arc & Alloy",
         company_name: "Arc & Alloy",
@@ -52,7 +52,7 @@ function seedStore(): MvpStore {
       },
       {
         id: DEMO_PROFILES.studio,
-        email: "creator.nova@adbridge.test",
+        email: "creator.nova@studioos.test",
         role: "studio",
         name: "Nova Motion Studio",
         company_name: "Nova Motion Studio",
@@ -60,7 +60,7 @@ function seedStore(): MvpStore {
       },
       {
         id: DEMO_PROFILES.admin,
-        email: "admin@adbridge.test",
+        email: "admin@studioos.test",
         role: "admin",
         name: "Platform Admin",
         company_name: "StudioOS",
@@ -68,7 +68,7 @@ function seedStore(): MvpStore {
       },
       {
         id: "prof_demo_brand_bright",
-        email: "client.bright@adbridge.test",
+        email: "client.bright@studioos.test",
         role: "brand",
         name: "BrightSip",
         company_name: "BrightSip",

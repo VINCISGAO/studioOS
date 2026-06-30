@@ -22,7 +22,7 @@ const copy = {
       {
         icon: HandCoins,
         title: "Escrow after agreement",
-        body: "Funds are collected only after the brand accepts the quote. AdBridge holds the payment until review, delivery, or dispute resolution."
+        body: "Funds are collected only after the brand accepts the quote. StudioOS holds the payment until review, delivery, or dispute resolution."
       },
       {
         icon: ShieldCheck,
@@ -32,7 +32,7 @@ const copy = {
       {
         icon: Scale,
         title: "Platform review",
-        body: "AdBridge reviews disputes, refund requests, missing deliverables, and deposit release instead of manually pricing every project."
+        body: "StudioOS reviews disputes, refund requests, missing deliverables, and deposit release instead of manually pricing every project."
       }
     ],
     flowTitle: "Recommended transaction flow",
@@ -45,7 +45,7 @@ const copy = {
     eyebrow: "询价与担保规则",
     title: "不设固定套餐。价格由创作者、项目范围、使用权和交付速度共同决定。",
     subtitle:
-      "AdBridge 不把创作者强行塞进固定套餐。品牌方先看作品，再发起询价，范围和条款确认后才进入平台托管付款。",
+      "StudioOS 不把创作者强行塞进固定套餐。品牌方先看作品，再发起询价，范围和条款确认后才进入平台托管付款。",
     browse: "浏览作品",
     start: "提交需求",
     cards: [
@@ -57,7 +57,7 @@ const copy = {
       {
         icon: HandCoins,
         title: "确认后进入托管",
-        body: "品牌接受报价后才收取项目款。AdBridge 在审核、交付或争议处理完成前托管资金。"
+        body: "品牌接受报价后才收取项目款。StudioOS 在审核、交付或争议处理完成前托管资金。"
       },
       {
         icon: ShieldCheck,
@@ -67,7 +67,7 @@ const copy = {
       {
         icon: Scale,
         title: "平台只管关键节点",
-        body: "AdBridge 处理争议、退款、未交付和保证金释放，不需要人工给每个项目定价。"
+        body: "StudioOS 处理争议、退款、未交付和保证金释放，不需要人工给每个项目定价。"
       }
     ],
     flowTitle: "推荐交易流程",

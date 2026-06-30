@@ -6,7 +6,7 @@ cd "$ROOT"
 
 echo ""
 echo "========================================"
-echo "  StudioOS / adbridge — Vercel deploy"
+echo "  StudioOS / studioos — Vercel deploy"
 echo "========================================"
 echo ""
 

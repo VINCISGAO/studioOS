@@ -2,7 +2,7 @@
   "records": [
     {
       "id": "perf_demo_arc_v1",
-      "org_id": "client.arc@adbridge.test",
+      "org_id": "client.arc@studioos.test",
       "project_id": "proj_demo_arc_nova",
       "order_id": "ord_demo_arc_nova",
       "deliverable_id": "del_demo_arc_v1",
@@ -36,8 +36,8 @@
   ],
   "insights": [
     {
-      "id": "ins_client.arc@adbridge.test_top",
-      "org_id": "client.arc@adbridge.test",
+      "id": "ins_client.arc@studioos.test_top",
+      "org_id": "client.arc@studioos.test",
       "category": "style",
       "pattern": "ugc+minimal",
       "title": { "en": "Top attributed creative identified", "zh": "已识别表现最佳归因创意" },
@@ -54,7 +54,7 @@
   ],
   "dna_profiles": [
     {
-      "org_id": "client.arc@adbridge.test",
+      "org_id": "client.arc@studioos.test",
       "version": 1,
       "fields": {
         "color": "#1D1D1F · #F5F5F7",

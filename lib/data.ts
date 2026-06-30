@@ -335,7 +335,7 @@ export const deliverables: Deliverable[] = [
   {
     id: "del_9001",
     order_id: "ord_7001",
-    file_url: "https://example.com/adbridge/arc-alloy-v1.mp4",
+    file_url: "https://example.com/studioos/arc-alloy-v1.mp4",
     thumbnail_url: "https://images.unsplash.com/photo-1523359346063-d879354c0ea5",
     notes: "First review cut with three hook variations.",
     version: 1,

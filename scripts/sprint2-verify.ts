@@ -16,7 +16,7 @@ async function main() {
 
   try {
     const brand = await prisma.user.findUniqueOrThrow({
-      where: { email: "client.arc@adbridge.test" }
+      where: { email: "client.arc@studioos.test" }
     });
 
     const deadline = new Date();

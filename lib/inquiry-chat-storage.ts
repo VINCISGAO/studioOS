@@ -19,7 +19,7 @@ export type InquiryThread = {
 };
 
 export function chatStorageKey(inquiryId: string) {
-  return `adbridge:chat:${inquiryId}`;
+  return `studioos:chat:${inquiryId}`;
 }
 
 export function readChatMessages(inquiryId: string): ChatMessage[] {

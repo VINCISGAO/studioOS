@@ -1,11 +1,11 @@
 import { test, expect, type Page } from "@playwright/test";
 
-export const DEMO_PASSWORD = "TempAdBridge2026!";
+export const DEMO_PASSWORD = "TempStudioOS2026!";
 
 export const DEMO_ACCOUNTS = {
-  brand: { email: "client.arc@adbridge.test", role: "brand" as const },
-  creator: { email: "creator.nova@adbridge.test", role: "creator" as const },
-  admin: { email: "admin@adbridge.test", role: "admin" as const }
+  brand: { email: "client.arc@studioos.test", role: "brand" as const },
+  creator: { email: "creator.nova@studioos.test", role: "creator" as const },
+  admin: { email: "admin@studioos.test", role: "admin" as const }
 };
 
 export async function loginViaUi(

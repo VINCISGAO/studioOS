@@ -217,7 +217,7 @@ Fixed QA path for investors and regression.
 
 ### Spec references
 - Architect #4 §M1.6
-- Demo accounts: `client.arc@adbridge.test`, `creator.nova@adbridge.test`
+- Demo accounts: `client.arc@studioos.test`, `creator.nova@studioos.test`
 
 ### Scope
 - Seed one project `proj_demo_arc_nova`:

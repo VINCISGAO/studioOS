@@ -1,6 +1,6 @@
-# AdBridge
+# StudioOS
 
-Production-ready MVP for AdBridge, a managed service that helps US brands order AI commercial videos from vetted global AI creative studios.
+Production-ready MVP for StudioOS, a managed service that helps US brands order AI commercial videos from vetted global AI creative studios.
 
 ## Stack
 

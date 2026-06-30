@@ -91,7 +91,7 @@ async function main() {
     });
 
     const creatorUser = await prisma.user.findUnique({
-      where: { email: "creator.nova@adbridge.test" },
+      where: { email: "creator.nova@studioos.test" },
       include: { creatorProfile: true }
     });
 

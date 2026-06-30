@@ -15,11 +15,11 @@ export type CreatorProfileDraft = Pick<
 >;
 
 export function profileStorageKey(creatorId: string) {
-  return `adbridge:creator:${creatorId}:profile`;
+  return `studioos:creator:${creatorId}:profile`;
 }
 
 export function worksStorageKey(creatorId: string) {
-  return `adbridge:creator:${creatorId}:works`;
+  return `studioos:creator:${creatorId}:works`;
 }
 
 export function readProfileDraft(creatorId: string): Partial<CreatorProfileDraft> | null {

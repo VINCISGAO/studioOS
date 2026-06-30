@@ -4,7 +4,7 @@ import { parseDemoSession } from "@/lib/demo-session";
 /** Stable guest brand identity for a signed-in non-brand session (no cookie writes). */
 export function brandDraftEmailForSession(email: string, role: string) {
   const slug = email.toLowerCase().replace(/[^a-z0-9]+/g, "_");
-  return `brand_draft_${role}_${slug}@visitor.adbridge.local`;
+  return `brand_draft_${role}_${slug}@visitor.studioos.local`;
 }
 
 /** Resolve brand brief owner from raw cookie values (safe in route handlers). */
@@ -23,7 +23,7 @@ export function resolveBrandBriefEmailFromCookieValues(
   }
 
   if (visitorIdRaw) {
-    return `${visitorIdRaw}@visitor.adbridge.local`;
+    return `${visitorIdRaw}@visitor.studioos.local`;
   }
 
   return null;
@@ -39,5 +39,5 @@ export function resolveBrandBriefStartFromRequestCookies(
   }
 
   const visitorId = `vis_${Date.now()}_${randomBytes(4).toString("hex")}`;
-  return { email: `${visitorId}@visitor.adbridge.local`, visitorId };
+  return { email: `${visitorId}@visitor.studioos.local`, visitorId };
 }

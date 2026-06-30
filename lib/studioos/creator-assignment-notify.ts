@@ -24,9 +24,9 @@ function resolveCreatorEmail(creatorId: string): string | null {
   }
 
   const demoMap: Record<string, string> = {
-    creator_01: "creator.nova@adbridge.test",
-    creator_02: "creator.signal@adbridge.test",
-    creator_03: "creator.atlas@adbridge.test"
+    creator_01: "creator.nova@studioos.test",
+    creator_02: "creator.signal@studioos.test",
+    creator_03: "creator.atlas@studioos.test"
   };
 
   if (demoMap[creatorId]) {

@@ -79,7 +79,7 @@ async function main() {
     });
 
     const brandUser = await prisma.user.findUnique({
-      where: { email: "client.arc@adbridge.test" }
+      where: { email: "client.arc@studioos.test" }
     });
 
     if (brandUser) {

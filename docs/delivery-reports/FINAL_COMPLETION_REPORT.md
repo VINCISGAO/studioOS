@@ -101,9 +101,9 @@ npm run deploy
 - Events: `checkout.session.completed`, `checkout.session.expired`, `checkout.session.async_payment_failed`, `payment_intent.payment_failed`
 
 **Demo accounts:**
-- Brand: `client.arc@adbridge.test` / `TempAdBridge2026!`
-- Creator: `creator.nova@adbridge.test` / same
-- Admin: `admin@adbridge.test` / same
+- Brand: `client.arc@studioos.test` / `TempStudioOS2026!`
+- Creator: `creator.nova@studioos.test` / same
+- Admin: `admin@studioos.test` / same
 
 ---
 

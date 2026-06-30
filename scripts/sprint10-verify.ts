@@ -17,7 +17,7 @@ async function main() {
   let campaignId: string | null = null;
 
   try {
-    const brand = await prisma.user.findUniqueOrThrow({ where: { email: "client.arc@adbridge.test" } });
+    const brand = await prisma.user.findUniqueOrThrow({ where: { email: "client.arc@studioos.test" } });
 
     const deadline = new Date();
     deadline.setDate(deadline.getDate() + 14);

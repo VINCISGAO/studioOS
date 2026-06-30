@@ -40,7 +40,7 @@ async function main() {
   });
 
   const brand = await prisma.user.findUnique({
-    where: { email: "client.arc@adbridge.test" },
+    where: { email: "client.arc@studioos.test" },
     include: { brandProfile: true }
   });
   checks.push({
@@ -50,7 +50,7 @@ async function main() {
   });
 
   const creator = await prisma.user.findUnique({
-    where: { email: "creator.nova@adbridge.test" },
+    where: { email: "creator.nova@studioos.test" },
     include: { creatorProfile: true }
   });
   checks.push({
@@ -69,14 +69,14 @@ async function main() {
     detail: campaign ? `${campaign.versions.length} versions` : "missing"
   });
 
-  const auth = await authService.authenticate("client.arc@adbridge.test", DEMO_PASSWORD);
+  const auth = await authService.authenticate("client.arc@studioos.test", DEMO_PASSWORD);
   checks.push({
     name: "auth.login",
     ok: auth?.role === "BRAND" && Boolean(auth.id),
     detail: auth ? `${auth.email} (${auth.role})` : "authenticate returned null"
   });
 
-  const badAuth = await authService.authenticate("client.arc@adbridge.test", "wrong-password");
+  const badAuth = await authService.authenticate("client.arc@studioos.test", "wrong-password");
   checks.push({
     name: "auth.reject_bad_password",
     ok: badAuth === null,

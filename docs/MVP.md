@@ -8,10 +8,10 @@ Video ad review and approval — **not** chat, **not** a marketplace, **not** an
 npm run dev
 ```
 
-1. Sign in at `/login` with demo accounts (`TempAdBridge2026!`):
-   - **Brand:** `client.arc@adbridge.test`
-   - **Studio:** `creator.nova@adbridge.test`
-   - **Admin:** `admin@adbridge.test`
+1. Sign in at `/login` with demo accounts (`TempStudioOS2026!`):
+   - **Brand:** `client.arc@studioos.test`
+   - **Studio:** `creator.nova@studioos.test`
+   - **Admin:** `admin@studioos.test`
 2. Open **Review Workspace:** [/workspace](/workspace)
 3. Demo project review: [/workspace/projects/proj_mvp_demo_01/review](/workspace/projects/proj_mvp_demo_01/review)
 

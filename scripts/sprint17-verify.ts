@@ -30,8 +30,8 @@ async function main() {
       detail: brandPortalRoutes.newProject ?? "/brand/projects/new"
     });
 
-    const brand = await prisma.user.findUnique({ where: { email: "client.arc@adbridge.test" } });
-    const creator = await prisma.user.findUnique({ where: { email: "creator.nova@adbridge.test" } });
+    const brand = await prisma.user.findUnique({ where: { email: "client.arc@studioos.test" } });
+    const creator = await prisma.user.findUnique({ where: { email: "creator.nova@studioos.test" } });
 
     if (!brand || !creator) {
       checks.push({ step: 0, name: "seed.demo_users", ok: false, detail: "run npm run db:seed" });

@@ -3,9 +3,9 @@ import type { Locale } from "@/lib/i18n";
 
 /** Default UI language per demo brand account. Extend with profile settings later. */
 const BRAND_PREFERRED_LOCALE: Record<string, Locale> = {
-  "client.arc@adbridge.test": "en",
-  "client.bright@adbridge.test": "en",
-  "client.north@adbridge.test": "en"
+  "client.arc@studioos.test": "en",
+  "client.bright@studioos.test": "en",
+  "client.north@studioos.test": "en"
 };
 
 export function getClientPreferredLocale(

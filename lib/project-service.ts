@@ -205,7 +205,7 @@ function seedStore(): ProjectStore {
   const projects: StoredProject[] = seedProjects.map((item) =>
     migrateStoredProject({
       id: item.id,
-      client_email: `${item.user_id}@seed.adbridge.local`,
+      client_email: `${item.user_id}@seed.studioos.local`,
       client_name: item.company_name,
       company_name: item.company_name,
       email: item.email,
@@ -252,10 +252,10 @@ function ensureDemoArcNovaProject(store: ProjectStore): ProjectStore {
     store.projects.unshift(
       defaultProjectFields({
         id: DEMO_PROJECT_ID,
-        client_email: "client.arc@adbridge.test",
+        client_email: "client.arc@studioos.test",
         client_name: "Arc & Alloy",
         company_name: "Arc & Alloy",
-        email: "client.arc@adbridge.test",
+        email: "client.arc@studioos.test",
         title: "我的产品 Campaign",
         status: "in_review",
         wizard_step: 6,

@@ -34,8 +34,8 @@ async function main() {
       detail: String(videoConfig.enforceHlsOnly)
     });
 
-    const creator = await prisma.user.findUniqueOrThrow({ where: { email: "creator.nova@adbridge.test" } });
-    const brand = await prisma.user.findUniqueOrThrow({ where: { email: "client.arc@adbridge.test" } });
+    const creator = await prisma.user.findUniqueOrThrow({ where: { email: "creator.nova@studioos.test" } });
+    const brand = await prisma.user.findUniqueOrThrow({ where: { email: "client.arc@studioos.test" } });
 
     const campaign = await prisma.campaign.create({
       data: {

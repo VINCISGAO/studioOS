@@ -13,9 +13,9 @@ const copy = {
     admin: "admin",
     guest: "guest (not signed in)",
     brandViewingCreatorHint:
-      "You are signed in as a brand. To send a quote, sign out and sign in with the creator account (creator.nova@adbridge.test).",
+      "You are signed in as a brand. To send a quote, sign out and sign in with the creator account (creator.nova@studioos.test).",
     creatorViewingBrandHint:
-      "You are signed in as a creator. To accept a quote, sign out and sign in with the brand account (client.arc@adbridge.test).",
+      "You are signed in as a creator. To accept a quote, sign out and sign in with the brand account (client.arc@studioos.test).",
     quoteSent: "Quote sent successfully. The brand can accept it from this chat or their dashboard.",
     quoteFailed:
       "Quote was not saved. Sign in as the creator for this thread, then send the quote again.",
@@ -31,9 +31,9 @@ const copy = {
     admin: "管理员",
     guest: "未登录",
     brandViewingCreatorHint:
-      "你现在是品牌方登录。若要发送报价，请先退出，再用创作者账号登录（creator.nova@adbridge.test）。",
+      "你现在是品牌方登录。若要发送报价，请先退出，再用创作者账号登录（creator.nova@studioos.test）。",
     creatorViewingBrandHint:
-      "你现在是创作者登录。若要接受报价，请先退出，再用品牌账号登录（client.arc@adbridge.test）。",
+      "你现在是创作者登录。若要接受报价，请先退出，再用品牌账号登录（client.arc@studioos.test）。",
     quoteSent: "报价已发送。品牌方可在本页或「询价与订单」里接受报价。",
     quoteFailed: "报价未保存。请确认已用创作者账号登录，然后重新发送报价。",
     signInCreator: "登录创作者账号",

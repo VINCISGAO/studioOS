@@ -43,7 +43,7 @@ async function main() {
     });
 
     const creator = await prisma.user.findUniqueOrThrow({
-      where: { email: "creator.nova@adbridge.test" }
+      where: { email: "creator.nova@studioos.test" }
     });
     creatorId = creator.id;
 
@@ -88,7 +88,7 @@ async function main() {
     }
 
     const brand = await prisma.user.findUniqueOrThrow({
-      where: { email: "client.arc@adbridge.test" }
+      where: { email: "client.arc@studioos.test" }
     });
     const deadline = new Date();
     deadline.setDate(deadline.getDate() + 7);

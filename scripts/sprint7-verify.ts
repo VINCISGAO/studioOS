@@ -17,8 +17,8 @@ async function main() {
   let campaignId: string | null = null;
 
   try {
-    const brand = await prisma.user.findUniqueOrThrow({ where: { email: "client.arc@adbridge.test" } });
-    const creatorUser = await prisma.user.findUniqueOrThrow({ where: { email: "creator.nova@adbridge.test" } });
+    const brand = await prisma.user.findUniqueOrThrow({ where: { email: "client.arc@studioos.test" } });
+    const creatorUser = await prisma.user.findUniqueOrThrow({ where: { email: "creator.nova@studioos.test" } });
     const nova = await prisma.creatorProfile.findFirstOrThrow({
       where: { userId: creatorUser.id }
     });

@@ -10,8 +10,8 @@ import { buildDnaProfile } from "@/lib/studioos/creative-dna-service";
 
 const STORE_PATH = dataStorePath("creative-performance-store.json");
 
-const DEMO_ORG_BRIGHT = "client.bright@adbridge.test";
-const DEMO_ORG_ARC = "client.arc@adbridge.test";
+const DEMO_ORG_BRIGHT = "client.bright@studioos.test";
+const DEMO_ORG_ARC = "client.arc@studioos.test";
 
 function createId(prefix: string) {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;

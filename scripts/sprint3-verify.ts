@@ -17,12 +17,12 @@ async function main() {
   let campaignId: string | null = null;
 
   try {
-    const brand = await prisma.user.findUniqueOrThrow({ where: { email: "client.arc@adbridge.test" } });
+    const brand = await prisma.user.findUniqueOrThrow({ where: { email: "client.arc@studioos.test" } });
     const nova = await prisma.creatorProfile.findFirstOrThrow({
-      where: { user: { email: "creator.nova@adbridge.test" } }
+      where: { user: { email: "creator.nova@studioos.test" } }
     });
     const signal = await prisma.creatorProfile.findFirstOrThrow({
-      where: { user: { email: "creator.signal@adbridge.test" } }
+      where: { user: { email: "creator.signal@studioos.test" } }
     });
 
     const deadline = new Date();

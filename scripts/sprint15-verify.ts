@@ -79,7 +79,7 @@ async function main() {
       detail: "admin dashboard preview"
     });
 
-    const admin = await prisma.user.findUnique({ where: { email: "admin@adbridge.test" } });
+    const admin = await prisma.user.findUnique({ where: { email: "admin@studioos.test" } });
     if (admin) {
       const overview = await adminService.getOverview({ id: admin.id, role: "ADMIN" });
       checks.push({

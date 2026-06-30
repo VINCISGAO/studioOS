@@ -108,7 +108,7 @@ Not confirmed. `npm run backup:daily` included in `night:deliver` script.
 ## Suggested next priorities
 
 1. Run `npm run night:deliver` locally to validate + push.
-2. Manual QA: `/studio` as `creator.nova@adbridge.test`, `/admin/membership` as `admin@adbridge.test`.
+2. Manual QA: `/studio` as `creator.nova@studioos.test`, `/admin/membership` as `admin@studioos.test`.
 3. Add Playwright for 15-step QA script.
 4. Generate OpenAPI spec from existing `/api/v1/*` routes.
 5. Install Sentry when production DSN is ready.

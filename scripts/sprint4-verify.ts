@@ -14,7 +14,7 @@ async function main() {
   let commentId: string | null = null;
 
   try {
-    const brand = await prisma.user.findUniqueOrThrow({ where: { email: "client.arc@adbridge.test" } });
+    const brand = await prisma.user.findUniqueOrThrow({ where: { email: "client.arc@studioos.test" } });
     const campaign = await prisma.campaign.findFirstOrThrow({
       where: { title: "Summer Glow Campaign" },
       include: { versions: { orderBy: { versionNumber: "desc" }, take: 1 } }

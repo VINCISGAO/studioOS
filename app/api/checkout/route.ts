@@ -37,7 +37,7 @@ export async function POST(request: Request) {
           currency: "usd",
           unit_amount: Math.round(amount * 100),
           product_data: {
-            name: body.creatorName ? `AdBridge quote with ${body.creatorName}` : "AdBridge accepted quote",
+            name: body.creatorName ? `StudioOS quote with ${body.creatorName}` : "StudioOS accepted quote",
             description: body.description ?? "Escrow payment for an accepted AI advertising production quote."
           }
         }

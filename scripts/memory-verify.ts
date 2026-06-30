@@ -21,8 +21,8 @@ async function main() {
   let campaignId: string | null = null;
 
   try {
-    const brand = await prisma.user.findUniqueOrThrow({ where: { email: "client.arc@adbridge.test" } });
-    const creator = await prisma.user.findUniqueOrThrow({ where: { email: "creator.nova@adbridge.test" } });
+    const brand = await prisma.user.findUniqueOrThrow({ where: { email: "client.arc@studioos.test" } });
+    const creator = await prisma.user.findUniqueOrThrow({ where: { email: "creator.nova@studioos.test" } });
 
     await memoryExtractionService.extractFromMessage({
       content: "我们品牌一直喜欢 Apple 那种极简风。",

@@ -9,9 +9,9 @@ import {
 import type { Creator } from "@/lib/types";
 
 const DEMO_CREATOR_IDS: Record<string, string> = {
-  "creator.nova@adbridge.test": "creator_01",
-  "creator.signal@adbridge.test": "creator_02",
-  "creator.atlas@adbridge.test": "creator_03"
+  "creator.nova@studioos.test": "creator_01",
+  "creator.signal@studioos.test": "creator_02",
+  "creator.atlas@studioos.test": "creator_03"
 };
 
 export function getCreatorIdForDemoEmail(email: string) {

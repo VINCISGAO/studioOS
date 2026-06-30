@@ -17,7 +17,7 @@ const copy = {
     you: "You",
     brand: "Brand",
     creator: "Creator",
-    system: "AdBridge",
+    system: "StudioOS",
     syncing: "Live chat",
     error: "Could not send. Try again."
   },
@@ -28,7 +28,7 @@ const copy = {
     you: "你",
     brand: "品牌方",
     creator: "创作者",
-    system: "AdBridge",
+    system: "StudioOS",
     syncing: "实时聊天",
     error: "发送失败，请重试。"
   }

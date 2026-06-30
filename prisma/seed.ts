@@ -64,17 +64,17 @@ async function seedDemoUsers() {
 async function enrichCreatorProfiles() {
   const creators = [
     {
-      email: "creator.nova@adbridge.test",
+      email: "creator.nova@studioos.test",
       dna: { style: ["Luxury", "Tech"], strength: ["Motion", "TikTok"] },
       aiQualityScore: 88
     },
     {
-      email: "creator.signal@adbridge.test",
+      email: "creator.signal@studioos.test",
       dna: { style: ["UGC", "Tech"], strength: ["TikTok", "Meta"] },
       aiQualityScore: 85
     },
     {
-      email: "creator.atlas@adbridge.test",
+      email: "creator.atlas@studioos.test",
       dna: { style: ["Luxury", "UGC"], strength: ["VFX", "Meta"] },
       aiQualityScore: 83
     }
@@ -272,11 +272,11 @@ async function main() {
   await enrichCreatorProfiles();
 
   const brand = await prisma.user.findUniqueOrThrow({
-    where: { email: "client.arc@adbridge.test" }
+    where: { email: "client.arc@studioos.test" }
   });
 
   const creator = await prisma.user.findUniqueOrThrow({
-    where: { email: "creator.nova@adbridge.test" }
+    where: { email: "creator.nova@studioos.test" }
   });
 
   await seedDemoMemory(brand.id, creator.id);
@@ -308,7 +308,7 @@ async function main() {
         }
       });
     }
-    await seedDemoDispute(existing.id, "client.arc@adbridge.test");
+    await seedDemoDispute(existing.id, "client.arc@studioos.test");
     console.log("Demo campaign already exists:", existing.id);
     return;
   }
