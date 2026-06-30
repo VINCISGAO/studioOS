@@ -57,12 +57,8 @@ export function CinematicHeroStats({ locale }: { locale: Locale }) {
       variants={panelVariants}
       className="hero-stats-dock relative w-full"
     >
-      <div className="hero-stats-panel relative overflow-hidden rounded-2xl border border-white/[0.1] bg-black/40 shadow-[0_24px_64px_-24px_rgba(0,0,0,0.8)] backdrop-blur-2xl sm:rounded-[1.25rem]">
+      <div className="hero-stats-panel relative overflow-hidden rounded-2xl border border-white/[0.1] bg-black/45 backdrop-blur-xl sm:rounded-[1.25rem]">
         <div className="hero-stats-shimmer pointer-events-none absolute inset-x-0 top-0 h-px" aria-hidden />
-        <div
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,rgba(139,92,246,0.14),transparent_65%)]"
-          aria-hidden
-        />
 
         <div className="relative grid grid-cols-2 divide-x divide-white/[0.08] lg:grid-cols-4">
           {stats.map((stat, index) => {
@@ -78,8 +74,7 @@ export function CinematicHeroStats({ locale }: { locale: Locale }) {
               >
                 <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_100%,rgba(139,92,246,0.12),transparent_72%)] opacity-0 transition duration-700 group-hover:opacity-100" />
                 <p className="relative font-mono text-[1.75rem] font-semibold tracking-tight sm:text-[2.65rem]">
-                  <span className="hero-stat-glow inline-block">
-                    {meta.animate !== null ? (
+                  {meta.animate !== null ? (
                       <>
                         <AnimatedCounter value={meta.animate} locale={locale} />
                         {meta.suffix}
@@ -90,7 +85,6 @@ export function CinematicHeroStats({ locale }: { locale: Locale }) {
                     ) : (
                       "display" in meta && meta.display
                     )}
-                  </span>
                 </p>
                 <p className="relative mt-2 text-[11px] text-zinc-400 sm:text-sm">{stat.label}</p>
               </motion.div>

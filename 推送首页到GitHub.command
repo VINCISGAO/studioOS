@@ -5,11 +5,13 @@ if [ -s "$HOME/.nvm/nvm.sh" ]; then
   . "$HOME/.nvm/nvm.sh"
 fi
 cd "$(dirname "$0")" || exit 1
-chmod +x scripts/start-dev.sh 2>/dev/null || true
-bash scripts/start-dev.sh
+chmod +x scripts/deploy-homepage-github.sh 2>/dev/null || true
+bash scripts/deploy-homepage-github.sh
 EXIT=$?
 echo ""
 if [ $EXIT -ne 0 ]; then
-  echo "❌ 启动失败 (exit $EXIT)。请把上面报错截图发给我。"
+  echo "❌ 推送失败。详情见 .git-deploy-report.txt"
+else
+  echo "✅ 已推送到 GitHub"
 fi
 read -r -p "按回车键关闭…" _

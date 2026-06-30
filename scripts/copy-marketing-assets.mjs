@@ -75,13 +75,27 @@ copyFirstAvailable({
   sources: [studioPublic, ...studioSources]
 });
 
+const LOGIN_SPACE_ASSETS = [
+  "2026_6_29__02_06_45-61ae13a4-0fa5-47a1-902c-92fa594e614f.png",
+  "image-469c9ec8-95b8-4a05-bb65-175e39b28542.png"
+];
+
 copyFirstAvailable({
   label: "login space bg",
   dest: path.join(root, "public/images/login-space-bg.png"),
   sources: [
-    path.join(assetRoot, "2026_6_29__02_06_45-61ae13a4-0fa5-47a1-902c-92fa594e614f.png"),
+    path.join(root, "assets/marketing/login-space-bg.png"),
+    ...LOGIN_SPACE_ASSETS.map((fileName) => path.join(assetRoot, fileName)),
+    path.join(root, "public/images/login-space-bg.png")
+  ]
+});
+
+copyFirstAvailable({
+  label: "login space bg (bundled)",
+  dest: path.join(root, "assets/marketing/login-space-bg.png"),
+  sources: [
     path.join(root, "public/images/login-space-bg.png"),
-    path.join(root, "public/images/home-hero-bg.png")
+    ...LOGIN_SPACE_ASSETS.map((fileName) => path.join(assetRoot, fileName))
   ]
 });
 

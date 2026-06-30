@@ -18,7 +18,7 @@ export function CinematicHeroFeatures({ locale }: { locale: Locale }) {
   const features = landingText("heroFeatures", locale);
 
   return (
-    <div className="mt-10 grid grid-cols-2 gap-x-6 gap-y-8 border-t border-white/[0.08] pt-10 sm:mt-12 sm:gap-x-8 lg:grid-cols-4 lg:gap-x-10">
+    <div className="mt-10 grid grid-cols-2 gap-x-8 gap-y-8 pt-2 sm:mt-12 lg:grid-cols-4">
       {features.map((feature, index) => {
         const Icon = featureIcons[feature.icon];
         return (
@@ -29,7 +29,7 @@ export function CinematicHeroFeatures({ locale }: { locale: Locale }) {
             transition={{ duration: 0.75, ease: cinematicEase, delay: 0.55 + index * 0.08 }}
             className="flex flex-col items-start gap-3 sm:gap-4"
           >
-            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-violet-600/20 text-violet-300 ring-1 ring-violet-500/25">
+            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-violet-600/25 text-violet-200">
               <Icon className="h-5 w-5" strokeWidth={1.75} />
             </span>
             <div>
