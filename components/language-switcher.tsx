@@ -43,11 +43,11 @@ function LanguageSwitcherInner({ locale, tone = "light" }: { locale: Locale; ton
   return (
     <div
       className={cn(
-        "flex h-9 items-center gap-1 rounded-md border p-1 text-xs font-medium backdrop-blur",
+        "flex h-9 items-center gap-0.5 rounded-md border p-1 text-xs font-medium backdrop-blur sm:gap-1",
         isDark ? "border-white/15 bg-white/5 shadow-none" : "border bg-white/80 shadow-sm"
       )}
     >
-      <Globe2 className={cn("ml-1 h-3.5 w-3.5", isDark ? "text-zinc-400" : "text-muted-foreground")} />
+      <Globe2 className={cn("ml-0.5 hidden h-3.5 w-3.5 min-[390px]:block sm:ml-1", isDark ? "text-zinc-400" : "text-muted-foreground")} />
       {(["en", "zh"] as const).map((item) => (
         <button
           key={item}
@@ -55,7 +55,7 @@ function LanguageSwitcherInner({ locale, tone = "light" }: { locale: Locale; ton
           aria-pressed={current === item}
           onClick={() => switchTo(item)}
           className={cn(
-            "rounded px-2.5 py-1.5 transition-colors",
+            "rounded px-2 py-1.5 transition-colors sm:px-2.5",
             current === item
               ? isDark
                 ? "bg-white text-zinc-950 shadow-sm"
@@ -92,16 +92,16 @@ export function LanguageSwitcherFallback({
   return (
     <div
       className={cn(
-        "flex h-9 items-center gap-1 rounded-md border p-1 text-xs font-medium backdrop-blur",
+        "flex h-9 items-center gap-0.5 rounded-md border p-1 text-xs font-medium backdrop-blur sm:gap-1",
         isDark ? "border-white/15 bg-white/5 shadow-none" : "border bg-white/80 shadow-sm"
       )}
     >
-      <Globe2 className={cn("ml-1 h-3.5 w-3.5", isDark ? "text-zinc-400" : "text-muted-foreground")} />
+      <Globe2 className={cn("ml-0.5 hidden h-3.5 w-3.5 min-[390px]:block sm:ml-1", isDark ? "text-zinc-400" : "text-muted-foreground")} />
       {(["en", "zh"] as const).map((item) => (
         <span
           key={item}
           className={cn(
-            "rounded px-2.5 py-1.5",
+            "rounded px-2 py-1.5 sm:px-2.5",
             locale === item
               ? isDark
                 ? "bg-white text-zinc-950 shadow-sm"
