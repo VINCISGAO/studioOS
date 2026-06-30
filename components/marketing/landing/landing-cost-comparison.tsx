@@ -71,7 +71,7 @@ export function LandingCostComparison({ locale }: { locale: Locale }) {
             </LandingHeadline>
           </motion.div>
           <motion.div variants={fadeUpItem}>
-            <LandingLead className="mx-auto mt-5 max-w-2xl text-[15px] leading-7 text-zinc-400 sm:text-base sm:leading-8">
+            <LandingLead className="mx-auto mt-5 max-w-2xl whitespace-pre-line text-center text-[15px] leading-7 text-zinc-400 sm:text-base sm:leading-8">
               {t.body}
             </LandingLead>
           </motion.div>
