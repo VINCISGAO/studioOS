@@ -65,9 +65,10 @@ export function CinematicHero({
   const primaryHref = isLoggedIn ? portalHref : withLocale("/login?role=brand", locale);
   const secondaryLabel = t.secondary;
   const secondaryHref = withLocale("/login?role=creator", locale);
+  const isEnglish = locale === "en";
 
   return (
-    <section ref={sectionRef} className="relative min-h-[100svh] overflow-hidden bg-[#050607] text-white">
+    <section ref={sectionRef} className="relative overflow-hidden bg-[#050607] text-white">
       <div
         className="pointer-events-none absolute inset-0 bg-cover bg-[62%_42%] bg-no-repeat opacity-[0.9]"
         style={{ backgroundImage: `url(${HERO_BG})` }}
@@ -87,73 +88,92 @@ export function CinematicHero({
       />
       <div className="absolute inset-x-0 bottom-0 h-px bg-white/10" aria-hidden />
 
-      <div className="relative z-10 mx-auto max-w-7xl px-5 pb-10 pt-16 sm:px-8 sm:pt-16 lg:pb-14 lg:pt-16">
+      <div className="relative z-10 mx-auto max-w-7xl px-4 pb-10 pt-24 sm:px-8 sm:pt-24 md:pt-28 lg:pb-14 lg:pt-20">
         <motion.div
           style={reduce ? undefined : { opacity: contentOpacity, y: contentY, scale: contentScale }}
-          className="grid min-h-[calc(100svh-4rem)] items-center gap-12 lg:grid-cols-[minmax(0,0.94fr)_minmax(440px,1.06fr)]"
+          className="grid gap-9 md:gap-11 lg:min-h-[680px] lg:grid-cols-[minmax(0,1.08fr)_minmax(390px,0.92fr)] lg:items-center lg:gap-8 xl:min-h-[720px] xl:grid-cols-[minmax(0,0.94fr)_minmax(440px,1.06fr)] xl:gap-12"
         >
-          <div className="max-w-3xl">
-            <p className="inline-flex w-fit items-center gap-2 rounded-md border border-white/12 bg-white/[0.06] px-3.5 py-1.5 text-[11px] font-medium text-zinc-200">
-              <ShieldCheck className="h-3.5 w-3.5 text-[#c7d1df]" />
-              {t.eyebrow}
+          <div className={cn("max-w-3xl", isEnglish ? "md:max-w-2xl lg:max-w-[38rem] xl:max-w-[42rem]" : undefined)}>
+            <p className="inline-flex max-w-full items-start gap-2 rounded-md border border-white/12 bg-white/[0.06] px-3 py-1.5 text-[10px] font-medium leading-5 text-zinc-200 sm:items-center sm:px-3.5 sm:text-[11px]">
+              <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#c7d1df] sm:mt-0" />
+              <span className="min-w-0 text-wrap">{t.eyebrow}</span>
             </p>
 
             <h1
               className={cn(
-                "mt-6 max-w-[10em] text-[2.45rem] font-semibold leading-[1.08] sm:text-[3.5rem] lg:text-[4.6rem]",
-                locale === "en" ? marketingHeadlineClassName("en") : "text-pretty"
+                "mt-5 font-semibold sm:mt-6",
+                isEnglish
+                  ? "max-w-[8.8em] text-[clamp(2.7rem,10.2vw,3.8rem)] leading-[1.02] sm:max-w-[9.4em] sm:text-[clamp(3.2rem,6.4vw,4rem)] md:text-[clamp(3.4rem,5.6vw,4.25rem)] lg:text-[3.65rem] xl:text-[4.05rem]"
+                  : "max-w-[11em] text-[clamp(2.55rem,12vw,4rem)] leading-[1.08] sm:max-w-[10.5em] sm:text-[clamp(3.25rem,8.2vw,4.8rem)] lg:text-[4rem] xl:text-[4.6rem]",
+                isEnglish ? marketingHeadlineClassName("en") : "text-pretty"
               )}
             >
-              <span className="block text-white">{t.titleLine1}</span>
-              <span className="mt-2 block text-zinc-300">
-                {t.titleHighlight}
-                {t.titleLine2 ? ` ${t.titleLine2}` : null}
+              <span className={cn("block text-white", locale === "zh" ? "whitespace-nowrap" : undefined)}>
+                {t.titleLine1}
               </span>
+              {isEnglish ? (
+                <>
+                  <span className="mt-3 block text-zinc-300 sm:mt-4">{t.titleHighlight}</span>
+                  {t.titleLine2 ? <span className="mt-3 block text-zinc-300 sm:mt-4">{t.titleLine2}</span> : null}
+                </>
+              ) : (
+                <span className="mt-2 block whitespace-nowrap text-zinc-300">
+                  {t.titleHighlight}
+                  {t.titleLine2 ? ` ${t.titleLine2}` : null}
+                </span>
+              )}
             </h1>
 
-            <p className="mt-6 max-w-2xl text-[15px] leading-7 text-zinc-300 sm:text-base">{t.subtitle}</p>
+            <p
+              className={cn(
+                "mt-5 max-w-2xl text-[15px] leading-7 text-zinc-300 sm:mt-6 sm:text-base md:text-[17px] md:leading-8",
+                isEnglish ? "md:max-w-xl lg:max-w-[36rem]" : undefined
+              )}
+            >
+              {t.subtitle}
+            </p>
 
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="mt-7 grid grid-cols-2 gap-2 sm:mt-8 sm:flex sm:items-center sm:gap-3">
               <Link
                 href={primaryHref}
-                className="inline-flex h-12 min-w-[150px] items-center justify-center rounded-md bg-white px-7 text-sm font-semibold text-black shadow-[0_18px_48px_-20px_rgba(255,255,255,0.65)] transition duration-300 hover:-translate-y-0.5 hover:bg-zinc-200 hover:shadow-[0_24px_60px_-24px_rgba(255,255,255,0.85)] active:translate-y-0 active:scale-[0.98]"
+                className="inline-flex h-12 min-w-0 items-center justify-center rounded-md bg-white px-3 text-[13px] font-semibold text-black shadow-[0_18px_48px_-20px_rgba(255,255,255,0.65)] transition duration-300 hover:-translate-y-0.5 hover:bg-zinc-200 hover:shadow-[0_24px_60px_-24px_rgba(255,255,255,0.85)] active:translate-y-0 active:scale-[0.98] sm:min-w-[150px] sm:px-7 sm:text-sm"
               >
                 {primaryLabel}
               </Link>
               <Link
                 href={secondaryHref}
-                className="inline-flex h-12 min-w-[150px] items-center justify-center rounded-md border border-white/18 bg-white/[0.04] px-7 text-sm font-semibold text-white backdrop-blur-sm transition duration-300 hover:-translate-y-0.5 hover:border-white/35 hover:bg-white/10 active:translate-y-0 active:scale-[0.98]"
+                className="inline-flex h-12 min-w-0 items-center justify-center rounded-md border border-white/18 bg-white/[0.04] px-3 text-[13px] font-semibold text-white backdrop-blur-sm transition duration-300 hover:-translate-y-0.5 hover:border-white/35 hover:bg-white/10 active:translate-y-0 active:scale-[0.98] sm:min-w-[150px] sm:px-7 sm:text-sm"
               >
                 {secondaryLabel}
               </Link>
             </div>
 
-            <div className="mt-8 grid max-w-xl gap-3 border-y border-white/10 py-5 sm:grid-cols-3">
-              <div>
-                <p className="text-xl font-semibold text-white">$8k</p>
-                <p className="mt-1 text-xs text-zinc-500">{locale === "zh" ? "起步制作预算" : "Starting production lane"}</p>
+            <div className="mt-7 grid max-w-xl grid-cols-3 gap-2 border-y border-white/10 py-4 text-center sm:mt-8 sm:gap-3 sm:py-5 sm:text-left">
+              <div className="rounded-md bg-black/15 px-2 py-3 sm:bg-transparent sm:px-0 sm:py-0">
+                <p className="text-lg font-semibold text-white sm:text-xl">$8k</p>
+                <p className="mt-1 text-[10px] leading-4 text-zinc-400 sm:text-xs sm:text-zinc-500">{locale === "zh" ? "起步制作预算" : "Starting production lane"}</p>
               </div>
-              <div>
-                <p className="text-xl font-semibold text-white">72h</p>
-                <p className="mt-1 text-xs text-zinc-500">{locale === "zh" ? "首轮方案窗口" : "First concept window"}</p>
+              <div className="rounded-md bg-black/15 px-2 py-3 sm:bg-transparent sm:px-0 sm:py-0">
+                <p className="text-lg font-semibold text-white sm:text-xl">72h</p>
+                <p className="mt-1 text-[10px] leading-4 text-zinc-400 sm:text-xs sm:text-zinc-500">{locale === "zh" ? "首轮方案窗口" : "First concept window"}</p>
               </div>
-              <div>
-                <p className="text-xl font-semibold text-white">4K</p>
-                <p className="mt-1 text-xs text-zinc-500">{locale === "zh" ? "交付与版权标准" : "Delivery and rights standard"}</p>
+              <div className="rounded-md bg-black/15 px-2 py-3 sm:bg-transparent sm:px-0 sm:py-0">
+                <p className="text-lg font-semibold text-white sm:text-xl">4K</p>
+                <p className="mt-1 text-[10px] leading-4 text-zinc-400 sm:text-xs sm:text-zinc-500">{locale === "zh" ? "交付与版权标准" : "Delivery and rights standard"}</p>
               </div>
             </div>
 
-            <div className="mt-6 flex items-center gap-4">
+            <div className="mt-5 flex flex-col items-center justify-center gap-2 text-center sm:mt-6 sm:flex-row sm:justify-start sm:gap-4 sm:text-left">
               <div className="flex items-center gap-0.5">
                 {Array.from({ length: 5 }).map((_, index) => (
                   <Star key={index} className="h-3.5 w-3.5 fill-[#d0c19a] text-[#d0c19a]" />
                 ))}
               </div>
-              <p className="text-xs text-zinc-500">{t.trusted}</p>
+              <p className="max-w-[18rem] text-xs leading-5 text-zinc-400 sm:max-w-none sm:text-zinc-500">{t.trusted}</p>
             </div>
           </div>
 
-          <div className="relative animate-studio-panel-float transition duration-500 hover:-translate-y-2 hover:scale-[1.01]">
+          <div className="relative hidden animate-studio-panel-float transition duration-500 hover:-translate-y-2 hover:scale-[1.01] md:block">
             <div className="overflow-hidden rounded-lg border border-white/12 bg-[#0b0d0f]/88 shadow-[0_32px_90px_-44px_rgba(0,0,0,0.95)] backdrop-blur-xl">
               <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
                 <div className="flex items-center gap-2">
@@ -247,14 +267,14 @@ export function CinematicHero({
           </div>
         </motion.div>
 
-        <div className="mt-4 overflow-hidden border-y border-white/[0.08] py-5 sm:mt-6 sm:py-6">
-          <p className="text-center text-[11px] font-medium tracking-[0.24em] text-zinc-500">
+        <div className="mt-8 overflow-hidden border-y border-white/[0.08] py-5 sm:mt-6 sm:py-6">
+          <p className="text-center text-[10px] font-medium tracking-[0.18em] text-zinc-500 sm:text-[11px] sm:tracking-[0.24em]">
             {locale === "zh" ? "全球品牌信赖" : "TRUSTED BY GLOBAL BRAND TEAMS"}
           </p>
           <div className="relative mt-4">
             <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-gradient-to-r from-[#050607] to-transparent" />
             <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-[#050607] to-transparent" />
-            <div className="animate-cinematic-marquee flex w-max items-center gap-x-12 pr-12">
+            <div className="animate-cinematic-marquee flex w-max items-center gap-x-8 pr-8 sm:gap-x-12 sm:pr-12">
               {[...TRUST_BRANDS, ...TRUST_BRANDS].map((brand, index) => (
                 <span
                   key={`${brand}-${index}`}
@@ -267,12 +287,12 @@ export function CinematicHero({
           </div>
         </div>
 
-        <div className="mt-6">
+        <div className="mx-auto mt-8 w-full max-w-6xl sm:mt-6">
           <CinematicHeroFeatures locale={locale} />
-        </div>
 
-        <div className="mt-6 sm:mt-7">
-          <CinematicHeroStats locale={locale} />
+          <div className="mt-6 sm:mt-7">
+            <CinematicHeroStats locale={locale} />
+          </div>
         </div>
       </div>
     </section>
