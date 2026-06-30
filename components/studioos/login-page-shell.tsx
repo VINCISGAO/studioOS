@@ -221,12 +221,7 @@ function LoginMobileIntro({
 
   return (
     <div className="mb-6 space-y-3 sm:mb-8 lg:hidden">
-      <LoginMarketingHeadline
-        role={role}
-        locale={locale}
-        t={t}
-        className="text-[2.125rem] sm:text-[2.5rem]"
-      />
+      <LoginMarketingHeadline role={role} locale={locale} t={t} className="text-[2.125rem] sm:text-[2.5rem]" />
       <div
         className={cn(
           "h-0.5 w-9 rounded-full",
@@ -236,12 +231,7 @@ function LoginMobileIntro({
         )}
         aria-hidden
       />
-      <p
-        className={cn(
-          "max-w-md text-[13px] leading-6 sm:text-sm sm:leading-7",
-          isBrand ? visual.panelMuted : "text-zinc-600"
-        )}
-      >
+      <p className={cn("max-w-md text-[13px] leading-6 sm:text-sm sm:leading-7", isBrand ? visual.panelMuted : "text-zinc-600")}>
         {heroSubtitle}
       </p>
     </div>
@@ -265,11 +255,7 @@ export function LoginPageShell({
 
   return (
     <main className="relative min-h-[100dvh] overflow-hidden">
-      <div
-        className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: `url(${visual.bg})` }}
-        aria-hidden
-      />
+      <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${visual.bg})` }} aria-hidden />
       <div className="absolute inset-0" style={{ background: visual.overlay }} aria-hidden />
 
       <div className={cn("relative z-10 flex min-h-[100dvh] flex-col", visual.panelText)}>
@@ -296,26 +282,14 @@ export function LoginPageShell({
           <section className="hidden max-w-xl lg:block lg:flex-1 lg:pl-6 lg:py-6 xl:pl-14">
             {isBrand ? (
               <>
-                <LoginMarketingHeadline
-                  role={role}
-                  locale={locale}
-                  t={t}
-                  className="text-[2rem] sm:text-[2.75rem] lg:text-[3.25rem]"
-                />
-                <p className={cn("mt-4 max-w-lg text-[15px] leading-7 sm:text-base", visual.panelMuted)}>
-                  {t.brandHeroSubtitle}
-                </p>
+                <LoginMarketingHeadline role={role} locale={locale} t={t} className="text-[2rem] sm:text-[2.75rem] lg:text-[3.25rem]" />
+                <p className={cn("mt-4 max-w-lg text-[15px] leading-7 sm:text-base", visual.panelMuted)}>{t.brandHeroSubtitle}</p>
                 <ul className="mt-8 hidden space-y-5 lg:block lg:mt-10">
                   {t.brandFeatures.map((feature, index) => {
                     const Icon = featureIcons[feature.icon];
                     return (
                       <li key={feature.title} className="flex gap-4">
-                        <span
-                          className={cn(
-                            "flex h-11 w-11 shrink-0 items-center justify-center rounded-full ring-1",
-                            visual.featureIcon[index]
-                          )}
-                        >
+                        <span className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-full ring-1", visual.featureIcon[index])}>
                           <Icon className="h-5 w-5" strokeWidth={1.75} />
                         </span>
                         <div className="min-w-0 pt-0.5">
@@ -330,26 +304,14 @@ export function LoginPageShell({
               </>
             ) : (
               <>
-                <LoginMarketingHeadline
-                  role={role}
-                  locale={locale}
-                  t={t}
-                  className="text-[2rem] sm:text-[2.75rem] lg:text-[3.25rem]"
-                />
-                <p className={cn("mt-4 max-w-lg text-[15px] leading-7 sm:text-base", visual.panelMuted)}>
-                  {t.creatorHeroSubtitle}
-                </p>
+                <LoginMarketingHeadline role={role} locale={locale} t={t} className="text-[2rem] sm:text-[2.75rem] lg:text-[3.25rem]" />
+                <p className={cn("mt-4 max-w-lg text-[15px] leading-7 sm:text-base", visual.panelMuted)}>{t.creatorHeroSubtitle}</p>
                 <ul className="mt-8 space-y-5 sm:mt-10">
                   {t.creatorFeatures.map((feature, index) => {
                     const Icon = featureIcons[feature.icon];
                     return (
                       <li key={feature.title} className="flex gap-4">
-                        <span
-                          className={cn(
-                            "flex h-11 w-11 shrink-0 items-center justify-center rounded-full ring-1",
-                            visual.featureIcon[index]
-                          )}
-                        >
+                        <span className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-full ring-1", visual.featureIcon[index])}>
                           <Icon className="h-5 w-5" strokeWidth={1.75} />
                         </span>
                         <div className="min-w-0 pt-0.5">
@@ -373,36 +335,16 @@ export function LoginPageShell({
             <LoginMobileIntro role={role} locale={locale} t={t} visual={visual} />
 
             <div className={cn("rounded-[1.35rem] p-5 sm:p-8 lg:p-9", visual.card)}>
-              <h2
-                className={cn(
-                  "text-xl font-semibold tracking-[-0.03em] sm:text-[1.65rem]",
-                  visual.cardTitle
-                )}
-              >
+              <h2 className={cn("text-xl font-semibold tracking-[-0.03em] sm:text-[1.65rem]", visual.cardTitle)}>
                 {desktopCardTitle}
               </h2>
-              <p className={cn("mt-1 text-[13px] leading-5 sm:text-sm", visual.cardMuted)}>
-                {cardSubtitle}
-              </p>
+              <p className={cn("mt-1 text-[13px] leading-5 sm:text-sm", visual.cardMuted)}>{cardSubtitle}</p>
 
-              <nav
-                className={cn("mt-5 grid grid-cols-2 gap-1 rounded-xl sm:mt-6", visual.tabWrap)}
-                aria-label={locale === "zh" ? "登录身份" : "Sign-in role"}
-              >
-                <RoleTab
-                  href={roleTabHref(locale, "brand", nextPath)}
-                  active={isBrand}
-                  visual={visual}
-                  icon={UserRound}
-                >
+              <nav className={cn("mt-5 grid grid-cols-2 gap-1 rounded-xl sm:mt-6", visual.tabWrap)} aria-label={locale === "zh" ? "登录身份" : "Sign-in role"}>
+                <RoleTab href={roleTabHref(locale, "brand", nextPath)} active={isBrand} visual={visual} icon={UserRound}>
                   {t.brandTab}
                 </RoleTab>
-                <RoleTab
-                  href={roleTabHref(locale, "creator", nextPath)}
-                  active={!isBrand}
-                  visual={visual}
-                  icon={Clapperboard}
-                >
+                <RoleTab href={roleTabHref(locale, "creator", nextPath)} active={!isBrand} visual={visual} icon={Clapperboard}>
                   {t.creatorTab}
                 </RoleTab>
               </nav>
@@ -423,13 +365,7 @@ export function LoginPageShell({
                 <>
                   <div className="relative mt-6 py-1">
                     <div className={cn("absolute inset-x-0 top-1/2 h-px", isBrand ? "bg-white/10" : "bg-zinc-200")} />
-                    <p
-                      className={cn(
-                        "relative mx-auto w-fit px-3 text-[11px] sm:text-xs",
-                        visual.divider,
-                        isBrand ? "bg-black/45" : "bg-white/75"
-                      )}
-                    >
+                    <p className={cn("relative mx-auto w-fit px-3 text-[11px] sm:text-xs", visual.divider, isBrand ? "bg-black/45" : "bg-white/75")}>
                       {t.socialDivider}
                     </p>
                   </div>
@@ -445,12 +381,7 @@ export function LoginPageShell({
               </p>
             </div>
 
-            <p
-              className={cn(
-                "mt-4 text-balance text-center text-sm leading-6 lg:hidden",
-                isBrand ? visual.panelMuted : "text-zinc-600"
-              )}
-            >
+            <p className={cn("mt-4 text-balance text-center text-sm leading-6 lg:hidden", isBrand ? visual.panelMuted : "text-zinc-600")}>
               {cardSubtitle}
             </p>
           </section>

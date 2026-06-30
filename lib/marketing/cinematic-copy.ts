@@ -5,12 +5,18 @@ export const cinematicCopy = {
     en: {
       cases: "Work",
       process: "Process",
+      pricing: "Pricing",
+      resources: "Resources",
+      about: "About",
       login: "Log in",
       start: "Start project"
     },
     zh: {
       cases: "案例",
       process: "流程",
+      pricing: "价格",
+      resources: "资源",
+      about: "关于我们",
       login: "登录",
       start: "开始项目"
     }
@@ -18,19 +24,32 @@ export const cinematicCopy = {
   hero: {
     en: {
       chapter: "01 — Opening",
-      lines: ["Hollywood-level ads.", "Lowest production budget.", "Global creator network."],
-      subtitle: "A cross-border production OS — from brief to final cut, with cinema-grade quality.",
+      lines: ["Hollywood quality.", "Without Hollywood cost."],
+      subtitle:
+        "The production OS for global brands — portfolio-first matching, frame-accurate review, and escrow-backed delivery.",
       primary: "I'm a brand",
       secondary: "I'm a creator",
+      loggedInPrimary: "Brand portal",
       scroll: "Scroll to enter"
     },
     zh: {
       chapter: "01 — 开场",
-      lines: ["好莱坞级广告。", "最低制作预算。", "全球创作者网络。"],
-      subtitle: "跨境广告制作系统 — 从 Brief 到成片，电影级品质一站完成。",
-      primary: "我是广告商",
+      lines: ["好莱坞品质。", "无需 好莱坞成本。"],
+      subtitle: "面向全球品牌的制作操作系统 — 作品集优先匹配、帧级审片、托管交付。",
+      primary: "我是品牌方",
       secondary: "我是创作者",
-      scroll: "向下进入"
+      loggedInPrimary: "品牌方门户",
+      scroll: "向下滚动"
+    }
+  },
+  trust: {
+    en: {
+      label: "Trusted by teams who ship at paid-social speed",
+      brands: ["Google", "Samsung", "Coca-Cola", "Airbnb", "TikTok", "Shopify", "Amazon", "Meta", "Nike", "P&G"]
+    },
+    zh: {
+      label: "服务需要快速出片的全球品牌团队",
+      brands: ["Google", "Samsung", "Coca-Cola", "Airbnb", "TikTok", "Shopify", "Amazon", "Meta", "Nike", "P&G"]
     }
   },
   cost: {
@@ -61,14 +80,22 @@ export const cinematicCopy = {
     en: {
       chapter: "03 — Production Network",
       title: "Not a marketplace.",
-      highlight: "A living production network.",
-      subtitle: "Studios, directors, and AIGC teams — connected in real time across time zones."
+      highlight: "A curated studio roster.",
+      subtitle: "Directors, editors, and AIGC teams — vetted for portfolio quality and delivery discipline.",
+      rosterEyebrow: "Live roster",
+      statusActive: "In production",
+      statusOpen: "Taking briefs",
+      matchNote: "Matched in under 48h on average"
     },
     zh: {
       chapter: "03 — 制作网络",
       title: "不是找人平台。",
-      highlight: "是流动的制作网络。",
-      subtitle: "工作室、导演、AIGC 团队 — 跨时区实时连接。"
+      highlight: "是严选的制作方名册。",
+      subtitle: "导演、剪辑、AIGC 团队 — 按作品集质量与交付纪律筛选，品牌方直连协作。",
+      rosterEyebrow: "实时名册",
+      statusActive: "制作中",
+      statusOpen: "可接 Brief",
+      matchNote: "平均 48 小时内完成匹配"
     }
   },
   filmstrip: {

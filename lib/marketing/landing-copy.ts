@@ -80,15 +80,29 @@ export const landingCopy = {
     zh: {
       eyebrow: "商业制作的未来",
       titleLine1: "好莱坞品质。",
-      titleHighlight: "无需",
-      titleLine2: "好莱坞成本。",
+      titleHighlight: "无需好莱坞成本。",
+      titleLine2: "",
       subtitle:
         "面向全球品牌的制作操作系统 — 作品集优先匹配、帧级审片、托管交付。电影级广告，无需好莱坞预算。",
-      primary: "我是广告主",
+      primary: "我是品牌方",
       secondary: "我是创作者",
       trusted: "全球 1,200+ 品牌信赖",
       showreel: "播放 Showreel"
     }
+  },
+  heroFeatures: {
+    en: [
+      { title: "Portfolio-first matching", desc: "Find the right creator with precision", icon: "users" as const },
+      { title: "Frame-accurate review", desc: "Online proofing with clear versions", icon: "play" as const },
+      { title: "Escrow-backed delivery", desc: "Secure handoff and rights protection", icon: "shield" as const },
+      { title: "Efficient production", desc: "Shorter cycles, lower cost", icon: "zap" as const }
+    ],
+    zh: [
+      { title: "作品集优先匹配", desc: "精准找到合适创作者", icon: "users" as const },
+      { title: "帧级审片协作", desc: "在线审片，版本清晰", icon: "play" as const },
+      { title: "托管交付保障", desc: "安全交付，权益保障", icon: "shield" as const },
+      { title: "高效制作流程", desc: "缩短周期，降低成本", icon: "zap" as const }
+    ]
   },
   stats: {
     en: [

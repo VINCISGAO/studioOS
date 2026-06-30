@@ -2,7 +2,7 @@
 
 import { demoSocialSignInAction } from "@/app/actions";
 import type { Locale } from "@/lib/i18n";
-import { getLoginVisual, type LoginRole } from "@/lib/studioos/login-theme";
+import { getLoginVisual, type LoginRole, type LoginVisual } from "@/lib/studioos/login-theme";
 import { cn } from "@/lib/utils";
 
 function GoogleIcon() {
@@ -59,13 +59,15 @@ const providers = [
 export function LoginSocialButtons({
   locale,
   role,
-  nextPath
+  nextPath,
+  visualOverride
 }: {
   locale: Locale;
   role: LoginRole;
   nextPath: string;
+  visualOverride?: LoginVisual;
 }) {
-  const visual = getLoginVisual(role);
+  const visual = visualOverride ?? getLoginVisual(role);
 
   return (
     <div className="mt-6 grid grid-cols-3 gap-3">

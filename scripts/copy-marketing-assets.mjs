@@ -80,7 +80,8 @@ copyFirstAvailable({
   dest: path.join(root, "public/images/login-space-bg.png"),
   sources: [
     path.join(assetRoot, "2026_6_29__02_06_45-61ae13a4-0fa5-47a1-902c-92fa594e614f.png"),
-    path.join(root, "public/images/login-space-bg.png")
+    path.join(root, "public/images/login-space-bg.png"),
+    path.join(root, "public/images/home-hero-bg.png")
   ]
 });
 

@@ -7,7 +7,7 @@ import { LoginSubmitSpinner } from "@/components/studioos/login-demo-accounts";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { Locale } from "@/lib/i18n";
-import { getLoginVisual, type LoginRole } from "@/lib/studioos/login-theme";
+import { getLoginVisual, type LoginRole, type LoginVisual } from "@/lib/studioos/login-theme";
 import { cn } from "@/lib/utils";
 
 type LoginCopy = {
@@ -27,6 +27,7 @@ export function LoginWorkspace({
   error,
   errorCode,
   initialEmail = "",
+  visualOverride,
   t
 }: {
   locale: Locale;
@@ -35,6 +36,7 @@ export function LoginWorkspace({
   error?: string;
   errorCode?: string;
   initialEmail?: string;
+  visualOverride?: LoginVisual;
   t: LoginCopy;
 }) {
   const [email, setEmail] = useState(initialEmail);
@@ -48,22 +50,30 @@ export function LoginWorkspace({
 
   const isWrongRole = errorCode === "wrong-role" || clientErrorCode === "wrong-role";
   const displayError = formError ?? error;
-  const visual = getLoginVisual(role);
-  const isBrand = role === "brand";
+  const visual = visualOverride ?? getLoginVisual(role);
+  const lightPanel = Boolean(visualOverride);
 
-  const labelClass = cn("text-xs font-medium sm:text-sm", isBrand ? "text-zinc-200" : "text-zinc-800");
-  const mutedClass = cn("text-xs sm:text-sm", isBrand ? "text-zinc-400" : "text-zinc-500");
-  const iconClass = isBrand ? "text-zinc-500" : "text-zinc-400";
+  const labelClass = cn(
+    "text-xs font-medium sm:text-sm",
+    lightPanel ? "text-zinc-700" : role === "brand" ? "text-zinc-200" : "text-zinc-800"
+  );
+  const mutedClass = cn(
+    "text-xs sm:text-sm",
+    lightPanel ? "text-zinc-500" : role === "brand" ? "text-zinc-400" : "text-zinc-500"
+  );
+  const iconClass = lightPanel ? "text-zinc-400" : role === "brand" ? "text-zinc-500" : "text-zinc-400";
 
   const checkboxClass = useMemo(
     () =>
       cn(
         "h-4 w-4 rounded border focus:ring-2",
-        isBrand
-          ? "border-white/20 bg-white/[0.06] text-white focus:ring-white/20"
-          : "border-zinc-300 text-violet-600 focus:ring-violet-500/20"
+        lightPanel
+          ? "border-zinc-300 text-violet-600 focus:ring-violet-500/20"
+          : role === "brand"
+            ? "border-white/20 bg-white/[0.06] text-white focus:ring-white/20"
+            : "border-zinc-300 text-violet-600 focus:ring-violet-500/20"
       ),
-    [isBrand]
+    [lightPanel, role]
   );
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -119,12 +129,16 @@ export function LoginWorkspace({
             className={cn(
               "flex gap-2.5 rounded-xl border px-3.5 py-2.5 text-[13px] leading-5",
               isWrongRole
-                ? isBrand
-                  ? "border-amber-400/30 bg-amber-500/10 text-amber-100"
-                  : "border-amber-200 bg-amber-50 text-amber-900"
-                : isBrand
-                  ? "border-red-400/30 bg-red-500/10 text-red-100"
-                  : "border-red-200 bg-red-50 text-red-800"
+                ? lightPanel
+                  ? "border-amber-200 bg-amber-50 text-amber-900"
+                  : role === "brand"
+                    ? "border-amber-400/30 bg-amber-500/10 text-amber-100"
+                    : "border-amber-200 bg-amber-50 text-amber-900"
+                : lightPanel
+                  ? "border-red-200 bg-red-50 text-red-800"
+                  : role === "brand"
+                    ? "border-red-400/30 bg-red-500/10 text-red-100"
+                    : "border-red-200 bg-red-50 text-red-800"
             )}
             role="alert"
           >
@@ -176,7 +190,11 @@ export function LoginWorkspace({
               onClick={() => setShowPassword((v) => !v)}
               className={cn(
                 "absolute right-3.5 top-1/2 -translate-y-1/2 transition",
-                isBrand ? "text-zinc-500 hover:text-zinc-300" : "text-zinc-400 hover:text-zinc-600"
+                lightPanel
+                  ? "text-zinc-400 hover:text-zinc-600"
+                  : role === "brand"
+                    ? "text-zinc-500 hover:text-zinc-300"
+                    : "text-zinc-400 hover:text-zinc-600"
               )}
             >
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -196,7 +214,14 @@ export function LoginWorkspace({
           </label>
           <button
             type="button"
-            className={cn("font-medium transition", isBrand ? "text-zinc-400 hover:text-white" : "text-zinc-500 hover:text-zinc-800")}
+            className={cn(
+              "font-medium transition",
+              lightPanel
+                ? "text-zinc-500 hover:text-zinc-800"
+                : role === "brand"
+                  ? "text-zinc-400 hover:text-white"
+                  : "text-zinc-500 hover:text-zinc-800"
+            )}
           >
             {t.forgotPassword}
           </button>

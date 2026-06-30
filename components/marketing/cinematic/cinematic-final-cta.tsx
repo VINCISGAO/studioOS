@@ -9,12 +9,15 @@ import { withLocale } from "@/lib/i18n";
 
 export function CinematicFinalCta({
   locale,
-  portalHref
+  portalHref,
+  portalLabel
 }: {
   locale: Locale;
   portalHref: string;
+  portalLabel?: string;
 }) {
   const t = cinematicText("cta", locale);
+  const primaryLabel = portalLabel ?? t.primary;
   const { scrollYProgress } = useScroll({ offset: ["start end", "end end"] });
   const letterSpacing = useTransform(scrollYProgress, [0.7, 1], ["0.02em", "0.35em"]);
   const opacity = useTransform(scrollYProgress, [0.75, 1], [0.4, 1]);
@@ -54,7 +57,7 @@ export function CinematicFinalCta({
             href={portalHref}
             className="inline-flex h-12 min-w-[200px] items-center justify-center rounded-full bg-white px-8 text-sm font-semibold text-black transition hover:bg-zinc-100"
           >
-            {t.primary}
+            {primaryLabel}
           </Link>
           <Link
             href={withLocale("/contact", locale)}

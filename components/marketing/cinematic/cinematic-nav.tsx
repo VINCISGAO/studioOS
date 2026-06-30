@@ -6,20 +6,20 @@ import { LanguageSwitcher } from "@/components/language-switcher";
 import { cinematicText } from "@/lib/marketing/cinematic-copy";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
-import { cn } from "@/lib/utils";
 import { motion, useScroll, useTransform } from "framer-motion";
 
 export function CinematicNav({ locale }: { locale: Locale }) {
   const t = cinematicText("nav", locale);
   const { scrollY } = useScroll();
-  const bg = useTransform(scrollY, [0, 120], ["rgba(0,0,0,0.15)", "rgba(0,0,0,0.72)"]);
+  const bg = useTransform(scrollY, [0, 120], ["rgba(0,0,0,0)", "rgba(0,0,0,0.82)"]);
+  const border = useTransform(scrollY, [0, 120], ["rgba(255,255,255,0)", "rgba(255,255,255,0.06)"]);
 
   return (
     <motion.header
-      style={{ backgroundColor: bg }}
-      className="fixed inset-x-0 top-0 z-50 border-b border-white/[0.06] backdrop-blur-xl"
+      style={{ backgroundColor: bg, borderBottomColor: border }}
+      className="fixed inset-x-0 top-0 z-50 border-b backdrop-blur-xl"
     >
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 sm:px-8">
+      <div className="relative mx-auto flex h-16 max-w-7xl items-center justify-between px-5 sm:px-8">
         <Link href={withLocale("/", locale)} className="flex items-center gap-2.5 text-white">
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-black">
             <Sparkles className="h-4 w-4" />
@@ -27,12 +27,21 @@ export function CinematicNav({ locale }: { locale: Locale }) {
           <span className="text-sm font-semibold tracking-tight">StudioOS</span>
         </Link>
 
-        <nav className="hidden items-center gap-8 text-sm text-zinc-400 md:flex">
-          <a href="#process" className="transition hover:text-white">
+        <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-7 text-sm text-zinc-400 lg:flex">
+          <a href="#how-it-works" className="transition hover:text-white">
             {t.process}
           </a>
           <Link href={withLocale("/case-studies", locale)} className="transition hover:text-white">
             {t.cases}
+          </Link>
+          <Link href={withLocale("/pricing", locale)} className="transition hover:text-white">
+            {t.pricing}
+          </Link>
+          <Link href={withLocale("/resources", locale)} className="transition hover:text-white">
+            {t.resources}
+          </Link>
+          <Link href={withLocale("/about", locale)} className="transition hover:text-white">
+            {t.about}
           </Link>
         </nav>
 
@@ -40,18 +49,9 @@ export function CinematicNav({ locale }: { locale: Locale }) {
           <LanguageSwitcher locale={locale} tone="dark" />
           <Link
             href={withLocale("/login", locale)}
-            className="hidden text-sm text-zinc-300 transition hover:text-white sm:inline"
+            className="inline-flex h-9 items-center rounded-lg border border-white/25 px-4 text-sm text-white transition hover:bg-white/10"
           >
             {t.login}
-          </Link>
-          <Link
-            href={withLocale("/login?role=brand", locale)}
-            className={cn(
-              "rounded-full bg-white px-4 py-2 text-xs font-semibold text-black transition",
-              "hover:bg-zinc-100 sm:text-sm"
-            )}
-          >
-            {t.start}
           </Link>
         </div>
       </div>

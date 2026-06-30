@@ -78,3 +78,9 @@ export const LOGIN_VISUAL: Record<LoginRole, LoginVisual> = {
 export function getLoginVisual(role: LoginRole) {
   return LOGIN_VISUAL[role];
 }
+
+/** White split-panel login — matches homepage LandingSplitHero auth column */
+export const LOGIN_SPLIT_VISUAL: LoginVisual = {
+  ...LOGIN_VISUAL.creator,
+  btn: "h-11 w-full rounded-xl bg-zinc-950 text-sm font-medium text-white shadow-sm hover:bg-zinc-800 sm:h-12 sm:text-[15px]"
+};
