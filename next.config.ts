@@ -15,11 +15,7 @@ const nextConfig: NextConfig = {
   },
   images: {
     localPatterns: [
-      { pathname: "/api/home-hero-bg" },
       { pathname: "/api/home-hero-studio" },
-      { pathname: "/api/login-space-bg" },
-      { pathname: "/api/login-brand-bg" },
-      { pathname: "/api/login-creator-bg" },
       { pathname: "/images/**" }
     ],
     remotePatterns: [
