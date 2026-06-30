@@ -93,7 +93,7 @@ export function CinematicHero({
           style={reduce ? undefined : { opacity: contentOpacity, y: contentY, scale: contentScale }}
           className="grid gap-9 md:gap-11 lg:min-h-[680px] lg:grid-cols-[minmax(0,1.08fr)_minmax(390px,0.92fr)] lg:items-center lg:gap-8 xl:min-h-[720px] xl:grid-cols-[minmax(0,0.94fr)_minmax(440px,1.06fr)] xl:gap-12"
         >
-          <div className={cn("max-w-3xl", isEnglish ? "md:max-w-2xl lg:max-w-[38rem] xl:max-w-[42rem]" : undefined)}>
+          <div className={cn("max-w-3xl", isEnglish ? "md:max-w-2xl lg:max-w-[42rem] xl:max-w-[46rem]" : undefined)}>
             <p className="inline-flex max-w-full items-start gap-2 rounded-md border border-white/12 bg-white/[0.06] px-3 py-1.5 text-[10px] font-medium leading-5 text-zinc-200 sm:items-center sm:px-3.5 sm:text-[11px]">
               <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#c7d1df] sm:mt-0" />
               <span className="min-w-0 text-wrap">{t.eyebrow}</span>
@@ -103,7 +103,7 @@ export function CinematicHero({
               className={cn(
                 "mt-5 font-semibold sm:mt-6",
                 isEnglish
-                  ? "max-w-[8.8em] text-[clamp(2.7rem,10.2vw,3.8rem)] leading-[1.02] sm:max-w-[9.4em] sm:text-[clamp(3.2rem,6.4vw,4rem)] md:text-[clamp(3.4rem,5.6vw,4.25rem)] lg:text-[3.65rem] xl:text-[4.05rem]"
+                  ? "max-w-[8.8em] text-[clamp(2.7rem,10.2vw,3.8rem)] leading-[1.02] sm:max-w-[9.4em] sm:text-[clamp(3.1rem,6vw,3.8rem)] md:text-[clamp(3.2rem,5vw,3.9rem)] lg:max-w-[11.4em] lg:text-[3.25rem] xl:text-[3.55rem]"
                   : "max-w-[11em] text-[clamp(2.55rem,12vw,4rem)] leading-[1.08] sm:max-w-[10.5em] sm:text-[clamp(3.25rem,8.2vw,4.8rem)] lg:text-[4rem] xl:text-[4.6rem]",
                 isEnglish ? marketingHeadlineClassName("en") : "text-pretty"
               )}
