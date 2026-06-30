@@ -16,6 +16,7 @@
     "deploy:github": "bash scripts/deploy-homepage-github.sh",
     "github:push": "bash scripts/connect-github.sh",
     "github:homepage": "node scripts/git-push-homepage.mjs",
+    "homepage:anchor": "node scripts/anchor-homepage-golden.mjs",
     "github:identity": "bash scripts/git-identity.sh && git config user.name && git config user.email",
     "reset:demo-review": "node scripts/reset-mvp-demo.mjs",
     "build": "npx prisma generate && node scripts/copy-marketing-assets.mjs && next build",
