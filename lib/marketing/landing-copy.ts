@@ -136,7 +136,8 @@ export const landingCopy = {
       compareTitle: "See the difference",
       traditional: "Traditional Agency",
       studio: "StudioOS",
-      saveBadge: "Save 60–80%",
+      saveBadge: "Save about 80%",
+      savings: ["Budget saved about 80%", "Time saved about 95-96%"],
       rows: [
         { label: "Average Cost", trad: "$25,000+", studio: "$5,000" },
         { label: "Production Time", trad: "8–12 weeks", studio: "72 hours" },
@@ -151,7 +152,8 @@ export const landingCopy = {
       compareTitle: "一眼看懂差异",
       traditional: "传统广告公司",
       studio: "StudioOS",
-      saveBadge: "节省 60–80%",
+      saveBadge: "节省约 99%",
+      savings: ["经费节约约 99%", "时间节约约 95-96%"],
       rows: [
         { label: "平均成本", trad: "$20,000+", studio: "$200+" },
         { label: "制作周期", trad: "8–12 周", studio: "72 小时" },
