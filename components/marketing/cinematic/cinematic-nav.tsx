@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Sparkles } from "lucide-react";
+import { Layers3 } from "lucide-react";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { cinematicText } from "@/lib/marketing/cinematic-copy";
 import type { Locale } from "@/lib/i18n";
@@ -21,8 +21,8 @@ export function CinematicNav({ locale }: { locale: Locale }) {
     >
       <div className="relative mx-auto flex h-16 max-w-7xl items-center justify-between px-5 sm:px-8">
         <Link href={withLocale("/", locale)} className="flex items-center gap-2.5 text-white">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-black">
-            <Sparkles className="h-4 w-4" />
+          <span className="flex h-8 w-8 items-center justify-center rounded-md bg-white text-black">
+            <Layers3 className="h-4 w-4" />
           </span>
           <span className="text-sm font-semibold tracking-tight">StudioOS</span>
         </Link>
@@ -37,10 +37,10 @@ export function CinematicNav({ locale }: { locale: Locale }) {
           <Link href={withLocale("/pricing", locale)} className="transition hover:text-white">
             {t.pricing}
           </Link>
-          <Link href={withLocale("/resources", locale)} className="transition hover:text-white">
+          <a href="#network" className="transition hover:text-white">
             {t.resources}
-          </Link>
-          <Link href={withLocale("/about", locale)} className="transition hover:text-white">
+          </a>
+          <Link href={withLocale("/contact", locale)} className="transition hover:text-white">
             {t.about}
           </Link>
         </nav>
@@ -49,7 +49,7 @@ export function CinematicNav({ locale }: { locale: Locale }) {
           <LanguageSwitcher locale={locale} tone="dark" />
           <Link
             href={withLocale("/login", locale)}
-            className="inline-flex h-9 items-center rounded-lg border border-white/25 px-4 text-sm text-white transition hover:bg-white/10"
+            className="inline-flex h-9 items-center rounded-md border border-white/25 px-4 text-sm text-white transition hover:bg-white/10"
           >
             {t.login}
           </Link>

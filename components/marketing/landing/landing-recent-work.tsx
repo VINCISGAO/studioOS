@@ -35,7 +35,7 @@ function WorkCard({
     <Link href={href} className="group block h-full">
       <div
         className={cn(
-          "relative overflow-hidden rounded-2xl border border-white/10 bg-zinc-900 transition duration-500 group-hover:border-violet-500/30 group-hover:shadow-[0_24px_60px_-20px_rgba(139,92,246,0.35)]",
+          "relative overflow-hidden rounded-lg border border-black/10 bg-zinc-900 transition duration-500 group-hover:border-black/30 group-hover:shadow-[0_24px_60px_-28px_rgba(0,0,0,0.45)]",
           featured ? "aspect-[16/11] sm:aspect-auto sm:min-h-[320px]" : "aspect-[16/10]"
         )}
       >
@@ -66,7 +66,7 @@ function WorkCard({
       </div>
       {!featured ? (
         <>
-          <h3 className="mt-3 text-sm font-semibold text-white line-clamp-1">{work.title}</h3>
+          <h3 className="mt-3 text-sm font-semibold text-zinc-950 line-clamp-1">{work.title}</h3>
           <p className="mt-1 text-xs text-zinc-500">{meta}</p>
         </>
       ) : null}
@@ -87,16 +87,16 @@ export function LandingRecentWork({
   const [hero, ...rest] = works.slice(0, 5);
 
   return (
-    <section className="border-t border-white/10 bg-[#050505] py-20 sm:py-28">
+    <section className="border-t border-black/10 bg-[#f6f5f1] py-14 sm:py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <RevealSection className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-zinc-500">{t.eyebrow}</p>
-            <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">{t.title}</h2>
+            <h2 className="mt-3 text-3xl font-semibold tracking-tight text-zinc-950 sm:text-4xl">{t.title}</h2>
           </div>
           <Link
             href={withLocale("/case-studies", locale)}
-            className="inline-flex items-center gap-1.5 text-sm text-zinc-400 transition hover:text-white"
+            className="inline-flex items-center gap-1.5 text-sm text-zinc-500 transition hover:text-zinc-950"
           >
             {t.viewAll}
             <ArrowRight className="h-4 w-4" />
@@ -104,7 +104,7 @@ export function LandingRecentWork({
         </RevealSection>
 
         {hero ? (
-          <div className="mt-10 grid gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
+          <div className="mt-8 grid gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
             <motion.div
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}

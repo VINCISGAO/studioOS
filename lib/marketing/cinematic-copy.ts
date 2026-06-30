@@ -34,8 +34,8 @@ export const cinematicCopy = {
     },
     zh: {
       chapter: "01 — 开场",
-      lines: ["好莱坞品质。", "无需 好莱坞成本。"],
-      subtitle: "面向全球品牌的制作操作系统 — 作品集优先匹配、帧级审片、托管交付。",
+      lines: ["好莱坞品质", "无需好莱坞成本"],
+      subtitle: "面向全球品牌的制作操作系统 — 作品集优先匹配、帧级审片、托管交付",
       primary: "我是品牌方",
       secondary: "我是创作者",
       loggedInPrimary: "品牌方门户",
@@ -66,7 +66,7 @@ export const cinematicCopy = {
     },
     zh: {
       chapter: "02 — 成本切开",
-      title: "传统制作模式，被切开。",
+      title: "传统制作模式已经失效",
       agency: "传统广告公司",
       agencyPrice: 360000,
       agencyLabel: "平均投放项目",
@@ -89,12 +89,12 @@ export const cinematicCopy = {
     },
     zh: {
       chapter: "03 — 制作网络",
-      title: "不是找人平台。",
-      highlight: "是严选的制作方名册。",
-      subtitle: "导演、剪辑、AIGC 团队 — 按作品集质量与交付纪律筛选，品牌方直连协作。",
+      title: "不是找人平台",
+      highlight: "是严选的制作方名册",
+      subtitle: "导演、剪辑、AI 制作团队 — 按作品集质量与交付纪律筛选，品牌方直连协作",
       rosterEyebrow: "实时名册",
       statusActive: "制作中",
-      statusOpen: "可接 Brief",
+      statusOpen: "可接需求",
       matchNote: "平均 48 小时内完成匹配"
     }
   },
@@ -111,14 +111,14 @@ export const cinematicCopy = {
       ]
     },
     zh: {
-      chapter: "04 — 从 Brief 到成片",
-      title: "五个节拍，一条制作线。",
+      chapter: "04 — 从需求到成片",
+      title: "五个节拍，一条制作线",
       steps: [
-        { key: "brief", label: "Brief", desc: "发布需求" },
-        { key: "match", label: "Match", desc: "作品集匹配" },
-        { key: "production", label: "Production", desc: "制作执行" },
-        { key: "review", label: "Review", desc: "帧级审片" },
-        { key: "delivery", label: "Delivery", desc: "交付成片" }
+        { key: "brief", label: "需求", desc: "发布需求" },
+        { key: "match", label: "匹配", desc: "作品集匹配" },
+        { key: "production", label: "制作", desc: "制作执行" },
+        { key: "review", label: "审片", desc: "帧级审片" },
+        { key: "delivery", label: "交付", desc: "交付成片" }
       ]
     }
   },
@@ -130,7 +130,7 @@ export const cinematicCopy = {
     },
     zh: {
       chapter: "05 — 品质墙",
-      title: "匹配之前，作品先说话。",
+      title: "匹配之前，作品先说话",
       viewAll: "浏览全部制作方"
     }
   },
@@ -146,11 +146,11 @@ export const cinematicCopy = {
     },
     zh: {
       chapter: "06 — 托管信任",
-      title: "每一帧都有信任机制。",
+      title: "每一帧都有信任机制",
       items: [
-        { title: "资金托管", desc: "里程碑达成前资金锁定。" },
-        { title: "审片保护", desc: "水印样片，版本完整留痕。" },
-        { title: "交付解锁", desc: "验收满意后释放付款。" }
+        { title: "资金托管", desc: "里程碑达成前资金锁定" },
+        { title: "审片保护", desc: "水印样片，版本完整留痕" },
+        { title: "交付解锁", desc: "验收满意后释放付款" }
       ]
     }
   },
@@ -164,8 +164,8 @@ export const cinematicCopy = {
     },
     zh: {
       chapter: "07 — 终场",
-      title: "准备好你的下一支大片了吗？",
-      subtitle: "已有品牌以远低于代理成本，持续产出电影级广告。",
+      title: "下一支电影级广告，从这里开始",
+      subtitle: "已有品牌以远低于代理成本，持续产出电影级广告",
       primary: "启动投放项目",
       secondary: "联系专家"
     }

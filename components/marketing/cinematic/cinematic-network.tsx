@@ -64,22 +64,22 @@ export function CinematicNetwork({ locale }: { locale: Locale }) {
   const t = cinematicText("network", locale);
 
   return (
-    <section className="bg-[#070707] py-20 sm:py-28">
+    <section className="bg-[#f7f7f4] py-14 sm:py-20">
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
         <div className="max-w-xl">
           <ChapterLabel>{t.chapter}</ChapterLabel>
-          <p className="mt-6 text-xl text-zinc-500 sm:text-2xl">{t.title}</p>
-          <h2 className="mt-2 text-3xl font-semibold tracking-[-0.03em] text-white sm:text-4xl">{t.highlight}</h2>
-          <p className="mt-5 text-base leading-7 text-zinc-400">{t.subtitle}</p>
-          <p className="mt-6 inline-flex items-center gap-2 text-xs text-zinc-500">
+          <p className="mt-5 text-xl text-zinc-500 sm:text-2xl">{t.title}</p>
+          <h2 className="mt-2 text-3xl font-semibold tracking-[-0.03em] text-zinc-950 sm:text-4xl">{t.highlight}</h2>
+          <p className="mt-4 text-base leading-7 text-zinc-600">{t.subtitle}</p>
+          <p className="mt-5 inline-flex items-center gap-2 text-xs text-zinc-500">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
             {t.matchNote}
           </p>
         </div>
 
-        <div className="mt-12 flex items-end justify-between gap-4">
+        <div className="mt-10 flex items-end justify-between gap-4">
           <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-zinc-500">{t.rosterEyebrow}</p>
-          <Link href={withLocale("/creators", locale)} className="text-xs text-zinc-400 hover:text-white">
+          <Link href={withLocale("/creators", locale)} className="text-xs text-zinc-500 hover:text-zinc-950">
             {locale === "zh" ? "查看全部 →" : "View all →"}
           </Link>
         </div>
@@ -93,7 +93,7 @@ export function CinematicNetwork({ locale }: { locale: Locale }) {
             return (
               <li
                 key={card.id}
-                className="overflow-hidden rounded-2xl border border-white/10 bg-[#111111]"
+                className="overflow-hidden rounded-lg border border-black/10 bg-white shadow-sm"
               >
                 <div className="relative aspect-[16/8] bg-zinc-900">
                   {thumb ? (
@@ -101,7 +101,7 @@ export function CinematicNetwork({ locale }: { locale: Locale }) {
                   ) : (
                     <div className="h-full w-full bg-gradient-to-br from-zinc-800 to-zinc-950" />
                   )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#111111] to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 to-transparent" />
                   <div className="absolute left-3 top-3 flex gap-2">
                     <span className="rounded-full bg-black/60 px-2 py-1 text-[10px] text-zinc-200">{statusLabel}</span>
                     <span className="rounded-full bg-black/60 px-2 py-1 text-[10px] text-zinc-400">{card.timezone}</span>
@@ -110,18 +110,18 @@ export function CinematicNetwork({ locale }: { locale: Locale }) {
                 <div className="space-y-3 p-4">
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <h3 className="font-semibold text-white">{card.studio}</h3>
+                      <h3 className="font-semibold text-zinc-950">{card.studio}</h3>
                       <p className="mt-0.5 text-sm text-zinc-500">
                         {card.role[locale]} · {card.city}
                       </p>
                     </div>
                     {creator ? (
-                      <span className="text-xs text-zinc-400">★ {creator.rating.toFixed(1)}</span>
+                      <span className="text-xs text-zinc-500">★ {creator.rating.toFixed(1)}</span>
                     ) : null}
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     {card.tags[locale].map((tag) => (
-                      <span key={tag} className="rounded-md border border-white/8 px-2 py-0.5 text-[11px] text-zinc-500">
+                      <span key={tag} className="rounded-md border border-black/10 px-2 py-0.5 text-[11px] text-zinc-500">
                         {tag}
                       </span>
                     ))}

@@ -1,6 +1,6 @@
 import type { Locale } from "@/lib/i18n";
 
-/** Landing page v2 — 1:1 mockup copy. */
+/** StudioOS marketing copy. */
 export const landingCopy = {
   nav: {
     en: {
@@ -46,7 +46,7 @@ export const landingCopy = {
     zh: {
       panelEyebrow: "开始使用",
       panelTitle: "登录或注册账号",
-      panelSubtitle: "选择您的工作台 — 品牌方发起项目，创作者交付电影级作品。",
+      panelSubtitle: "选择您的工作台 — 品牌方发起项目，创作者交付电影级作品",
       welcomeBack: "欢迎回来",
       loggedInSubtitle: "继续进入您的 StudioOS 工作台。",
       brandTab: "品牌方",
@@ -61,76 +61,76 @@ export const landingCopy = {
       createAccount: "立即注册",
       explorePricing: "查看价格",
       legalNotice: "继续即表示您同意我们的服务条款与隐私政策。",
-      leftFootnote: "全球品牌信赖 — 作品集优先匹配、帧级审片、托管交付。"
+      leftFootnote: "全球品牌信赖 — 作品集优先匹配、帧级审片、托管交付"
     }
   },
   hero: {
     en: {
-      eyebrow: "The Future of Commercial Production",
-      titleLine1: "Hollywood Quality.",
-      titleHighlight: "Without",
-      titleLine2: "Hollywood Costs.",
+      eyebrow: "Commercial production infrastructure for global brands",
+      titleLine1: "Launch cinematic ads",
+      titleHighlight: "with an operating system",
+      titleLine2: "built for modern production.",
       subtitle:
-        "The production OS for global brands — portfolio-first matching, frame-accurate review, and escrow-backed delivery. Cinema-grade ads without the Hollywood price tag.",
-      primary: "I'm a brand",
-      secondary: "I'm a creator",
-      trusted: "Trusted by 1,200+ brands worldwide",
-      showreel: "Play showreel"
+        "StudioOS connects brand teams with vetted AI production studios, structured review rooms, escrow-backed delivery, and performance-ready creative workflows.",
+      primary: "Start as a brand",
+      secondary: "Join as a studio",
+      trusted: "Built for brand teams shipping paid-social creative at speed",
+      showreel: "View the workflow"
     },
     zh: {
-      eyebrow: "商业制作的未来",
-      titleLine1: "好莱坞品质。",
-      titleHighlight: "无需好莱坞成本。",
+      eyebrow: "面向全球品牌的商业制作基础设施",
+      titleLine1: "好莱坞品质",
+      titleHighlight: "无需好莱坞成本",
       titleLine2: "",
       subtitle:
-        "面向全球品牌的制作操作系统 — 作品集优先匹配、帧级审片、托管交付。电影级广告，无需好莱坞预算。",
-      primary: "我是品牌方",
-      secondary: "我是创作者",
-      trusted: "全球 1,200+ 品牌信赖",
-      showreel: "播放 Showreel"
+        "StudioOS 连接品牌团队与严选 AI 制作方，提供结构化需求简报、帧级审片、资金托管交付与适合投放的创意生产流程",
+      primary: "品牌方开始项目",
+      secondary: "制作方入驻",
+      trusted: "为需要高速投放素材的品牌团队而建",
+      showreel: "查看流程"
     }
   },
   heroFeatures: {
     en: [
-      { title: "Portfolio-first matching", desc: "Find the right creator with precision", icon: "users" as const },
-      { title: "Frame-accurate review", desc: "Online proofing with clear versions", icon: "play" as const },
-      { title: "Escrow-backed delivery", desc: "Secure handoff and rights protection", icon: "shield" as const },
-      { title: "Efficient production", desc: "Shorter cycles, lower cost", icon: "zap" as const }
+      { title: "Studio matching", desc: "Vetted teams ranked by portfolio fit", icon: "users" as const },
+      { title: "Review rooms", desc: "Frame notes, versions, and approvals", icon: "play" as const },
+      { title: "Escrow workflow", desc: "Milestone-based payment protection", icon: "shield" as const },
+      { title: "Creative velocity", desc: "Launch more tests with fewer layers", icon: "zap" as const }
     ],
     zh: [
-      { title: "作品集优先匹配", desc: "精准找到合适创作者", icon: "users" as const },
-      { title: "帧级审片协作", desc: "在线审片，版本清晰", icon: "play" as const },
-      { title: "托管交付保障", desc: "安全交付，权益保障", icon: "shield" as const },
-      { title: "高效制作流程", desc: "缩短周期，降低成本", icon: "zap" as const }
+      { title: "制作方匹配", desc: "按作品集与品类精准推荐", icon: "users" as const },
+      { title: "审片工作室", desc: "帧级批注、版本、审批统一管理", icon: "play" as const },
+      { title: "托管流程", desc: "按里程碑保护付款与交付", icon: "shield" as const },
+      { title: "创意速度", desc: "减少中间层，快速测试更多素材", icon: "zap" as const }
     ]
   },
   stats: {
     en: [
-      { value: "70%", suffix: "↓", label: "Lower Production Cost" },
-      { value: "72h", suffix: "", label: "First Version Ready" },
-      { value: "4K", suffix: "", label: "Cinema-level Quality" },
-      { value: "2000+", suffix: "", label: "Global Creators" }
+      { value: "70%", suffix: "↓", label: "Typical cost reduction" },
+      { value: "72h", suffix: "", label: "First concept window" },
+      { value: "4K", suffix: "", label: "Delivery standard" },
+      { value: "2000+", suffix: "", label: "Vetted studio network" }
     ],
     zh: [
-      { value: "70%", suffix: "↓", label: "制作成本更低" },
-      { value: "72h", suffix: "", label: "初版就绪" },
-      { value: "4K", suffix: "", label: "电影级画质" },
-      { value: "2000+", suffix: "", label: "全球创作者" }
+      { value: "70%", suffix: "↓", label: "典型成本下降" },
+      { value: "72h", suffix: "", label: "首轮方案窗口" },
+      { value: "4K", suffix: "", label: "交付标准" },
+      { value: "2000+", suffix: "", label: "严选制作网络" }
     ]
   },
   logos: {
     en: {
-      label: "Trusted by global brands",
-      brands: ["Google", "Coca-Cola", "Samsung", "Airbnb", "TikTok", "Shopify", "Amazon", "Meta"]
+      label: "Production model designed for modern marketing teams",
+      brands: ["Strategy", "Brief", "Match", "Review", "Escrow", "Delivery", "Rights", "Analytics"]
     },
     zh: {
-      label: "全球品牌信赖",
-      brands: ["Google", "Coca-Cola", "Samsung", "Airbnb", "TikTok", "Shopify", "Amazon", "Meta"]
+      label: "为现代市场团队设计的制作模型",
+      brands: ["策略", "简报", "匹配", "审片", "托管", "交付", "版权", "分析"]
     }
   },
   cost: {
     en: {
-      title: "Traditional ad production is broken.",
+      title: "Traditional ad production is broken",
       body: "Agencies add layers of markup, slow timelines, and opaque revisions — while brands still need cinema-grade output on paid-social timelines.",
       pains: ["High agency markup", "8–12 week timelines", "Limited creator access", "Endless revision loops"],
       compareTitle: "See the difference",
@@ -145,15 +145,15 @@ export const landingCopy = {
       ]
     },
     zh: {
-      title: "传统广告制作模式已经失效。",
-      body: "代理层层加价、周期冗长、修改不透明 — 品牌方却仍需在付费社交节奏下拿到电影级成片。",
+      title: "传统广告制作模式已经失效",
+      body: "代理层层加价、周期冗长、修改不透明 — 品牌方却仍需在付费社交节奏下拿到电影级成片",
       pains: ["代理层层加价", "8–12 周制作周期", "创作者触达受限", "修改陷入循环"],
       compareTitle: "一眼看懂差异",
       traditional: "传统广告公司",
       studio: "StudioOS",
       saveBadge: "节省 60–80%",
       rows: [
-        { label: "平均成本", trad: "¥180,000+", studio: "¥36,000" },
+        { label: "平均成本", trad: "$20,000+", studio: "$200+" },
         { label: "制作周期", trad: "8–12 周", studio: "72 小时" },
         { label: "创作者触达", trad: "多层中介", studio: "直连网络" },
         { label: "修改机制", trad: "额外收费", studio: "流程内包含" }
@@ -163,7 +163,7 @@ export const landingCopy = {
   steps: {
     en: {
       eyebrow: "HOW IT WORKS",
-      title: "From brief to final cut — one production flow.",
+      title: "From brief to final cut, one production flow",
       subtitle: "",
       items: [
         { num: "01", title: "Share Your Vision", desc: "Upload your brief and references in minutes." },
@@ -174,26 +174,36 @@ export const landingCopy = {
     },
     zh: {
       eyebrow: "如何运作",
-      title: "从 Brief 到成片 — 一条制作链路。",
+      title: "从需求简报到成片交付",
       subtitle: "",
       items: [
-        { num: "01", title: "分享愿景", desc: "几分钟上传 Brief 与参考素材。" },
-        { num: "02", title: "匹配规划", desc: "作品集优先，严选制作方。" },
-        { num: "03", title: "创作协作", desc: "制作、审片、修改一站完成。" },
-        { num: "04", title: "交付扩展", desc: "验收成片，放大优质创意。" }
+        { num: "01", title: "提交需求", desc: "上传目标、参考素材与投放要求" },
+        { num: "02", title: "匹配制作方", desc: "按品类、风格与作品质量推荐团队" },
+        { num: "03", title: "制作协作", desc: "制作、审片、修改在同一流程推进" },
+        { num: "04", title: "成片交付", desc: "验收最终版本并释放交付资产" }
       ]
     }
   },
   why: {
     en: {
-      line1: "Not a talent marketplace.",
-      line2: "Not just proofing software.",
-      highlight: "A cross-border ad production network."
+      eyebrow: "Platform position",
+      titleLine1: "Move commercial production out of manual coordination",
+      titleLine2: "into one controlled operating system",
+      subtitle:
+        "StudioOS gives brand teams one place to brief, match studios, review cuts, protect payment, and release campaign-ready assets.",
+      items: ["Structured brief intake", "Vetted studio matching", "Frame review and escrow delivery"],
+      trustLabel: "Built for global brand standards",
+      brands: ["Google", "Coca-Cola", "Samsung", "Airbnb", "TikTok", "Shopify", "Amazon", "Meta"]
     },
     zh: {
-      line1: "不是找人平台，",
-      line2: "不是审片工具，",
-      highlight: "是跨境广告制作网络。"
+      eyebrow: "产品定位",
+      titleLine1: "把广告制作从人工协调",
+      titleLine2: "升级成一套可控的制作系统",
+      subtitle:
+        "StudioOS 让品牌团队在一个工作流里完成需求简报、制作方匹配、审片、资金托管和成片交付",
+      items: ["把需求变成可执行简报", "按作品集匹配制作团队", "用审片与托管锁定交付质量"],
+      trustLabel: "以全球品牌级标准设计",
+      brands: ["Google", "Coca-Cola", "Samsung", "Airbnb", "TikTok", "Shopify", "Amazon", "Meta"]
     }
   },
   work: {
@@ -224,15 +234,15 @@ export const landingCopy = {
   },
   cta: {
     en: {
-      title: "Ready to create something amazing?",
-      subtitle: "Join thousands of brands already saving 70%+ on cinematic ad production.",
+      title: "Bring your next campaign into a real production system",
+      subtitle: "Start with a structured brief, matched studios, protected milestones, and a review room your team can actually use.",
       primary: "Start your project",
       secondary: "Talk to an expert"
     },
     zh: {
-      title: "准备好创造令人惊艳的作品了吗？",
-      subtitle: "已有数千品牌通过 StudioOS 节省 70% 以上的电影级广告制作成本。",
-      primary: "启动你的投放项目",
+      title: "把下一次广告项目放进制作系统",
+      subtitle: "从结构化需求、制作方匹配、里程碑托管，到团队可用的审片工作室，一次完成",
+      primary: "启动投放项目",
       secondary: "联系专家"
     }
   }

@@ -36,7 +36,7 @@ export function CinematicHomePage({
         {/* 图一 — 宇宙风 Hero */}
         <CinematicHero locale={locale} portalHref={portalHref} portalLabel={portalLabel} isLoggedIn={isLoggedIn} />
 
-        <HomePageScreen id="why" className="bg-[#030303] py-0">
+        <HomePageScreen id="why" className="bg-[#f6f5f1] py-0">
           <LandingWhy locale={locale} />
         </HomePageScreen>
 
@@ -45,7 +45,7 @@ export function CinematicHomePage({
           <LandingCostComparison locale={locale} />
         </HomePageScreen>
 
-        <HomePageScreen id="network" className="justify-start py-0">
+        <HomePageScreen id="network" className="justify-start bg-[#f7f7f4] py-0">
           <CinematicNetwork locale={locale} />
         </HomePageScreen>
 
@@ -53,7 +53,7 @@ export function CinematicHomePage({
           <LandingHowItWorks locale={locale} />
         </HomePageScreen>
 
-        <HomePageScreen id="work" className="justify-start bg-[#080808] py-0">
+        <HomePageScreen id="work" className="justify-start bg-[#f6f5f1] py-0">
           <LandingRecentWork locale={locale} works={featuredWorks} engagement={engagement} isLoggedIn={isLoggedIn} />
         </HomePageScreen>
 
@@ -70,7 +70,7 @@ export function CinematicHomePage({
         </HomePageScreen>
       </main>
 
-      <MarketingFooter locale={locale} tone="dark" />
+      <MarketingFooter locale={locale} tone="light" />
     </div>
   );
 }

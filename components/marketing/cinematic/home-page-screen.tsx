@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-/** Full-viewport section — multi-page scroll feel without scroll hijacking. */
+/** Homepage section wrapper. */
 export function HomePageScreen({
   id,
   children,
@@ -12,7 +12,7 @@ export function HomePageScreen({
   className?: string;
 }) {
   return (
-    <section id={id} className={cn("flex min-h-svh flex-col justify-center py-16 sm:py-20", className)}>
+    <section id={id} className={cn("flex flex-col justify-center", className)}>
       {children}
     </section>
   );
