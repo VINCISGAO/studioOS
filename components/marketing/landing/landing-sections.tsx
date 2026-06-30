@@ -84,7 +84,7 @@ export function LandingWhy({ locale }: { locale: Locale }) {
                 hidden: { opacity: 0, y: 18 },
                 visible: { opacity: 1, y: 0, transition: { duration: 0.85, ease: cinematicEase, delay: 0.05 } }
               }}
-              className="mt-5 max-w-4xl text-[2rem] font-semibold leading-[1.08] tracking-tight text-zinc-950 sm:text-[2.75rem] lg:text-[3.35rem]"
+              className="mt-5 max-w-[56rem] text-[1.8rem] font-semibold leading-[1.08] tracking-tight text-zinc-950 sm:text-[2.35rem] lg:text-[2.75rem]"
             >
               <span className="block">{t.titleLine1}</span>
               <span className="block">{t.titleLine2}</span>

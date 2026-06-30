@@ -1,24 +1,41 @@
 "use client";
 
+import { useRef } from "react";
 import Link from "next/link";
-import Image from "next/image";
-import { ArrowRight, Sparkles, Star } from "lucide-react";
+import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import {
+  CheckCircle2,
+  CircleDollarSign,
+  Clock3,
+  FileCheck2,
+  Layers3,
+  ShieldCheck,
+  Star
+} from "lucide-react";
 import { CinematicHeroFeatures } from "@/components/marketing/cinematic/cinematic-hero-features";
 import { CinematicHeroStats } from "@/components/marketing/cinematic/cinematic-hero-stats";
 import { landingText } from "@/lib/marketing/landing-copy";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
-import { LOGIN_SPACE_BG } from "@/lib/studioos/login-background";
 import { marketingHeadlineClassName } from "@/lib/studioos/marketing-headline-font";
 import { cn } from "@/lib/utils";
 
-const AVATAR_GRADIENTS = [
-  "from-violet-400 to-indigo-600",
-  "from-sky-400 to-blue-600",
-  "from-fuchsia-400 to-purple-600",
-  "from-amber-300 to-orange-500",
-  "from-emerald-400 to-teal-600"
+/** Static public asset — avoids Next/Image + missing API bg breaking the page. */
+const HERO_BG = "/images/home-hero-space.png";
+
+const PIPELINE = [
+  { label: { en: "Brief locked", zh: "简报已确认" }, meta: "01", icon: FileCheck2 },
+  { label: { en: "Studio matched", zh: "制作方已匹配" }, meta: "02", icon: Layers3 },
+  { label: { en: "Escrow protected", zh: "资金托管中" }, meta: "03", icon: ShieldCheck },
+  { label: { en: "First cut in review", zh: "首版审片中" }, meta: "04", icon: CheckCircle2 }
 ] as const;
+
+const BRIEF_TAGS = {
+  en: ["DTC launch film", "Beauty", "Meta/TikTok", "4K master"],
+  zh: ["DTC 发布片", "美妆", "Meta/TikTok", "4K 母版"]
+} as const;
+
+const TRUST_BRANDS = ["Google", "Coca-Cola", "Samsung", "Airbnb", "TikTok", "Shopify", "Amazon", "Meta"] as const;
 
 export function CinematicHero({
   locale,
@@ -32,6 +49,15 @@ export function CinematicHero({
   isLoggedIn?: boolean;
 }) {
   const t = landingText("hero", locale);
+  const sectionRef = useRef<HTMLElement>(null);
+  const reduce = useReducedMotion();
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start start", "end start"]
+  });
+  const contentOpacity = useTransform(scrollYProgress, [0, 0.58, 0.88], [1, 1, 0]);
+  const contentY = useTransform(scrollYProgress, [0, 0.58, 0.88], [0, 0, -80]);
+  const contentScale = useTransform(scrollYProgress, [0, 0.58, 0.88], [1, 1, 0.965]);
 
   const primaryLabel = isLoggedIn
     ? (portalLabel ?? (locale === "zh" ? "品牌方门户" : "Brand portal"))
@@ -40,96 +66,212 @@ export function CinematicHero({
   const secondaryLabel = t.secondary;
   const secondaryHref = withLocale("/login?role=creator", locale);
 
-  const headlineLine2 = [t.titleHighlight, t.titleLine2].filter(Boolean).join(" ");
-
   return (
-    <section className="relative overflow-hidden bg-[#050508] text-white">
-      {/* 固定使用 login-space-bg，不替换为 home-hero-bg */}
-      <Image
-        src={LOGIN_SPACE_BG}
-        alt=""
-        fill
-        priority
-        sizes="100vw"
-        className="object-cover object-center opacity-90"
-      />
+    <section ref={sectionRef} className="relative min-h-[100svh] overflow-hidden bg-[#050607] text-white">
       <div
-        className="absolute inset-0 bg-gradient-to-br from-[#050508]/90 via-[#0a0a12]/75 to-[#120818]/55"
+        className="pointer-events-none absolute inset-0 bg-cover bg-[62%_42%] bg-no-repeat opacity-[0.9]"
+        style={{ backgroundImage: `url(${HERO_BG})` }}
         aria-hidden
       />
+      <div
+        className="absolute inset-0 bg-[linear-gradient(90deg,rgba(5,6,7,0.94)_0%,rgba(5,6,7,0.78)_34%,rgba(5,6,7,0.46)_66%,rgba(5,6,7,0.74)_100%)]"
+        aria-hidden
+      />
+      <div
+        className="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,6,7,0.1)_0%,rgba(5,6,7,0.34)_58%,#050607_100%)]"
+        aria-hidden
+      />
+      <div
+        className="absolute inset-0 bg-[radial-gradient(circle_at_68%_28%,rgba(188,198,214,0.12),transparent_34%),radial-gradient(circle_at_34%_40%,rgba(255,255,255,0.055),transparent_28%)]"
+        aria-hidden
+      />
+      <div className="absolute inset-x-0 bottom-0 h-px bg-white/10" aria-hidden />
 
-      <div className="relative z-10 mx-auto max-w-7xl px-5 pb-14 pt-24 sm:px-8 sm:pb-16 sm:pt-28 lg:pb-20">
-        <div className="max-w-3xl">
-          <p className="inline-flex w-fit items-center gap-2 rounded-full border border-violet-500/35 bg-violet-600/15 px-3.5 py-1.5 text-[11px] font-medium tracking-wide text-violet-100">
-            <Sparkles className="h-3.5 w-3.5 text-violet-300" />
-            {t.eyebrow}
-          </p>
+      <div className="relative z-10 mx-auto max-w-7xl px-5 pb-10 pt-16 sm:px-8 sm:pt-16 lg:pb-14 lg:pt-16">
+        <motion.div
+          style={reduce ? undefined : { opacity: contentOpacity, y: contentY, scale: contentScale }}
+          className="grid min-h-[calc(100svh-4rem)] items-center gap-12 lg:grid-cols-[minmax(0,0.94fr)_minmax(440px,1.06fr)]"
+        >
+          <div className="max-w-3xl">
+            <p className="inline-flex w-fit items-center gap-2 rounded-md border border-white/12 bg-white/[0.06] px-3.5 py-1.5 text-[11px] font-medium text-zinc-200">
+              <ShieldCheck className="h-3.5 w-3.5 text-[#c7d1df]" />
+              {t.eyebrow}
+            </p>
 
-          <h1
-            className={cn(
-              "mt-6 text-[2.25rem] font-semibold leading-[1.1] tracking-[-0.03em] text-white sm:text-[2.85rem] lg:text-[3.5rem]",
-              locale === "en" ? marketingHeadlineClassName("en") : "text-pretty"
-            )}
-          >
-            <span className="block">{t.titleLine1}</span>
-            {locale === "en" ? (
-              <span className="mt-2 block">
-                <span className="bg-gradient-to-r from-violet-300 via-indigo-200 to-violet-300 bg-clip-text text-transparent">
-                  {t.titleHighlight}
-                </span>{" "}
-                {t.titleLine2}
+            <h1
+              className={cn(
+                "mt-6 max-w-[10em] text-[2.45rem] font-semibold leading-[1.08] sm:text-[3.5rem] lg:text-[4.6rem]",
+                locale === "en" ? marketingHeadlineClassName("en") : "text-pretty"
+              )}
+            >
+              <span className="block text-white">{t.titleLine1}</span>
+              <span className="mt-2 block text-zinc-300">
+                {t.titleHighlight}
+                {t.titleLine2 ? ` ${t.titleLine2}` : null}
               </span>
-            ) : (
-              <span className="mt-2 block">{headlineLine2}</span>
-            )}
-          </h1>
+            </h1>
 
-          <p className="mt-5 max-w-2xl text-[15px] leading-7 text-zinc-300 sm:text-base">{t.subtitle}</p>
+            <p className="mt-6 max-w-2xl text-[15px] leading-7 text-zinc-300 sm:text-base">{t.subtitle}</p>
 
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-            <Link
-              href={primaryHref}
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-violet-600 px-7 text-sm font-semibold text-white transition hover:bg-violet-500"
-            >
-              {primaryLabel}
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-            <Link
-              href={secondaryHref}
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-white/25 bg-transparent px-7 text-sm font-semibold text-white transition hover:bg-white/10"
-            >
-              {secondaryLabel}
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-
-          <div className="mt-8 flex items-center gap-4 sm:gap-5">
-            <div className="flex -space-x-2.5">
-              {AVATAR_GRADIENTS.map((gradient, index) => (
-                <span
-                  key={gradient}
-                  className={cn(
-                    "flex h-9 w-9 items-center justify-center rounded-full border-2 border-[#050508] bg-gradient-to-br",
-                    gradient
-                  )}
-                  aria-hidden
-                />
-              ))}
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <Link
+                href={primaryHref}
+                className="inline-flex h-12 min-w-[150px] items-center justify-center rounded-md bg-white px-7 text-sm font-semibold text-black shadow-[0_18px_48px_-20px_rgba(255,255,255,0.65)] transition duration-300 hover:-translate-y-0.5 hover:bg-zinc-200 hover:shadow-[0_24px_60px_-24px_rgba(255,255,255,0.85)] active:translate-y-0 active:scale-[0.98]"
+              >
+                {primaryLabel}
+              </Link>
+              <Link
+                href={secondaryHref}
+                className="inline-flex h-12 min-w-[150px] items-center justify-center rounded-md border border-white/18 bg-white/[0.04] px-7 text-sm font-semibold text-white backdrop-blur-sm transition duration-300 hover:-translate-y-0.5 hover:border-white/35 hover:bg-white/10 active:translate-y-0 active:scale-[0.98]"
+              >
+                {secondaryLabel}
+              </Link>
             </div>
-            <div>
+
+            <div className="mt-8 grid max-w-xl gap-3 border-y border-white/10 py-5 sm:grid-cols-3">
+              <div>
+                <p className="text-xl font-semibold text-white">$8k</p>
+                <p className="mt-1 text-xs text-zinc-500">{locale === "zh" ? "起步制作预算" : "Starting production lane"}</p>
+              </div>
+              <div>
+                <p className="text-xl font-semibold text-white">72h</p>
+                <p className="mt-1 text-xs text-zinc-500">{locale === "zh" ? "首轮方案窗口" : "First concept window"}</p>
+              </div>
+              <div>
+                <p className="text-xl font-semibold text-white">4K</p>
+                <p className="mt-1 text-xs text-zinc-500">{locale === "zh" ? "交付与版权标准" : "Delivery and rights standard"}</p>
+              </div>
+            </div>
+
+            <div className="mt-6 flex items-center gap-4">
               <div className="flex items-center gap-0.5">
                 {Array.from({ length: 5 }).map((_, index) => (
-                  <Star key={index} className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                  <Star key={index} className="h-3.5 w-3.5 fill-[#d0c19a] text-[#d0c19a]" />
                 ))}
               </div>
-              <p className="mt-1 text-xs text-zinc-400">{t.trusted}</p>
+              <p className="text-xs text-zinc-500">{t.trusted}</p>
+            </div>
+          </div>
+
+          <div className="relative animate-studio-panel-float transition duration-500 hover:-translate-y-2 hover:scale-[1.01]">
+            <div className="overflow-hidden rounded-lg border border-white/12 bg-[#0b0d0f]/88 shadow-[0_32px_90px_-44px_rgba(0,0,0,0.95)] backdrop-blur-xl">
+              <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <span className="h-2.5 w-2.5 rounded-full bg-red-400" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-amber-300" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
+                </div>
+                <p className="text-[11px] font-medium text-zinc-500">studioOS://campaign-control</p>
+              </div>
+
+              <div className="grid border-b border-white/10 lg:grid-cols-[1fr_220px]">
+                <div className="p-5 sm:p-6">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {BRIEF_TAGS[locale].map((tag) => (
+                      <span key={tag} className="rounded-md border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] text-zinc-300 transition duration-300 hover:border-white/25 hover:bg-white/[0.08] hover:text-white">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                  <h2 className="mt-5 text-2xl font-semibold leading-tight text-white sm:text-3xl">
+                    {locale === "zh" ? "Spring launch hero film" : "Spring launch hero film"}
+                  </h2>
+                  <p className="mt-3 max-w-xl text-sm leading-6 text-zinc-400">
+                    {locale === "zh"
+                      ? "品牌简报、创意方向、制作方匹配、审片进度与交付权限集中在同一个工作流"
+                      : "Brief, creative direction, studio matching, review progress, and delivery permissions in one operating flow."}
+                  </p>
+
+                  <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                    {PIPELINE.map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <div key={item.meta} className="group rounded-lg border border-white/10 bg-black/35 p-4 transition duration-300 hover:-translate-y-1 hover:border-[#d8d2c4]/35 hover:bg-white/[0.055]">
+                          <div className="flex items-center justify-between gap-3">
+                            <Icon className="h-4 w-4 text-[#d8d2c4] transition duration-300 group-hover:text-white" />
+                            <span className="font-mono text-[10px] text-zinc-600 transition duration-300 group-hover:text-zinc-400">{item.meta}</span>
+                          </div>
+                          <p className="mt-4 text-sm font-medium text-white transition duration-300 group-hover:text-[#f4f0e7]">{item.label[locale]}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="border-t border-white/10 p-5 lg:border-l lg:border-t-0">
+                  <p className="text-[11px] uppercase text-zinc-500">{locale === "zh" ? "预算保护" : "Budget protection"}</p>
+                  <div className="mt-4 flex items-center gap-3">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-md bg-[#aeb9a6]/12 text-[#c0cab8]">
+                      <CircleDollarSign className="h-5 w-5" />
+                    </span>
+                    <div>
+                      <p className="text-xl font-semibold text-white">$12,400</p>
+                      <p className="text-xs text-zinc-500">{locale === "zh" ? "托管中" : "held in escrow"}</p>
+                    </div>
+                  </div>
+                  <div className="mt-6 space-y-3">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-zinc-500">{locale === "zh" ? "制作进度" : "Production progress"}</span>
+                      <span className="text-zinc-300">68%</span>
+                    </div>
+                    <div className="h-2 overflow-hidden rounded-full bg-white/10">
+                      <div className="h-full w-[68%] rounded-full bg-[#c7d1df]" />
+                    </div>
+                  </div>
+                  <div className="mt-6 rounded-lg border border-white/10 bg-white/[0.03] p-4">
+                    <div className="flex items-center gap-2 text-xs text-zinc-400">
+                      <Clock3 className="h-4 w-4 text-[#d0c19a]" />
+                      {locale === "zh" ? "下一次里程碑" : "Next milestone"}
+                    </div>
+                    <p className="mt-2 text-sm font-medium text-white">
+                      {locale === "zh" ? "首版审片交付" : "First cut review"}
+                    </p>
+                    <p className="mt-1 text-xs text-zinc-500">18:30 UTC</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-px bg-white/10 sm:grid-cols-3">
+                {[
+                  [locale === "zh" ? "制作方评分" : "Studio quality", "4.9/5"],
+                  [locale === "zh" ? "版本记录" : "Version history", "12"],
+                  [locale === "zh" ? "权限资产" : "Rights assets", "Ready"]
+                ].map(([label, value]) => (
+                  <div key={label} className="bg-[#0b0d0f] px-5 py-4">
+                    <p className="text-[11px] text-zinc-500">{label}</p>
+                    <p className="mt-1 text-sm font-semibold text-white">{value}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        <div className="mt-4 overflow-hidden border-y border-white/[0.08] py-5 sm:mt-6 sm:py-6">
+          <p className="text-center text-[11px] font-medium tracking-[0.24em] text-zinc-500">
+            {locale === "zh" ? "全球品牌信赖" : "TRUSTED BY GLOBAL BRAND TEAMS"}
+          </p>
+          <div className="relative mt-4">
+            <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-gradient-to-r from-[#050607] to-transparent" />
+            <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-[#050607] to-transparent" />
+            <div className="animate-cinematic-marquee flex w-max items-center gap-x-12 pr-12">
+              {[...TRUST_BRANDS, ...TRUST_BRANDS].map((brand, index) => (
+                <span
+                  key={`${brand}-${index}`}
+                  className="text-base font-semibold tracking-tight text-zinc-500/80 grayscale transition hover:text-zinc-300 sm:text-lg"
+                >
+                  {brand}
+                </span>
+              ))}
             </div>
           </div>
         </div>
 
-        <CinematicHeroFeatures locale={locale} />
+        <div className="mt-6">
+          <CinematicHeroFeatures locale={locale} />
+        </div>
 
-        <div className="mt-10 sm:mt-12">
+        <div className="mt-6 sm:mt-7">
           <CinematicHeroStats locale={locale} />
         </div>
       </div>

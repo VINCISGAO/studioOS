@@ -84,8 +84,8 @@ export const landingCopy = {
       titleLine2: "",
       subtitle:
         "StudioOS 连接品牌团队与严选 AI 制作方，提供结构化需求简报、帧级审片、资金托管交付与适合投放的创意生产流程",
-      primary: "品牌方开始项目",
-      secondary: "制作方入驻",
+      primary: "我是项目方",
+      secondary: "我是创作者",
       trusted: "为需要高速投放素材的品牌团队而建",
       showreel: "查看流程"
     }
