@@ -25,7 +25,7 @@ export type LoginVisual = {
 export const LOGIN_VISUAL: Record<LoginRole, LoginVisual> = {
   brand: {
     portalLabel: { en: "Brand workspace", zh: "广告主工作台" },
-    bg: "/api/login-brand-bg",
+    bg: "/images/login/brand-bg.png",
     overlay: "linear-gradient(90deg, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.55) 45%, rgba(0,0,0,0.35) 100%)",
     panelText: "text-white",
     panelMuted: "text-zinc-400",
@@ -50,7 +50,7 @@ export const LOGIN_VISUAL: Record<LoginRole, LoginVisual> = {
   },
   creator: {
     portalLabel: { en: "Creator workspace", zh: "创作者工作台" },
-    bg: "/api/login-creator-bg",
+    bg: "/images/login/creator-bg.png",
     overlay: "linear-gradient(90deg, rgba(255,255,255,0.88) 0%, rgba(255,255,255,0.72) 42%, rgba(255,255,255,0.35) 100%)",
     panelText: "text-zinc-950",
     panelMuted: "text-zinc-600",
