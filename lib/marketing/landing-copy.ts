@@ -131,7 +131,7 @@ export const landingCopy = {
   cost: {
     en: {
       title: "Traditional ad production is broken",
-      body: "Agencies add layers of markup, slow timelines, and opaque revisions — while brands still need cinema-grade output on paid-social timelines.",
+      body: "Agencies add layers of markup, slow timelines, and opaque revisions.\nWhile brands still need cinema-grade output on paid-social timelines.",
       pains: ["High agency markup", "8–12 week timelines", "Limited creator access", "Endless revision loops"],
       compareTitle: "See the difference",
       traditional: "Traditional Agency",

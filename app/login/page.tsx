@@ -224,14 +224,18 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const nextPath = typeof params.next === "string" ? params.next : "";
 
   const demoMode = isDemoLoginUiEnabled();
+  const rawError = typeof params.error === "string" ? params.error : undefined;
+  const session = await getCurrentSession();
+
+  if (session && !rawError) {
+    redirect(withLocale(demoRedirectForRole(session.role), locale));
+  }
 
   // Only bounce back when middleware sent the user here with ?next= — not when switching brand/creator tabs.
   if (demoMode && nextPath) {
-    const session = await getCurrentSession();
     redirectIfAlreadySignedIn(session, role, nextPath, locale);
   }
   const initialEmail = typeof params.email === "string" ? params.email : "";
-  const rawError = typeof params.error === "string" ? params.error : undefined;
   const errorCode = resolveLoginErrorCode(rawError);
   const error = resolveLoginErrorMessage(rawError, t);
 

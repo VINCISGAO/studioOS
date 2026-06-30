@@ -1,11 +1,47 @@
 import { cookies } from "next/headers";
-import { DEMO_SESSION_COOKIE } from "@/lib/auth-config";
-import { parseDemoSession, type DemoSession } from "@/lib/demo-session";
+import { DEMO_SESSION_COOKIE, hasSupabaseConfig } from "@/lib/auth-config";
+import { parseDemoSession, type DemoRole, type DemoSession } from "@/lib/demo-session";
 import { getSessionUser } from "@/features/auth/session.service";
+import { createClient } from "@/lib/supabase/server";
+
+function resolveDemoRole(raw: unknown): DemoRole {
+  if (raw === "creator" || raw === "studio") return "creator";
+  if (raw === "admin") return "admin";
+  return "client";
+}
+
+async function getSupabaseSession(): Promise<DemoSession | null> {
+  if (!hasSupabaseConfig()) {
+    return null;
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+
+  if (!user?.email) {
+    return null;
+  }
+
+  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+  const role = resolveDemoRole(profile?.role ?? user.user_metadata?.role);
+
+  return {
+    email: user.email,
+    role,
+    userId: user.id
+  };
+}
 
 export async function getCurrentSession(): Promise<DemoSession | null> {
   const cookieStore = await cookies();
-  return parseDemoSession(cookieStore.get(DEMO_SESSION_COOKIE)?.value);
+  const demoSession = parseDemoSession(cookieStore.get(DEMO_SESSION_COOKIE)?.value);
+  if (demoSession) {
+    return demoSession;
+  }
+
+  return getSupabaseSession();
 }
 
 export async function getCurrentUserEmail(): Promise<string | null> {

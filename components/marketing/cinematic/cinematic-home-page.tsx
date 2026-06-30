@@ -30,7 +30,12 @@ export function CinematicHomePage({
 }) {
   return (
     <div className="relative bg-black text-white">
-      <CinematicNav locale={locale} />
+      <CinematicNav
+        locale={locale}
+        isLoggedIn={isLoggedIn}
+        portalHref={portalHref}
+        portalLabel={portalLabel}
+      />
 
       <main className="scroll-smooth">
         {/* 图一 — 宇宙风 Hero */}

@@ -45,15 +45,19 @@ log "身份: $(git config user.name) <$(git config user.email)>"
 log ""
 
 git add \
+  app/login/page.tsx \
   app/globals.css \
   app/page.tsx \
-  app/api/login-space-bg/route.ts \
-  components/marketing/cinematic/ \
-  components/marketing/landing/ \
+  app/api/home-hero-space \
+  components/marketing/ \
   components/studioos/login-page-shell.tsx \
   components/studioos/login-social-buttons.tsx \
   components/studioos/login-workspace.tsx \
   lib/marketing/ \
+  lib/session-user.ts \
+  lib/auth/sign-in-service.ts \
+  lib/studioos/home-hero-space-asset.ts \
+  lib/studioos/marketing-headline-font.ts \
   lib/studioos/login-theme.ts \
   lib/studioos/login-background.ts \
   scripts/start-dev.sh \
@@ -62,25 +66,31 @@ git add \
   package.json \
   "启动本地开发.command" \
   "推送首页到GitHub.command" \
-  public/images/home-hero-bg.png \
-  public/images/home-hero-studio.png \
+  public/images/ \
   assets/marketing/ \
   2>> "${REPORT}" || true
 
 git add -u \
+  app/login/page.tsx \
   app/globals.css \
-  app/api/login-space-bg \
-  components/marketing/cinematic \
-  components/marketing/landing \
+  app/page.tsx \
+  app/api/home-hero-space \
+  components/marketing \
   components/studioos/login-page-shell.tsx \
   components/studioos/login-social-buttons.tsx \
   components/studioos/login-workspace.tsx \
   lib/marketing \
+  lib/session-user.ts \
+  lib/auth/sign-in-service.ts \
+  lib/studioos/home-hero-space-asset.ts \
+  lib/studioos/marketing-headline-font.ts \
   lib/studioos/login-theme.ts \
   scripts/start-dev.sh \
   scripts/deploy-homepage-github.sh \
   scripts/copy-marketing-assets.mjs \
   package.json \
+  public/images \
+  assets/marketing \
   2>> "${REPORT}" || true
 
 git status >> "${REPORT}" 2>&1
@@ -89,9 +99,9 @@ if git diff --cached --quiet; then
   log "⚠️  没有可提交的改动（可能已提交过）"
 else
   git commit -m "$(cat <<'EOF'
-Ship cinematic homepage layout and restore login UX.
+Keep users signed in on marketing homepage and publish copy updates.
 
-Refresh marketing cinematic sections and landing copy, align globals and login theming, and add local dev plus GitHub deploy scripts.
+Show workspace CTA when logged in, unify session detection, split English cost body, and redirect active sessions away from login.
 EOF
 )"
   log "✅ 已提交: $(git rev-parse HEAD)"

@@ -8,8 +8,20 @@ import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import { motion, useScroll, useTransform } from "framer-motion";
 
-export function CinematicNav({ locale }: { locale: Locale }) {
+export function CinematicNav({
+  locale,
+  isLoggedIn = false,
+  portalHref,
+  portalLabel
+}: {
+  locale: Locale;
+  isLoggedIn?: boolean;
+  portalHref?: string;
+  portalLabel?: string;
+}) {
   const t = cinematicText("nav", locale);
+  const portalCta =
+    portalLabel ?? (locale === "zh" ? "进入工作台" : "Open workspace");
   const { scrollY } = useScroll();
   const bg = useTransform(scrollY, [0, 120], ["rgba(0,0,0,0)", "rgba(0,0,0,0.82)"]);
   const border = useTransform(scrollY, [0, 120], ["rgba(255,255,255,0)", "rgba(255,255,255,0.06)"]);
@@ -47,12 +59,21 @@ export function CinematicNav({ locale }: { locale: Locale }) {
 
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
           <LanguageSwitcher locale={locale} tone="dark" />
-          <Link
-            href={withLocale("/login", locale)}
-            className="inline-flex h-9 items-center rounded-md border border-white/25 px-3 text-sm text-white transition hover:bg-white/10 sm:px-4"
-          >
-            {t.login}
-          </Link>
+          {isLoggedIn && portalHref ? (
+            <Link
+              href={portalHref}
+              className="inline-flex h-9 items-center rounded-md border border-white/25 bg-white px-3 text-sm font-medium text-black transition hover:bg-zinc-100 sm:px-4"
+            >
+              {portalCta}
+            </Link>
+          ) : (
+            <Link
+              href={withLocale("/login", locale)}
+              className="inline-flex h-9 items-center rounded-md border border-white/25 px-3 text-sm text-white transition hover:bg-white/10 sm:px-4"
+            >
+              {t.login}
+            </Link>
+          )}
         </div>
       </div>
     </motion.header>

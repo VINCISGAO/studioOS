@@ -211,7 +211,7 @@ export async function performSignIn(input: SignInInput): Promise<SignInResult> {
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({ email: trimmedEmail, password });
+  const { data, error } = await supabase.auth.signInWithPassword({ email: trimmedEmail, password });
 
   if (error) {
     return {
@@ -221,6 +221,33 @@ export async function performSignIn(input: SignInInput): Promise<SignInResult> {
       role: expectedRole || "brand",
       email: trimmedEmail
     };
+  }
+
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+
+  if (user?.email) {
+    const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+    const roleRaw = profile?.role ?? user.user_metadata?.role ?? "brand";
+    const demoRole =
+      roleRaw === "studio" || roleRaw === "creator"
+        ? "creator"
+        : roleRaw === "admin"
+          ? "admin"
+          : "client";
+
+    await setDemoSession({
+      email: user.email,
+      role: demoRole,
+      userId: user.id
+    });
+
+    const redirectTo = nextPath.startsWith("/")
+      ? withLocale(nextPath, lang)
+      : withLocale(demoRedirectForRole(demoRole), lang);
+
+    return { ok: true, redirectTo };
   }
 
   return { ok: true, redirectTo: `/dashboard?lang=${lang}` };
