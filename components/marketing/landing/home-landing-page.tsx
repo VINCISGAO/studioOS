@@ -1,9 +1,9 @@
 import { HomeReviewShowcase } from "@/components/marketing/home-review-showcase";
 import { HomeWorkflowTabs } from "@/components/marketing/home-workflow-tabs";
 import { LandingCostComparison } from "@/components/marketing/landing/landing-cost-comparison";
-import { LandingHeaderNav, LandingHero } from "@/components/marketing/landing/landing-hero";
 import { LandingRecentWork } from "@/components/marketing/landing/landing-recent-work";
 import { LandingCta, LandingHowItWorks, LandingWhy } from "@/components/marketing/landing/landing-sections";
+import { LandingSplitHero } from "@/components/marketing/landing/landing-split-hero";
 import { LandingStatsBar } from "@/components/marketing/landing/landing-stats-bar";
 import { MarketingFooter } from "@/components/marketing/marketing-footer";
 import type { Locale } from "@/lib/i18n";
@@ -11,7 +11,7 @@ import { resolveWorkThumbnail } from "@/lib/media-url";
 import type { CreatorWork } from "@/lib/types";
 import type { WorkEngagementSnapshot } from "@/lib/work-engagement-utils";
 
-/** Mockup-aligned landing v4 — split hero, workflow demo, review room. */
+/** Split cosmic hero + white auth panel, with marketing sections below the fold. */
 export function HomeLandingPage({
   locale,
   portalHref,
@@ -34,9 +34,13 @@ export function HomeLandingPage({
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <LandingHeaderNav locale={locale} isLoggedIn={isLoggedIn} portalHref={portalHref} portalLabel={portalLabel} />
+      <LandingSplitHero
+        locale={locale}
+        isLoggedIn={isLoggedIn}
+        portalHref={portalHref}
+        portalLabel={portalLabel}
+      />
       <main>
-        <LandingHero locale={locale} showreelPoster={reviewPoster} isLoggedIn={isLoggedIn} portalHref={portalHref} />
         <LandingStatsBar locale={locale} />
         <LandingCostComparison locale={locale} />
         <LandingWhy locale={locale} />

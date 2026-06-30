@@ -31,5 +31,6 @@ features/{name}/
 | `ai/` | Phase 10 ✅ | AI Gateway + Queue |
 | `membership/` | Phase ✅ | Creator tiers, commission snapshots, admin config (DB-driven) |
 | `creator/` | Sprint 13 ✅ | Unified portal dashboard, invitations, review routes |
+| `brand/` | Sprint 14 ✅ | Unified portal dashboard, review hub, escrow settlement |
 
 旧代码 (`lib/*-store.ts`, `components/mvp/`) 在迁移完成前继续运行，通过 Repository 适配器逐步切换。

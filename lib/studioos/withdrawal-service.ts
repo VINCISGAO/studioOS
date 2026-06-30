@@ -1,5 +1,7 @@
-import { promises as fs } from "fs";
-import path from "path";
+import "server-only";
+
+import { promises as fs } from "node:fs";
+import path from "node:path";
 import { listOrdersForCreator } from "@/lib/order-service";
 import { markOrdersPaidForWithdrawal } from "@/lib/order-service";
 import type {

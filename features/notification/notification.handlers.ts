@@ -92,7 +92,6 @@ async function onReviewApproved(event: DomainEvent) {
 async function onCampaignUpdated(event: DomainEvent) {
   const inner = event.payload.event;
   if (inner === "CREATOR_ACCEPT") return onCreatorAccepted(event);
-  if (inner === "PAYMENT_SUCCESS") return onEscrowFunded(event);
   if (inner === "VERSION_UPLOAD") {
     const campaign = await loadCampaign(event.aggregateId);
     if (!campaign) return;

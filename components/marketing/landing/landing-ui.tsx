@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 /** Shared max-width + horizontal rhythm for marketing pages. */
@@ -72,6 +73,34 @@ export function LandingRule({ className }: { className?: string }) {
   return <div className={cn("landing-rule", className)} aria-hidden />;
 }
 
+function isInternalPageHref(href: string) {
+  return href.startsWith("/") && !href.startsWith("//");
+}
+
+function LandingHref({
+  href,
+  className,
+  children
+}: {
+  href: string;
+  className?: string;
+  children: ReactNode;
+}) {
+  if (isInternalPageHref(href)) {
+    return (
+      <Link href={href} className={className}>
+        {children}
+      </Link>
+    );
+  }
+
+  return (
+    <a href={href} className={className}>
+      {children}
+    </a>
+  );
+}
+
 export function LandingPrimaryButton({
   href,
   children,
@@ -82,9 +111,9 @@ export function LandingPrimaryButton({
   className?: string;
 }) {
   return (
-    <a href={href} className={cn("landing-btn-primary", className)}>
+    <LandingHref href={href} className={cn("landing-btn-primary", className)}>
       {children}
-    </a>
+    </LandingHref>
   );
 }
 
@@ -98,8 +127,8 @@ export function LandingGhostButton({
   className?: string;
 }) {
   return (
-    <a href={href} className={cn("landing-btn-ghost", className)}>
+    <LandingHref href={href} className={cn("landing-btn-ghost", className)}>
       {children}
-    </a>
+    </LandingHref>
   );
 }

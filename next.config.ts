@@ -14,6 +14,14 @@ const nextConfig: NextConfig = {
     }
   },
   images: {
+    localPatterns: [
+      { pathname: "/api/home-hero-bg" },
+      { pathname: "/api/home-hero-studio" },
+      { pathname: "/api/login-space-bg" },
+      { pathname: "/api/login-brand-bg" },
+      { pathname: "/api/login-creator-bg" },
+      { pathname: "/images/**" }
+    ],
     remotePatterns: [
       {
         protocol: "https",
@@ -54,6 +62,18 @@ const nextConfig: NextConfig = {
         ]
       }
     ];
+  },
+  serverExternalPackages: ["@prisma/client", "bullmq", "ioredis"],
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        path: false,
+        crypto: false
+      };
+    }
+    return config;
   }
 };
 

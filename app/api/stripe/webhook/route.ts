@@ -17,7 +17,7 @@ export async function POST(request: Request) {
     const stripe = getStripe();
     const event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
     const result = await paymentWebhookService.handleStripeEvent(event);
-    return NextResponse.json({ received: true, ...result });
+    return NextResponse.json({ received: true, ...(result as Record<string, unknown>) });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Invalid Stripe webhook payload";
     return NextResponse.json({ error: message }, { status: 400 });

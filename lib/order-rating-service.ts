@@ -46,7 +46,7 @@ export async function createOrderReview(input: {
     creator_id: input.creator_id,
     client_email: input.client_email.toLowerCase(),
     rating: input.rating,
-    comment: input.comment?.trim() || undefined,
+    comment: input.comment?.trim() ?? "",
     created_at: new Date().toISOString()
   };
 

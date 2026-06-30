@@ -1,3 +1,5 @@
+import "server-only";
+
 import { registerNotificationHandlers } from "@/features/notification/notification.handlers";
 import { eventProcessorService } from "@/features/events/event-processor.service";
 

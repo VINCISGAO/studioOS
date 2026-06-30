@@ -11,9 +11,7 @@ import {
   LandingEyebrow,
   LandingGhostButton,
   LandingHeadline,
-  LandingLead,
   LandingPrimaryButton,
-  LandingSection,
   LandingShell
 } from "@/components/marketing/landing/landing-ui";
 import { landingText } from "@/lib/marketing/landing-copy";

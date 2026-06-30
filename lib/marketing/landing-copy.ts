@@ -22,6 +22,48 @@ export const landingCopy = {
       startProject: "开始项目"
     }
   },
+  split: {
+    en: {
+      panelEyebrow: "Get started",
+      panelTitle: "Sign in or create an account",
+      panelSubtitle: "Choose your workspace — brands launch campaigns, creators deliver cinema-grade work.",
+      welcomeBack: "Welcome back",
+      loggedInSubtitle: "Continue to your StudioOS workspace.",
+      brandTab: "Brand",
+      creatorTab: "Creator",
+      emailLabel: "Work email",
+      emailPlaceholder: "you@company.com",
+      continue: "Continue",
+      orDivider: "or",
+      signInBrand: "Brand sign in",
+      signInCreator: "Creator sign in",
+      noAccount: "New to StudioOS?",
+      createAccount: "Create account",
+      explorePricing: "View pricing",
+      legalNotice: "By continuing you agree to our Terms and Privacy Policy.",
+      leftFootnote: "Trusted by global brands for portfolio-first matching, frame-accurate review, and escrow-backed delivery."
+    },
+    zh: {
+      panelEyebrow: "开始使用",
+      panelTitle: "登录或注册账号",
+      panelSubtitle: "选择您的工作台 — 品牌方发起项目，创作者交付电影级作品。",
+      welcomeBack: "欢迎回来",
+      loggedInSubtitle: "继续进入您的 StudioOS 工作台。",
+      brandTab: "品牌方",
+      creatorTab: "创作者",
+      emailLabel: "工作邮箱",
+      emailPlaceholder: "you@company.com",
+      continue: "继续",
+      orDivider: "或",
+      signInBrand: "品牌方登录",
+      signInCreator: "创作者登录",
+      noAccount: "还没有账号？",
+      createAccount: "立即注册",
+      explorePricing: "查看价格",
+      legalNotice: "继续即表示您同意我们的服务条款与隐私政策。",
+      leftFootnote: "全球品牌信赖 — 作品集优先匹配、帧级审片、托管交付。"
+    }
+  },
   hero: {
     en: {
       eyebrow: "The Future of Commercial Production",

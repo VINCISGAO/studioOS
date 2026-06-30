@@ -57,7 +57,7 @@ export function CinematicPosterWall({
               >
                 <div className="relative aspect-[2/3] overflow-hidden rounded-lg border border-white/10 bg-zinc-900 shadow-2xl transition duration-500 group-hover:-translate-y-2 group-hover:border-violet-500/40">
                   <WorkCoverImage
-                    src={resolveWorkThumbnail(work)}
+                    src={resolveWorkThumbnail(work.video_url, work.thumbnail_url)}
                     alt={work.title}
                     className="object-cover transition duration-700 group-hover:scale-105"
                   />

@@ -2,6 +2,7 @@ import { escrowRepository } from "@/features/payment/escrow.repository";
 import { serializeEscrow } from "@/features/payment/escrow.serializer";
 import { stripeCheckoutService } from "@/features/payment/stripe-checkout.service";
 import { paymentBridgeService } from "@/features/payment/payment-bridge.service";
+import { paymentCollectionService } from "@/features/payment/payment-collection.service";
 import { campaignRepository } from "@/features/campaign/campaign.repository";
 import { campaignService } from "@/features/campaign/campaign.service";
 import { CampaignEvent, CampaignState } from "@/features/campaign/campaign.state-machine";
@@ -154,6 +155,10 @@ export class EscrowService {
       brandEmail: user.email
     });
 
+    await escrowRepository.updatePaymentMeta(campaignId, {
+      stripeSessionId: session.id
+    });
+
     return {
       mode: "stripe" as const,
       checkoutUrl: session.url,
@@ -177,6 +182,12 @@ export class EscrowService {
     }
 
     if (escrow.status === EscrowState.HELD) {
+      await paymentCollectionService.finalizeSuccessfulPayment({
+        campaignId: input.campaignId,
+        stripePaymentId: input.stripePaymentId,
+        stripeSessionId: input.stripeSessionId
+      }).catch(() => undefined);
+
       return {
         alreadyFunded: true,
         escrow: serializeEscrow(escrow),
@@ -220,6 +231,12 @@ export class EscrowService {
     }
 
     await paymentBridgeService.syncLegacyAfterEscrowFunded(input.campaignId);
+
+    await paymentCollectionService.finalizeSuccessfulPayment({
+      campaignId: input.campaignId,
+      stripePaymentId: input.stripePaymentId,
+      stripeSessionId: input.stripeSessionId
+    });
 
     const finalEscrow = await escrowRepository.findByCampaignId(input.campaignId);
     const finalCampaign = await prisma.campaign.findUniqueOrThrow({ where: { id: input.campaignId } });

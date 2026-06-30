@@ -1,4 +1,4 @@
-import { randomUUID } from "crypto";
+import { randomId } from "@/lib/core/random-id";
 import type { CommunicationMessage, CommunicationSourceType } from "@prisma/client";
 import { communicationAiService } from "@/features/communication/communication-ai.service";
 import { communicationRepository } from "@/features/communication/communication.repository";
@@ -13,7 +13,7 @@ import { memoryService } from "@/features/memory/memory.service";
 import { communicationConfig, languageDisplay, normalizeLanguageCode } from "@/lib/core/config/communication";
 
 function todosFromStrings(items: string[]): CommunicationTodo[] {
-  return items.map((text) => ({ id: randomUUID(), text, done: false }));
+  return items.map((text) => ({ id: randomId(), text, done: false }));
 }
 
 export class CommunicationService {

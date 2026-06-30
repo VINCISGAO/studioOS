@@ -1,7 +1,9 @@
-import path from "path";
+import "server-only";
+
+import path from "node:path";
 import { canPersistLocalDataStore } from "@/lib/can-persist-local-store";
 import { getMemoryStore, writeDataJson, cacheDataJson } from "@/lib/serverless-store";
-import { promises as fs } from "fs";
+import { promises as fs } from "node:fs";
 
 const queues = new Map<string, Promise<unknown>>();
 

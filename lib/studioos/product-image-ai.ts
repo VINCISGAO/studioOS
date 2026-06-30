@@ -46,7 +46,7 @@ async function refineWithImageEdit(
 
   for (const model of models) {
     const form = new FormData();
-    form.append("image", new Blob([buffer], { type: mime }), mime.includes("png") ? "product.png" : "product.jpg");
+    form.append("image", new Blob([new Uint8Array(buffer)], { type: mime }), mime.includes("png") ? "product.png" : "product.jpg");
     form.append("model", model);
     form.append("prompt", buildEditPrompt(prompt, locale));
     form.append("size", "1024x1024");

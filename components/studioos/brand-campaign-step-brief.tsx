@@ -1106,6 +1106,8 @@ export function BrandCampaignStepBrief({
             ) : null}
           </div>
         </div>
+        ) : null}
+      </div>
       ) : null}
 
       {/* ── Details ── */}

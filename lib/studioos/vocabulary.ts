@@ -43,7 +43,8 @@ export const brandNav = {
     invoices: "Invoices",
     team: "Team",
     newBrief: "New brief",
-    reviewRoom: "Review center"
+    reviewRoom: "Review center",
+    settlement: "Settlement"
   },
   zh: {
     dashboard: "总览",
@@ -54,7 +55,8 @@ export const brandNav = {
     invoices: "账单",
     team: "团队",
     newBrief: "新建 Brief",
-    reviewRoom: "审片中心"
+    reviewRoom: "审片中心",
+    settlement: "托管结算"
   }
 } as const;
 

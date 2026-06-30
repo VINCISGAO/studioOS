@@ -11,7 +11,7 @@ export default async function WorkspaceHomePage() {
   if (!profile) {
     redirect(withLocale("/login", locale));
   }
-  if (profile.role === "studio") redirect(withLocale("/workspace/studio", locale));
+  if (profile.role === "studio") redirect(withLocale("/studio", locale));
   if (profile.role === "admin") redirect(withLocale("/workspace/admin", locale));
-  redirect(withLocale("/workspace/brand", locale));
+  redirect(withLocale("/brand", locale));
 }

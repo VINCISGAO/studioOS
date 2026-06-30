@@ -4,6 +4,7 @@ import { getCurrentClientEmail } from "@/lib/client-session";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
 import { getDeliverables, getOrder, getOrderForProject } from "@/lib/order-service";
 import { getProject } from "@/lib/project-service";
+import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
 import { listReviewComments } from "@/lib/studioos/review-store";
 
 type HubTab = "brief" | "match" | "proposal" | "production" | "review";
@@ -32,8 +33,11 @@ export default async function BrandProjectHubPage({
 
   if (!project) {
     const order = await getOrder(id);
+    if (order?.project_id) {
+      redirect(withLocale(brandPortalRoutes.project(order.project_id), locale));
+    }
     if (order) {
-      redirect(withLocale(`/orders/${id}`, locale));
+      redirect(withLocale(brandPortalRoutes.projectReview(id), locale));
     }
     notFound();
   }

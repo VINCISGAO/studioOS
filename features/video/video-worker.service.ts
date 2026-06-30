@@ -17,6 +17,7 @@ import {
 } from "@/lib/studioos/video-version-upload";
 import { logger } from "@/lib/core/logger";
 import { prisma, hasDatabaseUrl } from "@/lib/core/database/prisma";
+import { asInputJson } from "@/lib/core/prisma-json";
 import { appError } from "@/lib/core/errors";
 
 function resolveLocalSourcePath(videoUrl: string, videoKey: string, campaignId: string) {
@@ -172,8 +173,7 @@ export class VideoWorkerService {
       videoUrl: input.videoUrl || version.videoUrl || undefined,
       hlsUrl: hlsStorageKey,
       thumbnailUrl,
-      duration: durationSec,
-      watermark: input.watermark
+      duration: durationSec
     });
 
     await versionProcessingService.runPipeline(input.versionId, {
@@ -189,7 +189,7 @@ export class VideoWorkerService {
         jobId,
         level,
         message,
-        metadata: metadata ?? undefined
+        metadata: asInputJson(metadata ?? undefined)
       }
     });
   }

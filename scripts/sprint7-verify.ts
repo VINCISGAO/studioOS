@@ -108,6 +108,7 @@ async function main() {
     });
   } finally {
     if (campaignId) {
+      await prisma.orderCommission.deleteMany({ where: { campaignId } });
       await prisma.activityLog.deleteMany({ where: { campaignId } });
       await prisma.escrowPayment.deleteMany({ where: { campaignId } });
       await prisma.creatorInvitation.deleteMany({ where: { campaignId } });

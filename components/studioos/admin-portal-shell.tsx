@@ -12,23 +12,32 @@ import {
   Building2,
   Clapperboard,
   CreditCard,
+  Flag,
   Headphones,
   Home,
   LayoutDashboard,
   LogOut,
+  Crown,
+  Scale,
+  ScrollText,
   ShieldCheck,
   Sparkles,
   Users
 } from "lucide-react";
+import { adminPortalRoutes } from "@/lib/studioos/admin-portal-routes";
 
 const navItems = [
-  { href: "/admin", label: { en: "Overview", zh: "总览" }, icon: LayoutDashboard },
-  { href: "/admin/brands", label: { en: "Brands", zh: "Brands" }, icon: Building2 },
-  { href: "/admin/projects", label: { en: "Projects", zh: "Projects" }, icon: Clapperboard },
-  { href: "/admin/studios", label: { en: "Studios", zh: "Studios" }, icon: Users },
-  { href: "/admin/payments", label: { en: "Payments", zh: "Payments" }, icon: CreditCard },
-  { href: "/admin/quality", label: { en: "Quality", zh: "Quality" }, icon: ShieldCheck },
-  { href: "/admin/support", label: { en: "Support", zh: "Support" }, icon: Headphones }
+  { href: adminPortalRoutes.dashboard, label: { en: "Overview", zh: "总览" }, icon: LayoutDashboard },
+  { href: adminPortalRoutes.brands, label: { en: "Brands", zh: "Brands" }, icon: Building2 },
+  { href: adminPortalRoutes.projects, label: { en: "Projects", zh: "Projects" }, icon: Clapperboard },
+  { href: adminPortalRoutes.studios, label: { en: "Studios", zh: "Studios" }, icon: Users },
+  { href: adminPortalRoutes.payments, label: { en: "Payments", zh: "Payments" }, icon: CreditCard },
+  { href: adminPortalRoutes.membership, label: { en: "Membership", zh: "会员" }, icon: Crown },
+  { href: adminPortalRoutes.disputes, label: { en: "Disputes", zh: "争议" }, icon: Scale },
+  { href: adminPortalRoutes.audit, label: { en: "Audit", zh: "审计" }, icon: ScrollText },
+  { href: adminPortalRoutes.featureFlags, label: { en: "Flags", zh: "开关" }, icon: Flag },
+  { href: adminPortalRoutes.quality, label: { en: "Quality", zh: "Quality" }, icon: ShieldCheck },
+  { href: adminPortalRoutes.support, label: { en: "Support", zh: "Support" }, icon: Headphones }
 ];
 
 export function AdminPortalShell({
@@ -54,12 +63,13 @@ export function AdminPortalShell({
             <span className="hidden text-xs font-normal text-zinc-500 sm:inline">Admin</span>
           </MarketingHomeLink>
           <div className="flex items-center gap-2">
-            <Button asChild variant="ghost" size="sm" className="hidden text-zinc-600 sm:inline-flex">
-              <MarketingHomeLink locale={locale} className="inline-flex items-center gap-2">
-                <Home className="h-4 w-4" />
-                {locale === "zh" ? "首页" : "Home"}
-              </MarketingHomeLink>
-            </Button>
+            <MarketingHomeLink
+              locale={locale}
+              className="hidden inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 sm:inline-flex"
+            >
+              <Home className="h-4 w-4" />
+              {locale === "zh" ? "首页" : "Home"}
+            </MarketingHomeLink>
             <LanguageSwitcher locale={locale} pathname={pathname} search={search} />
             <form action={signOutAction}>
               <input type="hidden" name="lang" value={locale} />
@@ -81,8 +91,9 @@ export function AdminPortalShell({
             locale={locale}
             pathname={pathname}
             items={[
-              { href: "/", label: locale === "zh" ? "首页" : "Home", icon: Home },
+              { id: "home", href: "/", label: locale === "zh" ? "首页" : "Home", icon: Home },
               ...navItems.map(({ href, label, icon }) => ({
+                id: href,
                 href,
                 label: label[locale],
                 icon
@@ -97,7 +108,9 @@ export function AdminPortalShell({
         <aside className="hidden lg:block">
           <nav className="sticky top-20 space-y-1">
             {navItems.map(({ href, label, icon: Icon }) => {
-              const active = pathname === href || (href !== "/admin" && pathname.startsWith(href));
+              const active =
+                pathname === href ||
+                (href !== adminPortalRoutes.dashboard && pathname.startsWith(href));
               return (
                 <Link
                   key={href}

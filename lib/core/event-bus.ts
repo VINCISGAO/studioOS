@@ -1,3 +1,5 @@
+import "server-only";
+
 import type { DomainEvent } from "@/features/shared/types/events";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { persistDomainEvent, markDomainEventProcessed } from "@/lib/core/event-store";
@@ -7,10 +9,23 @@ type EventHandler = (event: DomainEvent) => void | Promise<void>;
 
 const handlers = new Map<string, Set<EventHandler>>();
 
+let bootstrapPromise: Promise<void> | null = null;
+
+async function ensureEventSystemBootstrapped() {
+  if (!bootstrapPromise) {
+    bootstrapPromise = import("@/features/events/bootstrap").then(({ bootstrapEventSystem }) => {
+      bootstrapEventSystem();
+    });
+  }
+  await bootstrapPromise;
+}
+
 export async function publishEvent(
   event: DomainEvent,
   options?: { skipPersist?: boolean }
 ): Promise<void> {
+  await ensureEventSystemBootstrapped();
+
   let storedId: string | null = null;
 
   if (hasDatabaseUrl() && !options?.skipPersist) {

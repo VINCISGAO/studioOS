@@ -18,7 +18,7 @@ export class PaymentBridgeService {
     if (!legacyProjectId) return;
 
     try {
-      const { getOrderForProject } = await import("@/lib/order-service");
+      const { getOrderForProject, markOrderPaid } = await import("@/lib/order-service");
       const { syncBrandOrderPaid } = await import("@/lib/studioos/brand-checkout-service");
 
       const order = await getOrderForProject(legacyProjectId);

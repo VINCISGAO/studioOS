@@ -14,8 +14,11 @@ import {
   syncProjectAfterRevisionRequest,
   syncProjectFromOrderEvent
 } from "@/lib/studioos/project-order-sync";
+import { promises as fs } from "node:fs";
+import path from "node:path";
 
 const STORE_PATH = dataStorePath("order-store.json");
+const REVISION_NOTES_DIR = path.dirname(STORE_PATH);
 const PLATFORM_FEE_RATE = 0.2;
 const DEMO_ARC_PROJECT_ID = "proj_demo_arc_nova";
 const DEMO_ARC_ORDER_ID = "ord_demo_arc_nova";
@@ -187,8 +190,8 @@ async function readStoreInner(): Promise<OrderStore> {
   next = ensureDemoUploadOrder(next);
   next = ensureDemoReviewDeliverable(next);
   const arcOrderChanged =
-    Boolean(afterArcOrder) &&
-    (!beforeArcOrder ||
+    afterArcOrder != null &&
+    (beforeArcOrder == null ||
       beforeArcOrder.project_id !== afterArcOrder.project_id ||
       beforeArcOrder.status !== afterArcOrder.status);
   if (
@@ -588,8 +591,8 @@ export async function requestOrderRevision(orderId: string, notes: string): Prom
   await syncProjectAfterRevisionRequest(order.project_id);
 
   if (notes.trim()) {
-    await fs.mkdir(STORE_DIR, { recursive: true });
-    const notePath = path.join(STORE_DIR, `revision-${orderId}.txt`);
+    await fs.mkdir(REVISION_NOTES_DIR, { recursive: true });
+    const notePath = path.join(REVISION_NOTES_DIR, `revision-${orderId}.txt`);
     await fs.writeFile(notePath, notes.trim(), "utf8");
   }
 

@@ -105,11 +105,13 @@ export const workspaceCopy = {
       commentStatus: { open: "待处理", resolved: "已解决", reopened: "已重开" }
     }
   }
-} as const;
+};
 
-export function wsCopy<T extends keyof typeof workspaceCopy>(
+export type WorkspaceCopy = typeof workspaceCopy;
+
+export function wsCopy<T extends keyof WorkspaceCopy>(
   section: T,
   locale: Locale
-): (typeof workspaceCopy)[T][Locale] {
+): WorkspaceCopy[T][Locale] {
   return workspaceCopy[section][locale];
 }

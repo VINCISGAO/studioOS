@@ -380,7 +380,7 @@ export function StudioProfilePagination({
 
   return (
     <nav
-      aria-label="Pagination"
+      aria-label={locale === "zh" ? "作品分页" : "Works pagination"}
       className="mt-10 flex items-center justify-center gap-1"
     >
       <button

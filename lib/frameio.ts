@@ -160,7 +160,7 @@ export async function uploadFrameAsset(input: {
   const putRes = await fetch(uploadUrl, {
     method: "PUT",
     headers: { "Content-Type": input.mimeType },
-    body: input.fileBuffer
+    body: new Uint8Array(input.fileBuffer)
   });
 
   if (!putRes.ok) {

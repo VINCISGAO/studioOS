@@ -1,0 +1,8 @@
+---
+description: StudioOS engineering standards — read AGENT.md before any change
+alwaysApply: true
+---
+
+Read [AGENT.md](../../AGENT.md) before making any changes.
+
+Follow the completion requirements there: typecheck, build, and `npm run production:verify` must all pass before a task is done.

@@ -116,6 +116,18 @@ enum EscrowStatus {
   DISPUTE
 }
 
+enum PaymentCollectionStatus {
+  UNPAID
+  PAID
+  FAILED
+  CANCELLED
+}
+
+enum CreatorPayoutStatus {
+  MANUAL_PAYOUT_PENDING
+  PAID
+}
+
 enum TransactionType {
   ESCROW_DEPOSIT
   ESCROW_RELEASE
@@ -471,24 +483,32 @@ model CreatorInvitation {
 // ─── Payment & Wallet ────────────────────────────────────────────────────────
 
 model EscrowPayment {
-  id              String       @id @default(uuid())
-  campaignId      String       @unique @map("campaign_id")
-  brandId         String       @map("brand_id")
-  creatorId       String       @map("creator_id")
-  stripePaymentId String?      @map("stripe_payment_id")
-  currency        String       @default("USD")
-  amount          Decimal      @db.Decimal(18, 2)
-  releasedAmount  Decimal      @default(0) @map("released_amount") @db.Decimal(18, 2)
-  remainingAmount Decimal      @map("remaining_amount") @db.Decimal(18, 2)
-  status          EscrowStatus @default(CREATED)
-  createdAt       DateTime     @default(now()) @map("created_at")
-  updatedAt       DateTime     @updatedAt @map("updated_at")
+  id                     String                   @id @default(uuid())
+  campaignId             String                   @unique @map("campaign_id")
+  brandId                String                   @map("brand_id")
+  creatorId              String                   @map("creator_id")
+  stripePaymentId        String?                  @map("stripe_payment_id")
+  stripeSessionId        String?                  @map("stripe_session_id")
+  currency               String                   @default("USD")
+  amount                 Decimal                  @db.Decimal(18, 2)
+  releasedAmount         Decimal                  @default(0) @map("released_amount") @db.Decimal(18, 2)
+  remainingAmount        Decimal                  @map("remaining_amount") @db.Decimal(18, 2)
+  status                 EscrowStatus             @default(CREATED)
+  paymentStatus          PaymentCollectionStatus  @default(UNPAID) @map("payment_status")
+  creatorPayoutStatus    CreatorPayoutStatus?     @map("creator_payout_status")
+  paidAt                 DateTime?                @map("paid_at")
+  payoutPaidAt           DateTime?                @map("payout_paid_at")
+  payoutMarkedByAdminId  String?                  @map("payout_marked_by_admin_id")
+  createdAt              DateTime                 @default(now()) @map("created_at")
+  updatedAt              DateTime                 @updatedAt @map("updated_at")
 
   campaign Campaign @relation(fields: [campaignId], references: [id])
 
   @@index([brandId])
   @@index([creatorId])
   @@index([status])
+  @@index([paymentStatus])
+  @@index([creatorPayoutStatus])
   @@map("escrow_payments")
 }
 

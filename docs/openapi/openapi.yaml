@@ -1,353 +1,710 @@
-openapi: 3.1.0
+openapi: 3.0.3
 info:
   title: StudioOS API
   version: 1.0.0
-  description: StudioOS Public API — Development Bible Vol 15
+  description: |
+    Contract-driven REST API for StudioOS (Campaign aggregate root).
+    All authenticated routes require session cookie from `/api/auth/login` or `/api/v1/auth/me`.
+  contact:
+    name: StudioOS Platform
+
 servers:
-  - url: http://localhost:3000/api/v1
+  - url: http://localhost:3000
     description: Local development
-security:
-  - bearerAuth: []
+  - url: "{baseUrl}"
+    description: Production
+    variables:
+      baseUrl:
+        default: https://app.studioos.test
+
 tags:
-  - name: Campaign
+  - name: Health
+  - name: Auth
+  - name: Campaigns
   - name: Review
-  - name: Version
+  - name: Creative
+  - name: Matching
   - name: Payment
+  - name: Wallet
+  - name: Notifications
+  - name: AI
+  - name: Communication
+  - name: Memory
+  - name: Creator
+  - name: Brand
+  - name: Membership
+  - name: Admin
+  - name: Playback
+
 paths:
-  /campaigns:
+  /api/v1/health:
     get:
-      tags: [Campaign]
-      summary: List campaigns (paginated)
-      parameters:
-        - name: page
-          in: query
-          schema: { type: integer, default: 1 }
-        - name: limit
-          in: query
-          schema: { type: integer, default: 20 }
+      tags: [Health]
+      summary: Service health check
+      operationId: getHealth
       responses:
         "200":
-          description: Success
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+        "503":
+          description: Unhealthy
+
+  /api/v1/auth/me:
+    get:
+      tags: [Auth]
+      summary: Current session user
+      operationId: getAuthMe
+      responses:
+        "200":
+          description: Authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthMeResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/v1/auth/logout:
     post:
-      tags: [Campaign]
+      tags: [Auth]
+      summary: End session
+      operationId: postAuthLogout
+      responses:
+        "200":
+          description: Logged out
+
+  /api/v1/campaigns:
+    get:
+      tags: [Campaigns]
+      summary: List campaigns for current user
+      operationId: listCampaigns
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Paginated campaigns
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      tags: [Campaigns]
       summary: Create campaign
-      responses:
-        "201":
-          description: Created
-  /campaigns/{campaignId}:
-    get:
-      tags: [Campaign]
-      summary: Campaign detail
-      parameters:
-        - name: campaignId
-          in: path
-          required: true
-          schema: { type: string, format: uuid }
-      responses:
-        "200":
-          description: Success
-    patch:
-      tags: [Campaign]
-      summary: Update draft campaign
-      responses:
-        "200":
-          description: Success
-  /campaigns/{campaignId}/assets:
-    get:
-      tags: [Campaign]
-      summary: List campaign assets
-      parameters:
-        - name: campaignId
-          in: path
-          required: true
-          schema: { type: string, format: uuid }
-      responses:
-        "200":
-          description: Success
-    post:
-      tags: [Campaign]
-      summary: Upload campaign asset (LOGO)
+      operationId: createCampaign
       requestBody:
+        required: true
         content:
-          multipart/form-data:
+          application/json:
             schema:
-              type: object
-              properties:
-                file: { type: string, format: binary }
-                asset_type: { type: string, enum: [LOGO] }
+              $ref: "#/components/schemas/CreateCampaignRequest"
       responses:
         "201":
           description: Created
-  /campaigns/{campaignId}/creative:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+  /api/v1/campaigns/{campaignId}:
     get:
-      tags: [Campaign]
-      summary: Get AI creative directions
-      responses:
-        "200":
-          description: Success
-    post:
-      tags: [Campaign]
-      summary: Generate 3 creative directions
-      responses:
-        "201":
-          description: Created
-  /campaigns/{campaignId}/creative/approve:
-    post:
-      tags: [Campaign]
-      summary: Approve a creative direction
-      responses:
-        "200":
-          description: Success
-  /campaigns/{campaignId}/matches:
-    get:
-      tags: [Campaign]
-      summary: Rank matched creators
-      responses:
-        "200":
-          description: Success
-  /campaigns/{campaignId}/invitations:
-    get:
-      tags: [Campaign]
-      summary: List creator invitations
-      responses:
-        "200":
-          description: Success
-    post:
-      tags: [Campaign]
-      summary: Send creator invitations
-      responses:
-        "201":
-          description: Created
-  /invitations/{invitationId}/accept:
-    post:
-      tags: [Campaign]
-      summary: Creator accepts invitation
-      responses:
-        "200":
-          description: Success
-  /invitations/{invitationId}/decline:
-    post:
-      tags: [Campaign]
-      summary: Creator declines invitation
-      responses:
-        "200":
-          description: Success
-  /versions/{versionId}:
-    get:
-      tags: [Review]
-      summary: Version playback URLs
+      tags: [Campaigns]
+      summary: Get campaign
+      operationId: getCampaign
       parameters:
-        - name: versionId
-          in: path
-          required: true
-          schema: { type: string, format: uuid }
+        - $ref: "#/components/parameters/CampaignId"
       responses:
         "200":
-          description: Success
-  /versions/{versionId}/comments:
-    get:
-      tags: [Review]
-      summary: List comments for version
+          description: Campaign detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags: [Campaigns]
+      summary: Update campaign
+      operationId: updateCampaign
       parameters:
-        - name: versionId
-          in: path
-          required: true
-          schema: { type: string, format: uuid }
+        - $ref: "#/components/parameters/CampaignId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCampaignRequest"
       responses:
         "200":
-          description: Success
-    post:
-      tags: [Review]
-      summary: Create comment with optional annotation
-      responses:
-        "201":
-          description: Created
-  /campaigns/{campaignId}/review:
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignResponse"
+
+  /api/v1/campaigns/{campaignId}/review:
     get:
       tags: [Review]
-      summary: Full review timeline for campaign
+      summary: Review timeline for campaign
+      operationId: getCampaignReview
+      parameters:
+        - $ref: "#/components/parameters/CampaignId"
       responses:
         "200":
-          description: Success
-  /versions/{versionId}/approve:
-    post:
-      tags: [Review]
-      summary: Approve version
-      responses:
-        "200":
-          description: Success
-  /versions/{versionId}/revision:
-    post:
-      tags: [Review]
-      summary: Request revision
-      responses:
-        "200":
-          description: Success
-  /campaigns/{campaignId}/activity:
+          description: Review timeline
+
+  /api/v1/campaigns/{campaignId}/activity:
     get:
-      tags: [Campaign]
-      summary: Campaign activity log
+      tags: [Campaigns]
+      summary: Activity log for campaign
+      operationId: getCampaignActivity
+      parameters:
+        - $ref: "#/components/parameters/CampaignId"
       responses:
         "200":
-          description: Success
-  /campaigns/{campaignId}/versions/upload/init:
-    post:
-      tags: [Video]
-      summary: Initialize chunked video upload
-      responses:
-        "200":
-          description: Success
-  /campaigns/{campaignId}/versions/upload/{uploadId}/chunk:
-    put:
-      tags: [Video]
-      summary: Upload video chunk
-      responses:
-        "200":
-          description: Success
-  /campaigns/{campaignId}/versions/upload/{uploadId}/complete:
-    post:
-      tags: [Video]
-      summary: Complete chunked upload and enqueue transcode
-      responses:
-        "200":
-          description: Success
-  /versions/{versionId}/processing:
-    get:
-      tags: [Video]
-      summary: Version transcode / processing status
-      responses:
-        "200":
-          description: Success
-  /campaigns/{campaignId}/escrow:
-    get:
-      tags: [Payment]
-      summary: Escrow status for campaign
-      responses:
-        "200":
-          description: Success
-  /campaigns/{campaignId}/checkout:
+          description: Activity entries
+
+  /api/v1/campaigns/{campaignId}/checkout:
     post:
       tags: [Payment]
-      summary: Start Stripe checkout (or demo mode hint)
+      summary: Create Stripe checkout session
+      operationId: createCampaignCheckout
+      parameters:
+        - $ref: "#/components/parameters/CampaignId"
       responses:
         "200":
-          description: Success
-  /campaigns/{campaignId}/checkout/demo:
+          description: Checkout session
+
+  /api/v1/campaigns/{campaignId}/checkout/demo:
     post:
       tags: [Payment]
-      summary: Demo escrow payment (local dev)
+      summary: Demo escrow payment (no Stripe)
+      operationId: demoCampaignCheckout
+      parameters:
+        - $ref: "#/components/parameters/CampaignId"
       responses:
         "200":
-          description: Success
-  /webhooks/stripe:
-    post:
+          description: Demo payment applied
+
+  /api/v1/campaigns/{campaignId}/escrow:
+    get:
       tags: [Payment]
-      summary: Stripe webhook
+      summary: Escrow status
+      operationId: getCampaignEscrow
+      parameters:
+        - $ref: "#/components/parameters/CampaignId"
       responses:
         "200":
-          description: Success
-  /wallet:
-    get:
-      tags: [Wallet]
-      summary: Current user wallet
-      responses:
-        "200":
-          description: Success
-  /wallet/transactions:
-    get:
-      tags: [Wallet]
-      summary: Wallet ledger
-      responses:
-        "200":
-          description: Success
-  /wallet/withdraw:
-    post:
-      tags: [Wallet]
-      summary: Request withdrawal
-      responses:
-        "200":
-          description: Success
-  /wallet/withdraw/{withdrawId}/complete:
-    post:
-      tags: [Wallet]
-      summary: Complete withdrawal (demo)
-      responses:
-        "200":
-          description: Success
-  /campaigns/{campaignId}/settlement/release:
+          description: Escrow detail
+
+  /api/v1/campaigns/{campaignId}/settlement/release:
     post:
       tags: [Payment]
       summary: Release escrow to creator wallet
+      operationId: releaseCampaignSettlement
+      parameters:
+        - $ref: "#/components/parameters/CampaignId"
       responses:
         "200":
-          description: Success
-  /notifications:
+          description: Released
+
+  /api/v1/versions/{versionId}:
     get:
-      tags: [Notification]
-      summary: List in-app notifications
+      tags: [Review]
+      summary: Version playback URLs (signed HLS)
+      operationId: getVersion
+      parameters:
+        - $ref: "#/components/parameters/VersionId"
       responses:
         "200":
-          description: Success
-  /notifications/read-all:
+          description: Version with playback token
+
+  /api/v1/versions/{versionId}/comments:
+    get:
+      tags: [Review]
+      summary: List review comments
+      operationId: listVersionComments
+      parameters:
+        - $ref: "#/components/parameters/VersionId"
+      responses:
+        "200":
+          description: Comments
     post:
-      tags: [Notification]
-      summary: Mark all notifications read
+      tags: [Review]
+      summary: Add timecoded comment
+      operationId: createVersionComment
+      parameters:
+        - $ref: "#/components/parameters/VersionId"
+      responses:
+        "201":
+          description: Comment created
+
+  /api/v1/versions/{versionId}/approve:
+    post:
+      tags: [Review]
+      summary: Approve version
+      operationId: approveVersion
+      parameters:
+        - $ref: "#/components/parameters/VersionId"
       responses:
         "200":
-          description: Success
-  /notifications/{notificationId}/read:
+          description: Approved
+
+  /api/v1/versions/{versionId}/revision:
+    post:
+      tags: [Review]
+      summary: Request revision
+      operationId: requestVersionRevision
+      parameters:
+        - $ref: "#/components/parameters/VersionId"
+      responses:
+        "200":
+          description: Revision requested
+
+  /api/v1/wallet:
+    get:
+      tags: [Wallet]
+      summary: Creator wallet balance
+      operationId: getWallet
+      responses:
+        "200":
+          description: Wallet summary
+
+  /api/v1/wallet/transactions:
+    get:
+      tags: [Wallet]
+      summary: Ledger transactions
+      operationId: listWalletTransactions
+      responses:
+        "200":
+          description: Transaction list
+
+  /api/v1/wallet/withdraw:
+    post:
+      tags: [Wallet]
+      summary: Request withdrawal
+      operationId: requestWithdraw
+      responses:
+        "200":
+          description: Withdrawal created
+
+  /api/v1/notifications:
+    get:
+      tags: [Notifications]
+      summary: List notifications
+      operationId: listNotifications
+      responses:
+        "200":
+          description: Notifications
+
+  /api/v1/me/creator/portal:
+    get:
+      tags: [Creator]
+      summary: Creator portal dashboard
+      operationId: getCreatorPortal
+      responses:
+        "200":
+          description: Dashboard payload
+
+  /api/v1/me/brand/portal:
+    get:
+      tags: [Brand]
+      summary: Brand portal dashboard
+      operationId: getBrandPortal
+      responses:
+        "200":
+          description: Dashboard payload
+
+  /api/v1/me/membership:
+    get:
+      tags: [Membership]
+      summary: Creator membership status
+      operationId: getMembershipStatus
+      responses:
+        "200":
+          description: Membership status and eligibility
     patch:
-      tags: [Notification]
-      summary: Mark notification read
+      tags: [Membership]
+      summary: Decline upgrade prompt
+      operationId: patchMembership
       responses:
         "200":
-          description: Success
-  /notifications/stream:
-    get:
-      tags: [Notification]
-      summary: SSE notification stream
-      responses:
-        "200":
-          description: text/event-stream
-  /ai/jobs/{jobId}:
-    get:
-      tags: [AI]
-      summary: AI job status and cost
-      responses:
-        "200":
-          description: Success
-  /campaigns/{campaignId}/ai/jobs:
-    get:
-      tags: [AI]
-      summary: AI jobs for campaign
-      responses:
-        "200":
-          description: Success
-  /ai/jobs/process:
+          description: Updated
+
+  /api/v1/me/membership/checkout:
     post:
-      tags: [AI]
-      summary: Process next queued AI job (admin)
+      tags: [Membership]
+      summary: Stripe checkout for verified upgrade
+      operationId: membershipCheckout
       responses:
         "200":
-          description: Success
+          description: Checkout session URL
+
+  /api/v1/admin/overview:
+    get:
+      tags: [Admin]
+      summary: Platform overview metrics
+      operationId: getAdminOverview
+      responses:
+        "200":
+          description: Overview stats
+
+  /api/v1/campaigns/{campaignId}/disputes:
+    get:
+      tags: [Admin, Campaigns]
+      summary: List disputes for a campaign
+      operationId: listCampaignDisputes
+      parameters:
+        - $ref: "#/components/parameters/CampaignId"
+      responses:
+        "200":
+          description: Disputes for campaign
+    post:
+      tags: [Admin, Campaigns]
+      summary: Open a dispute (brand or creator)
+      operationId: openCampaignDispute
+      parameters:
+        - $ref: "#/components/parameters/CampaignId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason:
+                  type: string
+                  minLength: 10
+      responses:
+        "201":
+          description: Dispute opened
+
+  /api/v1/admin/disputes:
+    get:
+      tags: [Admin]
+      summary: List disputes
+      operationId: listDisputes
+      responses:
+        "200":
+          description: Disputes
+
+  /api/v1/admin/audit:
+    get:
+      tags: [Admin]
+      summary: Platform audit log
+      operationId: listAuditLogs
+      responses:
+        "200":
+          description: Audit entries
+
+  /api/v1/admin/feature-flags:
+    get:
+      tags: [Admin]
+      summary: List feature flags
+      operationId: listFeatureFlags
+      responses:
+        "200":
+          description: Feature flags
+    put:
+      tags: [Admin]
+      summary: Upsert feature flag
+      operationId: upsertFeatureFlag
+      responses:
+        "200":
+          description: Updated flag
+
+  /api/v1/admin/membership/commission-rules:
+    get:
+      tags: [Admin, Membership]
+      summary: Active commission configuration
+      operationId: getCommissionRules
+      responses:
+        "200":
+          description: Commission rule and plans
+    patch:
+      tags: [Admin, Membership]
+      summary: Update commission rule
+      operationId: updateCommissionRules
+      responses:
+        "200":
+          description: Updated rule
+
+  /api/v1/admin/payments:
+    get:
+      tags: [Admin, Payment]
+      summary: List payment collection records
+      operationId: listAdminPayments
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        "200":
+          description: Payment records with commission breakdown
+
+  /api/v1/admin/payments/{campaignId}/payout:
+    post:
+      tags: [Admin, Payment]
+      summary: Mark creator manual payout as paid
+      operationId: markCreatorPayoutPaid
+      parameters:
+        - $ref: "#/components/parameters/CampaignId"
+      responses:
+        "200":
+          description: Payout marked paid
+
+  /api/v1/webhooks/stripe:
+    post:
+      tags: [Payment]
+      summary: Stripe webhook (signature verified)
+      operationId: stripeWebhook
+      security: []
+      responses:
+        "200":
+          description: Event processed
+        "400":
+          description: Invalid signature or payload
+
+  /api/v1/openapi:
+    get:
+      tags: [Health]
+      summary: OpenAPI specification (this document)
+      operationId: getOpenApiSpec
+      responses:
+        "200":
+          description: OpenAPI YAML
+
 components:
-  securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
+  parameters:
+    CampaignId:
+      name: campaignId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    VersionId:
+      name: versionId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    Page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    Limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+
+  responses:
+    Unauthorized:
+      description: Not authenticated
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    ValidationError:
+      description: Invalid input
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
   schemas:
-    SuccessResponse:
+    ApiSuccess:
       type: object
+      required: [success, data]
       properties:
-        success: { type: boolean, example: true }
-        data: { type: object }
+        success:
+          type: boolean
+          enum: [true]
+        data:
+          type: object
+
     ErrorResponse:
       type: object
+      required: [success, error]
       properties:
-        success: { type: boolean, example: false }
+        success:
+          type: boolean
+          enum: [false]
         error:
           type: object
+          required: [code, message]
           properties:
-            code: { type: string }
-            message: { type: string }
+            code:
+              type: string
+            message:
+              type: string
+
+    HealthResponse:
+      allOf:
+        - $ref: "#/components/schemas/ApiSuccess"
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                service:
+                  type: string
+                checks:
+                  type: object
+                  additionalProperties:
+                    type: string
+                    enum: [ok, skipped, error]
+                timestamp:
+                  type: string
+                  format: date-time
+
+    AuthMeResponse:
+      allOf:
+        - $ref: "#/components/schemas/ApiSuccess"
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                id:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                role:
+                  type: string
+                  enum: [BRAND, CREATOR, ADMIN, SUPPORT]
+                fullName:
+                  type: string
+                companyName:
+                  type: string
+                displayName:
+                  type: string
+
+    Campaign:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        status:
+          type: string
+        budget:
+          type: number
+        currency:
+          type: string
+        deadline:
+          type: string
+          format: date-time
+        platform:
+          type: string
+        aspectRatio:
+          type: string
+        brandId:
+          type: string
+        creatorId:
+          type: string
+          nullable: true
+
+    CreateCampaignRequest:
+      type: object
+      required: [title, budget, deadline, platform, aspect_ratio]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        budget:
+          type: number
+        currency:
+          type: string
+          default: USD
+        deadline:
+          type: string
+          format: date-time
+        platform:
+          type: string
+        aspect_ratio:
+          type: string
+
+    UpdateCampaignRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        budget:
+          type: number
+
+    CampaignResponse:
+      allOf:
+        - $ref: "#/components/schemas/ApiSuccess"
+        - type: object
+          properties:
+            data:
+              $ref: "#/components/schemas/Campaign"
+
+    CampaignListResponse:
+      allOf:
+        - $ref: "#/components/schemas/ApiSuccess"
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                items:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Campaign"
+                pagination:
+                  type: object
+                  properties:
+                    page:
+                      type: integer
+                    limit:
+                      type: integer
+                    total:
+                      type: integer
+                    totalPages:
+                      type: integer
+
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: studioos_demo_session
+      description: Demo session cookie set by login
+
+security:
+  - sessionCookie: []

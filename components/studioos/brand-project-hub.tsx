@@ -477,7 +477,7 @@ export function BrandProjectHub({
                   <div className="mt-4 h-px flex-1 bg-zinc-200" />
                   <TimelineStep done={reviewActive || completedDone} active={reviewActive && !completedDone} label={t.stepReview} />
                   <div className="mt-4 h-px flex-1 bg-zinc-200" />
-                  <TimelineStep done={completedDone} label={t.stepDone} />
+                  <TimelineStep done={completedDone} active={false} label={t.stepDone} />
                 </div>
               </div>
 

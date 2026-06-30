@@ -2,7 +2,10 @@ import Link from "next/link";
 import { ArrowRight, BarChart3, Plus, Sparkles, UserRound } from "lucide-react";
 import { BrandStartBriefButton } from "@/components/studioos/brand-start-brief-button";
 import { BrandCampaignList } from "@/components/studioos/brand-campaign-list";
+import { BrandPortalSections } from "@/components/studioos/brand-portal-sections";
 import { Button } from "@/components/ui/button";
+import { brandPortalService } from "@/features/brand/brand-portal.service";
+import { getSessionUser } from "@/features/auth/session.service";
 import { getCurrentClientEmail } from "@/lib/client-session";
 import { DEMO_USERS } from "@/lib/demo-auth";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
@@ -95,9 +98,18 @@ export default async function BrandHomePage({
   const brandProfile = clientEmail ? await getBrandProfileByEmail(clientEmail) : null;
   const profileComplete = isBrandProfileComplete(brandProfile);
   const attribution = clientEmail ? await getBrandAttributionWorkspace(clientEmail) : null;
+  const sessionUser = await getSessionUser();
+  const portal =
+    sessionUser && !sessionUser.id.startsWith("demo_")
+      ? await brandPortalService.getDashboard({ id: sessionUser.id, role: sessionUser.role }, orders, projects)
+      : {
+          campaigns: [],
+          escrows: [],
+          stats: { totalProjects: rows.length, draftCount, activeCount, awaitingReview: 0, escrowHeld: 0, monthSpend: 0 }
+        };
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
+    <div className="space-y-6">
       {query.error === "start-brief" ? (
         <section className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
           {locale === "zh"
@@ -196,6 +208,13 @@ export default async function BrandHomePage({
         </div>
         <BrandCampaignList locale={locale} rows={rows} orderProjectMap={orderProjectMap} />
       </section>
+
+      <BrandPortalSections
+        locale={locale}
+        campaigns={portal.campaigns}
+        escrows={portal.escrows}
+        stats={portal.stats}
+      />
     </div>
   );
 }

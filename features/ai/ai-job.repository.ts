@@ -1,5 +1,6 @@
 import type { AiJob, AiJobStatus } from "@prisma/client";
 import { prisma, hasDatabaseUrl } from "@/lib/core/database/prisma";
+import { asInputJson } from "@/lib/core/prisma-json";
 
 export class AiJobRepository {
   async create(input: {
@@ -15,7 +16,7 @@ export class AiJobRepository {
         type: input.type,
         provider: input.provider,
         status: "QUEUED",
-        inputJson: input.inputJson,
+        inputJson: asInputJson(input.inputJson)!,
         promptVersion: input.promptVersion
       }
     });
@@ -64,8 +65,15 @@ export class AiJobRepository {
     return prisma.aiJob.update({
       where: { id },
       data: {
-        ...data,
-        cost: data.cost != null ? data.cost : undefined
+        ...(data.status !== undefined ? { status: data.status } : {}),
+        ...(data.outputJson !== undefined ? { outputJson: asInputJson(data.outputJson) } : {}),
+        ...(data.tokenInput !== undefined ? { tokenInput: data.tokenInput } : {}),
+        ...(data.tokenOutput !== undefined ? { tokenOutput: data.tokenOutput } : {}),
+        ...(data.cost !== undefined ? { cost: data.cost } : {}),
+        ...(data.latencyMs !== undefined ? { latencyMs: data.latencyMs } : {}),
+        ...(data.retryCount !== undefined ? { retryCount: data.retryCount } : {}),
+        ...(data.provider !== undefined ? { provider: data.provider } : {}),
+        ...(data.completedAt !== undefined ? { completedAt: data.completedAt } : {})
       }
     });
   }

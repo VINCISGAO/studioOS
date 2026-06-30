@@ -63,7 +63,7 @@ export class WalletService {
   }) {
     this.assertDb();
 
-    const settled = await membershipService.settleOrderCommission({
+    const settled = await membershipService.getOrSettleOrderCommission({
       campaignId: input.campaignId,
       creatorId: input.creatorUserId,
       orderAmount: input.grossAmount,

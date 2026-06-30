@@ -1,10 +1,10 @@
 "use client";
 
-import { motion, useReducedMotion, type Variants } from "framer-motion";
+import { motion, useReducedMotion, type Easing, type Variants } from "framer-motion";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-export const cinematicEase = [0.16, 1, 0.3, 1] as const;
+export const cinematicEase: Easing = [0.16, 1, 0.3, 1];
 
 export const fadeUp: Variants = {
   hidden: { opacity: 0, y: 48 },

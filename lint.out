@@ -1,0 +1,114 @@
+
+> adbridge@0.1.0 lint
+> next lint --no-cache
+
+`next lint` is deprecated and will be removed in Next.js 16.
+For new projects, use create-next-app to choose your preferred linter.
+For existing projects, migrate to the ESLint CLI:
+npx @next/codemod@canary next-lint-to-eslint-cli .
+
+
+./app/actions.ts
+4:19  Warning: 'headers' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./app/api/v1/admin/membership/commission-rules/route.ts
+2:32  Warning: 'membershipPlanSchema' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./app/api/v1/brands/[brandId]/relationships/[creatorId]/dna/route.ts
+5:10  Warning: 'appError' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./app/api/v1/campaigns/[campaignId]/communication/stream/route.ts
+2:10  Warning: 'apiSuccess' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./app/brand/page.tsx
+2:39  Warning: 'Sparkles' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./app/brand/projects/[id]/checkout/page.tsx
+38:11  Warning: 'creator' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./app/brand-campaign-actions.ts
+190:9  Warning: 'category' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+205:28  Warning: '_removed' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+271:9  Warning: 'lang' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+352:28  Warning: '_removed' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./app/brand-profile-actions.ts
+116:47  Warning: 'formData' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./app/project-wizard-actions.ts
+20:15  Warning: 'PackItemType' is defined but never used.  @typescript-eslint/no-unused-vars
+491:5  Warning: 'mimeType' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+492:5  Warning: 'sizeBytes' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./app/studio/upload/page.tsx
+2:40  Warning: 'withLocale' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./app/studioos-actions.ts
+3:10  Warning: 'revalidatePath' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./components/order/brand-order-view.tsx
+19:10  Warning: 'formatCurrency' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./components/proposal/proposal-contract-panel.tsx
+58:3  Warning: 'clientEmail' is defined but never used.  @typescript-eslint/no-unused-vars
+59:3  Warning: 'clientName' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./components/studioos/brand-attribution-hub.tsx
+10:22  Warning: 'BarChart3' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./components/studioos/brand-campaign-step-brief.tsx
+27:3  Warning: 'defaultBrandAspectRatio' is defined but never used.  @typescript-eslint/no-unused-vars
+29:3  Warning: 'defaultBrandTimeline' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./components/studioos/brand-project-hub.tsx
+27:14  Warning: 'formatDate' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./components/studioos/brand-public-profile.tsx
+11:10  Warning: 'brandTheme' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./components/studioos/project-wizard.tsx
+44:3  Warning: 'ChevronDown' is defined but never used.  @typescript-eslint/no-unused-vars
+168:10  Warning: 'showMore' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+168:20  Warning: 'setShowMore' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./components/studioos/review-engine/creator-review-upload.tsx
+15:10  Warning: 'withLocale' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./components/studioos/studio-creative-workspace.tsx
+98:3  Warning: 'brief' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./components/studioos/studio-delivery-hub.tsx
+25:10  Warning: 'cn' is defined but never used.  @typescript-eslint/no-unused-vars
+159:10  Warning: 'sessionIdFromOrder' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./components/studioos/studio-workspace-dashboard.tsx
+175:18  Warning: '_notifications' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./components/studioos/wizard-product-hero.tsx
+82:10  Warning: 'localFile' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./lib/brand-start-brief.ts
+5:3  Warning: 'resolveBrandBriefStartFromRequestCookies' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./lib/order-service.ts
+215:9  Warning: 'now' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+635:32  Warning: '_order' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./lib/project-service.ts
+249:7  Error: 'project' is never reassigned. Use 'const' instead.  prefer-const
+566:34  Warning: '_status' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./lib/studioos/analytics.ts
+146:38  Warning: '_brandEmail' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./lib/studioos/attribution-service.ts
+10:3  Warning: 'StoredCreativeInsight' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./lib/studioos/creative-dna-service.ts
+46:72  Warning: 'locale' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./lib/studioos/platform-data-analyzer.ts
+368:3  Warning: 'locale' is defined but never used.  @typescript-eslint/no-unused-vars
+434:3  Warning: 'locale' is defined but never used.  @typescript-eslint/no-unused-vars
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules

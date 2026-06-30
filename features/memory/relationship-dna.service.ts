@@ -105,7 +105,7 @@ export class RelationshipDnaService {
           `${count} collaborations`,
           avgSatisfaction != null ? `satisfaction ${avgSatisfaction.toFixed(1)}` : null,
           avgReviewRounds != null ? `review rounds ${avgReviewRounds.toFixed(1)}` : null
-        ].filter(Boolean)
+        ].filter((value): value is string => typeof value === "string")
       }
     });
 

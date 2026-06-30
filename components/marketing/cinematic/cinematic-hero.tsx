@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { HOME_HERO_STUDIO_SRC } from "@/lib/hero-studio";
 import { cinematicText } from "@/lib/marketing/cinematic-copy";
@@ -25,11 +26,13 @@ export function CinematicHero({
   return (
     <section className="relative min-h-[115vh] overflow-hidden bg-black">
       <motion.div style={{ scale, y }} className="absolute inset-0 will-change-transform">
-        <img
+        <Image
           src={HOME_HERO_STUDIO_SRC}
           alt=""
-          fetchPriority="high"
-          className="h-full w-full object-cover object-[center_38%]"
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-[center_38%]"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/25 to-black" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_20%,transparent_0%,black_78%)]" />

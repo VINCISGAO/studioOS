@@ -1,5 +1,7 @@
-import { promises as fs } from "fs";
-import path from "path";
+import "server-only";
+
+import { promises as fs } from "node:fs";
+import path from "node:path";
 import { GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { isObjectStorageConfigured, videoConfig } from "@/lib/core/config/video";
 

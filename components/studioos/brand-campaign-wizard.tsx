@@ -299,11 +299,7 @@ export function BrandCampaignWizard({
       fd.set("project_id", projectId);
       appendBriefForm(fd, state);
       const result = await saveBrandCampaignReferencesAction(fd);
-      if (!result.ok) {
-        setError(result.error);
-        return;
-      }
-      goStep(4);
+      goStep(result.nextStep);
     });
   }
 

@@ -215,10 +215,60 @@ async function seedCreatorMemberships() {
   }
 }
 
+async function seedFeatureFlags() {
+  const flags = [
+    {
+      key: "security.api_rate_limit",
+      enabled: true,
+      metadata: {
+        windowMs: 60_000,
+        maxRequests: 120,
+        routes: {
+          "/api/v1/auth/login": { maxRequests: 20, windowMs: 60_000 },
+          "/api/v1/webhooks/stripe": { maxRequests: 200, windowMs: 60_000 }
+        }
+      }
+    },
+    {
+      key: "monitoring.sentry",
+      enabled: false,
+      metadata: { sampleRate: 0.1, tracesSampleRate: 0.05 }
+    },
+    {
+      key: "review.watermark_overlay",
+      enabled: true,
+      metadata: {}
+    }
+  ];
+
+  for (const flag of flags) {
+    await prisma.featureFlag.upsert({
+      where: { key: flag.key },
+      update: { enabled: flag.enabled, metadata: flag.metadata },
+      create: { key: flag.key, enabled: flag.enabled, metadata: flag.metadata }
+    });
+  }
+}
+
+async function seedDemoDispute(campaignId: string, brandEmail: string) {
+  const existing = await prisma.dispute.findFirst({ where: { campaignId } });
+  if (existing) return;
+
+  await prisma.dispute.create({
+    data: {
+      campaignId,
+      openedBy: brandEmail,
+      reason: "Delivery does not match approved creative direction — request partial refund review.",
+      status: "OPEN"
+    }
+  });
+}
+
 async function main() {
   await seedDemoUsers();
   await seedMembershipConfig();
   await seedCreatorMemberships();
+  await seedFeatureFlags();
   await enrichCreatorProfiles();
 
   const brand = await prisma.user.findUniqueOrThrow({
@@ -258,6 +308,7 @@ async function main() {
         }
       });
     }
+    await seedDemoDispute(existing.id, "client.arc@adbridge.test");
     console.log("Demo campaign already exists:", existing.id);
     return;
   }
@@ -339,6 +390,7 @@ async function main() {
   }
 
   console.log("Seeded campaign:", campaign.id, "linked to", DEMO_PROJECT_ID);
+  await seedDemoDispute(campaign.id, brand.email);
 }
 
 main()

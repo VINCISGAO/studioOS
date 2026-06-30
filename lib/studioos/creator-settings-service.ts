@@ -1,4 +1,4 @@
-import { randomBytes } from "crypto";
+import { randomBytes } from "node:crypto";
 import { DEMO_PASSWORD, DEMO_USERS } from "@/lib/demo-auth";
 import { getCreatorIdForDemoEmail } from "@/lib/creator-session";
 import type { Creator } from "@/lib/types";

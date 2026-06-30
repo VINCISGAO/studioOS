@@ -475,7 +475,7 @@ export function ReviewPlayer({
                 <>
                   <ReviewVideoSource
                     videoRef={videoRef}
-                    hlsUrl={activeVersion.hls_url}
+                    hlsUrl={activeVersion.hls_url ?? null}
                     className="absolute inset-0 h-full w-full object-contain"
                     onTimeUpdate={setCurrentTime}
                     onLoadedMetadata={syncDurationFromVideo}
@@ -488,7 +488,7 @@ export function ReviewPlayer({
                   <ReviewWatermarkOverlay
                     label={project.brand_name}
                     sublabel={profiles[project.created_by]?.email}
-                    enabled={!canDownloadMaster(project.status)}
+                    enabled={!canDownloadMaster(project)}
                   />
 
                   <svg

@@ -4,7 +4,14 @@ import { campaignBridgeService } from "@/features/campaign/campaign-bridge.servi
 import { buildVersionPlayback } from "@/features/video/playback-token.service";
 import type { CommentStatus, MvpProfile, ProjectStatus, ReviewBundle, VideoComment, VideoVersion } from "@/lib/mvp/types";
 
-type CampaignUser = CampaignWithRelations["brand"];
+type ReviewBundleUser = {
+  id: string;
+  email: string;
+  fullName: string;
+  createdAt: Date;
+  brandProfile?: { companyName: string } | null;
+  creatorProfile?: { displayName: string | null } | null;
+};
 
 function mapCampaignStatus(status: string): ProjectStatus {
   if (status === "UNDER_REVIEW" || status === "PRODUCING") return "in_review";
@@ -13,12 +20,16 @@ function mapCampaignStatus(status: string): ProjectStatus {
   return "draft";
 }
 
-function mapUserToProfile(user: CampaignUser, role: MvpProfile["role"]): MvpProfile {
+function mapUserToProfile(user: ReviewBundleUser, role: MvpProfile["role"]): MvpProfile {
+  const name =
+    role === "studio"
+      ? user.creatorProfile?.displayName ?? user.fullName
+      : user.brandProfile?.companyName ?? user.fullName;
   return {
     id: user.id,
     email: user.email,
     role,
-    name: user.creatorProfile?.displayName ?? user.brandProfile?.companyName ?? user.fullName,
+    name,
     company_name: user.brandProfile?.companyName ?? user.fullName,
     created_at: user.createdAt.toISOString()
   };

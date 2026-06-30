@@ -35,7 +35,7 @@ import {
 import { useWizardProgress } from "@/hooks/use-wizard-progress";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
-import type { StoredProject } from "@/lib/project-types";
+import type { CommercialObjective, StoredProject } from "@/lib/project-types";
 import type { WizardIntelligencePrefill } from "@/lib/studioos/creative-performance-types";
 import { cn } from "@/lib/utils";
 import {
@@ -436,7 +436,11 @@ export function ProjectWizard({
               <Label>{locale === "zh" ? "这次广告想达成什么？" : "What's the goal?"}</Label>
               <div className="grid gap-2 sm:grid-cols-2">
                 {OBJECTIVES.map((item) => (
-                  <OptionButton key={item.id} active={objective === item.id} onClick={() => setObjective(item.id)}>
+                  <OptionButton
+                    key={item.id}
+                    active={objective === item.id}
+                    onClick={() => setObjective(item.id as CommercialObjective)}
+                  >
                     <p className="font-medium">{item[locale]}</p>
                     <p className={cn("mt-0.5 text-xs", objective === item.id ? "text-zinc-300" : "text-zinc-500")}>
                       {item.hint[locale]}
@@ -760,10 +764,12 @@ export function ProjectWizard({
                 rows={4}
                 value={scriptEdit}
                 onChange={(e) => setScriptEdit(e.target.value)}
-                placeholder={
-                  ((script?.content_json.lines as { text: string }[]) ?? [])[0]?.text ??
-                  (locale === "zh" ? "输入旁白…" : "Voiceover…")
-                }
+                  placeholder={
+                    (Array.isArray(script?.content_json["lines"])
+                      ? (script.content_json["lines"] as { text: string }[])[0]?.text
+                      : undefined) ??
+                    (locale === "zh" ? "输入旁白…" : "Voiceover…")
+                  }
               />
             </div>
           </div>

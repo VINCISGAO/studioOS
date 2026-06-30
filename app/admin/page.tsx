@@ -1,14 +1,18 @@
 import Link from "next/link";
-import { DollarSign, FolderKanban, Scale, ShieldCheck, UsersRound, Video } from "lucide-react";
+import { DollarSign, FolderKanban, Scale, ScrollText, ShieldCheck, UsersRound, Video, Flag } from "lucide-react";
 import { approveOnboardingAction, rejectOnboardingAction } from "@/app/onboarding-actions";
 import { StatusBadge } from "@/components/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { creators, deposits, disputes, orders, projects, refundRequests } from "@/lib/data";
+import { adminService } from "@/features/admin/admin.service";
+import { getSessionUser } from "@/features/auth/session.service";
+import { AdminOpsPreview } from "@/components/studioos/admin-ops-preview";
+import { creators, deposits, orders, projects, refundRequests } from "@/lib/data";
 import { listApplications } from "@/lib/onboarding-service";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { adminPortalRoutes } from "@/lib/studioos/admin-portal-routes";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 const copy = {
@@ -31,6 +35,8 @@ const copy = {
     trustOps: "Trust & payments",
     deposits: "Studio deposits",
     disputes: "Disputes & refunds",
+    audit: "Audit log",
+    featureFlags: "Feature flags",
     onboarding: "Studio applications",
     onboardingEmpty: "No studio applications yet.",
     approve: "Approve",
@@ -56,6 +62,8 @@ const copy = {
     trustOps: "交易与信任",
     deposits: "Studio 保证金",
     disputes: "争议与退款",
+    audit: "审计日志",
+    featureFlags: "功能开关",
     onboarding: "Studio 入驻申请",
     onboardingEmpty: "暂无 Studio 入驻申请。",
     approve: "通过",
@@ -67,17 +75,32 @@ const copy = {
 export default async function AdminPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const locale = getLocale(await searchParams);
   const t = copy[locale];
+  const sessionUser = await getSessionUser();
+  const dbOverview = sessionUser ? await adminService.getOverview(sessionUser) : null;
+  const opsPreview =
+    sessionUser && !sessionUser.id.startsWith("demo_")
+      ? await adminService.getOpsPreview(sessionUser)
+      : { openDisputes: [], recentAudit: [], recentCampaigns: [] };
   const pendingApplications = await listApplications("pending");
   const revenue = orders.reduce((sum, order) => sum + order.amount, 0);
   const unassigned = orders.filter((order) => !order.assigned_creator_id).length;
   const depositTotal = deposits.reduce((sum, deposit) => sum + deposit.amount, 0);
+  const disputeCount = dbOverview?.openDisputeCount ?? refundRequests.length;
   const metrics = [
-    { icon: FolderKanban, label: t.metrics.projects, value: String(projects.length) },
+    {
+      icon: FolderKanban,
+      label: t.metrics.projects,
+      value: String(dbOverview?.campaignCount ?? projects.length)
+    },
     { icon: Video, label: t.metrics.orders, value: String(orders.length) },
-    { icon: DollarSign, label: t.metrics.paidVolume, value: formatCurrency(revenue) },
+    {
+      icon: DollarSign,
+      label: t.metrics.paidVolume,
+      value: formatCurrency(dbOverview?.escrowHeldTotal ? dbOverview.escrowHeldTotal + revenue : revenue)
+    },
     { icon: UsersRound, label: t.metrics.unassigned, value: String(unassigned) },
     { icon: ShieldCheck, label: t.metrics.deposits, value: formatCurrency(depositTotal) },
-    { icon: Scale, label: t.metrics.disputes, value: String(disputes.length + refundRequests.length) }
+    { icon: Scale, label: t.metrics.disputes, value: String(disputeCount) }
   ];
 
   return (
@@ -208,21 +231,37 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
         </CardContent>
       </Card>
 
+      <AdminOpsPreview
+        locale={locale}
+        disputes={opsPreview.openDisputes}
+        auditLogs={opsPreview.recentAudit}
+      />
+
       <Card className="mt-8 border-zinc-200/80 shadow-none">
         <CardContent className="p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 className="text-lg font-semibold">{t.trustOps}</h2>
             </div>
-            <div className="flex flex-col gap-2 sm:flex-row">
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
               <Button asChild variant="outline">
-                <Link href={withLocale("/admin/deposits", locale)}>
+                <Link href={withLocale(adminPortalRoutes.deposits, locale)}>
                   <ShieldCheck className="h-4 w-4" /> {t.deposits}
                 </Link>
               </Button>
               <Button asChild variant="outline">
-                <Link href={withLocale("/admin/disputes", locale)}>
+                <Link href={withLocale(adminPortalRoutes.disputes, locale)}>
                   <Scale className="h-4 w-4" /> {t.disputes}
+                </Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href={withLocale(adminPortalRoutes.audit, locale)}>
+                  <ScrollText className="h-4 w-4" /> {t.audit}
+                </Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href={withLocale(adminPortalRoutes.featureFlags, locale)}>
+                  <Flag className="h-4 w-4" /> {t.featureFlags}
                 </Link>
               </Button>
             </div>

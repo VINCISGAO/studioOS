@@ -1,5 +1,6 @@
 import type { VideoJob, CampaignVersion } from "@prisma/client";
 import { prisma, hasDatabaseUrl } from "@/lib/core/database/prisma";
+import { asInputJson } from "@/lib/core/prisma-json";
 
 export class VideoRepository {
   async createJob(input: {
@@ -14,7 +15,7 @@ export class VideoRepository {
         versionId: input.versionId,
         queue: input.queue ?? "video.transcode",
         status: "WAITING",
-        payloadJson: input.payload
+        payloadJson: asInputJson(input.payload)!,
       }
     });
   }

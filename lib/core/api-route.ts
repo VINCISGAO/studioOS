@@ -3,6 +3,7 @@ import { ZodError } from "zod";
 import type { AuthUserDto } from "@/features/auth/auth.service";
 import { getSessionUser } from "@/features/auth/session.service";
 import { appError, isAppError } from "@/lib/core/errors";
+import { enforceApiRateLimit } from "@/lib/core/security/rate-limit.service";
 
 export function apiSuccess<T>(data: T, status = 200) {
   return NextResponse.json({ success: true, data }, { status });
@@ -18,13 +19,19 @@ export function handleRouteError(error: unknown) {
     return apiError("VALIDATION_ERROR", message, 422);
   }
   if (isAppError(error)) {
-    return apiError(error.code, error.message, error.status);
+    const status = error.code === "RATE_LIMIT" ? 429 : error.status;
+    return apiError(error.code, error.message, status);
   }
   console.error("[api]", error);
   return apiError("SYSTEM_ERROR", "Internal server error", 500);
 }
 
-export async function requireApiUser(): Promise<AuthUserDto> {
+export async function requireApiUser(request?: Request): Promise<AuthUserDto> {
+  if (request) {
+    const pathname = new URL(request.url).pathname;
+    await enforceApiRateLimit(request, pathname);
+  }
+
   const user = await getSessionUser();
   if (!user) {
     throw appError("UNAUTHORIZED", "Not authenticated");
@@ -33,4 +40,9 @@ export async function requireApiUser(): Promise<AuthUserDto> {
     throw appError("UNAUTHORIZED", "Sign in with a database account (run npm run db:seed)");
   }
   return user;
+}
+
+export async function enforcePublicApiRateLimit(request: Request): Promise<void> {
+  const pathname = new URL(request.url).pathname;
+  await enforceApiRateLimit(request, pathname);
 }

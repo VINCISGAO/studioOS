@@ -24,6 +24,7 @@ export const ErrorCodes = {
   INVALID_TRANSITION: { code: "INVALID_STATE_TRANSITION", status: 409 },
   REVIEW_LOCKED: { code: "REVIEW_LOCKED", status: 409 },
   CAMPAIGN_LOCKED: { code: "CAMPAIGN_LOCKED", status: 409 },
+  CONFLICT: { code: "CONFLICT", status: 409 },
   PAYMENT_FAILED: { code: "PAYMENT_FAILED", status: 402 },
   RATE_LIMIT: { code: "RATE_LIMIT", status: 429 },
   SYSTEM_ERROR: { code: "SYSTEM_ERROR", status: 500 }

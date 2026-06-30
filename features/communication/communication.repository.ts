@@ -1,4 +1,4 @@
-import { randomUUID } from "crypto";
+import { randomId } from "@/lib/core/random-id";
 import type { CommunicationMessage, CommunicationSourceType } from "@prisma/client";
 import { prisma, hasDatabaseUrl } from "@/lib/core/database/prisma";
 import type { CommunicationTodo } from "@/features/communication/communication.types";
@@ -128,7 +128,7 @@ export class CommunicationRepository {
     return raw.map((item) => {
       const row = item as { id?: string; text?: string; done?: boolean };
       return {
-        id: row.id ?? randomUUID(),
+        id: row.id ?? randomId(),
         text: String(row.text ?? ""),
         done: Boolean(row.done)
       };

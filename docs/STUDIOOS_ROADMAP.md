@@ -19,16 +19,17 @@
 | **0** | Vol 16 Bootstrap + Vol 17 Standards + **Vol 18 State Machine** | 路线图、10 状态机、runTransition、docs v2 | ✅ |
 | **1** | Vol 02 Database + Vol 14 Prisma | `prisma/schema.prisma`、Docker Compose、Migration | ✅ |
 | **2** | Vol 07 Auth + Permission | User/Brand/Creator、RBAC、PermissionService | ✅ |
-| **3** | Vol 03 Backend + Vol 03 API | Feature First 目录、Action→Service→Repository | ⏳ |
-| **4** | Campaign.spec | 7 步 Wizard、Campaign 状态机、Activity Log | ⏳ |
-| **5** | Review.spec + Vol 05 | 统一 Review Workspace、拆分组件 ≤300 行 | ⏳ |
+| **3** | Vol 03 Backend + Vol 03 API | Feature First 目录、Action→Service→Repository | ✅ |
+| **4** | Campaign.spec | 7 步 Wizard、Campaign 状态机、Activity Log | ✅ |
+| **5** | Review.spec + Vol 05 | 统一 Review Workspace、拆分组件 ≤300 行 | ✅ |
 | **6** | Vol 06 Video Engine | 分片上传、Worker 队列、HLS、Signed URL、水印 | ✅ (Sprint 6 + 6b) |
-| **7** | Vol 09 Payment | Escrow、Ledger、Stripe Webhook | ⏳ |
-| **8** | Vol 08 AI + Vol 11 Creative | AI Gateway、Queue、Prompt 版本化 | ⏳ |
-| **9** | Vol 10 Notification | Event Bus、模板、WebSocket | ⏳ |
-| **10** | Vol 04 Frontend | Design Token、TanStack Query、响应式 | ⏳ |
-| **11** | Vol 15 OpenAPI | 契约驱动 API、SDK 生成 | ⏳ |
-| **12** | 集成 & QA | Happy Path E2E、95% 核心模块测试 | ⏳ |
+| **7** | Vol 09 Payment | Escrow、Ledger、Stripe Webhook | ✅ |
+| **8** | Vol 08 AI + Vol 11 Creative | AI Gateway、Queue、Prompt 版本化 | ✅ |
+| **9** | Vol 10 Notification | Event Bus、模板、WebSocket | ✅ |
+| **10** | Vol 04 Frontend | Design Token、TanStack Query、响应式 | ✅ (partial — Design System Sprint 11) |
+| **11** | Vol 15 OpenAPI | 契约驱动 API、SDK 生成 | ✅ |
+| **12** | 集成 & QA | Happy Path E2E、95% 核心模块测试 | ✅ |
+| **13** | MVP Payment Collection | Webhook + Commission + Manual payout | ✅ |
 
 ---
 

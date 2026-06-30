@@ -28,12 +28,39 @@ ensure_env() {
 }
 
 load_database_url() {
-  # shellcheck disable=SC1091
-  set -a
-  [ -f .env.local ] && source .env.local
-  [ -f .env ] && source .env
-  set +a
-  export DATABASE_URL="${DATABASE_URL:-$DEFAULT_DATABASE_URL}"
+  # Do not `source` the whole .env.local — values like RESEND_FROM_EMAIL may contain
+  # spaces or `<>` and break bash. Only read DATABASE_URL.
+  read_env_var() {
+    local file="$1"
+    local key="$2"
+    if [ ! -f "$file" ]; then
+      return 1
+    fi
+    local line
+    line="$(grep -E "^${key}=" "$file" | tail -1 || true)"
+    if [ -z "$line" ]; then
+      return 1
+    fi
+    local value="${line#*=}"
+    value="${value%$'\r'}"
+    value="${value#\"}"
+    value="${value%\"}"
+    value="${value#\'}"
+    value="${value%\'}"
+    printf '%s' "$value"
+  }
+
+  local from_local from_env
+  from_local="$(read_env_var .env.local DATABASE_URL || true)"
+  from_env="$(read_env_var .env DATABASE_URL || true)"
+
+  if [ -n "$from_local" ]; then
+    export DATABASE_URL="$from_local"
+  elif [ -n "$from_env" ]; then
+    export DATABASE_URL="$from_env"
+  else
+    export DATABASE_URL="$DEFAULT_DATABASE_URL"
+  fi
 }
 
 wait_for_postgres() {
@@ -54,22 +81,36 @@ wait_for_postgres() {
   exit 1
 }
 
+recover_failed_migrations() {
+  npx prisma migrate resolve --rolled-back "20250630130000_payment_collection" 2>/dev/null || true
+}
+
 ensure_migration() {
-  if [ -n "$(ls -A prisma/migrations 2>/dev/null)" ]; then
-    echo ">>> Applying existing migrations"
-    npx prisma migrate deploy
-    return
+  local init_dir="prisma/migrations/20250630120000_init"
+  local orphan_dir="prisma/migrations/20250630130000_payment_collection"
+
+  recover_failed_migrations
+
+  # Alter-only migration without base schema breaks fresh installs
+  if [ -d "$orphan_dir" ] && [ ! -s "$init_dir/migration.sql" ]; then
+    echo ">>> Removing orphan payment-only migration (regenerating full init)"
+    rm -rf "$orphan_dir"
   fi
 
-  echo ">>> Generating initial migration from schema"
-  mkdir -p prisma/migrations/20250630120000_init
-  npx prisma migrate diff \
-    --from-empty \
-    --to-schema-datamodel prisma/schema.prisma \
-    --script > prisma/migrations/20250630120000_init/migration.sql
+  if [ ! -s "$init_dir/migration.sql" ]; then
+    echo ">>> Generating initial migration from schema"
+    mkdir -p "$init_dir"
+    npx prisma migrate diff \
+      --from-empty \
+      --to-schema-datamodel prisma/schema.prisma \
+      --script > "$init_dir/migration.sql"
+  fi
 
-  echo ">>> Applying initial migration"
-  npx prisma migrate deploy
+  echo ">>> Applying migrations"
+  if ! npx prisma migrate deploy; then
+    echo ">>> migrate deploy failed — falling back to db push (local dev)"
+    npx prisma db push
+  fi
 }
 
 echo ""
@@ -88,7 +129,7 @@ else
   docker compose up -d
 fi
 
-if [ ! -d node_modules ]; then
+if [ ! -d node_modules ] || [ ! -x node_modules/.bin/prisma ]; then
   echo ">>> Installing npm dependencies..."
   npm install
 fi

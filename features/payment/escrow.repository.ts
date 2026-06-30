@@ -1,5 +1,6 @@
 import type { EscrowPayment, EscrowStatus } from "@prisma/client";
 import { prisma, hasDatabaseUrl } from "@/lib/core/database/prisma";
+import { asInputJson } from "@/lib/core/prisma-json";
 
 export class EscrowRepository {
   async findByCampaignId(campaignId: string): Promise<EscrowPayment | null> {
@@ -38,6 +39,19 @@ export class EscrowRepository {
     });
   }
 
+  async updatePaymentMeta(campaignId: string, data: Partial<{
+    stripePaymentId: string;
+    stripeSessionId: string;
+    paymentStatus: "UNPAID" | "PAID" | "FAILED" | "CANCELLED";
+    creatorPayoutStatus: "MANUAL_PAYOUT_PENDING" | "PAID";
+    paidAt: Date;
+  }>) {
+    return prisma.escrowPayment.update({
+      where: { campaignId },
+      data
+    });
+  }
+
   async recordWebhook(input: {
     provider: string;
     eventType: string;
@@ -48,7 +62,7 @@ export class EscrowRepository {
       data: {
         provider: input.provider,
         eventType: input.eventType,
-        payloadJson: input.payload,
+        payloadJson: asInputJson(input.payload)!,
         processed: input.processed
       }
     });

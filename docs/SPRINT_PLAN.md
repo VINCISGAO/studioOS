@@ -1,6 +1,6 @@
 # Sprint Plan
 
-> 按文档建议拆分为 18 个 Sprint，避免一次生成万行代码
+> 按文档建议拆分为 21 个 Sprint，避免一次生成万行代码
 
 | Sprint | 范围 | 验收标准 | 状态 |
 |--------|------|----------|------|
@@ -17,11 +17,66 @@
 | **11** | Design System 落地 | Token 统一、组件库 | ✅ |
 | **12** | Campaign Wizard 7 步 | 断点续填、WebSocket 进度 | ✅ |
 | **13** | Creator Portal 统一 | 接单、交付、审片 | ✅ |
-| **14** | Brand Portal 统一 | 项目中心、审片、结算 | ⏳ |
-| **15** | Admin + Dispute + Audit | 仲裁、日志、Feature Flag | ⏳ |
-| **16** | Security + Signed URL + RBAC | 权限矩阵、Rate Limit | ⏳ |
-| **17** | E2E Happy Path | QA 脚本 15 步全绿 | ⏳ |
-| **18** | Performance + Monitoring | Sentry、Grafana、LCP <2.5s | ⏳ |
+| **14** | Brand Portal 统一 | 项目中心、审片、结算 | ✅ |
+| **15** | Admin + Dispute + Audit | 仲裁、日志、Feature Flag | ✅ |
+| **16** | Security + Signed URL + RBAC | 权限矩阵、Rate Limit | ✅ |
+| **17** | E2E Happy Path | QA 脚本 15 步全绿 | ✅ |
+| **18** | Performance + Monitoring | Sentry、Grafana、LCP <2.5s | ✅ |
+| **19** | Creator Membership UI | 仪表盘会员区、升级弹窗、Admin 配置 | ✅ |
+| **20** | OpenAPI + SDK | 契约 spec、客户端、/api/v1/openapi | ✅ |
+| **21** | Playwright E2E | 浏览器 Happy Path + OpenAPI smoke | ✅ |
+| **22** | MVP Payment Collection | Checkout → Webhook → Commission → Manual payout | ✅ |
+
+## Sprint 22 — MVP Payment Collection ✅
+
+- [x] Stripe checkout session + webhook signature verification
+- [x] Payment success: mark PAID, save transaction ID, DB commission snapshot
+- [x] Creator payout `MANUAL_PAYOUT_PENDING` + admin mark paid
+- [x] Payment fail/cancel: keep unpaid, notify brand
+- [x] Admin `/admin/payments` + `GET/POST /api/v1/admin/payments`
+- [x] `npm run payment:verify` + `npm run production:verify`
+
+```bash
+npm run db:init
+npm run payment:verify
+npm run production:verify
+```
+
+## Sprint 20 — OpenAPI + SDK ✅
+
+- [x] `docs/openapi/openapi.yaml` — v1 contract (Campaign, Review, Payment, Admin, Membership)
+- [x] `GET /api/v1/openapi` — serve spec at runtime
+- [x] `lib/api-client/studioos-api.ts` — typed fetch client
+- [x] `npm run openapi:generate` + `npm run sprint20:verify`
+
+## Sprint 21 — Playwright E2E ✅
+
+- [x] `playwright.config.ts` + `e2e/happy-path.spec.ts`
+- [x] Demo login fixture — brand / creator / admin flows
+- [x] `npm run e2e` + `npm run sprint21:verify`
+
+```bash
+npm run db:seed
+npm run sprint20:verify
+npm run sprint21:verify
+npm run e2e   # optional — starts dev server if not running
+```
+
+## Sprint 19 — Creator Membership UI ✅
+
+- [x] `CreatorMembershipPanel` — `/studio` dashboard section (DB-driven rates)
+- [x] `CreatorMembershipUpgradeDialog` — auto-prompt when threshold met
+- [x] `/admin/membership` — commission rule + plan overview (no hard-coded rates)
+- [x] `activateVerifiedMembershipDemo` — local upgrade without Stripe
+- [x] Creator sign-in → `ensureDefaultMembershipOnCreatorRegister`
+- [x] `npm run membership-ui:verify`
+
+```bash
+npm run db:seed
+npm run membership:verify
+npm run membership-ui:verify
+# 浏览器: /studio (creator.nova@adbridge.test) · /admin/membership (admin@adbridge.test)
+```
 
 ## 当前 Sprint 1 任务
 
@@ -318,6 +373,80 @@ npm run typecheck
 # 浏览器: /studio (dashboard + invitations)
 # /studio/invitations · /studio/review · /studio/delivery
 # 登录: creator.nova@adbridge.test / TempAdBridge2026!
+```
+
+## Sprint 14 — Brand Portal 统一 ✅
+
+- [x] `features/brand/` — `BrandPortalService` + Prisma campaigns/escrow
+- [x] `lib/studioos/brand-portal-routes.ts` — canonical `/brand/*` routes
+- [x] `GET /api/v1/me/brand/portal` — dashboard API
+- [x] `/brand/review` — unified review hub (replaces `/workspace/brand` review table)
+- [x] `/brand/settlement` — escrow & settlement center
+- [x] `BrandPortalShell` — sidebar nav (Dashboard, Brief, Review, Settlement, Invoices, Attribution, Profile)
+- [x] Legacy redirects — `/workspace/brand`, `/workspace/projects/new` → `/brand/*`
+
+### Sprint 14 本地验收
+
+```bash
+npm run db:seed
+npm run sprint14:verify
+npm run typecheck
+# 浏览器: /brand · /brand/review · /brand/settlement
+# 登录: client.arc@adbridge.test / TempAdBridge2026!
+```
+
+## Sprint 15 — Admin + Dispute + Audit ✅
+
+- [x] `features/admin/` — overview, disputes, audit, feature flags
+- [x] `GET /api/v1/admin/overview|disputes|audit|feature-flags`
+- [x] `POST/GET /api/v1/campaigns/{id}/disputes` — brand/creator open dispute + activity log
+- [x] `/admin/disputes/[id]` — dispute detail + campaign activity timeline
+- [x] `/admin/audit` + `/admin/feature-flags` pages
+- [x] `AdminOpsPreview` on `/admin` — open disputes + recent audit
+- [x] `activityLogWriter` — centralized audit writes
+- [x] Prisma-backed disputes + DB feature flags (rate limits in metadata)
+- [x] `supabase/migrations/009_admin_feature_flags.sql`
+
+```bash
+npm run db:seed
+npm run sprint15:verify
+# 浏览器: /admin · /admin/disputes · /admin/audit · /admin/feature-flags
+# 登录: admin@adbridge.test / TempAdBridge2026!
+```
+
+```bash
+npm run db:seed
+npm run sprint15:verify
+```
+
+## Sprint 16 — Security + RBAC ✅
+
+- [x] `lib/core/security/rbac-matrix.ts` — exported permission matrix
+- [x] `lib/core/security/rate-limit.service.ts` — DB-driven limits
+- [x] `lib/core/security/playback-guard.ts` — RBAC on signed playback
+- [x] Login + API rate limiting via feature flag
+
+```bash
+npm run sprint16:verify
+```
+
+## Sprint 17 — E2E Happy Path ✅
+
+- [x] `scripts/sprint17-verify.ts` — 15 automated checkpoints (QA script map)
+
+```bash
+npm run db:seed
+npm run sprint17:verify
+```
+
+## Sprint 18 — Performance + Monitoring ✅
+
+- [x] `lib/core/monitoring/` — Sentry hook (flag + DSN gated)
+- [x] `instrumentation.ts` — init monitoring on boot
+- [x] `measureAsync` performance helper
+
+```bash
+npm run sprint18:verify
 ```
 
 ## 开发结束检查

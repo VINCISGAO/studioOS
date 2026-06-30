@@ -246,7 +246,7 @@ function ensureDemoArcNovaProject(store: ProjectStore): ProjectStore {
     return store;
   }
 
-  let project = store.projects.find((item) => item.id === DEMO_PROJECT_ID);
+  const project = store.projects.find((item) => item.id === DEMO_PROJECT_ID);
 
   if (!project) {
     store.projects.unshift(

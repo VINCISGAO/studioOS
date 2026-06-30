@@ -83,6 +83,39 @@ export class MembershipService {
     };
   }
 
+  async getOrderCommissionSnapshot(
+    campaignId: string
+  ): Promise<(CommissionBreakdown & { id: string }) | null> {
+    this.assertDb();
+    const existing = await membershipRepository.findOrderCommissionByCampaign(campaignId);
+    if (!existing) return null;
+    return {
+      id: existing.id,
+      orderAmount: Number(existing.orderAmount),
+      currency: existing.currency,
+      clientServiceFeePercentage: Number(existing.clientServiceFeePercentage),
+      clientServiceFeeAmount: Number(existing.clientServiceFeeAmount),
+      creatorCommissionPercentage: Number(existing.creatorCommissionPercentage),
+      creatorCommissionAmount: Number(existing.creatorCommissionAmount),
+      creatorPayoutAmount: Number(existing.creatorPayoutAmount),
+      platformTotalRevenue: Number(existing.platformTotalRevenue),
+      creatorMembershipType: existing.creatorMembershipTypeAtOrder
+    };
+  }
+
+  /** Idempotent commission snapshot — returns existing or creates new. */
+  async getOrSettleOrderCommission(input: {
+    campaignId: string;
+    creatorId: string;
+    orderAmount: number;
+    currency?: string;
+    orderId?: string;
+  }): Promise<CommissionBreakdown & { id: string }> {
+    const existing = await this.getOrderCommissionSnapshot(input.campaignId);
+    if (existing) return existing;
+    return this.settleOrderCommission(input);
+  }
+
   /** Calculate + persist commission snapshot for a settled order/campaign. */
   async settleOrderCommission(input: {
     campaignId: string;
@@ -267,6 +300,48 @@ export class MembershipService {
     if (creatorProfileId) {
       void creatorProfileId;
     }
+  }
+
+  /** Local/demo upgrade when Stripe is not configured — fee from DB plan. */
+  async activateVerifiedMembershipDemo(creatorId: string) {
+    this.assertDb();
+    const eligibility = await this.getUpgradeEligibility(creatorId);
+    if (!eligibility.eligible) {
+      throw appError("FORBIDDEN", "Not eligible for verified upgrade");
+    }
+
+    const verified = await membershipRepository.getActiveVerifiedMembership(creatorId);
+    if (verified) {
+      throw appError("VALIDATION_ERROR", "Already on verified membership");
+    }
+
+    const verifiedPlan = await this.requireVerifiedPlan();
+    const startedAt = new Date();
+    const expiresAt = new Date(startedAt);
+    expiresAt.setDate(expiresAt.getDate() + verifiedPlan.membershipDurationDays);
+
+    const membership = await membershipRepository.createMembership({
+      creator: { connect: { id: creatorId } },
+      plan: { connect: { id: verifiedPlan.id } },
+      status: "ACTIVE",
+      paymentProvider: "DEMO",
+      startedAt,
+      expiresAt,
+      amountPaid: verifiedPlan.annualFee,
+      currency: "USD",
+      paymentId: `demo_${Date.now()}`
+    });
+
+    await membershipRepository.appendHistory({
+      creator: { connect: { id: creatorId } },
+      plan: { connect: { id: verifiedPlan.id } },
+      membershipId: membership.id,
+      action: "ACTIVATED",
+      note: "Demo membership upgrade (no Stripe)"
+    });
+
+    await membershipNotificationService.notifyMembershipActivated(creatorId, expiresAt);
+    return membership;
   }
 }
 

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { HERO_BACKGROUND_SRC } from "@/lib/hero-video";
 
 export { HERO_BACKGROUND_SRC, HERO_VIDEO_SRC } from "@/lib/hero-video";
@@ -5,15 +6,16 @@ export { HERO_BACKGROUND_SRC, HERO_VIDEO_SRC } from "@/lib/hero-video";
 export function HomeHeroVideo() {
   return (
     <div
-      className="pointer-events-none absolute inset-x-0 top-0 z-0 h-[min(68vh,640px)] overflow-hidden bg-[#09090b]"
+      className="pointer-events-none absolute inset-x-0 top-0 z-0 h-[min(68vh,640px)] overflow-hidden bg-[#09090b] relative"
       aria-hidden
     >
-      <img
+      <Image
         src={HERO_BACKGROUND_SRC}
         alt=""
-        fetchPriority="high"
-        decoding="async"
-        className="pointer-events-none absolute left-1/2 top-1/2 h-full w-full min-h-full min-w-full -translate-x-1/2 -translate-y-1/2 object-cover object-center"
+        fill
+        priority
+        sizes="100vw"
+        className="pointer-events-none object-cover object-center"
         style={{ filter: "saturate(1.02) contrast(1.06)" }}
       />
 

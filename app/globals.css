@@ -448,4 +448,100 @@
     @apply mt-3 text-[11px] uppercase tracking-[0.18em] text-zinc-600;
   }
 
+  @keyframes landing-star-twinkle {
+    0%,
+    100% {
+      opacity: 0.25;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.35);
+    }
+  }
+
+  @keyframes landing-planet-drift {
+    0%,
+    100% {
+      transform: translateY(-50%) rotate(0deg);
+    }
+    50% {
+      transform: translateY(calc(-50% - 10px)) rotate(2deg);
+    }
+  }
+
+  @keyframes landing-planet-ring-spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes landing-split-enter {
+    from {
+      opacity: 0;
+      transform: translateY(18px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .landing-split-shell {
+    isolation: isolate;
+  }
+
+  .landing-star {
+    animation: landing-star-twinkle 4.5s ease-in-out infinite;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.45);
+  }
+
+  .landing-planet-orbit {
+    animation: landing-planet-drift 12s ease-in-out infinite;
+  }
+
+  .landing-planet-core {
+    box-shadow:
+      inset -18px -18px 36px rgba(0, 0, 0, 0.35),
+      0 0 80px rgba(139, 92, 246, 0.25);
+  }
+
+  .landing-planet-ring {
+    transform: rotate(-18deg);
+  }
+
+  .landing-planet-ring--outer {
+    animation: landing-planet-ring-spin 48s linear infinite;
+    transform: rotate(24deg) scale(1.08);
+  }
+
+  .landing-split-enter {
+    animation: landing-split-enter 0.85s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .landing-split-enter-delay-1 {
+    animation-delay: 0.08s;
+  }
+
+  .landing-split-enter-delay-2 {
+    animation-delay: 0.16s;
+  }
+
+  .landing-split-enter-delay-3 {
+    animation-delay: 0.24s;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .landing-star,
+    .landing-planet-orbit,
+    .landing-planet-ring--outer,
+    .landing-split-enter,
+    .animate-hero-orb {
+      animation: none;
+    }
+  }
+
 }

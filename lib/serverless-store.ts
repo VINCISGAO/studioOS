@@ -1,6 +1,8 @@
-import { randomBytes } from "crypto";
-import { promises as fs } from "fs";
-import path from "path";
+import "server-only";
+
+import { randomBytes } from "node:crypto";
+import { promises as fs } from "node:fs";
+import path from "node:path";
 import { canPersistLocalDataStore } from "@/lib/can-persist-local-store";
 
 const memoryByPath = new Map<string, unknown>();

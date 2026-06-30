@@ -50,7 +50,7 @@ async function main() {
       );
       checks.push({
         name: "campaign.update",
-        ok: updated?.title.includes("updated"),
+        ok: Boolean(updated?.title.includes("updated")),
         detail: updated?.title
       });
 

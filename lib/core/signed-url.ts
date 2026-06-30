@@ -1,4 +1,6 @@
-import { createHmac, timingSafeEqual } from "crypto";
+import "server-only";
+
+import { createHmac, timingSafeEqual } from "node:crypto";
 
 function base64UrlEncode(input: string | Buffer) {
   return Buffer.from(input).toString("base64url");

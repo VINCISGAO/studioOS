@@ -1,4 +1,6 @@
-import { randomBytes, scryptSync, timingSafeEqual } from "crypto";
+import "server-only";
+
+import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 
 export function hashPassword(password: string): string {
   const salt = randomBytes(16).toString("hex");

@@ -1,6 +1,8 @@
-import { promises as fs } from "fs";
-import path from "path";
-import crypto from "crypto";
+import "server-only";
+
+import { promises as fs } from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
 
 const CHUNK_DIR = path.join(process.cwd(), ".data", "uploads", "chunks");
 export const DEFAULT_CHUNK_BYTES = 5 * 1024 * 1024;

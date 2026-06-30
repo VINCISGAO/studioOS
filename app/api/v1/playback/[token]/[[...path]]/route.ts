@@ -5,6 +5,7 @@ import {
   signedPlaybackSegmentUrl,
   verifyPlaybackToken
 } from "@/features/video/playback-token.service";
+import { assertPlaybackAccess } from "@/lib/core/security/playback-guard";
 import { getObject } from "@/lib/studioos/object-storage";
 import { videoConfig } from "@/lib/core/config/video";
 import { hlsManifestFilePath } from "@/lib/studioos/video-version-upload";
@@ -62,6 +63,13 @@ export async function GET(_request: Request, { params }: Params) {
   const payload = verifyPlaybackToken(token);
   if (!payload) {
     return NextResponse.json({ error: "Invalid or expired playback token" }, { status: 403 });
+  }
+
+  try {
+    await assertPlaybackAccess(payload);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Forbidden";
+    return NextResponse.json({ error: message }, { status: 403 });
   }
 
   const version = await prisma.campaignVersion.findUnique({

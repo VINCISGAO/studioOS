@@ -1,12 +1,8 @@
 import { videoConfig, hlsStoragePrefix } from "@/lib/core/config/video";
 import { signPayload, verifySignedPayload } from "@/lib/core/signed-url";
+import type { PlaybackTokenPayload } from "@/features/video/playback-token.types";
 
-type PlaybackTokenPayload = {
-  v: string;
-  u: string;
-  c: string;
-  exp: number;
-};
+export type { PlaybackTokenPayload };
 
 export function createPlaybackToken(input: {
   versionId: string;

@@ -200,6 +200,9 @@ export async function resolveMvpReviewProjectForOrder(
   order: StoredOrder,
   input?: { deliverables?: StoredDeliverable[] }
 ): Promise<string> {
+  if (!order.project_id) {
+    throw new Error("Order has no linked campaign project");
+  }
   return ensureMvpReviewProjectForCampaign(order.project_id, {
     order,
     deliverables: input?.deliverables

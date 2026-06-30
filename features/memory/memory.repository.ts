@@ -1,5 +1,6 @@
 import type { AiPreference, MemoryFact, MemoryOwnerType, RelationshipDna } from "@prisma/client";
 import { prisma, hasDatabaseUrl } from "@/lib/core/database/prisma";
+import { asInputJson } from "@/lib/core/prisma-json";
 
 export class MemoryRepository {
   async upsertFact(input: {
@@ -99,12 +100,25 @@ export class MemoryRepository {
   async upsertRelationship(
     brandId: string,
     creatorId: string,
-    data: Partial<Omit<RelationshipDna, "id" | "brandId" | "creatorId" | "createdAt" | "updatedAt">>
+    data: {
+      collaborationCount?: number;
+      avgSatisfaction?: number | null;
+      avgReviewRounds?: number | null;
+      avgDaysEarly?: number | null;
+      priorityScore?: number;
+      lastCollaborationAt?: Date | null;
+      dnaJson?: unknown;
+    }
   ) {
+    const { dnaJson, ...rest } = data;
+    const payload = {
+      ...rest,
+      ...(dnaJson !== undefined ? { dnaJson: asInputJson(dnaJson) } : {})
+    };
     return prisma.relationshipDna.upsert({
       where: { brandId_creatorId: { brandId, creatorId } },
-      create: { brandId, creatorId, ...data },
-      update: data
+      create: { brandId, creatorId, ...payload },
+      update: payload
     });
   }
 

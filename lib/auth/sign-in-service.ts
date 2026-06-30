@@ -21,6 +21,7 @@ import { creators } from "@/lib/data";
 import { getCreatorById } from "@/lib/creator-service";
 import { withLocale, type Locale } from "@/lib/i18n";
 import { createClient } from "@/lib/supabase/server";
+import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 
 export type SignInInput = {
   email: string;
@@ -138,6 +139,10 @@ export async function performSignIn(input: SignInInput): Promise<SignInResult> {
     await setDemoSession(buildSessionPayload(prismaUser, demoRole));
     if (demoRole === "creator") {
       await recordCreatorSignIn(prismaUser.email);
+      if (prismaUser.role === "CREATOR" && hasDatabaseUrl()) {
+        const { membershipService } = await import("@/features/membership/membership.service");
+        await membershipService.ensureDefaultMembershipOnCreatorRegister(prismaUser.id).catch(() => null);
+      }
     }
 
     const redirectTo = nextPath.startsWith("/")

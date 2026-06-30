@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { performSignIn, type SignInInput } from "@/lib/auth/sign-in-service";
 import type { Locale } from "@/lib/i18n";
+import { enforcePublicApiRateLimit, handleRouteError } from "@/lib/core/api-route";
 
 export const runtime = "nodejs";
 
@@ -28,6 +29,12 @@ function parseBody(body: unknown): SignInInput | null {
 }
 
 export async function POST(request: Request) {
+  try {
+    await enforcePublicApiRateLimit(request);
+  } catch (error) {
+    return handleRouteError(error);
+  }
+
   let body: unknown;
   try {
     body = await request.json();

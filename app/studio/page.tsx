@@ -1,8 +1,11 @@
 import { redirect } from "next/navigation";
 import { StudioWorkspaceDashboard } from "@/components/studioos/studio-workspace-dashboard";
 import { CreatorPortalSections } from "@/components/studioos/creator-portal-sections";
+import { CreatorMembershipPanel } from "@/components/studioos/creator-membership-panel";
 import { creatorPortalService } from "@/features/creator/creator-portal.service";
+import { membershipService } from "@/features/membership/membership.service";
 import { getSessionUser } from "@/features/auth/session.service";
+import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { getCurrentCreator } from "@/lib/creator-session";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
 import { listOrdersForCreator } from "@/lib/order-service";
@@ -38,8 +41,27 @@ export default async function StudioDashboardPage({ searchParams }: { searchPara
           stats: { pendingInvitations: 0, activeOrders: assigned, inReview, completed, revenue }
         };
 
+  const membershipBundle =
+    sessionUser &&
+    !sessionUser.id.startsWith("demo_") &&
+    hasDatabaseUrl() &&
+    sessionUser.role.toUpperCase() === "CREATOR"
+      ? await Promise.all([
+          membershipService.getCreatorMembershipStatus(sessionUser.id),
+          membershipService.requireVerifiedPlan()
+        ])
+      : null;
+
   return (
     <div className="space-y-8">
+      {membershipBundle ? (
+        <CreatorMembershipPanel
+          locale={locale}
+          status={membershipBundle[0]}
+          verifiedPlan={membershipBundle[1]}
+          stripeConfigured={Boolean(process.env.STRIPE_SECRET_KEY)}
+        />
+      ) : null}
       <StudioWorkspaceDashboard
         locale={locale}
         creator={creator}

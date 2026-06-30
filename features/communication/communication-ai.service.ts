@@ -1,4 +1,4 @@
-import { randomUUID } from "crypto";
+import { randomId } from "@/lib/core/random-id";
 import { aiGatewayService } from "@/features/ai/ai-gateway.service";
 import type { AiCommunicationResult, LocalizeTextInput } from "@/features/communication/communication.types";
 import { communicationConfig, normalizeLanguageCode } from "@/lib/core/config/communication";
@@ -199,7 +199,7 @@ export class CommunicationAiService {
       context: "extract creator action items"
     };
     const processed = await this.processMessage(input);
-    return processed.result.todos.map((text) => ({ id: randomUUID(), text, done: false }));
+    return processed.result.todos.map((text) => ({ id: randomId(), text, done: false }));
   }
 }
 

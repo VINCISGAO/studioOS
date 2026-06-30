@@ -63,6 +63,19 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  if (pathname === "/workspace/brand" || pathname.startsWith("/workspace/brand/")) {
+    const url = withLang(request.nextUrl.clone(), request);
+    url.pathname = "/brand";
+    return NextResponse.redirect(url);
+  }
+
+  if (pathname === "/workspace/projects/new") {
+    const url = withLang(request.nextUrl.clone(), request);
+    url.pathname = "/brand/projects/new";
+    url.search = request.nextUrl.search;
+    return NextResponse.redirect(url);
+  }
+
   function nextWithPathHeaders() {
     const requestHeaders = new Headers(request.headers);
     requestHeaders.set("x-pathname", pathname);

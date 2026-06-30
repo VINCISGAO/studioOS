@@ -1,37 +1,55 @@
-import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
-import { orders } from "@/lib/data";
-import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { AdminPaymentsTable } from "@/components/studioos/admin-payments-table";
+import { paymentCollectionService } from "@/features/payment/payment-collection.service";
+import { getSessionUser } from "@/features/auth/session.service";
+import { getLocale, type SearchParams } from "@/lib/i18n";
 import { formatCurrency } from "@/lib/utils";
 
 export default async function AdminPaymentsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const locale = getLocale(await searchParams);
-  const total = orders.reduce((s, o) => s + o.amount, 0);
+  const user = await getSessionUser();
+
+  let records: Awaited<ReturnType<typeof paymentCollectionService.listForAdmin>> = [];
+  if (user) {
+    try {
+      records = await paymentCollectionService.listForAdmin(user);
+    } catch {
+      records = [];
+    }
+  }
+
+  const paidTotal = records
+    .filter((row) => row.paymentStatus === "PAID")
+    .reduce((sum, row) => sum + row.amount, 0);
+  const pendingPayouts = records.filter(
+    (row) => row.creatorPayoutStatus === "MANUAL_PAYOUT_PENDING"
+  ).length;
 
   return (
     <div>
       <h1 className="text-3xl font-semibold tracking-tight">Payments</h1>
       <p className="mt-2 text-sm text-zinc-500">
-        {locale === "zh" ? "托管、释放与平台收入。" : "Escrow, release, and platform revenue."}
+        {locale === "zh"
+          ? "在线收款、手续费与创作者手动结算。"
+          : "Online collection, service fees, and manual creator payouts."}
       </p>
-      <Card className="mt-8 border-zinc-200/80 shadow-none">
-        <CardContent className="p-6">
-          <p className="text-sm text-zinc-500">{locale === "zh" ? "平台总流水" : "Total volume"}</p>
-          <p className="mt-2 text-4xl font-semibold">{formatCurrency(total)}</p>
-        </CardContent>
-      </Card>
+      <div className="mt-8 grid gap-4 sm:grid-cols-2">
+        <Card className="border-zinc-200/80 shadow-none">
+          <CardContent className="p-6">
+            <p className="text-sm text-zinc-500">{locale === "zh" ? "已收款项" : "Collected volume"}</p>
+            <p className="mt-2 text-4xl font-semibold">{formatCurrency(paidTotal)}</p>
+          </CardContent>
+        </Card>
+        <Card className="border-zinc-200/80 shadow-none">
+          <CardContent className="p-6">
+            <p className="text-sm text-zinc-500">{locale === "zh" ? "待手动结算" : "Manual payout pending"}</p>
+            <p className="mt-2 text-4xl font-semibold">{pendingPayouts}</p>
+          </CardContent>
+        </Card>
+      </div>
       <Card className="mt-4 border-zinc-200/80 shadow-none">
         <CardContent className="p-0">
-          <ul className="divide-y">
-            {orders.map((order) => (
-              <li key={order.id} className="flex justify-between px-6 py-4">
-                <Link href={withLocale(`/admin/orders/${order.id}`, locale)} className="font-medium hover:underline">
-                  {order.id}
-                </Link>
-                <span>{formatCurrency(order.amount)} · {order.payment_status}</span>
-              </li>
-            ))}
-          </ul>
+          <AdminPaymentsTable records={records} />
         </CardContent>
       </Card>
     </div>

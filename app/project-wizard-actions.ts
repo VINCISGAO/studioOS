@@ -72,7 +72,6 @@ function revalidateWizard(projectId: string) {
 }
 
 export async function ensureProjectDraftAction(formData: FormData) {
-  const lang = normalizeLang(formData.get("lang"));
   const client = await requireBrandClient();
   const existingId = String(formData.get("project_id") ?? "");
 
@@ -294,7 +293,7 @@ export async function publishProjectAction(formData: FormData) {
   const lang = normalizeLang(formData.get("lang"));
   const client = await requireBrandClient();
   const projectId = String(formData.get("project_id") ?? "");
-  const project = await requireProject(projectId, client.client_email);
+  await requireProject(projectId, client.client_email);
   const title = String(formData.get("title") ?? "").trim();
   const confirmed = formData.get("confirmed") === "1";
 

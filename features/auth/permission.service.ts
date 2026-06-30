@@ -26,6 +26,11 @@ export type Permission =
   | "admin.user.manage"
   | "admin.campaign.manage"
   | "admin.membership.manage"
+  | "admin.overview.read"
+  | "admin.dispute.manage"
+  | "admin.audit.read"
+  | "admin.feature_flag.manage"
+  | "admin.payment.manage"
   | "membership.read"
   | "membership.upgrade";
 
@@ -74,10 +79,21 @@ const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     "admin.user.manage",
     "admin.campaign.manage",
     "admin.membership.manage",
+    "admin.overview.read",
+    "admin.dispute.manage",
+    "admin.audit.read",
+    "admin.feature_flag.manage",
+    "admin.payment.manage",
     "membership.read",
     "membership.upgrade"
   ],
-  SUPPORT: ["campaign.read", "review.read", "payment.read"]
+  SUPPORT: [
+    "campaign.read",
+    "review.read",
+    "payment.read",
+    "admin.audit.read",
+    "admin.dispute.manage"
+  ]
 };
 
 export type AuthUser = {
@@ -103,5 +119,13 @@ export class PermissionService {
     if (user.role.toUpperCase() === "BRAND" && campaign.brandId === user.id) return true;
     if (user.role.toUpperCase() === "CREATOR" && campaign.creatorId === user.id) return true;
     return false;
+  }
+
+  /** Export RBAC matrix for admin docs and verification */
+  static exportMatrix(): { role: string; permissions: Permission[] }[] {
+    return Object.entries(ROLE_PERMISSIONS).map(([role, permissions]) => ({
+      role,
+      permissions: [...permissions]
+    }));
   }
 }

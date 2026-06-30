@@ -1,10 +1,10 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
-/** Full document navigation — avoids client-router / server-action redirect issues. */
 export function BrandStartBriefButton({
   locale,
   label,
@@ -21,8 +21,8 @@ export function BrandStartBriefButton({
   const href = withLocale("/brand/start-brief", locale);
 
   return (
-    <a href={href} className={cn(buttonVariants({ size }), className)}>
+    <Link href={href} className={cn(buttonVariants({ size }), className)}>
       {children ?? label}
-    </a>
+    </Link>
   );
 }

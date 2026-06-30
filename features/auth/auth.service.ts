@@ -1,6 +1,5 @@
 import { headers } from "next/headers";
 import { DEMO_USERS, findDemoUser, type DemoUser } from "@/lib/demo-auth";
-import { verifyPassword } from "@/lib/core/password";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { userRepository, type UserWithProfiles } from "@/features/auth/user.repository";
 import type { UserRole } from "@prisma/client";
@@ -37,16 +36,19 @@ export class AuthService {
 
     if (hasDatabaseUrl()) {
       const user = await userRepository.findByEmail(normalized);
-      if (user?.passwordHash && verifyPassword(password, user.passwordHash)) {
-        const headerList = await headers();
-        await userRepository.touchLogin(user.id, {
-          ip:
-            headerList.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-            headerList.get("x-real-ip") ??
-            undefined,
-          device: headerList.get("user-agent") ?? undefined
-        });
-        return mapPrismaUser(user);
+      if (user?.passwordHash) {
+        const { verifyPassword } = await import("@/lib/core/password");
+        if (verifyPassword(password, user.passwordHash)) {
+          const headerList = await headers();
+          await userRepository.touchLogin(user.id, {
+            ip:
+              headerList.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+              headerList.get("x-real-ip") ??
+              undefined,
+            device: headerList.get("user-agent") ?? undefined
+          });
+          return mapPrismaUser(user);
+        }
       }
     }
 

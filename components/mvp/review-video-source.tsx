@@ -38,9 +38,10 @@ export function ReviewVideoSource({
   const hlsRef = useRef<{ destroy: () => void } | null>(null);
 
   useEffect(() => {
-    const video = videoRef.current;
-    if (!video || !hlsUrl) return;
+    if (!videoRef.current || !hlsUrl) return;
 
+    const mediaEl: HTMLVideoElement = videoRef.current;
+    const sourceUrl = hlsUrl;
     let cancelled = false;
 
     async function attachSource() {
@@ -48,8 +49,8 @@ export function ReviewVideoSource({
       hlsRef.current = null;
 
       if (canPlayNativeHls()) {
-        video.src = hlsUrl!;
-        video.load();
+        mediaEl.src = sourceUrl;
+        mediaEl.load();
         return;
       }
 
@@ -59,8 +60,8 @@ export function ReviewVideoSource({
         if (Hls.isSupported() && !cancelled) {
           const hls = new Hls({ enableWorker: true });
           hlsRef.current = hls;
-          hls.loadSource(hlsUrl!);
-          hls.attachMedia(video);
+          hls.loadSource(sourceUrl);
+          hls.attachMedia(mediaEl);
           return;
         }
       } catch {
