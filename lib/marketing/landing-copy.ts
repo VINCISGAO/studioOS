@@ -67,11 +67,11 @@ export const landingCopy = {
   hero: {
     en: {
       eyebrow: "Commercial production infrastructure for global brands",
-      titleLine1: "Launch cinematic ads",
-      titleHighlight: "with an operating system",
-      titleLine2: "built for modern production.",
+      titleLine1: "Connecting global",
+      titleHighlight: "ad supply & demand",
+      titleLine2: "",
       subtitle:
-        "StudioOS connects brand teams with vetted AI production studios, structured review rooms, escrow-backed delivery, and performance-ready creative workflows.",
+        "Connects brand teams with vetted AI production studios\nBrands get product ads at lower cost, creators win more global orders.",
       primary: "Start as a brand",
       secondary: "Join as a studio",
       trusted: "Built for brand teams shipping paid-social creative at speed",
@@ -79,11 +79,11 @@ export const landingCopy = {
     },
     zh: {
       eyebrow: "面向全球品牌的商业制作基础设施",
-      titleLine1: "好莱坞品质",
-      titleHighlight: "无需好莱坞成本",
+      titleLine1: "连接全球广告供需",
+      titleHighlight: "",
       titleLine2: "",
       subtitle:
-        "StudioOS 连接品牌团队与严选 AI 制作方，提供结构化需求简报、帧级审片、资金托管交付与适合投放的创意生产流程",
+        "连接品牌团队与严选 AI 制作方\n品牌更低成本获得产品广告，创作者获得更多全球订单。",
       primary: "我是项目方",
       secondary: "我是创作者",
       trusted: "为需要高速投放素材的品牌团队而建",

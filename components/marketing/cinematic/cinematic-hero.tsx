@@ -127,7 +127,7 @@ export function CinematicHero({
 
             <p
               className={cn(
-                "mt-5 max-w-2xl text-[15px] leading-7 text-zinc-300 sm:mt-6 sm:text-base md:text-[17px] md:leading-8",
+                "mt-5 max-w-2xl whitespace-pre-line text-[15px] leading-7 text-zinc-300 sm:mt-6 sm:text-base md:text-[17px] md:leading-8",
                 isEnglish ? "md:max-w-xl lg:max-w-[36rem]" : undefined
               )}
             >
