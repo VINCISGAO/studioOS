@@ -3,6 +3,7 @@ import type { CommercialObjective } from "@/lib/project-types";
 
 export type BrandProductionBrief = {
   legacy_project_id: string;
+  studio_id?: string;
   product?: {
     name?: string;
     url?: string;
@@ -35,6 +36,15 @@ export type BrandProductionBrief = {
   };
 };
 
+export type BrandCampaignSelection = {
+  legacy_creator_id: string;
+  invitation_id: string;
+  creator_profile_id?: string;
+  creator_user_id?: string;
+  selected_at: string;
+  selected_by_email?: string;
+};
+
 export type BrandCampaignMemory = {
   wizard?: {
     step?: number;
@@ -51,6 +61,7 @@ export type BrandCampaignMemory = {
   visibility?: string;
   org_id?: string | null;
   pack_items?: unknown[];
+  selection?: BrandCampaignSelection;
 };
 
 export type BrandCampaignActor = {

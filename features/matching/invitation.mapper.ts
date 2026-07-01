@@ -1,5 +1,6 @@
 import type { Campaign, CreatorInvitation, InvitationStatus, User } from "@prisma/client";
 import type { CreatorPortalInvitationView } from "@/features/creator/creator-portal.types";
+import type { BrandCampaignMemory } from "@/features/campaign/brand-campaign/brand-campaign.types";
 import type { StoredCreatorInvitation } from "@/lib/studioos/creator-invitation-types";
 import { readProductionBrief } from "@/features/campaign/brand-campaign/brand-campaign.utils";
 
@@ -18,6 +19,27 @@ export function prismaInvitationStatusToPortal(status: InvitationStatus): string
   return "pending";
 }
 
+export function resolvePortalInvitationStatus(
+  prismaStatus: InvitationStatus,
+  legacyCreatorId: string,
+  selection?: BrandCampaignMemory["selection"]
+): string {
+  const base = prismaInvitationStatusToPortal(prismaStatus);
+  if (!selection?.legacy_creator_id) {
+    return base;
+  }
+  if (selection.legacy_creator_id === legacyCreatorId && prismaStatus === "ACCEPTED") {
+    return "selected";
+  }
+  if (
+    selection.legacy_creator_id !== legacyCreatorId &&
+    (prismaStatus === "EXPIRED" || base === "accepted")
+  ) {
+    return "expired";
+  }
+  return base;
+}
+
 export function portalInvitationStatusToPrismaRespondable(status: string): InvitationStatus[] {
   if (status === "pending") return ["SENT", "VIEWED"];
   return [];
@@ -32,7 +54,8 @@ export function resolveLegacyProjectId(campaign: Campaign): string {
 export function mapInvitationToStored(
   invitation: InvitationWithCampaign,
   legacyProjectId: string,
-  legacyCreatorId: string
+  legacyCreatorId: string,
+  selection?: BrandCampaignMemory["selection"]
 ): StoredCreatorInvitation {
   const campaign = invitation.campaign;
   const brandName =
@@ -53,7 +76,7 @@ export function mapInvitationToStored(
     deadline: campaign.deadline.toISOString(),
     platform: campaign.platform,
     matchScore: Number(invitation.matchScore),
-    status: prismaInvitationStatusToPortal(invitation.status),
+    status: resolvePortalInvitationStatus(invitation.status, legacyCreatorId, selection),
     expiresAt: invitation.expiresAt?.toISOString() ?? null,
     createdAt: invitation.createdAt.toISOString()
   };

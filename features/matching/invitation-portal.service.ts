@@ -19,6 +19,8 @@ import { getProject } from "@/lib/project-service";
 import { matchCreatorsForProjectWithDemoFallback } from "@/lib/matching-engine";
 import type { CreatorPortalInvitationView } from "@/features/creator/creator-portal.types";
 import type { StoredCreatorInvitation } from "@/lib/studioos/creator-invitation-types";
+import type { BrandCampaignMemory } from "@/features/campaign/brand-campaign/brand-campaign.types";
+import { readCampaignMemory } from "@/features/campaign/brand-campaign/brand-campaign.utils";
 import {
   isInvitationRecruitmentClosed,
   MAX_CAMPAIGN_INVITATIONS
@@ -75,13 +77,18 @@ function brandResponseCopy(
 
 async function mapRowsForCampaign(campaignId: string): Promise<StoredCreatorInvitation[]> {
   const rows = await invitationRepository.listForCampaign(campaignId);
+  const campaignRow = rows[0]?.campaign ?? (await campaignRepository.findById(campaignId));
+  const memory = campaignRow
+    ? (readCampaignMemory(campaignRow.campaignMemoryJson) as BrandCampaignMemory)
+    : {};
+  const selection = memory.selection;
   const mapped: StoredCreatorInvitation[] = [];
 
   for (const row of rows) {
     const legacyProjectId = resolveLegacyProjectId(row.campaign);
     const legacyCreatorId = await resolveLegacyCreatorIdForProfile(row.creator);
     if (!legacyCreatorId) continue;
-    mapped.push(mapInvitationToStored(row, legacyProjectId, legacyCreatorId));
+    mapped.push(mapInvitationToStored(row, legacyProjectId, legacyCreatorId, selection));
   }
 
   return mapped;
@@ -95,7 +102,8 @@ async function mapRowsForCreator(creatorProfileId: string): Promise<StoredCreato
     const legacyProjectId = resolveLegacyProjectId(row.campaign);
     const legacyCreatorId = await resolveLegacyCreatorIdForProfile(row.creator);
     if (!legacyCreatorId) continue;
-    mapped.push(mapInvitationToStored(row, legacyProjectId, legacyCreatorId));
+    const memory = readCampaignMemory(row.campaign.campaignMemoryJson) as BrandCampaignMemory;
+    mapped.push(mapInvitationToStored(row, legacyProjectId, legacyCreatorId, memory.selection));
   }
 
   return mapped;
@@ -207,7 +215,8 @@ export class InvitationPortalService {
     const legacyProjectId = resolveLegacyProjectId(row.campaign);
     const legacyCreatorId = await resolveLegacyCreatorIdForProfile(row.creator);
     if (!legacyCreatorId) return null;
-    return mapInvitationToStored(row, legacyProjectId, legacyCreatorId);
+    const memory = readCampaignMemory(row.campaign.campaignMemoryJson) as BrandCampaignMemory;
+    return mapInvitationToStored(row, legacyProjectId, legacyCreatorId, memory.selection);
   }
 
   async acceptForCreator(

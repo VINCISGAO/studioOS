@@ -311,6 +311,32 @@ export class CampaignRepository {
     });
   }
 
+  async selectCreator(input: {
+    campaignId: string;
+    creatorUserId: string;
+    productionBrief?: BrandProductionBrief;
+    campaignMemoryJson?: BrandCampaignMemory;
+    status?: CampaignStatus;
+  }): Promise<CampaignWithBrandAndAssets> {
+    return prisma.campaign.update({
+      where: { id: input.campaignId },
+      data: {
+        creatorId: input.creatorUserId,
+        ...(input.productionBrief !== undefined
+          ? { productionBrief: asInputJson(input.productionBrief) }
+          : {}),
+        ...(input.campaignMemoryJson !== undefined
+          ? { campaignMemoryJson: asInputJson(input.campaignMemoryJson) }
+          : {}),
+        ...(input.status !== undefined ? { status: input.status } : {})
+      },
+      include: {
+        brand: { include: { brandProfile: true } },
+        assets: { where: { deletedAt: null }, orderBy: { createdAt: "desc" } }
+      }
+    });
+  }
+
   async updateStatus(id: string, status: CampaignStatus): Promise<Campaign> {
     return prisma.campaign.update({
       where: { id },

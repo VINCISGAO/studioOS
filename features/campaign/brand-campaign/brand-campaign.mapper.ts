@@ -135,7 +135,7 @@ export function mapCampaignToStoredProject(campaign: CampaignWithBrand): StoredP
     budget_min: brief.budget?.min ?? null,
     budget_max: brief.budget?.max ?? null,
     deadline: campaign.deadline.toISOString().slice(0, 10),
-    selected_studio_id: null,
+    selected_studio_id: memory.selection?.legacy_creator_id ?? brief.studio_id ?? null,
     published_at: memory.published_at ?? null,
     email: clientEmail,
     target_platform: campaign.platform ?? "",

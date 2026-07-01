@@ -1,4 +1,5 @@
 import { invitationPortalService } from "@/features/matching/invitation-portal.service";
+import { campaignSelectionService } from "@/features/matching/campaign-selection.service";
 import { invitationRepository } from "@/features/matching/invitation.repository";
 import { matchingService } from "@/features/matching/matching.service";
 import { campaignRepository } from "@/features/campaign/campaign.repository";
@@ -150,6 +151,15 @@ export class InvitationService {
 
   declineForLegacyCreator(invitationId: string, legacyCreatorId: string, locale?: Locale) {
     return invitationPortalService.declineForCreator(invitationId, legacyCreatorId, locale);
+  }
+
+  selectCreatorForLegacyProject(input: {
+    projectId: string;
+    creatorId: string;
+    client: { client_name: string; client_email: string; company_name: string };
+    locale: Locale;
+  }) {
+    return campaignSelectionService.selectCreatorForLegacyProject(input);
   }
 }
 

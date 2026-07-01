@@ -152,6 +152,18 @@ export async function selectCreatorForProject(input: {
   client: { client_name: string; client_email: string; company_name: string };
   locale: "en" | "zh";
 }) {
+  if (hasDatabaseUrl()) {
+    const campaign = await campaignRepository.findByLegacyProjectId(input.projectId);
+    if (campaign) {
+      const profileId = await resolveCreatorProfileIdForLegacyId(input.creatorId);
+      if (profileId) {
+        const result = await invitationService.selectCreatorForLegacyProject(input);
+        if (!result.ok) return result;
+        return { ok: true as const, invitation: result.invitation };
+      }
+    }
+  }
+
   const store = await readStore();
   const project = await getProject(input.projectId);
   if (!project) return { ok: false as const, error: "project-not-found" };

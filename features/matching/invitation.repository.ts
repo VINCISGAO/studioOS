@@ -1,9 +1,6 @@
 import type { InvitationStatus } from "@prisma/client";
 import { prisma, hasDatabaseUrl } from "@/lib/core/database/prisma";
 
-import type { InvitationStatus } from "@prisma/client";
-import { prisma, hasDatabaseUrl } from "@/lib/core/database/prisma";
-
 export class InvitationRepository {
   async listForCampaign(campaignId: string) {
     if (!hasDatabaseUrl()) return [];
@@ -101,6 +98,33 @@ export class InvitationRepository {
     if (!hasDatabaseUrl()) return 0;
     return prisma.creatorInvitation.count({
       where: { campaignId, status: "ACCEPTED" }
+    });
+  }
+
+  async findByCampaignAndCreatorProfile(campaignId: string, creatorProfileId: string) {
+    if (!hasDatabaseUrl()) return null;
+    return prisma.creatorInvitation.findFirst({
+      where: { campaignId, creatorId: creatorProfileId },
+      include: {
+        campaign: {
+          include: {
+            brand: { include: { brandProfile: true } }
+          }
+        },
+        creator: { include: { user: true } }
+      }
+    });
+  }
+
+  async expireNonWinners(campaignId: string, winnerInvitationId: string) {
+    if (!hasDatabaseUrl()) return { count: 0 };
+    return prisma.creatorInvitation.updateMany({
+      where: {
+        campaignId,
+        id: { not: winnerInvitationId },
+        status: { in: ["SENT", "VIEWED", "ACCEPTED"] }
+      },
+      data: { status: "EXPIRED", respondedAt: new Date() }
     });
   }
 }
