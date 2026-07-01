@@ -649,6 +649,20 @@ export async function requestOrderRevision(orderId: string, notes: string): Prom
   return order;
 }
 
+/** Sync legacy JSON order after Prisma settlement — does not release wallet. */
+export async function markOrderEscrowReleased(orderId: string): Promise<StoredOrder | null> {
+  const store = await readStore();
+  const order = store.orders.find((item) => item.id === orderId);
+  if (!order) return null;
+
+  order.payment_status = "released";
+  if (order.payout_status === "held") {
+    order.payout_status = "approved";
+  }
+  await writeStore(store);
+  return order;
+}
+
 export async function approveOrderDelivery(orderId: string): Promise<StoredOrder | null> {
   const store = await readStore();
   const order = store.orders.find((item) => item.id === orderId);

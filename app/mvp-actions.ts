@@ -28,7 +28,10 @@ import {
   uploadMasterToSupabaseStorage
 } from "@/lib/mvp/store";
 import { isReviewPhase, isPendingSettlement, reviewIsLocked } from "@/lib/mvp/review-settlement";
+import { settlementService } from "@/features/settlement/settlement.service";
+import { campaignRepository } from "@/features/campaign/campaign.repository";
 import { reviewBridgeService } from "@/features/review/review-bridge.service";
+import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { videoBridgeService } from "@/features/video/video-bridge.service";
 
 function revalidateProject(projectId: string) {
@@ -285,6 +288,25 @@ export async function releaseSettlementAction(formData: FormData) {
 
   if (!isPendingSettlement(project.status)) {
     redirect(`/workspace/projects/${projectId}/review`);
+  }
+
+  const legacyProjectId = (await findCampaignIdByMvpReviewProjectId(projectId)) ?? projectId;
+
+  if (hasDatabaseUrl()) {
+    const campaign = await campaignRepository.findByLegacyProjectId(legacyProjectId);
+    if (campaign) {
+      const result = await settlementService.releaseForLegacyProject({
+        legacyProjectId,
+        actor: { id: profile.id, role: "ADMIN", email: profile.email },
+        locale: "en"
+      });
+
+      if (result.ok) {
+        await releaseSettlement(projectId);
+        revalidateCampaignForMvp(projectId);
+        redirect(await resolveMvpReviewRedirect(projectId, "settled=1"));
+      }
+    }
   }
 
   await releaseSettlement(projectId);

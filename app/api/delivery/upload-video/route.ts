@@ -40,6 +40,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
     }
 
+    const [{ hasDatabaseUrl }, { campaignRepository }, { versionService }, { MAX_CAMPAIGN_VERSIONS }] =
+      await Promise.all([
+        import("@/lib/core/database/prisma"),
+        import("@/features/campaign/campaign.repository"),
+        import("@/features/delivery/version.service"),
+        import("@/features/delivery/version.repository")
+      ]);
+
     if (hasDatabaseUrl() && order.project_id) {
       const campaign = await campaignRepository.findByLegacyProjectId(order.project_id);
       if (campaign) {

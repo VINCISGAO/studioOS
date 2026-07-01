@@ -1,12 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { getCurrentCreatorId } from "@/lib/creator-session";
 import { getOrder } from "@/lib/order-service";
 import { campaignRepository } from "@/features/campaign/campaign.repository";
 import { deliveryService } from "@/features/delivery/delivery.service";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
-import type { Locale } from "@/lib/i18n";
+import { withLocale, type Locale } from "@/lib/i18n";
 
 function normalizeLang(raw: FormDataEntryValue | null): Locale {
   return String(raw ?? "en") === "zh" ? "zh" : "en";
@@ -30,12 +31,12 @@ export async function markAsFinalDeliveryAction(formData: FormData) {
   const creatorId = await getCurrentCreatorId();
   const order = await getOrder(orderId);
   if (!order || !creatorId || order.creator_id !== creatorId) {
-    return { ok: false as const, error: lang === "zh" ? "无权限" : "Unauthorized" };
+    redirect(withLocale(`/studio/review/${orderId}?error=final`, lang));
   }
 
   const legacyProjectId = projectId || order.project_id;
   if (!legacyProjectId || !Number.isFinite(versionNumber) || versionNumber < 1) {
-    return { ok: false as const, error: lang === "zh" ? "参数无效" : "Invalid input" };
+    redirect(withLocale(`/studio/review/${orderId}?error=final`, lang));
   }
 
   if (hasDatabaseUrl()) {
@@ -50,25 +51,13 @@ export async function markAsFinalDeliveryAction(formData: FormData) {
       });
 
       if (!result.ok) {
-        const message =
-          result.error === "invalid-status"
-            ? lang === "zh"
-              ? "品牌尚未通过审片，无法标记最终版"
-              : "Brand must approve review before marking final"
-            : result.error === "version-not-found"
-              ? lang === "zh"
-                ? "所选版本不存在"
-                : "Selected version not found"
-              : lang === "zh"
-                ? "无法标记最终版"
-                : "Could not mark as final";
-        return { ok: false as const, error: message };
+        redirect(withLocale(`/studio/review/${orderId}?error=final`, lang));
       }
 
       revalidateDeliveryPaths(legacyProjectId, orderId);
-      return { ok: true as const, delivery: result.delivery };
+      redirect(withLocale(`/studio/review/${orderId}?final=1`, lang));
     }
   }
 
-  return { ok: false as const, error: lang === "zh" ? "暂不可用" : "Not available" };
+  redirect(withLocale(`/studio/review/${orderId}?error=final`, lang));
 }

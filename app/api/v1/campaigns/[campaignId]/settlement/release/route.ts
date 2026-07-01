@@ -1,4 +1,4 @@
-import { walletService } from "@/features/wallet/wallet.service";
+import { settlementService } from "@/features/settlement/settlement.service";
 import { apiSuccess, handleRouteError, requireApiUser } from "@/lib/core/api-route";
 
 type Params = { params: Promise<{ campaignId: string }> };
@@ -8,11 +8,17 @@ export async function POST(_request: Request, { params }: Params) {
   try {
     const user = await requireApiUser();
     const { campaignId } = await params;
-    const result = await walletService.releaseEscrowForCampaign(campaignId, {
-      id: user.id,
-      role: user.role
+    const result = await settlementService.releaseForCampaign({
+      campaignId,
+      actor: { id: user.id, role: user.role, email: user.email },
+      locale: "en"
     });
-    return apiSuccess(result);
+
+    if (!result.ok) {
+      throw new Error(result.error);
+    }
+
+    return apiSuccess(result.result);
   } catch (error) {
     return handleRouteError(error);
   }

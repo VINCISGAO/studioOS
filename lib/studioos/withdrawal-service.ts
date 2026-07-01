@@ -13,6 +13,9 @@ import type {
   WithdrawalStatus,
   WithdrawalStore
 } from "@/lib/studioos/withdrawal-types";
+import { hasDatabaseUrl, prisma } from "@/lib/core/database/prisma";
+import { settlementService } from "@/features/settlement/settlement.service";
+import { resolveCreatorProfileIdForLegacyId } from "@/features/matching/invitation-creator-bridge";
 import {
   MIN_WITHDRAWAL_USD,
   computeWithdrawalFee,
@@ -142,6 +145,22 @@ function isActiveWithdrawal(status: WithdrawalStatus) {
   return ["pending", "under_review", "processing"].includes(status);
 }
 
+
+async function resolvePrismaIncomeSnapshot(creatorId: string) {
+  if (!hasDatabaseUrl()) return null;
+
+  const profileId = await resolveCreatorProfileIdForLegacyId(creatorId);
+  if (!profileId) return null;
+
+  const profile = await prisma.creatorProfile.findUnique({
+    where: { id: profileId },
+    select: { userId: true }
+  });
+  if (!profile) return null;
+
+  return settlementService.getCreatorIncomeSnapshot(profile.userId);
+}
+
 async function advanceDemoWithdrawals(store: WithdrawalStore) {
   const now = Date.now();
   let changed = false;
@@ -180,6 +199,24 @@ export async function getCreatorIncomeSnapshot(creatorId: string): Promise<Creat
       pending_withdrawal_usd: 0,
       lifetime_withdrawn_usd: 84200,
       min_withdrawal_usd: MIN_WITHDRAWAL_USD
+    };
+  }
+
+  const prismaSnapshot = await resolvePrismaIncomeSnapshot(creatorId);
+  if (prismaSnapshot) {
+    const store = await readStore();
+    await advanceDemoWithdrawals(store);
+    const pendingWithdrawals = store.withdrawals
+      .filter((item) => item.creator_id === creatorId && isActiveWithdrawal(item.status))
+      .reduce((sum, item) => sum + item.amount_usd, 0);
+
+    return {
+      ...prismaSnapshot,
+      pending_withdrawal_usd: Math.round(pendingWithdrawals * 100) / 100,
+      available_usd: Math.max(
+        0,
+        Math.round((prismaSnapshot.available_usd - pendingWithdrawals) * 100) / 100
+      )
     };
   }
 
