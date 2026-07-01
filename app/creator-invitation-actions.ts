@@ -10,7 +10,11 @@ import {
   acceptInvitation,
   declineInvitation
 } from "@/lib/studioos/creator-invitation-store";
-import { creatorPortalRoutes } from "@/lib/studioos/creator-portal-routes";
+import type { CreatorInvitationTab } from "@/lib/studioos/creator-invitation-utils";
+
+export type InvitationActionResult =
+  | { ok: true; nextTab: CreatorInvitationTab }
+  | { ok: false; error: string };
 
 function revalidateInvitationPaths(projectId?: string) {
   revalidatePath("/studio");
@@ -24,7 +28,7 @@ function revalidateInvitationPaths(projectId?: string) {
   }
 }
 
-export async function acceptDemoInvitationAction(formData: FormData) {
+export async function acceptDemoInvitationAction(formData: FormData): Promise<InvitationActionResult> {
   const locale = (formData.get("lang") as Locale) || "en";
   const invitationId = String(formData.get("invitationId") ?? "");
   const creatorId = await getCurrentCreatorId();
@@ -41,17 +45,14 @@ export async function acceptDemoInvitationAction(formData: FormData) {
       action: "accepted",
       locale
     });
-  }
-  revalidateInvitationPaths(result.ok ? result.invitation.projectId : undefined);
-
-  if (!result.ok) {
-    redirect(withLocale(`${creatorPortalRoutes.invitations}?error=${result.error}`, locale));
+    revalidateInvitationPaths(result.invitation.projectId);
+    return { ok: true, nextTab: "accepted" };
   }
 
-  redirect(withLocale(`${creatorPortalRoutes.invitations}?tab=accepted`, locale));
+  return { ok: false, error: result.error };
 }
 
-export async function declineDemoInvitationAction(formData: FormData) {
+export async function declineDemoInvitationAction(formData: FormData): Promise<InvitationActionResult> {
   const locale = (formData.get("lang") as Locale) || "en";
   const invitationId = String(formData.get("invitationId") ?? "");
   const creatorId = await getCurrentCreatorId();
@@ -68,7 +69,9 @@ export async function declineDemoInvitationAction(formData: FormData) {
       action: "declined",
       locale
     });
+    revalidateInvitationPaths(result.invitation.projectId);
+    return { ok: true, nextTab: "declined" };
   }
-  revalidateInvitationPaths(result.ok ? result.invitation.projectId : undefined);
-  redirect(withLocale(`${creatorPortalRoutes.invitations}?tab=declined`, locale));
+
+  return { ok: false, error: result.error };
 }

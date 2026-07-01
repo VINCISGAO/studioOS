@@ -1,4 +1,13 @@
 {
   "notifications": [],
-  "dismissed_demo_ids": ["ntf_demo_arc_selected", "ntf_demo_arc_funded"]
+  "dismissed_demo_ids": [
+    "ntf_demo_arc_selected",
+    "ntf_demo_arc_funded",
+    "ntf_demo_nike_work_selected",
+    "ntf_demo_samsung_feedback",
+    "ntf_demo_apple_revision",
+    "ntf_demo_payment_received",
+    "ntf_demo_project_completed",
+    "ntf_demo_system_cert"
+  ]
 }

@@ -82,6 +82,52 @@ export class UserRepository {
     return user;
   }
 
+  async createFromOAuth(input: {
+    email: string;
+    role: UserRole;
+    fullName: string;
+  }): Promise<UserWithProfiles> {
+    const existing = await this.findByEmail(input.email);
+    if (existing) {
+      return existing;
+    }
+
+    const user = await prisma.user.create({
+      data: {
+        email: input.email.toLowerCase(),
+        role: input.role,
+        fullName: input.fullName,
+        passwordHash: null,
+        emailVerified: true,
+        ...(input.role === "BRAND"
+          ? {
+              brandProfile: {
+                create: { companyName: input.fullName }
+              }
+            }
+          : {}),
+        ...(input.role === "CREATOR"
+          ? {
+              creatorProfile: {
+                create: { displayName: input.fullName }
+              }
+            }
+          : {})
+      },
+      include: { brandProfile: true, creatorProfile: true }
+    });
+
+    if (input.role === "CREATOR") {
+      const { membershipService } = await import("@/features/membership/membership.service");
+      await membershipService.ensureDefaultMembershipOnCreatorRegister(
+        user.id,
+        user.creatorProfile?.id
+      );
+    }
+
+    return user;
+  }
+
   async touchLogin(userId: string, meta?: { ip?: string; device?: string }) {
     await prisma.user.update({
       where: { id: userId },

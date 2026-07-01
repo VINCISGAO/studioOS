@@ -12,6 +12,7 @@ import { StudioPortalSidebarNav } from "@/components/studioos/certification/stud
 import { studioNav, studioOS } from "@/lib/studioos/vocabulary";
 import { creatorPortalNavItems } from "@/lib/studioos/creator-portal-nav";
 import { creatorPortalRoutes } from "@/lib/studioos/creator-portal-routes";
+import { isCreatorPortalReviewRoute } from "@/lib/studioos/portal-focus-mode";
 import { tCertificationExperience } from "@/lib/studioos/certification-experience-copy";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
@@ -63,17 +64,18 @@ export function StudioPortalShell({
   const partnerBadge = tCertificationExperience(locale).partnerBadge;
   const initials = creator ? studioInitials(creator.name) : "CR";
 
-  const isReviewPage =
-    /\/workspace\/projects\/[^/]+\/review$/.test(pathname) ||
-    /\/studio\/review\/[^/]+$/.test(pathname);
-
-  const isInvitationsFocus =
-    pathname === creatorPortalRoutes.invitations || pathname.startsWith(`${creatorPortalRoutes.invitations}/`);
+  const isReviewPage = isCreatorPortalReviewRoute(pathname);
 
   const shellInner = (
-    <div className={cn(isReviewPage ? "h-screen overflow-hidden bg-white" : "min-h-screen bg-[#f8f9fb]")}>
-      <div className={cn("flex", isReviewPage ? "h-full" : "min-h-screen")}>
-        <aside className={cn("hidden w-[248px] shrink-0 flex-col border-r border-zinc-200/80 bg-white lg:flex", isInvitationsFocus && "lg:hidden")}>
+    <div
+      className={cn(
+        isReviewPage
+          ? "max-lg:h-screen max-lg:overflow-hidden bg-white lg:min-h-screen lg:bg-[#f8f9fb]"
+          : "min-h-screen bg-[#f8f9fb]"
+      )}
+    >
+      <div className={cn("flex", isReviewPage ? "max-lg:h-full lg:min-h-screen" : "min-h-screen")}>
+        <aside className="hidden w-[248px] shrink-0 flex-col border-r border-zinc-200/80 bg-white lg:flex">
           <MarketingHomeLink
             locale={locale}
             className="flex items-center gap-2.5 px-5 py-5 transition hover:opacity-80"
@@ -168,17 +170,7 @@ export function StudioPortalShell({
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           <header className="sticky top-0 z-40 shrink-0 border-b border-zinc-200/80 bg-white/95 backdrop-blur">
             <div className="flex h-14 items-center justify-between px-4 sm:px-6 lg:px-8">
-              {isInvitationsFocus ? (
-                <Link
-                  href={withLocale(creatorPortalRoutes.home, locale)}
-                  className="flex items-center gap-2.5 text-sm font-semibold text-zinc-950"
-                >
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-600 text-white shadow-sm">
-                    <Sparkles className="h-4 w-4" />
-                  </span>
-                  {locale === "zh" ? "项目邀请" : "Project invitations"}
-                </Link>
-              ) : !isReviewPage ? (
+              {!isReviewPage ? (
                 <div className="flex items-center gap-2 lg:hidden">
                   <MarketingHomeLink locale={locale} className="flex items-center gap-2 font-semibold text-zinc-950">
                     <span
@@ -195,12 +187,10 @@ export function StudioPortalShell({
                     <CertifiedPartnerBadge label={partnerBadge} compact className="hidden sm:inline-flex" />
                   ) : null}
                 </div>
-              ) : (
-                <div className="hidden lg:block" />
-              )}
-              {!isReviewPage && !isInvitationsFocus ? <div className="hidden lg:block" /> : null}
+              ) : null}
+              <div className="hidden lg:block" />
 
-              <div className={cn("flex items-center gap-2 sm:gap-3", isReviewPage && "ml-auto")}>
+              <div className={cn("flex items-center gap-2 sm:gap-3", isReviewPage && "max-lg:ml-auto")}>
                 <Suspense fallback={<LanguageSwitcherFallback locale={locale} />}>
                   <LanguageSwitcher locale={locale} pathname={pathname} search={search} />
                 </Suspense>
@@ -221,7 +211,7 @@ export function StudioPortalShell({
               </div>
             </div>
 
-            {!isReviewPage && !isInvitationsFocus ? (
+            {!isReviewPage ? (
               <div className="border-t border-zinc-100 px-4 py-3 lg:hidden">
                 <PortalMobileNav
                   locale={locale}
@@ -245,10 +235,10 @@ export function StudioPortalShell({
             className={cn(
               "min-h-0 min-w-0 flex-1",
               isReviewPage
-                ? "flex flex-col overflow-hidden p-0"
+                ? "flex flex-col overflow-hidden p-0 lg:px-8 lg:py-8"
                 : cn(
                     "mx-auto w-full px-4 py-6 sm:px-6 lg:px-8 lg:py-8",
-                    isInvitationsFocus ? "max-w-[920px]" : "max-w-[1280px]"
+                    "max-w-[1280px]"
                   )
             )}
           >

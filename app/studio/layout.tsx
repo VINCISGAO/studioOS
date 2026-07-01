@@ -16,7 +16,6 @@ import { listOrdersForCreator } from "@/lib/order-service";
 import { countUnreadNotifications, listNotificationsForCreator } from "@/lib/notification-service";
 import { countInvitationsByTab, listInvitationsForCreator } from "@/lib/studioos/creator-invitation-store";
 import { getCreatorIncomeSnapshot } from "@/lib/studioos/withdrawal-service";
-import { CREATOR_HOME_DEMO_CREATOR_ID } from "@/lib/studioos/creator-home-ui";
 import {
   isStudioFeaturePath,
   studioCertificationRedirectPath,
@@ -67,15 +66,9 @@ export default async function StudioLayout({ children }: { children: React.React
       isVerified={access.isVerified}
       levelUpSeen={levelUpSeen}
       notifications={notifications}
-      unreadCount={
-        creator?.id === CREATOR_HOME_DEMO_CREATOR_ID && canUseBusinessFeatures ? 5 : unreadCount
-      }
+      unreadCount={unreadCount}
       withdrawableUsd={income?.available_usd ?? 0}
-      pendingInvitationCount={
-        creator?.id === CREATOR_HOME_DEMO_CREATOR_ID && canUseBusinessFeatures
-          ? 3
-          : invitationCounts.pending
-      }
+      pendingInvitationCount={invitationCounts.pending}
     >
       {children}
     </StudioPortalShell>

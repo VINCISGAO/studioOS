@@ -67,9 +67,9 @@ export const landingCopy = {
   hero: {
     en: {
       eyebrow: "Commercial production infrastructure for global brands",
-      titleLine1: "Connecting global ad supply & demand",
+      titleLine1: "Connecting global ad",
       titleHighlight: "",
-      titleLine2: "",
+      titleLine2: "supply & demand",
       subtitle:
         "Connects brand teams with vetted AI production studios\nBrands get product ads at lower cost, creators win more global orders.",
       primary: "Start as a brand",

@@ -15,6 +15,7 @@ datasource db {
 enum UserRole {
   BRAND
   CREATOR
+  STUDIO
   ADMIN
   SUPPORT
   SYSTEM
@@ -231,6 +232,7 @@ model User {
 
   brandProfile   BrandProfile?
   creatorProfile CreatorProfile?
+  studioProfile  StudioProfile?
   brandCampaigns Campaign[]      @relation("BrandCampaigns")
   creatorCampaigns Campaign[]    @relation("CreatorCampaigns")
   reviewComments ReviewComment[]
@@ -271,9 +273,33 @@ model BrandProfile {
   @@map("brand_profiles")
 }
 
+model StudioProfile {
+  id          String   @id @default(uuid())
+  userId      String   @unique @map("user_id")
+  studioName  String   @map("studio_name")
+  companyName String   @map("company_name")
+  website     String?
+  logoUrl     String?  @map("logo_url")
+  coverUrl    String?  @map("cover_url")
+  country     String?
+  city        String?
+  description String?
+  verified    Boolean  @default(false)
+  rating      Decimal? @db.Decimal(3, 2)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user         User                  @relation(fields: [userId], references: [id])
+  creators     CreatorProfile[]
+  invitations  CreatorInvitation[]
+
+  @@map("studio_profiles")
+}
+
 model CreatorProfile {
   id                  String              @id @default(uuid())
   userId              String              @unique @map("user_id")
+  studioId            String?             @map("studio_id")
   displayName         String              @map("display_name")
   headline            String?
   bio                 String?
@@ -295,9 +321,11 @@ model CreatorProfile {
   updatedAt           DateTime            @updatedAt @map("updated_at")
 
   user        User                 @relation(fields: [userId], references: [id])
+  studio      StudioProfile?       @relation(fields: [studioId], references: [id])
   invitations CreatorInvitation[]
   memberships CreatorMembership[]
 
+  @@index([studioId])
   @@map("creator_profiles")
 }
 
@@ -463,6 +491,7 @@ model CreatorInvitation {
   id           String           @id @default(uuid())
   campaignId   String           @map("campaign_id")
   creatorId    String           @map("creator_id")
+  studioId     String?          @map("studio_id")
   matchScore   Decimal          @map("match_score") @db.Decimal(5, 2)
   status       InvitationStatus @default(SENT)
   counterOffer Decimal?         @map("counter_offer") @db.Decimal(18, 2)
@@ -473,9 +502,11 @@ model CreatorInvitation {
 
   campaign Campaign       @relation(fields: [campaignId], references: [id])
   creator  CreatorProfile @relation(fields: [creatorId], references: [id])
+  studio   StudioProfile? @relation(fields: [studioId], references: [id])
 
   @@index([campaignId])
   @@index([creatorId])
+  @@index([studioId])
   @@index([status])
   @@map("creator_invitations")
 }

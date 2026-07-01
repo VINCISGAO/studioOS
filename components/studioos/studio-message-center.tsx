@@ -72,18 +72,30 @@ export function StudioMessageCenter({
   const [selectedId, setSelectedId] = useState<string | null>(
     initialSelectedId ?? list[0]?.id ?? null
   );
+  const [readOverrides, setReadOverrides] = useState<Record<string, string>>({});
 
-  const detailMap = useMemo(() => new Map(details.map((item) => [item.notificationId, item])), [details]);
-  const statCounts = useMemo(() => countMessagesByCategory(list), [list]);
+  const effectiveList = useMemo(
+    () =>
+      list.map((item) =>
+        readOverrides[item.id] ? { ...item, readAt: readOverrides[item.id] } : item
+      ),
+    [list, readOverrides]
+  );
+
+  const detailMap = useMemo(
+    () => new Map(details.map((item) => [item.notificationId, item])),
+    [details]
+  );
+  const statCounts = useMemo(() => countMessagesByCategory(effectiveList), [effectiveList]);
   const statCards = useMemo(
     () => statCardsOverride ?? buildMessageStatCards(statCounts, locale),
     [locale, statCardsOverride, statCounts]
   );
 
   const categoryFiltered = useMemo(() => {
-    if (categoryFilter === "all") return list;
-    return list.filter((item) => item.category === categoryFilter);
-  }, [categoryFilter, list]);
+    if (categoryFilter === "all") return effectiveList;
+    return effectiveList.filter((item) => item.category === categoryFilter);
+  }, [categoryFilter, effectiveList]);
 
   const tabFiltered = useMemo(() => {
     if (tab === "unread") return categoryFiltered.filter((item) => !item.readAt);
@@ -103,14 +115,22 @@ export function StudioMessageCenter({
   }, [tab, categoryFilter]);
 
   useEffect(() => {
-    if (selectedId && !list.some((item) => item.id === selectedId)) {
-      setSelectedId(list[0]?.id ?? null);
+    if (selectedId && !effectiveList.some((item) => item.id === selectedId)) {
+      setSelectedId(effectiveList[0]?.id ?? null);
     }
-  }, [list, selectedId]);
+  }, [effectiveList, selectedId]);
+
+  function markReadLocally(id: string) {
+    setReadOverrides((current) => ({
+      ...current,
+      [id]: new Date().toISOString()
+    }));
+  }
 
   function selectMessage(item: MessageListItem) {
     setSelectedId(item.id);
     if (!item.readAt) {
+      markReadLocally(item.id);
       startTransition(async () => {
         const fd = new FormData();
         fd.set("notification_id", item.id);
@@ -119,6 +139,22 @@ export function StudioMessageCenter({
       });
     }
   }
+
+  useEffect(() => {
+    const initialId = initialSelectedId ?? list[0]?.id;
+    if (!initialId) return;
+    const item = list.find((entry) => entry.id === initialId);
+    if (!item || item.readAt || readOverrides[item.id]) return;
+    markReadLocally(item.id);
+    startTransition(async () => {
+      const fd = new FormData();
+      fd.set("notification_id", item.id);
+      await actions.markRead(fd);
+      router.refresh();
+    });
+    // Mark the initially opened message as read once on mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function toggleSelectAllVisible() {
     const visibleIds = pageItems.map((item) => item.id);
@@ -140,6 +176,14 @@ export function StudioMessageCenter({
       const fd = new FormData();
       fd.set("notification_ids", ids.join(","));
       await actions.markManyRead(fd);
+      setReadOverrides((current) => {
+        const next = { ...current };
+        const now = new Date().toISOString();
+        for (const id of ids) {
+          next[id] = now;
+        }
+        return next;
+      });
       setSelectedIds([]);
       router.refresh();
     });

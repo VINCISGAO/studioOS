@@ -154,8 +154,8 @@ export default async function BrandMessagesPage({ searchParams }: { searchParams
           </h1>
           <p className="mt-2 text-sm text-zinc-500">
             {locale === "zh"
-              ? "项目动态、创作者回复与平台提醒。"
-              : "Project updates, creator replies, and platform alerts."}
+              ? "项目动态、创作者消息与付款通知。"
+              : "Project updates, creator messages, and payment alerts."}
           </p>
         </header>
         <StudioMessageCenter

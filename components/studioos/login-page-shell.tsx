@@ -70,6 +70,7 @@ type LoginPageShellProps = {
   error?: string;
   errorCode?: string;
   demoMode: boolean;
+  googleOAuthEnabled?: boolean;
   t: LoginPageCopy;
 };
 
@@ -246,6 +247,7 @@ export function LoginPageShell({
   error,
   errorCode,
   demoMode,
+  googleOAuthEnabled = false,
   t
 }: LoginPageShellProps) {
   const isBrand = role === "brand";
@@ -361,7 +363,7 @@ export function LoginPageShell({
                 />
               </div>
 
-              {demoMode ? (
+              {demoMode || googleOAuthEnabled ? (
                 <>
                   <div className="relative mt-6 py-1">
                     <div className={cn("absolute inset-x-0 top-1/2 h-px", isBrand ? "bg-white/10" : "bg-zinc-200")} />
@@ -369,7 +371,13 @@ export function LoginPageShell({
                       {t.socialDivider}
                     </p>
                   </div>
-                  <LoginSocialButtons locale={locale} role={role} nextPath={nextPath} />
+                  <LoginSocialButtons
+                    locale={locale}
+                    role={role}
+                    nextPath={nextPath}
+                    demoMode={demoMode}
+                    googleOAuthEnabled={googleOAuthEnabled}
+                  />
                 </>
               ) : null}
 

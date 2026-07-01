@@ -52,6 +52,7 @@ export function CreatorInvitationsBoard({
   const labels = creatorInvitationTabLabels[locale];
   const [tab, setTab] = useState<CreatorInvitationTab>(initialTab);
   const [actingId, setActingId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const counts = useMemo(() => countInvitationsByTab(invitations), [invitations]);
   const filtered = useMemo(() => filterInvitationsByTab(invitations, tab), [invitations, tab]);
@@ -62,6 +63,31 @@ export function CreatorInvitationsBoard({
   function selectTab(nextTab: CreatorInvitationTab) {
     setTab(nextTab);
     setPage(1);
+    setActionError(null);
+  }
+
+  function handleRespond(nextTab: CreatorInvitationTab) {
+    setActingId(null);
+    setActionError(null);
+    setTab(nextTab);
+    setPage(1);
+  }
+
+  function handleActionError(code: string) {
+    setActingId(null);
+    setActionError(
+      code === "recruitment-closed"
+        ? locale === "zh"
+          ? "该项目招募已结束，无法接受或拒绝。"
+          : "Recruitment for this project is closed."
+        : code === "not-pending"
+          ? locale === "zh"
+            ? "该邀请状态已更新，请刷新页面后重试。"
+            : "This invitation was already updated. Refresh and try again."
+          : locale === "zh"
+            ? "操作失败，请稍后重试。"
+            : "Something went wrong. Please try again."
+    );
   }
 
   return (
@@ -77,6 +103,10 @@ export function CreatorInvitationsBoard({
         </h1>
         <p className="mt-2 max-w-3xl text-sm leading-relaxed text-zinc-500">{t.subtitle}</p>
       </header>
+
+      {actionError ? (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{actionError}</div>
+      ) : null}
 
       <div className="flex flex-wrap gap-2">
         {creatorInvitationTabs.map((item) => {
@@ -114,6 +144,8 @@ export function CreatorInvitationsBoard({
               orderId={orderByProjectId[invitation.campaignId]}
               actingId={actingId}
               onActing={setActingId}
+              onRespond={handleRespond}
+              onActionError={handleActionError}
             />
           ))
         ) : (

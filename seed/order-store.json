@@ -1,110 +1,11 @@
 {
-  "quotes": [
-    {
-      "id": "quote_demo_arc_nova",
-      "inquiry_id": "inq_demo_arc_nova",
-      "creator_id": "creator_01",
-      "client_email": "client.arc@studioos.test",
-      "amount": 1800,
-      "summary": "Arc Alloy Summer Launch — 3x 9:16 cutdowns",
-      "delivery_days": 7,
-      "status": "accepted",
-      "created_at": "2026-06-28T10:00:00.000Z"
-    }
-  ],
-  "orders": [
-    {
-      "id": "ord_demo_arc_nova",
-      "project_id": "proj_demo_arc_nova",
-      "inquiry_id": "inq_demo_arc_nova",
-      "quote_id": "quote_demo_arc_nova",
-      "creator_id": "creator_01",
-      "client_email": "client.arc@studioos.test",
-      "client_name": "Arc & Alloy",
-      "company_name": "Arc & Alloy",
-      "title": "Arc Alloy Summer Launch — Hero film",
-      "requirements": "3x 9:16 cutdowns for TikTok and Meta summer travel launch.",
-      "budget_range": "$1,000-$2,500",
-      "work_id": null,
-      "amount": 1800,
-      "platform_fee": 360,
-      "creator_payout": 1440,
-      "payment_status": "escrowed",
-      "status": "review",
-      "payout_status": "held",
-      "client_locale": "en",
-      "created_at": "2026-06-28T11:00:00.000Z",
-      "paid_at": "2026-06-28T11:30:00.000Z",
-      "completed_at": null
-    },
-    {
-      "id": "ord_demo_nova_active",
-      "project_id": null,
-      "inquiry_id": "inq_demo_nova_2",
-      "quote_id": "quote_demo_nova_2",
-      "creator_id": "creator_01",
-      "client_email": "client.bright@studioos.test",
-      "client_name": "BrightSip",
-      "company_name": "BrightSip",
-      "title": "CPG product demo batch",
-      "requirements": "Amazon + YouTube product demo.",
-      "budget_range": "$500-$700",
-      "work_id": null,
-      "amount": 599,
-      "platform_fee": 120,
-      "creator_payout": 479,
-      "payment_status": "escrowed",
-      "status": "review",
-      "payout_status": "held",
-      "created_at": "2026-06-27T09:00:00.000Z",
-      "paid_at": "2026-06-27T10:00:00.000Z",
-      "completed_at": null
-    },
-    {
-      "id": "ord_demo_nova_first",
-      "project_id": null,
-      "inquiry_id": "inq_demo_nova_first",
-      "quote_id": "quote_demo_nova_first",
-      "creator_id": "creator_01",
-      "client_email": "client.bright@studioos.test",
-      "client_name": "Northline Skincare",
-      "company_name": "Northline Skincare",
-      "title": "Northline 保湿精华 — 待上传初稿",
-      "requirements": "30s vertical hero for TikTok launch.",
-      "budget_range": "$1,000-$2,500",
-      "work_id": null,
-      "amount": 1200,
-      "platform_fee": 240,
-      "creator_payout": 960,
-      "payment_status": "escrowed",
-      "status": "in_production",
-      "payout_status": "held",
-      "created_at": "2026-06-28T12:00:00.000Z",
-      "paid_at": "2026-06-28T12:30:00.000Z",
-      "completed_at": null
-    }
-  ],
-  "deliverables": [
-    {
-      "id": "del_demo_arc_v1",
-      "order_id": "ord_demo_arc_nova",
-      "file_url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
-      "thumbnail_url": "",
-      "notes": "Version 1 — summer launch hero cut for brand review.",
-      "notes_for_client": "Version 1 — summer launch hero cut for brand review.",
-      "notes_client_locale": "en",
-      "version": 1,
-      "created_at": "2026-06-28T12:00:00.000Z"
-    },
-    {
-      "id": "del_demo_nova_v1",
-      "order_id": "ord_demo_nova_active",
-      "file_url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-      "thumbnail_url": "",
-      "notes": "Version 1 — hero cut for review",
-      "version": 1,
-      "created_at": "2026-06-28T08:00:00.000Z"
-    }
-  ],
-  "dismissed_demo_ids": ["ord_demo_nova_completed"]
+  "quotes": [],
+  "orders": [],
+  "deliverables": [],
+  "dismissed_demo_ids": [
+    "ord_demo_arc_nova",
+    "ord_demo_nova_completed",
+    "ord_demo_nova_active",
+    "ord_demo_nova_first"
+  ]
 }

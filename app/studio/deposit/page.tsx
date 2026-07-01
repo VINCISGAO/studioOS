@@ -16,7 +16,7 @@ export const dynamic = "force-dynamic";
 export default async function StudioDepositPage({
   searchParams
 }: {
-  searchParams: Promise<SearchParams & { submitted?: string; error?: string }>;
+  searchParams: Promise<SearchParams & { submitted?: string; error?: string; scroll?: string }>;
 }) {
   const query = await searchParams;
   const locale = getLocale(query);
@@ -42,6 +42,8 @@ export default async function StudioDepositPage({
       ? "required"
       : "optional";
 
+  const scrollToPayment = query.scroll === "pay";
+
   return (
     <CreatorCertificationHub
       locale={locale}
@@ -52,6 +54,7 @@ export default async function StudioDepositPage({
       submitted={query.submitted === "1"}
       error={errorMessage}
       profileComplete={hasCompletedCreatorProfile(creator)}
+      scrollToPayment={scrollToPayment}
     />
   );
 }

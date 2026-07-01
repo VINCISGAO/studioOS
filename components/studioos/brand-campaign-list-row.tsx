@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import {
-  brandCampaignProgress,
   brandCampaignStatusLabel,
   brandCampaignStepIndex
 } from "@/lib/studioos/brand-campaign-display";
@@ -55,7 +54,6 @@ export function BrandCampaignListRow({
   const normalized = normalizeCampaignStatus(row.status);
   const statusLabel = brandCampaignStatusLabel(row.status, locale);
   const stepIndex = brandCampaignStepIndex(row.status);
-  const progress = brandCampaignProgress(row.status);
   const isPayCta = normalized === "payment_pending";
 
   return (
@@ -150,9 +148,6 @@ export function BrandCampaignListRow({
                   ) : null}
                 </div>
               ))}
-            </div>
-            <div className="mt-2 h-1 overflow-hidden rounded-full bg-zinc-100">
-              <div className="h-full rounded-full bg-violet-600 transition-all" style={{ width: `${progress}%` }} />
             </div>
           </div>
         ) : null}

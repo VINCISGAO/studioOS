@@ -3,9 +3,7 @@ import { CreatorInvitationsBoard } from "@/components/studioos/creator-invitatio
 import { CreatorInvitationsProgress } from "@/components/studioos/creator-invitations-progress";
 import { getCurrentCreator } from "@/lib/creator-session";
 import { enrichInvitationsForCards } from "@/lib/studioos/creator-invitation-display";
-import { getCreatorInvitationsDemoPayload } from "@/lib/studioos/creator-invitations-demo";
 import { listInvitationsForCreator } from "@/lib/studioos/creator-invitation-store";
-import { CREATOR_HOME_DEMO_CREATOR_ID } from "@/lib/studioos/creator-home-ui";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
 import { listOrdersForCreator } from "@/lib/order-service";
 import { getProject } from "@/lib/project-service";
@@ -22,10 +20,7 @@ export default async function StudioInvitationsPage({
   if (!creator) redirect(withLocale("/login?role=creator", locale));
 
   const invitations = await listInvitationsForCreator(creator.id);
-  const displayInvitations =
-    creator.id === CREATOR_HOME_DEMO_CREATOR_ID
-      ? getCreatorInvitationsDemoPayload()
-      : invitations;
+  const displayInvitations = invitations;
   const orders = await listOrdersForCreator(creator.id);
   const orderByProjectId = Object.fromEntries(
     orders.filter((order) => order.project_id).map((order) => [order.project_id as string, order.id])
@@ -42,12 +37,9 @@ export default async function StudioInvitationsPage({
     invitations.find((item) => item.status === "pending") ??
     invitations.find((item) => item.status === "declined") ??
     null;
-  const creatorCommercialStep =
-    creator.id === CREATOR_HOME_DEMO_CREATOR_ID
-      ? ("waiting_brand_selection" as const)
-      : resolveCreatorCommercialStep({
-          invitationStatus: focusInvitation?.status ?? null
-        });
+  const creatorCommercialStep = resolveCreatorCommercialStep({
+    invitationStatus: focusInvitation?.status ?? null
+  });
 
   const validTabs = new Set(["pending", "accepted", "declined", "expired"]);
   const initialTab =

@@ -53,7 +53,7 @@ export const brandNav = {
     creativeDna: "Creative DNA",
     assets: "Assets",
     invoices: "Invoices",
-    team: "Team",
+    team: "Team collaboration (coming soon)",
     newBrief: "New brief",
     reviewRoom: "Review center",
     settlement: "Settlement"
@@ -77,7 +77,7 @@ export const brandNav = {
     creativeDna: "Creative DNA",
     assets: "素材库",
     invoices: "账单",
-    team: "团队",
+    team: "团队协作（暂未开放）",
     newBrief: "新建 Brief",
     reviewRoom: "审片中心",
     settlement: "托管结算"

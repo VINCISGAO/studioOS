@@ -7,6 +7,11 @@ import { StudioUserMenu } from "@/components/studioos/studio-user-menu";
 import { brandNav, studioOS } from "@/lib/studioos/vocabulary";
 import { brandPortalNavItems, type BrandPortalNavItem } from "@/lib/studioos/brand-portal-nav";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
+import {
+  isBrandPortalFocusRoute,
+  isBrandPortalProjectReviewRoute,
+  isBrandPortalWizardCreateRoute
+} from "@/lib/studioos/portal-focus-mode";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -37,16 +42,9 @@ export function BrandPortalShell({
 }) {
   const nav = brandNav[locale];
   const initials = brandAccount ? brandInitials(brandAccount.name) : "BR";
-  const isProjectReview = /\/brand\/projects\/[^/]+\/review/.test(pathname);
-
-  const focus =
-    !isProjectReview &&
-    (pathname.includes("/projects/new") ||
-    pathname.includes("/studios") ||
-    pathname.includes("/checkout") ||
-    /\/brand\/(campaigns|projects)\/[^/]+$/.test(pathname));
-
-  const isWizardCreate = pathname.includes("/projects/new");
+  const isProjectReview = isBrandPortalProjectReviewRoute(pathname);
+  const focusRoute = isBrandPortalFocusRoute(pathname);
+  const isWizardCreate = isBrandPortalWizardCreateRoute(pathname);
 
   function isActive(item: BrandPortalNavItem) {
     if (item.labelKey === "workspace") {
@@ -109,8 +107,12 @@ export function BrandPortalShell({
   return (
     <div className="min-h-screen bg-[#f8f9fc]">
       <div className="flex min-h-screen">
-        {!isWizardCreate ? (
-        <aside className="hidden w-[248px] shrink-0 flex-col border-r border-zinc-200/80 bg-white lg:flex">
+        <aside
+          className={cn(
+            "hidden w-[248px] shrink-0 flex-col border-r border-zinc-200/80 bg-white lg:flex",
+            isWizardCreate && "max-lg:hidden"
+          )}
+        >
           <MarketingHomeLink
             locale={locale}
             className="flex items-center gap-2.5 px-5 py-5 transition hover:opacity-80"
@@ -186,7 +188,6 @@ export function BrandPortalShell({
             ) : null}
           </div>
         </aside>
-        ) : null}
 
         <div className="flex min-w-0 flex-1 flex-col">
           <header className="sticky top-0 z-40 shrink-0 border-b border-zinc-200/80 bg-white/95 backdrop-blur">
@@ -194,7 +195,7 @@ export function BrandPortalShell({
               {isWizardCreate ? (
                 <Link
                   href={withLocale(brandPortalRoutes.dashboard, locale)}
-                  className="flex items-center gap-2.5 text-sm font-semibold text-zinc-950"
+                  className="flex items-center gap-2.5 text-sm font-semibold text-zinc-950 lg:hidden"
                 >
                   <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-700">
                     <Home className="h-4 w-4" />
@@ -211,23 +212,24 @@ export function BrandPortalShell({
                   </MarketingHomeLink>
                 </div>
               )}
-              {!isWizardCreate ? <div className="hidden lg:block" /> : null}
+              <div className="hidden lg:block" />
               <div className="flex items-center gap-2 sm:gap-3">
                 <Suspense fallback={<LanguageSwitcherFallback locale={locale} />}>
                   <LanguageSwitcher locale={locale} pathname={pathname} search={search} />
                 </Suspense>
-                {!isWizardCreate ? (
-                  <Link
-                    href={withLocale(brandPortalRoutes.messages, locale)}
-                    className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-600 transition hover:bg-zinc-50"
-                    aria-label={locale === "zh" ? "通知" : "Notifications"}
-                  >
-                    <Bell className="h-4 w-4" />
-                    {unreadMessageCount > 0 ? (
-                      <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-white" />
-                    ) : null}
-                  </Link>
-                ) : null}
+                <Link
+                  href={withLocale(brandPortalRoutes.messages, locale)}
+                  className={cn(
+                    "relative flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-600 transition hover:bg-zinc-50",
+                    isWizardCreate && "hidden lg:flex"
+                  )}
+                  aria-label={locale === "zh" ? "通知" : "Notifications"}
+                >
+                  <Bell className="h-4 w-4" />
+                  {unreadMessageCount > 0 ? (
+                    <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-white" />
+                  ) : null}
+                </Link>
                 <StudioUserMenu
                   locale={locale}
                   initials={initials}
@@ -256,9 +258,13 @@ export function BrandPortalShell({
 
           <main
             className={cn(
-              "flex-1 px-4 py-6 sm:px-6 lg:px-8",
-              isProjectReview ? "lg:py-6" : "lg:py-8",
-              !isProjectReview && (focus ? "mx-auto max-w-6xl" : "mx-auto max-w-6xl")
+              "min-h-0 min-w-0 flex-1",
+              isProjectReview
+                ? "flex flex-col overflow-hidden p-0 lg:py-6"
+                : cn(
+                    "mx-auto w-full px-4 py-6 sm:px-6 lg:px-8 lg:py-8",
+                    focusRoute ? "max-w-[920px] lg:max-w-[1280px]" : "max-w-[1280px]"
+                  )
             )}
           >
             {children}

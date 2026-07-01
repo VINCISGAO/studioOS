@@ -36,12 +36,6 @@ export const brandPortalNavItems: BrandPortalNavItem[] = [
     mobileIconKey: "home"
   },
   {
-    href: brandPortalRoutes.brandTeam,
-    labelKey: "team",
-    icon: Users,
-    mobileIconKey: "studios"
-  },
-  {
     href: brandPortalRoutes.reviewHub,
     labelKey: "reviewRoom",
     icon: Clapperboard,
@@ -64,6 +58,12 @@ export const brandPortalNavItems: BrandPortalNavItem[] = [
     labelKey: "messages",
     icon: MessageSquare,
     mobileIconKey: "messages"
+  },
+  {
+    href: brandPortalRoutes.brandTeam,
+    labelKey: "team",
+    icon: Users,
+    mobileIconKey: "studios"
   },
   {
     href: brandPortalRoutes.settings,

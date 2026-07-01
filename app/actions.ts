@@ -210,27 +210,44 @@ export async function signUpAction(formData: FormData) {
 export async function oauthSignInAction(formData: FormData) {
   const lang = normalizeLang(formData.get("lang"));
   const provider = String(formData.get("provider") ?? "") as OAuthProvider;
+  const expectedRole = String(formData.get("expected_role") ?? "brand");
+  const entryRole = expectedRole === "creator" ? "creator" : "brand";
+  const nextPath = String(formData.get("next") ?? "").trim();
 
   if (!hasSupabaseConfig()) {
     redirect(
-      `/login?error=${encodeURIComponent("OAuth is disabled in demo mode. Use the preset email and password accounts below.")}&lang=${lang}&site=global`
+      `/login?error=${encodeURIComponent("OAuth is disabled in demo mode. Use the preset email and password accounts below.")}&lang=${lang}&role=${entryRole}`
     );
   }
 
-  if (!["google", "github"].includes(provider)) {
-    redirect(`/login?error=unsupported-provider&lang=${lang}&site=global`);
+  if (provider !== "google") {
+    redirect(`/login?error=unsupported-provider&lang=${lang}&role=${entryRole}`);
+  }
+
+  const callbackUrl = new URL(
+    `${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/auth/callback`
+  );
+  callbackUrl.searchParams.set("role", entryRole);
+  callbackUrl.searchParams.set("lang", lang);
+  if (nextPath.startsWith("/")) {
+    callbackUrl.searchParams.set("next", nextPath);
   }
 
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithOAuth({
-    provider,
+    provider: "google",
     options: {
-      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/auth/callback`
+      redirectTo: callbackUrl.toString(),
+      queryParams: {
+        prompt: "select_account"
+      }
     }
   });
 
   if (error || !data.url) {
-    redirect(`/login?error=${encodeURIComponent(error?.message ?? "OAuth unavailable")}&lang=${lang}&site=global`);
+    redirect(
+      `/login?error=${encodeURIComponent(error?.message ?? "Google sign-in is unavailable")}&lang=${lang}&role=${entryRole}`
+    );
   }
 
   redirect(data.url);
@@ -242,9 +259,9 @@ export async function signOutAction(formData?: FormData) {
   if (hasSupabaseConfig()) {
     const supabase = await createClient();
     await supabase.auth.signOut();
-  } else {
-    await clearDemoSession();
   }
+
+  await clearDemoSession();
 
   redirect(`/?lang=${lang}`);
 }

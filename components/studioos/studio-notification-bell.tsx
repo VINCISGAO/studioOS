@@ -81,6 +81,7 @@ export function StudioNotificationBell({
         await markNotificationReadAction(fd);
       }
       setOpen(false);
+      router.refresh();
       router.push(action.href);
     });
   }

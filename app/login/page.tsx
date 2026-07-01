@@ -1,7 +1,9 @@
 import { redirect } from "next/navigation";
 import { LoginPageShell, type LoginPageCopy } from "@/components/studioos/login-page-shell";
-import { isDemoLoginUiEnabled } from "@/lib/can-persist-local-store";
-import { demoRedirectForRole, type DemoRole } from "@/lib/demo-auth";
+import { isDemoLoginUiEnabled, preferDemoAuth } from "@/lib/can-persist-local-store";
+import { resolvePostLoginDestination } from "@/lib/auth/post-login-redirect";
+import { hasSupabaseConfig } from "@/lib/auth-config";
+import { type DemoRole } from "@/lib/demo-auth";
 import { getLocale, type Locale, type SearchParams, withLocale } from "@/lib/i18n";
 import { getCurrentSession } from "@/lib/session-user";
 import type { LoginRole } from "@/lib/studioos/login-theme";
@@ -208,32 +210,6 @@ function resolveLoginErrorCode(rawError: string | undefined) {
   return undefined;
 }
 
-function resolvePostLoginDestination(
-  session: { role: DemoRole },
-  nextPath: string,
-  locale: Locale
-) {
-  if (!nextPath.startsWith("/")) {
-    return withLocale(demoRedirectForRole(session.role), locale);
-  }
-
-  const isBrandPath = nextPath.startsWith("/brand");
-  const isStudioPath =
-    nextPath.startsWith("/studio") ||
-    nextPath.startsWith("/creator") ||
-    nextPath.startsWith("/workspace/studio");
-
-  if (isBrandPath && session.role !== "client") {
-    return withLocale(demoRedirectForRole(session.role), locale);
-  }
-
-  if (isStudioPath && session.role === "client") {
-    return withLocale("/brand", locale);
-  }
-
-  return withLocale(nextPath, locale);
-}
-
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams;
   const locale = getLocale(params);
@@ -242,6 +218,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const nextPath = typeof params.next === "string" ? params.next : "";
 
   const demoMode = isDemoLoginUiEnabled();
+  const googleOAuthEnabled = hasSupabaseConfig() && !preferDemoAuth();
   const rawError = typeof params.error === "string" ? params.error : undefined;
   const session = await getCurrentSession();
 
@@ -266,6 +243,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       error={error}
       errorCode={errorCode}
       demoMode={demoMode}
+      googleOAuthEnabled={googleOAuthEnabled}
       t={t}
     />
   );

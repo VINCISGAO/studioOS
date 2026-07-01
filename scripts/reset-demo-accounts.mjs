@@ -2,14 +2,15 @@
 /**
  * Reset all demo / test account runtime stores to bundled seed baseline.
  *
- * Initial creator state after reset:
- * - completedOrders === 0 (no completed demo orders)
- * - isVerified === false (all deposits unpaid)
- * - empty profile overlays (creator-profile-store)
+ * Clears campaigns, orders, invitations, messages, and review data for:
+ * - client.arc@studioos.test, client.bright@studioos.test, client.north@studioos.test
+ * - creator.nova@studioos.test, creator.signal@studioos.test, creator.atlas@studioos.test
+ *
+ * Demo auto-seed rows are suppressed via dismissed_demo_ids in seed JSON.
  *
  * Restart dev server after running so in-memory store cache clears.
  */
-import { cpSync, mkdirSync, readdirSync, unlinkSync } from "fs";
+import { cpSync, mkdirSync, readdirSync, writeFileSync } from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -42,39 +43,35 @@ function copySeedStores() {
   return seedFiles;
 }
 
-/** Invitation store is code-seeded (dynamic dates); drop stale runtime copy. */
-function resetRuntimeOnlyStores() {
-  for (const fileName of ["creator-invitation-store.json", "brand-notification-store.json"]) {
-    const runtimePath = path.join(dataDir, fileName);
-    try {
-      unlinkSync(runtimePath);
-    } catch {
-      // missing is fine
-    }
-  }
+function writeJson(fileName, data) {
+  const target = path.join(dataDir, fileName);
+  writeFileSync(target, `${JSON.stringify(data, null, 2)}\n`, "utf8");
 }
 
 const copied = copySeedStores();
-resetRuntimeOnlyStores();
+
+writeJson("creator-invitation-store.json", { invitations: [] });
+writeJson("brand-notification-store.json", { notifications: [] });
 
 console.log("Demo account reset complete.");
 console.log("");
 console.log("Creators (password: TempStudioOS2026!):");
 for (const creator of DEMO_CREATORS) {
   console.log(`  ${creator.email} → ${creator.label}`);
-  console.log(`    completedOrders: 0 · deposit: unpaid · sidebar: all open`);
+  console.log(`    projects · invitations · messages: cleared`);
 }
 console.log("");
 console.log("Brands:");
 for (const brand of DEMO_BRANDS) {
   console.log(`  ${brand.email} → ${brand.label}`);
+  console.log(`    campaigns · orders · messages: cleared`);
 }
 console.log("");
 console.log(`Copied ${copied.length} seed store(s) to .data/`);
-console.log("  invitations + brand notifications: cleared (re-seeded on next request)");
+console.log("  invitations + brand notifications: cleared");
 console.log("");
 console.log("Restart dev server so memory cache clears:");
 console.log("  npm run dev:clean");
 console.log("");
-console.log("Optional — reset MVP review demo separately:");
+console.log("Optional — restore MVP review demo:");
 console.log("  npm run reset:demo-review");

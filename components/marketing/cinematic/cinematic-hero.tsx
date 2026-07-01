@@ -8,7 +8,7 @@ import { CinematicHeroFeatures } from "@/components/marketing/cinematic/cinemati
 import { landingText } from "@/lib/marketing/landing-copy";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
-import { marketingHeadlineClassName, marketingSilverGradientClassName } from "@/lib/studioos/marketing-headline-font";
+import { marketingSilverGradientClassName } from "@/lib/studioos/marketing-headline-font";
 import { cn } from "@/lib/utils";
 
 const HERO_BG = "/api/home-hero-space";
@@ -51,7 +51,6 @@ export function CinematicHero({
   const primaryHref = isLoggedIn ? portalHref : withLocale("/login?role=brand", locale);
   const secondaryLabel = t.secondary;
   const secondaryHref = withLocale("/login?role=creator", locale);
-  const isEnglish = locale === "en";
   const primaryDescription = locale === "zh" ? "匹配优质创作者" : "Match with vetted AI Studios";
   const secondaryDescription = locale === "zh" ? "入驻获取全球订单" : "Join to get global orders";
 
@@ -84,34 +83,30 @@ export function CinematicHero({
           style={reduce ? undefined : { opacity: contentOpacity, y: contentY }}
           className="flex flex-1 flex-col justify-center"
         >
-          <div className={cn(isEnglish ? "max-w-none" : "w-full max-w-3xl sm:max-w-xl")}>
+          <div className="w-full max-w-3xl sm:max-w-xl">
             <p className="inline-flex max-w-full items-center gap-2 rounded-md border border-white/12 bg-white/[0.06] px-3 py-1.5 text-[10px] font-medium leading-5 text-zinc-200 sm:px-3.5 sm:text-[11px]">
               <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-[#c7d1df]" />
               <span className="min-w-0 text-wrap">{t.eyebrow}</span>
             </p>
 
-            <h1
-              className={cn(
-                "mt-5 font-semibold tracking-[-0.04em] sm:mt-6",
-                isEnglish
-                  ? "max-w-none text-[clamp(1.65rem,4.6vw,4.1rem)] leading-[1.02] sm:text-[clamp(2.35rem,3.8vw,3.85rem)] lg:text-[3.85rem] xl:text-[4.1rem]"
-                  : "w-full max-w-none text-[clamp(2.9rem,11.8vw,4.35rem)] leading-[1.01] sm:text-[4.35rem] md:text-[4.5rem] lg:text-[4.5rem] xl:text-[4.55rem]",
-                isEnglish ? marketingHeadlineClassName("en") : "text-pretty"
-              )}
-            >
+            <h1 className="mt-5 w-full max-w-none text-pretty text-[clamp(2.9rem,11.8vw,4.35rem)] font-semibold leading-[1.01] tracking-[-0.04em] sm:mt-6 sm:text-[4.35rem] md:text-[4.5rem] lg:text-[4.5rem] xl:text-[4.55rem]">
               <span
                 className={cn(
-                  "block w-full whitespace-nowrap",
-                  isEnglish ? "text-white" : marketingSilverGradientClassName()
+                  "block w-full sm:whitespace-nowrap",
+                  marketingSilverGradientClassName()
                 )}
               >
                 {t.titleLine1}
               </span>
-              {isEnglish && t.titleHighlight ? (
-                <span className="mt-3 block whitespace-nowrap text-white sm:mt-4">{t.titleHighlight}</span>
-              ) : null}
-              {isEnglish && t.titleLine2 ? (
-                <span className="mt-3 block whitespace-nowrap text-zinc-300 sm:mt-4">{t.titleLine2}</span>
+              {t.titleLine2 ? (
+                <span
+                  className={cn(
+                    "mt-1 block w-full sm:mt-2 sm:whitespace-nowrap",
+                    marketingSilverGradientClassName()
+                  )}
+                >
+                  {t.titleLine2}
+                </span>
               ) : null}
             </h1>
 

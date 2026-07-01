@@ -505,14 +505,15 @@ export function BrandCampaignList({
                           selectable ? (
                             <Button
                               type="button"
-                              variant="ghost"
+                              variant="outline"
                               size="sm"
-                              className="h-9 w-9 p-0 text-zinc-400 hover:text-red-600"
+                              className="h-9 shrink-0 rounded-xl border-red-200 bg-red-50 px-3 text-red-600 hover:border-red-300 hover:bg-red-100 hover:text-red-700"
                               disabled={isPending}
                               onClick={() => openSingleDelete(row)}
                               aria-label={t.delete}
                             >
                               <Trash2 className="h-4 w-4" />
+                              {t.delete}
                             </Button>
                           ) : null
                         }

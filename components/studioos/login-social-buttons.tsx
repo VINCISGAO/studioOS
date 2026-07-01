@@ -1,6 +1,6 @@
 "use client";
 
-import { demoSocialSignInAction } from "@/app/actions";
+import { demoSocialSignInAction, oauthSignInAction } from "@/app/actions";
 import type { Locale } from "@/lib/i18n";
 import { getLoginVisual, type LoginRole, type LoginVisual } from "@/lib/studioos/login-theme";
 import { cn } from "@/lib/utils";
@@ -50,43 +50,100 @@ function DiscordIcon() {
   );
 }
 
-const providers = [
+const demoProviders = [
   { id: "google" as const, label: "Google", Icon: GoogleIcon },
   { id: "apple" as const, label: "Apple", Icon: AppleIcon },
   { id: "discord" as const, label: "Discord", Icon: DiscordIcon }
 ];
 
+function SocialHiddenFields({
+  locale,
+  role,
+  nextPath,
+  provider
+}: {
+  locale: Locale;
+  role: LoginRole;
+  nextPath: string;
+  provider: string;
+}) {
+  return (
+    <>
+      <input type="hidden" name="lang" value={locale} />
+      <input type="hidden" name="provider" value={provider} />
+      <input type="hidden" name="expected_role" value={role} />
+      {nextPath ? <input type="hidden" name="next" value={nextPath} /> : null}
+    </>
+  );
+}
+
 export function LoginSocialButtons({
   locale,
   role,
   nextPath,
+  demoMode,
+  googleOAuthEnabled,
   visualOverride
 }: {
   locale: Locale;
   role: LoginRole;
   nextPath: string;
+  demoMode: boolean;
+  googleOAuthEnabled: boolean;
   visualOverride?: LoginVisual;
 }) {
   const visual = visualOverride ?? getLoginVisual(role);
+  const showGoogleReal = googleOAuthEnabled;
+  const showGoogleDemo = demoMode && !googleOAuthEnabled;
+  const showOtherDemo = demoMode;
 
   return (
-    <div className="mt-6 grid grid-cols-3 gap-3">
-      {providers.map(({ id, label, Icon }) => (
-        <form key={id} action={demoSocialSignInAction} className="min-w-0">
-          <input type="hidden" name="lang" value={locale} />
-          <input type="hidden" name="provider" value={id} />
-          <input type="hidden" name="expected_role" value={role} />
-          {nextPath ? <input type="hidden" name="next" value={nextPath} /> : null}
+    <div className={cn("mt-6 grid gap-3", showOtherDemo ? "grid-cols-3" : "grid-cols-1")}>
+      {showGoogleReal ? (
+        <form action={oauthSignInAction} className="min-w-0">
+          <SocialHiddenFields locale={locale} role={role} nextPath={nextPath} provider="google" />
           <button
             type="submit"
-            aria-label={label}
+            aria-label="Google"
             className={cn(visual.socialBtn, "w-full min-w-0 px-2 sm:px-3")}
           >
-            <Icon />
-            <span className="truncate text-xs sm:text-sm">{label}</span>
+            <GoogleIcon />
+            <span className="truncate text-xs sm:text-sm">Google</span>
           </button>
         </form>
-      ))}
+      ) : null}
+
+      {showGoogleDemo ? (
+        <form action={demoSocialSignInAction} className="min-w-0">
+          <SocialHiddenFields locale={locale} role={role} nextPath={nextPath} provider="google" />
+          <button
+            type="submit"
+            aria-label="Google"
+            className={cn(visual.socialBtn, "w-full min-w-0 px-2 sm:px-3")}
+          >
+            <GoogleIcon />
+            <span className="truncate text-xs sm:text-sm">Google</span>
+          </button>
+        </form>
+      ) : null}
+
+      {showOtherDemo
+        ? demoProviders
+            .filter((provider) => provider.id !== "google")
+            .map(({ id, label, Icon }) => (
+              <form key={id} action={demoSocialSignInAction} className="min-w-0">
+                <SocialHiddenFields locale={locale} role={role} nextPath={nextPath} provider={id} />
+                <button
+                  type="submit"
+                  aria-label={label}
+                  className={cn(visual.socialBtn, "w-full min-w-0 px-2 sm:px-3")}
+                >
+                  <Icon />
+                  <span className="truncate text-xs sm:text-sm">{label}</span>
+                </button>
+              </form>
+            ))
+        : null}
     </div>
   );
 }

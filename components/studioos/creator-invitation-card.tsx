@@ -2,6 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useTransition } from "react";
 import { BadgeCheck, Calendar, Check, Clock, Sparkles, Tag, Wallet, X } from "lucide-react";
 import {
   acceptDemoInvitationAction,
@@ -13,6 +15,7 @@ import { withLocale } from "@/lib/i18n";
 import { invitationStatusLabel } from "@/lib/studioos/campaign-closed-loop";
 import type { CreatorInvitationCardModel } from "@/lib/studioos/creator-invitation-display";
 import { formatInvitationDeadline } from "@/lib/studioos/creator-invitation-display";
+import type { CreatorInvitationTab } from "@/lib/studioos/creator-invitation-utils";
 import { creatorPortalRoutes } from "@/lib/studioos/creator-portal-routes";
 import { cn } from "@/lib/utils";
 
@@ -59,17 +62,45 @@ function CardActions({
   invitation,
   orderId,
   actingId,
-  onActing
+  onActing,
+  onRespond,
+  onActionError
 }: {
   locale: Locale;
   invitation: CreatorInvitationCardModel;
   orderId?: string | null;
   actingId: string | null;
-  onActing: (id: string) => void;
+  onActing: (id: string | null) => void;
+  onRespond: (tab: CreatorInvitationTab) => void;
+  onActionError: (message: string) => void;
 }) {
   const t = copy[locale];
-  const isActing = actingId === invitation.id;
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const isActing = actingId === invitation.id || isPending;
   const status = invitation.status === "not_selected" ? "expired" : invitation.status;
+
+  function runAction(action: "accept" | "decline") {
+    onActing(invitation.id);
+    const formData = new FormData();
+    formData.set("lang", locale);
+    formData.set("invitationId", invitation.id);
+
+    startTransition(async () => {
+      const result =
+        action === "accept"
+          ? await acceptDemoInvitationAction(formData)
+          : await declineDemoInvitationAction(formData);
+
+      if (result.ok) {
+        onRespond(result.nextTab);
+        router.refresh();
+        return;
+      }
+
+      onActionError(result.error);
+    });
+  }
 
   if (status === "selected") {
     const href = orderId
@@ -127,36 +158,30 @@ function CardActions({
 
   return (
     <div className="flex w-full shrink-0 flex-col gap-2 sm:w-[168px]">
-      <form action={acceptDemoInvitationAction} onSubmit={() => onActing(invitation.id)}>
-        <input type="hidden" name="lang" value={locale} />
-        <input type="hidden" name="invitationId" value={invitation.id} />
-        <Button
-          type="submit"
-          size="sm"
-          disabled={isActing}
-          className={cn(
-            "h-10 w-full rounded-xl",
-            isActing ? mutedActionClass : "bg-violet-600 hover:bg-violet-700"
-          )}
-        >
-          <Check className="h-4 w-4" />
-          {t.accept}
-        </Button>
-      </form>
-      <form action={declineDemoInvitationAction} onSubmit={() => onActing(invitation.id)}>
-        <input type="hidden" name="lang" value={locale} />
-        <input type="hidden" name="invitationId" value={invitation.id} />
-        <Button
-          type="submit"
-          variant="outline"
-          size="sm"
-          disabled={isActing}
-          className={cn("h-10 w-full rounded-xl border-zinc-300 bg-white text-zinc-900", isActing && mutedActionClass)}
-        >
-          <X className="h-4 w-4" />
-          {t.decline}
-        </Button>
-      </form>
+      <Button
+        type="button"
+        size="sm"
+        disabled={isActing}
+        onClick={() => runAction("accept")}
+        className={cn(
+          "h-10 w-full rounded-xl",
+          isActing ? mutedActionClass : "bg-violet-600 hover:bg-violet-700"
+        )}
+      >
+        <Check className="h-4 w-4" />
+        {t.accept}
+      </Button>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        disabled={isActing}
+        onClick={() => runAction("decline")}
+        className={cn("h-10 w-full rounded-xl border-zinc-300 bg-white text-zinc-900", isActing && mutedActionClass)}
+      >
+        <X className="h-4 w-4" />
+        {t.decline}
+      </Button>
       <p className="text-xs leading-relaxed text-zinc-500">{t.acceptHint}</p>
     </div>
   );
@@ -167,13 +192,17 @@ export function CreatorInvitationCard({
   invitation,
   orderId,
   actingId,
-  onActing
+  onActing,
+  onRespond,
+  onActionError
 }: {
   locale: Locale;
   invitation: CreatorInvitationCardModel;
   orderId?: string | null;
   actingId: string | null;
-  onActing: (id: string) => void;
+  onActing: (id: string | null) => void;
+  onRespond: (tab: CreatorInvitationTab) => void;
+  onActionError: (message: string) => void;
 }) {
   const t = copy[locale];
   const status = invitation.status === "not_selected" ? "expired" : invitation.status;
@@ -219,6 +248,8 @@ export function CreatorInvitationCard({
           orderId={orderId}
           actingId={actingId}
           onActing={onActing}
+          onRespond={onRespond}
+          onActionError={onActionError}
         />
       </div>
     </article>

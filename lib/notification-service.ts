@@ -35,14 +35,20 @@ function isDemoNotificationDismissed(store: NotificationStore, id: string) {
 async function readStoreInner(): Promise<NotificationStore> {
   const parsed = await readDataJson<NotificationStore>(STORE_PATH, () => emptyStore());
   parsed.dismissed_demo_ids ??= [];
-  const next = ensureDemoNotifications(parsed);
-  if (
-    JSON.stringify(next.notifications) !== JSON.stringify(parsed.notifications) ||
-    JSON.stringify(next.dismissed_demo_ids) !== JSON.stringify(parsed.dismissed_demo_ids)
-  ) {
-    await writeStore(next);
+  if (process.env.STUDIOOS_SEED_DEMO_NOTIFICATIONS === "1") {
+    const next = ensureDemoNotifications(parsed);
+    if (
+      JSON.stringify(next.notifications) !== JSON.stringify(parsed.notifications) ||
+      JSON.stringify(next.dismissed_demo_ids) !== JSON.stringify(parsed.dismissed_demo_ids)
+    ) {
+      await writeStore(next);
+    }
+    return next;
   }
-  return next;
+  parsed.notifications = parsed.notifications.filter(
+    (item) => !isDemoNotificationDismissed(parsed, item.id)
+  );
+  return parsed;
 }
 
 function ensureDemoNotifications(store: NotificationStore): NotificationStore {
