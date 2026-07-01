@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentCreatorId } from "@/lib/creator-session";
+import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { withLocale, type Locale } from "@/lib/i18n";
 import { getProject } from "@/lib/project-service";
 import { notifyBrandInvitationResponse } from "@/lib/studioos/campaign-invitation-notify";
@@ -36,15 +37,17 @@ export async function acceptDemoInvitationAction(formData: FormData): Promise<In
     redirect(withLocale("/login?role=creator", locale));
   }
 
-  const result = await acceptInvitation(invitationId, creatorId);
+  const result = await acceptInvitation(invitationId, creatorId, locale);
   if (result.ok) {
     const project = await getProject(result.invitation.projectId);
-    await notifyBrandInvitationResponse({
-      invitation: result.invitation,
-      project,
-      action: "accepted",
-      locale
-    });
+    if (!hasDatabaseUrl()) {
+      await notifyBrandInvitationResponse({
+        invitation: result.invitation,
+        project,
+        action: "accepted",
+        locale
+      });
+    }
     revalidateInvitationPaths(result.invitation.projectId);
     return { ok: true, nextTab: "accepted" };
   }
@@ -60,15 +63,17 @@ export async function declineDemoInvitationAction(formData: FormData): Promise<I
     redirect(withLocale("/login?role=creator", locale));
   }
 
-  const result = await declineInvitation(invitationId, creatorId);
+  const result = await declineInvitation(invitationId, creatorId, locale);
   if (result.ok) {
     const project = await getProject(result.invitation.projectId);
-    await notifyBrandInvitationResponse({
-      invitation: result.invitation,
-      project,
-      action: "declined",
-      locale
-    });
+    if (!hasDatabaseUrl()) {
+      await notifyBrandInvitationResponse({
+        invitation: result.invitation,
+        project,
+        action: "declined",
+        locale
+      });
+    }
     revalidateInvitationPaths(result.invitation.projectId);
     return { ok: true, nextTab: "declined" };
   }

@@ -9,7 +9,7 @@ import { headers } from "next/headers";
 export type ActivityActor = {
   userId?: string | null;
   email: string;
-  role?: "brand" | "system" | "admin";
+  role?: "brand" | "creator" | "system" | "admin";
 };
 
 export class ActivityService {

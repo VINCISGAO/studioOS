@@ -1,6 +1,10 @@
 import "server-only";
 
 import type { CreatorPortalInvitationView } from "@/features/creator/creator-portal.types";
+import { invitationService } from "@/features/matching/invitation.service";
+import { resolveCreatorProfileIdForLegacyId } from "@/features/matching/invitation-creator-bridge";
+import { campaignRepository } from "@/features/campaign/campaign.repository";
+import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { createSerializedStoreReader, writeJsonFileAtomic } from "@/lib/json-file-store";
 import { listCreatorsForMatching } from "@/lib/creator-service";
 import { dataStorePath, readDataJson, writeDataJson } from "@/lib/serverless-store";
@@ -45,6 +49,13 @@ async function writeStore(store: CreatorInvitationStore) {
 }
 
 export async function listInvitationsForCreator(creatorId: string): Promise<CreatorPortalInvitationView[]> {
+  if (hasDatabaseUrl()) {
+    const profileId = await resolveCreatorProfileIdForLegacyId(creatorId);
+    if (profileId) {
+      return invitationService.listForLegacyCreator(creatorId);
+    }
+  }
+
   const store = await readStore();
   return store.invitations
     .filter((item) => item.creatorId === creatorId)
@@ -52,6 +63,13 @@ export async function listInvitationsForCreator(creatorId: string): Promise<Crea
 }
 
 export async function listAcceptedInvitationsForProject(projectId: string) {
+  if (hasDatabaseUrl()) {
+    const campaign = await campaignRepository.findByLegacyProjectId(projectId);
+    if (campaign) {
+      return invitationService.listAcceptedForLegacyProject(projectId);
+    }
+  }
+
   const store = await readStore();
   return store.invitations.filter(
     (item) => item.projectId === projectId && item.status === "accepted"
@@ -59,16 +77,37 @@ export async function listAcceptedInvitationsForProject(projectId: string) {
 }
 
 export async function listInvitationsForProject(projectId: string) {
+  if (hasDatabaseUrl()) {
+    const campaign = await campaignRepository.findByLegacyProjectId(projectId);
+    if (campaign) {
+      return invitationService.listForLegacyProject(projectId);
+    }
+  }
+
   const store = await readStore();
   return store.invitations.filter((item) => item.projectId === projectId);
 }
 
 export async function getInvitationById(id: string) {
+  if (hasDatabaseUrl()) {
+    const prismaInvitation = await invitationService.getPortalInvitationById(id);
+    if (prismaInvitation) {
+      return prismaInvitation;
+    }
+  }
+
   const store = await readStore();
   return store.invitations.find((item) => item.id === id) ?? null;
 }
 
-export async function acceptInvitation(id: string, creatorId: string) {
+export async function acceptInvitation(id: string, creatorId: string, locale: "en" | "zh" = "en") {
+  if (hasDatabaseUrl()) {
+    const profileId = await resolveCreatorProfileIdForLegacyId(creatorId);
+    if (profileId) {
+      return invitationService.acceptForLegacyCreator(id, creatorId, locale);
+    }
+  }
+
   const store = await readStore();
   const item = store.invitations.find((row) => row.id === id && row.creatorId === creatorId);
   if (!item) return { ok: false as const, error: "not-found" };
@@ -84,7 +123,14 @@ export async function acceptInvitation(id: string, creatorId: string) {
   return { ok: true as const, invitation: item };
 }
 
-export async function declineInvitation(id: string, creatorId: string) {
+export async function declineInvitation(id: string, creatorId: string, locale: "en" | "zh" = "en") {
+  if (hasDatabaseUrl()) {
+    const profileId = await resolveCreatorProfileIdForLegacyId(creatorId);
+    if (profileId) {
+      return invitationService.declineForLegacyCreator(id, creatorId, locale);
+    }
+  }
+
   const store = await readStore();
   const item = store.invitations.find((row) => row.id === id && row.creatorId === creatorId);
   if (!item) return { ok: false as const, error: "not-found" };
@@ -168,7 +214,14 @@ export async function selectCreatorForProject(input: {
   return { ok: true as const, order: checkout.order, invitation: winner };
 }
 
-export async function ensureCampaignInvitationsForProject(project: StoredProject) {
+export async function ensureCampaignInvitationsForProject(project: StoredProject, locale: "en" | "zh" = "en") {
+  if (hasDatabaseUrl()) {
+    const campaign = await campaignRepository.findByLegacyProjectId(project.id);
+    if (campaign) {
+      return invitationService.ensureForProject(project, locale);
+    }
+  }
+
   const store = await readStore();
   const existing = store.invitations.filter((item) => item.projectId === project.id);
   if (existing.length > 0) {

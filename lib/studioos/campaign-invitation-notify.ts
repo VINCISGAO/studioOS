@@ -4,6 +4,7 @@ import { getCreatorByIdSync } from "@/lib/creator-service";
 import { creators } from "@/lib/data";
 import type { Locale } from "@/lib/i18n";
 import { createBrandNotification, hasBrandNotification } from "@/lib/studioos/brand-notification-service";
+import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { getConfirmedBriefText } from "@/lib/studioos/confirmed-brief";
 import { ensureCampaignInvitationsForProject } from "@/lib/studioos/creator-invitation-store";
 import type { StoredCreatorInvitation } from "@/lib/studioos/creator-invitation-types";
@@ -65,7 +66,11 @@ export async function publishCampaignIntentInvitations(input: {
   project: StoredProject;
   locale: Locale;
 }) {
-  const invitations = await ensureCampaignInvitationsForProject(input.project);
+  const invitations = await ensureCampaignInvitationsForProject(input.project, input.locale);
+  if (hasDatabaseUrl()) {
+    return invitations;
+  }
+
   const pending = invitations.filter((item) => item.status === "pending");
   const brandName = input.project.company_name || input.project.client_name || "Brand";
   const projectTitle = input.project.title || input.project.product_name || brandName;

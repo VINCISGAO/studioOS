@@ -1,3 +1,4 @@
+import { invitationPortalService } from "@/features/matching/invitation-portal.service";
 import { invitationRepository } from "@/features/matching/invitation.repository";
 import { matchingService } from "@/features/matching/matching.service";
 import { campaignRepository } from "@/features/campaign/campaign.repository";
@@ -6,6 +7,8 @@ import { CampaignEvent, CampaignState } from "@/features/campaign/campaign.state
 import type { AuthUser } from "@/features/auth/permission.service";
 import { PermissionService } from "@/features/auth/permission.service";
 import { appError } from "@/lib/core/errors";
+import type { Locale } from "@/lib/i18n";
+import type { StoredProject } from "@/lib/project-types";
 import { hasDatabaseUrl, prisma } from "@/lib/core/database/prisma";
 
 export function serializeInvitation(
@@ -118,6 +121,35 @@ export class InvitationService {
 
     await invitationRepository.updateStatus(invitationId, "DECLINED");
     return serializeInvitation(invitation);
+  }
+
+  // Brand portal — legacy proj_* flow (Prisma primary, JSON fallback in store)
+  ensureForProject(project: StoredProject, locale?: Locale) {
+    return invitationPortalService.ensureForProject(project, locale);
+  }
+
+  listForLegacyProject(legacyProjectId: string) {
+    return invitationPortalService.listForProject(legacyProjectId);
+  }
+
+  listAcceptedForLegacyProject(legacyProjectId: string) {
+    return invitationPortalService.listAcceptedForProject(legacyProjectId);
+  }
+
+  listForLegacyCreator(legacyCreatorId: string) {
+    return invitationPortalService.listForCreator(legacyCreatorId);
+  }
+
+  getPortalInvitationById(id: string) {
+    return invitationPortalService.getById(id);
+  }
+
+  acceptForLegacyCreator(invitationId: string, legacyCreatorId: string, locale?: Locale) {
+    return invitationPortalService.acceptForCreator(invitationId, legacyCreatorId, locale);
+  }
+
+  declineForLegacyCreator(invitationId: string, legacyCreatorId: string, locale?: Locale) {
+    return invitationPortalService.declineForCreator(invitationId, legacyCreatorId, locale);
   }
 }
 

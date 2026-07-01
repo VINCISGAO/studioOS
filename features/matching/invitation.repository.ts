@@ -1,15 +1,39 @@
 import type { InvitationStatus } from "@prisma/client";
 import { prisma, hasDatabaseUrl } from "@/lib/core/database/prisma";
 
+import type { InvitationStatus } from "@prisma/client";
+import { prisma, hasDatabaseUrl } from "@/lib/core/database/prisma";
+
 export class InvitationRepository {
   async listForCampaign(campaignId: string) {
     if (!hasDatabaseUrl()) return [];
     return prisma.creatorInvitation.findMany({
       where: { campaignId },
       include: {
-        creator: { include: { user: true } }
+        creator: { include: { user: true } },
+        campaign: {
+          include: {
+            brand: { include: { brandProfile: true } }
+          }
+        }
       },
       orderBy: { matchScore: "desc" }
+    });
+  }
+
+  async listForCreatorProfile(creatorProfileId: string) {
+    if (!hasDatabaseUrl()) return [];
+    return prisma.creatorInvitation.findMany({
+      where: { creatorId: creatorProfileId },
+      include: {
+        creator: { include: { user: true } },
+        campaign: {
+          include: {
+            brand: { include: { brandProfile: true } }
+          }
+        }
+      },
+      orderBy: { createdAt: "desc" }
     });
   }
 
@@ -18,7 +42,11 @@ export class InvitationRepository {
     return prisma.creatorInvitation.findUnique({
       where: { id },
       include: {
-        campaign: true,
+        campaign: {
+          include: {
+            brand: { include: { brandProfile: true } }
+          }
+        },
         creator: { include: { user: true } }
       }
     });
@@ -45,7 +73,12 @@ export class InvitationRepository {
         expiresAt: input.expiresAt ?? new Date(Date.now() + 7 * 86400000)
       },
       include: {
-        creator: { include: { user: true } }
+        creator: { include: { user: true } },
+        campaign: {
+          include: {
+            brand: { include: { brandProfile: true } }
+          }
+        }
       }
     });
   }
@@ -59,8 +92,15 @@ export class InvitationRepository {
 
   async declineOthers(campaignId: string, exceptId: string) {
     await prisma.creatorInvitation.updateMany({
-      where: { campaignId, id: { not: exceptId }, status: "SENT" },
+      where: { campaignId, id: { not: exceptId }, status: { in: ["SENT", "VIEWED"] } },
       data: { status: "DECLINED", respondedAt: new Date() }
+    });
+  }
+
+  async countAcceptedForCampaign(campaignId: string) {
+    if (!hasDatabaseUrl()) return 0;
+    return prisma.creatorInvitation.count({
+      where: { campaignId, status: "ACCEPTED" }
     });
   }
 }
