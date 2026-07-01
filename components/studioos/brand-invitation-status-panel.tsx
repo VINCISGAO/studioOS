@@ -10,7 +10,8 @@ import { cn } from "@/lib/utils";
 const copy = {
   en: {
     title: "Intent invitations sent",
-    subtitle: "Matched creators received intent orders. Accept and decline both notify you; acceptances join the shortlist for your final pick.",
+    subtitle:
+      "Matched creators received intent orders. Acceptances join the shortlist — pick one candidate to officially start the project.",
     pending: "Awaiting response",
     accepted: "Accepted",
     declined: "Declined",
@@ -52,15 +53,15 @@ export function BrandInvitationStatusPanel({
   ];
 
   return (
-    <div className={cn(portalChrome.card, "p-5 sm:p-6")}>
+    <div className={cn(portalChrome.card, "flex h-full flex-col p-5 sm:p-6")}>
       <h2 className="text-lg font-semibold text-zinc-950">{t.title}</h2>
       <p className={cn("mt-2 max-w-2xl", portalChrome.body)}>{t.subtitle}</p>
 
-      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-5 grid flex-1 gap-3 sm:grid-cols-2">
         {stats.map((item) => {
           const Icon = item.icon;
           return (
-            <div key={item.label} className="rounded-xl border border-zinc-200/80 bg-zinc-50/50 px-4 py-3">
+            <div key={item.label} className="rounded-xl border border-zinc-200/80 bg-zinc-50/40 px-4 py-3">
               <div className="flex items-center gap-2 text-xs font-medium text-zinc-500">
                 <span className={cn("flex h-7 w-7 items-center justify-center rounded-lg", item.tone)}>
                   <Icon className="h-3.5 w-3.5" />
@@ -75,7 +76,7 @@ export function BrandInvitationStatusPanel({
 
       <Link
         href={withLocale(`${brandPortalRoutes.messages}?tab=project`, locale)}
-        className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-zinc-900 hover:underline"
+        className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-zinc-900 hover:text-indigo-700"
       >
         <Bell className="h-4 w-4" />
         {t.viewMessages}

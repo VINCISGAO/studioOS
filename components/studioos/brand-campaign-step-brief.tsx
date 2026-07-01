@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { refineBrandBriefAction } from "@/app/brand-campaign-actions";
 import { addReferenceAction, removeReferenceAction } from "@/app/project-wizard-actions";
+import { BrandCampaignBriefStep1Panel } from "@/components/studioos/brand-campaign-brief-step1-panel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,8 +56,8 @@ const copy = {
     steps: ["Brief", "Prepare", "Confirm", "Studios"],
     title: "Tell us about your campaign",
     subtitle: "Start with a casual description — AI turns it into a studio-ready brief in seconds.",
-    aiHeroTitle: "Describe your idea in plain language",
-    aiHeroHint: "Not sure how to describe it? Just cover the key points — AI will organize it for you.",
+    aiHeroTitle: "Describe your ad idea with AI",
+    aiHeroHint: "Not sure how to write it? Share the key points — AI will turn them into a professional brief.",
     aiPlaceholder:
       "e.g. We're launching a travel pouch on TikTok — target urban women 25–35, clean minimal vibe, 30s vertical…",
     detailsTitle: "Fine-tune details",
@@ -71,6 +72,7 @@ const copy = {
     uploading: "Uploading…",
     uploadFailed: "Upload failed",
     clickToUpload: "Click to choose an image",
+    clickToUploadDrag: "Click to choose an image or drag here",
     formats: "JPG, PNG, WebP · max 10MB",
     q1: "What are you promoting?",
     q1Hint: "Describe the product in your own words.",
@@ -112,12 +114,15 @@ const copy = {
     refsTitle: "Style references (optional)",
     refsHint: "Reference videos help us quickly understand your preferences.",
     refsEmpty: "Paste a TikTok, YouTube, or Instagram link",
+    refPlaceholder: "Paste a TikTok, YouTube, or Instagram link",
     paste: "Paste:",
     addRef: "Add",
     removeRef: "Remove",
     or: "or",
-    uploadSample: "Upload reference video",
-    uploadSampleHint: "Max 50MB — coming soon",
+    uploadSample: "No link yet? Drag or upload a reference video",
+    uploadSampleHint: "mp4, mov · max 50MB",
+    draftSaved: "Draft saved automatically · just now",
+    continuePending: "Continuing…",
     aspectRatioTitle: "Video aspect ratio",
     aspectRatioHint: "Required — pick the primary format for your deliverable.",
     aspectRatioError: "Select a video aspect ratio."
@@ -128,8 +133,8 @@ const copy = {
     steps: ["需求", "准备", "确认", "Studio"],
     title: "告诉我们你想做什么广告",
     subtitle: "先用口语描述想法 — AI 几秒内整理成 Studio 能用的专业 Brief。",
-    aiHeroTitle: "用口语描述你的广告想法",
-    aiHeroHint: "不会描述没关系，把重点说完即可，AI 为您整理。",
+    aiHeroTitle: "用 AI 描述你的广告想法",
+    aiHeroHint: "不会写没关系，把重点说完即可，AI 帮你整理成专业需求。",
     aiPlaceholder:
       "例如：新上的旅行收纳包，想做 TikTok，面向 25-35 岁都市女生，高级极简风，30 秒竖屏…",
     detailsTitle: "补充细节",
@@ -144,6 +149,7 @@ const copy = {
     uploading: "上传中…",
     uploadFailed: "上传失败",
     clickToUpload: "点击选择图片",
+    clickToUploadDrag: "点击选择图片或拖拽到此处",
     formats: "JPG、PNG、WebP · 最大 10MB",
     q1: "你要推广什么？",
     q1Hint: "用你自己的话介绍产品。",
@@ -185,12 +191,15 @@ const copy = {
     refsTitle: "风格参考（选填）",
     refsHint: "有参考视频，帮助我们快速锁定您的喜好。",
     refsEmpty: "粘贴 TikTok、YouTube 或 Instagram 链接",
+    refPlaceholder: "粘贴链接到 TikTok、YouTube 或 Instagram",
     paste: "粘贴：",
     addRef: "添加",
     removeRef: "删除",
     or: "或",
-    uploadSample: "上传参考视频",
-    uploadSampleHint: "最大 50MB — 即将支持",
+    uploadSample: "还没有链接？拖拽或上传参考视频",
+    uploadSampleHint: "支持 mp4、mov，最大 50MB",
+    draftSaved: "草稿已自动保存 / 刚刚",
+    continuePending: "继续中…",
     aspectRatioTitle: "视频比例",
     aspectRatioHint: "必选 — 选择成片的主要规格。",
     aspectRatioError: "请选择视频比例。"
@@ -672,6 +681,55 @@ export function BrandCampaignStepBrief({
   const showBrief = stepMode === "brief" || stepMode === "all";
   const showProduct = stepMode === "product" || stepMode === "all";
   const showReferences = stepMode === "references" || stepMode === "all";
+
+  if (hideTopBar && stepMode === "all") {
+    const { steps: _steps, ...briefPanelCopy } = t;
+    return (
+      <BrandCampaignBriefStep1Panel
+        locale={locale}
+        copy={briefPanelCopy}
+        form={form}
+        patch={patch}
+        budgetCustom={budgetCustom}
+        budgetCustomError={budgetCustomError}
+        budgetIsCustom={budgetIsCustom}
+        aspectRatioError={aspectRatioError}
+        displayError={displayError}
+        refinedApplied={refinedApplied}
+        applyNotice={applyNotice}
+        isPolishing={isPolishing}
+        isPending={isPending}
+        isSavingDraft={isSavingDraft}
+        isUploading={isUploading}
+        isRefPending={isRefPending}
+        continueDisabled={continueDisabled}
+        productReady={productReady}
+        previewUrl={previewUrl}
+        uploadError={uploadError}
+        references={references}
+        refUrl={refUrl}
+        setRefUrl={setRefUrl}
+        fileInputRef={fileInputRef}
+        onPolish={handlePolish}
+        onApplyRefined={handleApplyRefined}
+        onUploadClick={() => fileInputRef.current?.click()}
+        onUploadFile={handleUploadFile}
+        onAddRef={handleAddRef}
+        onRemoveRef={handleRemoveRef}
+        onSelectPresetBudget={selectPresetBudget}
+        onBudgetCustomChange={handleBudgetCustomChange}
+        onBudgetCustomBlur={handleBudgetCustomBlur}
+        onAspectRatioSelect={(value) => {
+          patch("aspectRatio", value);
+          setAspectRatioError(null);
+          setLocalError(null);
+        }}
+        onContinue={handleContinue}
+        onSaveDraft={onSaveDraft ? handleSaveDraft : undefined}
+        updateRefined={updateRefined}
+      />
+    );
+  }
 
   return (
     <section className="space-y-8">

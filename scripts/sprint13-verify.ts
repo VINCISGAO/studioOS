@@ -43,7 +43,9 @@ async function main() {
 
     checks.push({
       name: "ui.invitations_panel",
-      ok: read("components/studioos/creator-invitations-board.tsx").includes("acceptDemoInvitationAction"),
+      ok:
+        read("components/studioos/creator-invitation-card.tsx").includes("acceptDemoInvitationAction") ||
+        read("components/studioos/creator-invitations-board.tsx").includes("acceptDemoInvitationAction"),
       detail: "CreatorInvitationsBoard"
     });
 

@@ -1,23 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition, type ComponentType } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight,
-  Banknote,
-  Bitcoin,
   CheckCircle2,
-  Clock3,
   Landmark,
-  Loader2,
-  MessageCircle,
-  Pencil,
-  Shield,
-  Smartphone,
-  Sparkles,
-  TrendingUp,
-  Wallet,
-  XCircle
+  Loader2
 } from "lucide-react";
 import {
   addPayoutMethodAction,
@@ -27,6 +16,9 @@ import {
   submitWithdrawalAction,
   updatePayoutMethodAction
 } from "@/app/withdrawal-actions";
+import { IncomeFinancialHero } from "@/components/studioos/income-financial-hero";
+import { IncomePayoutMethodsSection } from "@/components/studioos/income-payout-methods-section";
+import { IncomeWithdrawalHistorySection } from "@/components/studioos/income-withdrawal-history-section";
 import { PayoutQrUploadField } from "@/components/studioos/payout-qr-upload-field";
 import { Button } from "@/components/ui/button";
 import {
@@ -49,7 +41,6 @@ import type { Locale } from "@/lib/i18n";
 import {
   computeWithdrawalFee,
   estimateCryptoAmount,
-  maskWalletAddress,
   payoutMethodSummary
 } from "@/lib/studioos/withdrawal-utils";
 import type {
@@ -61,8 +52,7 @@ import type {
   WithdrawalRequest,
   WithdrawalStatus
 } from "@/lib/studioos/withdrawal-types";
-import { formatCurrency } from "@/lib/utils";
-import { cn } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 
 const PAYOUT_METHOD_TYPES: PayoutMethodType[] = ["alipay", "wechat", "paypal", "bank_wire", "crypto"];
 
@@ -495,209 +485,29 @@ export function IncomeWithdrawalPanel({
   const stepIndex = steps.indexOf(step);
 
   return (
-    <div className="space-y-8">
-      <section className="relative overflow-hidden rounded-3xl border border-zinc-200/80 bg-[radial-gradient(circle_at_top_right,_rgba(16,185,129,0.08),_transparent_38%),linear-gradient(180deg,#ffffff_0%,#f8faf9_100%)] p-8 sm:p-10">
-        <div className="relative flex flex-col gap-8 xl:flex-row xl:items-end xl:justify-between">
-          <div className="max-w-2xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-zinc-500">{t.eyebrow}</p>
-            <p className="mt-4 text-sm font-medium text-emerald-700">{t.readyToWithdraw}</p>
-            <p className="mt-2 text-5xl font-semibold tracking-tight text-zinc-950 sm:text-6xl">
-              {formatCurrency(snapshot.available_usd)}
-            </p>
-            <p className="mt-3 max-w-xl text-sm leading-7 text-zinc-600">{t.escrowNote}</p>
-            <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1.5 text-xs text-zinc-600 ring-1 ring-zinc-200/80">
-              <Shield className="h-3.5 w-3.5 text-emerald-600" />
-              {t.secured}
-            </div>
-          </div>
+    <div className="space-y-6">
+      <IncomeFinancialHero
+        locale={locale}
+        snapshot={snapshot}
+        canWithdraw={snapshot.available_usd >= snapshot.min_withdrawal_usd && methods.length > 0}
+        onWithdraw={openWithdraw}
+        onAddMethod={openAddMethodDialog}
+      />
 
-          <div className="flex flex-wrap gap-3">
-            <Button
-              size="lg"
-              className="h-11 rounded-full px-6 shadow-sm"
-              onClick={openWithdraw}
-              disabled={snapshot.available_usd < snapshot.min_withdrawal_usd || methods.length === 0}
-            >
-              <Wallet className="h-4 w-4" /> {t.withdraw}
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="h-11 rounded-full border-zinc-300 bg-white/80 px-6 backdrop-blur"
-              onClick={openAddMethodDialog}
-            >
-              <Landmark className="h-4 w-4" /> {t.addMethod}
-            </Button>
-          </div>
-        </div>
-
-        <div className="relative mt-8 grid gap-3 sm:grid-cols-3">
-          <MetricCard
-            label={t.held}
-            value={formatCurrency(snapshot.held_usd)}
-            icon={Clock3}
-            tone="amber"
-          />
-          <MetricCard
-            label={t.pending}
-            value={formatCurrency(snapshot.pending_withdrawal_usd)}
-            icon={TrendingUp}
-            tone="zinc"
-          />
-          <MetricCard
-            label={t.lifetime}
-            value={formatCurrency(snapshot.lifetime_withdrawn_usd)}
-            icon={Sparkles}
-            tone="emerald"
-          />
-        </div>
-      </section>
-
-      <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-        <section className="overflow-hidden rounded-2xl border border-zinc-200/90 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.04)]">
-          <div className="flex items-center justify-between gap-4 border-b border-zinc-100 px-5 py-4 sm:px-6">
-            <div>
-              <h2 className="text-base font-semibold tracking-tight text-zinc-950">{t.payoutMethods}</h2>
-              <p className="mt-0.5 text-sm text-zinc-500">{t.payoutMethodsBody}</p>
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="h-9 shrink-0 rounded-lg"
-              onClick={openAddMethodDialog}
-            >
-              <Landmark className="h-3.5 w-3.5" />
-              {t.addMethod}
-            </Button>
-          </div>
-
-          {successMessage ? (
-            <div className="mx-5 mt-4 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm text-emerald-800 sm:mx-6">
-              <CheckCircle2 className="h-4 w-4 shrink-0" />
-              {successMessage}
-            </div>
-          ) : null}
-
-          {methods.length ? (
-            <ul className="divide-y divide-zinc-100">
-              {methods.map((method) => (
-                <li key={method.id} className="group px-5 py-4 transition hover:bg-zinc-50/80 sm:px-6">
-                  <div className="flex items-start gap-4">
-                    <MethodTypeBadge type={method.type} />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="text-sm font-medium text-zinc-950">{method.label}</p>
-                        {method.is_default ? (
-                          <span className="rounded-md bg-zinc-900 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white">
-                            {t.default}
-                          </span>
-                        ) : null}
-                        <span className="text-xs text-zinc-400">{methodTypeLabel(method.type, locale)}</span>
-                      </div>
-                      <p className="mt-1 truncate font-mono text-xs text-zinc-500">
-                        {payoutMethodSummary(method, locale)}
-                      </p>
-                    </div>
-                    <div className="flex shrink-0 items-center gap-1">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 rounded-lg px-2.5 text-xs text-zinc-600"
-                        disabled={isPending}
-                        onClick={() => openEditMethodDialog(method)}
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                        {t.edit}
-                      </Button>
-                      {!method.is_default ? (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="hidden h-8 rounded-lg px-2.5 text-xs text-zinc-600 sm:inline-flex"
-                          disabled={isPending}
-                          onClick={() => handleSetDefault(method)}
-                        >
-                          {t.setDefaultAction}
-                        </Button>
-                      ) : null}
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 rounded-lg px-2.5 text-xs text-red-600 hover:bg-red-50 hover:text-red-700"
-                        disabled={isPending}
-                        onClick={() => handleRemoveMethod(method)}
-                      >
-                        {t.removeMethod}
-                      </Button>
-                    </div>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <div className="px-6 py-16 text-center">
-              <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-100 text-zinc-600">
-                <Landmark className="h-5 w-5" />
-              </span>
-              <p className="mt-4 text-base font-medium text-zinc-950">{t.emptyMethodsTitle}</p>
-              <p className="mx-auto mt-1 max-w-sm text-sm text-zinc-500">{t.emptyMethodsBody}</p>
-              <Button className="mt-6 rounded-lg" onClick={openAddMethodDialog}>
-                <Landmark className="h-4 w-4" /> {t.addMethod}
-              </Button>
-            </div>
-          )}
-        </section>
-
-        <section className="rounded-3xl border border-zinc-200/80 bg-white shadow-[0_8px_30px_rgba(0,0,0,0.03)]">
-          <div className="border-b border-zinc-100 px-6 py-5 sm:px-8">
-            <h2 className="text-lg font-semibold tracking-tight text-zinc-950">{t.history}</h2>
-            <p className="mt-1 text-sm text-zinc-500">{t.recentActivity}</p>
-          </div>
-
-          {withdrawals.length ? (
-            <ul className="divide-y divide-zinc-100">
-              {withdrawals.map((item) => (
-                <li key={item.id} className="px-6 py-5 sm:px-8">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0">
-                      <p className="text-lg font-semibold tabular-nums text-zinc-950">
-                        {formatCurrency(item.amount_usd)}
-                      </p>
-                      <p className="mt-1 text-sm text-zinc-500">
-                        {item.crypto_asset
-                          ? `${item.crypto_amount} ${item.crypto_asset} · ${maskWalletAddress(item.wallet_address ?? "")}`
-                          : formatCurrency(item.net_usd)}
-                      </p>
-                      <p className="mt-2 text-xs text-zinc-400">
-                        {new Date(item.created_at).toLocaleString(locale === "zh" ? "zh-CN" : "en-US")}
-                      </p>
-                    </div>
-                    <div className="flex shrink-0 flex-col items-end gap-2">
-                      <WithdrawalStatusBadge status={item.status} label={t.status[item.status]} />
-                      {item.status === "pending" ? (
-                        <Button size="sm" variant="ghost" className="h-8 rounded-full px-3 text-xs" onClick={() => handleCancel(item.id)} disabled={isPending}>
-                          {t.cancel}
-                        </Button>
-                      ) : null}
-                    </div>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <div className="px-6 py-14 text-center sm:px-8">
-              <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-100 text-zinc-700">
-                <Wallet className="h-6 w-6" />
-              </span>
-              <p className="mt-5 text-base font-semibold text-zinc-950">{t.emptyHistoryTitle}</p>
-              <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-zinc-500">{t.emptyHistoryBody}</p>
-            </div>
-          )}
-        </section>
+      <div className="grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
+        <IncomePayoutMethodsSection
+          locale={locale}
+          methods={methods}
+          successMessage={successMessage}
+          onAddMethod={openAddMethodDialog}
+          onEditMethod={openEditMethodDialog}
+        />
+        <IncomeWithdrawalHistorySection
+          locale={locale}
+          withdrawals={withdrawals}
+          isPending={isPending}
+          onCancel={handleCancel}
+        />
       </div>
 
       <Dialog open={withdrawOpen} onOpenChange={setWithdrawOpen}>
@@ -1062,38 +872,42 @@ export function IncomeWithdrawalPanel({
               {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
               {editingMethod ? (locale === "zh" ? "保存更改" : "Save changes") : t.saveMethod}
             </Button>
+
+            {editingMethod ? (
+              <div className="flex flex-wrap gap-2 pt-1">
+                {!editingMethod.is_default ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="rounded-lg"
+                    disabled={isPending}
+                    onClick={() => {
+                      handleSetDefault(editingMethod);
+                      closeMethodDialog();
+                    }}
+                  >
+                    {t.setDefaultAction}
+                  </Button>
+                ) : null}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="rounded-lg text-red-600 hover:bg-red-50 hover:text-red-700"
+                  disabled={isPending}
+                  onClick={() => {
+                    handleRemoveMethod(editingMethod);
+                    closeMethodDialog();
+                  }}
+                >
+                  {t.removeMethod}
+                </Button>
+              </div>
+            ) : null}
           </form>
         </DialogContent>
       </Dialog>
-    </div>
-  );
-}
-
-function MetricCard({
-  label,
-  value,
-  icon: Icon,
-  tone = "zinc"
-}: {
-  label: string;
-  value: string;
-  icon: ComponentType<{ className?: string }>;
-  tone?: "zinc" | "emerald" | "amber";
-}) {
-  const iconTone =
-    tone === "emerald" ? "bg-emerald-600" : tone === "amber" ? "bg-amber-500" : "bg-zinc-900";
-
-  return (
-    <div className="rounded-2xl border border-white/80 bg-white/80 px-5 py-4 shadow-[0_1px_0_rgba(0,0,0,0.03)] backdrop-blur">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">{label}</p>
-          <p className="mt-2 text-2xl font-semibold tabular-nums tracking-tight text-zinc-950">{value}</p>
-        </div>
-        <span className={cn("flex h-10 w-10 items-center justify-center rounded-2xl text-white", iconTone)}>
-          <Icon className="h-4 w-4" />
-        </span>
-      </div>
     </div>
   );
 }
@@ -1105,41 +919,6 @@ function ReviewRow({ label, value, highlight }: { label: string; value: string; 
       <span className={cn("font-medium", highlight && "text-lg")}>{value}</span>
     </div>
   );
-}
-
-function MethodTypeBadge({ type }: { type: PayoutMethodType }) {
-  const tone =
-    type === "crypto"
-      ? "bg-amber-50 text-amber-700 ring-amber-100"
-      : type === "paypal"
-        ? "bg-blue-50 text-blue-700 ring-blue-100"
-        : type === "alipay"
-          ? "bg-sky-50 text-sky-700 ring-sky-100"
-          : type === "wechat"
-            ? "bg-green-50 text-green-700 ring-green-100"
-            : "bg-emerald-50 text-emerald-700 ring-emerald-100";
-
-  return (
-    <span className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ring-1", tone)}>
-      <MethodIcon type={type} className="h-4 w-4" />
-    </span>
-  );
-}
-
-function MethodIcon({ type, className }: { type: PayoutMethodType; className?: string }) {
-  if (type === "crypto") {
-    return <Bitcoin className={cn("shrink-0 text-current", className)} />;
-  }
-  if (type === "paypal") {
-    return <Banknote className={cn("shrink-0 text-current", className)} />;
-  }
-  if (type === "alipay") {
-    return <Smartphone className={cn("shrink-0 text-current", className)} />;
-  }
-  if (type === "wechat") {
-    return <MessageCircle className={cn("shrink-0 text-current", className)} />;
-  }
-  return <Landmark className={cn("shrink-0 text-current", className)} />;
 }
 
 function methodTypeLabel(type: PayoutMethodType, locale: Locale) {
@@ -1157,28 +936,6 @@ function estimateArrivalLabel(type: PayoutMethodType, locale: Locale) {
     return locale === "zh" ? "即时" : "Instant";
   }
   return locale === "zh" ? "3–5 个工作日" : "3–5 business days";
-}
-
-function WithdrawalStatusBadge({ status, label }: { status: WithdrawalStatus; label: string }) {
-  const tone =
-    status === "completed"
-      ? "bg-emerald-50 text-emerald-700"
-      : status === "failed" || status === "cancelled"
-        ? "bg-red-50 text-red-700"
-        : "bg-amber-50 text-amber-800";
-
-  return (
-    <span className={cn("inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium", tone)}>
-      {status === "completed" ? (
-        <CheckCircle2 className="h-3.5 w-3.5" />
-      ) : status === "failed" || status === "cancelled" ? (
-        <XCircle className="h-3.5 w-3.5" />
-      ) : (
-        <Clock3 className="h-3.5 w-3.5" />
-      )}
-      {label}
-    </span>
-  );
 }
 
 function objectToFormData(values: Record<string, string>) {

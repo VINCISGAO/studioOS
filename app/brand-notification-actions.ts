@@ -6,7 +6,8 @@ import type { Locale } from "@/lib/i18n";
 import {
   deleteAllNotificationsForBrand,
   deleteBrandNotifications,
-  markBrandNotificationRead
+  markBrandNotificationRead,
+  markBrandNotificationsRead
 } from "@/lib/studioos/brand-notification-service";
 
 function normalizeLang(raw: FormDataEntryValue | null): Locale {
@@ -28,6 +29,22 @@ export async function markBrandNotificationReadAction(formData: FormData) {
   const ok = await markBrandNotificationRead(notificationId, clientEmail);
   revalidateBrandMessages();
   return { ok: ok as boolean };
+}
+
+export async function markBrandNotificationsReadAction(formData: FormData) {
+  const clientEmail = await getCurrentClientEmail();
+  if (!clientEmail) {
+    return { ok: false as const, count: 0 };
+  }
+
+  const raw = String(formData.get("notification_ids") ?? "");
+  const ids = raw
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+  const count = await markBrandNotificationsRead(ids, clientEmail);
+  revalidateBrandMessages();
+  return { ok: true as const, count };
 }
 
 export async function deleteBrandNotificationsAction(formData: FormData) {

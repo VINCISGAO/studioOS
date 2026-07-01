@@ -24,13 +24,15 @@ export function StudioPortalSidebarNav({
   pathname: pathnameProp,
   canUseBusinessFeatures,
   isVerified,
-  unreadCount
+  unreadCount,
+  pendingInvitationCount = 0
 }: {
   locale: Locale;
   pathname: string;
   canUseBusinessFeatures: boolean;
   isVerified: boolean;
   unreadCount: number;
+  pendingInvitationCount?: number;
 }) {
   const nav = studioNav[locale];
   const t = tCertificationExperience(locale);
@@ -72,10 +74,16 @@ export function StudioPortalSidebarNav({
     if (item.labelKey === "home") {
       return pathname === creatorPortalRoutes.home;
     }
-    if (item.labelKey === "projects") {
+    if (item.labelKey === "projectDetails" || item.labelKey === "projects") {
       return (
         pathname === creatorPortalRoutes.projects ||
         pathname.startsWith(`${creatorPortalRoutes.projects}/`)
+      );
+    }
+    if (item.labelKey === "orders" || item.labelKey === "invitations") {
+      return (
+        pathname === creatorPortalRoutes.invitations ||
+        pathname.startsWith(`${creatorPortalRoutes.invitations}/`)
       );
     }
     if (item.labelKey === "reviewRoom") {
@@ -145,7 +153,14 @@ export function StudioPortalSidebarNav({
               <span className="text-[10px] font-medium text-violet-600">{t.unlockLabel}</span>
             ) : null}
             {showUnreadDot && unreadCount > 0 && !locked ? (
-              <span className="h-2 w-2 rounded-full bg-violet-500" />
+              <span className="rounded-full bg-rose-500 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </span>
+            ) : null}
+            {labelKey === "orders" && pendingInvitationCount > 0 && !locked ? (
+              <span className="rounded-full bg-violet-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                {pendingInvitationCount}
+              </span>
             ) : null}
           </Link>
         );

@@ -43,10 +43,10 @@ export function brandWizardStepMeta(locale: Locale, visibleStep: number) {
   const clamped = clampBrandVisibleStep(visibleStep);
   const labels: Record<number, { headline: Record<Locale, string>; subtitle: Record<Locale, string> }> = {
     1: {
-      headline: { en: "Describe your ad", zh: "说说你要什么广告" },
+      headline: { en: "Describe your ad", zh: "说说你想要什么广告" },
       subtitle: {
-        en: "Brief, product, and style references — about 3 minutes.",
-        zh: "需求、产品和参考放一起填，大约 3 分钟。"
+        en: "The more detail you share, the better we can match you with the right creative team.",
+        zh: "填写越详细，我们越能帮你匹配到合适的创作团队。"
       }
     },
     2: {
@@ -111,11 +111,14 @@ export function emptyWizardDraft(step = 1): WizardDraftState {
   };
 }
 
-/** Map legacy 7-step URLs to the 3-step brand wizard */
+/** Map legacy 7-step URLs to the 3-step brand wizard. Steps 1–3 are already visible steps. */
 export function migrateLegacyBrandWizardStep(step: number): number {
-  if (step <= 3) return 1;
-  if (step <= 6) return 2;
-  return clampBrandVisibleStep(step >= 7 ? 3 : step);
+  const normalized = Math.floor(step) || 1;
+  if (normalized <= BRAND_WIZARD_VISIBLE_STEP_COUNT) {
+    return clampBrandVisibleStep(normalized);
+  }
+  if (normalized <= 6) return 2;
+  return 3;
 }
 
 /** Map legacy 6-step project wizard progress */

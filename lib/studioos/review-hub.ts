@@ -7,11 +7,18 @@ export type ReviewHubItem = {
   orderId: string;
   projectId: string | null;
   title: string;
+  brandName: string;
+  description: string;
   status: StoredOrder["status"];
   updatedAt: string;
   deliverableCount: number;
   openCommentCount: number;
   reviewHref: string;
+  latestVersion: number | null;
+  latestVersionUploadedAt: string | null;
+  latestCommentAt: string | null;
+  deadline: string | null;
+  budget: number;
 };
 
 const REVIEW_ORDER_STATUSES = new Set<StoredOrder["status"]>([
@@ -48,22 +55,40 @@ async function toReviewHubItem(
   }
 
   let title = order.title || order.company_name;
+  let brandName = order.company_name || order.client_name;
+  let description = order.requirements ?? "";
+  let projectDeadline: string | null = null;
   if (order.project_id) {
     const project = await getProject(order.project_id);
     if (project) {
       title = project.title || project.product_name || project.company_name || title;
+      brandName = project.company_name || project.client_name || brandName;
+      description = project.campaign_goal || project.notes || description;
+      projectDeadline = project.deadline ?? null;
     }
   }
+
+  const latestDeliverable = deliverables.sort((a, b) => b.version - a.version)[0];
+  const latestComment = comments
+    .filter((item) => item.status === "open")
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
 
   return {
     orderId: order.id,
     projectId: order.project_id,
     title,
+    brandName,
+    description,
     status: order.status,
     updatedAt: order.completed_at ?? order.paid_at ?? order.created_at,
     deliverableCount: deliverables.length,
     openCommentCount: comments.filter((item) => item.status === "open").length,
-    reviewHref
+    reviewHref,
+    latestVersion: latestDeliverable?.version ?? null,
+    latestVersionUploadedAt: latestDeliverable?.created_at ?? null,
+    latestCommentAt: latestComment?.created_at ?? null,
+    deadline: projectDeadline,
+    budget: order.creator_payout
   };
 }
 

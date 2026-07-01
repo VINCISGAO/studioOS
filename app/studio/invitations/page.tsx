@@ -1,11 +1,15 @@
 import { redirect } from "next/navigation";
 import { CreatorInvitationsBoard } from "@/components/studioos/creator-invitations-board";
-import { CreatorCommercialTimeline } from "@/components/studioos/commercial-lifecycle-timeline";
+import { CreatorInvitationsProgress } from "@/components/studioos/creator-invitations-progress";
 import { getCurrentCreator } from "@/lib/creator-session";
-import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
-import { resolveCreatorCommercialStep } from "@/lib/studioos/commercial-lifecycle";
+import { enrichInvitationsForCards } from "@/lib/studioos/creator-invitation-display";
+import { getCreatorInvitationsDemoPayload } from "@/lib/studioos/creator-invitations-demo";
 import { listInvitationsForCreator } from "@/lib/studioos/creator-invitation-store";
+import { CREATOR_HOME_DEMO_CREATOR_ID } from "@/lib/studioos/creator-home-ui";
+import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
 import { listOrdersForCreator } from "@/lib/order-service";
+import { getProject } from "@/lib/project-service";
+import { resolveCreatorCommercialStep } from "@/lib/studioos/commercial-lifecycle";
 
 export default async function StudioInvitationsPage({
   searchParams
@@ -18,19 +22,32 @@ export default async function StudioInvitationsPage({
   if (!creator) redirect(withLocale("/login?role=creator", locale));
 
   const invitations = await listInvitationsForCreator(creator.id);
+  const displayInvitations =
+    creator.id === CREATOR_HOME_DEMO_CREATOR_ID
+      ? getCreatorInvitationsDemoPayload()
+      : invitations;
   const orders = await listOrdersForCreator(creator.id);
   const orderByProjectId = Object.fromEntries(
     orders.filter((order) => order.project_id).map((order) => [order.project_id as string, order.id])
   );
+
+  const projectIds = [...new Set(displayInvitations.map((item) => item.campaignId))];
+  const projects = await Promise.all(projectIds.map((id) => getProject(id)));
+  const projectsById = Object.fromEntries(projectIds.map((id, index) => [id, projects[index] ?? null]));
+  const cardInvitations = enrichInvitationsForCards(displayInvitations, projectsById, locale);
+
   const focusInvitation =
     invitations.find((item) => item.status === "selected") ??
     invitations.find((item) => item.status === "accepted") ??
     invitations.find((item) => item.status === "pending") ??
     invitations.find((item) => item.status === "declined") ??
     null;
-  const creatorCommercialStep = resolveCreatorCommercialStep({
-    invitationStatus: focusInvitation?.status ?? null
-  });
+  const creatorCommercialStep =
+    creator.id === CREATOR_HOME_DEMO_CREATOR_ID
+      ? ("waiting_brand_selection" as const)
+      : resolveCreatorCommercialStep({
+          invitationStatus: focusInvitation?.status ?? null
+        });
 
   const validTabs = new Set(["pending", "accepted", "declined", "expired"]);
   const initialTab =
@@ -40,10 +57,10 @@ export default async function StudioInvitationsPage({
 
   return (
     <div className="space-y-6">
-      <CreatorCommercialTimeline locale={locale} currentStep={creatorCommercialStep} compact />
+      <CreatorInvitationsProgress locale={locale} currentStep={creatorCommercialStep} />
       <CreatorInvitationsBoard
         locale={locale}
-        invitations={invitations}
+        invitations={cardInvitations}
         orderByProjectId={orderByProjectId}
         initialTab={initialTab}
       />

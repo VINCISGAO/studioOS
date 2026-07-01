@@ -10,7 +10,7 @@ import { formatEngagementCount, seedWorkDuration } from "@/lib/work-engagement-u
 import type { CreatorWork } from "@/lib/types";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
-import { labelPlatform } from "@/lib/localized-options";
+import { labelPlatform, labelWorkCategory } from "@/lib/localized-options";
 import { canEmbedVideo, resolveWorkThumbnail, sanitizeVideoUrl } from "@/lib/media-url";
 import { cn } from "@/lib/utils";
 import { Eye, EyeOff, Heart, MoreHorizontal, Trash2 } from "lucide-react";
@@ -261,7 +261,12 @@ export function PortfolioWorkCard({
       <p className="mt-1 text-sm text-zinc-500">
         {platformLabel} · {work.format}
       </p>
-      <p className="mt-1 text-sm text-zinc-400">{t.deliveryDate(deliveryDate)}</p>
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        <span className="rounded-md bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">
+          {labelWorkCategory(work.category, locale)}
+        </span>
+        <span className="text-sm text-zinc-400">{deliveryDate}</span>
+      </div>
       {creatorName && creatorHref ? (
         <Link
           href={creatorHref}

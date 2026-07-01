@@ -9,7 +9,16 @@ import type { Locale } from "@/lib/i18n";
 const STORE_PATH = dataStorePath("notification-store.json");
 
 /** Fixed demo seed IDs — must be dismissed on delete or they respawn from ensureDemoNotifications. */
-export const DEMO_NOTIFICATION_IDS = ["ntf_demo_arc_selected", "ntf_demo_arc_funded"] as const;
+export const DEMO_NOTIFICATION_IDS = [
+  "ntf_demo_arc_selected",
+  "ntf_demo_arc_funded",
+  "ntf_demo_nike_work_selected",
+  "ntf_demo_samsung_feedback",
+  "ntf_demo_apple_revision",
+  "ntf_demo_payment_received",
+  "ntf_demo_project_completed",
+  "ntf_demo_system_cert"
+] as const;
 
 function createId(prefix: string) {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -64,6 +73,84 @@ function ensureDemoNotifications(store: NotificationStore): NotificationStore {
 
   const seeds = [
     {
+      id: "ntf_demo_nike_work_selected",
+      type: "creator_selected" as const,
+      title: "选择了您的作品作为第一版",
+      body: "我们对《Smartwatch lifestyle film》的创意方向非常满意，已将其选为「Nike 春季新品广告」项目的第一版。请在 3 天内上传完整作品。",
+      company_name: "Nike",
+      client_name: "Nike",
+      project_id: null,
+      order_id: null,
+      read_at: null,
+      created_at: "2026-06-21T02:30:00.000Z",
+      email_sent_at: "2026-06-21T02:30:00.000Z"
+    },
+    {
+      id: "ntf_demo_samsung_feedback",
+      type: "review_comment_added" as const,
+      title: "品牌方对第一版提出了修改意见",
+      body: "Samsung 品牌方在审片中标注了 3 处修改点，请查看批注并在 2 天内提交修改版。",
+      company_name: "Samsung",
+      client_name: "Samsung",
+      project_id: null,
+      order_id: null,
+      read_at: null,
+      created_at: "2026-06-20T08:45:00.000Z",
+      email_sent_at: "2026-06-20T08:45:00.000Z"
+    },
+    {
+      id: "ntf_demo_apple_revision",
+      type: "revision_requested" as const,
+      title: "修改版已通过，等待最终确认",
+      body: "Apple 品牌方已确认修改版通过，请等待最终交付确认通知。",
+      company_name: "Apple",
+      client_name: "Apple",
+      project_id: null,
+      order_id: null,
+      read_at: null,
+      created_at: "2026-06-19T09:15:00.000Z",
+      email_sent_at: "2026-06-19T09:15:00.000Z"
+    },
+    {
+      id: "ntf_demo_payment_received",
+      type: "project_funded" as const,
+      title: "项目款项已到账",
+      body: "Samsung 项目的托管款项已到账，请开始制作并按时交付。",
+      company_name: "Samsung",
+      client_name: "Samsung",
+      project_id: null,
+      order_id: null,
+      read_at: null,
+      created_at: "2026-06-18T11:30:00.000Z",
+      email_sent_at: "2026-06-18T11:30:00.000Z"
+    },
+    {
+      id: "ntf_demo_project_completed",
+      type: "delivery_approved" as const,
+      title: "项目已完成，款项即将释放",
+      body: "Apple 品牌方已确认最终交付，款项将在 3 个工作日内释放至您的账户。",
+      company_name: "Apple",
+      client_name: "Apple",
+      project_id: null,
+      order_id: null,
+      read_at: "2026-06-17T15:00:00.000Z",
+      created_at: "2026-06-17T14:20:00.000Z",
+      email_sent_at: "2026-06-17T14:20:00.000Z"
+    },
+    {
+      id: "ntf_demo_system_cert",
+      type: "invitation_match" as const,
+      title: "您的 StudioOS 认证已通过",
+      body: "恭喜！您已通过 StudioOS 专业创作者认证，现在可以接收更多品牌项目邀请。",
+      company_name: "系统通知",
+      client_name: "StudioOS",
+      project_id: null,
+      order_id: null,
+      read_at: "2026-06-16T09:00:00.000Z",
+      created_at: "2026-06-16T09:00:00.000Z",
+      email_sent_at: "2026-06-16T09:00:00.000Z"
+    },
+    {
       id: "ntf_demo_arc_selected",
       type: "creator_selected" as const,
       title: "你被 Arc & Alloy (brand) 选中了",
@@ -96,10 +183,10 @@ function ensureDemoNotifications(store: NotificationStore): NotificationStore {
       type: seed.type,
       title: seed.title,
       body: seed.body,
-      project_id: demoProjectId,
-      order_id: demoOrderId,
-      client_name: "Arc & Alloy",
-      company_name: "Arc & Alloy",
+      project_id: seed.project_id === undefined ? demoProjectId : seed.project_id,
+      order_id: seed.order_id === undefined ? demoOrderId : seed.order_id,
+      client_name: seed.client_name ?? "Arc & Alloy",
+      company_name: seed.company_name ?? "Arc & Alloy",
       requirements_text: requirementsText,
       read_at: seed.read_at,
       email_sent_at: seed.email_sent_at,
@@ -291,6 +378,30 @@ export async function markAllNotificationsRead(creatorId: string): Promise<numbe
   if (count) {
     await writeStore(store);
   }
+  return count;
+}
+
+export async function markNotificationsRead(ids: string[], creatorId: string): Promise<number> {
+  if (!ids.length) {
+    return 0;
+  }
+
+  const store = await readStore();
+  const now = new Date().toISOString();
+  const idSet = new Set(ids);
+  let count = 0;
+
+  for (const item of store.notifications) {
+    if (item.creator_id === creatorId && idSet.has(item.id) && !item.read_at) {
+      item.read_at = now;
+      count += 1;
+    }
+  }
+
+  if (count) {
+    await writeStore(store);
+  }
+
   return count;
 }
 

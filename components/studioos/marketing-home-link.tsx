@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";

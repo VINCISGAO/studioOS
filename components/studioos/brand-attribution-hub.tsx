@@ -1,13 +1,13 @@
 import Link from "next/link";
+import { BrandAttributionInsightCard } from "@/components/studioos/brand-attribution-insight-card";
 import { PerformanceAttributionPanel } from "@/components/studioos/performance-attribution-panel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import type { AttributionDeliverableRow } from "@/lib/studioos/attribution-service";
-import { insightToQueryParams } from "@/lib/studioos/insight-engine";
 import type { StoredCreativeInsight } from "@/lib/studioos/creative-performance-types";
-import { ArrowRight, BarChart3, CheckCircle2, CircleDashed, Lightbulb, Sparkles } from "lucide-react";
+import { CheckCircle2, CircleDashed, Lightbulb, Sparkles } from "lucide-react";
 
 const copy = {
   en: {
@@ -23,7 +23,6 @@ const copy = {
     createCampaign: "Create ad project",
     intelligence: "Learned for next campaign",
     intelligenceBody: "Insights auto-apply when you start a new Campaign wizard.",
-    applyInsight: "Apply to new campaign",
     statsAttributed: "Attributed",
     statsPending: "Pending",
     statsInsights: "Insights"
@@ -41,7 +40,6 @@ const copy = {
     createCampaign: "发布广告需求",
     intelligence: "已学习 · 用于下次 Campaign",
     intelligenceBody: "创建新 Campaign 时，以下洞察会自动预填 Hook、时长与风格。",
-    applyInsight: "应用到新 Campaign",
     statsAttributed: "已归因",
     statsPending: "待归因",
     statsInsights: "洞察"
@@ -65,29 +63,28 @@ export function BrandAttributionHub({
 
   return (
     <div className="space-y-8">
-      <section className="overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-sm">
-        <div className="border-b border-zinc-100 px-6 py-8 sm:px-8">
-          <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-end">
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-400">
-                Creative Intelligence
-              </p>
-              <h1 className="mt-2 text-3xl font-semibold tracking-tight text-zinc-950">{t.heroTitle}</h1>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-500">{t.heroBody}</p>
+      <section className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-end">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-400">
+            Creative Intelligence
+          </p>
+          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-zinc-950">{t.heroTitle}</h1>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-500">{t.heroBody}</p>
+        </div>
+        <div className="grid grid-cols-3 gap-3 lg:min-w-[280px]">
+          {[
+            { label: t.statsAttributed, value: attributedCount },
+            { label: t.statsPending, value: pendingCount },
+            { label: t.statsInsights, value: insights.length }
+          ].map((stat) => (
+            <div
+              key={stat.label}
+              className="rounded-xl border border-zinc-200/80 bg-white px-4 py-3 text-center shadow-sm"
+            >
+              <p className="text-2xl font-semibold tabular-nums tracking-tight text-zinc-950">{stat.value}</p>
+              <p className="mt-1 text-[11px] font-medium text-zinc-500">{stat.label}</p>
             </div>
-            <div className="grid grid-cols-3 gap-3 lg:min-w-[260px]">
-              {[
-                { label: t.statsAttributed, value: attributedCount },
-                { label: t.statsPending, value: pendingCount },
-                { label: t.statsInsights, value: insights.length }
-              ].map((stat) => (
-                <div key={stat.label} className="rounded-xl border border-zinc-200/80 bg-zinc-50/80 px-4 py-3 text-center">
-                  <p className="text-2xl font-semibold tabular-nums tracking-tight text-zinc-950">{stat.value}</p>
-                  <p className="mt-1 text-[11px] font-medium text-zinc-500">{stat.label}</p>
-                </div>
-              ))}
-            </div>
-          </div>
+          ))}
         </div>
       </section>
 
@@ -98,13 +95,13 @@ export function BrandAttributionHub({
             const title = row.order.title || row.order.company_name;
 
             return (
-              <article key={row.order.id} className="overflow-hidden rounded-2xl border border-zinc-200/80 bg-white">
+              <article key={row.order.id} className="overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-sm">
                 <div className="flex flex-col gap-3 border-b border-zinc-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
                       <h2 className="font-semibold text-zinc-900">{title}</h2>
                       {row.attributed ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-emerald-100">
                           <CheckCircle2 className="h-3 w-3" />
                           {t.attributed}
                         </span>
@@ -119,7 +116,7 @@ export function BrandAttributionHub({
                       {t.version} {latest?.version ?? 1} · {row.order.status}
                     </p>
                   </div>
-                  <Button asChild variant="outline" size="sm" className="rounded-full">
+                  <Button asChild variant="outline" size="sm" className="rounded-full border-zinc-200">
                     <Link href={withLocale(row.reviewHref, locale)}>{t.openReview}</Link>
                   </Button>
                 </div>
@@ -158,33 +155,13 @@ export function BrandAttributionHub({
         <section>
           <div className="flex items-center gap-2">
             <Lightbulb className="h-5 w-5 text-amber-500" />
-            <h2 className="text-lg font-semibold">{t.intelligence}</h2>
+            <h2 className="text-lg font-semibold text-zinc-950">{t.intelligence}</h2>
           </div>
           <p className="mt-1 text-sm text-zinc-500">{t.intelligenceBody}</p>
-          <div className="mt-4 grid gap-3 lg:grid-cols-2">
-            {insights.slice(0, 4).map((insight) => {
-              const params = insightToQueryParams(insight);
-              const href = withLocale(
-                `/brand/projects/new?${new URLSearchParams(params).toString()}`,
-                locale
-              );
-
-              return (
-                <Card key={insight.id} className="border-zinc-200/80 shadow-none">
-                  <CardContent className="p-5">
-                    <p className="text-xs font-semibold uppercase text-emerald-600">+{insight.lift_pct}% lift</p>
-                    <h3 className="mt-2 font-semibold">{insight.title[locale]}</h3>
-                    <p className="mt-2 text-sm leading-6 text-zinc-600">{insight.body[locale]}</p>
-                    <Button asChild variant="outline" size="sm" className="mt-4 rounded-full">
-                      <Link href={href}>
-                        {t.applyInsight}
-                        <ArrowRight className="h-3.5 w-3.5" />
-                      </Link>
-                    </Button>
-                  </CardContent>
-                </Card>
-              );
-            })}
+          <div className="mt-4 space-y-3">
+            {insights.slice(0, 4).map((insight) => (
+              <BrandAttributionInsightCard key={insight.id} locale={locale} insight={insight} />
+            ))}
           </div>
         </section>
       ) : null}

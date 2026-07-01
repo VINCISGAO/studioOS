@@ -1,4 +1,4 @@
-import { Check, Star } from "lucide-react";
+import { Check, Star, Users } from "lucide-react";
 import { selectCreatorFromInvitationsAction } from "@/app/brand-selection-actions";
 import { Button } from "@/components/ui/button";
 import { creators } from "@/lib/data";
@@ -13,7 +13,8 @@ const copy = {
     subtitle:
       "These creators accepted your invitation and joined the shortlist. Pick one to officially start the project — all other invitations close automatically.",
     select: "Select creator",
-    empty: "No creators have accepted yet. System recommendations are still pending responses.",
+    emptyTitle: "No creators have accepted yet",
+    emptyBody: "System recommendations are still pending responses.",
     match: "Match",
     acceptedAt: "Accepted"
   },
@@ -21,7 +22,8 @@ const copy = {
     title: (count: number) => `候选 Creator（${count}）`,
     subtitle: "以下 Creator 已接受邀请并进入候选名单。选定 1 位后，项目才正式开始，其余邀请将自动失效。",
     select: "选定 Creator",
-    empty: "还没有 Creator 接受邀请。系统推荐已发出，等待回复中。",
+    emptyTitle: "还没有 Creator 接受邀请",
+    emptyBody: "系统推荐已发出，等待回复中。",
     match: "匹配度",
     acceptedAt: "接受时间"
   }
@@ -83,9 +85,13 @@ export function BrandAcceptedCreatorsPanel({
           })}
         </ul>
       ) : (
-        <p className={cn("mt-5 rounded-2xl border border-dashed border-zinc-200 px-6 py-10 text-center", portalChrome.body)}>
-          {t.empty}
-        </p>
+        <div className="mt-5 rounded-2xl border border-dashed border-zinc-300 bg-zinc-50/40 px-6 py-12 text-center">
+          <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-white text-zinc-400 ring-1 ring-zinc-200">
+            <Users className="h-5 w-5" />
+          </span>
+          <p className="mt-4 text-sm font-medium text-zinc-800">{t.emptyTitle}</p>
+          <p className="mt-1 text-sm text-zinc-500">{t.emptyBody}</p>
+        </div>
       )}
     </div>
   );

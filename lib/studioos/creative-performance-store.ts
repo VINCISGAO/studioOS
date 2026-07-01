@@ -94,7 +94,7 @@ function seedRecords(): CreativePerformanceRecord[] {
       id: "perf_demo_arc_v1",
       org_id: DEMO_ORG_ARC,
       project_id: "proj_demo_arc_nova",
-      order_id: "ord_demo_arc_review",
+      order_id: "ord_demo_arc_nova",
       deliverable_id: "del_demo_arc_v1",
       deliverable_version: 1,
       name: "Travel case launch — v1",
@@ -144,23 +144,71 @@ async function refreshOrgIntelligence(store: PerformanceStore, orgId: string) {
   }
 }
 
-function ensureDemoStore(store: PerformanceStore): PerformanceStore {
-  if (store.records.some((item) => item.id === "perf_demo_bright_v1")) {
+function ensureArcAttributionDemo(store: PerformanceStore): PerformanceStore {
+  const arcRecord = store.records.find((item) => item.id === "perf_demo_arc_v1");
+  if (arcRecord && arcRecord.order_id !== "ord_demo_arc_nova") {
+    arcRecord.order_id = "ord_demo_arc_nova";
+  }
+
+  if (!arcRecord) {
     return store;
   }
 
-  store.records.push(...seedRecords());
-  for (const orgId of [DEMO_ORG_BRIGHT, DEMO_ORG_ARC]) {
-    refreshOrgIntelligence(store, orgId);
+  const demoInsight: StoredCreativeInsight = {
+    id: "ins_demo_arc_ugc_handheld",
+    org_id: DEMO_ORG_ARC,
+    category: "hook",
+    pattern: "ugc_handheld",
+    title: {
+      en: "Handheld UGC outperforms baseline",
+      zh: "手持 UGC 优于基线"
+    },
+    body: {
+      en: "Across 2 attributed ads, handheld UGC CTR is 0% above your baseline (3.2%).",
+      zh: "在 2 条已归因广告中，手持 UGC 的 CTR 比品牌基线（3.2%）高 0%。"
+    },
+    lift_pct: 1,
+    sample_size: 2,
+    confidence: 0.72,
+    applies_to: { category: "Consumer tech" },
+    generated_at: new Date().toISOString()
+  };
+
+  store.insights = store.insights.filter((item) => item.id !== "ins_client.arc@studioos.test_top");
+  const index = store.insights.findIndex((item) => item.id === demoInsight.id);
+  if (index >= 0) {
+    store.insights[index] = { ...demoInsight, generated_at: store.insights[index].generated_at };
+  } else {
+    store.insights.push(demoInsight);
   }
+
   return store;
+}
+
+function ensureDemoStore(store: PerformanceStore): PerformanceStore {
+  let added = false;
+  for (const record of seedRecords()) {
+    if (!store.records.some((item) => item.id === record.id)) {
+      store.records.push(record);
+      added = true;
+    }
+  }
+
+  if (added) {
+    for (const orgId of [DEMO_ORG_BRIGHT, DEMO_ORG_ARC]) {
+      refreshOrgIntelligence(store, orgId);
+    }
+  }
+
+  return ensureArcAttributionDemo(store);
 }
 
 async function readStore(): Promise<PerformanceStore> {
   const store = await readDataJson<PerformanceStore>(STORE_PATH, () => ensureDemoStore(emptyStore()));
-  const before = store.records.length;
+  const beforeRecords = store.records.length;
+  const beforeInsights = store.insights.length;
   const next = ensureDemoStore(store);
-  if (next.records.length !== before) {
+  if (next.records.length !== beforeRecords || next.insights.length !== beforeInsights) {
     await writeStore(next);
   }
   return next;

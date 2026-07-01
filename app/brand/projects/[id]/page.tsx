@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { BrandCommercialTimeline } from "@/components/studioos/commercial-lifecycle-timeline";
 import { BrandProjectHub } from "@/components/studioos/brand-project-hub";
@@ -7,7 +8,7 @@ import { getDeliverables, getOrder, getOrderForProject } from "@/lib/order-servi
 import { getProject } from "@/lib/project-service";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
 import { resolveBrandCommercialStep } from "@/lib/studioos/commercial-lifecycle";
-import { listAcceptedInvitationsForProject, listInvitationsForProject } from "@/lib/studioos/creator-invitation-store";
+import { listAcceptedInvitationsForProject, listInvitationsForProject, ensureCampaignInvitationsForProject } from "@/lib/studioos/creator-invitation-store";
 import { listReviewComments } from "@/lib/studioos/review-store";
 
 type HubTab = "brief" | "match" | "proposal" | "production" | "review";
@@ -62,8 +63,11 @@ export default async function BrandProjectHubPage({
   }
 
   const reviewComments = linkedOrder ? await listReviewComments(linkedOrder.id) : [];
+  let projectInvitations = await listInvitationsForProject(id);
+  if (project.status === "matching" && projectInvitations.length === 0) {
+    projectInvitations = await ensureCampaignInvitationsForProject(project);
+  }
   const acceptedInvitations = await listAcceptedInvitationsForProject(id);
-  const projectInvitations = await listInvitationsForProject(id);
   const brandCommercialStep = resolveBrandCommercialStep({
     project,
     order: linkedOrder,
@@ -73,6 +77,12 @@ export default async function BrandProjectHubPage({
 
   return (
     <div className="space-y-6">
+      <Link
+        href={withLocale("/brand", locale)}
+        className="inline-flex items-center text-sm text-zinc-500 transition hover:text-zinc-900"
+      >
+        ← {locale === "zh" ? "返回工作台" : "Back to workspace"}
+      </Link>
       <BrandCommercialTimeline
         locale={locale}
         currentStep={brandCommercialStep}

@@ -21,7 +21,10 @@ export default async function BrandAttributionPage({
 
   return (
     <div>
-      <Link href={withLocale("/brand", locale)} className="text-sm text-zinc-500 hover:text-zinc-900">
+      <Link
+        href={withLocale("/brand", locale)}
+        className="inline-flex items-center text-sm text-zinc-500 transition hover:text-zinc-900"
+      >
         ← {locale === "zh" ? "返回工作台" : "Back to workspace"}
       </Link>
       <div className="mt-6">

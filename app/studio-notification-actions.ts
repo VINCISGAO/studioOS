@@ -6,7 +6,8 @@ import {
   deleteAllNotificationsForCreator,
   deleteNotifications,
   markAllNotificationsRead,
-  markNotificationRead
+  markNotificationRead,
+  markNotificationsRead
 } from "@/lib/notification-service";
 
 function revalidateCreatorMessages() {
@@ -33,6 +34,22 @@ export async function markAllNotificationsReadAction() {
   }
 
   const count = await markAllNotificationsRead(creatorId);
+  revalidateCreatorMessages();
+  return { ok: true as const, count };
+}
+
+export async function markNotificationsReadAction(formData: FormData) {
+  const creatorId = await getCurrentCreatorId();
+  if (!creatorId) {
+    return { ok: false as const, count: 0 };
+  }
+
+  const raw = String(formData.get("notification_ids") ?? "");
+  const ids = raw
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+  const count = await markNotificationsRead(ids, creatorId);
   revalidateCreatorMessages();
   return { ok: true as const, count };
 }

@@ -48,12 +48,29 @@ function seedInvitations(): CreatorInvitationStore {
         brandEmail: "client.arc@studioos.test",
         budget: 1800,
         currency: "USD",
-        deadline: new Date(now + 14 * 86400000).toISOString(),
+        deadline: "2026-07-15T00:00:00.000Z",
         platform: "TikTok",
         matchScore: 92,
         status: "pending",
         expiresAt: new Date(now + 5 * 86400000).toISOString(),
         createdAt: new Date(now - 2 * 86400000).toISOString()
+      },
+      {
+        id: "inv_demo_pending_03",
+        creatorId: "creator_01",
+        projectId: "proj_demo_arc_brand_300",
+        campaignId: "proj_demo_arc_brand_300",
+        title: "我的产品 Campaign",
+        brandName: "Arc & Alloy (BRAND)",
+        brandEmail: "client.arc@studioos.test",
+        budget: 300,
+        currency: "USD",
+        deadline: "2026-07-08T00:00:00.000Z",
+        platform: "Meta",
+        matchScore: 89,
+        status: "pending",
+        expiresAt: new Date(now + 4 * 86400000).toISOString(),
+        createdAt: new Date(now - 1 * 86400000).toISOString()
       },
       {
         id: "inv_demo_pending_02",
@@ -142,12 +159,57 @@ function seedInvitations(): CreatorInvitationStore {
 
 async function readStoreInner(): Promise<CreatorInvitationStore> {
   const fromStore = await readDataJson(STORE_PATH, seedInvitations);
-  if (fromStore.invitations.length > 0) {
-    return fromStore;
+  const store =
+    fromStore.invitations.length > 0
+      ? fromStore
+      : (() => {
+          const seeded = seedInvitations();
+          void writeDataJson(STORE_PATH, seeded);
+          return seeded;
+        })();
+
+  const patched = patchDemoInvitations(store);
+  if (patched.changed) {
+    await writeStore(patched.store);
   }
+  return patched.store;
+}
+
+function patchDemoInvitations(store: CreatorInvitationStore) {
   const seeded = seedInvitations();
-  await writeDataJson(STORE_PATH, seeded);
-  return seeded;
+  const demoIds = [
+    "inv_demo_pending_01",
+    "inv_demo_pending_03",
+    "inv_demo_accepted_01",
+    "inv_demo_declined_01",
+    "inv_demo_expired_01"
+  ];
+  let changed = false;
+  const next = { invitations: [...store.invitations] };
+
+  for (const id of demoIds) {
+    const seedRow = seeded.invitations.find((item) => item.id === id);
+    if (!seedRow) continue;
+    const index = next.invitations.findIndex((item) => item.id === id);
+    if (index >= 0) {
+      next.invitations[index] = { ...next.invitations[index], ...seedRow };
+      changed = true;
+    } else {
+      next.invitations.push(seedRow);
+      changed = true;
+    }
+  }
+
+  const legacyDemoIds = ["inv_demo_pending_nike", "inv_demo_pending_apple"];
+  const filtered = next.invitations.filter(
+    (item) => !(item.creatorId === "creator_01" && legacyDemoIds.includes(item.id))
+  );
+  if (filtered.length !== next.invitations.length) {
+    next.invitations = filtered;
+    changed = true;
+  }
+
+  return { store: next, changed };
 }
 
 const readStore = createSerializedStoreReader(readStoreInner);

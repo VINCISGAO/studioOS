@@ -2,21 +2,20 @@
 
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { useFormStatus } from "react-dom";
 import {
-  publishBrandCampaignFormAction,
   saveBrandCampaignDraftAction,
   saveBrandCampaignSetupAction
 } from "@/app/brand-campaign-actions";
-import { BrandCampaignConfirmation } from "@/components/studioos/brand-campaign-confirmation";
+import { BrandCampaignStep3Publish } from "@/components/studioos/brand-campaign-step3-publish";
+import { BrandCampaignStep2Review } from "@/components/studioos/brand-campaign-step2-review";
 import {
   BrandCampaignStepBrief,
   type BriefFormState
 } from "@/components/studioos/brand-campaign-step-brief";
 import { WizardStepper } from "@/components/studioos/ui/wizard-stepper";
-import { Button } from "@/components/ui/button";
 import {
   brandWizardStepMeta,
+  BRAND_WIZARD_VISIBLE_STEP_COUNT,
   clampBrandVisibleStep,
   migrateLegacyBrandWizardStep
 } from "@/lib/campaign/wizard-steps";
@@ -40,7 +39,7 @@ import {
   resolveDeliveryTimelineFromProject
 } from "@/lib/studioos/brand-campaign-options";
 import { cn } from "@/lib/utils";
-import { ArrowLeft, ArrowRight, Check, Loader2 } from "lucide-react";
+import { Check, Sparkles } from "lucide-react";
 
 type WizardData = {
   project: StoredProject;
@@ -142,17 +141,6 @@ function appendBriefForm(fd: FormData, state: BriefFormState) {
   }
 }
 
-function PublishSubmitButton({ label, publishingLabel }: { label: string; publishingLabel: string }) {
-  const { pending } = useFormStatus();
-  return (
-    <Button type="submit" size="lg" className="w-full" disabled={pending}>
-      {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-      {pending ? publishingLabel : label}
-      {!pending ? <ArrowRight className="h-4 w-4" /> : null}
-    </Button>
-  );
-}
-
 export function BrandCampaignWizard({
   locale,
   initialData,
@@ -165,7 +153,7 @@ export function BrandCampaignWizard({
   const t = copy[locale];
   const router = useRouter();
   const projectId = initialData.project.id;
-  const migrated = migrateLegacyBrandWizardStep(initialStep);
+  const migrated = initialStep <= BRAND_WIZARD_VISIBLE_STEP_COUNT ? initialStep : migrateLegacyBrandWizardStep(initialStep);
   const [step, setStep] = useState(clampBrandVisibleStep(migrated));
   const [isSaving, setIsSaving] = useState(false);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
@@ -260,28 +248,50 @@ export function BrandCampaignWizard({
     }
   }
 
-  const maxWidth = step === 1 ? "max-w-6xl" : step === 3 ? "max-w-lg" : "max-w-3xl";
+  const maxWidth = step === 1 || step === 2 ? "max-w-6xl" : "max-w-3xl";
 
   return (
     <div className={cn("mx-auto w-full", maxWidth)}>
       <div className="mb-8">
-        <WizardStepper locale={locale} currentStep={step} variant="brand" compact={step === 3} />
-        <h1 className="mt-6 text-title text-foreground">{meta.headline[locale]}</h1>
-        <p className="mt-2 text-body text-muted-foreground">{meta.subtitle[locale]}</p>
+        <WizardStepper locale={locale} currentStep={step} variant="brand" />
+        <div className="mt-6 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+          <div className={cn("max-w-2xl", step === 3 && "mx-auto text-center lg:mx-0 lg:text-left")}>
+            <h1 className="flex items-center justify-center gap-2 text-3xl font-semibold tracking-tight text-zinc-950 sm:text-[32px] lg:justify-start">
+              {step === 2 ? <Sparkles className="h-7 w-7 text-violet-600" /> : null}
+              {meta.headline[locale]}
+              {step === 3 ? <Sparkles className="h-7 w-7 text-violet-600" /> : null}
+            </h1>
+            <p className="mt-3 text-base leading-relaxed text-zinc-500">{meta.subtitle[locale]}</p>
+          </div>
+          {step === 1 ? (
+            <div className="relative hidden h-36 w-44 shrink-0 lg:block" aria-hidden>
+              <div className="absolute inset-0 rounded-[28px] bg-gradient-to-br from-violet-100 via-indigo-50 to-white shadow-[0_20px_60px_rgba(99,102,241,0.18)]" />
+              <div className="absolute left-5 top-6 h-24 w-16 rounded-2xl bg-white shadow-lg ring-1 ring-violet-100" />
+              <div className="absolute left-8 top-9 h-14 w-10 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-500" />
+              <div className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-violet-600 text-white shadow-md">
+                <Sparkles className="h-4 w-4" />
+              </div>
+              <div className="absolute bottom-5 right-6 flex h-8 w-8 items-center justify-center rounded-full bg-indigo-500 text-white shadow-md">
+                <Sparkles className="h-3.5 w-3.5" />
+              </div>
+            </div>
+          ) : step === 2 ? (
+            <div className="relative hidden h-44 w-52 shrink-0 lg:block" aria-hidden>
+              <div className="absolute inset-0 rounded-[28px] bg-gradient-to-br from-violet-100 via-indigo-50 to-white shadow-[0_20px_60px_rgba(99,102,241,0.18)]" />
+              <div className="absolute left-7 top-8 h-28 w-24 rotate-[-6deg] rounded-2xl bg-white shadow-lg ring-1 ring-violet-100" />
+              <div className="absolute left-10 top-12 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-500 text-white shadow-md">
+                <Check className="h-8 w-8" />
+              </div>
+              <div className="absolute right-6 top-6 flex h-10 w-10 items-center justify-center rounded-full bg-violet-600 text-white shadow-md">
+                <Sparkles className="h-4 w-4" />
+              </div>
+              <div className="absolute bottom-7 right-8 flex h-9 w-9 items-center justify-center rounded-full bg-indigo-500/90 text-white shadow-md">
+                <span className="ml-0.5 text-xs font-bold">▶</span>
+              </div>
+            </div>
+          ) : null}
+        </div>
       </div>
-
-      {step > 1 ? (
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="mb-6 gap-2 text-muted-foreground"
-          onClick={() => goStep(step - 1)}
-          disabled={isPending}
-        >
-          <ArrowLeft className="h-4 w-4" /> {t.back}
-        </Button>
-      ) : null}
 
       {step === 1 ? (
         <BrandCampaignStepBrief
@@ -303,53 +313,27 @@ export function BrandCampaignWizard({
       ) : null}
 
       {step === 2 ? (
-        <section className="space-y-8">
-          <ul className="space-y-3 rounded-card border bg-card p-6">
-            {[t.analyzedProduct, t.analyzedRef, t.planReady].map((label) => (
-              <li key={label} className="flex items-center gap-3 text-sm font-medium">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-success/15 text-success">
-                  <Check className="h-3.5 w-3.5" />
-                </span>
-                {label}
-              </li>
-            ))}
-          </ul>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="rounded-card border bg-card p-5">
-              <p className="text-label text-muted-foreground">{t.budget}</p>
-              <p className="mt-2 text-2xl font-semibold">{budget}</p>
-            </div>
-            <div className="rounded-card border bg-card p-5">
-              <p className="text-label text-muted-foreground">{t.delivery}</p>
-              <p className="mt-2 text-2xl font-semibold">{delivery}</p>
-            </div>
-          </div>
-          {error ? <p className="text-sm text-destructive">{error}</p> : null}
-          <BrandCampaignConfirmation
-            locale={locale}
-            project={initialData.project}
-            onConfirmed={() => {
-              router.refresh();
-              goStep(3);
-            }}
-          />
-        </section>
+        <BrandCampaignStep2Review
+          locale={locale}
+          project={initialData.project}
+          budget={budget}
+          delivery={delivery}
+          error={error}
+          onBack={() => goStep(1)}
+          onConfirmed={() => {
+            router.refresh();
+            goStep(3);
+          }}
+        />
       ) : null}
 
       {step === 3 ? (
-        <section className="space-y-6">
-          <p className="text-sm text-muted-foreground">
-            {locale === "zh"
-              ? "确认无误后发布并进入托管付款。付款完成后，系统才会向匹配的 Creator 发出意向发单。"
-              : "Publish when ready, then complete escrow payment. Creator invitations go out only after payment is confirmed."}
-          </p>
-          {error ? <p className="text-sm text-destructive">{error}</p> : null}
-          <form action={publishBrandCampaignFormAction}>
-            <input type="hidden" name="lang" value={locale} />
-            <input type="hidden" name="project_id" value={projectId} />
-            <PublishSubmitButton label={t.publish} publishingLabel={t.publishing} />
-          </form>
-        </section>
+        <BrandCampaignStep3Publish
+          locale={locale}
+          projectId={projectId}
+          error={error}
+          onBack={() => goStep(2)}
+        />
       ) : null}
     </div>
   );

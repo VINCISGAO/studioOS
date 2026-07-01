@@ -53,17 +53,20 @@ export function WizardStepper({
           {locale === "zh" ? "步，共" : "of"} {stepCount}{" "}
           {locale === "zh" ? "步" : "steps"}
         </span>
-        <span>{percent}%</span>
+        <span>
+          {percent}%
+          {isBrand ? (locale === "zh" ? " 完成" : " complete") : ""}
+        </span>
       </div>
-      <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+      <div className="h-1.5 overflow-hidden rounded-full bg-violet-100">
         <div
-          className="h-full rounded-full bg-primary transition-all duration-page"
+          className="h-full rounded-full bg-violet-600 transition-all duration-page"
           style={{ width: `${percent}%` }}
         />
       </div>
       {!compact ? (
         <ol
-          className="flex flex-wrap gap-6 pt-2"
+          className="flex flex-wrap gap-8 pt-2"
           style={{ gap: wizard.stepGap }}
           aria-label={locale === "zh" ? "Campaign 向导步骤" : "Campaign wizard steps"}
         >
@@ -71,24 +74,35 @@ export function WizardStepper({
             const isCurrent = step.id === current;
             const isDone = done.has(step.id);
             return (
-              <li key={step.id} className="flex items-center gap-2">
+              <li key={step.id} className="flex items-center gap-2.5">
                 <span
                   className={cn(
-                    "flex shrink-0 items-center justify-center rounded-full border text-xs font-semibold transition-transform duration-micro",
-                    isDone
-                      ? "border-success bg-success text-success-foreground"
-                      : isCurrent
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-border bg-background text-muted-foreground"
+                    "flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-xs font-semibold transition-transform duration-micro",
+                    isBrand && isDone
+                      ? "border-violet-600 bg-violet-600 text-white"
+                      : isBrand && isCurrent
+                        ? "border-violet-600 bg-violet-600 text-white"
+                        : isBrand
+                          ? "border-zinc-200 bg-white text-zinc-400"
+                          : isDone
+                            ? "border-success bg-success text-success-foreground"
+                            : isCurrent
+                              ? "border-primary bg-primary text-primary-foreground"
+                              : "border-border bg-background text-muted-foreground"
                   )}
-                  style={{ width: wizard.stepCircle, height: wizard.stepCircle }}
                 >
                   {isDone ? <Check className="h-4 w-4" /> : step.id}
                 </span>
                 <span
                   className={cn(
-                    "hidden text-xs font-medium sm:inline",
-                    isCurrent ? "text-foreground" : "text-muted-foreground"
+                    "text-sm font-medium",
+                    isBrand && isCurrent
+                      ? "text-violet-700"
+                      : isBrand
+                        ? "text-zinc-400"
+                        : isCurrent
+                          ? "text-foreground"
+                          : "text-muted-foreground"
                   )}
                 >
                   {step.label[locale]}

@@ -36,18 +36,18 @@
   ],
   "insights": [
     {
-      "id": "ins_client.arc@studioos.test_top",
+      "id": "ins_demo_arc_ugc_handheld",
       "org_id": "client.arc@studioos.test",
-      "category": "style",
-      "pattern": "ugc+minimal",
-      "title": { "en": "Top attributed creative identified", "zh": "已识别表现最佳归因创意" },
+      "category": "hook",
+      "pattern": "ugc_handheld",
+      "title": { "en": "Handheld UGC outperforms baseline", "zh": "手持 UGC 优于基线" },
       "body": {
-        "en": "\"Travel case launch — v1\" leads your library at 3.2% CTR.",
-        "zh": "\"Travel case launch — v1\" 以 3.2% CTR 领先。"
+        "en": "Across 2 attributed ads, handheld UGC CTR is 0% above your baseline (3.2%).",
+        "zh": "在 2 条已归因广告中，手持 UGC 的 CTR 比品牌基线（3.2%）高 0%。"
       },
-      "lift_pct": 0,
-      "sample_size": 1,
-      "confidence": 0.65,
+      "lift_pct": 1,
+      "sample_size": 2,
+      "confidence": 0.72,
       "applies_to": { "category": "Consumer tech" },
       "generated_at": "2026-06-28T02:03:40.276Z"
     }

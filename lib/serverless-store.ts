@@ -4,6 +4,7 @@ import { randomBytes } from "node:crypto";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { canPersistLocalDataStore } from "@/lib/can-persist-local-store";
+import { safeReadJsonFile } from "@/lib/core/safe-json";
 
 const memoryByPath = new Map<string, unknown>();
 
@@ -16,12 +17,7 @@ export function bundledSeedPath(fileName: string) {
 }
 
 async function readJsonFromDisk<T>(filePath: string): Promise<T | null> {
-  try {
-    const raw = await fs.readFile(filePath, "utf8");
-    return JSON.parse(raw) as T;
-  } catch {
-    return null;
-  }
+  return safeReadJsonFile<T | null>(filePath, null);
 }
 
 async function writeJsonToDisk(filePath: string, data: unknown): Promise<void> {

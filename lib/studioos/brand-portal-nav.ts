@@ -1,21 +1,77 @@
+import type { PortalMobileNavIconKey } from "@/lib/studioos/portal-mobile-nav-types";
 import type { brandNav } from "@/lib/studioos/vocabulary";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
-import { Building2, Clapperboard, Home, LineChart, MessageSquare, Settings, Wallet } from "lucide-react";
+import {
+  BarChart3,
+  Clapperboard,
+  FolderOpen,
+  LayoutDashboard,
+  Megaphone,
+  MessageSquare,
+  Settings,
+  Users
+} from "lucide-react";
 
 export type BrandPortalNavKey = keyof typeof brandNav.en;
 
 export type BrandPortalNavItem = {
   href: string;
   labelKey: BrandPortalNavKey;
-  icon: typeof Home;
+  icon: typeof LayoutDashboard;
+  mobileIconKey: PortalMobileNavIconKey;
 };
 
+/** Brand workspace sidebar — matches dashboard mockup IA. */
 export const brandPortalNavItems: BrandPortalNavItem[] = [
-  { href: brandPortalRoutes.brandCenter, labelKey: "brandCenter", icon: Building2 },
-  { href: brandPortalRoutes.dashboard, labelKey: "home", icon: Home },
-  { href: brandPortalRoutes.reviewHub, labelKey: "reviewRoom", icon: Clapperboard },
-  { href: brandPortalRoutes.messages, labelKey: "messages", icon: MessageSquare },
-  { href: brandPortalRoutes.finance, labelKey: "finance", icon: Wallet },
-  { href: brandPortalRoutes.attribution, labelKey: "attribution", icon: LineChart },
-  { href: brandPortalRoutes.settings, labelKey: "settings", icon: Settings }
+  {
+    href: brandPortalRoutes.dashboard,
+    labelKey: "workspace",
+    icon: LayoutDashboard,
+    mobileIconKey: "layoutDashboard"
+  },
+  {
+    href: `${brandPortalRoutes.dashboard}#my-ads`,
+    labelKey: "adRequirements",
+    icon: Megaphone,
+    mobileIconKey: "home"
+  },
+  {
+    href: brandPortalRoutes.brandTeam,
+    labelKey: "team",
+    icon: Users,
+    mobileIconKey: "studios"
+  },
+  {
+    href: brandPortalRoutes.reviewHub,
+    labelKey: "reviewRoom",
+    icon: Clapperboard,
+    mobileIconKey: "reviewRoom"
+  },
+  {
+    href: brandPortalRoutes.brandCenter,
+    labelKey: "brandLibrary",
+    icon: FolderOpen,
+    mobileIconKey: "brandCenter"
+  },
+  {
+    href: brandPortalRoutes.attribution,
+    labelKey: "attribution",
+    icon: BarChart3,
+    mobileIconKey: "attribution"
+  },
+  {
+    href: brandPortalRoutes.messages,
+    labelKey: "messages",
+    icon: MessageSquare,
+    mobileIconKey: "messages"
+  },
+  {
+    href: brandPortalRoutes.settings,
+    labelKey: "settings",
+    icon: Settings,
+    mobileIconKey: "settings"
+  }
 ];
+
+/** Legacy / deep-link nav used on project flows. */
+export const brandPortalLegacyNavKeys = ["reviewRoom", "finance", "brandCenter"] as const;

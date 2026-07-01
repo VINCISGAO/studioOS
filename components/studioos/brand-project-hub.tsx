@@ -1,6 +1,5 @@
 import Link from "next/link";
 import {
-  ArrowLeft,
   ArrowRight,
   Calendar,
   CheckCircle2,
@@ -14,9 +13,7 @@ import {
   Users
 } from "lucide-react";
 import { BrandReviewWorkflowPanel } from "@/components/studioos/brand-review-workflow-panel";
-import { BrandAcceptedCreatorsPanel } from "@/components/studioos/brand-accepted-creators-panel";
-import { BrandInvitationRosterPanel } from "@/components/studioos/brand-invitation-roster-panel";
-import { BrandInvitationStatusPanel } from "@/components/studioos/brand-invitation-status-panel";
+import { BrandProjectMatchTab } from "@/components/studioos/brand-project-match-tab";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { creators } from "@/lib/data";
@@ -50,7 +47,7 @@ const tabs: { id: HubTab; label: { en: string; zh: string } }[] = [
 
 const copy = {
   en: {
-    back: "Back to my ads",
+    back: "Back to workspace",
     budget: "Budget",
     deadline: "Deadline",
     category: "Category",
@@ -95,7 +92,7 @@ const copy = {
     projectBadge: "Ad project"
   },
   zh: {
-    back: "返回我的广告",
+    back: "返回工作台",
     budget: "预算",
     deadline: "交付日期",
     category: "品类",
@@ -296,18 +293,11 @@ export function BrandProjectHub({
   const openComments = reviewComments.filter((item) => item.status === "open").length;
   const action = primaryAction(project, locale, deliverables.length);
   const latestDeliverable = deliverables[deliverables.length - 1];
-  const deliverDone = deliverables.length > 0;
+  const isRecruiting = status === "matching" || status === "studio_selected";
+  const showAside = activeTab !== "match" && (latestDeliverable || studio);
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
-      <Link
-        href={withLocale(`${brandPortalRoutes.dashboard}#my-ads`, locale)}
-        className="inline-flex items-center gap-1.5 text-sm text-zinc-500 transition hover:text-zinc-900"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        {t.back}
-      </Link>
-
       <section className="overflow-hidden rounded-3xl border border-zinc-200/80 bg-white shadow-sm">
         <div className="border-b border-zinc-100 bg-gradient-to-br from-zinc-50 to-white p-6 sm:p-8">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
@@ -320,6 +310,7 @@ export function BrandProjectHub({
                   variant="outline"
                   className={cn(
                     "font-normal",
+                    isRecruiting && "border-emerald-200 bg-emerald-50 text-emerald-800",
                     status === "production" && "border-violet-200 bg-violet-50 text-violet-800",
                     status === "in_review" && "border-emerald-200 bg-emerald-50 text-emerald-800"
                   )}
@@ -344,11 +335,11 @@ export function BrandProjectHub({
             ) : null}
           </div>
 
-          <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-6 grid gap-3 sm:grid-cols-3">
             {project.budget_range ? <MetaChip icon={CircleDollarSign} label={t.budget} value={project.budget_range} /> : null}
             {project.deadline ? <MetaChip icon={Calendar} label={t.deadline} value={project.deadline} /> : null}
             {project.category ? <MetaChip icon={Layers} label={t.category} value={project.category} /> : null}
-            {studio ? <MetaChip icon={Users} label={t.studio} value={studio.name} /> : null}
+            {studio && !isRecruiting ? <MetaChip icon={Users} label={t.studio} value={studio.name} /> : null}
           </div>
         </div>
 
@@ -362,11 +353,11 @@ export function BrandProjectHub({
                 href={tabHref(project.id, tab.id, locale)}
                 className={cn(
                   "relative shrink-0 px-4 py-3.5 text-sm font-medium transition",
-                  active ? "text-zinc-900" : "text-zinc-500 hover:text-zinc-800"
+                  active ? "font-semibold text-zinc-900" : "text-zinc-500 hover:text-zinc-800"
                 )}
               >
                 {tab.label[locale]}
-                {active ? <span className="absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-zinc-900" /> : null}
+                {active ? <span className="absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-indigo-600" /> : null}
               </Link>
             ) : (
               <span
@@ -379,9 +370,21 @@ export function BrandProjectHub({
             );
           })}
         </nav>
+
+        {activeTab === "match" ? (
+          <div className="border-t border-zinc-100 p-4 sm:p-6">
+            <BrandProjectMatchTab
+              locale={locale}
+              projectId={project.id}
+              invitations={projectInvitations}
+              accepted={acceptedInvitations}
+            />
+          </div>
+        ) : null}
       </section>
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
+      {activeTab !== "match" ? (
+      <div className={cn("grid gap-6", showAside && "lg:grid-cols-[1fr_280px]")}>
         <section className="min-w-0 rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm sm:p-8">
           {activeTab === "brief" ? (
             <div>
@@ -413,32 +416,6 @@ export function BrandProjectHub({
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                 </Button>
-              ) : null}
-            </div>
-          ) : null}
-
-          {activeTab === "match" ? (
-            <div className="space-y-6">
-              <BrandInvitationStatusPanel locale={locale} invitations={projectInvitations} />
-              <BrandInvitationRosterPanel locale={locale} invitations={projectInvitations} />
-              <BrandAcceptedCreatorsPanel
-                locale={locale}
-                projectId={project.id}
-                accepted={acceptedInvitations}
-              />
-              {studio ? (
-                <div>
-                  <h3 className="text-sm font-semibold text-zinc-900">{t.matchSelected}</h3>
-                  <div className="mt-4 flex items-start gap-4 rounded-2xl border border-zinc-200 bg-zinc-50/60 p-5">
-                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-zinc-900 text-sm font-semibold text-white">
-                      {studio.name.slice(0, 2).toUpperCase()}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="mt-0.5 text-base font-semibold text-zinc-900">{studio.name}</p>
-                      <p className="mt-1 text-sm text-zinc-600">{studio.headline}</p>
-                    </div>
-                  </div>
-                </div>
               ) : null}
             </div>
           ) : null}
@@ -511,7 +488,7 @@ export function BrandProjectHub({
                     <p className="font-semibold text-zinc-900">{studio.name}</p>
                     <p className="mt-1 text-sm text-zinc-600">{studio.headline}</p>
                     <p className="mt-2 text-xs text-violet-700">
-                      {deliverDone ? t.productionReady : t.productionWaiting}
+                      {deliverables.length ? t.productionReady : t.productionWaiting}
                     </p>
                   </div>
                 </div>
@@ -568,6 +545,7 @@ export function BrandProjectHub({
           ) : null}
         </section>
 
+        {showAside ? (
         <aside className="space-y-4">
           {latestDeliverable ? (
             <div className="overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-sm">
@@ -599,7 +577,9 @@ export function BrandProjectHub({
             </div>
           ) : null}
         </aside>
+        ) : null}
       </div>
+      ) : null}
     </div>
   );
 }

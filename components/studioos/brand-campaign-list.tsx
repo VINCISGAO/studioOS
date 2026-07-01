@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { deleteBrandProjectsAction } from "@/app/brand-project-actions";
+import { BrandCampaignListRow } from "@/components/studioos/brand-campaign-list-row";
 import { BrandStartBriefButton } from "@/components/studioos/brand-start-brief-button";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -19,11 +19,8 @@ import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import {
   brandCampaignHref,
-  brandCampaignProgress,
-  brandCampaignStatusLabel,
-  brandCampaignStepIndex
+  brandCampaignStatusLabel
 } from "@/lib/studioos/brand-campaign-display";
-import type { BrandProjectRow } from "@/lib/studioos/brand-dashboard";
 import {
   brandAdLifecycleFilters,
   brandAdLifecycleLabels,
@@ -31,14 +28,14 @@ import {
   filterBrandRowsByLifecycle,
   type BrandAdLifecycleFilter
 } from "@/lib/studioos/brand-lifecycle";
+import type { BrandProjectRow } from "@/lib/studioos/brand-dashboard";
 import { normalizeCampaignStatus } from "@/lib/studioos/project-status";
 import { cn, formatDate } from "@/lib/utils";
 import {
-  ArrowRight,
   AlertTriangle,
-  Calendar,
   CheckCircle2,
-  CircleDollarSign,
+  ChevronLeft,
+  ChevronRight,
   FileText,
   Loader2,
   Minus,
@@ -49,12 +46,9 @@ import {
   X
 } from "lucide-react";
 
-type Filter = BrandAdLifecycleFilter;
+const PAGE_SIZE = 5;
 
-const steps = {
-  en: ["Brief", "Studio", "Pay", "Produce", "Review"],
-  zh: ["需求", "选团队", "付款", "制作", "审片"]
-};
+type Filter = BrandAdLifecycleFilter;
 
 const copy = {
   en: {
@@ -225,11 +219,11 @@ export function BrandCampaignList({
   const router = useRouter();
   const t = copy[locale];
   const lifecycleLabels = brandAdLifecycleLabels[locale];
-  const stepLabels = steps[locale];
 
   const [items, setItems] = useState(rows);
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -261,6 +255,14 @@ export function BrandCampaignList({
         row.status.toLowerCase().includes(q)
     );
   }, [filter, items, query]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [filter, query]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const pageItems = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   const selectableInView = useMemo(() => filtered.filter(isSelectable), [filtered]);
 
@@ -439,7 +441,7 @@ export function BrandCampaignList({
                     "inline-flex shrink-0 items-center rounded-full px-3 py-1.5 text-sm font-medium transition",
                     filter === item.id
                       ? "bg-zinc-900 text-white"
-                      : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 hover:text-zinc-900"
+                      : "bg-white text-zinc-600 ring-1 ring-zinc-200 hover:text-zinc-900"
                   )}
                 >
                   {item.label}
@@ -467,26 +469,19 @@ export function BrandCampaignList({
           </div>
         ) : (
           <ul className="divide-y divide-zinc-100">
-            {filtered.map((row) => {
+            {pageItems.map((row) => {
               const key = rowKey(row);
               const checked = selected.has(key);
               const selectable = isSelectable(row);
               const href = resolveHref(row, orderProjectMap);
-              const normalized = normalizeCampaignStatus(row.status);
-              const statusLabel = brandCampaignStatusLabel(row.status, locale);
-              const stepIndex = brandCampaignStepIndex(row.status);
-              const progress = brandCampaignProgress(row.status);
 
               return (
                 <li
                   key={key}
-                  className={cn(
-                    "group transition",
-                    checked ? "bg-zinc-50" : "hover:bg-zinc-50/60"
-                  )}
+                  className={cn("group transition", checked ? "bg-zinc-50" : "hover:bg-zinc-50/60")}
                 >
-                  <div className="flex gap-3 px-4 py-4 sm:px-5">
-                    <div className="flex shrink-0 pt-1">
+                  <div className="flex gap-3">
+                    <div className="flex shrink-0 pt-5 pl-4 sm:pl-5">
                       {selectable ? (
                         <SelectCheckbox
                           checked={checked}
@@ -500,55 +495,14 @@ export function BrandCampaignList({
                         <span className="h-4 w-4" aria-hidden />
                       )}
                     </div>
-
-                    <div className="min-w-0 flex-1 space-y-3">
-                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                        <div className="min-w-0 flex-1">
-                          <div className="flex flex-wrap items-center gap-2">
-                            {row.category ? (
-                              <Badge variant="secondary" className="font-normal">
-                                {row.category}
-                              </Badge>
-                            ) : null}
-                            {row.kind === "order" ? (
-                              <Badge variant="outline" className="font-normal border-blue-200 bg-blue-50 text-blue-900">
-                                {t.kindOrder}
-                              </Badge>
-                            ) : null}
-                            <Badge
-                              variant="outline"
-                              className={cn(
-                                "font-normal",
-                                normalized === "payment_pending" && "border-amber-200 bg-amber-50 text-amber-900",
-                                normalized === "draft" && "border-zinc-200 bg-zinc-50 text-zinc-600",
-                                normalized === "in_review" && "border-emerald-200 bg-emerald-50 text-emerald-900"
-                              )}
-                            >
-                              {statusLabel}
-                            </Badge>
-                          </div>
-                          <h3 className="mt-2 truncate text-base font-semibold tracking-tight text-zinc-900">
-                            {friendlyName(row.name)}
-                          </h3>
-                          <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-zinc-500">
-                            {row.budgetRange ? (
-                              <span className="inline-flex items-center gap-1">
-                                <CircleDollarSign className="h-3.5 w-3.5" />
-                                {row.budgetRange}
-                              </span>
-                            ) : null}
-                            {row.deadline ? (
-                              <span className="inline-flex items-center gap-1">
-                                <Calendar className="h-3.5 w-3.5" />
-                                {row.deadline}
-                              </span>
-                            ) : null}
-                            <span>{formatDate(row.updatedAt)}</span>
-                          </div>
-                        </div>
-
-                        <div className="flex shrink-0 items-center gap-2">
-                          {selectable ? (
+                    <div className="min-w-0 flex-1">
+                      <BrandCampaignListRow
+                        locale={locale}
+                        row={row}
+                        href={href}
+                        openLabel={t.open}
+                        actionSlot={
+                          selectable ? (
                             <Button
                               type="button"
                               variant="ghost"
@@ -560,42 +514,9 @@ export function BrandCampaignList({
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
-                          ) : null}
-                          <Button asChild size="sm" className="h-9 rounded-lg" variant={normalized === "payment_pending" ? "default" : "outline"}>
-                            <Link href={withLocale(href, locale)}>
-                              {row.cta || t.open}
-                              <ArrowRight className="h-3.5 w-3.5" />
-                            </Link>
-                          </Button>
-                        </div>
-                      </div>
-
-                      {row.kind === "campaign" ? (
-                      <div className="hidden sm:block">
-                        <div className="flex items-center justify-between gap-2">
-                          {stepLabels.map((label, index) => (
-                            <div key={label} className="flex flex-1 flex-col items-center gap-1">
-                              <span
-                                className={cn(
-                                  "flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-semibold",
-                                  index <= stepIndex
-                                    ? "bg-zinc-900 text-white"
-                                    : "border border-zinc-200 bg-white text-zinc-400"
-                                )}
-                              >
-                                {index + 1}
-                              </span>
-                              <span className={cn("text-[10px]", index <= stepIndex ? "text-zinc-600" : "text-zinc-400")}>
-                                {label}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                        <div className="mt-2 h-1 overflow-hidden rounded-full bg-zinc-100">
-                          <div className="h-full rounded-full bg-zinc-900 transition-all" style={{ width: `${progress}%` }} />
-                        </div>
-                      </div>
-                      ) : null}
+                          ) : null
+                        }
+                      />
                     </div>
                   </div>
                 </li>
@@ -603,6 +524,32 @@ export function BrandCampaignList({
             })}
           </ul>
         )}
+
+        {filtered.length > 0 ? (
+          <div className="flex items-center justify-center gap-2 border-t border-zinc-100 px-4 py-4">
+            <button
+              type="button"
+              aria-label={locale === "zh" ? "上一页" : "Previous page"}
+              disabled={currentPage <= 1}
+              onClick={() => setPage((value) => Math.max(1, value - 1))}
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-600 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-violet-600 text-sm font-semibold text-white">
+              {currentPage}
+            </span>
+            <button
+              type="button"
+              aria-label={locale === "zh" ? "下一页" : "Next page"}
+              disabled={currentPage >= totalPages}
+              onClick={() => setPage((value) => Math.min(totalPages, value + 1))}
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-600 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+        ) : null}
       </div>
 
       <Dialog

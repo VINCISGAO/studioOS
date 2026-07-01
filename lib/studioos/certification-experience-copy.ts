@@ -2,8 +2,8 @@ import type { Locale } from "@/lib/i18n";
 import type { CreatorPortalNavKey } from "@/lib/studioos/creator-portal-nav";
 
 export const certificationUnlockOrder: CreatorPortalNavKey[] = [
-  "projects",
-  "invitations",
+  "projectDetails",
+  "orders",
   "reviewRoom",
   "income",
   "messages"

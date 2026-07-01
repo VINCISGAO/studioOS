@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { PortalMobileNav, type PortalMobileNavIconKey } from "@/components/studioos/portal-mobile-nav";
+import { PortalMobileNav } from "@/components/studioos/portal-mobile-nav";
 import { MarketingHomeLink } from "@/components/studioos/marketing-home-link";
 import { signOutAction } from "@/app/actions";
 import { LanguageSwitcher } from "@/components/language-switcher";

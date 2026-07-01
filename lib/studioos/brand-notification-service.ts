@@ -97,6 +97,30 @@ export async function markBrandNotificationRead(id: string, brandEmail: string):
   return true;
 }
 
+export async function markBrandNotificationsRead(ids: string[], brandEmail: string): Promise<number> {
+  if (!ids.length) {
+    return 0;
+  }
+  const store = await readStore();
+  const normalized = brandEmail.toLowerCase();
+  const idSet = new Set(ids);
+  const now = new Date().toISOString();
+  let count = 0;
+
+  for (const item of store.notifications) {
+    if (item.brand_email === normalized && idSet.has(item.id) && !item.read_at) {
+      item.read_at = now;
+      count += 1;
+    }
+  }
+
+  if (count) {
+    await writeStore(store);
+  }
+
+  return count;
+}
+
 export async function deleteBrandNotification(id: string, brandEmail: string): Promise<boolean> {
   const store = await readStore();
   const normalized = brandEmail.toLowerCase();

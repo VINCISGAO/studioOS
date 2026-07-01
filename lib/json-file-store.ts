@@ -2,8 +2,8 @@ import "server-only";
 
 import path from "node:path";
 import { canPersistLocalDataStore } from "@/lib/can-persist-local-store";
+import { safeReadJsonFile } from "@/lib/core/safe-json";
 import { getMemoryStore, writeDataJson, cacheDataJson } from "@/lib/serverless-store";
-import { promises as fs } from "node:fs";
 
 const queues = new Map<string, Promise<unknown>>();
 
@@ -22,12 +22,7 @@ function enqueue<T>(key: string, task: () => Promise<T>): Promise<T> {
 }
 
 async function readJsonFromDisk<T>(filePath: string): Promise<T | null> {
-  try {
-    const raw = await fs.readFile(filePath, "utf8");
-    return JSON.parse(raw) as T;
-  } catch {
-    return null;
-  }
+  return safeReadJsonFile<T | null>(filePath, null);
 }
 
 function bundledSeedPath(fileName: string) {
@@ -70,18 +65,19 @@ type SerializedStoreReader<T> = (() => Promise<T>) & {
 export function createSerializedStoreReader<T>(readInner: () => Promise<T>): SerializedStoreReader<T> {
   let inFlight: Promise<T> | null = null;
 
-  const read = (async () => {
+  async function read(): Promise<T> {
     if (!inFlight) {
       inFlight = readInner().finally(() => {
         inFlight = null;
       });
     }
     return inFlight;
-  }) as SerializedStoreReader<T>;
+  }
 
-  read.invalidate = () => {
+  const reader = read as SerializedStoreReader<T>;
+  reader.invalidate = () => {
     inFlight = null;
   };
 
-  return read;
+  return reader;
 }

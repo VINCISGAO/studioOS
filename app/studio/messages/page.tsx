@@ -1,16 +1,38 @@
 import { redirect } from "next/navigation";
 import { StudioMessageCenter } from "@/components/studioos/studio-message-center";
+import type { MessageDetailPayload, MessageListItem } from "@/components/studioos/studio-message-center.types";
 import { getCurrentCreator } from "@/lib/creator-session";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import type { CreatorNotification } from "@/lib/notification-types";
 import { listNotificationsForCreator } from "@/lib/notification-service";
 import { getOrder } from "@/lib/order-service";
 import { getProject } from "@/lib/project-service";
-import { getConfirmedBriefFields } from "@/lib/studioos/confirmed-brief";
 import { resolveCreatorNotificationAction } from "@/lib/studioos/commercial-notification-routes";
+import { getConfirmedBriefFields } from "@/lib/studioos/confirmed-brief";
+import {
+  buildMessageNextStep,
+  buildMessageProjectStage,
+  buildMessageSalutation,
+  buildProjectCode,
+  formatMessageDetailTime,
+  formatMessageListTime,
+  messageCategoryFromType,
+  messageCategoryLabel,
+  senderAvatarTone,
+  senderDisplayName,
+  senderInitials
+} from "@/lib/studioos/creator-messages-ui";
 import { buildMessageProgressSteps } from "@/lib/studioos/message-order-progress";
-import type { MessageDetailPayload, MessageListItem } from "@/components/studioos/studio-message-center.types";
-import type { CreatorNotification } from "@/lib/notification-types";
 import type { Locale } from "@/lib/i18n";
+
+const PROJECT_THUMBNAILS: Record<string, string> = {
+  ntf_demo_nike_work_selected:
+    "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=200&auto=format&fit=crop",
+  ntf_demo_arc_selected:
+    "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=200&auto=format&fit=crop",
+  ntf_demo_arc_funded:
+    "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=200&auto=format&fit=crop"
+};
 
 function fallbackBrandGuideAttachment(projectId: string, locale: Locale) {
   return {
@@ -24,6 +46,7 @@ function fallbackBrandGuideAttachment(projectId: string, locale: Locale) {
 
 async function buildMessageDetail(
   notification: CreatorNotification,
+  creatorName: string,
   locale: Locale
 ): Promise<MessageDetailPayload> {
   const project = notification.project_id ? await getProject(notification.project_id) : null;
@@ -43,40 +66,104 @@ async function buildMessageDetail(
     },
     locale
   );
+  const category = messageCategoryFromType(notification.type);
+  const senderName = senderDisplayName(notification.company_name, locale);
+  const progressSteps = buildMessageProgressSteps(order, notification.type, locale);
+  const projectCode = buildProjectCode(projectId);
+  const demoProjectInfo =
+    notification.id === "ntf_demo_nike_work_selected"
+      ? {
+          title: locale === "zh" ? "Nike 春季新品广告" : "Nike Spring Launch Ad",
+          code: "CAM-2026-0601",
+          stage: locale === "zh" ? "制作中 · 第一版" : "In production · V1",
+          thumbnailUrl: PROJECT_THUMBNAILS.ntf_demo_nike_work_selected,
+          href: withLocale("/studio/projects", locale)
+        }
+      : null;
+  const demoActionHref =
+    notification.id === "ntf_demo_nike_work_selected"
+      ? withLocale("/studio/projects", locale)
+      : action.href;
 
   return {
     notificationId: notification.id,
     type: notification.type,
+    category,
+    categoryLabel: messageCategoryLabel(category, locale),
+    senderName,
+    senderInitials: senderInitials(senderName),
+    senderAvatarTone: senderAvatarTone(senderName),
     title: notification.title,
+    detailTitle: notification.title,
+    salutation: buildMessageSalutation(creatorName, locale),
     body: notification.body,
     createdAt: notification.created_at,
+    detailTimeLabel: formatMessageDetailTime(notification.created_at, locale),
     readAt: notification.read_at,
     orderId: notification.order_id,
     projectId,
     projectTitle,
-    formId: projectId ? projectId.slice(-10).toUpperCase() : "—",
+    formId: projectCode,
     fields,
     attachments: projectId ? [fallbackBrandGuideAttachment(projectId, locale)] : [],
     briefPdfUrl,
-    progressSteps: buildMessageProgressSteps(order, notification.type, locale),
-    actionHref: action.href,
-    actionLabel: action.label
+    progressSteps,
+    projectInfo:
+      demoProjectInfo ??
+      (projectId
+        ? {
+            title: projectTitle,
+            code: projectCode,
+            stage: buildMessageProjectStage(progressSteps, locale),
+            thumbnailUrl:
+              PROJECT_THUMBNAILS[notification.id] ??
+              "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=200&auto=format&fit=crop",
+            href: action.href
+          }
+        : null),
+    nextStep: buildMessageNextStep(notification.type, locale),
+    actionHref: demoActionHref,
+    actionLabel:
+      locale === "zh"
+        ? notification.type === "escrow_released"
+          ? "查看收益"
+          : "查看项目"
+        : notification.type === "escrow_released"
+          ? "View income"
+          : "View project",
+    replyHref: demoActionHref,
+    replyLabel: locale === "zh" ? "回复品牌方" : "Reply to brand"
   };
 }
 
-async function buildMessageCenterPayload(notifications: CreatorNotification[], locale: Locale) {
-  const details = await Promise.all(notifications.map((item) => buildMessageDetail(item, locale)));
-  const list: MessageListItem[] = notifications.map((notification, index) => ({
-    id: notification.id,
-    type: notification.type,
-    title: notification.title,
-    preview: notification.body,
-    createdAt: notification.created_at,
-    readAt: notification.read_at,
-    orderId: notification.order_id,
-    actionHref: details[index]?.actionHref ?? withLocale("/studio/messages", locale),
-    actionLabel: details[index]?.actionLabel ?? (locale === "zh" ? "查看" : "Open")
-  }));
+async function buildMessageCenterPayload(
+  notifications: CreatorNotification[],
+  creatorName: string,
+  locale: Locale
+) {
+  const details = await Promise.all(
+    notifications.map((item) => buildMessageDetail(item, creatorName, locale))
+  );
+  const list: MessageListItem[] = notifications.map((notification, index) => {
+    const detail = details[index];
+    const senderName = detail?.senderName ?? senderDisplayName(notification.company_name, locale);
+    return {
+      id: notification.id,
+      type: notification.type,
+      category: detail?.category ?? messageCategoryFromType(notification.type),
+      senderName,
+      senderInitials: senderInitials(senderName),
+      senderAvatarTone: senderAvatarTone(senderName),
+      title: notification.title,
+      preview: notification.body,
+      createdAt: notification.created_at,
+      timeLabel: formatMessageListTime(notification.created_at, locale),
+      readAt: notification.read_at,
+      orderId: notification.order_id,
+      actionHref: detail?.actionHref ?? withLocale("/studio/messages", locale),
+      actionLabel: detail?.actionLabel ?? (locale === "zh" ? "查看" : "Open")
+    };
+  });
   return { list, details };
 }
 
@@ -90,7 +177,7 @@ export default async function StudioMessagesPage({ searchParams }: { searchParam
   }
 
   const notifications = await listNotificationsForCreator(creator.id, locale);
-  const payload = await buildMessageCenterPayload(notifications, locale);
+  const payload = await buildMessageCenterPayload(notifications, creator.name, locale);
   const initialSelectedId =
     typeof query.id === "string" && payload.list.some((item) => item.id === query.id)
       ? query.id

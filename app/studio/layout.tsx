@@ -14,6 +14,9 @@ import {
 import { getLocale, withLocale } from "@/lib/i18n";
 import { listOrdersForCreator } from "@/lib/order-service";
 import { countUnreadNotifications, listNotificationsForCreator } from "@/lib/notification-service";
+import { countInvitationsByTab, listInvitationsForCreator } from "@/lib/studioos/creator-invitation-store";
+import { getCreatorIncomeSnapshot } from "@/lib/studioos/withdrawal-service";
+import { CREATOR_HOME_DEMO_CREATOR_ID } from "@/lib/studioos/creator-home-ui";
 import {
   isStudioFeaturePath,
   studioCertificationRedirectPath,
@@ -35,6 +38,11 @@ export default async function StudioLayout({ children }: { children: React.React
     creator && canUseBusinessFeatures ? await listNotificationsForCreator(creator.id, locale) : [];
   const unreadCount =
     creator && canUseBusinessFeatures ? await countUnreadNotifications(creator.id) : 0;
+  const income = creator && canUseBusinessFeatures ? await getCreatorIncomeSnapshot(creator.id) : null;
+  const invitationCounts =
+    creator && canUseBusinessFeatures
+      ? countInvitationsByTab(await listInvitationsForCreator(creator.id))
+      : { pending: 0, accepted: 0, declined: 0, expired: 0 };
   const levelUpSeen = creator ? await hasSeenCertificationLevelUp(creator.id) : true;
 
   if (creator && isStudioFeaturePath(pathname)) {
@@ -59,7 +67,15 @@ export default async function StudioLayout({ children }: { children: React.React
       isVerified={access.isVerified}
       levelUpSeen={levelUpSeen}
       notifications={notifications}
-      unreadCount={unreadCount}
+      unreadCount={
+        creator?.id === CREATOR_HOME_DEMO_CREATOR_ID && canUseBusinessFeatures ? 5 : unreadCount
+      }
+      withdrawableUsd={income?.available_usd ?? 0}
+      pendingInvitationCount={
+        creator?.id === CREATOR_HOME_DEMO_CREATOR_ID && canUseBusinessFeatures
+          ? 3
+          : invitationCounts.pending
+      }
     >
       {children}
     </StudioPortalShell>

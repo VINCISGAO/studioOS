@@ -7,13 +7,13 @@ import { WorkCoverImage } from "@/components/creator/work-cover-image";
 import { WorkVideoPlayer } from "@/components/creator/work-video-player";
 import {
   CreatorAboutPanel,
-  CreatorProfileHero,
   CreatorProfileTabs,
   StudioProfileWorksGrid,
-  StudioProfileWorksToolbar,
   type WorkSortKey,
   type WorkViewMode
 } from "@/components/creator/creator-profile-ui";
+import { StudioWorksFilterBar } from "@/components/studioos/studio-works-filter-bar";
+import { StudioWorksProfileHero } from "@/components/studioos/studio-works-profile-hero";
 import type { WorkEngagementSnapshot } from "@/lib/work-engagement-utils";
 import { CreatorMinBudgetField } from "@/components/creator/creator-min-budget-field";
 import Link from "next/link";
@@ -41,7 +41,6 @@ import {
   getVideoFormatOptions,
   getWorkCategoryOptions,
   labelCountry,
-  labelDeliverySpeed,
   labelPlatform,
   labelTurnaround,
   labelVideoFormat,
@@ -62,13 +61,18 @@ import {
 import { canEmbedVideo, resolveWorkThumbnail, sanitizeVideoUrl } from "@/lib/media-url";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
-import { tCertified } from "@/lib/studioos/deposit-copy";
 import {
   creatorMinBudgetAboutLabel,
-  creatorMinBudgetLabel,
   normalizeCreatorMinBudget
 } from "@/lib/studioos/creator-price-preference";
 import { OrderRatingPolicyCard } from "@/components/studioos/order-rating-policy-card";
+import {
+  buildCreatorWorksHeroStats,
+  buildCreatorWorksProfileTags,
+  buildWorksFilterOptions,
+  filterCreatorWorks,
+  worksFilterAllValue
+} from "@/lib/studioos/creator-works-ui";
 import type { Creator, CreatorWork } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -297,6 +301,10 @@ export function CreatorProfileStudio({
   const [sortKey, setSortKey] = useState<WorkSortKey>("newest");
   const [viewMode, setViewMode] = useState<WorkViewMode>("grid");
   const [worksPage, setWorksPage] = useState(1);
+  const [worksQuery, setWorksQuery] = useState("");
+  const [platformFilter, setPlatformFilter] = useState(worksFilterAllValue);
+  const [categoryFilter, setCategoryFilter] = useState(worksFilterAllValue);
+  const [tagFilter, setTagFilter] = useState(worksFilterAllValue);
   const [editOpen, setEditOpen] = useState(false);
   const [publishOpen, setPublishOpen] = useState(openPublishOnLoad);
   const [selectedWork, setSelectedWork] = useState<CreatorWork | null>(null);
@@ -356,20 +364,26 @@ export function CreatorProfileStudio({
     [creator.name]
   );
 
-  const minBudgetStat = useMemo(() => {
-    const min = normalizeCreatorMinBudget(creator.min_project_budget_usd ?? 0);
-    if (!min) return null;
-    if (locale === "zh") {
-      return {
-        label: "起",
-        value: `$${min.toLocaleString("zh-CN")}`
-      };
-    }
-    return {
-      label: t.minBudget,
-      value: creatorMinBudgetLabel(min, locale)
-    };
-  }, [creator.min_project_budget_usd, locale, t.minBudget]);
+  const profileTags = useMemo(() => buildCreatorWorksProfileTags(creator, locale), [creator, locale]);
+  const heroStats = useMemo(
+    () => buildCreatorWorksHeroStats(creator, works.length, locale),
+    [creator, locale, works.length]
+  );
+  const filterOptions = useMemo(() => buildWorksFilterOptions(works, locale), [locale, works]);
+  const filteredWorks = useMemo(
+    () =>
+      filterCreatorWorks(
+        works,
+        {
+          query: worksQuery,
+          platform: platformFilter,
+          category: categoryFilter,
+          tag: tagFilter
+        },
+        locale
+      ),
+    [categoryFilter, locale, platformFilter, tagFilter, works, worksQuery]
+  );
 
   function handleSaveProfile(form: CreatorProfileDraft) {
     startTransition(async () => {
@@ -518,13 +532,13 @@ export function CreatorProfileStudio({
 
   useEffect(() => {
     setWorksPage(1);
-  }, [sortKey, viewMode]);
+  }, [sortKey, viewMode, worksQuery, platformFilter, categoryFilter, tagFilter]);
 
   return (
     <div className="w-full pb-10">
       {toast ? <ProfileToastBanner toast={toast} /> : null}
 
-      <CreatorProfileHero
+      <StudioWorksProfileHero
         name={creator.name}
         headline={creator.headline}
         initials={initials}
@@ -533,14 +547,8 @@ export function CreatorProfileStudio({
         avatarUploading={avatarUploading}
         editAvatarLabel={t.editAvatar}
         onAvatarUpload={(file) => void handleAvatarUpload(file)}
-        stats={[
-          { label: t.posts, value: String(works.length) },
-          { label: t.turnaround, value: labelDeliverySpeed(creator.delivery_speed, locale) },
-          ...(minBudgetStat ? [minBudgetStat] : [])
-        ]}
-        rating={creator.rating}
-        country={labelCountry(creator.country, locale)}
-        depositNote={creator.deposit_status === "paid" ? tCertified(locale).profileBadge : undefined}
+        tags={profileTags}
+        stats={heroStats}
         verified={creator.deposit_status === "paid" || Boolean(creator.profile_completed_at)}
         actions={
           <>
@@ -572,54 +580,63 @@ export function CreatorProfileStudio({
             { id: "posts", label: t.posts },
             { id: "about", label: t.about }
           ]}
-          trailing={
-            tab === "posts" ? (
-              <StudioProfileWorksToolbar
-                locale={locale}
-                sortKey={sortKey}
-                viewMode={viewMode}
-                onSortChange={setSortKey}
-                onViewModeChange={setViewMode}
-              />
-            ) : null
-          }
         />
 
         {tab === "posts" ? (
-          works.length ? (
-            <StudioProfileWorksGrid
+          <>
+            <StudioWorksFilterBar
               locale={locale}
-              works={works}
-              activeWorkId={activeWorkId}
-              viewMode={viewMode}
-              page={worksPage}
+              query={worksQuery}
+              platform={platformFilter}
+              category={categoryFilter}
+              tag={tagFilter}
+              platformOptions={filterOptions.platforms}
+              categoryOptions={filterOptions.categories}
+              tagOptions={filterOptions.tags}
               sortKey={sortKey}
-              onPageChange={setWorksPage}
-              engagement={engagement}
-              isLoggedIn={isLoggedIn}
-              empty={t.empty}
-              onActivate={handleActivateWork}
-              ownerActions={{
-                onHide: (work) => void handleHideWork(work, true),
-                onShow: (work) => void handleHideWork(work, false),
-                onDelete: (work) => void handleDeleteWork(work),
-                labels: {
-                  hide: t.hideWork,
-                  show: t.showWork,
-                  delete: t.deleteWork,
-                  hidden: t.hiddenBadge
-                }
-              }}
+              viewMode={viewMode}
+              onQueryChange={setWorksQuery}
+              onPlatformChange={setPlatformFilter}
+              onCategoryChange={setCategoryFilter}
+              onTagChange={setTagFilter}
+              onSortChange={setSortKey}
+              onViewModeChange={setViewMode}
             />
-          ) : (
-            <div className="mt-10 flex flex-col items-center rounded-[24px] border border-dashed border-zinc-200 bg-zinc-50/80 px-6 py-16 text-center">
-              <Clapperboard className="h-10 w-10 text-zinc-400" />
-              <p className="mt-4 max-w-md text-[15px] leading-7 text-zinc-500">{t.empty}</p>
-              <Button className="mt-6 rounded-full px-6" onClick={() => setPublishOpen(true)}>
-                <Plus className="h-4 w-4" /> {t.publishVideo}
-              </Button>
-            </div>
-          )
+            {works.length ? (
+              <StudioProfileWorksGrid
+                locale={locale}
+                works={filteredWorks}
+                activeWorkId={activeWorkId}
+                viewMode={viewMode}
+                page={worksPage}
+                sortKey={sortKey}
+                onPageChange={setWorksPage}
+                engagement={engagement}
+                isLoggedIn={isLoggedIn}
+                empty={t.empty}
+                onActivate={handleActivateWork}
+                ownerActions={{
+                  onHide: (work) => void handleHideWork(work, true),
+                  onShow: (work) => void handleHideWork(work, false),
+                  onDelete: (work) => void handleDeleteWork(work),
+                  labels: {
+                    hide: t.hideWork,
+                    show: t.showWork,
+                    delete: t.deleteWork,
+                    hidden: t.hiddenBadge
+                  }
+                }}
+              />
+            ) : (
+              <div className="mt-10 flex flex-col items-center rounded-[24px] border border-dashed border-zinc-200 bg-zinc-50/80 px-6 py-16 text-center">
+                <Clapperboard className="h-10 w-10 text-zinc-400" />
+                <p className="mt-4 max-w-md text-[15px] leading-7 text-zinc-500">{t.empty}</p>
+                <Button className="mt-6 rounded-full px-6" onClick={() => setPublishOpen(true)}>
+                  <Plus className="h-4 w-4" /> {t.publishVideo}
+                </Button>
+              </div>
+            )}
+          </>
         ) : (
           <div className="space-y-4">
             {showRatingNote ? (

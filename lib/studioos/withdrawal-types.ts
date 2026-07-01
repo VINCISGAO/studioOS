@@ -30,6 +30,7 @@ export type PayoutMethod = {
   crypto_asset?: CryptoAsset;
   crypto_network?: CryptoNetwork;
   wallet_address?: string;
+  verified?: boolean;
   created_at: string;
 };
 

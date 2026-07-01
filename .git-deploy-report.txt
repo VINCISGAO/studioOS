@@ -2,3 +2,25 @@
 Branch: main
 Remote: https://github.com/VINCISGAO/studioOS.git
 
+Committed: c5edada906fdb0b7ed71cc8b60383e69819e8f66
+Push complete.
+HEAD: c5edada
+Files in last commit:
+c5edada Fix portal nav, typecheck, and local verify tooling.
+ .git-deploy-report.txt                             |  2 +-
+ app/brand-campaign-actions.ts                      | 15 ++++
+ app/workspace/projects/[id]/review/page.tsx        | 59 +++++++++++--
+ components/order/brand-order-view.tsx              |  1 +
+ components/studioos/admin-portal-shell.tsx         | 30 +++----
+ components/studioos/brand-campaign-wizard.tsx      |  4 +-
+ components/studioos/brand-portal-shell.tsx         |  6 +-
+ .../certification-level-up-dialog.tsx              |  2 +-
+ components/studioos/portal-mobile-nav.tsx          | 97 ++++++++++++++++++++--
+ components/studioos/studio-portal-shell.tsx        | 11 ++-
+ package.json                                       |  5 +-
+ scripts/git-push-all.mjs                           | 56 +++++++++++++
+ scripts/push-session-changes.sh                    |  6 +-
+ scripts/sprint13-verify.ts                         |  2 +-
+ scripts/verify-local.sh                            | 48 +++++++++++
+ 15 files changed, 298 insertions(+), 46 deletions(-)
+Done.

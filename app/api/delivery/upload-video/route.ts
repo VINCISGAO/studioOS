@@ -1,13 +1,21 @@
 import { NextResponse } from "next/server";
-import { getCurrentCreatorId } from "@/lib/creator-session";
-import { getDeliverables, getOrder } from "@/lib/order-service";
-import { purgeExpiredDeliverableVideos } from "@/lib/studioos/deliverable-video-policy";
-import { saveReviewVideoUpload } from "@/lib/studioos/video-upload";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
 
 export async function POST(request: Request) {
+  const [
+    { getCurrentCreatorId },
+    { getDeliverables, getOrder },
+    { purgeExpiredDeliverableVideos },
+    { saveReviewVideoUpload }
+  ] = await Promise.all([
+    import("@/lib/creator-session"),
+    import("@/lib/order-service"),
+    import("@/lib/studioos/deliverable-video-policy"),
+    import("@/lib/studioos/video-upload")
+  ]);
+
   await purgeExpiredDeliverableVideos();
 
   const creatorId = await getCurrentCreatorId();

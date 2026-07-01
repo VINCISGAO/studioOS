@@ -79,7 +79,7 @@ export function labelTurnaround(value: string, locale: Locale) {
 }
 
 const DELIVERY_SPEED_I18N: Record<string, Bilingual> = {
-  "48-72 hours": { en: "48-72 hours", zh: "48–72 小时" }
+  "48-72 hours": { en: "48-72 hours", zh: "48-72 小时" }
 };
 
 export function labelDeliverySpeed(value: string, locale: Locale) {

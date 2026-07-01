@@ -108,7 +108,7 @@ export function normalizeCustomBudgetInput(
 }
 
 export function defaultBrandBudget(): string {
-  return BRAND_BUDGET_PRESETS[1]?.value ?? "$500 – $1,000";
+  return BRAND_BUDGET_PRESETS[0]?.value ?? "$200 – $500";
 }
 
 export function defaultBrandTimeline(): BrandDeliveryTimelineId {

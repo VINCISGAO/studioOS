@@ -33,10 +33,10 @@ export function invitationTabForStatus(status: string) {
   return "pending" as const;
 }
 
-export function filterInvitationsByTab(
-  invitations: CreatorPortalInvitationView[],
+export function filterInvitationsByTab<T extends CreatorPortalInvitationView>(
+  invitations: T[],
   tab: CreatorInvitationTab
-) {
+): T[] {
   return invitations.filter((item) => invitationTabForStatus(item.status) === tab);
 }
 

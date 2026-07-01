@@ -378,7 +378,7 @@ export function resolveBrandNextActorHint(
       return locale === "zh" ? "下一步：请选择 Creator" : "Next: select a creator";
     }
     if (step === "collecting_candidates" || step === "invitations_sent") {
-      return locale === "zh" ? "下一步：等待 Creator 回应" : "Next: waiting for creators";
+      return locale === "zh" ? "下一步：等待 Creator 响应" : "Next: waiting for creator responses";
     }
     return locale === "zh" ? "下一步：您发布需求并招募 Creator" : "Next: publish and recruit creators";
   }

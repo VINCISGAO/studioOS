@@ -34,12 +34,101 @@ function emptyStore(): WithdrawalStore {
 async function readStore(): Promise<WithdrawalStore> {
   try {
     const raw = await fs.readFile(STORE_PATH, "utf8");
-    return JSON.parse(raw) as WithdrawalStore;
+    const parsed = JSON.parse(raw) as WithdrawalStore;
+    const { store, changed } = ensureDemoPayoutMethods(parsed);
+    if (changed) {
+      await writeStore(store);
+    }
+    return store;
   } catch {
-    const seeded = emptyStore();
+    const { store: seeded, changed } = ensureDemoPayoutMethods(emptyStore());
     await writeStore(seeded);
     return seeded;
   }
+}
+
+function ensureDemoPayoutMethods(store: WithdrawalStore): { store: WithdrawalStore; changed: boolean } {
+  const creatorId = "creator_02";
+  const demoIds = [
+    "pm_demo_signal_bank",
+    "pm_demo_signal_paypal",
+    "pm_demo_signal_alipay",
+    "pm_demo_signal_wechat",
+    "pm_demo_signal_crypto"
+  ];
+
+  if (demoIds.every((id) => store.payout_methods.some((item) => item.id === id))) {
+    return { store, changed: false };
+  }
+
+  const now = "2026-06-01T09:00:00.000Z";
+  const seeds: PayoutMethod[] = [
+    {
+      id: "pm_demo_signal_bank",
+      creator_id: creatorId,
+      type: "bank_wire",
+      label: "Santander Bank",
+      is_default: true,
+      verified: true,
+      account_holder: "Signal Frame Lab",
+      bank_name: "Santander Bank",
+      account_last4: "4242",
+      routing_last4: "0210",
+      created_at: now
+    },
+    {
+      id: "pm_demo_signal_paypal",
+      creator_id: creatorId,
+      type: "paypal",
+      label: "PayPal",
+      is_default: false,
+      verified: true,
+      paypal_email: "hello@signalframe.ai",
+      created_at: now
+    },
+    {
+      id: "pm_demo_signal_alipay",
+      creator_id: creatorId,
+      type: "alipay",
+      label: "Alipay",
+      is_default: false,
+      verified: false,
+      alipay_account: "hello@signalframe.ai",
+      created_at: now
+    },
+    {
+      id: "pm_demo_signal_wechat",
+      creator_id: creatorId,
+      type: "wechat",
+      label: "WeChat Pay",
+      is_default: false,
+      verified: false,
+      wechat_account: "SignalFrame",
+      created_at: now
+    },
+    {
+      id: "pm_demo_signal_crypto",
+      creator_id: creatorId,
+      type: "crypto",
+      label: "USDT Wallet",
+      is_default: false,
+      verified: false,
+      crypto_asset: "USDT",
+      crypto_network: "TRC20",
+      wallet_address: "0x8a12f6VPqDgRE67v1736s7bJ8Ray5wYjU7",
+      created_at: now
+    }
+  ];
+
+  let changed = false;
+  for (const seed of seeds) {
+    if (!store.payout_methods.some((item) => item.id === seed.id)) {
+      store.payout_methods.push(seed);
+      changed = true;
+    }
+  }
+
+  return { store, changed };
 }
 
 async function writeStore(store: WithdrawalStore) {
@@ -84,6 +173,16 @@ async function advanceDemoWithdrawals(store: WithdrawalStore) {
 }
 
 export async function getCreatorIncomeSnapshot(creatorId: string): Promise<CreatorIncomeSnapshot> {
+  if (creatorId === "creator_01") {
+    return {
+      available_usd: 2879,
+      held_usd: 4200,
+      pending_withdrawal_usd: 0,
+      lifetime_withdrawn_usd: 84200,
+      min_withdrawal_usd: MIN_WITHDRAWAL_USD
+    };
+  }
+
   const [orders, store] = await Promise.all([listOrdersForCreator(creatorId), readStore()]);
   await advanceDemoWithdrawals(store);
 
