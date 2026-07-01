@@ -12,7 +12,13 @@ import { listReviewComments } from "@/lib/studioos/review-store";
 type Props = {
   params: Promise<{ id: string }>;
   searchParams: Promise<
-    SearchParams & { approved?: string; revision?: string; settled?: string; completed?: string }
+    SearchParams & {
+      approved?: string;
+      revision?: string;
+      settled?: string;
+      completed?: string;
+      error?: string;
+    }
   >;
 };
 
@@ -47,6 +53,16 @@ export default async function BrandProjectReviewPage({ params, searchParams }: P
       ? ("completed" as const)
       : query.revision === "1" || query.revision === "requested"
         ? ("revision" as const)
+        : undefined;
+  const actionError =
+    query.error === "approve"
+      ? locale === "zh"
+        ? "暂时无法通过交付，请确认订单仍在审片状态后重试。"
+        : "Could not approve delivery. Make sure the order is still in review and try again."
+      : query.error === "revision"
+        ? locale === "zh"
+          ? "暂时无法提交修改请求，请稍后重试。"
+          : "Could not request changes. Please try again."
         : undefined;
 
   if (!order || !deliverables.length) {
@@ -87,6 +103,7 @@ export default async function BrandProjectReviewPage({ params, searchParams }: P
         backHref={withLocale(`${brandPortalRoutes.project(id)}?tab=production`, locale)}
         backLabel={locale === "zh" ? "返回项目" : "Back to project"}
         flash={flash}
+        actionError={actionError}
       />
     </div>
   );

@@ -6,6 +6,7 @@ import type {
   StoredQuote
 } from "@/lib/order-types";
 import { createSerializedStoreReader, writeJsonFileAtomic } from "@/lib/json-file-store";
+import { canPersistLocalDataStore } from "@/lib/can-persist-local-store";
 import { getProject } from "@/lib/project-service";
 import type { StoredProject } from "@/lib/project-types";
 import { readDataJson, dataStorePath } from "@/lib/serverless-store";
@@ -632,7 +633,7 @@ export async function requestOrderRevision(orderId: string, notes: string): Prom
   await writeStore(store);
   await syncProjectAfterRevisionRequest(order.project_id);
 
-  if (notes.trim()) {
+  if (notes.trim() && canPersistLocalDataStore()) {
     await fs.mkdir(REVISION_NOTES_DIR, { recursive: true });
     const notePath = path.join(REVISION_NOTES_DIR, `revision-${orderId}.txt`);
     await fs.writeFile(notePath, notes.trim(), "utf8");

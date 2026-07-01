@@ -3,7 +3,6 @@
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { addReviewCommentAction, uploadVideoVersionAction } from "@/app/review-actions";
-import { approveDeliveryAction, requestRevisionAction } from "@/app/order-actions";
 import type { Locale } from "@/lib/i18n";
 import type { ReviewComment } from "@/lib/studioos/review-store";
 import type { PinDraft } from "@/components/studioos/review-engine/review-center-player";
@@ -78,25 +77,5 @@ export function useReviewCenterActions({
     });
   }
 
-  function approve() {
-    startTransition(async () => {
-      const fd = new FormData();
-      fd.set("lang", locale);
-      fd.set("order_id", orderId);
-      await approveDeliveryAction(fd);
-      router.refresh();
-    });
-  }
-
-  function requestChanges() {
-    startTransition(async () => {
-      const fd = new FormData();
-      fd.set("lang", locale);
-      fd.set("order_id", orderId);
-      await requestRevisionAction(fd);
-      router.refresh();
-    });
-  }
-
-  return { pending, savePinComment, uploadVersion, approve, requestChanges };
+  return { pending, savePinComment, uploadVersion };
 }

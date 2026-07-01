@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
-import { ArrowLeft, CheckCircle2, RotateCcw } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { ReviewWorkspace } from "@/features/review/ReviewWorkspace";
 import { ReviewCenterEmptyUpload } from "@/components/studioos/review-engine/review-center-empty-upload";
 import { ReviewCenterStepper } from "@/components/studioos/review-engine/review-center-stepper";
 import { ReviewCenterVersionStrip } from "@/components/studioos/review-engine/review-center-version-strip";
+import { ReviewDeliveryDecisionForms } from "@/components/studioos/review-engine/review-delivery-decision-forms";
 import { useReviewCenterActions } from "@/components/studioos/review-engine/use-review-center-actions";
 import { Button } from "@/components/ui/button";
 import type { Locale } from "@/lib/i18n";
@@ -63,7 +64,8 @@ export function FrameioReviewCenter({
   backHref,
   backLabel,
   variant = "fullscreen",
-  flash
+  flash,
+  actionError
 }: {
   locale: Locale;
   order: StoredOrder;
@@ -76,6 +78,7 @@ export function FrameioReviewCenter({
   backLabel?: string;
   variant?: "fullscreen" | "embedded";
   flash?: "completed" | "revision";
+  actionError?: string;
 }) {
   const t = copy[locale];
   const embedded = variant === "embedded";
@@ -106,7 +109,7 @@ export function FrameioReviewCenter({
     uploadedAt: item.created_at
   }));
 
-  const { pending, uploadVersion, approve, requestChanges } = useReviewCenterActions({
+  const { pending, uploadVersion } = useReviewCenterActions({
     locale,
     orderId: order.id,
     activeVersion,
@@ -180,22 +183,13 @@ export function FrameioReviewCenter({
             </div>
           </div>
           {role === "brand" && canBrandReview ? (
-            <div className="flex w-full shrink-0 items-center gap-2 sm:ml-auto sm:w-auto">
-              <Button type="button" variant="outline" size="sm" disabled={pending} onClick={requestChanges}>
-                <RotateCcw className="h-4 w-4" />
-                {t.requestChanges}
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                disabled={pending}
-                onClick={approve}
-                className="bg-emerald-600 hover:bg-emerald-700"
-              >
-                <CheckCircle2 className="h-4 w-4" />
-                {t.approve}
-              </Button>
-            </div>
+            <ReviewDeliveryDecisionForms
+              locale={locale}
+              orderId={order.id}
+              projectId={order.project_id}
+              requestChangesLabel={t.requestChanges}
+              approveLabel={t.approve}
+            />
           ) : null}
           {role === "creator" && canCreatorUpload ? (
             <div className="flex w-full shrink-0 items-center gap-2 sm:ml-auto sm:w-auto">
@@ -221,6 +215,9 @@ export function FrameioReviewCenter({
           {locale === "zh" ? "交付已通过" : "Delivery approved"}
         </div>
       ) : null}
+      {actionError ? (
+        <div className="bg-red-50 px-4 py-2 text-center text-sm text-red-700">{actionError}</div>
+      ) : null}
 
       <div className="min-h-0 flex-1 p-4 sm:p-6">
         {videoUrl ? (
@@ -238,9 +235,7 @@ export function FrameioReviewCenter({
               activeVersion={activeVersion}
               onVersionChange={setActiveVersion}
               backHref={backHref}
-              canBrandReview={canBrandReview}
-              onApprove={approve}
-              onRequestChanges={requestChanges}
+              canBrandReview={false}
             />
             {role === "creator" && canCreatorUpload ? (
               <ReviewCenterVersionStrip

@@ -228,28 +228,48 @@ export async function submitDeliverableAction(formData: FormData) {
   redirect(withLocale(`/creator/orders/${orderId}?delivered=1`, lang));
 }
 
+function brandReviewPath(projectId: string | null | undefined, lang: Locale, query: string) {
+  if (projectId) {
+    return withLocale(`/brand/projects/${projectId}/review${query}`, lang);
+  }
+  return null;
+}
+
+function clientOwnsOrder(clientEmail: string | null, orderEmail: string) {
+  if (!clientEmail) {
+    return true;
+  }
+  return orderEmail.toLowerCase() === clientEmail.toLowerCase();
+}
+
 export async function approveDeliveryAction(formData: FormData) {
   const lang = normalizeLang(formData.get("lang"));
   const orderId = String(formData.get("order_id") ?? "");
   const projectId = String(formData.get("project_id") ?? "").trim();
   const order = await getOrder(orderId);
+  const targetProjectId = projectId || order?.project_id || null;
 
   if (!order) {
     redirect(withLocale("/dashboard", lang));
   }
 
   const clientEmail = await getCurrentClientEmail();
-  if (clientEmail && order.client_email !== clientEmail) {
+  if (!clientOwnsOrder(clientEmail, order.client_email)) {
     redirect(withLocale("/dashboard", lang));
   }
 
   const updated = await approveOrderDelivery(orderId);
   if (!updated) {
-    redirect(withLocale(`/orders/${orderId}?error=approve`, lang));
+    const reviewPath = brandReviewPath(targetProjectId, lang, "?error=approve");
+    redirect(reviewPath ?? withLocale(`/orders/${orderId}?error=approve`, lang));
   }
 
   revalidatePath("/studio");
   revalidatePath("/studio/messages");
+  if (targetProjectId) {
+    revalidatePath(`/brand/projects/${targetProjectId}`);
+    revalidatePath(`/brand/projects/${targetProjectId}/review`);
+  }
 
   await updateInquiryStatus(order.inquiry_id, "converted");
   await addSystemMessage(
@@ -259,12 +279,8 @@ export async function approveDeliveryAction(formData: FormData) {
       : `Delivery approved. Escrow released. Order ${order.id} completed.`
   );
 
-  const targetProjectId = projectId || order.project_id;
-  if (targetProjectId) {
-    redirect(withLocale(`/brand/projects/${targetProjectId}/review?completed=1`, lang));
-  }
-
-  redirect(withLocale(`/orders/${orderId}?completed=1`, lang));
+  const completedPath = brandReviewPath(targetProjectId, lang, "?completed=1");
+  redirect(completedPath ?? withLocale(`/orders/${orderId}?completed=1`, lang));
 }
 
 export async function requestRevisionAction(formData: FormData) {
@@ -273,23 +289,29 @@ export async function requestRevisionAction(formData: FormData) {
   const projectId = String(formData.get("project_id") ?? "").trim();
   const revisionNotes = String(formData.get("revision_notes") ?? "").trim();
   const order = await getOrder(orderId);
+  const targetProjectId = projectId || order?.project_id || null;
 
   if (!order) {
     redirect(withLocale("/dashboard", lang));
   }
 
   const clientEmail = await getCurrentClientEmail();
-  if (clientEmail && order.client_email !== clientEmail) {
+  if (!clientOwnsOrder(clientEmail, order.client_email)) {
     redirect(withLocale("/dashboard", lang));
   }
 
   const updated = await requestOrderRevision(orderId, revisionNotes);
   if (!updated) {
-    redirect(withLocale(`/orders/${orderId}?error=revision`, lang));
+    const reviewPath = brandReviewPath(targetProjectId, lang, "?error=revision");
+    redirect(reviewPath ?? withLocale(`/orders/${orderId}?error=revision`, lang));
   }
 
   revalidatePath("/studio");
   revalidatePath("/studio/messages");
+  if (targetProjectId) {
+    revalidatePath(`/brand/projects/${targetProjectId}`);
+    revalidatePath(`/brand/projects/${targetProjectId}/review`);
+  }
 
   if (revisionNotes) {
     await addSystemMessage(
@@ -298,12 +320,8 @@ export async function requestRevisionAction(formData: FormData) {
     );
   }
 
-  const targetProjectId = projectId || order.project_id;
-  if (targetProjectId) {
-    redirect(withLocale(`/brand/projects/${targetProjectId}/review?revision=requested`, lang));
-  }
-
-  redirect(withLocale(`/orders/${orderId}?revision=requested`, lang));
+  const revisionPath = brandReviewPath(targetProjectId, lang, "?revision=requested");
+  redirect(revisionPath ?? withLocale(`/orders/${orderId}?revision=requested`, lang));
 }
 
 export async function submitOrderRatingAction(formData: FormData) {

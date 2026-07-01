@@ -1,12 +1,10 @@
 import "server-only";
 
-import { promises as fs } from "node:fs";
-import path from "node:path";
 import type { ProjectEventName, ProjectActorRole } from "@/lib/studioos/project-status";
 import type { ProjectEventStore, StoredProjectEvent } from "@/lib/project-types";
+import { dataStorePath, readDataJson, writeDataJson } from "@/lib/serverless-store";
 
-const STORE_DIR = path.join(process.cwd(), ".data");
-const STORE_PATH = path.join(STORE_DIR, "project-events-store.json");
+const STORE_PATH = dataStorePath("project-events-store.json");
 
 function createId() {
   return `evt_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -17,21 +15,11 @@ function emptyStore(): ProjectEventStore {
 }
 
 async function readStore(): Promise<ProjectEventStore> {
-  try {
-    const raw = await fs.readFile(STORE_PATH, "utf8");
-    return JSON.parse(raw) as ProjectEventStore;
-  } catch {
-    const seeded = emptyStore();
-    await writeStore(seeded);
-    return seeded;
-  }
+  return readDataJson(STORE_PATH, emptyStore);
 }
 
 async function writeStore(store: ProjectEventStore) {
-  await fs.mkdir(STORE_DIR, { recursive: true });
-  const tempPath = `${STORE_PATH}.tmp`;
-  await fs.writeFile(tempPath, JSON.stringify(store, null, 2), "utf8");
-  await fs.rename(tempPath, STORE_PATH);
+  await writeDataJson(STORE_PATH, store);
 }
 
 export async function appendProjectEvent(input: {

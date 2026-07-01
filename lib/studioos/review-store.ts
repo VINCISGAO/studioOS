@@ -183,7 +183,11 @@ export async function listReviewComments(orderId: string, version?: number): Pro
   const store = await readStore();
   return store.comments
     .filter((item) => item.order_id === orderId && (version === undefined || item.version === version))
-    .sort((a, b) => a.timestamp_sec - b.timestamp_sec || a.created_at.localeCompare(b.created_at));
+    .sort(
+      (a, b) =>
+        a.timestamp_sec - b.timestamp_sec ||
+        String(a.created_at ?? "").localeCompare(String(b.created_at ?? ""))
+    );
 }
 
 export async function addReviewComment(input: {
