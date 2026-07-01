@@ -60,6 +60,8 @@ export type StoredCreatorSettings = {
   api_keys: StoredApiKey[];
   orders_paused: boolean;
   account_deleted_at: string | null;
+  certification_level_up_seen_at?: string | null;
+  certification_welcome_banner_dismissed_at?: string | null;
   updated_at: string;
 };
 

@@ -16,7 +16,7 @@ import { AlertTriangle, ArrowRight, CheckCircle2, Loader2, Pencil } from "lucide
 
 const copy = {
   en: {
-    step: "Step 3 / 4",
+    step: "Step 2 / 3",
     title: "Review and confirm your brief",
     subtitle: "Please review every field carefully — creators receive this exact form after you publish.",
     docTitle: "Campaign requirement form",
@@ -30,7 +30,7 @@ const copy = {
     sectionFallback: "Details"
   },
   zh: {
-    step: "第 3 步 / 共 4 步",
+    step: "第 2 步 / 共 3 步",
     title: "确认需求表单",
     subtitle: "请仔细核对以下信息。确认发布后，创作者将收到与此完全一致的正式需求表单。",
     docTitle: "广告需求确认表",

@@ -8,24 +8,40 @@ import type { Locale } from "@/lib/i18n";
 
 const STORE_PATH = dataStorePath("notification-store.json");
 
+/** Fixed demo seed IDs — must be dismissed on delete or they respawn from ensureDemoNotifications. */
+export const DEMO_NOTIFICATION_IDS = ["ntf_demo_arc_selected", "ntf_demo_arc_funded"] as const;
+
 function createId(prefix: string) {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
 function emptyStore(): NotificationStore {
-  return { notifications: [] };
+  return { notifications: [], dismissed_demo_ids: [] };
+}
+
+function isDemoNotificationDismissed(store: NotificationStore, id: string) {
+  return store.dismissed_demo_ids?.includes(id) ?? false;
 }
 
 async function readStoreInner(): Promise<NotificationStore> {
   const parsed = await readDataJson<NotificationStore>(STORE_PATH, () => emptyStore());
+  parsed.dismissed_demo_ids ??= [];
   const next = ensureDemoNotifications(parsed);
-  if (JSON.stringify(next.notifications) !== JSON.stringify(parsed.notifications)) {
+  if (
+    JSON.stringify(next.notifications) !== JSON.stringify(parsed.notifications) ||
+    JSON.stringify(next.dismissed_demo_ids) !== JSON.stringify(parsed.dismissed_demo_ids)
+  ) {
     await writeStore(next);
   }
   return next;
 }
 
 function ensureDemoNotifications(store: NotificationStore): NotificationStore {
+  store.dismissed_demo_ids ??= [];
+  store.notifications = store.notifications.filter(
+    (item) => !isDemoNotificationDismissed(store, item.id)
+  );
+
   const demoCreatorId = "creator_01";
   const demoOrderId = "ord_demo_arc_nova";
   const demoProjectId = "proj_demo_arc_nova";
@@ -68,6 +84,9 @@ function ensureDemoNotifications(store: NotificationStore): NotificationStore {
   ];
 
   for (const seed of seeds) {
+    if (isDemoNotificationDismissed(store, seed.id)) {
+      continue;
+    }
     if (store.notifications.some((item) => item.id === seed.id)) {
       continue;
     }
@@ -95,6 +114,19 @@ const readStore = createSerializedStoreReader(readStoreInner);
 
 async function writeStore(store: NotificationStore) {
   await writeJsonFileAtomic(STORE_PATH, store);
+  readStore.invalidate?.();
+}
+
+function dismissDemoNotificationIds(store: NotificationStore, ids: Iterable<string>) {
+  store.dismissed_demo_ids ??= [];
+  for (const id of ids) {
+    if (
+      DEMO_NOTIFICATION_IDS.includes(id as (typeof DEMO_NOTIFICATION_IDS)[number]) &&
+      !store.dismissed_demo_ids.includes(id)
+    ) {
+      store.dismissed_demo_ids.push(id);
+    }
+  }
 }
 
 async function enrichNotificationRequirements(
@@ -165,6 +197,19 @@ export async function findNotification(
   return (
     store.notifications.find(
       (item) => item.creator_id === creatorId && item.order_id === orderId && item.type === type
+    ) ?? null
+  );
+}
+
+export async function findNotificationByProject(
+  creatorId: string,
+  projectId: string,
+  type: CreatorNotificationType
+): Promise<CreatorNotification | null> {
+  const store = await readStore();
+  return (
+    store.notifications.find(
+      (item) => item.creator_id === creatorId && item.project_id === projectId && item.type === type
     ) ?? null
   );
 }
@@ -247,6 +292,49 @@ export async function markAllNotificationsRead(creatorId: string): Promise<numbe
     await writeStore(store);
   }
   return count;
+}
+
+export async function deleteNotification(id: string, creatorId: string): Promise<boolean> {
+  const store = await readStore();
+  dismissDemoNotificationIds(store, [id]);
+  const index = store.notifications.findIndex(
+    (item) => item.id === id && item.creator_id === creatorId
+  );
+  if (index === -1) {
+    if (DEMO_NOTIFICATION_IDS.includes(id as (typeof DEMO_NOTIFICATION_IDS)[number])) {
+      await writeStore(store);
+    }
+    return false;
+  }
+  store.notifications.splice(index, 1);
+  await writeStore(store);
+  return true;
+}
+
+export async function deleteNotifications(ids: string[], creatorId: string): Promise<number> {
+  if (!ids.length) {
+    return 0;
+  }
+  const store = await readStore();
+  dismissDemoNotificationIds(store, ids);
+  const idSet = new Set(ids);
+  const before = store.notifications.length;
+  store.notifications = store.notifications.filter(
+    (item) => !(item.creator_id === creatorId && idSet.has(item.id))
+  );
+  const deleted = before - store.notifications.length;
+  await writeStore(store);
+  return deleted;
+}
+
+export async function deleteAllNotificationsForCreator(creatorId: string): Promise<number> {
+  const store = await readStore();
+  dismissDemoNotificationIds(store, DEMO_NOTIFICATION_IDS);
+  const before = store.notifications.length;
+  store.notifications = store.notifications.filter((item) => item.creator_id !== creatorId);
+  const deleted = before - store.notifications.length;
+  await writeStore(store);
+  return deleted;
 }
 
 export async function markNotificationEmailSent(id: string): Promise<void> {

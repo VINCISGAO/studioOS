@@ -476,6 +476,7 @@ export function ReviewPlayer({
                   <ReviewVideoSource
                     videoRef={videoRef}
                     hlsUrl={activeVersion.hls_url ?? null}
+                    fileUrl={activeVersion.file_url ?? null}
                     className="absolute inset-0 h-full w-full object-contain"
                     onTimeUpdate={setCurrentTime}
                     onLoadedMetadata={syncDurationFromVideo}

@@ -7,7 +7,14 @@ import type {
 } from "@/lib/order-types";
 import { createSerializedStoreReader, writeJsonFileAtomic } from "@/lib/json-file-store";
 import { getProject } from "@/lib/project-service";
+import type { StoredProject } from "@/lib/project-types";
 import { readDataJson, dataStorePath } from "@/lib/serverless-store";
+import {
+  buildQuoteSummary,
+  CAMPAIGN_PENDING_CREATOR_ID,
+  deliveryDaysFromDeadline,
+  parseBudgetMidpoint
+} from "@/lib/studioos/brand-checkout-utils";
 import {
   syncProjectAfterApproval,
   syncProjectAfterDeliverable,
@@ -426,6 +433,27 @@ export async function acceptQuote(
   return order;
 }
 
+/** Brand selected creator — production starts before escrow payment in invitation-first flow. */
+export async function beginOrderProduction(orderId: string): Promise<StoredOrder | null> {
+  const store = await readStore();
+  const order = store.orders.find((item) => item.id === orderId);
+  if (!order) {
+    return null;
+  }
+
+  if (["in_production", "revision", "review", "completed"].includes(order.status)) {
+    return order;
+  }
+
+  if (order.status !== "waiting_payment") {
+    return order;
+  }
+
+  order.status = "in_production";
+  await writeStore(store);
+  return order;
+}
+
 export async function linkOrderToProject(orderId: string, projectId: string): Promise<StoredOrder | null> {
   const store = await readStore();
   const order = store.orders.find((item) => item.id === orderId);
@@ -520,9 +548,15 @@ export async function markOrderPaid(orderId: string): Promise<StoredOrder | null
   }
 
   order.payment_status = "escrowed";
-  order.status = "in_production";
+  const isCampaignEscrow = order.creator_id === CAMPAIGN_PENDING_CREATOR_ID;
+  order.status = isCampaignEscrow ? "waiting_payment" : "in_production";
   order.paid_at = new Date().toISOString();
   await writeStore(store);
+
+  if (isCampaignEscrow) {
+    return order;
+  }
+
   await syncProjectFromOrderEvent(order.project_id, "project.payment_received", "brand");
 
   const project = order.project_id ? await getProject(order.project_id) : null;
@@ -576,6 +610,14 @@ export async function addDeliverable(
   order.status = "review";
   await writeStore(store);
   await syncProjectAfterDeliverable(order.project_id);
+
+  const { notifyBrandDeliverableUploaded } = await import("@/lib/studioos/brand-deliverable-notify");
+  await notifyBrandDeliverableUploaded({
+    order,
+    deliverable,
+    locale: input.notes_client_locale ?? order.client_locale
+  });
+
   return deliverable;
 }
 
@@ -596,6 +638,9 @@ export async function requestOrderRevision(orderId: string, notes: string): Prom
     await fs.writeFile(notePath, notes.trim(), "utf8");
   }
 
+  const { notifyCreatorRevisionRequested } = await import("@/lib/studioos/commercial-interaction-notify");
+  await notifyCreatorRevisionRequested({ order, notes, locale: order.client_locale });
+
   return order;
 }
 
@@ -608,10 +653,97 @@ export async function approveOrderDelivery(orderId: string): Promise<StoredOrder
 
   order.status = "completed";
   order.payment_status = "released";
-  order.payout_status = "approved";
+  order.payout_status = "paid";
   order.completed_at = new Date().toISOString();
   await writeStore(store);
   await syncProjectAfterApproval(order.project_id);
+
+  const { notifyCreatorDeliveryApproved, notifyCreatorEscrowReleased } = await import(
+    "@/lib/studioos/commercial-interaction-notify"
+  );
+  await notifyCreatorDeliveryApproved({ order, locale: order.client_locale });
+  await notifyCreatorEscrowReleased({ order, locale: order.client_locale });
+
+  return order;
+}
+
+export async function createCampaignEscrowOrder(input: {
+  project: StoredProject;
+  client: { client_name: string; client_email: string; company_name: string };
+  locale: "en" | "zh";
+  requirements: string;
+}): Promise<StoredOrder> {
+  const store = await readStore();
+  const amount = parseBudgetMidpoint(input.project.budget_range);
+  const { platform_fee, creator_payout } = splitFees(amount);
+  const inquiryId = createId("inq");
+  const quoteId = createId("quote");
+  const now = new Date().toISOString();
+
+  store.quotes.unshift({
+    id: quoteId,
+    inquiry_id: inquiryId,
+    creator_id: CAMPAIGN_PENDING_CREATOR_ID,
+    client_email: input.client.client_email,
+    amount,
+    summary: buildQuoteSummary({
+      title: input.project.title || input.project.product_name || input.project.company_name,
+      videoCount: input.project.video_count ?? input.project.output_quantity,
+      targetPlatform: input.project.target_platform,
+      locale: input.locale
+    }),
+    delivery_days: deliveryDaysFromDeadline(input.project.deadline),
+    status: "accepted",
+    created_at: now
+  });
+
+  const order: StoredOrder = {
+    id: createId("ord"),
+    project_id: input.project.id,
+    inquiry_id: inquiryId,
+    quote_id: quoteId,
+    creator_id: CAMPAIGN_PENDING_CREATOR_ID,
+    client_email: input.client.client_email,
+    client_name: input.client.client_name,
+    company_name: input.project.company_name || input.client.company_name,
+    client_locale: input.locale,
+    title: input.project.title || input.project.product_name || input.project.company_name,
+    requirements: input.requirements,
+    budget_range: input.project.budget_range,
+    work_id: null,
+    amount,
+    platform_fee,
+    creator_payout,
+    payment_status: "unpaid",
+    status: "waiting_payment",
+    payout_status: "held",
+    created_at: now,
+    paid_at: null,
+    completed_at: null
+  };
+
+  store.orders.unshift(order);
+  await writeStore(store);
+  return order;
+}
+
+export async function assignOrderCreator(input: {
+  orderId: string;
+  creatorId: string;
+  inquiryId: string;
+  workId: string | null;
+}): Promise<StoredOrder | null> {
+  const store = await readStore();
+  const order = store.orders.find((item) => item.id === input.orderId);
+  if (!order) {
+    return null;
+  }
+
+  order.creator_id = input.creatorId;
+  order.inquiry_id = input.inquiryId;
+  order.work_id = input.workId;
+  order.status = "in_production";
+  await writeStore(store);
   return order;
 }
 
@@ -633,7 +765,7 @@ export async function getDeliverables(orderId: string): Promise<StoredDeliverabl
 
 
 export function canDeleteOrder(_order: Pick<StoredOrder, "status" | "payment_status">) {
-  return true;
+  return false;
 }
 
 export async function deleteOrdersForProjectId(
@@ -679,10 +811,23 @@ export async function deleteOrderForClient(
     return { ok: false, code: "NOT_FOUND", message: "Order not found" };
   }
 
-  store.orders.splice(index, 1);
-  store.deliverables = store.deliverables.filter((item) => item.order_id !== orderId);
-  dismissDemoOrder(store, orderId);
+  return {
+    ok: false,
+    code: "LOCKED",
+    message: "Orders cannot be deleted"
+  };
+}
+
+export async function clearDeliverableVideoFile(deliverableId: string): Promise<boolean> {
+  const store = await readStore();
+  const deliverable = store.deliverables.find((item) => item.id === deliverableId);
+  if (!deliverable) {
+    return false;
+  }
+
+  deliverable.file_url = "";
+  deliverable.thumbnail_url = "";
   await writeStore(store);
   readStore.invalidate?.();
-  return { ok: true };
+  return true;
 }

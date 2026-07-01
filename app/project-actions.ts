@@ -7,9 +7,14 @@ import { getOrCreateVisitorId } from "@/lib/client-session";
 import { parseDemoSession, DEMO_USERS } from "@/lib/demo-auth";
 import { getCurrentCreator } from "@/lib/creator-session";
 import { withLocale, type Locale } from "@/lib/i18n";
-import { canUseStudioFeatures } from "@/lib/studioos/deposit-guard";
+import { canAcceptCreatorOrders, countCompletedCreatorOrders } from "@/lib/studioos/deposit-guard";
 import { createProjectApplication, getProject } from "@/lib/project-service";
+import { getOrderForProject, listOrdersForCreator } from "@/lib/order-service";
+import { isOrderPaymentEscrowed } from "@/lib/order-types";
+import { CAMPAIGN_PENDING_CREATOR_ID } from "@/lib/studioos/brand-checkout-utils";
 import { setupBrandCheckout } from "@/lib/studioos/brand-checkout-service";
+import { listInvitationsForProject } from "@/lib/studioos/creator-invitation-store";
+import { normalizeCampaignStatus } from "@/lib/studioos/project-status";
 
 function normalizeLang(raw: FormDataEntryValue | null): Locale {
   return String(raw ?? "en") === "zh" ? "zh" : "en";
@@ -46,6 +51,11 @@ export async function connectCreatorFromMatchAction(formData: FormData) {
     redirect(withLocale("/start?error=missing-project", lang));
   }
 
+  const invitations = await listInvitationsForProject(projectId);
+  if (normalizeCampaignStatus(project.status) === "matching" && invitations.length > 0) {
+    redirect(withLocale(`/brand/projects/${projectId}?tab=match&error=use-shortlist`, lang));
+  }
+
   const client = await resolveBrandClient(lang, project.company_name);
 
   await setupBrandCheckout({
@@ -59,6 +69,15 @@ export async function connectCreatorFromMatchAction(formData: FormData) {
     },
     locale: lang
   });
+
+  const order = await getOrderForProject(projectId);
+  if (
+    order &&
+    isOrderPaymentEscrowed(order.payment_status) &&
+    order.creator_id !== CAMPAIGN_PENDING_CREATOR_ID
+  ) {
+    redirect(withLocale(`/brand/projects/${projectId}?tab=production`, lang));
+  }
 
   redirect(withLocale(`/brand/projects/${projectId}/checkout`, lang));
 }
@@ -76,8 +95,11 @@ export async function applyToProjectAction(formData: FormData) {
   }
 
   const creator = await getCurrentCreator();
-  if (!canUseStudioFeatures(creator)) {
-    redirect(withLocale("/studio/profile?onboarding=1", lang));
+  if (
+    !creator ||
+    !canAcceptCreatorOrders(creator, countCompletedCreatorOrders(await listOrdersForCreator(creatorId)))
+  ) {
+    redirect(withLocale("/studio/deposit?error=deposit-required", lang));
   }
 
   await createProjectApplication({

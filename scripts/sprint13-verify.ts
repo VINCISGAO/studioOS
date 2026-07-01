@@ -24,7 +24,8 @@ async function main() {
       ok:
         creatorPortalRoutes.dashboard === "/studio" &&
         creatorPortalRoutes.invitations === "/studio/invitations" &&
-        creatorPortalRoutes.reviewHub === "/studio/review",
+        creatorPortalRoutes.reviewHub === "/studio/projects" &&
+        creatorPortalRoutes.projects === "/studio/projects",
       detail: "creator-portal-routes"
     });
 
@@ -42,20 +43,20 @@ async function main() {
 
     checks.push({
       name: "ui.invitations_panel",
-      ok: read("components/studioos/creator-invitations-panel.tsx").includes("acceptCreatorInvitationAction"),
-      detail: "CreatorInvitationsPanel"
+      ok: read("components/studioos/creator-invitations-board.tsx").includes("acceptDemoInvitationAction"),
+      detail: "CreatorInvitationsBoard"
     });
 
     checks.push({
       name: "page.studio_invitations",
-      ok: read("app/studio/invitations/page.tsx").includes("CreatorInvitationsPanel"),
+      ok: read("app/studio/invitations/page.tsx").includes("CreatorInvitationsBoard"),
       detail: "/studio/invitations"
     });
 
     checks.push({
       name: "page.review_hub",
-      ok: read("app/studio/review/page.tsx").includes("Review center"),
-      detail: "/studio/review"
+      ok: read("app/studio/review/page.tsx").includes("creatorPortalRoutes.projects"),
+      detail: "/studio/review → /studio/projects"
     });
 
     checks.push({
@@ -72,15 +73,15 @@ async function main() {
 
     checks.push({
       name: "redirect.workspace_studio",
-      ok: read("app/workspace/studio/page.tsx").includes("creatorPortalRoutes.reviewHub"),
-      detail: "/workspace/studio → /studio/review"
+      ok: read("app/workspace/studio/page.tsx").includes("creatorPortalRoutes.projects"),
+      detail: "/workspace/studio → /studio/projects"
     });
 
     checks.push({
       name: "nav.unified",
       ok:
         read("components/studioos/studio-portal-shell.tsx").includes("creatorPortalRoutes.invitations") &&
-        read("components/studioos/studio-portal-shell.tsx").includes("creatorPortalRoutes.reviewHub"),
+        read("components/studioos/studio-portal-shell.tsx").includes("creatorPortalRoutes.projects"),
       detail: "StudioPortalShell nav"
     });
 

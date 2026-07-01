@@ -1,8 +1,12 @@
-import { promises as fs } from "fs";
 import path from "path";
+import { promises as fs } from "fs";
+import {
+  MAX_DELIVERABLE_VIDEO_BYTES,
+  maxDeliverableVideoLabel
+} from "@/lib/studioos/deliverable-video-policy-shared";
+import type { Locale } from "@/lib/i18n";
 
 const UPLOAD_DIR = path.join(process.cwd(), ".data", "uploads", "review");
-const MAX_BYTES = 50 * 1024 * 1024;
 
 export function reviewVideoPublicUrl(orderId: string, version: number) {
   return `/api/review-video/${orderId}/${version}`;
@@ -11,14 +15,21 @@ export function reviewVideoPublicUrl(orderId: string, version: number) {
 export async function saveReviewVideoUpload(
   orderId: string,
   version: number,
-  file: File
+  file: File,
+  locale: Locale = "en"
 ): Promise<{ ok: true; url: string; file_name: string } | { ok: false; error: string }> {
   if (!file.size) {
     return { ok: false, error: "Empty file" };
   }
 
-  if (file.size > MAX_BYTES) {
-    return { ok: false, error: "File exceeds 50MB limit" };
+  if (file.size > MAX_DELIVERABLE_VIDEO_BYTES) {
+    return {
+      ok: false,
+      error:
+        locale === "zh"
+          ? `文件超过 ${maxDeliverableVideoLabel("zh")} 限制`
+          : `File exceeds ${maxDeliverableVideoLabel("en")} limit`
+    };
   }
 
   const mime = file.type || "application/octet-stream";

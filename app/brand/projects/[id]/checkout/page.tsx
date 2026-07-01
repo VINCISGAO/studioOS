@@ -10,7 +10,8 @@ import { getCurrentClientEmail } from "@/lib/client-session";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
 import { getOrderForProject } from "@/lib/order-service";
 import { getProject } from "@/lib/project-service";
-import { setupBrandCheckout } from "@/lib/studioos/brand-checkout-service";
+import { normalizeCampaignStatus } from "@/lib/studioos/project-status";
+import { setupBrandCampaignPayment } from "@/lib/studioos/brand-checkout-service";
 import { estimateDeliveryDays } from "@/lib/studioos/brand-campaign-display";
 import { formatCurrency } from "@/lib/utils";
 
@@ -34,12 +35,9 @@ export default async function BrandCheckoutPage({ params, searchParams }: Props)
   let order = await getOrderForProject(id);
   const creatorId = project.selected_studio_id;
 
-  if (!order && creatorId) {
-    const creator = await getCreatorById(creatorId);
-    const { order: created } = await setupBrandCheckout({
+  if (!order) {
+    const created = await setupBrandCampaignPayment({
       project,
-      creatorId,
-      workId: null,
       client: {
         client_name: project.client_name,
         client_email: project.client_email,
@@ -51,11 +49,16 @@ export default async function BrandCheckoutPage({ params, searchParams }: Props)
   }
 
   if (!order) {
-    redirect(withLocale(`/brand/projects/${id}/studios`, locale));
+    redirect(withLocale(`/brand/projects/new?project=${id}&step=3`, locale));
   }
 
   const studio = creatorId ? await getCreatorById(creatorId) : null;
   const deliveryLabel = estimateDeliveryDays(project.deadline);
+  const campaignStatus = normalizeCampaignStatus(project.status);
+  const paidReady = order.payment_status !== "unpaid" || paid;
+  const showProductionCta =
+    paidReady && ["production", "in_review", "delivered", "completed"].includes(campaignStatus);
+  const showMatchCta = paidReady && !showProductionCta;
 
   return (
     <div className="mx-auto max-w-5xl space-y-8">
@@ -68,8 +71,8 @@ export default async function BrandCheckoutPage({ params, searchParams }: Props)
         </h1>
         <p className="mt-2 text-sm text-zinc-500">
           {locale === "zh"
-            ? "托管付款后 Studio 开始制作。款项在你确认交付前不会释放。"
-            : "Pay into escrow to start production. Funds release only after you approve delivery."}
+            ? "托管付款完成后，系统才会开始匹配 Studio。"
+            : "Creator matching starts only after escrow payment is complete."}
         </p>
       </div>
 
@@ -185,12 +188,20 @@ export default async function BrandCheckoutPage({ params, searchParams }: Props)
             paid={paid}
           />
 
-          {order.payment_status !== "unpaid" || paid ? (
-            <Button asChild size="lg" className="h-12 w-full rounded-full">
-              <Link href={withLocale(`/brand/projects/${id}?tab=production`, locale)}>
-                {locale === "zh" ? "查看制作进度" : "View production progress"}
-              </Link>
-            </Button>
+          {paidReady ? (
+            showMatchCta ? (
+              <Button asChild size="lg" className="h-12 w-full rounded-full">
+                <Link href={withLocale(`/brand/projects/${id}?tab=match`, locale)}>
+                  {locale === "zh" ? "开始匹配创作者" : "Start matching creators"}
+                </Link>
+              </Button>
+            ) : showProductionCta ? (
+              <Button asChild size="lg" className="h-12 w-full rounded-full">
+                <Link href={withLocale(`/brand/projects/${id}?tab=production`, locale)}>
+                  {locale === "zh" ? "查看制作进度" : "View production progress"}
+                </Link>
+              </Button>
+            ) : null
           ) : null}
         </div>
       </div>

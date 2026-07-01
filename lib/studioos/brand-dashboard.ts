@@ -3,6 +3,7 @@ import type { StoredProject } from "@/lib/project-types";
 import { canDeleteOrder } from "@/lib/order-service";
 import { projectCta, projectHref, canDeleteProject } from "@/lib/project-service";
 import { brandCampaignHref } from "@/lib/studioos/brand-campaign-display";
+import { isVisibleBrandDraftProject } from "@/lib/studioos/brand-wizard-session";
 import { normalizeCampaignStatus, type CampaignProjectStatus } from "@/lib/studioos/project-status";
 
 export type BrandDashboardMetrics = {
@@ -24,7 +25,9 @@ export function computeBrandMetrics(
     .filter((o) => o.payment_status !== "unpaid" && o.paid_at && new Date(o.paid_at) >= monthStart)
     .reduce((sum, o) => sum + o.amount, 0);
 
-  const activeProjects = projects.filter((p) => !["completed", "cancelled"].includes(p.status));
+  const activeProjects = projects.filter(
+    (p) => !["completed", "cancelled"].includes(p.status) && isVisibleBrandDraftProject(p)
+  );
   const activeOrders = orders.filter((o) => !["completed", "cancelled"].includes(o.status));
 
   return {
@@ -66,7 +69,9 @@ export function toBrandProjectRows(
 ): BrandProjectRow[] {
   const projectIds = new Set(projects.map((project) => project.id));
 
-  const campaignRows: BrandProjectRow[] = projects.map((project) => {
+  const campaignRows: BrandProjectRow[] = projects
+    .filter(isVisibleBrandDraftProject)
+    .map((project) => {
     const status = normalizeCampaignStatus(project.status);
     return {
     id: project.id,

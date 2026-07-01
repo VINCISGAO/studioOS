@@ -20,6 +20,8 @@ export type ProjectEventName =
   | "project.step_completed"
   | "project.publish"
   | "project.match_completed"
+  | "project.campaign_funded"
+  | "project.creator_assigned"
   | "project.studio_selected"
   | "project.proposal_opened"
   | "project.proposal_accepted"
@@ -75,6 +77,8 @@ type TransitionRule = {
 
 export const PROJECT_TRANSITIONS: Partial<Record<ProjectEventName, TransitionRule>> = {
   "project.publish": { from: ["draft"], to: "matching" },
+  "project.campaign_funded": { from: ["payment_pending"], to: "matching" },
+  "project.creator_assigned": { from: ["matching"], to: "production" },
   "project.studio_selected": { from: ["matching"], to: "studio_selected" },
   "project.proposal_opened": { from: ["studio_selected"], to: "proposal" },
   "project.proposal_accepted": { from: ["proposal"], to: "contract_pending" },

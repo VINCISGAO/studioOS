@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 
 type Props = {
   hlsUrl: string | null;
+  fileUrl?: string | null;
   className?: string;
   onTimeUpdate: (time: number) => void;
   onLoadedMetadata: () => void;
@@ -21,8 +22,13 @@ function canPlayNativeHls(): boolean {
   return video.canPlayType("application/vnd.apple.mpegurl") !== "";
 }
 
+function isHlsPlaylist(url: string): boolean {
+  return /\.m3u8(\?|$)/i.test(url);
+}
+
 export function ReviewVideoSource({
   hlsUrl,
+  fileUrl,
   className,
   onTimeUpdate,
   onLoadedMetadata,
@@ -37,19 +43,37 @@ export function ReviewVideoSource({
   const videoRef = externalRef ?? internalRef;
   const hlsRef = useRef<{ destroy: () => void } | null>(null);
 
+  const mp4Url = fileUrl?.trim() || null;
+  const streamUrl = hlsUrl?.trim() || null;
+  const directPlaybackUrl = !streamUrl || !isHlsPlaylist(streamUrl) ? streamUrl ?? mp4Url : null;
+  const hlsPlaybackUrl = streamUrl && isHlsPlaylist(streamUrl) ? streamUrl : null;
+
   useEffect(() => {
-    if (!videoRef.current || !hlsUrl) return;
+    if (!videoRef.current) return;
 
     const mediaEl: HTMLVideoElement = videoRef.current;
-    const sourceUrl = hlsUrl;
     let cancelled = false;
 
     async function attachSource() {
       hlsRef.current?.destroy();
       hlsRef.current = null;
 
+      if (!directPlaybackUrl && !hlsPlaybackUrl) {
+        mediaEl.removeAttribute("src");
+        mediaEl.load();
+        return;
+      }
+
+      if (directPlaybackUrl) {
+        mediaEl.src = directPlaybackUrl;
+        mediaEl.load();
+        return;
+      }
+
+      if (!hlsPlaybackUrl) return;
+
       if (canPlayNativeHls()) {
-        mediaEl.src = sourceUrl;
+        mediaEl.src = hlsPlaybackUrl;
         mediaEl.load();
         return;
       }
@@ -60,12 +84,12 @@ export function ReviewVideoSource({
         if (Hls.isSupported() && !cancelled) {
           const hls = new Hls({ enableWorker: true });
           hlsRef.current = hls;
-          hls.loadSource(sourceUrl);
+          hls.loadSource(hlsPlaybackUrl);
           hls.attachMedia(mediaEl);
-          return;
         }
       } catch {
-        // ADR-002: no MP4 fallback
+        mediaEl.src = hlsPlaybackUrl;
+        mediaEl.load();
       }
     }
 
@@ -76,7 +100,7 @@ export function ReviewVideoSource({
       hlsRef.current?.destroy();
       hlsRef.current = null;
     };
-  }, [hlsUrl, videoRef]);
+  }, [directPlaybackUrl, hlsPlaybackUrl, videoRef]);
 
   return (
     <video

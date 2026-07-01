@@ -25,7 +25,7 @@ function emailCopy(locale: Locale, type: CreatorNotificationType) {
       : {
           subject: (brand: string) => `你被 ${brand} 选中了`,
           headline: "恭喜，品牌方选择了你",
-          lead: "品牌方已将你选为合作创作者。请登录创作者中心查看客户的具体需求；付款完成后即可开拍。",
+          lead: "品牌方已将你选为合作创作者。请登录创作者中心查看客户的具体需求并开始制作。",
           cta: "查看客户需求"
         };
   }

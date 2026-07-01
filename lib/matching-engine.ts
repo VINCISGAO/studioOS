@@ -209,6 +209,38 @@ function scoreCreatorForProject(
   };
 }
 
+export function withDemoMatchingEligibility(creator: Creator): Creator {
+  return {
+    ...creator,
+    status: "active",
+    deposit_status: "paid",
+    orders_paused: false,
+    account_deleted_at: undefined,
+    profile_completed_at: creator.profile_completed_at ?? "2026-06-01T00:00:00.000Z",
+    min_project_budget_usd: 0,
+    ai_tags: creator.ai_tags ?? creator.specialties
+  };
+}
+
+export function matchCreatorsForProjectWithDemoFallback(
+  project: StoredProject,
+  creators: Creator[],
+  works: CreatorWork[],
+  options?: { studioPerformanceLift?: Map<string, number> }
+): CreatorMatch[] {
+  const matches = matchCreatorsForProject(project, creators, works, options);
+  if (matches.length) {
+    return matches;
+  }
+
+  return matchCreatorsForProject(
+    project,
+    creators.map(withDemoMatchingEligibility),
+    works,
+    options
+  );
+}
+
 export function matchCreatorsForProject(
   project: StoredProject,
   creators: Creator[],

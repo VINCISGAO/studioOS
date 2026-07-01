@@ -1,28 +1,24 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useMemo, useState } from "react";
+import { useFormStatus } from "react-dom";
 import {
-  prepareBrandCampaignAction,
   publishBrandCampaignAction,
-  saveBrandCampaignBriefAction,
-  saveBrandCampaignProductAction,
-  saveBrandCampaignReferencesAction
+  saveBrandCampaignDraftAction,
+  saveBrandCampaignSetupAction
 } from "@/app/brand-campaign-actions";
 import { BrandCampaignConfirmation } from "@/components/studioos/brand-campaign-confirmation";
-import { BrandCreatorMatchRadar } from "@/components/studioos/brand-creator-match-radar";
 import {
   BrandCampaignStepBrief,
   type BriefFormState
 } from "@/components/studioos/brand-campaign-step-brief";
-import { WizardProgressPanel } from "@/components/studioos/ui/wizard-progress-panel";
 import { WizardStepper } from "@/components/studioos/ui/wizard-stepper";
 import { Button } from "@/components/ui/button";
-import { useWizardProgress } from "@/hooks/use-wizard-progress";
 import {
-  clampWizardStep,
-  migrateLegacyBrandWizardStep,
-  wizardStepMeta
+  brandWizardStepMeta,
+  clampBrandVisibleStep,
+  migrateLegacyBrandWizardStep
 } from "@/lib/campaign/wizard-steps";
 import type {
   StoredCreativeBrief,
@@ -56,7 +52,6 @@ type WizardData = {
 
 const copy = {
   en: {
-    packTitle: "Your creative pack is ready",
     analyzedProduct: "Product analyzed",
     analyzedRef: "Reference analyzed",
     planReady: "Creative plan ready",
@@ -65,10 +60,10 @@ const copy = {
     continue: "Continue",
     back: "Back",
     matching: "Matching creators…",
-    matchFailed: "Matching failed — try again"
+    publish: "Publish and pay",
+    publishing: "Publishing…"
   },
   zh: {
-    packTitle: "创意方案已就绪",
     analyzedProduct: "产品已分析",
     analyzedRef: "参考已分析",
     planReady: "创意方案就绪",
@@ -77,9 +72,10 @@ const copy = {
     continue: "继续",
     back: "返回",
     matching: "正在匹配创作者…",
-    matchFailed: "匹配失败，请重试"
+    publish: "发布并去付款",
+    publishing: "正在发布…"
   }
-};
+} as const;
 
 function readStoredQuestionnaire(project: StoredProject): Partial<BriefFormState> {
   const stored = project.settings_json?.brand_questionnaire as
@@ -146,6 +142,17 @@ function appendBriefForm(fd: FormData, state: BriefFormState) {
   }
 }
 
+function PublishSubmitButton({ label, publishingLabel }: { label: string; publishingLabel: string }) {
+  const { pending } = useFormStatus();
+  return (
+    <Button type="submit" size="lg" className="w-full" disabled={pending}>
+      {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+      {pending ? publishingLabel : label}
+      {!pending ? <ArrowRight className="h-4 w-4" /> : null}
+    </Button>
+  );
+}
+
 export function BrandCampaignWizard({
   locale,
   initialData,
@@ -159,15 +166,10 @@ export function BrandCampaignWizard({
   const router = useRouter();
   const projectId = initialData.project.id;
   const migrated = migrateLegacyBrandWizardStep(initialStep);
-  const [step, setStep] = useState(clampWizardStep(migrated));
-  const [isPending, startTransition] = useTransition();
+  const [step, setStep] = useState(clampBrandVisibleStep(migrated));
+  const [isSaving, setIsSaving] = useState(false);
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [prepared, setPrepared] = useState(initialData.project.wizard_completed_steps.includes(5));
-  const [isMatching, setIsMatching] = useState(step === 7);
-  const [analysisStarted, setAnalysisStarted] = useState(false);
-  const matchStartedRef = useRef(false);
-
-  const { draft: progressDraft } = useWizardProgress(projectId, step === 4 || step === 7);
 
   const budget = estimateBudgetRange(initialData.project.budget_range);
   const deliveryTimelineId = resolveDeliveryTimelineFromProject(initialData.project);
@@ -195,7 +197,7 @@ export function BrandCampaignWizard({
     [initialData.project]
   );
 
-  const meta = wizardStepMeta(locale, step);
+  const meta = brandWizardStepMeta(locale, step);
   const productImageUrl = useMemo(() => {
     const asset = initialData.assets.find(
       (item) => item.type === "product_image_original" || item.type === "product_image"
@@ -203,125 +205,79 @@ export function BrandCampaignWizard({
     return asset?.file_url ?? null;
   }, [initialData.assets]);
 
+  const isPending = isSaving;
+
   function goStep(next: number) {
-    const clamped = clampWizardStep(next);
+    const clamped = clampBrandVisibleStep(next);
     router.push(withLocale(`/brand/projects/new?project=${projectId}&step=${clamped}`, locale));
     setStep(clamped);
   }
 
-  function runPrepare() {
-    setAnalysisStarted(true);
-    startTransition(async () => {
-      setError(null);
-      const fd = new FormData();
-      fd.set("lang", locale);
-      fd.set("project_id", projectId);
-      const result = await prepareBrandCampaignAction(fd);
-      if (!result.ok) {
-        setError(result.error);
-        setAnalysisStarted(false);
-        return;
-      }
-      setPrepared(true);
-      setAnalysisStarted(false);
-      router.refresh();
-    });
-  }
-
-  useEffect(() => {
-    if (step !== 4 || prepared || analysisStarted) return;
-    runPrepare();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step, prepared]);
-
-  useEffect(() => {
-    if (step !== 7 || matchStartedRef.current) return;
-    matchStartedRef.current = true;
-    setIsMatching(true);
+  async function saveDraft(state: BriefFormState) {
+    setIsSavingDraft(true);
     setError(null);
-    runPublish();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step]);
 
-  function runPublish() {
-    startTransition(async () => {
-      setError(null);
-      const fd = new FormData();
-      fd.set("lang", locale);
-      fd.set("project_id", projectId);
-      const result = await publishBrandCampaignAction(fd);
-      if (result && !result.ok) {
-        setIsMatching(false);
-        matchStartedRef.current = false;
-        setError(result.error);
-      }
-    });
-  }
+    const fd = new FormData();
+    fd.set("lang", locale);
+    fd.set("project_id", projectId);
+    appendBriefForm(fd, state);
 
-  function saveBrief(state: BriefFormState) {
-    startTransition(async () => {
-      setError(null);
-      const fd = new FormData();
-      fd.set("lang", locale);
-      fd.set("project_id", projectId);
-      appendBriefForm(fd, state);
-      const result = await saveBrandCampaignBriefAction(fd);
+    try {
+      const result = await saveBrandCampaignDraftAction(fd);
       if (!result.ok) {
         setError(result.error);
         return;
       }
+      router.push(withLocale("/brand?draft=saved#my-ads", locale));
+    } catch {
+      setError(locale === "zh" ? "保存失败，请重试" : "Save failed — try again");
+    } finally {
+      setIsSavingDraft(false);
+    }
+  }
+
+  async function saveSetup(state: BriefFormState) {
+    setIsSaving(true);
+    setError(null);
+
+    const fd = new FormData();
+    fd.set("lang", locale);
+    fd.set("project_id", projectId);
+    appendBriefForm(fd, state);
+
+    try {
+      const result = await saveBrandCampaignSetupAction(fd);
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      router.refresh();
       goStep(2);
-    });
+    } catch {
+      setError(locale === "zh" ? "保存失败，请重试" : "Save failed — try again");
+    } finally {
+      setIsSaving(false);
+    }
   }
 
-  function saveProduct(state: BriefFormState) {
-    startTransition(async () => {
-      setError(null);
-      const fd = new FormData();
-      fd.set("lang", locale);
-      fd.set("project_id", projectId);
-      fd.set("product_name", state.productName);
-      fd.set("product_url", state.productUrl);
-      const result = await saveBrandCampaignProductAction(fd);
-      if (!result.ok) {
-        setError(result.error);
-        return;
-      }
-      goStep(3);
-    });
-  }
-
-  function saveReferences(state: BriefFormState) {
-    startTransition(async () => {
-      setError(null);
-      const fd = new FormData();
-      fd.set("lang", locale);
-      fd.set("project_id", projectId);
-      appendBriefForm(fd, state);
-      const result = await saveBrandCampaignReferencesAction(fd);
-      goStep(result.nextStep);
-    });
-  }
-
-  const maxWidth =
-    step === 1 ? "max-w-6xl" : step === 7 ? "max-w-lg" : step === 4 && !prepared ? "max-w-2xl" : "max-w-3xl";
+  const maxWidth = step === 1 ? "max-w-6xl" : step === 3 ? "max-w-lg" : "max-w-3xl";
 
   return (
     <div className={cn("mx-auto w-full", maxWidth)}>
       <div className="mb-8">
-        <WizardStepper locale={locale} currentStep={step} compact={step === 7} />
+        <WizardStepper locale={locale} currentStep={step} variant="brand" compact={step === 3} />
         <h1 className="mt-6 text-title text-foreground">{meta.headline[locale]}</h1>
         <p className="mt-2 text-body text-muted-foreground">{meta.subtitle[locale]}</p>
       </div>
 
-      {step > 1 && step !== 4 ? (
+      {step > 1 ? (
         <Button
           type="button"
           variant="ghost"
           size="sm"
           className="mb-6 gap-2 text-muted-foreground"
           onClick={() => goStep(step - 1)}
-          disabled={isPending || (step === 7 && isMatching)}
+          disabled={isPending}
         >
           <ArrowLeft className="h-4 w-4" /> {t.back}
         </Button>
@@ -332,73 +288,21 @@ export function BrandCampaignWizard({
           locale={locale}
           projectId={projectId}
           initial={briefInitial}
-          stepMode="brief"
+          initialProductImageUrl={productImageUrl}
+          initialReferences={initialData.references}
+          stepMode="all"
           hideTopBar
-          isPending={isPending}
+          isPending={isSaving}
           error={error}
-          onContinue={saveBrief}
+          onProductUploaded={() => router.refresh()}
+          onReferencesUpdated={() => router.refresh()}
+          onContinue={saveSetup}
+          onSaveDraft={saveDraft}
+          isSavingDraft={isSavingDraft}
         />
       ) : null}
 
       {step === 2 ? (
-        <BrandCampaignStepBrief
-          locale={locale}
-          projectId={projectId}
-          initial={briefInitial}
-          initialProductImageUrl={productImageUrl}
-          stepMode="product"
-          hideTopBar
-          isPending={isPending}
-          error={error}
-          onProductUploaded={() => router.refresh()}
-          onContinue={saveProduct}
-        />
-      ) : null}
-
-      {step === 3 ? (
-        <BrandCampaignStepBrief
-          locale={locale}
-          projectId={projectId}
-          initial={briefInitial}
-          initialReferences={initialData.references}
-          stepMode="references"
-          hideTopBar
-          isPending={isPending}
-          error={error}
-          onReferencesUpdated={() => router.refresh()}
-          onContinue={saveReferences}
-        />
-      ) : null}
-
-      {step === 4 ? (
-        <section className="space-y-6">
-          <WizardProgressPanel
-            locale={locale}
-            draft={progressDraft}
-            fallbackMessage={locale === "zh" ? "正在分析…" : "Analyzing your inputs…"}
-          />
-          {prepared ? (
-            <>
-              <ul className="space-y-3 rounded-card border bg-card p-6">
-                {[t.analyzedProduct, t.analyzedRef, t.planReady].map((label) => (
-                  <li key={label} className="flex items-center gap-3 text-sm font-medium">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-success/15 text-success">
-                      <Check className="h-3.5 w-3.5" />
-                    </span>
-                    {label}
-                  </li>
-                ))}
-              </ul>
-              {error ? <p className="text-sm text-destructive">{error}</p> : null}
-              <Button type="button" size="lg" className="w-full" disabled={isPending} onClick={() => goStep(5)}>
-                {t.continue} <ArrowRight className="h-4 w-4" />
-              </Button>
-            </>
-          ) : null}
-        </section>
-      ) : null}
-
-      {step === 5 ? (
         <section className="space-y-8">
           <ul className="space-y-3 rounded-card border bg-card p-6">
             {[t.analyzedProduct, t.analyzedRef, t.planReady].map((label) => (
@@ -420,51 +324,31 @@ export function BrandCampaignWizard({
               <p className="mt-2 text-2xl font-semibold">{delivery}</p>
             </div>
           </div>
-          <Button type="button" size="lg" className="w-full" onClick={() => goStep(6)}>
-            {t.continue} <ArrowRight className="h-4 w-4" />
-          </Button>
+          {error ? <p className="text-sm text-destructive">{error}</p> : null}
+          <BrandCampaignConfirmation
+            locale={locale}
+            project={initialData.project}
+            onConfirmed={() => {
+              router.refresh();
+              goStep(3);
+            }}
+          />
         </section>
       ) : null}
 
-      {step === 6 ? (
-        <BrandCampaignConfirmation
-          locale={locale}
-          project={initialData.project}
-          onConfirmed={() => {
-            matchStartedRef.current = false;
-            router.refresh();
-            goStep(7);
-          }}
-        />
-      ) : null}
-
-      {step === 7 ? (
+      {step === 3 ? (
         <section className="space-y-6">
-          <WizardProgressPanel locale={locale} draft={progressDraft} fallbackMessage={t.matching} />
-          {isMatching && !error ? (
-            <BrandCreatorMatchRadar locale={locale} />
-          ) : (
-            <>
-              <p className="text-sm text-muted-foreground">
-                {locale === "zh" ? "匹配未完成，请点击继续重试。" : "Matching did not complete — tap continue to retry."}
-              </p>
-              {error ? <p className="text-sm text-destructive">{error}</p> : null}
-              <Button
-                type="button"
-                size="lg"
-                className="w-full"
-                disabled={isPending}
-                onClick={() => {
-                  matchStartedRef.current = false;
-                  setIsMatching(true);
-                  runPublish();
-                }}
-              >
-                {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : t.continue}
-                {!isPending ? <ArrowRight className="h-4 w-4" /> : null}
-              </Button>
-            </>
-          )}
+          <p className="text-sm text-muted-foreground">
+            {locale === "zh"
+              ? "确认无误后发布并进入托管付款。付款完成后，系统才会向匹配的 Creator 发出意向发单。"
+              : "Publish when ready, then complete escrow payment. Creator invitations go out only after payment is confirmed."}
+          </p>
+          {error ? <p className="text-sm text-destructive">{error}</p> : null}
+          <form action={publishBrandCampaignAction}>
+            <input type="hidden" name="lang" value={locale} />
+            <input type="hidden" name="project_id" value={projectId} />
+            <PublishSubmitButton label={t.publish} publishingLabel={t.publishing} />
+          </form>
         </section>
       ) : null}
     </div>

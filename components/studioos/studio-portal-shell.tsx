@@ -1,64 +1,21 @@
-import Link from "next/link";
 import { Suspense } from "react";
 import { PortalMobileNav } from "@/components/studioos/portal-mobile-nav";
 import { StudioNotificationBell } from "@/components/studioos/studio-notification-bell";
 import { StudioUserMenu } from "@/components/studioos/studio-user-menu";
 import { MarketingHomeLink } from "@/components/studioos/marketing-home-link";
-import { signOutAction } from "@/app/actions";
 import { LanguageSwitcher, LanguageSwitcherFallback } from "@/components/language-switcher";
-import { Button } from "@/components/ui/button";
+import { CertifiedPartnerBadge } from "@/components/studioos/certification/certified-partner-badge";
+import { StudioCertificationOrchestrator } from "@/components/studioos/certification/studio-certification-orchestrator";
+import { StudioPortalSidebarNav } from "@/components/studioos/certification/studio-portal-sidebar-nav";
 import { studioNav, studioOS } from "@/lib/studioos/vocabulary";
+import { creatorPortalNavItems } from "@/lib/studioos/creator-portal-nav";
 import { creatorPortalRoutes } from "@/lib/studioos/creator-portal-routes";
+import { tCertificationExperience } from "@/lib/studioos/certification-experience-copy";
 import type { Locale } from "@/lib/i18n";
-import { withLocale } from "@/lib/i18n";
 import type { CreatorNotification } from "@/lib/notification-types";
 import type { Creator } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import {
-  Clapperboard,
-  Home,
-  LayoutDashboard,
-  Lock,
-  LogOut,
-  MessageSquare,
-  Receipt,
-  Settings,
-  Shield,
-  Sparkles,
-  Upload,
-  Inbox
-} from "lucide-react";
-
-type NavItem = {
-  href: string;
-  labelKey: keyof typeof studioNav.en;
-  icon: typeof Home;
-  requiresCertification: boolean;
-  showUnreadDot?: boolean;
-};
-
-const navItems: NavItem[] = [
-  { href: "/studio/profile", labelKey: "home", icon: Home, requiresCertification: false },
-  { href: "/studio/deposit", labelKey: "deposit", icon: Shield, requiresCertification: false },
-  { href: creatorPortalRoutes.dashboard, labelKey: "dashboard", icon: LayoutDashboard, requiresCertification: true },
-  {
-    href: creatorPortalRoutes.invitations,
-    labelKey: "invitations",
-    icon: Inbox,
-    requiresCertification: true
-  },
-  { href: creatorPortalRoutes.reviewHub, labelKey: "reviewRoom", icon: Clapperboard, requiresCertification: true },
-  { href: creatorPortalRoutes.delivery, labelKey: "upload", icon: Upload, requiresCertification: true },
-  { href: "/studio/income", labelKey: "income", icon: Receipt, requiresCertification: true },
-  {
-    href: "/studio/messages",
-    labelKey: "messages",
-    icon: MessageSquare,
-    requiresCertification: true,
-    showUnreadDot: true
-  },
-  { href: "/studio/settings", labelKey: "settings", icon: Settings, requiresCertification: false }
-];
+import { Lock, Sparkles } from "lucide-react";
 
 function studioInitials(name: string) {
   return name
@@ -73,8 +30,10 @@ export function StudioPortalShell({
   pathname,
   search,
   creator,
-  certificationPaid = true,
-  profileComplete = true,
+  creatorId,
+  canUseBusinessFeatures = true,
+  isVerified = false,
+  levelUpSeen = true,
   notifications = [],
   unreadCount = 0,
   children
@@ -83,77 +42,25 @@ export function StudioPortalShell({
   pathname: string;
   search: string;
   creator?: Creator | null;
+  creatorId?: string | null;
   certificationPaid?: boolean;
   profileComplete?: boolean;
+  canUseBusinessFeatures?: boolean;
+  isVerified?: boolean;
+  levelUpSeen?: boolean;
   notifications?: CreatorNotification[];
   unreadCount?: number;
   children: React.ReactNode;
 }) {
   const nav = studioNav[locale];
-  const studioUnlocked = certificationPaid && profileComplete;
-  const initials = creator ? studioInitials(creator.name) : "ST";
+  const partnerBadge = tCertificationExperience(locale).partnerBadge;
+  const initials = creator ? studioInitials(creator.name) : "CR";
 
-  function navHref(item: NavItem) {
-    if (!certificationPaid && item.requiresCertification) {
-      return withLocale("/studio/deposit", locale);
-    }
-    if (certificationPaid && !profileComplete && item.requiresCertification) {
-      return withLocale("/studio/profile?onboarding=1", locale);
-    }
-    return withLocale(item.href, locale);
-  }
+  const isReviewPage =
+    /\/workspace\/projects\/[^/]+\/review$/.test(pathname) ||
+    /\/studio\/review\/[^/]+$/.test(pathname);
 
-  function isNavLocked(item: NavItem) {
-    return item.requiresCertification && !studioUnlocked;
-  }
-
-  function isActive(item: NavItem) {
-    const href = item.href;
-    if (item.labelKey === "home") {
-      return pathname === "/studio/profile" || pathname.startsWith("/studio/profile/");
-    }
-    if (item.labelKey === "settings") {
-      return pathname === "/studio/settings" || pathname.startsWith("/studio/settings/");
-    }
-    if (item.labelKey === "upload") {
-      return (
-        pathname === creatorPortalRoutes.delivery ||
-        pathname.startsWith(`${creatorPortalRoutes.delivery}/`) ||
-        pathname === "/studio/upload" ||
-        pathname.startsWith("/studio/review/")
-      );
-    }
-    if (item.labelKey === "invitations") {
-      return pathname === creatorPortalRoutes.invitations;
-    }
-    return (
-      pathname === href ||
-      (href === creatorPortalRoutes.dashboard &&
-        (pathname === creatorPortalRoutes.dashboard || pathname.startsWith("/studio/projects"))) ||
-      (href !== creatorPortalRoutes.dashboard &&
-        href !== creatorPortalRoutes.reviewHub &&
-        (pathname === href || pathname.startsWith(`${href}/`))) ||
-      (href === creatorPortalRoutes.reviewHub &&
-        (pathname === creatorPortalRoutes.reviewHub ||
-          pathname.startsWith("/studio/review") ||
-          /\/workspace\/projects\/[^/]+\/review$/.test(pathname)))
-    );
-  }
-
-  function sidebarLinkClass(active: boolean, locked: boolean) {
-    return cn(
-      "relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition",
-      locked
-        ? "text-zinc-400"
-        : active
-          ? "bg-gradient-to-r from-zinc-100/90 via-zinc-50 to-white text-zinc-900 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.04)]"
-          : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900"
-    );
-  }
-
-  const isReviewPage = /\/workspace\/projects\/[^/]+\/review$/.test(pathname);
-
-  return (
+  const shellInner = (
     <div className={cn(isReviewPage ? "h-screen overflow-hidden bg-white" : "min-h-screen bg-[#f4f7fb]")}>
       <div className={cn("flex", isReviewPage ? "h-full" : "min-h-screen")}>
         <aside className="hidden w-[248px] shrink-0 flex-col border-r border-zinc-200/80 bg-white lg:flex">
@@ -161,75 +68,52 @@ export function StudioPortalShell({
             locale={locale}
             className="flex items-center gap-2.5 px-5 py-5 transition hover:opacity-80"
           >
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-sm">
+            <span
+              className={cn(
+                "flex h-9 w-9 items-center justify-center rounded-xl text-white shadow-sm",
+                isVerified ? "bg-violet-600" : "bg-indigo-600"
+              )}
+            >
               <Sparkles className="h-4 w-4" />
             </span>
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-zinc-950">{studioOS.productName}</p>
+              <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium text-zinc-500">
+                  {locale === "zh" ? "创作者" : "Creator"}
+                </span>
+                {isVerified ? <CertifiedPartnerBadge label={partnerBadge} compact /> : null}
+              </div>
             </div>
-            <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium text-zinc-500">Studio</span>
           </MarketingHomeLink>
 
-          <nav className="flex-1 space-y-0.5 px-3">
-            {navItems.map((item) => {
-              const { labelKey, icon: Icon, showUnreadDot } = item;
-              const active = isActive(item);
-              const locked = isNavLocked(item);
-              const ItemIcon = locked ? Lock : Icon;
+          <StudioPortalSidebarNav
+            locale={locale}
+            pathname={pathname}
+            canUseBusinessFeatures={canUseBusinessFeatures}
+            isVerified={isVerified}
+            unreadCount={unreadCount}
+          />
 
-              return (
-                <Link
-                  key={item.href + labelKey}
-                  href={navHref(item)}
-                  className={sidebarLinkClass(active && !locked, locked)}
-                  title={
-                    locked
-                      ? !certificationPaid
-                        ? locale === "zh"
-                          ? "请先完成认证服务商"
-                          : "Complete certification first"
-                        : locale === "zh"
-                          ? "请先完善 Studio 主页"
-                          : "Complete your studio profile first"
-                      : undefined
-                  }
-                >
-                  {active && !locked ? (
-                    <span className="absolute bottom-2 left-0 top-2 w-[3px] rounded-full bg-zinc-900" />
-                  ) : null}
-                  <ItemIcon className={cn("h-[18px] w-[18px] shrink-0", active && !locked && "text-zinc-900")} />
-                  <span className="flex-1">{nav[labelKey]}</span>
-                  {showUnreadDot && unreadCount > 0 && !locked ? (
-                    <span className="h-2 w-2 rounded-full bg-indigo-500" />
-                  ) : null}
-                </Link>
-              );
-            })}
-          </nav>
-
-          <div className="mt-auto space-y-2 border-t border-zinc-100 p-4">
+          <div className="mt-auto border-t border-zinc-100 p-4">
             {creator ? (
               <div className="flex items-center gap-3 rounded-xl bg-zinc-50 px-3 py-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-sm font-semibold text-white">
+                <div
+                  className={cn(
+                    "flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white",
+                    isVerified ? "bg-violet-600" : "bg-zinc-900"
+                  )}
+                >
                   {initials.slice(0, 2)}
                 </div>
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-zinc-900">{creator.name}</p>
-                  <p className="truncate text-xs text-zinc-500">{nav.studioOwner}</p>
+                  <p className="truncate text-xs text-zinc-500">
+                    {isVerified ? partnerBadge : nav.studioOwner}
+                  </p>
                 </div>
               </div>
             ) : null}
-            <form action={signOutAction}>
-              <input type="hidden" name="lang" value={locale} />
-              <Button
-                type="submit"
-                variant="ghost"
-                className="h-10 w-full justify-start gap-2 rounded-xl px-3 text-sm font-medium text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900"
-              >
-                <LogOut className="h-4 w-4" />
-                {locale === "zh" ? "退出登录" : "Sign out"}
-              </Button>
-            </form>
           </div>
         </aside>
 
@@ -239,11 +123,19 @@ export function StudioPortalShell({
               {!isReviewPage ? (
                 <div className="flex items-center gap-2 lg:hidden">
                   <MarketingHomeLink locale={locale} className="flex items-center gap-2 font-semibold text-zinc-950">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 text-white">
+                    <span
+                      className={cn(
+                        "flex h-8 w-8 items-center justify-center rounded-lg text-white",
+                        isVerified ? "bg-violet-600" : "bg-indigo-600"
+                      )}
+                    >
                       <Sparkles className="h-4 w-4" />
                     </span>
                     {studioOS.productName}
                   </MarketingHomeLink>
+                  {isVerified ? (
+                    <CertifiedPartnerBadge label={partnerBadge} compact className="hidden sm:inline-flex" />
+                  ) : null}
                 </div>
               ) : (
                 <div className="hidden lg:block" />
@@ -254,14 +146,20 @@ export function StudioPortalShell({
                 <Suspense fallback={<LanguageSwitcherFallback locale={locale} />}>
                   <LanguageSwitcher locale={locale} pathname={pathname} search={search} />
                 </Suspense>
-                {studioUnlocked ? (
+                {canUseBusinessFeatures ? (
                   <StudioNotificationBell
                     locale={locale}
                     notifications={notifications}
                     unreadCount={unreadCount}
                   />
                 ) : null}
-                <StudioUserMenu locale={locale} initials={initials} name={creator?.name} />
+                <StudioUserMenu
+                  locale={locale}
+                  initials={initials}
+                  name={creator?.name}
+                  profileHref={creatorPortalRoutes.profile}
+                  roleLabel={isVerified ? partnerBadge : locale === "zh" ? "创作者" : "Creator"}
+                />
               </div>
             </div>
 
@@ -270,16 +168,14 @@ export function StudioPortalShell({
                 <PortalMobileNav
                   locale={locale}
                   pathname={pathname}
-                  items={navItems.map(({ href, labelKey, icon, requiresCertification }) => ({
+                  items={creatorPortalNavItems.map(({ href, labelKey, icon, requiresBusinessAccess }) => ({
                     id: labelKey,
                     href:
-                      !certificationPaid && requiresCertification
-                        ? "/studio/deposit"
-                        : certificationPaid && !profileComplete && requiresCertification
-                          ? "/studio/profile?onboarding=1"
-                          : href,
+                      requiresBusinessAccess && !canUseBusinessFeatures
+                        ? creatorPortalRoutes.deposit
+                        : href,
                     label: nav[labelKey],
-                    icon: requiresCertification && !studioUnlocked ? Lock : icon
+                    icon: requiresBusinessAccess && !canUseBusinessFeatures ? Lock : icon
                   }))}
                 />
               </div>
@@ -289,7 +185,7 @@ export function StudioPortalShell({
           <main
             className={cn(
               "min-h-0 min-w-0 flex-1",
-              isReviewPage ? "flex flex-col overflow-hidden p-0" : "px-4 py-6 sm:px-6 lg:px-8 lg:py-8"
+              isReviewPage ? "flex flex-col overflow-hidden p-0" : "mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8"
             )}
           >
             {children}
@@ -297,5 +193,20 @@ export function StudioPortalShell({
         </div>
       </div>
     </div>
+  );
+
+  if (!creatorId) {
+    return shellInner;
+  }
+
+  return (
+    <StudioCertificationOrchestrator
+      locale={locale}
+      creatorId={creatorId}
+      isVerified={isVerified}
+      levelUpSeen={levelUpSeen}
+    >
+      {shellInner}
+    </StudioCertificationOrchestrator>
   );
 }

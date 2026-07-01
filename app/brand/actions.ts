@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { DEMO_SESSION_COOKIE, VISITOR_COOKIE } from "@/lib/auth-config";
 import { resolveBrandBriefStartFromRequestCookies } from "@/lib/brand-brief-session";
-import { createBrandBriefDraftProjectForEmail } from "@/lib/brand-start-brief";
+import { getOrCreateEphemeralWizardProject } from "@/lib/brand-start-brief";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
 
 function localeFromForm(formData: FormData) {
@@ -29,6 +29,6 @@ export async function startBrandBriefAction(formData: FormData) {
     });
   }
 
-  const project = await createBrandBriefDraftProjectForEmail(clientEmail);
+  const project = await getOrCreateEphemeralWizardProject(clientEmail);
   redirect(withLocale(`/brand/projects/new?project=${project.id}&step=1`, locale));
 }

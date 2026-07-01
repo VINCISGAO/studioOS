@@ -228,6 +228,9 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const session = await getCurrentSession();
 
   if (session && !rawError) {
+    if (nextPath.startsWith("/")) {
+      redirect(withLocale(nextPath, locale));
+    }
     redirect(withLocale(demoRedirectForRole(session.role), locale));
   }
 

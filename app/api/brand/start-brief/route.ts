@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { DEMO_SESSION_COOKIE, VISITOR_COOKIE } from "@/lib/auth-config";
 import { resolveBrandBriefStartFromRequestCookies } from "@/lib/brand-brief-session";
-import { createBrandBriefDraftProjectForEmail } from "@/lib/brand-start-brief";
+import { getOrCreateEphemeralWizardProject } from "@/lib/brand-start-brief";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
   );
 
   try {
-    const project = await createBrandBriefDraftProjectForEmail(clientEmail);
+    const project = await getOrCreateEphemeralWizardProject(clientEmail);
     const destination = new URL("/brand/projects/new", request.url);
     destination.searchParams.set("project", project.id);
     destination.searchParams.set("step", "1");

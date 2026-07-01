@@ -15,7 +15,11 @@ import { getOrderReview } from "@/lib/order-rating-service";
 import type { Locale, SearchParams } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import { getDeliverables, getOrder } from "@/lib/order-service";
-import { deliverableNotesForViewer } from "@/lib/studioos/deliverable-notes";
+import { DeliverableVideoPolicyNotice } from "@/components/studioos/deliverable-video-policy-notice";
+import {
+  deliverableDownloadHref,
+  isDeliverableVideoPurged
+} from "@/lib/studioos/deliverable-video-policy-shared";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 const copy = {
@@ -27,7 +31,8 @@ const copy = {
     budget: "Budget",
     deliverables: "Deliverables",
     version: "Version",
-    download: "Download",
+    download: "Download final",
+    purged: "Removed from server (retention policy). Use your saved copy.",
     preparing: "Waiting for creator delivery.",
     revisionTitle: "Request revision",
     revisionPlaceholder: "Add clear revision notes for the creator.",
@@ -48,7 +53,8 @@ const copy = {
     budget: "预算",
     deliverables: "交付文件",
     version: "版本",
-    download: "下载",
+    download: "下载成品",
+    purged: "服务器已按规则自动删除，请使用您本地保存的副本。",
     preparing: "等待创作者提交交付文件。",
     revisionTitle: "申请修改",
     revisionPlaceholder: "请填写清晰的修改意见。",
@@ -176,9 +182,17 @@ export async function BrandOrderView({
           <Card className="shadow-none">
             <CardContent className="p-6">
               <h2 className="text-lg font-semibold">{t.deliverables}</h2>
+              <DeliverableVideoPolicyNotice locale={locale} className="mt-4" />
               <div className="mt-5 space-y-3">
                 {orderDeliverables.length ? (
-                  orderDeliverables.map((deliverable) => (
+                  orderDeliverables.map((deliverable) => {
+                    const purged = isDeliverableVideoPurged(deliverable);
+                    const downloadHref =
+                      order.status === "completed" && !purged
+                        ? deliverableDownloadHref(deliverable.file_url)
+                        : deliverable.file_url;
+
+                    return (
                     <div key={deliverable.id} className="rounded-lg border p-4">
                       <div className="flex items-center justify-between gap-3">
                         <div>
@@ -187,11 +201,15 @@ export async function BrandOrderView({
                           </p>
                           <p className="mt-1 text-xs text-muted-foreground">{formatDate(deliverable.created_at)}</p>
                         </div>
-                        <Button asChild size="sm" variant="outline">
-                          <a href={deliverable.file_url} target="_blank" rel="noreferrer">
-                            <Download className="h-4 w-4" /> {t.download}
-                          </a>
-                        </Button>
+                        {purged ? (
+                          <p className="text-xs text-muted-foreground">{t.purged}</p>
+                        ) : (
+                          <Button asChild size="sm" variant="outline">
+                            <a href={downloadHref} target="_blank" rel="noreferrer">
+                              <Download className="h-4 w-4" /> {t.download}
+                            </a>
+                          </Button>
+                        )}
                       </div>
                       {(() => {
                         const notesView = deliverableNotesForViewer(deliverable, "brand", locale);
@@ -200,7 +218,8 @@ export async function BrandOrderView({
                         ) : null;
                       })()}
                     </div>
-                  ))
+                    );
+                  })
                 ) : (
                   <p className="text-sm text-muted-foreground">{t.preparing}</p>
                 )}

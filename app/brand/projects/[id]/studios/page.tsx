@@ -3,17 +3,22 @@ import { notFound, redirect } from "next/navigation";
 import { ArrowRight, Star } from "lucide-react";
 import { connectCreatorFromMatchAction } from "@/app/project-actions";
 import { WorkCoverImage } from "@/components/creator/work-cover-image";
+import { CertifiedPartnerBadge } from "@/components/studioos/certification/certified-partner-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { getCurrentClientEmail } from "@/lib/client-session";
 import { listCreatorsForMatching } from "@/lib/creator-service";
 import { getWorksForCreator } from "@/lib/works-catalog";
+import { clampBrandVisibleStep, migrateLegacyBrandWizardStep } from "@/lib/campaign/wizard-steps";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
-import { getStudioPerformanceLiftForOrg, matchCreatorsForProject } from "@/lib/matching-engine";
+import { getStudioPerformanceLiftForOrg, matchCreatorsForProjectWithDemoFallback } from "@/lib/matching-engine";
 import { resolveWorkThumbnail } from "@/lib/media-url";
 import { getProject } from "@/lib/project-service";
+import { normalizeCampaignStatus } from "@/lib/studioos/project-status";
 import { orgIdFromEmail } from "@/lib/studioos/creative-performance-store";
+import { tCertificationExperience } from "@/lib/studioos/certification-experience-copy";
+import { isCreatorVerified } from "@/lib/studioos/deposit-guard";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -31,7 +36,13 @@ export default async function BrandStudiosPage({ params, searchParams }: Props) 
     redirect(withLocale("/brand", locale));
   }
   if (project.status === "draft") {
-    redirect(withLocale(`/brand/projects/new?project=${id}&step=3`, locale));
+    const resumeStep = clampBrandVisibleStep(migrateLegacyBrandWizardStep(project.wizard_step || 1));
+    redirect(withLocale(`/brand/projects/new?project=${id}&step=${resumeStep}`, locale));
+  }
+
+  const status = normalizeCampaignStatus(project.status);
+  if (status === "matching") {
+    redirect(withLocale(`/brand/projects/${id}?tab=match`, locale));
   }
 
   const studioPerformanceLift = project.client_email
@@ -41,11 +52,12 @@ export default async function BrandStudiosPage({ params, searchParams }: Props) 
   const allWorks = (
     await Promise.all(enrichedCreators.map((creator) => getWorksForCreator(creator.id)))
   ).flat();
-  const matches = matchCreatorsForProject(project, enrichedCreators, allWorks, {
+  const matches = matchCreatorsForProjectWithDemoFallback(project, enrichedCreators, allWorks, {
     studioPerformanceLift
   }).slice(0, 6);
 
   const title = locale === "zh" ? "推荐 Studio" : "Recommended Studios";
+  const partnerBadge = tCertificationExperience(locale).partnerBadge;
 
   return (
     <div className="space-y-8">
@@ -56,8 +68,8 @@ export default async function BrandStudiosPage({ params, searchParams }: Props) 
         <h1 className="mt-4 text-3xl font-semibold tracking-tight">{title}</h1>
         <p className="mt-2 text-sm text-zinc-500">
           {locale === "zh"
-            ? "选择 Studio，查看主页并完成付款。"
-            : "Choose a studio, view their profile, and complete payment."}
+            ? "意向发单流程请前往项目匹配页查看 Creator 回复并选定合作方。"
+            : "Use the project match tab to track invitation responses and select a creator."}
         </p>
       </div>
 
@@ -79,6 +91,9 @@ export default async function BrandStudiosPage({ params, searchParams }: Props) 
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="text-amber-500">⭐</span>
                         <h2 className="text-xl font-semibold">{creator.name}</h2>
+                        {isCreatorVerified(creator) ? (
+                          <CertifiedPartnerBadge label={partnerBadge} compact />
+                        ) : null}
                         <Badge variant="secondary" className="gap-1">
                           {match.score}% {locale === "zh" ? "匹配" : "Match"}
                         </Badge>

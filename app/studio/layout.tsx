@@ -3,10 +3,16 @@ import { redirect } from "next/navigation";
 import { StudioPortalShell } from "@/components/studioos/studio-portal-shell";
 import { getCurrentCreator } from "@/lib/creator-session";
 import {
+  countCompletedCreatorOrders,
+  getCreatorAccessState,
   hasCompletedCreatorProfile,
-  hasPaidCreatorDeposit
+  requiresCreatorCertification
 } from "@/lib/studioos/deposit-guard";
+import {
+  hasSeenCertificationLevelUp
+} from "@/lib/studioos/creator-settings-service";
 import { getLocale, withLocale } from "@/lib/i18n";
+import { listOrdersForCreator } from "@/lib/order-service";
 import { countUnreadNotifications, listNotificationsForCreator } from "@/lib/notification-service";
 import {
   isStudioFeaturePath,
@@ -20,22 +26,22 @@ export default async function StudioLayout({ children }: { children: React.React
   const search = headerList.get("x-search") ?? "";
   const locale = getLocale({ lang: new URLSearchParams(search).get("lang") ?? undefined });
   const creator = await getCurrentCreator();
-  const certificationPaid = hasPaidCreatorDeposit(creator);
+  const orders = creator ? await listOrdersForCreator(creator.id) : [];
+  const completedOrders = countCompletedCreatorOrders(orders);
+  const access = getCreatorAccessState(creator, completedOrders);
   const profileComplete = hasCompletedCreatorProfile(creator);
+  const canUseBusinessFeatures = access.canUseBusinessFeatures;
   const notifications =
-    creator && certificationPaid && profileComplete
-      ? await listNotificationsForCreator(creator.id, locale)
-      : [];
+    creator && canUseBusinessFeatures ? await listNotificationsForCreator(creator.id, locale) : [];
   const unreadCount =
-    creator && certificationPaid && profileComplete
-      ? await countUnreadNotifications(creator.id)
-      : 0;
+    creator && canUseBusinessFeatures ? await countUnreadNotifications(creator.id) : 0;
+  const levelUpSeen = creator ? await hasSeenCertificationLevelUp(creator.id) : true;
 
   if (creator && isStudioFeaturePath(pathname)) {
-    if (!certificationPaid) {
+    if (requiresCreatorCertification(creator, completedOrders)) {
       redirect(withLocale(studioCertificationRedirectPath(locale), locale));
     }
-    if (!profileComplete) {
+    if (access.isVerified && !profileComplete) {
       redirect(withLocale(studioProfileOnboardingPath(locale), locale));
     }
   }
@@ -46,8 +52,12 @@ export default async function StudioLayout({ children }: { children: React.React
       pathname={pathname}
       search={search}
       creator={creator}
-      certificationPaid={certificationPaid}
+      creatorId={creator?.id ?? null}
+      certificationPaid={access.isVerified}
       profileComplete={profileComplete}
+      canUseBusinessFeatures={canUseBusinessFeatures}
+      isVerified={access.isVerified}
+      levelUpSeen={levelUpSeen}
       notifications={notifications}
       unreadCount={unreadCount}
     >

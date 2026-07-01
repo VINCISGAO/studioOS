@@ -104,7 +104,7 @@ export async function uploadReviewVideoFile(input: {
   }
 
   const version = session.version_number;
-  const saved = await saveReviewVideoUpload(session.order_id, version, input.file);
+  const saved = await saveReviewVideoUpload(session.order_id, version, input.file, "en");
   if (!saved.ok) {
     await updateReviewSession(session.id, { status: "failed" });
     throw new Error(saved.error);

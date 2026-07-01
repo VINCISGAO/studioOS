@@ -1,5 +1,10 @@
-/** Studio routes accessible before certification is complete. */
-const STUDIO_PATHS_ALWAYS_ALLOWED = ["/studio/profile", "/studio/deposit", "/studio/settings"];
+/** Studio routes accessible before certification lock or without business access. */
+const STUDIO_PATHS_ALWAYS_ALLOWED = [
+  "/studio",
+  "/studio/deposit",
+  "/studio/settings",
+  "/studio/works"
+];
 
 export function isStudioPathAlwaysAllowed(pathname: string) {
   return STUDIO_PATHS_ALWAYS_ALLOWED.some(
@@ -46,5 +51,5 @@ export function studioCertificationRedirectPath(locale: "en" | "zh") {
 }
 
 export function studioProfileOnboardingPath(locale: "en" | "zh") {
-  return locale === "zh" ? "/studio/profile?lang=zh&onboarding=1" : "/studio/profile?onboarding=1";
+  return locale === "zh" ? "/studio/works?lang=zh&onboarding=1" : "/studio/works?onboarding=1";
 }

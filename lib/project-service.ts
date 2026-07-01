@@ -85,6 +85,28 @@ function dismissDemoProject(store: ProjectStore, id: string) {
   }
 }
 
+function tombstoneDeletedProject(store: ProjectStore, id: string) {
+  store.deleted_project_ids ??= [];
+  if (!store.deleted_project_ids.includes(id)) {
+    store.deleted_project_ids.push(id);
+  }
+}
+
+function applyDeletedProjectTombstones(store: ProjectStore): ProjectStore {
+  if (!store.deleted_project_ids?.length) {
+    return store;
+  }
+  const deleted = new Set(store.deleted_project_ids);
+  return {
+    ...store,
+    projects: store.projects.filter((item) => !deleted.has(item.id))
+  };
+}
+
+function isProjectDeleted(store: ProjectStore, id: string) {
+  return store.deleted_project_ids?.includes(id) ?? false;
+}
+
 function createId(prefix: string) {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
@@ -242,7 +264,7 @@ function seedStore(): ProjectStore {
 }
 
 function ensureDemoArcNovaProject(store: ProjectStore): ProjectStore {
-  if (isDemoProjectDismissed(store, DEMO_PROJECT_ID)) {
+  if (isDemoProjectDismissed(store, DEMO_PROJECT_ID) || isProjectDeleted(store, DEMO_PROJECT_ID)) {
     return store;
   }
 
@@ -308,7 +330,12 @@ async function seedProjectStore(): Promise<ProjectStore> {
 }
 
 async function readStoreInner(): Promise<ProjectStore> {
-  const parsed = await readDataJson<{ projects: Record<string, unknown>[]; applications: StoredProjectApplication[]; dismissed_demo_ids?: string[] }>(
+  const parsed = await readDataJson<{
+    projects: Record<string, unknown>[];
+    applications: StoredProjectApplication[];
+    dismissed_demo_ids?: string[];
+    deleted_project_ids?: string[];
+  }>(
     STORE_PATH,
     seedProjectStore
   );
@@ -320,11 +347,12 @@ async function readStoreInner(): Promise<ProjectStore> {
     }
     return next;
   });
-  let store: ProjectStore = {
+  let store: ProjectStore = applyDeletedProjectTombstones({
     projects,
     applications: parsed.applications ?? [],
-    dismissed_demo_ids: parsed.dismissed_demo_ids
-  };
+    dismissed_demo_ids: parsed.dismissed_demo_ids,
+    deleted_project_ids: parsed.deleted_project_ids
+  });
   const beforeDemo = store.projects.length;
   const beforeArcTitle = store.projects.find((item) => item.id === DEMO_PROJECT_ID)?.title;
   const beforeArcStatus = store.projects.find((item) => item.id === DEMO_PROJECT_ID)?.status;
@@ -342,9 +370,8 @@ async function readStoreInner(): Promise<ProjectStore> {
   ) {
     mergeLatestProjectStore(store);
     await writeStore(store);
-    readStore.invalidate?.();
   }
-  return store;
+  return applyDeletedProjectTombstones(store);
 }
 
 /** Avoid read/migrate writes clobbering concurrent create/update mutations. */
@@ -352,12 +379,24 @@ function mergeLatestProjectStore(store: ProjectStore) {
   const latest = getMemoryStore<ProjectStore>(STORE_PATH);
   if (!latest) return;
 
+  if (latest.deleted_project_ids?.length) {
+    const deleted = new Set(store.deleted_project_ids ?? []);
+    for (const id of latest.deleted_project_ids) {
+      deleted.add(id);
+    }
+    store.deleted_project_ids = [...deleted];
+  }
+
+  const deleted = new Set(store.deleted_project_ids ?? []);
+  store.projects = store.projects.filter((item) => !deleted.has(item.id));
+
   const mergedIds = new Set(store.projects.map((item) => item.id));
   for (const project of latest.projects) {
-    if (!mergedIds.has(project.id)) {
-      store.projects.push(project);
-      mergedIds.add(project.id);
+    if (deleted.has(project.id) || mergedIds.has(project.id)) {
+      continue;
     }
+    store.projects.push(project);
+    mergedIds.add(project.id);
   }
 
   if (latest.dismissed_demo_ids?.length) {
@@ -373,6 +412,7 @@ const readStore = createSerializedStoreReader(readStoreInner);
 
 async function writeStore(store: ProjectStore) {
   await writeJsonFileAtomic(STORE_PATH, store);
+  readStore.invalidate?.();
 }
 
 export async function createProjectDraft(input: CreateProjectDraftInput): Promise<StoredProject> {
@@ -388,12 +428,12 @@ export async function createProjectDraft(input: CreateProjectDraftInput): Promis
     status: "draft",
     wizard_step: 1,
     wizard_completed_steps: [],
-    email: input.client_email.toLowerCase()
+    email: input.client_email.toLowerCase(),
+    settings_json: input.wizard_ephemeral ? { wizard_ephemeral: true } : {}
   });
 
   store.projects.unshift(project);
   await writeStore(store);
-  readStore.invalidate?.();
   try {
     await appendProjectEvent({
       project_id: project.id,
@@ -563,8 +603,8 @@ export async function listProjectsForClient(clientEmail: string): Promise<Stored
     .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
 }
 
-export function canDeleteProject(_status: string) {
-  return true;
+export function canDeleteProject(status: string) {
+  return normalizeCampaignStatus(status) === "draft";
 }
 
 export async function deleteProjectForClient(
@@ -583,17 +623,26 @@ export async function deleteProjectForClient(
 
   const project = store.projects[index];
 
-  store.projects.splice(index, 1);
+  if (normalizeCampaignStatus(project.status) !== "draft") {
+    return {
+      ok: false,
+      code: "LOCKED",
+      message: "Only draft projects can be deleted"
+    };
+  }
+
+  tombstoneDeletedProject(store, projectId);
   dismissDemoProject(store, projectId);
-  await writeStore(store);
-  readStore.invalidate?.();
+  store.projects.splice(index, 1);
 
   try {
     const { deleteOrdersForProjectId } = await import("@/lib/order-service");
     await deleteOrdersForProjectId(projectId, normalized);
   } catch {
-    // Best-effort cleanup — project deletion already persisted.
+    // Best-effort cleanup — tombstone prevents resurrection if orders remain.
   }
+
+  await writeStore(store);
 
   try {
     const { purgeProjectCampaignData } = await import("@/lib/campaign-store");
@@ -693,7 +742,7 @@ export function projectHref(project: StoredProject): string {
     return `/brand/projects/new?project=${project.id}&step=1`;
   }
   if (project.status === "matching") {
-    return `/brand/projects/${project.id}/studios`;
+    return `/brand/projects/${project.id}?tab=match`;
   }
   if (["payment_pending", "contract_pending", "studio_selected", "proposal"].includes(project.status)) {
     return `/brand/projects/${project.id}/checkout`;

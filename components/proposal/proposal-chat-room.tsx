@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Send, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CreatorMessageIdentity } from "@/components/studioos/certification/creator-message-identity";
 import type { ChatSender, StoredMessage } from "@/lib/chat-types";
 import type { Locale } from "@/lib/i18n";
 import type { Creator } from "@/lib/types";
@@ -171,7 +172,15 @@ export function ProposalChatRoom({
               )}
             >
               <div className="mb-1 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] opacity-70">
-                {labelFor(message)}
+                {message.sender === "creator" ? (
+                  <CreatorMessageIdentity
+                    locale={locale}
+                    creator={creator}
+                    name={creator.name || t.studio}
+                  />
+                ) : (
+                  labelFor(message)
+                )}
                 {message.kind === "pitch" ? (
                   <span className="inline-flex items-center gap-0.5 normal-case">
                     <Video className="h-3 w-3" /> {t.pitch}

@@ -1,17 +1,25 @@
 import { redirect } from "next/navigation";
-import { StudioWorkspaceDashboard } from "@/components/studioos/studio-workspace-dashboard";
-import { CreatorPortalSections } from "@/components/studioos/creator-portal-sections";
-import { CreatorMembershipPanel } from "@/components/studioos/creator-membership-panel";
-import { creatorPortalService } from "@/features/creator/creator-portal.service";
-import { membershipService } from "@/features/membership/membership.service";
-import { getSessionUser } from "@/features/auth/session.service";
-import { hasDatabaseUrl } from "@/lib/core/database/prisma";
+import { CreatorCommercialTimeline } from "@/components/studioos/commercial-lifecycle-timeline";
+import { CertificationWelcomeBanner } from "@/components/studioos/certification/certification-welcome-banner";
+import { CreatorHomeDashboard } from "@/components/studioos/creator-home-dashboard";
 import { getCurrentCreator } from "@/lib/creator-session";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
-import { listOrdersForCreator } from "@/lib/order-service";
-import { listNotificationsForCreator } from "@/lib/notification-service";
+import { getDeliverables, listOrdersForCreator } from "@/lib/order-service";
+import { resolveCreatorCommercialStep } from "@/lib/studioos/commercial-lifecycle";
+import {
+  countAwaitingBrandSelection,
+  countInvitationsByTab
+} from "@/lib/studioos/creator-invitation-utils";
+import { listInvitationsForCreator } from "@/lib/studioos/creator-invitation-store";
+import { deriveCreatorTodayTasks } from "@/lib/studioos/creator-order-lifecycle";
+import {
+  hasDismissedCertificationWelcomeBanner,
+  hasSeenCertificationLevelUp
+} from "@/lib/studioos/creator-settings-service";
+import { isCreatorVerified } from "@/lib/studioos/deposit-guard";
+import { getCreatorIncomeSnapshot } from "@/lib/studioos/withdrawal-service";
 
-export default async function StudioDashboardPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
+export default async function StudioHomePage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const locale = getLocale(await searchParams);
   const creator = await getCurrentCreator();
 
@@ -19,62 +27,79 @@ export default async function StudioDashboardPage({ searchParams }: { searchPara
     redirect(withLocale("/login?role=creator", locale));
   }
 
-  const [orders, notifications, sessionUser] = await Promise.all([
+  const [orders, invitations, income, levelUpSeen, welcomeDismissed] = await Promise.all([
     listOrdersForCreator(creator.id),
-    listNotificationsForCreator(creator.id, locale),
-    getSessionUser()
+    listInvitationsForCreator(creator.id),
+    getCreatorIncomeSnapshot(creator.id),
+    hasSeenCertificationLevelUp(creator.id),
+    hasDismissedCertificationWelcomeBanner(creator.id)
   ]);
 
-  const assigned = orders.filter((o) => ["in_production", "waiting_payment"].includes(o.status)).length;
-  const inReview = orders.filter((o) => o.status === "review" || o.status === "revision").length;
-  const completed = orders.filter((o) => o.status === "completed").length;
-  const revenue = orders
-    .filter((o) => o.payout_status === "held" || o.payout_status === "approved" || o.payout_status === "paid")
-    .reduce((sum, o) => sum + o.creator_payout, 0);
+  const showWelcomeBanner =
+    isCreatorVerified(creator) && levelUpSeen && !welcomeDismissed;
 
-  const portal =
-    sessionUser && !sessionUser.id.startsWith("demo_")
-      ? await creatorPortalService.getDashboard({ id: sessionUser.id, role: sessionUser.role }, orders)
-      : {
-          invitations: [],
-          campaigns: [],
-          stats: { pendingInvitations: 0, activeOrders: assigned, inReview, completed, revenue }
-        };
+  const invitationCounts = countInvitationsByTab(invitations);
+  const deliverableCounts: Record<string, number> = {};
+  await Promise.all(
+    orders.map(async (order) => {
+      deliverableCounts[order.id] = (await getDeliverables(order.id)).length;
+    })
+  );
 
-  const membershipBundle =
-    sessionUser &&
-    !sessionUser.id.startsWith("demo_") &&
-    hasDatabaseUrl() &&
-    sessionUser.role.toUpperCase() === "CREATOR"
-      ? await Promise.all([
-          membershipService.getCreatorMembershipStatus(sessionUser.id),
-          membershipService.requireVerifiedPlan()
-        ])
-      : null;
+  const tasks = deriveCreatorTodayTasks({
+    pendingInvitations: invitationCounts.pending,
+    awaitingBrandSelection: countAwaitingBrandSelection(invitations),
+    orders,
+    deliverableCounts
+  });
+
+  const completed = orders.filter((order) => order.status === "completed").length;
+  const responded =
+    invitationCounts.accepted + invitationCounts.declined + invitationCounts.expired;
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const todayIncome = orders
+    .filter(
+      (order) =>
+        order.completed_at &&
+        new Date(order.completed_at) >= todayStart &&
+        order.payout_status === "paid"
+    )
+    .reduce((sum, order) => sum + order.creator_payout, 0);
+
+  const primaryOrder = orders[0] ?? null;
+  const primaryDeliverables = primaryOrder ? deliverableCounts[primaryOrder.id] ?? 0 : 0;
+  const focusInvitation =
+    invitations.find((item) => item.status === "selected") ??
+    invitations.find((item) => item.status === "accepted") ??
+    invitations.find((item) => item.status === "pending") ??
+    null;
+  const creatorCommercialStep = resolveCreatorCommercialStep({
+    invitationStatus: focusInvitation?.status ?? null,
+    order: primaryOrder,
+    deliverableCount: primaryDeliverables
+  });
 
   return (
-    <div className="space-y-8">
-      {membershipBundle ? (
-        <CreatorMembershipPanel
-          locale={locale}
-          status={membershipBundle[0]}
-          verifiedPlan={membershipBundle[1]}
-          stripeConfigured={Boolean(process.env.STRIPE_SECRET_KEY)}
-        />
-      ) : null}
-      <StudioWorkspaceDashboard
+    <div className="space-y-6">
+      {showWelcomeBanner ? <CertificationWelcomeBanner locale={locale} /> : null}
+      <CreatorCommercialTimeline
         locale={locale}
-        creator={creator}
-        orders={orders}
-        notifications={notifications}
-        stats={{ assigned, inReview, completed, revenue }}
+        currentStep={creatorCommercialStep}
+        orderStatus={primaryOrder?.status ?? null}
+        compact
       />
-      <CreatorPortalSections
+      <CreatorHomeDashboard
         locale={locale}
-        invitations={portal.invitations}
-        campaigns={portal.campaigns}
-        orders={orders}
-        stats={portal.stats}
+        creatorName={creator.name}
+        tasks={tasks}
+        stats={{
+          todayIncome,
+          pendingSettlement: income.held_usd,
+          completionRate: orders.length ? Math.round((completed / orders.length) * 100) : 0,
+          responseRate: invitations.length ? Math.round((responded / invitations.length) * 100) : 100,
+          pendingInvitations: invitationCounts.pending
+        }}
       />
     </div>
   );

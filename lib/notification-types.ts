@@ -1,4 +1,12 @@
-export type CreatorNotificationType = "creator_selected" | "project_funded";
+export type CreatorNotificationType =
+  | "invitation_match"
+  | "creator_selected"
+  | "project_funded"
+  | "review_comment_added"
+  | "revision_requested"
+  | "delivery_approved"
+  | "escrow_released"
+  | "not_selected";
 
 export type CreatorNotification = {
   id: string;
@@ -18,4 +26,6 @@ export type CreatorNotification = {
 
 export type NotificationStore = {
   notifications: CreatorNotification[];
+  /** Demo notification ids suppressed after reset — same pattern as order-store. */
+  dismissed_demo_ids?: string[];
 };

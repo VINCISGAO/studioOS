@@ -11,10 +11,10 @@ import { Button } from "@/components/ui/button";
 import { getInquiry, getMessagesForPair, consolidateInquiryThreads } from "@/lib/chat-service";
 import { getCurrentCreator, getCurrentCreatorId } from "@/lib/creator-session";
 import { getCreatorById } from "@/lib/creator-service";
-import { hasPaidCreatorDeposit } from "@/lib/studioos/deposit-guard";
+import { canAcceptCreatorOrders, countCompletedCreatorOrders } from "@/lib/studioos/deposit-guard";
 import { creatorWorks } from "@/lib/data";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
-import { getActiveQuoteForPair, getOrderForPair } from "@/lib/order-service";
+import { getActiveQuoteForPair, getOrderForPair, listOrdersForCreator } from "@/lib/order-service";
 import { isProposalChatLocked, resolveProposalStage } from "@/lib/studioos/project-contract";
 
 const copy = {
@@ -67,7 +67,12 @@ export default async function ProposalRoomPage({
   const currentCreatorId = await getCurrentCreatorId();
   const currentCreator = await getCurrentCreator();
   const viewerRole = currentCreatorId === inquiry.creator_id ? "studio" : "brand";
-  const depositPaid = viewerRole === "studio" ? hasPaidCreatorDeposit(currentCreator) : true;
+  const completedOrders =
+    currentCreator && viewerRole === "studio"
+      ? countCompletedCreatorOrders(await listOrdersForCreator(currentCreator.id))
+      : 0;
+  const depositPaid =
+    viewerRole === "studio" ? canAcceptCreatorOrders(currentCreator, completedOrders) : true;
   const messages = await getMessagesForPair(inquiry.client_email, inquiry.creator_id);
   const quote = await getActiveQuoteForPair(inquiry.client_email, inquiry.creator_id);
   const order = await getOrderForPair(inquiry.client_email, inquiry.creator_id);

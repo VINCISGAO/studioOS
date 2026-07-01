@@ -14,6 +14,9 @@ import {
   Users
 } from "lucide-react";
 import { BrandReviewWorkflowPanel } from "@/components/studioos/brand-review-workflow-panel";
+import { BrandAcceptedCreatorsPanel } from "@/components/studioos/brand-accepted-creators-panel";
+import { BrandInvitationRosterPanel } from "@/components/studioos/brand-invitation-roster-panel";
+import { BrandInvitationStatusPanel } from "@/components/studioos/brand-invitation-status-panel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { creators } from "@/lib/data";
@@ -21,24 +24,33 @@ import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import type { StoredDeliverable, StoredOrder } from "@/lib/order-types";
 import type { StoredProject } from "@/lib/project-types";
-import { projectStatusLabel } from "@/lib/project-service";
+import {
+  brandCommercialPhaseLabel,
+  brandUserPhaseLabels,
+  mapBrandStepToPhase,
+  userCommercialPhaseIndex,
+  userCommercialPhases,
+  type BrandCommercialStep
+} from "@/lib/studioos/commercial-lifecycle";
 import type { ReviewComment } from "@/lib/studioos/review-store";
+import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
+import type { StoredCreatorInvitation } from "@/lib/studioos/creator-invitation-types";
 import type { CampaignProjectStatus } from "@/lib/studioos/project-status";
 import { cn, formatDate } from "@/lib/utils";
 
 type HubTab = "brief" | "match" | "proposal" | "production" | "review";
 
 const tabs: { id: HubTab; label: { en: string; zh: string } }[] = [
-  { id: "brief", label: { en: "Brief", zh: "需求" } },
-  { id: "match", label: { en: "Studio", zh: "制作团队" } },
-  { id: "proposal", label: { en: "Payment", zh: "付款" } },
-  { id: "production", label: { en: "Production", zh: "制作" } },
-  { id: "review", label: { en: "Review", zh: "审片" } }
+  { id: "brief", label: { en: "Ad requirements", zh: "广告需求" } },
+  { id: "match", label: { en: "Creators", zh: "创作者" } },
+  { id: "production", label: { en: "Progress", zh: "项目进度" } },
+  { id: "review", label: { en: "Review", zh: "审片" } },
+  { id: "proposal", label: { en: "Payments", zh: "付款记录" } }
 ];
 
 const copy = {
   en: {
-    back: "Back to projects",
+    back: "Back to my ads",
     budget: "Budget",
     deadline: "Deadline",
     category: "Category",
@@ -52,7 +64,6 @@ const copy = {
     productionWaiting: "Waiting for first draft",
     productionReady: "First draft uploaded",
     openReview: "Open review room",
-    openMessages: "AI Messages",
     viewStudios: "View studio options",
     goCheckout: "View payment details",
     continueWizard: "Continue setup",
@@ -61,7 +72,8 @@ const copy = {
     matchTitle: "Production studio",
     matchSelected: "Selected for this project",
     matchPending: "Matching in progress",
-    matchBody: "We recommended studios based on your brief. You picked a partner before production started.",
+    matchBody:
+      "AI sent invitations to multiple creators at once. Acceptances join the shortlist — pick one candidate to officially start the project.",
     proposalTitle: "Payment & escrow",
     proposalBody: "Funds stay in escrow until you approve the final delivery.",
     reviewTitle: "Video review",
@@ -83,7 +95,7 @@ const copy = {
     projectBadge: "Ad project"
   },
   zh: {
-    back: "返回项目列表",
+    back: "返回我的广告",
     budget: "预算",
     deadline: "交付日期",
     category: "品类",
@@ -97,7 +109,6 @@ const copy = {
     productionWaiting: "等待初稿上传",
     productionReady: "初稿已上传",
     openReview: "进入审片室",
-    openMessages: "AI 消息",
     viewStudios: "查看推荐团队",
     goCheckout: "查看付款详情",
     continueWizard: "继续填写需求",
@@ -105,8 +116,9 @@ const copy = {
     briefEmpty: "暂无需求内容。",
     matchTitle: "合作制作团队",
     matchSelected: "本项目的合作方",
-    matchPending: "匹配进行中",
-    matchBody: "系统根据您的需求推荐了制作团队，您已在开拍前选定合作伙伴。",
+    matchPending: "招募进行中",
+    matchBody:
+      "AI 已同时向多位 Creator 发出邀请。接受者进入候选名单 — 请从候选 Creator 中最终选定 1 位，项目才正式开始。",
     proposalTitle: "付款与托管",
     proposalBody: "款项托管在平台，您对成片满意并确认后，才会打给制作团队。",
     reviewTitle: "视频审片",
@@ -136,8 +148,17 @@ function tabHref(projectId: string, tab: HubTab, locale: Locale) {
   return withLocale(`/brand/projects/${projectId}?tab=${tab}`, locale);
 }
 
-function isTabAvailable(status: CampaignProjectStatus, tab: HubTab): boolean {
+function isTabAvailable(
+  status: CampaignProjectStatus,
+  tab: HubTab,
+  deliverableCount = 0,
+  orderStatus?: string | null
+): boolean {
   if (status === "draft") return tab === "brief";
+  if (tab === "review") {
+    if (deliverableCount > 0) return true;
+    if (orderStatus === "review" || orderStatus === "revision") return true;
+  }
   const order: HubTab[] = ["brief", "match", "proposal", "production", "review"];
   const statusTab: Record<CampaignProjectStatus, HubTab> = {
     draft: "brief",
@@ -171,8 +192,8 @@ function primaryAction(
   }
   if (project.status === "matching") {
     return {
-      href: withLocale(`/brand/projects/${id}/studios`, locale),
-      label: copy[locale].viewStudios
+      href: withLocale(`/brand/projects/${id}?tab=match`, locale),
+      label: copy[locale].matchPending
     };
   }
   if (["payment_pending", "contract_pending", "studio_selected", "proposal"].includes(project.status)) {
@@ -250,7 +271,10 @@ export function BrandProjectHub({
   activeTab,
   linkedOrder,
   deliverables,
-  reviewComments
+  reviewComments,
+  acceptedInvitations = [],
+  projectInvitations = [],
+  brandCommercialStep
 }: {
   locale: Locale;
   project: StoredProject;
@@ -258,6 +282,9 @@ export function BrandProjectHub({
   linkedOrder: StoredOrder | null;
   deliverables: StoredDeliverable[];
   reviewComments: ReviewComment[];
+  acceptedInvitations?: StoredCreatorInvitation[];
+  projectInvitations?: StoredCreatorInvitation[];
+  brandCommercialStep: BrandCommercialStep;
 }) {
   const t = copy[locale];
   const status = project.status;
@@ -269,17 +296,12 @@ export function BrandProjectHub({
   const openComments = reviewComments.filter((item) => item.status === "open").length;
   const action = primaryAction(project, locale, deliverables.length);
   const latestDeliverable = deliverables[deliverables.length - 1];
-
-  const paidDone = linkedOrder ? linkedOrder.payment_status !== "unpaid" : !["payment_pending", "contract_pending"].includes(status);
-  const productionActive = ["production", "in_review", "delivered", "completed"].includes(status);
   const deliverDone = deliverables.length > 0;
-  const reviewActive = ["in_review", "delivered"].includes(status) || (linkedOrder?.status === "review" || linkedOrder?.status === "revision");
-  const completedDone = status === "completed" || linkedOrder?.status === "completed";
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <Link
-        href={withLocale("/brand", locale)}
+        href={withLocale(`${brandPortalRoutes.dashboard}#my-ads`, locale)}
         className="inline-flex items-center gap-1.5 text-sm text-zinc-500 transition hover:text-zinc-900"
       >
         <ArrowLeft className="h-4 w-4" />
@@ -302,7 +324,7 @@ export function BrandProjectHub({
                     status === "in_review" && "border-emerald-200 bg-emerald-50 text-emerald-800"
                   )}
                 >
-                  {projectStatusLabel(status, locale)}
+                  {brandCommercialPhaseLabel(brandCommercialStep, locale)}
                 </Badge>
               </div>
               <h1 className="mt-3 text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">
@@ -332,7 +354,7 @@ export function BrandProjectHub({
 
         <nav className="flex gap-1 overflow-x-auto border-b border-zinc-100 px-4 sm:px-6" aria-label="Campaign steps">
           {tabs.map((tab) => {
-            const available = isTabAvailable(status, tab.id);
+            const available = isTabAvailable(status, tab.id, deliverables.length, linkedOrder?.status);
             const active = activeTab === tab.id;
             return available ? (
               <Link
@@ -396,36 +418,28 @@ export function BrandProjectHub({
           ) : null}
 
           {activeTab === "match" ? (
-            <div>
-              <h2 className="flex items-center gap-2 text-lg font-semibold text-zinc-900">
-                <Users className="h-5 w-5 text-zinc-400" />
-                {t.matchTitle}
-              </h2>
-              <p className="mt-2 text-sm leading-relaxed text-zinc-600">{t.matchBody}</p>
+            <div className="space-y-6">
+              <BrandInvitationStatusPanel locale={locale} invitations={projectInvitations} />
+              <BrandInvitationRosterPanel locale={locale} invitations={projectInvitations} />
+              <BrandAcceptedCreatorsPanel
+                locale={locale}
+                projectId={project.id}
+                accepted={acceptedInvitations}
+              />
               {studio ? (
-                <div className="mt-6 flex items-start gap-4 rounded-2xl border border-zinc-200 bg-zinc-50/60 p-5">
-                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-zinc-900 text-sm font-semibold text-white">
-                    {studio.name.slice(0, 2).toUpperCase()}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-medium text-zinc-500">{t.matchSelected}</p>
-                    <p className="mt-0.5 text-base font-semibold text-zinc-900">{studio.name}</p>
-                    <p className="mt-1 text-sm text-zinc-600">{studio.headline}</p>
-                    <p className="mt-2 inline-flex items-center gap-1 text-xs text-zinc-500">
-                      <Clock className="h-3.5 w-3.5" />
-                      {studio.delivery_speed}
-                    </p>
+                <div>
+                  <h3 className="text-sm font-semibold text-zinc-900">{t.matchSelected}</h3>
+                  <div className="mt-4 flex items-start gap-4 rounded-2xl border border-zinc-200 bg-zinc-50/60 p-5">
+                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-zinc-900 text-sm font-semibold text-white">
+                      {studio.name.slice(0, 2).toUpperCase()}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="mt-0.5 text-base font-semibold text-zinc-900">{studio.name}</p>
+                      <p className="mt-1 text-sm text-zinc-600">{studio.headline}</p>
+                    </div>
                   </div>
                 </div>
-              ) : (
-                <p className="mt-4 text-sm text-zinc-500">{t.matchPending}</p>
-              )}
-              <Button asChild variant="outline" className="mt-6 rounded-xl">
-                <Link href={withLocale(`/brand/projects/${project.id}/studios`, locale)}>
-                  {t.viewStudios}
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
+              ) : null}
             </div>
           ) : null}
 
@@ -469,15 +483,22 @@ export function BrandProjectHub({
               <div className="rounded-2xl border border-zinc-200 bg-zinc-50/40 p-5 sm:p-6">
                 <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">{t.timeline}</p>
                 <div className="mt-5 flex items-start justify-between gap-2">
-                  <TimelineStep done={paidDone} active={!paidDone} label={t.stepPaid} />
-                  <div className="mt-4 h-px flex-1 bg-zinc-200" />
-                  <TimelineStep done={productionActive && deliverDone} active={productionActive && !deliverDone} label={t.stepProduction} />
-                  <div className="mt-4 h-px flex-1 bg-zinc-200" />
-                  <TimelineStep done={deliverDone} active={deliverDone && !reviewActive} label={t.stepDeliver} />
-                  <div className="mt-4 h-px flex-1 bg-zinc-200" />
-                  <TimelineStep done={reviewActive || completedDone} active={reviewActive && !completedDone} label={t.stepReview} />
-                  <div className="mt-4 h-px flex-1 bg-zinc-200" />
-                  <TimelineStep done={completedDone} active={false} label={t.stepDone} />
+                  {userCommercialPhases.map((phase, index) => {
+                    const currentPhase = mapBrandStepToPhase(brandCommercialStep);
+                    const currentIndex = userCommercialPhaseIndex(currentPhase);
+                    const done = index < currentIndex;
+                    const active = index === currentIndex;
+                    return (
+                      <div key={phase} className="flex flex-1 items-start gap-2">
+                        {index > 0 ? <div className="mt-4 hidden h-px flex-1 bg-zinc-200 sm:block" /> : null}
+                        <TimelineStep
+                          done={done}
+                          active={active}
+                          label={brandUserPhaseLabels[locale][phase]}
+                        />
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -495,13 +516,6 @@ export function BrandProjectHub({
                   </div>
                 </div>
               ) : null}
-
-              <Button asChild variant="outline" className="rounded-xl">
-                <Link href={withLocale(`/brand/projects/${project.id}/communication`, locale)}>
-                  {t.openMessages}
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
 
               {deliverables.length ? (
                 <div className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-5">

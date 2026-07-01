@@ -1,10 +1,17 @@
 import { redirect } from "next/navigation";
-import { DepositPanel } from "@/components/studioos/deposit-panel";
+import { CreatorCertificationHub } from "@/components/studioos/creator-certification-hub";
 import { getCurrentCreator } from "@/lib/creator-session";
 import { getCreatorDepositSnapshot } from "@/lib/studioos/deposit-service";
 import { depositRequiredMessage } from "@/lib/studioos/deposit-copy";
-import { hasCompletedCreatorProfile } from "@/lib/studioos/deposit-guard";
+import {
+  countCompletedCreatorOrders,
+  getCreatorAccessState,
+  hasCompletedCreatorProfile
+} from "@/lib/studioos/deposit-guard";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { listOrdersForCreator } from "@/lib/order-service";
+
+export const dynamic = "force-dynamic";
 
 export default async function StudioDepositPage({
   searchParams
@@ -19,6 +26,8 @@ export default async function StudioDepositPage({
     redirect(withLocale("/login?role=creator", locale));
   }
 
+  const orders = await listOrdersForCreator(creator.id);
+  const access = getCreatorAccessState(creator, countCompletedCreatorOrders(orders));
   const snapshot = await getCreatorDepositSnapshot(creator.id);
   const errorMessage =
     query.error === "deposit-required"
@@ -27,11 +36,19 @@ export default async function StudioDepositPage({
         ? decodeURIComponent(query.error)
         : undefined;
 
+  const mode = snapshot.deposit_status === "paid"
+    ? "certified"
+    : access.isLockedAfterFirstOrder
+      ? "required"
+      : "optional";
+
   return (
-    <DepositPanel
+    <CreatorCertificationHub
       locale={locale}
       creatorId={creator.id}
       snapshot={snapshot}
+      mode={mode}
+      completedOrders={access.completedOrders}
       submitted={query.submitted === "1"}
       error={errorMessage}
       profileComplete={hasCompletedCreatorProfile(creator)}

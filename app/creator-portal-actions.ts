@@ -31,7 +31,7 @@ export async function acceptCreatorInvitationAction(formData: FormData) {
 
   await invitationService.accept(invitationId, { id: user.id, role: user.role });
   revalidateCreatorPortal();
-  redirect(withLocale(creatorPortalRoutes.dashboard, locale));
+  redirect(withLocale(`${creatorPortalRoutes.invitations}?tab=accepted`, locale));
 }
 
 export async function declineCreatorInvitationAction(formData: FormData) {

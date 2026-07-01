@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CreatorMessageIdentity } from "@/components/studioos/certification/creator-message-identity";
 import type { ChatSender, StoredMessage } from "@/lib/chat-types";
 import type { Locale } from "@/lib/i18n";
 import type { Creator } from "@/lib/types";
@@ -181,7 +182,15 @@ export function InquiryChatRoom({
               )}
             >
               <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.12em] opacity-70">
-                {labelFor(message)}
+                {message.sender === "creator" ? (
+                  <CreatorMessageIdentity
+                    locale={locale}
+                    creator={creator}
+                    name={creator.name || t.creator}
+                  />
+                ) : (
+                  labelFor(message)
+                )}
               </div>
               {message.body}
             </div>

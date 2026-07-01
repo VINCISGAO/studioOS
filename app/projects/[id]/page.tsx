@@ -11,9 +11,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { creatorWorks } from "@/lib/data";
 import { DepositRequiredCallout } from "@/components/studioos/deposit-required-callout";
 import { getCurrentCreator, getCurrentCreatorId } from "@/lib/creator-session";
-import { hasPaidCreatorDeposit } from "@/lib/studioos/deposit-guard";
+import { canAcceptCreatorOrders, countCompletedCreatorOrders } from "@/lib/studioos/deposit-guard";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
 import { matchProjectsForCreator } from "@/lib/matching-engine";
+import { listOrdersForCreator } from "@/lib/order-service";
 import { getProject, listApplicationsForProject } from "@/lib/project-service";
 import { formatDate } from "@/lib/utils";
 
@@ -77,6 +78,8 @@ export default async function ProjectDetailPage({ params, searchParams }: Projec
         [project]
       )[0]
     : null;
+  const completedOrders = creator ? countCompletedCreatorOrders(await listOrdersForCreator(creator.id)) : 0;
+  const canApply = canAcceptCreatorOrders(creator, completedOrders);
 
   return (
     <PageShell locale={locale}>
@@ -128,7 +131,7 @@ export default async function ProjectDetailPage({ params, searchParams }: Projec
               <h2 className="text-xl font-semibold">{t.apply}</h2>
               {query.applied ? <p className="mt-3 text-sm text-emerald-700">{t.applied}</p> : null}
               {creatorId ? (
-                hasPaidCreatorDeposit(creator) ? (
+                canApply ? (
                 <form action={applyToProjectAction} className="mt-6 grid gap-4">
                   <input type="hidden" name="lang" value={locale} />
                   <input type="hidden" name="project_id" value={project.id} />

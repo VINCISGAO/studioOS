@@ -20,11 +20,23 @@ export default async function StudioIncomePage({ searchParams }: { searchParams:
   ]);
 
   return (
-    <IncomeWithdrawalPanel
-      locale={locale}
-      snapshot={snapshot}
-      payoutMethods={payoutMethods}
-      withdrawals={withdrawals}
-    />
+    <div className="space-y-6">
+      <header>
+        <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 sm:text-3xl">
+          {locale === "zh" ? "收入中心" : "Income center"}
+        </h1>
+        <p className="mt-2 text-sm text-zinc-500">
+          {locale === "zh"
+            ? "可提现、待结算、历史收入与提现记录。"
+            : "Withdrawable balance, pending settlement, history, and withdrawals."}
+        </p>
+      </header>
+      <IncomeWithdrawalPanel
+        locale={locale}
+        snapshot={snapshot}
+        payoutMethods={payoutMethods}
+        withdrawals={withdrawals}
+      />
+    </div>
   );
 }

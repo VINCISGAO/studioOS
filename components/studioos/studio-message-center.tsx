@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
+  deleteAllNotificationsAction,
+  deleteNotificationsAction,
   markAllNotificationsReadAction,
   markNotificationReadAction
 } from "@/app/studio-notification-actions";
@@ -55,9 +57,17 @@ const copy = {
     attachment: "Attachment",
     projectStatus: "Project status",
     enterProject: "Enter project",
+    openStage: "Open workflow stage",
+    tapHint: "Tap to open the related workflow",
     viewPdf: "View PDF",
     downloadPdf: "Download PDF",
-    pdfPreview: "PDF preview"
+    pdfPreview: "PDF preview",
+    deleteSelected: "Delete selected",
+    deleteAll: "Delete all",
+    selectAll: "Select all",
+    confirmDeleteAll:
+      "Delete all messages in the message center? This cannot be undone.",
+    confirmDeleteSelected: "Delete selected messages? This cannot be undone."
   },
   zh: {
     title: "消息中心",
@@ -72,14 +82,23 @@ const copy = {
     attachment: "附件",
     projectStatus: "项目状态",
     enterProject: "进入项目",
+    openStage: "进入对应环节",
+    tapHint: "点击进入对应环节",
     viewPdf: "查看 PDF",
     downloadPdf: "下载 PDF",
-    pdfPreview: "PDF 预览"
+    pdfPreview: "PDF 预览",
+    deleteSelected: "删除选中",
+    deleteAll: "一键删除",
+    selectAll: "全选",
+    confirmDeleteAll: "确定删除消息中心的全部消息吗？此操作不可恢复。",
+    confirmDeleteSelected: "确定删除选中的消息吗？此操作不可恢复。"
   }
 };
 
 function messageIcon(type: MessageListItem["type"]) {
-  if (type === "project_funded") return CheckCircle2;
+  if (type === "project_funded" || type === "delivery_approved" || type === "escrow_released") return CheckCircle2;
+  if (type === "invitation_match" || type === "not_selected") return Bell;
+  if (type === "review_comment_added" || type === "revision_requested") return FileText;
   return ShoppingBag;
 }
 
@@ -99,6 +118,7 @@ export function StudioMessageCenter({
   const [isPending, startTransition] = useTransition();
   const [tab, setTab] = useState<FilterTab>("all");
   const [showPdf, setShowPdf] = useState(true);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const [selectedId, setSelectedId] = useState<string | null>(
     initialSelectedId ?? list[0]?.id ?? null
@@ -115,18 +135,15 @@ export function StudioMessageCenter({
   const unreadCount = list.filter((item) => !item.readAt).length;
   const selected = selectedId ? detailMap.get(selectedId) ?? null : null;
 
-  function selectMessage(id: string) {
-    setSelectedId(id);
-
-    const item = list.find((entry) => entry.id === id);
-    if (item && !item.readAt) {
-      startTransition(async () => {
+  function openMessage(item: MessageListItem) {
+    startTransition(async () => {
+      if (!item.readAt) {
         const fd = new FormData();
-        fd.set("notification_id", id);
+        fd.set("notification_id", item.id);
         await markNotificationReadAction(fd);
-        router.refresh();
-      });
-    }
+      }
+      router.push(item.actionHref);
+    });
   }
 
   function markAllRead() {
@@ -136,6 +153,51 @@ export function StudioMessageCenter({
     });
   }
 
+  function toggleSelected(id: string) {
+    setSelectedIds((current) =>
+      current.includes(id) ? current.filter((item) => item !== id) : [...current, id]
+    );
+  }
+
+  function toggleSelectAllVisible() {
+    const visibleIds = filtered.map((item) => item.id);
+    const allSelected = visibleIds.length > 0 && visibleIds.every((id) => selectedIds.includes(id));
+    if (allSelected) {
+      setSelectedIds((current) => current.filter((id) => !visibleIds.includes(id)));
+      return;
+    }
+    setSelectedIds((current) => [...new Set([...current, ...visibleIds])]);
+  }
+
+  function deleteSelected() {
+    if (!selectedIds.length) return;
+    if (!window.confirm(t.confirmDeleteSelected)) return;
+
+    startTransition(async () => {
+      const fd = new FormData();
+      fd.set("notification_ids", selectedIds.join(","));
+      await deleteNotificationsAction(fd);
+      setSelectedIds([]);
+      setSelectedId(null);
+      router.refresh();
+    });
+  }
+
+  function deleteAll() {
+    if (!list.length) return;
+    if (!window.confirm(t.confirmDeleteAll)) return;
+
+    startTransition(async () => {
+      await deleteAllNotificationsAction();
+      setSelectedIds([]);
+      setSelectedId(null);
+      router.refresh();
+    });
+  }
+
+  const visibleSelectedCount = filtered.filter((item) => selectedIds.includes(item.id)).length;
+  const allVisibleSelected = filtered.length > 0 && visibleSelectedCount === filtered.length;
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -143,25 +205,62 @@ export function StudioMessageCenter({
           <h1 className="text-2xl font-semibold tracking-tight text-zinc-950">{t.title}</h1>
           <p className="mt-1 text-sm text-zinc-500">{t.subtitle}</p>
         </div>
-        {unreadCount > 0 ? (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="rounded-lg border-zinc-200"
-            disabled={isPending}
-            onClick={markAllRead}
-          >
-            {locale === "zh" ? "全部标为已读" : "Mark all read"}
-          </Button>
-        ) : null}
+        <div className="flex flex-wrap items-center gap-2">
+          {unreadCount > 0 ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="rounded-lg border-zinc-200"
+              disabled={isPending}
+              onClick={markAllRead}
+            >
+              {locale === "zh" ? "全部标为已读" : "Mark all read"}
+            </Button>
+          ) : null}
+          {selectedIds.length > 0 ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="rounded-lg border-red-200 text-red-700 hover:bg-red-50"
+              disabled={isPending}
+              onClick={deleteSelected}
+            >
+              {t.deleteSelected} ({selectedIds.length})
+            </Button>
+          ) : null}
+          {list.length > 0 ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="rounded-lg border-red-200 text-red-700 hover:bg-red-50"
+              disabled={isPending}
+              onClick={deleteAll}
+            >
+              {t.deleteAll}
+            </Button>
+          ) : null}
+        </div>
       </div>
 
       <div className="grid gap-5 xl:grid-cols-[360px_minmax(0,1fr)] xl:items-start">
         {/* Left list */}
         <section className="overflow-hidden rounded-[20px] border border-zinc-200/80 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
           <div className="flex items-center justify-between border-b border-zinc-100 px-4 py-3">
-            <div className="flex gap-1">
+            <div className="flex flex-wrap items-center gap-3">
+              <label className="inline-flex items-center gap-2 text-xs text-zinc-500">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-zinc-300"
+                  checked={allVisibleSelected}
+                  disabled={!filtered.length || isPending}
+                  onChange={toggleSelectAllVisible}
+                />
+                {t.selectAll}
+              </label>
+              <div className="flex gap-1">
               {(
                 [
                   ["all", t.all, list.length],
@@ -181,6 +280,7 @@ export function StudioMessageCenter({
                   {label} ({count})
                 </button>
               ))}
+              </div>
             </div>
             <button type="button" className="inline-flex items-center gap-1 text-xs text-zinc-500">
               {t.filter}
@@ -194,12 +294,23 @@ export function StudioMessageCenter({
                 const Icon = messageIcon(item.type);
                 const active = item.id === selectedId;
                 return (
-                  <li key={item.id}>
+                  <li key={item.id} className="flex">
+                    <label className="flex shrink-0 items-start px-3 py-4">
+                      <input
+                        type="checkbox"
+                        className="mt-1 h-4 w-4 rounded border-zinc-300"
+                        checked={selectedIds.includes(item.id)}
+                        disabled={isPending}
+                        onChange={() => toggleSelected(item.id)}
+                        onClick={(event) => event.stopPropagation()}
+                      />
+                    </label>
                     <button
                       type="button"
-                      onClick={() => selectMessage(item.id)}
+                      disabled={isPending}
+                      onClick={() => openMessage(item)}
                       className={cn(
-                        "flex w-full gap-3 px-4 py-4 text-left transition",
+                        "flex w-full flex-1 gap-3 py-4 pr-4 text-left transition",
                         active ? "bg-zinc-50" : "hover:bg-zinc-50/70"
                       )}
                     >
@@ -217,6 +328,8 @@ export function StudioMessageCenter({
                         <span className="mt-2 block text-[11px] text-zinc-400">
                           {formatMessageTime(item.createdAt, locale)}
                         </span>
+                        <span className="mt-1 block text-xs font-medium text-zinc-700">{item.actionLabel}</span>
+                        <span className="mt-0.5 block text-[11px] text-zinc-400">{t.tapHint}</span>
                       </span>
                     </button>
                   </li>
@@ -241,10 +354,10 @@ export function StudioMessageCenter({
                   <p className="mt-1 text-xs text-zinc-400">{formatMessageTime(selected.createdAt, locale)}</p>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
-                  {selected.projectHref ? (
+                  {selected.actionHref ? (
                     <Button asChild size="sm" className="rounded-lg bg-zinc-900 hover:bg-zinc-800">
-                      <Link href={selected.projectHref}>
-                        {t.enterProject}
+                      <Link href={selected.actionHref}>
+                        {selected.actionLabel || t.enterProject}
                         <ArrowRight className="h-4 w-4" />
                       </Link>
                     </Button>
@@ -348,7 +461,7 @@ export function StudioMessageCenter({
                 <div>
                   <p className="mb-3 text-sm font-semibold text-zinc-900">{t.projectStatus}</p>
                   <div className="rounded-xl border border-zinc-100 bg-zinc-50/50 p-4">
-                    <div className="grid gap-4 sm:grid-cols-5">
+                    <div className="grid gap-4 sm:grid-cols-4">
                       {selected.progressSteps.map((step, index) => (
                         <div key={step.id} className="relative min-w-0">
                           {index < selected.progressSteps.length - 1 ? (

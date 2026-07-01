@@ -1,4 +1,6 @@
-export type MessageNotificationType = "creator_selected" | "project_funded";
+import type { CreatorNotificationType } from "@/lib/notification-types";
+
+export type MessageNotificationType = CreatorNotificationType;
 
 export type BriefField = {
   section: string;
@@ -37,7 +39,8 @@ export type MessageDetailPayload = {
   attachments: MessageAttachment[];
   briefPdfUrl: string;
   progressSteps: ProgressStep[];
-  projectHref: string | null;
+  actionHref: string;
+  actionLabel: string;
 };
 
 export type MessageListItem = {
@@ -48,4 +51,6 @@ export type MessageListItem = {
   createdAt: string;
   readAt: string | null;
   orderId: string | null;
+  actionHref: string;
+  actionLabel: string;
 };

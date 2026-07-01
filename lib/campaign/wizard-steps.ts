@@ -1,8 +1,6 @@
 import type { Locale } from "@/lib/i18n";
 import { wizard } from "@/lib/design/tokens";
 
-export const CAMPAIGN_WIZARD_STEP_COUNT = wizard.steps;
-
 export type CampaignWizardStepKey =
   | "brief"
   | "product"
@@ -17,6 +15,57 @@ export type CampaignWizardStep = {
   key: CampaignWizardStepKey;
   label: Record<Locale, string>;
 };
+
+export const CAMPAIGN_WIZARD_STEP_COUNT = wizard.steps;
+
+/** Brand portal — user-facing 3-step flow (internal backend still tracks 7 substeps). */
+export const BRAND_WIZARD_VISIBLE_STEP_COUNT = 3;
+
+export const BRAND_WIZARD_VISIBLE_STEPS: CampaignWizardStep[] = [
+  { id: 1, key: "brief", label: { en: "Describe", zh: "说需求" } },
+  { id: 2, key: "confirm", label: { en: "Review", zh: "看方案" } },
+  { id: 3, key: "match", label: { en: "Publish", zh: "发布" } }
+];
+
+export function clampBrandVisibleStep(step: number): number {
+  return Math.min(BRAND_WIZARD_VISIBLE_STEP_COUNT, Math.max(1, Math.floor(step) || 1));
+}
+
+export function brandWizardProgressPercent(visibleStep: number): number {
+  return Math.round((clampBrandVisibleStep(visibleStep) / BRAND_WIZARD_VISIBLE_STEP_COUNT) * 100);
+}
+
+export function completedBrandVisibleSteps(visibleStep: number): number[] {
+  return BRAND_WIZARD_VISIBLE_STEPS.filter((s) => s.id < clampBrandVisibleStep(visibleStep)).map((s) => s.id);
+}
+
+export function brandWizardStepMeta(locale: Locale, visibleStep: number) {
+  const clamped = clampBrandVisibleStep(visibleStep);
+  const labels: Record<number, { headline: Record<Locale, string>; subtitle: Record<Locale, string> }> = {
+    1: {
+      headline: { en: "Describe your ad", zh: "说说你要什么广告" },
+      subtitle: {
+        en: "Brief, product, and style references — about 3 minutes.",
+        zh: "需求、产品和参考放一起填，大约 3 分钟。"
+      }
+    },
+    2: {
+      headline: { en: "Review and confirm", zh: "确认创意方案" },
+      subtitle: {
+        en: "AI prepared your plan — check budget and certify the brief.",
+        zh: "AI 已生成方案 — 核对预算并确认需求表单。"
+      }
+    },
+    3: {
+      headline: { en: "Publish your ad", zh: "发布广告" },
+      subtitle: {
+        en: "Publish sends intent invitations to matched creators — they accept or decline before you select one.",
+        zh: "发布后会向匹配的 Creator 发出意向发单 — 对方接受或拒绝后，你再从名单里选定。"
+      }
+    }
+  };
+  return labels[clamped] ?? labels[1]!;
+}
 
 export const CAMPAIGN_WIZARD_STEPS: CampaignWizardStep[] = [
   { id: 1, key: "brief", label: { en: "Brief", zh: "Brief" } },
@@ -62,10 +111,11 @@ export function emptyWizardDraft(step = 1): WizardDraftState {
   };
 }
 
-/** Map legacy 4-step brand wizard URLs saved before Sprint 12 */
+/** Map legacy 7-step URLs to the 3-step brand wizard */
 export function migrateLegacyBrandWizardStep(step: number): number {
-  const map: Record<number, number> = { 1: 1, 2: 4, 3: 6, 4: 7 };
-  return map[step] ?? clampWizardStep(step);
+  if (step <= 3) return 1;
+  if (step <= 6) return 2;
+  return clampBrandVisibleStep(step >= 7 ? 3 : step);
 }
 
 /** Map legacy 6-step project wizard progress */

@@ -234,4 +234,19 @@ export async function resolveReviewComment(
   return comment;
 }
 
+export async function deleteReviewComment(
+  commentId: string,
+  orderId: string
+): Promise<ReviewComment | null> {
+  const store = await readStore();
+  const index = store.comments.findIndex((item) => item.id === commentId && item.order_id === orderId);
+  if (index < 0) {
+    return null;
+  }
+
+  const [removed] = store.comments.splice(index, 1);
+  await writeStore(store);
+  return removed;
+}
+
 export { formatTimestamp } from "@/lib/studioos/review-utils";

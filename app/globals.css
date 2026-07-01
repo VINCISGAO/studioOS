@@ -599,9 +599,41 @@
     .hero-stats-shimmer::after,
     .hero-stat-glow,
     .animate-studio-panel-float,
-    .animate-hero-orb {
+    .animate-hero-orb,
+    .cert-badge-enter,
+    .cert-benefit-enter {
       animation: none;
     }
+  }
+
+  @keyframes cert-badge-enter {
+    0% {
+      opacity: 0;
+      transform: translateY(16px) scale(0.85);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes cert-benefit-enter {
+    0% {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .cert-badge-enter {
+    animation: cert-badge-enter 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .cert-benefit-enter {
+    animation: cert-benefit-enter 500ms cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 
 }

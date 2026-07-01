@@ -63,8 +63,8 @@ export const creators: Creator[] = [
     rating: 4.7,
     delivery_speed: "3-5 days",
     min_project_budget_usd: 500,
-    status: "pending",
-    deposit_status: "paid",
+    status: "deposit_required",
+    deposit_status: "unpaid",
     deposit_amount: 99,
     created_at: "2026-06-20T09:00:00Z"
   }

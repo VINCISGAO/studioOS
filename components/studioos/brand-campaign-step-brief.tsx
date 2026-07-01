@@ -104,6 +104,8 @@ const copy = {
     appliedSuccess: "Brief applied — you can continue to the next step.",
     appliedBanner: "Applied brief",
     continue: "Continue",
+    saveDraft: "Save draft",
+    savingDraft: "Saving…",
     needInput: "Upload a product photo or add a link (optional), and describe your campaign.",
     needPolish: "Write your idea first, then tap AI polish.",
     needApply: "Apply the AI result before continuing, or fill in the questionnaire manually.",
@@ -175,6 +177,8 @@ const copy = {
     appliedSuccess: "Brief 已应用，可以继续下一步。",
     appliedBanner: "已应用的 Brief",
     continue: "继续",
+    saveDraft: "保存草稿",
+    savingDraft: "保存中…",
     needInput: "请上传产品图或填写产品链接（选填），并描述广告需求。",
     needPolish: "先写下你的想法，再点 AI 整理。",
     needApply: "请先点击「应用到 Campaign」，或手动填写问卷。",
@@ -308,7 +312,9 @@ export function BrandCampaignStepBrief({
   error,
   onProductUploaded,
   onReferencesUpdated,
-  onContinue
+  onContinue,
+  onSaveDraft,
+  isSavingDraft = false
 }: {
   locale: Locale;
   projectId: string;
@@ -322,6 +328,8 @@ export function BrandCampaignStepBrief({
   onProductUploaded?: () => void;
   onReferencesUpdated?: () => void;
   onContinue: (state: BriefFormState) => void;
+  onSaveDraft?: (state: BriefFormState) => void;
+  isSavingDraft?: boolean;
 }) {
   const t = copy[locale];
   const objectives = objectiveOptions(locale);
@@ -557,18 +565,29 @@ export function BrandCampaignStepBrief({
     });
   }
 
+  function resolveBriefForContinue(state: BriefFormState): BriefFormState {
+    if (state.refined) {
+      return {
+        ...state,
+        productName: state.productName.trim() || state.refined.product_name,
+        productDescription: state.refined.campaign_goal,
+        audienceDescription: state.audienceDescription.trim() || state.refined.target_audience,
+        extraNotes: state.extraNotes.trim() || state.refined.notes
+      };
+    }
+    return state;
+  }
+
   function handleContinue() {
+    const payload = resolveBriefForContinue(form);
+
     if (stepMode === "brief") {
-      const hasBrief = form.productDescription.trim() || form.rawSummary.trim();
+      const hasBrief = payload.productDescription.trim() || payload.rawSummary.trim();
       if (!hasBrief) {
         setLocalError(t.needPolish);
         return;
       }
-      if (form.refined && !refinedApplied) {
-        setLocalError(t.needApply);
-        return;
-      }
-      if (!form.aspectRatio) {
+      if (!payload.aspectRatio) {
         setAspectRatioError(t.aspectRatioError);
         setLocalError(t.aspectRatioError);
         return;
@@ -582,7 +601,7 @@ export function BrandCampaignStepBrief({
         }
       }
       setLocalError(null);
-      onContinue(form);
+      onContinue(payload);
       return;
     }
 
@@ -603,20 +622,16 @@ export function BrandCampaignStepBrief({
       return;
     }
 
+    const payloadAll = resolveBriefForContinue(form);
     const hasVisual = Boolean(form.productUrl.trim()) || productReady;
-    const hasBrief = form.productDescription.trim() || form.rawSummary.trim();
+    const hasBrief = payloadAll.productDescription.trim() || payloadAll.rawSummary.trim();
 
     if (!hasVisual || !hasBrief) {
       setLocalError(t.needInput);
       return;
     }
 
-    if (form.refined && !refinedApplied) {
-      setLocalError(t.needApply);
-      return;
-    }
-
-    if (!form.aspectRatio) {
+    if (!payloadAll.aspectRatio) {
       setAspectRatioError(t.aspectRatioError);
       setLocalError(t.aspectRatioError);
       return;
@@ -632,13 +647,27 @@ export function BrandCampaignStepBrief({
     }
 
     setLocalError(null);
-    onContinue(form);
+    onContinue(payloadAll);
+  }
+
+  function handleSaveDraft() {
+    if (!onSaveDraft) return;
+    const payload = resolveBriefForContinue(form);
+    setLocalError(null);
+    onSaveDraft(payload);
   }
 
   const displayError = localError || error;
   const timelineOptions = BRAND_DELIVERY_TIMELINES[locale];
   const aspectRatioOptions = BRAND_VIDEO_ASPECT_RATIOS[locale];
   const budgetIsCustom = Boolean(budgetCustom.trim()) || !isPresetBudget(form.budgetRange);
+  const continueDisabled =
+    isPending ||
+    isSavingDraft ||
+    isUploading ||
+    isRefPending ||
+    (stepMode === "product" && isUploading) ||
+    (stepMode === "references" && isRefPending);
 
   const showBrief = stepMode === "brief" || stepMode === "all";
   const showProduct = stepMode === "product" || stepMode === "all";
@@ -1110,8 +1139,8 @@ export function BrandCampaignStepBrief({
       </div>
       ) : null}
 
-      {/* ── Details ── */}
-      {showBrief ? (
+      {/* ── Details (hidden in compact 3-step wizard) ── */}
+      {showBrief && !(stepMode === "all" && hideTopBar) ? (
       <div className="overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-sm">
         <div className="border-b border-zinc-100 px-6 py-5">
           <p className="text-base font-semibold text-zinc-900">{t.detailsTitle}</p>
@@ -1205,16 +1234,32 @@ export function BrandCampaignStepBrief({
             <p className="text-sm text-emerald-700">{t.appliedSuccess}</p>
           ) : null}
         </div>
-        <Button
-          type="button"
-          size="lg"
-          className="h-12 w-full rounded-xl sm:w-auto sm:min-w-[180px]"
-          disabled={isPending || isPolishing || isUploading || isRefPending}
-          onClick={handleContinue}
-        >
-          {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : t.continue}
-          {!isPending ? <ArrowRight className="h-4 w-4" /> : null}
-        </Button>
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+          {onSaveDraft ? (
+            <Button
+              type="button"
+              size="lg"
+              variant="outline"
+              className="h-12 w-full rounded-xl sm:min-w-[140px]"
+              disabled={continueDisabled}
+              onClick={handleSaveDraft}
+            >
+              {isSavingDraft ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              {isSavingDraft ? t.savingDraft : t.saveDraft}
+            </Button>
+          ) : null}
+          <Button
+            type="button"
+            size="lg"
+            variant="brand"
+            className="h-12 w-full rounded-xl sm:w-auto sm:min-w-[180px]"
+            disabled={continueDisabled}
+            onClick={handleContinue}
+          >
+            {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : t.continue}
+            {!isPending ? <ArrowRight className="h-4 w-4" /> : null}
+          </Button>
+        </div>
       </div>
     </section>
   );

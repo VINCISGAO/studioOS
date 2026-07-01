@@ -6,6 +6,7 @@ import { listNotificationsForCreator } from "@/lib/notification-service";
 import { getOrder } from "@/lib/order-service";
 import { getProject } from "@/lib/project-service";
 import { getConfirmedBriefFields } from "@/lib/studioos/confirmed-brief";
+import { resolveCreatorNotificationAction } from "@/lib/studioos/commercial-notification-routes";
 import { buildMessageProgressSteps } from "@/lib/studioos/message-order-progress";
 import type { MessageDetailPayload, MessageListItem } from "@/components/studioos/studio-message-center.types";
 import type { CreatorNotification } from "@/lib/notification-types";
@@ -34,6 +35,14 @@ async function buildMessageDetail(
   const projectTitle =
     resolvedProject?.title || order?.title || notification.company_name || notification.title;
   const briefPdfUrl = projectId ? `/api/projects/${projectId}/brief.pdf?lang=${locale}` : "";
+  const action = resolveCreatorNotificationAction(
+    {
+      type: notification.type,
+      order_id: notification.order_id,
+      project_id: projectId
+    },
+    locale
+  );
 
   return {
     notificationId: notification.id,
@@ -50,22 +59,23 @@ async function buildMessageDetail(
     attachments: projectId ? [fallbackBrandGuideAttachment(projectId, locale)] : [],
     briefPdfUrl,
     progressSteps: buildMessageProgressSteps(order, notification.type, locale),
-    projectHref: notification.order_id
-      ? withLocale(`/studio/projects/${notification.order_id}`, locale)
-      : null
+    actionHref: action.href,
+    actionLabel: action.label
   };
 }
 
 async function buildMessageCenterPayload(notifications: CreatorNotification[], locale: Locale) {
   const details = await Promise.all(notifications.map((item) => buildMessageDetail(item, locale)));
-  const list: MessageListItem[] = notifications.map((notification) => ({
+  const list: MessageListItem[] = notifications.map((notification, index) => ({
     id: notification.id,
     type: notification.type,
     title: notification.title,
     preview: notification.body,
     createdAt: notification.created_at,
     readAt: notification.read_at,
-    orderId: notification.order_id
+    orderId: notification.order_id,
+    actionHref: details[index]?.actionHref ?? withLocale("/studio/messages", locale),
+    actionLabel: details[index]?.actionLabel ?? (locale === "zh" ? "查看" : "Open")
   }));
   return { list, details };
 }
@@ -87,11 +97,21 @@ export default async function StudioMessagesPage({ searchParams }: { searchParam
       : payload.list[0]?.id ?? null;
 
   return (
-    <StudioMessageCenter
-      locale={locale}
-      list={payload.list}
-      details={payload.details}
-      initialSelectedId={initialSelectedId}
-    />
+    <div className="space-y-6">
+      <header>
+        <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 sm:text-3xl">
+          {locale === "zh" ? "消息中心" : "Messages"}
+        </h1>
+        <p className="mt-2 text-sm text-zinc-500">
+          {locale === "zh" ? "项目消息、品牌消息与系统通知。" : "Project, brand, and system notifications."}
+        </p>
+      </header>
+      <StudioMessageCenter
+        locale={locale}
+        list={payload.list}
+        details={payload.details}
+        initialSelectedId={initialSelectedId}
+      />
+    </div>
   );
 }

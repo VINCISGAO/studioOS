@@ -36,7 +36,7 @@ export function DepositRequiredCallout({
       <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex gap-3">
           <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" />
-          <div>
+          <div className="min-w-0 max-w-2xl">
             <p className="font-semibold text-amber-950">{title}</p>
             <p className="mt-1 text-sm leading-6 text-amber-900/90">{depositRequiredMessage(locale)}</p>
           </div>

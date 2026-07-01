@@ -8,5 +8,5 @@ export default async function WorkspaceStudioRedirect({
   searchParams: Promise<SearchParams>;
 }) {
   const locale = getLocale(await searchParams);
-  redirect(withLocale(creatorPortalRoutes.reviewHub, locale));
+  redirect(withLocale(creatorPortalRoutes.projects, locale));
 }

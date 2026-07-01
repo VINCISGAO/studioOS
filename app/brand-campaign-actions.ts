@@ -3,12 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
-  ensureCreativeBrief,
-  ensureCreativePack,
   hasProductVisual,
   listReferencesForProject
 } from "@/lib/campaign-store";
-import { getCurrentClientEmail } from "@/lib/client-session";
+import { requireBrandPortalClientEmail } from "@/lib/client-session";
 import { DEMO_USERS } from "@/lib/demo-auth";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
@@ -22,44 +20,73 @@ import type { CommercialObjective } from "@/lib/project-types";
 import {
   objectiveOptions,
   reorganizeBrandBriefWithAI,
+  templateReorganizeBrandBrief,
   type BrandQuestionnaireInput
 } from "@/lib/studioos/brand-brief-ai";
 import {
   deadlineFromTimeline,
+  defaultBrandAspectRatio,
   defaultBrandBudget,
   defaultBrandTimeline,
-  deliveryTimelineLabel,
   isValidBrandAspectRatio
 } from "@/lib/studioos/brand-campaign-options";
 import { upsertBrandProfileFromBrief } from "@/lib/brand-profile-service";
 import { listOrdersForProject, updateOrderRequirements } from "@/lib/order-service";
 import { buildConfirmedBriefSnapshot } from "@/lib/studioos/confirmed-brief";
 import { campaignBridgeService } from "@/features/campaign/campaign-bridge.service";
-import { creativeDirectionService } from "@/features/ai/creative-direction.service";
-import { getSessionUser } from "@/features/auth/session.service";
+import { emitWizardProgress } from "@/lib/campaign/wizard-progress.service";
+import { runBrandWizardDemoPrepareInstant, runBrandWizardDemoPublish } from "@/lib/campaign/brand-wizard-demo-prepare";
+import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
+import { preparePublishedCampaignCheckout } from "@/lib/studioos/brand-checkout-service";
 import {
-  emitWizardProgress,
-  runAnalyzingProgress,
-  runMatchingProgress
-} from "@/lib/campaign/wizard-progress.service";
+  WIZARD_EPHEMERAL_KEY,
+  WIZARD_SAVED_AT_KEY
+} from "@/lib/studioos/brand-wizard-session";
 
-async function requireBrandClient() {
-  const email = await getCurrentClientEmail();
-  if (!email) throw new Error("Unauthorized");
-  const demoUser = DEMO_USERS.find((user) => user.email === email.toLowerCase());
-  return {
-    client_email: email.toLowerCase(),
-    client_name: demoUser?.label ?? email.split("@")[0],
-    company_name: demoUser?.label ?? email.split("@")[0]
-  };
+async function requireBrandClient(): Promise<
+  | { ok: true; client_email: string; client_name: string; company_name: string }
+  | { ok: false; error: string }
+> {
+  try {
+    const email = await requireBrandPortalClientEmail();
+    const demoUser = DEMO_USERS.find((user) => user.email === email);
+    return {
+      ok: true,
+      client_email: email,
+      client_name: demoUser?.label ?? email.split("@")[0],
+      company_name: demoUser?.label ?? email.split("@")[0]
+    };
+  } catch {
+    return { ok: false, error: "Unauthorized" };
+  }
 }
 
 async function requireProject(projectId: string, clientEmail: string) {
   const project = await getProject(projectId);
   if (!project || project.client_email.toLowerCase() !== clientEmail.toLowerCase()) {
-    throw new Error("Project not found");
+    return { ok: false as const, error: "Project not found" };
   }
-  return project;
+  return { ok: true as const, project };
+}
+
+async function resolveBrandCampaignContext(projectId: string, lang: Locale) {
+  const client = await requireBrandClient();
+  if (!client.ok) {
+    return {
+      ok: false as const,
+      error: lang === "zh" ? "请重新登录广告主账号" : "Please sign in again as a brand"
+    };
+  }
+
+  const projectResult = await requireProject(projectId, client.client_email);
+  if (!projectResult.ok) {
+    return {
+      ok: false as const,
+      error: lang === "zh" ? "项目不存在或无权访问" : "Project not found or access denied"
+    };
+  }
+
+  return { ok: true as const, client, project: projectResult.project };
 }
 
 function normalizeLang(raw: FormDataEntryValue | null): Locale {
@@ -88,8 +115,11 @@ function revalidateBrandCampaign(projectId: string) {
   revalidatePath("/brand/profile");
   revalidatePath("/brand/projects");
   revalidatePath("/brand/projects/new");
+  revalidatePath(brandPortalRoutes.projectCheckout(projectId));
+  revalidatePath("/brand/messages");
   revalidatePath(`/brand/projects/${projectId}`);
   revalidatePath(`/brand/projects/${projectId}/studios`);
+  revalidatePath("/studio/invitations");
 }
 
 function parseObjective(raw: FormDataEntryValue | null): CommercialObjective {
@@ -127,9 +157,9 @@ function readQuestionnaire(formData: FormData, lang: Locale): BrandQuestionnaire
 
 export async function refineBrandBriefAction(formData: FormData) {
   const lang = normalizeLang(formData.get("lang"));
-  const client = await requireBrandClient();
   const projectId = String(formData.get("project_id") ?? "");
-  await requireProject(projectId, client.client_email);
+  const ctx = await resolveBrandCampaignContext(projectId, lang);
+  if (!ctx.ok) return ctx;
 
   const input = readQuestionnaire(formData, lang);
   const hasText =
@@ -151,9 +181,9 @@ export async function refineBrandBriefAction(formData: FormData) {
 
 export async function saveBrandCampaignBriefAction(formData: FormData) {
   const lang = normalizeLang(formData.get("lang"));
-  const client = await requireBrandClient();
   const projectId = String(formData.get("project_id") ?? "");
-  await requireProject(projectId, client.client_email);
+  const ctx = await resolveBrandCampaignContext(projectId, lang);
+  if (!ctx.ok) return ctx;
 
   const product_url = String(formData.get("product_url") ?? "").trim();
   const input = readQuestionnaire(formData, lang);
@@ -238,9 +268,9 @@ export async function saveBrandCampaignBriefAction(formData: FormData) {
 
 export async function saveBrandCampaignProductAction(formData: FormData) {
   const lang = normalizeLang(formData.get("lang"));
-  const client = await requireBrandClient();
   const projectId = String(formData.get("project_id") ?? "");
-  await requireProject(projectId, client.client_email);
+  const ctx = await resolveBrandCampaignContext(projectId, lang);
+  if (!ctx.ok) return ctx;
 
   const product_url = String(formData.get("product_url") ?? "").trim();
   const product_name = String(formData.get("product_name") ?? "").trim();
@@ -269,9 +299,9 @@ export async function saveBrandCampaignProductAction(formData: FormData) {
 
 export async function saveBrandCampaignReferencesAction(formData: FormData) {
   const lang = normalizeLang(formData.get("lang"));
-  const client = await requireBrandClient();
   const projectId = String(formData.get("project_id") ?? "");
-  await requireProject(projectId, client.client_email);
+  const ctx = await resolveBrandCampaignContext(projectId, lang);
+  if (!ctx.ok) return ctx;
 
   const refs = await listReferencesForProject(projectId);
   await updateProject(projectId, {
@@ -284,12 +314,222 @@ export async function saveBrandCampaignReferencesAction(formData: FormData) {
   return { ok: true as const, nextStep: 4 };
 }
 
-/** @deprecated Use saveBrandCampaignBriefAction + saveBrandCampaignProductAction */
+/** Persists wizard form fields and promotes ephemeral session to a visible draft. */
+export async function saveBrandCampaignDraftAction(formData: FormData) {
+  const lang = normalizeLang(formData.get("lang"));
+  const projectId = String(formData.get("project_id") ?? "");
+  const ctx = await resolveBrandCampaignContext(projectId, lang);
+  if (!ctx.ok) return ctx;
+
+  const product_url = String(formData.get("product_url") ?? "").trim();
+  const product_name = String(formData.get("product_name") ?? "").trim();
+  const input = readQuestionnaire(formData, lang);
+  const refinedGoal = String(formData.get("campaign_goal") ?? "").trim();
+  const refinedAudience = String(formData.get("target_audience") ?? "").trim();
+  const refinedTitle = String(formData.get("title") ?? "").trim();
+  const refinedNotes = String(formData.get("notes") ?? "").trim();
+
+  const brief =
+    refinedGoal
+      ? {
+          campaign_goal: refinedGoal,
+          product_name: input.productName || deriveProductName(product_url, "My Product"),
+          target_audience: refinedAudience || input.audienceDescription || "25-40",
+          title: refinedTitle || `${input.productName || deriveProductName(product_url, "My Product")} Campaign`,
+          notes: refinedNotes || [input.productDescription, input.extraNotes, input.rawSummary].filter(Boolean).join("\n\n"),
+          source: "openai" as const
+        }
+      : templateReorganizeBrandBrief(input, lang);
+
+  const resolvedName = product_name || brief.product_name || deriveProductName(product_url, "My Product");
+  const category = "CPG";
+  const target_platform = input.platforms.length ? input.platforms.join(", ") : "TikTok, Meta";
+  const budget_range = String(formData.get("budget_range") ?? "").trim() || defaultBrandBudget();
+  const delivery_timeline = String(formData.get("delivery_timeline") ?? "").trim() || defaultBrandTimeline();
+  const aspect_ratio_raw = String(formData.get("aspect_ratio") ?? "").trim();
+  const aspect_ratio = isValidBrandAspectRatio(aspect_ratio_raw)
+    ? aspect_ratio_raw
+    : defaultBrandAspectRatio();
+
+  const deadline = deadlineFromTimeline(delivery_timeline);
+  const existingProject = await getProject(projectId);
+  const priorSettings = existingProject?.settings_json ?? {};
+  const { confirmed_brief: _removed, ...priorWithoutConfirm } = priorSettings as Record<string, unknown>;
+  const refs = await listReferencesForProject(projectId);
+
+  await updateProject(projectId, {
+    product_name: resolvedName,
+    product_url,
+    category,
+    commercial_objective: input.objective,
+    commercial_objective_note: input.extraNotes,
+    target_audience: brief.target_audience,
+    target_platform,
+    title: brief.title,
+    campaign_goal: brief.campaign_goal,
+    notes: brief.notes,
+    budget_range,
+    deadline,
+    video_format: aspect_ratio,
+    aspect_ratios: [aspect_ratio],
+    reference_links: refs.map((item) => item.source_url).join("\n"),
+    settings_json: {
+      ...priorWithoutConfirm,
+      [WIZARD_EPHEMERAL_KEY]: false,
+      [WIZARD_SAVED_AT_KEY]: new Date().toISOString(),
+      brand_questionnaire: {
+        ...input,
+        budgetRange: budget_range,
+        deliveryTimeline: delivery_timeline,
+        aspectRatio: aspect_ratio,
+        refined_brief: brief,
+        refined_at: new Date().toISOString()
+      }
+    }
+  });
+
+  revalidateBrandCampaign(projectId);
+  return { ok: true as const };
+}
+
+/** Brand 3-step wizard — saves brief, product, and references in one submit. */
+export async function saveBrandCampaignSetupAction(formData: FormData) {
+  const lang = normalizeLang(formData.get("lang"));
+  const projectId = String(formData.get("project_id") ?? "");
+  const ctx = await resolveBrandCampaignContext(projectId, lang);
+  if (!ctx.ok) return ctx;
+  const { client } = ctx;
+
+  const product_url = String(formData.get("product_url") ?? "").trim();
+  const product_name = String(formData.get("product_name") ?? "").trim();
+  const hasProduct = await hasProductVisual(projectId);
+  const input = readQuestionnaire(formData, lang);
+
+  if (!product_url && !hasProduct) {
+    return {
+      ok: false as const,
+      error: lang === "zh" ? "请上传产品图，或填写产品链接" : "Upload a product photo or add a product link"
+    };
+  }
+
+  const hasBrief =
+    input.rawSummary ||
+    input.productDescription ||
+    String(formData.get("campaign_goal") ?? "").trim();
+
+  if (!hasBrief) {
+    return {
+      ok: false as const,
+      error: lang === "zh" ? "请描述你想做的广告，或使用 AI 整理" : "Describe your campaign or use AI polish"
+    };
+  }
+
+  const refinedGoal = String(formData.get("campaign_goal") ?? "").trim();
+  const refinedAudience = String(formData.get("target_audience") ?? "").trim();
+  const refinedTitle = String(formData.get("title") ?? "").trim();
+  const refinedNotes = String(formData.get("notes") ?? "").trim();
+
+  const brief =
+    refinedGoal
+      ? {
+          campaign_goal: refinedGoal,
+          product_name: input.productName || deriveProductName(product_url, "My Product"),
+          target_audience: refinedAudience || input.audienceDescription || "25-40",
+          title: refinedTitle || `${input.productName || deriveProductName(product_url, "My Product")} Campaign`,
+          notes: refinedNotes || [input.productDescription, input.extraNotes, input.rawSummary].filter(Boolean).join("\n\n"),
+          source: "openai" as const
+        }
+      : templateReorganizeBrandBrief(input, lang);
+
+  const resolvedName = product_name || brief.product_name || deriveProductName(product_url, "My Product");
+  const category = "CPG";
+  const target_platform = input.platforms.length ? input.platforms.join(", ") : "TikTok, Meta";
+  const budget_range = String(formData.get("budget_range") ?? "").trim() || defaultBrandBudget();
+  const delivery_timeline = String(formData.get("delivery_timeline") ?? "").trim() || defaultBrandTimeline();
+  const aspect_ratio_raw = String(formData.get("aspect_ratio") ?? "").trim();
+  if (!isValidBrandAspectRatio(aspect_ratio_raw)) {
+    return {
+      ok: false as const,
+      error: lang === "zh" ? "请选择视频比例" : "Select a video aspect ratio"
+    };
+  }
+
+  const deadline = deadlineFromTimeline(delivery_timeline);
+  const existingProject = await getProject(projectId);
+  const priorSettings = existingProject?.settings_json ?? {};
+  const { confirmed_brief: _removed, ...priorWithoutConfirm } = priorSettings as Record<string, unknown>;
+  const refs = await listReferencesForProject(projectId);
+
+  await updateProject(projectId, {
+    product_name: resolvedName,
+    product_url,
+    category,
+    commercial_objective: input.objective,
+    commercial_objective_note: input.extraNotes,
+    target_audience: brief.target_audience,
+    target_platform,
+    title: brief.title,
+    campaign_goal: brief.campaign_goal,
+    notes: brief.notes,
+    budget_range,
+    deadline,
+    video_format: aspect_ratio_raw,
+    aspect_ratios: [aspect_ratio_raw],
+    reference_links: refs.map((item) => item.source_url).join("\n"),
+    settings_json: {
+      ...priorWithoutConfirm,
+      brand_questionnaire: {
+        ...input,
+        budgetRange: budget_range,
+        deliveryTimeline: delivery_timeline,
+        aspectRatio: aspect_ratio_raw,
+        refined_brief: brief,
+        refined_at: new Date().toISOString()
+      }
+    }
+  });
+
+  await completeWizardStep(projectId, 1);
+  await completeWizardStep(projectId, 2);
+  await completeWizardStep(projectId, 3);
+  await emitWizardProgress(projectId, {
+    step: 3,
+    phase: "idle",
+    progressMessage: lang === "zh" ? "需求已保存" : "Campaign details saved"
+  });
+
+  const project = await getProject(projectId);
+  if (project) {
+    const profile = await upsertBrandProfileFromBrief(client.client_email, {
+      company_name: project.company_name || client.company_name,
+      product_name: resolvedName,
+      product_url,
+      industry: category,
+      campaign_goal: brief.campaign_goal
+    });
+    revalidatePath(`/brands/${profile.id}`);
+  }
+
+  revalidateBrandCampaign(projectId);
+
+  try {
+    await runBrandWizardDemoPrepareInstant(projectId, lang);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : lang === "zh" ? "方案生成失败" : "Plan generation failed";
+    return { ok: false as const, error: message };
+  }
+
+  revalidateBrandCampaign(projectId);
+  return { ok: true as const, nextStep: 2, prepared: true as const };
+}
+
+/** @deprecated Use saveBrandCampaignSetupAction */
 export async function saveBrandCampaignStep1Action(formData: FormData) {
   const lang = normalizeLang(formData.get("lang"));
-  const client = await requireBrandClient();
   const projectId = String(formData.get("project_id") ?? "");
-  await requireProject(projectId, client.client_email);
+  const ctx = await resolveBrandCampaignContext(projectId, lang);
+  if (!ctx.ok) return ctx;
+  const { client } = ctx;
 
   const product_url = String(formData.get("product_url") ?? "").trim();
   const hasProduct = await hasProductVisual(projectId);
@@ -410,79 +650,28 @@ export async function saveBrandCampaignStep2Action(formData: FormData) {
 /** Runs hidden AI steps (brief, specs, creative pack) — Brand never sees prompts. */
 export async function prepareBrandCampaignAction(formData: FormData) {
   const lang = normalizeLang(formData.get("lang"));
-  const client = await requireBrandClient();
   const projectId = String(formData.get("project_id") ?? "");
-  const project = await requireProject(projectId, client.client_email);
+  const ctx = await resolveBrandCampaignContext(projectId, lang);
+  if (!ctx.ok) return ctx;
 
   try {
-    await runAnalyzingProgress(projectId, lang, async () => {
-      const brief = await ensureCreativeBrief(project);
-      if (!brief.executive_summary) {
-        throw new Error(lang === "zh" ? "分析失败，请重试" : "Analysis failed — try again");
-      }
-      await completeWizardStep(projectId, 4);
-
-      await updateProject(projectId, {
-        style_presets: ["Apple Minimal"],
-        video_lengths: ["30s"],
-        aspect_ratios: ["9:16"],
-        output_quantity: 1,
-        ...(project.budget_range?.trim() ? {} : { budget_range: defaultBrandBudget() }),
-        ...(project.deadline?.trim() ? {} : { deadline: defaultDeadlineIso() }),
-        video_count: 1,
-        video_format: "9:16",
-        target_platform: project.target_platform || "TikTok, Meta",
-        brand_style: "Apple Minimal"
-      });
-
-      await ensureCreativePack(project);
-      await completeWizardStep(projectId, 5);
-
-      const sessionUser = await getSessionUser();
-      const prismaCampaignId = await campaignBridgeService.ensurePrismaCampaignOnDraft(projectId);
-      if (prismaCampaignId && sessionUser && !sessionUser.id.startsWith("demo_")) {
-        try {
-          const directions = await creativeDirectionService.generate(prismaCampaignId, {
-            id: sessionUser.id,
-            role: sessionUser.role
-          });
-          if (directions[0]) {
-            await creativeDirectionService.approve(
-              prismaCampaignId,
-              { id: sessionUser.id, role: sessionUser.role },
-              directions[0].id
-            );
-          }
-        } catch (error) {
-          console.error("[prepareBrandCampaignAction] prisma creative sync failed", error);
-        }
-      }
-    });
+    const result = await runBrandWizardDemoPrepareInstant(projectId, lang);
+    revalidateBrandCampaign(projectId);
+    return { ok: true as const, nextStep: 2, budget: result.budget, delivery: result.delivery, prepared: true as const };
   } catch (error) {
     const message = error instanceof Error ? error.message : lang === "zh" ? "分析失败" : "Analysis failed";
     await emitWizardProgress(projectId, { phase: "idle", progressMessage: message });
     return { ok: false as const, error: message };
   }
-
-  const updated = await getProject(projectId);
-  const timelineId = String(
-    (updated?.settings_json?.brand_questionnaire as { deliveryTimeline?: string } | undefined)?.deliveryTimeline ??
-      defaultBrandTimeline()
-  );
-  revalidateBrandCampaign(projectId);
-  return {
-    ok: true as const,
-    nextStep: 5,
-    budget: updated?.budget_range ?? defaultBrandBudget(),
-    delivery: deliveryTimelineLabel(timelineId, lang)
-  };
 }
 
 /** @deprecated merged into saveBrandCampaignReferencesAction */
 export async function confirmBrandCampaignAction(formData: FormData) {
   const lang = normalizeLang(formData.get("lang"));
-  const client = await requireBrandClient();
   const projectId = String(formData.get("project_id") ?? "");
+  const ctx = await resolveBrandCampaignContext(projectId, lang);
+  if (!ctx.ok) return ctx;
+  const { project } = ctx;
   const confirmed = formData.get("confirmed") === "1";
 
   if (!confirmed) {
@@ -492,7 +681,6 @@ export async function confirmBrandCampaignAction(formData: FormData) {
     };
   }
 
-  const project = await requireProject(projectId, client.client_email);
   const snapshot = buildConfirmedBriefSnapshot(project, lang);
 
   await updateProject(projectId, {
@@ -516,9 +704,10 @@ export async function confirmBrandCampaignAction(formData: FormData) {
 
 export async function publishBrandCampaignAction(formData: FormData) {
   const lang = normalizeLang(formData.get("lang"));
-  const client = await requireBrandClient();
   const projectId = String(formData.get("project_id") ?? "");
-  const project = await requireProject(projectId, client.client_email);
+  const ctx = await resolveBrandCampaignContext(projectId, lang);
+  if (!ctx.ok) return ctx;
+  const { client, project } = ctx;
 
   const confirmedBrief = project.settings_json?.confirmed_brief as { full_text?: string } | undefined;
   if (!confirmedBrief?.full_text?.trim()) {
@@ -528,8 +717,16 @@ export async function publishBrandCampaignAction(formData: FormData) {
     };
   }
 
+  const priorSettings = project.settings_json ?? {};
+  await updateProject(projectId, {
+    settings_json: {
+      ...priorSettings,
+      [WIZARD_EPHEMERAL_KEY]: false
+    }
+  });
+
   try {
-    await runMatchingProgress(projectId, lang, async () => {
+    await runBrandWizardDemoPublish(projectId, lang, client.client_email, async () => {
       await completeWizardStep(projectId, 7);
 
       const result = await transitionProject(projectId, "project.publish", {
@@ -541,7 +738,11 @@ export async function publishBrandCampaignAction(formData: FormData) {
         throw new Error(result.message);
       }
 
-      await campaignBridgeService.syncPublishToPrisma(projectId);
+      try {
+        await campaignBridgeService.syncPublishToPrisma(projectId);
+      } catch {
+        // Prisma optional for demo flow
+      }
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : lang === "zh" ? "发布失败" : "Publish failed";
@@ -550,5 +751,17 @@ export async function publishBrandCampaignAction(formData: FormData) {
   }
 
   revalidateBrandCampaign(projectId);
-  redirect(withLocale(`/brand/projects/${projectId}/studios`, lang));
+  const published = (await getProject(projectId)) ?? project;
+
+  await preparePublishedCampaignCheckout({
+    project: published,
+    client: {
+      client_name: client.client_name,
+      client_email: client.client_email,
+      company_name: client.company_name
+    },
+    locale: lang
+  });
+
+  redirect(withLocale(brandPortalRoutes.projectCheckout(projectId), lang));
 }

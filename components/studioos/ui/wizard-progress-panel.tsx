@@ -35,7 +35,7 @@ export function WizardProgressPanel({
       )}
     >
       <div className="flex items-center gap-3">
-        <Loader2 className="h-5 w-5 animate-spin text-primary" />
+        {active ? <Loader2 className="h-5 w-5 animate-spin text-primary" /> : null}
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium text-foreground">{message}</p>
           {active ? (

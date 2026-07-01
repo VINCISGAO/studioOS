@@ -1,37 +1,52 @@
 import { redirect } from "next/navigation";
-import { CreatorInvitationsPanel } from "@/components/studioos/creator-invitations-panel";
-import { PageHeader } from "@/components/studioos/ui/page-header";
-import { creatorPortalService } from "@/features/creator/creator-portal.service";
-import { getSessionUser } from "@/features/auth/session.service";
+import { CreatorInvitationsBoard } from "@/components/studioos/creator-invitations-board";
+import { CreatorCommercialTimeline } from "@/components/studioos/commercial-lifecycle-timeline";
 import { getCurrentCreator } from "@/lib/creator-session";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { resolveCreatorCommercialStep } from "@/lib/studioos/commercial-lifecycle";
+import { listInvitationsForCreator } from "@/lib/studioos/creator-invitation-store";
+import { listOrdersForCreator } from "@/lib/order-service";
 
 export default async function StudioInvitationsPage({
   searchParams
 }: {
-  searchParams: Promise<SearchParams>;
+  searchParams: Promise<SearchParams & { tab?: string }>;
 }) {
   const locale = getLocale(await searchParams);
+  const query = await searchParams;
   const creator = await getCurrentCreator();
   if (!creator) redirect(withLocale("/login?role=creator", locale));
 
-  const user = await getSessionUser();
-  const invitations =
-    user && !user.id.startsWith("demo_")
-      ? await creatorPortalService.listInvitations({ id: user.id, role: user.role })
-      : [];
+  const invitations = await listInvitationsForCreator(creator.id);
+  const orders = await listOrdersForCreator(creator.id);
+  const orderByProjectId = Object.fromEntries(
+    orders.filter((order) => order.project_id).map((order) => [order.project_id as string, order.id])
+  );
+  const focusInvitation =
+    invitations.find((item) => item.status === "selected") ??
+    invitations.find((item) => item.status === "accepted") ??
+    invitations.find((item) => item.status === "pending") ??
+    invitations.find((item) => item.status === "declined") ??
+    null;
+  const creatorCommercialStep = resolveCreatorCommercialStep({
+    invitationStatus: focusInvitation?.status ?? null
+  });
+
+  const validTabs = new Set(["pending", "accepted", "declined", "expired"]);
+  const initialTab =
+    query.tab && validTabs.has(query.tab)
+      ? (query.tab as "pending" | "accepted" | "declined" | "expired")
+      : "pending";
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title={locale === "zh" ? "项目邀请" : "Project invitations"}
-        description={
-          locale === "zh"
-            ? "接受或拒绝品牌发来的制作邀请。接受后项目会进入制作流程。"
-            : "Accept or decline brand project invitations. Accepted projects enter production."
-        }
+      <CreatorCommercialTimeline locale={locale} currentStep={creatorCommercialStep} compact />
+      <CreatorInvitationsBoard
+        locale={locale}
+        invitations={invitations}
+        orderByProjectId={orderByProjectId}
+        initialTab={initialTab}
       />
-      <CreatorInvitationsPanel locale={locale} invitations={invitations} />
     </div>
   );
 }

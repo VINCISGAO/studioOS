@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { deleteBrandProjectsAction } from "@/app/brand-project-actions";
+import { BrandStartBriefButton } from "@/components/studioos/brand-start-brief-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,6 +24,13 @@ import {
   brandCampaignStepIndex
 } from "@/lib/studioos/brand-campaign-display";
 import type { BrandProjectRow } from "@/lib/studioos/brand-dashboard";
+import {
+  brandAdLifecycleFilters,
+  brandAdLifecycleLabels,
+  countBrandRowsByLifecycle,
+  filterBrandRowsByLifecycle,
+  type BrandAdLifecycleFilter
+} from "@/lib/studioos/brand-lifecycle";
 import { normalizeCampaignStatus } from "@/lib/studioos/project-status";
 import { cn, formatDate } from "@/lib/utils";
 import {
@@ -34,13 +42,14 @@ import {
   FileText,
   Loader2,
   Minus,
+  Plus,
   Receipt,
   Search,
   Trash2,
   X
 } from "lucide-react";
 
-type Filter = "all" | "draft" | "active" | "done";
+type Filter = BrandAdLifecycleFilter;
 
 const steps = {
   en: ["Brief", "Studio", "Pay", "Produce", "Review"],
@@ -50,18 +59,15 @@ const steps = {
 const copy = {
   en: {
     search: "Search projects…",
-    all: "All",
-    draft: "Drafts",
-    active: "Active",
-    done: "Done",
     empty: "No projects yet",
     emptyBody: "Create your first ad project — AI helps you write the brief in minutes.",
+    publish: "Publish ad brief",
     emptyFiltered: "No projects match this filter.",
     delete: "Delete",
     deleteTitle: (count: number) => `Delete ${count} item${count === 1 ? "" : "s"}?`,
     deleteTitleOne: "Delete this item?",
-    deleteBody: "The following will be permanently removed from your account.",
-    deleteBodyOne: "This will be permanently removed from your account.",
+    deleteBody: "The following draft briefs will be permanently removed.",
+    deleteBodyOne: "This draft brief will be permanently removed.",
     cancel: "Cancel",
     confirmDelete: "Delete permanently",
     deleting: "Deleting…",
@@ -76,25 +82,22 @@ const copy = {
     selected: "selected",
     selectAll: "Select all deletable",
     open: "Continue",
-    lockedHint: "In production — cannot delete",
+    lockedHint: "Only drafts can be deleted",
     kindProject: "Project",
     kindOrder: "Order",
     deleteListTitle: "Items to delete"
   },
   zh: {
     search: "搜索项目…",
-    all: "全部",
-    draft: "草稿",
-    active: "进行中",
-    done: "已完成",
     empty: "还没有广告项目",
     emptyBody: "发布第一个广告需求，AI 帮你在几分钟内整理好说明。",
+    publish: "发布广告需求",
     emptyFiltered: "当前筛选下没有项目。",
     delete: "删除",
     deleteTitle: (count: number) => `确认删除 ${count} 项？`,
     deleteTitleOne: "确认删除？",
-    deleteBody: "以下项目和订单将被永久删除，无法恢复。",
-    deleteBodyOne: "此项目或订单将被永久删除，无法恢复。",
+    deleteBody: "以下草稿将被永久删除，无法恢复。",
+    deleteBodyOne: "此草稿将被永久删除，无法恢复。",
     cancel: "取消",
     confirmDelete: "确认永久删除",
     deleting: "删除中…",
@@ -108,7 +111,7 @@ const copy = {
     selected: "项已选",
     selectAll: "全选可删项",
     open: "继续",
-    lockedHint: "制作中，不可删除",
+    lockedHint: "仅草稿可删除",
     kindProject: "广告项目",
     kindOrder: "订单",
     deleteListTitle: "待删除项目"
@@ -221,6 +224,7 @@ export function BrandCampaignList({
 }) {
   const router = useRouter();
   const t = copy[locale];
+  const lifecycleLabels = brandAdLifecycleLabels[locale];
   const stepLabels = steps[locale];
 
   const [items, setItems] = useState(rows);
@@ -244,27 +248,18 @@ export function BrandCampaignList({
     return () => window.clearTimeout(timer);
   }, [successMessage]);
 
-  const stats = useMemo(
-    () => ({
-      total: items.length,
-      drafts: items.filter((row) => row.phase === "draft").length,
-      active: items.filter((row) => row.phase === "active").length,
-      done: items.filter((row) => row.phase === "done").length
-    }),
-    [items]
-  );
+  const lifecycleCounts = useMemo(() => countBrandRowsByLifecycle(items), [items]);
 
   const filtered = useMemo(() => {
+    const byLifecycle = filterBrandRowsByLifecycle(items, filter);
     const q = query.trim().toLowerCase();
-    return items.filter((row) => {
-      if (filter !== "all" && row.phase !== filter) return false;
-      if (!q) return true;
-      return (
+    if (!q) return byLifecycle;
+    return byLifecycle.filter(
+      (row) =>
         row.name.toLowerCase().includes(q) ||
         row.category?.toLowerCase().includes(q) ||
         row.status.toLowerCase().includes(q)
-      );
-    });
+    );
   }, [filter, items, query]);
 
   const selectableInView = useMemo(() => filtered.filter(isSelectable), [filtered]);
@@ -373,12 +368,11 @@ export function BrandCampaignList({
     });
   }
 
-  const filters: { id: Filter; label: string; count: number }[] = [
-    { id: "all", label: t.all, count: stats.total },
-    { id: "draft", label: t.draft, count: stats.drafts },
-    { id: "active", label: t.active, count: stats.active },
-    { id: "done", label: t.done, count: stats.done }
-  ];
+  const filters = brandAdLifecycleFilters.map((id) => ({
+    id,
+    label: lifecycleLabels[id],
+    count: lifecycleCounts[id]
+  }));
 
   return (
     <div className="space-y-4">
@@ -425,8 +419,8 @@ export function BrandCampaignList({
             </Button>
           </div>
         ) : (
-          <div className="flex flex-col gap-3 border-b border-zinc-100 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
-            <div className="relative max-w-sm flex-1">
+          <div className="flex flex-col gap-3 border-b border-zinc-100 px-4 py-4 lg:flex-row lg:items-center lg:justify-between sm:px-5">
+            <div className="relative w-full max-w-sm flex-1">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
               <Input
                 value={query}
@@ -435,21 +429,23 @@ export function BrandCampaignList({
                 className="h-9 rounded-lg border-zinc-200 bg-zinc-50/80 pl-9 text-sm focus-visible:bg-white"
               />
             </div>
-            <div className="flex flex-wrap gap-1 rounded-lg bg-zinc-100/80 p-1">
+            <div className="flex max-w-full flex-wrap gap-2 lg:justify-end">
               {filters.map((item) => (
                 <button
                   key={item.id}
                   type="button"
                   onClick={() => setFilter(item.id)}
                   className={cn(
-                    "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition",
+                    "inline-flex shrink-0 items-center rounded-full px-3 py-1.5 text-sm font-medium transition",
                     filter === item.id
-                      ? "bg-white text-zinc-900 shadow-sm"
-                      : "text-zinc-600 hover:text-zinc-900"
+                      ? "bg-zinc-900 text-white"
+                      : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 hover:text-zinc-900"
                   )}
                 >
                   {item.label}
-                  <span className="tabular-nums text-zinc-400">{item.count}</span>
+                  <span className={cn("ml-1.5 tabular-nums", filter === item.id ? "text-white/80" : "text-zinc-400")}>
+                    {item.count}
+                  </span>
                 </button>
               ))}
             </div>
@@ -457,9 +453,18 @@ export function BrandCampaignList({
         )}
 
         {!filtered.length ? (
-          <p className="px-6 py-16 text-center text-sm text-zinc-500">
-            {items.length ? t.emptyFiltered : t.emptyBody}
-          </p>
+          <div className="flex flex-col items-center gap-4 px-6 py-16 text-center">
+            <p className="text-sm text-zinc-500">{items.length ? t.emptyFiltered : t.emptyBody}</p>
+            {!items.length ? (
+              <BrandStartBriefButton
+                locale={locale}
+                className="inline-flex h-10 items-center gap-2 rounded-full bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800"
+              >
+                <Plus className="h-4 w-4" />
+                {t.publish}
+              </BrandStartBriefButton>
+            ) : null}
+          </div>
         ) : (
           <ul className="divide-y divide-zinc-100">
             {filtered.map((row) => {

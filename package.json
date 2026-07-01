@@ -19,6 +19,7 @@
     "homepage:anchor": "node scripts/anchor-homepage-golden.mjs",
     "github:identity": "bash scripts/git-identity.sh && git config user.name && git config user.email",
     "reset:demo-review": "node scripts/reset-mvp-demo.mjs",
+    "reset:demo-accounts": "node scripts/reset-demo-accounts.mjs",
     "build": "npx prisma generate && node scripts/copy-marketing-assets.mjs && next build",
     "postinstall": "npx prisma generate",
     "start": "next start",

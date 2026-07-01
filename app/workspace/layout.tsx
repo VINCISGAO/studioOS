@@ -6,10 +6,13 @@ import { BrandPortalShell } from "@/components/studioos/brand-portal-shell";
 import { StudioPortalShell } from "@/components/studioos/studio-portal-shell";
 import { getCurrentCreator } from "@/lib/creator-session";
 import {
+  countCompletedCreatorOrders,
+  getCreatorAccessState,
   hasCompletedCreatorProfile,
-  hasPaidCreatorDeposit
+  requiresCreatorCertification
 } from "@/lib/studioos/deposit-guard";
 import { getLocale, withLocale } from "@/lib/i18n";
+import { listOrdersForCreator } from "@/lib/order-service";
 import { countUnreadNotifications, listNotificationsForCreator } from "@/lib/notification-service";
 import {
   isStudioFeaturePath,
@@ -34,23 +37,22 @@ export default async function WorkspaceLayout({ children }: { children: React.Re
   const reviewMatch = pathname.match(/\/workspace\/projects\/([^/]+)\/review$/);
   const isReviewRoom = Boolean(reviewMatch);
   const creator = await getCurrentCreator();
-  const certificationPaid = hasPaidCreatorDeposit(creator);
+  const orders = creator ? await listOrdersForCreator(creator.id) : [];
+  const completedOrders = countCompletedCreatorOrders(orders);
+  const access = getCreatorAccessState(creator, completedOrders);
   const profileComplete = hasCompletedCreatorProfile(creator);
+  const canUseBusinessFeatures = access.canUseBusinessFeatures;
 
   const notifications =
-    creator && certificationPaid && profileComplete
-      ? await listNotificationsForCreator(creator.id, locale)
-      : [];
+    creator && canUseBusinessFeatures ? await listNotificationsForCreator(creator.id, locale) : [];
   const unreadCount =
-    creator && certificationPaid && profileComplete
-      ? await countUnreadNotifications(creator.id)
-      : 0;
+    creator && canUseBusinessFeatures ? await countUnreadNotifications(creator.id) : 0;
 
   if (profile?.role === "studio" && creator && isStudioFeaturePath(pathname)) {
-    if (!certificationPaid) {
+    if (requiresCreatorCertification(creator, completedOrders)) {
       redirect(withLocale(studioCertificationRedirectPath(locale), locale));
     }
-    if (!profileComplete) {
+    if (access.isVerified && !profileComplete) {
       redirect(withLocale(studioProfileOnboardingPath(locale), locale));
     }
   }
@@ -71,8 +73,9 @@ export default async function WorkspaceLayout({ children }: { children: React.Re
           pathname={pathname}
           search={search}
           creator={creator}
-          certificationPaid={certificationPaid}
+          certificationPaid={access.isVerified}
           profileComplete={profileComplete}
+          canUseBusinessFeatures={canUseBusinessFeatures}
           notifications={notifications}
           unreadCount={unreadCount}
         >
@@ -91,8 +94,9 @@ export default async function WorkspaceLayout({ children }: { children: React.Re
         pathname={pathname}
         search={search}
         creator={creator}
-        certificationPaid={certificationPaid}
+        certificationPaid={access.isVerified}
         profileComplete={profileComplete}
+        canUseBusinessFeatures={canUseBusinessFeatures}
         notifications={notifications}
         unreadCount={unreadCount}
       >

@@ -1,33 +1,40 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { resolveReviewCommentAction } from "@/app/review-actions";
-import { DeliveryUploadPanel } from "@/components/studioos/delivery-upload-panel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { StoredCreativeBrief, StoredCreativePackItem } from "@/lib/campaign-types";
 import type { Locale } from "@/lib/i18n";
+import { withLocale } from "@/lib/i18n";
 import type { StoredDeliverable, StoredOrder } from "@/lib/order-types";
 import type { StoredProject } from "@/lib/project-types";
 import type { ReviewComment } from "@/lib/studioos/review-store";
 import { buildProjectBriefFields } from "@/lib/studioos/project-brief-format";
+import { tCertificationExperience } from "@/lib/studioos/certification-experience-copy";
 import { getConfirmedBriefFields } from "@/lib/studioos/confirmed-brief";
+import { creatorPortalRoutes } from "@/lib/studioos/creator-portal-routes";
 import { ClientBriefFormCard } from "@/components/studioos/client-brief-form-card";
+import { CertifiedPartnerBadge } from "@/components/studioos/certification/certified-partner-badge";
 import { formatTimestamp } from "@/lib/studioos/review-utils";
 import { cn } from "@/lib/utils";
-import { CheckCircle2, Pause, Play } from "lucide-react";
+import { CheckCircle2, Clapperboard, Pause, Play } from "lucide-react";
 
-type TabId = "brief" | "storyboard" | "versions" | "issues" | "delivery";
+type TabId = "brief" | "storyboard" | "versions" | "issues";
 
 const copy = {
   en: {
-    workspace: "Studio Workspace",
-    brief: "Brief",
-    storyboard: "Storyboard",
-    versions: "Versions",
-    issues: "Issues",
-    delivery: "Delivery",
+    workspace: "Project workspace",
+    brief: "Ad requirements",
+    storyboard: "Asset files",
+    versions: "Work versions",
+    issues: "Review history",
+    productionBanner:
+      "You have been selected. Upload Version 1 from the review center to start brand review.",
+    reviewCenterFirst: "Upload Version 1 in review center",
+    reviewCenterRevision: "Upload new version in review center",
     resolve: "Resolve",
     publishRevision: "Publish Revision",
     revisionSummary: "Revision Summary",
@@ -46,12 +53,14 @@ const copy = {
     completed: "Completed"
   },
   zh: {
-    workspace: "Studio 制作台",
-    brief: "Brief",
-    storyboard: "分镜",
-    versions: "版本",
-    issues: "Issue",
-    delivery: "交付",
+    workspace: "项目工作台",
+    brief: "广告需求",
+    storyboard: "素材文件",
+    versions: "作品版本",
+    issues: "审核记录",
+    productionBanner: "你已被品牌选中，请前往审片中心上传 Version 1。",
+    reviewCenterFirst: "前往审片中心上传 Version 1",
+    reviewCenterRevision: "前往审片中心上传新版本",
     resolve: "标记已解决",
     publishRevision: "发布修改版",
     revisionSummary: "修改摘要",
@@ -93,6 +102,7 @@ function sceneStatusLabel(status: string | undefined, locale: Locale) {
 export function StudioCreativeWorkspace({
   locale,
   studioName,
+  isVerified = false,
   order,
   project,
   brief,
@@ -103,6 +113,7 @@ export function StudioCreativeWorkspace({
 }: {
   locale: Locale;
   studioName: string;
+  isVerified?: boolean;
   order: StoredOrder;
   project: StoredProject | null;
   brief: StoredCreativeBrief | null;
@@ -112,6 +123,7 @@ export function StudioCreativeWorkspace({
   canUpload: boolean;
 }) {
   const t = copy[locale];
+  const partnerBadge = tCertificationExperience(locale).partnerBadge;
   const router = useRouter();
   const briefFields = useMemo(() => {
     const confirmed = project ? getConfirmedBriefFields(project, locale) : [];
@@ -179,17 +191,34 @@ export function StudioCreativeWorkspace({
     { id: "brief", label: t.brief },
     { id: "storyboard", label: t.storyboard },
     { id: "versions", label: t.versions },
-    { id: "issues", label: t.issues },
-    { id: "delivery", label: t.delivery }
+    { id: "issues", label: t.issues }
   ];
+
+  const reviewHref = withLocale(creatorPortalRoutes.review(order.id), locale);
 
   return (
     <div className="space-y-6">
       <div>
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">{t.workspace}</p>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight">{studioName}</h1>
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <h1 className="text-2xl font-semibold tracking-tight">{studioName}</h1>
+          {isVerified ? <CertifiedPartnerBadge label={partnerBadge} /> : null}
+        </div>
         <p className="mt-1 text-lg font-medium text-zinc-800">{order.title || project?.title}</p>
       </div>
+
+      {canUpload && sortedVersions.length === 0 ? (
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 px-5 py-4 text-sm text-emerald-900">
+          <p>{t.productionBanner}</p>
+          <Link
+            href={reviewHref}
+            className="mt-3 inline-flex items-center gap-2 rounded-xl bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-800"
+          >
+            <Clapperboard className="h-4 w-4" />
+            {t.reviewCenterFirst}
+          </Link>
+        </div>
+      ) : null}
 
       <div className="flex flex-wrap gap-1 border-b border-zinc-200">
         {tabs.map(({ id, label }) => (
@@ -296,13 +325,28 @@ export function StudioCreativeWorkspace({
                 <span className="font-mono text-xs text-zinc-400">{formatTimestamp(currentSec)}</span>
               </div>
             </div>
+          ) : canUpload ? (
+            <div className="rounded-2xl border border-blue-200 bg-blue-50 p-6 text-center shadow-sm">
+              <p className="text-sm text-blue-900">
+                {locale === "zh"
+                  ? "审片版统一在审片中心上传，第一版与后续修改版都在同一页面提交。"
+                  : "Upload every review version from the review center — starting with Version 1."}
+              </p>
+              <Link
+                href={reviewHref}
+                className="mt-4 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+              >
+                <Clapperboard className="h-4 w-4" />
+                {t.reviewCenterFirst}
+              </Link>
+            </div>
           ) : (
             <div className="flex aspect-video items-center justify-center rounded-2xl border bg-zinc-100 text-sm text-zinc-500">
-              {locale === "zh" ? "上传 Version 1 开始制作" : "Upload Version 1 to start"}
+              {locale === "zh" ? "等待品牌选中后开始制作" : "Waiting for brand selection to start production"}
             </div>
           )}
 
-          {(tab === "versions" || tab === "delivery") && sortedVersions.length ? (
+          {(tab === "versions") && sortedVersions.length ? (
             <div className="flex flex-wrap gap-2">
               {sortedVersions.map((v, i) => (
                 <button
@@ -323,13 +367,18 @@ export function StudioCreativeWorkspace({
             </div>
           ) : null}
 
-          {tab === "delivery" && canUpload ? (
-            <DeliveryUploadPanel
-              locale={locale}
-              orderId={order.id}
-              nextVersion={sortedVersions.length ? sortedVersions[sortedVersions.length - 1].version + 1 : 1}
-              mode={sortedVersions.length ? "revision" : "first"}
-            />
+          {canUpload && order.status === "revision" ? (
+            <Link
+              href={reviewHref}
+              className="flex w-full items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-left text-sm text-amber-900 hover:bg-amber-100"
+            >
+              <span>
+                {locale === "zh"
+                  ? "品牌要求修改 — 前往审片中心上传新版本"
+                  : "Revision requested — upload a new version in the review center"}
+              </span>
+              <span>→</span>
+            </Link>
           ) : null}
         </section>
 
@@ -378,11 +427,9 @@ export function StudioCreativeWorkspace({
                 ))}
               </ul>
               {canUpload ? (
-                <p className="mt-4 text-xs text-zinc-500">
-                  {locale === "zh"
-                    ? "上传新版本后，Brand 会在审片页看到修改摘要。"
-                    : "After you upload a new version, the brand sees this summary in review."}
-                </p>
+                <Link href={reviewHref} className="mt-4 inline-flex text-sm font-medium text-blue-700 hover:underline">
+                  {t.reviewCenterRevision}
+                </Link>
               ) : null}
             </div>
           ) : null}

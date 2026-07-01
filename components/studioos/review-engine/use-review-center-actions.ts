@@ -1,0 +1,102 @@
+"use client";
+
+import { useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { addReviewCommentAction, uploadVideoVersionAction } from "@/app/review-actions";
+import { approveDeliveryAction, requestRevisionAction } from "@/app/order-actions";
+import type { Locale } from "@/lib/i18n";
+import type { ReviewComment } from "@/lib/studioos/review-store";
+import type { PinDraft } from "@/components/studioos/review-engine/review-center-player";
+
+export function useReviewCenterActions({
+  locale,
+  orderId,
+  activeVersion,
+  onCommentsChange,
+  onError,
+  onUploadComplete,
+  onPinClear
+}: {
+  locale: Locale;
+  orderId: string;
+  activeVersion: number;
+  onCommentsChange: (updater: (prev: ReviewComment[]) => ReviewComment[]) => void;
+  onError: (message: string | null) => void;
+  onUploadComplete: () => void;
+  onPinClear: () => void;
+}) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+
+  function savePinComment(pinDraft: PinDraft, pinText: string) {
+    if (!pinDraft || !pinText.trim()) return;
+    startTransition(async () => {
+      onError(null);
+      const fd = new FormData();
+      fd.set("lang", locale);
+      fd.set("order_id", orderId);
+      fd.set("version", String(activeVersion));
+      fd.set("timestamp_sec", String(pinDraft.seconds));
+      fd.set("pos_x", String(pinDraft.x));
+      fd.set("pos_y", String(pinDraft.y));
+      fd.set("body", pinText.trim());
+      const result = await addReviewCommentAction(fd);
+      if (!result.ok) {
+        onError(result.error);
+        return;
+      }
+      onCommentsChange((prev) => [...prev, result.comment]);
+      onPinClear();
+      router.refresh();
+    });
+  }
+
+  function uploadVersion(file: File, uploadNotes: string) {
+    startTransition(async () => {
+      onError(null);
+      const uploadFd = new FormData();
+      uploadFd.set("order_id", orderId);
+      uploadFd.set("video_file", file);
+      const uploadRes = await fetch("/api/delivery/upload-video", { method: "POST", body: uploadFd });
+      const uploadResult = (await uploadRes.json()) as { ok: boolean; url?: string; error?: string };
+      if (!uploadRes.ok || !uploadResult.ok || !uploadResult.url) {
+        onError(uploadResult.error ?? (locale === "zh" ? "视频上传失败" : "Upload failed"));
+        return;
+      }
+      const fd = new FormData();
+      fd.set("lang", locale);
+      fd.set("order_id", orderId);
+      fd.set("file_url", uploadResult.url);
+      if (uploadNotes.trim()) fd.set("notes", uploadNotes.trim());
+      const result = await uploadVideoVersionAction(fd);
+      if (!result.ok) {
+        onError(result.error);
+        return;
+      }
+      onUploadComplete();
+      router.refresh();
+    });
+  }
+
+  function approve() {
+    startTransition(async () => {
+      const fd = new FormData();
+      fd.set("lang", locale);
+      fd.set("order_id", orderId);
+      await approveDeliveryAction(fd);
+      router.refresh();
+    });
+  }
+
+  function requestChanges() {
+    startTransition(async () => {
+      const fd = new FormData();
+      fd.set("lang", locale);
+      fd.set("order_id", orderId);
+      await requestRevisionAction(fd);
+      router.refresh();
+    });
+  }
+
+  return { pending, savePinComment, uploadVersion, approve, requestChanges };
+}

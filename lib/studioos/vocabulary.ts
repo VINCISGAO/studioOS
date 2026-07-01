@@ -35,6 +35,13 @@ export function formatHeroHeadlineLine1(line1: string) {
 
 export const brandNav = {
   en: {
+    home: "My ads",
+    campaigns: "My ads",
+    finance: "Finance",
+    brandCenter: "Brand center",
+    messages: "Messages",
+    attribution: "Ad attribution",
+    settings: "Account",
     dashboard: "Dashboard",
     projects: "Projects",
     analytics: "Analytics",
@@ -47,6 +54,13 @@ export const brandNav = {
     settlement: "Settlement"
   },
   zh: {
+    home: "我的广告",
+    campaigns: "我的广告",
+    finance: "财务中心",
+    brandCenter: "品牌中心",
+    messages: "消息中心",
+    attribution: "广告效果归因",
+    settings: "账号设置",
     dashboard: "总览",
     projects: "项目",
     analytics: "Analytics",
@@ -63,31 +77,33 @@ export const brandNav = {
 export const studioNav = {
   en: {
     home: "Home",
-    dashboard: "Production",
-    projects: "Assigned projects",
     invitations: "Invitations",
-    upload: "Delivery Workspace",
+    projects: "My projects",
+    works: "My portfolio",
     income: "Income",
     deposit: "Certification",
+    messages: "Messages",
+    settings: "Account",
+    dashboard: "Production",
+    upload: "Delivery Workspace",
     profile: "Studio profile",
     reviewRoom: "Review center",
-    messages: "Messages",
-    settings: "Account security",
-    studioOwner: "Studio Owner"
+    studioOwner: "Creator"
   },
   zh: {
     home: "首页",
-    dashboard: "制作台",
-    projects: "分配项目",
     invitations: "项目邀请",
-    upload: "交付工作台",
-    income: "收入",
+    projects: "我的项目",
+    works: "我的作品",
+    income: "收入中心",
     deposit: "认证服务商",
+    messages: "消息中心",
+    settings: "账号设置",
+    dashboard: "制作台",
+    upload: "交付工作台",
     profile: "主页",
     reviewRoom: "审片中心",
-    messages: "消息中心",
-    settings: "账号安全",
-    studioOwner: "Studio Owner"
+    studioOwner: "创作者"
   }
 } as const;
 

@@ -11,22 +11,27 @@ import { Button } from "@/components/ui/button";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import type { CreatorNotification } from "@/lib/notification-types";
+import { resolveCreatorNotificationAction } from "@/lib/studioos/commercial-notification-routes";
 import { cn } from "@/lib/utils";
 import { Bell } from "lucide-react";
 
 const copy = {
   en: {
     title: "Notifications",
-    empty: "No notifications yet.",
+    empty: "No new notifications.",
+    emptyHint: "Read messages stay in the message center.",
     markAll: "Mark all read",
+    viewAll: "View all messages",
     viewBrief: "Open project workspace",
     clientBrief: "Confirmed client brief"
   },
   zh: {
     title: "通知",
-    empty: "暂无通知。",
+    empty: "暂无新通知",
+    emptyHint: "已读消息可在消息中心查看",
     markAll: "全部已读",
-    viewBrief: "进入制作台",
+    viewAll: "查看全部消息",
+    viewBrief: "进入项目工作台",
     clientBrief: "正式需求表单"
   }
 };
@@ -45,6 +50,7 @@ export function StudioNotificationBell({
   const panelRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const unreadNotifications = notifications.filter((notification) => !notification.read_at);
 
   useEffect(() => {
     function onPointerDown(event: MouseEvent) {
@@ -59,6 +65,15 @@ export function StudioNotificationBell({
   }, [open]);
 
   function handleOpenNotification(notification: CreatorNotification) {
+    const action = resolveCreatorNotificationAction(
+      {
+        type: notification.type,
+        order_id: notification.order_id,
+        project_id: notification.project_id
+      },
+      locale
+    );
+
     startTransition(async () => {
       if (!notification.read_at) {
         const fd = new FormData();
@@ -66,11 +81,7 @@ export function StudioNotificationBell({
         await markNotificationReadAction(fd);
       }
       setOpen(false);
-      if (notification.order_id) {
-        router.push(withLocale(`/studio/messages?id=${notification.id}`, locale));
-      } else {
-        router.refresh();
-      }
+      router.push(action.href);
     });
   }
 
@@ -116,8 +127,17 @@ export function StudioNotificationBell({
           </div>
 
           <ul className="max-h-[28rem] overflow-y-auto">
-            {notifications.length ? (
-              notifications.slice(0, 12).map((notification) => (
+            {unreadNotifications.length ? (
+              unreadNotifications.slice(0, 12).map((notification) => {
+                const action = resolveCreatorNotificationAction(
+                  {
+                    type: notification.type,
+                    order_id: notification.order_id,
+                    project_id: notification.project_id
+                  },
+                  locale
+                );
+                return (
                 <li key={notification.id} className="border-b border-zinc-50 last:border-0">
                   <button
                     type="button"
@@ -147,32 +167,32 @@ export function StudioNotificationBell({
                             </pre>
                           </div>
                         ) : null}
-                        {notification.order_id ? (
-                          <span className="mt-2 inline-flex text-xs font-medium text-zinc-700 underline-offset-2 hover:underline">
-                            {t.viewBrief}
-                          </span>
-                        ) : null}
+                        <span className="mt-2 inline-flex text-xs font-medium text-zinc-700 underline-offset-2 hover:underline">
+                          {action.label}
+                        </span>
                       </div>
                     </div>
                   </button>
                 </li>
-              ))
+              );
+              })
             ) : (
-              <li className="px-4 py-8 text-center text-sm text-zinc-400">{t.empty}</li>
+              <li className="px-4 py-8 text-center">
+                <p className="text-sm text-zinc-400">{t.empty}</p>
+                <p className="mt-1 text-xs text-zinc-400">{t.emptyHint}</p>
+              </li>
             )}
           </ul>
 
-          {notifications.length ? (
-            <div className="border-t border-zinc-100 px-4 py-2.5">
-              <Link
-                href={withLocale("/studio/messages", locale)}
-                className="text-xs font-medium text-zinc-500 hover:text-zinc-900"
-                onClick={() => setOpen(false)}
-              >
-                {locale === "zh" ? "查看全部消息" : "View all messages"}
-              </Link>
-            </div>
-          ) : null}
+          <div className="border-t border-zinc-100 px-4 py-2.5">
+            <Link
+              href={withLocale("/studio/messages", locale)}
+              className="text-xs font-medium text-zinc-500 hover:text-zinc-900"
+              onClick={() => setOpen(false)}
+            >
+              {t.viewAll}
+            </Link>
+          </div>
         </div>
       ) : null}
     </div>

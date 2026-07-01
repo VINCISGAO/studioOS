@@ -54,6 +54,8 @@ export type CreateProjectDraftInput = {
   org_id?: string | null;
   created_by?: string | null;
   title?: string;
+  /** Hidden from 我的广告 until user clicks Save draft */
+  wizard_ephemeral?: boolean;
 };
 
 export type CreateProjectInput = {
@@ -95,6 +97,8 @@ export type ProjectStore = {
   applications: StoredProjectApplication[];
   /** Demo seed IDs the brand explicitly removed — do not re-insert on read. */
   dismissed_demo_ids?: string[];
+  /** Brand-deleted project IDs — never resurrect from repair/merge on read. */
+  deleted_project_ids?: string[];
 };
 
 export type MatchReason = {

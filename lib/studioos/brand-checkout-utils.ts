@@ -17,6 +17,9 @@ export function deliveryDaysFromDeadline(deadline?: string | null): number {
   return Math.max(5, Math.min(days, 21));
 }
 
+/** Placeholder creator on campaign escrow orders — replaced when brand picks a Studio. */
+export const CAMPAIGN_PENDING_CREATOR_ID = "pending_match";
+
 export function buildQuoteSummary(input: {
   title: string;
   videoCount?: number | null;

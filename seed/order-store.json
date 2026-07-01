@@ -38,29 +38,6 @@
       "completed_at": null
     },
     {
-      "id": "ord_demo_nova_completed",
-      "project_id": null,
-      "inquiry_id": "inq_demo_nova",
-      "quote_id": "quote_demo_nova",
-      "creator_id": "creator_01",
-      "client_email": "client.arc@studioos.test",
-      "client_name": "Arc & Alloy",
-      "company_name": "Arc & Alloy",
-      "title": "Beauty launch hero film",
-      "requirements": "3 cutdowns for TikTok and Meta.",
-      "budget_range": "$800-$1,000",
-      "work_id": null,
-      "amount": 799,
-      "platform_fee": 160,
-      "creator_payout": 639,
-      "payment_status": "released",
-      "status": "completed",
-      "payout_status": "approved",
-      "created_at": "2026-06-20T10:00:00.000Z",
-      "paid_at": "2026-06-21T10:00:00.000Z",
-      "completed_at": "2026-06-26T14:00:00.000Z"
-    },
-    {
       "id": "ord_demo_nova_active",
       "project_id": null,
       "inquiry_id": "inq_demo_nova_2",
@@ -129,5 +106,5 @@
       "created_at": "2026-06-28T08:00:00.000Z"
     }
   ],
-  "dismissed_demo_ids": []
+  "dismissed_demo_ids": ["ord_demo_nova_completed"]
 }

@@ -1,17 +1,24 @@
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 
-/** Canonical Creator Portal routes — all creator flows live under /studio */
+/** Canonical Creator Portal routes */
 export const creatorPortalRoutes = {
-  dashboard: "/studio",
+  home: "/studio",
   invitations: "/studio/invitations",
-  delivery: "/studio/delivery",
-  reviewHub: "/studio/review",
-  profile: "/studio/profile",
+  projects: "/studio/projects",
+  works: "/studio/works",
   income: "/studio/income",
+  deposit: "/studio/deposit",
+  messages: "/studio/messages",
+  settings: "/studio/settings",
   project: (orderId: string) => `/studio/projects/${orderId}`,
   review: (orderId: string) => `/studio/review/${orderId}`,
-  deliveryForOrder: (orderId: string) => `/studio/delivery?order=${orderId}`,
+  reviewHub: "/studio/review",
+  /** Legacy aliases */
+  dashboard: "/studio",
+  delivery: "/studio/projects",
+  profile: "/studio/works",
+  deliveryForOrder: (orderId: string) => `/studio/projects/${orderId}`,
   campaignReview: (campaignId: string) => `/brand/projects/${campaignId}/review`
 } as const;
 

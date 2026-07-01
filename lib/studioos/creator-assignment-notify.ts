@@ -54,9 +54,15 @@ function notificationCopy(
         body: `「${projectTitle}」款项已托管，请查看下方完整需求表单并开始制作。`
       };
     }
+    if (type === "invitation_match") {
+      return {
+        title: "你有匹配订单",
+        body: `${brandName} 向你发出了「${projectTitle}」的意向发单。你可以直接接受或拒绝。`
+      };
+    }
     return {
-      title: `你被 ${brandName} 选中了`,
-      body: `品牌方选择了你负责「${projectTitle}」。完整需求表单见下方，付款完成后即可开拍。`
+      title: `🎉 恭喜，你已被品牌选中`,
+      body: `项目方选择了你负责「${projectTitle}」。项目已正式开始，点击「进入项目」开始制作。`
     };
   }
 
@@ -67,9 +73,16 @@ function notificationCopy(
     };
   }
 
+  if (type === "invitation_match") {
+    return {
+      title: "You have a matching order",
+      body: `${brandName} sent you an intent invitation for "${projectTitle}". Accept or decline when ready.`
+    };
+  }
+
   return {
     title: `Selected by ${brandName}`,
-    body: `You were chosen for "${projectTitle}". The confirmed client brief is included below.`
+    body: `You were chosen for "${projectTitle}". The project is now official — review the brief below and start production.`
   };
 }
 

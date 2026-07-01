@@ -75,7 +75,8 @@ export function BrandCreativeReview({
   deliverables,
   initialComments,
   initialVersion,
-  flash
+  flash,
+  projectId
 }: {
   locale: Locale;
   order: StoredOrder;
@@ -84,6 +85,7 @@ export function BrandCreativeReview({
   initialComments: ReviewComment[];
   initialVersion: number;
   flash?: "completed" | "revision";
+  projectId?: string;
 }) {
   const t = copy[locale];
   const router = useRouter();
@@ -171,6 +173,7 @@ export function BrandCreativeReview({
             <form action={requestRevisionAction}>
               <input type="hidden" name="lang" value={locale} />
               <input type="hidden" name="order_id" value={order.id} />
+              {projectId ? <input type="hidden" name="project_id" value={projectId} /> : null}
               <Button type="submit" variant="outline" size="sm" className="rounded-full">
                 <RotateCcw className="h-3.5 w-3.5" /> {t.requestRevision}
               </Button>
@@ -178,6 +181,7 @@ export function BrandCreativeReview({
             <form action={approveDeliveryAction}>
               <input type="hidden" name="lang" value={locale} />
               <input type="hidden" name="order_id" value={order.id} />
+              {projectId ? <input type="hidden" name="project_id" value={projectId} /> : null}
               <Button type="submit" size="sm" className="rounded-full bg-zinc-900">
                 <CheckCircle2 className="h-3.5 w-3.5" /> {t.approve}
               </Button>

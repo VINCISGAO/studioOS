@@ -6,7 +6,7 @@ import { getCurrentCreatorId } from "@/lib/creator-session";
 import type { Locale } from "@/lib/i18n";
 import { addDeliverable, getDeliverables, getOrder } from "@/lib/order-service";
 import { getClientPreferredLocale } from "@/lib/studioos/client-locale";
-import { addReviewComment, resolveReviewComment } from "@/lib/studioos/review-store";
+import { addReviewComment, deleteReviewComment, resolveReviewComment } from "@/lib/studioos/review-store";
 import { translateForClient } from "@/lib/studioos/translate";
 import { saveReviewVideoUpload } from "@/lib/studioos/video-upload";
 
@@ -15,6 +15,12 @@ function normalizeLang(raw: FormDataEntryValue | null): Locale {
 }
 
 function revalidateReview(orderId: string, projectId?: string | null) {
+  revalidatePath("/brand");
+  revalidatePath("/brand/review");
+  revalidatePath("/brand/messages");
+  revalidatePath("/studio");
+  revalidatePath("/studio/review");
+  revalidatePath("/studio/messages");
   revalidatePath(`/brand/projects/${orderId}/review`);
   revalidatePath(`/studio/review/${orderId}`);
   revalidatePath(`/studio/projects/${orderId}`);
@@ -61,6 +67,9 @@ export async function addReviewCommentAction(formData: FormData) {
     created_by: clientEmail.toLowerCase()
   });
 
+  const { notifyCreatorReviewComment } = await import("@/lib/studioos/commercial-interaction-notify");
+  await notifyCreatorReviewComment({ order, comment, locale: lang });
+
   revalidateReview(orderId, order.project_id);
   return { ok: true as const, comment };
 }
@@ -81,8 +90,31 @@ export async function resolveReviewCommentAction(formData: FormData) {
     return { ok: false as const, error: lang === "zh" ? "批注不存在" : "Comment not found" };
   }
 
+  const { notifyBrandCommentResolved } = await import("@/lib/studioos/commercial-interaction-notify");
+  await notifyBrandCommentResolved({ order, comment, locale: lang });
+
   revalidateReview(orderId, order.project_id);
   return { ok: true as const, comment };
+}
+
+export async function deleteReviewCommentAction(formData: FormData) {
+  const lang = normalizeLang(formData.get("lang"));
+  const orderId = String(formData.get("order_id") ?? "");
+  const commentId = String(formData.get("comment_id") ?? "");
+
+  const clientEmail = await getCurrentClientEmail();
+  const order = await getOrder(orderId);
+  if (!order || !clientEmail || order.client_email !== clientEmail.toLowerCase()) {
+    return { ok: false as const, error: lang === "zh" ? "无权限" : "Unauthorized" };
+  }
+
+  const deleted = await deleteReviewComment(commentId, orderId);
+  if (!deleted) {
+    return { ok: false as const, error: lang === "zh" ? "批注不存在" : "Comment not found" };
+  }
+
+  revalidateReview(orderId, order.project_id);
+  return { ok: true as const, commentId: deleted.id };
 }
 
 export async function uploadVideoVersionAction(formData: FormData) {
@@ -103,7 +135,7 @@ export async function uploadVideoVersionAction(formData: FormData) {
 
   let resolvedUrl = fileUrl;
   if (file instanceof File && file.size > 0) {
-    const saved = await saveReviewVideoUpload(orderId, nextVersion, file);
+    const saved = await saveReviewVideoUpload(orderId, nextVersion, file, lang);
     if (!saved.ok) {
       return { ok: false as const, error: saved.error };
     }

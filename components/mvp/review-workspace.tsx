@@ -1,1 +1,2 @@
-export { ReviewPlayer as ReviewWorkspace } from "@/components/mvp/review-player";
+export { ReviewWorkspace } from "@/features/review/ReviewWorkspace";
+export type { ReviewAnnotation, ReviewComment, ReviewTool, ReviewVersion } from "@/features/review/review.types";

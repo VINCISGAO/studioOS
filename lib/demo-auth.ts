@@ -69,7 +69,7 @@ export function demoRedirectForRole(role: DemoRole) {
     return "/admin";
   }
   if (role === "creator") {
-    return "/studio/profile";
+    return "/studio";
   }
   return "/brand";
 }

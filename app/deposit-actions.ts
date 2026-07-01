@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentCreatorId } from "@/lib/creator-session";
-import { submitDepositPayment } from "@/lib/studioos/deposit-service";
+import { getCreatorDepositSnapshot, submitDepositPayment } from "@/lib/studioos/deposit-service";
 import { DEPOSIT_PAYMENT_METHODS } from "@/lib/studioos/deposit-utils";
 import type { PayoutMethodType } from "@/lib/studioos/withdrawal-types";
 import { withLocale, type Locale } from "@/lib/i18n";
@@ -43,4 +43,22 @@ export async function submitDepositPaymentAction(formData: FormData) {
   revalidatePath("/studio");
   revalidatePath("/studio/deposit");
   redirect(withLocale("/studio/deposit?submitted=1", lang));
+}
+
+export async function pollDepositStatusAction() {
+  const creatorId = await getCurrentCreatorId();
+  if (!creatorId) {
+    return { ok: false as const, reason: "unauthorized" as const };
+  }
+
+  const snapshot = await getCreatorDepositSnapshot(creatorId);
+  revalidatePath("/studio");
+  revalidatePath("/studio/deposit");
+
+  return {
+    ok: true as const,
+    can_accept_orders: snapshot.can_accept_orders,
+    deposit_status: snapshot.deposit_status,
+    pending_status: snapshot.pending_payment?.status ?? null
+  };
 }

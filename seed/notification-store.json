@@ -1,1 +1,4 @@
-{ "notifications": [] }
+{
+  "notifications": [],
+  "dismissed_demo_ids": ["ntf_demo_arc_selected", "ntf_demo_arc_funded"]
+}

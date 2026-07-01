@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { DeliveryUploadPanel } from "@/components/studioos/delivery-upload-panel";
+import { DeliverableVideoPolicyNotice } from "@/components/studioos/deliverable-video-policy-notice";
 import { DeliverableNotesBlock } from "@/components/studioos/deliverable-notes-block";
 import { IntegrationStatus } from "@/components/studioos/integration-status";
 import { QualityCenterPanel } from "@/components/studioos/quality-center-panel";
@@ -456,7 +457,7 @@ export function StudioDeliveryHub({
 
             <section id="upload-review-version" className="rounded-2xl border border-zinc-200/80 bg-white p-5">
               <h3 className="text-sm font-semibold text-zinc-900">{t.uploadReview}</h3>
-              <p className="mt-1 text-xs text-zinc-500">{t.protectedNote}</p>
+              <DeliverableVideoPolicyNotice locale={locale} showUploadLimit className="mt-3" />
               {canUpload ? (
                 <div className="mt-4">
                   <DeliveryUploadPanel

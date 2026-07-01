@@ -1,23 +1,17 @@
 import { redirect } from "next/navigation";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { creatorPortalRoutes } from "@/lib/studioos/creator-portal-routes";
 
-/** Legacy route — Delivery Workspace lives at /studio/delivery */
+/** Legacy route — delivery now lives inside each project under My projects. */
 export default async function StudioUploadRedirectPage({
   searchParams
 }: {
-  searchParams: Promise<SearchParams>;
+  searchParams: Promise<SearchParams & { order?: string }>;
 }) {
   const query = await searchParams;
   const locale = getLocale(query);
-  const params = new URLSearchParams();
-  params.set("lang", locale);
-  for (const [key, value] of Object.entries(query)) {
-    if (key === "lang" || value == null) continue;
-    if (Array.isArray(value)) {
-      value.forEach((item) => params.append(key, item));
-    } else {
-      params.set(key, value);
-    }
+  if (query.order) {
+    redirect(withLocale(creatorPortalRoutes.project(query.order), locale));
   }
-  redirect(`/studio/delivery?${params.toString()}`);
+  redirect(withLocale(creatorPortalRoutes.projects, locale));
 }

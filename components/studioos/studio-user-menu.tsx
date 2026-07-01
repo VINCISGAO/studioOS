@@ -11,7 +11,7 @@ import { ChevronDown, LogOut, UserRound } from "lucide-react";
 
 const copy = {
   en: {
-    profile: "Studio profile",
+    profile: "Edit profile",
     signOut: "Sign out"
   },
   zh: {

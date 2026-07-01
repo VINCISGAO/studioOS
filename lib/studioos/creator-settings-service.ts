@@ -100,6 +100,8 @@ function defaultSettings(creatorId: string, creator: Creator): StoredCreatorSett
     api_keys: [],
     orders_paused: false,
     account_deleted_at: null,
+    certification_level_up_seen_at: null,
+    certification_welcome_banner_dismissed_at: null,
     updated_at: now
   };
 }
@@ -621,4 +623,30 @@ export async function verifyCreatorPassword(
   const settings = await getCreatorSettings(creatorId, creator);
   const expected = settings.custom_password ?? DEMO_PASSWORD;
   return password === expected;
+}
+
+export async function hasSeenCertificationLevelUp(creatorId: string): Promise<boolean> {
+  const settings = await getStoredCreatorSettings(creatorId);
+  return Boolean(settings?.certification_level_up_seen_at);
+}
+
+export async function markCertificationLevelUpSeen(creatorId: string, creator: Creator) {
+  await updateSettings(creatorId, creator, (current) => ({
+    ...current,
+    certification_level_up_seen_at: new Date().toISOString()
+  }));
+  return { ok: true as const };
+}
+
+export async function hasDismissedCertificationWelcomeBanner(creatorId: string): Promise<boolean> {
+  const settings = await getStoredCreatorSettings(creatorId);
+  return Boolean(settings?.certification_welcome_banner_dismissed_at);
+}
+
+export async function dismissCertificationWelcomeBanner(creatorId: string, creator: Creator) {
+  await updateSettings(creatorId, creator, (current) => ({
+    ...current,
+    certification_welcome_banner_dismissed_at: new Date().toISOString()
+  }));
+  return { ok: true as const };
 }

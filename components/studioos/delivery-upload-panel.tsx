@@ -7,7 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { DeliverableVideoPolicyNotice } from "@/components/studioos/deliverable-video-policy-notice";
 import type { Locale } from "@/lib/i18n";
+import { maxDeliverableVideoLabel } from "@/lib/studioos/deliverable-video-policy-shared";
 import { cn } from "@/lib/utils";
 import { FileVideo2, Loader2, UploadCloud, X } from "lucide-react";
 
@@ -16,7 +18,7 @@ const copy = {
     firstTitle: "Upload review version",
     firstSubtitle: "Submit Version 1 to generate a watermarked review copy for the brand.",
     revisionTitle: "Upload new review version",
-    revisionSubtitle: "Drag MP4 / MOV or paste a video URL. Max 50MB.",
+    revisionSubtitle: `Drag MP4 / MOV or paste a video URL. Max ${maxDeliverableVideoLabel("en")}.`,
     dropHere: "Drop MP4 here",
     browse: "or click to browse",
     orUrl: "Or paste video URL",
@@ -33,7 +35,7 @@ const copy = {
     firstTitle: "上传审片版",
     firstSubtitle: "提交 Version 1，系统将生成带水印的审片版供品牌审阅。",
     revisionTitle: "上传新审片版",
-    revisionSubtitle: "拖拽 MP4 / MOV 或粘贴视频链接，单文件最大 50MB。",
+    revisionSubtitle: `拖拽 MP4 / MOV 或粘贴视频链接，单文件最大 ${maxDeliverableVideoLabel("zh")}。`,
     dropHere: "拖拽 MP4 到此处",
     browse: "或点击选择文件",
     orUrl: "或粘贴视频链接",
@@ -80,12 +82,6 @@ export function DeliveryUploadPanel({
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = e.currentTarget;
-    const fd = new FormData(form);
-    fd.set("lang", locale);
-    fd.set("order_id", orderId);
-    fd.set("file_url", fileUrl.trim());
-    fd.set("notes", notes.trim());
-    if (file) fd.set("video_file", file);
 
     if (!file && !fileUrl.trim()) {
       setError(locale === "zh" ? "请上传 MP4 或填写视频链接" : "Upload an MP4 or provide a video URL");
@@ -95,6 +91,41 @@ export function DeliveryUploadPanel({
     startTransition(async () => {
       setError(null);
       setSuccess(null);
+
+      let resolvedUrl = fileUrl.trim();
+
+      if (file) {
+        const uploadFd = new FormData();
+        uploadFd.set("order_id", orderId);
+        uploadFd.set("video_file", file);
+
+        const uploadRes = await fetch("/api/delivery/upload-video", {
+          method: "POST",
+          body: uploadFd
+        });
+        const uploadResult = (await uploadRes.json()) as {
+          ok: boolean;
+          url?: string;
+          error?: string;
+        };
+
+        if (!uploadRes.ok || !uploadResult.ok || !uploadResult.url) {
+          setError(
+            uploadResult.error ??
+              (locale === "zh" ? "视频上传失败，请重试" : "Video upload failed — try again")
+          );
+          return;
+        }
+
+        resolvedUrl = uploadResult.url;
+      }
+
+      const fd = new FormData();
+      fd.set("lang", locale);
+      fd.set("order_id", orderId);
+      fd.set("file_url", resolvedUrl);
+      fd.set("notes", notes.trim());
+
       const result = await uploadVideoVersionAction(fd);
       if (!result.ok) {
         setError(result.error);
@@ -107,11 +138,11 @@ export function DeliveryUploadPanel({
       setSuccess(
         locale === "zh"
           ? result.translated
-            ? `Version ${result.deliverable.version} 已提交，版本说明已自动翻译给品牌。`
-            : `Version ${result.deliverable.version} 已提交，可以进入审片了。`
+            ? `Version ${result.deliverable.version} 已提交，已通知品牌方审片，版本说明已自动翻译。`
+            : `Version ${result.deliverable.version} 已提交，已通知品牌方，可以进入审片环节。`
           : result.translated
-            ? `Version ${result.deliverable.version} submitted — notes translated for the brand.`
-            : `Version ${result.deliverable.version} submitted — you can open review now.`
+            ? `Version ${result.deliverable.version} submitted — brand notified, notes translated.`
+            : `Version ${result.deliverable.version} submitted — brand notified, open review when ready.`
       );
       onSuccess?.();
       router.refresh();
@@ -132,6 +163,8 @@ export function DeliveryUploadPanel({
 
       {error ? <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p> : null}
       {success ? <p className="rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{success}</p> : null}
+
+      <DeliverableVideoPolicyNotice locale={locale} showUploadLimit className="text-xs leading-5" />
 
       <input
         ref={inputRef}

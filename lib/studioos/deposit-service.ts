@@ -74,7 +74,7 @@ async function advanceDemoDepositPayments(store: DepositStore) {
       changed = true;
     }
 
-    if (payment.status === "under_review" && ageMs > 12_000) {
+    if (payment.status === "under_review" && ageMs > 15_000) {
       payment.status = "confirmed";
       payment.confirmed_at = new Date().toISOString();
       const overlay = store.creator_overlays[payment.creator_id];

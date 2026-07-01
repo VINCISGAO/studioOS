@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { addSystemMessage, consolidateInquiryThreads, getInquiry, resolveCanonicalInquiry, updateInquiryStatus } from "@/lib/chat-service";
 import { getCurrentClientEmail } from "@/lib/client-session";
 import { getCurrentCreator, getCurrentCreatorId } from "@/lib/creator-session";
-import { canUseStudioFeatures } from "@/lib/studioos/deposit-guard";
+import { canAcceptCreatorOrders, countCompletedCreatorOrders } from "@/lib/studioos/deposit-guard";
 import { withLocale, type Locale } from "@/lib/i18n";
 import {
   acceptQuote,
@@ -15,6 +15,7 @@ import {
   getActiveQuote,
   getActiveQuoteForPair,
   getOrder,
+  listOrdersForCreator,
   markOrderPaid,
   requestOrderRevision
 } from "@/lib/order-service";
@@ -48,8 +49,8 @@ export async function submitQuoteAction(formData: FormData) {
     redirect(withLocale(`/proposal/${inquiryId}?error=quote`, lang));
   }
 
-  if (!canUseStudioFeatures(creator)) {
-    redirect(withLocale("/studio/profile?onboarding=1", lang));
+  if (!canAcceptCreatorOrders(creator, countCompletedCreatorOrders(await listOrdersForCreator(creatorId)))) {
+    redirect(withLocale("/studio/deposit?error=deposit-required", lang));
   }
 
   const targetInquiry =
@@ -247,6 +248,9 @@ export async function approveDeliveryAction(formData: FormData) {
     redirect(withLocale(`/orders/${orderId}?error=approve`, lang));
   }
 
+  revalidatePath("/studio");
+  revalidatePath("/studio/messages");
+
   await updateInquiryStatus(order.inquiry_id, "converted");
   await addSystemMessage(
     order.inquiry_id,
@@ -283,6 +287,9 @@ export async function requestRevisionAction(formData: FormData) {
   if (!updated) {
     redirect(withLocale(`/orders/${orderId}?error=revision`, lang));
   }
+
+  revalidatePath("/studio");
+  revalidatePath("/studio/messages");
 
   if (revisionNotes) {
     await addSystemMessage(

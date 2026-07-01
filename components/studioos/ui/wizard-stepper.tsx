@@ -2,9 +2,13 @@
 
 import type { Locale } from "@/lib/i18n";
 import {
+  BRAND_WIZARD_VISIBLE_STEP_COUNT,
+  BRAND_WIZARD_VISIBLE_STEPS,
   CAMPAIGN_WIZARD_STEP_COUNT,
   CAMPAIGN_WIZARD_STEPS,
+  brandWizardProgressPercent,
   clampWizardStep,
+  completedBrandVisibleSteps,
   completedWizardSteps,
   wizardProgressPercent
 } from "@/lib/campaign/wizard-steps";
@@ -18,6 +22,8 @@ type WizardStepperProps = {
   completedSteps?: number[];
   className?: string;
   compact?: boolean;
+  /** Brand ad wizard shows 3 user-facing steps instead of 7 internal steps */
+  variant?: "full" | "brand";
 };
 
 export function WizardStepper({
@@ -25,18 +31,26 @@ export function WizardStepper({
   currentStep,
   completedSteps,
   className,
-  compact = false
+  compact = false,
+  variant = "full"
 }: WizardStepperProps) {
-  const current = clampWizardStep(currentStep);
-  const done = new Set(completedSteps ?? completedWizardSteps(current));
-  const percent = wizardProgressPercent(current);
+  const isBrand = variant === "brand";
+  const stepCount = isBrand ? BRAND_WIZARD_VISIBLE_STEP_COUNT : CAMPAIGN_WIZARD_STEP_COUNT;
+  const steps = isBrand ? BRAND_WIZARD_VISIBLE_STEPS : CAMPAIGN_WIZARD_STEPS;
+  const current = isBrand
+    ? Math.min(BRAND_WIZARD_VISIBLE_STEP_COUNT, Math.max(1, Math.floor(currentStep) || 1))
+    : clampWizardStep(currentStep);
+  const done = new Set(
+    completedSteps ?? (isBrand ? completedBrandVisibleSteps(current) : completedWizardSteps(current))
+  );
+  const percent = isBrand ? brandWizardProgressPercent(current) : wizardProgressPercent(current);
 
   return (
     <div className={cn("space-y-3", className)}>
       <div className="flex items-center justify-between text-caption">
         <span>
           {locale === "zh" ? "第" : "Step"} {current}{" "}
-          {locale === "zh" ? "步，共" : "of"} {CAMPAIGN_WIZARD_STEP_COUNT}{" "}
+          {locale === "zh" ? "步，共" : "of"} {stepCount}{" "}
           {locale === "zh" ? "步" : "steps"}
         </span>
         <span>{percent}%</span>
@@ -53,7 +67,7 @@ export function WizardStepper({
           style={{ gap: wizard.stepGap }}
           aria-label={locale === "zh" ? "Campaign 向导步骤" : "Campaign wizard steps"}
         >
-          {CAMPAIGN_WIZARD_STEPS.map((step) => {
+          {steps.map((step) => {
             const isCurrent = step.id === current;
             const isDone = done.has(step.id);
             return (

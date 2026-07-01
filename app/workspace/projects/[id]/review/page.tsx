@@ -1,8 +1,16 @@
 import { notFound, redirect } from "next/navigation";
 import { ReviewWorkspace } from "@/components/mvp/review-workspace";
+import { getSessionUser } from "@/features/auth/session.service";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
-import { getMvpProfile } from "@/lib/mvp/session";
+import {
+  ensureMvpReviewProjectForCampaign,
+  findCampaignIdForMvpProject,
+  getUnifiedReviewBundleForCampaign
+} from "@/lib/mvp/campaign-review-bridge";
 import { getReviewBundle } from "@/lib/mvp/store";
+import { getMvpProfile } from "@/lib/mvp/session";
+import { getDeliverables, getOrderForProject } from "@/lib/order-service";
+import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
 
 export default async function ProjectReviewPage({
   params,
@@ -16,7 +24,29 @@ export default async function ProjectReviewPage({
   const profile = await getMvpProfile();
   if (!profile) redirect(withLocale("/login", locale));
 
-  const bundle = await getReviewBundle(id);
+  const campaignId = await findCampaignIdForMvpProject(id);
+  if (profile.role === "brand" && campaignId) {
+    redirect(withLocale(brandPortalRoutes.projectReview(campaignId), locale));
+  }
+
+  const order = campaignId ? await getOrderForProject(campaignId) : null;
+  const deliverables = order ? await getDeliverables(order.id) : [];
+
+  if (campaignId && deliverables.length) {
+    await ensureMvpReviewProjectForCampaign(campaignId, { order, deliverables });
+  }
+
+  const sessionUser = await getSessionUser();
+  const bundle = campaignId
+    ? (
+        await getUnifiedReviewBundleForCampaign(campaignId, {
+          order,
+          deliverables,
+          viewerUserId: sessionUser?.id
+        })
+      ).bundle
+    : await getReviewBundle(id);
+
   if (!bundle) notFound();
 
   const isParticipant =

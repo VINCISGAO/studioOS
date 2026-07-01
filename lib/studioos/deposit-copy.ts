@@ -42,9 +42,9 @@ export const certifiedProviderCopy = {
     submit: "I have paid — submit for review",
     history: "Payment history",
     historyEmpty: "No certification payments yet.",
-    requiredTitle: "Certification required to accept orders",
+    requiredTitle: "Your first project is free — certify after delivery",
     requiredBody:
-      "Pay the $99 Professional Deposit to become a certified service provider. Payment methods match withdrawals — funds go to our corporate account.",
+      "New creators can complete one project at no deposit. After your first delivery, pay the $99 Professional Deposit to become a certified provider and accept additional orders. The deposit is held in escrow and refundable per platform policy.",
     profileBadge: "Certified provider",
     nav: "Certification",
     eyebrow: "Studio certification",
@@ -87,9 +87,9 @@ export const certifiedProviderCopy = {
     submit: "我已付款 — 提交审核",
     history: "认证付款记录",
     historyEmpty: "暂无认证付款记录。",
-    requiredTitle: "需成为认证服务商后才能接单",
+    requiredTitle: "首单可免费接，完成后再认证",
     requiredBody:
-      "缴纳 $99 Professional Deposit 即可成为认证服务商。支付方式与提现相同，款项汇入平台对公账户。",
+      "新创作者可免费完成 1 个项目。完成首单后，需缴纳 $99 Professional Deposit 成为认证服务商，方可继续接单。保证金进入平台托管账户，可按平台规则退还。",
     profileBadge: "官方认证",
     nav: "认证服务商",
     eyebrow: "Studio 认证中心",

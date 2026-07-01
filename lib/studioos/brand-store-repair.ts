@@ -76,9 +76,11 @@ export async function repairMissingProjects(store: ProjectStore): Promise<{
     deliverables: []
   }));
 
+  const deleted = new Set(store.deleted_project_ids ?? []);
+
   for (const order of orderStore.orders) {
     const projectId = order.project_id;
-    if (!projectId || existing.has(projectId)) continue;
+    if (!projectId || existing.has(projectId) || deleted.has(projectId)) continue;
     additions.push(projectFromOrder(order));
     existing.add(projectId);
   }

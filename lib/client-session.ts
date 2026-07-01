@@ -31,6 +31,15 @@ export async function resolveBrandBriefClientEmail(): Promise<string | null> {
   );
 }
 
+/** Brand portal actions — same identity resolution as the campaign wizard page. */
+export async function requireBrandPortalClientEmail(): Promise<string> {
+  const email = (await resolveBrandBriefClientEmail()) ?? (await getCurrentClientEmail());
+  if (!email) {
+    throw new Error("Unauthorized");
+  }
+  return email.toLowerCase();
+}
+
 export async function getOrCreateVisitorId(): Promise<string> {
   const cookieStore = await cookies();
   const existing = cookieStore.get(VISITOR_COOKIE)?.value;
