@@ -765,3 +765,18 @@ export async function publishBrandCampaignAction(formData: FormData) {
 
   redirect(withLocale(brandPortalRoutes.projectCheckout(projectId), lang));
 }
+
+/** Form-friendly wrapper — `<form action>` handlers must return void. */
+export async function publishBrandCampaignFormAction(formData: FormData): Promise<void> {
+  const result = await publishBrandCampaignAction(formData);
+  if (result && "ok" in result && !result.ok) {
+    const lang = normalizeLang(formData.get("lang"));
+    const projectId = String(formData.get("project_id") ?? "");
+    redirect(
+      withLocale(
+        `/brand/projects/new?project=${encodeURIComponent(projectId)}&step=3&error=${encodeURIComponent(result.error ?? "publish")}`,
+        lang
+      )
+    );
+  }
+}

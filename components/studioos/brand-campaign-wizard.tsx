@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
 import {
-  publishBrandCampaignAction,
+  publishBrandCampaignFormAction,
   saveBrandCampaignDraftAction,
   saveBrandCampaignSetupAction
 } from "@/app/brand-campaign-actions";
@@ -344,7 +344,7 @@ export function BrandCampaignWizard({
               : "Publish when ready, then complete escrow payment. Creator invitations go out only after payment is confirmed."}
           </p>
           {error ? <p className="text-sm text-destructive">{error}</p> : null}
-          <form action={publishBrandCampaignAction}>
+          <form action={publishBrandCampaignFormAction}>
             <input type="hidden" name="lang" value={locale} />
             <input type="hidden" name="project_id" value={projectId} />
             <PublishSubmitButton label={t.publish} publishingLabel={t.publishing} />

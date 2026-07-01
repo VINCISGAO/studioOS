@@ -24,7 +24,7 @@ async function main() {
       ok:
         creatorPortalRoutes.dashboard === "/studio" &&
         creatorPortalRoutes.invitations === "/studio/invitations" &&
-        creatorPortalRoutes.reviewHub === "/studio/projects" &&
+        creatorPortalRoutes.reviewHub === "/studio/review" &&
         creatorPortalRoutes.projects === "/studio/projects",
       detail: "creator-portal-routes"
     });

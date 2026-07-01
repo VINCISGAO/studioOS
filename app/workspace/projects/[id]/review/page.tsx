@@ -9,8 +9,21 @@ import {
 } from "@/lib/mvp/campaign-review-bridge";
 import { getReviewBundle } from "@/lib/mvp/store";
 import { getMvpProfile } from "@/lib/mvp/session";
+import type { MvpRole, ProjectStatus } from "@/lib/mvp/types";
 import { getDeliverables, getOrderForProject } from "@/lib/order-service";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
+
+function mapMvpRole(role: MvpRole): "brand" | "creator" {
+  return role === "studio" ? "creator" : "brand";
+}
+
+function mapProjectStatus(status: ProjectStatus): "review" | "revision" | "completed" | "in_production" {
+  if (status === "revision") return "revision";
+  if (status === "settled" || status === "approved" || status === "delivered" || status === "pending_settlement") {
+    return "completed";
+  }
+  return "review";
+}
 
 export default async function ProjectReviewPage({
   params,
@@ -65,15 +78,43 @@ export default async function ProjectReviewPage({
           ? ("settled" as const)
           : undefined;
 
+  const sortedVersions = [...bundle.versions].sort((a, b) => a.version_number - b.version_number);
+  const latestVersion = sortedVersions[sortedVersions.length - 1];
+  const reviewVersions = sortedVersions.map((version) => ({
+    version: version.version_number,
+    label: `Version ${version.version_number}`,
+    uploadedAt: version.created_at
+  }));
+
   return (
-    <ReviewWorkspace
-      locale={locale}
-      project={bundle.project}
-      versions={bundle.versions}
-      comments={bundle.comments}
-      profiles={bundle.profiles}
-      role={profile.role}
-      flash={flash}
-    />
+    <div className="min-h-screen bg-zinc-50">
+      {flash === "approved" ? (
+        <div className="bg-emerald-50 px-4 py-2 text-center text-sm text-emerald-800">
+          {locale === "zh" ? "审片已通过" : "Review approved"}
+        </div>
+      ) : null}
+      {flash === "revision" ? (
+        <div className="bg-amber-50 px-4 py-2 text-center text-sm text-amber-900">
+          {locale === "zh" ? "已请求修改" : "Revision requested"}
+        </div>
+      ) : null}
+      {flash === "settled" ? (
+        <div className="bg-emerald-50 px-4 py-2 text-center text-sm text-emerald-800">
+          {locale === "zh" ? "结算已完成" : "Settlement completed"}
+        </div>
+      ) : null}
+      <ReviewWorkspace
+        locale={locale}
+        role={mapMvpRole(profile.role)}
+        videoUrl={latestVersion?.file_url ?? ""}
+        projectTitle={bundle.project.title}
+        orderId={bundle.project.id}
+        orderStatus={mapProjectStatus(bundle.project.status)}
+        createdAt={bundle.project.created_at}
+        versions={reviewVersions}
+        backHref={withLocale("/workspace", locale)}
+        variant="full"
+      />
+    </div>
   );
 }

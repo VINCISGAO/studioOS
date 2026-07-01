@@ -24,15 +24,15 @@ log "Remote: $(git remote get-url origin 2>/dev/null || echo none)"
 log ""
 
 git add -A
-git reset HEAD -- .env .env.local .env.production .env.development .env.* 2>/dev/null || true
+git reset HEAD -- .env .env.local .env.production .env.development .env.* .verify-run.log 2>/dev/null || true
 
 if git diff --cached --quiet; then
   log "No staged changes — pushing existing commits only."
 else
   git commit -m "$(cat <<'EOF'
-Fix demo review 404, login redirect loops, and broken lang URLs.
+Fix portal nav, typecheck, and local verify tooling.
 
-Restore proj_demo_arc_nova from tombstones, sanitize malformed ?lang= links in middleware, and block cross-role post-login redirects so brand review pages load reliably in local demo mode.
+Sidebar active state follows usePathname; mobile nav uses iconKey for client components; restore demo project from tombstones; sanitize broken lang URLs and block cross-role login redirects; typecheck fixes for workspace review, brand order notes, publish form action, certification dialog, and sprint13 verify; add verify-local, dev:fix, and build:clean scripts.
 EOF
 )"
   log "Committed: $(git rev-parse HEAD)"

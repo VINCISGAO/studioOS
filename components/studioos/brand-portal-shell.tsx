@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { PortalMobileNav } from "@/components/studioos/portal-mobile-nav";
+import { PortalMobileNav, type PortalMobileNavIconKey } from "@/components/studioos/portal-mobile-nav";
 import { LanguageSwitcher, LanguageSwitcherFallback } from "@/components/language-switcher";
 import { MarketingHomeLink } from "@/components/studioos/marketing-home-link";
 import { StudioUserMenu } from "@/components/studioos/studio-user-menu";
@@ -178,11 +178,11 @@ export function BrandPortalShell({
               <PortalMobileNav
                 locale={locale}
                 pathname={pathname}
-                items={brandPortalNavItems.map(({ href, labelKey, icon }) => ({
+                items={brandPortalNavItems.map(({ href, labelKey }) => ({
                   id: labelKey,
                   href,
                   label: nav[labelKey],
-                  icon
+                  iconKey: labelKey as PortalMobileNavIconKey
                 }))}
               />
             </div>

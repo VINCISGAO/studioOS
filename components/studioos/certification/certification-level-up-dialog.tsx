@@ -45,9 +45,9 @@ export function CertificationLevelUpDialog({
   return (
     <Dialog open={open} onOpenChange={() => undefined}>
       <DialogContent
-        showCloseButton={false}
         className={cn(
           "max-h-[90vh] gap-0 overflow-hidden border-violet-200/80 p-0 sm:max-w-xl",
+          "[&>button.absolute]:hidden",
           "shadow-[0_0_0_1px_rgba(139,92,246,0.15),0_24px_80px_rgba(88,28,135,0.25)]"
         )}
       >

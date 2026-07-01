@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { PortalMobileNav } from "@/components/studioos/portal-mobile-nav";
+import { PortalMobileNav, type PortalMobileNavIconKey } from "@/components/studioos/portal-mobile-nav";
 import { MarketingHomeLink } from "@/components/studioos/marketing-home-link";
 import { signOutAction } from "@/app/actions";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -27,17 +27,17 @@ import {
 import { adminPortalRoutes } from "@/lib/studioos/admin-portal-routes";
 
 const navItems = [
-  { href: adminPortalRoutes.dashboard, label: { en: "Overview", zh: "总览" }, icon: LayoutDashboard },
-  { href: adminPortalRoutes.brands, label: { en: "Brands", zh: "Brands" }, icon: Building2 },
-  { href: adminPortalRoutes.projects, label: { en: "Projects", zh: "Projects" }, icon: Clapperboard },
-  { href: adminPortalRoutes.studios, label: { en: "Studios", zh: "Studios" }, icon: Users },
-  { href: adminPortalRoutes.payments, label: { en: "Payments", zh: "Payments" }, icon: CreditCard },
-  { href: adminPortalRoutes.membership, label: { en: "Membership", zh: "会员" }, icon: Crown },
-  { href: adminPortalRoutes.disputes, label: { en: "Disputes", zh: "争议" }, icon: Scale },
-  { href: adminPortalRoutes.audit, label: { en: "Audit", zh: "审计" }, icon: ScrollText },
-  { href: adminPortalRoutes.featureFlags, label: { en: "Flags", zh: "开关" }, icon: Flag },
-  { href: adminPortalRoutes.quality, label: { en: "Quality", zh: "Quality" }, icon: ShieldCheck },
-  { href: adminPortalRoutes.support, label: { en: "Support", zh: "Support" }, icon: Headphones }
+  { href: adminPortalRoutes.dashboard, label: { en: "Overview", zh: "总览" }, iconKey: "layoutDashboard" as const, icon: LayoutDashboard },
+  { href: adminPortalRoutes.brands, label: { en: "Brands", zh: "Brands" }, iconKey: "brands" as const, icon: Building2 },
+  { href: adminPortalRoutes.projects, label: { en: "Projects", zh: "Projects" }, iconKey: "adminProjects" as const, icon: Clapperboard },
+  { href: adminPortalRoutes.studios, label: { en: "Studios", zh: "Studios" }, iconKey: "studios" as const, icon: Users },
+  { href: adminPortalRoutes.payments, label: { en: "Payments", zh: "Payments" }, iconKey: "payments" as const, icon: CreditCard },
+  { href: adminPortalRoutes.membership, label: { en: "Membership", zh: "会员" }, iconKey: "membership" as const, icon: Crown },
+  { href: adminPortalRoutes.disputes, label: { en: "Disputes", zh: "争议" }, iconKey: "disputes" as const, icon: Scale },
+  { href: adminPortalRoutes.audit, label: { en: "Audit", zh: "审计" }, iconKey: "audit" as const, icon: ScrollText },
+  { href: adminPortalRoutes.featureFlags, label: { en: "Flags", zh: "开关" }, iconKey: "featureFlags" as const, icon: Flag },
+  { href: adminPortalRoutes.quality, label: { en: "Quality", zh: "Quality" }, iconKey: "quality" as const, icon: ShieldCheck },
+  { href: adminPortalRoutes.support, label: { en: "Support", zh: "Support" }, iconKey: "support" as const, icon: Headphones }
 ];
 
 export function AdminPortalShell({
@@ -91,12 +91,12 @@ export function AdminPortalShell({
             locale={locale}
             pathname={pathname}
             items={[
-              { id: "home", href: "/", label: locale === "zh" ? "首页" : "Home", icon: Home },
-              ...navItems.map(({ href, label, icon }) => ({
+              { id: "home", href: "/", label: locale === "zh" ? "首页" : "Home", iconKey: "home" },
+              ...navItems.map(({ href, label, iconKey }) => ({
                 id: href,
                 href,
                 label: label[locale],
-                icon
+                iconKey
               }))
             ]}
           />

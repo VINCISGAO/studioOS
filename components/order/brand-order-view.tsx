@@ -20,6 +20,7 @@ import {
   deliverableDownloadHref,
   isDeliverableVideoPurged
 } from "@/lib/studioos/deliverable-video-policy-shared";
+import { deliverableNotesForViewer } from "@/lib/studioos/deliverable-notes";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 const copy = {

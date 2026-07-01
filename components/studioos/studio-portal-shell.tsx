@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { PortalMobileNav } from "@/components/studioos/portal-mobile-nav";
+import { PortalMobileNav, type PortalMobileNavIconKey } from "@/components/studioos/portal-mobile-nav";
 import { StudioNotificationBell } from "@/components/studioos/studio-notification-bell";
 import { StudioUserMenu } from "@/components/studioos/studio-user-menu";
 import { MarketingHomeLink } from "@/components/studioos/marketing-home-link";
@@ -15,7 +15,7 @@ import type { Locale } from "@/lib/i18n";
 import type { CreatorNotification } from "@/lib/notification-types";
 import type { Creator } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { Lock, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 
 function studioInitials(name: string) {
   return name
@@ -168,14 +168,17 @@ export function StudioPortalShell({
                 <PortalMobileNav
                   locale={locale}
                   pathname={pathname}
-                  items={creatorPortalNavItems.map(({ href, labelKey, icon, requiresBusinessAccess }) => ({
+                  items={creatorPortalNavItems.map(({ href, labelKey, requiresBusinessAccess }) => ({
                     id: labelKey,
                     href:
                       requiresBusinessAccess && !canUseBusinessFeatures
                         ? creatorPortalRoutes.deposit
                         : href,
                     label: nav[labelKey],
-                    icon: requiresBusinessAccess && !canUseBusinessFeatures ? Lock : icon
+                    iconKey:
+                      requiresBusinessAccess && !canUseBusinessFeatures
+                        ? ("lock" as const)
+                        : (labelKey as PortalMobileNavIconKey)
                   }))}
                 />
               </div>
