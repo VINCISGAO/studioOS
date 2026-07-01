@@ -16,7 +16,7 @@ import {
   Smartphone,
   Wallet
 } from "lucide-react";
-import { payOrderAction } from "@/app/order-actions";
+import { payBrandCampaignCheckoutAction } from "@/app/brand-payment-actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -209,7 +209,7 @@ export function BrandCheckoutPanel({
       </div>
 
       <div className="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm">
-        <form action={payOrderAction}>
+        <form action={payBrandCampaignCheckoutAction}>
           <input type="hidden" name="lang" value={locale} />
           <input type="hidden" name="order_id" value={order.id} />
           <input type="hidden" name="project_id" value={projectId} />
