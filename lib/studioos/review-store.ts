@@ -1,4 +1,7 @@
 import { dataStorePath, readDataJson, writeDataJson } from "@/lib/serverless-store";
+import { getOrder } from "@/lib/order-service";
+import { reviewPortalService } from "@/features/review/review-portal.service";
+import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 
 export type ReviewCommentStatus = "open" | "resolved";
 
@@ -180,6 +183,21 @@ function ensureDemoComments(store: ReviewStore): ReviewStore {
 }
 
 export async function listReviewComments(orderId: string, version?: number): Promise<ReviewComment[]> {
+  if (hasDatabaseUrl()) {
+    const order = await getOrder(orderId);
+    if (order?.project_id) {
+      const fromPrisma = await reviewPortalService.listCommentsForLegacyOrder(
+        orderId,
+        order.project_id
+      );
+      if (fromPrisma) {
+        return fromPrisma.filter(
+          (item) => version === undefined || item.version === version
+        );
+      }
+    }
+  }
+
   const store = await readStore();
   return store.comments
     .filter((item) => item.order_id === orderId && (version === undefined || item.version === version))

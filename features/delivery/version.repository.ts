@@ -19,6 +19,16 @@ export class VersionRepository {
     });
   }
 
+  async findByCampaignAndVersionNumber(
+    campaignId: string,
+    versionNumber: number
+  ): Promise<CampaignVersion | null> {
+    if (!hasDatabaseUrl()) return null;
+    return prisma.campaignVersion.findFirst({
+      where: { campaignId, versionNumber, deletedAt: null }
+    });
+  }
+
   async getNextVersionNumber(campaignId: string): Promise<number> {
     const latest = await prisma.campaignVersion.findFirst({
       where: { campaignId, deletedAt: null },
@@ -50,7 +60,7 @@ export class VersionRepository {
         mimeType: input.mimeType ?? null,
         fileSizeBytes: input.fileSizeBytes ?? null,
         status: "READY",
-        reviewStatus: "WAITING",
+        reviewStatus: "READY",
         watermark: true
       }
     });

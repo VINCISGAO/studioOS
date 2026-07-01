@@ -12,6 +12,7 @@ import { saveReviewVideoUpload } from "@/lib/studioos/video-upload";
 import { campaignRepository } from "@/features/campaign/campaign.repository";
 import { versionService } from "@/features/delivery/version.service";
 import { MAX_CAMPAIGN_VERSIONS } from "@/features/delivery/version.repository";
+import { reviewPortalService } from "@/features/review/review-portal.service";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 
 function normalizeLang(raw: FormDataEntryValue | null): Locale {
@@ -59,6 +60,41 @@ export async function addReviewCommentAction(formData: FormData) {
     return { ok: false as const, error: lang === "zh" ? "无权限" : "Unauthorized" };
   }
 
+  if (hasDatabaseUrl() && order.project_id) {
+    const campaign = await campaignRepository.findByLegacyProjectId(order.project_id);
+    if (campaign) {
+      const result = await reviewPortalService.addCommentForLegacyOrder({
+        orderId,
+        legacyProjectId: order.project_id,
+        brandEmail: clientEmail.toLowerCase(),
+        version,
+        timestampSec: timestampSec,
+        body,
+        posX: posX,
+        posY: posY,
+        issueType,
+        locale: lang
+      });
+
+      if (!result.ok) {
+        return {
+          ok: false as const,
+          error:
+            result.error === "invalid-status"
+              ? lang === "zh"
+                ? "当前版本不可添加批注"
+                : "Comments are not allowed for this version"
+              : lang === "zh"
+                ? "无法添加批注"
+                : "Could not add comment"
+        };
+      }
+
+      revalidateReview(orderId, order.project_id);
+      return { ok: true as const, comment: result.comment };
+    }
+  }
+
   const comment = await addReviewComment({
     order_id: orderId,
     version,
@@ -89,6 +125,28 @@ export async function resolveReviewCommentAction(formData: FormData) {
     return { ok: false as const, error: lang === "zh" ? "无权限" : "Unauthorized" };
   }
 
+  if (hasDatabaseUrl() && order.project_id) {
+    const campaign = await campaignRepository.findByLegacyProjectId(order.project_id);
+    if (campaign) {
+      const result = await reviewPortalService.resolveCommentForLegacyOrder({
+        orderId,
+        legacyProjectId: order.project_id,
+        legacyCreatorId: creatorId,
+        commentId
+      });
+
+      if (!result.ok) {
+        return {
+          ok: false as const,
+          error: lang === "zh" ? "批注不存在" : "Comment not found"
+        };
+      }
+
+      revalidateReview(orderId, order.project_id);
+      return { ok: true as const, comment: result.comment };
+    }
+  }
+
   const comment = await resolveReviewComment(commentId, orderId);
   if (!comment) {
     return { ok: false as const, error: lang === "zh" ? "批注不存在" : "Comment not found" };
@@ -110,6 +168,25 @@ export async function deleteReviewCommentAction(formData: FormData) {
   const order = await getOrder(orderId);
   if (!order || !clientEmail || order.client_email !== clientEmail.toLowerCase()) {
     return { ok: false as const, error: lang === "zh" ? "无权限" : "Unauthorized" };
+  }
+
+  if (hasDatabaseUrl() && order.project_id) {
+    const campaign = await campaignRepository.findByLegacyProjectId(order.project_id);
+    if (campaign) {
+      const result = await reviewPortalService.deleteCommentForLegacyOrder({
+        orderId,
+        legacyProjectId: order.project_id,
+        brandEmail: clientEmail.toLowerCase(),
+        commentId
+      });
+
+      if (!result.ok) {
+        return { ok: false as const, error: lang === "zh" ? "批注不存在" : "Comment not found" };
+      }
+
+      revalidateReview(orderId, order.project_id);
+      return { ok: true as const, commentId: result.commentId };
+    }
   }
 
   const deleted = await deleteReviewComment(commentId, orderId);

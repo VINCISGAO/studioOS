@@ -23,6 +23,9 @@ import { getClientPreferredLocale } from "@/lib/studioos/client-locale";
 import { translateForClient } from "@/lib/studioos/translate";
 import { getStripe } from "@/lib/stripe";
 import { syncBrandOrderPaid } from "@/lib/studioos/brand-checkout-service";
+import { campaignRepository } from "@/features/campaign/campaign.repository";
+import { reviewPortalService } from "@/features/review/review-portal.service";
+import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 
 function normalizeLang(raw: FormDataEntryValue | null): Locale {
   return String(raw ?? "en") === "zh" ? "zh" : "en";
@@ -258,6 +261,31 @@ export async function approveDeliveryAction(formData: FormData) {
     redirect(withLocale("/dashboard", lang));
   }
 
+  if (hasDatabaseUrl() && targetProjectId) {
+    const campaign = await campaignRepository.findByLegacyProjectId(targetProjectId);
+    if (campaign && clientEmail) {
+      const result = await reviewPortalService.approveForLegacyOrder({
+        orderId,
+        legacyProjectId: targetProjectId,
+        brandEmail: clientEmail.toLowerCase(),
+        locale: lang
+      });
+
+      if (result.ok) {
+        revalidatePath("/studio");
+        revalidatePath("/studio/messages");
+        revalidatePath(`/brand/projects/${targetProjectId}`);
+        revalidatePath(`/brand/projects/${targetProjectId}/review`);
+
+        const completedPath = brandReviewPath(targetProjectId, lang, "?completed=1");
+        redirect(completedPath ?? withLocale(`/orders/${orderId}?completed=1`, lang));
+      }
+
+      const reviewPath = brandReviewPath(targetProjectId, lang, "?error=approve");
+      redirect(reviewPath ?? withLocale(`/orders/${orderId}?error=approve`, lang));
+    }
+  }
+
   const updated = await approveOrderDelivery(orderId);
   if (!updated) {
     const reviewPath = brandReviewPath(targetProjectId, lang, "?error=approve");
@@ -298,6 +326,32 @@ export async function requestRevisionAction(formData: FormData) {
   const clientEmail = await getCurrentClientEmail();
   if (!clientOwnsOrder(clientEmail, order.client_email)) {
     redirect(withLocale("/dashboard", lang));
+  }
+
+  if (hasDatabaseUrl() && targetProjectId) {
+    const campaign = await campaignRepository.findByLegacyProjectId(targetProjectId);
+    if (campaign && clientEmail) {
+      const result = await reviewPortalService.requestRevisionForLegacyOrder({
+        orderId,
+        legacyProjectId: targetProjectId,
+        brandEmail: clientEmail.toLowerCase(),
+        revisionNotes,
+        locale: lang
+      });
+
+      if (result.ok) {
+        revalidatePath("/studio");
+        revalidatePath("/studio/messages");
+        revalidatePath(`/brand/projects/${targetProjectId}`);
+        revalidatePath(`/brand/projects/${targetProjectId}/review`);
+
+        const revisionPath = brandReviewPath(targetProjectId, lang, "?revision=requested");
+        redirect(revisionPath ?? withLocale(`/orders/${orderId}?revision=requested`, lang));
+      }
+
+      const reviewPath = brandReviewPath(targetProjectId, lang, "?error=revision");
+      redirect(reviewPath ?? withLocale(`/orders/${orderId}?error=revision`, lang));
+    }
   }
 
   const updated = await requestOrderRevision(orderId, revisionNotes);
