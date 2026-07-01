@@ -7,6 +7,7 @@ import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
 import { getDeliverables, getOrder, getOrderForProject } from "@/lib/order-service";
 import { getProject } from "@/lib/project-service";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
+import { deliveryService } from "@/features/delivery/delivery.service";
 import { listReviewComments } from "@/lib/studioos/review-store";
 
 type Props = {
@@ -51,9 +52,10 @@ export default async function BrandProjectReviewPage({ params, searchParams }: P
   }
 
   const orderForReview = linkedOrder ?? (resolvedProjectId ? await getOrderForProject(resolvedProjectId) : null);
-  const [deliverables, comments] = await Promise.all([
+  const [deliverables, comments, delivery] = await Promise.all([
     orderForReview ? getDeliverables(orderForReview.id) : Promise.resolve([]),
-    orderForReview ? listReviewComments(orderForReview.id) : Promise.resolve([])
+    orderForReview ? listReviewComments(orderForReview.id) : Promise.resolve([]),
+    deliveryService.getForLegacyProject(resolvedProjectId)
   ]);
 
   const campaignTitle =
@@ -79,7 +81,11 @@ export default async function BrandProjectReviewPage({ params, searchParams }: P
         ? locale === "zh"
           ? "暂时无法提交修改请求，请稍后重试。"
           : "Could not request changes. Please try again."
-        : undefined;
+        : query.error === "download"
+          ? locale === "zh"
+            ? "暂时无法下载成片，请确认最终版已交付后重试。"
+            : "Could not download final delivery. Make sure the studio has marked a final version."
+          : undefined;
 
   if (!orderForReview || !deliverables.length) {
     return (
@@ -120,6 +126,7 @@ export default async function BrandProjectReviewPage({ params, searchParams }: P
         backLabel={locale === "zh" ? "返回项目" : "Back to project"}
         flash={flash}
         actionError={actionError}
+        delivery={delivery}
       />
     </div>
   );

@@ -90,6 +90,11 @@ enum ReviewStatus {
   LOCKED
 }
 
+enum DeliveryStatus {
+  READY
+  LOCKED
+}
+
 enum AnnotationType {
   CIRCLE
   RECTANGLE
@@ -367,6 +372,7 @@ model Campaign {
   messages      CommunicationMessage[]
   memoryFacts   MemoryFact[]
   orderCommission OrderCommission?
+  deliveries      CampaignDelivery[]
 
   @@index([brandId])
   @@index([creatorId])
@@ -432,6 +438,7 @@ model CampaignVersion {
   campaign   Campaign          @relation(fields: [campaignId], references: [id])
   comments   ReviewComment[]
   annotations ReviewAnnotation[]
+  deliveries CampaignDelivery[]
 
   @@unique([campaignId, versionNumber])
   @@index([campaignId])
@@ -486,6 +493,25 @@ model ReviewAnnotation {
   @@index([commentId])
   @@index([versionId])
   @@map("review_annotations")
+}
+
+model CampaignDelivery {
+  id          String         @id @default(uuid())
+  campaignId  String         @unique @map("campaign_id")
+  versionId   String         @map("version_id")
+  downloadUrl String         @map("download_url")
+  deliveredAt DateTime       @default(now()) @map("delivered_at")
+  acceptedAt  DateTime?      @map("accepted_at")
+  status      DeliveryStatus @default(READY)
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+
+  campaign Campaign        @relation(fields: [campaignId], references: [id])
+  version  CampaignVersion @relation(fields: [versionId], references: [id])
+
+  @@index([versionId])
+  @@index([status])
+  @@map("campaign_deliveries")
 }
 
 // ─── Creator Matching ────────────────────────────────────────────────────────

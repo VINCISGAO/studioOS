@@ -8,6 +8,8 @@ import { ReviewCenterEmptyUpload } from "@/components/studioos/review-engine/rev
 import { ReviewCenterStepper } from "@/components/studioos/review-engine/review-center-stepper";
 import { ReviewCenterVersionStrip } from "@/components/studioos/review-engine/review-center-version-strip";
 import { ReviewDeliveryDecisionForms } from "@/components/studioos/review-engine/review-delivery-decision-forms";
+import { ReviewDeliveryFinalPanel } from "@/components/studioos/review-engine/review-delivery-final-panel";
+import type { CampaignDeliveryView } from "@/features/delivery/delivery.service";
 import { useReviewCenterActions } from "@/components/studioos/review-engine/use-review-center-actions";
 import { Button } from "@/components/ui/button";
 import type { Locale } from "@/lib/i18n";
@@ -65,7 +67,8 @@ export function FrameioReviewCenter({
   backLabel,
   variant = "fullscreen",
   flash,
-  actionError
+  actionError,
+  delivery
 }: {
   locale: Locale;
   order: StoredOrder;
@@ -79,6 +82,7 @@ export function FrameioReviewCenter({
   variant?: "fullscreen" | "embedded";
   flash?: "completed" | "revision";
   actionError?: string;
+  delivery?: CampaignDeliveryView | null;
 }) {
   const t = copy[locale];
   const embedded = variant === "embedded";
@@ -189,6 +193,28 @@ export function FrameioReviewCenter({
               projectId={order.project_id}
               requestChangesLabel={t.requestChanges}
               approveLabel={t.approve}
+            />
+          ) : null}
+          {role === "brand" && orderApproved ? (
+            <ReviewDeliveryFinalPanel
+              locale={locale}
+              role="brand"
+              orderId={order.id}
+              projectId={order.project_id}
+              activeVersion={activeVersion}
+              orderApproved={orderApproved}
+              delivery={delivery ?? null}
+            />
+          ) : null}
+          {role === "creator" && orderApproved ? (
+            <ReviewDeliveryFinalPanel
+              locale={locale}
+              role="creator"
+              orderId={order.id}
+              projectId={order.project_id}
+              activeVersion={activeVersion}
+              orderApproved={orderApproved}
+              delivery={delivery ?? null}
             />
           ) : null}
           {role === "creator" && canCreatorUpload ? (

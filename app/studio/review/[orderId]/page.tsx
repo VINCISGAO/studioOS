@@ -7,6 +7,7 @@ import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
 import { getDeliverables, getOrder } from "@/lib/order-service";
 import { getProject } from "@/lib/project-service";
 import { creatorPortalRoutes } from "@/lib/studioos/creator-portal-routes";
+import { deliveryService } from "@/features/delivery/delivery.service";
 import { listReviewComments } from "@/lib/studioos/review-store";
 
 export default async function StudioReviewOrderPage({
@@ -29,9 +30,11 @@ export default async function StudioReviewOrderPage({
   }
 
   const project = order.project_id ? await getProject(order.project_id) : null;
-  const [deliverables, comments] = await Promise.all([
+  const legacyProjectId = order.project_id ?? order.id;
+  const [deliverables, comments, delivery] = await Promise.all([
     getDeliverables(order.id),
-    listReviewComments(order.id)
+    listReviewComments(order.id),
+    deliveryService.getForLegacyProject(legacyProjectId)
   ]);
 
   const title =
@@ -51,6 +54,7 @@ export default async function StudioReviewOrderPage({
         variant="embedded"
         backHref={withLocale(creatorPortalRoutes.reviewHub, locale)}
         backLabel={locale === "zh" ? "返回审片中心" : "Back to review center"}
+        delivery={delivery}
       />
     </div>
   );
