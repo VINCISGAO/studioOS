@@ -1,5 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { preferDemoAuth } from "@/lib/runtime-flags";
+import { isAdminRouteRole, normalizeRouteRole } from "@/lib/auth/route-access";
+import { demoRedirectForRole } from "@/lib/demo-auth";
 import { DEMO_SESSION_COOKIE, LOCALE_COOKIE } from "@/lib/auth-config";
 import { parseDemoSession } from "@/lib/demo-session";
 
@@ -113,7 +116,8 @@ export async function middleware(request: NextRequest) {
   }
 
   const isDashboardRoute = pathname.startsWith("/dashboard");
-  const isAdminRoute = pathname.startsWith("/admin");
+  const isAdminLoginRoute = pathname === "/admin/login";
+  const isAdminRoute = pathname.startsWith("/admin") && !isAdminLoginRoute;
   const isCreatorWorkspaceRoute =
     pathname === "/creator" ||
     pathname.startsWith("/creator/orders") ||
@@ -124,31 +128,40 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  function redirectToRoleHome(request: NextRequest, role: ReturnType<typeof normalizeRouteRole>) {
+    const url = withLang(request.nextUrl.clone(), request);
+    url.pathname = demoRedirectForRole(role ?? "client");
+    return NextResponse.redirect(url);
+  }
 
-  if (!supabaseUrl || !supabaseAnonKey) {
-    if (isProtectedRoute) {
-      const demoSession = parseDemoSession(request.cookies.get(DEMO_SESSION_COOKIE)?.value);
+  function authorizeDemoSession(request: NextRequest, response: NextResponse) {
+    const demoSession = parseDemoSession(request.cookies.get(DEMO_SESSION_COOKIE)?.value);
+    if (!demoSession) {
+      return redirectToLogin(request);
+    }
 
-      if (!demoSession) {
-        return redirectToLogin(request);
-      }
+    if (isAdminRoute && !isAdminRouteRole(demoSession.role)) {
+      return redirectToAdminLogin(request);
+    }
 
-      if (isAdminRoute && demoSession.role !== "admin") {
-        const url = withLang(request.nextUrl.clone(), request);
-        url.pathname = "/dashboard";
-        return NextResponse.redirect(url);
-      }
-
-      if (isCreatorWorkspaceRoute && !["creator", "admin"].includes(demoSession.role)) {
-        const url = withLang(request.nextUrl.clone(), request);
-        url.pathname = "/dashboard";
-        return NextResponse.redirect(url);
-      }
+    if (isCreatorWorkspaceRoute && !["creator", "admin"].includes(demoSession.role)) {
+      return redirectToRoleHome(request, normalizeRouteRole(demoSession.role));
     }
 
     return response;
+  }
+
+  const demoSession = parseDemoSession(request.cookies.get(DEMO_SESSION_COOKIE)?.value);
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const useDemoSessionAuth = Boolean(demoSession) && (preferDemoAuth() || !supabaseUrl || !supabaseAnonKey);
+
+  if (useDemoSessionAuth) {
+    return authorizeDemoSession(request, response);
+  }
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return authorizeDemoSession(request, response);
   }
 
   const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
@@ -171,39 +184,61 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (isProtectedRoute && !user) {
+    if (demoSession) {
+      return authorizeDemoSession(request, response);
+    }
+    if (isAdminRoute) {
+      return redirectToAdminLogin(request);
+    }
     return redirectToLogin(request);
   }
 
   if ((isAdminRoute || isCreatorWorkspaceRoute) && user) {
-    const { data: profile } = await supabase
-      .from("users")
-      .select("role")
-      .eq("id", user.id)
-      .single();
+    const [{ data: legacyProfile }, { data: mvpProfile }] = await Promise.all([
+      supabase.from("users").select("role").eq("id", user.id).maybeSingle(),
+      supabase.from("profiles").select("role").eq("id", user.id).maybeSingle()
+    ]);
 
-    if (isAdminRoute && profile?.role !== "admin") {
-      const url = withLang(request.nextUrl.clone(), request);
-      url.pathname = "/dashboard";
-      return NextResponse.redirect(url);
+    const routeRole = normalizeRouteRole(
+      legacyProfile?.role ?? mvpProfile?.role ?? user.user_metadata?.role
+    );
+
+    if (isAdminRoute && !isAdminRouteRole(routeRole)) {
+      return redirectToAdminLogin(request);
     }
 
-    if (isCreatorWorkspaceRoute && !["creator", "admin"].includes(profile?.role ?? "")) {
-      const url = withLang(request.nextUrl.clone(), request);
-      url.pathname = "/dashboard";
-      return NextResponse.redirect(url);
+    if (isCreatorWorkspaceRoute && routeRole !== "creator" && !isAdminRouteRole(routeRole)) {
+      return redirectToRoleHome(request, routeRole);
     }
   }
 
   return response;
 }
 
+function redirectToAdminLogin(request: NextRequest) {
+  const url = withLang(request.nextUrl.clone(), request);
+  url.pathname = "/admin/login";
+  url.search = "";
+  url.searchParams.set("next", `${request.nextUrl.pathname}${request.nextUrl.search}`);
+  url.searchParams.set("lang", resolveLang(request));
+  const response = NextResponse.redirect(url);
+  response.cookies.delete(DEMO_SESSION_COOKIE);
+  return response;
+}
+
 function redirectToLogin(request: NextRequest, error?: string) {
+  if (request.nextUrl.pathname.startsWith("/admin")) {
+    return redirectToAdminLogin(request);
+  }
+
   const url = withLang(request.nextUrl.clone(), request);
   url.pathname = "/login";
+  url.search = "";
   url.searchParams.set("next", `${request.nextUrl.pathname}${request.nextUrl.search}`);
   if (error) {
     url.searchParams.set("error", error);
   }
+  url.searchParams.set("lang", resolveLang(request));
   return NextResponse.redirect(url);
 }
 

@@ -1,0 +1,15 @@
+=== typecheck (pending local run) ===
+Fixed 5 TS errors — run: npm run typecheck
+
+Previous errors (FIXED):
+1. frameio-review-center.tsx — PinDraft | null guard
+2. version.service.ts — activityService import
+3. campaign-selection.service.ts — escrow status comparison
+4. review-portal-ui-state.ts — settlement-ready status comparison
+5. happy-path-transaction-verify.ts — CampaignState import from state-machine
+
+=== happy-path:verify (pending local run) ===
+Run: npm run happy-path:verify
+
+=== production:verify (pending local run) ===
+Run: npm run production:verify

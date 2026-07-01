@@ -3,14 +3,17 @@
 import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
 import { ArrowLeft } from "lucide-react";
-import { ReviewWorkspace } from "@/features/review/ReviewWorkspace";
+import { ReviewCenterCommentPanel } from "@/components/studioos/review-engine/review-center-comment-panel";
 import { ReviewCenterEmptyUpload } from "@/components/studioos/review-engine/review-center-empty-upload";
+import { ReviewCenterPlayer, type PinDraft } from "@/components/studioos/review-engine/review-center-player";
 import { ReviewCenterStepper } from "@/components/studioos/review-engine/review-center-stepper";
 import { ReviewCenterVersionStrip } from "@/components/studioos/review-engine/review-center-version-strip";
 import { ReviewDeliveryDecisionForms } from "@/components/studioos/review-engine/review-delivery-decision-forms";
 import { ReviewDeliveryFinalPanel } from "@/components/studioos/review-engine/review-delivery-final-panel";
 import type { CampaignDeliveryView } from "@/features/delivery/delivery.service";
+import type { ReviewPortalUiState } from "@/features/review/review-portal-ui-state";
 import { useReviewCenterActions } from "@/components/studioos/review-engine/use-review-center-actions";
+import { ReviewSettlementReleasePanel } from "@/components/studioos/review-engine/review-settlement-release-panel";
 import { Button } from "@/components/ui/button";
 import type { Locale } from "@/lib/i18n";
 import type { StoredDeliverable, StoredOrder } from "@/lib/order-types";
@@ -60,7 +63,7 @@ export function FrameioReviewCenter({
   order,
   campaignTitle,
   deliverables,
-  initialComments: _initialComments,
+  initialComments,
   initialVersion,
   role,
   backHref,
@@ -68,7 +71,8 @@ export function FrameioReviewCenter({
   variant = "fullscreen",
   flash,
   actionError,
-  delivery
+  delivery,
+  reviewUi
 }: {
   locale: Locale;
   order: StoredOrder;
@@ -83,13 +87,23 @@ export function FrameioReviewCenter({
   flash?: "completed" | "revision";
   actionError?: string;
   delivery?: CampaignDeliveryView | null;
+  reviewUi?: ReviewPortalUiState | null;
 }) {
   const t = copy[locale];
   const embedded = variant === "embedded";
   const resolvedBackLabel = backLabel ?? t.back;
   const fileRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
   const [uploadNotes, setUploadNotes] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [comments, setComments] = useState(initialComments);
+  const [currentSec, setCurrentSec] = useState(0);
+  const [durationSec, setDurationSec] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [pinDraft, setPinDraft] = useState<PinDraft | null>(null);
+  const [pinText, setPinText] = useState("");
+  const [activeCommentId, setActiveCommentId] = useState<string | null>(null);
 
   const sortedVersions = useMemo(
     () => [...deliverables].sort((a, b) => a.version - b.version),
@@ -102,29 +116,78 @@ export function FrameioReviewCenter({
     sortedVersions.find((item) => item.version === activeVersion) ??
     sortedVersions[sortedVersions.length - 1];
   const videoUrl = activeDeliverable?.file_url ?? "";
-  const canBrandReview = role === "brand" && ["review", "revision"].includes(order.status);
+  const derivedStatus = reviewUi?.derivedOrderStatus ?? order.status;
+  const canBrandReview =
+    reviewUi?.canBrandReview ??
+    (role === "brand" && ["review", "revision"].includes(order.status));
   const canCreatorUpload =
-    role === "creator" && ["in_production", "revision", "review"].includes(order.status);
-  const orderApproved = order.status === "completed";
+    reviewUi?.canCreatorUpload ??
+    (role === "creator" && ["in_production", "revision", "review"].includes(order.status));
+  const orderApproved = reviewUi?.orderApproved ?? order.status === "completed";
 
-  const reviewVersions = sortedVersions.map((item) => ({
-    version: item.version,
-    label: `Version ${item.version}`,
-    uploadedAt: item.created_at
-  }));
+  const versionComments = useMemo(
+    () => comments.filter((item) => item.version === activeVersion),
+    [comments, activeVersion]
+  );
+  const canAnnotate = role === "brand" && canBrandReview && !isPlaying;
 
-  const { pending, uploadVersion } = useReviewCenterActions({
+  const { pending, savePinComment, uploadVersion } = useReviewCenterActions({
     locale,
     orderId: order.id,
     activeVersion,
-    onCommentsChange: () => undefined,
+    onCommentsChange: (updater) => setComments(updater),
     onError: setError,
     onUploadComplete: () => {
       if (fileRef.current) fileRef.current.value = "";
       setUploadNotes("");
     },
-    onPinClear: () => undefined
+    onPinClear: () => {
+      setPinDraft(null);
+      setPinText("");
+    }
   });
+
+  function handleStageClick(event: React.MouseEvent<HTMLDivElement>) {
+    if (!canAnnotate || pinDraft) return;
+    if ((event.target as HTMLElement).closest("[data-pin-control]")) return;
+    const rect = stageRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    setPinDraft({
+      x: (event.clientX - rect.left) / rect.width,
+      y: (event.clientY - rect.top) / rect.height,
+      seconds: currentSec
+    });
+    setPinText("");
+  }
+
+  function handleSelectComment(comment: ReviewComment) {
+    const video = videoRef.current;
+    if (video) {
+      video.currentTime = comment.timestamp_sec;
+      video.pause();
+    }
+    setCurrentSec(comment.timestamp_sec);
+    setIsPlaying(false);
+    setActiveCommentId(comment.id);
+    setPinDraft(null);
+    setPinText("");
+  }
+
+  function handleTogglePlay() {
+    const video = videoRef.current;
+    if (!video) return;
+    if (video.paused) {
+      void video.play();
+    } else {
+      video.pause();
+    }
+  }
+
+  function handleSeek(sec: number) {
+    const video = videoRef.current;
+    if (video) video.currentTime = sec;
+    setCurrentSec(sec);
+  }
 
   function handlePickFile() {
     fileRef.current?.click();
@@ -138,14 +201,6 @@ export function FrameioReviewCenter({
 
   const isFirstUpload = sortedVersions.length === 0;
   const uploadLabel = isFirstUpload ? t.uploadFirst : t.uploadVersion;
-  const workspaceStatus =
-    order.status === "completed"
-      ? "completed"
-      : order.status === "revision"
-        ? "revision"
-        : order.status === "in_production"
-          ? "in_production"
-          : "review";
 
   return (
     <div
@@ -177,12 +232,12 @@ export function FrameioReviewCenter({
                   "rounded-full px-2.5 py-0.5 font-medium",
                   orderApproved
                     ? "bg-emerald-50 text-emerald-700"
-                    : order.status === "revision"
+                    : derivedStatus === "revision"
                       ? "bg-amber-50 text-amber-800"
                       : "bg-[#5B5CFF]/10 text-[#5B5CFF]"
                 )}
               >
-                {orderStatusLabel(order.status, locale)}
+                {orderStatusLabel(derivedStatus, locale)}
               </span>
             </div>
           </div>
@@ -204,6 +259,13 @@ export function FrameioReviewCenter({
               activeVersion={activeVersion}
               orderApproved={orderApproved}
               delivery={delivery ?? null}
+            />
+          ) : null}
+          {role === "brand" && reviewUi?.canReleaseSettlement && order.project_id ? (
+            <ReviewSettlementReleasePanel
+              locale={locale}
+              projectId={order.project_id}
+              orderId={order.id}
             />
           ) : null}
           {role === "creator" && orderApproved ? (
@@ -232,7 +294,12 @@ export function FrameioReviewCenter({
           ) : null}
         </div>
         <div className="mt-4 overflow-x-auto">
-          <ReviewCenterStepper locale={locale} order={order} deliverableCount={sortedVersions.length} />
+          <ReviewCenterStepper
+            locale={locale}
+            order={order}
+            deliverableCount={sortedVersions.length}
+            activeStepIndex={reviewUi?.workflowStepIndex}
+          />
         </div>
       </header>
 
@@ -248,21 +315,51 @@ export function FrameioReviewCenter({
       <div className="min-h-0 flex-1 p-4 sm:p-6">
         {videoUrl ? (
           <div className="space-y-5">
-            <ReviewWorkspace
-              variant="content"
-              locale={locale}
-              role={role}
-              videoUrl={videoUrl}
-              projectTitle={campaignTitle}
-              orderId={order.id}
-              orderStatus={workspaceStatus}
-              createdAt={order.created_at}
-              versions={reviewVersions}
-              activeVersion={activeVersion}
-              onVersionChange={setActiveVersion}
-              backHref={backHref}
-              canBrandReview={false}
-            />
+            <div className="grid min-h-0 gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
+              <ReviewCenterPlayer
+                locale={locale}
+                videoUrl={videoUrl}
+                videoRef={videoRef}
+                stageRef={stageRef}
+                versionComments={versionComments}
+                pinDraft={pinDraft}
+                pinText={pinText}
+                activeCommentId={activeCommentId}
+                canAnnotate={canAnnotate}
+                canBrandReview={canBrandReview}
+                currentSec={currentSec}
+                durationSec={durationSec}
+                isPlaying={isPlaying}
+                pending={pending}
+                onStageClick={handleStageClick}
+                onPinTextChange={setPinText}
+                onSaveComment={() => {
+                  if (pinDraft) savePinComment(pinDraft, pinText);
+                }}
+                onCancelPin={() => {
+                  setPinDraft(null);
+                  setPinText("");
+                }}
+                onTogglePlay={handleTogglePlay}
+                onSeek={handleSeek}
+                onSelectComment={handleSelectComment}
+                onTimeUpdate={() => setCurrentSec(videoRef.current?.currentTime ?? 0)}
+                onLoadedMetadata={() => setDurationSec(videoRef.current?.duration ?? 0)}
+                onPlay={() => setIsPlaying(true)}
+                onPause={() => setIsPlaying(false)}
+              />
+              <ReviewCenterCommentPanel
+                locale={locale}
+                role={role}
+                orderId={order.id}
+                activeVersion={activeVersion}
+                currentSec={currentSec}
+                comments={comments}
+                activeCommentId={activeCommentId}
+                onCommentsChange={setComments}
+                onSelectComment={handleSelectComment}
+              />
+            </div>
             {role === "creator" && canCreatorUpload ? (
               <ReviewCenterVersionStrip
                 locale={locale}

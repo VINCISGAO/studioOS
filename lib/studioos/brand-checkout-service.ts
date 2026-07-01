@@ -22,9 +22,6 @@ import {
   deliveryDaysFromDeadline,
   parseBudgetMidpoint
 } from "@/lib/studioos/brand-checkout-utils";
-import { notifyCreatorAssignment } from "@/lib/studioos/creator-assignment-notify";
-import { ensureCampaignInvitationsForProject } from "@/lib/studioos/creator-invitation-store";
-import { publishCampaignIntentInvitations } from "@/lib/studioos/campaign-invitation-notify";
 import { getConfirmedBriefText } from "@/lib/studioos/confirmed-brief";
 import { normalizeCampaignStatus } from "@/lib/studioos/project-status";
 import { syncProjectFromOrderEvent } from "@/lib/studioos/project-order-sync";
@@ -161,6 +158,7 @@ export async function startProductionWithSelectedCreator(input: {
   });
 
   const refreshed = (await getProject(project.id)) ?? project;
+  const { notifyCreatorAssignment } = await import("@/lib/studioos/creator-assignment-notify");
   await notifyCreatorAssignment({
     type: "creator_selected",
     creatorId: input.creatorId,
@@ -198,6 +196,7 @@ export async function setupBrandCheckout(input: {
     if (existing.payment_status === "unpaid") {
       await advanceProjectToPaymentPending(project.id);
     }
+    const { notifyCreatorAssignment } = await import("@/lib/studioos/creator-assignment-notify");
     await notifyCreatorAssignment({
       type: "creator_selected",
       creatorId: input.creatorId,
@@ -267,7 +266,10 @@ export async function setupBrandCheckout(input: {
   await updateProject(project.id, { selected_studio_id: input.creatorId });
   await advanceProjectToPaymentPending(project.id);
 
-  await notifyCreatorAssignment({
+  const { notifyCreatorAssignment: notifyAssignment } = await import(
+    "@/lib/studioos/creator-assignment-notify"
+  );
+  await notifyAssignment({
     type: "creator_selected",
     creatorId: input.creatorId,
     order,
@@ -329,6 +331,7 @@ async function assignCreatorToFundedCampaign(input: {
   });
 
   const project = (await getProject(input.project.id)) ?? input.project;
+  const { notifyCreatorAssignment } = await import("@/lib/studioos/creator-assignment-notify");
   await notifyCreatorAssignment({
     type: "creator_selected",
     creatorId: input.creatorId,
@@ -358,6 +361,12 @@ export async function syncBrandOrderPaid(order: StoredOrder) {
       skipPreconditions: true
     });
     const refreshed = (await getProject(order.project_id)) ?? project;
+    const { ensureCampaignInvitationsForProject } = await import(
+      "@/lib/studioos/creator-invitation-store"
+    );
+    const { publishCampaignIntentInvitations } = await import(
+      "@/lib/studioos/campaign-invitation-notify"
+    );
     await ensureCampaignInvitationsForProject(refreshed);
     await publishCampaignIntentInvitations({
       project: refreshed,

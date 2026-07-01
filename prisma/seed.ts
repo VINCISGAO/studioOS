@@ -2,8 +2,8 @@
  * StudioOS database seed — demo users + brand/creator + campaign in review
  * Run: npm run db:seed
  */
-import { PrismaClient, UserRole } from "@prisma/client";
-import { hashPassword } from "../lib/core/password";
+import { PrismaClient, UserRole, type CampaignStatus, type EscrowStatus } from "@prisma/client";
+import { hashPassword } from "../lib/core/password-crypto";
 import { DEMO_PASSWORD, DEMO_USERS } from "../lib/demo-auth";
 
 const prisma = new PrismaClient();
@@ -309,6 +309,7 @@ async function main() {
       });
     }
     await seedDemoDispute(existing.id, "client.arc@studioos.test");
+    await seedAdminDashboardDemo();
     console.log("Demo campaign already exists:", existing.id);
     return;
   }
@@ -391,6 +392,174 @@ async function main() {
 
   console.log("Seeded campaign:", campaign.id, "linked to", DEMO_PROJECT_ID);
   await seedDemoDispute(campaign.id, brand.email);
+  await seedAdminDashboardDemo();
+}
+
+const ADMIN_DEMO_MARKER = "[Admin Demo]";
+
+type AdminDemoCampaign = {
+  title: string;
+  status: CampaignStatus;
+  budget: number;
+  brandEmail: string;
+  creatorEmail?: string;
+  escrowStatus?: EscrowStatus;
+  commission?: boolean;
+  daysAgo?: number;
+};
+
+async function seedAdminDashboardDemo() {
+  const brand = await prisma.user.findUniqueOrThrow({
+    where: { email: "client.arc@studioos.test" }
+  });
+  const brandAlt = await prisma.user.findUniqueOrThrow({
+    where: { email: "client.bright@studioos.test" }
+  });
+  const creator = await prisma.user.findUniqueOrThrow({
+    where: { email: "creator.nova@studioos.test" }
+  });
+  const creatorAlt = await prisma.user.findUniqueOrThrow({
+    where: { email: "creator.signal@studioos.test" }
+  });
+  const admin = await prisma.user.findUniqueOrThrow({
+    where: { email: "admin@studioos.test" }
+  });
+
+  const demos: AdminDemoCampaign[] = [
+    { title: `${ADMIN_DEMO_MARKER} Draft Brief`, status: "DRAFT", budget: 900, brandEmail: brand.email },
+    { title: `${ADMIN_DEMO_MARKER} Match Queue`, status: "MATCHING", budget: 1500, brandEmail: brand.email, creatorEmail: creator.email, daysAgo: 12 },
+    { title: `${ADMIN_DEMO_MARKER} Invitation Sent`, status: "INVITATION_SENT", budget: 1800, brandEmail: brandAlt.email, creatorEmail: creatorAlt.email, daysAgo: 10 },
+    { title: `${ADMIN_DEMO_MARKER} In Production`, status: "PRODUCING", budget: 3200, brandEmail: brand.email, creatorEmail: creator.email, escrowStatus: "HELD", daysAgo: 8 },
+    { title: `${ADMIN_DEMO_MARKER} Under Review`, status: "UNDER_REVIEW", budget: 2800, brandEmail: brandAlt.email, creatorEmail: creator.email, escrowStatus: "HELD", daysAgo: 6 },
+    { title: `${ADMIN_DEMO_MARKER} Settlement`, status: "SETTLEMENT", budget: 4200, brandEmail: brand.email, creatorEmail: creatorAlt.email, escrowStatus: "HELD", commission: true, daysAgo: 4 },
+    { title: `${ADMIN_DEMO_MARKER} Completed`, status: "COMPLETED", budget: 3600, brandEmail: brandAlt.email, creatorEmail: creator.email, escrowStatus: "FULL_RELEASE", commission: true, daysAgo: 2 },
+    { title: `${ADMIN_DEMO_MARKER} Cancelled`, status: "CANCELLED", budget: 1100, brandEmail: brand.email, daysAgo: 1 }
+  ];
+
+  const activityTemplates = [
+    { action: "campaign.created", offsetDays: 13 },
+    { action: "invitation.sent", offsetDays: 11 },
+    { action: "creator.accepted", offsetDays: 10 },
+    { action: "escrow.paid", offsetDays: 9 },
+    { action: "upload.version", offsetDays: 7 },
+    { action: "review.approved", offsetDays: 5 },
+    { action: "settlement.released", offsetDays: 3 },
+    { action: "withdrawal.submitted", offsetDays: 2 },
+    { action: "withdrawal.approved", offsetDays: 1 },
+    { action: "payment.success", offsetDays: 0 }
+  ];
+
+  for (const demo of demos) {
+    const existingCampaign = await prisma.campaign.findFirst({ where: { title: demo.title } });
+    if (existingCampaign) continue;
+
+    const demoBrand = demo.brandEmail === brandAlt.email ? brandAlt : brand;
+    const demoCreator = demo.creatorEmail
+      ? demo.creatorEmail === creatorAlt.email
+        ? creatorAlt
+        : creator
+      : null;
+    const createdAt = new Date();
+    createdAt.setDate(createdAt.getDate() - (demo.daysAgo ?? 0));
+    createdAt.setHours(10, 0, 0, 0);
+
+    const campaign = await prisma.campaign.create({
+      data: {
+        brandId: demoBrand.id,
+        creatorId: demoCreator?.id ?? null,
+        title: demo.title,
+        description: "Admin dashboard demo campaign",
+        budget: demo.budget,
+        currency: "USD",
+        deadline: new Date(Date.now() + 21 * 86400000),
+        platform: "TIKTOK",
+        aspectRatio: "9:16",
+        status: demo.status,
+        createdAt,
+        updatedAt: createdAt
+      }
+    });
+
+    if (demoCreator && demo.escrowStatus) {
+      const remaining = demo.escrowStatus === "HELD" ? demo.budget * 0.85 : 0;
+      const released = demo.budget - remaining;
+      await prisma.escrowPayment.create({
+        data: {
+          campaignId: campaign.id,
+          brandId: demoBrand.id,
+          creatorId: demoCreator.id,
+          amount: demo.budget,
+          releasedAmount: released,
+          remainingAmount: remaining,
+          status: demo.escrowStatus,
+          paymentStatus: "PAID",
+          paidAt: createdAt,
+          createdAt,
+          updatedAt: createdAt
+        }
+      });
+    }
+
+    if (demoCreator && demo.commission) {
+      const feeAmount = demo.budget * 0.08;
+      const commissionAmount = demo.budget * 0.12;
+      const payoutAmount = demo.budget - feeAmount - commissionAmount;
+      const settledAt = new Date(createdAt);
+      settledAt.setDate(settledAt.getDate() + 1);
+      await prisma.orderCommission.create({
+        data: {
+          campaignId: campaign.id,
+          creatorId: demoCreator.id,
+          orderAmount: demo.budget,
+          currency: "USD",
+          clientServiceFeePercentage: 8,
+          clientServiceFeeAmount: feeAmount,
+          creatorCommissionPercentage: 12,
+          creatorCommissionAmount: commissionAmount,
+          creatorPayoutAmount: payoutAmount,
+          platformTotalRevenue: feeAmount + commissionAmount,
+          creatorMembershipTypeAtOrder: "DEFAULT",
+          settledAt,
+          createdAt: settledAt
+        }
+      });
+    }
+  }
+
+  const seededCampaigns = await prisma.campaign.findMany({
+    where: { title: { startsWith: ADMIN_DEMO_MARKER } },
+    orderBy: { createdAt: "asc" },
+    take: 3
+  });
+
+  const existingLogs = await prisma.activityLog.count({
+    where: {
+      action: { in: activityTemplates.map((item) => item.action) },
+      campaign: { title: { startsWith: ADMIN_DEMO_MARKER } }
+    }
+  });
+  if (existingLogs >= activityTemplates.length) {
+    console.log("Admin dashboard demo already seeded");
+    return;
+  }
+
+  for (const template of activityTemplates) {
+    const target = seededCampaigns[template.offsetDays % seededCampaigns.length];
+    if (!target) continue;
+    const logAt = new Date();
+    logAt.setDate(logAt.getDate() - template.offsetDays);
+    logAt.setHours(14, 30, 0, 0);
+    await prisma.activityLog.create({
+      data: {
+        campaignId: target.id,
+        userId: admin.id,
+        action: template.action,
+        createdAt: logAt
+      }
+    });
+  }
+
+  console.log("Seeded admin dashboard demo campaigns");
 }
 
 main()

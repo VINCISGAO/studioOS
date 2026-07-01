@@ -1,14 +1,17 @@
-import { headers } from "next/headers";
+import { readRequestMeta } from "@/lib/core/request-meta";
 import { hasSupabaseConfig } from "@/lib/auth-config";
 import { preferDemoAuth } from "@/lib/can-persist-local-store";
 import { setDemoSession } from "@/lib/demo-auth-server";
 import {
   demoRedirectForRole,
+  DEMO_PASSWORD,
   DEMO_USERS,
   type DemoUser
 } from "@/lib/demo-auth";
+import { hashPassword } from "@/lib/core/password";
 import { authService } from "@/features/auth/auth.service";
 import { buildSessionPayload } from "@/features/auth/session.service";
+import { resolvePostLoginDestination } from "@/lib/auth/post-login-redirect";
 import { userRepository } from "@/features/auth/user.repository";
 import type { UserRole } from "@prisma/client";
 import { getCreatorIdForDemoEmail } from "@/lib/creator-session";
@@ -27,7 +30,7 @@ export type SignInInput = {
   email: string;
   password: string;
   lang: Locale;
-  expectedRole: "brand" | "creator" | "";
+  expectedRole: "brand" | "creator" | "admin" | "";
   nextPath?: string;
 };
 
@@ -35,7 +38,7 @@ export type SignInSuccess = { ok: true; redirectTo: string };
 export type SignInFailure = {
   ok: false;
   error: string;
-  errorCode?: "wrong-role" | "invalid-credentials" | "unsupported-provider";
+  errorCode?: "wrong-role" | "invalid-credentials" | "unsupported-provider" | "admin-required";
   role?: string;
   email?: string;
 };
@@ -49,6 +52,7 @@ function demoRoleToPrisma(role: DemoUser["role"]): UserRole {
 
 async function authenticateDemoLogin(email: string, password: string): Promise<DemoUser | null> {
   const normalized = email.trim().toLowerCase();
+  const normalizedPassword = password.trim();
   const direct = DEMO_USERS.find((user) => user.email === normalized);
 
   if (direct) {
@@ -61,20 +65,20 @@ async function authenticateDemoLogin(email: string, password: string): Promise<D
           return null;
         }
         const expected = settings?.custom_password ?? direct.password;
-        if (password !== expected) {
+        if (normalizedPassword !== expected) {
           return null;
         }
-        return { ...direct, password };
+        return { ...direct, password: normalizedPassword };
       }
     }
 
-    if (direct.password !== password) {
+    if (direct.password !== normalizedPassword) {
       return null;
     }
     return direct;
   }
 
-  const aliasAuth = await authenticateDemoCreatorEmail(email, password);
+  const aliasAuth = await authenticateDemoCreatorEmail(email, normalizedPassword);
   if (!aliasAuth) {
     return null;
   }
@@ -99,24 +103,35 @@ export async function recordCreatorSignIn(email: string) {
     return;
   }
 
-  const headerStore = await headers();
+  const meta = await readRequestMeta();
   await recordCreatorLogin(creatorId, creator, {
-    userAgent: headerStore.get("user-agent") ?? "Unknown",
-    ip:
-      headerStore.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-      headerStore.get("x-real-ip") ??
-      "127.0.0.1"
+    userAgent: meta.device ?? "Unknown",
+    ip: meta.ip ?? "127.0.0.1"
   });
 }
 
 export async function performSignIn(input: SignInInput): Promise<SignInResult> {
   const { email, password, lang, expectedRole, nextPath = "" } = input;
   const trimmedEmail = email.trim();
+  const trimmedPassword = password.trim();
+  const allowDemoFallback =
+    preferDemoAuth() ||
+    expectedRole === "admin" ||
+    trimmedEmail.endsWith("@studioos.test");
 
-  const prismaUser = await authService.authenticate(trimmedEmail, password);
+  const prismaUser = await authService.authenticate(trimmedEmail, trimmedPassword);
   if (prismaUser) {
     const demoRole =
       prismaUser.role === "CREATOR" ? "creator" : prismaUser.role === "ADMIN" ? "admin" : "client";
+
+    if (expectedRole === "admin" && demoRole !== "admin") {
+      return {
+        ok: false,
+        error:
+          lang === "zh" ? "该账号没有管理员权限。" : "This account does not have administrator access.",
+        errorCode: "admin-required"
+      };
+    }
 
     if (expectedRole === "brand" && demoRole !== "client" && demoRole !== "admin") {
       return {
@@ -145,15 +160,24 @@ export async function performSignIn(input: SignInInput): Promise<SignInResult> {
       }
     }
 
-    const redirectTo = nextPath.startsWith("/")
-      ? withLocale(nextPath, lang)
-      : `${demoRedirectForRole(demoRole)}?lang=${lang}`;
+    const redirectTo = resolvePostLoginDestination({ role: demoRole }, nextPath, lang);
 
     return { ok: true, redirectTo };
   }
 
-  const demoUser = preferDemoAuth() ? await authenticateDemoLogin(trimmedEmail, password) : null;
+  const demoUser = allowDemoFallback
+    ? await authenticateDemoLogin(trimmedEmail, trimmedPassword)
+    : null;
   if (demoUser) {
+    if (expectedRole === "admin" && demoUser.role !== "admin") {
+      return {
+        ok: false,
+        error:
+          lang === "zh" ? "该账号没有管理员权限。" : "This account does not have administrator access.",
+        errorCode: "admin-required"
+      };
+    }
+
     if (expectedRole === "brand" && demoUser.role !== "client" && demoUser.role !== "admin") {
       return {
         ok: false,
@@ -172,8 +196,18 @@ export async function performSignIn(input: SignInInput): Promise<SignInResult> {
       };
     }
 
-    const synced =
-      hasDatabaseUrl() ? await userRepository.findByEmail(demoUser.email.toLowerCase()) : null;
+    const synced = hasDatabaseUrl()
+      ? await userRepository
+          .upsertDemoUser({
+            email: demoUser.email.toLowerCase(),
+            role: demoRoleToPrisma(demoUser.role),
+            fullName: demoUser.label,
+            passwordHash: hashPassword(DEMO_PASSWORD),
+            companyName: demoUser.role === "client" ? demoUser.label : undefined,
+            displayName: demoUser.role === "creator" ? demoUser.label : undefined
+          })
+          .catch(() => null)
+      : null;
 
     await setDemoSession(
       buildSessionPayload(
@@ -192,9 +226,7 @@ export async function performSignIn(input: SignInInput): Promise<SignInResult> {
       await recordCreatorSignIn(demoUser.email);
     }
 
-    const redirectTo = nextPath.startsWith("/")
-      ? withLocale(nextPath, lang)
-      : `${demoRedirectForRole(demoUser.role)}?lang=${lang}`;
+    const redirectTo = resolvePostLoginDestination({ role: demoUser.role }, nextPath, lang);
 
     return { ok: true, redirectTo };
   }
@@ -211,7 +243,10 @@ export async function performSignIn(input: SignInInput): Promise<SignInResult> {
   }
 
   const supabase = await createClient();
-  const { data, error } = await supabase.auth.signInWithPassword({ email: trimmedEmail, password });
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: trimmedEmail,
+    password: trimmedPassword
+  });
 
   if (error) {
     return {
@@ -243,9 +278,7 @@ export async function performSignIn(input: SignInInput): Promise<SignInResult> {
       userId: user.id
     });
 
-    const redirectTo = nextPath.startsWith("/")
-      ? withLocale(nextPath, lang)
-      : withLocale(demoRedirectForRole(demoRole), lang);
+    const redirectTo = resolvePostLoginDestination({ role: demoRole }, nextPath, lang);
 
     return { ok: true, redirectTo };
   }

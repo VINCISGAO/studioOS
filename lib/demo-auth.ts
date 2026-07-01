@@ -59,8 +59,9 @@ export const DEMO_USERS: DemoUser[] = [
 
 export function findDemoUser(email: string, password: string) {
   const normalized = email.trim().toLowerCase();
+  const normalizedPassword = password.trim();
   return DEMO_USERS.find(
-    (user) => user.email === normalized && user.password === password
+    (user) => user.email === normalized && user.password === normalizedPassword
   );
 }
 

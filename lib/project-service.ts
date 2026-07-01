@@ -1,10 +1,11 @@
 import { projectApplications, projects as seedProjects } from "@/lib/data";
 import { campaignService } from "@/features/campaign/campaign.service";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
-import { createSerializedStoreReader, writeJsonFileAtomic } from "@/lib/json-file-store";
-import { getMemoryStore, readDataJson, dataStorePath } from "@/lib/serverless-store";
+import { logger } from "@/lib/core/logger";
+import { createSerializedStoreReader, writeJsonFileAtomic } from "@/lib/json-file-store-core";
+import { getMemoryStore, readDataJson, dataStorePath } from "@/lib/serverless-store-core";
 import { repairMissingProjects } from "@/lib/studioos/brand-store-repair";
-import { appendProjectEvent } from "@/lib/project-events-service";
+import { appendProjectEvent } from "@/lib/project-events-service-core";
 import type {
   CreateProjectDraftInput,
   CreateProjectInput,
@@ -422,15 +423,7 @@ async function writeStore(store: ProjectStore) {
   readStore.invalidate?.();
 }
 
-export async function createProjectDraft(input: CreateProjectDraftInput): Promise<StoredProject> {
-  if (hasDatabaseUrl()) {
-    const prismaProject = await campaignService.createBrandDraft(input);
-    if (!prismaProject) {
-      throw new Error("Unable to create campaign draft for this brand account");
-    }
-    return prismaProject;
-  }
-
+async function createProjectDraftInJsonStore(input: CreateProjectDraftInput): Promise<StoredProject> {
   const store = await readStore();
   const project = defaultProjectFields({
     id: createId("proj"),
@@ -458,9 +451,36 @@ export async function createProjectDraft(input: CreateProjectDraftInput): Promis
       actor_id: project.created_by
     });
   } catch (error) {
-    console.error("[createProjectDraft] appendProjectEvent failed", error);
+    logger.error("createProjectDraft appendProjectEvent failed", {
+      service: "project-service",
+      projectId: project.id,
+      error: error instanceof Error ? error.message : String(error)
+    });
   }
   return project;
+}
+
+export async function createProjectDraft(input: CreateProjectDraftInput): Promise<StoredProject> {
+  if (hasDatabaseUrl()) {
+    try {
+      const prismaProject = await campaignService.createBrandDraft(input);
+      if (prismaProject) {
+        return prismaProject;
+      }
+      logger.warn("createProjectDraft Prisma returned null, falling back to JSON store", {
+        service: "project-service",
+        email: input.client_email
+      });
+    } catch (error) {
+      logger.error("createProjectDraft Prisma failed, falling back to JSON store", {
+        service: "project-service",
+        email: input.client_email,
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  }
+
+  return createProjectDraftInJsonStore(input);
 }
 
 /** Legacy start-flow: creates a published-ready project in matching. */

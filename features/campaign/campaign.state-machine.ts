@@ -27,6 +27,8 @@ export const CampaignEvent = {
   AI_SUCCESS: "AI_SUCCESS",
   AI_FAILED: "AI_FAILED",
   APPROVE_CREATIVE: "APPROVE_CREATIVE",
+  /** Brand wizard publish — skips AI path (DRAFT → MATCHING). */
+  PUBLISH: "PUBLISH",
   START_MATCHING: "START_MATCHING",
   SEND_INVITATION: "SEND_INVITATION",
   CREATOR_ACCEPT: "CREATOR_ACCEPT",
@@ -49,6 +51,7 @@ export const campaignStateMachine = createStateMachine<CampaignStateValue, Campa
   AI_SUCCESS: { from: [CampaignState.AI_PROCESSING], to: CampaignState.CREATIVE_READY },
   AI_FAILED: { from: [CampaignState.AI_PROCESSING], to: CampaignState.DRAFT },
   APPROVE_CREATIVE: { from: [CampaignState.CREATIVE_READY], to: CampaignState.CREATIVE_APPROVED },
+  PUBLISH: { from: [CampaignState.DRAFT], to: CampaignState.MATCHING },
   START_MATCHING: { from: [CampaignState.CREATIVE_APPROVED], to: CampaignState.MATCHING },
   SEND_INVITATION: { from: [CampaignState.MATCHING], to: CampaignState.INVITATION_SENT },
   CREATOR_ACCEPT: { from: [CampaignState.MATCHING, CampaignState.INVITATION_SENT], to: CampaignState.CREATOR_ACCEPTED },

@@ -1,7 +1,7 @@
 import type { User, UserRole, BrandProfile, CreatorProfile } from "@prisma/client";
 import { prisma, hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { DEMO_PASSWORD, DEMO_USERS } from "@/lib/demo-auth";
-import { hashPassword } from "@/lib/core/password";
+import { hashPassword } from "@/lib/core/password-crypto";
 
 export type UserWithProfiles = User & {
   brandProfile: BrandProfile | null;
@@ -168,7 +168,29 @@ export class UserRepository {
     const existing = await this.findByEmail(email);
     if (existing) {
       if (existing.role !== "BRAND" && existing.role !== "ADMIN") {
-        return null;
+        if (!demoBrand) {
+          return null;
+        }
+
+        const user = await this.upsertDemoUser({
+          email,
+          role: "BRAND",
+          fullName,
+          passwordHash: hashPassword(DEMO_PASSWORD),
+          companyName
+        });
+
+        if (!user.brandProfile) {
+          await prisma.brandProfile.create({
+            data: {
+              userId: user.id,
+              companyName
+            }
+          });
+          return this.findByEmail(email);
+        }
+
+        return user;
       }
 
       if (existing.role === "BRAND" && !existing.brandProfile) {

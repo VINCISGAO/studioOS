@@ -1,5 +1,5 @@
 import { videoConfig, hlsStoragePrefix } from "@/lib/core/config/video";
-import { signPayload, verifySignedPayload } from "@/lib/core/signed-url";
+import { signPayload, verifySignedPayload } from "@/lib/core/signed-url-core";
 import type { PlaybackTokenPayload } from "@/features/video/playback-token.types";
 
 export type { PlaybackTokenPayload };

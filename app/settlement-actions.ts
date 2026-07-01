@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { getCurrentClientEmail } from "@/lib/client-session";
 import { getOrder, getOrderForProject } from "@/lib/order-service";
 import { campaignRepository } from "@/features/campaign/campaign.repository";
@@ -8,6 +9,7 @@ import { settlementService } from "@/features/settlement/settlement.service";
 import { userRepository } from "@/features/auth/user.repository";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import type { Locale } from "@/lib/i18n";
+import { withLocale } from "@/lib/i18n";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
 
 function normalizeLang(raw: FormDataEntryValue | null): Locale {
@@ -30,18 +32,18 @@ export async function releaseSettlementForLegacyProjectAction(formData: FormData
   const orderId = String(formData.get("order_id") ?? "");
 
   if (!projectId) {
-    return { ok: false as const, error: lang === "zh" ? "参数无效" : "Invalid input" };
+    redirect(withLocale("/brand/settlement?error=invalid", lang));
   }
 
   const clientEmail = await getCurrentClientEmail();
   if (!clientEmail) {
-    return { ok: false as const, error: lang === "zh" ? "请先登录" : "Sign in required" };
+    redirect(withLocale("/login?role=brand", lang));
   }
 
   const order = orderId ? await getOrder(orderId) : await getOrderForProject(projectId);
   const legacyProjectId = projectId || order?.project_id;
   if (!legacyProjectId) {
-    return { ok: false as const, error: lang === "zh" ? "未找到项目" : "Project not found" };
+    redirect(withLocale("/brand/settlement?error=not-found", lang));
   }
 
   if (hasDatabaseUrl()) {
@@ -54,7 +56,7 @@ export async function releaseSettlementForLegacyProjectAction(formData: FormData
       });
 
       if (!brandUser || brandUser.id !== campaign.brandId) {
-        return { ok: false as const, error: lang === "zh" ? "无权限" : "Unauthorized" };
+        redirect(withLocale(brandPortalRoutes.projectReview(legacyProjectId), lang));
       }
 
       const result = await settlementService.releaseForLegacyProject({
@@ -65,21 +67,15 @@ export async function releaseSettlementForLegacyProjectAction(formData: FormData
       });
 
       if (!result.ok) {
-        const message =
-          result.error === "not-ready"
-            ? lang === "zh"
-              ? "交付尚未锁定或托管未就绪，无法结算"
-              : "Delivery must be locked and escrow held before settlement"
-            : lang === "zh"
-              ? "暂时无法结算"
-              : "Could not release settlement";
-        return { ok: false as const, error: message };
+        redirect(
+          withLocale(`${brandPortalRoutes.projectReview(legacyProjectId)}?error=settlement`, lang)
+        );
       }
 
       revalidateSettlementPaths(legacyProjectId);
-      return { ok: true as const, result: result.result };
+      redirect(withLocale(`${brandPortalRoutes.projectReview(legacyProjectId)}?settled=1`, lang));
     }
   }
 
-  return { ok: false as const, error: lang === "zh" ? "暂不可用" : "Not available" };
+  redirect(withLocale("/brand/settlement?error=unavailable", lang));
 }

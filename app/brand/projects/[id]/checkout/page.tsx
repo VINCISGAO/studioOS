@@ -11,6 +11,10 @@ import { getProject } from "@/lib/project-service";
 import { normalizeCampaignStatus } from "@/lib/studioos/project-status";
 import { setupBrandCampaignPayment } from "@/lib/studioos/brand-checkout-service";
 import { estimateDeliveryDays } from "@/lib/studioos/brand-campaign-display";
+import { campaignRepository } from "@/features/campaign/campaign.repository";
+import { paymentRepository } from "@/features/payment/payment.repository";
+import { EscrowState } from "@/features/shared/state-machines/escrow.state-machine";
+import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -52,7 +56,20 @@ export default async function BrandCheckoutPage({ params, searchParams }: Props)
   const studio = creatorId ? await getCreatorById(creatorId) : null;
   const deliveryLabel = estimateDeliveryDays(project.deadline);
   const campaignStatus = normalizeCampaignStatus(project.status);
-  const paidReady = order.payment_status !== "unpaid" || paid;
+
+  let prismaEscrowFunded = false;
+  if (hasDatabaseUrl()) {
+    const campaign = await campaignRepository.findByLegacyProjectId(id);
+    if (campaign) {
+      const escrow = await paymentRepository.findByCampaignId(campaign.id);
+      prismaEscrowFunded =
+        escrow?.status === EscrowState.HELD ||
+        escrow?.status === EscrowState.PARTIAL_RELEASE ||
+        escrow?.status === EscrowState.FULL_RELEASE;
+    }
+  }
+
+  const paidReady = order.payment_status !== "unpaid" || paid || prismaEscrowFunded;
   const showProductionCta =
     paidReady && ["production", "in_review", "delivered", "completed"].includes(campaignStatus);
   const showMatchCta = paidReady && !showProductionCta;
@@ -82,6 +99,7 @@ export default async function BrandCheckoutPage({ params, searchParams }: Props)
             projectId={id}
             studioName={studio?.name ?? "Studio"}
             paid={paid}
+            escrowFunded={prismaEscrowFunded}
           />
           {paidReady ? (
             showMatchCta ? (

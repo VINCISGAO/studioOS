@@ -1,5 +1,6 @@
 import { walletRepository } from "@/features/wallet/wallet.repository";
 import { serializeTransaction, serializeWallet } from "@/features/wallet/wallet.serializer";
+import { ledgerService } from "@/features/finance/ledger.service";
 import { paymentConfig } from "@/lib/core/config/payment";
 import { membershipService } from "@/features/membership/membership.service";
 import type { AuthUser } from "@/features/auth/permission.service";
@@ -75,6 +76,30 @@ export class WalletService {
     const net = settled.creatorPayoutAmount;
     const wallet = await walletRepository.getOrCreate(input.creatorUserId);
     const availableBefore = Number(wallet.availableBalance);
+    const currency = (input.currency ?? wallet.currency ?? "USD").toUpperCase();
+    const assetCode = currency === "CNY" ? "CNY" : currency === "EUR" ? "EUR" : "USD";
+
+    await ledgerService.postEntry({
+      userId: input.creatorUserId,
+      assetCode,
+      entryType: "ESCROW_RELEASE",
+      direction: "CREDIT",
+      amount: input.grossAmount,
+      pendingDelta: input.grossAmount,
+      campaignId: input.campaignId,
+      channel: "INTERNAL",
+      description: input.description ?? `Escrow release pending settlement — ${input.campaignId}`
+    });
+
+    await ledgerService.recordSettlement({
+      userId: input.creatorUserId,
+      assetCode,
+      grossAmount: input.grossAmount,
+      netAmount: net,
+      commissionAmount: commission,
+      campaignId: input.campaignId,
+      description: input.description ?? `Escrow release for campaign ${input.campaignId}`
+    });
 
     await walletRepository.applyLedgerUpdate({
       walletId: wallet.id,

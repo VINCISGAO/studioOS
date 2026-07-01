@@ -1,17 +1,10 @@
-import { headers } from "next/headers";
 import { activityLogWriter } from "@/features/admin/activity-log.service";
+import { readRequestMeta } from "@/lib/core/request-meta";
 import type { BrandCampaignActor } from "@/features/campaign/brand-campaign/brand-campaign.types";
 
 export class BrandCampaignActivityService {
   private async requestMeta() {
-    const headerList = await headers();
-    return {
-      ip:
-        headerList.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-        headerList.get("x-real-ip") ??
-        null,
-      device: headerList.get("user-agent")
-    };
+    return readRequestMeta();
   }
 
   async log(

@@ -122,13 +122,15 @@ export function BrandCheckoutPanel({
   order,
   projectId,
   studioName,
-  paid
+  paid,
+  escrowFunded
 }: {
   locale: Locale;
   order: StoredOrder;
   projectId: string;
   studioName: string;
   paid?: boolean;
+  escrowFunded?: boolean;
 }) {
   const t = copy[locale];
   const [method, setMethod] = useState<PayoutMethodType>("alipay");
@@ -151,7 +153,7 @@ export function BrandCheckoutPanel({
     window.setTimeout(() => setCopiedKey(null), 1500);
   }
 
-  if (order.payment_status !== "unpaid" || paid) {
+  if (order.payment_status !== "unpaid" || paid || escrowFunded) {
     return (
       <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 p-6">
         <div className="flex items-start gap-4">

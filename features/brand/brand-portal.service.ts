@@ -40,6 +40,7 @@ function mapEscrow(
   return {
     campaignId: row.campaignId,
     campaignTitle: row.campaign.title,
+    legacyProjectId: readLegacyProjectId(row.campaign.productionBrief),
     status: row.status,
     amount: Number(row.amount),
     releasedAmount: Number(row.releasedAmount),

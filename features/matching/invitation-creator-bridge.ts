@@ -1,4 +1,4 @@
-import type { CreatorProfile, User } from "@prisma/client";
+import type { CreatorProfile } from "@prisma/client";
 import { creators } from "@/lib/data";
 import { getCreatorIdForDemoEmail } from "@/lib/creator-session";
 import { prisma, hasDatabaseUrl } from "@/lib/core/database/prisma";
@@ -7,6 +7,13 @@ const LEGACY_CREATOR_DEMO_EMAIL: Record<string, string> = {
   creator_01: "creator.nova@studioos.test",
   creator_02: "creator.signal@studioos.test",
   creator_03: "creator.atlas@studioos.test"
+};
+
+/** Minimal fields used to map a Prisma creator profile to legacy creator_0x ids. */
+export type LegacyCreatorProfileLookup = Pick<CreatorProfile, "displayName"> & {
+  user?: {
+    email?: string | null;
+  } | null;
 };
 
 export async function resolveCreatorProfileIdForLegacyId(
@@ -34,7 +41,7 @@ export async function resolveCreatorProfileIdForLegacyId(
 }
 
 export async function resolveLegacyCreatorIdForProfile(
-  profile: CreatorProfile & { user?: User }
+  profile: LegacyCreatorProfileLookup
 ): Promise<string | null> {
   const email = profile.user?.email;
   if (email) {

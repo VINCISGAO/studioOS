@@ -71,6 +71,7 @@ type LoginPageShellProps = {
   errorCode?: string;
   demoMode: boolean;
   googleOAuthEnabled?: boolean;
+  adminLoginMode?: boolean;
   t: LoginPageCopy;
 };
 
@@ -248,12 +249,25 @@ export function LoginPageShell({
   errorCode,
   demoMode,
   googleOAuthEnabled = false,
+  adminLoginMode = false,
   t
 }: LoginPageShellProps) {
   const isBrand = role === "brand";
   const visual = getLoginVisual(role);
-  const desktopCardTitle = isBrand ? t.brandLoginTitle : t.creatorWelcome;
-  const cardSubtitle = isBrand ? t.welcomeSubtitleBrand : t.creatorWelcomeSubtitle;
+  const desktopCardTitle = adminLoginMode
+    ? locale === "zh"
+      ? "管理后台登录"
+      : "Admin console sign in"
+    : isBrand
+      ? t.brandLoginTitle
+      : t.creatorWelcome;
+  const cardSubtitle = adminLoginMode
+    ? locale === "zh"
+      ? "使用平台管理员账号登录 StudioOS Admin"
+      : "Sign in with a platform admin account for StudioOS Admin"
+    : isBrand
+      ? t.welcomeSubtitleBrand
+      : t.creatorWelcomeSubtitle;
 
   return (
     <main className="relative min-h-[100dvh] overflow-hidden">

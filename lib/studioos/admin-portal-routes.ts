@@ -1,6 +1,16 @@
 /** Canonical admin portal routes — Sprint 15 */
 export const adminPortalRoutes = {
   dashboard: "/admin",
+  analytics: "/admin/dashboard",
+  campaigns: "/admin/campaigns",
+  campaignDetail: (id: string) => `/admin/campaigns/${id}`,
+  settlements: "/admin/settlements",
+  withdrawals: "/admin/withdrawals",
+  wallets: "/admin/wallets",
+  walletDetail: (userId: string) => `/admin/wallets/${userId}`,
+  ledger: "/admin/ledger",
+  notifications: "/admin/notifications",
+  activityLog: "/admin/activity-log",
   disputes: "/admin/disputes",
   disputeDetail: (id: string) => `/admin/disputes/${id}`,
   audit: "/admin/audit",
@@ -12,5 +22,12 @@ export const adminPortalRoutes = {
   deposits: "/admin/deposits",
   quality: "/admin/quality",
   support: "/admin/support",
-  membership: "/admin/membership"
+  membership: "/admin/membership",
+  settings: "/admin/settings",
+  system: "/admin/system",
+  finance: "/admin/finance",
+  monitoring: "/admin/monitoring",
+  certification: "/admin/certification",
+  partners: "/admin/partners",
+  academy: "/admin/academy"
 } as const;

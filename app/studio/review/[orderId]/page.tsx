@@ -8,6 +8,7 @@ import { getDeliverables, getOrder } from "@/lib/order-service";
 import { getProject } from "@/lib/project-service";
 import { creatorPortalRoutes } from "@/lib/studioos/creator-portal-routes";
 import { deliveryService } from "@/features/delivery/delivery.service";
+import { resolveReviewPortalUiState } from "@/features/review/review-portal-ui-state";
 import { listReviewComments } from "@/lib/studioos/review-store";
 
 export default async function StudioReviewOrderPage({
@@ -37,12 +38,18 @@ export default async function StudioReviewOrderPage({
     deliveryService.getForLegacyProject(legacyProjectId)
   ]);
 
+  const reviewUi = await resolveReviewPortalUiState({
+    legacyProjectId,
+    order,
+    deliverableCount: deliverables.length
+  });
+
   const title =
     project?.title || project?.product_name || order.title || order.company_name || creator.name;
 
   return (
     <div className="mx-auto max-w-7xl space-y-4">
-      {order.status === "completed" ? <DeliverableVideoPolicyNotice locale={locale} /> : null}
+      {reviewUi.orderApproved ? <DeliverableVideoPolicyNotice locale={locale} /> : null}
       <FrameioReviewCenter
         locale={locale}
         order={order}
@@ -55,6 +62,7 @@ export default async function StudioReviewOrderPage({
         backHref={withLocale(creatorPortalRoutes.reviewHub, locale)}
         backLabel={locale === "zh" ? "返回审片中心" : "Back to review center"}
         delivery={delivery}
+        reviewUi={reviewUi}
       />
     </div>
   );

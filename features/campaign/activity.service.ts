@@ -4,7 +4,7 @@ import type { AuthUser } from "@/features/auth/permission.service";
 import { PermissionService } from "@/features/auth/permission.service";
 import { appError } from "@/lib/core/errors";
 import { activityLogWriter } from "@/features/admin/activity-log.service";
-import { headers } from "next/headers";
+import { readRequestMeta } from "@/lib/core/request-meta";
 
 export type ActivityActor = {
   userId?: string | null;
@@ -14,14 +14,7 @@ export type ActivityActor = {
 
 export class ActivityService {
   private async requestMeta() {
-    const headerList = await headers();
-    return {
-      ip:
-        headerList.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-        headerList.get("x-real-ip") ??
-        null,
-      device: headerList.get("user-agent")
-    };
+    return readRequestMeta();
   }
 
   async write(

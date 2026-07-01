@@ -1,5 +1,5 @@
 import type { CreatorRatingStats, OrderRatingStore, OrderReview } from "@/lib/order-rating-types";
-import { dataStorePath, readDataJson, writeDataJson } from "@/lib/serverless-store";
+import { dataStorePath, readDataJson, writeDataJson } from "@/lib/serverless-store-core";
 
 const STORE_PATH = dataStorePath("order-ratings-store.json");
 

@@ -7,14 +7,16 @@ import { Check } from "lucide-react";
 export function ReviewCenterStepper({
   locale,
   order,
-  deliverableCount
+  deliverableCount,
+  activeStepIndex
 }: {
   locale: Locale;
   order: StoredOrder;
   deliverableCount: number;
+  activeStepIndex?: number;
 }) {
   const steps = reviewCenterWorkflowSteps[locale];
-  const activeIndex = reviewCenterActiveStepIndex(order, deliverableCount);
+  const activeIndex = activeStepIndex ?? reviewCenterActiveStepIndex(order, deliverableCount);
 
   return (
     <ol className="flex flex-wrap items-center gap-2 sm:gap-0">

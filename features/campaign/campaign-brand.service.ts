@@ -19,8 +19,12 @@ import {
   readProductionBrief
 } from "@/features/campaign/brand-campaign/brand-campaign.utils";
 import { campaignRepository } from "@/features/campaign/campaign.repository";
+import { CampaignEvent, campaignStateMachine } from "@/features/campaign/campaign.state-machine";
 import { userRepository } from "@/features/auth/user.repository";
-import { hasDatabaseUrl } from "@/lib/core/database/prisma";
+import { CampaignEvents } from "@/features/shared/types/events";
+import { hasDatabaseUrl, prisma } from "@/lib/core/database/prisma";
+import { logger } from "@/lib/core/logger";
+import { runTransition } from "@/lib/core/transition-runner";
 
 function mergeBrief(existing: unknown, patch: UpdateProjectInput): BrandProductionBrief {
   const brief = readProductionBrief(existing) as BrandProductionBrief;
@@ -143,14 +147,22 @@ export class CampaignBrandPortalService {
       wizardEphemeral: input.wizard_ephemeral
     });
 
-    await activityService.write(campaign.id, "brand_campaign.created", {
-      userId: user.id,
-      email: input.client_email,
-      role: "brand"
-    }, {
-      legacy_project_id: legacyProjectId,
-      ephemeral: input.wizard_ephemeral === true
-    });
+    try {
+      await activityService.write(campaign.id, "brand_campaign.created", {
+        userId: user.id,
+        email: input.client_email,
+        role: "brand"
+      }, {
+        legacy_project_id: legacyProjectId,
+        ephemeral: input.wizard_ephemeral === true
+      });
+    } catch (error) {
+      logger.error("brand_campaign.created activity log failed", {
+        service: "campaign-brand",
+        campaignId: campaign.id,
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
 
     return mapCampaignToStoredProject(campaign);
   }
@@ -299,8 +311,7 @@ export class CampaignBrandPortalService {
     const memory = readCampaignMemory(campaign.campaignMemoryJson) as BrandCampaignMemory;
     const publishedAt = new Date().toISOString();
 
-    const updated = await campaignRepository.updateBrandCampaign(campaign.id, {
-      status: "MATCHING",
+    await campaignRepository.updateBrandCampaign(campaign.id, {
       campaignMemoryJson: {
         ...memory,
         wizard: {
@@ -308,6 +319,30 @@ export class CampaignBrandPortalService {
           ephemeral: false
         },
         published_at: publishedAt
+      }
+    });
+
+    await runTransition({
+      machine: campaignStateMachine,
+      current: "DRAFT",
+      event: CampaignEvent.PUBLISH,
+      context: {
+        aggregateType: "campaign",
+        aggregateId: campaign.id,
+        campaignId: campaign.id,
+        actor: actor.userId ? { id: actor.userId, role: "BRAND" } : undefined
+      },
+      persist: async (next) => {
+        await prisma.campaign.update({
+          where: { id: campaign.id },
+          data: { status: next }
+        });
+      },
+      domainEvent: {
+        name: CampaignEvents.UPDATED,
+        aggregateType: "campaign",
+        aggregateId: campaign.id,
+        payload: { event: CampaignEvent.PUBLISH, from: "DRAFT", legacy_project_id: legacyProjectId }
       }
     });
 
@@ -322,7 +357,8 @@ export class CampaignBrandPortalService {
       }
     );
 
-    return mapCampaignToStoredProject(updated);
+    const updated = await campaignRepository.findByLegacyProjectIdWithRelations(legacyProjectId);
+    return updated ? mapCampaignToStoredProject(updated) : null;
   }
 }
 

@@ -7,6 +7,7 @@ import { preferDemoAuth } from "@/lib/can-persist-local-store";
 import { DEMO_SESSION_COOKIE, hasSupabaseConfig } from "@/lib/auth-config";
 import { clearDemoSession, setDemoSession } from "@/lib/demo-auth-server";
 import { demoRedirectForRole, demoUserForSocialProvider, parseDemoSession, DEMO_USERS } from "@/lib/demo-auth";
+import { isAdminRouteRole } from "@/lib/auth/route-access";
 import { withLocale, type Locale } from "@/lib/i18n";
 import { getOrCreateOpenInquiry } from "@/lib/chat-service";
 import { getOrCreateVisitorId } from "@/lib/client-session";
@@ -173,6 +174,14 @@ export async function demoSocialSignInAction(formData: FormData) {
   await setDemoSession({ email: demoUser.email, role: demoUser.role });
   if (demoUser.role === "creator") {
     await recordCreatorSignIn(demoUser.email);
+  }
+  if (nextPath.startsWith("/admin") && !isAdminRouteRole(demoUser.role)) {
+    redirect(
+      withLocale(
+        `/login?next=${encodeURIComponent(nextPath)}&error=admin-required&role=brand`,
+        lang
+      )
+    );
   }
   if (nextPath.startsWith("/")) {
     redirect(withLocale(nextPath, lang));

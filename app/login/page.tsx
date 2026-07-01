@@ -6,6 +6,7 @@ import { hasSupabaseConfig } from "@/lib/auth-config";
 import { type DemoRole } from "@/lib/demo-auth";
 import { getLocale, type Locale, type SearchParams, withLocale } from "@/lib/i18n";
 import { getCurrentSession } from "@/lib/session-user";
+import { isAdminRouteRole } from "@/lib/auth/route-access";
 import type { LoginRole } from "@/lib/studioos/login-theme";
 
 type LoginPageProps = {
@@ -165,6 +166,10 @@ function redirectIfAlreadySignedIn(
     return;
   }
 
+  if (nextPath.startsWith("/admin") && !isAdminRouteRole(session.role)) {
+    return;
+  }
+
   const destination = resolvePostLoginDestination(session, nextPath, locale);
 
   if (role === "brand" && session.role === "client") {
@@ -193,7 +198,7 @@ function resolveLoginErrorMessage(
   if (rawError === "unsupported-provider") {
     return t.unsupported;
   }
-  if (rawError === "wrong-role") {
+  if (rawError === "wrong-role" || rawError === "admin-required") {
     return t.wrongRoleHint;
   }
   try {
@@ -204,23 +209,43 @@ function resolveLoginErrorMessage(
 }
 
 function resolveLoginErrorCode(rawError: string | undefined) {
-  if (rawError === "wrong-role" || rawError === "auth-config" || rawError === "unsupported-provider") {
+  if (
+    rawError === "wrong-role" ||
+    rawError === "auth-config" ||
+    rawError === "unsupported-provider" ||
+    rawError === "admin-required"
+  ) {
     return rawError;
   }
   return undefined;
 }
 
+function resolveNextPath(raw: SearchParams["next"]) {
+  if (typeof raw === "string") return raw;
+  if (Array.isArray(raw)) return raw[0] ?? "";
+  return "";
+}
+
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams;
   const locale = getLocale(params);
+  const nextPath = resolveNextPath(params.next);
+
+  if (nextPath.startsWith("/admin")) {
+    const adminUrl = withLocale(
+      `/admin/login?next=${encodeURIComponent(nextPath)}`,
+      locale
+    );
+    redirect(adminUrl);
+  }
+
   const t = copy[locale];
+  const rawError = typeof params.error === "string" ? params.error : undefined;
+  const session = await getCurrentSession();
   const role = resolveLoginRole(typeof params.role === "string" ? params.role : undefined);
-  const nextPath = typeof params.next === "string" ? params.next : "";
 
   const demoMode = isDemoLoginUiEnabled();
   const googleOAuthEnabled = hasSupabaseConfig() && !preferDemoAuth();
-  const rawError = typeof params.error === "string" ? params.error : undefined;
-  const session = await getCurrentSession();
 
   if (session && !rawError) {
     redirect(resolvePostLoginDestination(session, nextPath, locale));

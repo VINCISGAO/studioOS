@@ -5,6 +5,26 @@ import type { ProjectStatus } from "@/lib/types";
 import type { OrderStatus } from "@/lib/order-types";
 import { projectStatusLabel } from "@/lib/mvp/review-settlement";
 import type { ProjectStatus as MvpProjectStatus } from "@/lib/mvp/types";
+import { campaignStatusLabel } from "@/lib/studioos/admin-i18n";
+
+const prismaCampaignStatuses = new Set([
+  "DRAFT",
+  "AI_PROCESSING",
+  "CREATIVE_READY",
+  "CREATIVE_APPROVED",
+  "MATCHING",
+  "INVITATION_SENT",
+  "CREATOR_ACCEPTED",
+  "ESCROW_PENDING",
+  "ESCROW_FUNDED",
+  "PRODUCING",
+  "UNDER_REVIEW",
+  "APPROVED",
+  "MASTER_UPLOADED",
+  "SETTLEMENT",
+  "COMPLETED",
+  "CANCELLED"
+]);
 
 const mvpStatuses = new Set<string>([
   "draft",
@@ -85,6 +105,9 @@ const campaignLabels: Record<Locale, Record<CampaignProjectStatus, string>> = {
 };
 
 function resolveLabel(status: string, locale: Locale): string {
+  if (prismaCampaignStatuses.has(status)) {
+    return campaignStatusLabel(status, locale);
+  }
   if (mvpStatuses.has(status)) {
     return projectStatusLabel(status as MvpProjectStatus, locale);
   }
@@ -104,7 +127,19 @@ export function StatusBadge({
   status: ProjectStatus | OrderStatus | CampaignProjectStatus | string;
   locale?: Locale;
 }) {
-  const variant = ["delivered", "completed", "paid", "approved", "assigned", "matched", "settled"].includes(status)
+  const variant = [
+    "delivered",
+    "completed",
+    "paid",
+    "approved",
+    "assigned",
+    "matched",
+    "settled",
+    "COMPLETED",
+    "APPROVED",
+    "ESCROW_FUNDED",
+    "MASTER_UPLOADED"
+  ].includes(status)
     ? "success"
     : [
           "review",
@@ -118,10 +153,17 @@ export function StatusBadge({
           "disputed",
           "proposal",
           "contract_pending",
-          "payment_pending"
+          "payment_pending",
+          "MATCHING",
+          "PRODUCING",
+          "UNDER_REVIEW",
+          "SETTLEMENT",
+          "ESCROW_PENDING",
+          "INVITATION_SENT",
+          "AI_PROCESSING"
         ].includes(status)
       ? "warning"
-      : status === "draft"
+      : status === "draft" || status === "DRAFT"
         ? "secondary"
         : "secondary";
 

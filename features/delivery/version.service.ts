@@ -1,4 +1,5 @@
 import { activityService } from "@/features/campaign/activity.service";
+import { reviewBridgeService } from "@/features/review/review-bridge.service";
 import { campaignRepository } from "@/features/campaign/campaign.repository";
 import { campaignService } from "@/features/campaign/campaign.service";
 import { CampaignEvent, CampaignState } from "@/features/campaign/campaign.state-machine";
@@ -236,6 +237,8 @@ export class VersionService {
         email: false
       })
       .catch(() => undefined);
+
+    await reviewBridgeService.syncLegacyOrderStatusAfterUpload(campaign.id);
 
     const deliverable = mapVersionToDeliverable(
       version,

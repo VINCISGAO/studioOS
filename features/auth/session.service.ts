@@ -21,7 +21,10 @@ export async function getSessionUser(): Promise<AuthUserDto | null> {
     if (user) return user;
   }
 
-  return authService.getUserById(session.userId ?? `demo_${session.email.replace(/[^a-z0-9]/gi, "_")}`);
+  const byEmail = await authService.getUserByEmail(session.email);
+  if (byEmail) return byEmail;
+
+  return authService.getUserById(`demo_${session.email.replace(/[^a-z0-9]/gi, "_")}`);
 }
 
 export async function getSessionMvpProfile(): Promise<MvpProfile | null> {

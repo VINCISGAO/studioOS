@@ -69,8 +69,7 @@ export class SettlementService {
     if (
       ctx.campaign.status === CampaignState.SETTLEMENT ||
       ctx.escrow?.status === EscrowState.FULL_RELEASE ||
-      ctx.escrow?.status === EscrowState.CLOSED ||
-      ctx.commission
+      ctx.escrow?.status === EscrowState.CLOSED
     ) {
       return SettlementState.RELEASED;
     }
@@ -216,6 +215,15 @@ export class SettlementService {
     }
 
     if (settlementState === SettlementState.RELEASED) {
+      const escrowHeld =
+        ctx.escrow?.status === EscrowState.HELD && Number(ctx.escrow.remainingAmount) > 0;
+      if (escrowHeld) {
+        await walletService.releaseEscrowForCampaign(ctx.campaign.id, {
+          id: input.actor.id,
+          role: input.actor.role
+        });
+        await settlementRepository.markCreatorPayoutReleased(ctx.campaign.id, input.actor.id);
+      }
       await this.completeCampaignIfNeeded(ctx, input.actor);
       const preview = await this.previewForLegacyProject(resolveLegacyProjectId(ctx.campaign));
       return {

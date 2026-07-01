@@ -39,7 +39,9 @@ export default async function BrandSettlementPage({
       <section className="overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-sm">
         {escrows.length ? (
           <ul className="divide-y divide-zinc-100">
-            {escrows.map((item) => (
+            {escrows.map((item) => {
+              const projectId = item.legacyProjectId ?? item.campaignId;
+              return (
               <li
                 key={item.campaignId}
                 className="flex flex-col gap-4 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6"
@@ -62,13 +64,13 @@ export default async function BrandSettlementPage({
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <Button asChild size="sm" variant="outline" className="rounded-xl">
-                    <Link href={withLocale(brandPortalRoutes.project(item.campaignId), locale)}>
+                    <Link href={withLocale(brandPortalRoutes.project(projectId), locale)}>
                       {locale === "zh" ? "项目详情" : "Project"}
                     </Link>
                   </Button>
                   {item.remainingAmount > 0 && item.status === "HELD" ? (
                     <Button asChild size="sm" className="rounded-xl bg-zinc-900">
-                      <Link href={withLocale(brandPortalRoutes.projectReview(item.campaignId), locale)}>
+                      <Link href={withLocale(brandPortalRoutes.projectReview(projectId), locale)}>
                         <Receipt className="h-4 w-4" />
                         {locale === "zh" ? "审片并结算" : "Review & settle"}
                       </Link>
@@ -76,7 +78,8 @@ export default async function BrandSettlementPage({
                   ) : null}
                 </div>
               </li>
-            ))}
+            );
+            })}
           </ul>
         ) : (
           <p className="px-6 py-12 text-center text-sm text-zinc-500">

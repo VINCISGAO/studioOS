@@ -3,7 +3,10 @@ import { mapCampaignToStoredProject } from "@/features/campaign/brand-campaign/b
 import { brandCampaignRepository } from "@/features/campaign/brand-campaign/brand-campaign.repository";
 import type { BrandCampaignMemory, BrandProductionBrief } from "@/features/campaign/brand-campaign/brand-campaign.types";
 import { readCampaignMemory, readProductionBrief } from "@/features/campaign/brand-campaign/brand-campaign.utils";
-import { hasDatabaseUrl } from "@/lib/core/database/prisma";
+import { CampaignEvent, campaignStateMachine } from "@/features/campaign/campaign.state-machine";
+import { CampaignEvents } from "@/features/shared/types/events";
+import { hasDatabaseUrl, prisma } from "@/lib/core/database/prisma";
+import { runTransition } from "@/lib/core/transition-runner";
 import type { StoredProject } from "@/lib/project-types";
 
 export class BrandCampaignPublishService {
@@ -33,8 +36,7 @@ export class BrandCampaignPublishService {
     const memory = readCampaignMemory(campaign.campaignMemoryJson) as BrandCampaignMemory;
     const publishedAt = new Date().toISOString();
 
-    const updated = await brandCampaignRepository.updateCampaign(campaign.id, {
-      status: "MATCHING",
+    await brandCampaignRepository.updateCampaign(campaign.id, {
       campaignMemoryJson: {
         ...memory,
         wizard: {
@@ -42,6 +44,30 @@ export class BrandCampaignPublishService {
           ephemeral: false
         },
         published_at: publishedAt
+      }
+    });
+
+    await runTransition({
+      machine: campaignStateMachine,
+      current: "DRAFT",
+      event: CampaignEvent.PUBLISH,
+      context: {
+        aggregateType: "campaign",
+        aggregateId: campaign.id,
+        campaignId: campaign.id,
+        actor: actor.userId ? { id: actor.userId, role: "BRAND" } : undefined
+      },
+      persist: async (next) => {
+        await prisma.campaign.update({
+          where: { id: campaign.id },
+          data: { status: next }
+        });
+      },
+      domainEvent: {
+        name: CampaignEvents.UPDATED,
+        aggregateType: "campaign",
+        aggregateId: campaign.id,
+        payload: { event: CampaignEvent.PUBLISH, from: "DRAFT", legacy_project_id: legacyProjectId }
       }
     });
 
@@ -56,7 +82,8 @@ export class BrandCampaignPublishService {
       }
     );
 
-    return mapCampaignToStoredProject(updated);
+    const updated = await brandCampaignRepository.findByLegacyProjectId(legacyProjectId);
+    return updated ? mapCampaignToStoredProject(updated) : null;
   }
 }
 

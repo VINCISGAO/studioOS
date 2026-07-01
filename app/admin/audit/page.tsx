@@ -37,11 +37,18 @@ export default async function AdminAuditPage({ searchParams }: { searchParams: P
 
   return (
     <div>
-      <Button asChild variant="outline" size="sm">
-        <Link href={withLocale(adminPortalRoutes.dashboard, locale)}>
-          <ArrowLeft className="h-4 w-4" /> {t.back}
-        </Link>
-      </Button>
+      <div className="flex gap-2">
+        <Button asChild variant="outline" size="sm">
+          <Link href={withLocale(adminPortalRoutes.dashboard, locale)}>
+            <ArrowLeft className="h-4 w-4" /> {t.back}
+          </Link>
+        </Button>
+        <Button asChild variant="outline" size="sm">
+          <Link href={withLocale(adminPortalRoutes.activityLog, locale)}>
+            {locale === "zh" ? "高级筛选" : "Advanced explorer"}
+          </Link>
+        </Button>
+      </div>
       <div className="mt-8">
         <p className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">{t.eyebrow}</p>
         <h1 className="mt-3 text-4xl font-semibold tracking-tight">{t.title}</h1>

@@ -20,7 +20,11 @@ import { invitationRepository } from "@/features/matching/invitation.repository"
 import { notificationService } from "@/features/notification/notification.service";
 import { userRepository } from "@/features/auth/user.repository";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
+import { reviewBridgeService } from "@/features/review/review-bridge.service";
+import { paymentRepository } from "@/features/payment/payment.repository";
+import { EscrowState } from "@/features/shared/state-machines/escrow.state-machine";
 import { getProject } from "@/lib/project-service";
+import { startProductionWithSelectedCreator } from "@/lib/studioos/brand-checkout-service";
 import type { StoredCreatorInvitation } from "@/lib/studioos/creator-invitation-types";
 import { isInvitationRecruitmentClosed } from "@/lib/studioos/invitation-lifecycle";
 
@@ -152,8 +156,7 @@ export class CampaignSelectionService {
       campaignId: campaign.id,
       creatorUserId,
       productionBrief: updatedBrief,
-      campaignMemoryJson: updatedMemory,
-      status: CampaignState.CREATOR_ACCEPTED
+      campaignMemoryJson: updatedMemory
     });
 
     await activityService.write(
@@ -183,10 +186,45 @@ export class CampaignSelectionService {
         campaignId: campaign.id,
         title: copy.title,
         content: copy.body,
-        actionUrl: "/studio/projects",
+        actionUrl: `/studio/projects`,
         email: false
       })
       .catch(() => undefined);
+
+    const legacyProject = await getProject(legacyProjectId);
+    if (legacyProject) {
+      await startProductionWithSelectedCreator({
+        project: legacyProject,
+        creatorId: input.creatorId,
+        workId: null,
+        client: input.client,
+        locale: input.locale
+      }).catch(() => undefined);
+    }
+
+    await reviewBridgeService.syncLegacyOrderStatusAfterSelection(campaign.id, input.creatorId);
+
+    const refreshedCampaign = await campaignRepository.findById(campaign.id);
+    const escrow = await paymentRepository.findByCampaignId(campaign.id);
+    const brandUser = await userRepository.findByEmail(input.client.client_email.toLowerCase());
+    const actor = brandUser ? { id: brandUser.id, role: brandUser.role } : undefined;
+
+    if (
+      refreshedCampaign?.status === CampaignState.CREATOR_ACCEPTED &&
+      escrow &&
+      (escrow.status === EscrowState.HELD || escrow.status === EscrowState.PARTIAL_RELEASE)
+    ) {
+      await campaignService
+        .transition(campaign.id, CampaignEvent.PAYMENT_SUCCESS, actor)
+        .catch(() => undefined);
+
+      const afterFund = await campaignRepository.findById(campaign.id);
+      if (afterFund?.status === CampaignState.ESCROW_FUNDED) {
+        await campaignService
+          .transition(campaign.id, CampaignEvent.START_PRODUCTION, actor)
+          .catch(() => undefined);
+      }
+    }
 
     const invitation = mapInvitationToStored(
       winnerRow,

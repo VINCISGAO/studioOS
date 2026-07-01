@@ -1,4 +1,5 @@
 import type { StoredOrder } from "@/lib/order-types";
+import type { ReviewPortalUiState } from "@/features/review/review-portal-ui-state";
 
 export const reviewCenterWorkflowSteps = {
   en: [
@@ -21,4 +22,14 @@ export function reviewCenterActiveStepIndex(order: StoredOrder, deliverableCount
   if (deliverableCount > 0) return 3;
   if (order.status === "in_production") return 2;
   return 1;
+}
+
+export function reviewCenterActiveStepFromUi(
+  ui: Pick<ReviewPortalUiState, "derivedOrderStatus" | "deliverableCount" | "workflowStepIndex">,
+  order: StoredOrder
+): number {
+  if (ui.derivedOrderStatus !== order.status) {
+    return ui.workflowStepIndex;
+  }
+  return reviewCenterActiveStepIndex(order, ui.deliverableCount);
 }

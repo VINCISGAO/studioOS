@@ -8,7 +8,7 @@ import type {
   DepositPayment,
   DepositStore
 } from "@/lib/studioos/deposit-types";
-import { dataStorePath, readDataJson, writeDataJson } from "@/lib/serverless-store";
+import { dataStorePath, readDataJson, writeDataJson } from "@/lib/serverless-store-core";
 
 const STORE_PATH = dataStorePath("deposit-store.json");
 
@@ -102,6 +102,36 @@ export async function getCreatorDepositOverlay(creatorId: string): Promise<Creat
   const store = await readStore();
   await advanceDemoDepositPayments(store);
   return store.creator_overlays[creatorId] ?? null;
+}
+
+export type AdminDepositRow = {
+  id: string;
+  legacyCreatorId: string;
+  creatorProfileId: string | null;
+  amount: number;
+  status: string;
+  reason: string | null;
+  refundableAfter: string | null;
+};
+
+export async function listAdminDepositRows(): Promise<AdminDepositRow[]> {
+  const store = await readStore();
+  await advanceDemoDepositPayments(store);
+
+  const rows: AdminDepositRow[] = [];
+  for (const [legacyCreatorId, overlay] of Object.entries(store.creator_overlays)) {
+    rows.push({
+      id: `dep_${legacyCreatorId}`,
+      legacyCreatorId,
+      creatorProfileId: null,
+      amount: overlay.deposit_amount || CREATOR_DEPOSIT_USD,
+      status: overlay.deposit_status,
+      reason: overlay.deposit_status === "paid" ? "Paid studio guarantee deposit" : "Required before accepting orders",
+      refundableAfter: overlay.paid_at ?? null
+    });
+  }
+
+  return rows;
 }
 
 export async function getCreatorDepositSnapshot(creatorId: string): Promise<CreatorDepositSnapshot> {

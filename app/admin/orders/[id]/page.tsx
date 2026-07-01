@@ -16,7 +16,8 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { creators, deliverables, orders, projects, statuses } from "@/lib/data";
+import { adminOrderService } from "@/features/admin/order/admin-order.service";
+import { getSessionUser } from "@/features/auth/session.service";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
@@ -106,15 +107,23 @@ export default async function AdminOrderPage({ params, searchParams }: AdminOrde
   const { id } = await params;
   const locale = getLocale(await searchParams);
   const t = copy[locale];
-  const order = orders.find((item) => item.id === id);
+  const user = await getSessionUser();
 
-  if (!order) {
+  if (!user) {
     notFound();
   }
 
-  const project = projects.find((item) => item.id === order.project_id);
-  const assignedCreator = creators.find((item) => item.id === order.assigned_creator_id);
-  const orderDeliverables = deliverables.filter((item) => item.order_id === order.id);
+  let detail;
+  try {
+    detail = await adminOrderService.getDetail(user, id);
+  } catch {
+    notFound();
+  }
+
+  const { order, project, deliverables: orderDeliverables } = detail;
+  const creators = await adminOrderService.listCreatorsForAssignment(user);
+  const statuses = adminOrderService.orderStatuses;
+  const assignedCreator = creators.find((item) => item.legacyCreatorId === order.creator_id);
 
   return (
     <PageShell locale={locale}>
@@ -173,9 +182,9 @@ export default async function AdminOrderPage({ params, searchParams }: AdminOrde
               <CardContent className="p-6">
                 <h2 className="text-lg font-semibold">{t.payments}</h2>
                 <div className="mt-5 grid gap-4 sm:grid-cols-3">
-                  <Metric label={t.plan} value={order.plan_name} />
+                  <Metric label={t.plan} value={order.title || order.quote_id} />
                   <Metric label={t.amount} value={formatCurrency(order.amount)} />
-                  <Metric label={t.stripeSession} value={order.stripe_session_id} />
+                  <Metric label={t.stripeSession} value={order.payment_status} />
                 </div>
               </CardContent>
             </Card>
@@ -205,13 +214,13 @@ export default async function AdminOrderPage({ params, searchParams }: AdminOrde
                   </div>
                   <div className="grid gap-2">
                     <Label>{t.creator}</Label>
-                    <Select name="assigned_creator_id" defaultValue={assignedCreator?.id}>
+                    <Select name="assigned_creator_id" defaultValue={assignedCreator?.legacyCreatorId}>
                       <SelectTrigger>
                         <SelectValue placeholder={t.creatorPlaceholder} />
                       </SelectTrigger>
                       <SelectContent>
                         {creators.map((creator) => (
-                          <SelectItem key={creator.id} value={creator.id}>
+                          <SelectItem key={creator.legacyCreatorId} value={creator.legacyCreatorId}>
                             {creator.name} · {creator.country}
                           </SelectItem>
                         ))}

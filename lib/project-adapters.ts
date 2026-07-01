@@ -1,6 +1,6 @@
 import { getProject } from "@/lib/project-service";
 import { getOrder } from "@/lib/order-service";
-import { safeReadJsonFile } from "@/lib/core/safe-json";
+import { safeReadJsonFile } from "@/lib/core/safe-json-core";
 import { promises as fs } from "fs";
 import path from "path";
 import type { ChatStore } from "@/lib/chat-types";

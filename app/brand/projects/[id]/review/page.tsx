@@ -8,6 +8,7 @@ import { getDeliverables, getOrder, getOrderForProject } from "@/lib/order-servi
 import { getProject } from "@/lib/project-service";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
 import { deliveryService } from "@/features/delivery/delivery.service";
+import { resolveReviewPortalUiState } from "@/features/review/review-portal-ui-state";
 import { listReviewComments } from "@/lib/studioos/review-store";
 
 type Props = {
@@ -58,6 +59,15 @@ export default async function BrandProjectReviewPage({ params, searchParams }: P
     deliveryService.getForLegacyProject(resolvedProjectId)
   ]);
 
+  const reviewUi =
+    orderForReview && resolvedProjectId
+      ? await resolveReviewPortalUiState({
+          legacyProjectId: resolvedProjectId,
+          order: orderForReview,
+          deliverableCount: deliverables.length
+        })
+      : null;
+
   const campaignTitle =
     project?.title ||
     project?.product_name ||
@@ -87,7 +97,7 @@ export default async function BrandProjectReviewPage({ params, searchParams }: P
             : "Could not download final delivery. Make sure the studio has marked a final version."
           : undefined;
 
-  if (!orderForReview || !deliverables.length) {
+  if (!orderForReview || !(reviewUi?.deliverableCount ?? deliverables.length)) {
     return (
       <div className="mx-auto max-w-3xl space-y-6">
         <Link
@@ -112,7 +122,9 @@ export default async function BrandProjectReviewPage({ params, searchParams }: P
 
   return (
     <div className="mx-auto max-w-7xl space-y-4">
-      {orderForReview.status === "completed" ? <DeliverableVideoPolicyNotice locale={locale} /> : null}
+      {reviewUi?.orderApproved ?? orderForReview.status === "completed" ? (
+        <DeliverableVideoPolicyNotice locale={locale} />
+      ) : null}
       <FrameioReviewCenter
         locale={locale}
         order={orderForReview}
@@ -127,6 +139,7 @@ export default async function BrandProjectReviewPage({ params, searchParams }: P
         flash={flash}
         actionError={actionError}
         delivery={delivery}
+        reviewUi={reviewUi}
       />
     </div>
   );

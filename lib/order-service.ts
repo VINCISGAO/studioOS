@@ -5,11 +5,11 @@ import type {
   StoredOrder,
   StoredQuote
 } from "@/lib/order-types";
-import { createSerializedStoreReader, writeJsonFileAtomic } from "@/lib/json-file-store";
+import { createSerializedStoreReader, writeJsonFileAtomic } from "@/lib/json-file-store-core";
 import { canPersistLocalDataStore } from "@/lib/can-persist-local-store";
 import { getProject } from "@/lib/project-service";
 import type { StoredProject } from "@/lib/project-types";
-import { readDataJson, dataStorePath } from "@/lib/serverless-store";
+import { readDataJson, dataStorePath } from "@/lib/serverless-store-core";
 import {
   buildQuoteSummary,
   CAMPAIGN_PENDING_CREATOR_ID,
@@ -646,6 +646,63 @@ export async function requestOrderRevision(orderId: string, notes: string): Prom
   const { notifyCreatorRevisionRequested } = await import("@/lib/studioos/commercial-interaction-notify");
   await notifyCreatorRevisionRequested({ order, notes, locale: order.client_locale });
 
+  return order;
+}
+
+/** Write-through bridge helpers — sync JSON order phase from Prisma without duplicating side effects. */
+export async function syncOrderToReviewPhase(orderId: string): Promise<StoredOrder | null> {
+  const store = await readStore();
+  const order = store.orders.find((item) => item.id === orderId);
+  if (!order) return null;
+  if (["review", "completed"].includes(order.status)) return order;
+  if (!["in_production", "revision", "review"].includes(order.status)) return order;
+
+  order.status = "review";
+  await writeStore(store);
+  await syncProjectAfterDeliverable(order.project_id);
+  return order;
+}
+
+export async function syncOrderToRevisionPhase(orderId: string): Promise<StoredOrder | null> {
+  const store = await readStore();
+  const order = store.orders.find((item) => item.id === orderId);
+  if (!order) return null;
+  if (order.status === "revision") return order;
+  if (!["review", "revision"].includes(order.status)) return order;
+
+  order.status = "revision";
+  await writeStore(store);
+  await syncProjectAfterRevisionRequest(order.project_id);
+  return order;
+}
+
+export async function syncOrderToApprovedPhase(orderId: string): Promise<StoredOrder | null> {
+  const store = await readStore();
+  const order = store.orders.find((item) => item.id === orderId);
+  if (!order) return null;
+  if (order.status === "completed") return order;
+  if (!["review", "revision", "completed"].includes(order.status)) return order;
+
+  order.status = "completed";
+  if (order.payout_status === "held") {
+    order.payout_status = "approved";
+  }
+  order.completed_at = order.completed_at ?? new Date().toISOString();
+  await writeStore(store);
+  await syncProjectAfterApproval(order.project_id);
+  return order;
+}
+
+export async function syncOrderToInProduction(orderId: string): Promise<StoredOrder | null> {
+  const store = await readStore();
+  const order = store.orders.find((item) => item.id === orderId);
+  if (!order) return null;
+  if (["in_production", "review", "revision", "completed"].includes(order.status)) {
+    return order;
+  }
+
+  order.status = "in_production";
+  await writeStore(store);
   return order;
 }
 

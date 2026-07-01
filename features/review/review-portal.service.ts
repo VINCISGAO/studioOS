@@ -5,6 +5,7 @@ import { versionRepository } from "@/features/delivery/version.repository";
 import { reviewDecisionService } from "@/features/review/review-decision.service";
 import { reviewRepository } from "@/features/review/review.repository";
 import { reviewService } from "@/features/review/review.service";
+import { reviewBridgeService } from "@/features/review/review-bridge.service";
 import { notificationService } from "@/features/notification/notification.service";
 import { getAppBaseUrl } from "@/lib/app-url";
 import { resolveCreatorProfileIdForLegacyId } from "@/features/matching/invitation-creator-bridge";
@@ -347,6 +348,25 @@ export class ReviewPortalService {
       input.revisionNotes?.trim() || undefined
     );
 
+    await reviewBridgeService.syncLegacyOrderStatusAfterRevision(ctx.campaign.id);
+
+    if (ctx.campaign.creatorId) {
+      const legacyProjectId = resolveLegacyProjectId(ctx.campaign);
+      await notificationService
+        .notify({
+          userId: ctx.campaign.creatorId,
+          campaignId: ctx.campaign.id,
+          title: input.locale === "zh" ? "品牌要求修改" : "Brand requested changes",
+          content:
+            input.locale === "zh"
+              ? `「${ctx.campaign.title}」Version ${version.versionNumber} 需要修改，请查看 Studio 审片室。`
+              : `"${ctx.campaign.title}" — Version ${version.versionNumber} needs revisions. Open the review room.`,
+          actionUrl: `${getAppBaseUrl()}/studio/review/${input.orderId}`,
+          email: false
+        })
+        .catch(() => undefined);
+    }
+
     await activityService.write(
       ctx.campaign.id,
       "review.revision_requested",
@@ -399,6 +419,24 @@ export class ReviewPortalService {
     }
 
     await reviewDecisionService.approveVersion(version.id, actor);
+
+    await reviewBridgeService.syncLegacyOrderStatusAfterApprove(ctx.campaign.id);
+
+    if (ctx.campaign.creatorId) {
+      await notificationService
+        .notify({
+          userId: ctx.campaign.creatorId,
+          campaignId: ctx.campaign.id,
+          title: input.locale === "zh" ? "品牌已通过交付" : "Brand approved delivery",
+          content:
+            input.locale === "zh"
+              ? `「${ctx.campaign.title}」Version ${version.versionNumber} 已通过，请标记最终版供品牌下载。`
+              : `"${ctx.campaign.title}" — Version ${version.versionNumber} approved. Mark the final master for brand download.`,
+          actionUrl: `${getAppBaseUrl()}/studio/review/${input.orderId}`,
+          email: false
+        })
+        .catch(() => undefined);
+    }
 
     await activityService.write(
       ctx.campaign.id,

@@ -7,7 +7,7 @@ import {
   createSerializedStoreReader,
   readJsonFile,
   writeJsonFileAtomic
-} from "@/lib/json-file-store";
+} from "@/lib/json-file-store-core";
 import { resolveGeoLocation } from "@/lib/studioos/geo-from-ip";
 import type {
   CreatedApiKeyPayload,
@@ -19,7 +19,7 @@ import type {
   StoredApiKey,
   StoredCreatorSettings
 } from "@/lib/studioos/creator-settings-types";
-import { dataStorePath } from "@/lib/serverless-store";
+import { dataStorePath } from "@/lib/serverless-store-core";
 
 const STORE_PATH = dataStorePath("creator-settings-store.json");
 const MAX_DEVICES = 8;

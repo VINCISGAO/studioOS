@@ -31,6 +31,10 @@ export type Permission =
   | "admin.audit.read"
   | "admin.feature_flag.manage"
   | "admin.payment.manage"
+  | "admin.settlement.manage"
+  | "admin.wallet.manage"
+  | "admin.ledger.read"
+  | "admin.notification.read"
   | "membership.read"
   | "membership.upgrade";
 
@@ -84,6 +88,10 @@ const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     "admin.audit.read",
     "admin.feature_flag.manage",
     "admin.payment.manage",
+    "admin.settlement.manage",
+    "admin.wallet.manage",
+    "admin.ledger.read",
+    "admin.notification.read",
     "membership.read",
     "membership.upgrade"
   ],
@@ -92,7 +100,9 @@ const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     "review.read",
     "payment.read",
     "admin.audit.read",
-    "admin.dispute.manage"
+    "admin.dispute.manage",
+    "admin.ledger.read",
+    "admin.notification.read"
   ]
 };
 

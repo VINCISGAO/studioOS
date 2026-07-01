@@ -1,5 +1,5 @@
 import type { CreatorWork } from "@/lib/types";
-import { dataStorePath, readDataJson, writeDataJson } from "@/lib/serverless-store";
+import { dataStorePath, readDataJson, writeDataJson } from "@/lib/serverless-store-core";
 
 type WorksStore = {
   works: CreatorWork[];

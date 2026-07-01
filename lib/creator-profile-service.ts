@@ -3,7 +3,7 @@ import type { CreatorProfileStore, StoredCreatorProfile } from "@/lib/creator-pr
 import { generateCreatorAiTags } from "@/lib/studioos/creator-ai-tags";
 import { normalizeCreatorMinBudget } from "@/lib/studioos/creator-price-preference";
 import type { CreatorWork } from "@/lib/types";
-import { dataStorePath, readDataJson, writeDataJson } from "@/lib/serverless-store";
+import { dataStorePath, readDataJson, writeDataJson } from "@/lib/serverless-store-core";
 
 const STORE_PATH = dataStorePath("creator-profile-store.json");
 

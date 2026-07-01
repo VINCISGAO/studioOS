@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
-import { disputes, refundRequests } from "@/lib/data";
+import { adminSupportService } from "@/features/admin/support/admin-support.service";
+import { getSessionUser } from "@/features/auth/session.service";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
 
 export default async function AdminSupportPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const locale = getLocale(await searchParams);
-  const openItems = disputes.length + refundRequests.length;
+  const user = await getSessionUser();
+  const overview = user ? await adminSupportService.getOverview(user) : { openItems: 0 };
 
   return (
     <div>
@@ -16,7 +18,7 @@ export default async function AdminSupportPage({ searchParams }: { searchParams:
       <Card className="mt-8 border-zinc-200/80 shadow-none">
         <CardContent className="p-6">
           <p className="text-sm text-zinc-500">{locale === "zh" ? "待处理事项" : "Open items"}</p>
-          <p className="mt-2 text-4xl font-semibold">{openItems}</p>
+          <p className="mt-2 text-4xl font-semibold">{overview.openItems}</p>
           <div className="mt-6 flex gap-3">
             <Link
               href={withLocale("/admin/disputes", locale)}

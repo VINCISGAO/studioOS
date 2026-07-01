@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { disputeService } from "@/features/admin/dispute.service";
+import { adminRefundService } from "@/features/admin/refund/admin-refund.service";
 import { getSessionUser } from "@/features/auth/session.service";
-import { refundRequests } from "@/lib/data";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
 import { adminPortalRoutes } from "@/lib/studioos/admin-portal-routes";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -20,7 +20,7 @@ const copy = {
     subtitle:
       "Review dispute reasons and proposed resolutions before releasing escrow or returning funds.",
     disputes: "Disputes",
-    refunds: "Refund requests (legacy)",
+    refunds: "Refund requests",
     disputeTable: ["Campaign", "Brand", "Opened by", "Status", "Reason", "Created", "Resolve"],
     refundTable: ["Order", "Amount", "Status", "Reason", "Created"],
     resolve: "Resolve",
@@ -32,7 +32,7 @@ const copy = {
     title: "退款与争议处理",
     subtitle: "审核争议原因与处理方案，再决定释放托管款或退还资金。",
     disputes: "争议",
-    refunds: "退款申请（旧版）",
+    refunds: "退款申请",
     disputeTable: ["Campaign", "Brand", "发起方", "状态", "原因", "创建时间", "处理"],
     refundTable: ["订单", "金额", "状态", "原因", "创建时间"],
     resolve: "结案",
@@ -45,6 +45,7 @@ export default async function AdminDisputesPage({ searchParams }: { searchParams
   const t = copy[locale];
   const user = await getSessionUser();
   const disputes = user ? await disputeService.list(user) : [];
+  const refundRequests = user ? await adminRefundService.list(user) : [];
 
   return (
     <div>
@@ -139,13 +140,13 @@ export default async function AdminDisputesPage({ searchParams }: { searchParams
             <TableBody>
               {refundRequests.map((refund) => (
                 <TableRow key={refund.id}>
-                  <TableCell className="font-medium">{refund.order_id}</TableCell>
+                  <TableCell className="font-medium">{refund.orderId}</TableCell>
                   <TableCell>{formatCurrency(refund.amount)}</TableCell>
                   <TableCell>
                     <Badge variant="warning">{refund.status}</Badge>
                   </TableCell>
                   <TableCell>{refund.reason}</TableCell>
-                  <TableCell>{formatDate(refund.created_at)}</TableCell>
+                  <TableCell>{formatDate(refund.createdAt)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

@@ -23,7 +23,15 @@ export type PortalMobileNavIconKey =
   | "audit"
   | "featureFlags"
   | "quality"
-  | "support";
+  | "support"
+  | "campaigns"
+  | "settlements"
+  | "withdrawals"
+  | "adminWallets"
+  | "ledger"
+  | "notifications"
+  | "activityLog"
+  | "analytics";
 
 export const portalMobileNavIconKeys: PortalMobileNavIconKey[] = [
   "home",
@@ -49,7 +57,15 @@ export const portalMobileNavIconKeys: PortalMobileNavIconKey[] = [
   "audit",
   "featureFlags",
   "quality",
-  "support"
+  "support",
+  "campaigns",
+  "settlements",
+  "withdrawals",
+  "adminWallets",
+  "ledger",
+  "notifications",
+  "activityLog",
+  "analytics"
 ];
 
 export function isPortalMobileNavIconKey(value: string): value is PortalMobileNavIconKey {

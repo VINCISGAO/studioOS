@@ -1,7 +1,7 @@
 import type { StateMachine } from "@/lib/core/state-machine";
 import { safeTransition } from "@/lib/core/state-machine";
 import { appError } from "@/lib/core/errors";
-import { publishEvent } from "@/lib/core/event-bus";
+import { publishEvent } from "@/lib/core/event-bus-core";
 import { logger } from "@/lib/core/logger";
 import { prisma, hasDatabaseUrl } from "@/lib/core/database/prisma";
 import type { DomainEvent } from "@/features/shared/types/events";

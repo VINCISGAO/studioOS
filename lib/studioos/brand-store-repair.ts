@@ -1,6 +1,6 @@
 import type { OrderStore, StoredOrder } from "@/lib/order-types";
 import type { ProjectStore, StoredProject } from "@/lib/project-types";
-import { dataStorePath, readDataJson } from "@/lib/serverless-store";
+import { dataStorePath, readDataJson } from "@/lib/serverless-store-core";
 import type { CampaignProjectStatus } from "@/lib/studioos/project-status";
 
 function mapOrderToProjectStatus(order: StoredOrder): CampaignProjectStatus {

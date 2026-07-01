@@ -3,7 +3,7 @@ import type { ChatSender, ChatStore, CreateInquiryInput, MessageKind, StoredInqu
 import { getActiveQuoteForPair, getOrderForPair, reassignQuotesToInquiry } from "@/lib/order-service";
 import { allowOffPlatformContacts, isProposalChatLocked } from "@/lib/studioos/project-contract";
 import { contactFilterNotice, filterContactInfo } from "@/lib/studioos/contact-filter";
-import { dataStorePath, readDataJson, writeDataJson } from "@/lib/serverless-store";
+import { dataStorePath, readDataJson, writeDataJson } from "@/lib/serverless-store-core";
 
 const STORE_PATH = dataStorePath("chat-store.json");
 

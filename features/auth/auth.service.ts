@@ -1,6 +1,7 @@
-import { headers } from "next/headers";
 import { DEMO_USERS, findDemoUser, type DemoUser } from "@/lib/demo-auth";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
+import { hashPassword, verifyPassword } from "@/lib/core/password-crypto";
+import { readRequestMeta } from "@/lib/core/request-meta";
 import { userRepository, type UserWithProfiles } from "@/features/auth/user.repository";
 import type { UserRole } from "@prisma/client";
 
@@ -33,31 +34,45 @@ function demoRoleToPrisma(role: DemoUser["role"]): UserRole {
 export class AuthService {
   async authenticate(email: string, password: string): Promise<AuthUserDto | null> {
     const normalized = email.trim().toLowerCase();
+    const normalizedPassword = password.trim();
 
     if (hasDatabaseUrl()) {
       const user = await userRepository.findByEmail(normalized);
-      if (user?.passwordHash) {
-        const { verifyPassword } = await import("@/lib/core/password");
-        if (verifyPassword(password, user.passwordHash)) {
-          const headerList = await headers();
-          await userRepository.touchLogin(user.id, {
-            ip:
-              headerList.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-              headerList.get("x-real-ip") ??
-              undefined,
-            device: headerList.get("user-agent") ?? undefined
-          });
-          return mapPrismaUser(user);
-        }
+      if (user?.passwordHash && verifyPassword(normalizedPassword, user.passwordHash)) {
+        const meta = await readRequestMeta();
+        await userRepository.touchLogin(user.id, {
+          ip: meta.ip ?? undefined,
+          device: meta.device ?? undefined
+        });
+        return mapPrismaUser(user);
       }
     }
 
-    const demo = findDemoUser(normalized, password);
+    const demo = findDemoUser(normalized, normalizedPassword);
     if (!demo) return null;
 
     if (hasDatabaseUrl()) {
       const synced = await userRepository.findByEmail(normalized);
       if (synced) {
+        const expectedRole = demoRoleToPrisma(demo.role);
+        const hashMatches =
+          Boolean(synced.passwordHash) &&
+          verifyPassword(normalizedPassword, synced.passwordHash);
+        const roleMatches = synced.role === expectedRole;
+
+        if (!hashMatches || !roleMatches) {
+          const refreshed = await userRepository.upsertDemoUser({
+            email: normalized,
+            role: expectedRole,
+            fullName: demo.label,
+            passwordHash: hashPassword(normalizedPassword),
+            companyName: demo.role === "client" ? demo.label : undefined,
+            displayName: demo.role === "creator" ? demo.label : undefined
+          });
+          await userRepository.touchLogin(refreshed.id);
+          return mapPrismaUser(refreshed);
+        }
+
         await userRepository.touchLogin(synced.id);
         return mapPrismaUser(synced);
       }
@@ -88,6 +103,12 @@ export class AuthService {
 
     if (!hasDatabaseUrl()) return null;
     const user = await userRepository.findById(id);
+    return user ? mapPrismaUser(user) : null;
+  }
+
+  async getUserByEmail(email: string): Promise<AuthUserDto | null> {
+    if (!hasDatabaseUrl()) return null;
+    const user = await userRepository.findByEmail(email.trim().toLowerCase());
     return user ? mapPrismaUser(user) : null;
   }
 

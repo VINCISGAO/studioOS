@@ -13,7 +13,13 @@ function parseBody(body: unknown): SignInInput | null {
   const record = body as Record<string, unknown>;
   const lang = record.lang === "zh" ? "zh" : "en";
   const expectedRole =
-    record.expected_role === "creator" ? "creator" : record.expected_role === "brand" ? "brand" : "";
+    record.expected_role === "admin"
+      ? "admin"
+      : record.expected_role === "creator"
+        ? "creator"
+        : record.expected_role === "brand"
+          ? "brand"
+          : "";
 
   if (typeof record.email !== "string" || typeof record.password !== "string") {
     return null;

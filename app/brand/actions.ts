@@ -29,6 +29,12 @@ export async function startBrandBriefAction(formData: FormData) {
     });
   }
 
-  const project = await getOrCreateEphemeralWizardProject(clientEmail);
+  let project;
+  try {
+    project = await getOrCreateEphemeralWizardProject(clientEmail);
+  } catch {
+    redirect(withLocale("/brand?error=draft-failed", locale));
+  }
+
   redirect(withLocale(`/brand/projects/new?project=${project.id}&step=1`, locale));
 }

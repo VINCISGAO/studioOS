@@ -1,204 +1,98 @@
 import Link from "next/link";
-import { DollarSign, FolderKanban, Scale, ScrollText, ShieldCheck, UsersRound, Video, Flag } from "lucide-react";
+import { LineChart } from "lucide-react";
 import { approveOnboardingAction, rejectOnboardingAction } from "@/app/onboarding-actions";
-import { StatusBadge } from "@/components/status-badge";
+import { AdminOverviewDashboard } from "@/components/studioos/admin-overview-dashboard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { adminDashboardService } from "@/features/admin/dashboard/admin-dashboard.service";
 import { adminService } from "@/features/admin/admin.service";
 import { getSessionUser } from "@/features/auth/session.service";
-import { AdminOpsPreview } from "@/components/studioos/admin-ops-preview";
-import { creators, deposits, orders, projects, refundRequests } from "@/lib/data";
-import { listApplications } from "@/lib/onboarding-service";
+import { isPrismaAdminRole } from "@/lib/auth/route-access";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
 import { adminPortalRoutes } from "@/lib/studioos/admin-portal-routes";
-import { formatCurrency, formatDate } from "@/lib/utils";
 
 const copy = {
   en: {
     eyebrow: "StudioOS Admin",
     title: "Platform overview",
-    metrics: {
-      projects: "Campaigns",
-      orders: "Production jobs",
-      paidVolume: "Paid volume",
-      unassigned: "Unassigned",
-      deposits: "Studio deposits",
-      disputes: "Disputes"
-    },
-    allOrders: "Production pipeline",
-    table: ["Job", "Brand", "Status", "Studio", "Payment", "Amount"],
-    unassigned: "Unassigned",
-    submittedProjects: "Active briefs",
-    viewOrder: "View job",
-    trustOps: "Trust & payments",
-    deposits: "Studio deposits",
-    disputes: "Disputes & refunds",
-    audit: "Audit log",
-    featureFlags: "Feature flags",
+    analytics: "Analytics dashboard",
     onboarding: "Studio applications",
     onboardingEmpty: "No studio applications yet.",
     approve: "Approve",
     reject: "Reject",
-    pendingApps: "Pending"
+    pendingApps: "Pending",
+    signIn: "Sign in as admin to view the Prisma overview."
   },
   zh: {
     eyebrow: "StudioOS 管理后台",
     title: "平台总览",
-    metrics: {
-      projects: "Campaign",
-      orders: "制作任务",
-      paidVolume: "已付款金额",
-      unassigned: "未分配",
-      deposits: "Studio 保证金",
-      disputes: "争议"
-    },
-    allOrders: "制作流水线",
-    table: ["任务", "Brand", "状态", "Studio", "付款", "金额"],
-    unassigned: "未分配",
-    submittedProjects: "进行中的 Brief",
-    viewOrder: "查看任务",
-    trustOps: "交易与信任",
-    deposits: "Studio 保证金",
-    disputes: "争议与退款",
-    audit: "审计日志",
-    featureFlags: "功能开关",
-    onboarding: "Studio 入驻申请",
-    onboardingEmpty: "暂无 Studio 入驻申请。",
+    analytics: "分析仪表盘",
+    onboarding: "创作者入驻申请",
+    onboardingEmpty: "暂无入驻申请。",
     approve: "通过",
     reject: "拒绝",
-    pendingApps: "待审核"
+    pendingApps: "待审核",
+    signIn: "请使用管理员账号登录以查看 Prisma 总览。"
   }
 };
+
+async function loadPendingApplications() {
+  try {
+    const { listApplications } = await import("@/lib/onboarding-service");
+    return await listApplications("pending");
+  } catch {
+    return [];
+  }
+}
 
 export default async function AdminPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const locale = getLocale(await searchParams);
   const t = copy[locale];
   const sessionUser = await getSessionUser();
-  const dbOverview = sessionUser ? await adminService.getOverview(sessionUser) : null;
+  const isAdmin = sessionUser ? isPrismaAdminRole(sessionUser.role) : false;
+  const overview = isAdmin && sessionUser
+    ? await adminDashboardService.getOverviewPage(sessionUser)
+    : null;
   const opsPreview =
-    sessionUser && !sessionUser.id.startsWith("demo_")
+    isAdmin && sessionUser
       ? await adminService.getOpsPreview(sessionUser)
       : { openDisputes: [], recentAudit: [], recentCampaigns: [] };
-  const pendingApplications = await listApplications("pending");
-  const revenue = orders.reduce((sum, order) => sum + order.amount, 0);
-  const unassigned = orders.filter((order) => !order.assigned_creator_id).length;
-  const depositTotal = deposits.reduce((sum, deposit) => sum + deposit.amount, 0);
-  const disputeCount = dbOverview?.openDisputeCount ?? refundRequests.length;
-  const metrics = [
-    {
-      icon: FolderKanban,
-      label: t.metrics.projects,
-      value: String(dbOverview?.campaignCount ?? projects.length)
-    },
-    { icon: Video, label: t.metrics.orders, value: String(orders.length) },
-    {
-      icon: DollarSign,
-      label: t.metrics.paidVolume,
-      value: formatCurrency(dbOverview?.escrowHeldTotal ? dbOverview.escrowHeldTotal + revenue : revenue)
-    },
-    { icon: UsersRound, label: t.metrics.unassigned, value: String(unassigned) },
-    { icon: ShieldCheck, label: t.metrics.deposits, value: formatCurrency(depositTotal) },
-    { icon: Scale, label: t.metrics.disputes, value: String(disputeCount) }
-  ];
+  const pendingApplications = await loadPendingApplications();
 
   return (
     <div>
-      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">{t.eyebrow}</p>
-      <h1 className="mt-3 text-3xl font-semibold tracking-tight">{t.title}</h1>
-
-      <div className="mt-8 grid gap-4 md:grid-cols-3 xl:grid-cols-6">
-        {metrics.map(({ icon: Icon, label, value }) => (
-          <Card key={label} className="border-zinc-200/80 shadow-none">
-            <CardContent className="p-5">
-              <Icon className="h-5 w-5 text-zinc-400" />
-              <p className="mt-5 text-sm text-zinc-500">{label}</p>
-              <div className="mt-2 text-2xl font-semibold">{value}</div>
-            </CardContent>
-          </Card>
-        ))}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">{t.eyebrow}</p>
+          <h1 className="mt-3 text-3xl font-semibold tracking-tight">{t.title}</h1>
+        </div>
+        <Button asChild variant="outline">
+          <Link href={withLocale(adminPortalRoutes.analytics, locale)}>
+            <LineChart className="h-4 w-4" /> {t.analytics}
+          </Link>
+        </Button>
       </div>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_0.34fr]">
-        <Card className="border-zinc-200/80 shadow-none">
-          <CardContent className="p-0">
-            <div className="border-b p-6">
-              <h2 className="text-lg font-semibold">{t.allOrders}</h2>
-            </div>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  {t.table.map((heading) => (
-                    <TableHead key={heading} className={heading === t.table[5] ? "text-right" : undefined}>
-                      {heading}
-                    </TableHead>
-                  ))}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {orders.map((order) => {
-                  const project = projects.find((item) => item.id === order.project_id);
-                  const studio = creators.find((item) => item.id === order.assigned_creator_id);
-                  return (
-                    <TableRow key={order.id}>
-                      <TableCell className="font-medium">
-                        <Link href={withLocale(`/admin/orders/${order.id}`, locale)} className="hover:underline">
-                          {order.id}
-                        </Link>
-                      </TableCell>
-                      <TableCell>
-                        <div>{project?.company_name}</div>
-                        <div className="text-xs text-zinc-500">{project?.email}</div>
-                      </TableCell>
-                      <TableCell>
-                        <StatusBadge status={order.status} locale={locale} />
-                      </TableCell>
-                      <TableCell>{studio?.name ?? t.unassigned}</TableCell>
-                      <TableCell>
-                        <Badge variant="success">{order.payment_status}</Badge>
-                      </TableCell>
-                      <TableCell className="text-right">{formatCurrency(order.amount)}</TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+      <div className="mt-8">
+        {overview ? (
+          <AdminOverviewDashboard locale={locale} overview={overview} disputes={opsPreview.openDisputes} />
+        ) : (
+          <p className="text-sm text-zinc-500">{t.signIn}</p>
+        )}
+      </div>
 
-        <Card className="border-zinc-200/80 shadow-none">
+      {pendingApplications.length > 0 ? (
+        <Card className="mt-8 border-zinc-200/80 shadow-none">
           <CardContent className="p-6">
-            <h2 className="text-lg font-semibold">{t.submittedProjects}</h2>
-            <div className="mt-5 space-y-4">
-              {projects.map((project) => (
-                <div key={project.id} className="rounded-lg border p-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="font-medium">{project.company_name}</p>
-                      <p className="mt-1 text-xs text-zinc-500">{formatDate(project.created_at)}</p>
-                    </div>
-                    <StatusBadge status={project.status} locale={locale} />
-                  </div>
-                  <p className="mt-3 text-sm text-zinc-500">{project.campaign_goal}</p>
-                </div>
-              ))}
+            <div className="flex items-center justify-between gap-4">
+              <h2 className="text-lg font-semibold">{t.onboarding}</h2>
+              <Badge variant="warning">
+                {t.pendingApps}: {pendingApplications.length}
+              </Badge>
             </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card className="mt-8 border-zinc-200/80 shadow-none">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between gap-4">
-            <h2 className="text-lg font-semibold">{t.onboarding}</h2>
-            <Badge variant="warning">
-              {t.pendingApps}: {pendingApplications.length}
-            </Badge>
-          </div>
-          <div className="mt-5 space-y-4">
-            {pendingApplications.length ? (
-              pendingApplications.map((application) => (
+            <div className="mt-5 space-y-4">
+              {pendingApplications.map((application) => (
                 <div key={application.id} className="rounded-lg border p-4">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
@@ -223,51 +117,11 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                     </div>
                   </div>
                 </div>
-              ))
-            ) : (
-              <p className="text-sm text-zinc-500">{t.onboardingEmpty}</p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      <AdminOpsPreview
-        locale={locale}
-        disputes={opsPreview.openDisputes}
-        auditLogs={opsPreview.recentAudit}
-      />
-
-      <Card className="mt-8 border-zinc-200/80 shadow-none">
-        <CardContent className="p-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 className="text-lg font-semibold">{t.trustOps}</h2>
+              ))}
             </div>
-            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-              <Button asChild variant="outline">
-                <Link href={withLocale(adminPortalRoutes.deposits, locale)}>
-                  <ShieldCheck className="h-4 w-4" /> {t.deposits}
-                </Link>
-              </Button>
-              <Button asChild variant="outline">
-                <Link href={withLocale(adminPortalRoutes.disputes, locale)}>
-                  <Scale className="h-4 w-4" /> {t.disputes}
-                </Link>
-              </Button>
-              <Button asChild variant="outline">
-                <Link href={withLocale(adminPortalRoutes.audit, locale)}>
-                  <ScrollText className="h-4 w-4" /> {t.audit}
-                </Link>
-              </Button>
-              <Button asChild variant="outline">
-                <Link href={withLocale(adminPortalRoutes.featureFlags, locale)}>
-                  <Flag className="h-4 w-4" /> {t.featureFlags}
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      ) : null}
     </div>
   );
 }

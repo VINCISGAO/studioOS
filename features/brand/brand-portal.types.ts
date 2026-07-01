@@ -13,6 +13,7 @@ export type BrandPortalCampaignView = {
 export type BrandPortalEscrowView = {
   campaignId: string;
   campaignTitle: string;
+  legacyProjectId: string | null;
   status: string;
   amount: number;
   releasedAmount: number;

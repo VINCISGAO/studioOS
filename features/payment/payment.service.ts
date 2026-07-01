@@ -24,7 +24,9 @@ import type { Locale } from "@/lib/i18n";
 
 const PAYABLE_CAMPAIGN_STATES = new Set<string>([
   CampaignState.CREATOR_ACCEPTED,
-  CampaignState.ESCROW_PENDING
+  CampaignState.ESCROW_PENDING,
+  CampaignState.MATCHING,
+  CampaignState.INVITATION_SENT
 ]);
 
 export type BrandCampaignPaymentResult =
@@ -73,9 +75,7 @@ export class PaymentService {
 
   private async ensureEscrowRecord(campaignId: string) {
     const campaign = await prisma.campaign.findUniqueOrThrow({ where: { id: campaignId } });
-    if (!campaign.creatorId) {
-      throw appError("INVALID_TRANSITION", "Campaign has no assigned creator");
-    }
+    const escrowCreatorId = campaign.creatorId ?? campaign.brandId;
 
     const existing = await paymentRepository.findByCampaignId(campaignId);
     if (existing) return existing;
@@ -83,7 +83,7 @@ export class PaymentService {
     return paymentRepository.create({
       campaignId,
       brandId: campaign.brandId,
-      creatorId: campaign.creatorId,
+      creatorId: escrowCreatorId,
       amount: Number(campaign.budget),
       currency: campaign.currency
     });
@@ -212,8 +212,14 @@ export class PaymentService {
 
     if (escrow.status === EscrowState.CREATED) {
       await this.transitionEscrow(input.campaignId, "START_PAYMENT", actor);
-      if (campaign.status === CampaignState.CREATOR_ACCEPTED) {
-        await campaignService.transition(input.campaignId, CampaignEvent.START_PAYMENT, actor);
+      if (
+        campaign.status === CampaignState.CREATOR_ACCEPTED ||
+        campaign.status === CampaignState.MATCHING ||
+        campaign.status === CampaignState.INVITATION_SENT
+      ) {
+        if (campaign.status === CampaignState.CREATOR_ACCEPTED) {
+          await campaignService.transition(input.campaignId, CampaignEvent.START_PAYMENT, actor);
+        }
       }
       escrow = (await paymentRepository.findByCampaignId(input.campaignId))!;
     }
@@ -243,7 +249,7 @@ export class PaymentService {
     }
 
     const afterPay = await prisma.campaign.findUniqueOrThrow({ where: { id: input.campaignId } });
-    if (afterPay.status === CampaignState.ESCROW_FUNDED) {
+    if (afterPay.status === CampaignState.ESCROW_FUNDED && afterPay.creatorId) {
       await campaignService.transition(input.campaignId, CampaignEvent.START_PRODUCTION, actor);
     }
 

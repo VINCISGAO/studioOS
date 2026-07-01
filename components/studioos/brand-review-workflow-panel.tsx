@@ -9,6 +9,7 @@ import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import type { StoredDeliverable, StoredOrder } from "@/lib/order-types";
 import type { ReviewComment } from "@/lib/studioos/review-store";
+import type { ReviewPortalUiState } from "@/features/review/review-portal-ui-state";
 import { cn } from "@/lib/utils";
 
 const copy = {
@@ -93,7 +94,8 @@ export function BrandReviewWorkflowPanel({
   order,
   deliverables,
   comments,
-  flash
+  flash,
+  reviewUi
 }: {
   locale: Locale;
   projectId?: string;
@@ -101,14 +103,17 @@ export function BrandReviewWorkflowPanel({
   deliverables: StoredDeliverable[];
   comments: ReviewComment[];
   flash?: "completed" | "revision";
+  reviewUi?: ReviewPortalUiState | null;
 }) {
   const t = copy[locale];
   const creator = order ? creators.find((item) => item.id === order.creator_id) : null;
   const hasVersions = deliverables.length > 0;
   const openComments = comments.filter((item) => item.status === "open");
   const resolvedComments = comments.filter((item) => item.status === "resolved");
-  const canDecide = order && (order.status === "review" || order.status === "revision") && hasVersions;
-  const isCompleted = order?.status === "completed";
+  const canDecide =
+    reviewUi?.canDecide ??
+    Boolean(order && (order.status === "review" || order.status === "revision") && hasVersions);
+  const isCompleted = reviewUi?.orderApproved ?? order?.status === "completed";
 
   if (!order) {
     return (

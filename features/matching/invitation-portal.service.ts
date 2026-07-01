@@ -2,6 +2,8 @@ import type { Locale } from "@/lib/i18n";
 import type { StoredProject } from "@/lib/project-types";
 import { activityService } from "@/features/campaign/activity.service";
 import { campaignRepository } from "@/features/campaign/campaign.repository";
+import { campaignService } from "@/features/campaign/campaign.service";
+import { CampaignEvent } from "@/features/campaign/campaign.state-machine";
 import { resolveCreatorProfileIdForLegacyId, resolveLegacyCreatorIdForProfile } from "@/features/matching/invitation-creator-bridge";
 import {
   mapInvitationToPortalView,
@@ -25,7 +27,7 @@ import {
   isInvitationRecruitmentClosed,
   MAX_CAMPAIGN_INVITATIONS
 } from "@/lib/studioos/invitation-lifecycle";
-import { getWorksForCreator } from "@/lib/works-catalog";
+import { getWorksForCreator } from "@/lib/works-catalog-core";
 
 function resolveCreatorName(creatorId: string): string {
   return creators.find((item) => item.id === creatorId)?.name ?? creatorId;
@@ -180,8 +182,9 @@ export class InvitationPortalService {
     }
 
     if (campaign.status === "MATCHING") {
-      await campaignRepository.updateBrandCampaign(campaign.id, {
-        status: "INVITATION_SENT"
+      await campaignService.transition(campaign.id, CampaignEvent.SEND_INVITATION, {
+        id: campaign.brandId,
+        role: "BRAND"
       });
     }
 
@@ -253,8 +256,9 @@ export class InvitationPortalService {
     await invitationRepository.updateStatus(invitationId, "ACCEPTED");
 
     if (row.campaign.status === "MATCHING") {
-      await campaignRepository.updateBrandCampaign(row.campaignId, {
-        status: "INVITATION_SENT"
+      await campaignService.transition(row.campaignId, CampaignEvent.SEND_INVITATION, {
+        id: row.campaign.brandId,
+        role: "BRAND"
       });
     }
 

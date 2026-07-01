@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { AdminPaymentsTable } from "@/components/studioos/admin-payments-table";
-import { paymentCollectionService } from "@/features/payment/payment-collection.service";
+import { AdminPaymentsPrismaTable } from "@/components/studioos/admin-payments-prisma-table";
+import { adminPaymentService } from "@/features/admin/payment/admin-payment.service";
 import { getSessionUser } from "@/features/auth/session.service";
 import { getLocale, type SearchParams } from "@/lib/i18n";
 import { formatCurrency } from "@/lib/utils";
@@ -9,29 +9,21 @@ export default async function AdminPaymentsPage({ searchParams }: { searchParams
   const locale = getLocale(await searchParams);
   const user = await getSessionUser();
 
-  let records: Awaited<ReturnType<typeof paymentCollectionService.listForAdmin>> = [];
-  if (user) {
-    try {
-      records = await paymentCollectionService.listForAdmin(user);
-    } catch {
-      records = [];
-    }
-  }
+  const records = user ? await adminPaymentService.list(user) : [];
+  const webhooks = user ? await adminPaymentService.listWebhooks(user) : [];
 
   const paidTotal = records
     .filter((row) => row.paymentStatus === "PAID")
     .reduce((sum, row) => sum + row.amount, 0);
-  const pendingPayouts = records.filter(
-    (row) => row.creatorPayoutStatus === "MANUAL_PAYOUT_PENDING"
-  ).length;
+  const pendingPayouts = records.filter((row) => row.creatorPayoutStatus === "MANUAL_PAYOUT_PENDING").length;
 
   return (
     <div>
       <h1 className="text-3xl font-semibold tracking-tight">Payments</h1>
       <p className="mt-2 text-sm text-zinc-500">
         {locale === "zh"
-          ? "在线收款、手续费与创作者手动结算。"
-          : "Online collection, service fees, and manual creator payouts."}
+          ? "Prisma EscrowPayment、OrderCommission 与 Webhook 事件。"
+          : "Prisma EscrowPayment, OrderCommission, and webhook events."}
       </p>
       <div className="mt-8 grid gap-4 sm:grid-cols-2">
         <Card className="border-zinc-200/80 shadow-none">
@@ -49,9 +41,21 @@ export default async function AdminPaymentsPage({ searchParams }: { searchParams
       </div>
       <Card className="mt-4 border-zinc-200/80 shadow-none">
         <CardContent className="p-0">
-          <AdminPaymentsTable records={records} />
+          <AdminPaymentsPrismaTable records={records} />
         </CardContent>
       </Card>
+      {webhooks.length > 0 && (
+        <Card className="mt-4 border-zinc-200/80 shadow-none">
+          <CardContent className="p-6">
+            <h2 className="font-semibold">Recent webhooks</h2>
+            <ul className="mt-3 space-y-2 text-sm text-zinc-600">
+              {webhooks.map((w) => (
+                <li key={w.id}>{w.provider} · {w.eventType} · {w.processed ? "processed" : "pending"}</li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

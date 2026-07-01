@@ -23,7 +23,13 @@ import {
   Shield,
   ShieldCheck,
   Users,
-  Wallet
+  Wallet,
+  Megaphone,
+  ArrowDownToLine,
+  ArrowUpFromLine,
+  BookOpen,
+  Bell,
+  Activity
 } from "lucide-react";
 import {
   isPortalMobileNavIconKey,
@@ -54,7 +60,15 @@ const PORTAL_NAV_ICONS: Record<PortalMobileNavIconKey, LucideIcon> = {
   audit: ScrollText,
   featureFlags: Flag,
   quality: ShieldCheck,
-  support: Headphones
+  support: Headphones,
+  campaigns: Megaphone,
+  settlements: ArrowDownToLine,
+  withdrawals: ArrowUpFromLine,
+  adminWallets: Wallet,
+  ledger: BookOpen,
+  notifications: Bell,
+  activityLog: Activity,
+  analytics: LineChart
 };
 
 export function resolvePortalNavIcon(iconKey: string | undefined): LucideIcon {
