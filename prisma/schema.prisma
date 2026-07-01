@@ -151,6 +151,81 @@ enum TransactionType {
   DISPUTE_RELEASE
 }
 
+enum WalletAccountStatus {
+  ACTIVE
+  SUSPENDED
+  CLOSED
+}
+
+enum WalletAssetCode {
+  USD
+  CNY
+  EUR
+  USDT
+  USDC
+  BTC
+  ETH
+  TRX
+}
+
+enum PaymentChannel {
+  STRIPE
+  PAYPAL
+  WISE
+  BANK_TRANSFER
+  ALIPAY
+  WECHAT_PAY
+  ABA_LOCAL_BANK
+  MANUAL_OFFLINE
+  CRYPTO_ONCHAIN
+  INTERNAL
+}
+
+enum PaymentMethodType {
+  BANK_WIRE
+  PAYPAL
+  WISE
+  ALIPAY
+  WECHAT
+  CRYPTO
+  LOCAL_BANK
+  MANUAL
+}
+
+enum PaymentMethodProvider {
+  STRIPE
+  PAYPAL
+  WISE
+  BANK_TRANSFER
+  ALIPAY
+  WECHAT_PAY
+  ABA_LOCAL_BANK
+  MANUAL_OFFLINE
+  CRYPTO
+}
+
+enum PaymentMethodStatus {
+  PENDING
+  VERIFIED
+  DISABLED
+}
+
+enum LedgerEntryType {
+  DEPOSIT
+  WITHDRAW
+  ESCROW_LOCK
+  ESCROW_RELEASE
+  SETTLEMENT
+  COMMISSION
+  REFUND
+  MANUAL_ADJUSTMENT
+}
+
+enum LedgerDirection {
+  CREDIT
+  DEBIT
+}
+
 enum NotificationChannel {
   IN_APP
   EMAIL
@@ -244,6 +319,8 @@ model User {
   activityLogs   ActivityLog[]
   notifications  Notification[]
   wallet         Wallet?
+  walletAccount  WalletAccount?
+  paymentMethods PaymentMethod[]
   sentMessages     CommunicationMessage[] @relation("SentMessages")
   receivedMessages CommunicationMessage[] @relation("ReceivedMessages")
   aiPreference     AiPreference?
@@ -373,6 +450,7 @@ model Campaign {
   memoryFacts   MemoryFact[]
   orderCommission OrderCommission?
   deliveries      CampaignDelivery[]
+  ledgerEntries   LedgerEntry[]
 
   @@index([brandId])
   @@index([creatorId])
@@ -605,6 +683,100 @@ model Transaction {
   @@index([campaignId])
   @@index([type])
   @@map("transactions")
+}
+
+// ─── Unified Finance (WalletAccount / WalletAsset / LedgerEntry) ─────────────
+
+model WalletAccount {
+  id        String              @id @default(uuid())
+  userId    String              @unique @map("user_id")
+  status    WalletAccountStatus @default(ACTIVE)
+  createdAt DateTime            @default(now()) @map("created_at")
+  updatedAt DateTime            @updatedAt @map("updated_at")
+
+  user    User          @relation(fields: [userId], references: [id])
+  assets  WalletAsset[]
+  entries LedgerEntry[]
+
+  @@map("wallet_accounts")
+}
+
+model WalletAsset {
+  id               String          @id @default(uuid())
+  walletAccountId  String          @map("wallet_account_id")
+  assetCode        WalletAssetCode @map("asset_code")
+  availableBalance Decimal         @default(0) @map("available_balance") @db.Decimal(24, 8)
+  pendingBalance   Decimal         @default(0) @map("pending_balance") @db.Decimal(24, 8)
+  frozenBalance    Decimal         @default(0) @map("frozen_balance") @db.Decimal(24, 8)
+  createdAt        DateTime        @default(now()) @map("created_at")
+  updatedAt        DateTime        @updatedAt @map("updated_at")
+
+  walletAccount WalletAccount @relation(fields: [walletAccountId], references: [id], onDelete: Cascade)
+
+  @@unique([walletAccountId, assetCode])
+  @@index([walletAccountId])
+  @@map("wallet_assets")
+}
+
+model PaymentMethod {
+  id            String                @id @default(uuid())
+  userId        String                @map("user_id")
+  type          PaymentMethodType
+  provider      PaymentMethodProvider
+  accountName   String?               @map("account_name")
+  accountNumber String?               @map("account_number")
+  accountEmail  String?               @map("account_email")
+  walletAddress String?               @map("wallet_address")
+  network       String?
+  currency      WalletAssetCode       @default(USD)
+  isDefault     Boolean               @default(false) @map("is_default")
+  status        PaymentMethodStatus   @default(PENDING)
+  metadataJson  Json?                 @map("metadata_json")
+  createdAt     DateTime              @default(now()) @map("created_at")
+  updatedAt     DateTime              @updatedAt @map("updated_at")
+
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ledgerEntries LedgerEntry[]
+
+  @@index([userId])
+  @@index([userId, isDefault])
+  @@index([status])
+  @@map("payment_methods")
+}
+
+model LedgerEntry {
+  id                    String          @id @default(uuid())
+  walletAccountId       String          @map("wallet_account_id")
+  assetCode             WalletAssetCode @map("asset_code")
+  entryType             LedgerEntryType @map("entry_type")
+  direction             LedgerDirection
+  amount                Decimal         @db.Decimal(24, 8)
+  availableAfter        Decimal         @map("available_after") @db.Decimal(24, 8)
+  pendingAfter          Decimal         @map("pending_after") @db.Decimal(24, 8)
+  frozenAfter           Decimal         @map("frozen_after") @db.Decimal(24, 8)
+  campaignId            String?         @map("campaign_id")
+  paymentMethodId       String?         @map("payment_method_id")
+  channel               PaymentChannel?
+  referenceType         String?         @map("reference_type")
+  referenceId           String?         @map("reference_id")
+  cryptoNetwork         String?         @map("crypto_network")
+  txHash                String?         @map("tx_hash")
+  externalWalletAddress String?         @map("external_wallet_address")
+  description           String?
+  metadataJson          Json?           @map("metadata_json")
+  createdAt             DateTime        @default(now()) @map("created_at")
+
+  walletAccount WalletAccount  @relation(fields: [walletAccountId], references: [id], onDelete: Cascade)
+  paymentMethod PaymentMethod? @relation(fields: [paymentMethodId], references: [id])
+  campaign      Campaign?      @relation(fields: [campaignId], references: [id])
+
+  @@index([walletAccountId, createdAt])
+  @@index([walletAccountId, assetCode])
+  @@index([campaignId])
+  @@index([entryType])
+  @@index([channel])
+  @@index([txHash])
+  @@map("ledger_entries")
 }
 
 // ─── Events & Notifications ──────────────────────────────────────────────────
