@@ -24,7 +24,7 @@ import { reviewBridgeService } from "@/features/review/review-bridge.service";
 import { paymentRepository } from "@/features/payment/payment.repository";
 import { EscrowState } from "@/features/shared/state-machines/escrow.state-machine";
 import { getProject } from "@/lib/project-service";
-import { startProductionWithSelectedCreator } from "@/lib/studioos/brand-checkout-service";
+import { setupBrandCheckout } from "@/lib/studioos/brand-checkout-service";
 import { notifyCreatorsInvitationExpired } from "@/lib/studioos/commercial-interaction-notify";
 import type { StoredCreatorInvitation } from "@/lib/studioos/creator-invitation-types";
 import { isInvitationRecruitmentClosed } from "@/lib/studioos/invitation-lifecycle";
@@ -32,13 +32,13 @@ import { isInvitationRecruitmentClosed } from "@/lib/studioos/invitation-lifecyc
 function selectedCreatorCopy(locale: Locale, brandName: string, projectTitle: string) {
   if (locale === "zh") {
     return {
-      title: `${brandName} 已选定你参与项目`,
-      body: `「${projectTitle}」— 品牌已确认与你合作，请查看 Studio 工作台了解下一步。`
+      title: `🎉 恭喜，你已被品牌选中`,
+      body: `「${projectTitle}」— 品牌已确认与你合作。请等待品牌完成托管付款，收到付款通知后再开始制作。`
     };
   }
   return {
     title: `${brandName} selected you for this project`,
-    body: `"${projectTitle}" — the brand confirmed you as their creator. Open your studio dashboard to continue.`
+    body: `"${projectTitle}" — the brand confirmed you as their creator. Wait for escrow payment before starting production.`
   };
 }
 
@@ -193,27 +193,32 @@ export class CampaignSelectionService {
     const projectTitle =
       project?.title || project?.product_name || campaign.title || brandName;
     const copy = selectedCreatorCopy(input.locale, brandName, projectTitle);
+
+    const legacyProject = await getProject(legacyProjectId);
+    let studioActionUrl = "/studio/projects";
+    if (legacyProject) {
+      const checkout = await setupBrandCheckout({
+        project: legacyProject,
+        creatorId: input.creatorId,
+        workId: null,
+        client: input.client,
+        locale: input.locale
+      }).catch(() => null);
+      if (checkout?.order.id) {
+        studioActionUrl = `/studio/projects/${checkout.order.id}`;
+      }
+    }
+
     await notificationService
       .notify({
         userId: creatorUserId,
         campaignId: campaign.id,
         title: copy.title,
         content: copy.body,
-        actionUrl: `/studio/projects`,
+        actionUrl: studioActionUrl,
         email: false
       })
       .catch(() => undefined);
-
-    const legacyProject = await getProject(legacyProjectId);
-    if (legacyProject) {
-      await startProductionWithSelectedCreator({
-        project: legacyProject,
-        creatorId: input.creatorId,
-        workId: null,
-        client: input.client,
-        locale: input.locale
-      }).catch(() => undefined);
-    }
 
     await reviewBridgeService.syncLegacyOrderStatusAfterSelection(campaign.id, input.creatorId);
 

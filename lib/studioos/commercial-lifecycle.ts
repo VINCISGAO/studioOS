@@ -3,6 +3,34 @@ import type { StoredProject } from "@/lib/project-types";
 import type { StoredCreatorInvitation } from "@/lib/studioos/creator-invitation-types";
 import { normalizeCampaignStatus } from "@/lib/studioos/project-status";
 
+export type BrandCommercialContext = {
+  order?: Pick<Partial<StoredOrder>, "payment_status" | "status"> | null;
+  project?: Pick<StoredProject, "status"> | null;
+};
+
+export type CreatorCommercialContext = {
+  order?: Pick<Partial<StoredOrder>, "payment_status" | "status"> | null;
+};
+
+export function isBrandAwaitingPayment(context: BrandCommercialContext): boolean {
+  const projectStatus = context.project ? normalizeCampaignStatus(context.project.status) : null;
+  if (
+    projectStatus &&
+    ["payment_pending", "contract_pending", "studio_selected", "proposal"].includes(projectStatus)
+  ) {
+    return true;
+  }
+  if (context.order?.payment_status === "unpaid") return true;
+  if (context.order?.status === "waiting_payment") return true;
+  return false;
+}
+
+export function isCreatorAwaitingPayment(context: CreatorCommercialContext): boolean {
+  if (context.order?.payment_status === "unpaid") return true;
+  if (context.order?.status === "waiting_payment") return true;
+  return false;
+}
+
 /** Brand-side commercial lifecycle — project owner view */
 export type BrandCommercialStep =
   | "publish_requirement"
@@ -133,6 +161,9 @@ function resolvePostSelectionBrandStep(input: {
   const projectStatus = normalizeCampaignStatus(input.project.status);
 
   if (order) {
+    if (order.payment_status === "unpaid" || order.status === "waiting_payment") {
+      return "creator_selected";
+    }
     if (order.status === "revision") return "under_review";
     if (order.status === "review") return "under_review";
     if (order.status === "completed" && order.payout_status === "paid") return "completed";
@@ -140,13 +171,15 @@ function resolvePostSelectionBrandStep(input: {
     if (order.status === "completed") return "approved";
     if ((input.deliverableCount ?? 0) > 0 && order.status === "in_production") return "under_review";
     if (order.status === "in_production") return "in_production";
-    if (order.status === "waiting_payment") return "creator_selected";
   }
 
   if (projectStatus === "in_review") return "under_review";
   if (projectStatus === "delivered") return "pending_delivery";
   if (projectStatus === "completed") return "completed";
   if (projectStatus === "production") {
+    if (order?.payment_status === "unpaid" || order?.status === "waiting_payment") {
+      return "creator_selected";
+    }
     if ((input.deliverableCount ?? 0) === 0) return "in_production";
     return "under_review";
   }
@@ -336,11 +369,23 @@ const creatorStepToPhase: Record<CreatorCommercialStep, UserCommercialPhase> = {
   completed: "completed"
 };
 
-export function mapBrandStepToPhase(step: BrandCommercialStep): UserCommercialPhase {
+export function mapBrandStepToPhase(
+  step: BrandCommercialStep,
+  context?: BrandCommercialContext
+): UserCommercialPhase {
+  if (step === "creator_selected" && context && isBrandAwaitingPayment(context)) {
+    return "recruiting";
+  }
   return brandStepToPhase[step];
 }
 
-export function mapCreatorStepToPhase(step: CreatorCommercialStep): UserCommercialPhase {
+export function mapCreatorStepToPhase(
+  step: CreatorCommercialStep,
+  context?: CreatorCommercialContext
+): UserCommercialPhase {
+  if (step === "selected" && context && isCreatorAwaitingPayment(context)) {
+    return "recruiting";
+  }
   return creatorStepToPhase[step];
 }
 
@@ -356,24 +401,47 @@ export function creatorUserPhaseLabel(phase: UserCommercialPhase, locale: "en" |
   return creatorUserPhaseLabels[locale][phase];
 }
 
-export function brandCommercialPhaseLabel(step: BrandCommercialStep, locale: "en" | "zh"): string {
-  return brandUserPhaseLabel(mapBrandStepToPhase(step), locale);
+export function brandCommercialPhaseLabel(
+  step: BrandCommercialStep,
+  locale: "en" | "zh",
+  context?: BrandCommercialContext
+): string {
+  if (step === "creator_selected" && context && isBrandAwaitingPayment(context)) {
+    return locale === "zh" ? "待付款" : "Awaiting payment";
+  }
+  return brandUserPhaseLabel(mapBrandStepToPhase(step, context), locale);
 }
 
-export function creatorCommercialPhaseLabel(step: CreatorCommercialStep, locale: "en" | "zh"): string {
-  return creatorUserPhaseLabel(mapCreatorStepToPhase(step), locale);
+export function creatorCommercialPhaseLabel(
+  step: CreatorCommercialStep,
+  locale: "en" | "zh",
+  context?: CreatorCommercialContext
+): string {
+  if (step === "selected" && context && isCreatorAwaitingPayment(context)) {
+    return locale === "zh" ? "待品牌付款" : "Awaiting brand payment";
+  }
+  return creatorUserPhaseLabel(mapCreatorStepToPhase(step, context), locale);
 }
 
 export function resolveBrandNextActorHint(
   step: BrandCommercialStep,
   locale: "en" | "zh",
-  context?: { orderStatus?: string | null; hasOpenComments?: boolean }
+  context?: {
+    orderStatus?: string | null;
+    hasOpenComments?: boolean;
+    commercialContext?: BrandCommercialContext;
+  }
 ): string {
-  const phase = mapBrandStepToPhase(step);
+  const commercialContext = context?.commercialContext;
+  const phase = mapBrandStepToPhase(step, commercialContext);
   const orderStatus = context?.orderStatus ?? null;
   const hasOpenComments = context?.hasOpenComments ?? false;
+  const awaitingPayment = commercialContext ? isBrandAwaitingPayment(commercialContext) : false;
 
   if (phase === "recruiting") {
+    if (step === "creator_selected" && awaitingPayment) {
+      return locale === "zh" ? "下一步：完成托管付款" : "Next: complete escrow payment";
+    }
     if (step === "select_creator") {
       return locale === "zh" ? "下一步：请选择 Creator" : "Next: select a creator";
     }
@@ -415,14 +483,21 @@ export function resolveBrandNextActorHint(
 export function resolveCreatorNextActorHint(
   step: CreatorCommercialStep,
   locale: "en" | "zh",
-  context?: { orderStatus?: string | null }
+  context?: { orderStatus?: string | null; commercialContext?: CreatorCommercialContext }
 ): string {
-  const phase = mapCreatorStepToPhase(step);
+  const commercialContext = context?.commercialContext;
+  const phase = mapCreatorStepToPhase(step, commercialContext);
   const orderStatus = context?.orderStatus ?? null;
+  const awaitingPayment = commercialContext ? isCreatorAwaitingPayment(commercialContext) : false;
 
   if (phase === "recruiting") {
     if (step === "intent_declined") {
       return locale === "zh" ? "您已拒绝此邀请" : "You declined this invitation";
+    }
+    if (step === "selected" && awaitingPayment) {
+      return locale === "zh"
+        ? "下一步：等待品牌完成托管付款后再开始制作"
+        : "Next: wait for brand escrow payment before production";
     }
     if (step === "waiting_brand_selection") {
       return locale === "zh" ? "下一步：等待项目方选择" : "Next: waiting for brand selection";
@@ -461,7 +536,7 @@ export function creatorInvitationCommercialLabel(status: string, locale: "en" | 
     en: {
       pending: "Awaiting response",
       accepted: "Accepted · waiting for brand",
-      selected: "Selected · project started",
+      selected: "Selected · awaiting payment",
       not_selected: "Assigned to another creator",
       declined: "Declined",
       expired: "Closed"
@@ -469,7 +544,7 @@ export function creatorInvitationCommercialLabel(status: string, locale: "en" | 
     zh: {
       pending: "等待回复",
       accepted: "已接受邀请 · 等待品牌确认",
-      selected: "🎉 已被品牌选中",
+      selected: "🎉 已被选中 · 等待付款",
       not_selected: "已由其他 Creator 接单",
       declined: "已拒绝",
       expired: "已失效"

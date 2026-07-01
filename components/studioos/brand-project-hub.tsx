@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { BrandReviewWorkflowPanel } from "@/components/studioos/brand-review-workflow-panel";
 import { BrandProjectMatchTabShell } from "@/components/studioos/brand-project-match-tab-shell";
+import { BrandPaymentDeadlineNotice } from "@/components/studioos/brand-payment-deadline-notice";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { creators } from "@/lib/data";
@@ -24,6 +25,7 @@ import type { StoredProject } from "@/lib/project-types";
 import {
   brandCommercialPhaseLabel,
   brandUserPhaseLabels,
+  isBrandAwaitingPayment,
   mapBrandStepToPhase,
   userCommercialPhaseIndex,
   userCommercialPhases,
@@ -63,6 +65,9 @@ const copy = {
     openReview: "Open review room",
     viewStudios: "View studio options",
     goCheckout: "View payment details",
+    paymentPendingTitle: "Complete payment to start production",
+    paymentPendingBody:
+      "You selected a creator. Pay into escrow to officially start the project — production begins after payment is confirmed.",
     continueWizard: "Continue setup",
     briefTitle: "Project brief",
     briefEmpty: "No brief details yet.",
@@ -108,6 +113,9 @@ const copy = {
     openReview: "进入审片室",
     viewStudios: "查看推荐团队",
     goCheckout: "查看付款详情",
+    paymentPendingTitle: "完成付款后开始制作",
+    paymentPendingBody:
+      "您已选定 Creator。请先完成托管付款，款项确认后项目才会正式开始制作。",
     continueWizard: "继续填写需求",
     briefTitle: "需求说明",
     briefEmpty: "暂无需求内容。",
@@ -287,6 +295,8 @@ export function BrandProjectHub({
 }) {
   const t = copy[locale];
   const status = project.status;
+  const commercialContext = { project, order: linkedOrder };
+  const awaitingPayment = isBrandAwaitingPayment(commercialContext);
   const studio = project.selected_studio_id
     ? creators.find((item) => item.id === project.selected_studio_id)
     : linkedOrder
@@ -317,7 +327,7 @@ export function BrandProjectHub({
                     status === "in_review" && "border-emerald-200 bg-emerald-50 text-emerald-800"
                   )}
                 >
-                  {brandCommercialPhaseLabel(brandCommercialStep, locale)}
+                  {brandCommercialPhaseLabel(brandCommercialStep, locale, commercialContext)}
                 </Badge>
               </div>
               <h1 className="mt-3 text-2xl font-semibold tracking-tight text-zinc-900 sm:text-[1.75rem]">
@@ -432,6 +442,9 @@ export function BrandProjectHub({
                 {t.proposalTitle}
               </h2>
               <p className="mt-2 text-sm leading-relaxed text-zinc-600">{t.proposalBody}</p>
+              {linkedOrder?.payment_status === "unpaid" ? (
+                <BrandPaymentDeadlineNotice locale={locale} order={linkedOrder} className="mt-4" />
+              ) : null}
               {linkedOrder ? (
                 <div className="mt-6 rounded-2xl border border-zinc-200 bg-zinc-50/60 p-5">
                   <p className="text-xs font-medium text-zinc-500">{t.orderAmount}</p>
@@ -453,6 +466,35 @@ export function BrandProjectHub({
           ) : null}
 
           {activeTab === "production" ? (
+            awaitingPayment ? (
+              <div>
+                <h2 className="flex items-center gap-2 text-lg font-semibold text-zinc-900">
+                  <CircleDollarSign className="h-5 w-5 text-zinc-400" />
+                  {t.paymentPendingTitle}
+                </h2>
+                <p className="mt-2 max-w-xl text-sm leading-relaxed text-zinc-600">{t.paymentPendingBody}</p>
+                {linkedOrder ? (
+                  <BrandPaymentDeadlineNotice locale={locale} order={linkedOrder} className="mt-4" />
+                ) : null}
+                {linkedOrder ? (
+                  <div className="mt-6 rounded-2xl border border-zinc-200 bg-zinc-50/60 p-5">
+                    <p className="text-xs font-medium text-zinc-500">{t.orderAmount}</p>
+                    <p className="mt-1 text-2xl font-semibold tabular-nums text-zinc-900">
+                      ${linkedOrder.amount.toLocaleString()}
+                    </p>
+                    <Badge variant="outline" className="mt-3 font-normal">
+                      {t.unpaid}
+                    </Badge>
+                  </div>
+                ) : null}
+                <Button asChild className="mt-6 rounded-xl">
+                  <Link href={withLocale(brandPortalRoutes.projectCheckout(project.id), locale)}>
+                    {t.goCheckout}
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+            ) : (
             <div className="space-y-8">
               <div>
                 <h2 className="flex items-center gap-2 text-lg font-semibold text-zinc-900">
@@ -466,7 +508,7 @@ export function BrandProjectHub({
                 <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">{t.timeline}</p>
                 <div className="mt-5 flex items-start justify-between gap-2">
                   {userCommercialPhases.map((phase, index) => {
-                    const currentPhase = mapBrandStepToPhase(brandCommercialStep);
+                    const currentPhase = mapBrandStepToPhase(brandCommercialStep, commercialContext);
                     const currentIndex = userCommercialPhaseIndex(currentPhase);
                     const done = index < currentIndex;
                     const active = index === currentIndex;
@@ -514,6 +556,7 @@ export function BrandProjectHub({
                 </div>
               ) : null}
             </div>
+            )
           ) : null}
 
           {activeTab === "review" ? (

@@ -11,6 +11,7 @@ import { getProject } from "@/lib/project-service";
 import { normalizeCampaignStatus } from "@/lib/studioos/project-status";
 import { setupBrandCampaignPayment } from "@/lib/studioos/brand-checkout-service";
 import { estimateDeliveryDays } from "@/lib/studioos/brand-campaign-display";
+import { enforceBrandPaymentDeadlineForProject } from "@/lib/studioos/brand-payment-expiry.service";
 import { campaignRepository } from "@/features/campaign/campaign.repository";
 import { paymentRepository } from "@/features/payment/payment.repository";
 import { EscrowState } from "@/features/shared/state-machines/escrow.state-machine";
@@ -26,12 +27,15 @@ export default async function BrandCheckoutPage({ params, searchParams }: Props)
   const locale = getLocale(query);
   const paid = query.paid === "1";
   const clientEmail = await getCurrentClientEmail();
-  const project = await getProject(id);
+  let project = await getProject(id);
 
   if (!project) notFound();
   if (clientEmail && project.client_email !== clientEmail.toLowerCase()) {
     redirect(withLocale("/brand", locale));
   }
+
+  await enforceBrandPaymentDeadlineForProject(id);
+  project = (await getProject(id)) ?? project;
 
   let order = await getOrderForProject(id);
   const creatorId = project.selected_studio_id;
@@ -70,6 +74,7 @@ export default async function BrandCheckoutPage({ params, searchParams }: Props)
   }
 
   const paidReady = order.payment_status !== "unpaid" || paid || prismaEscrowFunded;
+  const orderCancelled = order.status === "cancelled" || campaignStatus === "cancelled";
   const showProductionCta =
     paidReady && ["production", "in_review", "delivered", "completed"].includes(campaignStatus);
   const showMatchCta = paidReady && !showProductionCta;
@@ -85,14 +90,23 @@ export default async function BrandCheckoutPage({ params, searchParams }: Props)
         </h1>
         <p className="mt-2 text-sm text-zinc-500">
           {locale === "zh"
-            ? "托管付款完成后，系统才会开始匹配 Studio。"
-            : "Creator matching starts only after escrow payment is complete."}
+            ? "托管付款完成后，系统才会开始匹配 Studio。下单后 3 小时内未付款，订单将自动取消。"
+            : "Creator matching starts only after escrow payment. Unpaid orders cancel automatically after 3 hours."}
         </p>
       </div>
+
+      {orderCancelled ? (
+        <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-800">
+          {locale === "zh"
+            ? "该订单已因超时未付款自动取消。如需继续合作，请重新发布 Campaign 或联系平台客服。"
+            : "This order was automatically cancelled because payment was not completed within 3 hours."}
+        </div>
+      ) : null}
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.12fr)]">
         <BrandCheckoutSummary locale={locale} project={project} deliveryLabel={deliveryLabel} />
         <div className="space-y-5">
+          {!orderCancelled ? (
           <BrandCheckoutPanel
             locale={locale}
             order={order}
@@ -101,7 +115,8 @@ export default async function BrandCheckoutPage({ params, searchParams }: Props)
             paid={paid}
             escrowFunded={prismaEscrowFunded}
           />
-          {paidReady ? (
+          ) : null}
+          {!orderCancelled && paidReady ? (
             showMatchCta ? (
               <Button asChild size="lg" className="h-12 w-full rounded-xl bg-indigo-600 hover:bg-indigo-700">
                 <Link href={withLocale(`/brand/projects/${id}?tab=match`, locale)}>

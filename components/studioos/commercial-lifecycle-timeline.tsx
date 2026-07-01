@@ -1,6 +1,7 @@
 "use client";
 
 import type { Locale } from "@/lib/i18n";
+import type { OrderPaymentStatus, OrderStatus } from "@/lib/order-types";
 import {
   brandUserPhaseLabel,
   brandUserPhaseLabels,
@@ -8,16 +9,20 @@ import {
   creatorUserPhaseLabel,
   creatorUserPhaseLabels,
   creatorUserPhaseSubtitles,
+  isBrandAwaitingPayment,
+  isCreatorAwaitingPayment,
   mapBrandStepToPhase,
   mapCreatorStepToPhase,
   resolveBrandNextActorHint,
   resolveCreatorNextActorHint,
   userCommercialPhaseIndex,
   userCommercialPhases,
+  type BrandCommercialContext,
   type BrandCommercialStep,
   type CreatorCommercialStep,
   type UserCommercialPhase
 } from "@/lib/studioos/commercial-lifecycle";
+import { normalizeCampaignStatus } from "@/lib/studioos/project-status";
 import { portalChrome } from "@/lib/studioos/product-theme";
 import { cn } from "@/lib/utils";
 import { Check, Hourglass } from "lucide-react";
@@ -41,19 +46,22 @@ function HorizontalPhaseTimeline({
   locale,
   side,
   currentPhase,
-  nextHint
+  nextHint,
+  currentLabelOverride
 }: {
   locale: Locale;
   side: "brand" | "creator";
   currentPhase: UserCommercialPhase;
   nextHint: string;
+  currentLabelOverride?: string;
 }) {
   const t = copy[locale];
   const currentIndex = userCommercialPhaseIndex(currentPhase);
   const phaseLabels = side === "brand" ? brandUserPhaseLabels[locale] : creatorUserPhaseLabels[locale];
   const phaseSubtitles = side === "brand" ? brandUserPhaseSubtitles[locale] : creatorUserPhaseSubtitles[locale];
   const currentLabel =
-    side === "brand" ? brandUserPhaseLabel(currentPhase, locale) : creatorUserPhaseLabel(currentPhase, locale);
+    currentLabelOverride ??
+    (side === "brand" ? brandUserPhaseLabel(currentPhase, locale) : creatorUserPhaseLabel(currentPhase, locale));
 
   return (
     <section className={cn(portalChrome.card, "p-4 sm:p-5")}>
@@ -114,16 +122,26 @@ function UserPhaseTimeline({
   side,
   currentPhase,
   nextHint,
-  compact = false
+  compact = false,
+  currentLabelOverride
 }: {
   locale: Locale;
   side: "brand" | "creator";
   currentPhase: UserCommercialPhase;
   nextHint: string;
   compact?: boolean;
+  currentLabelOverride?: string;
 }) {
   if (compact) {
-    return <HorizontalPhaseTimeline locale={locale} side={side} currentPhase={currentPhase} nextHint={nextHint} />;
+    return (
+      <HorizontalPhaseTimeline
+        locale={locale}
+        side={side}
+        currentPhase={currentPhase}
+        nextHint={nextHint}
+        currentLabelOverride={currentLabelOverride}
+      />
+    );
   }
 
   const t = copy[locale];
@@ -131,7 +149,8 @@ function UserPhaseTimeline({
   const phaseLabels = side === "brand" ? brandUserPhaseLabels[locale] : creatorUserPhaseLabels[locale];
   const phaseSubtitles = side === "brand" ? brandUserPhaseSubtitles[locale] : creatorUserPhaseSubtitles[locale];
   const currentLabel =
-    side === "brand" ? brandUserPhaseLabel(currentPhase, locale) : creatorUserPhaseLabel(currentPhase, locale);
+    currentLabelOverride ??
+    (side === "brand" ? brandUserPhaseLabel(currentPhase, locale) : creatorUserPhaseLabel(currentPhase, locale));
 
   return (
     <section className={cn(portalChrome.card, "p-5 sm:p-6")}>
@@ -200,22 +219,48 @@ export function BrandCommercialTimeline({
   currentStep,
   compact = false,
   orderStatus = null,
+  paymentStatus = null,
+  projectStatus = null,
   hasOpenComments = false
 }: {
   locale: Locale;
   currentStep: BrandCommercialStep;
   compact?: boolean;
   orderStatus?: string | null;
+  paymentStatus?: string | null;
+  projectStatus?: string | null;
   hasOpenComments?: boolean;
 }) {
-  const currentPhase = mapBrandStepToPhase(currentStep);
+  const commercialContext: BrandCommercialContext = {
+    order:
+      paymentStatus || orderStatus
+        ? {
+            ...(paymentStatus ? { payment_status: paymentStatus as OrderPaymentStatus } : {}),
+            ...(orderStatus ? { status: orderStatus as OrderStatus } : {})
+          }
+        : null,
+    project: projectStatus ? { status: normalizeCampaignStatus(projectStatus) } : null
+  };
+  const awaitingPayment = isBrandAwaitingPayment(commercialContext);
+  const currentPhase = mapBrandStepToPhase(currentStep, commercialContext);
+  const currentLabel =
+    currentStep === "creator_selected" && awaitingPayment
+      ? locale === "zh"
+        ? "待付款"
+        : "Awaiting payment"
+      : brandUserPhaseLabel(currentPhase, locale);
 
   return (
     <UserPhaseTimeline
       locale={locale}
       side="brand"
       currentPhase={currentPhase}
-      nextHint={resolveBrandNextActorHint(currentStep, locale, { orderStatus, hasOpenComments })}
+      currentLabelOverride={currentLabel}
+      nextHint={resolveBrandNextActorHint(currentStep, locale, {
+        orderStatus,
+        hasOpenComments,
+        commercialContext
+      })}
       compact={compact}
     />
   );
@@ -225,21 +270,44 @@ export function CreatorCommercialTimeline({
   locale,
   currentStep,
   compact = false,
-  orderStatus = null
+  orderStatus = null,
+  paymentStatus = null
 }: {
   locale: Locale;
   currentStep: CreatorCommercialStep;
   compact?: boolean;
   orderStatus?: string | null;
+  paymentStatus?: OrderPaymentStatus | null;
 }) {
-  const currentPhase = mapCreatorStepToPhase(currentStep);
+  const commercialContext = {
+    order:
+      paymentStatus || orderStatus
+        ? {
+            ...(paymentStatus ? { payment_status: paymentStatus } : {}),
+            ...(orderStatus ? { status: orderStatus as OrderStatus } : {})
+          }
+        : null
+  };
+  const awaitingPayment =
+    currentStep === "selected" && isCreatorAwaitingPayment(commercialContext);
+  const currentPhase = mapCreatorStepToPhase(currentStep, commercialContext);
+  const currentLabel =
+    awaitingPayment
+      ? locale === "zh"
+        ? "待品牌付款"
+        : "Awaiting brand payment"
+      : creatorUserPhaseLabel(currentPhase, locale);
 
   return (
     <UserPhaseTimeline
       locale={locale}
       side="creator"
       currentPhase={currentPhase}
-      nextHint={resolveCreatorNextActorHint(currentStep, locale, { orderStatus })}
+      currentLabelOverride={currentLabel}
+      nextHint={resolveCreatorNextActorHint(currentStep, locale, {
+        orderStatus,
+        commercialContext
+      })}
       compact={compact}
     />
   );

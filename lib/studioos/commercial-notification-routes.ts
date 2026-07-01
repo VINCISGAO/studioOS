@@ -79,10 +79,13 @@ export function resolveCreatorNotificationAction(
     };
   }
 
-  if (input.type === "invitation_match" || input.type === "not_selected") {
+  if (input.type === "invitation_match" || input.type === "not_selected" || input.type === "order_cancelled_unpaid") {
     return {
-      href: withLocale(creatorPortalRoutes.invitations, locale),
-      label: labels.invitations
+      href: withLocale(
+        input.type === "order_cancelled_unpaid" ? creatorPortalRoutes.messages : creatorPortalRoutes.invitations,
+        locale
+      ),
+      label: input.type === "order_cancelled_unpaid" ? labels.project : labels.invitations
     };
   }
 

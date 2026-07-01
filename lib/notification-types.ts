@@ -3,6 +3,7 @@ export type CreatorNotificationType =
   | "certification_approved"
   | "creator_selected"
   | "project_funded"
+  | "order_cancelled_unpaid"
   | "review_comment_added"
   | "revision_requested"
   | "delivery_approved"

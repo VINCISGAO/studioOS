@@ -243,6 +243,21 @@ export class PaymentCollectionService {
     const appUrl = getAppBaseUrl();
     const amountLabel = `${input.currency} ${input.amount.toFixed(2)}`;
 
+    const campaign = await prisma.campaign.findUnique({
+      where: { id: input.campaignId },
+      select: { productionBrief: true }
+    });
+    const brief = campaign?.productionBrief as { legacy_project_id?: string } | null;
+    const legacyProjectId = brief?.legacy_project_id;
+    let creatorActionUrl = `${appUrl}/studio/projects`;
+    if (legacyProjectId) {
+      const { getOrderForProject } = await import("@/lib/order-service");
+      const legacyOrder = await getOrderForProject(legacyProjectId);
+      if (legacyOrder) {
+        creatorActionUrl = `${appUrl}/studio/projects/${legacyOrder.id}`;
+      }
+    }
+
     await notificationService.notify({
       userId: input.brandId,
       campaignId: input.campaignId,
@@ -256,9 +271,9 @@ export class PaymentCollectionService {
     await notificationService.notify({
       userId: input.creatorId,
       campaignId: input.campaignId,
-      title: "Project funded — start production",
-      content: `"${input.campaignTitle}" is paid (${amountLabel}). Your payable amount after commission: ${input.currency} ${input.commission.creatorPayoutAmount.toFixed(2)}. Payout status: Manual Payout Pending.`,
-      actionUrl: `${appUrl}/studio/delivery`,
+      title: "Payment received — start production",
+      content: `"${input.campaignTitle}" is escrow-funded (${amountLabel}). You can start production now. Payable after commission: ${input.currency} ${input.commission.creatorPayoutAmount.toFixed(2)}.`,
+      actionUrl: creatorActionUrl,
       template: "payment.creator_funded",
       priority: "HIGH"
     });

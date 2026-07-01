@@ -103,6 +103,9 @@ function currentTaskForOrder(
   order: StoredOrder,
   deliverableCount: number
 ) {
+  if (order.status === "waiting_payment" || order.payment_status === "unpaid") {
+    return locale === "zh" ? "等待品牌付款后开始制作" : "Waiting for brand payment before production";
+  }
   if (order.status === "review") {
     return locale === "zh" ? "等待品牌审核" : "Waiting for brand review";
   }

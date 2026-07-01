@@ -24,6 +24,7 @@ import {
   senderInitials
 } from "@/lib/studioos/creator-messages-ui";
 import { buildMessageProgressSteps } from "@/lib/studioos/message-order-progress";
+import { enforceBrandPaymentDeadlinesForCreator } from "@/lib/studioos/brand-payment-expiry.service";
 import { creatorPortalRoutes } from "@/lib/studioos/creator-portal-routes";
 import type { Locale } from "@/lib/i18n";
 
@@ -206,6 +207,7 @@ export default async function StudioMessagesPage({ searchParams }: { searchParam
     redirect(withLocale("/login?role=creator", locale));
   }
 
+  await enforceBrandPaymentDeadlinesForCreator(creator.id);
   const notifications = await listNotificationsForCreator(creator.id, locale);
   const payload = await buildMessageCenterPayload(notifications, creator.name, locale);
   const initialSelectedId =

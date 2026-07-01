@@ -138,7 +138,12 @@ export function resolveClosedLoopStep(input: {
     if ((input.deliverableCount ?? 0) > 0 && order.status === "in_production") return "v1_uploaded";
   }
 
-  if (input.invitationStatus === "selected") return "production_started";
+  if (input.invitationStatus === "selected") {
+    if (order?.status === "waiting_payment" || order?.payment_status === "unpaid") {
+      return "creator_selected";
+    }
+    return "production_started";
+  }
   return "ad_published";
 }
 

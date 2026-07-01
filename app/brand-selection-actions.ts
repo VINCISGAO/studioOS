@@ -17,6 +17,7 @@ function revalidateClosedLoopPaths(projectId: string) {
   revalidatePath("/brand/messages");
   revalidatePath(brandPortalRoutes.campaign(projectId));
   revalidatePath(brandPortalRoutes.project(projectId));
+  revalidatePath(brandPortalRoutes.projectCheckout(projectId));
   revalidatePath("/studio");
   revalidatePath("/studio/messages");
   revalidatePath("/studio/invitations");
@@ -55,10 +56,5 @@ export async function selectCreatorFromInvitationsAction(formData: FormData) {
     redirect(withLocale(`${brandPortalRoutes.project(projectId)}?tab=match&error=${result.error}`, locale));
   }
 
-  redirect(
-    withLocale(
-      `${brandPortalRoutes.project(projectId)}?tab=production&selected=${creatorId}`,
-      locale
-    )
-  );
+  redirect(withLocale(brandPortalRoutes.projectCheckout(projectId), locale));
 }

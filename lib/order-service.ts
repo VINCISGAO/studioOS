@@ -438,7 +438,7 @@ export async function acceptQuote(
   return order;
 }
 
-/** Brand selected creator — production starts before escrow payment in invitation-first flow. */
+/** Moves order to in_production only after escrow payment is confirmed. */
 export async function beginOrderProduction(orderId: string): Promise<StoredOrder | null> {
   const store = await readStore();
   const order = store.orders.find((item) => item.id === orderId);
@@ -450,7 +450,7 @@ export async function beginOrderProduction(orderId: string): Promise<StoredOrder
     return order;
   }
 
-  if (order.status !== "waiting_payment") {
+  if (order.payment_status === "unpaid" || order.status === "waiting_payment") {
     return order;
   }
 
@@ -577,6 +577,18 @@ export async function markOrderPaid(orderId: string): Promise<StoredOrder | null
   return order;
 }
 
+export async function cancelUnpaidOrder(orderId: string): Promise<StoredOrder | null> {
+  const store = await readStore();
+  const order = store.orders.find((item) => item.id === orderId);
+  if (!order || order.payment_status !== "unpaid" || order.status === "cancelled") {
+    return null;
+  }
+
+  order.status = "cancelled";
+  await writeStore(store);
+  return order;
+}
+
 export async function addDeliverable(
   orderId: string,
   input: {
@@ -697,6 +709,9 @@ export async function syncOrderToInProduction(orderId: string): Promise<StoredOr
   const store = await readStore();
   const order = store.orders.find((item) => item.id === orderId);
   if (!order) return null;
+  if (order.payment_status === "unpaid" || order.status === "waiting_payment") {
+    return order;
+  }
   if (["in_production", "review", "revision", "completed"].includes(order.status)) {
     return order;
   }
@@ -818,7 +833,9 @@ export async function assignOrderCreator(input: {
   order.creator_id = input.creatorId;
   order.inquiry_id = input.inquiryId;
   order.work_id = input.workId;
-  order.status = "in_production";
+  if (order.payment_status !== "unpaid") {
+    order.status = "in_production";
+  }
   await writeStore(store);
   return order;
 }

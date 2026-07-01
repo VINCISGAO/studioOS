@@ -175,9 +175,11 @@ export function FrameioReviewCenter({
 
   function handleTogglePlay() {
     const video = videoRef.current;
-    if (!video) return;
+    if (!video || !videoUrl) return;
     if (video.paused) {
-      void video.play();
+      void video.play().catch(() => {
+        setIsPlaying(false);
+      });
     } else {
       video.pause();
     }
@@ -193,10 +195,10 @@ export function FrameioReviewCenter({
     fileRef.current?.click();
   }
 
-  function handleUpload() {
-    const file = fileRef.current?.files?.[0];
-    if (!file) return;
-    uploadVersion(file, uploadNotes);
+  function handleUpload(file?: File) {
+    const selected = file ?? fileRef.current?.files?.[0];
+    if (!selected) return;
+    uploadVersion(selected, uploadNotes);
   }
 
   const isFirstUpload = sortedVersions.length === 0;
@@ -382,7 +384,6 @@ export function FrameioReviewCenter({
             uploadNotes={uploadNotes}
             onUploadNotesChange={setUploadNotes}
             onUpload={handleUpload}
-            onPickFile={handlePickFile}
             pending={pending}
             fileInputRef={fileRef}
           />

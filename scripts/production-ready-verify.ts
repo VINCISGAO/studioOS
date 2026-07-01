@@ -15,6 +15,8 @@ const MAX_CMD_BUFFER = 64 * 1024 * 1024;
 type Step = { name: string; ok: boolean; detail?: string };
 
 function runCmd(label: string, cmd: string): Step {
+  console.log(`\n▶ Running ${label}…`);
+  const started = Date.now();
   const result = spawnSync(cmd, {
     cwd: ROOT,
     shell: true,
@@ -23,10 +25,14 @@ function runCmd(label: string, cmd: string): Step {
     stdio: ["ignore", "pipe", "pipe"],
     maxBuffer: MAX_CMD_BUFFER
   });
+  const elapsedSec = ((Date.now() - started) / 1000).toFixed(1);
 
   if (result.status === 0) {
+    console.log(`✅ ${label} (${elapsedSec}s)`);
     return { name: label, ok: true };
   }
+
+  console.log(`❌ ${label} (${elapsedSec}s)`);
 
   const detail = [
     result.status != null ? `exit: ${result.status}` : null,
@@ -40,6 +46,13 @@ function runCmd(label: string, cmd: string): Step {
     .slice(-4000);
 
   return { name: label, ok: false, detail: detail || "command failed" };
+}
+
+function runCheck(label: string, check: () => Step): Step {
+  console.log(`\n▶ Running ${label}…`);
+  const step = check();
+  console.log(step.ok ? `✅ ${label}` : `❌ ${label}`);
+  return step;
 }
 
 function checkMigrationFiles(): Step {
@@ -87,20 +100,24 @@ function checkPaymentService(): Step {
 }
 
 function main() {
+  console.log("\nProduction readiness verification");
+  console.log("(build alone can take 1–3 minutes — progress prints below)\n");
+
   const steps: Step[] = [];
 
   steps.push(runCmd("prisma.generate", "npx prisma generate"));
   steps.push(runCmd("typecheck", "npm run typecheck"));
   steps.push(runCmd("lint", "npm run lint"));
   steps.push(runCmd("build", "npm run build"));
-  steps.push(checkMigrationFiles());
-  steps.push(checkPrismaSchema());
-  steps.push(checkPaymentService());
+  steps.push(runCheck("migrations.payment_collection", checkMigrationFiles));
+  steps.push(runCheck("prisma.payment_fields", checkPrismaSchema));
+  steps.push(runCheck("payment.mvp_files", checkPaymentService));
 
   if (process.env.DATABASE_URL) {
     steps.push(runCmd("payment.verify", "npm run payment:verify"));
     steps.push(runCmd("sprint1.verify", "npm run sprint1:verify"));
   } else {
+    console.log("\n▶ Skipping DB checks (DATABASE_URL not set)");
     steps.push({
       name: "db.verify_skipped",
       ok: true,
@@ -108,7 +125,7 @@ function main() {
     });
   }
 
-  console.log("\nProduction readiness verification\n");
+  console.log("\n--- Summary ---");
   for (const step of steps) {
     if (step.ok) {
       console.log(`✅ ${step.name}${step.detail ? ` — ${step.detail}` : ""}`);

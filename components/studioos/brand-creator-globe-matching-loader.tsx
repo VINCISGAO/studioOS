@@ -50,6 +50,11 @@ const copy = {
   }
 } as const;
 
+const MATCH_STATUS = {
+  en: ["Scanning creator network…", "Analyzing style fit…", "Checking availability…", "Smart matching"],
+  zh: ["扫描全球创作者库…", "分析风格匹配度…", "评估档期与预算…", "智能匹配中"]
+} as const;
+
 export function BrandCreatorGlobeMatchingLoader({
   locale,
   className,
@@ -63,6 +68,7 @@ export function BrandCreatorGlobeMatchingLoader({
 }) {
   const t = copy[locale];
   const [progress, setProgress] = useState(12);
+  const [statusIndex, setStatusIndex] = useState(0);
 
   useEffect(() => {
     if (complete) {
@@ -71,15 +77,23 @@ export function BrandCreatorGlobeMatchingLoader({
     }
 
     setProgress(12);
+    setStatusIndex(0);
     const started = Date.now();
-    const timer = window.setInterval(() => {
+    const progressTimer = window.setInterval(() => {
       const elapsed = Date.now() - started;
-      const target = Math.min(92, 12 + Math.floor(elapsed / 45));
+      const target = Math.min(96, 12 + Math.floor(elapsed / 38));
       setProgress((value) => (target > value ? target : value));
-    }, 120);
+    }, 100);
 
-    return () => window.clearInterval(timer);
-  }, [complete]);
+    const statusTimer = window.setInterval(() => {
+      setStatusIndex((value) => (value + 1) % MATCH_STATUS[locale].length);
+    }, 720);
+
+    return () => {
+      window.clearInterval(progressTimer);
+      window.clearInterval(statusTimer);
+    };
+  }, [complete, locale]);
 
   return (
     <div
@@ -135,7 +149,9 @@ export function BrandCreatorGlobeMatchingLoader({
 
           <div className="absolute left-1/2 top-1/2 z-10 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center">
             <p className="text-4xl font-bold tabular-nums text-violet-600 sm:text-5xl">{progress}%</p>
-            <p className="mt-1 text-xs font-medium text-zinc-500 sm:text-sm">{t.matching}</p>
+            <p className="mt-1 text-xs font-medium text-zinc-500 sm:text-sm">
+              {complete ? t.matching : MATCH_STATUS[locale][statusIndex]}
+            </p>
           </div>
         </div>
 

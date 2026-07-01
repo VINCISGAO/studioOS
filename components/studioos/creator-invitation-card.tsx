@@ -26,6 +26,7 @@ const copy = {
     acceptedLabel: "Invitation accepted",
     waitingBrand: "Waiting for brand",
     selectedTitle: "Congratulations — you were selected",
+    awaitingPaymentHint: "Waiting for brand payment before production",
     enterProject: "Open project",
     expired: "Closed",
     expiredHint: "Another creator was selected for this project.",
@@ -40,6 +41,7 @@ const copy = {
     acceptedLabel: "已接受邀请",
     waitingBrand: "等待品牌确认",
     selectedTitle: "🎉 恭喜，你已被品牌选中",
+    awaitingPaymentHint: "等待品牌付款后再开始制作",
     enterProject: "进入项目",
     expired: "已失效",
     expiredHint: "本项目已由其他 Creator 成功接单。",
@@ -109,6 +111,7 @@ function CardActions({
     return (
       <div className="flex w-full shrink-0 flex-col gap-2 sm:w-[168px]">
         <p className="text-xs font-medium text-violet-700">{t.selectedTitle}</p>
+        <p className="text-xs leading-relaxed text-zinc-500">{t.awaitingPaymentHint}</p>
         <Button asChild size="sm" className="h-10 w-full rounded-xl bg-violet-600 hover:bg-violet-700">
           <Link href={href}>
             <Sparkles className="h-4 w-4" />

@@ -54,10 +54,12 @@ export function ReviewVideoPlayer({
 
   function togglePlay() {
     const video = videoRef.current;
-    if (!video) return;
+    if (!video || !videoUrl) return;
     if (video.paused) {
-      void video.play();
-      onPlayingChange(true);
+      void video
+        .play()
+        .then(() => onPlayingChange(true))
+        .catch(() => onPlayingChange(false));
     } else {
       video.pause();
       onPlayingChange(false);

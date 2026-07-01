@@ -34,6 +34,7 @@ function notificationToCreatorStep(
   if (notificationType === "invitation_match") return "matching_order";
   if (notificationType === "certification_approved") return "matching_order";
   if (notificationType === "creator_selected") return "selected";
+  if (notificationType === "order_cancelled_unpaid") return "selected";
   if (notificationType === "project_funded") return "in_production";
   if (notificationType === "review_comment_added") return "pending_review";
   if (notificationType === "revision_requested") return "pending_revision";
@@ -109,7 +110,10 @@ export function buildMessageProgressSteps(
   locale: Locale
 ): ProgressStep[] {
   const creatorStep = notificationToCreatorStep(notificationType, order);
-  const currentPhase = mapCreatorStepToPhase(creatorStep);
+  const commercialContext = order
+    ? { order: { payment_status: order.payment_status, status: order.status } }
+    : undefined;
+  const currentPhase = mapCreatorStepToPhase(creatorStep, commercialContext);
   const currentIndex = userCommercialPhases.indexOf(currentPhase);
   const zh = locale === "zh";
 

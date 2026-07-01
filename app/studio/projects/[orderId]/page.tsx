@@ -6,12 +6,12 @@ import { StudioCreativeWorkspace } from "@/components/studioos/studio-creative-w
 import { getCreativeBrief, listPackItems } from "@/lib/campaign-store";
 import { getCurrentCreator } from "@/lib/creator-session";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
-import { beginOrderProduction, getDeliverables, getOrder } from "@/lib/order-service";
-import { getProject } from "@/lib/project-service";
 import { resolveCreatorCommercialStep } from "@/lib/studioos/commercial-lifecycle";
 import { creatorPortalRoutes } from "@/lib/studioos/creator-portal-routes";
 import { listReviewComments } from "@/lib/studioos/review-store";
 import { isCreatorVerified } from "@/lib/studioos/deposit-guard";
+import { getDeliverables, getOrder } from "@/lib/order-service";
+import { getProject } from "@/lib/project-service";
 
 export default async function StudioProjectPage({
   params,
@@ -28,19 +28,13 @@ export default async function StudioProjectPage({
     redirect(withLocale("/login?role=creator", locale));
   }
 
-  let order = await getOrder(orderId);
+  const order = await getOrder(orderId);
   if (!order || order.creator_id !== creator.id) {
     redirect(withLocale("/studio", locale));
   }
 
   const project = order.project_id ? await getProject(order.project_id) : null;
 
-  if (order.status === "waiting_payment" && project?.status === "production") {
-    const repaired = await beginOrderProduction(order.id);
-    if (repaired) {
-      order = repaired;
-    }
-  }
   const [deliverables, comments, brief, pack] = await Promise.all([
     getDeliverables(order.id),
     listReviewComments(order.id),
@@ -67,6 +61,7 @@ export default async function StudioProjectPage({
         locale={locale}
         currentStep={creatorCommercialStep}
         orderStatus={order.status}
+        paymentStatus={order.payment_status}
         compact
       />
       {canUpload ? (

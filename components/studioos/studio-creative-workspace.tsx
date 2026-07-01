@@ -33,6 +33,8 @@ const copy = {
     issues: "Review history",
     productionBanner:
       "You have been selected. Upload Version 1 from the review center to start brand review.",
+    awaitingPaymentBanner:
+      "You were selected — waiting for the brand to complete escrow payment. Production starts after payment is confirmed.",
     reviewCenterFirst: "Upload Version 1 in review center",
     reviewCenterRevision: "Upload new version in review center",
     resolve: "Resolve",
@@ -59,6 +61,8 @@ const copy = {
     versions: "作品版本",
     issues: "审核记录",
     productionBanner: "你已被品牌选中，请前往审片中心上传 Version 1。",
+    awaitingPaymentBanner:
+      "你已被品牌选中，请等待品牌完成托管付款。收到付款通知后再开始制作。",
     reviewCenterFirst: "前往审片中心上传 Version 1",
     reviewCenterRevision: "前往审片中心上传新版本",
     resolve: "标记已解决",
@@ -195,6 +199,7 @@ export function StudioCreativeWorkspace({
   ];
 
   const reviewHref = withLocale(creatorPortalRoutes.review(order.id), locale);
+  const awaitingPayment = order.status === "waiting_payment" || order.payment_status === "unpaid";
 
   return (
     <div className="space-y-6">
@@ -206,6 +211,12 @@ export function StudioCreativeWorkspace({
         </div>
         <p className="mt-1 text-lg font-medium text-zinc-800">{order.title || project?.title}</p>
       </div>
+
+      {awaitingPayment ? (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50/80 px-5 py-4 text-sm text-amber-950">
+          <p>{t.awaitingPaymentBanner}</p>
+        </div>
+      ) : null}
 
       {canUpload && sortedVersions.length === 0 ? (
         <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 px-5 py-4 text-sm text-emerald-900">
@@ -238,18 +249,22 @@ export function StudioCreativeWorkspace({
         ))}
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[240px_minmax(0,1fr)_300px]">
+      <div
+        className={cn(
+          "grid gap-6",
+          tab === "brief" ? "grid-cols-1" : "xl:grid-cols-[240px_minmax(0,1fr)_300px]"
+        )}
+      >
         {tab === "brief" && confirmedBriefFields.length ? (
-          <div className="xl:col-span-3">
-            <ClientBriefFormCard
-              locale={locale}
-              fields={confirmedBriefFields}
-              projectTitle={project?.title || order.title}
-              formId={project?.id ? project.id.slice(-10).toUpperCase() : undefined}
-            />
-          </div>
+          <ClientBriefFormCard
+            locale={locale}
+            fields={confirmedBriefFields}
+            projectTitle={project?.title || order.title}
+            formId={project?.id ? project.id.slice(-10).toUpperCase() : undefined}
+          />
         ) : null}
 
+        {tab === "brief" && confirmedBriefFields.length ? null : (
         <aside className="space-y-4">
           {tab === "brief" || tab === "storyboard" ? (
             <div className="space-y-4">
@@ -306,7 +321,9 @@ export function StudioCreativeWorkspace({
             </div>
           ) : null}
         </aside>
+        )}
 
+        {tab === "brief" ? null : (
         <section className="space-y-4">
           {videoUrl ? (
             <div className="overflow-hidden rounded-2xl bg-zinc-950 ring-1 ring-zinc-900/10">
@@ -341,8 +358,14 @@ export function StudioCreativeWorkspace({
               </Link>
             </div>
           ) : (
-            <div className="flex aspect-video items-center justify-center rounded-2xl border bg-zinc-100 text-sm text-zinc-500">
-              {locale === "zh" ? "等待品牌选中后开始制作" : "Waiting for brand selection to start production"}
+            <div className="flex aspect-video items-center justify-center rounded-2xl border bg-zinc-100 px-6 text-center text-sm text-zinc-500">
+              {awaitingPayment
+                ? locale === "zh"
+                  ? "等待品牌完成托管付款后再开始制作"
+                  : "Waiting for brand escrow payment before production"
+                : locale === "zh"
+                  ? "等待品牌选中后开始制作"
+                  : "Waiting for brand selection to start production"}
             </div>
           )}
 
@@ -381,7 +404,9 @@ export function StudioCreativeWorkspace({
             </Link>
           ) : null}
         </section>
+        )}
 
+        {tab === "brief" ? null : (
         <aside className="space-y-4">
           <div className="rounded-xl border bg-white p-4">
             <h2 className="font-semibold">{t.openIssues}</h2>
@@ -434,6 +459,7 @@ export function StudioCreativeWorkspace({
             </div>
           ) : null}
         </aside>
+        )}
       </div>
     </div>
   );

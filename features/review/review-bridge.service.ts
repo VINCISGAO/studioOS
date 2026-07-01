@@ -138,16 +138,23 @@ export class ReviewBridgeService {
       const order = await getOrderForProject(legacyProjectId);
       if (!order) return;
 
+      let current = order;
+
       if (order.creator_id !== legacyCreatorId) {
-        await assignOrderCreator({
+        const updated = await assignOrderCreator({
           orderId: order.id,
           creatorId: legacyCreatorId,
           inquiryId: order.inquiry_id,
           workId: order.work_id
         });
+        if (updated) {
+          current = updated;
+        }
       }
 
-      await syncOrderToInProduction(order.id);
+      if (current.payment_status !== "unpaid" && current.status !== "waiting_payment") {
+        await syncOrderToInProduction(current.id);
+      }
       logger.info("Legacy order synced after Prisma creator selection", {
         service: "ReviewBridgeService",
         campaignId,

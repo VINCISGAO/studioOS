@@ -62,7 +62,7 @@ function notificationCopy(
     }
     return {
       title: `🎉 恭喜，你已被品牌选中`,
-      body: `项目方选择了你负责「${projectTitle}」。项目已正式开始，点击「进入项目」开始制作。`
+      body: `项目方选择了你负责「${projectTitle}」。请等待品牌完成托管付款，收到付款通知后再开始制作。`
     };
   }
 
@@ -82,7 +82,7 @@ function notificationCopy(
 
   return {
     title: `Selected by ${brandName}`,
-    body: `You were chosen for "${projectTitle}". The project is now official — review the brief below and start production.`
+    body: `You were chosen for "${projectTitle}". Wait for the brand to complete escrow payment — you'll be notified when production can begin.`
   };
 }
 

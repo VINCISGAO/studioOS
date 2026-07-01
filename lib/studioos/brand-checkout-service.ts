@@ -10,6 +10,7 @@ import {
   getOrderForProject
 } from "@/lib/order-service";
 import { isOrderPaymentEscrowed, type StoredOrder } from "@/lib/order-types";
+import type { CreatorNotificationType } from "@/lib/notification-types";
 import {
   getProject,
   transitionProject,
@@ -25,6 +26,12 @@ import {
 import { getConfirmedBriefText } from "@/lib/studioos/confirmed-brief";
 import { normalizeCampaignStatus } from "@/lib/studioos/project-status";
 import { syncProjectFromOrderEvent } from "@/lib/studioos/project-order-sync";
+
+function creatorAssignmentNotificationType(
+  paymentStatus: StoredOrder["payment_status"]
+): CreatorNotificationType {
+  return isOrderPaymentEscrowed(paymentStatus) ? "project_funded" : "creator_selected";
+}
 
 async function advanceProjectToPaymentPending(projectId: string) {
   const chain: Array<Parameters<typeof transitionProject>[1]> = [
@@ -160,7 +167,7 @@ export async function startProductionWithSelectedCreator(input: {
   const refreshed = (await getProject(project.id)) ?? project;
   const { notifyCreatorAssignment } = await import("@/lib/studioos/creator-assignment-notify");
   await notifyCreatorAssignment({
-    type: "creator_selected",
+    type: creatorAssignmentNotificationType(order.payment_status),
     creatorId: input.creatorId,
     order,
     project: refreshed,
@@ -198,7 +205,7 @@ export async function setupBrandCheckout(input: {
     }
     const { notifyCreatorAssignment } = await import("@/lib/studioos/creator-assignment-notify");
     await notifyCreatorAssignment({
-      type: "creator_selected",
+      type: creatorAssignmentNotificationType(existing.payment_status),
       creatorId: input.creatorId,
       order: existing,
       project,
@@ -270,7 +277,7 @@ export async function setupBrandCheckout(input: {
     "@/lib/studioos/creator-assignment-notify"
   );
   await notifyAssignment({
-    type: "creator_selected",
+    type: creatorAssignmentNotificationType(order.payment_status),
     creatorId: input.creatorId,
     order,
     project,
@@ -333,7 +340,7 @@ async function assignCreatorToFundedCampaign(input: {
   const project = (await getProject(input.project.id)) ?? input.project;
   const { notifyCreatorAssignment } = await import("@/lib/studioos/creator-assignment-notify");
   await notifyCreatorAssignment({
-    type: "creator_selected",
+    type: creatorAssignmentNotificationType(order.payment_status),
     creatorId: input.creatorId,
     order,
     project,

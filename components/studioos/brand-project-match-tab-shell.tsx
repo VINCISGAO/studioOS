@@ -1,14 +1,28 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ensureBrandProjectMatchAction } from "@/app/brand-project-actions";
-import { BrandCreatorGlobeMatchingLoader } from "@/components/studioos/brand-creator-globe-matching-loader";
 import { BrandProjectMatchTab } from "@/components/studioos/brand-project-match-tab";
 import type { Locale } from "@/lib/i18n";
 import type { StoredCreatorInvitation } from "@/lib/studioos/creator-invitation-types";
 
-const MIN_LOADER_MS = 1200;
+function MatchTabLoadingSkeleton({ locale }: { locale: Locale }) {
+  return (
+    <div className="space-y-5">
+      <p className="text-center text-sm text-zinc-500">
+        {locale === "zh" ? "加载匹配结果…" : "Loading match results…"}
+      </p>
+      <div className="grid animate-pulse items-start gap-5 xl:grid-cols-[minmax(0,1.55fr)_minmax(320px,1fr)]">
+        <div className="space-y-5">
+          <div className="h-28 rounded-2xl bg-zinc-100" />
+          <div className="h-52 rounded-2xl bg-zinc-100" />
+        </div>
+        <div className="h-96 rounded-2xl bg-zinc-100" />
+      </div>
+    </div>
+  );
+}
 
 export function BrandProjectMatchTabShell({
   locale,
@@ -31,11 +45,7 @@ export function BrandProjectMatchTabShell({
   const ensureStarted = useRef(false);
   const [invitations, setInvitations] = useState(initialInvitations);
   const [accepted, setAccepted] = useState(initialAccepted);
-  const [showLoader, setShowLoader] = useState(
-    () => (projectStatus === "matching" || projectStatus === "studio_selected") && initialInvitations.length === 0
-  );
-  const [loaderComplete, setLoaderComplete] = useState(false);
-  const [isPending, startTransition] = useTransition();
+  const [isEnsuring, setIsEnsuring] = useState(false);
 
   useEffect(() => {
     setInvitations(initialInvitations);
@@ -45,43 +55,25 @@ export function BrandProjectMatchTabShell({
   useEffect(() => {
     const needsEnsure =
       (projectStatus === "matching" || projectStatus === "studio_selected") && invitations.length === 0;
-    if (!needsEnsure) {
-      setShowLoader(false);
-      return;
-    }
-    if (ensureStarted.current) {
+    if (!needsEnsure || ensureStarted.current) {
       return;
     }
     ensureStarted.current = true;
+    setIsEnsuring(true);
 
-    setShowLoader(true);
-    setLoaderComplete(false);
-    const started = Date.now();
-
-    startTransition(async () => {
+    void (async () => {
       const result = await ensureBrandProjectMatchAction(projectId, locale);
-      const elapsed = Date.now() - started;
-      const waitMs = Math.max(0, MIN_LOADER_MS - elapsed);
-
       if (result.ok) {
         setInvitations(result.invitations);
         setAccepted(result.accepted);
+        router.refresh();
       }
-
-      window.setTimeout(() => {
-        setLoaderComplete(true);
-        window.setTimeout(() => {
-          setShowLoader(false);
-          if (result.ok) {
-            router.refresh();
-          }
-        }, 320);
-      }, waitMs);
-    });
+      setIsEnsuring(false);
+    })();
   }, [invitations.length, locale, projectId, projectStatus, router]);
 
-  if (showLoader || isPending) {
-    return <BrandCreatorGlobeMatchingLoader locale={locale} complete={loaderComplete} />;
+  if (isEnsuring && invitations.length === 0) {
+    return <MatchTabLoadingSkeleton locale={locale} />;
   }
 
   return (

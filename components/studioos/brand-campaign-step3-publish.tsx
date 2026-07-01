@@ -1,7 +1,9 @@
 "use client";
 
-import { useFormStatus } from "react-dom";
-import { publishBrandCampaignFormAction } from "@/app/brand-campaign-actions";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { publishBrandCampaignAction } from "@/app/brand-campaign-actions";
+import { BrandCreatorGlobeMatchingLoader } from "@/components/studioos/brand-creator-globe-matching-loader";
 import { Button } from "@/components/ui/button";
 import type { Locale } from "@/lib/i18n";
 import {
@@ -16,6 +18,10 @@ import {
   Send,
   Shield
 } from "lucide-react";
+
+/** Minimum time on the matching screen so the search feels real. */
+const MATCH_MIN_MS = 2500;
+const MATCH_FINISH_MS = 400;
 
 const copy = {
   en: {
@@ -60,28 +66,6 @@ const copy = {
     back: "返回上一步"
   }
 } as const;
-
-function PublishSubmitButton({
-  label,
-  publishingLabel
-}: {
-  label: string;
-  publishingLabel: string;
-}) {
-  const { pending } = useFormStatus();
-  return (
-    <Button
-      type="submit"
-      size="lg"
-      className="h-12 w-full rounded-xl bg-zinc-950 text-base font-medium text-white shadow-[0_12px_40px_rgba(124,58,237,0.25)] hover:bg-zinc-900"
-      disabled={pending}
-    >
-      {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-      {pending ? publishingLabel : label}
-      {!pending ? <ArrowRight className="ml-2 h-4 w-4" /> : null}
-    </Button>
-  );
-}
 
 function FeaturePillar({
   icon: Icon,
@@ -137,84 +121,147 @@ export function BrandCampaignStep3Publish({
   onBack: () => void;
 }) {
   const t = copy[locale];
+  const router = useRouter();
+  const [publishError, setPublishError] = useState<string | null>(error ?? null);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [isMatching, setIsMatching] = useState(false);
+  const [matchComplete, setMatchComplete] = useState(false);
+
+  async function handlePublish() {
+    if (isPublishing) return;
+
+    setIsPublishing(true);
+    setPublishError(null);
+    setIsMatching(true);
+    setMatchComplete(false);
+
+    const formData = new FormData();
+    formData.set("lang", locale);
+    formData.set("project_id", projectId);
+
+    const started = Date.now();
+    const result = await publishBrandCampaignAction(formData);
+    const elapsed = Date.now() - started;
+    const waitMs = Math.max(0, MATCH_MIN_MS - elapsed);
+    if (waitMs > 0) {
+      await new Promise((resolve) => window.setTimeout(resolve, waitMs));
+    }
+
+    if (!result.ok) {
+      setIsMatching(false);
+      setMatchComplete(false);
+      setPublishError(result.error);
+      setIsPublishing(false);
+      return;
+    }
+
+    setMatchComplete(true);
+    await new Promise((resolve) => window.setTimeout(resolve, MATCH_FINISH_MS));
+    router.push(result.checkoutPath);
+  }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6 pb-10">
-      <div className="overflow-hidden rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm sm:p-8">
-        <div className="relative mx-auto mb-6 flex h-36 w-full max-w-sm items-center justify-center">
-          <div className="absolute h-28 w-28 rounded-full bg-emerald-100/70 blur-sm" />
-          <div className="absolute h-24 w-24 rounded-full bg-sky-100/80" />
-          <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500 text-white shadow-lg shadow-emerald-500/30">
-            <Check className="h-8 w-8" strokeWidth={2.5} />
-          </div>
-          <Send className="absolute left-8 top-6 h-5 w-5 -rotate-12 text-violet-400" />
-          <span className="absolute right-10 top-8 h-2 w-2 rounded-full bg-violet-400" />
-          <span className="absolute right-16 top-14 h-1.5 w-1.5 rounded-full bg-indigo-400" />
-          <span className="absolute bottom-8 left-16 h-2 w-2 rounded-sm bg-sky-300 rotate-45" />
-        </div>
-
-        <div className="text-center">
-          <h2 className="text-xl font-semibold text-zinc-950 sm:text-2xl">{t.readyTitle}</h2>
-          <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-zinc-500">{t.readyBody}</p>
-        </div>
-
-        <div className="mt-8 border-t border-dashed border-zinc-200 pt-8">
-          <div className="flex flex-col gap-6 sm:flex-row sm:gap-0">
-            <FeaturePillar
-              icon={Shield}
-              iconClass="bg-violet-100 text-violet-700"
-              title={t.escrowTitle}
-              body={t.escrowBody}
-            />
-            <FeaturePillar
-              icon={Send}
-              iconClass="bg-blue-100 text-blue-700"
-              title={t.matchTitle}
-              body={t.matchBody}
-            />
-            <FeaturePillar
-              icon={Lock}
-              iconClass="bg-emerald-100 text-emerald-700"
-              title={t.privacyTitle}
-              body={t.privacyBody}
-            />
-          </div>
-        </div>
-
-        {error ? <p className="mt-6 text-sm text-red-600">{error}</p> : null}
-
-        <form action={publishBrandCampaignFormAction} className="mt-8">
-          <input type="hidden" name="lang" value={locale} />
-          <input type="hidden" name="project_id" value={projectId} />
-          <PublishSubmitButton label={t.publish} publishingLabel={t.publishing} />
-        </form>
-      </div>
-
-      <div className="rounded-2xl border border-violet-100 bg-violet-50/50 p-5 sm:p-6">
-        <div className="mb-5 flex items-center justify-center gap-2">
-          <Lightbulb className="h-4 w-4 text-violet-600" />
-          <h3 className="text-sm font-semibold text-zinc-950">{t.nextTitle}</h3>
-        </div>
-        <div className="flex flex-col items-stretch gap-6 sm:flex-row sm:items-start sm:gap-4">
-          <NextStep icon={Send} title={t.next1Title} body={t.next1Body} />
-          <div className="hidden self-center text-zinc-300 sm:block">→</div>
-          <NextStep icon={Bell} title={t.next2Title} body={t.next2Body} />
-          <div className="hidden self-center text-zinc-300 sm:block">→</div>
-          <NextStep icon={ListChecks} title={t.next3Title} body={t.next3Body} />
-        </div>
-      </div>
-
-      <div className="flex justify-center pt-2">
-        <Button
-          type="button"
-          variant="outline"
-          className="h-11 rounded-xl border-zinc-200 bg-white px-6"
-          onClick={onBack}
+    <>
+      {isMatching ? (
+        <div
+          className="fixed inset-0 z-[120] flex items-center justify-center overflow-y-auto bg-white/96 p-4 backdrop-blur-md sm:p-8"
+          role="dialog"
+          aria-modal="true"
+          aria-busy={!matchComplete}
+          aria-label={locale === "zh" ? "正在匹配创作者" : "Matching creators"}
         >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          {t.back}
-        </Button>
+          <div className="w-full max-w-4xl animate-in fade-in zoom-in-95 duration-300">
+            <BrandCreatorGlobeMatchingLoader locale={locale} complete={matchComplete} className="shadow-lg" />
+          </div>
+        </div>
+      ) : null}
+
+      <div className="mx-auto max-w-2xl space-y-6 pb-10">
+        <div className="overflow-hidden rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm sm:p-8">
+          <div className="relative mx-auto mb-6 flex h-36 w-full max-w-sm items-center justify-center">
+            <div className="absolute h-28 w-28 rounded-full bg-emerald-100/70 blur-sm" />
+            <div className="absolute h-24 w-24 rounded-full bg-sky-100/80" />
+            <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500 text-white shadow-lg shadow-emerald-500/30">
+              <Check className="h-8 w-8" strokeWidth={2.5} />
+            </div>
+            <Send className="absolute left-8 top-6 h-5 w-5 -rotate-12 text-violet-400" />
+            <span className="absolute right-10 top-8 h-2 w-2 rounded-full bg-violet-400" />
+            <span className="absolute right-16 top-14 h-1.5 w-1.5 rounded-full bg-indigo-400" />
+            <span className="absolute bottom-8 left-16 h-2 w-2 rotate-45 rounded-sm bg-sky-300" />
+          </div>
+
+          <div className="text-center">
+            <h2 className="text-xl font-semibold text-zinc-950 sm:text-2xl">{t.readyTitle}</h2>
+            <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-zinc-500">{t.readyBody}</p>
+          </div>
+
+          <div className="mt-8 border-t border-dashed border-zinc-200 pt-8">
+            <div className="flex flex-col gap-6 sm:flex-row sm:gap-0">
+              <FeaturePillar
+                icon={Shield}
+                iconClass="bg-violet-100 text-violet-700"
+                title={t.escrowTitle}
+                body={t.escrowBody}
+              />
+              <FeaturePillar
+                icon={Send}
+                iconClass="bg-blue-100 text-blue-700"
+                title={t.matchTitle}
+                body={t.matchBody}
+              />
+              <FeaturePillar
+                icon={Lock}
+                iconClass="bg-emerald-100 text-emerald-700"
+                title={t.privacyTitle}
+                body={t.privacyBody}
+              />
+            </div>
+          </div>
+
+          {publishError ? <p className="mt-6 text-sm text-red-600">{publishError}</p> : null}
+
+          <div className="mt-8">
+            <Button
+              type="button"
+              size="lg"
+              className="h-12 w-full rounded-xl bg-zinc-950 text-base font-medium text-white shadow-[0_12px_40px_rgba(124,58,237,0.25)] hover:bg-zinc-900"
+              disabled={isPublishing}
+              onClick={() => void handlePublish()}
+            >
+              {isPublishing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              {isPublishing ? t.publishing : t.publish}
+              {!isPublishing ? <ArrowRight className="ml-2 h-4 w-4" /> : null}
+            </Button>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-violet-100 bg-violet-50/50 p-5 sm:p-6">
+          <div className="mb-5 flex items-center justify-center gap-2">
+            <Lightbulb className="h-4 w-4 text-violet-600" />
+            <h3 className="text-sm font-semibold text-zinc-950">{t.nextTitle}</h3>
+          </div>
+          <div className="flex flex-col items-stretch gap-6 sm:flex-row sm:items-start sm:gap-4">
+            <NextStep icon={Send} title={t.next1Title} body={t.next1Body} />
+            <div className="hidden self-center text-zinc-300 sm:block">→</div>
+            <NextStep icon={Bell} title={t.next2Title} body={t.next2Body} />
+            <div className="hidden self-center text-zinc-300 sm:block">→</div>
+            <NextStep icon={ListChecks} title={t.next3Title} body={t.next3Body} />
+          </div>
+        </div>
+
+        <div className="flex justify-center pt-2">
+          <Button
+            type="button"
+            variant="outline"
+            className="h-11 rounded-xl border-zinc-200 bg-white px-6"
+            onClick={onBack}
+            disabled={isPublishing}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            {t.back}
+          </Button>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

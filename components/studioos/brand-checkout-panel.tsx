@@ -17,6 +17,7 @@ import {
   Wallet
 } from "lucide-react";
 import { payBrandCampaignCheckoutAction } from "@/app/brand-payment-actions";
+import { BrandPaymentDeadlineNotice } from "@/components/studioos/brand-payment-deadline-notice";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -172,6 +173,7 @@ export function BrandCheckoutPanel({
 
   return (
     <div className="space-y-5">
+      <BrandPaymentDeadlineNotice locale={locale} order={order} />
       <div className="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm">
         <div className="flex items-start justify-between gap-4">
           <div>

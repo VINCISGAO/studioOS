@@ -37,6 +37,8 @@ export function messageCategoryFromType(type: CreatorNotificationType): MessageC
       return "system";
     case "not_selected":
       return "brand";
+    case "order_cancelled_unpaid":
+      return "brand";
     default:
       return "project";
   }
@@ -195,6 +197,11 @@ export function buildMessageNextStep(
           title: "下一步",
           body: "请完善 Studio 主页、擅长领域与价格意愿，完成后即可正式接单。"
         };
+      case "order_cancelled_unpaid":
+        return {
+          title: "说明",
+          body: "该订单已关闭，无需继续制作。你可以继续查看其他意向邀请或新项目。"
+        };
       default:
         return undefined;
     }
@@ -226,6 +233,11 @@ export function buildMessageNextStep(
       return {
         title: "Next step",
         body: "Complete your studio profile, expertise, and pricing to start accepting orders."
+      };
+    case "order_cancelled_unpaid":
+      return {
+        title: "Note",
+        body: "This order is closed — no production is needed. Check other invitations or new projects."
       };
     default:
       return undefined;

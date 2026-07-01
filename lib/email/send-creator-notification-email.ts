@@ -15,6 +15,14 @@ type SendCreatorEmailInput = {
 
 function emailCopy(locale: Locale, type: CreatorNotificationType) {
   if (locale === "zh") {
+    if (type === "order_cancelled_unpaid") {
+      return {
+        subject: (brand: string) => `${brand} 的订单已取消`,
+        headline: "订单已自动取消",
+        lead: "品牌方未在 3 小时内完成付款，该订单已自动取消，你无需继续等待或开始制作。",
+        cta: "查看消息"
+      };
+    }
     return type === "project_funded"
       ? {
           subject: (brand: string) => `款项已托管 — ${brand} 的项目可以开拍`,
@@ -25,9 +33,18 @@ function emailCopy(locale: Locale, type: CreatorNotificationType) {
       : {
           subject: (brand: string) => `你被 ${brand} 选中了`,
           headline: "恭喜，品牌方选择了你",
-          lead: "品牌方已将你选为合作创作者。请登录创作者中心查看客户的具体需求并开始制作。",
-          cta: "查看客户需求"
+          lead: "品牌方已将你选为合作创作者。请等待品牌完成托管付款，收到付款通知后再开始制作。",
+          cta: "查看项目"
         };
+  }
+
+  if (type === "order_cancelled_unpaid") {
+    return {
+      subject: (brand: string) => `Order cancelled — ${brand}`,
+      headline: "Order automatically cancelled",
+      lead: "The brand did not complete payment within 3 hours. This order is closed — no further action is needed.",
+      cta: "View messages"
+    };
   }
 
   return type === "project_funded"
@@ -40,8 +57,8 @@ function emailCopy(locale: Locale, type: CreatorNotificationType) {
     : {
         subject: (brand: string) => `You were selected by ${brand}`,
         headline: "A brand chose your studio",
-        lead: "You have been matched to a new campaign. Sign in to review the client's requirements.",
-        cta: "View client brief"
+        lead: "You have been matched to a new campaign. Wait for escrow payment — you'll be notified when production can begin.",
+        cta: "View project"
       };
 }
 

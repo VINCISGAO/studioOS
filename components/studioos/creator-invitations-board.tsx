@@ -20,12 +20,12 @@ const copy = {
   en: {
     title: "Project invitations",
     subtitle:
-      "Accepting an invitation puts you on the brand shortlist — not a confirmed booking. Production starts only after the brand selects you.",
+      "Accepting an invitation puts you on the brand shortlist — not a confirmed booking. Production starts only after the brand selects you and completes escrow payment.",
     empty: "No invitations in this tab."
   },
   zh: {
     title: "项目邀请",
-    subtitle: "接受邀请只表示合作意向，不等于正式中标。品牌最终选定你后，项目才会正式开始。",
+    subtitle: "接受邀请只表示合作意向，不等于正式中标。品牌选定你并完成托管付款后，项目才会正式开始。",
     empty: "当前分类下没有邀请。"
   }
 } as const;

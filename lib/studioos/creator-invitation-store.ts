@@ -9,7 +9,7 @@ import { createSerializedStoreReader, writeJsonFileAtomic } from "@/lib/json-fil
 import { listCreatorsForMatching } from "@/lib/creator-service";
 import { dataStorePath, readDataJson, writeDataJson } from "@/lib/serverless-store";
 import type { InvitationLifecycleStatus } from "@/lib/studioos/campaign-closed-loop";
-import { startProductionWithSelectedCreator } from "@/lib/studioos/brand-checkout-service";
+import { setupBrandCheckout } from "@/lib/studioos/brand-checkout-service";
 import type { StoredCreatorInvitation } from "@/lib/studioos/creator-invitation-types";
 import {
   isInvitationRecruitmentClosed,
@@ -179,7 +179,7 @@ export async function selectCreatorForProject(input: {
       (item) => item.projectId === input.projectId && item.status === "selected"
     );
     if (alreadySelected?.creatorId === input.creatorId) {
-      const checkout = await startProductionWithSelectedCreator({
+      const checkout = await setupBrandCheckout({
         project,
         creatorId: input.creatorId,
         workId: null,
@@ -206,7 +206,7 @@ export async function selectCreatorForProject(input: {
   }
   await writeStore(store);
 
-  const checkout = await startProductionWithSelectedCreator({
+  const checkout = await setupBrandCheckout({
     project,
     creatorId: input.creatorId,
     workId: null,

@@ -7,7 +7,8 @@ import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
 import { getDeliverables, getOrder, getOrderForProject } from "@/lib/order-service";
 import { getProject } from "@/lib/project-service";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
-import { resolveBrandCommercialStep } from "@/lib/studioos/commercial-lifecycle";
+import { enforceBrandPaymentDeadlineForProject } from "@/lib/studioos/brand-payment-expiry.service";
+import { isBrandAwaitingPayment, resolveBrandCommercialStep } from "@/lib/studioos/commercial-lifecycle";
 import { listAcceptedInvitationsForProject, listInvitationsForProject } from "@/lib/studioos/creator-invitation-store";
 import { countUnreadBrandNotifications } from "@/lib/studioos/brand-notification-service";
 import { listReviewComments } from "@/lib/studioos/review-store";
@@ -33,7 +34,7 @@ export default async function BrandProjectHubPage({
   const [{ id }, query] = await Promise.all([params, searchParams]);
   const locale = getLocale(query);
   const clientEmail = await getCurrentClientEmail();
-  const project = await getProject(id);
+  let project = await getProject(id);
 
   if (!project) {
     const order = await getOrder(id);
@@ -50,6 +51,9 @@ export default async function BrandProjectHubPage({
     redirect(withLocale("/brand", locale));
   }
 
+  await enforceBrandPaymentDeadlineForProject(id);
+  project = (await getProject(id)) ?? project;
+
   const linkedOrder = await getOrderForProject(id);
   const deliverables = linkedOrder ? await getDeliverables(linkedOrder.id) : [];
 
@@ -61,6 +65,10 @@ export default async function BrandProjectHubPage({
 
   if (activeTab === "review") {
     redirect(withLocale(`/brand/projects/${id}/review`, locale));
+  }
+
+  if (activeTab === "production" && isBrandAwaitingPayment({ project, order: linkedOrder })) {
+    redirect(withLocale(brandPortalRoutes.projectCheckout(id), locale));
   }
 
   const reviewComments = linkedOrder ? await listReviewComments(linkedOrder.id) : [];
@@ -86,6 +94,8 @@ export default async function BrandProjectHubPage({
         locale={locale}
         currentStep={brandCommercialStep}
         orderStatus={linkedOrder?.status ?? null}
+        paymentStatus={linkedOrder?.payment_status ?? null}
+        projectStatus={project.status}
         hasOpenComments={reviewComments.some((item) => item.status === "open")}
         compact
       />

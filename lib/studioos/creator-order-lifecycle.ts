@@ -94,6 +94,8 @@ export function deriveCreatorTodayTasks(input: {
   const needsUpload = input.orders.some(
     (order) =>
       ["in_production", "revision"].includes(order.status) &&
+      order.payment_status !== "unpaid" &&
+      order.status !== "waiting_payment" &&
       (input.deliverableCounts[order.id] ?? 0) === 0
   );
   if (needsUpload) {

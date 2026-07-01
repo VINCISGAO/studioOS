@@ -757,7 +757,10 @@ export async function publishBrandCampaignAction(formData: FormData) {
     locale: lang
   });
 
-  redirect(withLocale(brandPortalRoutes.projectCheckout(projectId), lang));
+  return {
+    ok: true as const,
+    checkoutPath: withLocale(brandPortalRoutes.projectCheckout(projectId), lang)
+  };
 }
 
 /** Form-friendly wrapper — `<form action>` handlers must return void. */
@@ -772,5 +775,8 @@ export async function publishBrandCampaignFormAction(formData: FormData): Promis
         lang
       )
     );
+  }
+  if (result.ok) {
+    redirect(result.checkoutPath);
   }
 }
