@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useMemo } from "react";
 import { useCertificationExperience } from "@/components/studioos/certification/certification-experience-context";
 import type { Locale } from "@/lib/i18n";
@@ -20,7 +21,7 @@ import { Lock, Sparkles } from "lucide-react";
 
 export function StudioPortalSidebarNav({
   locale,
-  pathname,
+  pathname: pathnameProp,
   canUseBusinessFeatures,
   isVerified,
   unreadCount
@@ -34,6 +35,8 @@ export function StudioPortalSidebarNav({
   const nav = studioNav[locale];
   const t = tCertificationExperience(locale);
   const { unlockedNavKeys, isAnimating } = useCertificationExperience();
+  const pathnameFromRouter = usePathname();
+  const pathname = pathnameFromRouter ?? pathnameProp;
 
   const unlockedSet = useMemo(() => {
     if (isAnimating) {

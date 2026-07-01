@@ -30,9 +30,9 @@ if git diff --cached --quiet; then
   log "No staged changes — pushing existing commits only."
 else
   git commit -m "$(cat <<'EOF'
-Fix brand review delivery approval and serverless project events.
+Fix demo review 404, login redirect loops, and broken lang URLs.
 
-Use form actions for approve/revision, harden review store sorting, and persist project events in memory on Vercel so delivery approval no longer crashes production renders.
+Restore proj_demo_arc_nova from tombstones, sanitize malformed ?lang= links in middleware, and block cross-role post-login redirects so brand review pages load reliably in local demo mode.
 EOF
 )"
   log "Committed: $(git rev-parse HEAD)"

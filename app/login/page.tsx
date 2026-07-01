@@ -163,15 +163,7 @@ function redirectIfAlreadySignedIn(
     return;
   }
 
-  const brandBriefNext =
-    nextPath.startsWith("/brand/projects/new") || nextPath.startsWith("/brand/projects/");
-
-  if (brandBriefNext && ["client", "creator", "admin"].includes(session.role)) {
-    redirect(withLocale(nextPath, locale));
-  }
-
-  const destination =
-    nextPath.startsWith("/") ? withLocale(nextPath, locale) : withLocale(demoRedirectForRole(session.role), locale);
+  const destination = resolvePostLoginDestination(session, nextPath, locale);
 
   if (role === "brand" && session.role === "client") {
     redirect(destination);
@@ -216,6 +208,32 @@ function resolveLoginErrorCode(rawError: string | undefined) {
   return undefined;
 }
 
+function resolvePostLoginDestination(
+  session: { role: DemoRole },
+  nextPath: string,
+  locale: Locale
+) {
+  if (!nextPath.startsWith("/")) {
+    return withLocale(demoRedirectForRole(session.role), locale);
+  }
+
+  const isBrandPath = nextPath.startsWith("/brand");
+  const isStudioPath =
+    nextPath.startsWith("/studio") ||
+    nextPath.startsWith("/creator") ||
+    nextPath.startsWith("/workspace/studio");
+
+  if (isBrandPath && session.role !== "client") {
+    return withLocale(demoRedirectForRole(session.role), locale);
+  }
+
+  if (isStudioPath && session.role === "client") {
+    return withLocale("/brand", locale);
+  }
+
+  return withLocale(nextPath, locale);
+}
+
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams;
   const locale = getLocale(params);
@@ -228,10 +246,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const session = await getCurrentSession();
 
   if (session && !rawError) {
-    if (nextPath.startsWith("/")) {
-      redirect(withLocale(nextPath, locale));
-    }
-    redirect(withLocale(demoRedirectForRole(session.role), locale));
+    redirect(resolvePostLoginDestination(session, nextPath, locale));
   }
 
   // Only bounce back when middleware sent the user here with ?next= — not when switching brand/creator tabs.

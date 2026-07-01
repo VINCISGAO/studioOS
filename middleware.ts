@@ -22,9 +22,28 @@ function withLang(url: URL, request: NextRequest) {
   return url;
 }
 
+/** Rewrite broken links like ?lang%3Dzh=&lang=zh → ?lang=zh */
+function sanitizeBrokenLocaleSearch(request: NextRequest): NextResponse | null {
+  const rawSearch = request.nextUrl.search;
+  if (!rawSearch.includes("lang%3D") && !rawSearch.includes("lang%253D")) {
+    return null;
+  }
+
+  const url = request.nextUrl.clone();
+  url.search = rawSearch.includes("zh") ? "?lang=zh" : "?lang=en";
+  return NextResponse.redirect(url);
+}
+
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const isApiRoute = pathname.startsWith("/api/");
+
+  if (!isApiRoute) {
+    const sanitized = sanitizeBrokenLocaleSearch(request);
+    if (sanitized) {
+      return sanitized;
+    }
+  }
 
   // Fix broken links like /?lang%3Dzh → /?lang=zh
   const rawSearch = request.nextUrl.search;

@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { BrandPortalShell } from "@/components/studioos/brand-portal-shell";
 import { DEMO_SESSION_COOKIE } from "@/lib/auth-config";
 import { DEMO_USERS, parseDemoSession } from "@/lib/demo-auth";
-import { getLocale, withLocale } from "@/lib/i18n";
+import { getLocale, encodeBrandLoginNext, withLocale } from "@/lib/i18n";
 import { countUnreadBrandNotifications } from "@/lib/studioos/brand-notification-service";
 
 type BrandLayoutProps = {
@@ -19,7 +19,7 @@ export default async function BrandLayout({ children }: BrandLayoutProps) {
   const cookieStore = await cookies();
   const session = parseDemoSession(cookieStore.get(DEMO_SESSION_COOKIE)?.value);
   if (!session || session.role !== "client") {
-    const next = encodeURIComponent(`${pathname}${search ? `?${search}` : ""}`);
+    const next = encodeBrandLoginNext(pathname, search);
     redirect(withLocale(`/login?role=brand&next=${next}`, locale));
   }
 

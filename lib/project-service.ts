@@ -264,8 +264,13 @@ function seedStore(): ProjectStore {
 }
 
 function ensureDemoArcNovaProject(store: ProjectStore): ProjectStore {
-  if (isDemoProjectDismissed(store, DEMO_PROJECT_ID) || isProjectDeleted(store, DEMO_PROJECT_ID)) {
+  if (isDemoProjectDismissed(store, DEMO_PROJECT_ID)) {
     return store;
+  }
+
+  // Docs/QA use this id for brand review demos — do not keep it tombstoned.
+  if (store.deleted_project_ids?.includes(DEMO_PROJECT_ID)) {
+    store.deleted_project_ids = store.deleted_project_ids.filter((id) => id !== DEMO_PROJECT_ID);
   }
 
   const project = store.projects.find((item) => item.id === DEMO_PROJECT_ID);

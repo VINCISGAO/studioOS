@@ -20,6 +20,15 @@ export function withLocale(path: string, locale: Locale) {
   return `${pathname}?${params.toString()}${hash}`;
 }
 
+/** Safe login ?next= value — avoid double-encoded lang%3Dzh query strings. */
+export function encodeBrandLoginNext(pathname: string, search: string) {
+  const params = new URLSearchParams(search);
+  const lang = params.get("lang");
+  const next =
+    lang === "zh" || lang === "en" ? `${pathname}?lang=${lang}` : pathname;
+  return encodeURIComponent(next);
+}
+
 /** Opens the brand campaign wizard with a fresh draft project. */
 export function brandStartBriefHref(locale: Locale) {
   return withLocale("/brand/start-brief", locale);

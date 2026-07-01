@@ -21,7 +21,11 @@ if ! command -v node >/dev/null 2>&1; then
   exit 1
 fi
 
+NODE_MAJOR="$(node -p "process.versions.node.split('.')[0]")"
 echo "Node $(node -v)"
+if [ "${NODE_MAJOR}" -ge 23 ] 2>/dev/null; then
+  echo "⚠️  package.json 要求 Node 20–22。Node 24+ 可能导致 dev/build 异常，建议: nvm use 22"
+fi
 echo ""
 
 if [ ! -d node_modules ]; then

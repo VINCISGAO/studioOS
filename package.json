@@ -21,6 +21,7 @@
     "reset:demo-review": "node scripts/reset-mvp-demo.mjs",
     "reset:demo-accounts": "node scripts/reset-demo-accounts.mjs",
     "build": "npx prisma generate && node scripts/copy-marketing-assets.mjs && next build",
+    "build:clean": "rm -rf .next && npm run build",
     "postinstall": "npx prisma generate",
     "start": "next start",
     "lint": "next lint --no-cache",

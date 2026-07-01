@@ -4,7 +4,7 @@ import { FrameioReviewCenter } from "@/components/studioos/review-engine/frameio
 import { DeliverableVideoPolicyNotice } from "@/components/studioos/deliverable-video-policy-notice";
 import { getCurrentClientEmail } from "@/lib/client-session";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
-import { getDeliverables, getOrderForProject } from "@/lib/order-service";
+import { getDeliverables, getOrder, getOrderForProject } from "@/lib/order-service";
 import { getProject } from "@/lib/project-service";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
 import { listReviewComments } from "@/lib/studioos/review-store";
@@ -34,19 +34,35 @@ export default async function BrandProjectReviewPage({ params, searchParams }: P
   }
 
   const project = await getProject(id);
-  if (!project) {
+  const order = await getOrderForProject(id);
+  const linkedOrder = order ?? (await getOrder(id));
+  const resolvedProjectId = project?.id ?? linkedOrder?.project_id ?? id;
+
+  if (!project && !linkedOrder) {
     notFound();
   }
 
-  if (project.client_email.toLowerCase() !== clientEmail.toLowerCase()) {
+  if (project && project.client_email.toLowerCase() !== clientEmail.toLowerCase()) {
     redirect(withLocale("/brand", locale));
   }
 
-  const order = await getOrderForProject(id);
+  if (!project && linkedOrder && linkedOrder.client_email.toLowerCase() !== clientEmail.toLowerCase()) {
+    redirect(withLocale("/brand", locale));
+  }
+
+  const orderForReview = linkedOrder ?? (resolvedProjectId ? await getOrderForProject(resolvedProjectId) : null);
   const [deliverables, comments] = await Promise.all([
-    order ? getDeliverables(order.id) : Promise.resolve([]),
-    order ? listReviewComments(order.id) : Promise.resolve([])
+    orderForReview ? getDeliverables(orderForReview.id) : Promise.resolve([]),
+    orderForReview ? listReviewComments(orderForReview.id) : Promise.resolve([])
   ]);
+
+  const campaignTitle =
+    project?.title ||
+    project?.product_name ||
+    project?.company_name ||
+    orderForReview?.title ||
+    orderForReview?.company_name ||
+    "Project";
 
   const flash =
     query.approved === "1" || query.completed === "1"
@@ -65,11 +81,11 @@ export default async function BrandProjectReviewPage({ params, searchParams }: P
           : "Could not request changes. Please try again."
         : undefined;
 
-  if (!order || !deliverables.length) {
+  if (!orderForReview || !deliverables.length) {
     return (
       <div className="mx-auto max-w-3xl space-y-6">
         <Link
-          href={withLocale(`${brandPortalRoutes.project(id)}?tab=production`, locale)}
+          href={withLocale(`${brandPortalRoutes.project(resolvedProjectId)}?tab=production`, locale)}
           className="inline-flex items-center gap-1.5 text-sm text-zinc-500 transition hover:text-zinc-900"
         >
           ← {locale === "zh" ? "返回项目" : "Back to project"}
@@ -90,17 +106,17 @@ export default async function BrandProjectReviewPage({ params, searchParams }: P
 
   return (
     <div className="mx-auto max-w-7xl space-y-4">
-      {order.status === "completed" ? <DeliverableVideoPolicyNotice locale={locale} /> : null}
+      {orderForReview.status === "completed" ? <DeliverableVideoPolicyNotice locale={locale} /> : null}
       <FrameioReviewCenter
         locale={locale}
-        order={order}
-        campaignTitle={project.title || project.product_name || project.company_name}
+        order={orderForReview}
+        campaignTitle={campaignTitle}
         deliverables={deliverables}
         initialComments={comments}
         initialVersion={deliverables[deliverables.length - 1]?.version ?? 1}
         role="brand"
         variant="embedded"
-        backHref={withLocale(`${brandPortalRoutes.project(id)}?tab=production`, locale)}
+        backHref={withLocale(`${brandPortalRoutes.project(resolvedProjectId)}?tab=production`, locale)}
         backLabel={locale === "zh" ? "返回项目" : "Back to project"}
         flash={flash}
         actionError={actionError}

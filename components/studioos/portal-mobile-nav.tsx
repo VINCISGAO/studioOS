@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
 import { MarketingHomeLink } from "@/components/studioos/marketing-home-link";
 import type { Locale } from "@/lib/i18n";
@@ -7,13 +10,16 @@ import { cn } from "@/lib/utils";
 
 export function PortalMobileNav({
   locale,
-  pathname,
+  pathname: pathnameProp,
   items
 }: {
   locale: Locale;
   pathname: string;
   items: { id: string; href: string; label: string; icon: LucideIcon }[];
 }) {
+  const pathnameFromRouter = usePathname();
+  const pathname = pathnameFromRouter ?? pathnameProp;
+
   return (
     <nav
       className="flex gap-1.5 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:hidden"
