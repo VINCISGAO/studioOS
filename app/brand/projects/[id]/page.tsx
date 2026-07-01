@@ -8,7 +8,8 @@ import { getDeliverables, getOrder, getOrderForProject } from "@/lib/order-servi
 import { getProject } from "@/lib/project-service";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
 import { resolveBrandCommercialStep } from "@/lib/studioos/commercial-lifecycle";
-import { listAcceptedInvitationsForProject, listInvitationsForProject, ensureCampaignInvitationsForProject } from "@/lib/studioos/creator-invitation-store";
+import { listAcceptedInvitationsForProject, listInvitationsForProject } from "@/lib/studioos/creator-invitation-store";
+import { countUnreadBrandNotifications } from "@/lib/studioos/brand-notification-service";
 import { listReviewComments } from "@/lib/studioos/review-store";
 
 type HubTab = "brief" | "match" | "proposal" | "production" | "review";
@@ -63,11 +64,9 @@ export default async function BrandProjectHubPage({
   }
 
   const reviewComments = linkedOrder ? await listReviewComments(linkedOrder.id) : [];
-  let projectInvitations = await listInvitationsForProject(id);
-  if (project.status === "matching" && projectInvitations.length === 0) {
-    projectInvitations = await ensureCampaignInvitationsForProject(project);
-  }
+  const projectInvitations = await listInvitationsForProject(id);
   const acceptedInvitations = await listAcceptedInvitationsForProject(id);
+  const notificationCount = clientEmail ? await countUnreadBrandNotifications(clientEmail) : 0;
   const brandCommercialStep = resolveBrandCommercialStep({
     project,
     order: linkedOrder,
@@ -100,6 +99,7 @@ export default async function BrandProjectHubPage({
         acceptedInvitations={acceptedInvitations}
         projectInvitations={projectInvitations}
         brandCommercialStep={brandCommercialStep}
+        notificationCount={notificationCount}
       />
     </div>
   );

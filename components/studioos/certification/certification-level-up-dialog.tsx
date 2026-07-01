@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { markCertificationLevelUpSeenAction } from "@/app/certification-actions";
 import { CertificationBenefitCard } from "@/components/studioos/certification/certified-partner-badge";
@@ -14,39 +14,52 @@ import {
 import type { Locale } from "@/lib/i18n";
 import { tCertificationExperience } from "@/lib/studioos/certification-experience-copy";
 import { cn } from "@/lib/utils";
-import { BadgeCheck, Sparkles } from "lucide-react";
+import { BadgeCheck, Loader2, Sparkles } from "lucide-react";
 
 export function CertificationLevelUpDialog({
   locale,
   open,
-  onUnlockStep
+  onUnlockStep,
+  onDismiss
 }: {
   locale: Locale;
   open: boolean;
   onUnlockStep: (step: number) => void;
+  onDismiss: () => void;
 }) {
   const t = tCertificationExperience(locale);
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+  const [isPending, setIsPending] = useState(false);
 
-  function finish(next: "home" | "benefits") {
-    startTransition(async () => {
-      const fd = new FormData();
-      fd.set("lang", locale);
-      fd.set("next", next);
+  async function finish(next: "home" | "benefits") {
+    if (isPending) {
+      return;
+    }
+
+    setIsPending(true);
+    onDismiss();
+
+    const fd = new FormData();
+    fd.set("lang", locale);
+    fd.set("next", next);
+
+    try {
       const result = await markCertificationLevelUpSeenAction(fd);
       if (result.ok) {
         router.push(result.href);
         router.refresh();
       }
-    });
+    } finally {
+      setIsPending(false);
+    }
   }
 
   return (
     <Dialog open={open} onOpenChange={() => undefined}>
       <DialogContent
+        overlayClassName="z-[100]"
         className={cn(
-          "max-h-[90vh] gap-0 overflow-hidden border-violet-200/80 p-0 sm:max-w-xl",
+          "z-[100] max-h-[90vh] gap-0 overflow-hidden border-violet-200/80 p-0 sm:max-w-xl",
           "[&>button.absolute]:hidden",
           "shadow-[0_0_0_1px_rgba(139,92,246,0.15),0_24px_80px_rgba(88,28,135,0.25)]"
         )}
@@ -83,9 +96,9 @@ export function CertificationLevelUpDialog({
               type="button"
               className="h-11 flex-1 rounded-xl bg-violet-600 hover:bg-violet-700"
               disabled={isPending}
-              onClick={() => finish("home")}
+              onClick={() => void finish("home")}
             >
-              <Sparkles className="h-4 w-4" />
+              {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
               {t.primaryCta}
             </Button>
             <Button
@@ -93,7 +106,7 @@ export function CertificationLevelUpDialog({
               variant="outline"
               className="h-11 flex-1 rounded-xl border-violet-200"
               disabled={isPending}
-              onClick={() => finish("benefits")}
+              onClick={() => void finish("benefits")}
             >
               {t.secondaryCta}
             </Button>

@@ -116,11 +116,11 @@ export function CreatorDepositPendingCard({
             <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-amber-100">
               <div
                 className="h-full rounded-full bg-amber-500 transition-all duration-1000"
-                style={{ width: `${Math.min(100, (elapsedSec / 15) * 100)}%` }}
+                style={{ width: `${Math.min(100, (elapsedSec / 8) * 100)}%` }}
               />
             </div>
             <span className="shrink-0 font-mono text-xs tabular-nums text-amber-700">
-              {Math.min(elapsedSec, 15)}s
+              {Math.min(elapsedSec, 8)}s
             </span>
           </div>
           {pollError ? <p className="mt-2 text-xs text-red-600">{pollError}</p> : null}

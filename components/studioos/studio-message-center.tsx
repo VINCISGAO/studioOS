@@ -27,7 +27,9 @@ type FilterTab = "all" | "unread" | "read";
 type MessageCenterActions = {
   markRead: (formData: FormData) => Promise<{ ok: boolean }>;
   markManyRead: (formData: FormData) => Promise<{ ok: boolean }>;
-  deleteMany: (formData: FormData) => Promise<{ ok: boolean }>;
+  deleteMany: (
+    formData: FormData
+  ) => Promise<{ ok: boolean; deleted?: number; error?: string }>;
 };
 
 const defaultActions: MessageCenterActions = {
@@ -40,10 +42,12 @@ const PAGE_SIZE = 8;
 
 const copy = {
   zh: {
-    confirmDeleteSelected: "确定删除选中的消息吗？此操作不可恢复。"
+    confirmDeleteSelected: "确定删除选中的消息吗？此操作不可恢复。",
+    deleteFailed: "删除失败，请稍后重试。"
   },
   en: {
-    confirmDeleteSelected: "Delete selected messages? This cannot be undone."
+    confirmDeleteSelected: "Delete selected messages? This cannot be undone.",
+    deleteFailed: "Delete failed. Please try again."
   }
 } as const;
 
@@ -73,13 +77,19 @@ export function StudioMessageCenter({
     initialSelectedId ?? list[0]?.id ?? null
   );
   const [readOverrides, setReadOverrides] = useState<Record<string, string>>({});
+  const [hiddenIds, setHiddenIds] = useState<string[]>([]);
+
+  const visibleList = useMemo(
+    () => list.filter((item) => !hiddenIds.includes(item.id)),
+    [hiddenIds, list]
+  );
 
   const effectiveList = useMemo(
     () =>
-      list.map((item) =>
+      visibleList.map((item) =>
         readOverrides[item.id] ? { ...item, readAt: readOverrides[item.id] } : item
       ),
-    [list, readOverrides]
+    [visibleList, readOverrides]
   );
 
   const detailMap = useMemo(
@@ -130,12 +140,14 @@ export function StudioMessageCenter({
   function selectMessage(item: MessageListItem) {
     setSelectedId(item.id);
     if (!item.readAt) {
-      markReadLocally(item.id);
       startTransition(async () => {
         const fd = new FormData();
         fd.set("notification_id", item.id);
-        await actions.markRead(fd);
-        router.refresh();
+        const result = await actions.markRead(fd);
+        if (result.ok) {
+          markReadLocally(item.id);
+          router.refresh();
+        }
       });
     }
   }
@@ -145,25 +157,33 @@ export function StudioMessageCenter({
     if (!initialId) return;
     const item = list.find((entry) => entry.id === initialId);
     if (!item || item.readAt || readOverrides[item.id]) return;
-    markReadLocally(item.id);
     startTransition(async () => {
       const fd = new FormData();
       fd.set("notification_id", item.id);
-      await actions.markRead(fd);
-      router.refresh();
+      const result = await actions.markRead(fd);
+      if (result.ok) {
+        markReadLocally(item.id);
+        router.refresh();
+      }
     });
     // Mark the initially opened message as read once on mount.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  function toggleSelectId(id: string) {
+    setSelectedIds((current) =>
+      current.includes(id) ? current.filter((item) => item !== id) : [...current, id]
+    );
+  }
+
   function toggleSelectAllVisible() {
     const visibleIds = pageItems.map((item) => item.id);
     const allSelected = visibleIds.length > 0 && visibleIds.every((id) => selectedIds.includes(id));
     if (allSelected) {
-      setSelectedIds([]);
+      setSelectedIds((current) => current.filter((id) => !visibleIds.includes(id)));
       return;
     }
-    setSelectedIds(visibleIds);
+    setSelectedIds((current) => [...new Set([...current, ...visibleIds])]);
   }
 
   function markSelectedRead() {
@@ -175,7 +195,10 @@ export function StudioMessageCenter({
     startTransition(async () => {
       const fd = new FormData();
       fd.set("notification_ids", ids.join(","));
-      await actions.markManyRead(fd);
+      const result = await actions.markManyRead(fd);
+      if (!result.ok) {
+        return;
+      }
       setReadOverrides((current) => {
         const next = { ...current };
         const now = new Date().toISOString();
@@ -193,12 +216,21 @@ export function StudioMessageCenter({
     if (!selectedIds.length) return;
     if (!window.confirm(t.confirmDeleteSelected)) return;
 
+    const idsToDelete = [...selectedIds];
+    const deletingSelectedId = idsToDelete.includes(selectedId ?? "");
+
     startTransition(async () => {
       const fd = new FormData();
-      fd.set("notification_ids", selectedIds.join(","));
-      await actions.deleteMany(fd);
-      setSelectedIds([]);
-      if (selectedIds.includes(selectedId ?? "")) {
+      fd.set("notification_ids", idsToDelete.join(","));
+      fd.set("lang", locale);
+      const result = await actions.deleteMany(fd);
+      if (!result.ok) {
+        window.alert(result.error ?? t.deleteFailed);
+        return;
+      }
+      setHiddenIds((current) => [...new Set([...current, ...idsToDelete])]);
+      setSelectedIds((current) => current.filter((id) => !idsToDelete.includes(id)));
+      if (deletingSelectedId) {
         setSelectedId(null);
       }
       router.refresh();
@@ -227,6 +259,7 @@ export function StudioMessageCenter({
           isPending={isPending}
           onTabChange={setTab}
           onSelect={selectMessage}
+          onToggleSelect={toggleSelectId}
           onToggleSelectAll={toggleSelectAllVisible}
           onMarkRead={markSelectedRead}
           onDeleteSelected={deleteSelected}

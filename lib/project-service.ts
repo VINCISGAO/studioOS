@@ -708,13 +708,96 @@ export async function listProjectsForClient(clientEmail: string): Promise<Stored
 }
 
 export function canDeleteProject(status: string) {
-  return normalizeCampaignStatus(status) === "draft";
+  const normalized = normalizeCampaignStatus(status);
+  if (process.env.NODE_ENV === "development") {
+    return normalized !== "cancelled";
+  }
+  return normalized === "draft";
+}
+
+async function deletePrismaCampaignForClient(
+  projectId: string,
+  clientEmail: string
+): Promise<{ ok: true } | { ok: false; code: "NOT_FOUND" | "FORBIDDEN" | "LOCKED"; message: string } | null> {
+  if (!hasDatabaseUrl()) {
+    return null;
+  }
+
+  const { brandCampaignRepository } = await import(
+    "@/features/campaign/brand-campaign/brand-campaign.repository"
+  );
+  const { readCampaignMemory, prismaStatusToProjectStatus } = await import(
+    "@/features/campaign/brand-campaign/brand-campaign.utils"
+  );
+
+  const campaign = await brandCampaignRepository.findByLegacyProjectId(projectId);
+  if (!campaign) {
+    return null;
+  }
+
+  const normalized = clientEmail.toLowerCase();
+  const memory = readCampaignMemory(campaign.campaignMemoryJson) as {
+    client?: { email?: string };
+  };
+  const ownerEmail =
+    memory.client?.email?.toLowerCase() ?? campaign.brand?.email?.toLowerCase() ?? "";
+
+  if (ownerEmail !== normalized) {
+    return { ok: false, code: "FORBIDDEN", message: "Project not owned by client" };
+  }
+
+  const status = prismaStatusToProjectStatus(campaign.status);
+  if (!canDeleteProject(status)) {
+    return {
+      ok: false,
+      code: "LOCKED",
+      message: "Only draft projects can be deleted"
+    };
+  }
+
+  await brandCampaignRepository.softDeleteCampaign(campaign.id);
+
+  try {
+    const store = await readStore();
+    const jsonIndex = store.projects.findIndex(
+      (item) => item.id === projectId && item.client_email.toLowerCase() === normalized
+    );
+    if (jsonIndex >= 0) {
+      tombstoneDeletedProject(store, projectId);
+      dismissDemoProject(store, projectId);
+      store.projects.splice(jsonIndex, 1);
+      await writeStore(store);
+    }
+  } catch {
+    // Prisma is source of truth when configured.
+  }
+
+  try {
+    const { deleteOrdersForProjectId } = await import("@/lib/order-service");
+    await deleteOrdersForProjectId(projectId, normalized);
+  } catch {
+    // Best-effort order cleanup.
+  }
+
+  try {
+    const { purgeProjectCampaignData } = await import("@/lib/campaign-store");
+    await purgeProjectCampaignData(projectId);
+  } catch {
+    // Best-effort legacy store cleanup.
+  }
+
+  return { ok: true };
 }
 
 export async function deleteProjectForClient(
   projectId: string,
   clientEmail: string
 ): Promise<{ ok: true } | { ok: false; code: "NOT_FOUND" | "FORBIDDEN" | "LOCKED"; message: string }> {
+  const prismaResult = await deletePrismaCampaignForClient(projectId, clientEmail);
+  if (prismaResult) {
+    return prismaResult;
+  }
+
   const store = await readStore();
   const normalized = clientEmail.toLowerCase();
   const index = store.projects.findIndex(

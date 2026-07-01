@@ -2,6 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { CertificationOnboardingFormCard } from "@/components/studioos/certification-onboarding-form-card";
+import { ClientBriefFormCard } from "@/components/studioos/client-brief-form-card";
 import type { MessageDetailPayload } from "@/components/studioos/studio-message-center.types";
 import { Button } from "@/components/ui/button";
 import type { Locale } from "@/lib/i18n";
@@ -84,7 +86,7 @@ export function StudioMessageDetailPanel({
           <p className="mt-3 text-sm leading-7 text-zinc-600">{detail.body}</p>
         </div>
 
-        {detail.projectInfo ? (
+        {detail.type !== "certification_approved" && detail.projectInfo ? (
           <div className="rounded-[18px] border border-zinc-200 bg-zinc-50/70 p-4">
             <p className="text-sm font-semibold text-zinc-900">{t.projectInfo}</p>
             <div className="mt-3 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -129,15 +131,34 @@ export function StudioMessageDetailPanel({
             </div>
           </div>
         ) : null}
+
+        {detail.type === "certification_approved" && detail.fields.length > 0 ? (
+          <CertificationOnboardingFormCard locale={locale} fields={detail.fields} />
+        ) : detail.fields.length > 0 ? (
+          <ClientBriefFormCard
+            locale={locale}
+            fields={detail.fields}
+            formId={detail.formId}
+            projectTitle={detail.projectTitle}
+          />
+        ) : null}
       </div>
 
       <div className="flex flex-col gap-3 border-t border-zinc-100 px-5 py-4 sm:flex-row">
-        <Button asChild className="rounded-xl bg-violet-600 hover:bg-violet-700 sm:flex-1">
-          <Link href={detail.actionHref}>{detail.actionLabel || t.viewProject}</Link>
-        </Button>
-        <Button asChild variant="outline" className="rounded-xl border-zinc-200 sm:flex-1">
-          <Link href={detail.replyHref}>{detail.replyLabel || t.replyBrand}</Link>
-        </Button>
+        {detail.type === "certification_approved" ? (
+          <Button asChild className="rounded-xl bg-violet-600 hover:bg-violet-700 sm:flex-1">
+            <Link href={detail.actionHref}>{detail.actionLabel}</Link>
+          </Button>
+        ) : (
+          <>
+            <Button asChild className="rounded-xl bg-violet-600 hover:bg-violet-700 sm:flex-1">
+              <Link href={detail.actionHref}>{detail.actionLabel || t.viewProject}</Link>
+            </Button>
+            <Button asChild variant="outline" className="rounded-xl border-zinc-200 sm:flex-1">
+              <Link href={detail.replyHref}>{detail.replyLabel || t.replyBrand}</Link>
+            </Button>
+          </>
+        )}
       </div>
     </section>
   );

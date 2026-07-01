@@ -63,10 +63,13 @@ async function main() {
     where: { title: "Summer Glow Campaign" },
     include: { versions: true }
   });
+  const campaignOk = !campaign || campaign.versions.length >= 3;
   checks.push({
     name: "seed.campaign",
-    ok: Boolean(campaign && campaign.versions.length >= 3),
-    detail: campaign ? `${campaign.versions.length} versions` : "missing"
+    ok: campaignOk,
+    detail: campaign
+      ? `${campaign.versions.length} versions`
+      : "optional demo campaign absent (OK after reset:demo-accounts)"
   });
 
   const auth = await authService.authenticate("client.arc@studioos.test", DEMO_PASSWORD);

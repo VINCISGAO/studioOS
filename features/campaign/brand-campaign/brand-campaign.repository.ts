@@ -138,6 +138,14 @@ export class BrandCampaignRepository {
     });
   }
 
+  async softDeleteCampaign(campaignId: string) {
+    this.assertDb();
+    await prisma.campaign.update({
+      where: { id: campaignId },
+      data: { deletedAt: new Date() }
+    });
+  }
+
   async softDeleteAssetsByType(campaignId: string, assetType: AssetType) {
     this.assertDb();
     await prisma.campaignAsset.updateMany({

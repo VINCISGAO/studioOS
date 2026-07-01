@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { useFormStatus } from "react-dom";
 import {
   Bitcoin,
   Check,
@@ -42,6 +42,22 @@ const methodIcons: Record<PayoutMethodType, typeof Smartphone> = {
   crypto: Bitcoin
 };
 
+function SubmitPaymentButton({ label }: { label: string }) {
+  const { pending } = useFormStatus();
+
+  return (
+    <Button
+      type="submit"
+      size="lg"
+      className="h-12 w-full rounded-xl bg-zinc-900 text-sm font-medium hover:bg-zinc-800"
+      disabled={pending}
+    >
+      {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lock className="h-4 w-4" />}
+      {label}
+    </Button>
+  );
+}
+
 export function CreatorDepositPaymentSection({
   locale,
   creatorId,
@@ -57,11 +73,8 @@ export function CreatorDepositPaymentSection({
 }) {
   const t = tCertified(locale);
   const extra = copyExtra[locale];
-  const router = useRouter();
   const [method, setMethod] = useState<PayoutMethodType>("alipay");
-  const [reference, setReference] = useState("");
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
 
   const account = useMemo(() => getPlatformCorporateAccount(method, creatorId, locale), [method, creatorId, locale]);
 
@@ -75,19 +88,6 @@ export function CreatorDepositPaymentSection({
     void navigator.clipboard.writeText(value);
     setCopiedKey(key);
     window.setTimeout(() => setCopiedKey(null), 1500);
-  }
-
-  function handleSubmit() {
-    const formData = new FormData();
-    formData.set("lang", locale);
-    formData.set("payment_method", method);
-    if (reference.trim()) {
-      formData.set("payment_reference", reference.trim());
-    }
-    startTransition(async () => {
-      await submitDepositPaymentAction(formData);
-      router.refresh();
-    });
   }
 
   if (submitted || snapshot.pending_payment) {
@@ -108,7 +108,10 @@ export function CreatorDepositPaymentSection({
         <p className="mt-0.5 text-sm text-zinc-500">{t.secureTransfer}</p>
       </div>
 
-      <div className="space-y-6 p-5 sm:p-6">
+      <form action={submitDepositPaymentAction} className="space-y-6 p-5 sm:p-6">
+        <input type="hidden" name="lang" value={locale} />
+        <input type="hidden" name="payment_method" value={method} />
+
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {DEPOSIT_PAYMENT_METHODS.map((type) => {
             const Icon = methodIcons[type];
@@ -192,25 +195,15 @@ export function CreatorDepositPaymentSection({
           </Label>
           <Input
             id="payment_reference"
-            value={reference}
-            onChange={(event) => setReference(event.target.value)}
+            name="payment_reference"
             placeholder={locale === "zh" ? "转账单号 / 哈希 (选填)" : "Transfer ID / hash (optional)"}
             className="h-11 rounded-xl border-zinc-200 bg-white"
           />
           <p className="text-xs leading-5 text-zinc-500">{t.referenceHint}</p>
         </div>
 
-        <Button
-          type="button"
-          size="lg"
-          className="h-12 w-full rounded-xl bg-zinc-900 text-sm font-medium hover:bg-zinc-800"
-          disabled={isPending}
-          onClick={handleSubmit}
-        >
-          {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lock className="h-4 w-4" />}
-          {t.submit}
-        </Button>
-      </div>
+        <SubmitPaymentButton label={t.submit} />
+      </form>
     </section>
   );
 }

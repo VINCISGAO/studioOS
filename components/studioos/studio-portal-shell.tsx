@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { Suspense } from "react";
+import Link from "next/link";
 import { signOutAction } from "@/app/actions";
 import { PortalMobileNav } from "@/components/studioos/portal-mobile-nav";
 import { StudioNotificationBell } from "@/components/studioos/studio-notification-bell";
@@ -36,6 +36,7 @@ export function StudioPortalShell({
   creator,
   creatorId,
   canUseBusinessFeatures = true,
+  canUseIncomeFeatures = true,
   isVerified = false,
   levelUpSeen = true,
   notifications = [],
@@ -52,6 +53,7 @@ export function StudioPortalShell({
   certificationPaid?: boolean;
   profileComplete?: boolean;
   canUseBusinessFeatures?: boolean;
+  canUseIncomeFeatures?: boolean;
   isVerified?: boolean;
   levelUpSeen?: boolean;
   notifications?: CreatorNotification[];
@@ -109,7 +111,7 @@ export function StudioPortalShell({
           />
 
           <div className="mt-auto space-y-3 border-t border-zinc-100 p-4">
-            {canUseBusinessFeatures ? (
+            {canUseIncomeFeatures ? (
               <Link
                 href={withLocale(creatorPortalRoutes.income, locale)}
                 className="block rounded-xl border border-violet-100 bg-violet-50/70 p-3 transition hover:bg-violet-50"
@@ -119,6 +121,13 @@ export function StudioPortalShell({
                 <p className="mt-1 text-xs font-medium text-violet-600">
                   {locale === "zh" ? "去提现" : "Withdraw"} <ArrowRight className="ml-1 inline h-3.5 w-3.5" />
                 </p>
+                {!canUseBusinessFeatures ? (
+                  <p className="mt-2 text-[11px] leading-4 text-zinc-500">
+                    {locale === "zh"
+                      ? "首单完成后需认证才能继续接单，收益可随时提现。"
+                      : "Certify to accept more orders after your free project — withdrawals stay open."}
+                  </p>
+                ) : null}
               </Link>
             ) : null}
             <div className="rounded-xl border border-zinc-100 bg-zinc-50/80 p-3">
@@ -254,13 +263,15 @@ export function StudioPortalShell({
   }
 
   return (
-    <StudioCertificationOrchestrator
-      locale={locale}
-      creatorId={creatorId}
-      isVerified={isVerified}
-      levelUpSeen={levelUpSeen}
-    >
-      {shellInner}
-    </StudioCertificationOrchestrator>
+    <Suspense fallback={shellInner}>
+      <StudioCertificationOrchestrator
+        locale={locale}
+        creatorId={creatorId}
+        isVerified={isVerified}
+        levelUpSeen={levelUpSeen}
+      >
+        {shellInner}
+      </StudioCertificationOrchestrator>
+    </Suspense>
   );
 }

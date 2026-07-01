@@ -3,7 +3,7 @@ import {
   applyStoredProfileToCreator,
   getStoredCreatorProfile
 } from "@/lib/creator-profile-service";
-import { getCreatorDepositOverlay } from "@/lib/studioos/deposit-service";
+import { getCreatorDepositSnapshot } from "@/lib/studioos/deposit-service";
 import { getCreatorRatingStats } from "@/lib/order-rating-service";
 import { getStoredCreatorSettings } from "@/lib/studioos/creator-settings-service";
 import type { Creator } from "@/lib/types";
@@ -14,24 +14,22 @@ export async function getCreatorById(id: string): Promise<Creator | null> {
     return null;
   }
 
-  const [overlay, profile, ratingStats, settings] = await Promise.all([
-    getCreatorDepositOverlay(id),
+  const [depositSnapshot, profile, ratingStats, settings] = await Promise.all([
+    getCreatorDepositSnapshot(id),
     getStoredCreatorProfile(id),
     getCreatorRatingStats(id),
     getStoredCreatorSettings(id)
   ]);
 
   let creator = applyStoredProfileToCreator(base, profile);
-  const depositPaid = overlay?.deposit_status === "paid";
+  const depositPaid = depositSnapshot.deposit_status === "paid";
 
-  if (overlay) {
-    creator = {
-      ...creator,
-      deposit_status: overlay.deposit_status,
-      deposit_amount: overlay.deposit_amount,
-      status: depositPaid && creator.status === "deposit_required" ? "active" : creator.status
-    };
-  }
+  creator = {
+    ...creator,
+    deposit_status: depositSnapshot.deposit_status,
+    deposit_amount: depositSnapshot.amount_usd,
+    status: depositPaid && creator.status === "deposit_required" ? "active" : creator.status
+  };
 
   if (ratingStats.count > 0) {
     creator = {

@@ -252,13 +252,13 @@ export const brandUserPhaseLabels = {
   en: {
     recruiting: "Recruiting",
     in_production: "In production",
-    review_delivery: "Review & delivery",
+    review_delivery: "Review & payment",
     completed: "Completed"
   },
   zh: {
     recruiting: "招募中",
     in_production: "制作中",
-    review_delivery: "审核交付",
+    review_delivery: "审核支付",
     completed: "已完成"
   }
 } as const;

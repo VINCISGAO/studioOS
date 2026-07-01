@@ -13,7 +13,7 @@ import {
   Users
 } from "lucide-react";
 import { BrandReviewWorkflowPanel } from "@/components/studioos/brand-review-workflow-panel";
-import { BrandProjectMatchTab } from "@/components/studioos/brand-project-match-tab";
+import { BrandProjectMatchTabShell } from "@/components/studioos/brand-project-match-tab-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { creators } from "@/lib/data";
@@ -242,12 +242,12 @@ function TimelineStep({
 
 function MetaChip({ icon: Icon, label, value }: { icon: typeof Calendar; label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-zinc-200/80 bg-zinc-50/50 px-4 py-3">
-      <div className="flex items-center gap-1.5 text-xs font-medium text-zinc-500">
+    <div className="rounded-xl border border-zinc-200/90 bg-white px-4 py-3.5">
+      <div className="flex items-center gap-1.5 text-xs text-zinc-500">
         <Icon className="h-3.5 w-3.5" />
         {label}
       </div>
-      <p className="mt-1 text-sm font-semibold text-zinc-900">{value}</p>
+      <p className="mt-1.5 text-sm font-semibold text-zinc-900">{value}</p>
     </div>
   );
 }
@@ -271,7 +271,8 @@ export function BrandProjectHub({
   reviewComments,
   acceptedInvitations = [],
   projectInvitations = [],
-  brandCommercialStep
+  brandCommercialStep,
+  notificationCount = 0
 }: {
   locale: Locale;
   project: StoredProject;
@@ -282,6 +283,7 @@ export function BrandProjectHub({
   acceptedInvitations?: StoredCreatorInvitation[];
   projectInvitations?: StoredCreatorInvitation[];
   brandCommercialStep: BrandCommercialStep;
+  notificationCount?: number;
 }) {
   const t = copy[locale];
   const status = project.status;
@@ -297,20 +299,20 @@ export function BrandProjectHub({
   const showAside = activeTab !== "match" && (latestDeliverable || studio);
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
-      <section className="overflow-hidden rounded-3xl border border-zinc-200/80 bg-white shadow-sm">
-        <div className="border-b border-zinc-100 bg-gradient-to-br from-zinc-50 to-white p-6 sm:p-8">
+    <div className="mx-auto max-w-6xl space-y-6">
+      <section className="overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-sm">
+        <div className="border-b border-zinc-100 bg-white p-6 sm:p-8">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
-                <Badge variant="secondary" className="font-normal">
+                <Badge variant="secondary" className="rounded-full border-0 bg-zinc-100 font-normal text-zinc-600">
                   {t.projectBadge}
                 </Badge>
                 <Badge
                   variant="outline"
                   className={cn(
-                    "font-normal",
-                    isRecruiting && "border-emerald-200 bg-emerald-50 text-emerald-800",
+                    "rounded-full font-normal",
+                    isRecruiting && "border-emerald-200 bg-emerald-50 text-emerald-700",
                     status === "production" && "border-violet-200 bg-violet-50 text-violet-800",
                     status === "in_review" && "border-emerald-200 bg-emerald-50 text-emerald-800"
                   )}
@@ -318,14 +320,14 @@ export function BrandProjectHub({
                   {brandCommercialPhaseLabel(brandCommercialStep, locale)}
                 </Badge>
               </div>
-              <h1 className="mt-3 text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">
+              <h1 className="mt-3 text-2xl font-semibold tracking-tight text-zinc-900 sm:text-[1.75rem]">
                 {project.title}
               </h1>
               {project.campaign_goal ? (
-                <p className="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-600">{project.campaign_goal}</p>
+                <p className="mt-2 max-w-3xl text-sm leading-relaxed text-zinc-500">{project.campaign_goal}</p>
               ) : null}
             </div>
-            {action ? (
+            {action && !(isRecruiting && activeTab === "match") ? (
               <Button asChild size="lg" className="h-11 shrink-0 rounded-xl px-6">
                 <Link href={action.href}>
                   {action.label}
@@ -357,7 +359,7 @@ export function BrandProjectHub({
                 )}
               >
                 {tab.label[locale]}
-                {active ? <span className="absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-indigo-600" /> : null}
+                {active ? <span className="absolute inset-x-3 bottom-0 h-0.5 rounded-full bg-violet-600" /> : null}
               </Link>
             ) : (
               <span
@@ -372,12 +374,15 @@ export function BrandProjectHub({
         </nav>
 
         {activeTab === "match" ? (
-          <div className="border-t border-zinc-100 p-4 sm:p-6">
-            <BrandProjectMatchTab
+          <div className="border-t border-zinc-100 bg-[#F9FAFB] p-5 sm:p-6">
+            <BrandProjectMatchTabShell
               locale={locale}
               projectId={project.id}
-              invitations={projectInvitations}
-              accepted={acceptedInvitations}
+              projectStatus={status}
+              initialInvitations={projectInvitations}
+              initialAccepted={acceptedInvitations}
+              notificationCount={notificationCount}
+              projectBudgetRange={project.budget_range}
             />
           </div>
         ) : null}

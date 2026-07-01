@@ -6,11 +6,17 @@ import type { BrandProjectRow } from "@/lib/studioos/brand-dashboard";
 const copy = {
   en: {
     projectsTitle: "My ads",
-    projectsHint: "Only draft briefs can be deleted · orders are locked"
+    projectsHint:
+      process.env.NODE_ENV === "development"
+        ? "Dev mode: select rows on the left to batch-delete test projects"
+        : "Only draft briefs can be deleted · orders are locked"
   },
   zh: {
     projectsTitle: "我的广告",
-    projectsHint: "仅草稿可删除 · 正式订单不可删除"
+    projectsHint:
+      process.env.NODE_ENV === "development"
+        ? "开发模式：勾选左侧项目可批量删除测试数据"
+        : "仅草稿可删除 · 正式订单不可删除"
   }
 };
 

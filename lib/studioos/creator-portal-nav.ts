@@ -67,7 +67,8 @@ export const creatorPortalNavItems: CreatorPortalNavItem[] = [
     labelKey: "income",
     icon: Receipt,
     mobileIconKey: "income",
-    requiresBusinessAccess: true
+    /** Always available — creators can withdraw earnings before certifying. */
+    requiresBusinessAccess: false
   },
   {
     href: creatorPortalRoutes.messages,

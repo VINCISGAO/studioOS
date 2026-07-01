@@ -65,6 +65,15 @@ export async function deleteBrandNotificationsAction(formData: FormData) {
 
   const deleted = await deleteBrandNotifications(ids, clientEmail);
   revalidateBrandMessages();
+
+  if (deleted === 0) {
+    return {
+      ok: false as const,
+      deleted: 0,
+      error: lang === "zh" ? "未能删除消息，请刷新后重试" : "Could not delete messages. Refresh and try again."
+    };
+  }
+
   return { ok: true as const, deleted };
 }
 

@@ -187,6 +187,74 @@
     }
   }
 
+  .brand-globe-grid {
+    background-image: radial-gradient(circle, rgba(99, 102, 241, 0.34) 1.2px, transparent 1.2px);
+    background-size: 13px 13px;
+    mask-image: radial-gradient(circle, black 36%, transparent 70%);
+    animation: brand-globe-grid-pulse 3.6s ease-in-out infinite;
+  }
+
+  .brand-globe-spin {
+    animation: brand-globe-spin 20s linear infinite;
+    border-style: dotted;
+  }
+
+  .brand-globe-glow {
+    animation: brand-globe-glow 2.8s ease-in-out infinite;
+  }
+
+  .brand-orbit-spin {
+    animation: brand-orbit-spin 22s linear infinite;
+  }
+
+  .brand-orbit-spin-reverse {
+    animation: brand-orbit-spin 30s linear infinite reverse;
+  }
+
+  .brand-orbit-counter {
+    animation: brand-orbit-spin 22s linear infinite reverse;
+  }
+
+  @keyframes brand-globe-spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes brand-orbit-spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes brand-globe-grid-pulse {
+    0%,
+    100% {
+      opacity: 0.72;
+      transform: scale(0.98);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes brand-globe-glow {
+    0%,
+    100% {
+      opacity: 0.65;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+
   @keyframes marquee {
     from {
       transform: translateX(0);

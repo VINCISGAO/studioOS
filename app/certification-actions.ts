@@ -32,7 +32,7 @@ export async function markCertificationLevelUpSeenAction(formData: FormData) {
   const href =
     next === "benefits"
       ? withLocale(`${creatorPortalRoutes.deposit}?scroll=benefits`, lang)
-      : withLocale(creatorPortalRoutes.home, lang);
+      : withLocale(creatorPortalRoutes.invitations, lang);
   return { ok: true as const, href };
 }
 

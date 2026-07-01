@@ -849,6 +849,9 @@ export async function getDeliverables(orderId: string): Promise<StoredDeliverabl
 
 
 export function canDeleteOrder(_order: Pick<StoredOrder, "status" | "payment_status">) {
+  if (process.env.NODE_ENV === "development") {
+    return true;
+  }
   return false;
 }
 
@@ -895,11 +898,22 @@ export async function deleteOrderForClient(
     return { ok: false, code: "NOT_FOUND", message: "Order not found" };
   }
 
-  return {
-    ok: false,
-    code: "LOCKED",
-    message: "Orders cannot be deleted"
-  };
+  if (process.env.NODE_ENV !== "development") {
+    return {
+      ok: false,
+      code: "LOCKED",
+      message: "Orders cannot be deleted"
+    };
+  }
+
+  const order = store.orders[index];
+  store.orders.splice(index, 1);
+  store.deliverables = store.deliverables.filter((item) => item.order_id !== orderId);
+  dismissDemoOrder(store, orderId);
+  await writeStore(store);
+  readStore.invalidate?.();
+
+  return { ok: true };
 }
 
 export async function clearDeliverableVideoFile(deliverableId: string): Promise<boolean> {

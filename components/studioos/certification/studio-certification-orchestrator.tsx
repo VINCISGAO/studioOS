@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   CertificationExperienceProvider,
   type CertificationExperiencePhase
@@ -24,7 +25,8 @@ export function StudioCertificationOrchestrator({
   levelUpSeen: boolean;
   children: React.ReactNode;
 }) {
-  const storageKey = `studioos:cert-level-up:${creatorId}`;
+  const searchParams = useSearchParams();
+  const celebrateFromPayment = searchParams.get("certified") === "1";
   const [phase, setPhase] = useState<CertificationExperiencePhase>("idle");
   const [unlockedNavKeys, setUnlockedNavKeys] = useState<Set<CreatorPortalNavKey>>(new Set());
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -34,11 +36,7 @@ export function StudioCertificationOrchestrator({
     if (!shouldCelebrate) {
       return;
     }
-    if (typeof window !== "undefined" && sessionStorage.getItem(storageKey) === "1") {
-      return;
-    }
 
-    sessionStorage.setItem(storageKey, "1");
     setPhase("dim");
     const glowTimer = window.setTimeout(() => setPhase("glow"), 350);
     const modalTimer = window.setTimeout(() => {
@@ -50,7 +48,7 @@ export function StudioCertificationOrchestrator({
       window.clearTimeout(glowTimer);
       window.clearTimeout(modalTimer);
     };
-  }, [shouldCelebrate, storageKey]);
+  }, [shouldCelebrate, celebrateFromPayment]);
 
   function handleUnlockStep(step: number) {
     setPhase("unlocking");
@@ -73,8 +71,15 @@ export function StudioCertificationOrchestrator({
     [phase, shouldCelebrate, unlockedNavKeys]
   );
 
+  function handleDismiss() {
+    setDialogOpen(false);
+    setPhase("complete");
+  }
+
   const showOverlay =
-    shouldCelebrate && (phase === "dim" || phase === "glow" || phase === "modal" || phase === "unlocking");
+    shouldCelebrate &&
+    !dialogOpen &&
+    (phase === "dim" || phase === "glow" || phase === "unlocking");
 
   return (
     <CertificationExperienceProvider value={contextValue}>
@@ -84,7 +89,7 @@ export function StudioCertificationOrchestrator({
             "pointer-events-none fixed inset-0 z-[60] transition-all duration-500",
             phase === "dim" && "bg-black/20",
             phase === "glow" && "bg-black/35",
-            (phase === "modal" || phase === "unlocking") && "bg-black/45"
+            phase === "unlocking" && "bg-black/45"
           )}
         />
       ) : null}
@@ -93,7 +98,12 @@ export function StudioCertificationOrchestrator({
       ) : null}
       {children}
       {shouldCelebrate ? (
-        <CertificationLevelUpDialog locale={locale} open={dialogOpen} onUnlockStep={handleUnlockStep} />
+        <CertificationLevelUpDialog
+          locale={locale}
+          open={dialogOpen}
+          onUnlockStep={handleUnlockStep}
+          onDismiss={handleDismiss}
+        />
       ) : null}
     </CertificationExperienceProvider>
   );

@@ -32,6 +32,7 @@ function notificationToCreatorStep(
 ): CreatorCommercialStep {
   if (notificationType === "not_selected") return "waiting_brand_selection";
   if (notificationType === "invitation_match") return "matching_order";
+  if (notificationType === "certification_approved") return "matching_order";
   if (notificationType === "creator_selected") return "selected";
   if (notificationType === "project_funded") return "in_production";
   if (notificationType === "review_comment_added") return "pending_review";

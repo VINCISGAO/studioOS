@@ -62,9 +62,47 @@ function isActiveDepositPayment(status: DepositPayment["status"]) {
   return status === "pending" || status === "under_review";
 }
 
+function applyDepositConfirmation(store: DepositStore, payment: DepositPayment) {
+  payment.status = "confirmed";
+  payment.confirmed_at = new Date().toISOString();
+  const overlay = store.creator_overlays[payment.creator_id];
+  if (overlay) {
+    overlay.deposit_status = "paid";
+    overlay.deposit_amount = payment.amount_usd;
+    overlay.paid_at = payment.confirmed_at;
+  } else {
+    store.creator_overlays[payment.creator_id] = {
+      deposit_status: "paid",
+      deposit_amount: payment.amount_usd,
+      paid_at: payment.confirmed_at
+    };
+  }
+  return { creatorId: payment.creator_id, paymentId: payment.id };
+}
+
+async function runPostDepositConfirmationSideEffects(
+  items: Array<{ creatorId: string; paymentId: string }>
+) {
+  if (!items.length) {
+    return;
+  }
+
+  const { ensureCertificationFormAndMessage } = await import(
+    "@/lib/studioos/certification-form-notify"
+  );
+
+  for (const item of items) {
+    await ensureCertificationFormAndMessage({
+      creatorId: item.creatorId,
+      depositPaymentId: item.paymentId
+    }).catch(() => undefined);
+  }
+}
+
 async function advanceDemoDepositPayments(store: DepositStore) {
   const now = Date.now();
   let changed = false;
+  const confirmedCreatorIds: Array<{ creatorId: string; paymentId: string }> = [];
 
   for (const payment of store.payments) {
     const ageMs = now - new Date(payment.created_at).getTime();
@@ -74,21 +112,8 @@ async function advanceDemoDepositPayments(store: DepositStore) {
       changed = true;
     }
 
-    if (payment.status === "under_review" && ageMs > 15_000) {
-      payment.status = "confirmed";
-      payment.confirmed_at = new Date().toISOString();
-      const overlay = store.creator_overlays[payment.creator_id];
-      if (overlay) {
-        overlay.deposit_status = "paid";
-        overlay.deposit_amount = payment.amount_usd;
-        overlay.paid_at = payment.confirmed_at;
-      } else {
-        store.creator_overlays[payment.creator_id] = {
-          deposit_status: "paid",
-          deposit_amount: payment.amount_usd,
-          paid_at: payment.confirmed_at
-        };
-      }
+    if (payment.status === "under_review" && ageMs > 8_000) {
+      confirmedCreatorIds.push(applyDepositConfirmation(store, payment));
       changed = true;
     }
   }
@@ -96,6 +121,8 @@ async function advanceDemoDepositPayments(store: DepositStore) {
   if (changed) {
     await writeStore(store);
   }
+
+  await runPostDepositConfirmationSideEffects(confirmedCreatorIds);
 }
 
 export async function getCreatorDepositOverlay(creatorId: string): Promise<CreatorDepositOverlay | null> {
@@ -147,6 +174,18 @@ export async function getCreatorDepositSnapshot(creatorId: string): Promise<Crea
   const payments = store.payments
     .filter((item) => item.creator_id === creatorId)
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+  const latestConfirmed = payments.find((item) => item.status === "confirmed");
+  if (latestConfirmed && overlay.deposit_status !== "paid") {
+    overlay.deposit_status = "paid";
+    overlay.deposit_amount = latestConfirmed.amount_usd;
+    overlay.paid_at = latestConfirmed.confirmed_at ?? latestConfirmed.created_at;
+    store.creator_overlays[creatorId] = overlay;
+    await writeStore(store);
+    await runPostDepositConfirmationSideEffects([
+      { creatorId, paymentId: latestConfirmed.id }
+    ]);
+  }
 
   const pending_payment = payments.find((item) => isActiveDepositPayment(item.status)) ?? null;
 
@@ -201,6 +240,8 @@ export async function submitDepositPayment(
   };
 
   store.payments.unshift(payment);
+  const confirmed = applyDepositConfirmation(store, payment);
   await writeStore(store);
+  await runPostDepositConfirmationSideEffects([confirmed]);
   return { ok: true, payment };
 }

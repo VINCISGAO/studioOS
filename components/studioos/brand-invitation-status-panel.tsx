@@ -1,10 +1,9 @@
 import Link from "next/link";
-import { Bell, Clock, TimerOff, UserCheck, UserX } from "lucide-react";
+import { ArrowRight, Bell, Clock, TimerOff, UserCheck, UserX } from "lucide-react";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
 import type { StoredCreatorInvitation } from "@/lib/studioos/creator-invitation-types";
-import { portalChrome } from "@/lib/studioos/product-theme";
 import { cn } from "@/lib/utils";
 
 const copy = {
@@ -16,7 +15,8 @@ const copy = {
     accepted: "Accepted",
     declined: "Declined",
     expired: "Closed",
-    viewMessages: "View notifications"
+    viewMessages: "View notifications",
+    startSelecting: "Creators are ready — start selecting"
   },
   zh: {
     title: "意向邀请已发出",
@@ -26,16 +26,19 @@ const copy = {
     accepted: "已接受",
     declined: "已拒绝",
     expired: "已失效",
-    viewMessages: "查看通知"
+    viewMessages: "查看通知",
+    startSelecting: "开始选择 Creator"
   }
 };
 
 export function BrandInvitationStatusPanel({
   locale,
-  invitations
+  invitations,
+  notificationCount = 0
 }: {
   locale: Locale;
   invitations: StoredCreatorInvitation[];
+  notificationCount?: number;
 }) {
   const t = copy[locale];
   const pending = invitations.filter((item) => item.status === "pending").length;
@@ -46,40 +49,57 @@ export function BrandInvitationStatusPanel({
   ).length;
 
   const stats = [
-    { icon: Clock, label: t.pending, value: pending, tone: "text-amber-700 bg-amber-50" },
-    { icon: UserCheck, label: t.accepted, value: accepted, tone: "text-emerald-700 bg-emerald-50" },
-    { icon: UserX, label: t.declined, value: declined, tone: "text-zinc-600 bg-zinc-100" },
-    { icon: TimerOff, label: t.expired, value: expired, tone: "text-zinc-500 bg-zinc-100" }
+    { icon: Clock, label: t.pending, value: pending, tone: "bg-amber-50 text-amber-600" },
+    { icon: UserCheck, label: t.accepted, value: accepted, tone: "bg-emerald-50 text-emerald-600" },
+    { icon: UserX, label: t.declined, value: declined, tone: "bg-violet-50 text-violet-600" },
+    { icon: TimerOff, label: t.expired, value: expired, tone: "bg-zinc-100 text-zinc-500" }
   ];
 
   return (
-    <div className={cn(portalChrome.card, "flex h-full flex-col p-5 sm:p-6")}>
-      <h2 className="text-lg font-semibold text-zinc-950">{t.title}</h2>
-      <p className={cn("mt-2 max-w-2xl", portalChrome.body)}>{t.subtitle}</p>
+    <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-sm">
+      <div className="px-5 py-5 sm:px-6 sm:py-6">
+        <h2 className="text-base font-semibold text-zinc-950 sm:text-lg">{t.title}</h2>
+        <p className="mt-2 text-sm leading-relaxed text-zinc-500">{t.subtitle}</p>
 
-      <div className="mt-5 grid flex-1 gap-3 sm:grid-cols-2">
-        {stats.map((item) => {
-          const Icon = item.icon;
-          return (
-            <div key={item.label} className="rounded-xl border border-zinc-200/80 bg-zinc-50/40 px-4 py-3">
-              <div className="flex items-center gap-2 text-xs font-medium text-zinc-500">
-                <span className={cn("flex h-7 w-7 items-center justify-center rounded-lg", item.tone)}>
-                  <Icon className="h-3.5 w-3.5" />
+        {accepted > 0 ? (
+          <div className="mt-4 rounded-xl border border-emerald-200/80 bg-emerald-50/50 px-4 py-3">
+            <p className="text-sm font-medium text-emerald-800">{t.startSelecting}</p>
+          </div>
+        ) : null}
+
+        <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {stats.map((item) => {
+            const Icon = item.icon;
+            return (
+              <div
+                key={item.label}
+                className="rounded-xl border border-zinc-200/80 bg-zinc-50/30 px-4 py-4"
+              >
+                <span className={cn("inline-flex h-8 w-8 items-center justify-center rounded-lg", item.tone)}>
+                  <Icon className="h-4 w-4" />
                 </span>
-                {item.label}
+                <p className="mt-3 text-xs text-zinc-500">{item.label}</p>
+                <p className="mt-1 text-2xl font-semibold tabular-nums text-zinc-950">{item.value}</p>
               </div>
-              <p className="mt-2 text-2xl font-semibold tabular-nums text-zinc-900">{item.value}</p>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
 
       <Link
         href={withLocale(`${brandPortalRoutes.messages}?tab=project`, locale)}
-        className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-zinc-900 hover:text-indigo-700"
+        className="mt-auto flex items-center justify-between border-t border-zinc-200/80 bg-zinc-50/50 px-5 py-4 text-sm font-medium text-zinc-800 transition hover:bg-zinc-50 sm:px-6"
       >
-        <Bell className="h-4 w-4" />
-        {t.viewMessages}
+        <span className="inline-flex items-center gap-2">
+          <Bell className="h-4 w-4 text-zinc-500" />
+          {t.viewMessages}
+          {notificationCount > 0 ? (
+            <span className="inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-violet-600 px-1.5 py-0.5 text-[11px] font-semibold text-white">
+              {notificationCount}
+            </span>
+          ) : null}
+        </span>
+        <ArrowRight className="h-4 w-4 text-zinc-400" />
       </Link>
     </div>
   );

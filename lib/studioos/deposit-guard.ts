@@ -26,9 +26,14 @@ export function resolveCreatorAccess(input: {
   return resolveCreatorAccessSnapshot(input);
 }
 
-/** completedOrders === 0 || isVerified */
+/** completedOrders === 0 || isVerified — first order free, then certify to continue. */
 export function canUseBusinessFeatures(completedOrders: number, isVerified: boolean): boolean {
   return completedOrders === 0 || isVerified;
+}
+
+/** Income & withdrawal stay available after the free order, even before certification. */
+export function canUseIncomeFeatures(_completedOrders: number, _isVerified: boolean): boolean {
+  return true;
 }
 
 /** completedOrders >= 1 && !isVerified */
@@ -47,6 +52,7 @@ export function getCreatorAccessState(
     completedOrders: access.completedOrders,
     isVerified: access.isVerified,
     canUseBusinessFeatures: canUseBusinessFeatures(access.completedOrders, access.isVerified),
+    canUseIncomeFeatures: canUseIncomeFeatures(access.completedOrders, access.isVerified),
     isLockedAfterFirstOrder: isLockedAfterFirstOrder(access.completedOrders, access.isVerified)
   };
 }

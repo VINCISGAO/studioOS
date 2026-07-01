@@ -1,12 +1,15 @@
 import type { CreatorNotification, CreatorNotificationType, NotificationStore } from "@/lib/notification-types";
-import { createSerializedStoreReader, writeJsonFileAtomic } from "@/lib/json-file-store";
-import { readDataJson, dataStorePath } from "@/lib/serverless-store";
+import { createSerializedStoreReader } from "@/lib/json-file-store";
+import { getCreatorIdForDemoEmail } from "@/lib/creator-session";
+import { creators } from "@/lib/data";
+import { dataStorePath, invalidateDataJson, readDataJson, writeDataJson } from "@/lib/serverless-store";
 import { getProject } from "@/lib/project-service";
 import { getConfirmedBriefText } from "@/lib/studioos/confirmed-brief";
 import { buildProjectRequirementsText } from "@/lib/studioos/project-brief-format";
 import type { Locale } from "@/lib/i18n";
 
 const STORE_PATH = dataStorePath("notification-store.json");
+const CERTIFICATION_FORM_PROJECT_KEY = "certification_onboarding";
 
 /** Fixed demo seed IDs — must be dismissed on delete or they respawn from ensureDemoNotifications. */
 export const DEMO_NOTIFICATION_IDS = [
@@ -32,23 +35,59 @@ function isDemoNotificationDismissed(store: NotificationStore, id: string) {
   return store.dismissed_demo_ids?.includes(id) ?? false;
 }
 
+function cloneStore(store: NotificationStore): NotificationStore {
+  return {
+    dismissed_demo_ids: [...(store.dismissed_demo_ids ?? [])],
+    notifications: store.notifications.map((item) => ({ ...item }))
+  };
+}
+
+/** Legacy demo ids and email aliases can diverge from session-resolved creator ids. */
+function resolveCreatorOwnerIds(creatorId: string): Set<string> {
+  const ownerIds = new Set<string>([creatorId]);
+  const creator = creators.find((item) => item.id === creatorId);
+  if (creator?.email) {
+    const fromDemo = getCreatorIdForDemoEmail(creator.email);
+    if (fromDemo) {
+      ownerIds.add(fromDemo);
+    }
+  }
+  for (const item of creators) {
+    if (item.email && getCreatorIdForDemoEmail(item.email) === creatorId) {
+      ownerIds.add(item.id);
+    }
+  }
+  return ownerIds;
+}
+
+function notificationOwnedByCreator(notification: CreatorNotification, creatorId: string) {
+  return resolveCreatorOwnerIds(creatorId).has(notification.creator_id);
+}
+
+function normalizeStore(raw: NotificationStore): NotificationStore {
+  const store = cloneStore(raw);
+  store.dismissed_demo_ids ??= [];
+  if (process.env.STUDIOOS_SEED_DEMO_NOTIFICATIONS === "1") {
+    return ensureDemoNotifications(store);
+  }
+  store.notifications = store.notifications.filter(
+    (item) => !isDemoNotificationDismissed(store, item.id)
+  );
+  return store;
+}
+
 async function readStoreInner(): Promise<NotificationStore> {
   const parsed = await readDataJson<NotificationStore>(STORE_PATH, () => emptyStore());
-  parsed.dismissed_demo_ids ??= [];
+  const normalized = normalizeStore(parsed);
   if (process.env.STUDIOOS_SEED_DEMO_NOTIFICATIONS === "1") {
-    const next = ensureDemoNotifications(parsed);
     if (
-      JSON.stringify(next.notifications) !== JSON.stringify(parsed.notifications) ||
-      JSON.stringify(next.dismissed_demo_ids) !== JSON.stringify(parsed.dismissed_demo_ids)
+      JSON.stringify(normalized.notifications) !== JSON.stringify(parsed.notifications) ||
+      JSON.stringify(normalized.dismissed_demo_ids) !== JSON.stringify(parsed.dismissed_demo_ids ?? [])
     ) {
-      await writeStore(next);
+      await writeStore(normalized);
     }
-    return next;
   }
-  parsed.notifications = parsed.notifications.filter(
-    (item) => !isDemoNotificationDismissed(parsed, item.id)
-  );
-  return parsed;
+  return normalized;
 }
 
 function ensureDemoNotifications(store: NotificationStore): NotificationStore {
@@ -205,8 +244,16 @@ function ensureDemoNotifications(store: NotificationStore): NotificationStore {
 
 const readStore = createSerializedStoreReader(readStoreInner);
 
+/** Fresh disk read before writes — avoids stale in-memory JSON across server action workers. */
+async function readStoreForMutation(): Promise<NotificationStore> {
+  invalidateDataJson(STORE_PATH);
+  readStore.invalidate?.();
+  const parsed = await readDataJson<NotificationStore>(STORE_PATH, () => emptyStore());
+  return normalizeStore(parsed);
+}
+
 async function writeStore(store: NotificationStore) {
-  await writeJsonFileAtomic(STORE_PATH, store);
+  await writeDataJson(STORE_PATH, store);
   readStore.invalidate?.();
 }
 
@@ -253,8 +300,9 @@ export async function listNotificationsForCreator(
   locale: Locale = "zh"
 ): Promise<CreatorNotification[]> {
   const store = await readStore();
+  const ownerIds = resolveCreatorOwnerIds(creatorId);
   const items = store.notifications
-    .filter((item) => item.creator_id === creatorId)
+    .filter((item) => ownerIds.has(item.creator_id))
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
   return Promise.all(items.map((item) => enrichNotificationRequirements(item, locale)));
@@ -276,8 +324,9 @@ export async function hasNotification(
   type: CreatorNotificationType
 ): Promise<boolean> {
   const store = await readStore();
+  const ownerIds = resolveCreatorOwnerIds(creatorId);
   return store.notifications.some(
-    (item) => item.creator_id === creatorId && item.order_id === orderId && item.type === type
+    (item) => ownerIds.has(item.creator_id) && item.order_id === orderId && item.type === type
   );
 }
 
@@ -287,9 +336,10 @@ export async function findNotification(
   type: CreatorNotificationType
 ): Promise<CreatorNotification | null> {
   const store = await readStore();
+  const ownerIds = resolveCreatorOwnerIds(creatorId);
   return (
     store.notifications.find(
-      (item) => item.creator_id === creatorId && item.order_id === orderId && item.type === type
+      (item) => ownerIds.has(item.creator_id) && item.order_id === orderId && item.type === type
     ) ?? null
   );
 }
@@ -300,9 +350,10 @@ export async function findNotificationByProject(
   type: CreatorNotificationType
 ): Promise<CreatorNotification | null> {
   const store = await readStore();
+  const ownerIds = resolveCreatorOwnerIds(creatorId);
   return (
     store.notifications.find(
-      (item) => item.creator_id === creatorId && item.project_id === projectId && item.type === type
+      (item) => ownerIds.has(item.creator_id) && item.project_id === projectId && item.type === type
     ) ?? null
   );
 }
@@ -316,7 +367,7 @@ export async function patchNotificationRequirements(
     return getNotification(id);
   }
 
-  const store = await readStore();
+  const store = await readStoreForMutation();
   const item = store.notifications.find((n) => n.id === id);
   if (!item) {
     return null;
@@ -339,7 +390,7 @@ export async function createCreatorNotification(input: {
   requirements_text: string;
   email_sent_at?: string | null;
 }): Promise<CreatorNotification> {
-  const store = await readStore();
+  const store = await readStoreForMutation();
   const notification: CreatorNotification = {
     id: createId("ntf"),
     creator_id: input.creator_id,
@@ -361,8 +412,8 @@ export async function createCreatorNotification(input: {
 }
 
 export async function markNotificationRead(id: string, creatorId: string): Promise<boolean> {
-  const store = await readStore();
-  const item = store.notifications.find((n) => n.id === id && n.creator_id === creatorId);
+  const store = await readStoreForMutation();
+  const item = store.notifications.find((n) => n.id === id && notificationOwnedByCreator(n, creatorId));
   if (!item) {
     return false;
   }
@@ -372,11 +423,12 @@ export async function markNotificationRead(id: string, creatorId: string): Promi
 }
 
 export async function markAllNotificationsRead(creatorId: string): Promise<number> {
-  const store = await readStore();
+  const store = await readStoreForMutation();
+  const ownerIds = resolveCreatorOwnerIds(creatorId);
   const now = new Date().toISOString();
   let count = 0;
   for (const item of store.notifications) {
-    if (item.creator_id === creatorId && !item.read_at) {
+    if (ownerIds.has(item.creator_id) && !item.read_at) {
       item.read_at = now;
       count += 1;
     }
@@ -392,13 +444,14 @@ export async function markNotificationsRead(ids: string[], creatorId: string): P
     return 0;
   }
 
-  const store = await readStore();
+  const store = await readStoreForMutation();
+  const ownerIds = resolveCreatorOwnerIds(creatorId);
   const now = new Date().toISOString();
   const idSet = new Set(ids);
   let count = 0;
 
   for (const item of store.notifications) {
-    if (item.creator_id === creatorId && idSet.has(item.id) && !item.read_at) {
+    if (ownerIds.has(item.creator_id) && idSet.has(item.id) && !item.read_at) {
       item.read_at = now;
       count += 1;
     }
@@ -412,14 +465,17 @@ export async function markNotificationsRead(ids: string[], creatorId: string): P
 }
 
 export async function deleteNotification(id: string, creatorId: string): Promise<boolean> {
-  const store = await readStore();
+  const store = await readStoreForMutation();
+  const dismissedBefore = store.dismissed_demo_ids?.length ?? 0;
   dismissDemoNotificationIds(store, [id]);
+  const dismissedAdded = (store.dismissed_demo_ids?.length ?? 0) > dismissedBefore;
   const index = store.notifications.findIndex(
-    (item) => item.id === id && item.creator_id === creatorId
+    (item) => item.id === id && notificationOwnedByCreator(item, creatorId)
   );
   if (index === -1) {
-    if (DEMO_NOTIFICATION_IDS.includes(id as (typeof DEMO_NOTIFICATION_IDS)[number])) {
+    if (dismissedAdded) {
       await writeStore(store);
+      return true;
     }
     return false;
   }
@@ -432,30 +488,49 @@ export async function deleteNotifications(ids: string[], creatorId: string): Pro
   if (!ids.length) {
     return 0;
   }
-  const store = await readStore();
+  const store = await readStoreForMutation();
+  const dismissedBefore = store.dismissed_demo_ids?.length ?? 0;
   dismissDemoNotificationIds(store, ids);
+  const dismissedAdded = (store.dismissed_demo_ids?.length ?? 0) > dismissedBefore;
   const idSet = new Set(ids);
   const before = store.notifications.length;
+  const removed = store.notifications.filter(
+    (item) => idSet.has(item.id) && notificationOwnedByCreator(item, creatorId)
+  );
   store.notifications = store.notifications.filter(
-    (item) => !(item.creator_id === creatorId && idSet.has(item.id))
+    (item) => !(idSet.has(item.id) && notificationOwnedByCreator(item, creatorId))
   );
   const deleted = before - store.notifications.length;
-  await writeStore(store);
-  return deleted;
+
+  if (deleted > 0 || dismissedAdded) {
+    await writeStore(store);
+    const { dismissCertificationMessage } = await import("@/lib/studioos/certification-form-service");
+    for (const item of removed) {
+      if (
+        item.type === "certification_approved" &&
+        item.project_id === CERTIFICATION_FORM_PROJECT_KEY
+      ) {
+        await dismissCertificationMessage(creatorId, item.id).catch(() => undefined);
+      }
+    }
+  }
+
+  return deleted > 0 ? deleted : dismissedAdded ? ids.length : 0;
 }
 
 export async function deleteAllNotificationsForCreator(creatorId: string): Promise<number> {
-  const store = await readStore();
+  const store = await readStoreForMutation();
   dismissDemoNotificationIds(store, DEMO_NOTIFICATION_IDS);
+  const ownerIds = resolveCreatorOwnerIds(creatorId);
   const before = store.notifications.length;
-  store.notifications = store.notifications.filter((item) => item.creator_id !== creatorId);
+  store.notifications = store.notifications.filter((item) => !ownerIds.has(item.creator_id));
   const deleted = before - store.notifications.length;
   await writeStore(store);
   return deleted;
 }
 
 export async function markNotificationEmailSent(id: string): Promise<void> {
-  const store = await readStore();
+  const store = await readStoreForMutation();
   const item = store.notifications.find((n) => n.id === id);
   if (!item) {
     return;

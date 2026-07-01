@@ -115,8 +115,8 @@ export function BrandCampaignStep2Review({
           </Button>
           <Button
             type="button"
-            className="h-11 rounded-xl bg-violet-600 px-8 hover:bg-violet-700"
-            disabled={isPending}
+            className="h-11 rounded-xl bg-violet-600 px-8 hover:bg-violet-700 disabled:opacity-50"
+            disabled={isPending || !certified}
             onClick={handleConfirm}
           >
             {isPending ? (

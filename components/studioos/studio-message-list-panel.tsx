@@ -7,10 +7,14 @@ import { ChevronLeft, ChevronRight, Filter, Shield, Trash2 } from "lucide-react"
 
 type FilterTab = "all" | "unread" | "read";
 
+const checkboxClass =
+  "h-4 w-4 shrink-0 rounded border-zinc-300 text-violet-600 focus:ring-violet-500/20";
+
 const copy = {
   zh: {
     selectAll: "全选",
     markRead: "标记已读",
+    deleteSelected: "删除选中",
     all: "全部",
     unread: "未读",
     read: "已读",
@@ -21,6 +25,7 @@ const copy = {
   en: {
     selectAll: "Select all",
     markRead: "Mark read",
+    deleteSelected: "Delete selected",
     all: "All",
     unread: "Unread",
     read: "Read",
@@ -43,6 +48,7 @@ export function StudioMessageListPanel({
   isPending,
   onTabChange,
   onSelect,
+  onToggleSelect,
   onToggleSelectAll,
   onMarkRead,
   onDeleteSelected,
@@ -60,6 +66,7 @@ export function StudioMessageListPanel({
   isPending: boolean;
   onTabChange: (tab: FilterTab) => void;
   onSelect: (item: MessageListItem) => void;
+  onToggleSelect: (id: string) => void;
   onToggleSelectAll: () => void;
   onMarkRead: () => void;
   onDeleteSelected: () => void;
@@ -74,7 +81,7 @@ export function StudioMessageListPanel({
         <label className="inline-flex items-center gap-2 text-sm text-zinc-600">
           <input
             type="checkbox"
-            className="h-4 w-4 rounded border-zinc-300"
+            className={checkboxClass}
             checked={allVisibleSelected}
             disabled={!items.length || isPending}
             onChange={onToggleSelectAll}
@@ -94,10 +101,10 @@ export function StudioMessageListPanel({
             type="button"
             disabled={isPending || !selectedIds.length}
             onClick={onDeleteSelected}
-            className="flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-200 text-zinc-500 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40"
-            aria-label={locale === "zh" ? "删除" : "Delete"}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-1.5 text-sm text-zinc-600 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40"
           >
             <Trash2 className="h-4 w-4" />
+            {t.deleteSelected}
           </button>
         </div>
       </div>
@@ -144,15 +151,31 @@ export function StudioMessageListPanel({
             const active = item.id === selectedId;
             const checked = selectedIds.includes(item.id);
             return (
-              <li key={item.id}>
+              <li
+                key={item.id}
+                className={cn(
+                  "flex gap-3 px-4 py-4 transition",
+                  active || checked ? "bg-zinc-50" : "hover:bg-zinc-50/70"
+                )}
+              >
+                <label
+                  className="flex shrink-0 items-start pt-4"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <input
+                    type="checkbox"
+                    className={checkboxClass}
+                    checked={checked}
+                    disabled={isPending}
+                    onChange={() => onToggleSelect(item.id)}
+                    onClick={(event) => event.stopPropagation()}
+                  />
+                </label>
                 <button
                   type="button"
                   disabled={isPending}
                   onClick={() => onSelect(item)}
-                  className={cn(
-                    "flex w-full gap-3 px-4 py-4 text-left transition",
-                    active || checked ? "bg-zinc-50" : "hover:bg-zinc-50/70"
-                  )}
+                  className="flex min-w-0 flex-1 gap-3 text-left"
                 >
                   {!item.readAt ? (
                     <span className="mt-4 h-2 w-2 shrink-0 rounded-full bg-blue-600" />

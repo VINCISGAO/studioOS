@@ -10,18 +10,12 @@ import { motion, useScroll, useTransform } from "framer-motion";
 
 export function CinematicNav({
   locale,
-  isLoggedIn = false,
-  portalHref,
-  portalLabel
+  workspaceCta
 }: {
   locale: Locale;
-  isLoggedIn?: boolean;
-  portalHref?: string;
-  portalLabel?: string;
+  workspaceCta?: { href: string; label: string } | null;
 }) {
   const t = cinematicText("nav", locale);
-  const portalCta =
-    portalLabel ?? (locale === "zh" ? "进入工作台" : "Open workspace");
   const { scrollY } = useScroll();
   const bg = useTransform(scrollY, [0, 120], ["rgba(0,0,0,0)", "rgba(0,0,0,0.82)"]);
   const border = useTransform(scrollY, [0, 120], ["rgba(255,255,255,0)", "rgba(255,255,255,0.06)"]);
@@ -59,12 +53,12 @@ export function CinematicNav({
 
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
           <LanguageSwitcher locale={locale} tone="dark" />
-          {isLoggedIn && portalHref ? (
+          {workspaceCta ? (
             <Link
-              href={portalHref}
+              href={workspaceCta.href}
               className="inline-flex h-9 items-center rounded-md border border-white/25 bg-white px-3 text-sm font-medium text-black transition hover:bg-zinc-100 sm:px-4"
             >
-              {portalCta}
+              {workspaceCta.label}
             </Link>
           ) : (
             <Link

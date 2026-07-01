@@ -7,6 +7,8 @@ import { CreatorDepositHero } from "@/components/studioos/creator-deposit-hero";
 import { CreatorDepositPaymentSection } from "@/components/studioos/creator-deposit-payment-section";
 import { CreatorDepositSidebar } from "@/components/studioos/creator-deposit-sidebar";
 import { tCertified } from "@/lib/studioos/deposit-copy";
+import { tCertificationExperience } from "@/lib/studioos/certification-experience-copy";
+import { CertificationBenefitCard } from "@/components/studioos/certification/certified-partner-badge";
 import type { CreatorDepositSnapshot } from "@/lib/studioos/deposit-types";
 import { creatorPortalRoutes } from "@/lib/studioos/creator-portal-routes";
 import { formatCurrency } from "@/lib/utils";
@@ -25,12 +27,12 @@ type Props = {
 
 const requiredCopy = {
   en: {
-    title: "Your free trial has ended",
-    body: "Complete professional certification to continue receiving new ad projects."
+    title: "Your free order is complete",
+    body: "Become a certified service provider to accept new projects. Order management, invitations, and review are locked until you certify — income and withdrawals stay available."
   },
   zh: {
-    title: "你的免费体验已结束",
-    body: "完成专业认证后，即可继续接收新的广告项目。"
+    title: "你的免费首单已完成",
+    body: "成为认证服务商后可继续接新单。订单管理、审片、消息等功能已锁定，但收益管理与提现仍可正常使用。"
   }
 };
 
@@ -48,6 +50,7 @@ export function CreatorCertificationHub({
   const t = tCertified(locale);
 
   if (mode === "certified" || snapshot.deposit_status === "paid") {
+    const experience = tCertificationExperience(locale);
     return (
       <div className="space-y-6">
         <section className="relative overflow-hidden rounded-3xl border border-emerald-100 bg-[linear-gradient(135deg,#ecfdf5_0%,#ffffff_100%)] p-6 sm:p-8">
@@ -69,6 +72,11 @@ export function CreatorCertificationHub({
                   ? new Date(snapshot.paid_at).toLocaleDateString(locale === "zh" ? "zh-CN" : "en-US")
                   : "—"}
               </p>
+              <Button asChild variant="outline" className="mt-4 h-10 rounded-xl border-emerald-200 bg-white">
+                <Link href={withLocale("/studio/messages", locale)}>
+                  {locale === "zh" ? "查看入驻表单消息" : "View onboarding message"}
+                </Link>
+              </Button>
             </div>
           </div>
         </section>
@@ -81,13 +89,24 @@ export function CreatorCertificationHub({
                 <p className="mt-1.5 text-sm leading-6 text-zinc-500">{t.setupProfileBody}</p>
               </div>
               <Button asChild className="h-10 shrink-0 rounded-xl px-5">
-                <Link href={withLocale("/studio/profile?onboarding=1", locale)}>{t.setupProfileCta}</Link>
+                <Link href={withLocale("/studio/works?onboarding=1", locale)}>{t.setupProfileCta}</Link>
               </Button>
             </div>
           </section>
         ) : null}
 
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
+          <section className="overflow-hidden rounded-2xl border border-violet-200/80 bg-white shadow-sm">
+            <div className="border-b border-violet-100 bg-violet-50/60 px-5 py-4">
+              <h2 className="text-base font-semibold text-zinc-950">{experience.modalTitle}</h2>
+              <p className="mt-1 text-sm text-zinc-600">{experience.modalSubtitle}</p>
+            </div>
+            <div className="grid gap-2.5 p-5">
+              {experience.benefits.map((benefit) => (
+                <CertificationBenefitCard key={benefit.title} title={benefit.title} body={benefit.body} />
+              ))}
+            </div>
+          </section>
           <CreatorDepositSidebar locale={locale} />
         </div>
       </div>

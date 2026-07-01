@@ -8,6 +8,7 @@ import { listNotificationsForCreator } from "@/lib/notification-service";
 import { getOrder } from "@/lib/order-service";
 import { getProject } from "@/lib/project-service";
 import { resolveCreatorNotificationAction } from "@/lib/studioos/commercial-notification-routes";
+import { getCertificationFormForMessage } from "@/lib/studioos/certification-form-service";
 import { getConfirmedBriefFields } from "@/lib/studioos/confirmed-brief";
 import {
   buildMessageNextStep,
@@ -23,7 +24,10 @@ import {
   senderInitials
 } from "@/lib/studioos/creator-messages-ui";
 import { buildMessageProgressSteps } from "@/lib/studioos/message-order-progress";
+import { creatorPortalRoutes } from "@/lib/studioos/creator-portal-routes";
 import type { Locale } from "@/lib/i18n";
+
+const CERTIFICATION_MESSAGE_PROJECT_KEY = "certification_onboarding";
 
 const PROJECT_THUMBNAILS: Record<string, string> = {
   ntf_demo_nike_work_selected:
@@ -49,14 +53,25 @@ async function buildMessageDetail(
   creatorName: string,
   locale: Locale
 ): Promise<MessageDetailPayload> {
-  const project = notification.project_id ? await getProject(notification.project_id) : null;
+  const isCertificationMessage = notification.type === "certification_approved";
+  const project = !isCertificationMessage && notification.project_id
+    ? await getProject(notification.project_id)
+    : null;
   const order = notification.order_id ? await getOrder(notification.order_id) : null;
-  const projectId = notification.project_id ?? order?.project_id ?? null;
+  const projectId =
+    isCertificationMessage || notification.project_id === CERTIFICATION_MESSAGE_PROJECT_KEY
+      ? null
+      : notification.project_id ?? order?.project_id ?? null;
   const resolvedProject = project ?? (projectId ? await getProject(projectId) : null);
 
   const fields = resolvedProject ? getConfirmedBriefFields(resolvedProject, locale) : [];
-  const projectTitle =
-    resolvedProject?.title || order?.title || notification.company_name || notification.title;
+  const certificationForm = isCertificationMessage
+    ? await getCertificationFormForMessage(notification.id, notification.creator_id, locale)
+    : null;
+  const certificationFields = certificationForm?.fields ?? fields;
+  const projectTitle = isCertificationMessage
+    ? creatorName
+    : resolvedProject?.title || order?.title || notification.company_name || notification.title;
   const briefPdfUrl = projectId ? `/api/projects/${projectId}/brief.pdf?lang=${locale}` : "";
   const action = resolveCreatorNotificationAction(
     {
@@ -66,8 +81,13 @@ async function buildMessageDetail(
     },
     locale
   );
+  const profileSetupHref = withLocale(`${creatorPortalRoutes.works}?onboarding=1`, locale);
   const category = messageCategoryFromType(notification.type);
-  const senderName = senderDisplayName(notification.company_name, locale);
+  const senderName = isCertificationMessage
+    ? locale === "zh"
+      ? "StudioOS 系统"
+      : "StudioOS System"
+    : senderDisplayName(notification.company_name, locale);
   const progressSteps = buildMessageProgressSteps(order, notification.type, locale);
   const projectCode = buildProjectCode(projectId);
   const demoProjectInfo =
@@ -103,36 +123,46 @@ async function buildMessageDetail(
     orderId: notification.order_id,
     projectId,
     projectTitle,
-    formId: projectCode,
-    fields,
+    formId: certificationForm?.form_id ?? projectCode,
+    fields: certificationFields,
     attachments: projectId ? [fallbackBrandGuideAttachment(projectId, locale)] : [],
     briefPdfUrl,
     progressSteps,
-    projectInfo:
-      demoProjectInfo ??
-      (projectId
-        ? {
-            title: projectTitle,
-            code: projectCode,
-            stage: buildMessageProjectStage(progressSteps, locale),
-            thumbnailUrl:
-              PROJECT_THUMBNAILS[notification.id] ??
-              "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=200&auto=format&fit=crop",
-            href: action.href
-          }
-        : null),
+    projectInfo: isCertificationMessage
+      ? null
+      : demoProjectInfo ??
+        (projectId
+          ? {
+              title: projectTitle,
+              code: projectCode,
+              stage: buildMessageProjectStage(progressSteps, locale),
+              thumbnailUrl:
+                PROJECT_THUMBNAILS[notification.id] ??
+                "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=200&auto=format&fit=crop",
+              href: action.href
+            }
+          : null),
     nextStep: buildMessageNextStep(notification.type, locale),
-    actionHref: demoActionHref,
-    actionLabel:
-      locale === "zh"
+    actionHref: isCertificationMessage ? profileSetupHref : demoActionHref,
+    actionLabel: isCertificationMessage
+      ? locale === "zh"
+        ? "完善 Studio 主页"
+        : "Complete studio profile"
+      : locale === "zh"
         ? notification.type === "escrow_released"
           ? "查看收益"
           : "查看项目"
         : notification.type === "escrow_released"
           ? "View income"
           : "View project",
-    replyHref: demoActionHref,
-    replyLabel: locale === "zh" ? "回复品牌方" : "Reply to brand"
+    replyHref: isCertificationMessage ? profileSetupHref : demoActionHref,
+    replyLabel: isCertificationMessage
+      ? locale === "zh"
+        ? "前往完善主页"
+        : "Go to profile setup"
+      : locale === "zh"
+        ? "回复品牌方"
+        : "Reply to brand"
   };
 }
 

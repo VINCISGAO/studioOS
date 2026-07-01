@@ -3,7 +3,8 @@ const STUDIO_PATHS_ALWAYS_ALLOWED = [
   "/studio",
   "/studio/deposit",
   "/studio/settings",
-  "/studio/works"
+  "/studio/works",
+  "/studio/income"
 ];
 
 export function isStudioPathAlwaysAllowed(pathname: string) {

@@ -1,5 +1,6 @@
 export type CreatorNotificationType =
   | "invitation_match"
+  | "certification_approved"
   | "creator_selected"
   | "project_funded"
   | "review_comment_added"

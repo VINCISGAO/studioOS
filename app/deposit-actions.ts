@@ -7,6 +7,7 @@ import { getCreatorDepositSnapshot, submitDepositPayment } from "@/lib/studioos/
 import { DEPOSIT_PAYMENT_METHODS } from "@/lib/studioos/deposit-utils";
 import type { PayoutMethodType } from "@/lib/studioos/withdrawal-types";
 import { withLocale, type Locale } from "@/lib/i18n";
+import { creatorPortalRoutes } from "@/lib/studioos/creator-portal-routes";
 
 function normalizeLang(raw: FormDataEntryValue | null): Locale {
   return String(raw ?? "en") === "zh" ? "zh" : "en";
@@ -18,6 +19,18 @@ function parsePaymentMethod(raw: FormDataEntryValue | null): PayoutMethodType | 
     return value as PayoutMethodType;
   }
   return null;
+}
+
+function revalidateCertificationPaths() {
+  revalidatePath("/studio");
+  revalidatePath("/studio/deposit");
+  revalidatePath("/studio/messages");
+  revalidatePath("/studio/invitations");
+  revalidatePath("/admin/certification");
+}
+
+function certificationCelebratePath(locale: Locale) {
+  return withLocale(`${creatorPortalRoutes.home}?certified=1`, locale);
 }
 
 export async function submitDepositPaymentAction(formData: FormData) {
@@ -36,13 +49,27 @@ export async function submitDepositPaymentAction(formData: FormData) {
     locale: lang
   });
 
+  revalidateCertificationPaths();
+
   if (!result.ok) {
+    const alreadyPaid =
+      result.error === "保证金已缴纳" || result.error === "Deposit already paid";
+    if (alreadyPaid) {
+      const snapshot = await getCreatorDepositSnapshot(creatorId);
+      if (snapshot.deposit_status === "paid") {
+        redirect(certificationCelebratePath(lang));
+      }
+    }
+    const pendingReview =
+      result.error === "已有待确认的保证金付款" ||
+      result.error === "A deposit payment is already pending review";
+    if (pendingReview) {
+      redirect(withLocale("/studio/deposit?submitted=1", lang));
+    }
     redirect(withLocale(`/studio/deposit?error=${encodeURIComponent(result.error)}`, lang));
   }
 
-  revalidatePath("/studio");
-  revalidatePath("/studio/deposit");
-  redirect(withLocale("/studio/deposit?submitted=1", lang));
+  redirect(certificationCelebratePath(lang));
 }
 
 export async function pollDepositStatusAction() {
@@ -52,8 +79,7 @@ export async function pollDepositStatusAction() {
   }
 
   const snapshot = await getCreatorDepositSnapshot(creatorId);
-  revalidatePath("/studio");
-  revalidatePath("/studio/deposit");
+  revalidateCertificationPaths();
 
   return {
     ok: true as const,

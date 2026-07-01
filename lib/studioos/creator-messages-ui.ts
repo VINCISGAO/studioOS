@@ -33,6 +33,7 @@ export function messageCategoryFromType(type: CreatorNotificationType): MessageC
     case "escrow_released":
       return "payment";
     case "invitation_match":
+    case "certification_approved":
       return "system";
     case "not_selected":
       return "brand";
@@ -189,6 +190,11 @@ export function buildMessageNextStep(
           title: "下一步",
           body: "款项已释放，可在收益管理查看结算详情。"
         };
+      case "certification_approved":
+        return {
+          title: "下一步",
+          body: "请完善 Studio 主页、擅长领域与价格意愿，完成后即可正式接单。"
+        };
       default:
         return undefined;
     }
@@ -215,6 +221,11 @@ export function buildMessageNextStep(
       return {
         title: "Next step",
         body: "Funds are released — check Income for payout details."
+      };
+    case "certification_approved":
+      return {
+        title: "Next step",
+        body: "Complete your studio profile, expertise, and pricing to start accepting orders."
       };
     default:
       return undefined;

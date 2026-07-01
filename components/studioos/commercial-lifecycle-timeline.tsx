@@ -81,16 +81,16 @@ function HorizontalPhaseTimeline({
                 <span
                   className={cn(
                     "flex h-7 w-7 items-center justify-center rounded-full text-[11px] font-semibold",
-                    done ? "bg-zinc-900 text-white" : active ? "bg-indigo-600 text-white" : "border border-zinc-200 bg-white text-zinc-400"
+                    done ? "bg-zinc-900 text-white" : active ? "bg-violet-600 text-white" : "border border-zinc-200 bg-white text-zinc-400"
                   )}
                 >
                   {done ? <Check className="h-3.5 w-3.5" /> : index + 1}
                 </span>
-                <p className={cn("mt-2 text-sm font-semibold", active ? "text-indigo-950" : done ? "text-zinc-800" : "text-zinc-400")}>
+                <p className={cn("mt-2 text-sm font-semibold", active ? "text-violet-950" : done ? "text-zinc-800" : "text-zinc-400")}>
                   {phaseLabels[phase]}
                 </p>
                 {active ? (
-                  <p className="mt-1 text-xs leading-relaxed text-indigo-700/80">{phaseSubtitles[phase]}</p>
+                  <p className="mt-1 text-xs leading-relaxed text-violet-700/80">{phaseSubtitles[phase]}</p>
                 ) : null}
               </div>
             </li>

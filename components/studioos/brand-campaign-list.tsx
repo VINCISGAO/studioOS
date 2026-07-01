@@ -422,14 +422,26 @@ export function BrandCampaignList({
           </div>
         ) : (
           <div className="flex flex-col gap-3 border-b border-zinc-100 px-4 py-4 lg:flex-row lg:items-center lg:justify-between sm:px-5">
-            <div className="relative w-full max-w-sm flex-1">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
-              <Input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder={t.search}
-                className="h-9 rounded-lg border-zinc-200 bg-zinc-50/80 pl-9 text-sm focus-visible:bg-white"
-              />
+            <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:gap-4 lg:max-w-xl lg:flex-1">
+              {selectableInView.length > 0 ? (
+                <label className="flex shrink-0 cursor-pointer items-center gap-2 text-sm text-zinc-600">
+                  <SelectCheckbox
+                    checked={allSelectableChecked}
+                    indeterminate={someSelectableChecked && !allSelectableChecked}
+                    onChange={toggleSelectAll}
+                  />
+                  <span className="hidden sm:inline">{t.selectAll}</span>
+                </label>
+              ) : null}
+              <div className="relative w-full flex-1">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+                <Input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder={t.search}
+                  className="h-9 rounded-lg border-zinc-200 bg-zinc-50/80 pl-9 text-sm focus-visible:bg-white"
+                />
+              </div>
             </div>
             <div className="flex max-w-full flex-wrap gap-2 lg:justify-end">
               {filters.map((item) => (
@@ -480,19 +492,16 @@ export function BrandCampaignList({
                   key={key}
                   className={cn("group transition", checked ? "bg-zinc-50" : "hover:bg-zinc-50/60")}
                 >
-                  <div className="flex gap-3">
-                    <div className="flex shrink-0 pt-5 pl-4 sm:pl-5">
+                  <div className="flex items-stretch gap-2 sm:gap-3">
+                    <div className="flex w-10 shrink-0 items-center justify-center pl-3 sm:w-11 sm:pl-4">
                       {selectable ? (
-                        <SelectCheckbox
-                          checked={checked}
-                          onChange={() => toggleRow(row)}
-                          className={cn(
-                            !selectionActive && "opacity-0 group-hover:opacity-100",
-                            checked && "opacity-100"
-                          )}
-                        />
+                        <SelectCheckbox checked={checked} onChange={() => toggleRow(row)} />
                       ) : (
-                        <span className="h-4 w-4" aria-hidden />
+                        <span
+                          className="flex h-4 w-4 shrink-0 items-center justify-center rounded border border-zinc-200 bg-zinc-50"
+                          title={t.lockedHint}
+                          aria-hidden
+                        />
                       )}
                     </div>
                     <div className="min-w-0 flex-1">

@@ -239,12 +239,12 @@ export async function notifyCreatorsInvitationExpired(input: {
       const copy =
         input.locale === "zh"
           ? {
-              title: "很遗憾，本次项目已由其他 Creator 成功接单",
-              body: `「${projectTitle}」已由其他创作者接单。感谢你的响应，我们会继续为你推荐更匹配的合作机会，祝你早日获得下一份订单。`
+              title: "该 Campaign 已完成选择",
+              body: `「${projectTitle}」该Campaign已完成选择，谢谢参与。`
             }
           : {
-              title: "This project was assigned to another creator",
-              body: `"${projectTitle}" is no longer open. Thanks for your response — we'll keep matching you with better-fit opportunities.`
+              title: "Campaign selection complete",
+              body: `"${projectTitle}" — selection is complete. Thanks for participating.`
             };
 
       return createCreatorNotification({

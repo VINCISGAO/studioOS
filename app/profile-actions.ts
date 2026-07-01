@@ -7,6 +7,7 @@ import { completeCreatorProfile, saveCreatorProfileDraft } from "@/lib/creator-p
 import { getWorksForCreator } from "@/lib/works-catalog";
 import { withLocale, type Locale } from "@/lib/i18n";
 import { normalizeCreatorMinBudget } from "@/lib/studioos/creator-price-preference";
+import { markCertificationFormProfileCompleted } from "@/lib/studioos/certification-form-service";
 
 function normalizeLang(raw: FormDataEntryValue | null): Locale {
   return String(raw ?? "en") === "zh" ? "zh" : "en";
@@ -84,6 +85,8 @@ export async function completeCreatorProfileAction(formData: FormData) {
   if (!result.ok) {
     redirect(withLocale(`/studio/profile?onboarding=1&error=${result.error}`, lang));
   }
+
+  await markCertificationFormProfileCompleted(creatorId).catch(() => undefined);
 
   revalidateCreatorProfilePaths(creatorId);
   redirect(withLocale("/studio/profile?onboarded=1", lang));

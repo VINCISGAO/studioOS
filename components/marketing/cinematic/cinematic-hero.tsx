@@ -24,17 +24,7 @@ const TRUST_BRANDS = [
   "Coca-Cola"
 ] as const;
 
-export function CinematicHero({
-  locale,
-  portalHref,
-  portalLabel,
-  isLoggedIn = false
-}: {
-  locale: Locale;
-  portalHref: string;
-  portalLabel?: string;
-  isLoggedIn?: boolean;
-}) {
+export function CinematicHero({ locale }: { locale: Locale }) {
   const t = landingText("hero", locale);
   const sectionRef = useRef<HTMLElement>(null);
   const reduce = useReducedMotion();
@@ -45,10 +35,8 @@ export function CinematicHero({
   const contentOpacity = useTransform(scrollYProgress, [0, 0.58, 0.88], [1, 1, 0]);
   const contentY = useTransform(scrollYProgress, [0, 0.58, 0.88], [0, 0, -80]);
 
-  const primaryLabel = isLoggedIn
-    ? (portalLabel ?? (locale === "zh" ? "品牌方门户" : "Brand portal"))
-    : t.primary;
-  const primaryHref = isLoggedIn ? portalHref : withLocale("/login?role=brand", locale);
+  const primaryLabel = t.primary;
+  const primaryHref = withLocale("/login?role=brand", locale);
   const secondaryLabel = t.secondary;
   const secondaryHref = withLocale("/login?role=creator", locale);
   const primaryDescription = locale === "zh" ? "匹配优质创作者" : "Match with vetted AI Studios";
@@ -89,25 +77,21 @@ export function CinematicHero({
               <span className="min-w-0 text-wrap">{t.eyebrow}</span>
             </p>
 
-            <h1 className="mt-5 w-full max-w-none text-pretty text-[clamp(2.9rem,11.8vw,4.35rem)] font-semibold leading-[1.01] tracking-[-0.04em] sm:mt-6 sm:text-[4.35rem] md:text-[4.5rem] lg:text-[4.5rem] xl:text-[4.55rem]">
-              <span
-                className={cn(
-                  "block w-full sm:whitespace-nowrap",
-                  marketingSilverGradientClassName()
+            <h1 className="mt-5 w-full max-w-none text-[clamp(2.65rem,10.2vw,4.35rem)] font-semibold tracking-[-0.04em] sm:mt-6 sm:text-[4.35rem] md:text-[4.5rem] lg:text-[4.5rem] xl:text-[4.55rem]">
+              <span className={cn("inline-block w-full", marketingSilverGradientClassName())}>
+                {t.titleLine2 ? (
+                  <>
+                    <span className="block whitespace-nowrap leading-[1.02] max-sm:text-[clamp(1.95rem,7.85vw,2.95rem)]">
+                      {t.titleLine1}
+                    </span>
+                    <span className="block whitespace-nowrap leading-[1.02] max-sm:text-[clamp(1.95rem,7.85vw,2.95rem)]">
+                      {t.titleLine2}
+                    </span>
+                  </>
+                ) : (
+                  <span className="block leading-[1.08]">{t.titleLine1}</span>
                 )}
-              >
-                {t.titleLine1}
               </span>
-              {t.titleLine2 ? (
-                <span
-                  className={cn(
-                    "mt-1 block w-full sm:mt-2 sm:whitespace-nowrap",
-                    marketingSilverGradientClassName()
-                  )}
-                >
-                  {t.titleLine2}
-                </span>
-              ) : null}
             </h1>
 
             <p className="mt-5 max-w-2xl whitespace-pre-line text-[15px] leading-7 text-zinc-300 sm:mt-6 sm:text-base md:text-[17px] md:leading-8">

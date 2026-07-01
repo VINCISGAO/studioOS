@@ -124,9 +124,11 @@ export function StudioPortalSidebarNav({
             className={sidebarLinkClass(active && !locked, locked, certifiedItem)}
             title={
               locked && !isAnimating
-                ? locale === "zh"
-                  ? "完成首单后需成为认证服务商"
-                  : "Certify after your first completed order"
+                ? item.labelKey === "income"
+                  ? undefined
+                  : locale === "zh"
+                    ? "首单完成后需成为认证服务商才能继续接单"
+                    : "Certify after your free order to accept more projects"
                 : undefined
             }
           >

@@ -25,6 +25,7 @@ import { paymentRepository } from "@/features/payment/payment.repository";
 import { EscrowState } from "@/features/shared/state-machines/escrow.state-machine";
 import { getProject } from "@/lib/project-service";
 import { startProductionWithSelectedCreator } from "@/lib/studioos/brand-checkout-service";
+import { notifyCreatorsInvitationExpired } from "@/lib/studioos/commercial-interaction-notify";
 import type { StoredCreatorInvitation } from "@/lib/studioos/creator-invitation-types";
 import { isInvitationRecruitmentClosed } from "@/lib/studioos/invitation-lifecycle";
 
@@ -138,7 +139,19 @@ export class CampaignSelectionService {
       studio_id: input.creatorId
     };
 
+    const expiredCreatorIds = portalInvitations
+      .filter((item) => item.creatorId !== input.creatorId && item.status !== "declined")
+      .map((item) => item.creatorId);
+
     await invitationRepository.expireNonWinners(campaign.id, winnerRow.id);
+
+    if (project && expiredCreatorIds.length) {
+      await notifyCreatorsInvitationExpired({
+        project,
+        locale: input.locale,
+        expiredCreatorIds
+      }).catch(() => undefined);
+    }
 
     if (
       campaign.status === CampaignState.MATCHING ||

@@ -3,11 +3,9 @@ import { redirect } from "next/navigation";
 import { StudioPortalShell } from "@/components/studioos/studio-portal-shell";
 import { getCurrentCreator } from "@/lib/creator-session";
 import {
-  countCompletedCreatorOrders,
-  getCreatorAccessState,
-  hasCompletedCreatorProfile,
-  requiresCreatorCertification
+  hasCompletedCreatorProfile
 } from "@/lib/studioos/deposit-guard";
+import { resolveCreatorCertificationAccessFromOrders } from "@/lib/studioos/creator-certification-access";
 import {
   hasSeenCertificationLevelUp
 } from "@/lib/studioos/creator-settings-service";
@@ -29,15 +27,23 @@ export default async function StudioLayout({ children }: { children: React.React
   const locale = getLocale({ lang: new URLSearchParams(search).get("lang") ?? undefined });
   const creator = await getCurrentCreator();
   const orders = creator ? await listOrdersForCreator(creator.id) : [];
-  const completedOrders = countCompletedCreatorOrders(orders);
-  const access = getCreatorAccessState(creator, completedOrders);
+  const access = creator
+    ? await resolveCreatorCertificationAccessFromOrders(creator.id, orders)
+    : null;
   const profileComplete = hasCompletedCreatorProfile(creator);
-  const canUseBusinessFeatures = access.canUseBusinessFeatures;
+  const canUseBusinessFeatures = access?.canUseBusinessFeatures ?? false;
+  const canUseIncomeFeatures = access?.canUseIncomeFeatures ?? true;
+  const isVerified = access?.isVerified ?? false;
   const notifications =
-    creator && canUseBusinessFeatures ? await listNotificationsForCreator(creator.id, locale) : [];
+    creator && (canUseBusinessFeatures || isVerified)
+      ? await listNotificationsForCreator(creator.id, locale)
+      : [];
   const unreadCount =
-    creator && canUseBusinessFeatures ? await countUnreadNotifications(creator.id) : 0;
-  const income = creator && canUseBusinessFeatures ? await getCreatorIncomeSnapshot(creator.id) : null;
+    creator && (canUseBusinessFeatures || isVerified)
+      ? await countUnreadNotifications(creator.id)
+      : 0;
+  const income =
+    creator && canUseIncomeFeatures ? await getCreatorIncomeSnapshot(creator.id) : null;
   const invitationCounts =
     creator && canUseBusinessFeatures
       ? countInvitationsByTab(await listInvitationsForCreator(creator.id))
@@ -45,10 +51,10 @@ export default async function StudioLayout({ children }: { children: React.React
   const levelUpSeen = creator ? await hasSeenCertificationLevelUp(creator.id) : true;
 
   if (creator && isStudioFeaturePath(pathname)) {
-    if (requiresCreatorCertification(creator, completedOrders)) {
+    if (access?.isLockedAfterFirstOrder) {
       redirect(withLocale(studioCertificationRedirectPath(locale), locale));
     }
-    if (access.isVerified && !profileComplete) {
+    if (isVerified && !profileComplete && levelUpSeen) {
       redirect(withLocale(studioProfileOnboardingPath(locale), locale));
     }
   }
@@ -60,10 +66,11 @@ export default async function StudioLayout({ children }: { children: React.React
       search={search}
       creator={creator}
       creatorId={creator?.id ?? null}
-      certificationPaid={access.isVerified}
+      certificationPaid={isVerified}
       profileComplete={profileComplete}
       canUseBusinessFeatures={canUseBusinessFeatures}
-      isVerified={access.isVerified}
+      canUseIncomeFeatures={canUseIncomeFeatures}
+      isVerified={isVerified}
       levelUpSeen={levelUpSeen}
       notifications={notifications}
       unreadCount={unreadCount}

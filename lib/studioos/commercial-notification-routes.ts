@@ -72,6 +72,13 @@ export function resolveCreatorNotificationAction(
     };
   }
 
+  if (input.type === "certification_approved") {
+    return {
+      href: withLocale(`${creatorPortalRoutes.works}?onboarding=1`, locale),
+      label: locale === "zh" ? "完善 Studio 主页" : "Complete studio profile"
+    };
+  }
+
   if (input.type === "invitation_match" || input.type === "not_selected") {
     return {
       href: withLocale(creatorPortalRoutes.invitations, locale),

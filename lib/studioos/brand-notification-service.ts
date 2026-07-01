@@ -1,7 +1,7 @@
 import "server-only";
 
-import { createSerializedStoreReader, writeJsonFileAtomic } from "@/lib/json-file-store";
-import { readDataJson, dataStorePath } from "@/lib/serverless-store";
+import { createSerializedStoreReader } from "@/lib/json-file-store";
+import { dataStorePath, invalidateDataJson, readDataJson, writeDataJson } from "@/lib/serverless-store";
 import type { BrandNotification, BrandNotificationStore, BrandNotificationType } from "@/lib/studioos/brand-notification-types";
 
 const STORE_PATH = dataStorePath("brand-notification-store.json");
@@ -14,14 +14,28 @@ function emptyStore(): BrandNotificationStore {
   return { notifications: [] };
 }
 
+function cloneStore(store: BrandNotificationStore): BrandNotificationStore {
+  return {
+    notifications: store.notifications.map((item) => ({ ...item }))
+  };
+}
+
 async function readStoreInner(): Promise<BrandNotificationStore> {
-  return readDataJson(STORE_PATH, emptyStore);
+  const parsed = await readDataJson(STORE_PATH, emptyStore);
+  return cloneStore(parsed);
 }
 
 const readStore = createSerializedStoreReader(readStoreInner);
 
+async function readStoreForMutation(): Promise<BrandNotificationStore> {
+  invalidateDataJson(STORE_PATH);
+  readStore.invalidate?.();
+  const parsed = await readDataJson(STORE_PATH, emptyStore);
+  return cloneStore(parsed);
+}
+
 async function writeStore(store: BrandNotificationStore) {
-  await writeJsonFileAtomic(STORE_PATH, store);
+  await writeDataJson(STORE_PATH, store);
   readStore.invalidate?.();
 }
 
@@ -65,7 +79,7 @@ export async function createBrandNotification(input: {
   deliverable_version?: number | null;
   comment_id?: string | null;
 }): Promise<BrandNotification> {
-  const store = await readStore();
+  const store = await readStoreForMutation();
   const notification: BrandNotification = {
     id: createId("bntf"),
     brand_email: input.brand_email.toLowerCase(),
@@ -87,7 +101,7 @@ export async function createBrandNotification(input: {
 }
 
 export async function markBrandNotificationRead(id: string, brandEmail: string): Promise<boolean> {
-  const store = await readStore();
+  const store = await readStoreForMutation();
   const item = store.notifications.find(
     (row) => row.id === id && row.brand_email === brandEmail.toLowerCase()
   );
@@ -101,7 +115,7 @@ export async function markBrandNotificationsRead(ids: string[], brandEmail: stri
   if (!ids.length) {
     return 0;
   }
-  const store = await readStore();
+  const store = await readStoreForMutation();
   const normalized = brandEmail.toLowerCase();
   const idSet = new Set(ids);
   const now = new Date().toISOString();
@@ -122,7 +136,7 @@ export async function markBrandNotificationsRead(ids: string[], brandEmail: stri
 }
 
 export async function deleteBrandNotification(id: string, brandEmail: string): Promise<boolean> {
-  const store = await readStore();
+  const store = await readStoreForMutation();
   const normalized = brandEmail.toLowerCase();
   const index = store.notifications.findIndex(
     (item) => item.id === id && item.brand_email === normalized
@@ -139,7 +153,7 @@ export async function deleteBrandNotifications(ids: string[], brandEmail: string
   if (!ids.length) {
     return 0;
   }
-  const store = await readStore();
+  const store = await readStoreForMutation();
   const normalized = brandEmail.toLowerCase();
   const idSet = new Set(ids);
   const before = store.notifications.length;
@@ -154,7 +168,7 @@ export async function deleteBrandNotifications(ids: string[], brandEmail: string
 }
 
 export async function deleteAllNotificationsForBrand(brandEmail: string): Promise<number> {
-  const store = await readStore();
+  const store = await readStoreForMutation();
   const normalized = brandEmail.toLowerCase();
   const before = store.notifications.length;
   store.notifications = store.notifications.filter((item) => item.brand_email !== normalized);

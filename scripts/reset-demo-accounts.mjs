@@ -2,7 +2,8 @@
 /**
  * Reset all demo / test account runtime stores to bundled seed baseline.
  *
- * Clears campaigns, orders, invitations, messages, and review data for:
+ * Clears campaigns, orders, invitations, messages, certification, earnings, and
+ * review data for:
  * - client.arc@studioos.test, client.bright@studioos.test, client.north@studioos.test
  * - creator.nova@studioos.test, creator.signal@studioos.test, creator.atlas@studioos.test
  *
@@ -10,9 +11,10 @@
  *
  * Restart dev server after running so in-memory store cache clears.
  */
-import { cpSync, mkdirSync, readdirSync, writeFileSync } from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
+import { cpSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
+import { execSync } from "node:child_process";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const seedDir = path.join(root, "seed");
@@ -29,6 +31,57 @@ const DEMO_BRANDS = [
   { email: "client.bright@studioos.test", label: "BrightSip (brand)" },
   { email: "client.north@studioos.test", label: "Northline Skincare (brand)" }
 ];
+
+const FRESH_ACCOUNT_STORES = {
+  "creator-invitation-store.json": { invitations: [] },
+  "brand-notification-store.json": { notifications: [] },
+  "notification-store.json": {
+    notifications: [],
+    dismissed_demo_ids: [
+      "ntf_demo_arc_selected",
+      "ntf_demo_arc_funded",
+      "ntf_demo_nike_work_selected",
+      "ntf_demo_samsung_feedback",
+      "ntf_demo_apple_revision",
+      "ntf_demo_payment_received",
+      "ntf_demo_project_completed",
+      "ntf_demo_system_cert"
+    ]
+  },
+  "certification-form-store.json": { forms: [] },
+  "withdrawal-store.json": { payout_methods: [], withdrawals: [] },
+  "deposit-store.json": {
+    creator_overlays: {
+      creator_01: { deposit_status: "unpaid", deposit_amount: 99, paid_at: null },
+      creator_02: { deposit_status: "unpaid", deposit_amount: 99, paid_at: null },
+      creator_03: { deposit_status: "unpaid", deposit_amount: 99, paid_at: null }
+    },
+    payments: []
+  },
+  "creative-performance-store.json": { records: [], insights: [], dna_profiles: [] },
+  "chat-store.json": { inquiries: [], messages: [] },
+  "review-store.json": { comments: [] },
+  "order-ratings-store.json": { reviews: [] },
+  "order-store.json": {
+    quotes: [],
+    orders: [],
+    deliverables: [],
+    dismissed_demo_ids: [
+      "ord_demo_arc_nova",
+      "ord_demo_nova_completed",
+      "ord_demo_nova_active",
+      "ord_demo_nova_first"
+    ]
+  },
+  "project-store.json": {
+    projects: [],
+    applications: [],
+    dismissed_demo_ids: ["proj_demo_arc_nova"],
+    deleted_project_ids: []
+  },
+  "project-events-store.json": { events: [] },
+  "creator-settings-store.json": { settings: {}, email_aliases: {} }
+};
 
 function copySeedStores() {
   mkdirSync(dataDir, { recursive: true });
@@ -48,17 +101,30 @@ function writeJson(fileName, data) {
   writeFileSync(target, `${JSON.stringify(data, null, 2)}\n`, "utf8");
 }
 
-const copied = copySeedStores();
+function applyFreshAccountStores() {
+  for (const [fileName, data] of Object.entries(FRESH_ACCOUNT_STORES)) {
+    writeJson(fileName, data);
+  }
+}
 
-writeJson("creator-invitation-store.json", { invitations: [] });
-writeJson("brand-notification-store.json", { notifications: [] });
+function runPrismaReset() {
+  try {
+    execSync("npm run reset:demo-prisma", { cwd: root, stdio: "inherit" });
+  } catch {
+    console.warn("Prisma demo reset skipped or failed — JSON stores were still reset.");
+  }
+}
+
+const copied = copySeedStores();
+applyFreshAccountStores();
+runPrismaReset();
 
 console.log("Demo account reset complete.");
 console.log("");
 console.log("Creators (password: TempStudioOS2026!):");
 for (const creator of DEMO_CREATORS) {
   console.log(`  ${creator.email} → ${creator.label}`);
-  console.log(`    projects · invitations · messages: cleared`);
+  console.log(`    certification · projects · invitations · messages · earnings: cleared`);
 }
 console.log("");
 console.log("Brands:");
@@ -68,7 +134,7 @@ for (const brand of DEMO_BRANDS) {
 }
 console.log("");
 console.log(`Copied ${copied.length} seed store(s) to .data/`);
-console.log("  invitations + brand notifications: cleared");
+console.log(`Applied fresh-account overrides for ${Object.keys(FRESH_ACCOUNT_STORES).length} runtime store(s)`);
 console.log("");
 console.log("Restart dev server so memory cache clears:");
 console.log("  npm run dev:clean");

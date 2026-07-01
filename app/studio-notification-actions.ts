@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getCurrentCreatorId } from "@/lib/creator-session";
+import type { Locale } from "@/lib/i18n";
 import {
   deleteAllNotificationsForCreator,
   deleteNotifications,
@@ -9,6 +10,10 @@ import {
   markNotificationRead,
   markNotificationsRead
 } from "@/lib/notification-service";
+
+function normalizeLang(raw: FormDataEntryValue | null): Locale {
+  return raw === "zh" ? "zh" : "en";
+}
 
 function revalidateCreatorMessages() {
   revalidatePath("/studio");
@@ -55,9 +60,14 @@ export async function markNotificationsReadAction(formData: FormData) {
 }
 
 export async function deleteNotificationsAction(formData: FormData) {
+  const lang = normalizeLang(formData.get("lang"));
   const creatorId = await getCurrentCreatorId();
   if (!creatorId) {
-    return { ok: false as const, deleted: 0 };
+    return {
+      ok: false as const,
+      deleted: 0,
+      error: lang === "zh" ? "请先登录" : "Sign in required"
+    };
   }
 
   const raw = String(formData.get("notification_ids") ?? "");
@@ -65,8 +75,25 @@ export async function deleteNotificationsAction(formData: FormData) {
     .split(",")
     .map((item) => item.trim())
     .filter(Boolean);
+  if (!ids.length) {
+    return {
+      ok: false as const,
+      deleted: 0,
+      error: lang === "zh" ? "请先选择消息" : "Select messages first"
+    };
+  }
+
   const deleted = await deleteNotifications(ids, creatorId);
   revalidateCreatorMessages();
+
+  if (deleted === 0) {
+    return {
+      ok: false as const,
+      deleted: 0,
+      error: lang === "zh" ? "未能删除消息，请刷新后重试" : "Could not delete messages. Refresh and try again."
+    };
+  }
+
   return { ok: true as const, deleted };
 }
 

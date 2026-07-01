@@ -3,8 +3,11 @@ import type { Locale } from "@/lib/i18n";
 export const creatorDepositHeroCopy = {
   zh: {
     title: "专业认证 (可选)",
-    body: "完成认证可提升品牌信任度；也可以先免费完成第一单，再决定是否认证。",
-    completedMeta: (orders: number) => `$99 · 已完成 ${orders} 单 · 首单前全部功能开放`,
+    body: "完成认证可提升品牌信任度；首单免费体验全部功能。首单交付后需认证才能继续接单，收益与提现始终可用。",
+    completedMeta: (orders: number) =>
+      orders >= 1
+        ? `$99 · 已完成 ${orders} 单 · 接单功能已锁定 · 收益仍可提现`
+        : `$99 · 已完成 ${orders} 单 · 首单前全部功能开放`,
     certify: "立即认证",
     later: "以后再说",
     features: [
@@ -15,9 +18,11 @@ export const creatorDepositHeroCopy = {
   },
   en: {
     title: "Professional certification (optional)",
-    body: "Get certified to boost brand trust — or complete your first project free, then decide.",
+    body: "Get certified to boost brand trust — your first project is free with full access. After delivery, certify to accept more orders; income and withdrawals stay open.",
     completedMeta: (orders: number) =>
-      `$99 · ${orders} completed order(s) · all features open before first delivery`,
+      orders >= 1
+        ? `$99 · ${orders} completed · order tools locked · withdrawals open`
+        : `$99 · ${orders} completed order(s) · all features open before first delivery`,
     certify: "Certify now",
     later: "Maybe later",
     features: [
