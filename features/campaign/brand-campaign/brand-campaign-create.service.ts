@@ -2,6 +2,7 @@ import type { CreateProjectDraftInput } from "@/lib/project-types";
 import { brandCampaignActivityService } from "@/features/campaign/brand-campaign/brand-campaign-activity.service";
 import { mapCampaignToStoredProject } from "@/features/campaign/brand-campaign/brand-campaign.mapper";
 import { brandCampaignRepository } from "@/features/campaign/brand-campaign/brand-campaign.repository";
+import { userRepository } from "@/features/auth/user.repository";
 import { createLegacyProjectId } from "@/features/campaign/brand-campaign/brand-campaign.utils";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 
@@ -15,8 +16,12 @@ export class BrandCampaignCreateService {
       return null;
     }
 
-    const user = await brandCampaignRepository.findBrandUserByEmail(input.client_email);
-    if (!user || (user.role !== "BRAND" && user.role !== "ADMIN")) {
+    const user = await userRepository.ensureBrandPortalUser({
+      email: input.client_email,
+      fullName: input.client_name,
+      companyName: input.company_name
+    });
+    if (!user) {
       return null;
     }
 

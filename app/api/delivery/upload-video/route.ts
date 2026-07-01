@@ -40,6 +40,34 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
     }
 
+    if (hasDatabaseUrl() && order.project_id) {
+      const campaign = await campaignRepository.findByLegacyProjectId(order.project_id);
+      if (campaign) {
+        const deliverables = await versionService.listDeliverablesForLegacyProject(
+          order.project_id,
+          orderId
+        );
+        const count = deliverables?.length ?? 0;
+        if (count >= MAX_CAMPAIGN_VERSIONS) {
+          return NextResponse.json(
+            { ok: false, error: "Maximum of 3 review versions reached" },
+            { status: 400 }
+          );
+        }
+        const nextVersion = count + 1;
+        const saved = await saveReviewVideoUpload(orderId, nextVersion, file, "en");
+        if (!saved.ok) {
+          return NextResponse.json({ ok: false, error: saved.error }, { status: 400 });
+        }
+        return NextResponse.json({
+          ok: true,
+          url: saved.url,
+          version: nextVersion,
+          file_name: saved.file_name
+        });
+      }
+    }
+
     if (!["in_production", "revision", "review"].includes(order.status)) {
       return NextResponse.json(
         {

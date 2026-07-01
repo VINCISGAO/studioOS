@@ -9,6 +9,10 @@ import { getClientPreferredLocale } from "@/lib/studioos/client-locale";
 import { addReviewComment, deleteReviewComment, resolveReviewComment } from "@/lib/studioos/review-store";
 import { translateForClient } from "@/lib/studioos/translate";
 import { saveReviewVideoUpload } from "@/lib/studioos/video-upload";
+import { campaignRepository } from "@/features/campaign/campaign.repository";
+import { versionService } from "@/features/delivery/version.service";
+import { MAX_CAMPAIGN_VERSIONS } from "@/features/delivery/version.repository";
+import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 
 function normalizeLang(raw: FormDataEntryValue | null): Locale {
   return raw === "zh" ? "zh" : "en";
@@ -117,6 +121,19 @@ export async function deleteReviewCommentAction(formData: FormData) {
   return { ok: true as const, commentId: deleted.id };
 }
 
+function uploadErrorMessage(code: string, lang: Locale): string {
+  if (lang === "zh") {
+    if (code === "max-versions") return "最多只能上传 3 个审片版本";
+    if (code === "invalid-status") return "当前订单状态不可上传新版本";
+    if (code === "creator-not-assigned") return "品牌尚未选定 Studio，无法上传";
+    return "无权限";
+  }
+  if (code === "max-versions") return "You can upload at most 3 review versions";
+  if (code === "invalid-status") return "Cannot upload a new version in the current order status";
+  if (code === "creator-not-assigned") return "Brand has not selected a studio yet";
+  return "Unauthorized";
+}
+
 export async function uploadVideoVersionAction(formData: FormData) {
   const lang = normalizeLang(formData.get("lang"));
   const orderId = String(formData.get("order_id") ?? "");
@@ -131,6 +148,9 @@ export async function uploadVideoVersionAction(formData: FormData) {
   }
 
   const deliverables = await getDeliverables(orderId);
+  if (deliverables.length >= MAX_CAMPAIGN_VERSIONS) {
+    return { ok: false as const, error: uploadErrorMessage("max-versions", lang) };
+  }
   const nextVersion = deliverables.length + 1;
 
   let resolvedUrl = fileUrl;
@@ -151,6 +171,33 @@ export async function uploadVideoVersionAction(formData: FormData) {
 
   const clientLocale = getClientPreferredLocale(order.client_email, order.client_locale);
   const translation = await translateForClient(notes, lang, clientLocale);
+
+  if (hasDatabaseUrl() && order.project_id) {
+    const campaign = await campaignRepository.findByLegacyProjectId(order.project_id);
+    if (campaign) {
+      const prismaResult = await versionService.uploadForLegacyOrder({
+        legacyProjectId: order.project_id,
+        orderId,
+        legacyCreatorId: creatorId,
+        videoUrl: resolvedUrl,
+        notes,
+        notesForClient: translation.text,
+        notesClientLocale: clientLocale,
+        locale: lang
+      });
+
+      if (!prismaResult.ok) {
+        return { ok: false as const, error: uploadErrorMessage(prismaResult.error, lang) };
+      }
+
+      revalidateReview(orderId, order.project_id);
+      return {
+        ok: true as const,
+        deliverable: prismaResult.deliverable,
+        translated: prismaResult.translated
+      };
+    }
+  }
 
   const deliverable = await addDeliverable(orderId, {
     file_url: resolvedUrl,

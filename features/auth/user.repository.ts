@@ -1,5 +1,7 @@
 import type { User, UserRole, BrandProfile, CreatorProfile } from "@prisma/client";
 import { prisma, hasDatabaseUrl } from "@/lib/core/database/prisma";
+import { DEMO_PASSWORD, DEMO_USERS } from "@/lib/demo-auth";
+import { hashPassword } from "@/lib/core/password";
 
 export type UserWithProfiles = User & {
   brandProfile: BrandProfile | null;
@@ -139,6 +141,63 @@ export class UserRepository {
         ip: meta?.ip,
         device: meta?.device
       }
+    });
+  }
+
+  /** Ensure a PostgreSQL brand account exists for wizard / draft creation. */
+  async ensureBrandPortalUser(input: {
+    email: string;
+    fullName?: string;
+    companyName?: string;
+  }): Promise<UserWithProfiles | null> {
+    if (!hasDatabaseUrl()) return null;
+
+    const email = input.email.trim().toLowerCase();
+    if (!email) return null;
+
+    const demoBrand = DEMO_USERS.find(
+      (user) => user.email === email && user.role === "client"
+    );
+    const fullName =
+      input.fullName?.trim() ||
+      demoBrand?.label.replace(/\s*\(brand\)/i, "").trim() ||
+      email.split("@")[0] ||
+      "Brand";
+    const companyName = input.companyName?.trim() || demoBrand?.label || fullName;
+
+    const existing = await this.findByEmail(email);
+    if (existing) {
+      if (existing.role !== "BRAND" && existing.role !== "ADMIN") {
+        return null;
+      }
+
+      if (existing.role === "BRAND" && !existing.brandProfile) {
+        await prisma.brandProfile.create({
+          data: {
+            userId: existing.id,
+            companyName
+          }
+        });
+        return this.findByEmail(email);
+      }
+
+      return existing;
+    }
+
+    const passwordHash = demoBrand ? hashPassword(DEMO_PASSWORD) : null;
+
+    return prisma.user.create({
+      data: {
+        email,
+        role: "BRAND",
+        fullName,
+        passwordHash,
+        emailVerified: true,
+        brandProfile: {
+          create: { companyName }
+        }
+      },
+      include: { brandProfile: true, creatorProfile: true }
     });
   }
 }

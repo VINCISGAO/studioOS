@@ -22,6 +22,10 @@ import {
   syncProjectAfterRevisionRequest,
   syncProjectFromOrderEvent
 } from "@/lib/studioos/project-order-sync";
+import { versionService } from "@/features/delivery/version.service";
+import { campaignRepository } from "@/features/campaign/campaign.repository";
+import { MAX_CAMPAIGN_VERSIONS } from "@/features/delivery/version.repository";
+import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 
@@ -758,6 +762,14 @@ export async function getOrderForProject(projectId: string): Promise<StoredOrder
 }
 
 export async function getDeliverables(orderId: string): Promise<StoredDeliverable[]> {
+  const order = await getOrder(orderId);
+  if (order?.project_id) {
+    const fromPrisma = await versionService.listDeliverablesForLegacyProject(order.project_id, orderId);
+    if (fromPrisma) {
+      return fromPrisma.sort((a, b) => b.version - a.version);
+    }
+  }
+
   const store = await readStore();
   return store.deliverables
     .filter((item) => item.order_id === orderId)

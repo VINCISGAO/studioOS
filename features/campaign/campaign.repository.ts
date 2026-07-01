@@ -344,6 +344,13 @@ export class CampaignRepository {
     });
   }
 
+  async setCurrentVersion(id: string, versionNumber: number): Promise<Campaign> {
+    return prisma.campaign.update({
+      where: { id },
+      data: { currentVersion: versionNumber }
+    });
+  }
+
   async softDeleteLogoAssets(campaignId: string) {
     await assetRepository.softDeleteByType(campaignId, "LOGO");
   }

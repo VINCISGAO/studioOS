@@ -19,6 +19,7 @@ import {
   readProductionBrief
 } from "@/features/campaign/brand-campaign/brand-campaign.utils";
 import { campaignRepository } from "@/features/campaign/campaign.repository";
+import { userRepository } from "@/features/auth/user.repository";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 
 function mergeBrief(existing: unknown, patch: UpdateProjectInput): BrandProductionBrief {
@@ -118,8 +119,12 @@ export class CampaignBrandPortalService {
   async createDraft(input: CreateProjectDraftInput): Promise<StoredProject | null> {
     if (!this.isEnabled()) return null;
 
-    const user = await campaignRepository.findBrandUserByEmail(input.client_email);
-    if (!user || (user.role !== "BRAND" && user.role !== "ADMIN")) {
+    const user = await userRepository.ensureBrandPortalUser({
+      email: input.client_email,
+      fullName: input.client_name,
+      companyName: input.company_name
+    });
+    if (!user) {
       return null;
     }
 
