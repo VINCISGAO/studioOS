@@ -1,5 +1,6 @@
 import type { Campaign, CampaignAsset } from "@prisma/client";
 import { campaignRepository } from "@/features/campaign/campaign.repository";
+import { campaignBrandPortalService } from "@/features/campaign/campaign-brand.service";
 import type { CreateCampaignBody, UpdateCampaignBody } from "@/features/campaign/campaign.schemas";
 import type { CampaignStateValue, CampaignEventValue } from "@/features/campaign/campaign.state-machine";
 import { campaignStateMachine } from "@/features/campaign/campaign.state-machine";
@@ -209,6 +210,64 @@ export class CampaignService {
       }
     });
   }
+
+  // Brand wizard portal (legacy proj_* URLs)
+  createBrandDraft(input: Parameters<CampaignBrandPortalService["createDraft"]>[0]) {
+    return campaignBrandPortalService.createDraft(input);
+  }
+
+  getByLegacyProjectId(legacyProjectId: string) {
+    return campaignBrandPortalService.getByLegacyProjectId(legacyProjectId);
+  }
+
+  listForClientEmail(clientEmail: string) {
+    return campaignBrandPortalService.listForClientEmail(clientEmail);
+  }
+
+  resolveLegacyCampaignId(legacyProjectId: string) {
+    return campaignBrandPortalService.resolveLegacyCampaignId(legacyProjectId);
+  }
+
+  updateBrandProject(
+    legacyProjectId: string,
+    patch: Parameters<CampaignBrandPortalService["updateProject"]>[1],
+    options?: Parameters<CampaignBrandPortalService["updateProject"]>[2]
+  ) {
+    return campaignBrandPortalService.updateProject(legacyProjectId, patch, options);
+  }
+
+  completeBrandWizardStep(legacyProjectId: string, step: number, actorEmail?: string) {
+    return campaignBrandPortalService.completeWizardStep(legacyProjectId, step, actorEmail);
+  }
+
+  saveBrandCreativeBrief(
+    legacyProjectId: string,
+    brief: Parameters<CampaignBrandPortalService["saveCreativeBrief"]>[1],
+    actorEmail?: string
+  ) {
+    return campaignBrandPortalService.saveCreativeBrief(legacyProjectId, brief, actorEmail);
+  }
+
+  publishBrandCampaign(
+    legacyProjectId: string,
+    actor: Parameters<CampaignBrandPortalService["publish"]>[1]
+  ) {
+    return campaignBrandPortalService.publish(legacyProjectId, actor);
+  }
+
+  listBrandAssets(legacyProjectId: string) {
+    return campaignBrandPortalService.listAssets(legacyProjectId);
+  }
+
+  listBrandReferences(legacyProjectId: string) {
+    return campaignBrandPortalService.listReferences(legacyProjectId);
+  }
+
+  getBrandCreativeBrief(legacyProjectId: string) {
+    return campaignBrandPortalService.getCreativeBrief(legacyProjectId);
+  }
 }
+
+type CampaignBrandPortalService = typeof campaignBrandPortalService;
 
 export const campaignService = new CampaignService();

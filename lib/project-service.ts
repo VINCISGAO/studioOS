@@ -1,4 +1,6 @@
 import { projectApplications, projects as seedProjects } from "@/lib/data";
+import { campaignService } from "@/features/campaign/campaign.service";
+import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { createSerializedStoreReader, writeJsonFileAtomic } from "@/lib/json-file-store";
 import { getMemoryStore, readDataJson, dataStorePath } from "@/lib/serverless-store";
 import { repairMissingProjects } from "@/lib/studioos/brand-store-repair";
@@ -421,6 +423,14 @@ async function writeStore(store: ProjectStore) {
 }
 
 export async function createProjectDraft(input: CreateProjectDraftInput): Promise<StoredProject> {
+  if (hasDatabaseUrl()) {
+    const prismaProject = await campaignService.createBrandDraft(input);
+    if (!prismaProject) {
+      throw new Error("Unable to create campaign draft for this brand account");
+    }
+    return prismaProject;
+  }
+
   const store = await readStore();
   const project = defaultProjectFields({
     id: createId("proj"),
@@ -498,11 +508,26 @@ export async function createProject(input: CreateProjectInput): Promise<StoredPr
 }
 
 export async function getProject(id: string): Promise<StoredProject | null> {
+  if (hasDatabaseUrl()) {
+    const prismaProject = await campaignService.getByLegacyProjectId(id);
+    if (prismaProject) {
+      return prismaProject;
+    }
+  }
+
   const store = await readStore();
   return store.projects.find((item) => item.id === id) ?? null;
 }
 
-export async function updateProject(id: string, patch: UpdateProjectInput): Promise<StoredProject | null> {
+export async function updateProject(
+  id: string,
+  patch: UpdateProjectInput,
+  options?: { action?: string; actorEmail?: string }
+): Promise<StoredProject | null> {
+  if (hasDatabaseUrl()) {
+    return campaignService.updateBrandProject(id, patch, options);
+  }
+
   const store = await readStore();
   const project = store.projects.find((item) => item.id === id);
   if (!project) {
@@ -516,8 +541,13 @@ export async function updateProject(id: string, patch: UpdateProjectInput): Prom
 
 export async function completeWizardStep(
   projectId: string,
-  step: number
+  step: number,
+  actorEmail?: string
 ): Promise<StoredProject | null> {
+  if (hasDatabaseUrl()) {
+    return campaignService.completeBrandWizardStep(projectId, step, actorEmail);
+  }
+
   const project = await getProject(projectId);
   if (!project) {
     return null;
@@ -543,8 +573,7 @@ export async function transitionProject(
     skipPreconditions?: boolean;
   }
 ): Promise<{ ok: true; project: StoredProject } | { ok: false; code: string; message: string }> {
-  const store = await readStore();
-  const project = store.projects.find((item) => item.id === projectId);
+  const project = await getProject(projectId);
   if (!project) {
     return { ok: false, code: "NOT_FOUND", message: "Project not found" };
   }
@@ -569,28 +598,71 @@ export async function transitionProject(
   }
 
   const fromStatus = project.status;
-  if (result.status !== fromStatus) {
-    project.status = result.status;
+
+  if (event === "project.publish" && hasDatabaseUrl()) {
+    try {
+      const published = await campaignService.publishBrandCampaign(projectId, {
+        email: options?.actor_id ?? project.client_email,
+        userId: null
+      });
+      if (published) {
+        await appendProjectEvent({
+          project_id: projectId,
+          event_name: event,
+          from_state: { status: fromStatus },
+          to_state: { status: published.status },
+          actor_id: options?.actor_id ?? null,
+          actor_role: options?.actor_role ?? "system",
+          metadata: options?.metadata ?? {}
+        });
+        return { ok: true, project: published };
+      }
+    } catch (error) {
+      return {
+        ok: false,
+        code: "PRECONDITION_FAILED",
+        message: error instanceof Error ? error.message : "Publish failed"
+      };
+    }
+  }
+
+  if (hasDatabaseUrl()) {
+    return {
+      ok: false,
+      code: "NOT_FOUND",
+      message: "Project transition requires legacy JSON store entry"
+    };
+  }
+
+  const store = await readStore();
+  const jsonProject = store.projects.find((item) => item.id === projectId);
+  if (!jsonProject) {
+    return { ok: false, code: "NOT_FOUND", message: "Project not found" };
+  }
+
+  const previousStatus = jsonProject.status;
+  if (result.status !== previousStatus) {
+    jsonProject.status = result.status;
   }
 
   if (event === "project.publish") {
-    project.published_at = nowIso();
+    jsonProject.published_at = nowIso();
   }
 
-  project.updated_at = nowIso();
+  jsonProject.updated_at = nowIso();
   await writeStore(store);
 
   await appendProjectEvent({
     project_id: projectId,
     event_name: event,
-    from_state: { status: fromStatus },
-    to_state: { status: project.status },
+    from_state: { status: previousStatus },
+    to_state: { status: jsonProject.status },
     actor_id: options?.actor_id ?? null,
     actor_role: options?.actor_role ?? "system",
     metadata: options?.metadata ?? {}
   });
 
-  return { ok: true, project };
+  return { ok: true, project: jsonProject };
 }
 
 export async function listOpenProjects(): Promise<StoredProject[]> {
@@ -601,6 +673,13 @@ export async function listOpenProjects(): Promise<StoredProject[]> {
 }
 
 export async function listProjectsForClient(clientEmail: string): Promise<StoredProject[]> {
+  if (hasDatabaseUrl()) {
+    const prismaProjects = await campaignService.listForClientEmail(clientEmail);
+    if (prismaProjects.length > 0) {
+      return prismaProjects;
+    }
+  }
+
   const store = await readStore();
   const normalized = clientEmail.toLowerCase();
   return store.projects

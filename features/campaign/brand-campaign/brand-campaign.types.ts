@@ -1,0 +1,77 @@
+import type { StoredCreativeBrief } from "@/lib/campaign-types";
+import type { CommercialObjective } from "@/lib/project-types";
+
+export type BrandProductionBrief = {
+  legacy_project_id: string;
+  product?: {
+    name?: string;
+    url?: string;
+    category?: string;
+  };
+  objective?: {
+    type?: CommercialObjective | string;
+    notes?: string;
+  };
+  audience?: string;
+  goal?: string;
+  notes?: string;
+  questionnaire?: Record<string, unknown>;
+  confirmed_brief?: Record<string, unknown>;
+  creative_brief?: StoredCreativeBrief | Record<string, unknown>;
+  style?: {
+    brand?: string;
+    presets?: string[];
+  };
+  delivery?: {
+    video_lengths?: string[];
+    aspect_ratios?: string[];
+    quantity?: number;
+    timeline_id?: string;
+  };
+  budget?: {
+    range?: string;
+    min?: number | null;
+    max?: number | null;
+  };
+};
+
+export type BrandCampaignMemory = {
+  wizard?: {
+    step?: number;
+    completed_steps?: number[];
+    ephemeral?: boolean;
+    saved_at?: string;
+  };
+  client?: {
+    email?: string;
+    name?: string;
+    company_name?: string;
+  };
+  published_at?: string;
+  visibility?: string;
+  org_id?: string | null;
+  pack_items?: unknown[];
+};
+
+export type BrandCampaignActor = {
+  userId?: string | null;
+  email: string;
+  role?: "brand" | "system";
+};
+
+export const REFERENCE_ASSET_META_KIND = "reference" as const;
+
+export type ReferenceAssetMetadata = {
+  kind: typeof REFERENCE_ASSET_META_KIND;
+  source_url: string;
+  note?: string;
+  sort_order: number;
+  platform?: string;
+  reference_type?: string;
+  legacy_ref_id?: string;
+};
+
+export type LegacyAssetMetadata = {
+  legacy_asset_id?: string;
+  role?: "original" | "preview";
+};

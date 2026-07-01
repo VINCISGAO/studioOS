@@ -1,5 +1,12 @@
 import type { AssetType, Campaign, CampaignAsset, CampaignStatus, Prisma } from "@prisma/client";
 import { prisma, hasDatabaseUrl } from "@/lib/core/database/prisma";
+import { userRepository } from "@/features/auth/user.repository";
+import { assetRepository } from "@/features/campaign/asset.repository";
+import type {
+  BrandCampaignMemory,
+  BrandProductionBrief
+} from "@/features/campaign/brand-campaign/brand-campaign.types";
+import { asInputJson } from "@/lib/core/prisma-json";
 
 export type CampaignWithAssets = Prisma.CampaignGetPayload<{ include: { assets: true } }>;
 
@@ -8,6 +15,13 @@ export type CampaignWithRelations = Prisma.CampaignGetPayload<{
     versions: { include: { comments: { include: { annotations: true; user: true } } } };
     brand: { include: { brandProfile: true } };
     creator: { include: { creatorProfile: true } };
+  };
+}>;
+
+export type CampaignWithBrandAndAssets = Prisma.CampaignGetPayload<{
+  include: {
+    brand: { include: { brandProfile: true } };
+    assets: true;
   };
 }>;
 
@@ -64,6 +78,134 @@ export class CampaignRepository {
           path: ["legacy_project_id"],
           equals: legacyProjectId
         }
+      }
+    });
+  }
+
+  async findByLegacyProjectIdWithRelations(
+    legacyProjectId: string
+  ): Promise<CampaignWithBrandAndAssets | null> {
+    if (!hasDatabaseUrl()) return null;
+    return prisma.campaign.findFirst({
+      where: {
+        deletedAt: null,
+        productionBrief: {
+          path: ["legacy_project_id"],
+          equals: legacyProjectId
+        }
+      },
+      include: {
+        brand: { include: { brandProfile: true } },
+        assets: { where: { deletedAt: null }, orderBy: { createdAt: "desc" } }
+      }
+    });
+  }
+
+  async listByBrandEmail(email: string): Promise<CampaignWithBrandAndAssets[]> {
+    if (!hasDatabaseUrl()) return [];
+    const user = await userRepository.findByEmail(email.toLowerCase());
+    if (!user) return [];
+    return prisma.campaign.findMany({
+      where: { brandId: user.id, deletedAt: null },
+      include: {
+        brand: { include: { brandProfile: true } },
+        assets: { where: { deletedAt: null }, orderBy: { createdAt: "desc" } }
+      },
+      orderBy: { updatedAt: "desc" }
+    });
+  }
+
+  async findBrandUserByEmail(email: string) {
+    if (!hasDatabaseUrl()) return null;
+    return userRepository.findByEmail(email.toLowerCase());
+  }
+
+  async createBrandWizardDraft(input: {
+    brandId: string;
+    legacyProjectId: string;
+    title: string;
+    client: { email: string; name: string; company_name: string };
+    wizardEphemeral?: boolean;
+  }): Promise<CampaignWithBrandAndAssets> {
+    if (!hasDatabaseUrl()) {
+      throw new Error("DATABASE_URL not configured");
+    }
+
+    const deadline = new Date();
+    deadline.setDate(deadline.getDate() + 14);
+
+    const productionBrief: BrandProductionBrief = {
+      legacy_project_id: input.legacyProjectId,
+      product: { name: "", url: "", category: "" }
+    };
+    const campaignMemory: BrandCampaignMemory = {
+      wizard: {
+        step: 1,
+        completed_steps: [],
+        ephemeral: input.wizardEphemeral === true
+      },
+      client: {
+        email: input.client.email.toLowerCase(),
+        name: input.client.name,
+        company_name: input.client.company_name
+      },
+      visibility: "invite_only"
+    };
+
+    return prisma.campaign.create({
+      data: {
+        brandId: input.brandId,
+        title: input.title,
+        description: "",
+        budget: 200,
+        currency: "USD",
+        deadline,
+        status: "DRAFT",
+        createdBy: input.brandId,
+        productionBrief: asInputJson(productionBrief),
+        campaignMemoryJson: asInputJson(campaignMemory)
+      },
+      include: {
+        brand: { include: { brandProfile: true } },
+        assets: { where: { deletedAt: null } }
+      }
+    });
+  }
+
+  async updateBrandCampaign(
+    campaignId: string,
+    data: {
+      title?: string;
+      description?: string;
+      budget?: number;
+      deadline?: Date;
+      platform?: string;
+      aspectRatio?: string;
+      productionBrief?: BrandProductionBrief;
+      campaignMemoryJson?: BrandCampaignMemory;
+      status?: CampaignStatus;
+    }
+  ): Promise<CampaignWithBrandAndAssets> {
+    return prisma.campaign.update({
+      where: { id: campaignId },
+      data: {
+        ...(data.title !== undefined ? { title: data.title } : {}),
+        ...(data.description !== undefined ? { description: data.description } : {}),
+        ...(data.budget !== undefined ? { budget: data.budget } : {}),
+        ...(data.deadline !== undefined ? { deadline: data.deadline } : {}),
+        ...(data.platform !== undefined ? { platform: data.platform } : {}),
+        ...(data.aspectRatio !== undefined ? { aspectRatio: data.aspectRatio } : {}),
+        ...(data.productionBrief !== undefined
+          ? { productionBrief: asInputJson(data.productionBrief) }
+          : {}),
+        ...(data.campaignMemoryJson !== undefined
+          ? { campaignMemoryJson: asInputJson(data.campaignMemoryJson) }
+          : {}),
+        ...(data.status !== undefined ? { status: data.status } : {})
+      },
+      include: {
+        brand: { include: { brandProfile: true } },
+        assets: { where: { deletedAt: null }, orderBy: { createdAt: "desc" } }
       }
     });
   }
@@ -177,10 +319,7 @@ export class CampaignRepository {
   }
 
   async softDeleteLogoAssets(campaignId: string) {
-    await prisma.campaignAsset.updateMany({
-      where: { campaignId, assetType: "LOGO", deletedAt: null },
-      data: { deletedAt: new Date() }
-    });
+    await assetRepository.softDeleteByType(campaignId, "LOGO");
   }
 
   async createAsset(input: {
@@ -192,27 +331,13 @@ export class CampaignRepository {
     mimeType: string;
     fileSize: number;
     previewUrl?: string;
+    metadataJson?: Prisma.InputJsonValue;
   }): Promise<CampaignAsset> {
-    return prisma.campaignAsset.create({
-      data: {
-        campaignId: input.campaignId,
-        uploadedBy: input.uploadedBy,
-        assetType: input.assetType,
-        fileName: input.fileName,
-        fileKey: input.fileKey,
-        mimeType: input.mimeType,
-        fileSize: BigInt(input.fileSize),
-        previewUrl: input.previewUrl,
-        storageProvider: "local"
-      }
-    });
+    return assetRepository.create(input);
   }
 
   async listAssets(campaignId: string): Promise<CampaignAsset[]> {
-    return prisma.campaignAsset.findMany({
-      where: { campaignId, deletedAt: null },
-      orderBy: { createdAt: "desc" }
-    });
+    return assetRepository.listByCampaign(campaignId);
   }
 }
 

@@ -2,6 +2,10 @@ import "server-only";
 
 import { promises as fs } from "node:fs";
 import path from "node:path";
+import { campaignAssetService } from "@/features/campaign/campaign-asset.service";
+import { campaignService } from "@/features/campaign/campaign.service";
+import { detectReferenceType } from "@/lib/campaign/reference-type";
+import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import type {
   CampaignStore,
   PackItemType,
@@ -77,24 +81,28 @@ async function writeStore(store: CampaignStore) {
   await fs.rename(tempPath, STORE_PATH);
 }
 
-export function detectReferenceType(url: string): ReferenceType {
-  const lower = url.toLowerCase();
-  if (lower.includes("youtube.com") || lower.includes("youtu.be")) return "youtube";
-  if (lower.includes("tiktok.com")) return "tiktok";
-  if (lower.includes("instagram.com")) return "instagram";
-  if (lower.includes("pinterest.")) return "pinterest";
-  if (lower.includes("behance.net")) return "behance";
-  if (/\.(mp4|mov|webm)(\?|$)/i.test(lower)) return "mp4";
-  if (/\.(jpg|jpeg|png|webp|gif)(\?|$)/i.test(lower)) return "image";
-  return "link";
-}
+export { detectReferenceType } from "@/lib/campaign/reference-type";
 
 export async function listAssetsForProject(projectId: string): Promise<StoredProjectAsset[]> {
+  if (hasDatabaseUrl()) {
+    const prismaId = await campaignService.resolveLegacyCampaignId(projectId);
+    if (prismaId) {
+      return campaignService.listBrandAssets(projectId);
+    }
+  }
+
   const store = await readStore();
   return store.assets.filter((item) => item.project_id === projectId);
 }
 
 export async function listReferencesForProject(projectId: string): Promise<StoredProjectReference[]> {
+  if (hasDatabaseUrl()) {
+    const prismaId = await campaignService.resolveLegacyCampaignId(projectId);
+    if (prismaId) {
+      return campaignService.listBrandReferences(projectId);
+    }
+  }
+
   const store = await readStore();
   return store.references
     .filter((item) => item.project_id === projectId)
@@ -107,6 +115,18 @@ export async function addProjectAsset(input: {
   file_url: string;
   file_name?: string;
 }): Promise<StoredProjectAsset> {
+  if (hasDatabaseUrl()) {
+    const prismaAsset = await campaignAssetService.addLegacyProjectAsset({
+      legacyProjectId: input.project_id,
+      type: input.type,
+      file_url: input.file_url,
+      file_name: input.file_name
+    });
+    if (prismaAsset) {
+      return prismaAsset;
+    }
+  }
+
   const store = await readStore();
   if (input.type === "logo") {
     store.assets = store.assets.filter(
@@ -146,6 +166,14 @@ export async function addProjectAsset(input: {
 }
 
 export async function removeProjectAsset(assetId: string, projectId: string) {
+  if (hasDatabaseUrl()) {
+    const prismaId = await campaignService.resolveLegacyCampaignId(projectId);
+    if (prismaId) {
+      await campaignAssetService.removeLegacyProjectAsset(assetId, projectId);
+      return;
+    }
+  }
+
   const store = await readStore();
   store.assets = store.assets.filter((item) => !(item.id === assetId && item.project_id === projectId));
   await writeStore(store);
@@ -159,6 +187,17 @@ export async function addProjectReference(input: {
   const url = input.source_url.trim();
   if (!url) {
     return null;
+  }
+
+  if (hasDatabaseUrl()) {
+    const prismaRef = await campaignAssetService.addLegacyProjectReference({
+      legacyProjectId: input.project_id,
+      source_url: url,
+      note: input.note
+    });
+    if (prismaRef) {
+      return prismaRef;
+    }
   }
 
   const store = await readStore();
@@ -187,6 +226,14 @@ export async function addProjectReference(input: {
 }
 
 export async function removeProjectReference(refId: string, projectId: string) {
+  if (hasDatabaseUrl()) {
+    const prismaId = await campaignService.resolveLegacyCampaignId(projectId);
+    if (prismaId) {
+      await campaignAssetService.removeLegacyProjectReference(refId, projectId);
+      return;
+    }
+  }
+
   const store = await readStore();
   store.references = store.references.filter(
     (item) => !(item.id === refId && item.project_id === projectId)
@@ -195,6 +242,13 @@ export async function removeProjectReference(refId: string, projectId: string) {
 }
 
 export async function getCreativeBrief(projectId: string): Promise<StoredCreativeBrief | null> {
+  if (hasDatabaseUrl()) {
+    const prismaId = await campaignService.resolveLegacyCampaignId(projectId);
+    if (prismaId) {
+      return campaignService.getBrandCreativeBrief(projectId);
+    }
+  }
+
   const store = await readStore();
   return (
     store.briefs
@@ -232,6 +286,20 @@ export function buildTemplateBrief(project: StoredProject, referenceCount: numbe
 }
 
 export async function ensureCreativeBrief(project: StoredProject): Promise<StoredCreativeBrief> {
+  if (hasDatabaseUrl()) {
+    const prismaId = await campaignService.resolveLegacyCampaignId(project.id);
+    if (prismaId) {
+      const existing = await campaignService.getBrandCreativeBrief(project.id);
+      if (existing) {
+        return existing;
+      }
+      const refs = await campaignService.listBrandReferences(project.id);
+      const brief = buildTemplateBrief(project, refs.length);
+      await campaignService.saveBrandCreativeBrief(project.id, brief);
+      return brief;
+    }
+  }
+
   const store = await readStore();
   const existing = store.briefs.find((item) => item.project_id === project.id);
   if (existing) {
@@ -350,6 +418,14 @@ export async function updatePackItemContent(
 }
 
 export async function countReferences(projectId: string) {
+  if (hasDatabaseUrl()) {
+    const prismaId = await campaignService.resolveLegacyCampaignId(projectId);
+    if (prismaId) {
+      const refs = await campaignService.listBrandReferences(projectId);
+      return refs.length;
+    }
+  }
+
   const store = await readStore();
   return store.references.filter((item) => item.project_id === projectId).length;
 }
@@ -376,6 +452,13 @@ export async function hasLogo(projectId: string) {
 }
 
 export async function hasProductVisual(projectId: string) {
+  if (hasDatabaseUrl()) {
+    const prismaId = await campaignService.resolveLegacyCampaignId(projectId);
+    if (prismaId) {
+      return campaignAssetService.hasLegacyProductVisual(projectId);
+    }
+  }
+
   const store = await readStore();
   return store.assets.some(
     (item) =>

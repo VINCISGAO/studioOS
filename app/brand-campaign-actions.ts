@@ -737,12 +737,6 @@ export async function publishBrandCampaignAction(formData: FormData) {
       if (!result.ok) {
         throw new Error(result.message);
       }
-
-      try {
-        await campaignBridgeService.syncPublishToPrisma(projectId);
-      } catch {
-        // Prisma optional for demo flow
-      }
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : lang === "zh" ? "发布失败" : "Publish failed";
