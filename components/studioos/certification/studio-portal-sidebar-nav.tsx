@@ -106,7 +106,7 @@ export function StudioPortalSidebarNav({
   }
 
   return (
-    <nav className="flex-1 space-y-0.5 px-3">
+    <nav className="min-h-0 flex-1 space-y-0.5 overflow-hidden px-3">
       {creatorPortalNavItems.map((item) => {
         const { labelKey, icon: Icon, showUnreadDot } = item;
         const active = isActive(item);

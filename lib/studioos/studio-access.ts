@@ -4,6 +4,7 @@ const STUDIO_PATHS_ALWAYS_ALLOWED = [
   "/studio/deposit",
   "/studio/settings",
   "/studio/works",
+  "/studio/profile",
   "/studio/income"
 ];
 

@@ -14,10 +14,10 @@ export const creatorPortalRoutes = {
   project: (orderId: string) => `/studio/projects/${orderId}`,
   review: (orderId: string) => `/studio/review/${orderId}`,
   reviewHub: "/studio/review",
+  profile: "/studio/profile",
   /** Legacy aliases */
   dashboard: "/studio",
   delivery: "/studio/projects",
-  profile: "/studio/works",
   deliveryForOrder: (orderId: string) => `/studio/projects/${orderId}`,
   campaignReview: (campaignId: string) => `/brand/projects/${campaignId}/review`
 } as const;

@@ -553,12 +553,14 @@ export function CreatorProfileStudio({
         actions={
           <>
             <Button
+              asChild
               variant="outline"
               size="sm"
               className="rounded-lg border-zinc-200"
-              onClick={() => setEditOpen(true)}
             >
-              <Pencil className="h-4 w-4" /> {t.editProfile}
+              <Link href={withLocale("/studio/profile", locale)}>
+                <Pencil className="h-4 w-4" /> {t.editProfile}
+              </Link>
             </Button>
             <Button size="sm" className="rounded-lg bg-zinc-950 hover:bg-zinc-800" onClick={() => setPublishOpen(true)}>
               <Plus className="h-4 w-4" /> {t.publishVideo}

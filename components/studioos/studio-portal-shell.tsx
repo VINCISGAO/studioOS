@@ -127,9 +127,8 @@ function StudioPortalShellInner({
   }, [unreadCount]);
 
   const isReviewPage = isCreatorPortalReviewRoute(pathname);
-  const isReviewSection =
-    pathname === creatorPortalRoutes.reviewHub || pathname.startsWith(`${creatorPortalRoutes.reviewHub}/`);
-  const hidePortalHeader = isReviewSection || isReviewPage;
+  const hidePortalHeader = isReviewPage;
+  const isProfileEditorPage = pathname === creatorPortalRoutes.profile;
 
   if (isReviewPage && isReviewFocusMode) {
     return (
@@ -161,16 +160,12 @@ function StudioPortalShellInner({
 
   const shellInner = (
     <PortalShellChromeProvider value={portalChrome}>
-    <div
-      className={cn(
-        isReviewPage ? "min-h-screen bg-[#f8f9fb] lg:min-h-screen" : "min-h-screen bg-[#f8f9fb]"
-      )}
-    >
-      <div className={cn("flex min-h-screen")}>
-        <aside className="hidden w-[248px] shrink-0 flex-col border-r border-zinc-200/80 bg-white lg:flex">
+    <div className="min-h-screen bg-[#f8f9fb] lg:h-screen lg:overflow-hidden">
+      <div className={cn("flex min-h-screen lg:h-screen lg:min-h-0 lg:overflow-hidden")}>
+        <aside className="hidden h-screen w-[248px] shrink-0 flex-col overflow-hidden border-r border-zinc-200/80 bg-white lg:flex">
           <MarketingHomeLink
             locale={locale}
-            className="flex items-center gap-2.5 px-5 py-5 transition hover:opacity-80"
+            className="flex shrink-0 items-center gap-2.5 px-5 py-5 transition hover:opacity-80"
           >
             <span
               className={cn(
@@ -203,7 +198,7 @@ function StudioPortalShellInner({
             pendingInvitationCount={pendingInvitationCount}
           />
 
-          <div className="mt-auto border-t border-zinc-100 p-4">
+          <div className="mt-auto shrink-0 border-t border-zinc-100 p-4">
             {creator ? (
               <div className="flex items-center gap-3 rounded-xl bg-zinc-50 px-3 py-3">
                 <div
@@ -227,7 +222,7 @@ function StudioPortalShellInner({
 
         <div
           className={cn(
-            "flex min-h-0 min-w-0 flex-1 flex-col",
+            "flex min-h-0 min-w-0 flex-1 flex-col lg:h-screen lg:overflow-hidden",
             isReviewPage && "h-[100dvh] max-h-[100dvh] overflow-hidden"
           )}
         >
@@ -304,8 +299,8 @@ function StudioPortalShellInner({
               isReviewPage
                 ? "flex w-full flex-col overflow-hidden p-0"
                 : cn(
-                    "mx-auto w-full px-4 py-6 sm:px-6 lg:px-8 lg:py-8",
-                    "max-w-[1280px]"
+                    "mx-auto w-full px-4 py-6 sm:px-6 lg:px-8 lg:py-8 lg:overflow-y-auto",
+                    isProfileEditorPage ? "max-w-none" : "max-w-[1280px]"
                   )
             )}
           >

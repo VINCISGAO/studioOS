@@ -68,6 +68,7 @@ async function persistCreatorProfile(
 function revalidateCreatorProfilePaths(creatorId: string) {
   revalidatePath("/studio");
   revalidatePath("/studio/profile");
+  revalidatePath("/creator/profile");
   revalidatePath("/match");
   revalidatePath(`/creators/${creatorId}`);
 }

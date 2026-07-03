@@ -85,6 +85,7 @@ function BrandPortalShellInner({
   const isProjectReview = isBrandPortalProjectReviewRoute(pathname);
   const focusRoute = isBrandPortalFocusRoute(pathname);
   const isWizardCreate = isBrandPortalWizardCreateRoute(pathname);
+  const isProfileEditorPage = pathname === brandPortalRoutes.brandProfile || pathname === brandPortalRoutes.profile;
   const portalChrome = {
     initials,
     userName: brandAccount?.name,
@@ -163,19 +164,26 @@ function BrandPortalShellInner({
     );
   }
 
+  function sidebarDisabledClass() {
+    return cn(
+      "relative flex cursor-not-allowed items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium",
+      "text-zinc-400 opacity-65"
+    );
+  }
+
   return (
     <PortalShellChromeProvider value={portalChrome}>
-      <div className="min-h-screen bg-[#f8f9fc]">
-      <div className="flex min-h-screen">
+      <div className="min-h-screen bg-[#f8f9fc] lg:h-screen lg:overflow-hidden">
+      <div className="flex min-h-screen lg:h-screen lg:min-h-0 lg:overflow-hidden">
         <aside
           className={cn(
-            "hidden w-[248px] shrink-0 flex-col border-r border-zinc-200/80 bg-white lg:flex",
+            "hidden h-screen w-[248px] shrink-0 flex-col overflow-hidden border-r border-zinc-200/80 bg-white lg:flex",
             isWizardCreate && "max-lg:hidden"
           )}
         >
           <MarketingHomeLink
             locale={locale}
-            className="flex items-center gap-2.5 px-5 py-5 transition hover:opacity-80"
+            className="flex shrink-0 items-center gap-2.5 px-5 py-5 transition hover:opacity-80"
           >
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-600 text-white shadow-sm">
               <Sparkles className="h-4 w-4" />
@@ -187,11 +195,26 @@ function BrandPortalShellInner({
             </div>
           </MarketingHomeLink>
 
-          <nav className="flex-1 space-y-0.5 px-3">
+          <nav className="min-h-0 flex-1 space-y-0.5 overflow-hidden px-3">
             {brandPortalNavItems.map((item) => {
               const active = isActive(item);
               const workspaceActive = item.labelKey === "workspace" && active;
               const Icon = item.icon ?? LayoutDashboard;
+              if (item.disabled) {
+                return (
+                  <div
+                    key={item.href + item.labelKey}
+                    className={sidebarDisabledClass()}
+                    aria-disabled="true"
+                    title={locale === "zh" ? "暂未开放" : "Coming soon"}
+                  >
+                    <Icon className="h-[18px] w-[18px] shrink-0" />
+                    <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
+                      <span>{nav[item.labelKey]}</span>
+                    </span>
+                  </div>
+                );
+              }
               return (
                 <Link
                   key={item.href + item.labelKey}
@@ -212,7 +235,7 @@ function BrandPortalShellInner({
             })}
           </nav>
 
-          <div className="mt-auto border-t border-zinc-100 p-4">
+          <div className="mt-auto shrink-0 border-t border-zinc-100 p-4">
             {brandAccount ? (
               <div className="flex items-center gap-3 rounded-xl bg-zinc-50 px-3 py-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-sm font-semibold text-white">
@@ -232,7 +255,7 @@ function BrandPortalShellInner({
 
         <div
           className={cn(
-            "flex min-w-0 flex-1 flex-col",
+            "flex min-w-0 flex-1 flex-col lg:h-screen lg:overflow-hidden",
             isProjectReview && "h-[100dvh] max-h-[100dvh] overflow-hidden"
           )}
         >
@@ -292,12 +315,14 @@ function BrandPortalShellInner({
                 <PortalMobileNav
                   locale={locale}
                   pathname={pathname}
-                  items={brandPortalNavItems.map(({ href, labelKey, mobileIconKey }) => ({
-                    id: labelKey,
-                    href,
-                    label: nav[labelKey],
-                    iconKey: mobileIconKey
-                  }))}
+                  items={brandPortalNavItems
+                    .filter((item) => !item.disabled)
+                    .map(({ href, labelKey, mobileIconKey }) => ({
+                      id: labelKey,
+                      href,
+                      label: nav[labelKey],
+                      iconKey: mobileIconKey
+                    }))}
                 />
               </div>
               ) : null}
@@ -310,8 +335,8 @@ function BrandPortalShellInner({
               isProjectReview
                 ? "flex w-full flex-col overflow-hidden p-0"
                 : cn(
-                    "mx-auto w-full px-4 py-6 sm:px-6 lg:px-8 lg:py-8",
-                    focusRoute ? "max-w-[920px] lg:max-w-[1280px]" : "max-w-[1280px]"
+                    "mx-auto w-full px-4 py-6 sm:px-6 lg:px-8 lg:py-8 lg:overflow-y-auto",
+                    isProfileEditorPage ? "max-w-none" : focusRoute ? "max-w-[920px] lg:max-w-[1280px]" : "max-w-[1280px]"
                   )
             )}
           >

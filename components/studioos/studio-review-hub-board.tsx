@@ -137,14 +137,14 @@ export function StudioReviewHubBoard({ locale, items }: { locale: Locale; items:
     { label: t.pendingRevision, value: stats.pendingRevision, sub: t.waitBrand, icon: MessageSquareText, tone: "amber" },
     { label: t.dueToday, value: Math.max(1, stats.dueToday), sub: t.deadlineToday, icon: Clock3, tone: "blue" },
     { label: t.approved, value: Math.max(stats.approved, 8), sub: t.passedMonth, icon: CheckCircle2, tone: "emerald" },
-    { label: t.avgReview, value: "1.8天", sub: t.faster, icon: TrendingUp, tone: "violet", trendDown: true }
+    { label: t.avgReview, value: locale === "zh" ? "1.8天" : "1.8d", sub: t.faster, icon: TrendingUp, tone: "violet", trendDown: true }
   ];
 
   return (
-    <div className="space-y-6">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 sm:text-[28px]">{t.title}</h1>
-        <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-500">{t.subtitle}</p>
+    <div className="mx-auto w-full max-w-[1180px] space-y-6">
+      <header className="flex flex-col gap-2">
+        <h1 className="text-[28px] font-semibold leading-9 tracking-[-0.035em] text-zinc-950">{t.title}</h1>
+        <p className="max-w-3xl text-sm leading-6 text-zinc-500">{t.subtitle}</p>
       </header>
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
@@ -159,12 +159,15 @@ export function StudioReviewHubBoard({ locale, items }: { locale: Locale; items:
                   ? "bg-blue-50 text-blue-600"
                   : "bg-emerald-50 text-emerald-600";
           return (
-            <div key={card.label} className="rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-sm">
+            <div
+              key={card.label}
+              className="min-h-[132px] rounded-[22px] border border-zinc-200/80 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]"
+            >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-xs font-medium text-zinc-500">{card.label}</p>
-                  <p className="mt-2 text-3xl font-semibold tracking-tight text-zinc-950">{card.value}</p>
-                  <p className="mt-1 text-xs text-zinc-500">{card.sub}</p>
+                  <p className="text-[13px] font-medium text-zinc-500">{card.label}</p>
+                  <p className="mt-3 text-[32px] font-semibold leading-none tracking-[-0.04em] text-zinc-950">{card.value}</p>
+                  <p className="mt-2 text-xs leading-5 text-zinc-500">{card.sub}</p>
                 </div>
                 <span className={cn("flex h-10 w-10 items-center justify-center rounded-xl", iconTone)}>
                   <Icon className="h-5 w-5" />
@@ -181,7 +184,7 @@ export function StudioReviewHubBoard({ locale, items }: { locale: Locale; items:
         })}
       </section>
 
-      <section className="rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-sm sm:p-5">
+      <section className="rounded-[22px] border border-zinc-200/80 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
           <div className="relative min-w-0 flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
@@ -189,17 +192,17 @@ export function StudioReviewHubBoard({ locale, items }: { locale: Locale; items:
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder={t.search}
-              className="h-11 w-full rounded-xl border border-zinc-200 bg-zinc-50/50 pl-10 pr-3 text-sm outline-none ring-violet-500/20 focus:border-violet-300 focus:ring-2"
+              className="h-11 w-full rounded-xl border border-zinc-200 bg-zinc-50/50 pl-10 pr-3 text-sm outline-none ring-violet-500/20 transition focus:border-violet-300 focus:ring-2"
             />
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <Button variant="outline" className="h-11 rounded-xl border-zinc-200 bg-white">{t.allBrands}</Button>
-            <Button variant="outline" className="h-11 rounded-xl border-zinc-200 bg-white">{t.allStatus}</Button>
-            <Button variant="outline" className="h-11 rounded-xl border-zinc-200 bg-white">
+            <Button variant="outline" className="h-11 rounded-xl border-zinc-200 bg-white px-4">{t.allBrands}</Button>
+            <Button variant="outline" className="h-11 rounded-xl border-zinc-200 bg-white px-4">{t.allStatus}</Button>
+            <Button variant="outline" className="h-11 rounded-xl border-zinc-200 bg-white px-4">
               <CalendarDays className="mr-2 h-4 w-4" />
               {t.dateRange}
             </Button>
-            <Button variant="outline" className="h-11 rounded-xl border-zinc-200 bg-white">{t.sort}</Button>
+            <Button variant="outline" className="h-11 rounded-xl border-zinc-200 bg-white px-4">{t.sort}</Button>
             <div className="ml-auto flex rounded-xl border border-zinc-200 p-1">
               <button type="button" onClick={() => setView("list")} className={cn("rounded-lg p-2", view === "list" ? "bg-zinc-900 text-white" : "text-zinc-500")}>
                 <LayoutList className="h-4 w-4" />
@@ -218,17 +221,20 @@ export function StudioReviewHubBoard({ locale, items }: { locale: Locale; items:
           <p className="mt-3 text-sm font-medium text-zinc-700">{t.empty}</p>
         </div>
       ) : (
-        <div className={cn("space-y-4", view === "grid" && "grid gap-4 sm:grid-cols-2")}>
+        <div className={cn(view === "grid" ? "grid gap-4 xl:grid-cols-2" : "space-y-4")}>
           {filtered.map((item) => (
-            <article key={item.orderId} className="overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-sm">
-              <div className="flex flex-col gap-4 border-b border-zinc-100 p-5 sm:flex-row sm:items-start sm:justify-between">
+            <article
+              key={item.orderId}
+              className="overflow-hidden rounded-[24px] border border-zinc-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]"
+            >
+              <div className="grid gap-5 border-b border-zinc-100 p-5 lg:grid-cols-[minmax(0,1fr)_144px] lg:items-start">
                 <div className="flex min-w-0 gap-4">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-zinc-900 text-sm font-semibold text-white">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-zinc-900 text-sm font-semibold text-white">
                     {brandInitial(item.brandName)}
                   </div>
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h2 className="truncate text-lg font-semibold text-zinc-950">{item.title}</h2>
+                      <h2 className="min-w-0 truncate text-lg font-semibold leading-6 text-zinc-950">{item.title}</h2>
                       <span className="rounded-full bg-violet-50 px-2.5 py-0.5 text-xs font-medium text-violet-700">
                         {t.status[item.status as keyof typeof t.status] ?? item.status}
                       </span>
@@ -237,24 +243,24 @@ export function StudioReviewHubBoard({ locale, items }: { locale: Locale; items:
                       {item.brandName} · {locale === "zh" ? "创建于" : "Created"} {formatDate(item.updatedAt)}
                     </p>
                     {item.description ? (
-                      <p className="mt-2 line-clamp-2 text-sm text-zinc-600">{item.description}</p>
+                      <p className="mt-2 line-clamp-2 max-w-4xl text-sm leading-6 text-zinc-600">{item.description}</p>
                     ) : null}
-                    <div className="mt-3 flex flex-wrap gap-3 text-xs text-zinc-500">
+                    <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-zinc-500">
                       <span>{item.deliverableCount} {locale === "zh" ? t.versions : t.versions}</span>
                       <span>{item.openCommentCount} {locale === "zh" ? t.comments : t.comments}</span>
                       <span>{t.updated} {relativeTime(item.updatedAt, locale)}</span>
                     </div>
                   </div>
                 </div>
-                <Button asChild className="rounded-xl bg-violet-600 hover:bg-violet-700">
+                <Button asChild className="h-11 min-w-[112px] justify-center whitespace-nowrap rounded-xl bg-violet-600 px-5 hover:bg-violet-700">
                   <Link href={withLocale(item.reviewHref, locale)}>
                     <Play className="mr-2 h-4 w-4" />
                     {t.open}
                   </Link>
                 </Button>
               </div>
-              <div className="grid gap-4 p-5 lg:grid-cols-[160px_minmax(0,1fr)_auto] lg:items-center">
-                <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-zinc-800 to-zinc-600 px-4 py-8 text-white">
+              <div className="grid gap-5 p-5 lg:grid-cols-[160px_minmax(0,1fr)_180px] lg:items-center">
+                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-zinc-800 to-zinc-600 px-4 py-8 text-white">
                   <Play className="mx-auto h-8 w-8 opacity-90" />
                   <p className="mt-2 text-center text-xs opacity-80">02:45</p>
                 </div>
@@ -275,8 +281,8 @@ export function StudioReviewHubBoard({ locale, items }: { locale: Locale; items:
                     {item.latestCommentAt ? ` · ${t.latestFeedback}: ${relativeTime(item.latestCommentAt, locale)}` : ""}
                   </p>
                 </div>
-                <div className="space-y-3 lg:w-40">
-                  <div>
+                <div className="rounded-2xl bg-zinc-50 p-4">
+                  <div className="mb-3">
                     <p className="text-xs text-zinc-500">{item.deadline ? formatDate(item.deadline) : formatDate(item.updatedAt)}</p>
                     <p className="text-xs font-medium text-amber-600">{t.remaining} 2 {t.days}</p>
                   </div>

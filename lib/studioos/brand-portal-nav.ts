@@ -20,6 +20,7 @@ export type BrandPortalNavItem = {
   labelKey: BrandPortalNavKey;
   icon: typeof LayoutDashboard;
   mobileIconKey: PortalMobileNavIconKey;
+  disabled?: boolean;
 };
 
 /** Brand workspace sidebar — matches dashboard mockup IA. */
@@ -70,7 +71,8 @@ export const brandPortalNavItems: BrandPortalNavItem[] = [
     href: brandPortalRoutes.brandTeam,
     labelKey: "team",
     icon: Users,
-    mobileIconKey: "studios"
+    mobileIconKey: "studios",
+    disabled: true
   },
   {
     href: brandPortalRoutes.settings,

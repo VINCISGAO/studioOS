@@ -35,7 +35,8 @@ export default async function BrandCenterPage({ searchParams }: { searchParams: 
           title: locale === "zh" ? "团队成员" : "Team members",
           description:
             locale === "zh" ? "邀请同事查看广告、审片与账单。" : "Invite teammates to manage ads, review, and billing.",
-          icon: Users
+          icon: Users,
+          disabled: true
         },
         {
           href: brandPortalRoutes.profile,

@@ -60,3 +60,5 @@ public/uploads/**/*.mov
 playwright-report/
 test-results/
 *.tsbuildinfo
+.vercel
+.env*
