@@ -13,8 +13,15 @@ function buildTemplateDirections(campaign: Campaign): CreativeDirection[] {
       id: randomUUID(),
       title: "Cinematic Proof",
       hook: `Open on a single hero shot — ${product} in motion within 2 seconds.`,
+      story: `Show ${product} moving from problem to premium payoff: tension, reveal, proof, then brand moment.`,
       visualStyle: "Premium lighting, shallow depth of field, slow push-ins",
       tone: "Confident, aspirational",
+      shotList: [
+        "Macro product reveal with motion",
+        "Lifestyle scene showing the core use case",
+        "Proof shot highlighting the benefit",
+        "Clean end card with offer and CTA"
+      ],
       cta: "Shop the launch — link in bio",
       rationale: `Strong for ${platform} when the product looks premium and needs instant credibility.`
     },
@@ -22,8 +29,15 @@ function buildTemplateDirections(campaign: Campaign): CreativeDirection[] {
       id: randomUUID(),
       title: "UGC Testimonial",
       hook: `"I didn't expect this from ${product}" — creator face-to-camera cold open.`,
+      story: `A creator frames the doubt, tries ${product}, shows the result, then explains why it earned a spot in their routine.`,
       visualStyle: "Handheld, natural light, quick jump cuts",
       tone: "Authentic, conversational",
+      shotList: [
+        "Face-to-camera curiosity hook",
+        "Unboxing or first-touch product moment",
+        "Before/after or problem/solution demo",
+        "Creator verdict with direct CTA"
+      ],
       cta: "Try it today — limited offer",
       rationale: `Performs on ${platform} when social proof and relatability drive consideration.`
     },
@@ -31,8 +45,15 @@ function buildTemplateDirections(campaign: Campaign): CreativeDirection[] {
       id: randomUUID(),
       title: "Pattern Interrupt",
       hook: "Unexpected visual gag or contrast cut before revealing the product benefit.",
+      story: `Start with a thumb-stopping contradiction, reveal ${product} as the answer, then stack quick benefit proof.`,
       visualStyle: "Bold typography overlays, rhythmic editing, saturated color",
       tone: "Playful, high-energy",
+      shotList: [
+        "Unexpected cold-open visual",
+        "Fast product reveal with text overlay",
+        "Three rapid benefit beats",
+        "High-contrast CTA frame"
+      ],
       cta: "Tap to claim your discount",
       rationale: `Best when ${platform} audiences scroll fast and you need thumb-stop in the first frame.`
     }
@@ -43,13 +64,18 @@ function parseDirectionsFromJson(raw: string, campaign: Campaign): CreativeDirec
   try {
     const parsed = JSON.parse(raw) as { directions?: CreativeDirection[] };
     if (!Array.isArray(parsed.directions) || parsed.directions.length < 3) return null;
-    return parsed.directions.slice(0, 3).map((d) => ({
+    const fallback = buildTemplateDirections(campaign);
+    return parsed.directions.slice(0, 3).map((d, index) => ({
       id: d.id || randomUUID(),
-      title: d.title,
-      hook: d.hook,
-      visualStyle: d.visualStyle,
-      tone: d.tone,
-      cta: d.cta,
+      title: d.title || fallback[index]?.title || `Direction ${index + 1}`,
+      hook: d.hook || fallback[index]?.hook || "",
+      story: d.story || fallback[index]?.story || "",
+      visualStyle: d.visualStyle || fallback[index]?.visualStyle || "",
+      tone: d.tone || fallback[index]?.tone || "",
+      shotList: Array.isArray(d.shotList) && d.shotList.length
+        ? d.shotList.map(String)
+        : fallback[index]?.shotList ?? [],
+      cta: d.cta || fallback[index]?.cta || "",
       rationale: d.rationale || `Tailored for ${campaign.platform ?? "TikTok"}.`
     }));
   } catch {
@@ -79,7 +105,7 @@ export async function runCreativeDirectionJob(campaign: Campaign): Promise<{
 
   const result = await aiGatewayService.chatCompletion({
     system:
-      "You are StudioOS Creative Director. Generate exactly 3 distinct creative directions for a paid social video campaign. Return JSON: { directions: [{ title, hook, visualStyle, tone, cta, rationale }] }. Keep hooks under 25 words. No markdown.",
+      "You are StudioOS Creative Director. Generate exactly 3 distinct creative directions for a paid social video campaign. Return JSON only: { directions: [{ title, hook, story, visualStyle, tone, shotList, cta, rationale }] }. shotList must be an array of 4 concise shots. Keep hooks under 25 words. No markdown.",
     user: JSON.stringify({
       title: campaign.title,
       platform: campaign.platform,

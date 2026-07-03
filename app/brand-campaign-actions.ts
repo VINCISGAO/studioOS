@@ -33,6 +33,9 @@ import {
 import { upsertBrandProfileFromBrief } from "@/lib/brand-profile-service";
 import { listOrdersForProject, updateOrderRequirements } from "@/lib/order-service";
 import { buildConfirmedBriefSnapshot } from "@/lib/studioos/confirmed-brief";
+import { creativeDirectionService } from "@/features/ai/creative-direction.service";
+import { brandCampaignRepository } from "@/features/campaign/brand-campaign/brand-campaign.repository";
+import type { BrandProductionBrief } from "@/features/campaign/brand-campaign/brand-campaign.types";
 import { campaignBridgeService } from "@/features/campaign/campaign-bridge.service";
 import { emitWizardProgress } from "@/lib/campaign/wizard-progress.service";
 import { runBrandWizardDemoPrepareInstant, runBrandWizardDemoPublish } from "@/lib/campaign/brand-wizard-demo-prepare";
@@ -120,6 +123,14 @@ function revalidateBrandCampaign(projectId: string) {
   revalidatePath(`/brand/projects/${projectId}`);
   revalidatePath(`/brand/projects/${projectId}/studios`);
   revalidatePath("/studio/invitations");
+}
+
+async function requireBrandCampaignUser(email: string) {
+  const user = await brandCampaignRepository.findBrandUserByEmail(email);
+  if (!user) {
+    throw new Error("Brand user not found");
+  }
+  return { id: user.id, role: user.role };
 }
 
 function parseObjective(raw: FormDataEntryValue | null): CommercialObjective {
@@ -667,6 +678,106 @@ export async function prepareBrandCampaignAction(formData: FormData) {
   }
 }
 
+export async function generateBrandCreativeDirectionsAction(formData: FormData) {
+  const lang = normalizeLang(formData.get("lang"));
+  const projectId = String(formData.get("project_id") ?? "");
+  const ctx = await resolveBrandCampaignContext(projectId, lang);
+  if (!ctx.ok) return ctx;
+
+  const campaignId = await campaignBridgeService.resolvePrismaCampaignId(projectId);
+  if (!campaignId) {
+    return {
+      ok: false as const,
+      error: lang === "zh" ? "Campaign 尚未连接到 AI 创意流程" : "Campaign is not connected to the AI creative flow"
+    };
+  }
+
+  try {
+    const user = await requireBrandCampaignUser(ctx.client.client_email);
+    const directions = await creativeDirectionService.generate(campaignId, user);
+    await completeWizardStep(projectId, 2);
+    await emitWizardProgress(projectId, {
+      step: 2,
+      phase: "idle",
+      progressMessage: lang === "zh" ? "AI 已生成 3 个创意方向" : "AI generated 3 creative directions"
+    });
+    revalidateBrandCampaign(projectId);
+    return { ok: true as const, directions };
+  } catch (error) {
+    return {
+      ok: false as const,
+      error: error instanceof Error ? error.message : lang === "zh" ? "创意方向生成失败" : "Creative directions failed"
+    };
+  }
+}
+
+export async function approveBrandCreativeDirectionAction(formData: FormData) {
+  const lang = normalizeLang(formData.get("lang"));
+  const projectId = String(formData.get("project_id") ?? "");
+  const directionId = String(formData.get("direction_id") ?? "");
+  const ctx = await resolveBrandCampaignContext(projectId, lang);
+  if (!ctx.ok) return ctx;
+
+  if (!directionId) {
+    return { ok: false as const, error: lang === "zh" ? "请选择一个创意方向" : "Choose a creative direction" };
+  }
+
+  const campaignId = await campaignBridgeService.resolvePrismaCampaignId(projectId);
+  if (!campaignId) {
+    return {
+      ok: false as const,
+      error: lang === "zh" ? "Campaign 尚未连接到 AI 创意流程" : "Campaign is not connected to the AI creative flow"
+    };
+  }
+
+  try {
+    const user = await requireBrandCampaignUser(ctx.client.client_email);
+    const selected = await creativeDirectionService.approve(campaignId, user, directionId);
+    const campaign = await brandCampaignRepository.findByLegacyProjectId(projectId);
+    const brief = (campaign?.productionBrief ?? {}) as BrandProductionBrief;
+    const frozen = brief.frozen_production_brief;
+    if (!frozen?.full_text?.trim()) {
+      throw new Error("Frozen Production Brief was not generated");
+    }
+
+    await updateProject(projectId, {
+      settings_json: {
+        ...ctx.project.settings_json,
+        frozen_production_brief: frozen,
+        selected_direction_id: directionId,
+        confirmed_brief: {
+          confirmed_at: frozen.frozen_at,
+          fields: [
+            { section: "Creative", label: "Hook", value: frozen.hook },
+            { section: "Creative", label: "Story", value: frozen.story },
+            { section: "Creative", label: "Tone", value: frozen.tone },
+            { section: "Creative", label: "CTA", value: frozen.cta }
+          ],
+          full_text: frozen.full_text
+        }
+      }
+    });
+
+    const linkedOrders = await listOrdersForProject(projectId);
+    await Promise.all(linkedOrders.map((order) => updateOrderRequirements(order.id, frozen.full_text)));
+
+    await Promise.all([3, 4, 5, 6].map((step) => completeWizardStep(projectId, step)));
+    await emitWizardProgress(projectId, {
+      step: 6,
+      phase: "idle",
+      progressMessage: lang === "zh" ? "Production Brief 已冻结" : "Production Brief frozen"
+    });
+
+    revalidateBrandCampaign(projectId);
+    return { ok: true as const, selected, frozen };
+  } catch (error) {
+    return {
+      ok: false as const,
+      error: error instanceof Error ? error.message : lang === "zh" ? "创意确认失败" : "Creative approval failed"
+    };
+  }
+}
+
 /** @deprecated merged into saveBrandCampaignReferencesAction */
 export async function confirmBrandCampaignAction(formData: FormData) {
   const lang = normalizeLang(formData.get("lang"));
@@ -711,11 +822,11 @@ export async function publishBrandCampaignAction(formData: FormData) {
   if (!ctx.ok) return ctx;
   const { client, project } = ctx;
 
-  const confirmedBrief = project.settings_json?.confirmed_brief as { full_text?: string } | undefined;
-  if (!confirmedBrief?.full_text?.trim()) {
+  const frozenBrief = project.settings_json?.frozen_production_brief as { full_text?: string } | undefined;
+  if (!frozenBrief?.full_text?.trim()) {
     return {
       ok: false as const,
-      error: lang === "zh" ? "请先确认需求表单" : "Confirm your brief before publishing"
+      error: lang === "zh" ? "请先选择创意方向并冻结 Production Brief" : "Choose a creative direction and freeze the Production Brief before publishing"
     };
   }
 

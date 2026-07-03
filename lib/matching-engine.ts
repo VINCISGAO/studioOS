@@ -1,5 +1,6 @@
 import type { Creator, CreatorWork } from "@/lib/types";
 import type { CreatorMatch, MatchReason, ProjectMatch, StoredProject } from "@/lib/project-types";
+import type { FrozenProductionBrief } from "@/features/ai/creative-direction.types";
 import { AI_MATCHING_WEIGHTS, orderRatingMatchPoints } from "@/lib/studioos/ai-matching-policy";
 import { projectBudgetMatchesCreatorMin } from "@/lib/studioos/creator-price-preference";
 
@@ -43,6 +44,20 @@ function includesAny(haystack: string, needles: string[]) {
   return needles.some((needle) => needle && value.includes(normalize(needle)));
 }
 
+function frozenBriefFromProject(project: StoredProject): FrozenProductionBrief | null {
+  const value = project.settings_json?.frozen_production_brief;
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+  const brief = value as FrozenProductionBrief;
+  return brief.full_text?.trim() ? brief : null;
+}
+
+function frozenAspectRatio(brief: FrozenProductionBrief) {
+  const delivery = brief.delivery as { aspect_ratios?: string[] } | undefined;
+  return delivery?.aspect_ratios?.[0] ?? "";
+}
+
 function scoreCreatorForProject(
   project: StoredProject,
   creator: Creator,
@@ -52,6 +67,11 @@ function scoreCreatorForProject(
     creatorLearningMemory?: Map<string, CreatorLearningMatchMemory>;
   }
 ): CreatorMatch | null {
+  const brief = frozenBriefFromProject(project);
+  if (!brief) {
+    return null;
+  }
+
   if (!ACTIVE_CREATOR_STATUSES.has(creator.status)) {
     return null;
   }
@@ -66,7 +86,7 @@ function scoreCreatorForProject(
 
   const learningMemory = options?.creatorLearningMemory?.get(creator.id);
   const effectiveMinBudget = learningMemory?.minAcceptBudgetUsd ?? creator.min_project_budget_usd;
-  if (!projectBudgetMatchesCreatorMin(project.budget_range, effectiveMinBudget)) {
+  if (!projectBudgetMatchesCreatorMin(brief.budget_range ?? "", effectiveMinBudget)) {
     return null;
   }
 
@@ -74,20 +94,23 @@ function scoreCreatorForProject(
   const reasons: MatchReason[] = [];
   let score = 0;
 
-  const categoryNeedle = normalize(project.category);
+  const category = brief.product?.category ?? "";
+  const categoryNeedle = normalize(category);
   const categoryHit =
-    creator.specialties.some((item) => normalize(item).includes(categoryNeedle) || categoryNeedle.includes(normalize(item))) ||
-    creatorWorks.some((work) => normalize(work.category).includes(categoryNeedle) || categoryNeedle.includes(normalize(work.category)));
+    Boolean(categoryNeedle) &&
+    (creator.specialties.some((item) => normalize(item).includes(categoryNeedle) || categoryNeedle.includes(normalize(item))) ||
+      creatorWorks.some((work) => normalize(work.category).includes(categoryNeedle) || categoryNeedle.includes(normalize(work.category))));
 
   if (categoryHit) {
     score += AI_MATCHING_WEIGHTS.category;
     reasons.push({
-      en: `Category fit: ${project.category}`,
-      zh: `品类匹配：${project.category}`
+      en: `Category fit: ${category}`,
+      zh: `品类匹配：${category}`
     });
   }
 
-  const platformParts = project.target_platform.split(/[,/|]+/).map((item) => item.trim()).filter(Boolean);
+  const platform = brief.platforms ?? "";
+  const platformParts = platform.split(/[,/|]+/).map((item) => item.trim()).filter(Boolean);
   const platformHit =
     includesAny(creator.specialties.join(" "), platformParts) ||
     creatorWorks.some((work) => includesAny(work.platform, platformParts));
@@ -95,26 +118,37 @@ function scoreCreatorForProject(
   if (platformHit) {
     score += AI_MATCHING_WEIGHTS.platform;
     reasons.push({
-      en: `Platform experience: ${project.target_platform}`,
-      zh: `平台经验：${project.target_platform}`
+      en: `Platform experience: ${platform}`,
+      zh: `平台经验：${platform}`
     });
   }
 
+  const aspectRatio = frozenAspectRatio(brief);
   const formatHit = creatorWorks.some(
     (work) =>
-      normalize(work.format).includes(normalize(project.video_format)) ||
-      normalize(project.video_format).includes(normalize(work.format))
+      Boolean(aspectRatio) &&
+      (normalize(work.format).includes(normalize(aspectRatio)) ||
+        normalize(aspectRatio).includes(normalize(work.format)))
   );
 
   if (formatHit) {
     score += AI_MATCHING_WEIGHTS.format;
     reasons.push({
-      en: `Format match: ${project.video_format}`,
-      zh: `画幅匹配：${project.video_format}`
+      en: `Format match: ${aspectRatio}`,
+      zh: `画幅匹配：${aspectRatio}`
     });
   }
 
-  const briefText = [project.campaign_goal, project.notes, project.brand_style].join(" ");
+  const briefText = [
+    brief.title,
+    brief.hook,
+    brief.story,
+    brief.tone,
+    brief.visual_style,
+    brief.shot_list.join(" "),
+    brief.cta,
+    brief.full_text
+  ].join(" ");
   const creatorText = [
     creator.bio ?? "",
     creator.headline ?? "",
@@ -211,7 +245,7 @@ function scoreCreatorForProject(
   const matchedWorks = creatorWorks
     .filter((work) => {
       const categoryOk =
-        !project.category ||
+        !categoryNeedle ||
         normalize(work.category).includes(categoryNeedle) ||
         categoryNeedle.includes(normalize(work.category));
       const platformOk = !platformParts.length || includesAny(work.platform, platformParts);

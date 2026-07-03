@@ -1,7 +1,5 @@
 import "server-only";
 
-import { promises as fs } from "node:fs";
-import path from "node:path";
 import { listOrdersForCreator } from "@/lib/order-service";
 import { markOrdersPaidForWithdrawal } from "@/lib/order-service";
 import type {
@@ -14,6 +12,7 @@ import type {
   WithdrawalStore
 } from "@/lib/studioos/withdrawal-types";
 import { hasDatabaseUrl, prisma } from "@/lib/core/database/prisma";
+import { dataStorePath, readDataJson, writeDataJson } from "@/lib/serverless-store-core";
 import { settlementService } from "@/features/settlement/settlement.service";
 import { resolveCreatorProfileIdForLegacyId } from "@/features/matching/invitation-creator-bridge";
 import {
@@ -23,8 +22,7 @@ import {
   estimateCryptoAmount
 } from "@/lib/studioos/withdrawal-utils";
 
-const STORE_DIR = path.join(process.cwd(), ".data");
-const STORE_PATH = path.join(STORE_DIR, "withdrawal-store.json");
+const STORE_PATH = dataStorePath("withdrawal-store.json");
 
 function createId(prefix: string) {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -35,19 +33,12 @@ function emptyStore(): WithdrawalStore {
 }
 
 async function readStore(): Promise<WithdrawalStore> {
-  try {
-    const raw = await fs.readFile(STORE_PATH, "utf8");
-    const parsed = JSON.parse(raw) as WithdrawalStore;
-    const { store, changed } = ensureDemoPayoutMethods(parsed);
-    if (changed) {
-      await writeStore(store);
-    }
-    return store;
-  } catch {
-    const { store: seeded } = ensureDemoPayoutMethods(emptyStore());
-    await writeStore(seeded);
-    return seeded;
+  const parsed = await readDataJson(STORE_PATH, () => emptyStore());
+  const { store, changed } = ensureDemoPayoutMethods(parsed);
+  if (changed) {
+    await writeStore(store);
   }
+  return store;
 }
 
 function ensureDemoPayoutMethods(store: WithdrawalStore): { store: WithdrawalStore; changed: boolean } {
@@ -135,10 +126,7 @@ function ensureDemoPayoutMethods(store: WithdrawalStore): { store: WithdrawalSto
 }
 
 async function writeStore(store: WithdrawalStore) {
-  await fs.mkdir(STORE_DIR, { recursive: true });
-  const tempPath = `${STORE_PATH}.tmp`;
-  await fs.writeFile(tempPath, JSON.stringify(store, null, 2), "utf8");
-  await fs.rename(tempPath, STORE_PATH);
+  await writeDataJson(STORE_PATH, store);
 }
 
 function isActiveWithdrawal(status: WithdrawalStatus) {

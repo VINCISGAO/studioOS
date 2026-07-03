@@ -1,4 +1,5 @@
 import type { StoredCreativeBrief } from "@/lib/campaign-types";
+import type { CreativeDirection, FrozenProductionBrief } from "@/features/ai/creative-direction.types";
 import type { CommercialObjective } from "@/lib/project-types";
 
 export type BrandProductionBrief = {
@@ -18,6 +19,12 @@ export type BrandProductionBrief = {
   notes?: string;
   questionnaire?: Record<string, unknown>;
   confirmed_brief?: Record<string, unknown>;
+  creative_directions?: CreativeDirection[];
+  selected_direction_id?: string;
+  generated_at?: string;
+  approved_at?: string;
+  ai_job_id?: string;
+  frozen_production_brief?: FrozenProductionBrief;
   creative_brief?: StoredCreativeBrief | Record<string, unknown>;
   style?: {
     brand?: string;

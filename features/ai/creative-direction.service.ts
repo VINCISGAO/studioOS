@@ -1,4 +1,4 @@
-import type { CreativeDirection } from "@/features/ai/creative-direction.types";
+import type { CreativeDirection, FrozenProductionBrief } from "@/features/ai/creative-direction.types";
 import { aiWorkerService } from "@/features/ai/ai-worker.service";
 import { aiJobRepository } from "@/features/ai/ai-job.repository";
 import { campaignRepository } from "@/features/campaign/campaign.repository";
@@ -8,7 +8,45 @@ import type { AuthUser } from "@/features/auth/permission.service";
 import { PermissionService } from "@/features/auth/permission.service";
 import { appError } from "@/lib/core/errors";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
+import { asInputJson } from "@/lib/core/prisma-json";
 import type { Campaign } from "@prisma/client";
+
+function buildFrozenProductionBrief(campaign: Campaign, direction: CreativeDirection): FrozenProductionBrief {
+  const brief = (campaign.productionBrief ?? {}) as {
+    product?: FrozenProductionBrief["product"];
+    audience?: string;
+    budget?: { range?: string };
+    delivery?: Record<string, unknown>;
+  };
+  const shotList = direction.shotList.length ? direction.shotList : ["Hero hook", "Story setup", "Product proof", "CTA"];
+  const fullText = [
+    `Title: ${direction.title}`,
+    `Hook: ${direction.hook}`,
+    `Story: ${direction.story}`,
+    `Tone: ${direction.tone}`,
+    `Visual style: ${direction.visualStyle}`,
+    `Shot list:\n${shotList.map((shot, index) => `${index + 1}. ${shot}`).join("\n")}`,
+    `CTA: ${direction.cta}`
+  ].join("\n\n");
+
+  return {
+    frozen_at: new Date().toISOString(),
+    source_direction_id: direction.id,
+    title: direction.title,
+    hook: direction.hook,
+    story: direction.story,
+    tone: direction.tone,
+    visual_style: direction.visualStyle,
+    shot_list: shotList,
+    cta: direction.cta,
+    ...(brief.product ? { product: brief.product } : {}),
+    ...(brief.audience ? { audience: brief.audience } : {}),
+    ...(campaign.platform ? { platforms: campaign.platform } : {}),
+    budget_range: brief.budget?.range ?? `$${Number(campaign.budget)}`,
+    ...(brief.delivery ? { delivery: brief.delivery } : {}),
+    full_text: fullText
+  };
+}
 
 export class CreativeDirectionService {
   private assertDb() {
@@ -95,19 +133,15 @@ export class CreativeDirectionService {
       ...((campaign.productionBrief as Record<string, unknown> | null) ?? {}),
       creative_directions: directions,
       selected_direction_id: directionId,
-      approved_at: new Date().toISOString()
+      approved_at: new Date().toISOString(),
+      frozen_production_brief: buildFrozenProductionBrief(campaign, selected)
     };
 
-    await campaignRepository.updateCreativeBrief(campaignId, brief, selected.title);
+    await campaignRepository.updateCreativeBrief(campaignId, asInputJson(brief)!, selected.title);
 
     const actor = { id: user.id, role: user.role };
     if (campaign.status === CampaignState.CREATIVE_READY) {
       await campaignService.transition(campaignId, CampaignEvent.APPROVE_CREATIVE, actor);
-    }
-
-    const updated = await campaignRepository.findById(campaignId);
-    if (updated?.status === CampaignState.CREATIVE_APPROVED) {
-      await campaignService.transition(campaignId, CampaignEvent.START_MATCHING, actor);
     }
 
     if (campaign.creatorId) {

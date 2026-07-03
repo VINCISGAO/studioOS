@@ -1,25 +1,53 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, useTransition } from "react";
-import { confirmBrandCampaignAction } from "@/app/brand-campaign-actions";
-import { BrandCampaignStep2FormPanel } from "@/components/studioos/brand-campaign-step2-form-panel";
+import { useEffect, useState, useTransition } from "react";
+import {
+  approveBrandCreativeDirectionAction,
+  generateBrandCreativeDirectionsAction
+} from "@/app/brand-campaign-actions";
 import { BrandCampaignStep2PlanPanel } from "@/components/studioos/brand-campaign-step2-plan-panel";
 import { Button } from "@/components/ui/button";
+import type { CreativeDirection } from "@/features/ai/creative-direction.types";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
-import { buildConfirmedBriefSnapshot } from "@/lib/studioos/confirmed-brief";
 import {
   deliveryTimelineLabel,
   resolveAspectRatioFromProject,
   resolveDeliveryTimelineFromProject
 } from "@/lib/studioos/brand-campaign-options";
 import type { StoredProject } from "@/lib/project-types";
-import { ArrowRight, CheckCircle2, Loader2, Pencil } from "lucide-react";
+import { ArrowRight, CheckCircle2, Loader2, Pencil, Sparkles } from "lucide-react";
 
 const copy = {
-  en: { edit: "Back to edit", confirm: "Confirm and continue" },
-  zh: { edit: "返回修改", confirm: "确认并继续" }
+  en: {
+    edit: "Back to edit",
+    confirm: "Choose and freeze Production Brief",
+    generating: "AI is generating creative directions...",
+    chooseTitle: "Choose one creative direction",
+    chooseBody: "StudioOS will freeze the selected direction into the Production Brief. Matching will use this brief, not the draft.",
+    selected: "Selected",
+    choose: "Choose",
+    hook: "Hook",
+    story: "Story",
+    tone: "Tone",
+    shotList: "Shot list",
+    cta: "CTA"
+  },
+  zh: {
+    edit: "返回修改",
+    confirm: "选择并冻结 Production Brief",
+    generating: "AI 正在生成创意方向...",
+    chooseTitle: "选择一个创意方向",
+    chooseBody: "StudioOS 会把你选择的方向冻结成 Production Brief。后续匹配只读取这份 Brief，不读取草稿。",
+    selected: "已选择",
+    choose: "选择",
+    hook: "Hook",
+    story: "Story",
+    tone: "Tone",
+    shotList: "Shot List",
+    cta: "CTA"
+  }
 } as const;
 
 export function BrandCampaignStep2Review({
@@ -40,11 +68,12 @@ export function BrandCampaignStep2Review({
   onConfirmed: () => void;
 }) {
   const t = copy[locale];
-  const [certified, setCertified] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [directions, setDirections] = useState<CreativeDirection[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [loadingDirections, setLoadingDirections] = useState(true);
   const [isPending, startTransition] = useTransition();
 
-  const snapshot = useMemo(() => buildConfirmedBriefSnapshot(project, locale), [project, locale]);
   const timelineId = resolveDeliveryTimelineFromProject(project);
   const deliveryLabel = deliveryTimelineLabel(timelineId, locale) || delivery;
   const aspectRatio = resolveAspectRatioFromProject(project);
@@ -56,11 +85,34 @@ export function BrandCampaignStep2Review({
       "TikTok, Meta");
 
   const displayError = localError || error;
-  const projectTitle = project.title || project.product_name || project.company_name;
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoadingDirections(true);
+    setLocalError(null);
+    startTransition(async () => {
+      const fd = new FormData();
+      fd.set("lang", locale);
+      fd.set("project_id", project.id);
+      const result = await generateBrandCreativeDirectionsAction(fd);
+      if (cancelled) return;
+      if (!result.ok) {
+        setLocalError(result.error);
+        setLoadingDirections(false);
+        return;
+      }
+      setDirections(result.directions);
+      setSelectedId(result.directions[0]?.id ?? null);
+      setLoadingDirections(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [locale, project.id, startTransition]);
 
   function handleConfirm() {
-    if (!certified) {
-      setLocalError(locale === "zh" ? "请先勾选确认项" : "Please check the certification box");
+    if (!selectedId) {
+      setLocalError(locale === "zh" ? "请先选择一个创意方向" : "Choose one creative direction");
       return;
     }
 
@@ -69,8 +121,8 @@ export function BrandCampaignStep2Review({
       const fd = new FormData();
       fd.set("lang", locale);
       fd.set("project_id", project.id);
-      fd.set("confirmed", "1");
-      const result = await confirmBrandCampaignAction(fd);
+      fd.set("direction_id", selectedId);
+      const result = await approveBrandCreativeDirectionAction(fd);
       if (!result.ok) {
         setLocalError(result.error);
         return;
@@ -92,16 +144,70 @@ export function BrandCampaignStep2Review({
         onBack={onBack}
       />
 
-      <BrandCampaignStep2FormPanel
-        locale={locale}
-        projectTitle={projectTitle}
-        fields={snapshot.fields}
-        certified={certified}
-        onCertifiedChange={(value) => {
-          setCertified(value);
-          if (value) setLocalError(null);
-        }}
-      />
+      <section className="rounded-[28px] border border-violet-100 bg-white p-5 shadow-sm sm:p-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <p className="inline-flex items-center gap-1.5 rounded-full bg-violet-50 px-3 py-1 text-xs font-semibold text-violet-700">
+              <Sparkles className="h-3.5 w-3.5" />
+              CREATIVE_OPTIONS
+            </p>
+            <h2 className="mt-3 text-xl font-semibold text-zinc-950">{t.chooseTitle}</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-500">{t.chooseBody}</p>
+          </div>
+          {loadingDirections ? (
+            <span className="inline-flex items-center gap-2 rounded-full bg-zinc-100 px-3 py-1.5 text-sm text-zinc-600">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              {t.generating}
+            </span>
+          ) : null}
+        </div>
+
+        <div className="mt-6 grid gap-4 lg:grid-cols-3">
+          {directions.map((direction, index) => {
+            const selected = selectedId === direction.id;
+            return (
+              <button
+                key={direction.id}
+                type="button"
+                onClick={() => {
+                  setSelectedId(direction.id);
+                  setLocalError(null);
+                }}
+                className={[
+                  "rounded-2xl border p-4 text-left transition",
+                  selected
+                    ? "border-violet-500 bg-violet-50 shadow-[0_16px_40px_rgba(124,58,237,0.14)]"
+                    : "border-zinc-200 bg-white hover:border-violet-200 hover:bg-violet-50/40"
+                ].join(" ")}
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-600">
+                    Direction {String.fromCharCode(65 + index)}
+                  </p>
+                  <span className={selected ? "text-xs font-semibold text-violet-700" : "text-xs text-zinc-400"}>
+                    {selected ? t.selected : t.choose}
+                  </span>
+                </div>
+                <h3 className="mt-3 text-lg font-semibold text-zinc-950">{direction.title}</h3>
+                <div className="mt-4 space-y-3 text-sm leading-6 text-zinc-600">
+                  <p><span className="font-semibold text-zinc-900">{t.hook}:</span> {direction.hook}</p>
+                  <p><span className="font-semibold text-zinc-900">{t.story}:</span> {direction.story}</p>
+                  <p><span className="font-semibold text-zinc-900">{t.tone}:</span> {direction.tone}</p>
+                  <div>
+                    <p className="font-semibold text-zinc-900">{t.shotList}</p>
+                    <ol className="mt-1 list-decimal space-y-1 pl-5">
+                      {direction.shotList.map((shot) => (
+                        <li key={shot}>{shot}</li>
+                      ))}
+                    </ol>
+                  </div>
+                  <p><span className="font-semibold text-zinc-900">{t.cta}:</span> {direction.cta}</p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </section>
 
       {displayError ? <p className="text-sm text-red-600">{displayError}</p> : null}
 
@@ -116,7 +222,7 @@ export function BrandCampaignStep2Review({
           <Button
             type="button"
             className="h-11 rounded-xl bg-violet-600 px-8 hover:bg-violet-700 disabled:opacity-50"
-            disabled={isPending || !certified}
+            disabled={isPending || loadingDirections || !selectedId}
             onClick={handleConfirm}
           >
             {isPending ? (

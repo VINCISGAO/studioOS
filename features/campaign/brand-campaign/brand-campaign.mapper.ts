@@ -116,6 +116,8 @@ export function mapCampaignToStoredProject(campaign: CampaignWithBrand): StoredP
     settings_json: {
       brand_questionnaire: questionnaire,
       confirmed_brief: brief.confirmed_brief,
+      frozen_production_brief: brief.frozen_production_brief,
+      selected_direction_id: brief.selected_direction_id,
       wizard_ephemeral: memory.wizard?.ephemeral === true,
       wizard_saved_at: memory.wizard?.saved_at,
       prisma_campaign_id: campaign.id

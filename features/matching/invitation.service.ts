@@ -59,7 +59,7 @@ export class InvitationService {
       throw appError("FORBIDDEN", "Not allowed for this campaign");
     }
 
-    if (!["MATCHING", "INVITATION_SENT"].includes(campaign.status)) {
+    if (!["CREATIVE_APPROVED", "MATCHING", "INVITATION_SENT"].includes(campaign.status)) {
       throw appError("INVALID_TRANSITION", "Campaign must be in matching phase");
     }
 
@@ -81,7 +81,10 @@ export class InvitationService {
       });
     }
 
-    if (campaign.status === CampaignState.MATCHING) {
+    if (campaign.status === CampaignState.CREATIVE_APPROVED) {
+      await campaignService.transition(campaignId, CampaignEvent.START_MATCHING, actor);
+      await campaignService.transition(campaignId, CampaignEvent.SEND_INVITATION, actor);
+    } else if (campaign.status === CampaignState.MATCHING) {
       await campaignService.transition(campaignId, CampaignEvent.SEND_INVITATION, actor);
     }
 

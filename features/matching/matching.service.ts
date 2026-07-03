@@ -2,6 +2,7 @@ import { AI_MATCHING_WEIGHTS } from "@/lib/studioos/ai-matching-policy";
 import { memoryRepository } from "@/features/memory/memory.repository";
 import { relationshipDnaService } from "@/features/memory/relationship-dna.service";
 import { campaignRepository } from "@/features/campaign/campaign.repository";
+import type { BrandProductionBrief } from "@/features/campaign/brand-campaign/brand-campaign.types";
 import type { AuthUser } from "@/features/auth/permission.service";
 import { PermissionService } from "@/features/auth/permission.service";
 import { appError } from "@/lib/core/errors";
@@ -12,6 +13,12 @@ type CreatorMatchingMemory = {
   minAcceptBudgetUsd: number | null;
   budgetDeclines: number;
   declineTotal: number;
+};
+
+type FrozenMatchingBrief = {
+  budget: number;
+  platform: string;
+  text: string;
 };
 
 export type CreatorMatchResult = {
@@ -29,12 +36,37 @@ function normalize(value: string) {
   return value.trim().toLowerCase();
 }
 
+function parseBudgetRange(raw?: string | null) {
+  if (!raw) return 200;
+  const values = raw
+    .split(/[-–—]/)
+    .map((part) => Number(part.replace(/[^\d.]/g, "")))
+    .filter((value) => Number.isFinite(value) && value > 0);
+  if (!values.length) return 200;
+  return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
+}
+
+function frozenBriefForMatching(campaign: Campaign): FrozenMatchingBrief | null {
+  const brief = (campaign.productionBrief ?? {}) as BrandProductionBrief;
+  const frozen = brief.frozen_production_brief;
+  if (!frozen?.full_text?.trim()) {
+    return null;
+  }
+  return {
+    budget: parseBudgetRange(frozen.budget_range),
+    platform: frozen.platforms ?? "",
+    text: [frozen.title, frozen.hook, frozen.story, frozen.tone, frozen.visual_style, frozen.shot_list.join(" "), frozen.cta, frozen.full_text]
+      .filter(Boolean)
+      .join(" ")
+  };
+}
+
 function baseScore(
-  campaign: Campaign,
+  brief: FrozenMatchingBrief,
   profile: CreatorProfile & { user: { email: string; id: string } },
   memory: CreatorMatchingMemory
 ) {
-  const budget = Number(campaign.budget);
+  const budget = brief.budget;
   const minBudget = memory.minAcceptBudgetUsd ?? (profile.minBudget ? Number(profile.minBudget) : null);
   const maxBudget = profile.maxBudget ? Number(profile.maxBudget) : null;
 
@@ -54,16 +86,16 @@ function baseScore(
     ...(Array.isArray(dna.tools) ? dna.tools : []),
     ...(Array.isArray(dna.editingSoftware) ? dna.editingSoftware : [])
   ];
-  const platform = normalize(campaign.platform ?? "");
+  const platform = normalize(brief.platform);
   const reasons: string[] = [];
   let score = 0;
 
   if (platform && strengths.some((s) => normalize(s).includes(platform) || platform.includes(normalize(s)))) {
     score += AI_MATCHING_WEIGHTS.platform;
-    reasons.push(`Platform fit: ${campaign.platform}`);
+    reasons.push(`Platform fit: ${brief.platform}`);
   }
 
-  if (styles.some((s) => normalize(campaign.title).includes(normalize(s)))) {
+  if (styles.some((s) => normalize(brief.text).includes(normalize(s)))) {
     score += AI_MATCHING_WEIGHTS.category;
     reasons.push(`Style alignment: ${styles.join(", ")}`);
   }
@@ -112,6 +144,10 @@ export class MatchingService {
     if (!allowedStatuses.has(campaign.status)) {
       throw appError("INVALID_TRANSITION", "Matching is available after creative approval");
     }
+    const matchingBrief = frozenBriefForMatching(campaign);
+    if (!matchingBrief) {
+      throw appError("VALIDATION_ERROR", "Frozen Production Brief is required before matching");
+    }
 
     const profiles = await prisma.creatorProfile.findMany({
       where: {
@@ -124,7 +160,7 @@ export class MatchingService {
     const scored: CreatorMatchResult[] = [];
     for (const profile of profiles) {
       const memory = await loadCreatorMatchingMemory(profile.userId);
-      const base = baseScore(campaign, profile, memory);
+      const base = baseScore(matchingBrief, profile, memory);
       if (!base) continue;
 
       const rel = await relationshipDnaService.getMatchingBoost(campaign.brandId, profile.userId);
