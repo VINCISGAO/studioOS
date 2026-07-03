@@ -1,7 +1,23 @@
 import { addProjectAsset } from "@/lib/campaign-store";
+import { brandCampaignRepository } from "@/features/campaign/brand-campaign/brand-campaign.repository";
 import { getProject } from "@/lib/project-service";
 import { saveProjectAssetUpload } from "@/lib/studioos/project-asset-upload";
 import type { StoredProjectAsset } from "@/lib/campaign-types";
+
+async function canAccessProject(projectId: string, clientEmail: string) {
+  const normalizedEmail = clientEmail.toLowerCase();
+  const project = await getProject(projectId);
+  if (project?.client_email.toLowerCase() === normalizedEmail) {
+    return true;
+  }
+
+  try {
+    const campaign = await brandCampaignRepository.findByLegacyProjectId(projectId);
+    return campaign?.brand?.email?.toLowerCase() === normalizedEmail;
+  } catch {
+    return false;
+  }
+}
 
 export async function uploadBrandProductImage(input: {
   projectId: string;
@@ -12,8 +28,7 @@ export async function uploadBrandProductImage(input: {
   | { ok: true; original: StoredProjectAsset; preview_url: string }
   | { ok: false; error: string; status?: number }
 > {
-  const project = await getProject(input.projectId);
-  if (!project || project.client_email !== input.clientEmail.toLowerCase()) {
+  if (!(await canAccessProject(input.projectId, input.clientEmail))) {
     return {
       ok: false,
       status: 403,

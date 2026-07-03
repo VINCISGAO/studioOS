@@ -21,6 +21,8 @@ import { getCurrentClientEmail } from "@/lib/client-session";
 import { DEMO_USERS } from "@/lib/demo-auth";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
+import { brandCampaignRepository } from "@/features/campaign/brand-campaign/brand-campaign.repository";
+import { mapCampaignToStoredProject } from "@/features/campaign/brand-campaign/brand-campaign.mapper";
 import { campaignBridgeService } from "@/features/campaign/campaign-bridge.service";
 import { campaignAssetService } from "@/features/campaign/campaign-asset.service";
 import { getSessionUser } from "@/features/auth/session.service";
@@ -53,7 +55,22 @@ async function requireBrandClient() {
 
 async function requireProject(projectId: string, clientEmail: string) {
   const project = await getProject(projectId);
-  if (!project || project.client_email.toLowerCase() !== clientEmail.toLowerCase()) {
+  const normalizedEmail = clientEmail.toLowerCase();
+  if (project?.client_email.toLowerCase() === normalizedEmail) {
+    return project;
+  }
+
+  try {
+    const campaign = await brandCampaignRepository.findByLegacyProjectId(projectId);
+    const campaignEmail = campaign?.brand?.email?.toLowerCase();
+    if (campaign && campaignEmail === normalizedEmail) {
+      return mapCampaignToStoredProject(campaign);
+    }
+  } catch {
+    // Fall through to the standard access-denied response below.
+  }
+
+  if (!project || project.client_email.toLowerCase() !== normalizedEmail) {
     throw new Error("Project not found");
   }
   return project;
