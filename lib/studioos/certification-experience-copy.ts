@@ -39,6 +39,7 @@ export const certificationExperienceCopy = {
     primaryCta: "Start accepting projects",
     secondaryCta: "View certification benefits",
     partnerBadge: "Certified Service Partner",
+    partnerBadgeSidebar: "Verified Partner",
     unlockLabel: "Unlocked",
     welcomeTitle: "Welcome to the StudioOS Certified Service Partner program!",
     welcomeBody:
@@ -73,6 +74,7 @@ export const certificationExperienceCopy = {
     primaryCta: "开始接单",
     secondaryCta: "查看认证权益",
     partnerBadge: "认证服务商",
+    partnerBadgeSidebar: "认证服务商",
     unlockLabel: "已解锁",
     welcomeTitle: "🎉 欢迎加入 StudioOS 认证服务商计划！",
     welcomeBody:

@@ -1,21 +1,30 @@
 import { reviewRepository } from "@/features/review/review.repository";
+import { reviewerV1Repository } from "@/features/review/reviewer-v1.repository";
+import { reviewerV1Service } from "@/features/review/reviewer-v1.service";
 import type { CreateReviewCommentBody } from "@/features/review/review.schemas";
 import { serializeReviewComment, serializeReviewVersion } from "@/features/review/review.serializer";
 import { platformLocalizationService } from "@/features/communication/platform-localization.service";
 import { buildReviewBundleFromPrisma } from "@/features/review/prisma-review-bundle";
 import { campaignRepository } from "@/features/campaign/campaign.repository";
+import { readProductionBrief } from "@/features/campaign/brand-campaign/brand-campaign.utils";
+import type { BrandProductionBrief } from "@/features/campaign/brand-campaign/brand-campaign.types";
 import { PermissionService, type AuthUser } from "@/features/auth/permission.service";
-import { prisma, hasDatabaseUrl } from "@/lib/core/database/prisma";
+import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { appError } from "@/lib/core/errors";
 import { runTransition } from "@/lib/core/transition-runner";
 import { ReviewEvents } from "@/features/shared/types/events";
+import { listOrdersForProject } from "@/lib/order-service";
+import {
+  assertRevisionRequestAllowed,
+  reviewRoundGateMessage
+} from "@/features/review/review-round-policy";
 import {
   reviewStateMachine,
-  MAX_REVIEW_ROUNDS,
-  type ReviewStateValue,
-  type ReviewEventValue
+  type ReviewEventValue,
+  type ReviewStateValue
 } from "@/features/review/review.state-machine";
 import type { ReviewStatus } from "@prisma/client";
+import type { ReviewerV1AnnotationInput } from "@/features/review/reviewer-v1.types";
 
 export type CreateCommentInput = {
   campaignId: string;
@@ -23,14 +32,8 @@ export type CreateCommentInput = {
   userId: string;
   timeSeconds: number;
   comment: string;
-  annotation?: {
-    type: "CIRCLE" | "RECTANGLE" | "ARROW" | "POINT";
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-    color?: string;
-  };
+  annotation?: ReviewerV1AnnotationInput;
+  annotations?: ReviewerV1AnnotationInput[];
 };
 
 export class ReviewService {
@@ -150,7 +153,8 @@ export class ReviewService {
       userId: user.id,
       timeSeconds: body.time_seconds,
       comment: body.comment,
-      annotation: body.annotation
+      annotation: body.annotation,
+      annotations: body.annotations
     });
 
     if (version.reviewStatus === "READY") {
@@ -173,13 +177,10 @@ export class ReviewService {
 
   async getVersionBundle(versionId: string) {
     if (!hasDatabaseUrl()) return null;
-    return prisma.campaignVersion.findUnique({
-      where: { id: versionId },
-      include: {
-        comments: { include: { annotations: true, user: true }, orderBy: { timeSeconds: "asc" } },
-        campaign: true
-      }
-    });
+    const version = await reviewerV1Repository.findCampaignVersion(versionId);
+    if (!version) return null;
+    const comments = await reviewerV1Repository.listCommentsForVersion(versionId);
+    return { ...version, comments };
   }
 
   async createComment(input: CreateCommentInput) {
@@ -187,34 +188,20 @@ export class ReviewService {
       throw appError("SYSTEM_ERROR", "DATABASE_URL not configured");
     }
 
-    const version = await prisma.campaignVersion.findUnique({ where: { id: input.versionId } });
-    if (!version || version.campaignId !== input.campaignId) {
-      throw appError("NOT_FOUND", "Version not found");
+    if (input.campaignId) {
+      const version = await reviewerV1Repository.findCampaignVersion(input.versionId);
+      if (!version || version.campaignId !== input.campaignId) {
+        throw appError("NOT_FOUND", "Version not found");
+      }
     }
 
-    return prisma.reviewComment.create({
-      data: {
-        campaignId: input.campaignId,
-        versionId: input.versionId,
-        userId: input.userId,
-        timeSeconds: input.timeSeconds,
-        comment: input.comment,
-        annotations: input.annotation
-          ? {
-              create: {
-                campaignId: input.campaignId,
-                versionId: input.versionId,
-                type: input.annotation.type,
-                x: input.annotation.x,
-                y: input.annotation.y,
-                width: input.annotation.width,
-                height: input.annotation.height,
-                color: input.annotation.color ?? "#FF4D4F"
-              }
-            }
-          : undefined
-      },
-      include: { annotations: true }
+    return reviewerV1Service.createComment({
+      versionId: input.versionId,
+      userId: input.userId,
+      timeSeconds: input.timeSeconds,
+      comment: input.comment,
+      annotation: input.annotation,
+      annotations: input.annotations
     });
   }
 
@@ -228,14 +215,27 @@ export class ReviewService {
       throw appError("SYSTEM_ERROR", "DATABASE_URL not configured");
     }
 
-    const version = await prisma.campaignVersion.findUnique({
-      where: { id: versionId },
-      include: { campaign: true }
-    });
+    const version = await reviewerV1Repository.findCampaignVersion(versionId);
     if (!version) throw appError("NOT_FOUND", "Version not found");
 
-    if (event === "REQUEST_REVISION" && reviewRound >= MAX_REVIEW_ROUNDS) {
-      throw appError("REVIEW_LOCKED", `Maximum ${MAX_REVIEW_ROUNDS} review rounds reached`);
+    if (event === "REQUEST_REVISION") {
+      const campaign = await campaignRepository.findById(version.campaignId);
+      const brief = campaign
+        ? (readProductionBrief(campaign.productionBrief) as BrandProductionBrief)
+        : null;
+      const legacyProjectId = brief?.legacy_project_id ?? campaign?.id;
+      const orders = legacyProjectId ? await listOrdersForProject(legacyProjectId) : [];
+      const order = orders[0] ?? null;
+      const gate = assertRevisionRequestAllowed({
+        currentVersionNumber: version.versionNumber,
+        paidSlotsUnlocked: order?.paid_revision_slots_unlocked ?? 0
+      });
+      if (!gate.ok) {
+        throw appError(
+          gate.code,
+          reviewRoundGateMessage(gate.code, "en", gate.nextRevisionRound)
+        );
+      }
     }
 
     const current = version.reviewStatus as unknown as ReviewStateValue;
@@ -251,10 +251,10 @@ export class ReviewService {
         actor
       },
       persist: async (next) => {
-        await prisma.campaignVersion.update({
-          where: { id: versionId },
-          data: { reviewStatus: next as ReviewStatus }
-        });
+        await reviewerV1Repository.updateCampaignVersionReviewStatus(
+          versionId,
+          next as ReviewStatus
+        );
       },
       domainEvent: {
         name:
@@ -262,7 +262,9 @@ export class ReviewService {
             ? ReviewEvents.APPROVED
             : event === "REQUEST_REVISION"
               ? ReviewEvents.REVISION_REQUESTED
-              : ReviewEvents.COMMENT_CREATED,
+              : event === "CREATOR_REVERT"
+                ? ReviewEvents.COMMENT_CREATED
+                : ReviewEvents.COMMENT_CREATED,
         aggregateType: "review",
         aggregateId: versionId,
         payload: { event, reviewRound }

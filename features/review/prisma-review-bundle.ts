@@ -40,6 +40,8 @@ function mapAnnotationType(type: string): VideoComment["annotation_type"] {
   if (type === "RECTANGLE") return "rect";
   if (type === "ARROW") return "arrow";
   if (type === "POINT") return "pin";
+  if (type === "PEN") return "pin";
+  if (type === "TEXT") return "pin";
   return null;
 }
 

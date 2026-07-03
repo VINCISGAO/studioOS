@@ -1,5 +1,6 @@
 import { copyFileSync, existsSync, mkdirSync } from "fs";
 import path from "path";
+import { spawnSync } from "node:child_process";
 
 const root = process.cwd();
 const home = process.env.HOME ?? "";
@@ -141,3 +142,8 @@ for (const [destName, sourceName] of Object.entries({
     sources: [path.join(assetRoot, sourceName), path.join(loginDir, destName)]
   });
 }
+
+spawnSync(process.execPath, [path.join(root, "scripts/ensure-demo-review-video.mjs")], {
+  stdio: "inherit",
+  cwd: root
+});

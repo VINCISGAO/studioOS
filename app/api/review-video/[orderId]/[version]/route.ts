@@ -2,15 +2,74 @@ import { promises as fs } from "fs";
 import { NextResponse } from "next/server";
 import { getCurrentClientEmail } from "@/lib/client-session";
 import { getCurrentCreatorId } from "@/lib/creator-session";
+import { getDeliverables, getOrder } from "@/lib/order-service";
+import { readDemoReviewVideoBytes } from "@/lib/studioos/demo-review-video-bytes";
 import {
   assertDeliverableVideoAccess,
   getDeliverableRetentionDeleteAfter,
   purgeExpiredDeliverableVideos,
   recordBrandFinalDeliverableDownload
 } from "@/lib/studioos/deliverable-video-policy";
-import { reviewVideoFilePath } from "@/lib/studioos/video-upload";
+import { findReviewVideoFile } from "@/lib/studioos/video-upload";
 
 export const runtime = "nodejs";
+
+function isDevDemoOrder(orderId: string) {
+  return process.env.NODE_ENV === "development" && orderId.startsWith("ord_demo_");
+}
+
+async function readVideoBytes(filePath: string, allowDemoFallback: boolean) {
+  try {
+    return await fs.readFile(filePath);
+  } catch {
+    if (!allowDemoFallback) {
+      return null;
+    }
+    return readDemoReviewVideoBytes();
+  }
+}
+
+function parseRangeHeader(rangeHeader: string | null, fileSize: number) {
+  if (!rangeHeader) return null;
+  const match = /^bytes=(\d*)-(\d*)$/.exec(rangeHeader.trim());
+  if (!match) return null;
+
+  const [, startRaw, endRaw] = match;
+  if (!startRaw && !endRaw) return null;
+
+  if (!startRaw) {
+    const suffixLength = Number(endRaw);
+    if (!Number.isFinite(suffixLength) || suffixLength <= 0) return null;
+    const start = Math.max(fileSize - suffixLength, 0);
+    return { start, end: fileSize - 1 };
+  }
+
+  const start = Number(startRaw);
+  const end = endRaw ? Number(endRaw) : fileSize - 1;
+  if (
+    !Number.isFinite(start) ||
+    !Number.isFinite(end) ||
+    start < 0 ||
+    end < start ||
+    start >= fileSize
+  ) {
+    return null;
+  }
+
+  return { start, end: Math.min(end, fileSize - 1) };
+}
+
+async function readVideoRange(filePath: string, start: number, end: number) {
+  const length = end - start + 1;
+  const file = await fs.open(filePath, "r");
+  try {
+    const buffer = Buffer.alloc(length);
+    await file.read(buffer, 0, length, start);
+    return buffer;
+  } finally {
+    await file.close();
+  }
+}
 
 export async function GET(
   request: Request,
@@ -27,12 +86,21 @@ export async function GET(
   const url = new URL(request.url);
   const download = url.searchParams.get("download") === "1";
   const [clientEmail, creatorId] = await Promise.all([getCurrentClientEmail(), getCurrentCreatorId()]);
-  const access = await assertDeliverableVideoAccess({
+  let access = await assertDeliverableVideoAccess({
     orderId,
     version: versionNum,
     clientEmail,
     creatorId
   });
+
+  if (!access.ok && isDevDemoOrder(orderId) && access.code === "FORBIDDEN") {
+    const order = await getOrder(orderId);
+    const deliverables = order ? await getDeliverables(orderId) : [];
+    const deliverable = deliverables.find((item) => item.version === versionNum) ?? null;
+    if (order && deliverable) {
+      access = { ok: true as const, order, deliverable, isBrand: false };
+    }
+  }
 
   if (!access.ok) {
     if (access.code === "PURGED") {
@@ -52,32 +120,62 @@ export async function GET(
 
   const { order, deliverable, isBrand } = access;
 
-  const filePath = reviewVideoFilePath(orderId, versionNum);
-  try {
-    const data = await fs.readFile(filePath);
-
-    let deleteAfter: string | null = null;
-    if (download && isBrand && clientEmail) {
-      const record = await recordBrandFinalDeliverableDownload({
-        order,
-        deliverable,
-        clientEmail
-      });
-      deleteAfter =
-        record?.delete_after ?? (await getDeliverableRetentionDeleteAfter(deliverable.id));
-    }
-
-    const filename = `studioos-${orderId}-v${versionNum}.mp4`;
-
-    return new NextResponse(data, {
-      headers: {
-        "Content-Type": "video/mp4",
-        "Cache-Control": download ? "private, no-store" : "private, max-age=3600",
-        "Content-Disposition": download ? `attachment; filename="${filename}"` : "inline",
-        ...(deleteAfter ? { "X-Video-Delete-After": deleteAfter } : {})
-      }
-    });
-  } catch {
+  const videoFile = await findReviewVideoFile(orderId, versionNum);
+  if (!videoFile) {
     return NextResponse.json({ error: "Video not found" }, { status: 404 });
   }
+
+  const allowDemoFallback = isDevDemoOrder(orderId);
+  let fileSize: number | null = null;
+  try {
+    fileSize = (await fs.stat(videoFile.path)).size;
+  } catch {
+    fileSize = null;
+  }
+
+  const range = fileSize != null ? parseRangeHeader(request.headers.get("range"), fileSize) : null;
+  if (range && fileSize != null) {
+    const data = await readVideoRange(videoFile.path, range.start, range.end);
+    const contentLength = range.end - range.start + 1;
+    return new NextResponse(new Uint8Array(data), {
+      status: 206,
+      headers: {
+        "Content-Type": videoFile.contentType,
+        "Accept-Ranges": "bytes",
+        "Content-Length": String(contentLength),
+        "Content-Range": `bytes ${range.start}-${range.end}/${fileSize}`,
+        "Cache-Control": download ? "private, no-store" : "private, max-age=3600",
+        "Content-Disposition": download ? `attachment; filename="studioos-${orderId}-v${versionNum}.${videoFile.extension}"` : "inline"
+      }
+    });
+  }
+
+  const data = await readVideoBytes(videoFile.path, allowDemoFallback);
+  if (!data) {
+    return NextResponse.json({ error: "Video not found" }, { status: 404 });
+  }
+
+  let deleteAfter: string | null = null;
+  if (download && isBrand && clientEmail) {
+    const record = await recordBrandFinalDeliverableDownload({
+      order,
+      deliverable,
+      clientEmail
+    });
+    deleteAfter =
+      record?.delete_after ?? (await getDeliverableRetentionDeleteAfter(deliverable.id));
+  }
+
+  const filename = `studioos-${orderId}-v${versionNum}.${videoFile.extension}`;
+
+  return new NextResponse(new Uint8Array(data), {
+    headers: {
+      "Content-Type": videoFile.contentType,
+      "Accept-Ranges": "bytes",
+      "Content-Length": String(data.byteLength),
+      "Cache-Control": download ? "private, no-store" : "private, max-age=3600",
+      "Content-Disposition": download ? `attachment; filename="${filename}"` : "inline",
+      ...(deleteAfter ? { "X-Video-Delete-After": deleteAfter } : {})
+    }
+  });
 }

@@ -489,7 +489,7 @@ export function IncomeWithdrawalPanel({
       <IncomeFinancialHero
         locale={locale}
         snapshot={snapshot}
-        canWithdraw={snapshot.available_usd >= snapshot.min_withdrawal_usd && methods.length > 0}
+        canWithdraw={snapshot.available_usd >= snapshot.min_withdrawal_usd}
         onWithdraw={openWithdraw}
         onAddMethod={openAddMethodDialog}
       />

@@ -49,17 +49,41 @@ export const creatorTodayTaskLabels = {
   }
 } as const;
 
-export function creatorProjectBucket(status: StoredOrder["status"]): CreatorProjectFilter {
-  if (status === "review" || status === "revision") {
-    return status === "review" ? "pending_review" : "in_progress";
+/** Active creator work — not completed or cancelled (includes brand review). */
+export function isCreatorOrderInProgress(status: StoredOrder["status"]): boolean {
+  return status !== "completed" && status !== "cancelled";
+}
+
+export function isCreatorOrderPendingReview(status: StoredOrder["status"]): boolean {
+  return status === "review";
+}
+
+export function matchesCreatorProjectFilter(
+  order: StoredOrder,
+  filter: CreatorProjectFilter
+): boolean {
+  switch (filter) {
+    case "in_progress":
+      return isCreatorOrderInProgress(order.status);
+    case "pending_review":
+      return isCreatorOrderPendingReview(order.status);
+    case "completed":
+      return order.status === "completed";
+    case "history":
+      return order.status === "cancelled";
   }
+}
+
+/** @deprecated Prefer matchesCreatorProjectFilter — buckets can overlap (review is both in-progress and pending review). */
+export function creatorProjectBucket(status: StoredOrder["status"]): CreatorProjectFilter {
   if (status === "completed") return "completed";
   if (status === "cancelled") return "history";
+  if (status === "review") return "pending_review";
   return "in_progress";
 }
 
 export function filterCreatorOrders(rows: StoredOrder[], filter: CreatorProjectFilter): StoredOrder[] {
-  return rows.filter((order) => creatorProjectBucket(order.status) === filter);
+  return rows.filter((order) => matchesCreatorProjectFilter(order, filter));
 }
 
 export function countCreatorOrdersByBucket(orders: StoredOrder[]): Record<CreatorProjectFilter, number> {
@@ -70,7 +94,11 @@ export function countCreatorOrdersByBucket(orders: StoredOrder[]): Record<Creato
     history: 0
   };
   for (const order of orders) {
-    counts[creatorProjectBucket(order.status)] += 1;
+    for (const filter of creatorProjectFilters) {
+      if (matchesCreatorProjectFilter(order, filter)) {
+        counts[filter] += 1;
+      }
+    }
   }
   return counts;
 }

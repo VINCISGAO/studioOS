@@ -71,7 +71,7 @@ export default async function StudioHomePage({ searchParams }: { searchParams: P
     pendingTasks: tasks.length,
     isVerified: isCreatorVerified(creator),
     responseRate: invitations.length ? Math.round((responded / invitations.length) * 100) : 100,
-    totalEarningsOverride: income.lifetime_withdrawn_usd + income.held_usd + income.available_usd
+    totalEarningsOverride: income.lifetime_withdrawn_usd + income.available_usd
   });
 
   const pendingTasks = buildCreatorPendingTaskCards({

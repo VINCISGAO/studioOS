@@ -302,7 +302,7 @@ export function BrandProjectHub({
     : linkedOrder
       ? creators.find((item) => item.id === linkedOrder.creator_id)
       : null;
-  const openComments = reviewComments.filter((item) => item.status === "open").length;
+  const openComments = reviewComments.filter((item) => item.status !== "resolved").length;
   const action = primaryAction(project, locale, deliverables.length);
   const latestDeliverable = deliverables[deliverables.length - 1];
   const isRecruiting = status === "matching" || status === "studio_selected";

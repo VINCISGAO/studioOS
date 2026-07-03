@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Suspense } from "react";
 import { PortalMobileNav } from "@/components/studioos/portal-mobile-nav";
 import { LanguageSwitcher, LanguageSwitcherFallback } from "@/components/language-switcher";
@@ -12,6 +15,11 @@ import {
   isBrandPortalProjectReviewRoute,
   isBrandPortalWizardCreateRoute
 } from "@/lib/studioos/portal-focus-mode";
+import { PortalShellChromeProvider } from "@/components/studioos/portal-shell-chrome-context";
+import {
+  ReviewFocusModeProvider,
+  usePortalReviewFocus
+} from "@/components/studioos/reviewer-skeleton/use-review-focus-mode";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -27,24 +35,72 @@ function brandInitials(name: string) {
 
 export function BrandPortalShell({
   locale,
-  pathname,
+  pathname: pathnameProp,
   search,
   unreadMessageCount = 0,
   brandAccount,
   children
 }: {
   locale: Locale;
-  pathname: string;
+  pathname?: string;
   search: string;
   unreadMessageCount?: number;
   brandAccount?: { name: string; email: string } | null;
   children: React.ReactNode;
 }) {
+  return (
+    <ReviewFocusModeProvider searchFallback={search}>
+      <BrandPortalShellInner
+        locale={locale}
+        pathname={pathnameProp}
+        search={search}
+        unreadMessageCount={unreadMessageCount}
+        brandAccount={brandAccount}
+      >
+        {children}
+      </BrandPortalShellInner>
+    </ReviewFocusModeProvider>
+  );
+}
+
+function BrandPortalShellInner({
+  locale,
+  pathname: pathnameProp,
+  search,
+  unreadMessageCount = 0,
+  brandAccount,
+  children
+}: {
+  locale: Locale;
+  pathname?: string;
+  search: string;
+  unreadMessageCount?: number;
+  brandAccount?: { name: string; email: string } | null;
+  children: React.ReactNode;
+}) {
+  const pathname = usePathname() ?? pathnameProp ?? "/brand";
+  const { isFocusMode: isReviewFocusMode } = usePortalReviewFocus();
   const nav = brandNav[locale];
   const initials = brandAccount ? brandInitials(brandAccount.name) : "BR";
   const isProjectReview = isBrandPortalProjectReviewRoute(pathname);
   const focusRoute = isBrandPortalFocusRoute(pathname);
   const isWizardCreate = isBrandPortalWizardCreateRoute(pathname);
+  const portalChrome = {
+    initials,
+    userName: brandAccount?.name,
+    profileHref: brandPortalRoutes.brandProfile,
+    roleLabel: locale === "zh" ? "广告主" : "Brand",
+    unreadMessageCount,
+    messagesHref: brandPortalRoutes.messages
+  };
+
+  if (isProjectReview && isReviewFocusMode) {
+    return (
+      <PortalShellChromeProvider value={portalChrome}>
+        <div className="h-[100dvh] max-h-[100dvh] w-full overflow-hidden bg-[#f8f9fb]">{children}</div>
+      </PortalShellChromeProvider>
+    );
+  }
 
   function isActive(item: BrandPortalNavItem) {
     if (item.labelKey === "workspace") {
@@ -68,6 +124,9 @@ export function BrandPortalShell({
     if (item.labelKey === "settings") {
       return pathname === brandPortalRoutes.settings || pathname.startsWith("/brand/settings");
     }
+    if (item.labelKey === "brandAccount") {
+      return pathname === brandPortalRoutes.financeAccount;
+    }
     if (item.labelKey === "home") {
       return (
         (pathname === brandPortalRoutes.dashboard ||
@@ -83,7 +142,7 @@ export function BrandPortalShell({
     if (item.labelKey === "finance") {
       return (
         pathname === brandPortalRoutes.finance ||
-        pathname.startsWith("/brand/finance") ||
+        (pathname.startsWith("/brand/finance") && pathname !== brandPortalRoutes.financeAccount) ||
         pathname.includes("/checkout")
       );
     }
@@ -105,7 +164,8 @@ export function BrandPortalShell({
   }
 
   return (
-    <div className="min-h-screen bg-[#f8f9fc]">
+    <PortalShellChromeProvider value={portalChrome}>
+      <div className="min-h-screen bg-[#f8f9fc]">
       <div className="flex min-h-screen">
         <aside
           className={cn(
@@ -122,9 +182,8 @@ export function BrandPortalShell({
             </span>
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-zinc-950">
-                {locale === "zh" ? "品牌工作台" : "Brand workspace"}
+                {locale === "zh" ? "品牌方工作台" : "Brand workspace"}
               </p>
-              <p className="truncate text-[11px] text-zinc-500">{studioOS.productName}</p>
             </div>
           </MarketingHomeLink>
 
@@ -153,25 +212,7 @@ export function BrandPortalShell({
             })}
           </nav>
 
-          <div className="mt-auto space-y-3 border-t border-zinc-100 p-4">
-            <div className="overflow-hidden rounded-2xl border border-violet-100 bg-gradient-to-br from-violet-50 to-indigo-50/50 p-4">
-              <div className="relative h-16 rounded-xl bg-white/60" aria-hidden>
-                <div className="absolute left-3 top-3 h-8 w-8 rounded-lg bg-violet-200/80" />
-                <div className="absolute right-4 top-5 h-6 w-6 rounded-full bg-indigo-300/80" />
-              </div>
-              <p className="mt-3 text-sm font-semibold text-zinc-900">
-                {locale === "zh" ? "提升合作效率" : "Work better together"}
-              </p>
-              <p className="mt-1 text-xs leading-relaxed text-zinc-500">
-                {locale === "zh" ? "邀请团队成员一起管理广告项目" : "Invite teammates to manage campaigns"}
-              </p>
-              <Link
-                href={withLocale(brandPortalRoutes.brandTeam, locale)}
-                className="mt-3 inline-flex h-9 items-center justify-center rounded-xl bg-violet-600 px-4 text-xs font-medium text-white hover:bg-violet-700"
-              >
-                {locale === "zh" ? "邀请成员" : "Invite members"}
-              </Link>
-            </div>
+          <div className="mt-auto border-t border-zinc-100 p-4">
             {brandAccount ? (
               <div className="flex items-center gap-3 rounded-xl bg-zinc-50 px-3 py-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-sm font-semibold text-white">
@@ -189,78 +230,85 @@ export function BrandPortalShell({
           </div>
         </aside>
 
-        <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-40 shrink-0 border-b border-zinc-200/80 bg-white/95 backdrop-blur">
-            <div className="flex h-14 items-center justify-between px-4 sm:px-6 lg:px-8">
-              {isWizardCreate ? (
-                <Link
-                  href={withLocale(brandPortalRoutes.dashboard, locale)}
-                  className="flex items-center gap-2.5 text-sm font-semibold text-zinc-950 lg:hidden"
-                >
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-700">
-                    <Home className="h-4 w-4" />
-                  </span>
-                  {locale === "zh" ? "新建广告需求" : "New ad brief"}
-                </Link>
-              ) : (
-                <div className="flex items-center gap-2 lg:hidden">
-                  <MarketingHomeLink locale={locale} className="flex items-center gap-2 font-semibold text-zinc-950">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-900 text-white">
-                      <Sparkles className="h-4 w-4" />
+        <div
+          className={cn(
+            "flex min-w-0 flex-1 flex-col",
+            isProjectReview && "h-[100dvh] max-h-[100dvh] overflow-hidden"
+          )}
+        >
+          {!isProjectReview ? (
+            <header className="sticky top-0 z-40 shrink-0 border-b border-zinc-200/80 bg-white/95 backdrop-blur">
+              <div className="flex h-14 items-center justify-between px-4 sm:px-6 lg:px-8">
+                {isWizardCreate ? (
+                  <Link
+                    href={withLocale(brandPortalRoutes.dashboard, locale)}
+                    className="flex items-center gap-2.5 text-sm font-semibold text-zinc-950 lg:hidden"
+                  >
+                    <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-700">
+                      <Home className="h-4 w-4" />
                     </span>
-                    {studioOS.productName}
-                  </MarketingHomeLink>
+                    {locale === "zh" ? "新建广告需求" : "New ad brief"}
+                  </Link>
+                ) : (
+                  <div className="flex items-center gap-2 lg:hidden">
+                    <MarketingHomeLink locale={locale} className="flex items-center gap-2 font-semibold text-zinc-950">
+                      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-900 text-white">
+                        <Sparkles className="h-4 w-4" />
+                      </span>
+                      {studioOS.productName}
+                    </MarketingHomeLink>
+                  </div>
+                )}
+                <div className="hidden lg:block" />
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <Suspense fallback={<LanguageSwitcherFallback locale={locale} />}>
+                    <LanguageSwitcher locale={locale} pathname={pathname} search={search} />
+                  </Suspense>
+                  <Link
+                    href={withLocale(brandPortalRoutes.messages, locale)}
+                    className={cn(
+                      "relative flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-600 transition hover:bg-zinc-50",
+                      isWizardCreate && "hidden lg:flex"
+                    )}
+                    aria-label={locale === "zh" ? "通知" : "Notifications"}
+                  >
+                    <Bell className="h-4 w-4" />
+                    {unreadMessageCount > 0 ? (
+                      <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-white" />
+                    ) : null}
+                  </Link>
+                  <StudioUserMenu
+                    locale={locale}
+                    initials={initials}
+                    name={brandAccount?.name}
+                    profileHref={brandPortalRoutes.brandProfile}
+                    roleLabel={locale === "zh" ? "广告主" : "Brand"}
+                  />
                 </div>
-              )}
-              <div className="hidden lg:block" />
-              <div className="flex items-center gap-2 sm:gap-3">
-                <Suspense fallback={<LanguageSwitcherFallback locale={locale} />}>
-                  <LanguageSwitcher locale={locale} pathname={pathname} search={search} />
-                </Suspense>
-                <Link
-                  href={withLocale(brandPortalRoutes.messages, locale)}
-                  className={cn(
-                    "relative flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-600 transition hover:bg-zinc-50",
-                    isWizardCreate && "hidden lg:flex"
-                  )}
-                  aria-label={locale === "zh" ? "通知" : "Notifications"}
-                >
-                  <Bell className="h-4 w-4" />
-                  {unreadMessageCount > 0 ? (
-                    <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-white" />
-                  ) : null}
-                </Link>
-                <StudioUserMenu
+              </div>
+
+              {!isWizardCreate ? (
+              <div className="border-t border-zinc-100 px-4 py-3 lg:hidden">
+                <PortalMobileNav
                   locale={locale}
-                  initials={initials}
-                  name={brandAccount?.name}
-                  profileHref={brandPortalRoutes.brandProfile}
-                  roleLabel={locale === "zh" ? "广告主" : "Brand"}
+                  pathname={pathname}
+                  items={brandPortalNavItems.map(({ href, labelKey, mobileIconKey }) => ({
+                    id: labelKey,
+                    href,
+                    label: nav[labelKey],
+                    iconKey: mobileIconKey
+                  }))}
                 />
               </div>
-            </div>
-
-            {!isWizardCreate ? (
-            <div className="border-t border-zinc-100 px-4 py-3 lg:hidden">
-              <PortalMobileNav
-                locale={locale}
-                pathname={pathname}
-                items={brandPortalNavItems.map(({ href, labelKey, mobileIconKey }) => ({
-                  id: labelKey,
-                  href,
-                  label: nav[labelKey],
-                  iconKey: mobileIconKey
-                }))}
-              />
-            </div>
-            ) : null}
-          </header>
+              ) : null}
+            </header>
+          ) : null}
 
           <main
             className={cn(
               "min-h-0 min-w-0 flex-1",
               isProjectReview
-                ? "flex flex-col overflow-hidden p-0 lg:py-6"
+                ? "flex w-full flex-col overflow-hidden p-0"
                 : cn(
                     "mx-auto w-full px-4 py-6 sm:px-6 lg:px-8 lg:py-8",
                     focusRoute ? "max-w-[920px] lg:max-w-[1280px]" : "max-w-[1280px]"
@@ -271,6 +319,7 @@ export function BrandPortalShell({
           </main>
         </div>
       </div>
-    </div>
+      </div>
+    </PortalShellChromeProvider>
   );
 }

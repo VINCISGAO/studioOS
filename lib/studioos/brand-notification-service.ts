@@ -56,6 +56,9 @@ export async function hasBrandNotification(input: {
   project_id: string;
   creator_id: string;
   type: BrandNotificationType;
+  order_id?: string | null;
+  deliverable_version?: number | null;
+  comment_id?: string | null;
 }): Promise<boolean> {
   const store = await readStore();
   return store.notifications.some(
@@ -63,7 +66,10 @@ export async function hasBrandNotification(input: {
       item.brand_email === input.brand_email.toLowerCase() &&
       item.project_id === input.project_id &&
       item.creator_id === input.creator_id &&
-      item.type === input.type
+      item.type === input.type &&
+      (input.order_id == null || item.order_id === input.order_id) &&
+      (input.deliverable_version == null || item.deliverable_version === input.deliverable_version) &&
+      (input.comment_id == null || item.comment_id === input.comment_id)
   );
 }
 

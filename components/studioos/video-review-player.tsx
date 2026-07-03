@@ -17,7 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import type { StoredDeliverable } from "@/lib/order-types";
-import type { ReviewComment } from "@/lib/studioos/review-store";
+import type { ReviewComment } from "@/lib/studioos/review-comment-types";
 import { formatTimestamp } from "@/lib/studioos/review-utils";
 import { deliverableNotesForViewer } from "@/lib/studioos/deliverable-notes";
 import { cn } from "@/lib/utils";

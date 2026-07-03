@@ -5,7 +5,7 @@ import type {
   PayoutMethodType
 } from "@/lib/studioos/withdrawal-types";
 
-export const MIN_WITHDRAWAL_USD = 50;
+export const MIN_WITHDRAWAL_USD = 99;
 
 const CRYPTO_RATES_USD: Record<CryptoAsset, number> = {
   USDT: 1,

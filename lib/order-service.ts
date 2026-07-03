@@ -26,6 +26,14 @@ import { versionService } from "@/features/delivery/version.service";
 import { campaignRepository } from "@/features/campaign/campaign.repository";
 import { MAX_CAMPAIGN_VERSIONS } from "@/features/delivery/version.repository";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
+import { normalizeDeliverablePlaybackUrl, DEMO_REVIEW_VIDEO_URL } from "@/lib/studioos/review-video-url";
+import {
+  filterPlayableDeliverables,
+  isUnsubmittedDeliverable,
+  normalizeReviewDeliverableCatalog,
+  prunePhantomReviewDeliverables
+} from "@/lib/studioos/review-upload-version";
+import { hasReviewVideoFileOnDisk } from "@/lib/studioos/video-upload";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 
@@ -106,7 +114,7 @@ function ensureDemoArcNovaOrder(store: OrderStore): OrderStore {
     store.deliverables.push({
       id: "del_demo_arc_v1",
       order_id: DEMO_ARC_ORDER_ID,
-      file_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
+      file_url: DEMO_REVIEW_VIDEO_URL,
       thumbnail_url: "",
       notes: "Version 1 — summer launch hero cut for brand review.",
       notes_for_client: "Version 1 — summer launch hero cut for brand review.",
@@ -164,7 +172,7 @@ function ensureDemoReviewDeliverable(store: OrderStore): OrderStore {
     store.deliverables.push({
       id: "del_demo_nova_v1",
       order_id: "ord_demo_nova_active",
-      file_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+      file_url: DEMO_REVIEW_VIDEO_URL,
       thumbnail_url: "",
       notes: "Version 1 — hero cut for review",
       version: 1,
@@ -628,14 +636,49 @@ export async function addDeliverable(
   await writeStore(store);
   await syncProjectAfterDeliverable(order.project_id);
 
-  const { notifyBrandDeliverableUploaded } = await import("@/lib/studioos/brand-deliverable-notify");
-  await notifyBrandDeliverableUploaded({
-    order,
-    deliverable,
-    locale: input.notes_client_locale ?? order.client_locale
-  });
-
   return deliverable;
+}
+
+export async function upsertJsonDeliverable(
+  orderId: string,
+  deliverable: StoredDeliverable
+): Promise<StoredDeliverable | null> {
+  const store = await readStore();
+  const order = store.orders.find((item) => item.id === orderId);
+  if (!order) {
+    return null;
+  }
+
+  const index = store.deliverables.findIndex(
+    (item) => item.order_id === orderId && item.version === deliverable.version
+  );
+
+  if (index >= 0) {
+    store.deliverables[index] = {
+      ...store.deliverables[index],
+      ...deliverable,
+      order_id: orderId,
+      version: deliverable.version
+    };
+  } else {
+    store.deliverables.push({
+      ...deliverable,
+      order_id: orderId
+    });
+  }
+
+  if (["in_production", "revision", "review"].includes(order.status)) {
+    order.status = "review";
+  }
+
+  await writeStore(store);
+  await syncProjectAfterDeliverable(order.project_id);
+
+  return (
+    store.deliverables.find(
+      (item) => item.order_id === orderId && item.version === deliverable.version
+    ) ?? null
+  );
 }
 
 export async function requestOrderRevision(orderId: string, notes: string): Promise<StoredOrder | null> {
@@ -645,7 +688,28 @@ export async function requestOrderRevision(orderId: string, notes: string): Prom
     return null;
   }
 
+  const deliverables = store.deliverables
+    .filter((item) => item.order_id === orderId)
+    .sort((a, b) => b.version - a.version);
+  const latestSubmitted = deliverables.find(
+    (item) => item.file_url.trim() && !item.file_url.includes("demo")
+  )?.version;
+  if (latestSubmitted) {
+    const { assertRevisionRequestAllowed } = await import("@/features/review/review-round-policy");
+    const gate = assertRevisionRequestAllowed({
+      currentVersionNumber: latestSubmitted,
+      paidSlotsUnlocked: order.paid_revision_slots_unlocked ?? 0
+    });
+    if (!gate.ok) {
+      return null;
+    }
+    order.review_round = gate.nextRevisionRound;
+  }
+
   order.status = "revision";
+  if (order.review_round == null && latestSubmitted) {
+    order.review_round = latestSubmitted + 1;
+  }
   await writeStore(store);
   await syncProjectAfterRevisionRequest(order.project_id);
 
@@ -661,6 +725,40 @@ export async function requestOrderRevision(orderId: string, notes: string): Prom
   return order;
 }
 
+export async function syncOrderPaidRevisionSlots(
+  orderId: string,
+  paidRevisionSlotsUnlocked: number
+): Promise<StoredOrder | null> {
+  const store = await readStore();
+  const order = store.orders.find((item) => item.id === orderId);
+  if (!order) return null;
+  order.paid_revision_slots_unlocked = paidRevisionSlotsUnlocked >= 1 ? 1 : 0;
+  await writeStore(store);
+  return order;
+}
+
+export async function syncOrderToReadyForCompletion(orderId: string): Promise<StoredOrder | null> {
+  const store = await readStore();
+  const order = store.orders.find((item) => item.id === orderId);
+  if (!order) return null;
+  if (!["review", "revision"].includes(order.status)) return null;
+
+  order.status = "ready_for_completion";
+  await writeStore(store);
+  return order;
+}
+
+export async function resumeReviewFromReadyForCompletion(orderId: string): Promise<StoredOrder | null> {
+  const store = await readStore();
+  const order = store.orders.find((item) => item.id === orderId);
+  if (!order) return null;
+  if (order.status !== "ready_for_completion") return null;
+
+  order.status = "review";
+  await writeStore(store);
+  return order;
+}
+
 /** Write-through bridge helpers — sync JSON order phase from Prisma without duplicating side effects. */
 export async function syncOrderToReviewPhase(orderId: string): Promise<StoredOrder | null> {
   const store = await readStore();
@@ -672,6 +770,24 @@ export async function syncOrderToReviewPhase(orderId: string): Promise<StoredOrd
   order.status = "review";
   await writeStore(store);
   await syncProjectAfterDeliverable(order.project_id);
+  return order;
+}
+
+/** Creator withdrew a submitted draft before brand review — back to upload. */
+export async function syncOrderToCreatorReuploadPhase(
+  orderId: string,
+  reviewRound?: number
+): Promise<StoredOrder | null> {
+  const store = await readStore();
+  const order = store.orders.find((item) => item.id === orderId);
+  if (!order) return null;
+  if (order.status !== "review") return order;
+
+  order.status = "in_production";
+  if (reviewRound != null && reviewRound > 0) {
+    order.review_round = reviewRound;
+  }
+  await writeStore(store);
   return order;
 }
 
@@ -692,7 +808,14 @@ export async function syncOrderToApprovedPhase(orderId: string): Promise<StoredO
   const store = await readStore();
   const order = store.orders.find((item) => item.id === orderId);
   if (!order) return null;
-  if (order.status === "completed") return order;
+  if (order.status === "completed") {
+    const { notifyCreatorDeliveryApproved, notifyCreatorEscrowReleased } = await import(
+      "@/lib/studioos/commercial-interaction-notify"
+    );
+    await notifyCreatorDeliveryApproved({ order, locale: order.client_locale });
+    await notifyCreatorEscrowReleased({ order, locale: order.client_locale });
+    return order;
+  }
   if (!["review", "revision", "completed"].includes(order.status)) return order;
 
   order.status = "completed";
@@ -738,13 +861,15 @@ export async function markOrderEscrowReleased(orderId: string): Promise<StoredOr
 export async function approveOrderDelivery(orderId: string): Promise<StoredOrder | null> {
   const store = await readStore();
   const order = store.orders.find((item) => item.id === orderId);
-  if (!order || !["review", "revision"].includes(order.status)) {
+  if (!order) {
     return null;
   }
+  if (order.status === "completed") return order;
+  if (!["review", "revision", "ready_for_completion", "settling"].includes(order.status)) return null;
 
   order.status = "completed";
   order.payment_status = "released";
-  order.payout_status = "paid";
+  order.payout_status = "approved";
   order.completed_at = new Date().toISOString();
   await writeStore(store);
   await syncProjectAfterApproval(order.project_id);
@@ -849,19 +974,72 @@ export async function getOrderForProject(projectId: string): Promise<StoredOrder
   );
 }
 
-export async function getDeliverables(orderId: string): Promise<StoredDeliverable[]> {
+export async function removeJsonDeliverableVersion(orderId: string, version: number): Promise<void> {
+  const store = await readStore();
+  const before = store.deliverables.length;
+  store.deliverables = store.deliverables.filter(
+    (item) => !(item.order_id === orderId && item.version === version)
+  );
+  if (store.deliverables.length !== before) {
+    await writeStore(store);
+    readStore.invalidate?.();
+  }
+}
+
+async function fetchRawDeliverablesForOrder(orderId: string): Promise<StoredDeliverable[]> {
   const order = await getOrder(orderId);
+  const store = await readStore();
+  const fromJson = store.deliverables
+    .filter((item) => item.order_id === orderId)
+    .sort((a, b) => b.version - a.version);
+
   if (order?.project_id) {
     const fromPrisma = await versionService.listDeliverablesForLegacyProject(order.project_id, orderId);
-    if (fromPrisma) {
+    if (fromPrisma !== null && fromPrisma.length > 0) {
       return fromPrisma.sort((a, b) => b.version - a.version);
     }
   }
 
-  const store = await readStore();
-  return store.deliverables
-    .filter((item) => item.order_id === orderId)
-    .sort((a, b) => b.version - a.version);
+  return fromJson;
+}
+
+async function repairPhantomReviewVersions(orderId: string, projectId: string | null) {
+  const raw = await fetchRawDeliverablesForOrder(orderId);
+  const sorted = [...raw].sort((a, b) => b.version - a.version);
+
+  for (const item of sorted) {
+    if (item.version <= 1 || isUnsubmittedDeliverable(item)) continue;
+    if (await hasReviewVideoFileOnDisk(orderId, item.version)) continue;
+    if (!(await hasReviewVideoFileOnDisk(orderId, item.version - 1))) continue;
+
+    if (hasDatabaseUrl() && projectId) {
+      const campaign = await campaignRepository.findByLegacyProjectId(projectId);
+      if (campaign) {
+        const { versionRepository } = await import("@/features/delivery/version.repository");
+        await versionRepository.softDeleteVersion({
+          campaignId: campaign.id,
+          versionNumber: item.version
+        });
+      }
+    }
+
+    await removeJsonDeliverableVersion(orderId, item.version);
+  }
+}
+
+export async function listDeliverablesForUpload(orderId: string): Promise<StoredDeliverable[]> {
+  const order = await getOrder(orderId);
+  await repairPhantomReviewVersions(orderId, order?.project_id ?? null);
+  const raw = await fetchRawDeliverablesForOrder(orderId);
+  return prunePhantomReviewDeliverables(orderId, raw);
+}
+
+export async function getDeliverables(orderId: string): Promise<StoredDeliverable[]> {
+  const merged = await listDeliverablesForUpload(orderId);
+  const normalized = await normalizeReviewDeliverableCatalog(orderId, merged);
+  const playable = await filterPlayableDeliverables(orderId, normalized);
+
+  return playable.sort((a, b) => b.version - a.version);
 }
 
 

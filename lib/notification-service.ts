@@ -132,8 +132,8 @@ function ensureDemoNotifications(store: NotificationStore): NotificationStore {
     },
     {
       id: "ntf_demo_samsung_feedback",
-      type: "review_comment_added" as const,
-      title: "品牌方对第一版提出了修改意见",
+      type: "revision_requested" as const,
+      title: "品牌方已完成第一版审片",
       body: "Samsung 品牌方在审片中标注了 3 处修改点，请查看批注并在 2 天内提交修改版。",
       company_name: "Samsung",
       client_name: "Samsung",

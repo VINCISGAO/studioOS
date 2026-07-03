@@ -100,6 +100,8 @@ enum AnnotationType {
   RECTANGLE
   ARROW
   POINT
+  PEN
+  TEXT
 }
 
 enum InvitationStatus {
@@ -430,6 +432,7 @@ model Campaign {
   campaignMemoryJson Json?        @map("campaign_memory_json")
   campaignHealth   Int            @default(100) @map("campaign_health")
   reviewRound      Int            @default(0) @map("review_round")
+  paidRevisionSlotsUnlocked  Int            @default(0) @map("paid_revision_slots_unlocked")
   currentVersion   Int            @default(0) @map("current_version")
   createdBy        String?        @map("created_by")
   createdAt        DateTime       @default(now()) @map("created_at")
@@ -441,6 +444,7 @@ model Campaign {
   assets        CampaignAsset[]
   versions      CampaignVersion[]
   comments      ReviewComment[]
+  reviewAnnotations ReviewAnnotation[]
   invitations   CreatorInvitation[]
   escrow        EscrowPayment?
   activities    ActivityLog[]
@@ -521,6 +525,7 @@ model CampaignVersion {
   @@unique([campaignId, versionNumber])
   @@index([campaignId])
   @@index([status])
+  @@index([reviewStatus])
   @@map("campaign_versions")
 }
 
@@ -563,13 +568,17 @@ model ReviewAnnotation {
   height      Decimal        @db.Decimal(8, 6)
   color       String         @default("#FF4D4F")
   strokeWidth Int            @default(2) @map("stroke_width")
+  dataJson    Json?          @map("data_json")
   createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime?      @updatedAt @map("updated_at")
 
   comment ReviewComment   @relation(fields: [commentId], references: [id])
   version CampaignVersion @relation(fields: [versionId], references: [id])
+  campaign Campaign       @relation(fields: [campaignId], references: [id])
 
   @@index([commentId])
   @@index([versionId])
+  @@index([campaignId])
   @@map("review_annotations")
 }
 

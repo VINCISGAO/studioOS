@@ -109,6 +109,41 @@ export async function notifyCreatorRevisionRequested(input: {
   });
 }
 
+export async function notifyCreatorPaidRevisionUnlocked(input: {
+  order: StoredOrder;
+  locale?: Locale;
+}) {
+  const exists = await hasNotification(input.order.creator_id, input.order.id, "paid_revision_unlocked");
+  if (exists) return null;
+
+  const locale = input.locale ?? input.order.client_locale ?? "en";
+  const brandName = resolveBrandName(input.order);
+  const projectTitle = await resolveProjectTitle(input.order);
+
+  const copy =
+    locale === "zh"
+      ? {
+          title: `${brandName} 已加购第 4–5 轮修订`,
+          body: `「${projectTitle}」已完成额外修订服务费支付，第 4 轮修改已开启。请根据品牌批注准备并上传 V4。`
+        }
+      : {
+          title: `${brandName} unlocked rounds 4-5 revisions`,
+          body: `"${projectTitle}" paid for the additional revision add-on. Round 4 is now open — please prepare and upload V4 after reviewing the brand notes.`
+        };
+
+  return createCreatorNotification({
+    creator_id: input.order.creator_id,
+    type: "paid_revision_unlocked",
+    title: copy.title,
+    body: copy.body,
+    project_id: input.order.project_id,
+    order_id: input.order.id,
+    client_name: input.order.client_name,
+    company_name: input.order.company_name,
+    requirements_text: ""
+  });
+}
+
 export async function notifyCreatorDeliveryApproved(input: {
   order: StoredOrder;
   locale?: Locale;

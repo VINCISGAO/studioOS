@@ -1,4 +1,4 @@
-import { CreditCard, FileText, Receipt, Shield } from "lucide-react";
+import { CreditCard, FileText, Receipt, Shield, Wallet } from "lucide-react";
 import { BrandSectionHub } from "@/components/studioos/brand-section-hub";
 import { getLocale, type SearchParams } from "@/lib/i18n";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
@@ -16,6 +16,15 @@ export default async function BrandFinancePage({ searchParams }: { searchParams:
           : "Platform escrow, payment history, invoices, and payment methods."
       }
       sections={[
+        {
+          href: brandPortalRoutes.financeAccount,
+          title: locale === "zh" ? "账户余额" : "Account balance",
+          description:
+            locale === "zh"
+              ? "查看商家账户余额，充值后可直接支付加购服务费。"
+              : "View and top up your brand account balance for add-on fees.",
+          icon: Wallet
+        },
         {
           href: brandPortalRoutes.financeEscrow,
           title: locale === "zh" ? "平台托管" : "Platform escrow",

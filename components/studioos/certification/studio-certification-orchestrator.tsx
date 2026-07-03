@@ -38,11 +38,13 @@ export function StudioCertificationOrchestrator({
     }
 
     setPhase("dim");
-    const glowTimer = window.setTimeout(() => setPhase("glow"), 350);
+    const glowDelay = celebrateFromPayment ? 80 : 350;
+    const modalDelay = celebrateFromPayment ? 180 : 700;
+    const glowTimer = window.setTimeout(() => setPhase("glow"), glowDelay);
     const modalTimer = window.setTimeout(() => {
       setPhase("modal");
       setDialogOpen(true);
-    }, 700);
+    }, modalDelay);
 
     return () => {
       window.clearTimeout(glowTimer);

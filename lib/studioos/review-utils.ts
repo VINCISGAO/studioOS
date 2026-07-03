@@ -4,6 +4,12 @@ export function formatTimestamp(sec: number): string {
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
+export function latestDeliverableVersion(
+  deliverables: Array<{ version: number }>
+): number {
+  return deliverables.reduce((max, item) => Math.max(max, item.version), 0) || 1;
+}
+
 /** Frame.io-style timecode HH:MM:SS:FF (default 24fps). */
 export function formatTimecode(sec: number, fps = 24): string {
   const h = Math.floor(sec / 3600);

@@ -152,24 +152,6 @@ export function StudioMessageCenter({
     }
   }
 
-  useEffect(() => {
-    const initialId = initialSelectedId ?? list[0]?.id;
-    if (!initialId) return;
-    const item = list.find((entry) => entry.id === initialId);
-    if (!item || item.readAt || readOverrides[item.id]) return;
-    startTransition(async () => {
-      const fd = new FormData();
-      fd.set("notification_id", item.id);
-      const result = await actions.markRead(fd);
-      if (result.ok) {
-        markReadLocally(item.id);
-        router.refresh();
-      }
-    });
-    // Mark the initially opened message as read once on mount.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   function toggleSelectId(id: string) {
     setSelectedIds((current) =>
       current.includes(id) ? current.filter((item) => item !== id) : [...current, id]

@@ -17,6 +17,7 @@ export const ReviewEvent = {
   START_REVIEW: "START_REVIEW",
   REQUEST_REVISION: "REQUEST_REVISION",
   RESUBMIT: "RESUBMIT",
+  CREATOR_REVERT: "CREATOR_REVERT",
   APPROVE: "APPROVE",
   LOCK: "LOCK"
 } as const;
@@ -28,9 +29,10 @@ export const reviewStateMachine = createStateMachine<ReviewStateValue, ReviewEve
   START_REVIEW: { from: [ReviewState.READY, ReviewState.REVIEWING], to: ReviewState.REVIEWING },
   REQUEST_REVISION: { from: [ReviewState.REVIEWING], to: ReviewState.REVISION_REQUIRED },
   RESUBMIT: { from: [ReviewState.REVISION_REQUIRED], to: ReviewState.WAITING },
+  CREATOR_REVERT: { from: [ReviewState.READY], to: ReviewState.WAITING },
   APPROVE: { from: [ReviewState.REVIEWING], to: ReviewState.APPROVED },
   LOCK: { from: [ReviewState.APPROVED], to: ReviewState.LOCKED }
 });
 
-/** Business rule: max 3 revision rounds — admin intervention after */
-export const MAX_REVIEW_ROUNDS = 3;
+/** Business rule: see review-round-policy.ts (Vn = round n, max 5 rounds). */
+export { MAX_REVISION_ROUNDS as MAX_REVIEW_ROUNDS } from "@/features/review/review-round-policy";

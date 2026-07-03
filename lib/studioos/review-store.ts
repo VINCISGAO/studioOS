@@ -1,30 +1,32 @@
+import "server-only";
+
 import { dataStorePath, readDataJson, writeDataJson } from "@/lib/serverless-store";
 import { getOrder } from "@/lib/order-service";
 import { reviewPortalService } from "@/features/review/review-portal.service";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
+import { normalizeReviewCommentTimestampSec } from "@/lib/studioos/review-comment-time";
+import { enrichReviewCommentAnnotations } from "@/lib/studioos/review-annotation-json";
+import {
+  parseReviewCommentAnnotations,
+  type ReviewComment,
+  type ReviewCommentAnnotation,
+  type ReviewCommentStatus
+} from "@/lib/studioos/review-comment-types";
+import { normalizeReviewCommentStatus } from "@/lib/studioos/review-comment-status";
 
-export type ReviewCommentStatus = "open" | "resolved";
-
-export type ReviewComment = {
-  id: string;
-  order_id: string;
-  version: number;
-  /** Playback position in seconds (supports decimals). */
-  timestamp_sec: number;
-  body: string;
-  /** Normalized click position on video frame, 0–1. */
-  pos_x?: number | null;
-  pos_y?: number | null;
-  issue_type?: string | null;
-  author: "brand" | "studio";
-  created_by?: string | null;
-  status: ReviewCommentStatus;
-  created_at: string;
-  resolved_at: string | null;
-};
+export type { ReviewComment, ReviewCommentAnnotation, ReviewCommentStatus } from "@/lib/studioos/review-comment-types";
+export {
+  coerceReviewCommentAnnotation,
+  parseReviewCommentAnnotations
+} from "@/lib/studioos/review-comment-types";
+export {
+  countUnresolvedReviewComments,
+  normalizeReviewCommentStatus
+} from "@/lib/studioos/review-comment-status";
 
 type ReviewStore = {
   comments: ReviewComment[];
+  dismissed_demo_order_ids?: string[];
 };
 
 const STORE_PATH = dataStorePath("review-store.json");
@@ -47,18 +49,26 @@ function migrateComment(raw: Record<string, unknown>): ReviewComment {
       ? String(raw.issue_type)
       : inferIssueType(body);
 
+  const annotations = parseReviewCommentAnnotations(
+    raw.annotations,
+    `ann_${String(raw.id ?? "comment")}`
+  );
+
   return {
     id: String(raw.id),
     order_id: String(raw.order_id),
     version: Number(raw.version ?? 1) || 1,
-    timestamp_sec: Number(raw.timestamp_sec ?? raw.time_seconds ?? 0),
+    timestamp_sec: normalizeReviewCommentTimestampSec(raw.timestamp_sec ?? raw.time_seconds),
     body: String(raw.body ?? raw.content ?? ""),
     pos_x: raw.pos_x != null ? Number(raw.pos_x) : null,
     pos_y: raw.pos_y != null ? Number(raw.pos_y) : null,
     issue_type: issueType,
     author: raw.author === "studio" ? "studio" : "brand",
     created_by: raw.created_by != null ? String(raw.created_by) : null,
-    status: raw.status === "resolved" ? "resolved" : "open",
+    author_display_name:
+      raw.author_display_name != null ? String(raw.author_display_name) : undefined,
+    annotations,
+    status: normalizeReviewCommentStatus(raw.status),
     created_at: String(raw.created_at ?? new Date().toISOString()),
     resolved_at: raw.resolved_at ? String(raw.resolved_at) : null
   };
@@ -78,7 +88,7 @@ function seedCommentsForOrder(orderId: string): ReviewComment[] {
         pos_y: 0.22,
         issue_type: null,
         author: "brand",
-        status: "open",
+        status: "todo",
         created_at: now,
         resolved_at: null
       },
@@ -92,7 +102,7 @@ function seedCommentsForOrder(orderId: string): ReviewComment[] {
         pos_y: 0.48,
         issue_type: null,
         author: "brand",
-        status: "open",
+        status: "todo",
         created_at: now,
         resolved_at: null
       },
@@ -106,7 +116,7 @@ function seedCommentsForOrder(orderId: string): ReviewComment[] {
         pos_y: 0.72,
         issue_type: null,
         author: "brand",
-        status: "open",
+        status: "todo",
         created_at: now,
         resolved_at: null
       }
@@ -124,7 +134,7 @@ function seedCommentsForOrder(orderId: string): ReviewComment[] {
       pos_y: 0.18,
       issue_type: null,
       author: "brand",
-      status: "open",
+      status: "todo",
       created_at: now,
       resolved_at: null
     },
@@ -154,9 +164,10 @@ async function writeStore(store: ReviewStore) {
 }
 
 async function readStore(): Promise<ReviewStore> {
-  const parsed = await readDataJson<{ comments: Record<string, unknown>[] }>(STORE_PATH, () => ({
-    comments: seedComments()
-  }));
+  const parsed = await readDataJson<{
+    comments: Record<string, unknown>[];
+    dismissed_demo_order_ids?: string[];
+  }>(STORE_PATH, seedReviewStore);
   let migrated = false;
   const comments = (parsed.comments ?? []).map((item) => {
     const next = migrateComment(item);
@@ -166,15 +177,21 @@ async function readStore(): Promise<ReviewStore> {
     return next;
   });
 
-  const store = ensureDemoComments({ comments });
-  if (migrated || store.comments.length !== comments.length) {
+  const store: ReviewStore = {
+    comments,
+    dismissed_demo_order_ids: parsed.dismissed_demo_order_ids ?? []
+  };
+
+  if (migrated) {
     await writeStore(store);
   }
   return store;
 }
 
 function ensureDemoComments(store: ReviewStore): ReviewStore {
+  const dismissed = new Set(store.dismissed_demo_order_ids ?? []);
   for (const orderId of [DEMO_ORDER_ID, DEMO_ARC_ORDER_ID]) {
+    if (dismissed.has(orderId)) continue;
     if (!store.comments.some((item) => item.order_id === orderId)) {
       store.comments.push(...seedCommentsForOrder(orderId));
     }
@@ -182,7 +199,27 @@ function ensureDemoComments(store: ReviewStore): ReviewStore {
   return store;
 }
 
+function seedReviewStore(): ReviewStore {
+  return ensureDemoComments({ comments: seedComments() });
+}
+
+function sortReviewComments(items: ReviewComment[]) {
+  return [...items].sort(
+    (a, b) =>
+      a.timestamp_sec - b.timestamp_sec ||
+      String(a.created_at ?? "").localeCompare(String(b.created_at ?? ""))
+  );
+}
+
 export async function listReviewComments(orderId: string, version?: number): Promise<ReviewComment[]> {
+  const matchesVersion = (item: ReviewComment) =>
+    version === undefined || item.version === version;
+
+  const store = await readStore();
+  const jsonComments = store.comments.filter(
+    (item) => item.order_id === orderId && matchesVersion(item)
+  );
+
   if (hasDatabaseUrl()) {
     const order = await getOrder(orderId);
     if (order?.project_id) {
@@ -190,22 +227,29 @@ export async function listReviewComments(orderId: string, version?: number): Pro
         orderId,
         order.project_id
       );
-      if (fromPrisma) {
-        return fromPrisma.filter(
-          (item) => version === undefined || item.version === version
-        );
+      if (fromPrisma !== null) {
+        const prismaComments = fromPrisma.filter(matchesVersion);
+        const localById = new Map(jsonComments.map((item) => [item.id, item]));
+        const prismaWithLocalStatus = prismaComments.map((item) => {
+          const local = localById.get(item.id);
+          return local
+            ? {
+                ...item,
+                status: local.status,
+                resolved_at: local.resolved_at
+              }
+            : item;
+        });
+        const prismaIds = new Set(prismaComments.map((item) => item.id));
+        return sortReviewComments([
+          ...prismaWithLocalStatus,
+          ...jsonComments.filter((item) => !prismaIds.has(item.id))
+        ]);
       }
     }
   }
 
-  const store = await readStore();
-  return store.comments
-    .filter((item) => item.order_id === orderId && (version === undefined || item.version === version))
-    .sort(
-      (a, b) =>
-        a.timestamp_sec - b.timestamp_sec ||
-        String(a.created_at ?? "").localeCompare(String(b.created_at ?? ""))
-    );
+  return sortReviewComments(jsonComments);
 }
 
 export async function addReviewComment(input: {
@@ -218,20 +262,27 @@ export async function addReviewComment(input: {
   issue_type?: string | null;
   author?: ReviewComment["author"];
   created_by?: string | null;
+  author_display_name?: string;
+  annotations?: ReviewCommentAnnotation[];
 }): Promise<ReviewComment> {
   const store = await readStore();
   const comment: ReviewComment = {
     id: createId(),
     order_id: input.order_id,
     version: input.version,
-    timestamp_sec: Math.max(0, input.timestamp_sec),
+    timestamp_sec: Math.max(0, normalizeReviewCommentTimestampSec(input.timestamp_sec)),
     body: input.body.trim(),
     pos_x: input.pos_x ?? null,
     pos_y: input.pos_y ?? null,
     issue_type: input.issue_type?.trim() || inferIssueType(input.body),
     author: input.author ?? "brand",
     created_by: input.created_by ?? null,
-    status: "open",
+    author_display_name: input.author_display_name,
+    annotations: enrichReviewCommentAnnotations(input.annotations ?? [], input.timestamp_sec, {
+      x: input.pos_x,
+      y: input.pos_y
+    }),
+    status: "todo",
     created_at: new Date().toISOString(),
     resolved_at: null
   };
@@ -240,9 +291,26 @@ export async function addReviewComment(input: {
   return comment;
 }
 
+export async function inheritOpenReviewComments(input: {
+  orderId: string;
+  fromVersion: number;
+  toVersion: number;
+}): Promise<ReviewComment[]> {
+  void input;
+  return [];
+}
+
 export async function resolveReviewComment(
   commentId: string,
   orderId: string
+): Promise<ReviewComment | null> {
+  return setReviewCommentStatus(commentId, orderId, "resolved");
+}
+
+export async function setReviewCommentStatus(
+  commentId: string,
+  orderId: string,
+  status: ReviewCommentStatus
 ): Promise<ReviewComment | null> {
   const store = await readStore();
   const comment = store.comments.find((item) => item.id === commentId && item.order_id === orderId);
@@ -250,10 +318,36 @@ export async function resolveReviewComment(
     return null;
   }
 
-  comment.status = "resolved";
-  comment.resolved_at = new Date().toISOString();
+  comment.status = normalizeReviewCommentStatus(status);
+  comment.resolved_at = comment.status === "resolved" ? new Date().toISOString() : null;
   await writeStore(store);
   return comment;
+}
+
+export async function upsertReviewCommentStatusOverride(
+  comment: ReviewComment,
+  status: ReviewCommentStatus
+): Promise<ReviewComment> {
+  const store = await readStore();
+  const existing = store.comments.find((item) => item.id === comment.id && item.order_id === comment.order_id);
+  const nextStatus = normalizeReviewCommentStatus(status);
+  const nextResolvedAt = nextStatus === "resolved" ? new Date().toISOString() : null;
+
+  if (existing) {
+    existing.status = nextStatus;
+    existing.resolved_at = nextResolvedAt;
+    await writeStore(store);
+    return existing;
+  }
+
+  const shadow: ReviewComment = {
+    ...comment,
+    status: nextStatus,
+    resolved_at: nextResolvedAt
+  };
+  store.comments.push(shadow);
+  await writeStore(store);
+  return shadow;
 }
 
 export async function deleteReviewComment(
@@ -267,6 +361,11 @@ export async function deleteReviewComment(
   }
 
   const [removed] = store.comments.splice(index, 1);
+  if ([DEMO_ORDER_ID, DEMO_ARC_ORDER_ID].includes(orderId)) {
+    const dismissed = new Set(store.dismissed_demo_order_ids ?? []);
+    dismissed.add(orderId);
+    store.dismissed_demo_order_ids = [...dismissed];
+  }
   await writeStore(store);
   return removed;
 }

@@ -37,6 +37,7 @@ export const CampaignEvent = {
   START_PRODUCTION: "START_PRODUCTION",
   VERSION_UPLOAD: "VERSION_UPLOAD",
   REQUEST_REVISION: "REQUEST_REVISION",
+  CREATOR_REVERT_UPLOAD: "CREATOR_REVERT_UPLOAD",
   APPROVE: "APPROVE",
   MASTER_UPLOAD: "MASTER_UPLOAD",
   RELEASE_PAYMENT: "RELEASE_PAYMENT",
@@ -59,7 +60,9 @@ export const campaignStateMachine = createStateMachine<CampaignStateValue, Campa
   PAYMENT_SUCCESS: { from: [CampaignState.ESCROW_PENDING, CampaignState.CREATOR_ACCEPTED], to: CampaignState.ESCROW_FUNDED },
   START_PRODUCTION: { from: [CampaignState.ESCROW_FUNDED], to: CampaignState.PRODUCING },
   VERSION_UPLOAD: { from: [CampaignState.PRODUCING, CampaignState.UNDER_REVIEW], to: CampaignState.UNDER_REVIEW },
+  /** Brand has not started annotating — creator may revert and replace the current draft. */
   REQUEST_REVISION: { from: [CampaignState.UNDER_REVIEW], to: CampaignState.PRODUCING },
+  CREATOR_REVERT_UPLOAD: { from: [CampaignState.UNDER_REVIEW], to: CampaignState.PRODUCING },
   APPROVE: { from: [CampaignState.UNDER_REVIEW], to: CampaignState.APPROVED },
   MASTER_UPLOAD: { from: [CampaignState.APPROVED], to: CampaignState.MASTER_UPLOADED },
   RELEASE_PAYMENT: { from: [CampaignState.MASTER_UPLOADED], to: CampaignState.SETTLEMENT },

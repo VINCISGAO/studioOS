@@ -192,17 +192,9 @@ async function advanceDemoWithdrawals(store: WithdrawalStore) {
 }
 
 export async function getCreatorIncomeSnapshot(creatorId: string): Promise<CreatorIncomeSnapshot> {
-  if (creatorId === "creator_01") {
-    return {
-      available_usd: 2879,
-      held_usd: 4200,
-      pending_withdrawal_usd: 0,
-      lifetime_withdrawn_usd: 84200,
-      min_withdrawal_usd: MIN_WITHDRAWAL_USD
-    };
-  }
-
-  const prismaSnapshot = await resolvePrismaIncomeSnapshot(creatorId);
+  const prismaSnapshot = creatorId.startsWith("creator_")
+    ? null
+    : await resolvePrismaIncomeSnapshot(creatorId);
   if (prismaSnapshot) {
     const store = await readStore();
     await advanceDemoWithdrawals(store);
@@ -223,8 +215,8 @@ export async function getCreatorIncomeSnapshot(creatorId: string): Promise<Creat
   const [orders, store] = await Promise.all([listOrdersForCreator(creatorId), readStore()]);
   await advanceDemoWithdrawals(store);
 
-  const approved = orders
-    .filter((order) => order.payout_status === "approved")
+  const released = orders
+    .filter((order) => ["approved", "paid"].includes(order.payout_status))
     .reduce((sum, order) => sum + order.creator_payout, 0);
   const held = orders
     .filter((order) => order.payout_status === "held" && order.payment_status === "escrowed")
@@ -238,15 +230,18 @@ export async function getCreatorIncomeSnapshot(creatorId: string): Promise<Creat
     .filter((item) => item.creator_id === creatorId && item.status === "completed")
     .reduce((sum, item) => sum + item.net_usd, 0);
 
-  const paidOrders = orders
-    .filter((order) => order.payout_status === "paid")
-    .reduce((sum, order) => sum + order.creator_payout, 0);
+  const completedWithdrawals = store.withdrawals
+    .filter((item) => item.creator_id === creatorId && item.status === "completed")
+    .reduce((sum, item) => sum + item.amount_usd, 0);
 
   return {
-    available_usd: Math.max(0, Math.round((approved - pendingWithdrawals) * 100) / 100),
+    available_usd: Math.max(
+      0,
+      Math.round((released - pendingWithdrawals - completedWithdrawals) * 100) / 100
+    ),
     held_usd: Math.round(held * 100) / 100,
     pending_withdrawal_usd: Math.round(pendingWithdrawals * 100) / 100,
-    lifetime_withdrawn_usd: Math.round((lifetimeWithdrawn + paidOrders) * 100) / 100,
+    lifetime_withdrawn_usd: Math.round(lifetimeWithdrawn * 100) / 100,
     min_withdrawal_usd: MIN_WITHDRAWAL_USD
   };
 }

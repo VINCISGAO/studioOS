@@ -6,7 +6,7 @@ export const maxDuration = 300;
 export async function POST(request: Request) {
   const [
     { getCurrentCreatorId },
-    { getDeliverables, getOrder },
+    { listDeliverablesForUpload, getOrder },
     { purgeExpiredDeliverableVideos },
     { saveReviewVideoUpload }
   ] = await Promise.all([
@@ -40,37 +40,88 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
     }
 
-    const [{ hasDatabaseUrl }, { campaignRepository }, { versionService }, { MAX_CAMPAIGN_VERSIONS }] =
-      await Promise.all([
-        import("@/lib/core/database/prisma"),
-        import("@/features/campaign/campaign.repository"),
-        import("@/features/delivery/version.service"),
-        import("@/features/delivery/version.repository")
-      ]);
+    const [
+      { hasDatabaseUrl },
+      { campaignRepository },
+      { MAX_CAMPAIGN_VERSIONS },
+      {
+        resolveReviewUploadVersionForOrder,
+        filterPlayableDeliverables,
+        blocksCreatorNewVersionUpload,
+        latestSubmittedDeliverableVersion
+      },
+      { paidRevisionService },
+      { assertReviewVersionUploadAllowed }
+    ] = await Promise.all([
+      import("@/lib/core/database/prisma"),
+      import("@/features/campaign/campaign.repository"),
+      import("@/features/delivery/version.repository"),
+      import("@/lib/studioos/review-upload-version"),
+      import("@/features/review/paid-revision.service"),
+      import("@/features/review/review-round-policy")
+    ]);
+
+    const paidPolicy = await paidRevisionService.resolvePolicyForOrder({
+      orderId,
+      projectId: order.project_id
+    });
 
     if (hasDatabaseUrl() && order.project_id) {
       const campaign = await campaignRepository.findByLegacyProjectId(order.project_id);
       if (campaign) {
-        const deliverables = await versionService.listDeliverablesForLegacyProject(
-          order.project_id,
-          orderId
+        const deliverables = (await listDeliverablesForUpload(orderId)).sort(
+          (a, b) => a.version - b.version
         );
-        const count = deliverables?.length ?? 0;
-        if (count >= MAX_CAMPAIGN_VERSIONS) {
+        const uploadTarget = await resolveReviewUploadVersionForOrder(
+          orderId,
+          deliverables,
+          order.status,
+          paidPolicy.paidRevisionSlotsUnlocked
+        );
+        const latestSubmitted = latestSubmittedDeliverableVersion(deliverables);
+        if (
+          blocksCreatorNewVersionUpload({
+            orderStatus: order.status,
+            replace: uploadTarget.replace,
+            latestSubmitted
+          })
+        ) {
+          return NextResponse.json(
+            { ok: false, error: "Cannot upload in the current order status" },
+            { status: 400 }
+          );
+        }
+        const uploadGate = assertReviewVersionUploadAllowed({
+          targetVersion: uploadTarget.version,
+          paidSlotsUnlocked: paidPolicy.paidRevisionSlotsUnlocked
+        });
+        if (!uploadGate.ok) {
+          return NextResponse.json(
+            {
+              ok: false,
+              error:
+                uploadGate.code === "PAYMENT_REQUIRED"
+                  ? "Paid revision unlock required"
+                  : "Maximum review versions reached"
+            },
+            { status: uploadGate.code === "PAYMENT_REQUIRED" ? 402 : 409 }
+          );
+        }
+        const playableCount = (await filterPlayableDeliverables(orderId, deliverables)).length;
+        if (!uploadTarget.replace && playableCount >= MAX_CAMPAIGN_VERSIONS) {
           return NextResponse.json(
             { ok: false, error: "Maximum of 3 review versions reached" },
             { status: 400 }
           );
         }
-        const nextVersion = count + 1;
-        const saved = await saveReviewVideoUpload(orderId, nextVersion, file, "en");
+        const saved = await saveReviewVideoUpload(orderId, uploadTarget.version, file, "en");
         if (!saved.ok) {
           return NextResponse.json({ ok: false, error: saved.error }, { status: 400 });
         }
         return NextResponse.json({
           ok: true,
           url: saved.url,
-          version: nextVersion,
+          version: uploadTarget.version,
           file_name: saved.file_name
         });
       }
@@ -86,9 +137,50 @@ export async function POST(request: Request) {
       );
     }
 
-    const deliverables = await getDeliverables(orderId);
-    const nextVersion = deliverables.length + 1;
-    const saved = await saveReviewVideoUpload(orderId, nextVersion, file, "en");
+    const deliverables = await listDeliverablesForUpload(orderId);
+    const uploadTarget = await resolveReviewUploadVersionForOrder(
+      orderId,
+      deliverables,
+      order.status,
+      paidPolicy.paidRevisionSlotsUnlocked
+    );
+    const latestSubmitted = latestSubmittedDeliverableVersion(deliverables);
+    if (
+      blocksCreatorNewVersionUpload({
+        orderStatus: order.status,
+        replace: uploadTarget.replace,
+        latestSubmitted
+      })
+    ) {
+      return NextResponse.json(
+        { ok: false, error: "Cannot upload in the current order status" },
+        { status: 400 }
+      );
+    }
+    const uploadGate = assertReviewVersionUploadAllowed({
+      targetVersion: uploadTarget.version,
+      paidSlotsUnlocked: paidPolicy.paidRevisionSlotsUnlocked
+    });
+    if (!uploadGate.ok) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error:
+            uploadGate.code === "PAYMENT_REQUIRED"
+              ? "Paid revision unlock required"
+              : "Maximum review versions reached"
+        },
+        { status: uploadGate.code === "PAYMENT_REQUIRED" ? 402 : 409 }
+      );
+    }
+    const playableCount = (await filterPlayableDeliverables(orderId, deliverables)).length;
+    if (!uploadTarget.replace && playableCount >= MAX_CAMPAIGN_VERSIONS) {
+      return NextResponse.json(
+        { ok: false, error: "Maximum of 3 review versions reached" },
+        { status: 400 }
+      );
+    }
+    const saved = await saveReviewVideoUpload(orderId, uploadTarget.version, file, "en");
 
     if (!saved.ok) {
       return NextResponse.json({ ok: false, error: saved.error }, { status: 400 });
@@ -97,7 +189,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       ok: true,
       url: saved.url,
-      version: nextVersion,
+      version: uploadTarget.version,
       file_name: saved.file_name
     });
   } catch (error) {

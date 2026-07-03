@@ -1,10 +1,25 @@
 import type { ReviewComment, ReviewAnnotation } from "@prisma/client";
 import { buildVersionPlayback } from "@/features/video/playback-token.service";
 
+export function serializeReviewAnnotation(annotation: ReviewAnnotation) {
+  return {
+    id: annotation.id,
+    type: annotation.type,
+    x: Number(annotation.x),
+    y: Number(annotation.y),
+    width: Number(annotation.width),
+    height: Number(annotation.height),
+    color: annotation.color,
+    strokeWidth: annotation.strokeWidth,
+    dataJson: "dataJson" in annotation ? annotation.dataJson : null
+  };
+}
+
 export function serializeReviewComment(
   comment: ReviewComment & { annotations?: ReviewAnnotation[] }
 ) {
-  const annotation = comment.annotations?.[0];
+  const annotations = (comment.annotations ?? []).map(serializeReviewAnnotation);
+  const annotation = annotations[0] ?? null;
   return {
     id: comment.id,
     campaignId: comment.campaignId,
@@ -13,16 +28,8 @@ export function serializeReviewComment(
     timeSeconds: Number(comment.timeSeconds),
     comment: comment.comment,
     resolved: comment.resolved,
-    annotation: annotation
-      ? {
-          type: annotation.type,
-          x: Number(annotation.x),
-          y: Number(annotation.y),
-          width: Number(annotation.width),
-          height: Number(annotation.height),
-          color: annotation.color
-        }
-      : null,
+    annotations,
+    annotation,
     createdAt: comment.createdAt.toISOString()
   };
 }

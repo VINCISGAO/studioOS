@@ -1,3 +1,4 @@
+import { MAX_REVISION_ROUNDS } from "@/features/review/review-round-policy";
 import { campaignService } from "@/features/campaign/campaign.service";
 import { CampaignEvent, CampaignState } from "@/features/campaign/campaign.state-machine";
 import { reviewRepository } from "@/features/review/review.repository";
@@ -62,12 +63,12 @@ export class ReviewDecisionService {
       throw appError("INVALID_TRANSITION", `Cannot request revision from review status ${version.reviewStatus}`);
     }
 
-    const reviewRound = version.campaign.reviewRound;
-    const reviewStatus = await reviewService.requestRevision(versionId, user, reviewRound);
+    const reviewStatus = await reviewService.requestRevision(versionId, user, version.versionNumber);
 
+    const nextRevisionRound = Math.min(version.versionNumber + 1, MAX_REVISION_ROUNDS);
     await prisma.campaign.update({
       where: { id: version.campaignId },
-      data: { reviewRound: reviewRound + 1 }
+      data: { reviewRound: nextRevisionRound }
     });
 
     const campaign = await prisma.campaign.findUniqueOrThrow({ where: { id: version.campaignId } });
@@ -90,7 +91,7 @@ export class ReviewDecisionService {
     return {
       reviewStatus,
       campaignStatus: updated?.campaign.status ?? campaign.status,
-      reviewRound: reviewRound + 1,
+      reviewRound: nextRevisionRound,
       version: updated ? serializeReviewVersion(updated) : null
     };
   }

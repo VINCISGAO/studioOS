@@ -96,7 +96,7 @@ export default async function BrandProjectHubPage({
         orderStatus={linkedOrder?.status ?? null}
         paymentStatus={linkedOrder?.payment_status ?? null}
         projectStatus={project.status}
-        hasOpenComments={reviewComments.some((item) => item.status === "open")}
+        hasOpenComments={reviewComments.some((item) => isReviewCommentUnresolved(item.status))}
         compact
       />
       <BrandProjectHub

@@ -1,7 +1,11 @@
 import type { Locale } from "@/lib/i18n";
 import type { StoredOrder } from "@/lib/order-types";
 import type { CreatorProjectFilter } from "@/lib/studioos/creator-order-lifecycle";
-import { creatorProjectBucket } from "@/lib/studioos/creator-order-lifecycle";
+import {
+  isCreatorOrderInProgress,
+  isCreatorOrderPendingReview,
+  matchesCreatorProjectFilter
+} from "@/lib/studioos/creator-order-lifecycle";
 
 export type CreatorProjectsStats = {
   inProgress: number;
@@ -39,8 +43,8 @@ export function buildCreatorProjectsStats(
 ): CreatorProjectsStats {
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-  const inProgress = orders.filter((order) => creatorProjectBucket(order.status) === "in_progress").length;
-  const pendingReview = orders.filter((order) => creatorProjectBucket(order.status) === "pending_review").length;
+  const inProgress = orders.filter((order) => isCreatorOrderInProgress(order.status)).length;
+  const pendingReview = orders.filter((order) => isCreatorOrderPendingReview(order.status)).length;
   const completedThisMonth = orders.filter(
     (order) =>
       order.status === "completed" &&
@@ -167,7 +171,7 @@ export function buildCreatorProjectRows(input: {
         };
 
   return input.orders
-    .filter((order) => creatorProjectBucket(order.status) === input.filter)
+    .filter((order) => matchesCreatorProjectFilter(order, input.filter))
     .map((order, index) => {
       const deliverableCount = input.deliverableCounts[order.id] ?? 0;
       const deadline = order.completed_at ?? order.paid_at ?? order.created_at;

@@ -1,120 +1,84 @@
 import type { CampaignVersion, ReviewAnnotation, ReviewComment } from "@prisma/client";
-import { prisma, hasDatabaseUrl } from "@/lib/core/database/prisma";
+import {
+  reviewerV1Repository,
+  ReviewerV1Repository
+} from "@/features/review/reviewer-v1.repository";
+import type {
+  CreateReviewerV1CommentInput,
+  ReviewerV1CommentRecord,
+  ReviewerV1VersionWithComments
+} from "@/features/review/reviewer-v1.types";
 
-export type VersionWithComments = CampaignVersion & {
-  comments: (ReviewComment & { annotations: ReviewAnnotation[] })[];
+export type ReviewCommentWithAnnotations = ReviewerV1CommentRecord;
+
+export type VersionWithComments = ReviewerV1VersionWithComments & {
+  comments: (ReviewComment & {
+    annotations: ReviewAnnotation[];
+    user: { id: string; fullName: string; role: string };
+  })[];
 };
 
-export type ReviewCommentWithAnnotations = ReviewComment & {
-  annotations: ReviewAnnotation[];
-};
-
+/** @deprecated Use ReviewerV1Repository — kept for existing imports */
 export class ReviewRepository {
-  async findVersion(versionId: string) {
-    if (!hasDatabaseUrl()) return null;
-    return prisma.campaignVersion.findFirst({
-      where: { id: versionId, deletedAt: null },
-      include: { campaign: true }
+  findVersion(versionId: string) {
+    return reviewerV1Repository.findCampaignVersion(versionId);
+  }
+
+  findVersionByCampaignAndNumber(campaignId: string, versionNumber: number) {
+    return reviewerV1Repository.findCampaignVersionByNumber(campaignId, versionNumber);
+  }
+
+  listVersionsForCampaign(campaignId: string): Promise<VersionWithComments[]> {
+    return reviewerV1Repository.listCampaignVersionsWithComments(campaignId) as Promise<
+      VersionWithComments[]
+    >;
+  }
+
+  listComments(versionId: string) {
+    return reviewerV1Repository.listCommentsForVersion(versionId);
+  }
+
+  createComment(input: CreateReviewerV1CommentInput): Promise<ReviewCommentWithAnnotations> {
+    return reviewerV1Repository.createComment(input);
+  }
+
+  softDeleteComment(commentId: string, campaignId: string) {
+    return reviewerV1Repository.softDeleteComment(commentId, campaignId);
+  }
+
+  hardDeleteComment(commentId: string, campaignId: string) {
+    return reviewerV1Repository.hardDeleteComment(commentId, campaignId);
+  }
+
+  resolveComment(commentId: string, campaignId: string, resolvedBy: string) {
+    return reviewerV1Repository.updateCommentStatus({
+      commentId,
+      campaignId,
+      resolved: true,
+      resolvedBy
     });
   }
 
-  async findVersionByCampaignAndNumber(campaignId: string, versionNumber: number) {
-    if (!hasDatabaseUrl()) return null;
-    return prisma.campaignVersion.findFirst({
-      where: { campaignId, versionNumber, deletedAt: null },
-      include: { campaign: true }
+  updateCommentStatus(
+    commentId: string,
+    campaignId: string,
+    resolved: boolean,
+    resolvedBy?: string
+  ) {
+    return reviewerV1Repository.updateCommentStatus({
+      commentId,
+      campaignId,
+      resolved,
+      resolvedBy
     });
   }
 
-  async listVersionsForCampaign(campaignId: string): Promise<VersionWithComments[]> {
-    if (!hasDatabaseUrl()) return [];
-    return prisma.campaignVersion.findMany({
-      where: { campaignId, deletedAt: null },
-      include: {
-        comments: {
-          where: { deletedAt: null },
-          orderBy: { timeSeconds: "asc" },
-          include: { annotations: true }
-        }
-      },
-      orderBy: { versionNumber: "asc" }
-    });
-  }
-
-  async listComments(versionId: string) {
-    if (!hasDatabaseUrl()) return [];
-    return prisma.reviewComment.findMany({
-      where: { versionId, deletedAt: null },
-      orderBy: { timeSeconds: "asc" },
-      include: { annotations: true, user: true }
-    });
-  }
-
-  async createComment(input: {
-    campaignId: string;
-    versionId: string;
-    userId: string;
-    timeSeconds: number;
-    comment: string;
-    annotation?: {
-      type: "CIRCLE" | "RECTANGLE" | "ARROW" | "POINT";
-      x: number;
-      y: number;
-      width: number;
-      height: number;
-      color?: string;
-    };
-  }): Promise<ReviewCommentWithAnnotations> {
-    return prisma.reviewComment.create({
-      data: {
-        campaignId: input.campaignId,
-        versionId: input.versionId,
-        userId: input.userId,
-        timeSeconds: input.timeSeconds,
-        comment: input.comment,
-        annotations: input.annotation
-          ? {
-              create: {
-                campaignId: input.campaignId,
-                versionId: input.versionId,
-                type: input.annotation.type,
-                x: input.annotation.x,
-                y: input.annotation.y,
-                width: input.annotation.width,
-                height: input.annotation.height,
-                color: input.annotation.color ?? "#FF4D4F"
-              }
-            }
-          : undefined
-      },
-      include: { annotations: true }
-    });
-  }
-
-  async softDeleteComment(commentId: string, campaignId: string) {
-    return prisma.reviewComment.updateMany({
-      where: { id: commentId, campaignId, deletedAt: null },
-      data: { deletedAt: new Date() }
-    });
-  }
-
-  async resolveComment(commentId: string, campaignId: string, resolvedBy: string) {
-    return prisma.reviewComment.updateMany({
-      where: { id: commentId, campaignId, deletedAt: null },
-      data: {
-        resolved: true,
-        resolvedBy,
-        resolvedAt: new Date()
-      }
-    });
-  }
-
-  async findComment(commentId: string, campaignId: string) {
-    return prisma.reviewComment.findFirst({
-      where: { id: commentId, campaignId, deletedAt: null },
-      include: { annotations: true }
-    });
+  findComment(commentId: string, campaignId: string): Promise<ReviewCommentWithAnnotations | null> {
+    return reviewerV1Repository.findComment(commentId, campaignId);
   }
 }
 
+export { ReviewerV1Repository, reviewerV1Repository };
 export const reviewRepository = new ReviewRepository();
+
+export type { CampaignVersion, ReviewAnnotation, ReviewComment };

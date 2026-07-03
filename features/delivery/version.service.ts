@@ -8,14 +8,14 @@ import {
   versionRepository
 } from "@/features/delivery/version.repository";
 import { resolveCreatorProfileIdForLegacyId } from "@/features/matching/invitation-creator-bridge";
-import { notificationService } from "@/features/notification/notification.service";
 import { userRepository } from "@/features/auth/user.repository";
-import { getAppBaseUrl } from "@/lib/app-url";
 import { hasDatabaseUrl, prisma } from "@/lib/core/database/prisma";
 import type { Locale } from "@/lib/i18n";
-import type { StoredDeliverable } from "@/lib/order-types";
-import { readProductionBrief } from "@/features/campaign/brand-campaign/brand-campaign.utils";
-import type { BrandProductionBrief } from "@/features/campaign/brand-campaign/brand-campaign.types";
+import type { OrderStatus, StoredDeliverable } from "@/lib/order-types";
+import {
+  resolveReviewUploadVersionForOrder,
+  reviewVideoUrlForVersion
+} from "@/lib/studioos/review-upload-version";
 
 const UPLOADABLE_CAMPAIGN_STATUSES = new Set<string>([
   CampaignState.PRODUCING,
@@ -34,12 +34,12 @@ export type VersionUploadInput = {
   notesForClient?: string;
   notesClientLocale?: Locale;
   locale: Locale;
+  /** When set (e.g. after /api/delivery/upload-video), must match the on-disk review file slot. */
+  versionNumber?: number;
+  replaceExisting?: boolean;
+  orderStatus?: OrderStatus;
+  paidRevisionSlotsUnlocked?: number;
 };
-
-function resolveLegacyProjectId(campaign: { productionBrief: unknown; id: string }): string {
-  const brief = readProductionBrief(campaign.productionBrief) as BrandProductionBrief;
-  return brief.legacy_project_id ?? campaign.id;
-}
 
 function deriveFileKey(orderId: string, versionNumber: number, fileName: string) {
   const safeName = fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
@@ -64,33 +64,6 @@ function inferUploadMeta(input: {
   };
 }
 
-function brandReviewCopy(locale: Locale, projectTitle: string, versionNumber: number) {
-  if (locale === "zh") {
-    if (versionNumber === 1) {
-      return {
-        title: "Studio 已提交审片版",
-        body: `「${projectTitle}」Version 1 已上传，请前往审片页审核。`
-      };
-    }
-    return {
-      title: "Studio 已提交新版本",
-      body: `「${projectTitle}」Version ${versionNumber} 已提交，请审阅修改版。`
-    };
-  }
-
-  if (versionNumber === 1) {
-    return {
-      title: "Studio submitted Version 1 for review",
-      body: `"${projectTitle}" — Version 1 is ready. Open the review workspace to approve or request changes.`
-    };
-  }
-
-  return {
-    title: "Studio submitted a new version",
-    body: `"${projectTitle}" — Version ${versionNumber} is ready for your review.`
-  };
-}
-
 function mapVersionToDeliverable(
   version: Awaited<ReturnType<typeof versionRepository.createVersion>>,
   orderId: string,
@@ -98,11 +71,12 @@ function mapVersionToDeliverable(
   notesForClient?: string,
   notesClientLocale?: Locale
 ): StoredDeliverable {
+  const videoUrl = version.videoUrl?.trim() ?? "";
   return {
     id: version.id,
     order_id: orderId,
-    file_url: version.videoUrl ?? "",
-    thumbnail_url: version.thumbnailUrl ?? version.videoUrl ?? "",
+    file_url: videoUrl,
+    thumbnail_url: version.thumbnailUrl ?? videoUrl,
     notes: notes ?? "",
     notes_for_client: notesForClient ?? notes ?? "",
     notes_client_locale: notesClientLocale,
@@ -165,12 +139,26 @@ export class VersionService {
       return { ok: false, error: "invalid-status" };
     }
 
-    const existingCount = await versionRepository.countByCampaign(campaign.id);
-    if (existingCount >= MAX_CAMPAIGN_VERSIONS) {
-      return { ok: false, error: "max-versions" };
+    const existingDeliverables =
+      (await this.listDeliverablesForLegacyProject(input.legacyProjectId, input.orderId)) ?? [];
+    const uploadTarget =
+      input.versionNumber != null && input.replaceExisting != null
+        ? { version: input.versionNumber, replace: input.replaceExisting }
+        : await resolveReviewUploadVersionForOrder(
+            input.orderId,
+            existingDeliverables,
+            input.orderStatus ?? "in_production",
+            input.paidRevisionSlotsUnlocked ?? 0
+          );
+    const { version: versionNumber, replace } = uploadTarget;
+
+    if (!replace) {
+      const existingCount = await versionRepository.countByCampaign(campaign.id);
+      if (existingCount >= MAX_CAMPAIGN_VERSIONS) {
+        return { ok: false, error: "max-versions" };
+      }
     }
 
-    const versionNumber = existingCount + 1;
     const meta = inferUploadMeta({
       orderId: input.orderId,
       versionNumber,
@@ -186,18 +174,39 @@ export class VersionService {
       return { ok: false, error: "unauthorized" };
     }
 
-    const version = await versionRepository.createVersion({
-      campaignId: campaign.id,
-      versionNumber,
-      uploadedBy: campaign.creatorId,
-      videoKey,
-      videoUrl: input.videoUrl,
-      fileName: meta.fileName,
-      mimeType: meta.mimeType,
-      fileSizeBytes: meta.fileSizeBytes
-    });
+    const existingVersion = await versionRepository.findByCampaignAndVersionNumber(campaign.id, versionNumber);
+    const shouldUpdateExisting = replace || Boolean(existingVersion);
 
-    await campaignRepository.setCurrentVersion(campaign.id, versionNumber);
+    const version = shouldUpdateExisting
+      ? await versionRepository.updateVersionMedia({
+          campaignId: campaign.id,
+          versionNumber,
+          videoKey,
+          videoUrl: input.videoUrl,
+          fileName: meta.fileName,
+          mimeType: meta.mimeType,
+          fileSizeBytes: meta.fileSizeBytes,
+          notes: input.notes?.trim() || null
+        })
+      : await versionRepository.createVersion({
+          campaignId: campaign.id,
+          versionNumber,
+          uploadedBy: campaign.creatorId,
+          videoKey,
+          videoUrl: input.videoUrl,
+          fileName: meta.fileName,
+          mimeType: meta.mimeType,
+          fileSizeBytes: meta.fileSizeBytes,
+          notes: input.notes?.trim() || null
+        });
+
+    if (!version) {
+      return { ok: false, error: "project-not-found" };
+    }
+
+    if (!replace) {
+      await campaignRepository.setCurrentVersion(campaign.id, versionNumber);
+    }
 
     await campaignService.transition(campaign.id, CampaignEvent.VERSION_UPLOAD, {
       id: creatorUser.id,
@@ -225,19 +234,6 @@ export class VersionService {
       }
     );
 
-    const legacyProjectId = resolveLegacyProjectId(campaign);
-    const copy = brandReviewCopy(input.locale, campaign.title, versionNumber);
-    await notificationService
-      .notify({
-        userId: campaign.brandId,
-        campaignId: campaign.id,
-        title: copy.title,
-        content: copy.body,
-        actionUrl: `${getAppBaseUrl()}/brand/projects/${legacyProjectId}/review`,
-        email: false
-      })
-      .catch(() => undefined);
-
     await reviewBridgeService.syncLegacyOrderStatusAfterUpload(campaign.id);
 
     const deliverable = mapVersionToDeliverable(
@@ -247,6 +243,9 @@ export class VersionService {
       input.notesForClient,
       input.notesClientLocale
     );
+
+    const { upsertJsonDeliverable } = await import("@/lib/order-service");
+    await upsertJsonDeliverable(input.orderId, deliverable);
 
     return {
       ok: true,

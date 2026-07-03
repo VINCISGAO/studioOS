@@ -108,7 +108,7 @@ export function BrandReviewWorkflowPanel({
   const t = copy[locale];
   const creator = order ? creators.find((item) => item.id === order.creator_id) : null;
   const hasVersions = deliverables.length > 0;
-  const openComments = comments.filter((item) => item.status === "open");
+  const openComments = comments.filter((item) => item.status !== "resolved");
   const resolvedComments = comments.filter((item) => item.status === "resolved");
   const canDecide =
     reviewUi?.canDecide ??

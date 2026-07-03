@@ -3,7 +3,7 @@
 import { Pause, Play, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Locale } from "@/lib/i18n";
-import type { ReviewComment } from "@/lib/studioos/review-store";
+import type { ReviewComment } from "@/lib/studioos/review-comment-types";
 import { formatTimestamp } from "@/lib/studioos/review-utils";
 import { cn } from "@/lib/utils";
 

@@ -3,7 +3,10 @@ import { campaignRepository } from "@/features/campaign/campaign.repository";
 import { userRepository } from "@/features/auth/user.repository";
 import { versionRepository } from "@/features/delivery/version.repository";
 import { reviewDecisionService } from "@/features/review/review-decision.service";
-import { reviewRepository } from "@/features/review/review.repository";
+import {
+  reviewRepository,
+  type ReviewCommentWithAnnotations
+} from "@/features/review/review.repository";
 import { reviewService } from "@/features/review/review.service";
 import { reviewBridgeService } from "@/features/review/review-bridge.service";
 import { notificationService } from "@/features/notification/notification.service";
@@ -12,6 +15,8 @@ import { resolveCreatorProfileIdForLegacyId } from "@/features/matching/invitati
 import { hasDatabaseUrl, prisma } from "@/lib/core/database/prisma";
 import type { Locale } from "@/lib/i18n";
 import type { ReviewComment as StoredReviewComment } from "@/lib/studioos/review-store";
+import { normalizeReviewCommentTimestampSec } from "@/lib/studioos/review-comment-time";
+import { normalizeStoredAnnotationDataJson } from "@/lib/studioos/review-annotation-json";
 import { readProductionBrief } from "@/features/campaign/brand-campaign/brand-campaign.utils";
 import type { BrandProductionBrief } from "@/features/campaign/brand-campaign/brand-campaign.types";
 
@@ -22,24 +27,84 @@ function resolveLegacyProjectId(campaign: { productionBrief: unknown; id: string
   return brief.legacy_project_id ?? campaign.id;
 }
 
+function mapAnnotationDataJson(
+  annotation: {
+    dataJson?: unknown;
+    x: unknown;
+    y: unknown;
+    width: unknown;
+    height: unknown;
+  },
+  commentTimeSeconds: number
+) {
+  return normalizeStoredAnnotationDataJson(annotation.dataJson, commentTimeSeconds, {
+    x: Number(annotation.x),
+    y: Number(annotation.y),
+    width: Number(annotation.width),
+    height: Number(annotation.height)
+  });
+}
+
 function mapStoredComment(
-  comment: Awaited<ReturnType<typeof reviewRepository.createComment>>,
+  comment: ReviewCommentWithAnnotations,
   orderId: string,
   versionNumber: number
 ): StoredReviewComment {
-  const annotation = comment.annotations[0];
   return {
     id: comment.id,
     order_id: orderId,
     version: versionNumber,
-    timestamp_sec: Number(comment.timeSeconds),
+    timestamp_sec: normalizeReviewCommentTimestampSec(comment.timeSeconds),
     body: comment.comment,
-    pos_x: annotation ? Number(annotation.x) : null,
-    pos_y: annotation ? Number(annotation.y) : null,
+    pos_x: comment.annotations[0] ? Number(comment.annotations[0].x) : null,
+    pos_y: comment.annotations[0] ? Number(comment.annotations[0].y) : null,
     issue_type: null,
-    author: "brand",
+    author: comment.user?.role === "BRAND" ? "brand" : "studio",
     created_by: comment.userId,
-    status: comment.resolved ? "resolved" : "open",
+    annotations: comment.annotations.map((annotation) => ({
+      id: annotation.id,
+      type: annotation.type,
+      color: annotation.color,
+      stroke_width: annotation.strokeWidth,
+      data_json: mapAnnotationDataJson(
+        annotation,
+        normalizeReviewCommentTimestampSec(comment.timeSeconds)
+      )
+    })),
+    status: comment.resolved ? "resolved" : "todo",
+    created_at: comment.createdAt.toISOString(),
+    resolved_at: comment.resolvedAt?.toISOString() ?? null
+  };
+}
+
+function mapVersionComment(
+  comment: Awaited<ReturnType<typeof reviewRepository.listVersionsForCampaign>>[number]["comments"][number],
+  orderId: string,
+  versionNumber: number
+): StoredReviewComment {
+  return {
+    id: comment.id,
+    order_id: orderId,
+    version: versionNumber,
+    timestamp_sec: normalizeReviewCommentTimestampSec(comment.timeSeconds),
+    body: comment.comment,
+    pos_x: comment.annotations[0] ? Number(comment.annotations[0].x) : null,
+    pos_y: comment.annotations[0] ? Number(comment.annotations[0].y) : null,
+    issue_type: null,
+    author: comment.user?.role === "BRAND" ? "brand" : "studio",
+    created_by: comment.userId,
+    author_display_name: comment.user?.fullName,
+    annotations: comment.annotations.map((annotation) => ({
+      id: annotation.id,
+      type: annotation.type,
+      color: annotation.color,
+      stroke_width: annotation.strokeWidth,
+      data_json: mapAnnotationDataJson(
+        annotation,
+        normalizeReviewCommentTimestampSec(comment.timeSeconds)
+      )
+    })),
+    status: comment.resolved ? "resolved" : "todo",
     created_at: comment.createdAt.toISOString(),
     resolved_at: comment.resolvedAt?.toISOString() ?? null
   };
@@ -120,7 +185,7 @@ export class ReviewPortalService {
 
     for (const version of versions) {
       for (const comment of version.comments) {
-        rows.push(mapStoredComment(comment, orderId, version.versionNumber));
+        rows.push(mapVersionComment(comment, orderId, version.versionNumber));
       }
     }
 
@@ -141,6 +206,7 @@ export class ReviewPortalService {
     posX?: number | null;
     posY?: number | null;
     issueType?: string | null;
+    annotations?: StoredReviewComment["annotations"];
     locale: Locale;
   }): Promise<{ ok: true; comment: StoredReviewComment } | { ok: false; error: string }> {
     if (!this.isEnabled()) {
@@ -178,22 +244,70 @@ export class ReviewPortalService {
       ? `[${input.issueType}] ${input.body}`.trim()
       : input.body.trim();
 
+    const annotations =
+      input.annotations && input.annotations.length
+        ? input.annotations
+            .map((annotation) => {
+              const type = String(annotation.type ?? "").toUpperCase();
+              if (
+                !["POINT", "ARROW", "RECTANGLE", "CIRCLE", "PEN", "TEXT"].includes(type)
+              ) {
+                return null;
+              }
+              const data = (annotation.data_json ?? {}) as Record<string, unknown>;
+              const x =
+                typeof data.x === "number"
+                  ? data.x
+                  : input.posX != null
+                    ? input.posX
+                    : 0.5;
+              const y =
+                typeof data.y === "number"
+                  ? data.y
+                  : input.posY != null
+                    ? input.posY
+                    : 0.5;
+              const width = typeof data.width === "number" ? data.width : 0;
+              const height = typeof data.height === "number" ? data.height : 0;
+              return {
+                type: type as "POINT" | "ARROW" | "RECTANGLE" | "CIRCLE" | "PEN" | "TEXT",
+                x,
+                y,
+                width,
+                height,
+                color: annotation.color ?? "#FF4D4F",
+                strokeWidth: annotation.stroke_width ?? 2,
+                dataJson: normalizeStoredAnnotationDataJson(annotation.data_json, input.timestampSec, {
+                  x,
+                  y,
+                  width,
+                  height
+                })
+              };
+            })
+            .filter((item): item is NonNullable<typeof item> => Boolean(item))
+        : undefined;
+
     const created = await reviewRepository.createComment({
       campaignId: ctx.campaign.id,
       versionId: version.id,
       userId: ctx.brandUser.id,
-      timeSeconds: input.timestampSec,
+      timeSeconds: normalizeReviewCommentTimestampSec(input.timestampSec),
       comment: body,
-      annotation:
-        input.posX != null && input.posY != null
-          ? {
-              type: "POINT",
-              x: input.posX,
-              y: input.posY,
-              width: 0,
-              height: 0
-            }
-          : undefined
+      annotations:
+        annotations && annotations.length > 0
+          ? annotations
+          : input.posX != null && input.posY != null
+            ? [
+                {
+                  type: "POINT",
+                  x: input.posX,
+                  y: input.posY,
+                  width: 0,
+                  height: 0
+                }
+              ]
+            : undefined
     });
 
     if (sessionVersion.reviewStatus === "READY") {
@@ -217,28 +331,148 @@ export class ReviewPortalService {
         order_id: input.orderId,
         version_number: input.version,
         comment_id: created.id,
-        time_seconds: input.timestampSec
+        time_seconds: normalizeReviewCommentTimestampSec(input.timestampSec)
       }
     );
 
-    if (ctx.campaign.creatorId) {
-      const legacyProjectId = resolveLegacyProjectId(ctx.campaign);
-      await notificationService
-        .notify({
-          userId: ctx.campaign.creatorId,
-          campaignId: ctx.campaign.id,
-          title: input.locale === "zh" ? "品牌添加了审片批注" : "Brand left a review comment",
-          content:
-            input.locale === "zh"
-              ? `「${ctx.campaign.title}」Version ${input.version} 有新批注，请查看 Studio 审片室。`
-              : `"${ctx.campaign.title}" — Version ${input.version} has new feedback in the review room.`,
-          actionUrl: `${getAppBaseUrl()}/studio/review/${input.orderId}`,
-          email: false
-        })
-        .catch(() => undefined);
+    return { ok: true, comment: mapStoredComment(created, input.orderId, input.version) };
+  }
+
+  async addStudioReplyForLegacyOrder(input: {
+    orderId: string;
+    legacyProjectId: string;
+    legacyCreatorId: string;
+    version: number;
+    body: string;
+    replyToCommentId: string;
+  }): Promise<{ ok: true; comment: StoredReviewComment } | { ok: false; error: string }> {
+    if (!this.isEnabled()) {
+      return { ok: false, error: "no-database" };
     }
 
-    return { ok: true, comment: mapStoredComment(created, input.orderId, input.version) };
+    const campaign = await campaignRepository.findByLegacyProjectId(input.legacyProjectId);
+    if (!campaign?.creatorId) {
+      return { ok: false, error: "unauthorized" };
+    }
+
+    const creatorProfileId = await resolveCreatorProfileIdForLegacyId(input.legacyCreatorId);
+    if (!creatorProfileId) {
+      return { ok: false, error: "unauthorized" };
+    }
+
+    const profile = await prisma.creatorProfile.findUnique({
+      where: { id: creatorProfileId },
+      select: { userId: true, displayName: true }
+    });
+    if (!profile || profile.userId !== campaign.creatorId) {
+      return { ok: false, error: "unauthorized" };
+    }
+
+    const parent = await reviewRepository.findComment(input.replyToCommentId, campaign.id);
+    if (!parent) {
+      return { ok: false, error: "not-found" };
+    }
+
+    const version = await reviewRepository.findVersion(parent.versionId);
+    if (!version || version.versionNumber !== input.version) {
+      return { ok: false, error: "not-found" };
+    }
+
+    const parentMapped = mapStoredComment(parent, input.orderId, version.versionNumber);
+    if (parentMapped.author !== "brand") {
+      return { ok: false, error: "invalid-parent" };
+    }
+
+    const created = await reviewRepository.createComment({
+      campaignId: campaign.id,
+      versionId: version.id,
+      userId: profile.userId,
+      timeSeconds: parent.timeSeconds,
+      comment: input.body.trim()
+    });
+
+    await activityService.write(
+      campaign.id,
+      "review.studio_reply_added",
+      { userId: profile.userId, email: input.legacyCreatorId, role: "creator" },
+      {
+        order_id: input.orderId,
+        version_number: input.version,
+        comment_id: created.id,
+        reply_to_comment_id: input.replyToCommentId
+      }
+    );
+
+    const mapped = mapStoredComment(created, input.orderId, input.version);
+    mapped.author_display_name = profile.displayName ?? "Studio";
+    return { ok: true, comment: mapped };
+  }
+
+  async updateCreatorCommentWorkflowForLegacyOrder(input: {
+    orderId: string;
+    legacyProjectId: string;
+    legacyCreatorId: string;
+    commentId: string;
+    status: "in_progress" | "pending_confirmation";
+  }): Promise<{ ok: true; comment: StoredReviewComment } | { ok: false; error: string }> {
+    if (!this.isEnabled()) {
+      return { ok: false, error: "no-database" };
+    }
+
+    const campaign = await campaignRepository.findByLegacyProjectId(input.legacyProjectId);
+    if (!campaign?.creatorId) {
+      return { ok: false, error: "unauthorized" };
+    }
+
+    const creatorProfileId = await resolveCreatorProfileIdForLegacyId(input.legacyCreatorId);
+    if (!creatorProfileId) {
+      return { ok: false, error: "unauthorized" };
+    }
+
+    const profile = await prisma.creatorProfile.findUnique({
+      where: { id: creatorProfileId },
+      select: { userId: true }
+    });
+    if (!profile || profile.userId !== campaign.creatorId) {
+      return { ok: false, error: "unauthorized" };
+    }
+
+    const existing = await reviewRepository.findComment(input.commentId, campaign.id);
+    if (!existing) {
+      return { ok: false, error: "not-found" };
+    }
+
+    const version = await reviewRepository.findVersion(existing.versionId);
+    if (!version) {
+      return { ok: false, error: "not-found" };
+    }
+
+    const mappedExisting = mapStoredComment(existing, input.orderId, version.versionNumber);
+    if (mappedExisting.status === "resolved") {
+      return { ok: false, error: "already-resolved" };
+    }
+    if (
+      (input.status === "in_progress" && mappedExisting.status !== "todo") ||
+      (input.status === "pending_confirmation" && mappedExisting.status !== "in_progress")
+    ) {
+      return { ok: false, error: "invalid-transition" };
+    }
+
+    await activityService.write(
+      campaign.id,
+      "review.comment_status_updated",
+      { userId: profile.userId, email: input.legacyCreatorId, role: "creator" },
+      {
+        order_id: input.orderId,
+        version_number: version.versionNumber,
+        comment_id: input.commentId,
+        status: input.status
+      }
+    );
+
+    const result = mapStoredComment(existing, input.orderId, version.versionNumber);
+    result.status = input.status;
+    return { ok: true, comment: result };
   }
 
   async deleteCommentForLegacyOrder(input: {
@@ -256,7 +490,7 @@ export class ReviewPortalService {
       return { ok: false, error: "unauthorized" };
     }
 
-    const deleted = await reviewRepository.softDeleteComment(input.commentId, ctx.campaign.id);
+    const deleted = await reviewRepository.hardDeleteComment(input.commentId, ctx.campaign.id);
     if (!deleted.count) {
       return { ok: false, error: "not-found" };
     }
@@ -311,6 +545,45 @@ export class ReviewPortalService {
     };
   }
 
+  async updateCommentStatusForLegacyOrder(input: {
+    orderId: string;
+    legacyProjectId: string;
+    brandEmail: string;
+    commentId: string;
+    status: StoredReviewComment["status"];
+  }): Promise<{ ok: true; comment: StoredReviewComment } | { ok: false; error: string }> {
+    if (!this.isEnabled()) {
+      return { ok: false, error: "no-database" };
+    }
+
+    const ctx = await this.loadBrandCampaign(input.legacyProjectId, input.brandEmail);
+    if (!ctx) {
+      return { ok: false, error: "unauthorized" };
+    }
+
+    const existing = await reviewRepository.findComment(input.commentId, ctx.campaign.id);
+    if (!existing) {
+      return { ok: false, error: "not-found" };
+    }
+
+    await reviewRepository.updateCommentStatus(
+      input.commentId,
+      ctx.campaign.id,
+      input.status === "resolved",
+      input.status === "resolved" ? ctx.brandUser.id : undefined
+    );
+
+    const updated = await reviewRepository.findComment(input.commentId, ctx.campaign.id);
+    const version = await reviewRepository.findVersion(existing.versionId);
+    if (!updated || !version) {
+      return { ok: false, error: "not-found" };
+    }
+
+    const mapped = mapStoredComment(updated, input.orderId, version.versionNumber);
+    mapped.author_display_name = ctx.brandUser.fullName;
+    return { ok: true, comment: mapped };
+  }
+
   async requestRevisionForLegacyOrder(input: {
     orderId: string;
     legacyProjectId: string;
@@ -342,11 +615,19 @@ export class ReviewPortalService {
       return { ok: false, error: "invalid-status" };
     }
 
-    await reviewDecisionService.requestRevision(
-      version.id,
-      actor,
-      input.revisionNotes?.trim() || undefined
-    );
+    try {
+      await reviewDecisionService.requestRevision(
+        version.id,
+        actor,
+        input.revisionNotes?.trim() || undefined
+      );
+    } catch (error) {
+      const { isAppError } = await import("@/lib/core/errors");
+      if (isAppError(error)) {
+        return { ok: false, error: error.code };
+      }
+      throw error;
+    }
 
     await reviewBridgeService.syncLegacyOrderStatusAfterRevision(ctx.campaign.id);
 

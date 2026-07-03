@@ -2,7 +2,7 @@
 
 import type { Locale } from "@/lib/i18n";
 import type { StoredDeliverable } from "@/lib/order-types";
-import type { ReviewComment } from "@/lib/studioos/review-store";
+import type { ReviewComment } from "@/lib/studioos/review-comment-types";
 import { VideoReviewPlayer } from "@/components/studioos/video-review-player";
 
 type ReviewCenterProps = {

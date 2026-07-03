@@ -39,11 +39,15 @@ const copy = {
 export function StudioNotificationBell({
   locale,
   notifications,
-  unreadCount
+  unreadCount,
+  badgeCount = unreadCount,
+  onBadgeSeen
 }: {
   locale: Locale;
   notifications: CreatorNotification[];
   unreadCount: number;
+  badgeCount?: number;
+  onBadgeSeen?: () => void;
 }) {
   const t = copy[locale];
   const router = useRouter();
@@ -81,8 +85,8 @@ export function StudioNotificationBell({
         await markNotificationReadAction(fd);
       }
       setOpen(false);
-      router.refresh();
       router.push(action.href);
+      router.refresh();
     });
   }
 
@@ -101,12 +105,15 @@ export function StudioNotificationBell({
         size="sm"
         aria-label={t.title}
         className="relative h-9 w-9 px-0 text-zinc-600"
-        onClick={() => setOpen((value) => !value)}
+        onClick={() => {
+          setOpen((value) => !value);
+          onBadgeSeen?.();
+        }}
       >
         <Bell className="h-4 w-4" />
-        {unreadCount > 0 ? (
+        {badgeCount > 0 ? (
           <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-semibold text-white">
-            {unreadCount > 9 ? "9+" : unreadCount}
+            {badgeCount > 9 ? "9+" : badgeCount}
           </span>
         ) : null}
       </Button>
@@ -151,7 +158,7 @@ export function StudioNotificationBell({
                   >
                     <div className="flex items-start gap-2">
                       {!notification.read_at ? (
-                        <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-zinc-900" />
+                        <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-rose-500" />
                       ) : (
                         <span className="mt-1.5 h-2 w-2 shrink-0" />
                       )}
@@ -168,7 +175,7 @@ export function StudioNotificationBell({
                             </pre>
                           </div>
                         ) : null}
-                        <span className="mt-2 inline-flex text-xs font-medium text-zinc-700 underline-offset-2 hover:underline">
+                        <span className="mt-2 inline-flex text-xs font-semibold text-rose-600 underline-offset-2 hover:text-rose-700 hover:underline">
                           {action.label}
                         </span>
                       </div>

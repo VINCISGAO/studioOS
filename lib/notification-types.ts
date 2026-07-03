@@ -6,6 +6,7 @@ export type CreatorNotificationType =
   | "order_cancelled_unpaid"
   | "review_comment_added"
   | "revision_requested"
+  | "paid_revision_unlocked"
   | "delivery_approved"
   | "escrow_released"
   | "not_selected";

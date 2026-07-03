@@ -97,13 +97,11 @@ export function StudioPortalSidebarNav({
       "relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition",
       locked
         ? "text-zinc-400"
-        : certified
-          ? active
-            ? "bg-violet-50 text-violet-950 shadow-[inset_0_0_0_1px_rgba(139,92,246,0.12)]"
-            : "text-zinc-700 hover:bg-violet-50/70 hover:text-violet-950"
-          : active
-            ? "bg-gradient-to-r from-zinc-100/90 via-zinc-50 to-white text-zinc-900 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.04)]"
-            : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900"
+        : active
+          ? certified
+            ? "bg-violet-50 text-violet-700 shadow-[inset_0_0_0_1px_rgba(139,92,246,0.1)]"
+            : "bg-zinc-100/80 text-zinc-900"
+          : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900"
     );
   }
 
@@ -139,9 +137,6 @@ export function StudioPortalSidebarNav({
                   certifiedItem ? "bg-violet-500" : "bg-zinc-900"
                 )}
               />
-            ) : null}
-            {certifiedItem ? (
-              <span className="absolute left-1.5 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full bg-violet-500" />
             ) : null}
             <ItemIcon
               className={cn(

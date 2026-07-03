@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import type { Locale } from "@/lib/i18n";
 import { BRAND_ISSUE_TYPES } from "@/lib/studioos/brand-campaign-display";
 import type { StoredDeliverable, StoredOrder } from "@/lib/order-types";
-import type { ReviewComment } from "@/lib/studioos/review-store";
+import type { ReviewComment } from "@/lib/studioos/review-comment-types";
 import { formatTimestamp } from "@/lib/studioos/review-utils";
 import { cn } from "@/lib/utils";
 import { CheckCircle2, Pause, Play, Plus, RotateCcw } from "lucide-react";
@@ -111,7 +111,7 @@ export function BrandCreativeReview({
     sortedVersions.find((v) => v.version === activeVersion) ?? sortedVersions[sortedVersions.length - 1];
   const videoUrl = activeDeliverable?.file_url ?? "";
   const versionComments = comments.filter((c) => c.version === activeVersion);
-  const openIssues = versionComments.filter((c) => c.status === "open");
+  const openIssues = versionComments.filter((c) => c.status !== "resolved");
   const resolvedIssues = versionComments.filter((c) => c.status === "resolved");
   const canReview = ["review", "revision"].includes(order.status);
   const progress = durationSec > 0 ? (currentSec / durationSec) * 100 : 0;

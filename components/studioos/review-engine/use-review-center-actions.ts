@@ -4,7 +4,7 @@ import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { addReviewCommentAction, uploadVideoVersionAction } from "@/app/review-actions";
 import type { Locale } from "@/lib/i18n";
-import type { ReviewComment } from "@/lib/studioos/review-store";
+import type { ReviewComment } from "@/lib/studioos/review-comment-types";
 import type { PinDraft } from "@/components/studioos/review-engine/review-center-player";
 
 export function useReviewCenterActions({

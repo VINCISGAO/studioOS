@@ -7,7 +7,9 @@ import { getCreatorById } from "@/lib/creator-service";
 import { getCurrentClientEmail } from "@/lib/client-session";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
 import { getOrderForProject } from "@/lib/order-service";
+import { isOrderPaymentEscrowed } from "@/lib/order-types";
 import { getProject } from "@/lib/project-service";
+import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
 import { normalizeCampaignStatus } from "@/lib/studioos/project-status";
 import { setupBrandCampaignPayment } from "@/lib/studioos/brand-checkout-service";
 import { estimateDeliveryDays } from "@/lib/studioos/brand-campaign-display";
@@ -73,11 +75,20 @@ export default async function BrandCheckoutPage({ params, searchParams }: Props)
     }
   }
 
-  const paidReady = order.payment_status !== "unpaid" || paid || prismaEscrowFunded;
+  const orderFunded =
+    isOrderPaymentEscrowed(order.payment_status) || paid || prismaEscrowFunded;
+  const paidReady = orderFunded;
   const orderCancelled = order.status === "cancelled" || campaignStatus === "cancelled";
-  const showProductionCta =
-    paidReady && ["production", "in_review", "delivered", "completed"].includes(campaignStatus);
-  const showMatchCta = paidReady && !showProductionCta;
+  const inProductionPhase = ["production", "in_review", "delivered", "completed"].includes(
+    campaignStatus
+  );
+  const showProductionCta = paidReady && (inProductionPhase || Boolean(creatorId));
+  const projectDetailHref = withLocale(
+    showProductionCta
+      ? `${brandPortalRoutes.project(id)}?tab=production`
+      : `${brandPortalRoutes.project(id)}?tab=match`,
+    locale
+  );
 
   return (
     <div className="mx-auto max-w-6xl space-y-8">
@@ -117,19 +128,17 @@ export default async function BrandCheckoutPage({ params, searchParams }: Props)
           />
           ) : null}
           {!orderCancelled && paidReady ? (
-            showMatchCta ? (
-              <Button asChild size="lg" className="h-12 w-full rounded-xl bg-indigo-600 hover:bg-indigo-700">
-                <Link href={withLocale(`/brand/projects/${id}?tab=match`, locale)}>
-                  {locale === "zh" ? "开始匹配创作者" : "Start matching creators"}
-                </Link>
-              </Button>
-            ) : showProductionCta ? (
-              <Button asChild size="lg" className="h-12 w-full rounded-xl bg-indigo-600 hover:bg-indigo-700">
-                <Link href={withLocale(`/brand/projects/${id}?tab=production`, locale)}>
-                  {locale === "zh" ? "查看制作进度" : "View production progress"}
-                </Link>
-              </Button>
-            ) : null
+            <Button asChild size="lg" className="h-12 w-full rounded-xl bg-indigo-600 hover:bg-indigo-700">
+              <Link href={projectDetailHref}>
+                {showProductionCta
+                  ? locale === "zh"
+                    ? "查看制作进度"
+                    : "View production progress"
+                  : locale === "zh"
+                    ? "查看项目详情"
+                    : "View project details"}
+              </Link>
+            </Button>
           ) : null}
         </div>
       </div>

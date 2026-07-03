@@ -8,9 +8,13 @@ export function isOrderPaymentEscrowed(status: OrderPaymentStatus) {
 
 export type OrderStatus =
   | "waiting_payment"
+  | "paid"
   | "in_production"
   | "review"
   | "revision"
+  | "ready_for_completion"
+  | "settling"
+  | "dispute"
   | "completed"
   | "cancelled";
 
@@ -52,6 +56,10 @@ export type StoredOrder = {
   created_at: string;
   paid_at: string | null;
   completed_at: string | null;
+  /** Included rounds used; synced from Prisma campaign.reviewRound when available. */
+  review_round?: number;
+  /** Paid revision pack (0 = locked, 1 = one add-on purchased — unlocks V4 + V5). */
+  paid_revision_slots_unlocked?: number;
 };
 
 export type StoredDeliverable = {

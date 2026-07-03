@@ -25,8 +25,10 @@ alwaysApply: true
 ## Review 模块
 
 - 品牌：评论、标注、Approve / Need Revision
-- 创作者：只读 + 上传新版本
+- 创作者：只读 + 上传新版本；**待品牌审核且品牌尚未批注**时可「退回上传」，覆盖当前稿后重新提交（`CREATOR_REVERT_UPLOAD` / `CREATOR_REVERT`）
+- **退回上传锁定**：品牌方一旦进入批注流程（`ReviewStatus.REVIEWING` 或已有 Brand 批注/标注），创作者不可再退回上传
 - 坐标用百分比，禁止像素
+- **审片版本 / 修订轮次**：V1–V5 与第 1–5 轮修订 **一一对应**（Vn = 第 n 轮）；前 3 轮免费；**一次加购（项目金额 20%）解锁第 4–5 轮**（`paidRevisionSlotsUnlocked >= 1`）；第 5 轮仍不过审 → 平台介入（见 `review-round-policy.ts`）
 - 组件拆分：ReviewPlayer / Timeline / AnnotationCanvas / CommentPanel 独立
 
 ## 禁止

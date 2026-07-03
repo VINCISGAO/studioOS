@@ -1,7 +1,8 @@
-import type { CampaignVersion } from "@prisma/client";
+import { Prisma, type CampaignVersion } from "@prisma/client";
+import { MAX_REVIEW_VERSIONS } from "@/features/review/review-round-policy";
 import { prisma, hasDatabaseUrl } from "@/lib/core/database/prisma";
 
-export const MAX_CAMPAIGN_VERSIONS = 3;
+export const MAX_CAMPAIGN_VERSIONS = MAX_REVIEW_VERSIONS;
 
 export class VersionRepository {
   async countByCampaign(campaignId: string): Promise<number> {
@@ -49,20 +50,117 @@ export class VersionRepository {
     fileSizeBytes?: number | null;
     notes?: string | null;
   }): Promise<CampaignVersion> {
-    return prisma.campaignVersion.create({
+    const data = {
+      uploadedBy: input.uploadedBy,
+      videoKey: input.videoKey,
+      videoUrl: input.videoUrl,
+      fileName: input.fileName ?? null,
+      mimeType: input.mimeType ?? null,
+      fileSizeBytes: input.fileSizeBytes ?? null,
+      status: "READY",
+      reviewStatus: "READY",
+      watermark: true,
+      deletedAt: null
+    };
+    const existing = await prisma.campaignVersion.findFirst({
+      where: { campaignId: input.campaignId, versionNumber: input.versionNumber }
+    });
+    if (existing) {
+      return prisma.campaignVersion.update({
+        where: { id: existing.id },
+        data
+      });
+    }
+
+    try {
+      return await prisma.campaignVersion.create({
+        data: {
+          campaignId: input.campaignId,
+          versionNumber: input.versionNumber,
+          ...data
+        }
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002"
+      ) {
+        const conflicted = await prisma.campaignVersion.findFirst({
+          where: { campaignId: input.campaignId, versionNumber: input.versionNumber }
+        });
+        if (conflicted) {
+          return prisma.campaignVersion.update({
+            where: { id: conflicted.id },
+            data
+          });
+        }
+      }
+      throw error;
+    }
+  }
+
+  async updateVersionMedia(input: {
+    campaignId: string;
+    versionNumber: number;
+    videoKey: string;
+    videoUrl: string;
+    fileName?: string | null;
+    mimeType?: string | null;
+    fileSizeBytes?: number | null;
+    notes?: string | null;
+  }): Promise<CampaignVersion | null> {
+    const existing = await prisma.campaignVersion.findFirst({
+      where: { campaignId: input.campaignId, versionNumber: input.versionNumber }
+    });
+    if (!existing) return null;
+
+    return prisma.campaignVersion.update({
+      where: { id: existing.id },
       data: {
-        campaignId: input.campaignId,
-        versionNumber: input.versionNumber,
-        uploadedBy: input.uploadedBy,
         videoKey: input.videoKey,
         videoUrl: input.videoUrl,
-        fileName: input.fileName ?? null,
-        mimeType: input.mimeType ?? null,
-        fileSizeBytes: input.fileSizeBytes ?? null,
+        fileName: input.fileName ?? existing.fileName,
+        mimeType: input.mimeType ?? existing.mimeType,
+        fileSizeBytes: input.fileSizeBytes ?? existing.fileSizeBytes,
         status: "READY",
         reviewStatus: "READY",
-        watermark: true
+        deletedAt: null
       }
+    });
+  }
+
+  async resetVersionForCreatorReupload(input: {
+    campaignId: string;
+    versionNumber: number;
+  }): Promise<CampaignVersion | null> {
+    const existing = await this.findByCampaignAndVersionNumber(input.campaignId, input.versionNumber);
+    if (!existing) return null;
+
+    return prisma.campaignVersion.update({
+      where: { id: existing.id },
+      data: {
+        videoUrl: null,
+        videoKey: "",
+        fileName: null,
+        mimeType: null,
+        fileSizeBytes: null,
+        thumbnailUrl: null,
+        status: "UPLOADING",
+        reviewStatus: "WAITING"
+      }
+    });
+  }
+
+  async softDeleteVersion(input: {
+    campaignId: string;
+    versionNumber: number;
+  }): Promise<CampaignVersion | null> {
+    const existing = await this.findByCampaignAndVersionNumber(input.campaignId, input.versionNumber);
+    if (!existing) return null;
+
+    return prisma.campaignVersion.update({
+      where: { id: existing.id },
+      data: { deletedAt: new Date() }
     });
   }
 }

@@ -30,6 +30,7 @@ stateDiagram-v2
   ESCROW_FUNDED --> PRODUCING: START_PRODUCTION
   PRODUCING --> UNDER_REVIEW: VERSION_UPLOAD
   UNDER_REVIEW --> PRODUCING: REQUEST_REVISION
+  UNDER_REVIEW --> PRODUCING: CREATOR_REVERT_UPLOAD
   UNDER_REVIEW --> APPROVED: APPROVE
   APPROVED --> MASTER_UPLOADED: MASTER_UPLOAD
   MASTER_UPLOADED --> SETTLEMENT: RELEASE_PAYMENT
@@ -48,13 +49,14 @@ stateDiagram-v2
   READY --> REVIEWING: START_REVIEW
   REVIEWING --> REVISION_REQUIRED: REQUEST_REVISION
   REVISION_REQUIRED --> WAITING: RESUBMIT
+  READY --> WAITING: CREATOR_REVERT
   REVIEWING --> APPROVED: APPROVE
   APPROVED --> LOCKED: LOCK
 ```
 
-Max 3 revision rounds — then admin intervention.
+Max **5 revision rounds** — **Vn = round n** (1:1). Rounds 1–3 (V1–V3) included; **one paid add-on (20% of project amount) unlocks rounds 4–5** (V4–V5). After round 5 still not approved → platform intervention.
 
-Code: `features/review/review.state-machine.ts`
+Code: `features/review/review-round-policy.ts`, `features/review/review.state-machine.ts`
 
 ## Version (video processing)
 

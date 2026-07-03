@@ -6,6 +6,8 @@ import { versionRepository } from "@/features/delivery/version.repository";
 import { EscrowState } from "@/features/shared/state-machines/escrow.state-machine";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import type { OrderStatus, StoredOrder } from "@/lib/order-types";
+import { nextPaidVersionToUnlock } from "@/features/review/review-round-policy";
+import { paidRevisionService } from "@/features/review/paid-revision.service";
 import { reviewCenterActiveStepIndex } from "@/lib/studioos/review-center-workflow";
 
 export type ReviewPortalUiState = {
@@ -20,6 +22,8 @@ export type ReviewPortalUiState = {
   workspaceStatus: "completed" | "revision" | "in_production" | "review";
   escrowFunded: boolean;
   deliverableCount: number;
+  paidRevisionSlotsUnlocked: number;
+  nextPaidVersion: number | null;
 };
 
 const UPLOADABLE_CAMPAIGN_STATUSES = new Set<string>([
@@ -37,12 +41,17 @@ const APPROVED_CAMPAIGN_STATUSES = new Set<string>([
 function deriveOrderStatusFromCampaign(input: {
   campaignStatus: string;
   latestReviewStatus: string | null;
-  deliverableCount: number;
+  hasSubmittedDeliverable: boolean;
   deliveryLocked: boolean;
   escrowReleased: boolean;
 }): OrderStatus {
-  const { campaignStatus, latestReviewStatus, deliverableCount, deliveryLocked, escrowReleased } =
-    input;
+  const {
+    campaignStatus,
+    latestReviewStatus,
+    hasSubmittedDeliverable,
+    deliveryLocked,
+    escrowReleased
+  } = input;
 
   if (campaignStatus === CampaignState.COMPLETED || escrowReleased) {
     return "completed";
@@ -52,24 +61,29 @@ function deriveOrderStatusFromCampaign(input: {
     return "completed";
   }
 
-  if (
-    latestReviewStatus === "REVISION_REQUIRED" ||
-    (campaignStatus === CampaignState.PRODUCING && deliverableCount > 0 && latestReviewStatus !== "REVIEWING" && latestReviewStatus !== "READY")
-  ) {
+  if (latestReviewStatus === "REVISION_REQUIRED") {
     return "revision";
   }
 
   if (
     campaignStatus === CampaignState.UNDER_REVIEW ||
     latestReviewStatus === "REVIEWING" ||
-    latestReviewStatus === "READY" ||
-    (deliverableCount > 0 && campaignStatus === CampaignState.PRODUCING)
+    latestReviewStatus === "READY"
   ) {
     return "review";
   }
 
+  if (campaignStatus === CampaignState.PRODUCING) {
+    if (latestReviewStatus === "READY" || latestReviewStatus === "REVIEWING") {
+      return "review";
+    }
+    if (hasSubmittedDeliverable && latestReviewStatus !== "WAITING") {
+      return "revision";
+    }
+    return "in_production";
+  }
+
   if (
-    campaignStatus === CampaignState.PRODUCING ||
     campaignStatus === CampaignState.ESCROW_FUNDED
   ) {
     return "in_production";
@@ -95,11 +109,13 @@ function workspaceStatusFromOrderStatus(
   if (status === "completed") return "completed";
   if (status === "revision") return "revision";
   if (status === "in_production") return "in_production";
+  if (status === "ready_for_completion" || status === "settling") return "review";
   return "review";
 }
 
 function legacyFallback(order: StoredOrder, deliverableCount: number): ReviewPortalUiState {
   const derivedOrderStatus = order.status;
+  const paidRevisionSlotsUnlocked = order.paid_revision_slots_unlocked ?? 0;
   return {
     source: "legacy",
     derivedOrderStatus,
@@ -113,7 +129,9 @@ function legacyFallback(order: StoredOrder, deliverableCount: number): ReviewPor
     workflowStepIndex: reviewCenterActiveStepIndex(order, deliverableCount),
     workspaceStatus: workspaceStatusFromOrderStatus(derivedOrderStatus),
     escrowFunded: order.payment_status !== "unpaid",
-    deliverableCount
+    deliverableCount,
+    paidRevisionSlotsUnlocked,
+    nextPaidVersion: nextPaidVersionToUnlock(paidRevisionSlotsUnlocked)
   };
 }
 
@@ -131,15 +149,21 @@ export async function resolveReviewPortalUiState(input: {
     return legacyFallback(input.order, input.deliverableCount);
   }
 
-  const [versions, delivery, escrow] = await Promise.all([
+  const [versions, delivery, escrow, paidPolicy] = await Promise.all([
     versionRepository.listByCampaign(campaign.id),
     deliveryRepository.findByCampaignIdWithVersion(campaign.id),
-    paymentRepository.findByCampaignId(campaign.id)
+    paymentRepository.findByCampaignId(campaign.id),
+    paidRevisionService.resolvePolicyForOrder({
+      orderId: input.order.id,
+      projectId: input.legacyProjectId
+    })
   ]);
 
-  const deliverableCount = Math.max(input.deliverableCount, versions.length);
-  const latestVersion = versions[versions.length - 1] ?? null;
+  const submittedVersions = versions.filter((version) => Boolean(version.videoUrl?.trim()));
+  const deliverableCount = Math.max(input.deliverableCount, submittedVersions.length);
+  const latestVersion = submittedVersions[submittedVersions.length - 1] ?? versions[versions.length - 1] ?? null;
   const latestReviewStatus = latestVersion?.reviewStatus ?? null;
+  const hasSubmittedDeliverable = submittedVersions.length > 0;
   const deliveryLocked = delivery?.status === "LOCKED";
   const escrowFunded =
     escrow?.status === EscrowState.HELD ||
@@ -151,7 +175,7 @@ export async function resolveReviewPortalUiState(input: {
   const derivedOrderStatus = deriveOrderStatusFromCampaign({
     campaignStatus: campaign.status,
     latestReviewStatus,
-    deliverableCount,
+    hasSubmittedDeliverable,
     deliveryLocked,
     escrowReleased
   });
@@ -174,21 +198,46 @@ export async function resolveReviewPortalUiState(input: {
     (campaign.status === CampaignState.APPROVED ||
       campaign.status === CampaignState.MASTER_UPLOADED);
 
-  const pseudoOrder: StoredOrder = { ...input.order, status: derivedOrderStatus };
+  const preservedStatus =
+    input.order.status === "ready_for_completion" || input.order.status === "settling"
+      ? input.order.status
+      : derivedOrderStatus;
+
+  const effectiveOrder: StoredOrder = { ...input.order, status: preservedStatus };
 
   return {
     source: "prisma",
-    derivedOrderStatus,
+    derivedOrderStatus: preservedStatus,
     canBrandReview,
     canCreatorUpload,
     orderApproved,
     canDecide,
     canReleaseSettlement,
-    workflowStepIndex: reviewCenterActiveStepIndex(pseudoOrder, deliverableCount),
-    workspaceStatus: workspaceStatusFromOrderStatus(derivedOrderStatus),
+    workflowStepIndex: reviewCenterActiveStepIndex(effectiveOrder, deliverableCount),
+    workspaceStatus: workspaceStatusFromOrderStatus(preservedStatus),
     escrowFunded,
-    deliverableCount
+    deliverableCount,
+    paidRevisionSlotsUnlocked: paidPolicy.paidRevisionSlotsUnlocked,
+    nextPaidVersion: paidPolicy.nextPaidVersion
   };
+}
+
+/** Same derived phase the review portal UI uses — may differ from JSON `order.status`. */
+export async function resolveLegacyOrderEffectiveStatus(input: {
+  order: StoredOrder;
+  deliverableCount?: number;
+}): Promise<OrderStatus> {
+  if (!hasDatabaseUrl() || !input.order.project_id) {
+    return input.order.status;
+  }
+
+  const ui = await resolveReviewPortalUiState({
+    legacyProjectId: input.order.project_id,
+    order: input.order,
+    deliverableCount: input.deliverableCount ?? 0
+  });
+
+  return ui.derivedOrderStatus;
 }
 
 export function reviewCenterActiveStepFromUiState(

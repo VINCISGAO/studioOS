@@ -8,6 +8,7 @@ export const brandPortalRoutes = {
   campaigns: "/brand/campaigns",
   campaign: (id: string) => `/brand/campaigns/${id}`,
   finance: "/brand/finance",
+  financeAccount: "/brand/finance/account",
   financeEscrow: "/brand/finance/escrow",
   financePayments: "/brand/finance/payments",
   financeInvoices: "/brand/finance/invoices",

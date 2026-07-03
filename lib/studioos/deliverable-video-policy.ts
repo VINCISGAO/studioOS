@@ -2,7 +2,7 @@ import "server-only";
 
 import { promises as fs } from "fs";
 import { createSerializedStoreReader, writeJsonFileAtomic } from "@/lib/json-file-store";
-import { clearDeliverableVideoFile, getDeliverables, getOrder } from "@/lib/order-service";
+import { clearDeliverableVideoFile, getDeliverables, getOrder, listDeliverablesForUpload } from "@/lib/order-service";
 import type { StoredDeliverable, StoredOrder } from "@/lib/order-types";
 import { dataStorePath, readDataJson } from "@/lib/serverless-store";
 import {
@@ -154,7 +154,7 @@ export async function assertDeliverableVideoAccess(input: {
     return { ok: false as const, code: "NOT_FOUND" as const };
   }
 
-  const deliverables = await getDeliverables(input.orderId);
+  const deliverables = await listDeliverablesForUpload(input.orderId);
   const deliverable = deliverables.find((item) => item.version === input.version) ?? null;
   if (!deliverable) {
     return { ok: false as const, code: "NOT_FOUND" as const };

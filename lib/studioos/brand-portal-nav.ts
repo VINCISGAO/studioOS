@@ -4,6 +4,7 @@ import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
 import {
   BarChart3,
   Clapperboard,
+  CreditCard,
   FolderOpen,
   LayoutDashboard,
   Megaphone,
@@ -40,6 +41,12 @@ export const brandPortalNavItems: BrandPortalNavItem[] = [
     labelKey: "reviewRoom",
     icon: Clapperboard,
     mobileIconKey: "reviewRoom"
+  },
+  {
+    href: brandPortalRoutes.financeAccount,
+    labelKey: "brandAccount",
+    icon: CreditCard,
+    mobileIconKey: "finance"
   },
   {
     href: brandPortalRoutes.brandCenter,

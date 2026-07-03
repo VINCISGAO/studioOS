@@ -11,10 +11,10 @@
  *
  * Restart dev server after running so in-memory store cache clears.
  */
-import { cpSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
 import { execSync } from "node:child_process";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { cpSync, existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import path from "path";
+import { fileURLToPath } from "url";
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const seedDir = path.join(root, "seed");
@@ -80,8 +80,59 @@ const FRESH_ACCOUNT_STORES = {
     deleted_project_ids: []
   },
   "project-events-store.json": { events: [] },
-  "creator-settings-store.json": { settings: {}, email_aliases: {} }
+  "creator-settings-store.json": { settings: {}, email_aliases: {} },
+  "creator-profile-store.json": { profiles: {} },
+  "brand-profile-store.json": { profiles: {} },
+  "works-store.json": { works: [], deletedIds: [] },
+  "mvp-store.json": {
+    profiles: [
+      {
+        id: "prof_demo_brand_arc",
+        email: "client.arc@studioos.test",
+        role: "brand",
+        name: "Arc & Alloy",
+        company_name: "Arc & Alloy",
+        created_at: "2026-06-28T10:00:00.000Z"
+      },
+      {
+        id: "prof_demo_studio_nova",
+        email: "creator.nova@studioos.test",
+        role: "studio",
+        name: "Nova Motion Studio",
+        company_name: "Nova Motion Studio",
+        created_at: "2026-06-28T10:00:00.000Z"
+      },
+      {
+        id: "prof_demo_admin",
+        email: "admin@studioos.test",
+        role: "admin",
+        name: "Platform Admin",
+        company_name: "StudioOS",
+        created_at: "2026-06-28T10:00:00.000Z"
+      },
+      {
+        id: "prof_demo_brand_bright",
+        email: "client.bright@studioos.test",
+        role: "brand",
+        name: "BrightSip",
+        company_name: "BrightSip",
+        created_at: "2026-06-28T10:00:00.000Z"
+      }
+    ],
+    projects: [],
+    versions: [],
+    comments: []
+  },
+  "deliverable-video-retention.json": { records: [] }
 };
+
+const UPLOAD_ROOT = path.join(root, ".data", "uploads");
+const UPLOAD_SUBDIRS = ["review", "campaigns", "projects", "creators", "brands", "payout-qr", "chunks"];
+const DEMO_VIDEO_PATHS = [
+  path.join(root, ".data", "demo-review-cache.mp4"),
+  path.join(root, "public", "demo", "review-sample.mp4"),
+  path.join(root, "public", "uploads", "mvp")
+];
 
 function copySeedStores() {
   mkdirSync(dataDir, { recursive: true });
@@ -107,6 +158,27 @@ function applyFreshAccountStores() {
   }
 }
 
+function clearUploadArtifacts() {
+  mkdirSync(UPLOAD_ROOT, { recursive: true });
+
+  for (const subdir of UPLOAD_SUBDIRS) {
+    const target = path.join(UPLOAD_ROOT, subdir);
+    if (existsSync(target)) {
+      rmSync(target, { recursive: true, force: true });
+    }
+    mkdirSync(target, { recursive: true });
+  }
+
+  let removedVideos = 0;
+  for (const target of DEMO_VIDEO_PATHS) {
+    if (!existsSync(target)) continue;
+    rmSync(target, { recursive: true, force: true });
+    removedVideos += 1;
+  }
+
+  return removedVideos;
+}
+
 function runPrismaReset() {
   try {
     execSync("npm run reset:demo-prisma", { cwd: root, stdio: "inherit" });
@@ -117,6 +189,7 @@ function runPrismaReset() {
 
 const copied = copySeedStores();
 applyFreshAccountStores();
+const removedVideoArtifacts = clearUploadArtifacts();
 runPrismaReset();
 
 console.log("Demo account reset complete.");
@@ -135,6 +208,7 @@ for (const brand of DEMO_BRANDS) {
 console.log("");
 console.log(`Copied ${copied.length} seed store(s) to .data/`);
 console.log(`Applied fresh-account overrides for ${Object.keys(FRESH_ACCOUNT_STORES).length} runtime store(s)`);
+console.log(`Cleared upload dirs under .data/uploads/ and ${removedVideoArtifacts} demo video artifact(s)`);
 console.log("");
 console.log("Restart dev server so memory cache clears:");
 console.log("  npm run dev:clean");

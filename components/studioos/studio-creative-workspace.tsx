@@ -11,7 +11,7 @@ import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import type { StoredDeliverable, StoredOrder } from "@/lib/order-types";
 import type { StoredProject } from "@/lib/project-types";
-import type { ReviewComment } from "@/lib/studioos/review-store";
+import type { ReviewComment } from "@/lib/studioos/review-comment-types";
 import { buildProjectBriefFields } from "@/lib/studioos/project-brief-format";
 import { tCertificationExperience } from "@/lib/studioos/certification-experience-copy";
 import { getConfirmedBriefFields } from "@/lib/studioos/confirmed-brief";

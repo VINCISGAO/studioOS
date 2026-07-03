@@ -1,29 +1,33 @@
-import { BadgeCheck, CheckCircle2, Sparkles } from "lucide-react";
+import { BadgeCheck, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function CertifiedPartnerBadge({
   label,
   compact = false,
+  pulse = false,
   className
 }: {
   label: string;
   compact?: boolean;
+  pulse?: boolean;
   className?: string;
 }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full bg-violet-100 px-2 py-0.5 font-medium text-violet-800 ring-1 ring-violet-200/80",
-        compact ? "text-[10px]" : "text-xs",
+        "inline-flex max-w-full items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 font-medium text-violet-800 ring-1 ring-violet-200/80",
+        compact ? "whitespace-nowrap text-[11px] leading-none" : "text-xs",
         className
       )}
     >
-      <span className="relative flex h-2 w-2">
-        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-violet-400 opacity-40" />
-        <span className="relative inline-flex h-2 w-2 rounded-full bg-violet-500" />
-      </span>
-      {compact ? <Sparkles className="h-3 w-3" /> : <BadgeCheck className="h-3.5 w-3.5" />}
-      {label}
+      {pulse ? (
+        <span className="relative flex h-2 w-2 shrink-0">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-violet-400 opacity-40" />
+          <span className="relative inline-flex h-2 w-2 rounded-full bg-violet-500" />
+        </span>
+      ) : null}
+      {compact ? <BadgeCheck className="h-3 w-3 shrink-0" /> : <BadgeCheck className="h-3.5 w-3.5 shrink-0" />}
+      <span className="truncate">{label}</span>
     </span>
   );
 }

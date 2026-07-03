@@ -38,11 +38,17 @@ export default async function ProjectReviewPage({
   if (!profile) redirect(withLocale("/login", locale));
 
   const campaignId = await findCampaignIdForMvpProject(id);
-  if (profile.role === "brand" && campaignId) {
-    redirect(withLocale(brandPortalRoutes.projectReview(campaignId), locale));
+  const order = campaignId ? await getOrderForProject(campaignId) : null;
+
+  if (campaignId && order) {
+    if (profile.role === "brand") {
+      redirect(withLocale(brandPortalRoutes.projectReview(campaignId), locale));
+    }
+    if (profile.role === "studio") {
+      redirect(withLocale(`/studio/review/${order.id}`, locale));
+    }
   }
 
-  const order = campaignId ? await getOrderForProject(campaignId) : null;
   const deliverables = order ? await getDeliverables(order.id) : [];
 
   if (campaignId && deliverables.length) {

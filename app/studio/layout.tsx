@@ -11,9 +11,8 @@ import {
 } from "@/lib/studioos/creator-settings-service";
 import { getLocale, withLocale } from "@/lib/i18n";
 import { listOrdersForCreator } from "@/lib/order-service";
-import { countUnreadNotifications, listNotificationsForCreator } from "@/lib/notification-service";
+import { listNotificationsForCreator } from "@/lib/notification-service";
 import { countInvitationsByTab, listInvitationsForCreator } from "@/lib/studioos/creator-invitation-store";
-import { getCreatorIncomeSnapshot } from "@/lib/studioos/withdrawal-service";
 import {
   isStudioFeaturePath,
   studioCertificationRedirectPath,
@@ -32,18 +31,12 @@ export default async function StudioLayout({ children }: { children: React.React
     : null;
   const profileComplete = hasCompletedCreatorProfile(creator);
   const canUseBusinessFeatures = access?.canUseBusinessFeatures ?? false;
-  const canUseIncomeFeatures = access?.canUseIncomeFeatures ?? true;
   const isVerified = access?.isVerified ?? false;
   const notifications =
     creator && (canUseBusinessFeatures || isVerified)
       ? await listNotificationsForCreator(creator.id, locale)
       : [];
-  const unreadCount =
-    creator && (canUseBusinessFeatures || isVerified)
-      ? await countUnreadNotifications(creator.id)
-      : 0;
-  const income =
-    creator && canUseIncomeFeatures ? await getCreatorIncomeSnapshot(creator.id) : null;
+  const unreadCount = notifications.filter((item) => !item.read_at).length;
   const invitationCounts =
     creator && canUseBusinessFeatures
       ? countInvitationsByTab(await listInvitationsForCreator(creator.id))
@@ -69,12 +62,10 @@ export default async function StudioLayout({ children }: { children: React.React
       certificationPaid={isVerified}
       profileComplete={profileComplete}
       canUseBusinessFeatures={canUseBusinessFeatures}
-      canUseIncomeFeatures={canUseIncomeFeatures}
       isVerified={isVerified}
       levelUpSeen={levelUpSeen}
       notifications={notifications}
       unreadCount={unreadCount}
-      withdrawableUsd={income?.available_usd ?? 0}
       pendingInvitationCount={invitationCounts.pending}
     >
       {children}

@@ -3,7 +3,10 @@ import "server-only";
 import { getCreatorByIdSync } from "@/lib/creator-service";
 import { creators } from "@/lib/data";
 import type { Locale } from "@/lib/i18n";
-import { createBrandNotification } from "@/lib/studioos/brand-notification-service";
+import {
+  createBrandNotification,
+  hasBrandNotification
+} from "@/lib/studioos/brand-notification-service";
 import type { StoredDeliverable, StoredOrder } from "@/lib/order-types";
 import { getProject } from "@/lib/project-service";
 
@@ -60,6 +63,17 @@ export async function notifyBrandDeliverableUploaded(input: {
     input.order.company_name ||
     "Project";
   const copy = deliverableCopy(locale, creatorName, projectTitle, input.deliverable.version);
+  const alreadyNotified = await hasBrandNotification({
+    brand_email: brandEmail,
+    type: "deliverable_uploaded",
+    project_id: projectId,
+    creator_id: input.order.creator_id,
+    order_id: input.order.id,
+    deliverable_version: input.deliverable.version
+  });
+  if (alreadyNotified) {
+    return null;
+  }
 
   return createBrandNotification({
     brand_email: brandEmail,

@@ -1,4 +1,4 @@
-import type { StoredOrder } from "@/lib/order-types";
+import { isOrderPaymentEscrowed, type StoredOrder } from "@/lib/order-types";
 import type { StoredProject } from "@/lib/project-types";
 import type { StoredCreatorInvitation } from "@/lib/studioos/creator-invitation-types";
 import { normalizeCampaignStatus } from "@/lib/studioos/project-status";
@@ -13,6 +13,14 @@ export type CreatorCommercialContext = {
 };
 
 export function isBrandAwaitingPayment(context: BrandCommercialContext): boolean {
+  const paymentStatus = context.order?.payment_status;
+  if (paymentStatus && isOrderPaymentEscrowed(paymentStatus)) {
+    return false;
+  }
+
+  if (paymentStatus === "unpaid") return true;
+  if (context.order?.status === "waiting_payment") return true;
+
   const projectStatus = context.project ? normalizeCampaignStatus(context.project.status) : null;
   if (
     projectStatus &&
@@ -20,8 +28,7 @@ export function isBrandAwaitingPayment(context: BrandCommercialContext): boolean
   ) {
     return true;
   }
-  if (context.order?.payment_status === "unpaid") return true;
-  if (context.order?.status === "waiting_payment") return true;
+
   return false;
 }
 

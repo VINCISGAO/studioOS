@@ -1,6 +1,7 @@
-import { Suspense } from "react";
-import Link from "next/link";
-import { signOutAction } from "@/app/actions";
+"use client";
+
+import { Suspense, useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { PortalMobileNav } from "@/components/studioos/portal-mobile-nav";
 import { StudioNotificationBell } from "@/components/studioos/studio-notification-bell";
 import { StudioUserMenu } from "@/components/studioos/studio-user-menu";
@@ -9,17 +10,21 @@ import { LanguageSwitcher, LanguageSwitcherFallback } from "@/components/languag
 import { CertifiedPartnerBadge } from "@/components/studioos/certification/certified-partner-badge";
 import { StudioCertificationOrchestrator } from "@/components/studioos/certification/studio-certification-orchestrator";
 import { StudioPortalSidebarNav } from "@/components/studioos/certification/studio-portal-sidebar-nav";
-import { studioNav, studioOS } from "@/lib/studioos/vocabulary";
+import { studioNav } from "@/lib/studioos/vocabulary";
 import { creatorPortalNavItems } from "@/lib/studioos/creator-portal-nav";
 import { creatorPortalRoutes } from "@/lib/studioos/creator-portal-routes";
 import { isCreatorPortalReviewRoute } from "@/lib/studioos/portal-focus-mode";
+import { PortalShellChromeProvider } from "@/components/studioos/portal-shell-chrome-context";
+import {
+  ReviewFocusModeProvider,
+  usePortalReviewFocus
+} from "@/components/studioos/reviewer-skeleton/use-review-focus-mode";
 import { tCertificationExperience } from "@/lib/studioos/certification-experience-copy";
 import type { Locale } from "@/lib/i18n";
-import { withLocale } from "@/lib/i18n";
 import type { CreatorNotification } from "@/lib/notification-types";
 import type { Creator } from "@/lib/types";
-import { cn, formatCurrency } from "@/lib/utils";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Sparkles } from "lucide-react";
 
 function studioInitials(name: string) {
   return name
@@ -31,52 +36,137 @@ function studioInitials(name: string) {
 
 export function StudioPortalShell({
   locale,
-  pathname,
+  pathname: pathnameProp,
   search,
   creator,
   creatorId,
   canUseBusinessFeatures = true,
-  canUseIncomeFeatures = true,
   isVerified = false,
   levelUpSeen = true,
   notifications = [],
   unreadCount = 0,
-  withdrawableUsd = 0,
   pendingInvitationCount = 0,
   children
 }: {
   locale: Locale;
-  pathname: string;
+  pathname?: string;
   search: string;
   creator?: Creator | null;
   creatorId?: string | null;
   certificationPaid?: boolean;
   profileComplete?: boolean;
   canUseBusinessFeatures?: boolean;
-  canUseIncomeFeatures?: boolean;
   isVerified?: boolean;
   levelUpSeen?: boolean;
   notifications?: CreatorNotification[];
   unreadCount?: number;
-  withdrawableUsd?: number;
   pendingInvitationCount?: number;
   children: React.ReactNode;
 }) {
+  return (
+    <ReviewFocusModeProvider searchFallback={search}>
+      <StudioPortalShellInner
+        locale={locale}
+        pathname={pathnameProp}
+        search={search}
+        creator={creator}
+        creatorId={creatorId}
+        canUseBusinessFeatures={canUseBusinessFeatures}
+        isVerified={isVerified}
+        levelUpSeen={levelUpSeen}
+        notifications={notifications}
+        unreadCount={unreadCount}
+        pendingInvitationCount={pendingInvitationCount}
+      >
+        {children}
+      </StudioPortalShellInner>
+    </ReviewFocusModeProvider>
+  );
+}
+
+function StudioPortalShellInner({
+  locale,
+  pathname: pathnameProp,
+  search,
+  creator,
+  creatorId,
+  canUseBusinessFeatures = true,
+  isVerified = false,
+  levelUpSeen = true,
+  notifications = [],
+  unreadCount = 0,
+  pendingInvitationCount = 0,
+  children
+}: {
+  locale: Locale;
+  pathname?: string;
+  search: string;
+  creator?: Creator | null;
+  creatorId?: string | null;
+  certificationPaid?: boolean;
+  profileComplete?: boolean;
+  canUseBusinessFeatures?: boolean;
+  isVerified?: boolean;
+  levelUpSeen?: boolean;
+  notifications?: CreatorNotification[];
+  unreadCount?: number;
+  pendingInvitationCount?: number;
+  children: React.ReactNode;
+}) {
+  const pathname = usePathname() ?? pathnameProp ?? "/studio";
+  const { isFocusMode: isReviewFocusMode } = usePortalReviewFocus();
   const nav = studioNav[locale];
   const partnerBadge = tCertificationExperience(locale).partnerBadge;
+  const partnerBadgeSidebar = tCertificationExperience(locale).partnerBadgeSidebar;
   const initials = creator ? studioInitials(creator.name) : "CR";
+  const [notificationBadgeSeen, setNotificationBadgeSeen] = useState(false);
+  const visibleUnreadCount = notificationBadgeSeen ? 0 : unreadCount;
+
+  useEffect(() => {
+    setNotificationBadgeSeen(false);
+  }, [unreadCount]);
 
   const isReviewPage = isCreatorPortalReviewRoute(pathname);
+  const isReviewSection =
+    pathname === creatorPortalRoutes.reviewHub || pathname.startsWith(`${creatorPortalRoutes.reviewHub}/`);
+  const hidePortalHeader = isReviewSection || isReviewPage;
+
+  if (isReviewPage && isReviewFocusMode) {
+    return (
+      <PortalShellChromeProvider
+        value={{
+          initials,
+          userName: creator?.name,
+          profileHref: creatorPortalRoutes.profile,
+          roleLabel: isVerified ? partnerBadge : locale === "zh" ? "创作者" : "Creator",
+          unreadMessageCount: unreadCount,
+          showNotificationBell: canUseBusinessFeatures,
+          notifications
+        }}
+      >
+        <div className="h-[100dvh] max-h-[100dvh] w-full overflow-hidden bg-[#f8f9fb]">{children}</div>
+      </PortalShellChromeProvider>
+    );
+  }
+
+  const portalChrome = {
+    initials,
+    userName: creator?.name,
+    profileHref: creatorPortalRoutes.profile,
+    roleLabel: isVerified ? partnerBadge : locale === "zh" ? "创作者" : "Creator",
+    unreadMessageCount: unreadCount,
+    showNotificationBell: canUseBusinessFeatures,
+    notifications
+  };
 
   const shellInner = (
+    <PortalShellChromeProvider value={portalChrome}>
     <div
       className={cn(
-        isReviewPage
-          ? "max-lg:h-screen max-lg:overflow-hidden bg-white lg:min-h-screen lg:bg-[#f8f9fb]"
-          : "min-h-screen bg-[#f8f9fb]"
+        isReviewPage ? "min-h-screen bg-[#f8f9fb] lg:min-h-screen" : "min-h-screen bg-[#f8f9fb]"
       )}
     >
-      <div className={cn("flex", isReviewPage ? "max-lg:h-full lg:min-h-screen" : "min-h-screen")}>
+      <div className={cn("flex min-h-screen")}>
         <aside className="hidden w-[248px] shrink-0 flex-col border-r border-zinc-200/80 bg-white lg:flex">
           <MarketingHomeLink
             locale={locale}
@@ -91,13 +181,16 @@ export function StudioPortalShell({
               <Sparkles className="h-4 w-4" />
             </span>
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-zinc-950">{studioOS.productName}</p>
-              <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium text-zinc-500">
-                  {locale === "zh" ? "创作者后台" : "Creator"}
-                </span>
-                {isVerified ? <CertifiedPartnerBadge label={partnerBadge} compact /> : null}
-              </div>
+              <p className="truncate text-sm font-semibold text-zinc-950">
+                {locale === "zh" ? "创作者工作台" : "Creator workspace"}
+              </p>
+              {isVerified ? (
+                <CertifiedPartnerBadge
+                  label={partnerBadgeSidebar}
+                  compact
+                  className="mt-1.5 bg-violet-50 text-violet-700 ring-violet-200/60"
+                />
+              ) : null}
             </div>
           </MarketingHomeLink>
 
@@ -106,55 +199,11 @@ export function StudioPortalShell({
             pathname={pathname}
             canUseBusinessFeatures={canUseBusinessFeatures}
             isVerified={isVerified}
-            unreadCount={unreadCount}
+            unreadCount={visibleUnreadCount}
             pendingInvitationCount={pendingInvitationCount}
           />
 
-          <div className="mt-auto space-y-3 border-t border-zinc-100 p-4">
-            {canUseIncomeFeatures ? (
-              <Link
-                href={withLocale(creatorPortalRoutes.income, locale)}
-                className="block rounded-xl border border-violet-100 bg-violet-50/70 p-3 transition hover:bg-violet-50"
-              >
-                <p className="text-xs text-zinc-500">{locale === "zh" ? "可提现金额" : "Withdrawable"}</p>
-                <p className="mt-1 text-lg font-semibold text-zinc-950">{formatCurrency(withdrawableUsd)}</p>
-                <p className="mt-1 text-xs font-medium text-violet-600">
-                  {locale === "zh" ? "去提现" : "Withdraw"} <ArrowRight className="ml-1 inline h-3.5 w-3.5" />
-                </p>
-                {!canUseBusinessFeatures ? (
-                  <p className="mt-2 text-[11px] leading-4 text-zinc-500">
-                    {locale === "zh"
-                      ? "首单完成后需认证才能继续接单，收益可随时提现。"
-                      : "Certify to accept more orders after your free project — withdrawals stay open."}
-                  </p>
-                ) : null}
-              </Link>
-            ) : null}
-            <div className="rounded-xl border border-zinc-100 bg-zinc-50/80 p-3">
-              <p className="text-xs text-zinc-500">{locale === "zh" ? "创作者等级" : "Creator level"}</p>
-              <p className="mt-1 text-sm font-semibold text-zinc-900">
-                {locale === "zh" ? "Lv.2 专业创作者" : "Lv.2 Pro creator"}
-              </p>
-              <div className="mt-2 h-1.5 rounded-full bg-zinc-200">
-                <div className="h-full w-[72%] rounded-full bg-violet-600" />
-              </div>
-              <p className="mt-1 text-[10px] text-zinc-500">
-                {locale === "zh" ? "还需 1,121 积分升级" : "1,121 points to level up"}
-              </p>
-            </div>
-            <div className="space-y-2 px-1 text-[11px] text-zinc-400">
-              <p>StudioOS © 2025</p>
-              <div className="flex flex-wrap gap-x-3 gap-y-1">
-                <Link href={withLocale("/#faq", locale)} className="hover:text-zinc-600">
-                  {locale === "zh" ? "帮助中心" : "Help center"}
-                </Link>
-                <form action={signOutAction}>
-                  <button type="submit" className="hover:text-zinc-600">
-                    {locale === "zh" ? "退出登录" : "Sign out"}
-                  </button>
-                </form>
-              </div>
-            </div>
+          <div className="mt-auto border-t border-zinc-100 p-4">
             {creator ? (
               <div className="flex items-center gap-3 rounded-xl bg-zinc-50 px-3 py-3">
                 <div
@@ -165,7 +214,7 @@ export function StudioPortalShell({
                 >
                   {initials.slice(0, 2)}
                 </div>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-zinc-900">{creator.name}</p>
                   <p className="truncate text-xs text-zinc-500">
                     {isVerified ? partnerBadge : nav.studioOwner}
@@ -176,10 +225,15 @@ export function StudioPortalShell({
           </div>
         </aside>
 
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-40 shrink-0 border-b border-zinc-200/80 bg-white/95 backdrop-blur">
-            <div className="flex h-14 items-center justify-between px-4 sm:px-6 lg:px-8">
-              {!isReviewPage ? (
+        <div
+          className={cn(
+            "flex min-h-0 min-w-0 flex-1 flex-col",
+            isReviewPage && "h-[100dvh] max-h-[100dvh] overflow-hidden"
+          )}
+        >
+          {!hidePortalHeader ? (
+            <header className="sticky top-0 z-40 shrink-0 border-b border-zinc-200/80 bg-white/95 backdrop-blur">
+              <div className="flex h-14 items-center justify-between px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center gap-2 lg:hidden">
                   <MarketingHomeLink locale={locale} className="flex items-center gap-2 font-semibold text-zinc-950">
                     <span
@@ -190,37 +244,41 @@ export function StudioPortalShell({
                     >
                       <Sparkles className="h-4 w-4" />
                     </span>
-                    {studioOS.productName}
+                    {locale === "zh" ? "创作者工作台" : "Creator workspace"}
                   </MarketingHomeLink>
                   {isVerified ? (
-                    <CertifiedPartnerBadge label={partnerBadge} compact className="hidden sm:inline-flex" />
+                    <CertifiedPartnerBadge
+                      label={partnerBadgeSidebar}
+                      compact
+                      className="hidden bg-violet-50 text-[10px] text-violet-700 ring-violet-200/60 sm:inline-flex"
+                    />
                   ) : null}
                 </div>
-              ) : null}
-              <div className="hidden lg:block" />
+                <div className="hidden lg:block" />
 
-              <div className={cn("flex items-center gap-2 sm:gap-3", isReviewPage && "max-lg:ml-auto")}>
-                <Suspense fallback={<LanguageSwitcherFallback locale={locale} />}>
-                  <LanguageSwitcher locale={locale} pathname={pathname} search={search} />
-                </Suspense>
-                {canUseBusinessFeatures ? (
-                  <StudioNotificationBell
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <Suspense fallback={<LanguageSwitcherFallback locale={locale} />}>
+                    <LanguageSwitcher locale={locale} pathname={pathname} search={search} />
+                  </Suspense>
+                  {canUseBusinessFeatures ? (
+                    <StudioNotificationBell
+                      locale={locale}
+                      notifications={notifications}
+                      unreadCount={unreadCount}
+                      badgeCount={visibleUnreadCount}
+                      onBadgeSeen={() => setNotificationBadgeSeen(true)}
+                    />
+                  ) : null}
+                  <StudioUserMenu
                     locale={locale}
-                    notifications={notifications}
-                    unreadCount={unreadCount}
+                    initials={initials}
+                    name={creator?.name}
+                    profileHref={creatorPortalRoutes.profile}
+                    roleLabel={isVerified ? partnerBadge : locale === "zh" ? "创作者" : "Creator"}
                   />
-                ) : null}
-                <StudioUserMenu
-                  locale={locale}
-                  initials={initials}
-                  name={creator?.name}
-                  profileHref={creatorPortalRoutes.profile}
-                  roleLabel={isVerified ? partnerBadge : locale === "zh" ? "创作者" : "Creator"}
-                />
+                </div>
               </div>
-            </div>
 
-            {!isReviewPage ? (
               <div className="border-t border-zinc-100 px-4 py-3 lg:hidden">
                 <PortalMobileNav
                   locale={locale}
@@ -237,14 +295,14 @@ export function StudioPortalShell({
                   }))}
                 />
               </div>
-            ) : null}
-          </header>
+            </header>
+          ) : null}
 
           <main
             className={cn(
               "min-h-0 min-w-0 flex-1",
               isReviewPage
-                ? "flex flex-col overflow-hidden p-0 lg:px-8 lg:py-8"
+                ? "flex w-full flex-col overflow-hidden p-0"
                 : cn(
                     "mx-auto w-full px-4 py-6 sm:px-6 lg:px-8 lg:py-8",
                     "max-w-[1280px]"
@@ -256,6 +314,7 @@ export function StudioPortalShell({
         </div>
       </div>
     </div>
+    </PortalShellChromeProvider>
   );
 
   if (!creatorId) {

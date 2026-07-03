@@ -1,7 +1,7 @@
 import type { StoredOrder } from "@/lib/order-types";
 import { getDeliverables, listOrdersForClient, listOrdersForCreator } from "@/lib/order-service";
 import { getProject } from "@/lib/project-service";
-import { listReviewComments } from "@/lib/studioos/review-store";
+import { listReviewComments, countUnresolvedReviewComments } from "@/lib/studioos/review-store";
 
 export type ReviewHubItem = {
   orderId: string;
@@ -25,6 +25,8 @@ const REVIEW_ORDER_STATUSES = new Set<StoredOrder["status"]>([
   "in_production",
   "review",
   "revision",
+  "ready_for_completion",
+  "settling",
   "completed"
 ]);
 
@@ -70,7 +72,7 @@ async function toReviewHubItem(
 
   const latestDeliverable = deliverables.sort((a, b) => b.version - a.version)[0];
   const latestComment = comments
-    .filter((item) => item.status === "open")
+    .filter((item) => item.status !== "resolved")
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
 
   return {
@@ -82,7 +84,7 @@ async function toReviewHubItem(
     status: order.status,
     updatedAt: order.completed_at ?? order.paid_at ?? order.created_at,
     deliverableCount: deliverables.length,
-    openCommentCount: comments.filter((item) => item.status === "open").length,
+    openCommentCount: countUnresolvedReviewComments(comments),
     reviewHref,
     latestVersion: latestDeliverable?.version ?? null,
     latestVersionUploadedAt: latestDeliverable?.created_at ?? null,

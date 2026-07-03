@@ -30,8 +30,18 @@ import type { PayoutMethodType } from "@/lib/studioos/withdrawal-types";
 import { cn, formatCurrency } from "@/lib/utils";
 
 const copyExtra = {
-  en: { copy: "Copy", copied: "Copied" },
-  zh: { copy: "复制", copied: "已复制" }
+  en: {
+    copy: "Copy",
+    copied: "Copied",
+    submitting: "Submitting for review...",
+    submittingHint: "Payment submitted. Confirming certification status now."
+  },
+  zh: {
+    copy: "复制",
+    copied: "已复制",
+    submitting: "正在提交审核...",
+    submittingHint: "已收到提交，正在确认认证状态。"
+  }
 } as const;
 
 const methodIcons: Record<PayoutMethodType, typeof Smartphone> = {
@@ -42,18 +52,27 @@ const methodIcons: Record<PayoutMethodType, typeof Smartphone> = {
   crypto: Bitcoin
 };
 
-function SubmitPaymentButton({ label }: { label: string }) {
+function SubmitPaymentButton({
+  label,
+  pendingLabel,
+  submitting
+}: {
+  label: string;
+  pendingLabel: string;
+  submitting: boolean;
+}) {
   const { pending } = useFormStatus();
+  const isSubmitting = pending || submitting;
 
   return (
     <Button
       type="submit"
       size="lg"
       className="h-12 w-full rounded-xl bg-zinc-900 text-sm font-medium hover:bg-zinc-800"
-      disabled={pending}
+      disabled={isSubmitting}
     >
-      {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lock className="h-4 w-4" />}
-      {label}
+      {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lock className="h-4 w-4" />}
+      {isSubmitting ? pendingLabel : label}
     </Button>
   );
 }
@@ -75,6 +94,7 @@ export function CreatorDepositPaymentSection({
   const extra = copyExtra[locale];
   const [method, setMethod] = useState<PayoutMethodType>("alipay");
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
 
   const account = useMemo(() => getPlatformCorporateAccount(method, creatorId, locale), [method, creatorId, locale]);
 
@@ -108,7 +128,11 @@ export function CreatorDepositPaymentSection({
         <p className="mt-0.5 text-sm text-zinc-500">{t.secureTransfer}</p>
       </div>
 
-      <form action={submitDepositPaymentAction} className="space-y-6 p-5 sm:p-6">
+      <form
+        action={submitDepositPaymentAction}
+        className="space-y-6 p-5 sm:p-6"
+        onSubmit={() => setIsSubmittingPayment(true)}
+      >
         <input type="hidden" name="lang" value={locale} />
         <input type="hidden" name="payment_method" value={method} />
 
@@ -120,6 +144,7 @@ export function CreatorDepositPaymentSection({
               <button
                 key={type}
                 type="button"
+                disabled={isSubmittingPayment}
                 onClick={() => setMethod(type)}
                 className={cn(
                   "relative flex min-h-[72px] flex-col items-center justify-center gap-2 rounded-xl border px-3 py-3 text-sm font-medium transition",
@@ -198,11 +223,23 @@ export function CreatorDepositPaymentSection({
             name="payment_reference"
             placeholder={locale === "zh" ? "转账单号 / 哈希 (选填)" : "Transfer ID / hash (optional)"}
             className="h-11 rounded-xl border-zinc-200 bg-white"
+            disabled={isSubmittingPayment}
           />
           <p className="text-xs leading-5 text-zinc-500">{t.referenceHint}</p>
         </div>
 
-        <SubmitPaymentButton label={t.submit} />
+        {isSubmittingPayment ? (
+          <div className="flex items-center justify-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700">
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            {extra.submittingHint}
+          </div>
+        ) : null}
+
+        <SubmitPaymentButton
+          label={t.submit}
+          pendingLabel={extra.submitting}
+          submitting={isSubmittingPayment}
+        />
       </form>
     </section>
   );
