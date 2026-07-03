@@ -103,21 +103,34 @@ function mergeMemory(existing: unknown, patch: UpdateProjectInput): BrandCampaig
   };
 }
 
+function isWizardMetadataPatch(patch: UpdateProjectInput): boolean {
+  const keys = Object.keys(patch);
+  return keys.length > 0 && keys.every((key) => ["settings_json", "wizard_step", "wizard_completed_steps"].includes(key));
+}
+
 /** Brand wizard portal — legacy `proj_*` URLs mapped to Prisma campaigns. */
 export class CampaignBrandPortalService {
   isEnabled() {
     return hasDatabaseUrl();
   }
 
-  private async loadDraftCampaign(legacyProjectId: string) {
+  private async loadCampaignForStatuses(legacyProjectId: string, allowedStatuses: string[]) {
     const campaign = await campaignRepository.findByLegacyProjectIdWithRelations(legacyProjectId);
     if (!campaign) {
       throw new Error("Campaign not found");
     }
-    if (campaign.status !== "DRAFT") {
-      throw new Error("Only draft campaigns can be edited");
+    if (!allowedStatuses.includes(campaign.status)) {
+      throw new Error(
+        allowedStatuses.length === 1 && allowedStatuses[0] === "DRAFT"
+          ? "Only draft campaigns can be edited"
+          : `Campaign status ${campaign.status} cannot update wizard metadata`
+      );
     }
     return campaign;
+  }
+
+  private async loadDraftCampaign(legacyProjectId: string) {
+    return this.loadCampaignForStatuses(legacyProjectId, ["DRAFT"]);
   }
 
   async createDraft(input: CreateProjectDraftInput): Promise<StoredProject | null> {
@@ -218,7 +231,12 @@ export class CampaignBrandPortalService {
   ): Promise<StoredProject | null> {
     if (!this.isEnabled()) return null;
 
-    const campaign = await this.loadDraftCampaign(legacyProjectId);
+    const campaign = await this.loadCampaignForStatuses(
+      legacyProjectId,
+      isWizardMetadataPatch(patch)
+        ? ["DRAFT", "AI_PROCESSING", "CREATIVE_READY", "CREATIVE_APPROVED"]
+        : ["DRAFT"]
+    );
     const productionBrief = mergeBrief(campaign.productionBrief, patch);
     const campaignMemory = mergeMemory(campaign.campaignMemoryJson, patch);
 
@@ -253,7 +271,12 @@ export class CampaignBrandPortalService {
 
   async completeWizardStep(legacyProjectId: string, step: number, actorEmail?: string) {
     if (!this.isEnabled()) return null;
-    const campaign = await this.loadDraftCampaign(legacyProjectId);
+    const campaign = await this.loadCampaignForStatuses(legacyProjectId, [
+      "DRAFT",
+      "AI_PROCESSING",
+      "CREATIVE_READY",
+      "CREATIVE_APPROVED"
+    ]);
     const memory = readCampaignMemory(campaign.campaignMemoryJson) as BrandCampaignMemory;
     const completed = new Set(memory.wizard?.completed_steps ?? []);
     completed.add(step);
@@ -299,13 +322,13 @@ export class CampaignBrandPortalService {
     if (!campaign) {
       throw new Error("Campaign not found");
     }
-    if (campaign.status !== "DRAFT") {
-      throw new Error("Only draft campaigns can be published");
+    if (campaign.status !== "CREATIVE_APPROVED") {
+      throw new Error("Approve a Creative Direction before publishing");
     }
 
     const brief = readProductionBrief(campaign.productionBrief) as BrandProductionBrief;
-    if (!brief.confirmed_brief || typeof brief.confirmed_brief !== "object") {
-      throw new Error("Confirmed brief required before publish");
+    if (!brief.frozen_production_brief?.full_text?.trim()) {
+      throw new Error("Frozen Production Brief required before publish");
     }
 
     const memory = readCampaignMemory(campaign.campaignMemoryJson) as BrandCampaignMemory;
@@ -324,8 +347,8 @@ export class CampaignBrandPortalService {
 
     await runTransition({
       machine: campaignStateMachine,
-      current: "DRAFT",
-      event: CampaignEvent.PUBLISH,
+      current: "CREATIVE_APPROVED",
+      event: CampaignEvent.START_MATCHING,
       context: {
         aggregateType: "campaign",
         aggregateId: campaign.id,
@@ -342,7 +365,7 @@ export class CampaignBrandPortalService {
         name: CampaignEvents.UPDATED,
         aggregateType: "campaign",
         aggregateId: campaign.id,
-        payload: { event: CampaignEvent.PUBLISH, from: "DRAFT", legacy_project_id: legacyProjectId }
+        payload: { event: CampaignEvent.START_MATCHING, from: "CREATIVE_APPROVED", legacy_project_id: legacyProjectId }
       }
     });
 
@@ -352,7 +375,7 @@ export class CampaignBrandPortalService {
       { userId: actor.userId ?? campaign.brandId, email: actor.email, role: "brand" },
       {
         legacy_project_id: legacyProjectId,
-        from_status: "DRAFT",
+        from_status: "CREATIVE_APPROVED",
         to_status: "MATCHING"
       }
     );

@@ -2,6 +2,7 @@ import { invitationPortalService } from "@/features/matching/invitation-portal.s
 import { campaignSelectionService } from "@/features/matching/campaign-selection.service";
 import { invitationRepository } from "@/features/matching/invitation.repository";
 import { matchingService } from "@/features/matching/matching.service";
+import { activityService } from "@/features/campaign/activity.service";
 import { campaignRepository } from "@/features/campaign/campaign.repository";
 import { campaignService } from "@/features/campaign/campaign.service";
 import { CampaignEvent, CampaignState } from "@/features/campaign/campaign.state-machine";
@@ -14,6 +15,8 @@ import { appError } from "@/lib/core/errors";
 import type { Locale } from "@/lib/i18n";
 import type { StoredProject } from "@/lib/project-types";
 import { hasDatabaseUrl, prisma } from "@/lib/core/database/prisma";
+import { notificationService } from "@/features/notification/notification.service";
+import { getAppBaseUrl } from "@/lib/app-url";
 
 export function serializeInvitation(
   invitation: Awaited<ReturnType<typeof invitationRepository.listForCampaign>>[number]
@@ -74,10 +77,29 @@ export class InvitationService {
       const profile = await prisma.creatorProfile.findUnique({ where: { id: creatorProfileId } });
       if (!profile) throw appError("NOT_FOUND", `Creator ${creatorProfileId} not found`);
 
-      await invitationRepository.create({
+      const created = await invitationRepository.create({
         campaignId,
         creatorProfileId,
         matchScore: matchMap.get(creatorProfileId) ?? 50
+      });
+      await activityService.write(campaignId, "invitation.sent", {
+        userId: user.id,
+        email: user.id,
+        role: user.role.toUpperCase() === "ADMIN" ? "admin" : "brand"
+      }, {
+        creatorProfileId,
+        creatorUserId: created.creator.userId,
+        matchScore: Number(created.matchScore)
+      });
+      await notificationService.notify({
+        userId: created.creator.userId,
+        campaignId,
+        title: "New collaboration invitation",
+        content: `You received a creator invitation for "${campaign.title}". Review the brief and respond.`,
+        actionUrl: `${getAppBaseUrl()}/studio/invitations`,
+        template: "invitation.sent",
+        priority: "HIGH",
+        email: false
       });
     }
 

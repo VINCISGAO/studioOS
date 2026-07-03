@@ -1,11 +1,10 @@
 import "server-only";
 
-import { promises as fs } from "node:fs";
-import path from "node:path";
 import { campaignAssetService } from "@/features/campaign/campaign-asset.service";
 import { campaignService } from "@/features/campaign/campaign.service";
 import { detectReferenceType } from "@/lib/campaign/reference-type";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
+import { dataStorePath, readDataJson, writeDataJson } from "@/lib/serverless-store-core";
 import type {
   CampaignStore,
   PackItemType,
@@ -17,8 +16,7 @@ import type {
 } from "@/lib/campaign-types";
 import type { StoredProject } from "@/lib/project-types";
 
-const STORE_DIR = path.join(process.cwd(), ".data");
-const STORE_PATH = path.join(STORE_DIR, "campaign-store.json");
+const STORE_PATH = dataStorePath("campaign-store.json");
 
 function createId(prefix: string) {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -38,19 +36,12 @@ function normalizeStore(parsed: Partial<CampaignStore> | null | undefined): Camp
 }
 
 async function readStore(): Promise<CampaignStore> {
-  try {
-    const raw = await fs.readFile(STORE_PATH, "utf8");
-    const parsed = normalizeStore(JSON.parse(raw) as Partial<CampaignStore>);
-    const next = ensureDemoBrandGuideAsset(parsed);
-    if (next.assets.length !== parsed.assets.length) {
-      await writeStore(next);
-    }
-    return next;
-  } catch {
-    const seeded = ensureDemoBrandGuideAsset(normalizeStore(emptyStore()));
-    await writeStore(seeded);
-    return seeded;
+  const parsed = normalizeStore(await readDataJson(STORE_PATH, () => emptyStore()));
+  const next = ensureDemoBrandGuideAsset(parsed);
+  if (next.assets.length !== parsed.assets.length) {
+    await writeStore(next);
   }
+  return next;
 }
 
 function ensureDemoBrandGuideAsset(store: CampaignStore): CampaignStore {
@@ -74,10 +65,7 @@ function ensureDemoBrandGuideAsset(store: CampaignStore): CampaignStore {
 }
 
 async function writeStore(store: CampaignStore) {
-  await fs.mkdir(STORE_DIR, { recursive: true });
-  const tempPath = `${STORE_PATH}.tmp`;
-  await fs.writeFile(tempPath, JSON.stringify(store, null, 2), "utf8");
-  await fs.rename(tempPath, STORE_PATH);
+  await writeDataJson(STORE_PATH, store);
 }
 
 export { detectReferenceType } from "@/lib/campaign/reference-type";

@@ -12,6 +12,7 @@ import { parseDemoSession } from "@/lib/demo-auth";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
 import { clampBrandVisibleStep, migrateLegacyBrandWizardStep } from "@/lib/campaign/wizard-steps";
 import { runBrandWizardDemoPrepareInstant } from "@/lib/campaign/brand-wizard-demo-prepare";
+import { getOrCreateEphemeralWizardProject } from "@/lib/brand-start-brief";
 import { getProject } from "@/lib/project-service";
 import { normalizeCampaignStatus } from "@/lib/studioos/project-status";
 import { cookies } from "next/headers";
@@ -57,11 +58,16 @@ export default async function NewProjectPage({
         : "";
 
   if (!projectId) {
-    redirect(withLocale("/brand", locale));
+    const project = await getOrCreateEphemeralWizardProject(clientEmail);
+    redirect(withLocale(`/brand/projects/new?project=${project.id}&step=1`, locale));
   }
 
   let project = await getProject(projectId);
-  if (!project || project.client_email !== clientEmail.toLowerCase()) {
+  if (!project) {
+    const fallbackProject = await getOrCreateEphemeralWizardProject(clientEmail);
+    redirect(withLocale(`/brand/projects/new?project=${fallbackProject.id}&step=1`, locale));
+  }
+  if (project.client_email !== clientEmail.toLowerCase()) {
     redirect(withLocale(`/brand?error=wizard-access`, locale));
   }
 

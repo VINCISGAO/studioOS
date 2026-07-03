@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
-import { startBrandBriefAction } from "@/app/brand/actions";
+import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import type { Locale } from "@/lib/i18n";
+import { withLocale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 export function BrandStartBriefButton({
@@ -18,11 +19,11 @@ export function BrandStartBriefButton({
   children?: ReactNode;
 }) {
   return (
-    <form action={startBrandBriefAction}>
-      <input type="hidden" name="lang" value={locale} />
-      <button type="submit" className={cn(buttonVariants({ size }), "cursor-pointer", className)}>
-        {children ?? label}
-      </button>
-    </form>
+    <Link
+      href={withLocale("/brand/start-brief", locale)}
+      className={cn(buttonVariants({ size }), "cursor-pointer", className)}
+    >
+      {children ?? label}
+    </Link>
   );
 }

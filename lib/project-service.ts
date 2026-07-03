@@ -2,6 +2,7 @@ import { projectApplications, projects as seedProjects } from "@/lib/data";
 import { campaignService } from "@/features/campaign/campaign.service";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { logger } from "@/lib/core/logger";
+import { canPersistLocalDataStore } from "@/lib/runtime-flags";
 import { createSerializedStoreReader, writeJsonFileAtomic } from "@/lib/json-file-store-core";
 import { getMemoryStore, readDataJson, dataStorePath } from "@/lib/serverless-store-core";
 import { repairMissingProjects } from "@/lib/studioos/brand-store-repair";
@@ -458,6 +459,7 @@ async function createProjectDraftInJsonStore(input: CreateProjectDraftInput): Pr
 
 export async function createProjectDraft(input: CreateProjectDraftInput): Promise<StoredProject> {
   if (hasDatabaseUrl()) {
+    let prismaError: unknown;
     try {
       const prismaProject = await campaignService.createBrandDraft(input);
       if (prismaProject) {
@@ -468,11 +470,18 @@ export async function createProjectDraft(input: CreateProjectDraftInput): Promis
         email: input.client_email
       });
     } catch (error) {
+      prismaError = error;
       logger.error("createProjectDraft Prisma failed, falling back to JSON store", {
         service: "project-service",
         email: input.client_email,
         error: error instanceof Error ? error.message : String(error)
       });
+    }
+
+    if (!canPersistLocalDataStore()) {
+      throw prismaError instanceof Error
+        ? prismaError
+        : new Error("Unable to create brand campaign draft in production database");
     }
   }
 

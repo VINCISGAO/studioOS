@@ -141,12 +141,15 @@ function scoreCreatorForProject(
 
   const briefText = [
     brief.title,
+    brief.core_idea,
     brief.hook,
     brief.story,
     brief.tone,
     brief.visual_style,
     brief.shot_list.join(" "),
     brief.cta,
+    brief.recommended_creator_type,
+    brief.expected_outcome,
     brief.full_text
   ].join(" ");
   const creatorText = [

@@ -28,11 +28,16 @@ const copy = {
     chooseBody: "StudioOS will freeze the selected direction into the Production Brief. Matching will use this brief, not the draft.",
     selected: "Selected",
     choose: "Choose",
+    coreIdea: "Core idea",
     hook: "Hook",
     story: "Story",
     tone: "Tone",
+    visualStyle: "Visual style",
     shotList: "Shot list",
-    cta: "CTA"
+    cta: "CTA",
+    recommendedCreatorType: "Recommended creator type",
+    recommendedBudget: "Recommended budget",
+    expectedOutcome: "Expected outcome"
   },
   zh: {
     edit: "返回修改",
@@ -42,11 +47,16 @@ const copy = {
     chooseBody: "StudioOS 会把你选择的方向冻结成 Production Brief。后续匹配只读取这份 Brief，不读取草稿。",
     selected: "已选择",
     choose: "选择",
+    coreIdea: "核心创意",
     hook: "Hook",
     story: "Story",
     tone: "Tone",
+    visualStyle: "视觉风格",
     shotList: "Shot List",
-    cta: "CTA"
+    cta: "CTA",
+    recommendedCreatorType: "推荐创作者类型",
+    recommendedBudget: "推荐预算",
+    expectedOutcome: "预期效果"
   }
 } as const;
 
@@ -190,9 +200,11 @@ export function BrandCampaignStep2Review({
                 </div>
                 <h3 className="mt-3 text-lg font-semibold text-zinc-950">{direction.title}</h3>
                 <div className="mt-4 space-y-3 text-sm leading-6 text-zinc-600">
+                  <p><span className="font-semibold text-zinc-900">{t.coreIdea}:</span> {direction.coreIdea}</p>
                   <p><span className="font-semibold text-zinc-900">{t.hook}:</span> {direction.hook}</p>
                   <p><span className="font-semibold text-zinc-900">{t.story}:</span> {direction.story}</p>
                   <p><span className="font-semibold text-zinc-900">{t.tone}:</span> {direction.tone}</p>
+                  <p><span className="font-semibold text-zinc-900">{t.visualStyle}:</span> {direction.visualStyle}</p>
                   <div>
                     <p className="font-semibold text-zinc-900">{t.shotList}</p>
                     <ol className="mt-1 list-decimal space-y-1 pl-5">
@@ -202,6 +214,9 @@ export function BrandCampaignStep2Review({
                     </ol>
                   </div>
                   <p><span className="font-semibold text-zinc-900">{t.cta}:</span> {direction.cta}</p>
+                  <p><span className="font-semibold text-zinc-900">{t.recommendedCreatorType}:</span> {direction.recommendedCreatorType}</p>
+                  <p><span className="font-semibold text-zinc-900">{t.recommendedBudget}:</span> {direction.recommendedBudget}</p>
+                  <p><span className="font-semibold text-zinc-900">{t.expectedOutcome}:</span> {direction.expectedOutcome}</p>
                 </div>
               </button>
             );

@@ -6,7 +6,9 @@ import { reviewService } from "@/features/review/review.service";
 import { serializeReviewVersion } from "@/features/review/review.serializer";
 import type { AuthUser } from "@/features/auth/permission.service";
 import { PermissionService } from "@/features/auth/permission.service";
+import { notificationService } from "@/features/notification/notification.service";
 import { appError } from "@/lib/core/errors";
+import { getAppBaseUrl } from "@/lib/app-url";
 import { prisma, hasDatabaseUrl } from "@/lib/core/database/prisma";
 
 export class ReviewDecisionService {
@@ -42,6 +44,18 @@ export class ReviewDecisionService {
     if (campaign.status === CampaignState.UNDER_REVIEW) {
       await campaignService.transition(version.campaignId, CampaignEvent.APPROVE, user);
     }
+    if (version.campaign.creatorId) {
+      await notificationService.notify({
+        userId: version.campaign.creatorId,
+        campaignId: version.campaignId,
+        title: "Campaign approved",
+        content: `"${version.campaign.title}" was approved by the brand.`,
+        actionUrl: `${getAppBaseUrl()}/studio/projects`,
+        template: "review.approved",
+        priority: "HIGH",
+        email: false
+      });
+    }
 
     const updated = await reviewRepository.findVersion(versionId);
     return {
@@ -74,6 +88,20 @@ export class ReviewDecisionService {
     const campaign = await prisma.campaign.findUniqueOrThrow({ where: { id: version.campaignId } });
     if (campaign.status === CampaignState.UNDER_REVIEW) {
       await campaignService.transition(version.campaignId, CampaignEvent.REQUEST_REVISION, user);
+    }
+    if (version.campaign.creatorId) {
+      await notificationService.notify({
+        userId: version.campaign.creatorId,
+        campaignId: version.campaignId,
+        title: "Revision requested",
+        content: note?.trim()
+          ? `The brand requested changes on "${version.campaign.title}": ${note.trim()}`
+          : `The brand requested changes on "${version.campaign.title}".`,
+        actionUrl: `${getAppBaseUrl()}/studio/delivery`,
+        template: "review.revision_requested",
+        priority: "HIGH",
+        email: false
+      });
     }
 
     if (note?.trim()) {

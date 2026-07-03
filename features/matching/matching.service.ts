@@ -1,10 +1,14 @@
 import { AI_MATCHING_WEIGHTS } from "@/lib/studioos/ai-matching-policy";
+import { aiLearningEventRepository } from "@/features/ai/ai-learning-event.repository";
+import { activityService } from "@/features/campaign/activity.service";
 import { memoryRepository } from "@/features/memory/memory.repository";
 import { relationshipDnaService } from "@/features/memory/relationship-dna.service";
 import { campaignRepository } from "@/features/campaign/campaign.repository";
 import type { BrandProductionBrief } from "@/features/campaign/brand-campaign/brand-campaign.types";
 import type { AuthUser } from "@/features/auth/permission.service";
 import { PermissionService } from "@/features/auth/permission.service";
+import { notificationService } from "@/features/notification/notification.service";
+import { getAppBaseUrl } from "@/lib/app-url";
 import { appError } from "@/lib/core/errors";
 import { hasDatabaseUrl, prisma } from "@/lib/core/database/prisma";
 import type { Campaign, CreatorProfile } from "@prisma/client";
@@ -55,7 +59,19 @@ function frozenBriefForMatching(campaign: Campaign): FrozenMatchingBrief | null 
   return {
     budget: parseBudgetRange(frozen.budget_range),
     platform: frozen.platforms ?? "",
-    text: [frozen.title, frozen.hook, frozen.story, frozen.tone, frozen.visual_style, frozen.shot_list.join(" "), frozen.cta, frozen.full_text]
+    text: [
+      frozen.title,
+      frozen.core_idea,
+      frozen.hook,
+      frozen.story,
+      frozen.tone,
+      frozen.visual_style,
+      frozen.shot_list.join(" "),
+      frozen.cta,
+      frozen.recommended_creator_type,
+      frozen.expected_outcome,
+      frozen.full_text
+    ]
       .filter(Boolean)
       .join(" ")
   };
@@ -178,7 +194,54 @@ export class MatchingService {
       });
     }
 
-    return scored.sort((a, b) => b.matchScore - a.matchScore).slice(0, limit);
+    const ranked = scored.sort((a, b) => b.matchScore - a.matchScore).slice(0, limit);
+    await activityService.write(campaign.id, "ai.matching_complete", {
+      userId: user.id,
+      email: user.id,
+      role: user.role.toUpperCase() === "ADMIN" ? "admin" : "brand"
+    }, {
+      matchCount: ranked.length,
+      source: "Final Production Brief"
+    });
+    const learningEvent = await aiLearningEventRepository.append({
+      eventType: "AIMatchingComplete",
+      entityType: "Campaign",
+      entityId: campaign.id,
+      payload: {
+        campaignId: campaign.id,
+        matchCount: ranked.length,
+        briefSource: "frozen_production_brief"
+      },
+      learningType: "matching_result",
+      after: {
+        matches: ranked.map((item) => ({
+          creatorProfileId: item.creatorProfileId,
+          score: item.matchScore
+        }))
+      },
+      confidence: 0.85
+    });
+    await memoryRepository.upsertFact({
+      ownerType: "CAMPAIGN",
+      campaignId: campaign.id,
+      category: "matching_statistics",
+      factKey: "latest_match_count",
+      factValue: String(ranked.length),
+      confidence: 0.85,
+      sourceType: "AIEvent",
+      sourceRefId: learningEvent?.eventId ?? undefined
+    });
+    await notificationService.notify({
+      userId: campaign.brandId,
+      campaignId: campaign.id,
+      title: "AI found creator matches",
+      content: `StudioOS found ${ranked.length} creator matches using the Final Production Brief.`,
+      actionUrl: `${getAppBaseUrl()}/brand/projects/${campaign.id}/studios`,
+      template: "ai.matching_complete",
+      priority: "HIGH",
+      email: false
+    });
+    return ranked;
   }
 }
 

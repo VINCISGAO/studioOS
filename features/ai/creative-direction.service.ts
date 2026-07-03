@@ -1,12 +1,17 @@
 import type { CreativeDirection, FrozenProductionBrief } from "@/features/ai/creative-direction.types";
 import { aiWorkerService } from "@/features/ai/ai-worker.service";
 import { aiJobRepository } from "@/features/ai/ai-job.repository";
+import { aiLearningEventRepository } from "@/features/ai/ai-learning-event.repository";
+import { activityService } from "@/features/campaign/activity.service";
 import { campaignRepository } from "@/features/campaign/campaign.repository";
 import { campaignService } from "@/features/campaign/campaign.service";
 import { CampaignEvent, CampaignState } from "@/features/campaign/campaign.state-machine";
 import type { AuthUser } from "@/features/auth/permission.service";
 import { PermissionService } from "@/features/auth/permission.service";
+import { memoryRepository } from "@/features/memory/memory.repository";
+import { notificationService } from "@/features/notification/notification.service";
 import { appError } from "@/lib/core/errors";
+import { getAppBaseUrl } from "@/lib/app-url";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { asInputJson } from "@/lib/core/prisma-json";
 import type { Campaign } from "@prisma/client";
@@ -21,24 +26,32 @@ function buildFrozenProductionBrief(campaign: Campaign, direction: CreativeDirec
   const shotList = direction.shotList.length ? direction.shotList : ["Hero hook", "Story setup", "Product proof", "CTA"];
   const fullText = [
     `Title: ${direction.title}`,
+    `Core idea: ${direction.coreIdea}`,
     `Hook: ${direction.hook}`,
     `Story: ${direction.story}`,
     `Tone: ${direction.tone}`,
     `Visual style: ${direction.visualStyle}`,
     `Shot list:\n${shotList.map((shot, index) => `${index + 1}. ${shot}`).join("\n")}`,
-    `CTA: ${direction.cta}`
+    `CTA: ${direction.cta}`,
+    `Recommended creator type: ${direction.recommendedCreatorType}`,
+    `Recommended budget: ${direction.recommendedBudget}`,
+    `Expected outcome: ${direction.expectedOutcome}`
   ].join("\n\n");
 
   return {
     frozen_at: new Date().toISOString(),
     source_direction_id: direction.id,
     title: direction.title,
+    core_idea: direction.coreIdea,
     hook: direction.hook,
     story: direction.story,
     tone: direction.tone,
     visual_style: direction.visualStyle,
     shot_list: shotList,
     cta: direction.cta,
+    recommended_creator_type: direction.recommendedCreatorType,
+    recommended_budget: direction.recommendedBudget,
+    expected_outcome: direction.expectedOutcome,
     ...(brief.product ? { product: brief.product } : {}),
     ...(brief.audience ? { audience: brief.audience } : {}),
     ...(campaign.platform ? { platforms: campaign.platform } : {}),
@@ -46,6 +59,56 @@ function buildFrozenProductionBrief(campaign: Campaign, direction: CreativeDirec
     ...(brief.delivery ? { delivery: brief.delivery } : {}),
     full_text: fullText
   };
+}
+
+async function recordCampaignAiEvidence(input: {
+  campaign: Campaign;
+  eventType: string;
+  learningType: string;
+  payload: Record<string, unknown>;
+  after: Record<string, unknown>;
+  memoryKey: string;
+  memoryValue: string;
+}) {
+  const learningEvent = await aiLearningEventRepository.append({
+    eventType: input.eventType,
+    entityType: "Campaign",
+    entityId: input.campaign.id,
+    payload: input.payload,
+    learningType: input.learningType,
+    after: input.after,
+    confidence: 0.9
+  });
+
+  await memoryRepository.upsertFact({
+    ownerType: "CAMPAIGN",
+    campaignId: input.campaign.id,
+    category: "creative_direction",
+    factKey: input.memoryKey,
+    factValue: input.memoryValue,
+    confidence: 0.9,
+    sourceType: "AIEvent",
+    sourceRefId: learningEvent?.eventId ?? undefined
+  });
+
+  return learningEvent;
+}
+
+async function notifyBrandAiProgress(campaign: Campaign, input: {
+  title: string;
+  content: string;
+  template: string;
+  priority?: "LOW" | "NORMAL" | "HIGH" | "URGENT";
+}) {
+  await notificationService.notify({
+    userId: campaign.brandId,
+    campaignId: campaign.id,
+    title: input.title,
+    content: input.content,
+    actionUrl: `${getAppBaseUrl()}/brand/projects/new?project=${encodeURIComponent(campaign.id)}`,
+    template: input.template,
+    priority: input.priority ?? "NORMAL"
+  });
 }
 
 export class CreativeDirectionService {
@@ -75,6 +138,27 @@ export class CreativeDirectionService {
     const actor = { id: user.id, role: user.role };
     if (campaign.status === CampaignState.DRAFT) {
       await campaignService.transition(campaignId, CampaignEvent.START_AI, actor);
+      await activityService.write(campaignId, "ai.analysis_started", {
+        userId: user.id,
+        email: user.id,
+        role: "brand"
+      }, {
+        campaignStatus: CampaignState.AI_PROCESSING
+      });
+      await recordCampaignAiEvidence({
+        campaign,
+        eventType: "AIAnalysisStarted",
+        learningType: "creative_analysis_started",
+        payload: { campaignId, title: campaign.title, platform: campaign.platform },
+        after: { status: CampaignState.AI_PROCESSING },
+        memoryKey: "analysis_status",
+        memoryValue: "AI_ANALYZING"
+      });
+      await notifyBrandAiProgress(campaign, {
+        title: "AI is analyzing your campaign",
+        content: `StudioOS is analyzing "${campaign.title}" and preparing creative directions.`,
+        template: "ai.analysis_started"
+      });
     }
 
     const refreshed = await campaignRepository.findById(campaignId);
@@ -99,7 +183,33 @@ export class CreativeDirectionService {
 
     const finalCampaign = await campaignRepository.findById(campaignId);
     if (!finalCampaign) throw appError("NOT_FOUND", "Campaign not found");
-    return this.readDirections(finalCampaign);
+    const directions = this.readDirections(finalCampaign);
+    if (directions.length >= 3) {
+      await activityService.write(campaignId, "ai.creative_directions_ready", {
+        userId: user.id,
+        email: user.id,
+        role: "brand"
+      }, {
+        directionCount: directions.length,
+        campaignStatus: finalCampaign.status
+      });
+      await recordCampaignAiEvidence({
+        campaign: finalCampaign,
+        eventType: "CreativeDirectionsReady",
+        learningType: "creative_directions_generated",
+        payload: { campaignId, directionCount: directions.length },
+        after: { directions: directions.map((direction) => direction.title) },
+        memoryKey: "latest_direction_titles",
+        memoryValue: JSON.stringify(directions.map((direction) => direction.title))
+      });
+      await notifyBrandAiProgress(finalCampaign, {
+        title: "Creative directions are ready",
+        content: `StudioOS generated ${directions.length} creative directions for "${finalCampaign.title}".`,
+        template: "ai.creative_directions_ready",
+        priority: "HIGH"
+      });
+    }
+    return directions;
   }
 
   async generateAsync(campaignId: string, user: AuthUser) {
@@ -109,6 +219,27 @@ export class CreativeDirectionService {
     const actor = { id: user.id, role: user.role };
     if (campaign.status === CampaignState.DRAFT) {
       await campaignService.transition(campaignId, CampaignEvent.START_AI, actor);
+      await activityService.write(campaignId, "ai.analysis_started", {
+        userId: user.id,
+        email: user.id,
+        role: "brand"
+      }, {
+        campaignStatus: CampaignState.AI_PROCESSING
+      });
+      await recordCampaignAiEvidence({
+        campaign,
+        eventType: "AIAnalysisStarted",
+        learningType: "creative_analysis_started",
+        payload: { campaignId, title: campaign.title, platform: campaign.platform },
+        after: { status: CampaignState.AI_PROCESSING },
+        memoryKey: "analysis_status",
+        memoryValue: "AI_ANALYZING"
+      });
+      await notifyBrandAiProgress(campaign, {
+        title: "AI is analyzing your campaign",
+        content: `StudioOS is analyzing "${campaign.title}" and preparing creative directions.`,
+        template: "ai.analysis_started"
+      });
     }
 
     const job = await aiWorkerService.enqueueCreativeDirection(campaignId, user.id);
@@ -143,6 +274,31 @@ export class CreativeDirectionService {
     if (campaign.status === CampaignState.CREATIVE_READY) {
       await campaignService.transition(campaignId, CampaignEvent.APPROVE_CREATIVE, actor);
     }
+
+    await activityService.write(campaignId, "ai.direction_selected", {
+      userId: user.id,
+      email: user.id,
+      role: "brand"
+    }, {
+      directionId,
+      title: selected.title,
+      frozenBrief: true
+    });
+    await recordCampaignAiEvidence({
+      campaign,
+      eventType: "CreativeDirectionSelected",
+      learningType: "creative_direction_selected",
+      payload: { campaignId, directionId, title: selected.title },
+      after: { selected_direction_id: directionId, frozen_production_brief: true },
+      memoryKey: "selected_direction",
+      memoryValue: selected.title
+    });
+    await notifyBrandAiProgress(campaign, {
+      title: "Creative direction selected",
+      content: `"${selected.title}" is now frozen as the Production Brief for matching and production.`,
+      template: "ai.direction_selected",
+      priority: "HIGH"
+    });
 
     if (campaign.creatorId) {
       const script = [selected.title, selected.hook, selected.visualStyle, selected.tone, selected.cta]
