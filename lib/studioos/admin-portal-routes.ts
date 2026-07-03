@@ -10,6 +10,7 @@ export const adminPortalRoutes = {
   walletDetail: (userId: string) => `/admin/wallets/${userId}`,
   ledger: "/admin/ledger",
   notifications: "/admin/notifications",
+  languages: "/admin/languages",
   activityLog: "/admin/activity-log",
   disputes: "/admin/disputes",
   disputeDetail: (id: string) => `/admin/disputes/${id}`,

@@ -65,16 +65,19 @@ async function enrichCreatorProfiles() {
   const creators = [
     {
       email: "creator.nova@studioos.test",
+      legacyCreatorId: "creator_01",
       dna: { style: ["Luxury", "Tech"], strength: ["Motion", "TikTok"] },
       aiQualityScore: 88
     },
     {
       email: "creator.signal@studioos.test",
+      legacyCreatorId: "creator_02",
       dna: { style: ["UGC", "Tech"], strength: ["TikTok", "Meta"] },
       aiQualityScore: 85
     },
     {
       email: "creator.atlas@studioos.test",
+      legacyCreatorId: "creator_03",
       dna: { style: ["Luxury", "UGC"], strength: ["VFX", "Meta"] },
       aiQualityScore: 83
     }
@@ -87,6 +90,7 @@ async function enrichCreatorProfiles() {
       where: { userId: user.id },
       data: {
         creatorDnaJson: item.dna,
+        legacyCreatorId: item.legacyCreatorId,
         minBudget: 500,
         maxBudget: 15000,
         aiQualityScore: item.aiQualityScore,

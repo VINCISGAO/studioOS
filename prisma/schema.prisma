@@ -54,6 +54,44 @@ enum CampaignStatus {
   CANCELLED
 }
 
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  REFUNDED
+}
+
+enum ReferralCommissionStatus {
+  PENDING
+  APPROVED
+  PAID
+  CANCELLED
+}
+
+enum WithdrawalRequestStatus {
+  PENDING
+  APPROVED
+  PAID
+  REJECTED
+  CANCELLED
+}
+
+enum ConversationStatus {
+  OPEN
+  AI_ACTIVE
+  HUMAN_REQUIRED
+  HUMAN_ACTIVE
+  CLOSED
+}
+
+enum ConversationMessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+  HUMAN_AGENT
+}
+
 enum AssetType {
   LOGO
   PRODUCT_IMAGE
@@ -334,9 +372,12 @@ model User {
   status        UserStatus @default(ACTIVE)
   avatarUrl     String?    @map("avatar_url")
   fullName      String     @map("full_name")
+  nickname      String?
+  phone         String?    @unique
   country       String?
   timezone      String?
   language      String?    @default("en")
+  languageCode  String     @default("en") @map("language_code")
   emailVerified Boolean    @default(false) @map("email_verified")
   lastLoginAt   DateTime?  @map("last_login_at")
   createdAt     DateTime   @default(now()) @map("created_at")
@@ -348,6 +389,9 @@ model User {
   studioProfile  StudioProfile?
   brandCampaigns Campaign[]      @relation("BrandCampaigns")
   creatorCampaigns Campaign[]    @relation("CreatorCampaigns")
+  clientOrders     Order[]       @relation("ClientOrders")
+  creatorOrders    Order[]       @relation("CreatorOrders")
+  referredOrders   Order[]       @relation("ReferredOrders")
   reviewComments ReviewComment[]
   activityLogs   ActivityLog[]
   notifications  Notification[]
@@ -364,10 +408,70 @@ model User {
   creatorEarnings       CreatorEarnings?
   orderCommissions      OrderCommission[] @relation("CreatorOrderCommissions")
   membershipHistory     CreatorMembershipHistory[] @relation("CreatorMembershipHistory")
+  referralCodes         ReferralCode[]
+  referralsMade         ReferralRelation[] @relation("ReferralsMade")
+  referralsReceived     ReferralRelation[] @relation("ReferralsReceived")
+  referralCommissions   ReferralCommission[] @relation("ReferralCommissions")
+  storageFiles          StorageFile[]
+  customerConversations Conversation[] @relation("CustomerConversations")
+  assignedConversations Conversation[] @relation("AssignedConversations")
+  preferredLanguage Language @relation(fields: [languageCode], references: [code])
 
   @@index([role])
   @@index([status])
+  @@index([phone])
+  @@index([languageCode])
   @@map("users")
+}
+
+model Language {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  locale      String   @unique
+  nativeName  String   @map("native_name")
+  englishName String   @map("english_name")
+  isDefault   Boolean  @default(false) @map("is_default")
+  isEnabled   Boolean  @default(true) @map("is_enabled")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  users        User[]
+  translations LanguageTranslation[]
+
+  @@index([isEnabled, sortOrder])
+  @@map("languages")
+}
+
+model LanguageKey {
+  id          String   @id @default(uuid())
+  namespace   String
+  key         String
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  translations LanguageTranslation[]
+
+  @@unique([namespace, key])
+  @@index([namespace])
+  @@map("language_keys")
+}
+
+model LanguageTranslation {
+  id         String   @id @default(uuid())
+  keyId      String   @map("key_id")
+  languageCode String @map("language_code")
+  value      String
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  key      LanguageKey @relation(fields: [keyId], references: [id], onDelete: Cascade)
+  language Language    @relation(fields: [languageCode], references: [code], onDelete: Cascade)
+
+  @@unique([keyId, languageCode])
+  @@index([languageCode])
+  @@map("language_translations")
 }
 
 model BrandProfile {
@@ -420,6 +524,17 @@ model CreatorProfile {
   headline            String?
   bio                 String?
   country             String?
+  city                String?
+  serviceCitiesJson   Json?               @map("service_cities_json")
+  socialLinksJson     Json?               @map("social_links_json")
+  stylesJson          Json?               @map("styles_json")
+  specialtiesJson     Json?               @map("specialties_json")
+  toolsJson           Json?               @map("tools_json")
+  expertiseDomainsJson Json?              @map("expertise_domains_json")
+  portfolioUrl        String?             @map("portfolio_url")
+  aiEnabled           Boolean             @default(true) @map("ai_enabled")
+  profileCompletedAt  DateTime?           @map("profile_completed_at")
+  legacyCreatorId     String?             @unique @map("legacy_creator_id")
   languagesJson       Json?               @map("languages_json")
   availability        CreatorAvailability @default(AVAILABLE)
   hourlyRate          Decimal?            @map("hourly_rate") @db.Decimal(18, 2)
@@ -440,9 +555,103 @@ model CreatorProfile {
   studio      StudioProfile?       @relation(fields: [studioId], references: [id])
   invitations CreatorInvitation[]
   memberships CreatorMembership[]
+  portfolioWorks CreatorPortfolioWork[]
+  aiConfig    CreatorAiConfig?
+  orders      Order[]
+  conversations Conversation[]
+  attributions  Attribution[]
+  connectedChannels ConnectedChannel[]
 
   @@index([studioId])
+  @@index([country])
+  @@index([availability])
+  @@index([profileCompletedAt])
   @@map("creator_profiles")
+}
+
+model CreatorPortfolioWork {
+  id            String    @id @default(uuid())
+  creatorId     String    @map("creator_id")
+  campaignId    String?   @map("campaign_id")
+  title         String
+  description   String?   @db.Text
+  city          String?
+  country       String?
+  category      String?
+  platform      String?
+  format        String?
+  workType      String?   @map("work_type")
+  thumbnailUrl  String?   @map("thumbnail_url")
+  thumbnailKey  String?   @map("thumbnail_key")
+  videoUrl      String?   @map("video_url")
+  videoKey      String?   @map("video_key")
+  tagsJson      Json?     @map("tags_json")
+  priceMin      Decimal?  @map("price_min") @db.Decimal(18, 2)
+  priceMax      Decimal?  @map("price_max") @db.Decimal(18, 2)
+  priceVisible  Boolean   @default(false) @map("price_visible")
+  isPublic      Boolean   @default(true) @map("is_public")
+  sortOrder     Int       @default(0) @map("sort_order")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+
+  creator      CreatorProfile @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  campaign     Campaign?      @relation(fields: [campaignId], references: [id])
+  storageFiles StorageFile[]
+
+  @@index([creatorId])
+  @@index([campaignId])
+  @@index([creatorId, isPublic, sortOrder])
+  @@index([deletedAt])
+  @@map("creator_portfolio_works")
+}
+
+model CreatorAiConfig {
+  id                 String   @id @default(uuid())
+  creatorId          String   @unique @map("creator_id")
+  aiName             String   @map("ai_name")
+  persona            String?  @db.Text
+  welcomeMessage     String?  @map("welcome_message") @db.Text
+  serviceIntro       String?  @map("service_intro") @db.Text
+  faqJson            Json?    @map("faq_json")
+  pricingRulesJson   Json?    @map("pricing_rules_json")
+  receptionScript    String?  @map("reception_script") @db.Text
+  multilingualJson   Json?    @map("multilingual_json")
+  defaultReply       String?  @map("default_reply") @db.Text
+  blockedContentJson Json?    @map("blocked_content_json")
+  handoffRulesJson   Json?    @map("handoff_rules_json")
+  dataSourcesJson    Json?    @map("data_sources_json")
+  isEnabled          Boolean  @default(true) @map("is_enabled")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  creator CreatorProfile @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+
+  @@map("creator_ai_configs")
+}
+
+model ConnectedChannel {
+  id                String    @id @default(uuid())
+  creatorId         String    @map("creator_id")
+  platform          String
+  accountUrl        String?   @map("account_url")
+  accountHandle     String?   @map("account_handle")
+  status            String    @default("DISCONNECTED")
+  sourceCount       Int       @default(0) @map("source_count")
+  aiLearningEnabled Boolean   @default(true) @map("ai_learning_enabled")
+  metadataJson      Json?     @map("metadata_json")
+  lastSyncedAt      DateTime? @map("last_synced_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  creator CreatorProfile @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+
+  @@unique([creatorId, platform])
+  @@index([creatorId])
+  @@index([platform])
+  @@index([status])
+  @@index([aiLearningEnabled])
+  @@map("connected_channels")
 }
 
 // ─── Campaign (Aggregate Root) ───────────────────────────────────────────────
@@ -486,8 +695,13 @@ model Campaign {
   memoryFacts   MemoryFact[]
   performanceSources PerformanceSource[]
   orderCommission OrderCommission?
+  orders           Order[]
+  portfolioWorks   CreatorPortfolioWork[]
+  referralCommissions ReferralCommission[]
   deliveries      CampaignDelivery[]
   ledgerEntries   LedgerEntry[]
+  conversations   Conversation[]
+  attributions    Attribution[]
 
   @@index([brandId])
   @@index([creatorId])
@@ -496,6 +710,131 @@ model Campaign {
   @@index([campaignHealth])
   @@index([createdAt])
   @@map("campaigns")
+}
+
+model Order {
+  id                 String      @id @default(uuid())
+  campaignId         String?     @map("campaign_id")
+  clientId           String      @map("client_id")
+  creatorId          String      @map("creator_id")
+  creatorProfileId   String?     @map("creator_profile_id")
+  serviceProject     String      @map("service_project")
+  shootingCity       String?     @map("shooting_city")
+  shootingDate       DateTime?   @map("shooting_date")
+  currency           String      @default("USD")
+  orderAmount        Decimal     @map("order_amount") @db.Decimal(18, 2)
+  platformCommission Decimal     @default(0) @map("platform_commission") @db.Decimal(18, 2)
+  creatorIncome      Decimal     @default(0) @map("creator_income") @db.Decimal(18, 2)
+  status             OrderStatus @default(PENDING)
+  sourceChannel      String?     @map("source_channel")
+  conversationId     String?     @map("conversation_id")
+  referrerId         String?     @map("referrer_id")
+  metadataJson       Json?       @map("metadata_json")
+  createdAt          DateTime    @default(now()) @map("created_at")
+  updatedAt          DateTime    @updatedAt @map("updated_at")
+  completedAt        DateTime?   @map("completed_at")
+  cancelledAt        DateTime?   @map("cancelled_at")
+  refundedAt         DateTime?   @map("refunded_at")
+
+  campaign       Campaign?       @relation(fields: [campaignId], references: [id])
+  client         User            @relation("ClientOrders", fields: [clientId], references: [id])
+  creator        User            @relation("CreatorOrders", fields: [creatorId], references: [id])
+  creatorProfile CreatorProfile? @relation(fields: [creatorProfileId], references: [id])
+  conversation    Conversation?   @relation(fields: [conversationId], references: [id])
+  referrer       User?           @relation("ReferredOrders", fields: [referrerId], references: [id])
+  ledgerEntries  LedgerEntry[]
+  attributions    Attribution[]
+  referralCommissions ReferralCommission[]
+
+  @@index([campaignId])
+  @@index([clientId])
+  @@index([creatorId])
+  @@index([creatorProfileId])
+  @@index([conversationId])
+  @@index([status])
+  @@index([referrerId])
+  @@index([createdAt])
+  @@map("orders")
+}
+
+model Conversation {
+  id            String             @id @default(uuid())
+  creatorId     String             @map("creator_id")
+  visitorId     String?            @map("visitor_id")
+  customerId    String?            @map("customer_id")
+  campaignId    String?            @map("campaign_id")
+  channel       String
+  source        String?
+  language      String             @default("en")
+  status        ConversationStatus @default(OPEN)
+  assignedTo    String?            @map("assigned_to")
+  lastMessageAt DateTime?          @map("last_message_at")
+  startedAt     DateTime           @default(now()) @map("started_at")
+  endedAt       DateTime?          @map("ended_at")
+  createdAt     DateTime           @default(now()) @map("created_at")
+  updatedAt     DateTime           @updatedAt @map("updated_at")
+
+  creator       CreatorProfile        @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  customer      User?                 @relation("CustomerConversations", fields: [customerId], references: [id])
+  campaign      Campaign?             @relation(fields: [campaignId], references: [id])
+  assignedAgent User?                 @relation("AssignedConversations", fields: [assignedTo], references: [id])
+  messages      ConversationMessage[]
+  orders        Order[]
+  attributions  Attribution[]
+
+  @@index([creatorId])
+  @@index([customerId])
+  @@index([campaignId])
+  @@index([assignedTo])
+  @@index([status, lastMessageAt])
+  @@index([createdAt])
+  @@map("conversations")
+}
+
+model ConversationMessage {
+  id             String                  @id @default(uuid())
+  conversationId String                  @map("conversation_id")
+  role           ConversationMessageRole
+  content        String                  @db.Text
+  metadata       Json?
+  tokens         Int?
+  createdAt      DateTime                @default(now()) @map("created_at")
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+  @@index([role])
+  @@map("conversation_messages")
+}
+
+model Attribution {
+  id             String   @id @default(uuid())
+  orderId        String?  @map("order_id")
+  campaignId     String?  @map("campaign_id")
+  conversationId String?  @map("conversation_id")
+  creatorId      String?  @map("creator_id")
+  source         String?
+  medium         String?
+  content        String?
+  utm            Json?
+  platform       String?
+  clickId        String?  @map("click_id")
+  metadataJson   Json?    @map("metadata_json")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  order        Order?          @relation(fields: [orderId], references: [id])
+  campaign     Campaign?       @relation(fields: [campaignId], references: [id])
+  conversation Conversation?   @relation(fields: [conversationId], references: [id])
+  creator      CreatorProfile? @relation(fields: [creatorId], references: [id])
+
+  @@index([orderId])
+  @@index([campaignId])
+  @@index([conversationId])
+  @@index([creatorId])
+  @@index([platform])
+  @@index([source, medium])
+  @@index([createdAt])
+  @@map("attributions")
 }
 
 model CampaignAsset {
@@ -772,6 +1111,7 @@ model WalletAccount {
   user    User          @relation(fields: [userId], references: [id])
   assets  WalletAsset[]
   entries LedgerEntry[]
+  withdrawalRequests WithdrawalRequest[]
 
   @@map("wallet_accounts")
 }
@@ -812,6 +1152,7 @@ model PaymentMethod {
 
   user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   ledgerEntries LedgerEntry[]
+  withdrawalRequests WithdrawalRequest[]
 
   @@index([userId])
   @@index([userId, isDefault])
@@ -830,7 +1171,9 @@ model LedgerEntry {
   pendingAfter          Decimal         @map("pending_after") @db.Decimal(24, 8)
   frozenAfter           Decimal         @map("frozen_after") @db.Decimal(24, 8)
   campaignId            String?         @map("campaign_id")
+  orderId               String?         @map("order_id")
   paymentMethodId       String?         @map("payment_method_id")
+  withdrawalRequestId   String?         @map("withdrawal_request_id")
   channel               PaymentChannel?
   referenceType         String?         @map("reference_type")
   referenceId           String?         @map("reference_id")
@@ -844,14 +1187,98 @@ model LedgerEntry {
   walletAccount WalletAccount  @relation(fields: [walletAccountId], references: [id], onDelete: Cascade)
   paymentMethod PaymentMethod? @relation(fields: [paymentMethodId], references: [id])
   campaign      Campaign?      @relation(fields: [campaignId], references: [id])
+  order         Order?         @relation(fields: [orderId], references: [id])
+  withdrawalRequest WithdrawalRequest? @relation(fields: [withdrawalRequestId], references: [id])
 
   @@index([walletAccountId, createdAt])
   @@index([walletAccountId, assetCode])
   @@index([campaignId])
+  @@index([orderId])
   @@index([entryType])
+  @@index([withdrawalRequestId])
   @@index([channel])
   @@index([txHash])
   @@map("ledger_entries")
+}
+
+model WithdrawalRequest {
+  id              String                  @id @default(uuid())
+  walletAccountId String                 @map("wallet_account_id")
+  paymentMethodId String?                @map("payment_method_id")
+  assetCode       WalletAssetCode        @default(USD) @map("asset_code")
+  amount          Decimal                @db.Decimal(24, 8)
+  status          WithdrawalRequestStatus @default(PENDING)
+  note            String?
+  metadataJson    Json?                  @map("metadata_json")
+  createdAt       DateTime               @default(now()) @map("created_at")
+  updatedAt       DateTime               @updatedAt @map("updated_at")
+  resolvedAt      DateTime?              @map("resolved_at")
+
+  walletAccount WalletAccount @relation(fields: [walletAccountId], references: [id], onDelete: Cascade)
+  paymentMethod PaymentMethod? @relation(fields: [paymentMethodId], references: [id])
+  ledgerEntries LedgerEntry[]
+
+  @@index([walletAccountId])
+  @@index([paymentMethodId])
+  @@index([status, createdAt])
+  @@map("withdrawal_requests")
+}
+
+model ReferralCode {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  code      String   @unique
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isActive])
+  @@map("referral_codes")
+}
+
+model ReferralRelation {
+  id             String   @id @default(uuid())
+  referrerUserId String   @map("referrer_user_id")
+  referredUserId String   @map("referred_user_id")
+  source         String?
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  referrer User @relation("ReferralsMade", fields: [referrerUserId], references: [id], onDelete: Cascade)
+  referred User @relation("ReferralsReceived", fields: [referredUserId], references: [id], onDelete: Cascade)
+
+  @@unique([referredUserId])
+  @@index([referrerUserId])
+  @@map("referral_relations")
+}
+
+model ReferralCommission {
+  id              String                   @id @default(uuid())
+  referrerUserId  String                   @map("referrer_user_id")
+  referredUserId  String?                  @map("referred_user_id")
+  orderId         String?                  @map("order_id")
+  campaignId      String?                  @map("campaign_id")
+  source          String?
+  dealAmount      Decimal                  @map("deal_amount") @db.Decimal(18, 2)
+  commissionRate  Decimal                  @map("commission_rate") @db.Decimal(5, 2)
+  commissionAmount Decimal                 @map("commission_amount") @db.Decimal(18, 2)
+  status          ReferralCommissionStatus @default(PENDING)
+  createdAt       DateTime                 @default(now()) @map("created_at")
+  updatedAt       DateTime                 @updatedAt @map("updated_at")
+  paidAt          DateTime?                @map("paid_at")
+
+  referrer User      @relation("ReferralCommissions", fields: [referrerUserId], references: [id], onDelete: Cascade)
+  order    Order?    @relation(fields: [orderId], references: [id])
+  campaign Campaign? @relation(fields: [campaignId], references: [id])
+
+  @@index([referrerUserId])
+  @@index([referredUserId])
+  @@index([orderId])
+  @@index([campaignId])
+  @@index([status])
+  @@map("referral_commissions")
 }
 
 // ─── Events & Notifications ──────────────────────────────────────────────────
@@ -1112,15 +1539,25 @@ model SessionLog {
 }
 
 model StorageFile {
-  id         String   @id @default(uuid())
-  campaignId String?  @map("campaign_id")
-  fileKey    String   @map("file_key")
-  mimeType   String   @map("mime_type")
-  fileSize   BigInt   @map("file_size")
-  provider   String   @default("r2")
-  createdAt  DateTime @default(now()) @map("created_at")
+  id          String   @id @default(uuid())
+  campaignId  String?  @map("campaign_id")
+  userId      String?  @map("user_id")
+  portfolioWorkId String? @map("portfolio_work_id")
+  fileName    String?  @map("file_name")
+  fileType    String?  @map("file_type")
+  fileKey     String   @map("file_key")
+  publicUrl   String?  @map("public_url")
+  mimeType    String   @map("mime_type")
+  fileSize    BigInt   @map("file_size")
+  provider    String   @default("r2")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user          User?                 @relation(fields: [userId], references: [id])
+  portfolioWork CreatorPortfolioWork? @relation(fields: [portfolioWorkId], references: [id])
 
   @@index([campaignId])
+  @@index([userId])
+  @@index([portfolioWorkId])
   @@index([fileKey])
   @@map("storage_files")
 }

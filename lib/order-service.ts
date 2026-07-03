@@ -24,6 +24,9 @@ import {
 } from "@/lib/studioos/project-order-sync";
 import { versionService } from "@/features/delivery/version.service";
 import { campaignRepository } from "@/features/campaign/campaign.repository";
+import { orderRepository } from "@/features/order/order.repository";
+import { userRepository } from "@/features/auth/user.repository";
+import { resolveCreatorProfileIdForLegacyId } from "@/features/matching/invitation-creator-bridge";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { DEMO_REVIEW_VIDEO_URL } from "@/lib/studioos/review-video-url";
 import {
@@ -320,6 +323,48 @@ function splitFees(amount: number) {
   return { platform_fee, creator_payout };
 }
 
+type PrismaOrderLike = NonNullable<Awaited<ReturnType<typeof orderRepository.findById>>>;
+
+function prismaOrderToStored(order: PrismaOrderLike): StoredOrder {
+  const metadata =
+    typeof order.metadataJson === "object" && order.metadataJson !== null && !Array.isArray(order.metadataJson)
+      ? (order.metadataJson as Record<string, unknown>)
+      : {};
+  const status =
+    order.status === "COMPLETED"
+      ? "completed"
+      : order.status === "CANCELLED" || order.status === "REFUNDED"
+        ? "cancelled"
+        : order.status === "CONFIRMED"
+          ? "in_production"
+          : "waiting_payment";
+
+  return {
+    id: order.id,
+    project_id: order.campaignId ?? (typeof metadata.project_id === "string" ? metadata.project_id : null),
+    inquiry_id: typeof metadata.inquiry_id === "string" ? metadata.inquiry_id : order.conversationId ?? order.id,
+    quote_id: typeof metadata.quote_id === "string" ? metadata.quote_id : order.id,
+    creator_id: order.creatorProfile?.legacyCreatorId ?? order.creatorProfileId ?? order.creatorId,
+    client_email: order.client.email,
+    client_name: order.client.fullName,
+    company_name: typeof metadata.company_name === "string" ? metadata.company_name : order.client.fullName,
+    client_locale: order.client.language === "zh" ? "zh" : "en",
+    title: order.serviceProject,
+    requirements: typeof metadata.requirements === "string" ? metadata.requirements : order.serviceProject,
+    budget_range: `${order.currency} ${Number(order.orderAmount).toLocaleString()}`,
+    work_id: typeof metadata.work_id === "string" ? metadata.work_id : null,
+    amount: Number(order.orderAmount),
+    platform_fee: Number(order.platformCommission),
+    creator_payout: Number(order.creatorIncome),
+    payment_status: order.status === "COMPLETED" ? "released" : order.status === "PENDING" ? "unpaid" : "escrowed",
+    status,
+    payout_status: order.status === "COMPLETED" ? "approved" : "held",
+    created_at: order.createdAt.toISOString(),
+    paid_at: order.status === "PENDING" ? null : order.updatedAt.toISOString(),
+    completed_at: order.completedAt?.toISOString() ?? null
+  };
+}
+
 export async function createQuote(input: CreateQuoteInput): Promise<StoredQuote> {
   const store = await readStore();
 
@@ -438,6 +483,44 @@ export async function acceptQuote(
     completed_at: null
   };
 
+  if (hasDatabaseUrl()) {
+    const [client, creatorProfileId, campaign] = await Promise.all([
+      userRepository.findByEmail(inquiry.client_email.toLowerCase()),
+      resolveCreatorProfileIdForLegacyId(inquiry.creator_id),
+      inquiry.project_id ? campaignRepository.findByLegacyProjectId(inquiry.project_id) : Promise.resolve(null)
+    ]);
+    const creatorProfile = creatorProfileId
+      ? await userRepository.findCreatorProfileById(creatorProfileId)
+      : null;
+
+    if (client && creatorProfile?.userId) {
+      const persisted = await orderRepository.create({
+        campaignId: campaign?.id ?? null,
+        clientId: client.id,
+        creatorId: creatorProfile.userId,
+        creatorProfileId: creatorProfile.id,
+        serviceProject: order.title,
+        currency: "USD",
+        orderAmount: order.amount,
+        platformCommission: order.platform_fee,
+        creatorIncome: order.creator_payout,
+        metadataJson: {
+          legacy_order_id: order.id,
+          project_id: order.project_id,
+          inquiry_id: order.inquiry_id,
+          quote_id: order.quote_id,
+          company_name: order.company_name,
+          requirements: order.requirements,
+          budget_range: order.budget_range,
+          work_id: order.work_id
+        }
+      });
+      await writeStore(store);
+      const hydrated = await orderRepository.findById(persisted.id);
+      if (hydrated) return prismaOrderToStored(hydrated);
+    }
+  }
+
   store.orders.unshift(order);
   await writeStore(store);
   return order;
@@ -476,11 +559,26 @@ export async function linkOrderToProject(orderId: string, projectId: string): Pr
 }
 
 export async function listOrdersForProject(projectId: string): Promise<StoredOrder[]> {
+  if (hasDatabaseUrl()) {
+    const rows = await orderRepository.listAll();
+    const details = await Promise.all(
+      rows
+        .filter((item) => item.campaignId === projectId)
+        .map((item) => orderRepository.findById(item.id))
+    );
+    return details.filter((item): item is PrismaOrderLike => Boolean(item)).map(prismaOrderToStored);
+  }
+
   const store = await readStore();
   return store.orders.filter((item) => item.project_id === projectId);
 }
 
 export async function getOrder(id: string): Promise<StoredOrder | null> {
+  if (hasDatabaseUrl()) {
+    const order = await orderRepository.findById(id);
+    return order ? prismaOrderToStored(order) : null;
+  }
+
   const store = await readStore();
   return store.orders.find((item) => item.id === id) ?? null;
 }
@@ -536,6 +634,17 @@ export async function reassignQuotesToInquiry(
 }
 
 export async function listOrdersForClient(clientEmail: string): Promise<StoredOrder[]> {
+  if (hasDatabaseUrl()) {
+    const rows = await orderRepository.listAll();
+    const details = await Promise.all(rows.map((item) => orderRepository.findById(item.id)));
+    const normalized = clientEmail.toLowerCase();
+    return details
+      .filter((item): item is PrismaOrderLike => Boolean(item))
+      .map(prismaOrderToStored)
+      .filter((item) => item.client_email.toLowerCase() === normalized)
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }
+
   const store = await readStore();
   const normalized = clientEmail.toLowerCase();
   return store.orders
@@ -544,6 +653,16 @@ export async function listOrdersForClient(clientEmail: string): Promise<StoredOr
 }
 
 export async function listOrdersForCreator(creatorId: string): Promise<StoredOrder[]> {
+  if (hasDatabaseUrl()) {
+    const rows = await orderRepository.listAll();
+    const details = await Promise.all(rows.map((item) => orderRepository.findById(item.id)));
+    return details
+      .filter((item): item is PrismaOrderLike => Boolean(item))
+      .map(prismaOrderToStored)
+      .filter((item) => item.creator_id === creatorId)
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }
+
   const store = await readStore();
   return store.orders
     .filter((item) => item.creator_id === creatorId)

@@ -208,6 +208,16 @@ export async function performSignIn(input: SignInInput): Promise<SignInResult> {
           .catch(() => null)
       : null;
 
+    if (hasDatabaseUrl() && !synced) {
+      return {
+        ok: false,
+        error: lang === "zh" ? "无法创建数据库用户，请检查数据库连接。" : "Could not create database user. Check the database connection.",
+        errorCode: "invalid-credentials",
+        role: expectedRole || "brand",
+        email: demoUser.email
+      };
+    }
+
     await setDemoSession(
       buildSessionPayload(
         {
@@ -215,6 +225,7 @@ export async function performSignIn(input: SignInInput): Promise<SignInResult> {
           email: demoUser.email,
           role: demoRoleToPrisma(demoUser.role),
           fullName: demoUser.label,
+          languageCode: synced?.languageCode ?? synced?.language ?? "en",
           companyName: demoUser.role === "client" ? demoUser.label : undefined,
           displayName: demoUser.role === "creator" ? demoUser.label : undefined
         },

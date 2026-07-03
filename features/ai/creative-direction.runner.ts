@@ -4,9 +4,10 @@ import { aiGatewayService } from "@/features/ai/ai-gateway.service";
 import { aiConfig } from "@/lib/core/config/ai";
 import type { Campaign } from "@prisma/client";
 
-function buildTemplateDirections(campaign: Campaign): CreativeDirection[] {
+function buildTemplateDirections(campaign: Campaign, language = "en"): CreativeDirection[] {
   const platform = campaign.platform ?? "TikTok";
   const product = campaign.title.replace(/ Campaign$/i, "").trim() || "Product";
+  const languageNote = language === "en" ? "" : ` Localize final copy for ${language}.`;
 
   return [
     {
@@ -27,7 +28,7 @@ function buildTemplateDirections(campaign: Campaign): CreativeDirection[] {
       recommendedCreatorType: "Cinematic product filmmaker with strong lighting and macro detail work",
       recommendedBudget: `$${Math.max(300, Math.round(Number(campaign.budget) || 300))}`,
       expectedOutcome: "Increase perceived product value and brand trust before the first click.",
-      rationale: `Strong for ${platform} when the product looks premium and needs instant credibility.`
+      rationale: `Strong for ${platform} when the product looks premium and needs instant credibility.${languageNote}`
     },
     {
       id: randomUUID(),
@@ -47,7 +48,7 @@ function buildTemplateDirections(campaign: Campaign): CreativeDirection[] {
       recommendedCreatorType: "UGC creator with strong face-to-camera delivery and natural product demos",
       recommendedBudget: `$${Math.max(250, Math.round((Number(campaign.budget) || 300) * 0.9))}`,
       expectedOutcome: "Drive consideration by making the offer feel peer-tested and approachable.",
-      rationale: `Performs on ${platform} when social proof and relatability drive consideration.`
+      rationale: `Performs on ${platform} when social proof and relatability drive consideration.${languageNote}`
     },
     {
       id: randomUUID(),
@@ -67,16 +68,16 @@ function buildTemplateDirections(campaign: Campaign): CreativeDirection[] {
       recommendedCreatorType: "Short-form performance editor who understands hooks, pacing, and punchy overlays",
       recommendedBudget: `$${Math.max(300, Math.round((Number(campaign.budget) || 300) * 1.05))}`,
       expectedOutcome: "Improve thumb-stop rate and initial watch time on fast-scrolling feeds.",
-      rationale: `Best when ${platform} audiences scroll fast and you need thumb-stop in the first frame.`
+      rationale: `Best when ${platform} audiences scroll fast and you need thumb-stop in the first frame.${languageNote}`
     }
   ];
 }
 
-function parseDirectionsFromJson(raw: string, campaign: Campaign): CreativeDirection[] | null {
+function parseDirectionsFromJson(raw: string, campaign: Campaign, language: string): CreativeDirection[] | null {
   try {
     const parsed = JSON.parse(raw) as { directions?: CreativeDirection[] };
     if (!Array.isArray(parsed.directions) || parsed.directions.length < 3) return null;
-    const fallback = buildTemplateDirections(campaign);
+    const fallback = buildTemplateDirections(campaign, language);
     return parsed.directions.slice(0, 3).map((d, index) => ({
       id: d.id || randomUUID(),
       title: d.title || fallback[index]?.title || `Direction ${index + 1}`,
@@ -99,7 +100,7 @@ function parseDirectionsFromJson(raw: string, campaign: Campaign): CreativeDirec
   }
 }
 
-export async function runCreativeDirectionJob(campaign: Campaign): Promise<{
+export async function runCreativeDirectionJob(campaign: Campaign, options: { language?: string } = {}): Promise<{
   directions: CreativeDirection[];
   provider: string;
   tokenInput: number;
@@ -107,8 +108,9 @@ export async function runCreativeDirectionJob(campaign: Campaign): Promise<{
   cost: number;
   latencyMs: number;
 }> {
+  const language = options.language ?? "en";
   if (!aiGatewayService.isConfigured()) {
-    const directions = buildTemplateDirections(campaign);
+    const directions = buildTemplateDirections(campaign, language);
     return {
       directions,
       provider: "template",
@@ -127,14 +129,16 @@ export async function runCreativeDirectionJob(campaign: Campaign): Promise<{
       platform: campaign.platform,
       aspectRatio: campaign.aspectRatio,
       budget: Number(campaign.budget),
-      description: campaign.description
+      description: campaign.description,
+      language
     }),
+    language,
     jsonMode: true,
     temperature: 0.5
   });
 
-  const parsed = parseDirectionsFromJson(result.content, campaign);
-  const directions = parsed ?? buildTemplateDirections(campaign);
+  const parsed = parseDirectionsFromJson(result.content, campaign, language);
+  const directions = parsed ?? buildTemplateDirections(campaign, language);
   const provider = parsed ? result.provider : "template-fallback";
 
   return {

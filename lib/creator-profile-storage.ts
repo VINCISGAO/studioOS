@@ -26,42 +26,30 @@ export function readProfileDraft(creatorId: string): Partial<CreatorProfileDraft
   if (typeof window === "undefined") {
     return null;
   }
+  window.localStorage.removeItem(profileStorageKey(creatorId));
+  return null;
 
-  const raw = window.localStorage.getItem(profileStorageKey(creatorId));
-  if (!raw) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(raw) as Partial<CreatorProfileDraft>;
-  } catch {
-    return null;
-  }
 }
 
-export function writeProfileDraft(creatorId: string, profile: CreatorProfileDraft) {
-  window.localStorage.setItem(profileStorageKey(creatorId), JSON.stringify(profile));
+export function writeProfileDraft(creatorId: string, _profile: CreatorProfileDraft) {
+  if (typeof window !== "undefined") {
+    window.localStorage.removeItem(profileStorageKey(creatorId));
+  }
 }
 
 export function readWorksDraft(creatorId: string): CreatorWork[] | null {
   if (typeof window === "undefined") {
     return null;
   }
+  window.localStorage.removeItem(worksStorageKey(creatorId));
+  return null;
 
-  const raw = window.localStorage.getItem(worksStorageKey(creatorId));
-  if (!raw) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(raw) as CreatorWork[];
-  } catch {
-    return null;
-  }
 }
 
-export function writeWorksDraft(creatorId: string, works: CreatorWork[]) {
-  window.localStorage.setItem(worksStorageKey(creatorId), JSON.stringify(works));
+export function writeWorksDraft(creatorId: string, _works: CreatorWork[]) {
+  if (typeof window !== "undefined") {
+    window.localStorage.removeItem(worksStorageKey(creatorId));
+  }
 }
 
 export function mergeCreatorProfile(base: Creator, draft: Partial<CreatorProfileDraft> | null): Creator {

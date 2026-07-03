@@ -10,6 +10,7 @@ export type AuthUserDto = {
   email: string;
   role: UserRole;
   fullName: string;
+  languageCode: string;
   companyName?: string;
   displayName?: string;
 };
@@ -20,6 +21,7 @@ function mapPrismaUser(user: UserWithProfiles): AuthUserDto {
     email: user.email,
     role: user.role,
     fullName: user.fullName,
+    languageCode: user.languageCode ?? user.language ?? "en",
     companyName: user.brandProfile?.companyName,
     displayName: user.creatorProfile?.displayName ?? undefined
   };
@@ -32,6 +34,41 @@ function demoRoleToPrisma(role: DemoUser["role"]): UserRole {
 }
 
 export class AuthService {
+  async register(input: {
+    email: string;
+    password: string;
+    role: UserRole;
+    fullName: string;
+    companyName?: string;
+    displayName?: string;
+  }): Promise<{ ok: true; user: AuthUserDto } | { ok: false; error: "invalid" | "email-taken" | "database-unavailable" }> {
+    if (!hasDatabaseUrl()) {
+      return { ok: false, error: "database-unavailable" };
+    }
+
+    const normalized = input.email.trim().toLowerCase();
+    const fullName = input.fullName.trim() || normalized.split("@")[0] || "StudioOS User";
+    if (!normalized.includes("@") || input.password.length < 8) {
+      return { ok: false, error: "invalid" };
+    }
+
+    const existing = await userRepository.findByEmail(normalized);
+    if (existing) {
+      return { ok: false, error: "email-taken" };
+    }
+
+    const user = await userRepository.createWithPassword({
+      email: normalized,
+      role: input.role,
+      fullName,
+      passwordHash: hashPassword(input.password),
+      companyName: input.companyName,
+      displayName: input.displayName
+    });
+
+    return { ok: true, user: mapPrismaUser(user) };
+  }
+
   async authenticate(email: string, password: string): Promise<AuthUserDto | null> {
     const normalized = email.trim().toLowerCase();
     const normalizedPassword = password.trim();
@@ -76,6 +113,17 @@ export class AuthService {
         await userRepository.touchLogin(synced.id);
         return mapPrismaUser(synced);
       }
+
+      const created = await userRepository.upsertDemoUser({
+        email: normalized,
+        role: demoRoleToPrisma(demo.role),
+        fullName: demo.label,
+        passwordHash: hashPassword(normalizedPassword),
+        companyName: demo.role === "client" ? demo.label : undefined,
+        displayName: demo.role === "creator" ? demo.label : undefined
+      });
+      await userRepository.touchLogin(created.id);
+      return mapPrismaUser(created);
     }
 
     return {
@@ -83,6 +131,7 @@ export class AuthService {
       email: demo.email,
       role: demoRoleToPrisma(demo.role),
       fullName: demo.label,
+      languageCode: "en",
       companyName: demo.role === "client" ? demo.label : undefined,
       displayName: demo.role === "creator" ? demo.label : undefined
     };
@@ -97,7 +146,8 @@ export class AuthService {
         id,
         email: demo.email,
         role: demoRoleToPrisma(demo.role),
-        fullName: demo.label
+        fullName: demo.label,
+        languageCode: "en"
       };
     }
 

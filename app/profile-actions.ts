@@ -179,6 +179,15 @@ export async function uploadCreatorAvatarAction(formData: FormData) {
 
   const works = await getWorksForCreator(creatorId, { ownerView: true });
   await updateCreatorAvatarUrl(creatorId, saved.url, creator, works);
+  const { storageFileService } = await import("@/features/storage/storage-file.service");
+  await storageFileService.recordCreatorAvatar(creatorId, {
+    fileName: saved.file_name,
+    fileKey: saved.file_key,
+    publicUrl: saved.url,
+    mimeType: saved.mime_type,
+    fileSize: saved.size_bytes,
+    provider: saved.storage_provider
+  });
 
   revalidateCreatorProfilePaths(creatorId);
   return { ok: true as const, avatar_url: saved.url };

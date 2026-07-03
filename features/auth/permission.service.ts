@@ -35,6 +35,7 @@ export type Permission =
   | "admin.wallet.manage"
   | "admin.ledger.read"
   | "admin.notification.read"
+  | "admin.language.manage"
   | "membership.read"
   | "membership.upgrade";
 
@@ -92,6 +93,7 @@ const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     "admin.wallet.manage",
     "admin.ledger.read",
     "admin.notification.read",
+    "admin.language.manage",
     "membership.read",
     "membership.upgrade"
   ],

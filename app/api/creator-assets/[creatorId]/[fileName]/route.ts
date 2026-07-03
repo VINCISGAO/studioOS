@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { promises as fs } from "fs";
-import { creatorAvatarFilePath } from "@/lib/studioos/creator-avatar-upload";
+import { creatorAvatarObjectKey } from "@/lib/studioos/creator-avatar-upload";
+import { getObject } from "@/lib/studioos/object-storage";
 
 export async function GET(
   _request: Request,
@@ -12,10 +12,13 @@ export async function GET(
   }
 
   const safeName = decodeURIComponent(fileName).replace(/[/\\]/g, "");
-  const filePath = creatorAvatarFilePath(creatorId, safeName);
+  const fileKey = creatorAvatarObjectKey(creatorId, safeName);
 
   try {
-    const data = await fs.readFile(filePath);
+    const data = await getObject(fileKey);
+    if (!data) {
+      return NextResponse.json({ error: "Asset not found" }, { status: 404 });
+    }
     const ext = safeName.split(".").pop()?.toLowerCase();
     const mime =
       ext === "png"

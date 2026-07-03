@@ -3,8 +3,11 @@ import { DEMO_PASSWORD, DEMO_USERS } from "@/lib/demo-auth";
 import { getCreatorIdForDemoEmail } from "@/lib/creator-session";
 import { resolveCreatorProfileIdForLegacyId } from "@/features/matching/invitation-creator-bridge";
 import { hasDatabaseUrl, prisma } from "@/lib/core/database/prisma";
+import { hashPassword, verifyPassword } from "@/lib/core/password-crypto";
+import { asInputJson } from "@/lib/core/prisma-json";
 import type { Creator } from "@/lib/types";
 import type { Locale } from "@/lib/i18n";
+import { normalizeLanguageCode } from "@/features/i18n/language.constants";
 import {
   createSerializedStoreReader,
   readJsonFile,
@@ -110,6 +113,100 @@ function defaultSettings(creatorId: string, creator: Creator): StoredCreatorSett
   };
 }
 
+function objectValue(value: unknown): Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function settingsFromDna(value: unknown): Partial<StoredCreatorSettings> {
+  const dna = objectValue(value);
+  return objectValue(dna.settings) as Partial<StoredCreatorSettings>;
+}
+
+async function getDatabaseCreatorSettings(
+  creatorId: string,
+  creator: Creator
+): Promise<StoredCreatorSettings | null> {
+  if (!hasDatabaseUrl()) return null;
+
+  const profileId = await resolveCreatorProfileIdForLegacyId(creatorId);
+  if (!profileId) return null;
+
+  const profile = await prisma.creatorProfile.findUnique({
+    where: { id: profileId },
+    include: {
+      user: true
+    }
+  });
+  if (!profile) return null;
+
+  const base = defaultSettings(creatorId, creator);
+  const persisted = settingsFromDna(profile.creatorDnaJson);
+  const logs = await prisma.sessionLog.findMany({
+    where: { userId: profile.userId },
+    orderBy: { createdAt: "desc" },
+    take: MAX_LOGIN_HISTORY
+  });
+  const loginHistory: LoginHistoryEntry[] = logs.map((log) => ({
+    id: log.id,
+    at: log.createdAt.toISOString(),
+    ip: log.ip ?? "unknown",
+    location: log.country ?? creator.country ?? "Unknown",
+    device: log.device ?? log.browser ?? "Unknown device",
+    success: true
+  }));
+
+  return {
+    ...base,
+    ...persisted,
+    creator_id: creatorId,
+    login_email: profile.user.email,
+    contact_email: persisted.contact_email ?? profile.user.email,
+    phone: profile.user.phone ?? persisted.phone ?? base.phone,
+    timezone: profile.user.timezone ?? persisted.timezone ?? base.timezone,
+    preferred_locale: normalizeLanguageCode(profile.user.languageCode ?? profile.user.language) === "en" ? "en" : "zh",
+    min_accept_budget_usd: profile.minBudget == null ? persisted.min_accept_budget_usd ?? null : Number(profile.minBudget),
+    ideal_budget_usd: profile.maxBudget == null ? persisted.ideal_budget_usd ?? null : Number(profile.maxBudget),
+    login_history: loginHistory,
+    devices: persisted.devices ?? base.devices,
+    security: persisted.security ?? base.security,
+    updated_at: profile.updatedAt.toISOString()
+  };
+}
+
+async function updateDatabaseCreatorSettings(
+  creatorId: string,
+  creator: Creator,
+  updater: (current: StoredCreatorSettings) => StoredCreatorSettings
+) {
+  const current = await getDatabaseCreatorSettings(creatorId, creator);
+  if (!current) return null;
+
+  const next = {
+    ...updater(current),
+    updated_at: new Date().toISOString()
+  };
+  const profileId = await resolveCreatorProfileIdForLegacyId(creatorId);
+  if (!profileId) return null;
+
+  const profile = await prisma.creatorProfile.findUnique({ where: { id: profileId } });
+  if (!profile) return null;
+
+  const dna = objectValue(profile.creatorDnaJson);
+  await prisma.creatorProfile.update({
+    where: { id: profileId },
+    data: {
+      creatorDnaJson: asInputJson({
+        ...dna,
+        settings: next
+      })
+    }
+  });
+
+  return next;
+}
+
 export function parseUserAgent(userAgent: string) {
   const ua = userAgent || "Unknown";
   const browser = /Edg\//i.test(ua)
@@ -176,6 +273,16 @@ function normalizeDevice(device: LoginDevice): LoginDevice {
 
 export async function resolveCreatorIdByEmail(email: string): Promise<string | null> {
   const normalized = email.trim().toLowerCase();
+  if (hasDatabaseUrl()) {
+    const user = await prisma.user.findUnique({
+      where: { email: normalized },
+      include: { creatorProfile: { select: { id: true, legacyCreatorId: true } } }
+    });
+    if (user?.creatorProfile) {
+      return user.creatorProfile.legacyCreatorId ?? user.creatorProfile.id;
+    }
+  }
+
   const store = await readStore();
 
   if (store.email_aliases[normalized]) {
@@ -197,6 +304,18 @@ export async function resolveCreatorIdByEmail(email: string): Promise<string | n
 }
 
 export async function getStoredCreatorSettings(creatorId: string): Promise<StoredCreatorSettings | null> {
+  if (hasDatabaseUrl()) {
+    const profileId = await resolveCreatorProfileIdForLegacyId(creatorId);
+    if (profileId) {
+      const profile = await prisma.creatorProfile.findUnique({
+        where: { id: profileId },
+        select: { creatorDnaJson: true }
+      });
+      const settings = settingsFromDna(profile?.creatorDnaJson);
+      if (settings.creator_id) return settings as StoredCreatorSettings;
+    }
+  }
+
   const store = await readStore();
   return store.settings[creatorId] ?? null;
 }
@@ -205,6 +324,9 @@ export async function getCreatorSettings(
   creatorId: string,
   creator: Creator
 ): Promise<StoredCreatorSettings> {
+  const databaseSettings = await getDatabaseCreatorSettings(creatorId, creator);
+  if (databaseSettings) return databaseSettings;
+
   const store = await readStore();
   const existing = store.settings[creatorId];
   if (existing) {
@@ -261,6 +383,9 @@ async function updateSettings(
   creator: Creator,
   updater: (current: StoredCreatorSettings) => StoredCreatorSettings
 ) {
+  const databaseSettings = await updateDatabaseCreatorSettings(creatorId, creator, updater);
+  if (databaseSettings) return databaseSettings;
+
   const store = await readStore();
   const current = store.settings[creatorId] ?? defaultSettings(creatorId, creator);
   store.settings[creatorId] = {
@@ -280,6 +405,36 @@ export async function updateCreatorLoginEmail(
   const normalized = nextEmail.trim().toLowerCase();
   if (!normalized.includes("@")) {
     return { ok: false as const, error: "invalid-email" };
+  }
+
+  if (hasDatabaseUrl()) {
+    const profileId = await resolveCreatorProfileIdForLegacyId(creatorId);
+    const profile = profileId
+      ? await prisma.creatorProfile.findUnique({ where: { id: profileId }, select: { userId: true } })
+      : null;
+    if (profile) {
+      const taken = await prisma.user.findFirst({
+        where: {
+          email: normalized,
+          NOT: { id: profile.userId },
+          deletedAt: null
+        },
+        select: { id: true }
+      });
+      if (taken) {
+        return { ok: false as const, error: "email-taken" };
+      }
+
+      await prisma.user.update({
+        where: { id: profile.userId },
+        data: { email: normalized }
+      });
+      await updateSettings(creatorId, creator, (current) => ({
+        ...current,
+        login_email: normalized
+      }));
+      return { ok: true as const, email: normalized };
+    }
   }
 
   const store = await readStore();
@@ -333,6 +488,19 @@ export async function updateCreatorPhone(creatorId: string, creator: Creator, ph
     return { ok: false as const, error: "invalid-phone" };
   }
 
+  if (hasDatabaseUrl()) {
+    const profileId = await resolveCreatorProfileIdForLegacyId(creatorId);
+    const profile = profileId
+      ? await prisma.creatorProfile.findUnique({ where: { id: profileId }, select: { userId: true } })
+      : null;
+    if (profile) {
+      await prisma.user.update({
+        where: { id: profile.userId },
+        data: { phone: trimmed }
+      });
+    }
+  }
+
   await updateSettings(creatorId, creator, (current) => ({
     ...current,
     phone: trimmed
@@ -384,6 +552,30 @@ export async function updateCreatorPassword(
 ) {
   if (nextPassword.length < 8) {
     return { ok: false as const, error: "weak-password" };
+  }
+
+  if (hasDatabaseUrl()) {
+    const profileId = await resolveCreatorProfileIdForLegacyId(creatorId);
+    const profile = profileId
+      ? await prisma.creatorProfile.findUnique({
+          where: { id: profileId },
+          include: { user: { select: { id: true, passwordHash: true } } }
+        })
+      : null;
+    if (profile?.user.passwordHash) {
+      if (!verifyPassword(currentPassword, profile.user.passwordHash)) {
+        return { ok: false as const, error: "wrong-password" };
+      }
+      await prisma.user.update({
+        where: { id: profile.user.id },
+        data: { passwordHash: hashPassword(nextPassword) }
+      });
+      await updateSettings(creatorId, creator, (current) => ({
+        ...current,
+        custom_password: null
+      }));
+      return { ok: true as const };
+    }
   }
 
   const settings = await getCreatorSettings(creatorId, creator);
@@ -441,6 +633,27 @@ export async function updateCreatorLocalePrefs(
   creator: Creator,
   input: { timezone?: string; currency?: string; preferred_locale?: Locale }
 ) {
+  if (hasDatabaseUrl()) {
+    const profileId = await resolveCreatorProfileIdForLegacyId(creatorId);
+    const profile = profileId
+      ? await prisma.creatorProfile.findUnique({ where: { id: profileId }, select: { userId: true } })
+      : null;
+    if (profile) {
+      await prisma.user.update({
+        where: { id: profile.userId },
+        data: {
+          ...(input.timezone !== undefined ? { timezone: input.timezone } : {}),
+          ...(input.preferred_locale !== undefined
+            ? {
+                language: input.preferred_locale,
+                languageCode: normalizeLanguageCode(input.preferred_locale)
+              }
+            : {})
+        }
+      });
+    }
+  }
+
   await updateSettings(creatorId, creator, (current) => ({
     ...current,
     timezone: input.timezone ?? current.timezone,
@@ -569,6 +782,25 @@ export async function recordCreatorLogin(
   const parsed = parseUserAgent(meta.userAgent);
   const now = new Date().toISOString();
   const location = await resolveGeoLocation(meta.ip, creator.country);
+
+  if (hasDatabaseUrl()) {
+    const profileId = await resolveCreatorProfileIdForLegacyId(creatorId);
+    const profile = profileId
+      ? await prisma.creatorProfile.findUnique({ where: { id: profileId }, select: { userId: true } })
+      : null;
+    if (profile) {
+      await prisma.sessionLog.create({
+        data: {
+          userId: profile.userId,
+          ip: meta.ip || null,
+          device: parsed.label,
+          browser: parsed.browserLabel,
+          country: location
+        }
+      });
+      return;
+    }
+  }
 
   await updateSettings(creatorId, creator, (current) => {
     const historyEntry: LoginHistoryEntry = {

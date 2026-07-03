@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LineChart } from "lucide-react";
+import { Database, Languages, LineChart } from "lucide-react";
 import { approveOnboardingAction, rejectOnboardingAction } from "@/app/onboarding-actions";
 import { AdminOverviewDashboard } from "@/components/studioos/admin-overview-dashboard";
 import { Badge } from "@/components/ui/badge";
@@ -67,11 +67,23 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">{t.eyebrow}</p>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight">{t.title}</h1>
         </div>
-        <Button asChild variant="outline">
-          <Link href={withLocale(adminPortalRoutes.analytics, locale)}>
-            <LineChart className="h-4 w-4" /> {t.analytics}
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button asChild variant="outline">
+            <Link href="/admin/database">
+              <Database className="h-4 w-4" /> DB
+            </Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link href={withLocale(adminPortalRoutes.languages, locale)}>
+              <Languages className="h-4 w-4" /> i18n
+            </Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link href={withLocale(adminPortalRoutes.analytics, locale)}>
+              <LineChart className="h-4 w-4" /> {t.analytics}
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <div className="mt-8">

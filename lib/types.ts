@@ -118,11 +118,18 @@ export type CreatorWork = {
   category: string;
   platform: string;
   format: string;
+  work_type?: string;
+  country?: string;
+  city?: string;
   thumbnail_url: string;
   video_url: string;
   description: string;
   turnaround: string;
   tags: string[];
+  price_min?: number | null;
+  price_max?: number | null;
+  price_visible?: boolean;
+  sort_order?: number;
   created_at: string;
   /** Hidden from public portfolio; owner can still manage. */
   hidden?: boolean;

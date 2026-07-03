@@ -490,6 +490,38 @@ export async function createProjectDraft(input: CreateProjectDraftInput): Promis
 
 /** Legacy start-flow: creates a published-ready project in matching. */
 export async function createProject(input: CreateProjectInput): Promise<StoredProject> {
+  if (hasDatabaseUrl()) {
+    const draft = await createProjectDraft({
+      client_email: input.client_email,
+      client_name: input.client_name,
+      company_name: input.company_name,
+      title: input.title ?? (input.campaign_goal || input.company_name)
+    });
+    const updated = await updateProject(draft.id, {
+      email: input.email,
+      product_url: input.product_url,
+      product_name: input.company_name,
+      category: input.category,
+      target_platform: input.target_platform,
+      video_format: input.video_format,
+      video_count: input.video_count,
+      output_quantity: input.video_count,
+      budget_range: input.budget_range,
+      deadline: input.deadline,
+      brand_style: input.brand_style,
+      reference_links: input.reference_links,
+      campaign_goal: input.campaign_goal,
+      notes: input.notes,
+      status: "matching",
+      wizard_step: 6,
+      wizard_completed_steps: [1, 2, 3, 4, 5, 6],
+      published_at: nowIso(),
+      video_lengths: input.video_format ? [input.video_format] : [],
+      aspect_ratios: input.video_format ? [input.video_format] : []
+    });
+    return updated ?? draft;
+  }
+
   const store = await readStore();
   const project = defaultProjectFields({
     id: createId("proj"),

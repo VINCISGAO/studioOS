@@ -109,6 +109,7 @@ export async function completeOAuthSignIn(input: {
       email: user.email,
       role: user.role,
       fullName: user.fullName,
+      languageCode: user.languageCode ?? user.language ?? "en",
       companyName: user.brandProfile?.companyName,
       displayName: user.creatorProfile?.displayName ?? undefined
     };
@@ -178,6 +179,7 @@ export async function completeOAuthSignIn(input: {
     email: normalizedEmail,
     role: entryRoleToPrisma(input.entryRole),
     fullName,
+    languageCode: "en",
     companyName: demoRole === "client" ? fullName : undefined,
     displayName: demoRole === "creator" ? fullName : undefined
   };

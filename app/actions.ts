@@ -3,10 +3,12 @@
 import { redirect } from "next/navigation";
 import { cookies, headers } from "next/headers";
 import { performSignIn, recordCreatorSignIn } from "@/lib/auth/sign-in-service";
+import { authService } from "@/features/auth/auth.service";
 import { preferDemoAuth } from "@/lib/can-persist-local-store";
 import { DEMO_SESSION_COOKIE, hasSupabaseConfig } from "@/lib/auth-config";
 import { clearDemoSession, setDemoSession } from "@/lib/demo-auth-server";
 import { demoRedirectForRole, demoUserForSocialProvider, parseDemoSession, DEMO_USERS } from "@/lib/demo-auth";
+import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { isAdminRouteRole } from "@/lib/auth/route-access";
 import { withLocale, type Locale } from "@/lib/i18n";
 import { getOrCreateOpenInquiry } from "@/lib/chat-service";
@@ -191,15 +193,39 @@ export async function demoSocialSignInAction(formData: FormData) {
 
 export async function signUpAction(formData: FormData) {
   const lang = normalizeLang(formData.get("lang"));
+  const email = String(formData.get("email") ?? "");
+  const password = String(formData.get("password") ?? "");
+  const role = String(formData.get("role") ?? "brand");
+
+  if (hasDatabaseUrl()) {
+    const isCreator = role === "creator" || role === "studio";
+    const result = await authService.register({
+      email,
+      password,
+      role: isCreator ? "CREATOR" : "BRAND",
+      fullName: email.split("@")[0] || "StudioOS User",
+      companyName: isCreator ? undefined : email.split("@")[0],
+      displayName: isCreator ? email.split("@")[0] : undefined
+    });
+
+    if (!result.ok) {
+      redirect(`/login?error=${encodeURIComponent(result.error)}&lang=${lang}`);
+    }
+
+    await setDemoSession({
+      email: result.user.email,
+      role: isCreator ? "creator" : "client",
+      userId: result.user.id
+    });
+    redirect(isCreator ? `/studio?lang=${lang}` : `/brand?lang=${lang}`);
+  }
 
   if (!hasSupabaseConfig()) {
     redirect(
-      `/login?error=${encodeURIComponent(lang === "zh" ? "演示模式请使用邮箱登录或 Google / Apple / Discord 登录。" : "Demo mode: sign in with email or Google / Apple / Discord.")}&lang=${lang}&site=global&auth=login`
+      `/login?error=${encodeURIComponent(lang === "zh" ? "数据库未配置，无法注册账号。" : "Database is not configured. Cannot create accounts.")}&lang=${lang}&site=global&auth=login`
     );
   }
 
-  const email = String(formData.get("email") ?? "");
-  const password = String(formData.get("password") ?? "");
   const supabase = await createClient();
   const { error } = await supabase.auth.signUp({
     email,

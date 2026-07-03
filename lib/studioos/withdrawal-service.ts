@@ -1,5 +1,6 @@
 import "server-only";
 
+import type { PaymentMethod } from "@prisma/client";
 import { listOrdersForCreator } from "@/lib/order-service";
 import { markOrdersPaidForWithdrawal } from "@/lib/order-service";
 import type {
@@ -149,6 +150,91 @@ async function resolvePrismaIncomeSnapshot(creatorId: string) {
   return settlementService.getCreatorIncomeSnapshot(profile.userId);
 }
 
+async function resolveCreatorUserId(creatorId: string): Promise<string | null> {
+  if (!hasDatabaseUrl()) return null;
+  const profileId = await resolveCreatorProfileIdForLegacyId(creatorId);
+  if (!profileId) return null;
+  const profile = await prisma.creatorProfile.findUnique({
+    where: { id: profileId },
+    select: { userId: true }
+  });
+  return profile?.userId ?? null;
+}
+
+function paymentMethodToPayoutMethod(creatorId: string, method: PaymentMethod): PayoutMethod {
+  const metadata =
+    typeof method.metadataJson === "object" && method.metadataJson !== null && !Array.isArray(method.metadataJson)
+      ? (method.metadataJson as Record<string, unknown>)
+      : {};
+  const type = String(metadata.payout_type ?? method.type.toLowerCase()) as PayoutMethod["type"];
+
+  return {
+    id: method.id,
+    creator_id: creatorId,
+    type,
+    label: method.accountName ?? String(metadata.label ?? method.provider),
+    is_default: method.isDefault,
+    verified: method.status === "VERIFIED",
+    account_holder: typeof metadata.account_holder === "string" ? metadata.account_holder : undefined,
+    bank_name: typeof metadata.bank_name === "string" ? metadata.bank_name : undefined,
+    account_last4: method.accountNumber ?? undefined,
+    routing_last4: typeof metadata.routing_last4 === "string" ? metadata.routing_last4 : undefined,
+    swift_code: typeof metadata.swift_code === "string" ? metadata.swift_code : undefined,
+    paypal_email: method.accountEmail ?? undefined,
+    alipay_account: typeof metadata.alipay_account === "string" ? metadata.alipay_account : undefined,
+    wechat_account: typeof metadata.wechat_account === "string" ? metadata.wechat_account : undefined,
+    qr_code_url: typeof metadata.qr_code_url === "string" ? metadata.qr_code_url : undefined,
+    crypto_asset: method.currency === "USDT" || method.currency === "USDC" ? method.currency : undefined,
+    crypto_network: method.network === "TRC20" || method.network === "ERC20" ? method.network : undefined,
+    wallet_address: method.walletAddress ?? undefined,
+    created_at: method.createdAt.toISOString()
+  };
+}
+
+function withdrawalRowToRequest(creatorId: string, row: {
+  id: string;
+  paymentMethodId: string | null;
+  amount: { toString(): string };
+  status: string;
+  note: string | null;
+  metadataJson: unknown;
+  createdAt: Date;
+  resolvedAt: Date | null;
+}): WithdrawalRequest {
+  const metadata =
+    typeof row.metadataJson === "object" && row.metadataJson !== null && !Array.isArray(row.metadataJson)
+      ? (row.metadataJson as Record<string, unknown>)
+      : {};
+  return {
+    id: row.id,
+    creator_id: creatorId,
+    payout_method_id: row.paymentMethodId ?? "",
+    amount_usd: Number(row.amount),
+    fee_usd: Number(metadata.fee_usd ?? 0),
+    net_usd: Number(metadata.net_usd ?? row.amount),
+    status:
+      row.status === "APPROVED"
+        ? "under_review"
+        : row.status === "PROCESSING"
+          ? "processing"
+          : row.status === "COMPLETED"
+            ? "completed"
+            : row.status === "REJECTED"
+              ? "failed"
+              : row.status === "CANCELLED"
+                ? "cancelled"
+                : "pending",
+    status_note: row.note ?? undefined,
+    estimated_arrival: typeof metadata.estimated_arrival === "string" ? metadata.estimated_arrival : "",
+    crypto_asset: metadata.crypto_asset === "USDT" || metadata.crypto_asset === "USDC" ? metadata.crypto_asset : undefined,
+    crypto_network: metadata.crypto_network === "TRC20" || metadata.crypto_network === "ERC20" ? metadata.crypto_network : undefined,
+    wallet_address: typeof metadata.wallet_address === "string" ? metadata.wallet_address : undefined,
+    crypto_amount: typeof metadata.crypto_amount === "number" ? metadata.crypto_amount : undefined,
+    created_at: row.createdAt.toISOString(),
+    completed_at: row.resolvedAt?.toISOString() ?? null
+  };
+}
+
 async function advanceDemoWithdrawals(store: WithdrawalStore) {
   const now = Date.now();
   let changed = false;
@@ -180,9 +266,7 @@ async function advanceDemoWithdrawals(store: WithdrawalStore) {
 }
 
 export async function getCreatorIncomeSnapshot(creatorId: string): Promise<CreatorIncomeSnapshot> {
-  const prismaSnapshot = creatorId.startsWith("creator_")
-    ? null
-    : await resolvePrismaIncomeSnapshot(creatorId);
+  const prismaSnapshot = await resolvePrismaIncomeSnapshot(creatorId);
   if (prismaSnapshot) {
     const store = await readStore();
     await advanceDemoWithdrawals(store);
@@ -235,6 +319,15 @@ export async function getCreatorIncomeSnapshot(creatorId: string): Promise<Creat
 }
 
 export async function listPayoutMethods(creatorId: string): Promise<PayoutMethod[]> {
+  const userId = await resolveCreatorUserId(creatorId);
+  if (userId) {
+    const rows = await prisma.paymentMethod.findMany({
+      where: { userId, status: { not: "DISABLED" } },
+      orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }]
+    });
+    return rows.map((item) => paymentMethodToPayoutMethod(creatorId, item));
+  }
+
   const store = await readStore();
   return store.payout_methods
     .filter((item) => item.creator_id === creatorId)
@@ -242,6 +335,17 @@ export async function listPayoutMethods(creatorId: string): Promise<PayoutMethod
 }
 
 export async function listWithdrawals(creatorId: string): Promise<WithdrawalRequest[]> {
+  const userId = await resolveCreatorUserId(creatorId);
+  if (userId) {
+    const account = await prisma.walletAccount.findUnique({ where: { userId } });
+    if (!account) return [];
+    const rows = await prisma.withdrawalRequest.findMany({
+      where: { walletAccountId: account.id },
+      orderBy: { createdAt: "desc" }
+    });
+    return rows.map((item) => withdrawalRowToRequest(creatorId, item));
+  }
+
   const store = await readStore();
   await advanceDemoWithdrawals(store);
   return store.withdrawals
@@ -253,6 +357,67 @@ export async function addPayoutMethod(
   creatorId: string,
   input: Omit<PayoutMethod, "id" | "creator_id" | "created_at" | "is_default"> & { is_default?: boolean }
 ): Promise<PayoutMethod> {
+  const userId = await resolveCreatorUserId(creatorId);
+  if (userId) {
+    const existingCount = await prisma.paymentMethod.count({
+      where: { userId, status: { not: "DISABLED" } }
+    });
+    const isDefault = input.is_default ?? existingCount === 0;
+    if (isDefault) {
+      await prisma.paymentMethod.updateMany({
+        where: { userId },
+        data: { isDefault: false }
+      });
+    }
+    const type =
+      input.type === "bank_wire"
+        ? "BANK_WIRE"
+        : input.type === "wechat"
+          ? "WECHAT"
+          : input.type === "crypto"
+            ? "CRYPTO"
+            : input.type === "alipay"
+              ? "ALIPAY"
+              : "PAYPAL";
+    const provider =
+      input.type === "bank_wire"
+        ? "BANK_TRANSFER"
+        : input.type === "wechat"
+          ? "WECHAT_PAY"
+          : input.type === "crypto"
+            ? "CRYPTO"
+            : input.type === "alipay"
+              ? "ALIPAY"
+              : "PAYPAL";
+    const method = await prisma.paymentMethod.create({
+      data: {
+        userId,
+        type,
+        provider,
+        accountName: input.label,
+        accountNumber: input.account_last4 ?? undefined,
+        accountEmail: input.paypal_email ?? undefined,
+        walletAddress: input.wallet_address ?? undefined,
+        network: input.crypto_network ?? undefined,
+        currency: input.crypto_asset ?? "USD",
+        isDefault,
+        status: input.verified ? "VERIFIED" : "PENDING",
+        metadataJson: {
+          payout_type: input.type,
+          label: input.label,
+          account_holder: input.account_holder,
+          bank_name: input.bank_name,
+          routing_last4: input.routing_last4,
+          swift_code: input.swift_code,
+          alipay_account: input.alipay_account,
+          wechat_account: input.wechat_account,
+          qr_code_url: input.qr_code_url
+        }
+      }
+    });
+    return paymentMethodToPayoutMethod(creatorId, method);
+  }
+
   const store = await readStore();
   const methods = store.payout_methods.filter((item) => item.creator_id === creatorId);
   const isDefault = input.is_default ?? methods.length === 0;
@@ -282,6 +447,35 @@ export async function deletePayoutMethod(
   creatorId: string,
   methodId: string
 ): Promise<{ ok: true } | { ok: false; code: "NOT_FOUND" | "IN_USE" }> {
+  const userId = await resolveCreatorUserId(creatorId);
+  if (userId) {
+    const activeWithdrawal = await prisma.withdrawalRequest.findFirst({
+      where: {
+        paymentMethodId: methodId,
+        status: { in: ["PENDING", "APPROVED"] }
+      }
+    });
+    if (activeWithdrawal) return { ok: false, code: "IN_USE" };
+
+    const method = await prisma.paymentMethod.findFirst({ where: { id: methodId, userId } });
+    if (!method) return { ok: false, code: "NOT_FOUND" };
+
+    await prisma.paymentMethod.update({
+      where: { id: methodId },
+      data: { status: "DISABLED", isDefault: false }
+    });
+    if (method.isDefault) {
+      const next = await prisma.paymentMethod.findFirst({
+        where: { userId, status: { not: "DISABLED" }, id: { not: methodId } },
+        orderBy: { createdAt: "desc" }
+      });
+      if (next) {
+        await prisma.paymentMethod.update({ where: { id: next.id }, data: { isDefault: true } });
+      }
+    }
+    return { ok: true };
+  }
+
   const store = await readStore();
   const index = store.payout_methods.findIndex(
     (item) => item.id === methodId && item.creator_id === creatorId
@@ -318,6 +512,20 @@ export async function setDefaultPayoutMethod(
   creatorId: string,
   methodId: string
 ): Promise<{ ok: true; method: PayoutMethod } | { ok: false; code: "NOT_FOUND" }> {
+  const userId = await resolveCreatorUserId(creatorId);
+  if (userId) {
+    const target = await prisma.paymentMethod.findFirst({
+      where: { id: methodId, userId, status: { not: "DISABLED" } }
+    });
+    if (!target) return { ok: false, code: "NOT_FOUND" };
+    await prisma.paymentMethod.updateMany({ where: { userId }, data: { isDefault: false } });
+    const method = await prisma.paymentMethod.update({
+      where: { id: methodId },
+      data: { isDefault: true }
+    });
+    return { ok: true, method: paymentMethodToPayoutMethod(creatorId, method) };
+  }
+
   const store = await readStore();
   const target = store.payout_methods.find(
     (item) => item.id === methodId && item.creator_id === creatorId
@@ -477,6 +685,35 @@ export async function createWithdrawal(
       ok: false,
       error: input.locale === "zh" ? "扣除手续费后金额无效" : "Amount is too low after fees"
     };
+  }
+
+  const userId = await resolveCreatorUserId(creatorId);
+  if (userId) {
+    const account = await prisma.walletAccount.upsert({
+      where: { userId },
+      update: {},
+      create: { userId }
+    });
+    const withdrawal = await prisma.withdrawalRequest.create({
+      data: {
+        walletAccountId: account.id,
+        paymentMethodId: method.id,
+        assetCode: "USD",
+        amount,
+        status: "PENDING",
+        metadataJson: {
+          fee_usd: fee,
+          net_usd: net,
+          estimated_arrival: estimateArrival(method.type, input.locale),
+          crypto_asset: method.crypto_asset,
+          crypto_network: method.crypto_network,
+          wallet_address: method.wallet_address,
+          crypto_amount:
+            method.type === "crypto" && method.crypto_asset ? estimateCryptoAmount(method.crypto_asset, net) : undefined
+        }
+      }
+    });
+    return { ok: true, withdrawal: withdrawalRowToRequest(creatorId, withdrawal) };
   }
 
   const withdrawal: WithdrawalRequest = {

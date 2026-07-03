@@ -21,6 +21,18 @@ export async function resolveCreatorProfileIdForLegacyId(
 ): Promise<string | null> {
   if (!hasDatabaseUrl()) return null;
 
+  const byId = await prisma.creatorProfile.findUnique({
+    where: { id: legacyCreatorId },
+    select: { id: true }
+  });
+  if (byId) return byId.id;
+
+  const byLegacyId = await prisma.creatorProfile.findUnique({
+    where: { legacyCreatorId: legacyCreatorId },
+    select: { id: true }
+  });
+  if (byLegacyId) return byLegacyId.id;
+
   const demoEmail = LEGACY_CREATOR_DEMO_EMAIL[legacyCreatorId];
   if (demoEmail) {
     const user = await prisma.user.findUnique({

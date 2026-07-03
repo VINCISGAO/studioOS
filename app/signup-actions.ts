@@ -2,6 +2,9 @@
 
 import { redirect } from "next/navigation";
 import { hasSupabaseConfig } from "@/lib/auth-config";
+import { authService } from "@/features/auth/auth.service";
+import { hasDatabaseUrl } from "@/lib/core/database/prisma";
+import { setDemoSession } from "@/lib/demo-auth-server";
 import { createClient } from "@/lib/supabase/server";
 
 export async function signUpMvpAction(formData: FormData) {
@@ -11,12 +14,35 @@ export async function signUpMvpAction(formData: FormData) {
   const role = String(formData.get("role") ?? "brand");
   const company = String(formData.get("company_name") ?? "").trim();
 
-  if (!hasSupabaseConfig()) {
-    redirect(`/login?error=${encodeURIComponent("Demo mode: use preset accounts on the login page.")}`);
-  }
-
   if (!email || password.length < 8) {
     redirect("/signup?error=invalid");
+  }
+
+  if (hasDatabaseUrl()) {
+    const isCreator = role === "studio" || role === "creator";
+    const result = await authService.register({
+      email,
+      password,
+      role: isCreator ? "CREATOR" : "BRAND",
+      fullName: name || company || email.split("@")[0] || "StudioOS User",
+      companyName: isCreator ? undefined : company || name,
+      displayName: isCreator ? name || company || email.split("@")[0] : undefined
+    });
+
+    if (!result.ok) {
+      redirect(`/signup?error=${encodeURIComponent(result.error)}`);
+    }
+
+    await setDemoSession({
+      email: result.user.email,
+      role: isCreator ? "creator" : "client",
+      userId: result.user.id
+    });
+    redirect(isCreator ? "/studio" : "/brand");
+  }
+
+  if (!hasSupabaseConfig()) {
+    redirect(`/login?error=${encodeURIComponent("Database is not configured. Cannot create accounts.")}`);
   }
 
   const supabase = await createClient();

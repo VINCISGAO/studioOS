@@ -166,6 +166,15 @@ export async function uploadBrandAvatarAction(formData: FormData) {
   if (!updated) {
     return { ok: false as const, error: lang === "zh" ? "保存头像失败" : "Failed to save avatar" };
   }
+  const { storageFileService } = await import("@/features/storage/storage-file.service");
+  await storageFileService.recordBrandAvatar(profile.id, {
+    fileName: saved.file_name,
+    fileKey: saved.file_key,
+    publicUrl: saved.url,
+    mimeType: saved.mime_type,
+    fileSize: saved.size_bytes,
+    provider: saved.storage_provider
+  });
 
   revalidatePath("/brand/profile");
   revalidatePath("/brand");

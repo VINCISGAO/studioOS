@@ -8,6 +8,7 @@ import { appError } from "@/lib/core/errors";
 import { logger } from "@/lib/core/logger";
 import { AiJobState, MAX_AI_RETRIES } from "@/features/shared/state-machines/ai-job.state-machine";
 import { prisma, hasDatabaseUrl } from "@/lib/core/database/prisma";
+import { normalizeLanguageCode } from "@/features/i18n/language.constants";
 
 export class AiWorkerService {
   private assertDb() {
@@ -18,6 +19,11 @@ export class AiWorkerService {
     this.assertDb();
     const campaign = await campaignRepository.findById(campaignId);
     if (!campaign) throw appError("NOT_FOUND", "Campaign not found");
+    const actor = await prisma.user.findUnique({
+      where: { id: actorUserId },
+      select: { languageCode: true, language: true }
+    });
+    const language = normalizeLanguageCode(actor?.languageCode ?? actor?.language);
 
     return aiJobRepository.create({
       campaignId,
@@ -30,7 +36,8 @@ export class AiWorkerService {
         title: campaign.title,
         platform: campaign.platform,
         aspectRatio: campaign.aspectRatio,
-        budget: Number(campaign.budget)
+        budget: Number(campaign.budget),
+        language
       }
     });
   }
@@ -117,7 +124,9 @@ export class AiWorkerService {
     const campaign = await campaignRepository.findById(campaignId);
     if (!campaign) throw new Error("Campaign not found");
 
-    const actorUserId = String((job.inputJson as { actorUserId?: string }).actorUserId ?? campaign.brandId);
+    const input = job.inputJson as { actorUserId?: string; language?: string };
+    const actorUserId = String(input.actorUserId ?? campaign.brandId);
+    const language = normalizeLanguageCode(input.language);
     const actor = { id: actorUserId, role: "BRAND" as const };
 
     if (campaign.status === CampaignState.AI_PROCESSING) {
@@ -126,11 +135,12 @@ export class AiWorkerService {
       await campaignService.transition(campaignId, CampaignEvent.START_AI, actor);
     }
 
-    const result = await runCreativeDirectionJob(campaign);
+    const result = await runCreativeDirectionJob(campaign, { language });
 
     const brief = {
       ...((campaign.productionBrief as Record<string, unknown> | null) ?? {}),
       creative_directions: result.directions,
+      language,
       generated_at: new Date().toISOString(),
       ai_job_id: job.id
     };

@@ -1,4 +1,5 @@
 import { creatorWorks as seedWorks } from "@/lib/data";
+import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { getDeletedWorkIds, listPublishedWorksForCreator } from "@/lib/works-service";
 import type { CreatorWork } from "@/lib/types";
 
@@ -15,6 +16,10 @@ export async function getWorksForCreator(
     listPublishedWorksForCreator(creatorId),
     getDeletedWorkIds()
   ]);
+  if (hasDatabaseUrl()) {
+    return options.ownerView ? published : published.filter((work) => !work.hidden);
+  }
+
   const deleted = new Set(deletedIds);
   const byId = new Map(
     seedWorks.filter((work) => work.creator_id === creatorId && !deleted.has(work.id)).map((work) => [work.id, work])

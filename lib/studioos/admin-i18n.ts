@@ -59,6 +59,7 @@ export type AdminNavKey =
   | "withdrawals"
   | "ledger"
   | "notifications"
+  | "languages"
   | "activityLog"
   | "disputes"
   | "analytics"
@@ -84,6 +85,7 @@ export const adminNavLabels: Record<AdminNavKey, Record<Locale, string>> = {
   withdrawals: { en: "Withdrawals", zh: "提现" },
   ledger: { en: "Ledger", zh: "账本" },
   notifications: { en: "Notifications", zh: "通知" },
+  languages: { en: "Languages", zh: "语言管理" },
   activityLog: { en: "Activity log", zh: "活动日志" },
   disputes: { en: "Disputes", zh: "争议" },
   analytics: { en: "Analytics", zh: "分析" },

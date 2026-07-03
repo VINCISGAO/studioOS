@@ -2,6 +2,7 @@ import "server-only";
 
 import { unstable_cache } from "next/cache";
 import { creatorWorks as seedWorks } from "@/lib/data";
+import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { getDeletedWorkIds, listPublishedWorks } from "@/lib/works-service";
 import { getWorksForCreator } from "@/lib/works-catalog-core";
 import type { CreatorWork } from "@/lib/types";
@@ -19,6 +20,10 @@ function mergeWorks(published: CreatorWork[], deletedIds: Set<string>) {
 
 async function loadAllCreatorWorks(): Promise<CreatorWork[]> {
   const [published, deletedIds] = await Promise.all([listPublishedWorks(), getDeletedWorkIds()]);
+  if (hasDatabaseUrl()) {
+    return published.filter((work) => !work.hidden);
+  }
+
   return mergeWorks(
     published.filter((work) => !work.hidden),
     new Set(deletedIds)

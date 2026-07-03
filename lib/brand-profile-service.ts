@@ -99,12 +99,12 @@ async function syncPrismaBrandProfile(
     "company_name" | "display_name" | "headline" | "bio" | "website" | "industry" | "logo_url"
   >
 ) {
-  if (!hasDatabaseUrl()) return;
+  if (!hasDatabaseUrl()) return null;
   const user = await prisma.user.findUnique({
     where: { email: clientEmail.toLowerCase() },
     include: { brandProfile: true }
   });
-  if (!user) return;
+  if (!user) return null;
   const current =
     typeof user.brandProfile?.brandDnaJson === "object" &&
     user.brandProfile.brandDnaJson !== null &&
@@ -151,6 +151,7 @@ async function syncPrismaBrandProfile(
       })
     }
   });
+  return getPrismaBrandProfileByEmail(clientEmail);
 }
 
 async function syncPrismaBrandLogoArchive(
@@ -213,17 +214,20 @@ export function isBrandProfileComplete(profile: StoredBrandProfile | null | unde
 }
 
 export async function getBrandProfileByEmail(email: string): Promise<StoredBrandProfile | null> {
+  const databaseProfile = await getPrismaBrandProfileByEmail(email);
+  if (databaseProfile) return databaseProfile;
+
   const store = await readStore();
   const normalized = email.toLowerCase();
-  return (
-    Object.values(store.profiles).find((item) => item.client_email === normalized) ??
-    (await getPrismaBrandProfileByEmail(normalized))
-  );
+  return Object.values(store.profiles).find((item) => item.client_email === normalized) ?? null;
 }
 
 export async function getBrandProfileById(id: string): Promise<StoredBrandProfile | null> {
+  const databaseProfile = await getPrismaBrandProfileById(id);
+  if (databaseProfile) return databaseProfile;
+
   const store = await readStore();
-  return store.profiles[id] ?? (await getPrismaBrandProfileById(id));
+  return store.profiles[id] ?? null;
 }
 
 export async function getOrCreateBrandProfile(input: {
@@ -235,8 +239,23 @@ export async function getOrCreateBrandProfile(input: {
   headline?: string;
   bio?: string;
 }): Promise<StoredBrandProfile> {
-  const store = await readStore();
   const normalized = input.client_email.toLowerCase();
+  const databaseProfile = await getPrismaBrandProfileByEmail(normalized);
+  if (databaseProfile) {
+    const updated = await syncPrismaBrandProfile(normalized, {
+      ...databaseProfile,
+      company_name: input.company_name || databaseProfile.company_name,
+      display_name: input.display_name ?? databaseProfile.display_name,
+      headline: input.headline || databaseProfile.headline,
+      bio: input.bio || databaseProfile.bio,
+      website: input.website ?? databaseProfile.website,
+      industry: input.industry ?? databaseProfile.industry,
+      logo_url: databaseProfile.logo_url
+    });
+    return updated ?? databaseProfile;
+  }
+
+  const store = await readStore();
   const existing = Object.values(store.profiles).find((item) => item.client_email === normalized);
 
   if (existing) {
@@ -249,7 +268,8 @@ export async function getOrCreateBrandProfile(input: {
     existing.updated_at = nowIso();
     store.profiles[existing.id] = existing;
     await writeStore(store);
-    await syncPrismaBrandProfile(existing.client_email, existing);
+    const updated = await syncPrismaBrandProfile(existing.client_email, existing);
+    if (updated) return updated;
     return existing;
   }
 
@@ -270,7 +290,8 @@ export async function getOrCreateBrandProfile(input: {
 
   store.profiles[profile.id] = profile;
   await writeStore(store);
-  await syncPrismaBrandProfile(profile.client_email, profile);
+  const databaseCreated = await syncPrismaBrandProfile(profile.client_email, profile);
+  if (databaseCreated) return databaseCreated;
   return profile;
 }
 
@@ -304,9 +325,11 @@ export async function saveBrandProfile(
     updated_at: nowIso()
   };
 
+  const updated = await syncPrismaBrandProfile(next.client_email, next);
+  if (updated) return updated;
+
   store.profiles[next.id] = next;
   await writeStore(store);
-  await syncPrismaBrandProfile(next.client_email, next);
   return next;
 }
 
@@ -330,9 +353,7 @@ export async function updateBrandLogoUrl(
     logo_url: logoUrl,
     updated_at: nowIso()
   };
-  store.profiles[next.id] = next;
-  await writeStore(store);
-  await syncPrismaBrandProfile(next.client_email, next);
+  const updated = await syncPrismaBrandProfile(next.client_email, next);
   await syncPrismaBrandLogoArchive(next.client_email, {
     logoUrl,
     fileKey: asset?.fileKey,
@@ -341,6 +362,10 @@ export async function updateBrandLogoUrl(
     mimeType: asset?.mimeType,
     sizeBytes: asset?.sizeBytes
   });
+  if (updated) return updated;
+
+  store.profiles[next.id] = next;
+  await writeStore(store);
   return next;
 }
 

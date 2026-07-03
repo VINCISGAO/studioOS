@@ -5,10 +5,12 @@ import type {
 import { activityService } from "@/features/campaign/activity.service";
 import { notificationService } from "@/features/notification/notification.service";
 import { aiLearningEventRepository } from "@/features/ai/ai-learning-event.repository";
+import { connectedChannelService } from "@/features/channels/connected-channel.service";
 import {
   performanceSourceRepository,
   serializePerformanceSource
 } from "@/features/attribution/performance-source.repository";
+import { prisma } from "@/lib/core/database/prisma";
 import type {
   PerformanceSourceSourceType,
   SerializedPerformanceSource
@@ -50,6 +52,38 @@ async function notifyBrand(input: {
     content: input.content,
     actionUrl: "/brand/attribution",
     email: false
+  });
+}
+
+async function syncConnectedChannelForCampaign(input: {
+  campaignId: string;
+  platform: PerformanceSourcePlatform;
+  accountUrl?: string | null;
+}) {
+  const campaign = await prisma.campaign.findUnique({
+    where: { id: input.campaignId },
+    select: {
+      creatorId: true,
+      _count: {
+        select: { performanceSources: true }
+      }
+    }
+  });
+  if (!campaign?.creatorId) return;
+
+  const profile = await prisma.creatorProfile.findUnique({
+    where: { userId: campaign.creatorId },
+    select: { id: true }
+  });
+  if (!profile) return;
+
+  await connectedChannelService.upsert({
+    creatorId: profile.id,
+    platform: input.platform,
+    accountUrl: input.accountUrl ?? null,
+    status: "CONNECTED",
+    sourceCount: campaign._count.performanceSources,
+    lastSyncedAt: new Date()
   });
 }
 
@@ -101,6 +135,11 @@ export class PerformanceSourceService {
       title: "Performance source added",
       content: "A new social performance source was added for attribution."
     });
+    await syncConnectedChannelForCampaign({
+      campaignId: campaign.id,
+      platform: input.platform,
+      accountUrl: input.url
+    });
 
     return { campaign, source };
   }
@@ -144,6 +183,10 @@ export class PerformanceSourceService {
         fileName
       })
     );
+    await syncConnectedChannelForCampaign({
+      campaignId: input.campaignId,
+      platform: input.platform
+    });
 
     return source;
   }
@@ -198,6 +241,11 @@ export class PerformanceSourceService {
         analysis: input.analysis
       },
       confidence: input.confidence
+    });
+    await syncConnectedChannelForCampaign({
+      campaignId: input.campaignId,
+      platform: input.platform,
+      accountUrl: source.url
     });
 
     return serializePerformanceSource(source);

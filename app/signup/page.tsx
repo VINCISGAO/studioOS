@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { hasSupabaseConfig } from "@/lib/auth-config";
+import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { Sparkles } from "lucide-react";
 
 export default async function SignUpPage({
@@ -13,9 +14,9 @@ export default async function SignUpPage({
   searchParams: Promise<{ error?: string }>;
 }) {
   const params = await searchParams;
-  const supabaseMode = hasSupabaseConfig();
+  const signupEnabled = hasDatabaseUrl() || hasSupabaseConfig();
 
-  if (!supabaseMode) {
+  if (!signupEnabled) {
     redirect("/login");
   }
 

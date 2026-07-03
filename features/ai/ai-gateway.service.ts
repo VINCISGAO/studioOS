@@ -26,6 +26,7 @@ export class AiGatewayService {
     model?: string;
     temperature?: number;
     jsonMode?: boolean;
+    language?: string;
   }): Promise<ChatCompletionResult> {
     const model = input.model ?? aiConfig.defaultModel;
     const started = Date.now();
@@ -53,7 +54,12 @@ export class AiGatewayService {
         temperature: input.temperature ?? 0.4,
         ...(input.jsonMode ? { response_format: { type: "json_object" } } : {}),
         messages: [
-          { role: "system", content: input.system },
+          {
+            role: "system",
+            content: input.language
+              ? `${input.system}\n\nOutput language: ${input.language}. All user-facing text must be written in this language.`
+              : input.system
+          },
           { role: "user", content: input.user }
         ]
       }),

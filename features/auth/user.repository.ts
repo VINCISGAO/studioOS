@@ -25,6 +25,11 @@ export class UserRepository {
     });
   }
 
+  async findCreatorProfileById(id: string): Promise<CreatorProfile | null> {
+    if (!hasDatabaseUrl()) return null;
+    return prisma.creatorProfile.findUnique({ where: { id } });
+  }
+
   async upsertDemoUser(input: {
     email: string;
     role: UserRole;
@@ -112,6 +117,50 @@ export class UserRepository {
           ? {
               creatorProfile: {
                 create: { displayName: input.fullName }
+              }
+            }
+          : {})
+      },
+      include: { brandProfile: true, creatorProfile: true }
+    });
+
+    if (input.role === "CREATOR") {
+      const { membershipService } = await import("@/features/membership/membership.service");
+      await membershipService.ensureDefaultMembershipOnCreatorRegister(
+        user.id,
+        user.creatorProfile?.id
+      );
+    }
+
+    return user;
+  }
+
+  async createWithPassword(input: {
+    email: string;
+    role: UserRole;
+    fullName: string;
+    passwordHash: string;
+    companyName?: string;
+    displayName?: string;
+  }): Promise<UserWithProfiles> {
+    const user = await prisma.user.create({
+      data: {
+        email: input.email.toLowerCase(),
+        role: input.role,
+        fullName: input.fullName,
+        passwordHash: input.passwordHash,
+        emailVerified: true,
+        ...(input.role === "BRAND"
+          ? {
+              brandProfile: {
+                create: { companyName: input.companyName ?? input.fullName }
+              }
+            }
+          : {}),
+        ...(input.role === "CREATOR"
+          ? {
+              creatorProfile: {
+                create: { displayName: input.displayName ?? input.fullName }
               }
             }
           : {})
