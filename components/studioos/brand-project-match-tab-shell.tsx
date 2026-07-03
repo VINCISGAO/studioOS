@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ensureBrandProjectMatchAction } from "@/app/brand-project-actions";
 import { BrandProjectMatchTab } from "@/components/studioos/brand-project-match-tab";
 import type { Locale } from "@/lib/i18n";
+import type { AiMatchReportStatistics } from "@/lib/studioos/ai-match-report";
 import type { StoredCreatorInvitation } from "@/lib/studioos/creator-invitation-types";
 
 function MatchTabLoadingSkeleton({ locale }: { locale: Locale }) {
@@ -31,7 +32,8 @@ export function BrandProjectMatchTabShell({
   initialInvitations,
   initialAccepted,
   notificationCount = 0,
-  projectBudgetRange
+  projectBudgetRange,
+  aiMatchStatistics
 }: {
   locale: Locale;
   projectId: string;
@@ -40,6 +42,7 @@ export function BrandProjectMatchTabShell({
   initialAccepted: StoredCreatorInvitation[];
   notificationCount?: number;
   projectBudgetRange?: string | null;
+  aiMatchStatistics?: AiMatchReportStatistics | null;
 }) {
   const router = useRouter();
   const ensureStarted = useRef(false);
@@ -84,6 +87,7 @@ export function BrandProjectMatchTabShell({
       accepted={accepted}
       notificationCount={notificationCount}
       projectBudgetRange={projectBudgetRange}
+      aiMatchStatistics={aiMatchStatistics}
     />
   );
 }

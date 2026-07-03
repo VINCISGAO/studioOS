@@ -8,7 +8,6 @@ import {
   BrandProfileHero,
   BrandProfileTabs
 } from "@/components/studioos/brand-profile-ui";
-import { brandTheme } from "@/lib/studioos/brand-theme";
 import { WorkVideoPlayer } from "@/components/creator/work-video-player";
 import { Button } from "@/components/ui/button";
 import {

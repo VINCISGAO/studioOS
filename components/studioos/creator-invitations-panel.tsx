@@ -1,11 +1,11 @@
+import Link from "next/link";
 import { Check, Clock, X } from "lucide-react";
-import {
-  acceptCreatorInvitationAction,
-  declineCreatorInvitationAction
-} from "@/app/creator-portal-actions";
+import { acceptCreatorInvitationAction } from "@/app/creator-portal-actions";
 import { Button } from "@/components/ui/button";
 import type { CreatorPortalInvitationView } from "@/features/creator/creator-portal.types";
 import type { Locale } from "@/lib/i18n";
+import { withLocale } from "@/lib/i18n";
+import { creatorPortalRoutes } from "@/lib/studioos/creator-portal-routes";
 import { formatCurrency } from "@/lib/utils";
 
 const copy = {
@@ -13,6 +13,7 @@ const copy = {
     title: "Project invitations",
     accept: "Accept",
     decline: "Decline",
+    reviewDecline: "Review",
     match: "Match",
     expires: "Expires",
     empty: "No pending invitations.",
@@ -23,6 +24,7 @@ const copy = {
     title: "项目邀请",
     accept: "接受",
     decline: "拒绝",
+    reviewDecline: "去处理",
     match: "匹配度",
     expires: "过期",
     empty: "暂无待处理邀请。",
@@ -101,14 +103,12 @@ export function CreatorInvitationsPanel({
                     {t.accept}
                   </Button>
                 </form>
-                <form action={declineCreatorInvitationAction}>
-                  <input type="hidden" name="lang" value={locale} />
-                  <input type="hidden" name="invitationId" value={invitation.id} />
-                  <Button type="submit" variant="outline" size="sm" className="rounded-xl">
+                <Button asChild variant="outline" size="sm" className="rounded-xl">
+                  <Link href={withLocale(creatorPortalRoutes.invitations, locale)}>
                     <X className="h-4 w-4" />
-                    {t.decline}
-                  </Button>
-                </form>
+                    {t.reviewDecline}
+                  </Link>
+                </Button>
               </div>
             </div>
           </li>

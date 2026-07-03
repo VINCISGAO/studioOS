@@ -1,4 +1,5 @@
 import { AI_MATCHING_WEIGHTS } from "@/lib/studioos/ai-matching-policy";
+import { memoryRepository } from "@/features/memory/memory.repository";
 import { relationshipDnaService } from "@/features/memory/relationship-dna.service";
 import { campaignRepository } from "@/features/campaign/campaign.repository";
 import type { AuthUser } from "@/features/auth/permission.service";
@@ -6,6 +7,12 @@ import { PermissionService } from "@/features/auth/permission.service";
 import { appError } from "@/lib/core/errors";
 import { hasDatabaseUrl, prisma } from "@/lib/core/database/prisma";
 import type { Campaign, CreatorProfile } from "@prisma/client";
+
+type CreatorMatchingMemory = {
+  minAcceptBudgetUsd: number | null;
+  budgetDeclines: number;
+  declineTotal: number;
+};
 
 export type CreatorMatchResult = {
   creatorProfileId: string;
@@ -22,9 +29,13 @@ function normalize(value: string) {
   return value.trim().toLowerCase();
 }
 
-function baseScore(campaign: Campaign, profile: CreatorProfile & { user: { email: string; id: string } }) {
+function baseScore(
+  campaign: Campaign,
+  profile: CreatorProfile & { user: { email: string; id: string } },
+  memory: CreatorMatchingMemory
+) {
   const budget = Number(campaign.budget);
-  const minBudget = profile.minBudget ? Number(profile.minBudget) : null;
+  const minBudget = memory.minAcceptBudgetUsd ?? (profile.minBudget ? Number(profile.minBudget) : null);
   const maxBudget = profile.maxBudget ? Number(profile.maxBudget) : null;
 
   if (minBudget && budget < minBudget) return null;
@@ -71,6 +82,12 @@ function baseScore(campaign: Campaign, profile: CreatorProfile & { user: { email
     reasons.push(`${profile.completedCampaigns} completed campaigns`);
   }
 
+  const declinePenalty = Math.min(12, Math.round(memory.budgetDeclines * 2 + memory.declineTotal * 0.5));
+  if (declinePenalty > 0) {
+    score -= declinePenalty;
+    reasons.push(`AI memory: recent decline friction -${declinePenalty}`);
+  }
+
   score += AI_MATCHING_WEIGHTS.activeStatusBonus;
 
   return { score, reasons };
@@ -106,7 +123,8 @@ export class MatchingService {
 
     const scored: CreatorMatchResult[] = [];
     for (const profile of profiles) {
-      const base = baseScore(campaign, profile);
+      const memory = await loadCreatorMatchingMemory(profile.userId);
+      const base = baseScore(campaign, profile, memory);
       if (!base) continue;
 
       const rel = await relationshipDnaService.getMatchingBoost(campaign.brandId, profile.userId);
@@ -129,3 +147,27 @@ export class MatchingService {
 }
 
 export const matchingService = new MatchingService();
+
+async function loadCreatorMatchingMemory(creatorUserId: string): Promise<CreatorMatchingMemory> {
+  const facts = await memoryRepository.listFacts({
+    ownerType: "CREATOR",
+    creatorId: creatorUserId,
+    limit: 200
+  });
+  return {
+    minAcceptBudgetUsd: numberFact(facts, "matching_preference", "min_accept_budget_usd"),
+    budgetDeclines: numberFact(facts, "matching_statistics", "budget_declines") ?? 0,
+    declineTotal: numberFact(facts, "matching_statistics", "decline_total") ?? 0
+  };
+}
+
+function numberFact(
+  facts: Array<{ category: string; factKey: string; factValue: string }>,
+  category: string,
+  key: string
+) {
+  const raw = facts.find((fact) => fact.category === category && fact.factKey === key)?.factValue;
+  if (!raw) return null;
+  const value = Number(raw);
+  return Number.isFinite(value) ? value : null;
+}

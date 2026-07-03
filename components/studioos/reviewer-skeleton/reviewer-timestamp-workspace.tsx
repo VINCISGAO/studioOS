@@ -32,7 +32,6 @@ import { assertRevisionRequestAllowed } from "@/features/review/review-round-pol
 import type { ReviewPortalUiState } from "@/features/review/review-portal-ui-state";
 import type { Locale } from "@/lib/i18n";
 import type { StoredDeliverable, StoredOrder } from "@/lib/order-types";
-import { readVideoCommentTimestampSec } from "@/lib/studioos/review-comment-time";
 import type { ReviewComment } from "@/lib/studioos/review-comment-types";
 import { latestSubmittedDeliverableVersion } from "@/lib/studioos/review-upload-version";
 import { formatDate } from "@/lib/utils";
@@ -359,7 +358,12 @@ function ReviewerTimestampWorkspaceInner({
 
       const result = await requestReviewRevisionAction(fd);
       if (!result.ok) {
-        if ("paymentRequired" in result && result.paymentRequired) {
+        if (
+          "paymentRequired" in result &&
+          result.paymentRequired &&
+          "paymentUrl" in result &&
+          typeof result.paymentUrl === "string"
+        ) {
           router.push(result.paymentUrl);
           return;
         }

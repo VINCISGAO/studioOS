@@ -30,7 +30,7 @@ export function BrandPaymentDeadlineNotice({
       setRemaining(formatBrandPaymentDeadlineRemaining(order, locale));
     }, 30_000);
     return () => window.clearInterval(timer);
-  }, [locale, order.created_at]);
+  }, [locale, order]);
 
   return (
     <div

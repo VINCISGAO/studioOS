@@ -3,7 +3,6 @@ import { hasSupabaseConfig } from "@/lib/auth-config";
 import { preferDemoAuth } from "@/lib/can-persist-local-store";
 import { setDemoSession } from "@/lib/demo-auth-server";
 import {
-  demoRedirectForRole,
   DEMO_PASSWORD,
   DEMO_USERS,
   type DemoUser
@@ -22,7 +21,7 @@ import {
 } from "@/lib/studioos/creator-settings-service";
 import { creators } from "@/lib/data";
 import { getCreatorById } from "@/lib/creator-service";
-import { withLocale, type Locale } from "@/lib/i18n";
+import type { Locale } from "@/lib/i18n";
 import { createClient } from "@/lib/supabase/server";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 
@@ -243,7 +242,7 @@ export async function performSignIn(input: SignInInput): Promise<SignInResult> {
   }
 
   const supabase = await createClient();
-  const { data, error } = await supabase.auth.signInWithPassword({
+  const { error } = await supabase.auth.signInWithPassword({
     email: trimmedEmail,
     password: trimmedPassword
   });

@@ -85,27 +85,39 @@ export function creatorHomeDemoDateLabel(locale: Locale) {
 
 const statusLabelsZh: Record<StoredOrder["status"], string> = {
   waiting_payment: "等待品牌选择",
+  paid: "已付款",
   in_production: "制作中",
   review: "审核中",
   revision: "修改中",
+  ready_for_completion: "待确认完成",
+  settling: "结算中",
+  dispute: "争议中",
   completed: "已完成",
   cancelled: "已取消"
 };
 
 const statusLabelsEn: Record<StoredOrder["status"], string> = {
   waiting_payment: "Awaiting brand",
+  paid: "Paid",
   in_production: "In production",
   review: "In review",
   revision: "Revision",
+  ready_for_completion: "Ready to complete",
+  settling: "Settling",
+  dispute: "Dispute",
   completed: "Completed",
   cancelled: "Cancelled"
 };
 
 const statusToneForOrder: Record<StoredOrder["status"], CreatorProjectStatusTone> = {
   waiting_payment: "amber",
+  paid: "amber",
   in_production: "blue",
   review: "violet",
   revision: "violet",
+  ready_for_completion: "emerald",
+  settling: "emerald",
+  dispute: "amber",
   completed: "emerald",
   cancelled: "zinc"
 };

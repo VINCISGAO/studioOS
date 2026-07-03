@@ -11,7 +11,9 @@ import { enforceBrandPaymentDeadlineForProject } from "@/lib/studioos/brand-paym
 import { isBrandAwaitingPayment, resolveBrandCommercialStep } from "@/lib/studioos/commercial-lifecycle";
 import { listAcceptedInvitationsForProject, listInvitationsForProject } from "@/lib/studioos/creator-invitation-store";
 import { countUnreadBrandNotifications } from "@/lib/studioos/brand-notification-service";
+import { getAiMatchReportStatisticsForProject } from "@/lib/studioos/ai-match-report-statistics";
 import { listReviewComments } from "@/lib/studioos/review-store";
+import { isReviewCommentUnresolved } from "@/lib/studioos/review-comment-status";
 
 type HubTab = "brief" | "match" | "proposal" | "production" | "review";
 
@@ -75,6 +77,7 @@ export default async function BrandProjectHubPage({
   const projectInvitations = await listInvitationsForProject(id);
   const acceptedInvitations = await listAcceptedInvitationsForProject(id);
   const notificationCount = clientEmail ? await countUnreadBrandNotifications(clientEmail) : 0;
+  const aiMatchStatistics = await getAiMatchReportStatisticsForProject(id);
   const brandCommercialStep = resolveBrandCommercialStep({
     project,
     order: linkedOrder,
@@ -110,6 +113,7 @@ export default async function BrandProjectHubPage({
         projectInvitations={projectInvitations}
         brandCommercialStep={brandCommercialStep}
         notificationCount={notificationCount}
+        aiMatchStatistics={aiMatchStatistics}
       />
     </div>
   );

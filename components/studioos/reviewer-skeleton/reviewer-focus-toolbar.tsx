@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { ComponentType } from "react";
+import type { ComponentType, SVGProps } from "react";
 import {
   ArrowUpRight,
   CircleSlash2,
@@ -25,7 +25,7 @@ import { cn } from "@/lib/utils";
 
 const DRAW_TOOLS: Array<{
   key: ReviewerTool;
-  icon: ComponentType<{ className?: string }>;
+  icon: ComponentType<SVGProps<SVGSVGElement>>;
   label: { zh: string; en: string };
 }> = [
   { key: "select", icon: MousePointer2, label: { zh: "标注", en: "Annotate" } },
@@ -130,7 +130,7 @@ export function ReviewerFocusToolbar({
     onClick,
     compact = false
   }: {
-    icon: ComponentType<{ className?: string }>;
+    icon: ComponentType<SVGProps<SVGSVGElement>>;
     label: string;
     onClick: () => void;
     compact?: boolean;

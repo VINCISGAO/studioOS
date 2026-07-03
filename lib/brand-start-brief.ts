@@ -1,8 +1,7 @@
 import { randomBytes } from "crypto";
 import { cookies } from "next/headers";
 import {
-  resolveBrandBriefEmailFromCookieValues,
-  resolveBrandBriefStartFromRequestCookies
+  resolveBrandBriefEmailFromCookieValues
 } from "@/lib/brand-brief-session";
 import { DEMO_SESSION_COOKIE, VISITOR_COOKIE } from "@/lib/auth-config";
 import { DEMO_USERS } from "@/lib/demo-auth";

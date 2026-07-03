@@ -59,16 +59,22 @@ async function main() {
     detail: creator ? "Nova ready" : "missing"
   });
 
-  const campaign = await prisma.campaign.findFirst({
-    where: { title: "Summer Glow Campaign" },
-    include: { versions: true }
-  });
-  const campaignOk = !campaign || campaign.versions.length >= 3;
+  const campaigns = await prisma.$queryRaw<{ id: string }[]>`
+    SELECT id FROM campaigns WHERE title = 'Summer Glow Campaign' LIMIT 1
+  `;
+  const campaign = campaigns[0] ?? null;
+  const versionCount = campaign
+    ? await prisma.$queryRaw<{ count: bigint }[]>`
+        SELECT COUNT(*)::bigint AS count FROM campaign_versions WHERE campaign_id = ${campaign.id}
+      `
+    : [];
+  const campaignVersions = Number(versionCount[0]?.count ?? 0);
+  const campaignOk = !campaign || campaignVersions >= 3;
   checks.push({
     name: "seed.campaign",
     ok: campaignOk,
     detail: campaign
-      ? `${campaign.versions.length} versions`
+      ? `${campaignVersions} versions`
       : "optional demo campaign absent (OK after reset:demo-accounts)"
   });
 

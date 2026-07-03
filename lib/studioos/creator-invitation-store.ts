@@ -5,9 +5,11 @@ import { invitationService } from "@/features/matching/invitation.service";
 import { resolveCreatorProfileIdForLegacyId } from "@/features/matching/invitation-creator-bridge";
 import { campaignRepository } from "@/features/campaign/campaign.repository";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
+import { isMissingPrismaMigrationError } from "@/lib/core/database/prisma-migration-errors";
+import { logger } from "@/lib/core/logger";
 import { createSerializedStoreReader, writeJsonFileAtomic } from "@/lib/json-file-store";
 import { listCreatorsForMatching } from "@/lib/creator-service";
-import { dataStorePath, readDataJson, writeDataJson } from "@/lib/serverless-store";
+import { dataStorePath, readDataJson } from "@/lib/serverless-store";
 import type { InvitationLifecycleStatus } from "@/lib/studioos/campaign-closed-loop";
 import { setupBrandCheckout } from "@/lib/studioos/brand-checkout-service";
 import type { StoredCreatorInvitation } from "@/lib/studioos/creator-invitation-types";
@@ -20,6 +22,7 @@ import type { StoredProject } from "@/lib/project-types";
 import { getWorksForCreator } from "@/lib/works-catalog";
 import { matchCreatorsForProjectWithDemoFallback } from "@/lib/matching-engine";
 import { parseBudgetMidpoint } from "@/lib/studioos/brand-checkout-utils";
+import type { InvitationDeclineFeedback } from "@/features/matching/invitation-decline-feedback";
 
 export type { StoredCreatorInvitation } from "@/lib/studioos/creator-invitation-types";
 export {
@@ -50,23 +53,53 @@ async function writeStore(store: CreatorInvitationStore) {
 
 export async function listInvitationsForCreator(creatorId: string): Promise<CreatorPortalInvitationView[]> {
   if (hasDatabaseUrl()) {
-    const profileId = await resolveCreatorProfileIdForLegacyId(creatorId);
-    if (profileId) {
-      return invitationService.listForLegacyCreator(creatorId);
+    try {
+      const profileId = await resolveCreatorProfileIdForLegacyId(creatorId);
+      if (profileId) {
+        return await invitationService.listForLegacyCreator(creatorId);
+      }
+    } catch (error) {
+      if (!isMissingPrismaMigrationError(error)) throw error;
+      logger.error("Prisma invitation schema is not migrated; falling back to legacy creator invitations", {
+        service: "creator-invitation-store",
+        creatorId
+      });
     }
   }
 
   const store = await readStore();
   return store.invitations
     .filter((item) => item.creatorId === creatorId)
-    .map(({ creatorId: _creatorId, projectId: _projectId, brandEmail: _brandEmail, ...view }) => view);
+    .map((item) => ({
+      id: item.id,
+      campaignId: item.campaignId,
+      title: item.title,
+      brandName: item.brandName,
+      budget: item.budget,
+      currency: item.currency,
+      deadline: item.deadline,
+      platform: item.platform,
+      matchScore: item.matchScore,
+      status: item.status,
+      expiresAt: item.expiresAt,
+      createdAt: item.createdAt,
+      ...(item.declineFeedback ? { declineFeedback: item.declineFeedback } : {})
+    }));
 }
 
 export async function listAcceptedInvitationsForProject(projectId: string) {
   if (hasDatabaseUrl()) {
-    const campaign = await campaignRepository.findByLegacyProjectId(projectId);
-    if (campaign) {
-      return invitationService.listAcceptedForLegacyProject(projectId);
+    try {
+      const campaign = await campaignRepository.findByLegacyProjectId(projectId);
+      if (campaign) {
+        return await invitationService.listAcceptedForLegacyProject(projectId);
+      }
+    } catch (error) {
+      if (!isMissingPrismaMigrationError(error)) throw error;
+      logger.error("Prisma invitation schema is not migrated; falling back to legacy accepted invitations", {
+        service: "creator-invitation-store",
+        projectId
+      });
     }
   }
 
@@ -78,9 +111,17 @@ export async function listAcceptedInvitationsForProject(projectId: string) {
 
 export async function listInvitationsForProject(projectId: string) {
   if (hasDatabaseUrl()) {
-    const campaign = await campaignRepository.findByLegacyProjectId(projectId);
-    if (campaign) {
-      return invitationService.listForLegacyProject(projectId);
+    try {
+      const campaign = await campaignRepository.findByLegacyProjectId(projectId);
+      if (campaign) {
+        return await invitationService.listForLegacyProject(projectId);
+      }
+    } catch (error) {
+      if (!isMissingPrismaMigrationError(error)) throw error;
+      logger.error("Prisma invitation schema is not migrated; falling back to legacy project invitations", {
+        service: "creator-invitation-store",
+        projectId
+      });
     }
   }
 
@@ -90,9 +131,17 @@ export async function listInvitationsForProject(projectId: string) {
 
 export async function getInvitationById(id: string) {
   if (hasDatabaseUrl()) {
-    const prismaInvitation = await invitationService.getPortalInvitationById(id);
-    if (prismaInvitation) {
-      return prismaInvitation;
+    try {
+      const prismaInvitation = await invitationService.getPortalInvitationById(id);
+      if (prismaInvitation) {
+        return prismaInvitation;
+      }
+    } catch (error) {
+      if (!isMissingPrismaMigrationError(error)) throw error;
+      logger.error("Prisma invitation schema is not migrated; falling back to legacy invitation lookup", {
+        service: "creator-invitation-store",
+        invitationId: id
+      });
     }
   }
 
@@ -123,11 +172,16 @@ export async function acceptInvitation(id: string, creatorId: string, locale: "e
   return { ok: true as const, invitation: item };
 }
 
-export async function declineInvitation(id: string, creatorId: string, locale: "en" | "zh" = "en") {
+export async function declineInvitation(
+  id: string,
+  creatorId: string,
+  locale: "en" | "zh" = "en",
+  feedback: InvitationDeclineFeedback
+) {
   if (hasDatabaseUrl()) {
     const profileId = await resolveCreatorProfileIdForLegacyId(creatorId);
     if (profileId) {
-      return invitationService.declineForLegacyCreator(id, creatorId, locale);
+      return invitationService.declineForLegacyCreator(id, creatorId, locale, feedback);
     }
   }
 
@@ -142,6 +196,7 @@ export async function declineInvitation(id: string, creatorId: string, locale: "
   }
 
   item.status = "declined";
+  item.declineFeedback = feedback;
   await writeStore(store);
   return { ok: true as const, invitation: item };
 }
@@ -228,9 +283,17 @@ export async function selectCreatorForProject(input: {
 
 export async function ensureCampaignInvitationsForProject(project: StoredProject, locale: "en" | "zh" = "en") {
   if (hasDatabaseUrl()) {
-    const campaign = await campaignRepository.findByLegacyProjectId(project.id);
-    if (campaign) {
-      return invitationService.ensureForProject(project, locale);
+    try {
+      const campaign = await campaignRepository.findByLegacyProjectId(project.id);
+      if (campaign) {
+        return await invitationService.ensureForProject(project, locale);
+      }
+    } catch (error) {
+      if (!isMissingPrismaMigrationError(error)) throw error;
+      logger.error("Prisma invitation schema is not migrated; falling back to legacy invitation creation", {
+        service: "creator-invitation-store",
+        projectId: project.id
+      });
     }
   }
 

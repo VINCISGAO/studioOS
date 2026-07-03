@@ -10,7 +10,6 @@ import { tCertified } from "@/lib/studioos/deposit-copy";
 import { tCertificationExperience } from "@/lib/studioos/certification-experience-copy";
 import { CertificationBenefitCard } from "@/components/studioos/certification/certified-partner-badge";
 import type { CreatorDepositSnapshot } from "@/lib/studioos/deposit-types";
-import { creatorPortalRoutes } from "@/lib/studioos/creator-portal-routes";
 import { formatCurrency } from "@/lib/utils";
 
 type Props = {

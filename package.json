@@ -72,7 +72,7 @@
     "e2e": "playwright test",
     "e2e:ui": "playwright test --ui",
     "verify:local": "bash scripts/verify-local.sh",
-    "payment:verify": "tsx -r ./scripts/helpers/load-env.cjs scripts/payment-collection-verify.ts",
+    "payment:verify": "tsx -r ./scripts/helpers/register-verify-runtime.cjs scripts/payment-collection-verify.ts",
     "production:verify": "tsx -r ./scripts/helpers/load-env.cjs scripts/production-ready-verify.ts",
     "happy-path:verify": "STUDIOOS_SCRIPT_RUNTIME=verify tsx -r ./scripts/helpers/register-verify-runtime.cjs scripts/happy-path-transaction-verify.ts",
     "membership-ui:verify": "tsx scripts/membership-ui-verify.ts",

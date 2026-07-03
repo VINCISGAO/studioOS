@@ -387,7 +387,7 @@ export class ReviewPortalService {
       campaignId: campaign.id,
       versionId: version.id,
       userId: profile.userId,
-      timeSeconds: parent.timeSeconds,
+      timeSeconds: Number(parent.timeSeconds),
       comment: input.body.trim()
     });
 

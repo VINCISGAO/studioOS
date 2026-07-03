@@ -9,6 +9,7 @@ import {
   resolveReviewCommentAction
 } from "@/app/review-actions";
 import { Button } from "@/components/ui/button";
+import { isReviewCommentUnresolved } from "@/lib/studioos/review-comment-status";
 import type { Locale } from "@/lib/i18n";
 import type { ReviewComment } from "@/lib/studioos/review-comment-types";
 import { formatTimestamp } from "@/lib/studioos/review-utils";
@@ -187,7 +188,7 @@ export function ReviewCenterCommentPanel({
                   </div>
                 </button>
                 <div className="mt-3 flex items-center gap-2 pl-9">
-                  {role === "creator" && comment.status === "open" ? (
+                  {role === "creator" && isReviewCommentUnresolved(comment.status) ? (
                     <Button
                       type="button"
                       size="sm"

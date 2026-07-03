@@ -220,7 +220,6 @@ export function PortfolioWorkCard({
     labels: { hide: string; show: string; delete: string; hidden: string };
   };
 }) {
-  const t = cardCopy[locale];
   const poster = resolveWorkThumbnail(work.video_url, work.thumbnail_url);
   const platformLabel = labelPlatform(work.platform, locale);
   const deliveryDate = formatDeliveryDate(work.created_at, locale);

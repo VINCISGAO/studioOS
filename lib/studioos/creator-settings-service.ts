@@ -1,6 +1,8 @@
 import { randomBytes } from "node:crypto";
 import { DEMO_PASSWORD, DEMO_USERS } from "@/lib/demo-auth";
 import { getCreatorIdForDemoEmail } from "@/lib/creator-session";
+import { resolveCreatorProfileIdForLegacyId } from "@/features/matching/invitation-creator-bridge";
+import { hasDatabaseUrl, prisma } from "@/lib/core/database/prisma";
 import type { Creator } from "@/lib/types";
 import type { Locale } from "@/lib/i18n";
 import {
@@ -95,6 +97,8 @@ function defaultSettings(creatorId: string, creator: Creator): StoredCreatorSett
     notifications: { email: true, in_app: true, marketing: false },
     timezone: defaultTimezone(creator),
     currency: "USD",
+    min_accept_budget_usd: null,
+    ideal_budget_usd: null,
     preferred_locale: "en",
     auto_accept_briefs: false,
     api_keys: [],
@@ -244,6 +248,10 @@ export async function getCreatorSettingsViewModel(
       login_alerts: true,
       suspicious_login_block: true,
       recovery_email: null
+    },
+    pricing: {
+      min_accept_budget_usd: settings.min_accept_budget_usd ?? null,
+      ideal_budget_usd: settings.ideal_budget_usd ?? null
     }
   };
 }
@@ -329,6 +337,42 @@ export async function updateCreatorPhone(creatorId: string, creator: Creator, ph
     ...current,
     phone: trimmed
   }));
+  return { ok: true as const };
+}
+
+export async function updateCreatorPricingPreference(
+  creatorId: string,
+  creator: Creator,
+  input: { minAcceptBudgetUsd: number | null; idealBudgetUsd: number | null }
+) {
+  if (input.minAcceptBudgetUsd !== null && input.minAcceptBudgetUsd < 1) {
+    return { ok: false as const, error: "invalid-min-budget" };
+  }
+  if (
+    input.idealBudgetUsd !== null &&
+    input.minAcceptBudgetUsd !== null &&
+    input.idealBudgetUsd < input.minAcceptBudgetUsd
+  ) {
+    return { ok: false as const, error: "ideal-below-min" };
+  }
+
+  await updateSettings(creatorId, creator, (current) => ({
+    ...current,
+    min_accept_budget_usd: input.minAcceptBudgetUsd,
+    ideal_budget_usd: input.idealBudgetUsd
+  }));
+  if (hasDatabaseUrl()) {
+    const profileId = await resolveCreatorProfileIdForLegacyId(creatorId);
+    if (profileId) {
+      await prisma.creatorProfile.update({
+        where: { id: profileId },
+        data: {
+          minBudget: input.minAcceptBudgetUsd,
+          maxBudget: input.idealBudgetUsd
+        }
+      });
+    }
+  }
   return { ok: true as const };
 }
 

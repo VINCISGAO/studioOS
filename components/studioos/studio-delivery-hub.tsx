@@ -23,7 +23,7 @@ import type { StoredDeliverable, StoredOrder } from "@/lib/order-types";
 import type { QualityReport } from "@/lib/studioos/quality-types";
 import type { ReviewComment } from "@/lib/studioos/review-comment-types";
 import { deliverableNotesForViewer } from "@/lib/studioos/deliverable-notes";
-import { cn, formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency, formatDate } from "@/lib/utils";
 import {
   ArrowRight,
   ChevronRight,
@@ -155,10 +155,6 @@ function reviewStatusLabel(
   if (hasVersions) return t.reviewReady;
   if (status === "waiting_payment") return t.waitingPayment;
   return t.noVersion;
-}
-
-function sessionIdFromOrder(orderId: string) {
-  return orderId.replace(/[^a-z0-9]/gi, "").slice(-6).toUpperCase() || "A2F83K";
 }
 
 function daysUntil(deadline: string | null) {

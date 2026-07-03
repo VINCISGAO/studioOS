@@ -199,6 +199,7 @@ export function ReviewerReviewLayout({
   onUnlockPaidRevision?: () => void;
   unlockPending?: boolean;
 }) {
+  void versionReadyState;
   const isFocus = shell === "focus";
   const focusDark = focusTheme === "dark";
   const latestSubmittedVersion = latestSubmittedDeliverableVersion(sortedVersions);

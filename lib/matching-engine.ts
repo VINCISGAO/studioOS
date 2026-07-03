@@ -5,6 +5,12 @@ import { projectBudgetMatchesCreatorMin } from "@/lib/studioos/creator-price-pre
 
 const ACTIVE_CREATOR_STATUSES = new Set(["active", "approved"]);
 
+export type CreatorLearningMatchMemory = {
+  minAcceptBudgetUsd?: number | null;
+  budgetDeclines?: number;
+  declineTotal?: number;
+};
+
 function normalize(value: string) {
   return value.trim().toLowerCase();
 }
@@ -41,7 +47,10 @@ function scoreCreatorForProject(
   project: StoredProject,
   creator: Creator,
   works: CreatorWork[],
-  studioPerformanceLift?: Map<string, number>
+  options?: {
+    studioPerformanceLift?: Map<string, number>;
+    creatorLearningMemory?: Map<string, CreatorLearningMatchMemory>;
+  }
 ): CreatorMatch | null {
   if (!ACTIVE_CREATOR_STATUSES.has(creator.status)) {
     return null;
@@ -55,7 +64,9 @@ function scoreCreatorForProject(
     return null;
   }
 
-  if (!projectBudgetMatchesCreatorMin(project.budget_range, creator.min_project_budget_usd)) {
+  const learningMemory = options?.creatorLearningMemory?.get(creator.id);
+  const effectiveMinBudget = learningMemory?.minAcceptBudgetUsd ?? creator.min_project_budget_usd;
+  if (!projectBudgetMatchesCreatorMin(project.budget_range, effectiveMinBudget)) {
     return null;
   }
 
@@ -173,7 +184,19 @@ function scoreCreatorForProject(
     score += AI_MATCHING_WEIGHTS.activeStatusBonus;
   }
 
-  const lift = studioPerformanceLift?.get(creator.id);
+  const learningPenalty = Math.min(
+    12,
+    Math.round((learningMemory?.budgetDeclines ?? 0) * 2 + (learningMemory?.declineTotal ?? 0) * 0.5)
+  );
+  if (learningPenalty > 0) {
+    score -= learningPenalty;
+    reasons.push({
+      en: `AI memory learned recent decline friction -${learningPenalty}`,
+      zh: `AI 记忆识别近期拒绝摩擦 -${learningPenalty}`
+    });
+  }
+
+  const lift = options?.studioPerformanceLift?.get(creator.id);
   if (lift && lift >= AI_MATCHING_WEIGHTS.performanceLiftThreshold) {
     score += Math.min(
       AI_MATCHING_WEIGHTS.performanceLiftMax,
@@ -203,7 +226,7 @@ function scoreCreatorForProject(
 
   return {
     creator_id: creator.id,
-    score: Math.min(AI_MATCHING_WEIGHTS.scoreCap, score),
+    score: Math.max(0, Math.min(AI_MATCHING_WEIGHTS.scoreCap, score)),
     reasons,
     matched_work_ids: matchedWorks
   };
@@ -226,7 +249,10 @@ export function matchCreatorsForProjectWithDemoFallback(
   project: StoredProject,
   creators: Creator[],
   works: CreatorWork[],
-  options?: { studioPerformanceLift?: Map<string, number> }
+  options?: {
+    studioPerformanceLift?: Map<string, number>;
+    creatorLearningMemory?: Map<string, CreatorLearningMatchMemory>;
+  }
 ): CreatorMatch[] {
   const matches = matchCreatorsForProject(project, creators, works, options);
   if (matches.length) {
@@ -245,11 +271,14 @@ export function matchCreatorsForProject(
   project: StoredProject,
   creators: Creator[],
   works: CreatorWork[],
-  options?: { studioPerformanceLift?: Map<string, number> }
+  options?: {
+    studioPerformanceLift?: Map<string, number>;
+    creatorLearningMemory?: Map<string, CreatorLearningMatchMemory>;
+  }
 ): CreatorMatch[] {
   return creators
     .map((creator) =>
-      scoreCreatorForProject(project, creator, works, options?.studioPerformanceLift)
+      scoreCreatorForProject(project, creator, works, options)
     )
     .filter((item): item is CreatorMatch => Boolean(item))
     .sort((a, b) => b.score - a.score);

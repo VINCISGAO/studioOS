@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { CalendarDays } from "lucide-react";
+import { CreatorAiMatchHealthCard } from "@/components/studioos/creator-ai-match-health-card";
 import { CreatorHomeBottomPanels } from "@/components/studioos/creator-home-bottom-panels";
 import { CreatorHomeProjectsSection } from "@/components/studioos/creator-home-projects-section";
 import { CreatorHomeStatCards } from "@/components/studioos/creator-home-stat-cards";
@@ -17,6 +17,7 @@ import type {
   CreatorPendingTaskCard,
   CreatorPhaseCount
 } from "@/lib/studioos/creator-home-ui";
+import type { CreatorAiMatchHealth } from "@/lib/studioos/creator-ai-match-health";
 import { creatorHomeDemoDateLabel } from "@/lib/studioos/creator-home-ui";
 import { creatorPortalRoutes } from "@/lib/studioos/creator-portal-routes";
 
@@ -65,6 +66,7 @@ export function CreatorHomeDashboard({
   projects,
   phases,
   messages,
+  aiMatchHealth,
   useDemoDate = false
 }: {
   locale: Locale;
@@ -74,14 +76,15 @@ export function CreatorHomeDashboard({
   projects: CreatorHomeProjectRow[];
   phases: CreatorPhaseCount;
   messages: CreatorHomeMessageRow[];
+  aiMatchHealth: CreatorAiMatchHealth;
   useDemoDate?: boolean;
 }) {
   const t = copy[locale];
-  const today = new Date();
   const dateLabel = useMemo(() => {
     if (useDemoDate) {
       return creatorHomeDemoDateLabel(locale);
     }
+    const today = new Date();
     return locale === "zh"
       ? `今天是 ${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日，${["日", "一", "二", "三", "四", "五", "六"][today.getDay()]}`
       : today.toLocaleDateString("en-US", {
@@ -90,7 +93,7 @@ export function CreatorHomeDashboard({
           month: "long",
           day: "numeric"
         });
-  }, [locale, today, useDemoDate]);
+  }, [locale, useDemoDate]);
 
   return (
     <div className="space-y-6">
@@ -118,6 +121,8 @@ export function CreatorHomeDashboard({
         }}
         stats={stats}
       />
+
+      <CreatorAiMatchHealthCard health={aiMatchHealth} />
 
       <CreatorHomeTodayTasks
         title={t.todayTasks}

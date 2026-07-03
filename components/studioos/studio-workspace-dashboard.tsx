@@ -172,7 +172,6 @@ export function StudioWorkspaceDashboard({
   locale,
   creator,
   orders,
-  notifications: _notifications = [],
   stats
 }: {
   locale: Locale;

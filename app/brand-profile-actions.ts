@@ -114,6 +114,7 @@ export async function polishBrandProfileAction(formData: FormData) {
 }
 
 export async function syncBrandShowcaseAction(formData: FormData) {
+  void formData;
   const email = await requireBrandEmail();
   const profile = await syncBrandShowcaseFromOrders(email);
   revalidatePath("/brand/profile");

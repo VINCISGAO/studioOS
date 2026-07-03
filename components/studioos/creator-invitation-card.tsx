@@ -3,13 +3,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { BadgeCheck, Calendar, Check, Clock, Sparkles, Tag, Wallet, X } from "lucide-react";
 import {
   acceptDemoInvitationAction,
   declineDemoInvitationAction
 } from "@/app/creator-invitation-actions";
 import { Button } from "@/components/ui/button";
+import { CreatorInvitationDeclineDialog } from "@/components/studioos/creator-invitation-decline-dialog";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import { invitationStatusLabel } from "@/lib/studioos/campaign-closed-loop";
@@ -79,14 +80,20 @@ function CardActions({
   const t = copy[locale];
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [declineOpen, setDeclineOpen] = useState(false);
   const isActing = actingId === invitation.id || isPending;
   const status = invitation.status === "not_selected" ? "expired" : invitation.status;
 
-  function runAction(action: "accept" | "decline") {
+  function runAction(action: "accept" | "decline", declineFeedback?: FormData) {
     onActing(invitation.id);
     const formData = new FormData();
     formData.set("lang", locale);
     formData.set("invitationId", invitation.id);
+    if (declineFeedback) {
+      for (const [key, value] of declineFeedback.entries()) {
+        formData.append(key, value);
+      }
+    }
 
     startTransition(async () => {
       const result =
@@ -95,6 +102,7 @@ function CardActions({
           : await declineDemoInvitationAction(formData);
 
       if (result.ok) {
+        setDeclineOpen(false);
         onRespond(result.nextTab);
         router.refresh();
         return;
@@ -179,12 +187,19 @@ function CardActions({
         variant="outline"
         size="sm"
         disabled={isActing}
-        onClick={() => runAction("decline")}
+        onClick={() => setDeclineOpen(true)}
         className={cn("h-10 w-full rounded-xl border-zinc-300 bg-white text-zinc-900", isActing && mutedActionClass)}
       >
         <X className="h-4 w-4" />
         {t.decline}
       </Button>
+      <CreatorInvitationDeclineDialog
+        locale={locale}
+        open={declineOpen}
+        pending={isActing}
+        onOpenChange={setDeclineOpen}
+        onSubmit={(feedback) => runAction("decline", feedback)}
+      />
       <p className="text-xs leading-relaxed text-zinc-500">{t.acceptHint}</p>
     </div>
   );

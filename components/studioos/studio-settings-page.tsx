@@ -12,6 +12,7 @@ import {
   updatePhoneAction,
   updateSecurityPrefsAction
 } from "@/app/studio-settings-actions";
+import { CreatorPricingPreferenceCard } from "@/components/studioos/creator-pricing-preference-card";
 import { StudioSettingsBoard } from "@/components/studioos/studio-settings/studio-settings-board";
 import { StudioSettingsDialogs } from "@/components/studioos/studio-settings/studio-settings-dialogs";
 import type { Locale } from "@/lib/i18n";
@@ -241,6 +242,8 @@ export function StudioSettingsPage({
           setRecoveryDialog(true);
         }}
       />
+
+      <CreatorPricingPreferenceCard locale={locale} settings={settings} />
 
       <StudioSettingsDialogs
         locale={locale}

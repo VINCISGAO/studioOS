@@ -13,7 +13,7 @@ import { ReviewerV1PlayerStage } from "@/components/studioos/reviewer-v1/reviewe
 import { ReviewerV1Timeline } from "@/components/studioos/reviewer-v1/reviewer-v1-timeline";
 import { ReviewerV1CommentsPanel } from "@/components/studioos/reviewer-v1/reviewer-v1-comments-panel";
 import { ReviewerV1VersionDock } from "@/components/studioos/reviewer-v1/reviewer-v1-version-dock";
-import { annotationFromComment, type ReviewerAnnotationShape, type ReviewerWorkspaceProps } from "@/components/studioos/reviewer-v1/reviewer-v1-types";
+import { annotationFromComment, type ReviewerAnnotationShape, type ReviewerTool, type ReviewerWorkspaceProps } from "@/components/studioos/reviewer-v1/reviewer-v1-types";
 import { serializeAnnotations } from "@/components/studioos/reviewer-v1/reviewer-v1-serialize";
 import { useReviewerPlayback } from "@/components/studioos/reviewer-v1/reviewer-v1-use-playback";
 import { useReviewerPlaybackKeyboard } from "@/components/studioos/reviewer-skeleton/use-reviewer-playback-keyboard";
@@ -43,7 +43,7 @@ export function ReviewerV1Workspace({
   const [activeVersion, setActiveVersion] = useState(
     initialVersion || deliverables[deliverables.length - 1]?.version || 1
   );
-  const [activeTool, setActiveTool] = useState<"select" | "pen" | "arrow" | "rect" | "circle" | "text" | "delete">("select");
+  const [activeTool, setActiveTool] = useState<ReviewerTool>("select");
   const [penColor, setPenColor] = useState("#FF4D4F");
   const [penSize, setPenSize] = useState(2);
   const [pendingAnnotations, setPendingAnnotations] = useState<ReviewerAnnotationShape[]>([]);

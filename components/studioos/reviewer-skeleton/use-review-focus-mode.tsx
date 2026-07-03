@@ -117,6 +117,7 @@ export function useReviewFocusMode() {
 }
 
 export function usePortalReviewFocus(_searchFallback = "") {
+  void _searchFallback;
   const { isReviewWorkspace, isFocusMode } = useReviewFocusModeContext();
   return { isReviewWorkspace, isFocusMode };
 }

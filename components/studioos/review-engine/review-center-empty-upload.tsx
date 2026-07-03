@@ -68,7 +68,7 @@ export function ReviewCenterEmptyUpload({
       if (file.size > MAX_DELIVERABLE_VIDEO_BYTES) return t.tooLarge(limitLabel);
       return null;
     },
-    [limitLabel, t.invalidType, t.tooLarge]
+    [limitLabel, t]
   );
 
   const applyFile = useCallback(

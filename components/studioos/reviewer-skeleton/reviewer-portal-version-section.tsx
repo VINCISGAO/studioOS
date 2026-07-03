@@ -629,7 +629,7 @@ export function ReviewerPortalVersionSection({
       <div className="min-w-0 overflow-hidden px-1 sm:px-2">
         <h3 className="mb-4 text-sm font-semibold text-zinc-900">{t.versionFlow}</h3>
         <ol className="relative grid min-w-0 grid-cols-5 gap-0 before:absolute before:left-[10%] before:right-[10%] before:top-4 before:h-px before:bg-zinc-200 before:content-[''] sm:before:top-[1.125rem]">
-          {slots.map((versionNumber, index) => {
+          {slots.map((versionNumber) => {
             const item = versionByNumber.get(versionNumber);
             const isSubmitted = Boolean(item && !isUnsubmittedDeliverable(item));
             const isApprovedFinal =

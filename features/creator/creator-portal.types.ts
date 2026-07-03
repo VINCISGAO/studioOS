@@ -1,3 +1,5 @@
+import type { InvitationDeclineFeedback } from "@/features/matching/invitation-decline-feedback";
+
 export type CreatorPortalInvitationView = {
   id: string;
   campaignId: string;
@@ -11,6 +13,7 @@ export type CreatorPortalInvitationView = {
   status: string;
   expiresAt: string | null;
   createdAt: string;
+  declineFeedback?: InvitationDeclineFeedback;
 };
 
 export type CreatorPortalCampaignView = {

@@ -41,7 +41,6 @@ import { cn } from "@/lib/utils";
 import {
   ArrowLeft,
   ArrowRight,
-  ChevronDown,
   Link2,
   Loader2,
   Rocket,
@@ -165,7 +164,6 @@ export function ProjectWizard({
   const [step, setStep] = useState(clampWizardStep(migrateLegacyProjectWizardStep(initialStep)));
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState(initialData);
-  const [showMore, setShowMore] = useState(false);
   const [analysisStarted, setAnalysisStarted] = useState(false);
 
   const projectId = data.project?.id;

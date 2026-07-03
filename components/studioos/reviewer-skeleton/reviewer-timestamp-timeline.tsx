@@ -35,6 +35,7 @@ export function ReviewerTimestampTimeline({
   onSeek: (sec: number) => void;
   onSelectComment: (comment: ReviewComment) => void;
 }) {
+  void compact;
   const markers = reviewCommentsToTimelineMarkers(comments);
 
   return (

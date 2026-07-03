@@ -5,7 +5,6 @@ import {
   CheckCircle2,
   CircleDollarSign,
   Clapperboard,
-  Clock,
   FileText,
   Layers,
   Play,
@@ -32,10 +31,11 @@ import {
   type BrandCommercialStep
 } from "@/lib/studioos/commercial-lifecycle";
 import type { ReviewComment } from "@/lib/studioos/review-store";
+import type { AiMatchReportStatistics } from "@/lib/studioos/ai-match-report";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
 import type { StoredCreatorInvitation } from "@/lib/studioos/creator-invitation-types";
 import type { CampaignProjectStatus } from "@/lib/studioos/project-status";
-import { cn, formatDate } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 type HubTab = "brief" | "match" | "proposal" | "production" | "review";
 
@@ -280,7 +280,8 @@ export function BrandProjectHub({
   acceptedInvitations = [],
   projectInvitations = [],
   brandCommercialStep,
-  notificationCount = 0
+  notificationCount = 0,
+  aiMatchStatistics
 }: {
   locale: Locale;
   project: StoredProject;
@@ -292,6 +293,7 @@ export function BrandProjectHub({
   projectInvitations?: StoredCreatorInvitation[];
   brandCommercialStep: BrandCommercialStep;
   notificationCount?: number;
+  aiMatchStatistics?: AiMatchReportStatistics | null;
 }) {
   const t = copy[locale];
   const status = project.status;
@@ -393,6 +395,7 @@ export function BrandProjectHub({
               initialAccepted={acceptedInvitations}
               notificationCount={notificationCount}
               projectBudgetRange={project.budget_range}
+              aiMatchStatistics={aiMatchStatistics}
             />
           </div>
         ) : null}

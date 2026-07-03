@@ -55,6 +55,8 @@ export type StoredCreatorSettings = {
   };
   timezone: string;
   currency: string;
+  min_accept_budget_usd: number | null;
+  ideal_budget_usd: number | null;
   preferred_locale: Locale;
   auto_accept_briefs: boolean;
   api_keys: StoredApiKey[];
@@ -80,6 +82,10 @@ export type CreatorSettingsViewModel = {
   devices: LoginDevice[];
   loginHistory: LoginHistoryEntry[];
   security: StoredCreatorSettings["security"];
+  pricing: {
+    min_accept_budget_usd: number | null;
+    ideal_budget_usd: number | null;
+  };
 };
 
 export type CreatedApiKeyPayload = {

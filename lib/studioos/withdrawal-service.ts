@@ -44,7 +44,7 @@ async function readStore(): Promise<WithdrawalStore> {
     }
     return store;
   } catch {
-    const { store: seeded, changed } = ensureDemoPayoutMethods(emptyStore());
+    const { store: seeded } = ensureDemoPayoutMethods(emptyStore());
     await writeStore(seeded);
     return seeded;
   }

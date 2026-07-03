@@ -1,6 +1,7 @@
 import type { Campaign, CreatorInvitation, InvitationStatus, User } from "@prisma/client";
 import type { CreatorPortalInvitationView } from "@/features/creator/creator-portal.types";
 import type { BrandCampaignMemory } from "@/features/campaign/brand-campaign/brand-campaign.types";
+import { parseInvitationDeclineFeedback } from "@/features/matching/invitation-decline-feedback";
 import type { StoredCreatorInvitation } from "@/lib/studioos/creator-invitation-types";
 import { readProductionBrief } from "@/features/campaign/brand-campaign/brand-campaign.utils";
 
@@ -58,6 +59,9 @@ export function mapInvitationToStored(
   selection?: BrandCampaignMemory["selection"]
 ): StoredCreatorInvitation {
   const campaign = invitation.campaign;
+  const feedback = parseInvitationDeclineFeedback(
+    (invitation as { declineFeedbackJson?: unknown }).declineFeedbackJson
+  );
   const brandName =
     campaign.brand?.brandProfile?.companyName ??
     campaign.brand?.fullName ??
@@ -78,13 +82,19 @@ export function mapInvitationToStored(
     matchScore: Number(invitation.matchScore),
     status: resolvePortalInvitationStatus(invitation.status, legacyCreatorId, selection),
     expiresAt: invitation.expiresAt?.toISOString() ?? null,
-    createdAt: invitation.createdAt.toISOString()
+    createdAt: invitation.createdAt.toISOString(),
+    ...(feedback.success ? { declineFeedback: feedback.data } : {})
   };
 }
 
 export function mapInvitationToPortalView(
   stored: StoredCreatorInvitation
 ): CreatorPortalInvitationView {
-  const { creatorId: _creatorId, projectId: _projectId, brandEmail: _brandEmail, ...view } = stored;
+  const {
+    creatorId: _creatorId,
+    projectId: _projectId,
+    brandEmail: _brandEmail,
+    ...view
+  } = stored;
   return view;
 }

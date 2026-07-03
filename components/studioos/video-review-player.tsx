@@ -21,6 +21,7 @@ import type { ReviewComment } from "@/lib/studioos/review-comment-types";
 import { formatTimestamp } from "@/lib/studioos/review-utils";
 import { deliverableNotesForViewer } from "@/lib/studioos/deliverable-notes";
 import { cn } from "@/lib/utils";
+import { isReviewCommentUnresolved } from "@/lib/studioos/review-comment-status";
 import { CheckCircle2, MessageSquarePlus, Pause, Play } from "lucide-react";
 import type { ReactNode } from "react";
 
@@ -351,7 +352,7 @@ export function VideoReviewPlayer({
                 <Badge variant={comment.status === "resolved" ? "secondary" : "outline"}>
                   {comment.status === "resolved" ? copy.resolved : copy.open}
                 </Badge>
-                {role === "studio" && comment.status === "open" ? (
+                {role === "studio" && isReviewCommentUnresolved(comment.status) ? (
                   <Button
                     type="button"
                     size="sm"

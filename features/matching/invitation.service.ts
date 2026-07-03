@@ -7,6 +7,9 @@ import { campaignService } from "@/features/campaign/campaign.service";
 import { CampaignEvent, CampaignState } from "@/features/campaign/campaign.state-machine";
 import type { AuthUser } from "@/features/auth/permission.service";
 import { PermissionService } from "@/features/auth/permission.service";
+import { aiLearningEventRepository } from "@/features/ai/ai-learning-event.repository";
+import { aiLearningWorkerService } from "@/features/ai/ai-learning-worker.service";
+import type { InvitationDeclineFeedback } from "@/features/matching/invitation-decline-feedback";
 import { appError } from "@/lib/core/errors";
 import type { Locale } from "@/lib/i18n";
 import type { StoredProject } from "@/lib/project-types";
@@ -110,7 +113,7 @@ export class InvitationService {
     return serializeInvitation(updated);
   }
 
-  async decline(invitationId: string, user: AuthUser) {
+  async decline(invitationId: string, user: AuthUser, feedback: InvitationDeclineFeedback) {
     this.assertDb();
     PermissionService.assert(user, "creator.reject");
 
@@ -120,8 +123,38 @@ export class InvitationService {
       throw appError("FORBIDDEN", "Not your invitation");
     }
 
-    await invitationRepository.updateStatus(invitationId, "DECLINED");
-    return serializeInvitation(invitation);
+    if (invitation.status !== "SENT" && invitation.status !== "VIEWED") {
+      throw appError("CAMPAIGN_LOCKED", "Invitation already responded");
+    }
+
+    await invitationRepository.declineWithFeedback(invitationId, feedback);
+    const learningEvent = await aiLearningEventRepository.append({
+      eventType: "CreatorRejected",
+      entityType: "CreatorInvitation",
+      entityId: invitationId,
+      payload: {
+        campaignId: invitation.campaignId,
+        creatorProfileId: invitation.creatorId,
+        creatorUserId: invitation.creator.userId,
+        matchScore: Number(invitation.matchScore),
+        feedback
+      },
+      learningType: "Preference",
+      after: {
+        creatorProfileId: invitation.creatorId,
+        campaignId: invitation.campaignId,
+        declineReason: feedback.reason,
+        feedback
+      },
+      confidence: 0.75
+    });
+    if (learningEvent?.eventId) {
+      await aiLearningWorkerService.processEvent(learningEvent.eventId);
+    }
+
+    const updated = await invitationRepository.findById(invitationId);
+    if (!updated) throw appError("NOT_FOUND", "Invitation not found");
+    return serializeInvitation(updated);
   }
 
   // Brand portal — legacy proj_* flow (Prisma primary, JSON fallback in store)
@@ -149,8 +182,13 @@ export class InvitationService {
     return invitationPortalService.acceptForCreator(invitationId, legacyCreatorId, locale);
   }
 
-  declineForLegacyCreator(invitationId: string, legacyCreatorId: string, locale?: Locale) {
-    return invitationPortalService.declineForCreator(invitationId, legacyCreatorId, locale);
+  declineForLegacyCreator(
+    invitationId: string,
+    legacyCreatorId: string,
+    locale: Locale | undefined,
+    feedback: InvitationDeclineFeedback
+  ) {
+    return invitationPortalService.declineForCreator(invitationId, legacyCreatorId, locale, feedback);
   }
 
   selectCreatorForLegacyProject(input: {

@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { BrandStartBriefButton } from "@/components/studioos/brand-start-brief-button";
 import type { Locale } from "@/lib/i18n";
 import { LayoutGrid, Pencil, Plus, Send } from "lucide-react";

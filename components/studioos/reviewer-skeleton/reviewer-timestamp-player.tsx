@@ -87,6 +87,7 @@ export function ReviewerTimestampPlayer({
   onPause: () => void;
   onEnded: () => void;
 }) {
+  void activeVersion;
   const t = getReviewerV1Copy(locale);
   const canPlay = Boolean(videoUrl) && videoStatus !== "error";
   const [volume, setVolume] = useState(1);

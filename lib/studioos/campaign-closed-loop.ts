@@ -1,4 +1,3 @@
-import type { CreatorPortalInvitationView } from "@/features/creator/creator-portal.types";
 import type { StoredOrder } from "@/lib/order-types";
 import type { StoredProject } from "@/lib/project-types";
 import { creatorInvitationCommercialLabel } from "@/lib/studioos/commercial-lifecycle";

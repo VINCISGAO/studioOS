@@ -17,6 +17,7 @@ import {
   updateCreatorLoginEmail,
   updateCreatorPassword,
   updateCreatorPhone,
+  updateCreatorPricingPreference,
   updateCreatorSecurityPrefs
 } from "@/lib/studioos/creator-settings-service";
 
@@ -108,6 +109,31 @@ export async function updatePhoneAction(input: { lang: Locale; phone: string }) 
     return {
       ok: false as const,
       error: input.lang === "zh" ? "请输入有效手机号" : "Enter a valid phone number"
+    };
+  }
+
+  revalidateSettingsPaths();
+  return { ok: true as const };
+}
+
+export async function updatePricingPreferenceAction(input: {
+  lang: Locale;
+  minAcceptBudgetUsd: number | null;
+  idealBudgetUsd: number | null;
+}) {
+  const ctx = await requireCreatorContext(input.lang);
+  if (!ctx.ok) {
+    return ctx;
+  }
+
+  const result = await updateCreatorPricingPreference(ctx.creatorId, ctx.creator, {
+    minAcceptBudgetUsd: input.minAcceptBudgetUsd,
+    idealBudgetUsd: input.idealBudgetUsd
+  });
+  if (!result.ok) {
+    return {
+      ok: false as const,
+      error: input.lang === "zh" ? "预算设置无效" : "Invalid budget preference"
     };
   }
 

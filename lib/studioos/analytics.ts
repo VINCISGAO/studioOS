@@ -149,6 +149,7 @@ export function getCreativeAnalytics(_brandEmail?: string): {
   summary: AnalyticsSummary;
   dataSource: AnalyticsDataSource;
 } {
+  void _brandEmail;
   const ads = demoAds;
   return {
     ads,

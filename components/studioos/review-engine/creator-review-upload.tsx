@@ -12,7 +12,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { Locale } from "@/lib/i18n";
-import { withLocale } from "@/lib/i18n";
 import type { StoredOrder } from "@/lib/order-types";
 import type { ReviewSession } from "@/lib/review-engine/types";
 import { reviewSessionStatusLabel } from "@/lib/review-engine/types";

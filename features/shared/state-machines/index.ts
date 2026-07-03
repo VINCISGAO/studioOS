@@ -24,7 +24,8 @@ export {
   maxUploadableReviewVersion,
   maxUploadableRevisionRound,
   reviewDraftLabel,
-  reviewRoundForVersion,
+  revisionRoundForVersion as reviewRoundForVersion,
+  revisionRoundForVersion,
   reviewRoundGateMessage,
   revisionRoundLabel,
   versionForRevisionRound

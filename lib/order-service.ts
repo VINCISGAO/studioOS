@@ -24,9 +24,8 @@ import {
 } from "@/lib/studioos/project-order-sync";
 import { versionService } from "@/features/delivery/version.service";
 import { campaignRepository } from "@/features/campaign/campaign.repository";
-import { MAX_CAMPAIGN_VERSIONS } from "@/features/delivery/version.repository";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
-import { normalizeDeliverablePlaybackUrl, DEMO_REVIEW_VIDEO_URL } from "@/lib/studioos/review-video-url";
+import { DEMO_REVIEW_VIDEO_URL } from "@/lib/studioos/review-video-url";
 import {
   filterPlayableDeliverables,
   isUnsubmittedDeliverable,
@@ -232,8 +231,6 @@ async function writeStore(store: OrderStore) {
 }
 
 function ensureDemoIncomeOrders(store: OrderStore): OrderStore {
-  const now = new Date().toISOString();
-
   if (
     !store.orders.some((order) => order.id === "ord_demo_nova_completed") &&
     !isDemoOrderDismissed(store, "ord_demo_nova_completed")
@@ -1044,6 +1041,7 @@ export async function getDeliverables(orderId: string): Promise<StoredDeliverabl
 
 
 export function canDeleteOrder(_order: Pick<StoredOrder, "status" | "payment_status">) {
+  void _order;
   if (process.env.NODE_ENV === "development") {
     return true;
   }
@@ -1101,7 +1099,6 @@ export async function deleteOrderForClient(
     };
   }
 
-  const order = store.orders[index];
   store.orders.splice(index, 1);
   store.deliverables = store.deliverables.filter((item) => item.order_id !== orderId);
   dismissDemoOrder(store, orderId);

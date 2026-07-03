@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { deleteBrandProjectsAction } from "@/app/brand-project-actions";
@@ -16,7 +15,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import type { Locale } from "@/lib/i18n";
-import { withLocale } from "@/lib/i18n";
 import {
   brandCampaignHref,
   brandCampaignStatusLabel

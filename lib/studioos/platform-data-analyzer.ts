@@ -367,6 +367,7 @@ function demoScreenshotAnalysis(
   platform: PlatformAttributionPlatform,
   locale: "en" | "zh"
 ): PlatformAttributionAnalysis {
+  void locale;
   const metrics: ParsedPlatformMetrics = {
     platform,
     platform_ad_id: `${platform}_demo_screenshot`,
@@ -433,6 +434,7 @@ async function analyzeWithOpenAI(
   platform: PlatformAttributionPlatform,
   locale: "en" | "zh"
 ): Promise<PlatformAttributionAnalysis | null> {
+  void locale;
   if (!hasOpenAI()) return null;
 
   try {

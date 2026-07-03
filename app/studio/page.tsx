@@ -11,6 +11,7 @@ import {
   buildCreatorPendingTaskCards,
   buildCreatorPhaseCounts
 } from "@/lib/studioos/creator-home-ui";
+import { buildCreatorAiMatchHealth } from "@/lib/studioos/creator-ai-match-health";
 import {
   countAwaitingBrandSelection,
   countInvitationsByTab
@@ -61,7 +62,6 @@ export default async function StudioHomePage({ searchParams }: { searchParams: P
     deliverableCounts
   });
 
-  const completed = orders.filter((order) => order.status === "completed").length;
   const responded =
     invitationCounts.accepted + invitationCounts.declined + invitationCounts.expired;
 
@@ -92,6 +92,7 @@ export default async function StudioHomePage({ searchParams }: { searchParams: P
     time: formatMessageListTime(notification.created_at, locale),
     href: withLocale(`${creatorPortalRoutes.messages}?id=${notification.id}`, locale)
   }));
+  const aiMatchHealth = buildCreatorAiMatchHealth({ locale, invitations });
 
   return (
     <div className="space-y-6">
@@ -104,6 +105,7 @@ export default async function StudioHomePage({ searchParams }: { searchParams: P
         projects={projects}
         phases={phases}
         messages={messages}
+        aiMatchHealth={aiMatchHealth}
       />
     </div>
   );

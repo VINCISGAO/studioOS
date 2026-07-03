@@ -7,7 +7,6 @@ import { ReviewerShellPortalActions } from "@/components/studioos/reviewer-skele
 import type { Locale } from "@/lib/i18n";
 import type { ReviewerShellHeaderInfo } from "@/components/studioos/reviewer-skeleton/reviewer-shell-types";
 import type { ReviewerSkeletonMock } from "@/components/studioos/reviewer-skeleton/reviewer-skeleton-mock";
-import { cn } from "@/lib/utils";
 
 const focusToggleClass =
   "inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-violet-200 bg-violet-50 px-2.5 py-1.5 text-sm font-semibold text-violet-700 shadow-sm transition hover:border-violet-300 hover:bg-violet-100 hover:text-violet-900";

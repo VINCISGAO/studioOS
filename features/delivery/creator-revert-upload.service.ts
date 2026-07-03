@@ -252,7 +252,6 @@ export class CreatorRevertUploadService {
         if (campaign.status === CampaignState.PRODUCING && prismaVersion?.reviewStatus === "READY") {
           await campaignService.transition(campaign.id, CampaignEvent.VERSION_UPLOAD, {
             id: creatorUser.id,
-            email: creatorUser.email,
             role: "creator"
           });
         }
@@ -264,7 +263,6 @@ export class CreatorRevertUploadService {
             campaign.reviewRound,
             {
               id: creatorUser.id,
-              email: creatorUser.email,
               role: "creator"
             }
           );
@@ -279,7 +277,6 @@ export class CreatorRevertUploadService {
 
         await campaignService.transition(campaign.id, CampaignEvent.CREATOR_REVERT_UPLOAD, {
           id: creatorUser.id,
-          email: creatorUser.email,
           role: "creator"
         });
 

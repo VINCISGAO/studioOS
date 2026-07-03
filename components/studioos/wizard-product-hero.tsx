@@ -79,7 +79,6 @@ export function WizardProductHero({
   const [localLogoPreview, setLocalLogoPreview] = useState<string | null>(
     logoAsset?.file_url ? previewUrl(logoAsset.file_url) : null
   );
-  const [localFile, setLocalFile] = useState<File | null>(null);
   const [phase, setPhase] = useState<"idle" | "uploading" | "optimizing" | "done">("idle");
 
   useEffect(() => {
@@ -129,7 +128,6 @@ export function WizardProductHero({
 
   function handleProductFile(file: File) {
     setError(null);
-    setLocalFile(file);
     setLocalProductPreview(URL.createObjectURL(file));
     setPhase("uploading");
 

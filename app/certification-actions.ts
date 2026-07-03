@@ -37,6 +37,7 @@ export async function markCertificationLevelUpSeenAction(formData: FormData) {
 }
 
 export async function dismissCertificationWelcomeBannerAction(formData: FormData) {
+  void formData;
   const creator = await getCurrentCreator();
   if (!creator) {
     return { ok: false as const };

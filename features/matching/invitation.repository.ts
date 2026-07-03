@@ -1,5 +1,9 @@
 import type { InvitationStatus } from "@prisma/client";
 import { prisma, hasDatabaseUrl } from "@/lib/core/database/prisma";
+import type {
+  CreatorInvitationDeclineReason,
+  InvitationDeclineFeedback
+} from "@/features/matching/invitation-decline-feedback";
 
 export class InvitationRepository {
   async listForCampaign(campaignId: string) {
@@ -85,6 +89,19 @@ export class InvitationRepository {
       where: { id },
       data: { status, respondedAt }
     });
+  }
+
+  async declineWithFeedback(id: string, feedback: InvitationDeclineFeedback, respondedAt = new Date()) {
+    await prisma.$executeRaw`
+      UPDATE "creator_invitations"
+      SET
+        "status" = 'DECLINED',
+        "responded_at" = ${respondedAt},
+        "decline_reason" = ${feedback.reason as CreatorInvitationDeclineReason}::"CreatorInvitationDeclineReason",
+        "decline_feedback_json" = ${JSON.stringify(feedback)}::jsonb,
+        "updated_at" = ${respondedAt}
+      WHERE "id" = ${id}
+    `;
   }
 
   async declineOthers(campaignId: string, exceptId: string) {

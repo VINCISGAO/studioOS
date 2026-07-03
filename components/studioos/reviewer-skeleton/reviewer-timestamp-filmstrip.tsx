@@ -108,6 +108,7 @@ export function ReviewerTimestampFilmstrip({
                 onClick={() => onSeek(sec)}
               >
                 {thumb ? (
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img src={thumb} alt="" className="h-full w-full object-cover" draggable={false} />
                 ) : (
                   <ReviewerRailShimmer rounded="rounded-none" className="absolute inset-0" />

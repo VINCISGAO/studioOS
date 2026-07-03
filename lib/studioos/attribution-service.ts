@@ -6,8 +6,7 @@ import {
   orgIdFromEmail
 } from "@/lib/studioos/creative-performance-store";
 import type {
-  CreativePerformanceRecord,
-  StoredCreativeInsight
+  CreativePerformanceRecord
 } from "@/lib/studioos/creative-performance-types";
 
 const ATTRIBUTION_ELIGIBLE_STATUSES = new Set<StoredOrder["status"]>([

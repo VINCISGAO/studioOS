@@ -1,4 +1,4 @@
-import { Prisma, type CampaignVersion } from "@prisma/client";
+import { Prisma, ReviewStatus, VersionStatus, type CampaignVersion } from "@prisma/client";
 import { MAX_REVIEW_VERSIONS } from "@/features/review/review-round-policy";
 import { prisma, hasDatabaseUrl } from "@/lib/core/database/prisma";
 
@@ -57,8 +57,8 @@ export class VersionRepository {
       fileName: input.fileName ?? null,
       mimeType: input.mimeType ?? null,
       fileSizeBytes: input.fileSizeBytes ?? null,
-      status: "READY",
-      reviewStatus: "READY",
+      status: VersionStatus.READY,
+      reviewStatus: ReviewStatus.READY,
       watermark: true,
       deletedAt: null
     };
@@ -122,8 +122,8 @@ export class VersionRepository {
         fileName: input.fileName ?? existing.fileName,
         mimeType: input.mimeType ?? existing.mimeType,
         fileSizeBytes: input.fileSizeBytes ?? existing.fileSizeBytes,
-        status: "READY",
-        reviewStatus: "READY",
+        status: VersionStatus.READY,
+        reviewStatus: ReviewStatus.READY,
         deletedAt: null
       }
     });

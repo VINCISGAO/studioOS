@@ -10,7 +10,7 @@ const PLACEHOLDER_MAX_BYTES = 2 * 1024 * 1024;
 const LOCAL_SOURCES = [
   process.env.DEMO_REVIEW_VIDEO_SOURCE,
   path.join(process.cwd(), "assets", "demo", "review-sample.mp4")
-].filter((value) => typeof value === "string" && value.trim().length > 0);
+].filter((value): value is string => typeof value === "string" && value.trim().length > 0);
 
 async function readIfLargeEnough(filePath: string, allowPlaceholder = false) {
   try {

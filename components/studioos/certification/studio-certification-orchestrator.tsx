@@ -25,6 +25,7 @@ export function StudioCertificationOrchestrator({
   levelUpSeen: boolean;
   children: React.ReactNode;
 }) {
+  void creatorId;
   const searchParams = useSearchParams();
   const celebrateFromPayment = searchParams.get("certified") === "1";
   const [phase, setPhase] = useState<CertificationExperiencePhase>("idle");

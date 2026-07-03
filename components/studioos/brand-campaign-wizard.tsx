@@ -150,7 +150,6 @@ export function BrandCampaignWizard({
   initialData: WizardData;
   initialStep: number;
 }) {
-  const t = copy[locale];
   const router = useRouter();
   const projectId = initialData.project.id;
   const migrated = initialStep <= BRAND_WIZARD_VISIBLE_STEP_COUNT ? initialStep : migrateLegacyBrandWizardStep(initialStep);
@@ -192,8 +191,6 @@ export function BrandCampaignWizard({
     );
     return asset?.file_url ?? null;
   }, [initialData.assets]);
-
-  const isPending = isSaving;
 
   function goStep(next: number) {
     const clamped = clampBrandVisibleStep(next);

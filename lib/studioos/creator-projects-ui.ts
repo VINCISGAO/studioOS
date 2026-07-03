@@ -159,16 +159,24 @@ export function buildCreatorProjectRows(input: {
           revision: "修改中",
           completed: "已完成",
           waiting_payment: "待开始",
+          paid: "已付款",
+          ready_for_completion: "待确认完成",
+          settling: "结算中",
+          dispute: "争议中",
           cancelled: "已关闭"
-        }
+        } satisfies Record<StoredOrder["status"], string>
       : {
           in_production: "In production",
           review: "Pending review",
           revision: "Revising",
           completed: "Completed",
           waiting_payment: "Pending",
+          paid: "Paid",
+          ready_for_completion: "Ready to complete",
+          settling: "Settling",
+          dispute: "Dispute",
           cancelled: "Closed"
-        };
+        } satisfies Record<StoredOrder["status"], string>;
 
   return input.orders
     .filter((order) => matchesCreatorProjectFilter(order, input.filter))

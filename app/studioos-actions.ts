@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import type { CopilotAction, CopilotContext } from "@/lib/studioos/copilot";
 import { generateCopilotWithAI } from "@/lib/studioos/copilot-ai";
 import { runQualityChecksAsync } from "@/lib/studioos/quality";

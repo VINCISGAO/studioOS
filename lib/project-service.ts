@@ -106,10 +106,6 @@ function applyDeletedProjectTombstones(store: ProjectStore): ProjectStore {
   };
 }
 
-function isProjectDeleted(store: ProjectStore, id: string) {
-  return store.deleted_project_ids?.includes(id) ?? false;
-}
-
 function createId(prefix: string) {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }

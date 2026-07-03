@@ -33,6 +33,8 @@ export function canUseBusinessFeatures(completedOrders: number, isVerified: bool
 
 /** Income & withdrawal stay available after the free order, even before certification. */
 export function canUseIncomeFeatures(_completedOrders: number, _isVerified: boolean): boolean {
+  void _completedOrders;
+  void _isVerified;
   return true;
 }
 

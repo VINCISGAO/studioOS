@@ -17,7 +17,6 @@ import {
   removeProjectReference,
   updatePackItemContent
 } from "@/lib/campaign-store";
-import type { PackItemType } from "@/lib/campaign-types";
 import { getCurrentClientEmail } from "@/lib/client-session";
 import { DEMO_USERS } from "@/lib/demo-auth";
 import type { Locale } from "@/lib/i18n";
@@ -458,15 +457,11 @@ export async function refineProductImageAction(formData: FormData) {
 
   let fileUrl = "";
   let fileName = "";
-  let mimeType = "image/jpeg";
-  let sizeBytes = 0;
   let source: "openai" | "local" = "local";
 
   if (aiResult.ok) {
     fileUrl = aiResult.url;
     fileName = aiResult.file_name;
-    mimeType = aiResult.mime_type;
-    sizeBytes = aiResult.size_bytes;
     source = aiResult.source;
   } else if (aiResult.code === "NO_OPENAI") {
     const refinedFile = formData.get("refined_file");
@@ -488,8 +483,6 @@ export async function refineProductImageAction(formData: FormData) {
 
     fileUrl = saved.url;
     fileName = saved.file_name;
-    mimeType = saved.mime_type;
-    sizeBytes = saved.size_bytes;
     source = "local";
   } else {
     return {

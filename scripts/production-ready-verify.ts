@@ -114,6 +114,7 @@ function main() {
   steps.push(runCheck("payment.mvp_files", checkPaymentService));
 
   if (process.env.DATABASE_URL) {
+    steps.push(runCmd("prisma.migrate_deploy", "npm run db:migrate:deploy"));
     steps.push(runCmd("payment.verify", "npm run payment:verify"));
     steps.push(runCmd("sprint1.verify", "npm run sprint1:verify"));
   } else {

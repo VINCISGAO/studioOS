@@ -232,7 +232,8 @@ export async function saveBrandCampaignBriefAction(formData: FormData) {
   const deadline = deadlineFromTimeline(delivery_timeline);
   const existingProject = await getProject(projectId);
   const priorSettings = existingProject?.settings_json ?? {};
-  const { confirmed_brief: _removed, ...priorWithoutConfirm } = priorSettings as Record<string, unknown>;
+  const { confirmed_brief: confirmedBrief, ...priorWithoutConfirm } = priorSettings as Record<string, unknown>;
+  void confirmedBrief;
 
   await updateProject(projectId, {
     commercial_objective: input.objective,
@@ -354,7 +355,8 @@ export async function saveBrandCampaignDraftAction(formData: FormData) {
   const deadline = deadlineFromTimeline(delivery_timeline);
   const existingProject = await getProject(projectId);
   const priorSettings = existingProject?.settings_json ?? {};
-  const { confirmed_brief: _removed, ...priorWithoutConfirm } = priorSettings as Record<string, unknown>;
+  const { confirmed_brief: confirmedBrief, ...priorWithoutConfirm } = priorSettings as Record<string, unknown>;
+  void confirmedBrief;
   const refs = await listReferencesForProject(projectId);
 
   await updateProject(projectId, {

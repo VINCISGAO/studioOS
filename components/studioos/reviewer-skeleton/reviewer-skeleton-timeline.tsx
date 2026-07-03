@@ -14,10 +14,11 @@ export function ReviewerSkeletonTimeline({
     <ReviewerV1TimelineTrack
       locale={locale}
       label={locale === "zh" ? "时间线" : "Timeline"}
-      comments={mock.comments.map((comment) => ({
+      comments={mock.comments.map((comment, index) => ({
         id: comment.id,
+        markerNumber: index + 1,
         timestampSec: comment.timestampSec,
-        status: comment.status,
+        status: comment.status === "resolved" ? "resolved" : "todo",
         title: `${formatTimestamp(comment.timestampSec)} ${comment.body}`
       }))}
       durationSec={mock.durationSec}

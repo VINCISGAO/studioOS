@@ -1,6 +1,9 @@
 import type { Locale } from "@/lib/i18n";
 import type { StoredProject } from "@/lib/project-types";
 import { activityService } from "@/features/campaign/activity.service";
+import { aiLearningEventRepository } from "@/features/ai/ai-learning-event.repository";
+import { aiLearningWorkerService } from "@/features/ai/ai-learning-worker.service";
+import { buildCreatorLearningMemoryMap } from "@/features/ai/creator-matching-memory.service";
 import { campaignRepository } from "@/features/campaign/campaign.repository";
 import { campaignService } from "@/features/campaign/campaign.service";
 import { CampaignEvent } from "@/features/campaign/campaign.state-machine";
@@ -20,6 +23,7 @@ import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { getProject } from "@/lib/project-service";
 import { matchCreatorsForProjectWithDemoFallback } from "@/lib/matching-engine";
 import type { CreatorPortalInvitationView } from "@/features/creator/creator-portal.types";
+import type { InvitationDeclineFeedback } from "@/features/matching/invitation-decline-feedback";
 import type { StoredCreatorInvitation } from "@/lib/studioos/creator-invitation-types";
 import type { BrandCampaignMemory } from "@/features/campaign/brand-campaign/brand-campaign.types";
 import { readCampaignMemory } from "@/features/campaign/brand-campaign/brand-campaign.utils";
@@ -137,7 +141,10 @@ export class InvitationPortalService {
     const allWorks = (
       await Promise.all(enrichedCreators.map((creator) => getWorksForCreator(creator.id)))
     ).flat();
-    const matches = matchCreatorsForProjectWithDemoFallback(project, enrichedCreators, allWorks).slice(
+    const creatorLearningMemory = await buildCreatorLearningMemoryMap(enrichedCreators.map((creator) => creator.id));
+    const matches = matchCreatorsForProjectWithDemoFallback(project, enrichedCreators, allWorks, {
+      creatorLearningMemory
+    }).slice(
       0,
       MAX_CAMPAIGN_INVITATIONS
     );
@@ -300,7 +307,8 @@ export class InvitationPortalService {
   async declineForCreator(
     invitationId: string,
     legacyCreatorId: string,
-    locale: Locale = "en"
+    locale: Locale = "en",
+    feedback: InvitationDeclineFeedback
   ): Promise<{ ok: true; invitation: StoredCreatorInvitation } | { ok: false; error: string }> {
     if (!this.isEnabled()) {
       return { ok: false, error: "not-found" };
@@ -328,7 +336,33 @@ export class InvitationPortalService {
       return { ok: false, error: "recruitment-closed" };
     }
 
-    await invitationRepository.updateStatus(invitationId, "DECLINED");
+    await invitationRepository.declineWithFeedback(invitationId, feedback);
+    const learningEvent = await aiLearningEventRepository.append({
+      eventType: "CreatorRejected",
+      entityType: "CreatorInvitation",
+      entityId: invitationId,
+      payload: {
+        legacy_project_id: legacyProjectId,
+        campaignId: row.campaignId,
+        legacy_creator_id: legacyCreatorId,
+        creatorProfileId,
+        creatorUserId: row.creator.userId,
+        matchScore: Number(row.matchScore),
+        feedback
+      },
+      learningType: "Preference",
+      after: {
+        legacy_creator_id: legacyCreatorId,
+        creatorProfileId,
+        campaignId: row.campaignId,
+        declineReason: feedback.reason,
+        feedback
+      },
+      confidence: 0.75
+    });
+    if (learningEvent?.eventId) {
+      await aiLearningWorkerService.processEvent(learningEvent.eventId);
+    }
 
     await activityService.write(
       row.campaignId,
@@ -337,7 +371,9 @@ export class InvitationPortalService {
       {
         legacy_project_id: legacyProjectId,
         invitation_id: invitationId,
-        legacy_creator_id: legacyCreatorId
+        legacy_creator_id: legacyCreatorId,
+        decline_reason: feedback.reason,
+        decline_feedback: feedback
       }
     );
 

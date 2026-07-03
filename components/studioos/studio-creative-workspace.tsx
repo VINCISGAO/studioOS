@@ -20,6 +20,7 @@ import { ClientBriefFormCard } from "@/components/studioos/client-brief-form-car
 import { CertifiedPartnerBadge } from "@/components/studioos/certification/certified-partner-badge";
 import { formatTimestamp } from "@/lib/studioos/review-utils";
 import { cn } from "@/lib/utils";
+import { isReviewCommentUnresolved } from "@/lib/studioos/review-comment-status";
 import { CheckCircle2, Clapperboard, Pause, Play } from "lucide-react";
 
 type TabId = "brief" | "storyboard" | "versions" | "issues";
@@ -126,6 +127,7 @@ export function StudioCreativeWorkspace({
   comments: ReviewComment[];
   canUpload: boolean;
 }) {
+  void brief;
   const t = copy[locale];
   const partnerBadge = tCertificationExperience(locale).partnerBadge;
   const router = useRouter();
@@ -156,7 +158,7 @@ export function StudioCreativeWorkspace({
 
   const scenes = storyboardScenes(pack);
   const versionComments = comments.filter((c) => c.version === activeVersion);
-  const openIssues = versionComments.filter((c) => c.status === "open");
+  const openIssues = versionComments.filter((c) => isReviewCommentUnresolved(c.status));
   const resolvedIssues = versionComments.filter((c) => c.status === "resolved");
   const activeDeliverable = sortedVersions.find((v) => v.version === activeVersion);
   const videoUrl = activeDeliverable?.file_url ?? sortedVersions[0]?.file_url ?? "";

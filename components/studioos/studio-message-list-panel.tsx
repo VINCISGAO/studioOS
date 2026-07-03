@@ -117,7 +117,7 @@ export function StudioMessageListPanel({
               ["unread", t.unread, unreadCount],
               ["read", t.read, readCount]
             ] as const
-          ).map(([key, label, count]) => {
+          ).map(([key, label]) => {
             const displayCount =
               key === "all"
                 ? unreadCount + readCount

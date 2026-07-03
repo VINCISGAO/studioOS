@@ -50,6 +50,7 @@ export function ReviewerV1TimelineTrack({
   onSeek?: (sec: number) => void;
   onMarkerClick?: (comment: TimelineMarker) => void;
 }) {
+  void locale;
   const timelineTicks = useMemo(() => buildTimelineTicks(durationSec), [durationSec]);
   const playhead = timelineSecToPercent(currentSec, durationSec);
   const hasDuration = durationSec > 0;

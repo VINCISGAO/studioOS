@@ -281,6 +281,7 @@ export function ReviewerReviewVersionDock({
                         projectId={projectId}
                         activeVersion={activeVersion}
                         reviewCompleted={reviewCompleted}
+                        orderStatus={orderStatus}
                         label={t.approveSettle}
                         className="h-auto min-h-0 rounded-full bg-emerald-600 px-5 py-2.5 text-sm hover:bg-emerald-700"
                         onSuccess={onApproveSuccess}

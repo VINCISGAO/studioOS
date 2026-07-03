@@ -25,9 +25,7 @@ import {
   BRAND_BUDGET_MIN_USD,
   BRAND_VIDEO_ASPECT_RATIOS,
   customBudgetInputFromStored,
-  defaultBrandAspectRatio,
   defaultBrandBudget,
-  defaultBrandTimeline,
   isPresetBudget,
   normalizeCustomBudgetInput,
   type BrandDeliveryTimelineId,
@@ -683,7 +681,8 @@ export function BrandCampaignStepBrief({
   const showReferences = stepMode === "references" || stepMode === "all";
 
   if (hideTopBar && stepMode === "all") {
-    const { steps: _steps, ...briefPanelCopy } = t;
+    const { steps, ...briefPanelCopy } = t;
+    void steps;
     return (
       <BrandCampaignBriefStep1Panel
         locale={locale}

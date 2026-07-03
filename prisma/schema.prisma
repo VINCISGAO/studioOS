@@ -113,6 +113,15 @@ enum InvitationStatus {
   EXPIRED
 }
 
+enum CreatorInvitationDeclineReason {
+  BUDGET_TOO_LOW
+  SCHEDULE_CONFLICT
+  NOT_MY_CATEGORY
+  BRIEF_INSUFFICIENT
+  DEADLINE_TOO_TIGHT
+  BRAND_RISK
+}
+
 enum EscrowStatus {
   CREATED
   PAYING
@@ -611,6 +620,8 @@ model CreatorInvitation {
   matchScore   Decimal          @map("match_score") @db.Decimal(5, 2)
   status       InvitationStatus @default(SENT)
   counterOffer Decimal?         @map("counter_offer") @db.Decimal(18, 2)
+  declineReason CreatorInvitationDeclineReason? @map("decline_reason")
+  declineFeedbackJson Json?      @map("decline_feedback_json")
   respondedAt  DateTime?        @map("responded_at")
   expiresAt    DateTime?        @map("expires_at")
   createdAt    DateTime         @default(now()) @map("created_at")
@@ -624,6 +635,7 @@ model CreatorInvitation {
   @@index([creatorId])
   @@index([studioId])
   @@index([status])
+  @@index([declineReason])
   @@map("creator_invitations")
 }
 
@@ -909,6 +921,39 @@ model AiJob {
   @@index([status])
   @@index([type])
   @@map("ai_jobs")
+}
+
+model AIEvent {
+  id         String   @id @default(uuid())
+  eventType  String   @map("event_type")
+  entityType String   @map("entity_type")
+  entityId   String   @map("entity_id")
+  payload    Json
+  processed  Boolean  @default(false)
+  retry      Int      @default(0)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([eventType])
+  @@index([entityType, entityId])
+  @@index([processed])
+  @@map("ai_events")
+}
+
+model AILearning {
+  id            String   @id @default(uuid())
+  sourceEventId String   @map("source_event_id")
+  entityType    String   @map("entity_type")
+  entityId      String   @map("entity_id")
+  learningType  String   @map("learning_type")
+  before        Json?
+  after         Json
+  confidence    Float
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@index([sourceEventId])
+  @@index([entityType, entityId])
+  @@index([learningType])
+  @@map("ai_learning")
 }
 
 model WebhookEvent {

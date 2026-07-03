@@ -44,6 +44,7 @@ export function buildDnaProfile(
 }
 
 export function dnaProfileToFields(profile: CreativeDnaProfile | null, locale: "en" | "zh"): CreativeDnaField[] {
+  void locale;
   if (!profile) {
     return [];
   }

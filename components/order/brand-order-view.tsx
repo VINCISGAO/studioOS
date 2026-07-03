@@ -21,7 +21,7 @@ import {
   isDeliverableVideoPurged
 } from "@/lib/studioos/deliverable-video-policy-shared";
 import { deliverableNotesForViewer } from "@/lib/studioos/deliverable-notes";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
 
 const copy = {
   en: {

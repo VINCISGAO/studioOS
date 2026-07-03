@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import {
   ArrowRight,
   CheckCircle2,
-  Landmark,
   Loader2
 } from "lucide-react";
 import {

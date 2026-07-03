@@ -1,11 +1,5 @@
 "use client";
 
-import {
-  updateContactEmailAction,
-  updatePasswordAction,
-  updatePhoneAction,
-  updateSecurityPrefsAction
-} from "@/app/studio-settings-actions";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,

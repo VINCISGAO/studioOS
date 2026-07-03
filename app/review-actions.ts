@@ -3,11 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { getCurrentClientEmail } from "@/lib/client-session";
 import { getCurrentCreatorId } from "@/lib/creator-session";
-import { type Locale, withLocale } from "@/lib/i18n";
+import type { Locale } from "@/lib/i18n";
 import {
   addDeliverable,
   approveOrderDelivery,
-  getDeliverables,
   getOrder,
   listDeliverablesForUpload,
   requestOrderRevision,
@@ -32,7 +31,6 @@ import {
   assertRevisionRequestAllowed,
   assertReviewVersionUploadAllowed,
   PAID_REVISION_SURCHARGE_RATE,
-  reviewRoundGateMessage
 } from "@/features/review/review-round-policy";
 import {
   paidRevisionErrorMessage,
@@ -46,7 +44,7 @@ import { versionService } from "@/features/delivery/version.service";
 import { MAX_CAMPAIGN_VERSIONS } from "@/features/delivery/version.repository";
 import { reviewPortalService } from "@/features/review/review-portal.service";
 import { settlementService } from "@/features/settlement/settlement.service";
-import { SettlementState } from "@/features/settlement/settlement.state-machine";
+import { SettlementState, type SettlementStateValue } from "@/features/settlement/settlement.state-machine";
 import { notificationService } from "@/features/notification/notification.service";
 import { getAppBaseUrl } from "@/lib/app-url";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
@@ -63,7 +61,6 @@ import { notifyBrandDeliverableUploaded } from "@/lib/studioos/brand-deliverable
 import {
   notifyCreatorDeliveryApproved,
   notifyCreatorEscrowReleased,
-  notifyCreatorPaidRevisionUnlocked,
   notifyCreatorRevisionRequested
 } from "@/lib/studioos/commercial-interaction-notify";
 import { hasBrandNotification } from "@/lib/studioos/brand-notification-service";
@@ -371,11 +368,7 @@ export async function resolveReviewCommentAction(formData: FormData) {
         }
         return { ok: false as const, error: lang === "zh" ? "已解决批注不可修改状态" : "Resolved comments cannot be changed" };
       }
-      if (
-        (status === "in_progress" && existing.status !== "todo") ||
-        (status === "pending_confirmation" && existing.status !== "in_progress") ||
-        (status === "resolved" && !["todo", "in_progress", "pending_confirmation"].includes(existing.status))
-      ) {
+      if (!["todo", "in_progress", "pending_confirmation"].includes(existing.status)) {
         return { ok: false as const, error: lang === "zh" ? "评论状态流转不合法" : "Invalid comment status transition" };
       }
 
@@ -414,11 +407,7 @@ export async function resolveReviewCommentAction(formData: FormData) {
     }
     return { ok: false as const, error: lang === "zh" ? "已解决批注不可修改状态" : "Resolved comments cannot be changed" };
   }
-  if (
-    (status === "in_progress" && existing.status !== "todo") ||
-    (status === "pending_confirmation" && existing.status !== "in_progress") ||
-    (status === "resolved" && !["todo", "in_progress", "pending_confirmation"].includes(existing.status))
-  ) {
+  if (!["todo", "in_progress", "pending_confirmation"].includes(existing.status)) {
     return { ok: false as const, error: lang === "zh" ? "评论状态流转不合法" : "Invalid comment status transition" };
   }
 
@@ -787,7 +776,6 @@ export async function requestReviewRevisionAction(formData: FormData) {
   const lang = normalizeLang(formData.get("lang"));
   const orderId = String(formData.get("order_id") ?? "");
   const projectId = String(formData.get("project_id") ?? "").trim();
-  const payInvoice = String(formData.get("pay_invoice") ?? "") === "1";
   const version = Number(formData.get("version") ?? 1);
   const revisionNotes = String(formData.get("revision_notes") ?? "").trim();
 
@@ -917,23 +905,8 @@ export async function unlockPaidRevisionSlotAction(formData: FormData) {
   };
 }
 
-function settlementErrorMessage(code: string, lang: Locale): string {
-  if (lang === "zh") {
-    if (code === "not-ready") return "当前暂不可结款，请确认最终版已就绪";
-    if (code === "not-found") return "找不到结算信息";
-    if (code === "unauthorized") return "无权限";
-    if (code === "no-database") return "数据库未配置";
-    return "结算失败，请稍后重试";
-  }
-  if (code === "not-ready") return "Settlement is not ready yet";
-  if (code === "not-found") return "Settlement not found";
-  if (code === "unauthorized") return "Unauthorized";
-  if (code === "no-database") return "Database is not configured";
-  return "Settlement failed. Please try again.";
-}
-
 function mapSettlementStatus(
-  state: SettlementState | null
+  state: SettlementStateValue | null
 ): ReviewSettlementPreview["settlementStatus"] {
   if (state === SettlementState.READY) return "ready";
   if (state === SettlementState.RELEASED) return "released";
@@ -959,7 +932,7 @@ export async function getReviewSettlementPreviewAction(input: {
     (order.paid_revision_slots_unlocked ?? 0) >= 1
       ? Math.round(order.amount * PAID_REVISION_SURCHARGE_RATE * 100) / 100
       : undefined;
-  let preview: ReviewSettlementPreview = {
+  const preview: ReviewSettlementPreview = {
     version: input.version,
     orderAmount: order.amount,
     paidRevisionAddOnAmount,

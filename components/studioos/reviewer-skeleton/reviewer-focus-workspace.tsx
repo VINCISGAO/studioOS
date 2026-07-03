@@ -10,12 +10,15 @@ import type { ReviewerVideoStatus } from "@/components/studioos/reviewer-v1/revi
 import type { Locale } from "@/lib/i18n";
 import type { StoredDeliverable } from "@/lib/order-types";
 import type { ReviewComment } from "@/lib/studioos/review-comment-types";
+import type { ReviewFocusTheme } from "@/lib/studioos/portal-focus-mode";
 
 export function ReviewerFocusWorkspace(props: {
   locale: Locale;
   role: "brand" | "creator";
   info: ReviewerShellHeaderInfo;
   onExit: () => void;
+  focusTheme?: ReviewFocusTheme;
+  onFocusThemeChange?: (theme: ReviewFocusTheme) => void;
   error: string | null;
   onDismissError: () => void;
   activeTool: ReviewerTool;
@@ -61,6 +64,7 @@ export function ReviewerFocusWorkspace(props: {
   pending: boolean;
   activeCommentId: string | null;
   onDeleteComment?: (commentId: string) => void;
+  onSetCommentStatus?: (commentId: string, status: ReviewComment["status"]) => void;
   deletedToast?: string | null;
   sortedVersions: StoredDeliverable[];
   activeVersion: number;
@@ -73,22 +77,48 @@ export function ReviewerFocusWorkspace(props: {
   onCancelUpload: () => void;
   onOpenPicker: () => void;
   reviewCompleted?: boolean;
+  orderId: string;
+  projectId: string | null;
+  orderStatus: import("@/lib/order-types").OrderStatus;
+  onRequestRevision: () => void;
+  onApproveSuccess?: (message: string) => void;
+  onApproveError?: (message: string) => void;
+  onOrderStatusChange?: (status: import("@/lib/order-types").OrderStatus) => void;
 }) {
-  const { locale, onExit, error, onDismissError, ...layoutProps } = props;
+  const {
+    locale,
+    onExit,
+    focusTheme = "dark",
+    onFocusThemeChange,
+    error,
+    onDismissError,
+    ...layoutProps
+  } = props;
 
   return (
     <ReviewerReviewLayout
       shell="focus"
+      focusTheme={focusTheme}
       header={
         <ReviewerFocusHeader
           locale={locale}
+          theme={focusTheme}
+          onThemeChange={onFocusThemeChange ?? (() => undefined)}
           onExit={onExit}
           errorMessage={error}
           onDismissError={onDismissError}
         />
       }
       locale={locale}
+      canUseTools={layoutProps.canDraw}
+      canReply={false}
+      replyTargetId={null}
+      replyTargetComment={null}
+      onStartReply={() => undefined}
+      onCancelReply={() => undefined}
+      toolDisabledMessage={layoutProps.canDraw ? undefined : layoutProps.role === "creator" ? "Read-only" : undefined}
       {...layoutProps}
+      reviewCompleted={layoutProps.reviewCompleted ?? false}
     />
   );
 }

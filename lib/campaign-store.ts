@@ -10,7 +10,6 @@ import type {
   CampaignStore,
   PackItemType,
   ProjectAssetType,
-  ReferenceType,
   StoredCreativeBrief,
   StoredCreativePackItem,
   StoredProjectAsset,

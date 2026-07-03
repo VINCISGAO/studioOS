@@ -43,6 +43,10 @@ export async function getCreatorById(id: string): Promise<Creator | null> {
     creator = { ...creator, orders_paused: true };
   }
 
+  if (settings?.min_accept_budget_usd) {
+    creator = { ...creator, min_project_budget_usd: settings.min_accept_budget_usd };
+  }
+
   if (settings?.account_deleted_at) {
     creator = { ...creator, account_deleted_at: settings.account_deleted_at };
   }
