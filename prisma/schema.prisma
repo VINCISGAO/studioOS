@@ -68,6 +68,23 @@ enum AssetType {
   OTHER
 }
 
+enum PerformanceSourceStatus {
+  PENDING
+  IMPORTED
+  ANALYZED
+  FAILED
+}
+
+enum PerformanceSourcePlatform {
+  TIKTOK
+  YOUTUBE
+  INSTAGRAM
+  FACEBOOK_ADS
+  GOOGLE_DRIVE
+  REPORT
+  OTHER
+}
+
 enum VersionStatus {
   UPLOADING
   PROCESSING
@@ -329,6 +346,7 @@ model User {
   reviewComments ReviewComment[]
   activityLogs   ActivityLog[]
   notifications  Notification[]
+  performanceSources PerformanceSource[]
   wallet         Wallet?
   walletAccount  WalletAccount?
   paymentMethods PaymentMethod[]
@@ -461,6 +479,7 @@ model Campaign {
   disputes      Dispute[]
   messages      CommunicationMessage[]
   memoryFacts   MemoryFact[]
+  performanceSources PerformanceSource[]
   orderCommission OrderCommission?
   deliveries      CampaignDelivery[]
   ledgerEntries   LedgerEntry[]
@@ -501,6 +520,36 @@ model CampaignAsset {
   @@index([campaignId])
   @@index([assetType])
   @@map("campaign_assets")
+}
+
+model PerformanceSource {
+  id              String                    @id @default(uuid())
+  campaignId      String                    @map("campaign_id")
+  uploadedBy      String                    @map("uploaded_by")
+  platform        PerformanceSourcePlatform
+  sourceType      String                    @map("source_type")
+  url             String?
+  status          PerformanceSourceStatus   @default(PENDING)
+  fileKey         String?                   @map("file_key")
+  fileName        String?                   @map("file_name")
+  mimeType        String?                   @map("mime_type")
+  fileSize        BigInt?                   @map("file_size")
+  metricsJson     Json?                     @map("metrics_json")
+  analysisJson    Json?                     @map("analysis_json")
+  errorMessage    String?                   @map("error_message")
+  createdAt       DateTime                  @default(now()) @map("created_at")
+  updatedAt       DateTime                  @updatedAt @map("updated_at")
+  analyzedAt      DateTime?                 @map("analyzed_at")
+
+  campaign Campaign @relation(fields: [campaignId], references: [id])
+  uploader User     @relation(fields: [uploadedBy], references: [id])
+
+  @@index([campaignId])
+  @@index([uploadedBy])
+  @@index([platform])
+  @@index([status])
+  @@index([createdAt])
+  @@map("performance_sources")
 }
 
 model CampaignVersion {

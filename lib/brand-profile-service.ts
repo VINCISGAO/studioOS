@@ -33,14 +33,20 @@ async function writeStore(store: BrandProfileStore) {
   await writeDataJson(STORE_PATH, store);
 }
 
-async function getPrismaBrandProfileByEmail(email: string): Promise<StoredBrandProfile | null> {
-  if (!hasDatabaseUrl()) return null;
-  const user = await prisma.user.findUnique({
-    where: { email: email.toLowerCase() },
-    include: { brandProfile: true }
-  });
-  const profile = user?.brandProfile;
-  if (!user || !profile) return null;
+function mapPrismaBrandProfileToStored(input: {
+  user: { email: string; fullName: string | null };
+  profile: {
+    id: string;
+    companyName: string;
+    website: string | null;
+    logoUrl: string | null;
+    industry: string | null;
+    brandDescription: string | null;
+    brandDnaJson: unknown;
+    updatedAt: Date;
+  };
+}): StoredBrandProfile {
+  const { user, profile } = input;
   const dna =
     typeof profile.brandDnaJson === "object" && profile.brandDnaJson !== null && !Array.isArray(profile.brandDnaJson)
       ? (profile.brandDnaJson as Record<string, unknown>)
@@ -63,6 +69,27 @@ async function getPrismaBrandProfileByEmail(email: string): Promise<StoredBrandP
     showcase_ads: [],
     updated_at: profile.updatedAt.toISOString()
   };
+}
+
+async function getPrismaBrandProfileByEmail(email: string): Promise<StoredBrandProfile | null> {
+  if (!hasDatabaseUrl()) return null;
+  const user = await prisma.user.findUnique({
+    where: { email: email.toLowerCase() },
+    include: { brandProfile: true }
+  });
+  const profile = user?.brandProfile;
+  if (!user || !profile) return null;
+  return mapPrismaBrandProfileToStored({ user, profile });
+}
+
+async function getPrismaBrandProfileById(id: string): Promise<StoredBrandProfile | null> {
+  if (!hasDatabaseUrl()) return null;
+  const profile = await prisma.brandProfile.findUnique({
+    where: { id },
+    include: { user: true }
+  });
+  if (!profile) return null;
+  return mapPrismaBrandProfileToStored({ user: profile.user, profile });
 }
 
 async function syncPrismaBrandProfile(
@@ -152,6 +179,9 @@ async function syncPrismaBrandLogoArchive(
     typeof current.asset_archive === "object" && current.asset_archive !== null && !Array.isArray(current.asset_archive)
       ? (current.asset_archive as Record<string, unknown>)
       : {};
+  const logoHistory = Array.isArray(currentArchive.logos)
+    ? (currentArchive.logos as Record<string, unknown>[])
+    : [];
   const logoArchive: Record<string, string | number> = {
     url: input.logoUrl,
     archived_at: nowIso()
@@ -170,7 +200,8 @@ async function syncPrismaBrandLogoArchive(
         ...current,
         asset_archive: {
           ...currentArchive,
-          logo: logoArchive
+          logo: logoArchive,
+          logos: [logoArchive, ...logoHistory]
         }
       })
     }
@@ -192,7 +223,7 @@ export async function getBrandProfileByEmail(email: string): Promise<StoredBrand
 
 export async function getBrandProfileById(id: string): Promise<StoredBrandProfile | null> {
   const store = await readStore();
-  return store.profiles[id] ?? null;
+  return store.profiles[id] ?? (await getPrismaBrandProfileById(id));
 }
 
 export async function getOrCreateBrandProfile(input: {

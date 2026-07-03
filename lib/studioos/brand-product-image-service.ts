@@ -1,22 +1,41 @@
 import { addProjectAsset } from "@/lib/campaign-store";
+import { mapCampaignAssetToStoredProjectAsset } from "@/features/campaign/brand-campaign/brand-campaign.mapper";
 import { brandCampaignRepository } from "@/features/campaign/brand-campaign/brand-campaign.repository";
 import { getProject } from "@/lib/project-service";
 import { saveProjectAssetUpload } from "@/lib/studioos/project-asset-upload";
 import type { StoredProjectAsset } from "@/lib/campaign-types";
 
-async function canAccessProject(projectId: string, clientEmail: string) {
+async function resolveAccessibleProject(projectId: string, clientEmail: string) {
   const normalizedEmail = clientEmail.toLowerCase();
   const project = await getProject(projectId);
   if (project?.client_email.toLowerCase() === normalizedEmail) {
-    return true;
+    const campaign = await brandCampaignRepository.findByLegacyProjectId(projectId).catch(() => null);
+    return { ok: true as const, campaign };
   }
 
   try {
     const campaign = await brandCampaignRepository.findByLegacyProjectId(projectId);
-    return campaign?.brand?.email?.toLowerCase() === normalizedEmail;
+    if (campaign?.brand?.email?.toLowerCase() === normalizedEmail) {
+      return { ok: true as const, campaign };
+    }
   } catch {
-    return false;
+    // Fall through to the broad brand-owned campaign lookup below.
   }
+
+  try {
+    const campaigns = await brandCampaignRepository.listByBrandEmail(normalizedEmail);
+    const campaign = campaigns.find((item) => {
+      const productionBrief = item.productionBrief as { legacy_project_id?: string } | null;
+      return item.id === projectId || productionBrief?.legacy_project_id === projectId;
+    });
+    if (campaign) {
+      return { ok: true as const, campaign };
+    }
+  } catch {
+    // If Prisma is unavailable, keep the standard denied result.
+  }
+
+  return { ok: false as const, campaign: null };
 }
 
 export async function uploadBrandProductImage(input: {
@@ -28,7 +47,8 @@ export async function uploadBrandProductImage(input: {
   | { ok: true; original: StoredProjectAsset; preview_url: string }
   | { ok: false; error: string; status?: number }
 > {
-  if (!(await canAccessProject(input.projectId, input.clientEmail))) {
+  const access = await resolveAccessibleProject(input.projectId, input.clientEmail);
+  if (!access.ok) {
     return {
       ok: false,
       status: 403,
@@ -55,6 +75,32 @@ export async function uploadBrandProductImage(input: {
             ? "图片不能超过 10MB"
             : saved.error;
     return { ok: false, status: 400, error };
+  }
+
+  if (access.campaign) {
+    await brandCampaignRepository.softDeleteAssetsByType(access.campaign.id, "PRODUCT_IMAGE");
+    const asset = await brandCampaignRepository.createAsset({
+      campaignId: access.campaign.id,
+      uploadedBy: access.campaign.brandId,
+      assetType: "PRODUCT_IMAGE",
+      fileName: saved.file_name,
+      fileKey: saved.file_key ?? saved.url,
+      mimeType: saved.mime_type,
+      fileSize: saved.size_bytes,
+      storageProvider: saved.storage_provider,
+      previewUrl: saved.url,
+      metadataJson: {
+        role: "original",
+        ...(saved.file_key ? { object_key: saved.file_key } : {}),
+        ...(saved.storage_provider ? { storage_provider: saved.storage_provider } : {})
+      }
+    });
+
+    return {
+      ok: true,
+      original: mapCampaignAssetToStoredProjectAsset(asset, input.projectId),
+      preview_url: saved.url
+    };
   }
 
   const original = await addProjectAsset({
