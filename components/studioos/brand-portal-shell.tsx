@@ -173,11 +173,11 @@ function BrandPortalShellInner({
 
   return (
     <PortalShellChromeProvider value={portalChrome}>
-      <div className="min-h-screen bg-[#f8f9fc] lg:h-screen lg:overflow-hidden">
-      <div className="flex min-h-screen lg:h-screen lg:min-h-0 lg:overflow-hidden">
+      <div className="min-h-screen bg-[#f8f9fc] lg:h-[100dvh] lg:max-h-[100dvh] lg:overflow-hidden">
+      <div className="flex min-h-screen lg:h-[100dvh] lg:min-h-0 lg:max-h-[100dvh] lg:overflow-hidden">
         <aside
           className={cn(
-            "hidden h-screen w-[248px] shrink-0 flex-col overflow-hidden border-r border-zinc-200/80 bg-white lg:flex",
+            "hidden h-[100dvh] max-h-[100dvh] w-[248px] shrink-0 flex-col overflow-hidden border-r border-zinc-200/80 bg-white lg:sticky lg:top-0 lg:flex",
             isWizardCreate && "max-lg:hidden"
           )}
         >
@@ -195,7 +195,7 @@ function BrandPortalShellInner({
             </div>
           </MarketingHomeLink>
 
-          <nav className="min-h-0 flex-1 space-y-0.5 overflow-hidden px-3">
+          <nav className="min-h-0 flex-1 space-y-0.5 overflow-y-auto px-3 pb-3">
             {brandPortalNavItems.map((item) => {
               const active = isActive(item);
               const workspaceActive = item.labelKey === "workspace" && active;
@@ -255,7 +255,7 @@ function BrandPortalShellInner({
 
         <div
           className={cn(
-            "flex min-w-0 flex-1 flex-col lg:h-screen lg:overflow-hidden",
+            "flex min-w-0 flex-1 flex-col lg:h-[100dvh] lg:max-h-[100dvh] lg:overflow-hidden",
             isProjectReview && "h-[100dvh] max-h-[100dvh] overflow-hidden"
           )}
         >

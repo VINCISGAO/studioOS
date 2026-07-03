@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { BrandAttributionHub } from "@/components/studioos/brand-attribution-hub";
 import { getCurrentClientEmail } from "@/lib/client-session";
@@ -20,22 +19,14 @@ export default async function BrandAttributionPage({
   const workspace = await getBrandAttributionWorkspace(clientEmail);
 
   return (
-    <div>
-      <Link
-        href={withLocale("/brand", locale)}
-        className="inline-flex items-center text-sm text-zinc-500 transition hover:text-zinc-900"
-      >
-        ← {locale === "zh" ? "返回工作台" : "Back to workspace"}
-      </Link>
-      <div className="mt-6">
-        <BrandAttributionHub
-          locale={locale}
-          rows={workspace.rows}
-          insights={workspace.insights}
-          pendingCount={workspace.pendingCount}
-          attributedCount={workspace.attributedCount}
-        />
-      </div>
-    </div>
+    <BrandAttributionHub
+      locale={locale}
+      rows={workspace.rows}
+      insights={workspace.insights}
+      sources={workspace.sources}
+      campaignOptions={workspace.campaignOptions}
+      pendingCount={workspace.pendingCount}
+      attributedCount={workspace.attributedCount}
+    />
   );
 }

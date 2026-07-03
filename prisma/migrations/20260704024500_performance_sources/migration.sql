@@ -2,7 +2,7 @@
 CREATE TYPE "PerformanceSourceStatus" AS ENUM ('PENDING', 'IMPORTED', 'ANALYZED', 'FAILED');
 
 -- CreateEnum
-CREATE TYPE "PerformanceSourcePlatform" AS ENUM ('TIKTOK', 'YOUTUBE', 'INSTAGRAM', 'FACEBOOK_ADS', 'GOOGLE_DRIVE', 'REPORT', 'OTHER');
+CREATE TYPE "PerformanceSourcePlatform" AS ENUM ('TIKTOK', 'YOUTUBE', 'INSTAGRAM', 'TELEGRAM', 'FACEBOOK_ADS', 'WHATSAPP', 'XIAOHONGSHU', 'DOUYIN', 'X', 'GOOGLE_DRIVE', 'REPORT', 'OTHER');
 
 -- CreateTable
 CREATE TABLE "performance_sources" (

@@ -3,7 +3,7 @@ import type {
   PerformanceSourceStatus
 } from "@prisma/client";
 
-export type PerformanceSourceSourceType = "url" | "file" | "url_file";
+export type PerformanceSourceSourceType = "url" | "file" | "text" | "url_file" | "url_text";
 
 export type SerializedPerformanceSource = {
   id: string;
