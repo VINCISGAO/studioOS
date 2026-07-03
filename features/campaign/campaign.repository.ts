@@ -366,6 +366,7 @@ export class CampaignRepository {
     fileKey: string;
     mimeType: string;
     fileSize: number;
+    storageProvider?: string;
     previewUrl?: string;
     metadataJson?: Prisma.InputJsonValue;
   }): Promise<CampaignAsset> {

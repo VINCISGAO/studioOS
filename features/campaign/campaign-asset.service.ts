@@ -57,6 +57,7 @@ export class CampaignAssetService {
       fileKey: saved.file_key,
       mimeType: saved.mime_type,
       fileSize: saved.size_bytes,
+      storageProvider: saved.storage_provider,
       previewUrl: saved.url
     });
 
@@ -88,8 +89,10 @@ export class CampaignAssetService {
     type: ProjectAssetType;
     file_url: string;
     file_name?: string;
+    file_key?: string;
     mime_type?: string;
     size_bytes?: number;
+    storage_provider?: string;
     actorEmail?: string;
   }): Promise<StoredProjectAsset | null> {
     if (!hasDatabaseUrl()) return null;
@@ -108,18 +111,21 @@ export class CampaignAssetService {
     }
 
     const fileName = input.file_name ?? input.file_url.split("/").pop() ?? "asset";
+    const metadata: Record<string, string> = {};
+    if (input.file_key) metadata.object_key = input.file_key;
+    if (input.storage_provider) metadata.storage_provider = input.storage_provider;
+    if (input.type === "product_image_original") metadata.role = "original";
     const asset = await assetRepository.create({
       campaignId: campaign.id,
       uploadedBy: campaign.brandId,
       assetType,
       fileName,
-      fileKey: input.file_url,
+      fileKey: input.file_key ?? input.file_url,
       mimeType: input.mime_type ?? "image/jpeg",
       fileSize: input.size_bytes ?? 0,
+      storageProvider: input.storage_provider,
       previewUrl: input.file_url,
-      metadataJson: {
-        role: input.type === "product_image_original" ? "original" : undefined
-      }
+      metadataJson: metadata
     });
 
     await activityService.write(

@@ -156,7 +156,13 @@ export async function uploadBrandAvatarAction(formData: FormData) {
     return { ok: false as const, error: saved.error };
   }
 
-  const updated = await updateBrandLogoUrl(email, saved.url);
+  const updated = await updateBrandLogoUrl(email, saved.url, {
+    fileKey: saved.file_key,
+    storageProvider: saved.storage_provider,
+    fileName: saved.file_name,
+    mimeType: saved.mime_type,
+    sizeBytes: saved.size_bytes
+  });
   if (!updated) {
     return { ok: false as const, error: lang === "zh" ? "保存头像失败" : "Failed to save avatar" };
   }

@@ -1,7 +1,6 @@
-import { promises as fs } from "fs";
 import path from "path";
+import { putObject } from "@/lib/studioos/object-storage";
 
-const UPLOAD_DIR = path.join(process.cwd(), ".data", "uploads", "brands");
 const MAX_BYTES = 5 * 1024 * 1024;
 
 const ALLOWED_MIME = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
@@ -18,14 +17,26 @@ export function brandAvatarPublicUrl(brandId: string, fileName: string) {
 }
 
 export function brandAvatarFilePath(brandId: string, fileName: string) {
-  return path.join(UPLOAD_DIR, brandId, fileName);
+  return path.join(process.cwd(), ".data", "uploads", "brands", brandId, fileName);
+}
+
+export function brandAvatarObjectKey(brandId: string, fileName: string) {
+  return `brands/${brandId}/${fileName}`;
 }
 
 export async function saveBrandAvatarUpload(
   brandId: string,
   file: File
 ): Promise<
-  | { ok: true; url: string; file_name: string; mime_type: string; size_bytes: number }
+  | {
+      ok: true;
+      url: string;
+      file_name: string;
+      file_key: string;
+      storage_provider: string;
+      mime_type: string;
+      size_bytes: number;
+    }
   | { ok: false; error: string }
 > {
   if (!file.size) {
@@ -41,17 +52,28 @@ export async function saveBrandAvatarUpload(
     return { ok: false, error: "Only JPEG, PNG, WebP, and GIF images are supported" };
   }
 
-  const dir = path.join(UPLOAD_DIR, brandId);
-  await fs.mkdir(dir, { recursive: true });
   const fileName = `logo_${Date.now()}.${extForMime(mime)}`;
-  const filePath = path.join(dir, fileName);
   const buffer = Buffer.from(await file.arrayBuffer());
-  await fs.writeFile(filePath, buffer);
+  const fileKey = brandAvatarObjectKey(brandId, fileName);
+  let stored: Awaited<ReturnType<typeof putObject>>;
+  try {
+    stored = await putObject(fileKey, buffer, mime);
+  } catch (error) {
+    return {
+      ok: false,
+      error:
+        error instanceof Error && error.message.includes("Durable object storage")
+          ? "Production asset storage is not configured. Configure R2/S3 before uploading brand assets."
+          : "Failed to store brand asset"
+    };
+  }
 
   return {
     ok: true,
     url: brandAvatarPublicUrl(brandId, fileName),
     file_name: file.name || fileName,
+    file_key: stored.key,
+    storage_provider: stored.backend,
     mime_type: mime,
     size_bytes: file.size
   };

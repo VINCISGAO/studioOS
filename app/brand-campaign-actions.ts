@@ -35,6 +35,7 @@ import { listOrdersForProject, updateOrderRequirements } from "@/lib/order-servi
 import { buildConfirmedBriefSnapshot } from "@/lib/studioos/confirmed-brief";
 import { creativeDirectionService } from "@/features/ai/creative-direction.service";
 import { brandCampaignRepository } from "@/features/campaign/brand-campaign/brand-campaign.repository";
+import { mapCampaignToStoredProject } from "@/features/campaign/brand-campaign/brand-campaign.mapper";
 import type { BrandProductionBrief } from "@/features/campaign/brand-campaign/brand-campaign.types";
 import { campaignBridgeService } from "@/features/campaign/campaign-bridge.service";
 import { emitWizardProgress } from "@/lib/campaign/wizard-progress.service";
@@ -66,7 +67,22 @@ async function requireBrandClient(): Promise<
 
 async function requireProject(projectId: string, clientEmail: string) {
   const project = await getProject(projectId);
-  if (!project || project.client_email.toLowerCase() !== clientEmail.toLowerCase()) {
+  const normalizedEmail = clientEmail.toLowerCase();
+  if (project?.client_email.toLowerCase() === normalizedEmail) {
+    return { ok: true as const, project };
+  }
+
+  try {
+    const campaign = await brandCampaignRepository.findByLegacyProjectId(projectId);
+    const campaignEmail = campaign?.brand?.email?.toLowerCase();
+    if (campaign && campaignEmail === normalizedEmail) {
+      return { ok: true as const, project: mapCampaignToStoredProject(campaign) };
+    }
+  } catch {
+    // Fall through to the standard access-denied response below.
+  }
+
+  if (!project || project.client_email.toLowerCase() !== normalizedEmail) {
     return { ok: false as const, error: "Project not found" };
   }
   return { ok: true as const, project };

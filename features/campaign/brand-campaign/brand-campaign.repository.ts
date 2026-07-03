@@ -178,6 +178,7 @@ export class BrandCampaignRepository {
     fileKey: string;
     mimeType: string;
     fileSize: number;
+    storageProvider?: string;
     previewUrl?: string;
     metadataJson?: Prisma.InputJsonValue;
   }): Promise<CampaignAsset> {
@@ -193,7 +194,7 @@ export class BrandCampaignRepository {
         fileSize: BigInt(input.fileSize),
         previewUrl: input.previewUrl,
         metadataJson: input.metadataJson,
-        storageProvider: "local"
+        storageProvider: input.storageProvider ?? "local"
       }
     });
   }

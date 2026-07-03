@@ -1,10 +1,10 @@
-import { promises as fs } from "fs";
 import { hasOpenAI, openAIImageModel } from "@/lib/studioos/config";
 import {
   fileNameFromAssetUrl,
-  projectAssetFilePath,
+  projectAssetObjectKey,
   saveProjectAssetBuffer
 } from "@/lib/studioos/project-asset-upload";
+import { getObject } from "@/lib/studioos/object-storage";
 
 export type RefineSource = "openai" | "local";
 
@@ -104,22 +104,30 @@ export async function refineProductImageWithAI(input: {
   locale: "en" | "zh";
   category?: string;
 }): Promise<
-  | { ok: true; url: string; file_name: string; mime_type: string; size_bytes: number; source: RefineSource }
+  | {
+      ok: true;
+      url: string;
+      file_name: string;
+      file_key: string;
+      storage_provider: string;
+      mime_type: string;
+      size_bytes: number;
+      source: RefineSource;
+    }
   | { ok: false; error: string; code: "NO_OPENAI" | "OPENAI_FAILED" }
 > {
   const fileName = fileNameFromAssetUrl(input.originalUrl);
-  const originalPath = projectAssetFilePath(input.projectId, fileName);
+  const originalKey = projectAssetObjectKey(input.projectId, fileName);
 
-  let buffer: Buffer;
-  try {
-    buffer = await fs.readFile(originalPath);
-  } catch {
+  const stored = await getObject(originalKey);
+  if (!stored) {
     return {
       ok: false,
       error: input.locale === "zh" ? "找不到原图" : "Original image not found",
       code: "OPENAI_FAILED"
     };
   }
+  const buffer = stored;
 
   if (!hasOpenAI()) {
     return { ok: false, error: "NO_OPENAI", code: "NO_OPENAI" };

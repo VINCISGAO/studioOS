@@ -46,7 +46,11 @@ export async function uploadBrandProductImage(input: {
     project_id: input.projectId,
     type: "product_image_original",
     file_url: saved.url,
-    file_name: saved.file_name
+    file_name: saved.file_name,
+    file_key: saved.file_key,
+    mime_type: saved.mime_type,
+    size_bytes: saved.size_bytes,
+    storage_provider: saved.storage_provider
   });
 
   return { ok: true, original, preview_url: saved.url };

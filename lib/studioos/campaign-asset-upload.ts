@@ -1,5 +1,6 @@
 import { promises as fs } from "fs";
 import path from "path";
+import { putObject } from "@/lib/studioos/object-storage";
 
 const UPLOAD_DIR = path.join(process.cwd(), ".data", "uploads", "campaigns");
 const MAX_BYTES = 10 * 1024 * 1024;
@@ -31,12 +32,24 @@ export function campaignAssetFilePath(campaignId: string, fileName: string) {
   return path.join(UPLOAD_DIR, campaignId, fileName);
 }
 
+export function campaignAssetObjectKey(campaignId: string, fileName: string) {
+  return `campaigns/${campaignId}/${fileName}`;
+}
+
 export async function saveCampaignAssetUpload(
   campaignId: string,
   file: File,
   prefix: string
 ): Promise<
-  | { ok: true; url: string; file_name: string; file_key: string; mime_type: string; size_bytes: number }
+  | {
+      ok: true;
+      url: string;
+      file_name: string;
+      file_key: string;
+      storage_provider: string;
+      mime_type: string;
+      size_bytes: number;
+    }
   | { ok: false; error: string }
 > {
   if (!file.size) return { ok: false, error: "Empty file" };
@@ -51,18 +64,28 @@ export async function saveCampaignAssetUpload(
     return { ok: false, error: "Only JPEG, PNG, WebP, and GIF images are supported" };
   }
 
-  const dir = path.join(UPLOAD_DIR, campaignId);
-  await fs.mkdir(dir, { recursive: true });
   const storedName = `${prefix}_${Date.now()}.${extForMime(mime)}`;
-  const filePath = path.join(dir, storedName);
   const buffer = Buffer.from(await file.arrayBuffer());
-  await fs.writeFile(filePath, buffer);
+  const fileKey = campaignAssetObjectKey(campaignId, storedName);
+  let stored: Awaited<ReturnType<typeof putObject>>;
+  try {
+    stored = await putObject(fileKey, buffer, mime);
+  } catch (error) {
+    return {
+      ok: false,
+      error:
+        error instanceof Error && error.message.includes("Durable object storage")
+          ? "Production asset storage is not configured. Configure R2/S3 before uploading brand assets."
+          : "Failed to store campaign asset"
+    };
+  }
 
   return {
     ok: true,
     url: campaignAssetPublicUrl(campaignId, storedName),
     file_name: file.name || storedName,
-    file_key: `campaigns/${campaignId}/${storedName}`,
+    file_key: stored.key,
+    storage_provider: stored.backend,
     mime_type: mime,
     size_bytes: file.size
   };
@@ -75,22 +98,29 @@ export async function saveCampaignAssetFromPath(input: {
   mimeType: string;
   prefix: string;
 }): Promise<
-  | { ok: true; url: string; file_name: string; file_key: string; mime_type: string; size_bytes: number }
+  | {
+      ok: true;
+      url: string;
+      file_name: string;
+      file_key: string;
+      storage_provider: string;
+      mime_type: string;
+      size_bytes: number;
+    }
   | { ok: false; error: string }
 > {
   const buffer = await fs.readFile(input.sourceFilePath);
   if (buffer.length > MAX_BYTES) return { ok: false, error: "File exceeds 10MB limit" };
 
-  const dir = path.join(UPLOAD_DIR, input.campaignId);
-  await fs.mkdir(dir, { recursive: true });
   const storedName = `${input.prefix}_${Date.now()}.${extForMime(input.mimeType)}`;
-  await fs.writeFile(path.join(dir, storedName), buffer);
+  const stored = await putObject(campaignAssetObjectKey(input.campaignId, storedName), buffer, input.mimeType);
 
   return {
     ok: true,
     url: campaignAssetPublicUrl(input.campaignId, storedName),
     file_name: input.fileName,
-    file_key: `campaigns/${input.campaignId}/${storedName}`,
+    file_key: stored.key,
+    storage_provider: stored.backend,
     mime_type: input.mimeType,
     size_bytes: buffer.length
   };

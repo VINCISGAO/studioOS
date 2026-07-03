@@ -3,6 +3,8 @@ import { creators } from "@/lib/data";
 import type { BrandProfileStore, BrandShowcaseAd, StoredBrandProfile } from "@/lib/brand-profile-types";
 import { getDeliverables, listOrdersForClient } from "@/lib/order-service";
 import { listProjectsForClient } from "@/lib/project-service";
+import { hasDatabaseUrl, prisma } from "@/lib/core/database/prisma";
+import { asInputJson } from "@/lib/core/prisma-json";
 
 const STORE_PATH = dataStorePath("brand-profile-store.json");
 
@@ -31,6 +33,150 @@ async function writeStore(store: BrandProfileStore) {
   await writeDataJson(STORE_PATH, store);
 }
 
+async function getPrismaBrandProfileByEmail(email: string): Promise<StoredBrandProfile | null> {
+  if (!hasDatabaseUrl()) return null;
+  const user = await prisma.user.findUnique({
+    where: { email: email.toLowerCase() },
+    include: { brandProfile: true }
+  });
+  const profile = user?.brandProfile;
+  if (!user || !profile) return null;
+  const dna =
+    typeof profile.brandDnaJson === "object" && profile.brandDnaJson !== null && !Array.isArray(profile.brandDnaJson)
+      ? (profile.brandDnaJson as Record<string, unknown>)
+      : {};
+  const archive =
+    typeof dna.profile_archive === "object" && dna.profile_archive !== null && !Array.isArray(dna.profile_archive)
+      ? (dna.profile_archive as Record<string, unknown>)
+      : {};
+  return {
+    id: profile.id,
+    client_email: user.email.toLowerCase(),
+    company_name: profile.companyName,
+    display_name: String(archive.display_name ?? user.fullName ?? profile.companyName),
+    headline: String(archive.headline ?? ""),
+    bio: String(archive.bio ?? profile.brandDescription ?? ""),
+    website: profile.website ?? "",
+    industry: profile.industry ?? "",
+    logo_url: profile.logoUrl ?? "",
+    profile_completed_at: null,
+    showcase_ads: [],
+    updated_at: profile.updatedAt.toISOString()
+  };
+}
+
+async function syncPrismaBrandProfile(
+  clientEmail: string,
+  input: Pick<
+    StoredBrandProfile,
+    "company_name" | "display_name" | "headline" | "bio" | "website" | "industry" | "logo_url"
+  >
+) {
+  if (!hasDatabaseUrl()) return;
+  const user = await prisma.user.findUnique({
+    where: { email: clientEmail.toLowerCase() },
+    include: { brandProfile: true }
+  });
+  if (!user) return;
+  const current =
+    typeof user.brandProfile?.brandDnaJson === "object" &&
+    user.brandProfile.brandDnaJson !== null &&
+    !Array.isArray(user.brandProfile.brandDnaJson)
+      ? (user.brandProfile.brandDnaJson as Record<string, unknown>)
+      : {};
+  const profileArchive = {
+    company_name: input.company_name,
+    display_name: input.display_name,
+    headline: input.headline,
+    bio: input.bio,
+    website: input.website,
+    industry: input.industry,
+    logo_url: input.logo_url,
+    archived_at: nowIso()
+  };
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { fullName: input.display_name || input.company_name }
+  });
+  await prisma.brandProfile.upsert({
+    where: { userId: user.id },
+    create: {
+      userId: user.id,
+      companyName: input.company_name,
+      website: input.website || null,
+      logoUrl: input.logo_url || null,
+      industry: input.industry || null,
+      brandDescription: input.bio || null,
+      brandDnaJson: asInputJson({
+        ...current,
+        profile_archive: profileArchive
+      })
+    },
+    update: {
+      companyName: input.company_name,
+      website: input.website || null,
+      logoUrl: input.logo_url || null,
+      industry: input.industry || null,
+      brandDescription: input.bio || null,
+      brandDnaJson: asInputJson({
+        ...current,
+        profile_archive: profileArchive
+      })
+    }
+  });
+}
+
+async function syncPrismaBrandLogoArchive(
+  clientEmail: string,
+  input: {
+    logoUrl: string;
+    fileKey?: string;
+    storageProvider?: string;
+    fileName?: string;
+    mimeType?: string;
+    sizeBytes?: number;
+  }
+) {
+  if (!hasDatabaseUrl()) return;
+  const user = await prisma.user.findUnique({
+    where: { email: clientEmail.toLowerCase() },
+    include: { brandProfile: true }
+  });
+  const profile = user?.brandProfile;
+  if (!user || !profile) return;
+  const current =
+    typeof profile.brandDnaJson === "object" && profile.brandDnaJson !== null && !Array.isArray(profile.brandDnaJson)
+      ? (profile.brandDnaJson as Record<string, unknown>)
+      : {};
+  const currentArchive =
+    typeof current.asset_archive === "object" && current.asset_archive !== null && !Array.isArray(current.asset_archive)
+      ? (current.asset_archive as Record<string, unknown>)
+      : {};
+  const logoArchive: Record<string, string | number> = {
+    url: input.logoUrl,
+    archived_at: nowIso()
+  };
+  if (input.fileKey) logoArchive.file_key = input.fileKey;
+  if (input.storageProvider) logoArchive.storage_provider = input.storageProvider;
+  if (input.fileName) logoArchive.file_name = input.fileName;
+  if (input.mimeType) logoArchive.mime_type = input.mimeType;
+  if (input.sizeBytes !== undefined) logoArchive.size_bytes = input.sizeBytes;
+
+  await prisma.brandProfile.update({
+    where: { userId: user.id },
+    data: {
+      logoUrl: input.logoUrl,
+      brandDnaJson: asInputJson({
+        ...current,
+        asset_archive: {
+          ...currentArchive,
+          logo: logoArchive
+        }
+      })
+    }
+  });
+}
+
 export function isBrandProfileComplete(profile: StoredBrandProfile | null | undefined) {
   return Boolean(profile?.profile_completed_at && profile.headline.trim() && profile.bio.trim());
 }
@@ -38,7 +184,10 @@ export function isBrandProfileComplete(profile: StoredBrandProfile | null | unde
 export async function getBrandProfileByEmail(email: string): Promise<StoredBrandProfile | null> {
   const store = await readStore();
   const normalized = email.toLowerCase();
-  return Object.values(store.profiles).find((item) => item.client_email === normalized) ?? null;
+  return (
+    Object.values(store.profiles).find((item) => item.client_email === normalized) ??
+    (await getPrismaBrandProfileByEmail(normalized))
+  );
 }
 
 export async function getBrandProfileById(id: string): Promise<StoredBrandProfile | null> {
@@ -69,6 +218,7 @@ export async function getOrCreateBrandProfile(input: {
     existing.updated_at = nowIso();
     store.profiles[existing.id] = existing;
     await writeStore(store);
+    await syncPrismaBrandProfile(existing.client_email, existing);
     return existing;
   }
 
@@ -89,6 +239,7 @@ export async function getOrCreateBrandProfile(input: {
 
   store.profiles[profile.id] = profile;
   await writeStore(store);
+  await syncPrismaBrandProfile(profile.client_email, profile);
   return profile;
 }
 
@@ -124,12 +275,20 @@ export async function saveBrandProfile(
 
   store.profiles[next.id] = next;
   await writeStore(store);
+  await syncPrismaBrandProfile(next.client_email, next);
   return next;
 }
 
 export async function updateBrandLogoUrl(
   clientEmail: string,
-  logoUrl: string
+  logoUrl: string,
+  asset?: {
+    fileKey?: string;
+    storageProvider?: string;
+    fileName?: string;
+    mimeType?: string;
+    sizeBytes?: number;
+  }
 ): Promise<StoredBrandProfile | null> {
   const profile = await getBrandProfileByEmail(clientEmail);
   if (!profile) return null;
@@ -142,6 +301,15 @@ export async function updateBrandLogoUrl(
   };
   store.profiles[next.id] = next;
   await writeStore(store);
+  await syncPrismaBrandProfile(next.client_email, next);
+  await syncPrismaBrandLogoArchive(next.client_email, {
+    logoUrl,
+    fileKey: asset?.fileKey,
+    storageProvider: asset?.storageProvider,
+    fileName: asset?.fileName,
+    mimeType: asset?.mimeType,
+    sizeBytes: asset?.sizeBytes
+  });
   return next;
 }
 

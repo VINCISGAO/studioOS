@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { promises as fs } from "fs";
-import { projectAssetFilePath } from "@/lib/studioos/project-asset-upload";
+import { projectAssetObjectKey } from "@/lib/studioos/project-asset-upload";
+import { getObject } from "@/lib/studioos/object-storage";
 
 export async function GET(
   _request: Request,
@@ -12,10 +12,13 @@ export async function GET(
   }
 
   const safeName = decodeURIComponent(filename).replace(/[/\\]/g, "");
-  const filePath = projectAssetFilePath(projectId, safeName);
+  const fileKey = projectAssetObjectKey(projectId, safeName);
 
   try {
-    const data = await fs.readFile(filePath);
+    const data = await getObject(fileKey);
+    if (!data) {
+      return NextResponse.json({ error: "Asset not found" }, { status: 404 });
+    }
     const ext = safeName.split(".").pop()?.toLowerCase();
     const mime =
       ext === "png"

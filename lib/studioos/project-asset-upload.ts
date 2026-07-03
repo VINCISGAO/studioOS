@@ -1,7 +1,6 @@
-import { promises as fs } from "fs";
 import path from "path";
+import { putObject } from "@/lib/studioos/object-storage";
 
-const UPLOAD_DIR = path.join(process.cwd(), ".data", "uploads", "projects");
 const MAX_BYTES = 10 * 1024 * 1024;
 
 const ALLOWED_MIME = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
@@ -33,7 +32,11 @@ export function projectAssetPublicUrl(projectId: string, fileName: string) {
 }
 
 export function projectAssetFilePath(projectId: string, fileName: string) {
-  return path.join(UPLOAD_DIR, projectId, fileName);
+  return path.join(process.cwd(), ".data", "uploads", "projects", projectId, fileName);
+}
+
+export function projectAssetObjectKey(projectId: string, fileName: string) {
+  return `projects/${projectId}/${fileName}`;
 }
 
 export async function saveProjectAssetUpload(
@@ -41,7 +44,15 @@ export async function saveProjectAssetUpload(
   file: File,
   prefix: string
 ): Promise<
-  | { ok: true; url: string; file_name: string; mime_type: string; size_bytes: number }
+  | {
+      ok: true;
+      url: string;
+      file_name: string;
+      file_key: string;
+      storage_provider: string;
+      mime_type: string;
+      size_bytes: number;
+    }
   | { ok: false; error: string }
 > {
   if (!file.size) {
@@ -64,17 +75,28 @@ export async function saveProjectAssetUpload(
     return { ok: false, error: "Only JPEG, PNG, WebP, and GIF images are supported" };
   }
 
-  const dir = path.join(UPLOAD_DIR, projectId);
-  await fs.mkdir(dir, { recursive: true });
   const fileName = `${prefix}_${Date.now()}.${extForMime(mime)}`;
-  const filePath = path.join(dir, fileName);
   const buffer = Buffer.from(await file.arrayBuffer());
-  await fs.writeFile(filePath, buffer);
+  const fileKey = projectAssetObjectKey(projectId, fileName);
+  let stored: Awaited<ReturnType<typeof putObject>>;
+  try {
+    stored = await putObject(fileKey, buffer, mime);
+  } catch (error) {
+    return {
+      ok: false,
+      error:
+        error instanceof Error && error.message.includes("Durable object storage")
+          ? "Production asset storage is not configured. Configure R2/S3 before uploading brand assets."
+          : "Failed to store brand asset"
+    };
+  }
 
   return {
     ok: true,
     url: projectAssetPublicUrl(projectId, fileName),
     file_name: file.name || fileName,
+    file_key: stored.key,
+    storage_provider: stored.backend,
     mime_type: mime,
     size_bytes: file.size
   };
@@ -85,15 +107,23 @@ export async function saveProjectAssetBuffer(
   buffer: Buffer,
   prefix: string,
   mime = "image/jpeg"
-): Promise<{ ok: true; url: string; file_name: string; mime_type: string; size_bytes: number }> {
-  const dir = path.join(UPLOAD_DIR, projectId);
-  await fs.mkdir(dir, { recursive: true });
+): Promise<{
+  ok: true;
+  url: string;
+  file_name: string;
+  file_key: string;
+  storage_provider: string;
+  mime_type: string;
+  size_bytes: number;
+}> {
   const fileName = `${prefix}_${Date.now()}.${extForMime(mime)}`;
-  await fs.writeFile(path.join(dir, fileName), buffer);
+  const stored = await putObject(projectAssetObjectKey(projectId, fileName), buffer, mime);
   return {
     ok: true,
     url: projectAssetPublicUrl(projectId, fileName),
     file_name: fileName,
+    file_key: stored.key,
+    storage_provider: stored.backend,
     mime_type: mime,
     size_bytes: buffer.length
   };

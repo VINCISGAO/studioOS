@@ -4,6 +4,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { isObjectStorageConfigured, videoConfig } from "@/lib/core/config/video";
+import { canPersistLocalDataStore } from "@/lib/runtime-flags";
 
 const LOCAL_ROOT = path.join(process.cwd(), ".data", "object-storage");
 
@@ -42,6 +43,9 @@ export async function putObject(key: string, body: Buffer, contentType: string) 
     return { backend: "r2" as const, key };
   }
 
+  if (!canPersistLocalDataStore()) {
+    throw new Error("Durable object storage is required for production asset uploads");
+  }
   const filePath = localPathForKey(key);
   await fs.mkdir(path.dirname(filePath), { recursive: true });
   await fs.writeFile(filePath, body);
@@ -89,5 +93,6 @@ export async function uploadDirectory(prefix: string, localDir: string) {
 }
 
 export function objectStorageBackendLabel() {
-  return isObjectStorageConfigured() ? "r2" : "local";
+  if (isObjectStorageConfigured()) return "r2";
+  return canPersistLocalDataStore() ? "local" : "unconfigured";
 }

@@ -366,7 +366,11 @@ export async function uploadLogoAssetAction(formData: FormData) {
     project_id: projectId,
     type: "logo",
     file_url: saved.url,
-    file_name: saved.file_name
+    file_name: saved.file_name,
+    file_key: saved.file_key,
+    mime_type: saved.mime_type,
+    size_bytes: saved.size_bytes,
+    storage_provider: saved.storage_provider
   });
 
   const sessionUser = await getSessionUser();
@@ -457,11 +461,19 @@ export async function refineProductImageAction(formData: FormData) {
 
   let fileUrl = "";
   let fileName = "";
+  let fileKey: string | undefined;
+  let mimeType: string | undefined;
+  let sizeBytes: number | undefined;
+  let storageProvider: string | undefined;
   let source: "openai" | "local" = "local";
 
   if (aiResult.ok) {
     fileUrl = aiResult.url;
     fileName = aiResult.file_name;
+    fileKey = aiResult.file_key;
+    mimeType = aiResult.mime_type;
+    sizeBytes = aiResult.size_bytes;
+    storageProvider = aiResult.storage_provider;
     source = aiResult.source;
   } else if (aiResult.code === "NO_OPENAI") {
     const refinedFile = formData.get("refined_file");
@@ -483,6 +495,10 @@ export async function refineProductImageAction(formData: FormData) {
 
     fileUrl = saved.url;
     fileName = saved.file_name;
+    fileKey = saved.file_key;
+    mimeType = saved.mime_type;
+    sizeBytes = saved.size_bytes;
+    storageProvider = saved.storage_provider;
     source = "local";
   } else {
     return {
@@ -498,7 +514,11 @@ export async function refineProductImageAction(formData: FormData) {
     project_id: projectId,
     type: "product_image",
     file_url: fileUrl,
-    file_name: fileName
+    file_name: fileName,
+    file_key: fileKey,
+    mime_type: mimeType,
+    size_bytes: sizeBytes,
+    storage_provider: storageProvider
   });
 
   revalidateWizard(projectId);

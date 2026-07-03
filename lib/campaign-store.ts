@@ -101,13 +101,21 @@ export async function addProjectAsset(input: {
   type: ProjectAssetType;
   file_url: string;
   file_name?: string;
+  file_key?: string;
+  mime_type?: string;
+  size_bytes?: number;
+  storage_provider?: string;
 }): Promise<StoredProjectAsset> {
   if (hasDatabaseUrl()) {
     const prismaAsset = await campaignAssetService.addLegacyProjectAsset({
       legacyProjectId: input.project_id,
       type: input.type,
       file_url: input.file_url,
-      file_name: input.file_name
+      file_name: input.file_name,
+      file_key: input.file_key,
+      mime_type: input.mime_type,
+      size_bytes: input.size_bytes,
+      storage_provider: input.storage_provider
     });
     if (prismaAsset) {
       return prismaAsset;
@@ -142,8 +150,8 @@ export async function addProjectAsset(input: {
     type: input.type,
     file_name: input.file_name ?? input.file_url.split("/").pop() ?? "asset",
     file_url: input.file_url.trim(),
-    mime_type: "image/jpeg",
-    size_bytes: 0,
+    mime_type: input.mime_type ?? "image/jpeg",
+    size_bytes: input.size_bytes ?? 0,
     created_at: new Date().toISOString()
   };
 
