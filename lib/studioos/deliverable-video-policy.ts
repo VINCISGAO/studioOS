@@ -1,6 +1,5 @@
 import "server-only";
 
-import { promises as fs } from "fs";
 import { createSerializedStoreReader, writeJsonFileAtomic } from "@/lib/json-file-store";
 import { clearDeliverableVideoFile, getDeliverables, getOrder, listDeliverablesForUpload } from "@/lib/order-service";
 import type { StoredDeliverable, StoredOrder } from "@/lib/order-types";
@@ -9,7 +8,7 @@ import {
   isDeliverableVideoPurged,
   RETENTION_DAYS_AFTER_BRAND_DOWNLOAD
 } from "@/lib/studioos/deliverable-video-policy-shared";
-import { reviewVideoFilePath } from "@/lib/studioos/video-upload";
+import { deleteReviewVideoSlotFiles, reviewVideoFilePath } from "@/lib/studioos/video-upload";
 
 export {
   deliverableDownloadHref,
@@ -117,11 +116,7 @@ export async function purgeExpiredDeliverableVideos(): Promise<number> {
       continue;
     }
 
-    try {
-      await fs.unlink(record.file_path);
-    } catch {
-      // File may already be removed manually.
-    }
+    await deleteReviewVideoSlotFiles(record.order_id, record.version);
 
     await clearDeliverableVideoFile(record.deliverable_id);
     record.deleted_at = new Date().toISOString();

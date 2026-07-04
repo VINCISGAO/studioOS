@@ -35,6 +35,7 @@ import {
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import type { StoredBrandProfile } from "@/lib/brand-profile-types";
+import { compressImageForUpload } from "@/lib/studioos/image-upload-client";
 import { cn } from "@/lib/utils";
 
 const countryOptions = ["United States", "South Korea", "United Kingdom", "Spain", "France", "Singapore", "Thailand"];
@@ -684,9 +685,15 @@ export function BrandProfileEditor({ locale, profile }: BrandProfileEditorProps)
   async function handleLogoFile(file: File) {
     setLogoUploading(true);
     try {
+      const uploadFile = await compressImageForUpload(file, {
+        maxBytes: 3.5 * 1024 * 1024,
+        maxDimension: 1200,
+        quality: 0.82,
+        fileNamePrefix: "brand-logo"
+      });
       const fd = new FormData();
       fd.set("lang", locale);
-      fd.set("avatar_file", file);
+      fd.set("avatar_file", uploadFile);
       const result = await uploadBrandAvatarAction(fd);
       if (!result.ok) {
         notify(result.error, "error");

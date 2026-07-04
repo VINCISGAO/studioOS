@@ -31,6 +31,7 @@ import {
   type BrandDeliveryTimelineId,
   type BrandVideoAspectRatio
 } from "@/lib/studioos/brand-campaign-options";
+import { compressImageForUpload } from "@/lib/studioos/image-upload-client";
 import type { CommercialObjective } from "@/lib/project-types";
 import { cn } from "@/lib/utils";
 import {
@@ -490,8 +491,14 @@ export function BrandCampaignStepBrief({
     setPreviewUrl(localPreview);
 
     startUpload(async () => {
+      const uploadFile = await compressImageForUpload(file, {
+        maxBytes: 3.5 * 1024 * 1024,
+        maxDimension: 1600,
+        quality: 0.82,
+        fileNamePrefix: "product"
+      });
       const fd = new FormData();
-      fd.set("image_file", file);
+      fd.set("image_file", uploadFile);
 
       try {
         const res = await fetch(

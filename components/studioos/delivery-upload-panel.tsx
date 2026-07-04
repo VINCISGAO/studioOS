@@ -55,6 +55,74 @@ function formatFileSize(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+const MULTIPART_THRESHOLD_BYTES = 6 * 1024 * 1024;
+
+type MultipartUploadPart = { partNumber: number; etag: string };
+
+async function uploadReviewVideoInParts(input: { orderId: string; file: File }) {
+  const initRes = await fetch("/api/delivery/upload-video/init", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      order_id: input.orderId,
+      file_name: input.file.name,
+      file_size: input.file.size,
+      mime_type: input.file.type || "application/octet-stream"
+    })
+  });
+  const init = (await initRes.json()) as {
+    ok: boolean;
+    error?: string;
+    upload_id?: string;
+    key?: string;
+    version?: number;
+    url?: string;
+    part_size?: number;
+  };
+  if (!initRes.ok || !init.ok || !init.upload_id || !init.key || !init.version) {
+    throw new Error(init.error ?? "Video upload failed");
+  }
+
+  const partSize = init.part_size ?? MULTIPART_THRESHOLD_BYTES;
+  const parts: MultipartUploadPart[] = [];
+  for (let offset = 0, partNumber = 1; offset < input.file.size; offset += partSize, partNumber += 1) {
+    const chunk = input.file.slice(offset, Math.min(offset + partSize, input.file.size));
+    const partRes = await fetch(
+      `/api/delivery/upload-video/part?uploadId=${encodeURIComponent(init.upload_id)}&key=${encodeURIComponent(init.key)}&partNumber=${partNumber}`,
+      {
+        method: "PUT",
+        body: chunk
+      }
+    );
+    const part = (await partRes.json()) as {
+      ok: boolean;
+      error?: string;
+      part?: MultipartUploadPart;
+    };
+    if (!partRes.ok || !part.ok || !part.part) {
+      throw new Error(part.error ?? "Video upload failed");
+    }
+    parts.push(part.part);
+  }
+
+  const completeRes = await fetch("/api/delivery/upload-video/complete", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      upload_id: init.upload_id,
+      order_id: input.orderId,
+      key: init.key,
+      version: init.version,
+      parts
+    })
+  });
+  const complete = (await completeRes.json()) as { ok: boolean; url?: string; error?: string };
+  if (!completeRes.ok || !complete.ok || !complete.url) {
+    throw new Error(complete.error ?? "Video upload failed");
+  }
+  return complete.url;
+}
+
 export function DeliveryUploadPanel({
   locale,
   orderId,
@@ -95,29 +163,40 @@ export function DeliveryUploadPanel({
       let resolvedUrl = fileUrl.trim();
 
       if (file) {
-        const uploadFd = new FormData();
-        uploadFd.set("order_id", orderId);
-        uploadFd.set("video_file", file);
+        try {
+          if (file.size > MULTIPART_THRESHOLD_BYTES) {
+            resolvedUrl = await uploadReviewVideoInParts({ orderId, file });
+          } else {
+            const uploadFd = new FormData();
+            uploadFd.set("order_id", orderId);
+            uploadFd.set("video_file", file);
 
-        const uploadRes = await fetch("/api/delivery/upload-video", {
-          method: "POST",
-          body: uploadFd
-        });
-        const uploadResult = (await uploadRes.json()) as {
-          ok: boolean;
-          url?: string;
-          error?: string;
-        };
+            const uploadRes = await fetch("/api/delivery/upload-video", {
+              method: "POST",
+              body: uploadFd
+            });
+            const uploadResult = (await uploadRes.json()) as {
+              ok: boolean;
+              url?: string;
+              error?: string;
+            };
 
-        if (!uploadRes.ok || !uploadResult.ok || !uploadResult.url) {
+            if (!uploadRes.ok || !uploadResult.ok || !uploadResult.url) {
+              throw new Error(uploadResult.error ?? (locale === "zh" ? "视频上传失败，请重试" : "Video upload failed — try again"));
+            }
+
+            resolvedUrl = uploadResult.url;
+          }
+        } catch (uploadError) {
           setError(
-            uploadResult.error ??
-              (locale === "zh" ? "视频上传失败，请重试" : "Video upload failed — try again")
+            uploadError instanceof Error
+              ? uploadError.message
+              : locale === "zh"
+                ? "视频上传失败，请重试"
+                : "Video upload failed — try again"
           );
           return;
         }
-
-        resolvedUrl = uploadResult.url;
       }
 
       const fd = new FormData();

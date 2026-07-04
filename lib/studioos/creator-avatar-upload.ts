@@ -60,12 +60,13 @@ export async function saveCreatorAvatarUpload(
   try {
     stored = await putObject(fileKey, buffer, mime);
   } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown storage error";
     return {
       ok: false,
       error:
-        error instanceof Error && error.message.includes("Durable object storage")
+        message.includes("Durable object storage")
           ? "Production asset storage is not configured. Configure R2/S3 before uploading creator assets."
-          : "Failed to store creator asset"
+          : `Failed to store creator asset: ${message}`
     };
   }
 

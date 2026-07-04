@@ -110,7 +110,7 @@ export async function POST(request: Request) {
         const playableCount = (await filterPlayableDeliverables(orderId, deliverables)).length;
         if (!uploadTarget.replace && playableCount >= MAX_CAMPAIGN_VERSIONS) {
           return NextResponse.json(
-            { ok: false, error: "Maximum of 3 review versions reached" },
+            { ok: false, error: "Maximum of 5 review versions reached" },
             { status: 400 }
           );
         }
@@ -176,7 +176,7 @@ export async function POST(request: Request) {
     const playableCount = (await filterPlayableDeliverables(orderId, deliverables)).length;
     if (!uploadTarget.replace && playableCount >= MAX_CAMPAIGN_VERSIONS) {
       return NextResponse.json(
-        { ok: false, error: "Maximum of 3 review versions reached" },
+        { ok: false, error: "Maximum of 5 review versions reached" },
         { status: 400 }
       );
     }

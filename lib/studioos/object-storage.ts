@@ -2,13 +2,39 @@ import "server-only";
 
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import {
+  CompleteMultipartUploadCommand,
+  CreateMultipartUploadCommand,
+  DeleteObjectCommand,
+  GetObjectCommand,
+  HeadObjectCommand,
+  PutObjectCommand,
+  S3Client,
+  UploadPartCommand
+} from "@aws-sdk/client-s3";
 import { isObjectStorageConfigured, videoConfig } from "@/lib/core/config/video";
 import { canPersistLocalDataStore } from "@/lib/runtime-flags";
 
 const LOCAL_ROOT = path.join(process.cwd(), ".data", "object-storage");
 
 let s3Client: S3Client | null = null;
+
+function objectStorageErrorMessage(error: unknown) {
+  if (!(error instanceof Error)) return String(error);
+  const code =
+    "name" in error && typeof error.name === "string" && error.name !== "Error"
+      ? error.name
+      : "R2Error";
+  return `${code}: ${error.message}`;
+}
+
+function requireS3Client() {
+  const client = getS3Client();
+  if (!client) {
+    throw new Error("Durable object storage is required for production asset uploads");
+  }
+  return client;
+}
 
 function getS3Client() {
   if (!isObjectStorageConfigured()) return null;
@@ -32,14 +58,18 @@ function localPathForKey(key: string) {
 export async function putObject(key: string, body: Buffer, contentType: string) {
   const client = getS3Client();
   if (client) {
-    await client.send(
-      new PutObjectCommand({
-        Bucket: videoConfig.r2.bucket,
-        Key: key,
-        Body: body,
-        ContentType: contentType
-      })
-    );
+    try {
+      await client.send(
+        new PutObjectCommand({
+          Bucket: videoConfig.r2.bucket,
+          Key: key,
+          Body: body,
+          ContentType: contentType
+        })
+      );
+    } catch (error) {
+      throw new Error(`R2 upload failed (${objectStorageErrorMessage(error)})`);
+    }
     return { backend: "r2" as const, key };
   }
 
@@ -71,6 +101,141 @@ export async function getObject(key: string): Promise<Buffer | null> {
   } catch {
     return null;
   }
+}
+
+export async function getObjectMetadata(
+  key: string
+): Promise<{ contentLength: number | null; contentType: string | null } | null> {
+  const client = getS3Client();
+  if (client) {
+    try {
+      const res = await client.send(new HeadObjectCommand({ Bucket: videoConfig.r2.bucket, Key: key }));
+      return {
+        contentLength: res.ContentLength ?? null,
+        contentType: res.ContentType ?? null
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  try {
+    const stat = await fs.stat(localPathForKey(key));
+    return { contentLength: stat.size, contentType: null };
+  } catch {
+    return null;
+  }
+}
+
+export async function getObjectRange(
+  key: string,
+  range?: { start: number; end: number }
+): Promise<Buffer | null> {
+  const client = getS3Client();
+  if (client) {
+    try {
+      const res = await client.send(
+        new GetObjectCommand({
+          Bucket: videoConfig.r2.bucket,
+          Key: key,
+          Range: range ? `bytes=${range.start}-${range.end}` : undefined
+        })
+      );
+      const bytes = await res.Body?.transformToByteArray();
+      return bytes ? Buffer.from(bytes) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  try {
+    const filePath = localPathForKey(key);
+    if (!range) {
+      return await fs.readFile(filePath);
+    }
+    const length = range.end - range.start + 1;
+    const file = await fs.open(filePath, "r");
+    try {
+      const buffer = Buffer.alloc(length);
+      await file.read(buffer, 0, length, range.start);
+      return buffer;
+    } finally {
+      await file.close();
+    }
+  } catch {
+    return null;
+  }
+}
+
+export async function deleteObject(key: string): Promise<void> {
+  const client = getS3Client();
+  if (client) {
+    await client.send(new DeleteObjectCommand({ Bucket: videoConfig.r2.bucket, Key: key }));
+    return;
+  }
+
+  try {
+    await fs.unlink(localPathForKey(key));
+  } catch {
+    // Object may already be gone.
+  }
+}
+
+export async function createMultipartObjectUpload(key: string, contentType: string) {
+  const client = requireS3Client();
+  const res = await client.send(
+    new CreateMultipartUploadCommand({
+      Bucket: videoConfig.r2.bucket,
+      Key: key,
+      ContentType: contentType
+    })
+  );
+  if (!res.UploadId) {
+    throw new Error("R2 multipart upload did not return an upload id");
+  }
+  return { uploadId: res.UploadId, key };
+}
+
+export async function uploadMultipartObjectPart(input: {
+  key: string;
+  uploadId: string;
+  partNumber: number;
+  body: Buffer;
+}) {
+  const client = requireS3Client();
+  const res = await client.send(
+    new UploadPartCommand({
+      Bucket: videoConfig.r2.bucket,
+      Key: input.key,
+      UploadId: input.uploadId,
+      PartNumber: input.partNumber,
+      Body: input.body
+    })
+  );
+  if (!res.ETag) {
+    throw new Error("R2 multipart part did not return an ETag");
+  }
+  return { partNumber: input.partNumber, etag: res.ETag };
+}
+
+export async function completeMultipartObjectUpload(input: {
+  key: string;
+  uploadId: string;
+  parts: Array<{ partNumber: number; etag: string }>;
+}) {
+  const client = requireS3Client();
+  await client.send(
+    new CompleteMultipartUploadCommand({
+      Bucket: videoConfig.r2.bucket,
+      Key: input.key,
+      UploadId: input.uploadId,
+      MultipartUpload: {
+        Parts: input.parts
+          .sort((a, b) => a.partNumber - b.partNumber)
+          .map((part) => ({ PartNumber: part.partNumber, ETag: part.etag }))
+      }
+    })
+  );
 }
 
 export async function uploadDirectory(prefix: string, localDir: string) {

@@ -10,7 +10,11 @@ import {
   purgeExpiredDeliverableVideos,
   recordBrandFinalDeliverableDownload
 } from "@/lib/studioos/deliverable-video-policy";
-import { findReviewVideoFile } from "@/lib/studioos/video-upload";
+import {
+  findReviewVideoFile,
+  findReviewVideoObject,
+  readReviewVideoObjectRange
+} from "@/lib/studioos/video-upload";
 
 export const runtime = "nodejs";
 
@@ -120,37 +124,53 @@ export async function GET(
 
   const { order, deliverable, isBrand } = access;
 
-  const videoFile = await findReviewVideoFile(orderId, versionNum);
-  if (!videoFile) {
+  const videoObject = await findReviewVideoObject(orderId, versionNum);
+  const videoFile = videoObject ? null : await findReviewVideoFile(orderId, versionNum);
+  if (!videoObject && !videoFile) {
     return NextResponse.json({ error: "Video not found" }, { status: 404 });
   }
 
   const allowDemoFallback = isDevDemoOrder(orderId);
-  let fileSize: number | null = null;
-  try {
-    fileSize = (await fs.stat(videoFile.path)).size;
-  } catch {
-    fileSize = null;
+  let fileSize: number | null = videoObject?.contentLength ?? null;
+  if (!videoObject && videoFile) {
+    try {
+      fileSize = (await fs.stat(videoFile.path)).size;
+    } catch {
+      fileSize = null;
+    }
   }
 
   const range = fileSize != null ? parseRangeHeader(request.headers.get("range"), fileSize) : null;
   if (range && fileSize != null) {
-    const data = await readVideoRange(videoFile.path, range.start, range.end);
+    const data = videoObject
+      ? await readReviewVideoObjectRange(videoObject.key, range)
+      : videoFile
+        ? await readVideoRange(videoFile.path, range.start, range.end)
+        : null;
+    if (!data) {
+      return NextResponse.json({ error: "Video not found" }, { status: 404 });
+    }
     const contentLength = range.end - range.start + 1;
     return new NextResponse(new Uint8Array(data), {
       status: 206,
       headers: {
-        "Content-Type": videoFile.contentType,
+        "Content-Type": videoObject?.contentType ?? videoFile?.contentType ?? "video/mp4",
         "Accept-Ranges": "bytes",
         "Content-Length": String(contentLength),
         "Content-Range": `bytes ${range.start}-${range.end}/${fileSize}`,
         "Cache-Control": download ? "private, no-store" : "private, max-age=3600",
-        "Content-Disposition": download ? `attachment; filename="studioos-${orderId}-v${versionNum}.${videoFile.extension}"` : "inline"
+        "Content-Disposition": download
+          ? `attachment; filename="studioos-${orderId}-v${versionNum}.${videoObject?.extension ?? videoFile?.extension ?? "mp4"}"`
+          : "inline"
       }
     });
   }
 
-  const data = await readVideoBytes(videoFile.path, allowDemoFallback);
+  const data = videoObject
+    ? await readReviewVideoObjectRange(videoObject.key)
+    : videoFile
+      ? await readVideoBytes(videoFile.path, allowDemoFallback)
+      : null;
   if (!data) {
     return NextResponse.json({ error: "Video not found" }, { status: 404 });
   }
@@ -166,11 +186,11 @@ export async function GET(
       record?.delete_after ?? (await getDeliverableRetentionDeleteAfter(deliverable.id));
   }
 
-  const filename = `studioos-${orderId}-v${versionNum}.${videoFile.extension}`;
+  const filename = `studioos-${orderId}-v${versionNum}.${videoObject?.extension ?? videoFile?.extension ?? "mp4"}`;
 
   return new NextResponse(new Uint8Array(data), {
     headers: {
-      "Content-Type": videoFile.contentType,
+      "Content-Type": videoObject?.contentType ?? videoFile?.contentType ?? "video/mp4",
       "Accept-Ranges": "bytes",
       "Content-Length": String(data.byteLength),
       "Cache-Control": download ? "private, no-store" : "private, max-age=3600",

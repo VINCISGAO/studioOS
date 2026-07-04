@@ -65,6 +65,7 @@ import {
   creatorMinBudgetAboutLabel,
   normalizeCreatorMinBudget
 } from "@/lib/studioos/creator-price-preference";
+import { compressImageForUpload } from "@/lib/studioos/image-upload-client";
 import { OrderRatingPolicyCard } from "@/components/studioos/order-rating-policy-card";
 import {
   buildCreatorWorksHeroStats,
@@ -417,9 +418,15 @@ export function CreatorProfileStudio({
   async function handleAvatarUpload(file: File) {
     setAvatarUploading(true);
     try {
+      const uploadFile = await compressImageForUpload(file, {
+        maxBytes: 3.5 * 1024 * 1024,
+        maxDimension: 1200,
+        quality: 0.82,
+        fileNamePrefix: "creator-avatar"
+      });
       const fd = new FormData();
       fd.set("lang", locale);
-      fd.set("avatar_file", file);
+      fd.set("avatar_file", uploadFile);
       const result = await uploadCreatorAvatarAction(fd);
       if (!result.ok) {
         notify(result.error, "error");

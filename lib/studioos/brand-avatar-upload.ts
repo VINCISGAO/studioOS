@@ -59,12 +59,13 @@ export async function saveBrandAvatarUpload(
   try {
     stored = await putObject(fileKey, buffer, mime);
   } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown storage error";
     return {
       ok: false,
       error:
-        error instanceof Error && error.message.includes("Durable object storage")
+        message.includes("Durable object storage")
           ? "Production asset storage is not configured. Configure R2/S3 before uploading brand assets."
-          : "Failed to store brand asset"
+          : `Failed to store brand asset: ${message}`
     };
   }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CalendarDays } from "lucide-react";
 import { CreatorAiMatchHealthCard } from "@/components/studioos/creator-ai-match-health-card";
 import { CreatorHomeBottomPanels } from "@/components/studioos/creator-home-bottom-panels";
@@ -21,9 +21,28 @@ import type { CreatorAiMatchHealth } from "@/lib/studioos/creator-ai-match-healt
 import { creatorHomeDemoDateLabel } from "@/lib/studioos/creator-home-ui";
 import { creatorPortalRoutes } from "@/lib/studioos/creator-portal-routes";
 
+type DayPart = "morning" | "afternoon" | "evening";
+
+function dayPartFromHour(hour: number): DayPart {
+  if (hour >= 5 && hour < 12) return "morning";
+  if (hour >= 12 && hour < 18) return "afternoon";
+  return "evening";
+}
+
+function useLocalDayPart() {
+  const [dayPart, setDayPart] = useState<DayPart | null>(null);
+
+  useEffect(() => {
+    setDayPart(dayPartFromHour(new Date().getHours()));
+  }, []);
+
+  return dayPart;
+}
+
 const copy = {
   zh: {
-    welcome: "欢迎回来",
+    welcome: (dayPart: DayPart | null) =>
+      dayPart === "morning" ? "早上好" : dayPart === "afternoon" ? "下午好" : dayPart === "evening" ? "晚上好" : "欢迎回来",
     calendar: "日历视图",
     totalEarnings: "累计收入",
     activeProjects: "进行中项目",
@@ -40,7 +59,14 @@ const copy = {
     detail: "查看详情"
   },
   en: {
-    welcome: "Welcome back",
+    welcome: (dayPart: DayPart | null) =>
+      dayPart === "morning"
+        ? "Good morning"
+        : dayPart === "afternoon"
+          ? "Good afternoon"
+          : dayPart === "evening"
+            ? "Good evening"
+            : "Welcome back",
     calendar: "Calendar",
     totalEarnings: "Total earnings",
     activeProjects: "Active projects",
@@ -80,6 +106,7 @@ export function CreatorHomeDashboard({
   useDemoDate?: boolean;
 }) {
   const t = copy[locale];
+  const dayPart = useLocalDayPart();
   const dateLabel = useMemo(() => {
     if (useDemoDate) {
       return creatorHomeDemoDateLabel(locale);
@@ -100,7 +127,7 @@ export function CreatorHomeDashboard({
       <section className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 sm:text-[28px]">
-            {t.welcome}，{creatorName} 👋
+            {t.welcome(dayPart)}，{creatorName} 👋
           </h1>
           <p className="mt-1 text-sm text-zinc-500">{dateLabel}</p>
         </div>

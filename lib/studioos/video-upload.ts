@@ -4,12 +4,18 @@ import {
   MAX_DELIVERABLE_VIDEO_BYTES,
   maxDeliverableVideoLabel
 } from "@/lib/studioos/deliverable-video-policy-shared";
+import { isObjectStorageConfigured } from "@/lib/core/config/video";
 import type { Locale } from "@/lib/i18n";
+import { deleteObject, getObjectMetadata, getObjectRange, putObject } from "@/lib/studioos/object-storage";
 
 const UPLOAD_DIR = path.join(process.cwd(), ".data", "uploads", "review");
 
 export function reviewVideoPublicUrl(orderId: string, version: number) {
   return `/api/review-video/${orderId}/${version}`;
+}
+
+export function reviewVideoObjectKey(orderId: string, version: number, extension: "mp4" | "mov") {
+  return `review/${orderId}/v${version}.${extension}`;
 }
 
 export async function saveReviewVideoUpload(
@@ -43,11 +49,27 @@ export async function saveReviewVideoUpload(
     };
   }
 
-  const dir = path.join(UPLOAD_DIR, orderId);
-  await fs.mkdir(dir, { recursive: true });
-  const filePath = path.join(dir, `v${version}${isMov ? ".mov" : ".mp4"}`);
   const buffer = Buffer.from(await file.arrayBuffer());
-  await fs.writeFile(filePath, buffer);
+  const extension = isMov ? "mov" : "mp4";
+  if (isObjectStorageConfigured()) {
+    try {
+      await putObject(reviewVideoObjectKey(orderId, version, extension), buffer, mime);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown storage error";
+      return {
+        ok: false,
+        error:
+          locale === "zh"
+            ? `视频上传到云存储失败：${message}`
+            : `Failed to store review video: ${message}`
+      };
+    }
+  } else {
+    const dir = path.join(UPLOAD_DIR, orderId);
+    await fs.mkdir(dir, { recursive: true });
+    const filePath = path.join(dir, `v${version}.${extension}`);
+    await fs.writeFile(filePath, buffer);
+  }
 
   return {
     ok: true,
@@ -64,6 +86,13 @@ type ReviewVideoFile = {
   path: string;
   contentType: string;
   extension: string;
+};
+
+export type ReviewVideoObject = {
+  key: string;
+  contentType: string;
+  extension: "mp4" | "mov";
+  contentLength: number | null;
 };
 
 function reviewVideoCandidate(orderId: string, version: number, extension: "mp4" | "mov"): ReviewVideoFile {
@@ -122,8 +151,38 @@ export async function findReviewVideoFile(orderId: string, version: number) {
   return nearestLower ?? null;
 }
 
+export async function findReviewVideoObject(
+  orderId: string,
+  version: number
+): Promise<ReviewVideoObject | null> {
+  if (!isObjectStorageConfigured()) return null;
+  for (const extension of ["mp4", "mov"] as const) {
+    const key = reviewVideoObjectKey(orderId, version, extension);
+    const metadata = await getObjectMetadata(key);
+    if (metadata) {
+      return {
+        key,
+        contentType: metadata.contentType ?? (extension === "mov" ? "video/quicktime" : "video/mp4"),
+        extension,
+        contentLength: metadata.contentLength
+      };
+    }
+  }
+  return null;
+}
+
+export async function readReviewVideoObjectRange(
+  key: string,
+  range?: { start: number; end: number }
+) {
+  return getObjectRange(key, range);
+}
+
 export async function deleteReviewVideoSlotFiles(orderId: string, version: number) {
   for (const extension of ["mp4", "mov"] as const) {
+    if (isObjectStorageConfigured()) {
+      await deleteObject(reviewVideoObjectKey(orderId, version, extension));
+    }
     try {
       await fs.unlink(reviewVideoCandidate(orderId, version, extension).path);
     } catch {
@@ -133,6 +192,9 @@ export async function deleteReviewVideoSlotFiles(orderId: string, version: numbe
 }
 
 export async function hasReviewVideoFileOnDisk(orderId: string, version: number) {
+  if (await findReviewVideoObject(orderId, version)) {
+    return true;
+  }
   for (const extension of ["mp4", "mov"] as const) {
     try {
       await fs.access(reviewVideoCandidate(orderId, version, extension).path);
@@ -145,6 +207,9 @@ export async function hasReviewVideoFileOnDisk(orderId: string, version: number)
 }
 
 export async function hasPlayableReviewVideo(orderId: string, version: number) {
+  if (await findReviewVideoObject(orderId, version)) {
+    return true;
+  }
   return (await findReviewVideoFile(orderId, version)) !== null;
 }
 
