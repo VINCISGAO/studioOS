@@ -76,7 +76,7 @@ export class SettlementRepository {
         creatorId: creatorUserId,
         deletedAt: null,
         status: { in: ["MASTER_UPLOADED", "SETTLEMENT"] },
-        deliveries: { some: { status: "LOCKED" } },
+        deliveries: { is: { status: "LOCKED" } },
         escrow: { status: "HELD" }
       },
       select: { id: true }

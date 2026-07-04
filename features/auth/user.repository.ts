@@ -106,6 +106,7 @@ export class UserRepository {
         fullName: input.fullName,
         passwordHash: null,
         emailVerified: true,
+        emailVerifiedAt: new Date(),
         ...(input.role === "BRAND"
           ? {
               brandProfile: {
@@ -142,6 +143,7 @@ export class UserRepository {
     passwordHash: string;
     companyName?: string;
     displayName?: string;
+    emailVerifiedAt?: Date;
   }): Promise<UserWithProfiles> {
     const user = await prisma.user.create({
       data: {
@@ -150,6 +152,52 @@ export class UserRepository {
         fullName: input.fullName,
         passwordHash: input.passwordHash,
         emailVerified: true,
+        emailVerifiedAt: input.emailVerifiedAt ?? new Date(),
+        ...(input.role === "BRAND"
+          ? {
+              brandProfile: {
+                create: { companyName: input.companyName ?? input.fullName }
+              }
+            }
+          : {}),
+        ...(input.role === "CREATOR"
+          ? {
+              creatorProfile: {
+                create: { displayName: input.displayName ?? input.fullName }
+              }
+            }
+          : {})
+      },
+      include: { brandProfile: true, creatorProfile: true }
+    });
+
+    if (input.role === "CREATOR") {
+      const { membershipService } = await import("@/features/membership/membership.service");
+      await membershipService.ensureDefaultMembershipOnCreatorRegister(
+        user.id,
+        user.creatorProfile?.id
+      );
+    }
+
+    return user;
+  }
+
+  async createPasswordless(input: {
+    email: string;
+    role: UserRole;
+    fullName: string;
+    companyName?: string;
+    displayName?: string;
+    emailVerifiedAt?: Date;
+  }): Promise<UserWithProfiles> {
+    const user = await prisma.user.create({
+      data: {
+        email: input.email.toLowerCase(),
+        role: input.role,
+        fullName: input.fullName,
+        passwordHash: null,
+        emailVerified: true,
+        emailVerifiedAt: input.emailVerifiedAt ?? new Date(),
         ...(input.role === "BRAND"
           ? {
               brandProfile: {

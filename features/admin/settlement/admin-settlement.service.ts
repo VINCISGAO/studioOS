@@ -55,7 +55,7 @@ export class AdminSettlementService {
     for (const row of rows) {
       const ctx = await settlementRepository.findContextByCampaignId(row.id);
       const settlementState = ctx ? settlementService.resolveState(ctx) : SettlementState.BLOCKED;
-      const deliveryStatus = row.deliveries[0]?.status ?? null;
+      const deliveryStatus = row.deliveries?.status ?? null;
       const queueState = deriveQueueState(settlementState, deliveryStatus, row.disputes.length > 0);
 
       if (filters?.state && queueState !== filters.state) continue;

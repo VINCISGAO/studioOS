@@ -65,7 +65,7 @@ function buildWhere(filters: AdminCampaignListFilters): Prisma.CampaignWhereInpu
     where.escrow = { status: filters.escrowStatus as EscrowStatus };
   }
   if (filters.deliveryStatus) {
-    where.deliveries = { some: { status: filters.deliveryStatus as DeliveryStatus } };
+    where.deliveries = { is: { status: filters.deliveryStatus as DeliveryStatus } };
   }
 
   return where;

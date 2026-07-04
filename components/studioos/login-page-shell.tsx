@@ -121,7 +121,6 @@ function CreatorHeadlineLine({
   }
 
   const prefix = `${lead}${tail ?? ""}`.replace(highlight, "");
-
   return (
     <>
       {prefix}
@@ -142,7 +141,6 @@ function LoginMarketingHeadline({
   className?: string;
 }) {
   const isBrand = role === "brand";
-  const brandHeadline = studioOS.heroHeadline[locale];
 
   return (
     <h1
@@ -157,12 +155,9 @@ function LoginMarketingHeadline({
     >
       {isBrand ? (
         <>
-          <span className="block">{formatHeroHeadlineLine1(brandHeadline.line1)}</span>
+          <span className="block">{formatHeroHeadlineLine1(t.brandHeroLine1)}</span>
           <span className="mt-3 block">
-            <span className="bg-gradient-to-r from-violet-400 via-indigo-300 to-violet-400 bg-clip-text text-transparent">
-              {brandHeadline.highlight}
-            </span>
-            {brandHeadline.line2.replace(brandHeadline.highlight, "")}
+            <CreatorHeadlineGradient>{t.brandHeroLine2}</CreatorHeadlineGradient>
           </span>
         </>
       ) : (
@@ -233,7 +228,12 @@ function LoginMobileIntro({
         )}
         aria-hidden
       />
-      <p className={cn("max-w-md text-[13px] leading-6 sm:text-sm sm:leading-7", isBrand ? visual.panelMuted : "text-zinc-600")}>
+      <p
+        className={cn(
+          "text-[13px] leading-6 sm:text-sm sm:leading-7",
+          isBrand ? cn("text-white sm:whitespace-nowrap") : "max-w-md text-zinc-600"
+        )}
+      >
         {heroSubtitle}
       </p>
     </div>
@@ -253,28 +253,27 @@ export function LoginPageShell({
   t
 }: LoginPageShellProps) {
   const isBrand = role === "brand";
-  const visual = getLoginVisual(role);
+  const pageVisual = getLoginVisual(role);
+  const formVisual = isBrand ? getLoginVisual("brand") : getLoginVisual("creator");
   const desktopCardTitle = adminLoginMode
     ? locale === "zh"
       ? "管理后台登录"
       : "Admin console sign in"
-    : isBrand
-      ? t.brandLoginTitle
-      : t.creatorWelcome;
+    : locale === "zh"
+      ? "简单三步完成登录"
+      : "Sign in in three simple steps";
   const cardSubtitle = adminLoginMode
     ? locale === "zh"
       ? "使用平台管理员账号登录 StudioOS Admin"
       : "Sign in with a platform admin account for StudioOS Admin"
-    : isBrand
-      ? t.welcomeSubtitleBrand
-      : t.creatorWelcomeSubtitle;
+    : null;
 
   return (
     <main className="relative min-h-[100dvh] overflow-hidden">
-      <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${visual.bg})` }} aria-hidden />
-      <div className="absolute inset-0" style={{ background: visual.overlay }} aria-hidden />
+      <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${pageVisual.bg})` }} aria-hidden />
+      <div className="absolute inset-0" style={{ background: pageVisual.overlay }} aria-hidden />
 
-      <div className={cn("relative z-10 flex min-h-[100dvh] flex-col", visual.panelText)}>
+      <div className={cn("relative z-10 flex min-h-[100dvh] flex-col", pageVisual.panelText)}>
         <header className="mx-auto flex w-full max-w-[1320px] items-center justify-between px-5 py-5 sm:px-8 sm:py-6 lg:px-10 xl:px-12">
           <MarketingHomeLink locale={locale} className="inline-flex items-center gap-2.5">
             <span
@@ -289,28 +288,43 @@ export function LoginPageShell({
           </MarketingHomeLink>
 
           <div className="flex items-center gap-2">
-            <Globe2 className={cn("hidden h-4 w-4 sm:block", isBrand ? "text-zinc-400" : "text-zinc-500")} />
+            <span
+              className={cn(
+                "hidden h-9 w-9 items-center justify-center rounded-full border shadow-sm backdrop-blur sm:flex",
+                isBrand
+                  ? "border-white/25 bg-white/15 text-white"
+                  : "border-violet-200/80 bg-white/80 text-violet-600"
+              )}
+            >
+              <Globe2 className="h-4.5 w-4.5" />
+            </span>
             <LoginLanguageSwitcher locale={locale} compact={isBrand} />
           </div>
         </header>
 
-        <div className="mx-auto flex w-full max-w-[1320px] flex-1 flex-col gap-6 px-5 pb-8 sm:px-8 max-lg:justify-start lg:gap-12 lg:px-10 lg:pb-12 xl:gap-16 xl:px-12 lg:flex-row lg:items-center lg:justify-between">
-          <section className="hidden max-w-xl lg:block lg:flex-1 lg:pl-6 lg:py-6 xl:pl-14">
+        <div className="mx-auto flex w-full max-w-[1320px] flex-1 flex-col gap-6 px-5 pb-8 sm:px-8 max-lg:justify-start lg:gap-10 lg:px-10 lg:pb-12 xl:gap-14 xl:px-12 lg:flex-row lg:items-center lg:justify-between">
+          <section className="hidden min-w-0 lg:block lg:flex-1 lg:pl-6 lg:py-6 xl:max-w-[820px] xl:pl-14">
             {isBrand ? (
               <>
                 <LoginMarketingHeadline role={role} locale={locale} t={t} className="text-[2rem] sm:text-[2.75rem] lg:text-[3.25rem]" />
-                <p className={cn("mt-4 max-w-lg text-[15px] leading-7 sm:text-base", visual.panelMuted)}>{t.brandHeroSubtitle}</p>
+                <p
+                  className={cn(
+                    "mt-4 text-[13px] leading-6 text-white lg:whitespace-nowrap xl:text-[15px] xl:leading-7"
+                  )}
+                >
+                  {t.brandHeroSubtitle}
+                </p>
                 <ul className="mt-8 hidden space-y-5 lg:block lg:mt-10">
                   {t.brandFeatures.map((feature, index) => {
                     const Icon = featureIcons[feature.icon];
                     return (
                       <li key={feature.title} className="flex gap-4">
-                        <span className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-full ring-1", visual.featureIcon[index])}>
+                        <span className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-full ring-1", pageVisual.featureIcon[index])}>
                           <Icon className="h-5 w-5" strokeWidth={1.75} />
                         </span>
                         <div className="min-w-0 pt-0.5">
                           <p className="text-[15px] font-medium leading-6">{feature.title}</p>
-                          <p className={cn("mt-1 text-sm leading-6", visual.panelMuted)}>{feature.description}</p>
+                          <p className={cn("mt-1 text-sm leading-6", pageVisual.panelMuted)}>{feature.description}</p>
                         </div>
                       </li>
                     );
@@ -321,18 +335,18 @@ export function LoginPageShell({
             ) : (
               <>
                 <LoginMarketingHeadline role={role} locale={locale} t={t} className="text-[2rem] sm:text-[2.75rem] lg:text-[3.25rem]" />
-                <p className={cn("mt-4 max-w-lg text-[15px] leading-7 sm:text-base", visual.panelMuted)}>{t.creatorHeroSubtitle}</p>
+                <p className={cn("mt-4 max-w-lg text-[15px] leading-7 sm:text-base", pageVisual.panelMuted)}>{t.creatorHeroSubtitle}</p>
                 <ul className="mt-8 space-y-5 sm:mt-10">
                   {t.creatorFeatures.map((feature, index) => {
                     const Icon = featureIcons[feature.icon];
                     return (
                       <li key={feature.title} className="flex gap-4">
-                        <span className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-full ring-1", visual.featureIcon[index])}>
+                        <span className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-full ring-1", pageVisual.featureIcon[index])}>
                           <Icon className="h-5 w-5" strokeWidth={1.75} />
                         </span>
                         <div className="min-w-0 pt-0.5">
                           <p className="text-[15px] font-medium leading-6">{feature.title}</p>
-                          <p className={cn("mt-1 text-sm leading-6", visual.panelMuted)}>{feature.description}</p>
+                          <p className={cn("mt-1 text-sm leading-6", pageVisual.panelMuted)}>{feature.description}</p>
                         </div>
                       </li>
                     );
@@ -342,25 +356,34 @@ export function LoginPageShell({
               </>
             )}
 
-            <p className={cn("mt-10 hidden text-xs lg:block", visual.panelMuted)}>
+            <p className={cn("mt-10 hidden text-xs lg:block", pageVisual.panelMuted)}>
               © {new Date().getFullYear()} {studioOS.productName}. {t.rights}
             </p>
           </section>
 
-          <section className="w-full lg:w-[min(100%,500px)] lg:shrink-0 lg:-translate-x-3 xl:w-[520px] xl:-translate-x-6 max-lg:mx-auto max-lg:mt-10 max-lg:max-w-[520px] sm:max-lg:mt-12">
-            <LoginMobileIntro role={role} locale={locale} t={t} visual={visual} />
+          <section className="w-full max-w-[460px] lg:w-[460px] lg:shrink-0 xl:w-[480px] max-lg:mx-auto max-lg:mt-10 sm:max-lg:mt-12">
+            <LoginMobileIntro role={role} locale={locale} t={t} visual={pageVisual} />
 
-            <div className={cn("rounded-[1.35rem] p-5 sm:p-8 lg:p-9", visual.card)}>
-              <h2 className={cn("text-xl font-semibold tracking-[-0.03em] sm:text-[1.65rem]", visual.cardTitle)}>
+            <div
+              className={cn(
+                "rounded-[1.65rem] p-6 backdrop-blur-xl sm:p-8 lg:px-10 lg:py-10",
+                isBrand
+                  ? "border border-white/10 bg-black/45 text-white shadow-[0_24px_80px_-12px_rgba(0,0,0,0.65)]"
+                  : "border border-white/70 bg-white/85 text-zinc-950 shadow-[0_28px_90px_-28px_rgba(88,28,135,0.35)]"
+              )}
+            >
+              <h2 className={cn("text-center text-2xl font-semibold tracking-[-0.03em] sm:text-[1.85rem]", isBrand ? "text-white" : "text-zinc-950")}>
                 {desktopCardTitle}
               </h2>
-              <p className={cn("mt-1 text-[13px] leading-5 sm:text-sm", visual.cardMuted)}>{cardSubtitle}</p>
+              {cardSubtitle ? (
+                <p className={cn("mt-2 text-center text-[13px] leading-5 sm:text-sm", isBrand ? "text-zinc-300" : "text-zinc-600")}>{cardSubtitle}</p>
+              ) : null}
 
-              <nav className={cn("mt-5 grid grid-cols-2 gap-1 rounded-xl sm:mt-6", visual.tabWrap)} aria-label={locale === "zh" ? "登录身份" : "Sign-in role"}>
-                <RoleTab href={roleTabHref(locale, "brand", nextPath)} active={isBrand} visual={visual} icon={UserRound}>
+              <nav className={cn("mt-5 grid grid-cols-2 gap-1 rounded-xl sm:mt-6", formVisual.tabWrap)} aria-label={locale === "zh" ? "登录身份" : "Sign-in role"}>
+                <RoleTab href={roleTabHref(locale, "brand", nextPath)} active={isBrand} visual={formVisual} icon={UserRound}>
                   {t.brandTab}
                 </RoleTab>
-                <RoleTab href={roleTabHref(locale, "creator", nextPath)} active={!isBrand} visual={visual} icon={Clapperboard}>
+                <RoleTab href={roleTabHref(locale, "creator", nextPath)} active={!isBrand} visual={formVisual} icon={Clapperboard}>
                   {t.creatorTab}
                 </RoleTab>
               </nav>
@@ -373,39 +396,26 @@ export function LoginPageShell({
                   initialEmail={initialEmail}
                   error={error}
                   errorCode={errorCode}
+                  visualOverride={formVisual}
                   t={t}
                 />
               </div>
 
-              {demoMode || googleOAuthEnabled ? (
-                <>
-                  <div className="relative mt-6 py-1">
-                    <div className={cn("absolute inset-x-0 top-1/2 h-px", isBrand ? "bg-white/10" : "bg-zinc-200")} />
-                    <p className={cn("relative mx-auto w-fit px-3 text-[11px] sm:text-xs", visual.divider, isBrand ? "bg-black/45" : "bg-white/75")}>
-                      {t.socialDivider}
-                    </p>
-                  </div>
-                  <LoginSocialButtons
-                    locale={locale}
-                    role={role}
-                    nextPath={nextPath}
-                    demoMode={demoMode}
-                    googleOAuthEnabled={googleOAuthEnabled}
-                  />
-                </>
-              ) : null}
-
-              <p className={cn("mt-6 text-center text-sm", visual.cardMuted)}>
-                {t.noAccount}{" "}
-                <Link href={`/signup?lang=${locale}&role=${role}`} className={cn("font-medium", visual.link)}>
-                  {t.signUp}
-                </Link>
-              </p>
+              <div className="relative mt-6 py-1">
+                <div className={cn("absolute inset-x-0 top-1/2 h-px", isBrand ? "bg-white/10" : "bg-zinc-200")} />
+                <p className={cn("relative mx-auto w-fit px-3 text-[11px] sm:text-xs", formVisual.divider, isBrand ? "bg-black/45" : "bg-white/75")}>
+                  {t.socialDivider}
+                </p>
+              </div>
+              <LoginSocialButtons
+                locale={locale}
+                role={role}
+                nextPath={nextPath}
+                demoMode={demoMode}
+                googleOAuthEnabled={googleOAuthEnabled}
+                visualOverride={formVisual}
+              />
             </div>
-
-            <p className={cn("mt-4 text-balance text-center text-sm leading-6 lg:hidden", isBrand ? visual.panelMuted : "text-zinc-600")}>
-              {cardSubtitle}
-            </p>
           </section>
         </div>
       </div>

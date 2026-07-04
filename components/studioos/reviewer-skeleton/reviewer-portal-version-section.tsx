@@ -37,7 +37,7 @@ import {
   latestUploadedDeliverableVersion,
   resolveCreatorUploadContext,
   resolveMaxOpenReviewWorkflowSlot
-} from "@/lib/studioos/review-upload-version";
+} from "@/lib/studioos/review-upload-version-shared";
 import type { ReviewSettlementPreview } from "@/lib/studioos/reviewer-settlement-ui";
 import { creatorRevertUploadPolicyNotice } from "@/lib/studioos/creator-revert-upload-policy";
 import { cn } from "@/lib/utils";

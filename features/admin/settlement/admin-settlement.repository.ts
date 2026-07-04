@@ -14,7 +14,7 @@ export class AdminSettlementRepository {
     const where: Prisma.CampaignWhereInput = {
       deletedAt: null,
       OR: [
-        { deliveries: { some: { status: "LOCKED" } } },
+        { deliveries: { is: { status: "LOCKED" } } },
         { escrow: { status: { in: ["HELD", "PARTIAL_RELEASE", "FULL_RELEASE", "CLOSED"] } } },
         { orderCommission: { isNot: null } },
         { disputes: { some: { status: { in: ["OPEN", "PROCESSING"] } } } }

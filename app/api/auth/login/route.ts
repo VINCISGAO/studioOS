@@ -2,10 +2,13 @@ import { NextResponse } from "next/server";
 import { performSignIn, type SignInInput } from "@/lib/auth/sign-in-service";
 import type { Locale } from "@/lib/i18n";
 import { enforcePublicApiRateLimit, handleRouteError } from "@/lib/core/api-route";
+import { AUTH_ERROR_COPY } from "@/features/auth/auth-error-copy";
+import { authSecurityService } from "@/features/auth/auth-security.service";
 
 export const runtime = "nodejs";
+const LOGIN_LOCKED_COPY = "登录尝试过多，请稍后再试。";
 
-function parseBody(body: unknown): SignInInput | null {
+function parseBody(body: unknown): (SignInInput & { turnstileToken?: string }) | null {
   if (!body || typeof body !== "object") {
     return null;
   }
@@ -30,7 +33,8 @@ function parseBody(body: unknown): SignInInput | null {
     password: record.password,
     lang: lang as Locale,
     expectedRole,
-    nextPath: typeof record.next === "string" ? record.next : ""
+    nextPath: typeof record.next === "string" ? record.next : "",
+    turnstileToken: typeof record.turnstileToken === "string" ? record.turnstileToken : undefined
   };
 }
 
@@ -53,10 +57,41 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "email and password are required" }, { status: 400 });
   }
 
-  const result = await performSignIn(input);
-  if (!result.ok) {
-    return NextResponse.json(result, { status: 401 });
+  const loginGate = await authSecurityService.assertPasswordLoginAllowed({
+    request,
+    email: input.email,
+    turnstileToken: input.turnstileToken
+  });
+  if (!loginGate.ok) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error:
+          loginGate.error === "locked"
+            ? LOGIN_LOCKED_COPY
+            : AUTH_ERROR_COPY.securityFailed
+      },
+      { status: loginGate.error === "locked" ? 429 : 403 }
+    );
   }
 
+  const result = await performSignIn(input);
+  if (!result.ok) {
+    await authSecurityService.recordPasswordLoginResult({
+      request,
+      email: input.email,
+      success: false
+    });
+    return NextResponse.json(
+      { ok: false, error: AUTH_ERROR_COPY.credentialsInvalid, errorCode: "invalid-credentials" },
+      { status: 401 }
+    );
+  }
+
+  await authSecurityService.recordPasswordLoginResult({
+    request,
+    email: input.email,
+    success: true
+  });
   return NextResponse.json(result);
 }

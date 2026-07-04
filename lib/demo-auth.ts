@@ -75,13 +75,13 @@ export function demoRedirectForRole(role: DemoRole) {
   return "/brand";
 }
 
-/** Google / Apple / Discord map to the first three demo accounts for each role tab. */
+/** Social providers map deterministically to demo accounts for each role tab. */
 export function demoUserForSocialProvider(
-  provider: "google" | "apple" | "discord",
+  provider: "google" | "apple" | "alipay" | "wechat" | "qq",
   tabRole: "brand" | "creator"
 ) {
   const demoRole = tabRole === "creator" ? "creator" : "client";
   const accounts = DEMO_USERS.filter((user) => user.role === demoRole);
-  const index = provider === "google" ? 0 : provider === "apple" ? 1 : 2;
+  const index = provider === "google" || provider === "wechat" ? 0 : provider === "apple" || provider === "qq" ? 1 : 2;
   return accounts[index] ?? accounts[0] ?? null;
 }

@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import { Fragment, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { AlertCircle, ArrowRight, Eye, EyeOff, Lock, Mail } from "lucide-react";
+import { AlertCircle, ArrowRight, Check, Mail, Rocket, ShieldCheck, Sparkles, Users } from "lucide-react";
 import { LoginSubmitSpinner } from "@/components/studioos/login-demo-accounts";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,8 +13,6 @@ import { cn } from "@/lib/utils";
 type LoginCopy = {
   email: string;
   emailPlaceholder: string;
-  password: string;
-  passwordPlaceholder: string;
   rememberMe: string;
   forgotPassword: string;
   login: string;
@@ -40,41 +38,30 @@ export function LoginWorkspace({
   t: LoginCopy;
 }) {
   const [email, setEmail] = useState(initialEmail);
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
+  const [code, setCode] = useState("");
+  const [step, setStep] = useState<"email" | "code" | "success">("email");
+  const [redirectTo, setRedirectTo] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | undefined>(error);
+  const [devCodeHint, setDevCodeHint] = useState<string | undefined>();
+  const [sentHint, setSentHint] = useState<string | undefined>();
   const [clientErrorCode, setClientErrorCode] = useState<string | undefined>();
   const router = useRouter();
 
   const isWrongRole = errorCode === "wrong-role" || clientErrorCode === "wrong-role";
   const displayError = formError ?? error;
   const visual = visualOverride ?? getLoginVisual(role);
-  const lightPanel = Boolean(visualOverride);
+  const darkPanel = role === "brand";
 
   const labelClass = cn(
     "text-xs font-medium sm:text-sm",
-    lightPanel ? "text-zinc-700" : role === "brand" ? "text-zinc-200" : "text-zinc-800"
+    darkPanel ? "text-zinc-200" : "text-zinc-800"
   );
   const mutedClass = cn(
     "text-xs sm:text-sm",
-    lightPanel ? "text-zinc-500" : role === "brand" ? "text-zinc-400" : "text-zinc-500"
+    darkPanel ? "text-zinc-400" : "text-zinc-500"
   );
-  const iconClass = lightPanel ? "text-zinc-400" : role === "brand" ? "text-zinc-500" : "text-zinc-400";
-
-  const checkboxClass = useMemo(
-    () =>
-      cn(
-        "h-4 w-4 rounded border focus:ring-2",
-        lightPanel
-          ? "border-zinc-300 text-violet-600 focus:ring-violet-500/20"
-          : role === "brand"
-            ? "border-white/20 bg-white/[0.06] text-white focus:ring-white/20"
-            : "border-zinc-300 text-violet-600 focus:ring-violet-500/20"
-      ),
-    [lightPanel, role]
-  );
+  const iconClass = darkPanel ? "text-zinc-500" : "text-zinc-400";
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -83,33 +70,58 @@ export function LoginWorkspace({
     setClientErrorCode(undefined);
 
     try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          password,
-          lang: locale,
-          expected_role: role,
-          next: nextPath
-        })
-      });
-
-      const data = (await response.json()) as {
-        ok: boolean;
-        redirectTo?: string;
-        error?: string;
-        errorCode?: string;
-      };
-
-      if (data.ok && data.redirectTo) {
-        router.push(data.redirectTo);
-        router.refresh();
+      if (step === "email") {
+        const response = await fetch("/api/auth/email/start", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, lang: locale })
+        });
+        const data = (await response.json().catch(() => null)) as {
+          ok?: boolean;
+          error?: string;
+          message?: string;
+          debugCode?: string;
+        } | null;
+        if (!response.ok || !data?.ok) {
+          setSentHint(undefined);
+          setFormError(
+            data?.error ??
+              (response.status === 503
+                ? locale === "zh"
+                  ? "认证服务暂不可用，请确认数据库迁移已执行。"
+                  : "Authentication service unavailable. Confirm database migrations are applied."
+                : locale === "zh"
+                  ? "请求过于频繁，请稍后再试。"
+                  : "Too many requests. Try again later.")
+          );
+          return;
+        }
+        setFormError(undefined);
+        setSentHint(data.message);
+        setDevCodeHint(data.debugCode);
+        setStep("code");
         return;
       }
 
-      setClientErrorCode(data.errorCode);
-      setFormError(data.error ?? (locale === "zh" ? "登录失败，请重试。" : "Sign in failed. Please try again."));
+      if (step === "code") {
+        const response = await fetch("/api/auth/continue", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, code, lang: locale, role })
+        });
+        const data = (await response.json()) as {
+          ok: boolean;
+          error?: string;
+          redirectTo?: string;
+        };
+        if (!response.ok || !data.ok || !data.redirectTo) {
+          setFormError(data.error ?? (locale === "zh" ? "验证码不正确或已过期。" : "Invalid or expired code."));
+          return;
+        }
+        setRedirectTo(data.redirectTo);
+        setStep("success");
+        return;
+      }
     } catch {
       setFormError(locale === "zh" ? "网络错误，请稍后重试。" : "Network error. Please try again.");
     } finally {
@@ -119,6 +131,113 @@ export function LoginWorkspace({
 
   return (
     <div className="w-full">
+      <div className="mb-8">
+        <div className="grid grid-cols-[1fr_auto_1fr_auto_1fr] items-start gap-2 sm:gap-4">
+          {[
+            { id: "email", label: locale === "zh" ? "验证邮箱" : "Email" },
+            { id: "code", label: locale === "zh" ? "输入验证码" : "Code" },
+            { id: "success", label: locale === "zh" ? "登录成功" : "Success" }
+          ].map((item, index) => {
+            const currentIndex = step === "email" ? 0 : step === "code" ? 1 : 2;
+            const done = index < currentIndex;
+            const active = index === currentIndex;
+            return (
+              <Fragment key={item.id}>
+                {index > 0 ? (
+                  <span
+                    key={`${item.id}-line`}
+                    className={cn(
+                      "mt-4 h-[2px] w-10 rounded-full sm:w-16 lg:w-20",
+                      index <= currentIndex
+                        ? "bg-violet-500"
+                        : darkPanel
+                          ? "bg-white/35"
+                          : "bg-zinc-300"
+                    )}
+                  />
+                ) : null}
+                <div key={item.id} className="flex min-w-0 flex-col items-center gap-2">
+                  <span
+                    className={cn(
+                      "flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold transition",
+                      done || active
+                        ? "bg-violet-600 text-white shadow-lg shadow-violet-500/25"
+                        : darkPanel
+                          ? "border border-white/15 bg-white text-zinc-500"
+                          : "border border-zinc-200 bg-white text-zinc-400"
+                    )}
+                  >
+                    {done ? <Check className="h-4 w-4" /> : index + 1}
+                  </span>
+                  <span
+                    className={cn(
+                      "whitespace-nowrap text-xs font-medium",
+                      done || active
+                        ? darkPanel
+                          ? "text-white"
+                          : "text-zinc-900"
+                        : darkPanel
+                          ? "text-zinc-400"
+                          : "text-zinc-400"
+                    )}
+                  >
+                    {item.label}
+                  </span>
+                </div>
+              </Fragment>
+            );
+          })}
+        </div>
+      </div>
+
+      {step === "success" ? (
+        <div className="space-y-6 text-center">
+          <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-violet-100 shadow-[0_18px_60px_rgba(124,58,237,0.28)]">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-violet-600 text-white">
+              <Check className="h-8 w-8" strokeWidth={3} />
+            </div>
+          </div>
+          <div>
+            <h3 className="text-2xl font-semibold tracking-tight text-zinc-950">
+              {locale === "zh" ? "登录成功！" : "You're in!"}
+            </h3>
+            <p className={cn("mt-2 text-sm", visual.cardMuted)}>
+              {locale === "zh" ? "欢迎回到 StudioOS，你的工作台已准备好" : "Welcome back to StudioOS. Your workspace is ready."}
+            </p>
+          </div>
+          <div className="mx-auto max-w-sm rounded-2xl border border-violet-100 bg-violet-50/60 p-4 text-left">
+            {[
+              { icon: Rocket, title: locale === "zh" ? "开始你的创作" : "Start creating", body: locale === "zh" ? "创建项目，邀请团队，开启高效协作" : "Create projects and collaborate with your team" },
+              { icon: Sparkles, title: locale === "zh" ? "探索强大功能" : "Explore AI tools", body: locale === "zh" ? "体验 AI 工具、项目管理与数据分析" : "Use AI, project management, and analytics" },
+              { icon: Users, title: locale === "zh" ? "连接全球创作者" : "Connect globally", body: locale === "zh" ? "与优秀创作者和品牌建立合作" : "Work with top creators and brands" }
+            ].map(({ icon: Icon, title, body }) => (
+              <div key={title} className="flex gap-3 py-2">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-violet-600">
+                  <Icon className="h-4 w-4" />
+                </span>
+                <div>
+                  <p className="text-sm font-semibold text-zinc-900">{title}</p>
+                  <p className="mt-0.5 text-xs text-zinc-500">{body}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <Button
+            type="button"
+            className={cn("gap-2", visual.btn)}
+            onClick={() => {
+              router.push(redirectTo || (role === "creator" ? `/studio?lang=${locale}` : `/brand?lang=${locale}`));
+              router.refresh();
+            }}
+          >
+            {locale === "zh" ? "进入 StudioOS" : "Enter StudioOS"}
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+          <p className={cn("text-xs", visual.cardMuted)}>
+            {locale === "zh" ? "我们重视你的数据安全，所有信息均加密保护" : "Your data is protected with encrypted security controls."}
+          </p>
+        </div>
+      ) : (
       <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
         <input type="hidden" name="lang" value={locale} />
         <input type="hidden" name="expected_role" value={role} />
@@ -129,14 +248,10 @@ export function LoginWorkspace({
             className={cn(
               "flex gap-2.5 rounded-xl border px-3.5 py-2.5 text-[13px] leading-5",
               isWrongRole
-                ? lightPanel
-                  ? "border-amber-200 bg-amber-50 text-amber-900"
-                  : role === "brand"
+                ? darkPanel
                     ? "border-amber-400/30 bg-amber-500/10 text-amber-100"
                     : "border-amber-200 bg-amber-50 text-amber-900"
-                : lightPanel
-                  ? "border-red-200 bg-red-50 text-red-800"
-                  : role === "brand"
+                : darkPanel
                     ? "border-red-400/30 bg-red-500/10 text-red-100"
                     : "border-red-200 bg-red-50 text-red-800"
             )}
@@ -148,9 +263,14 @@ export function LoginWorkspace({
         ) : null}
 
         <div className="space-y-1.5 sm:space-y-2">
-          <label htmlFor="email" className={labelClass}>
-            {t.email}
-          </label>
+          <div className="flex items-baseline justify-between gap-2">
+            <label htmlFor="email" className={labelClass}>
+              {t.email}
+            </label>
+            <span className={cn("shrink-0 text-[11px] leading-5 sm:text-xs", darkPanel ? "text-zinc-400" : "text-zinc-500")}>
+              {locale === "zh" ? "我们会向您发送 6 位数字验证码" : "We'll send a 6-digit code"}
+            </span>
+          </div>
           <div className="relative">
             <Mail className={cn("pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2", iconClass)} />
             <Input
@@ -158,6 +278,7 @@ export function LoginWorkspace({
               name="email"
               type="email"
               required
+              disabled={step !== "email"}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder={t.emailPlaceholder}
@@ -166,72 +287,73 @@ export function LoginWorkspace({
           </div>
         </div>
 
-        <div className="space-y-1.5 sm:space-y-2">
-          <label htmlFor="password" className={labelClass}>
-            {t.password}
-          </label>
-          <div className="relative">
-            <Lock className={cn("pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2", iconClass)} />
-            <Input
-              id="password"
-              name="password"
-              type={showPassword ? "text" : "password"}
-              required
-              minLength={8}
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder={t.passwordPlaceholder}
-              className={cn(visual.input, "pr-11")}
-            />
-            <button
-              type="button"
-              aria-label={showPassword ? "Hide password" : "Show password"}
-              onClick={() => setShowPassword((v) => !v)}
-              className={cn(
-                "absolute right-3.5 top-1/2 -translate-y-1/2 transition",
-                lightPanel
-                  ? "text-zinc-400 hover:text-zinc-600"
-                  : role === "brand"
-                    ? "text-zinc-500 hover:text-zinc-300"
-                    : "text-zinc-400 hover:text-zinc-600"
-              )}
-            >
-              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </button>
+        {step === "code" ? (
+          <div className="space-y-1.5 sm:space-y-2">
+            {sentHint ? (
+              <p
+                className={cn(
+                  "rounded-xl border px-3 py-2 text-xs leading-5",
+                  devCodeHint
+                    ? darkPanel
+                      ? "border-amber-400/30 bg-amber-500/10 text-amber-100"
+                      : "border-amber-200 bg-amber-50 text-amber-900"
+                    : darkPanel
+                      ? "border-emerald-400/30 bg-emerald-500/10 text-emerald-100"
+                      : "border-emerald-200 bg-emerald-50 text-emerald-900"
+                )}
+              >
+                {sentHint}
+                {devCodeHint
+                  ? locale === "zh"
+                    ? ` 验证码：${devCodeHint}`
+                    : ` Code: ${devCodeHint}`
+                  : null}
+              </p>
+            ) : null}
+            <label htmlFor="code" className={labelClass}>
+              {locale === "zh" ? "验证码" : "Verification code"}
+            </label>
+            <div className="relative">
+              <ShieldCheck className={cn("pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2", iconClass)} />
+              <Input
+                id="code"
+                name="code"
+                inputMode="numeric"
+                pattern="[0-9]{6}"
+                maxLength={6}
+                required
+                value={code}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                placeholder={locale === "zh" ? "输入 6 位验证码" : "Enter 6-digit code"}
+                className={visual.input}
+              />
+            </div>
           </div>
-        </div>
-
-        <div className="flex items-center justify-between gap-2 sm:gap-3">
-          <label className={cn("inline-flex cursor-pointer items-center gap-2", mutedClass)}>
-            <input
-              type="checkbox"
-              checked={rememberMe}
-              onChange={(e) => setRememberMe(e.target.checked)}
-              className={checkboxClass}
-            />
-            {t.rememberMe}
-          </label>
-          <button
-            type="button"
-            className={cn(
-              "font-medium transition",
-              lightPanel
-                ? "text-zinc-500 hover:text-zinc-800"
-                : role === "brand"
-                  ? "text-zinc-400 hover:text-white"
-                  : "text-zinc-500 hover:text-zinc-800"
-            )}
-          >
-            {t.forgotPassword}
-          </button>
-        </div>
+        ) : null}
 
         <Button type="submit" disabled={submitting} className={cn("gap-2", visual.btn)}>
-          {t.login}
+          {step === "email"
+            ? locale === "zh" ? "发送验证码" : "Send code"
+            : locale === "zh" ? "进入 StudioOS" : "Enter StudioOS"}
           {submitting ? <LoginSubmitSpinner visible /> : <ArrowRight className="h-4 w-4" />}
         </Button>
+        {step !== "email" ? (
+          <button
+            type="button"
+            className={cn("w-full text-center text-xs transition", mutedClass)}
+            onClick={() => {
+              setStep("email");
+              setCode("");
+              setDevCodeHint(undefined);
+              setSentHint(undefined);
+              setFormError(undefined);
+            }}
+          >
+            {locale === "zh" ? "更换邮箱" : "Use a different email"}
+          </button>
+        ) : null}
       </form>
+      )}
     </div>
   );
 }

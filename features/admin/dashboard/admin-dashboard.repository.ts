@@ -175,7 +175,7 @@ export class AdminDashboardRepository {
       prisma.campaign.count({
         where: {
           deletedAt: null,
-          deliveries: { some: { status: "LOCKED" } },
+          deliveries: { is: { status: "LOCKED" } },
           escrow: { status: "HELD" }
         }
       }),

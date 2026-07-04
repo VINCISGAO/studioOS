@@ -18,7 +18,7 @@ import type { ReviewerVideoStatus } from "@/components/studioos/reviewer-v1/revi
 import type { Locale } from "@/lib/i18n";
 import type { OrderStatus, StoredDeliverable } from "@/lib/order-types";
 import type { ReviewComment, ReviewCommentStatus } from "@/lib/studioos/review-comment-types";
-import { latestSubmittedDeliverableVersion } from "@/lib/studioos/review-upload-version";
+import { latestSubmittedDeliverableVersion } from "@/lib/studioos/review-upload-version-shared";
 import type { ReviewFocusTheme } from "@/lib/studioos/portal-focus-mode";
 import { cn } from "@/lib/utils";
 

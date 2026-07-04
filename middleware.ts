@@ -25,6 +25,56 @@ function withLang(url: URL, request: NextRequest) {
   return url;
 }
 
+function isAuthMutationPath(pathname: string) {
+  return (
+    pathname.startsWith("/api/auth/") ||
+    pathname === "/api/register" ||
+    pathname === "/api/login" ||
+    pathname === "/api/continue" ||
+    pathname === "/api/user/create" ||
+    pathname.startsWith("/api/account/")
+  );
+}
+
+function isClearlyMaliciousUserAgent(userAgent: string) {
+  const value = userAgent.toLowerCase();
+  return (
+    !value ||
+    value.includes("sqlmap") ||
+    value.includes("nikto") ||
+    value.includes("masscan") ||
+    value.includes("nmap") ||
+    value.includes("acunetix")
+  );
+}
+
+function enforceAuthEdgeRules(request: NextRequest): NextResponse | null {
+  const pathname = request.nextUrl.pathname;
+  if (!isAuthMutationPath(pathname)) return null;
+
+  const userAgent = request.headers.get("user-agent") ?? "";
+  if (isClearlyMaliciousUserAgent(userAgent)) {
+    return NextResponse.json({ ok: false, error: "安全验证失败，请稍后重试。" }, { status: 403 });
+  }
+
+  if (request.method === "GET") {
+    return NextResponse.json({ ok: false, error: "安全验证失败，请稍后重试。" }, { status: 405 });
+  }
+
+  if (request.method === "POST") {
+    const origin = request.headers.get("origin");
+    const referer = request.headers.get("referer");
+    const expectedOrigin = request.nextUrl.origin;
+    const validOrigin = !origin || origin === expectedOrigin;
+    const validReferer = !referer || referer.startsWith(expectedOrigin);
+    if (!validOrigin || !validReferer) {
+      return NextResponse.json({ ok: false, error: "安全验证失败，请稍后重试。" }, { status: 403 });
+    }
+  }
+
+  return null;
+}
+
 /** Rewrite broken links like ?lang%3Dzh=&lang=zh → ?lang=zh */
 function sanitizeBrokenLocaleSearch(request: NextRequest): NextResponse | null {
   const rawSearch = request.nextUrl.search;
@@ -40,6 +90,11 @@ function sanitizeBrokenLocaleSearch(request: NextRequest): NextResponse | null {
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const isApiRoute = pathname.startsWith("/api/");
+
+  const authEdgeResponse = enforceAuthEdgeRules(request);
+  if (authEdgeResponse) {
+    return authEdgeResponse;
+  }
 
   if (!isApiRoute) {
     const sanitized = sanitizeBrokenLocaleSearch(request);
@@ -243,5 +298,5 @@ function redirectToLogin(request: NextRequest, error?: string) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|api/|videos/|images/).*)"]
+  matcher: ["/api/auth/:path*", "/api/register", "/api/login", "/api/continue", "/api/user/create", "/api/account/:path*", "/((?!_next/static|_next/image|favicon.ico|api/|videos/|images/).*)"]
 };

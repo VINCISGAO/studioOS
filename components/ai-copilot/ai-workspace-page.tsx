@@ -94,6 +94,25 @@ type FeedbackData = {
   feedback: NonNullable<ChatLine["feedback"]>;
 };
 
+async function readJsonResponse<T>(response: Response): Promise<T | null> {
+  try {
+    return (await response.json()) as T;
+  } catch {
+    return null;
+  }
+}
+
+async function fetchJson<T>(input: RequestInfo | URL, init?: RequestInit): Promise<{
+  response: Response;
+  payload: T | null;
+}> {
+  const response = await fetch(input, init);
+  return {
+    response,
+    payload: await readJsonResponse<T>(response)
+  };
+}
+
 type AiWorkspacePageProps = {
   mode: WorkspaceMode;
 };
@@ -297,9 +316,8 @@ export function AiWorkspacePage({ mode }: AiWorkspacePageProps) {
   useEffect(() => {
     let cancelled = false;
     setBooting(true);
-    fetch(sessionsUrl)
-      .then(async (response) => {
-        const payload = (await response.json().catch(() => null)) as ApiResponse<SessionListData> | null;
+    fetchJson<ApiResponse<SessionListData>>(sessionsUrl)
+      .then(({ response, payload }) => {
         if (!response.ok || !payload?.success) throw new Error(payload?.error?.message ?? ui.unavailable);
         return payload;
       })
@@ -334,8 +352,7 @@ export function AiWorkspacePage({ mode }: AiWorkspacePageProps) {
     try {
       const params = new URLSearchParams({ sessionId: nextSessionId });
       if (context.languageCode) params.set("languageCode", context.languageCode);
-      const response = await fetch(`/api/ai-copilot?${params.toString()}`);
-      const payload = (await response.json().catch(() => null)) as ApiResponse<SessionDetailData> | null;
+      const { response, payload } = await fetchJson<ApiResponse<SessionDetailData>>(`/api/ai-copilot?${params.toString()}`);
       if (!response.ok || !payload?.success || !payload.data) {
         throw new Error(payload?.error?.message ?? ui.loadFailed);
       }
@@ -349,11 +366,14 @@ export function AiWorkspacePage({ mode }: AiWorkspacePageProps) {
   }
 
   async function refreshSessions() {
-    const response = await fetch(sessionsUrl);
-    const payload = (await response.json().catch(() => null)) as ApiResponse<SessionListData> | null;
-    if (payload?.success && payload.data) {
-      setSessions(payload.data.sessions);
-      setWorkspace(payload.data.workspace ?? null);
+    try {
+      const { payload } = await fetchJson<ApiResponse<SessionListData>>(sessionsUrl);
+      if (payload?.success && payload.data) {
+        setSessions(payload.data.sessions);
+        setWorkspace(payload.data.workspace ?? null);
+      }
+    } catch {
+      // Refresh is non-critical; keep the current conversation visible.
     }
   }
 
@@ -366,12 +386,11 @@ export function AiWorkspacePage({ mode }: AiWorkspacePageProps) {
     setMessages((current) => [...current, { id: crypto.randomUUID(), role: "USER", content: trimmed }]);
 
     try {
-      const response = await fetch("/api/ai-copilot", {
+      const { response, payload } = await fetchJson<ApiResponse<CopilotAnswerData>>("/api/ai-copilot", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sessionId, message: trimmed, ...context })
       });
-      const payload = (await response.json().catch(() => null)) as ApiResponse<CopilotAnswerData> | null;
       if (!response.ok || !payload?.success || !payload.data) {
         throw new Error(payload?.error?.message ?? ui.requestFailed);
       }
@@ -399,7 +418,7 @@ export function AiWorkspacePage({ mode }: AiWorkspacePageProps) {
     setSavingFeedbackId(messageId);
     setError(null);
     try {
-      const response = await fetch("/api/ai-copilot", {
+      const { response, payload } = await fetchJson<ApiResponse<FeedbackData>>("/api/ai-copilot", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -408,7 +427,6 @@ export function AiWorkspacePage({ mode }: AiWorkspacePageProps) {
           languageCode: context.languageCode
         })
       });
-      const payload = (await response.json().catch(() => null)) as ApiResponse<FeedbackData> | null;
       if (!response.ok || !payload?.success || !payload.data) {
         throw new Error(payload?.error?.message ?? ui.feedbackFailed);
       }

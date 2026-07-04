@@ -3,11 +3,12 @@
  * Run: npm run production:verify
  */
 import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, appendFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = join(fileURLToPath(new URL(".", import.meta.url)), "..");
+const FAILURE_LOG = join(ROOT, "verify-failure.log");
 
 /** Large enough for verbose lint output; default execSync buffer (1MB) can throw while exit code is 0. */
 const MAX_CMD_BUFFER = 64 * 1024 * 1024;
@@ -44,6 +45,17 @@ function runCmd(label: string, cmd: string): Step {
     .filter(Boolean)
     .join("\n")
     .slice(-4000);
+
+  if (detail) {
+    console.log("\n--- Failure output ---");
+    console.log(detail);
+    console.log("--- End failure output ---\n");
+    appendFileSync(
+      FAILURE_LOG,
+      `\n=== ${label} ${new Date().toISOString()} ===\n${detail}\n`,
+      "utf8"
+    );
+  }
 
   return { name: label, ok: false, detail: detail || "command failed" };
 }
@@ -102,6 +114,9 @@ function checkPaymentService(): Step {
 function main() {
   console.log("\nProduction readiness verification");
   console.log("(build alone can take 1–3 minutes — progress prints below)\n");
+  if (existsSync(FAILURE_LOG)) {
+    appendFileSync(FAILURE_LOG, `\n--- New verify run ${new Date().toISOString()} ---\n`, "utf8");
+  }
 
   const steps: Step[] = [];
 

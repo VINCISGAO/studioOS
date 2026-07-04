@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { hasSupabaseConfig } from "@/lib/auth-config";
 import { authService } from "@/features/auth/auth.service";
+import { AUTH_ERROR_COPY } from "@/features/auth/auth-error-copy";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { setDemoSession } from "@/lib/demo-auth-server";
 import type { Locale } from "@/lib/i18n";
@@ -12,7 +13,7 @@ function normalizeLang(raw: FormDataEntryValue | null): Locale {
   return String(raw ?? "en") === "zh" ? "zh" : "en";
 }
 
-function signupErrorRedirect(error: string, lang: Locale, role: string) {
+function signupErrorRedirect(error: string, lang: Locale, role: string): never {
   redirect(`/signup?error=${encodeURIComponent(error)}&lang=${lang}&role=${role === "creator" ? "creator" : "brand"}`);
 }
 
@@ -40,7 +41,7 @@ export async function signUpMvpAction(formData: FormData) {
     });
 
     if (!result.ok) {
-      signupErrorRedirect(result.error, lang, role);
+      signupErrorRedirect(AUTH_ERROR_COPY.credentialsInvalid, lang, role);
     }
 
     await setDemoSession({

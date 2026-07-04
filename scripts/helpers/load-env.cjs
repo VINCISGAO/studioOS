@@ -34,4 +34,22 @@ if (!process.env.DATABASE_URL) {
   process.env.DATABASE_URL = DEFAULT_DATABASE_URL;
 }
 
+if (!process.env.DIRECT_DATABASE_URL) {
+  const dbUrl = process.env.DATABASE_URL ?? "";
+  process.env.DIRECT_DATABASE_URL = dbUrl.includes("-pooler.")
+    ? dbUrl.replace("-pooler.", ".")
+    : dbUrl;
+}
+
+function appendQueryParam(url, param) {
+  const key = param.split("=")[0];
+  if (url.includes(`${key}=`)) return url;
+  return url.includes("?") ? `${url}&${param}` : `${url}?${param}`;
+}
+
+process.env.DIRECT_DATABASE_URL = appendQueryParam(
+  process.env.DIRECT_DATABASE_URL,
+  "connect_timeout=30"
+);
+
 module.exports = { DEFAULT_DATABASE_URL, loadEnvFile };

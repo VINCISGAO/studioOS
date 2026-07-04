@@ -33,6 +33,19 @@ function demoRoleToPrisma(role: DemoUser["role"]): UserRole {
   return "BRAND";
 }
 
+const weakPasswords = new Set(["12345678", "123456789", "password", "password1", "qwerty123"]);
+
+function isStrongPassword(password: string) {
+  const normalized = password.trim().toLowerCase();
+  return (
+    password.length >= 8 &&
+    !/^\d+$/.test(password) &&
+    /[a-z]/i.test(password) &&
+    /\d/.test(password) &&
+    !weakPasswords.has(normalized)
+  );
+}
+
 export class AuthService {
   async register(input: {
     email: string;
@@ -48,7 +61,7 @@ export class AuthService {
 
     const normalized = input.email.trim().toLowerCase();
     const fullName = input.fullName.trim() || normalized.split("@")[0] || "StudioOS User";
-    if (!normalized.includes("@") || input.password.length < 8) {
+    if (!normalized.includes("@") || !isStrongPassword(input.password)) {
       return { ok: false, error: "invalid" };
     }
 

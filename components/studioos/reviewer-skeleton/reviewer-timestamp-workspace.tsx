@@ -33,7 +33,7 @@ import type { ReviewPortalUiState } from "@/features/review/review-portal-ui-sta
 import type { Locale } from "@/lib/i18n";
 import type { StoredDeliverable, StoredOrder } from "@/lib/order-types";
 import type { ReviewComment } from "@/lib/studioos/review-comment-types";
-import { latestSubmittedDeliverableVersion } from "@/lib/studioos/review-upload-version";
+import { latestSubmittedDeliverableVersion } from "@/lib/studioos/review-upload-version-shared";
 import { formatDate } from "@/lib/utils";
 import { studioNav } from "@/lib/studioos/vocabulary";
 

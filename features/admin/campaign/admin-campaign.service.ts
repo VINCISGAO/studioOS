@@ -58,7 +58,7 @@ export class AdminCampaignService {
         creatorId: row.creatorId,
         creatorName: row.creator?.creatorProfile?.displayName ?? row.creator?.fullName ?? null,
         escrowStatus: row.escrow?.status ?? null,
-        deliveryStatus: row.deliveries[0]?.status ?? null,
+        deliveryStatus: row.deliveries?.status ?? null,
         settlementState,
         updatedAt: row.updatedAt.toISOString()
       });
@@ -108,7 +108,7 @@ export class AdminCampaignService {
       }
     }
 
-    const delivery = row.deliveries[0] ?? null;
+    const delivery = row.deliveries ?? null;
 
     return {
       id: row.id,

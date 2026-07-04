@@ -40,7 +40,7 @@
     "db:generate": "bash scripts/prisma-with-env.sh generate",
     "db:validate": "bash scripts/prisma-with-env.sh validate",
     "db:migrate": "bash scripts/prisma-with-env.sh migrate dev",
-    "db:migrate:deploy": "bash scripts/prisma-with-env.sh migrate deploy",
+    "db:migrate:deploy": "bash scripts/migrate-deploy.sh",
     "db:init": "bash scripts/db-init.sh",
     "db:recover": "bash scripts/db-recover.sh",
     "db:push": "bash scripts/prisma-with-env.sh db push",

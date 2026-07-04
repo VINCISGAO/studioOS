@@ -10,14 +10,16 @@ import { clearDemoSession, setDemoSession } from "@/lib/demo-auth-server";
 import { demoRedirectForRole, demoUserForSocialProvider, parseDemoSession, DEMO_USERS } from "@/lib/demo-auth";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { isAdminRouteRole } from "@/lib/auth/route-access";
+import { AUTH_ERROR_COPY } from "@/features/auth/auth-error-copy";
+import { authSecurityService } from "@/features/auth/auth-security.service";
 import { withLocale, type Locale } from "@/lib/i18n";
 import { getOrCreateOpenInquiry } from "@/lib/chat-service";
 import { getOrCreateVisitorId } from "@/lib/client-session";
 import { createProject } from "@/lib/project-service";
 import { createClient } from "@/lib/supabase/server";
 
-type OAuthProvider = "google" | "github" | "apple" | "discord";
-type DemoSocialProvider = "google" | "apple" | "discord";
+type OAuthProvider = "google" | "apple" | "alipay" | "wechat" | "qq";
+type DemoSocialProvider = "google" | "apple" | "alipay" | "wechat" | "qq";
 
 function normalizeLang(raw: FormDataEntryValue | null): Locale {
   return String(raw ?? "en") === "zh" ? "zh" : "en";
@@ -160,7 +162,7 @@ export async function demoSocialSignInAction(formData: FormData) {
     redirect(`/login?error=unsupported-provider&lang=${lang}&role=${expectedRole}`);
   }
 
-  if (!["google", "apple", "discord"].includes(provider)) {
+  if (!["google", "apple", "alipay", "wechat", "qq"].includes(provider)) {
     redirect(`/login?error=unsupported-provider&lang=${lang}&role=${expectedRole}`);
   }
 
@@ -209,7 +211,7 @@ export async function signUpAction(formData: FormData) {
     });
 
     if (!result.ok) {
-      redirect(`/login?error=${encodeURIComponent(result.error)}&lang=${lang}`);
+      redirect(`/login?error=${encodeURIComponent(AUTH_ERROR_COPY.credentialsInvalid)}&lang=${lang}`);
     }
 
     await setDemoSession({
@@ -248,15 +250,27 @@ export async function oauthSignInAction(formData: FormData) {
   const expectedRole = String(formData.get("expected_role") ?? "brand");
   const entryRole = expectedRole === "creator" ? "creator" : "brand";
   const nextPath = String(formData.get("next") ?? "").trim();
+  const headerList = await headers();
+  const actionRequest = new Request("https://studioos.local/api/auth/oauth/action", {
+    method: "POST",
+    headers: new Headers(headerList)
+  });
+  const oauthGate = await authSecurityService.enforceOAuthStart({
+    request: actionRequest,
+    provider
+  });
+  if (!oauthGate.ok) {
+    redirect(`/login?error=${encodeURIComponent(AUTH_ERROR_COPY.oauthFailed)}&lang=${lang}&role=${entryRole}`);
+  }
 
   if (!hasSupabaseConfig()) {
     redirect(
-      `/login?error=${encodeURIComponent("OAuth is disabled in demo mode. Use the preset email and password accounts below.")}&lang=${lang}&role=${entryRole}`
+      `/login?error=${encodeURIComponent(AUTH_ERROR_COPY.oauthFailed)}&lang=${lang}&role=${entryRole}`
     );
   }
 
   if (provider !== "google") {
-    redirect(`/login?error=unsupported-provider&lang=${lang}&role=${entryRole}`);
+    redirect(`/login?error=${encodeURIComponent(AUTH_ERROR_COPY.oauthFailed)}&lang=${lang}&role=${entryRole}`);
   }
 
   const callbackUrl = new URL(
@@ -280,8 +294,13 @@ export async function oauthSignInAction(formData: FormData) {
   });
 
   if (error || !data.url) {
+    await authSecurityService.recordOAuthCallback({
+      request: actionRequest,
+      provider,
+      success: false
+    });
     redirect(
-      `/login?error=${encodeURIComponent(error?.message ?? "Google sign-in is unavailable")}&lang=${lang}&role=${entryRole}`
+      `/login?error=${encodeURIComponent(AUTH_ERROR_COPY.oauthFailed)}&lang=${lang}&role=${entryRole}`
     );
   }
 
