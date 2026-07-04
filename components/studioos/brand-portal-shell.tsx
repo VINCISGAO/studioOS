@@ -245,7 +245,7 @@ function BrandPortalShellInner({
                   {initials.slice(0, 2)}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-zinc-900">{brandAccount.name.split(" ")[0]}</p>
+                  <p className="truncate text-sm font-semibold text-zinc-900">{brandAccount.name}</p>
                   <p className="truncate text-xs text-zinc-500">
                     {locale === "zh" ? "品牌管理员" : "Brand admin"}
                   </p>

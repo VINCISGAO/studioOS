@@ -2,30 +2,12 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { BrandWorkspaceOverview } from "@/components/studioos/brand-workspace-overview";
 import { DEMO_SESSION_COOKIE } from "@/lib/auth-config";
-import { DEMO_USERS, parseDemoSession } from "@/lib/demo-auth";
+import { parseDemoSession } from "@/lib/demo-auth";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
-import { getBrandProfileByEmail } from "@/lib/brand-profile-service";
 import { listOrdersForClient } from "@/lib/order-service";
 import { listProjectsForClient } from "@/lib/project-service";
+import { resolveBrandDisplayName } from "@/lib/studioos/brand-account-display";
 import { toBrandProjectRows } from "@/lib/studioos/brand-dashboard";
-
-function fallbackDisplayName(email: string): string {
-  const demo = DEMO_USERS.find((user) => user.email === email.toLowerCase());
-  if (demo) {
-    return (
-      demo.label
-        .split(" ")[0]
-        ?.replace(/[()（）]/g, "")
-        .replace(/\s*\(brand\)/i, "")
-        .trim() ?? demo.label
-    );
-  }
-  return email.split("@")[0] ?? "there";
-}
-
-function brandDisplayName(email: string, profile: Awaited<ReturnType<typeof getBrandProfileByEmail>>) {
-  return profile?.display_name.trim() || profile?.company_name.trim() || fallbackDisplayName(email);
-}
 
 export default async function BrandHomePage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const query = await searchParams;
@@ -38,7 +20,7 @@ export default async function BrandHomePage({ searchParams }: { searchParams: Pr
   }
 
   const clientEmail = session.email.toLowerCase();
-  const profile = await getBrandProfileByEmail(clientEmail);
+  const brandName = await resolveBrandDisplayName(clientEmail);
   const orders = await listOrdersForClient(clientEmail);
   const projects = await listProjectsForClient(clientEmail);
   const rows = toBrandProjectRows(orders, projects, locale);
@@ -63,7 +45,7 @@ export default async function BrandHomePage({ searchParams }: { searchParams: Pr
       ) : null}
       <BrandWorkspaceOverview
         locale={locale}
-        name={brandDisplayName(clientEmail, profile)}
+        name={brandName}
         rows={rows}
         orderProjectMap={orderProjectMap}
       />
