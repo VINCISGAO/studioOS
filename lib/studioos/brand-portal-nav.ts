@@ -63,16 +63,16 @@ export const brandPortalNavItems: BrandPortalNavItem[] = [
     mobileIconKey: "attribution"
   },
   {
-    href: brandPortalRoutes.aiAssistant,
-    labelKey: "aiAssistant",
-    icon: Sparkles,
-    mobileIconKey: "aiAssistant"
-  },
-  {
     href: brandPortalRoutes.messages,
     labelKey: "messages",
     icon: MessageSquare,
     mobileIconKey: "messages"
+  },
+  {
+    href: brandPortalRoutes.aiAssistant,
+    labelKey: "aiAssistant",
+    icon: Sparkles,
+    mobileIconKey: "aiAssistant"
   },
   {
     href: brandPortalRoutes.brandTeam,
