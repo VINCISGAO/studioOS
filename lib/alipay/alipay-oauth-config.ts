@@ -36,13 +36,39 @@ export function getAlipayOAuthConfig(): AlipayOAuthConfig | null {
     privateKey,
     authBaseUrl:
       readEnv("ALIPAY_AUTH_BASE_URL") ||
-      (sandbox ? "https://openauth.alipaydev.com" : "https://openauth.alipay.com"),
+      (sandbox
+        ? "https://openauth-sandbox.dl.alipaydev.com"
+        : "https://openauth.alipay.com"),
     gatewayUrl:
       readEnv("ALIPAY_GATEWAY_URL") ||
       (sandbox ? "https://openapi.alipaydev.com/gateway.do" : "https://openapi.alipay.com/gateway.do")
   };
 }
 
+/** Must match Alipay open platform「授权回调地址」exactly (https, no trailing slash). */
 export function alipayOAuthRedirectUri() {
+  const override = readEnv("ALIPAY_REDIRECT_URI");
+  if (override) {
+    return override.replace(/\/$/, "");
+  }
   return `${getAppBaseUrl()}/auth/alipay/callback`;
+}
+
+export function alipayOAuthMode(): "openauth" | "gateway" {
+  return readEnv("ALIPAY_OAUTH_MODE") === "gateway" ? "gateway" : "openauth";
+}
+
+export function getAlipayOAuthPublicConfig() {
+  const config = getAlipayOAuthConfig();
+  if (!config) return null;
+
+  const redirectUri = alipayOAuthRedirectUri();
+  return {
+    appId: config.appId,
+    redirectUri,
+    encodedRedirectUri: encodeURIComponent(redirectUri),
+    authMode: alipayOAuthMode(),
+    sandbox: config.authBaseUrl.includes("alipaydev"),
+    authorizePath: `${config.authBaseUrl}/oauth2/publicAppAuthorize.htm`
+  };
 }

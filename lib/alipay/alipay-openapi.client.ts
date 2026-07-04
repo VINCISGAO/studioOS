@@ -14,8 +14,7 @@ function signContent(content: string, privateKeyPem: string) {
   return signer.sign(privateKeyPem, "base64");
 }
 
-export async function callAlipayOpenApi(input: {
-  gatewayUrl: string;
+function buildSignedPayload(input: {
   appId: string;
   privateKey: string;
   method: string;
@@ -44,7 +43,30 @@ export async function callAlipayOpenApi(input: {
     .join("&");
 
   payload.sign = signContent(signBase, input.privateKey);
+  return payload;
+}
 
+export function buildAlipaySignedGatewayUrl(input: {
+  gatewayUrl: string;
+  appId: string;
+  privateKey: string;
+  method: string;
+  params?: Record<string, string>;
+  bizContent?: Record<string, unknown>;
+}) {
+  const payload = buildSignedPayload(input);
+  return `${input.gatewayUrl}?${new URLSearchParams(payload).toString()}`;
+}
+
+export async function callAlipayOpenApi(input: {
+  gatewayUrl: string;
+  appId: string;
+  privateKey: string;
+  method: string;
+  params?: Record<string, string>;
+  bizContent?: Record<string, unknown>;
+}) {
+  const payload = buildSignedPayload(input);
   const url = `${input.gatewayUrl}?${new URLSearchParams(payload).toString()}`;
   const response = await fetch(url, { method: "GET", cache: "no-store" });
   const json = (await response.json().catch(() => null)) as Record<string, unknown> | null;
