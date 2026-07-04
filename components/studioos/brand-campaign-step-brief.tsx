@@ -502,15 +502,28 @@ export function BrandCampaignStepBrief({
           }
         );
 
-        const result = (await res.json()) as {
+        const raw = await res.text();
+        type UploadProductImageResponse = {
           ok: boolean;
           error?: string;
           preview_url?: string;
           original?: { file_url: string };
         };
+        let result: UploadProductImageResponse;
+        try {
+          result = JSON.parse(raw) as UploadProductImageResponse;
+        } catch {
+          result = {
+            ok: false,
+            error:
+              locale === "zh"
+                ? `上传接口异常（HTTP ${res.status}）`
+                : `Upload endpoint error (HTTP ${res.status})`
+          };
+        }
 
         if (!res.ok || !result.ok) {
-          setUploadError(result.error ?? t.uploadFailed);
+          setUploadError(result.error ?? `${t.uploadFailed} (HTTP ${res.status})`);
           setProductReady(false);
           return;
         }

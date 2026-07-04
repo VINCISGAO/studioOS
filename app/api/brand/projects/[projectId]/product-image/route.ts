@@ -1,6 +1,7 @@
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { getCurrentClientEmail } from "@/lib/client-session";
+import { logger } from "@/lib/core/logger";
 import { uploadBrandProductImage } from "@/lib/studioos/brand-product-image-service";
 
 export const runtime = "nodejs";
@@ -51,12 +52,31 @@ export async function POST(
     );
   }
 
-  const result = await uploadBrandProductImage({
-    projectId,
-    clientEmail,
-    file,
-    locale: lang
-  });
+  let result: Awaited<ReturnType<typeof uploadBrandProductImage>>;
+  try {
+    result = await uploadBrandProductImage({
+      projectId,
+      clientEmail,
+      file,
+      locale: lang
+    });
+  } catch (error) {
+    logger.error("Brand product image upload failed", {
+      projectId,
+      clientEmail,
+      error: error instanceof Error ? error.message : String(error)
+    });
+    return NextResponse.json(
+      {
+        ok: false,
+        error:
+          lang === "zh"
+            ? "产品图上传失败，请稍后重试或检查 Vercel 日志"
+            : "Product image upload failed. Try again or check Vercel logs."
+      },
+      { status: 500 }
+    );
+  }
 
   if (!result.ok) {
     return NextResponse.json({ ok: false, error: result.error }, { status: result.status ?? 400 });
