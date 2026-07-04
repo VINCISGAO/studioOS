@@ -8,6 +8,7 @@ export type PortalMobileNavIconKey =
   | "income"
   | "deposit"
   | "messages"
+  | "aiAssistant"
   | "settings"
   | "brandCenter"
   | "finance"
@@ -42,6 +43,7 @@ export const portalMobileNavIconKeys: PortalMobileNavIconKey[] = [
   "income",
   "deposit",
   "messages",
+  "aiAssistant",
   "settings",
   "brandCenter",
   "finance",

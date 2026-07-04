@@ -14,6 +14,7 @@ export const brandPortalRoutes = {
   financeInvoices: "/brand/finance/invoices",
   financeMethods: "/brand/finance/methods",
   brandCenter: "/brand/brand-center",
+  aiAssistant: "/brand/ai",
   brandProfile: "/brand/brand-center/profile",
   brandGuidelines: "/brand/brand-center/guidelines",
   brandTeam: "/brand/brand-center/team",

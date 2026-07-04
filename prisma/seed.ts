@@ -3,12 +3,15 @@
  * Run: npm run db:seed
  */
 import { PrismaClient, UserRole, type CampaignStatus, type EscrowStatus } from "@prisma/client";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import { hashPassword } from "../lib/core/password-crypto";
 import { DEMO_PASSWORD, DEMO_USERS } from "../lib/demo-auth";
 
 const prisma = new PrismaClient();
 
 const DEMO_PROJECT_ID = "proj_demo_arc_nova";
+const AI_QA_SEED_PATH = path.join(process.cwd(), "docs/AI_COPILOT_QA_SEED_ZH.md");
 
 function demoRoleToPrisma(role: string): UserRole {
   if (role === "admin") return "ADMIN";
@@ -254,6 +257,118 @@ async function seedFeatureFlags() {
   }
 }
 
+type ParsedKnowledgeQa = {
+  sourceKey: string;
+  languageCode: string;
+  module: string;
+  question: string;
+  answer: string;
+  searchText: string;
+};
+
+function parseAiKnowledgeQaSeed(markdown: string): ParsedKnowledgeQa[] {
+  const entries: ParsedKnowledgeQa[] = [];
+  const lines = markdown.split(/\r?\n/);
+  let moduleName = "General";
+  let current:
+    | {
+        number: string;
+        question: string;
+        answerLines: string[];
+        module: string;
+      }
+    | null = null;
+
+  function flushCurrent() {
+    if (!current) return;
+    const answer = current.answerLines.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+    if (!answer) {
+      current = null;
+      return;
+    }
+    entries.push({
+      sourceKey: `studioos_qa_${current.number}_zh`,
+      languageCode: "zh-CN",
+      module: current.module,
+      question: current.question,
+      answer,
+      searchText: `${current.question}\n${answer}`
+    });
+    current = null;
+  }
+
+  for (const rawLine of lines) {
+    const line = rawLine.trimEnd();
+    const heading = line.match(/^##\s+(.+)$/);
+    if (heading) {
+      flushCurrent();
+      moduleName = heading[1]?.trim() ?? moduleName;
+      continue;
+    }
+
+    const question = line.match(/^(\d{3})｜(.+?)\s*$/);
+    if (question) {
+      flushCurrent();
+      current = {
+        number: question[1] ?? "",
+        question: question[2]?.trim() ?? "",
+        answerLines: [],
+        module: moduleName
+      };
+      continue;
+    }
+
+    if (!current) continue;
+    current.answerLines.push(line.trim());
+  }
+
+  flushCurrent();
+  return entries;
+}
+
+async function seedAiKnowledgeQa() {
+  const markdown = await readFile(AI_QA_SEED_PATH, "utf8");
+  const entries = parseAiKnowledgeQaSeed(markdown);
+  if (entries.length !== 200) {
+    throw new Error(`AI Copilot QA seed expected 200 entries, parsed ${entries.length}`);
+  }
+
+  for (const entry of entries) {
+    await prisma.aiKnowledgeQa.upsert({
+      where: { sourceKey: entry.sourceKey },
+      update: {
+        languageCode: entry.languageCode,
+        module: entry.module,
+        question: entry.question,
+        answer: entry.answer,
+        searchText: entry.searchText,
+        status: "ACTIVE",
+        metadataJson: {
+          source: "docs/AI_COPILOT_QA_SEED_ZH.md",
+          sourceVersion: "first_reviewed_pdf",
+          tone: "warm_human"
+        }
+      },
+      create: {
+        sourceKey: entry.sourceKey,
+        languageCode: entry.languageCode,
+        module: entry.module,
+        question: entry.question,
+        answer: entry.answer,
+        searchText: entry.searchText,
+        status: "ACTIVE",
+        metadataJson: {
+          source: "docs/AI_COPILOT_QA_SEED_ZH.md",
+          sourceVersion: "first_reviewed_pdf",
+          tone: "warm_human"
+        }
+      }
+    });
+  }
+
+  console.log(`Seeded AI Copilot QA knowledge: ${entries.length} entries`);
+}
+
 async function seedDemoDispute(campaignId: string, brandEmail: string) {
   const existing = await prisma.dispute.findFirst({ where: { campaignId } });
   if (existing) return;
@@ -269,6 +384,7 @@ async function seedDemoDispute(campaignId: string, brandEmail: string) {
 }
 
 async function main() {
+  await seedAiKnowledgeQa();
   await seedDemoUsers();
   await seedMembershipConfig();
   await seedCreatorMemberships();

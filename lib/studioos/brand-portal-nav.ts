@@ -10,6 +10,7 @@ import {
   Megaphone,
   MessageSquare,
   Settings,
+  Sparkles,
   Users
 } from "lucide-react";
 
@@ -60,6 +61,12 @@ export const brandPortalNavItems: BrandPortalNavItem[] = [
     labelKey: "attribution",
     icon: BarChart3,
     mobileIconKey: "attribution"
+  },
+  {
+    href: brandPortalRoutes.aiAssistant,
+    labelKey: "aiAssistant",
+    icon: Sparkles,
+    mobileIconKey: "aiAssistant"
   },
   {
     href: brandPortalRoutes.messages,

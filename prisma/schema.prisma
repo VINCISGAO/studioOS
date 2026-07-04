@@ -416,6 +416,9 @@ model User {
   customerConversations Conversation[] @relation("CustomerConversations")
   assignedConversations Conversation[] @relation("AssignedConversations")
   preferredLanguage Language @relation(fields: [languageCode], references: [code])
+  aiCopilotSessions ChatSession[]
+  aiCopilotMessages ChatMessage[]
+  aiCopilotContexts AiCopilotContext[]
 
   @@index([role])
   @@index([status])
@@ -472,6 +475,109 @@ model LanguageTranslation {
   @@unique([keyId, languageCode])
   @@index([languageCode])
   @@map("language_translations")
+}
+
+model ChatSession {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  role      String
+  title     String?
+  status    String   @default("OPEN")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages  ChatMessage[]
+  toolCalls AiToolCall[]
+  contexts  AiCopilotContext[]
+
+  @@index([userId, updatedAt])
+  @@index([status])
+  @@map("chat_sessions")
+}
+
+model ChatMessage {
+  id           String   @id @default(uuid())
+  sessionId    String   @map("session_id")
+  userId       String?  @map("user_id")
+  role         String
+  content      String
+  metadataJson Json?    @map("metadata_json")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user      User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  toolCalls AiToolCall[]
+
+  @@index([sessionId, createdAt])
+  @@index([userId])
+  @@map("chat_messages")
+}
+
+model AiToolCall {
+  id         String   @id @default(uuid())
+  sessionId  String   @map("session_id")
+  messageId  String?  @map("message_id")
+  toolName   String   @map("tool_name")
+  inputJson  Json?    @map("input_json")
+  outputJson Json?    @map("output_json")
+  status     String   @default("SUCCESS")
+  durationMs Int?     @map("duration_ms")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  session ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  message ChatMessage? @relation(fields: [messageId], references: [id], onDelete: SetNull)
+
+  @@index([sessionId, createdAt])
+  @@index([messageId])
+  @@index([toolName])
+  @@map("ai_tool_calls")
+}
+
+model AiCopilotContext {
+  id          String   @id @default(uuid())
+  sessionId   String   @map("session_id")
+  userId      String   @map("user_id")
+  role        String
+  pagePath    String?  @map("page_path")
+  entityType  String?  @map("entity_type")
+  entityId    String?  @map("entity_id")
+  contextJson Json     @map("context_json")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  session ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, createdAt])
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@map("ai_copilot_contexts")
+}
+
+model AiKnowledgeQa {
+  id              String   @id @default(uuid())
+  campaignId      String?  @map("campaign_id")
+  sourceKey       String   @unique @map("source_key")
+  languageCode    String   @map("language_code")
+  module          String?
+  question        String   @db.Text
+  answer          String   @db.Text
+  searchText      String   @map("search_text") @db.Text
+  status          String   @default("ACTIVE")
+  usageCount      Int      @default(0) @map("usage_count")
+  helpfulCount    Int      @default(0) @map("helpful_count")
+  notHelpfulCount Int      @default(0) @map("not_helpful_count")
+  metadataJson    Json?    @map("metadata_json")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  campaign Campaign? @relation(fields: [campaignId], references: [id])
+
+  @@index([campaignId])
+  @@index([languageCode])
+  @@index([status])
+  @@index([usageCount])
+  @@map("ai_knowledge_qas")
 }
 
 model BrandProfile {
@@ -693,6 +799,7 @@ model Campaign {
   disputes      Dispute[]
   messages      CommunicationMessage[]
   memoryFacts   MemoryFact[]
+  aiKnowledgeQas AiKnowledgeQa[]
   performanceSources PerformanceSource[]
   orderCommission OrderCommission?
   orders           Order[]

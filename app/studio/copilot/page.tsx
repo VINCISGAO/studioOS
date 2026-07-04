@@ -1,7 +1,5 @@
-import { redirect } from "next/navigation";
-import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { AiWorkspacePage } from "@/components/ai-copilot/ai-workspace-page";
 
-export default async function StudioCopilotPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  const locale = getLocale(await searchParams);
-  redirect(withLocale("/studio", locale));
+export default function StudioCopilotPage() {
+  return <AiWorkspacePage mode="creator" />;
 }

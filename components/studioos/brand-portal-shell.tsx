@@ -122,6 +122,9 @@ function BrandPortalShellInner({
     if (item.labelKey === "messages") {
       return pathname === brandPortalRoutes.messages || pathname.startsWith("/brand/messages");
     }
+    if (item.labelKey === "aiAssistant") {
+      return pathname === brandPortalRoutes.aiAssistant || pathname.startsWith("/brand/ai") || pathname.startsWith("/brand/copilot");
+    }
     if (item.labelKey === "settings") {
       return pathname === brandPortalRoutes.settings || pathname.startsWith("/brand/settings");
     }

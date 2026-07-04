@@ -279,7 +279,7 @@ export async function resolveCreatorIdByEmail(email: string): Promise<string | n
       include: { creatorProfile: { select: { id: true, legacyCreatorId: true } } }
     });
     if (user?.creatorProfile) {
-      return user.creatorProfile.legacyCreatorId ?? user.creatorProfile.id;
+      return user.creatorProfile.legacyCreatorId ?? getCreatorIdForDemoEmail(normalized) ?? user.creatorProfile.id;
     }
   }
 
