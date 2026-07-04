@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { ArrowLeft, Flag } from "lucide-react";
 import { toggleFeatureFlagAction } from "@/app/admin-feature-flag-actions";
+import { AdminFormCsrf } from "@/components/studioos/admin-form-csrf";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { featureFlagService } from "@/features/admin/feature-flag.service";
-import { getSessionUser } from "@/features/auth/session.service";
+import { getAdminSessionUser } from "@/features/admin/auth/admin-auth.service";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
 import { adminPortalRoutes } from "@/lib/studioos/admin-portal-routes";
 import { formatDate } from "@/lib/utils";
@@ -41,7 +42,7 @@ export default async function AdminFeatureFlagsPage({
 }) {
   const locale = getLocale(await searchParams);
   const t = copy[locale];
-  const user = await getSessionUser();
+  const user = await getAdminSessionUser();
   const flags = user ? await featureFlagService.list(user) : [];
 
   return (
@@ -89,6 +90,7 @@ export default async function AdminFeatureFlagsPage({
                     <TableCell className="whitespace-nowrap text-sm">{formatDate(flag.updatedAt)}</TableCell>
                     <TableCell>
                       <form action={toggleFeatureFlagAction}>
+                        <AdminFormCsrf />
                         <input type="hidden" name="lang" value={locale} />
                         <input type="hidden" name="key" value={flag.key} />
                         <input type="hidden" name="enabled" value={String(!flag.enabled)} />

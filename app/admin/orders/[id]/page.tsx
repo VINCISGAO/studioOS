@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { adminOrderService } from "@/features/admin/order/admin-order.service";
-import { getSessionUser } from "@/features/auth/session.service";
+import { getAdminSessionUser } from "@/features/admin/auth/admin-auth.service";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
@@ -107,7 +107,7 @@ export default async function AdminOrderPage({ params, searchParams }: AdminOrde
   const { id } = await params;
   const locale = getLocale(await searchParams);
   const t = copy[locale];
-  const user = await getSessionUser();
+  const user = await getAdminSessionUser();
 
   if (!user) {
     notFound();

@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
-import { AlertCircle, Eye, EyeOff, Lock, Mail } from "lucide-react";
+import { AlertCircle, Fingerprint, KeyRound, Mail, ShieldCheck } from "lucide-react";
 import { LoginLanguageSwitcher } from "@/components/studioos/login-language-switcher";
 import { LoginSubmitSpinner } from "@/components/studioos/login-demo-accounts";
 import { Button } from "@/components/ui/button";
@@ -10,15 +9,16 @@ import { Input } from "@/components/ui/input";
 import type { Locale } from "@/lib/i18n";
 import { studioOS } from "@/lib/studioos/vocabulary";
 import { cn } from "@/lib/utils";
+import { loginWithAdminPasskey } from "@/lib/studioos/admin-passkey-client";
 
 export type AdminLoginCopy = {
   consoleTitle: string;
+  productLabel: string;
   email: string;
   emailPlaceholder: string;
-  password: string;
-  passwordPlaceholder: string;
-  rememberDevice: string;
-  forgotPassword: string;
+  authenticatorCode: string;
+  authenticatorPlaceholder: string;
+  authenticatorHint: string;
   signIn: string;
   copyright: string;
   environment: string;
@@ -27,7 +27,9 @@ export type AdminLoginCopy = {
   status: string;
   secureConnection: string;
   invalidCredentials: string;
-  adminRequired: string;
+  notConfigured: string;
+  schemaNotReady: string;
+  unavailableOps: string;
   networkError: string;
 };
 
@@ -36,6 +38,11 @@ type AdminLoginShellProps = {
   nextPath: string;
   initialEmail?: string;
   error?: string;
+  signedOut?: boolean;
+  loginUnavailable: boolean;
+  showOpsHint: boolean;
+  schemaReady: boolean;
+  totpConfigured: boolean;
   t: AdminLoginCopy;
 };
 
@@ -55,32 +62,49 @@ export function AdminLoginShell({
   nextPath,
   initialEmail = "",
   error,
+  signedOut = false,
+  loginUnavailable,
+  showOpsHint,
+  schemaReady,
+  totpConfigured,
   t
 }: AdminLoginShellProps) {
   const [email, setEmail] = useState(initialEmail);
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [rememberDevice, setRememberDevice] = useState(false);
+  const [code, setCode] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [passkeySubmitting, setPasskeySubmitting] = useState(false);
   const [formError, setFormError] = useState<string | undefined>(error);
-  const router = useRouter();
 
   const displayError = formError ?? error;
 
+  const loginReady = !loginUnavailable;
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (loginUnavailable) {
+      setFormError(showOpsHint ? t.unavailableOps : t.notConfigured);
+      return;
+    }
+    if (!schemaReady) {
+      setFormError(showOpsHint ? t.schemaNotReady : t.notConfigured);
+      return;
+    }
+    if (!totpConfigured) {
+      setFormError(showOpsHint ? t.notConfigured : t.notConfigured);
+      return;
+    }
+
     setSubmitting(true);
     setFormError(undefined);
 
     try {
-      const response = await fetch("/api/auth/login", {
+      const response = await fetch("/api/admin/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email,
-          password,
+          code,
           lang: locale,
-          expected_role: "admin",
           next: nextPath
         })
       });
@@ -93,23 +117,43 @@ export function AdminLoginShell({
       };
 
       if (data.ok && data.redirectTo) {
-        router.push(data.redirectTo);
-        router.refresh();
+        window.location.assign(data.redirectTo);
         return;
       }
 
       setFormError(
         data.error ??
-          (data.errorCode === "admin-required"
-            ? t.adminRequired
-            : locale === "zh"
-              ? t.invalidCredentials
-              : t.invalidCredentials)
+          (data.errorCode === "admin-totp-not-configured"
+            ? t.notConfigured
+            : t.invalidCredentials)
       );
     } catch {
       setFormError(t.networkError);
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function handlePasskeyLogin() {
+    if (loginUnavailable || !email.trim()) {
+      setFormError(locale === "zh" ? "请先输入邮箱。" : "Enter your email first.");
+      return;
+    }
+
+    setPasskeySubmitting(true);
+    setFormError(undefined);
+
+    try {
+      const data = await loginWithAdminPasskey({ email, lang: locale, nextPath });
+      if (data.ok && data.redirectTo) {
+        window.location.assign(data.redirectTo);
+        return;
+      }
+      setFormError(t.invalidCredentials);
+    } catch {
+      setFormError(t.networkError);
+    } finally {
+      setPasskeySubmitting(false);
     }
   }
 
@@ -125,7 +169,7 @@ export function AdminLoginShell({
           <AdminLogoMark />
           <div>
             <p className="text-base font-semibold tracking-tight text-zinc-900 sm:text-lg">{studioOS.productName}</p>
-            <p className="text-sm text-zinc-500 sm:text-[15px]">{t.consoleTitle}</p>
+            <p className="text-sm text-zinc-500 sm:text-[15px]">{t.productLabel}</p>
           </div>
         </div>
         <LoginLanguageSwitcher locale={locale} />
@@ -135,10 +179,25 @@ export function AdminLoginShell({
         <div className="w-full max-w-[420px] rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-[0_24px_64px_-32px_rgba(15,23,42,0.18)] sm:p-8">
           <div className="mb-6 flex flex-col items-center text-center">
             <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-violet-50">
-              <Lock className="h-5 w-5 text-violet-600" strokeWidth={2} />
+              <ShieldCheck className="h-5 w-5 text-violet-600" strokeWidth={2} />
             </div>
             <h1 className="text-xl font-semibold tracking-tight text-zinc-900">{t.consoleTitle}</h1>
+            <p className="mt-2 text-sm text-zinc-500">{t.authenticatorHint}</p>
           </div>
+
+          {loginUnavailable ? (
+            <div className="mb-4 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-900">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>{showOpsHint ? (schemaReady ? t.notConfigured : t.schemaNotReady) : t.notConfigured}</span>
+            </div>
+          ) : null}
+
+          {signedOut ? (
+            <div className="mb-4 flex items-start gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-sm text-emerald-800">
+              <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>{locale === "zh" ? "已安全退出，请重新登录。" : "Signed out. Sign in again to continue."}</span>
+            </div>
+          ) : null}
 
           {displayError ? (
             <div className="mb-4 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">
@@ -168,51 +227,31 @@ export function AdminLoginShell({
             </div>
 
             <div className="space-y-1.5">
-              <label htmlFor="admin-password" className="text-xs font-medium text-zinc-700 sm:text-sm">
-                {t.password}
+              <label htmlFor="admin-totp" className="text-xs font-medium text-zinc-700 sm:text-sm">
+                {t.authenticatorCode}
               </label>
               <div className="relative">
-                <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+                <KeyRound className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
                 <Input
-                  id="admin-password"
-                  type={showPassword ? "text" : "password"}
-                  autoComplete="current-password"
+                  id="admin-totp"
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  pattern="\d{6}"
+                  maxLength={6}
                   required
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  placeholder={t.passwordPlaceholder}
-                  className="h-11 rounded-xl border-zinc-200 bg-white pl-10 pr-10 text-sm"
+                  value={code}
+                  onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
+                  placeholder={t.authenticatorPlaceholder}
+                  className="h-11 rounded-xl border-zinc-200 bg-white pl-10 text-sm tracking-[0.35em]"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((value) => !value)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
               </div>
             </div>
 
-            <div className="flex items-center justify-between gap-3 pt-1">
-              <label className="flex cursor-pointer items-center gap-2 text-xs text-zinc-600 sm:text-sm">
-                <input
-                  type="checkbox"
-                  checked={rememberDevice}
-                  onChange={(event) => setRememberDevice(event.target.checked)}
-                  className="h-4 w-4 rounded border-zinc-300 text-violet-600 focus:ring-violet-500/20"
-                />
-                {t.rememberDevice}
-              </label>
-              <button type="button" className="text-xs font-medium text-violet-600 hover:text-violet-700 sm:text-sm">
-                {t.forgotPassword}
-              </button>
-            </div>
-
-            <div className="border-t border-zinc-100 pt-4">
+            <div className="border-t border-zinc-100 pt-4 space-y-3">
               <Button
                 type="submit"
-                disabled={submitting}
+                disabled={submitting || passkeySubmitting || !loginReady}
                 className={cn(
                   "h-11 w-full gap-2 rounded-xl bg-violet-600 text-sm font-semibold text-white shadow-sm",
                   "hover:bg-violet-700 focus-visible:ring-violet-500"
@@ -220,6 +259,17 @@ export function AdminLoginShell({
               >
                 {t.signIn}
                 <LoginSubmitSpinner visible={submitting} />
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={submitting || passkeySubmitting || !loginReady}
+                onClick={() => void handlePasskeyLogin()}
+                className="h-11 w-full gap-2 rounded-xl border-zinc-200 text-sm font-semibold"
+              >
+                <Fingerprint className="h-4 w-4" />
+                {locale === "zh" ? "使用 Passkey 登录" : "Sign in with passkey"}
+                <LoginSubmitSpinner visible={passkeySubmitting} />
               </Button>
             </div>
           </form>

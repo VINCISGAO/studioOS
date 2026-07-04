@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { ArrowLeft, Crown } from "lucide-react";
 import { updateCommissionRuleAction } from "@/app/membership-admin-actions";
+import { AdminFormCsrf } from "@/components/studioos/admin-form-csrf";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { membershipAdminService } from "@/features/membership/membership-admin.service";
-import { getSessionUser } from "@/features/auth/session.service";
+import { getAdminSessionUser } from "@/features/admin/auth/admin-auth.service";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
 import { adminPortalRoutes } from "@/lib/studioos/admin-portal-routes";
 import { formatCurrency } from "@/lib/utils";
@@ -44,7 +45,7 @@ export default async function AdminMembershipPage({
 }) {
   const locale = getLocale(await searchParams);
   const t = copy[locale];
-  const user = await getSessionUser();
+  const user = await getAdminSessionUser();
   const config = user ? await membershipAdminService.getConfiguration(user) : { rule: null, plans: [] };
   const rule = config.rule;
 
@@ -66,6 +67,7 @@ export default async function AdminMembershipPage({
           <CardContent className="p-6">
             <h2 className="text-lg font-semibold">{t.rule}</h2>
             <form action={updateCommissionRuleAction} className="mt-6 grid gap-4 sm:grid-cols-2">
+              <AdminFormCsrf />
               <input type="hidden" name="lang" value={locale} />
               <input type="hidden" name="name" value={rule.name} />
               <div>

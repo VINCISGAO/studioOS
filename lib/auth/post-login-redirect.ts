@@ -1,10 +1,8 @@
 import { demoRedirectForRole, type DemoRole } from "@/lib/demo-auth";
-import { isAdminRouteRole } from "@/lib/auth/route-access";
 import { withLocale, type Locale } from "@/lib/i18n";
 
-function adminLoginDestination(nextPath: string, locale: Locale) {
-  const next = nextPath.startsWith("/") ? nextPath : "/admin";
-  return withLocale(`/admin/login?next=${encodeURIComponent(next)}`, locale);
+function safeUserRole(role: DemoRole): DemoRole {
+  return role === "creator" ? "creator" : "client";
 }
 
 export function resolvePostLoginDestination(
@@ -12,26 +10,23 @@ export function resolvePostLoginDestination(
   nextPath: string,
   locale: Locale
 ) {
-  if (!nextPath.startsWith("/")) {
-    return withLocale(demoRedirectForRole(session.role), locale);
+  const role = safeUserRole(session.role);
+
+  if (!nextPath.startsWith("/") || nextPath.startsWith("/admin")) {
+    return withLocale(demoRedirectForRole(role), locale);
   }
 
-  const isAdminPath = nextPath.startsWith("/admin");
   const isBrandPath = nextPath.startsWith("/brand");
   const isStudioPath =
     nextPath.startsWith("/studio") ||
     nextPath.startsWith("/creator") ||
     nextPath.startsWith("/workspace/studio");
 
-  if (isAdminPath && !isAdminRouteRole(session.role)) {
-    return adminLoginDestination(nextPath, locale);
+  if (isBrandPath && role !== "client") {
+    return withLocale(demoRedirectForRole(role), locale);
   }
 
-  if (isBrandPath && session.role !== "client" && !isAdminRouteRole(session.role)) {
-    return withLocale(demoRedirectForRole(session.role), locale);
-  }
-
-  if (isStudioPath && session.role === "client") {
+  if (isStudioPath && role === "client") {
     return withLocale("/brand", locale);
   }
 

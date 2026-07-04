@@ -6,6 +6,7 @@ import {
   oauthFailureRedirect
 } from "@/features/auth/oauth-auth.service";
 import { consumeAlipayOAuthState } from "@/features/auth/oauth-state";
+import { attachDemoSessionCookie } from "@/lib/demo-auth-server";
 
 export const runtime = "nodejs";
 
@@ -40,7 +41,7 @@ export async function GET(request: Request) {
 
   try {
     const profile = await alipayOAuthService.exchangeAuthCode(authCode);
-    const { redirectTo, userId, email } = await completeAlipaySignIn({
+    const { redirectTo, userId, email, demoSession } = await completeAlipaySignIn({
       providerUserId: profile.userId,
       nickName: profile.nickName,
       email: profile.email,
@@ -57,7 +58,9 @@ export async function GET(request: Request) {
       userId
     });
 
-    return NextResponse.redirect(new URL(redirectTo, request.url));
+    const response = NextResponse.redirect(new URL(redirectTo, request.url));
+    attachDemoSessionCookie(response, demoSession);
+    return response;
   } catch (error) {
     await authSecurityService.recordOAuthCallback({
       request,

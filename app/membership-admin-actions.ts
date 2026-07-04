@@ -3,14 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { commissionRuleSchema } from "@/features/membership/membership.schemas";
 import { membershipAdminService } from "@/features/membership/membership-admin.service";
-import { getSessionUser } from "@/features/auth/session.service";
+import { guardAdminServerActionUser } from "@/features/admin/auth/admin-mutation-guard";
 import { adminPortalRoutes } from "@/lib/studioos/admin-portal-routes";
 import type { Locale } from "@/lib/i18n";
 
 export async function updateCommissionRuleAction(formData: FormData) {
-  const user = await getSessionUser();
-  if (!user) throw new Error("Not authenticated");
-
+  const user = await guardAdminServerActionUser(formData);
   const lang = (String(formData.get("lang") ?? "en") === "zh" ? "zh" : "en") as Locale;
   const body = commissionRuleSchema.parse({
     name: String(formData.get("name") ?? "default"),

@@ -1,10 +1,11 @@
 import { featureFlagService } from "@/features/admin/feature-flag.service";
 import { featureFlagSchema } from "@/features/admin/admin.schemas";
-import { apiSuccess, handleRouteError, requireApiUser } from "@/lib/core/api-route";
+import { requireAdminAuthUser, requireAdminMutationUser } from "@/features/admin/auth/admin-api-guard";
+import { apiSuccess, handleRouteError } from "@/lib/core/api-route";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const user = await requireApiUser();
+    const user = await requireAdminAuthUser(request);
     const flags = await featureFlagService.list(user);
     return apiSuccess({ flags });
   } catch (error) {
@@ -14,7 +15,7 @@ export async function GET() {
 
 export async function PUT(request: Request) {
   try {
-    const user = await requireApiUser();
+    const user = await requireAdminMutationUser(request);
     const body = featureFlagSchema.parse(await request.json());
     const flag = await featureFlagService.upsert(user, body);
     return apiSuccess({ flag });

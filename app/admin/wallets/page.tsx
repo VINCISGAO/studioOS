@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { adminWalletService } from "@/features/admin/wallet/admin-wallet.service";
-import { getSessionUser } from "@/features/auth/session.service";
+import { getAdminSessionUser } from "@/features/admin/auth/admin-auth.service";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -13,7 +13,7 @@ import { formatCurrency } from "@/lib/utils";
 export default async function AdminWalletsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const params = await searchParams;
   const locale = getLocale(params);
-  const user = await getSessionUser();
+  const user = await getAdminSessionUser();
   const search = typeof params.search === "string" ? params.search : undefined;
   const result = user ? await adminWalletService.list(user, search) : { items: [], total: 0 };
 

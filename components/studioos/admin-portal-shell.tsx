@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { PortalMobileNav } from "@/components/studioos/portal-mobile-nav";
-import { signOutAction } from "@/app/actions";
+import { adminSignOutAction } from "@/app/actions";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { Button } from "@/components/ui/button";
 import type { Locale } from "@/lib/i18n";
@@ -180,7 +180,7 @@ export function AdminPortalShell({
                     <p className="text-[11px] text-zinc-500">{locale === "zh" ? "超级管理员" : "Super Admin"}</p>
                   </div>
                 </div>
-                <form action={signOutAction}>
+                <form action={adminSignOutAction}>
                   <input type="hidden" name="lang" value={locale} />
                   <Button type="submit" variant="outline" size="sm" className="h-9 gap-2 px-2.5">
                     <LogOut className="h-4 w-4" />

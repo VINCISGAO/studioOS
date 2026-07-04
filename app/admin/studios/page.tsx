@@ -1,12 +1,12 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { adminStudioService } from "@/features/admin/studio/admin-studio.service";
-import { getSessionUser } from "@/features/auth/session.service";
+import { getAdminSessionUser } from "@/features/admin/auth/admin-auth.service";
 import { getLocale, type SearchParams } from "@/lib/i18n";
 import { formatCurrency } from "@/lib/utils";
 
 export default async function AdminStudiosPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const locale = getLocale(await searchParams);
-  const user = await getSessionUser();
+  const user = await getAdminSessionUser();
   const studios = user ? await adminStudioService.list(user) : [];
 
   return (

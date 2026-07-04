@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { AdminCampaignDetailView } from "@/components/studioos/admin-campaign-detail";
 import { adminCampaignService } from "@/features/admin/campaign/admin-campaign.service";
-import { getSessionUser } from "@/features/auth/session.service";
+import { getAdminSessionUser } from "@/features/admin/auth/admin-auth.service";
 import { getLocale, type SearchParams } from "@/lib/i18n";
 
 export default async function AdminCampaignDetailPage({
@@ -13,7 +13,7 @@ export default async function AdminCampaignDetailPage({
 }) {
   const { id } = await params;
   const locale = getLocale(await searchParams);
-  const user = await getSessionUser();
+  const user = await getAdminSessionUser();
   if (!user) notFound();
 
   let detail;

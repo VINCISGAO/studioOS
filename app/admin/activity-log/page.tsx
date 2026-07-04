@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { adminActivityLogService } from "@/features/admin/admin-activity-log.service";
-import { getSessionUser } from "@/features/auth/session.service";
+import { getAdminSessionUser } from "@/features/admin/auth/admin-auth.service";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,7 +14,7 @@ import { formatDate } from "@/lib/utils";
 export default async function AdminActivityLogPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const params = await searchParams;
   const locale = getLocale(params);
-  const user = await getSessionUser();
+  const user = await getAdminSessionUser();
 
   const filters = {
     campaignId: typeof params.campaignId === "string" ? params.campaignId : undefined,

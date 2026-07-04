@@ -1,6 +1,6 @@
 import { AdminSettlementQueue } from "@/components/studioos/admin-settlement-queue";
 import { adminSettlementService } from "@/features/admin/settlement/admin-settlement.service";
-import { getSessionUser } from "@/features/auth/session.service";
+import { getAdminSessionUser } from "@/features/admin/auth/admin-auth.service";
 import { getLocale, type SearchParams } from "@/lib/i18n";
 
 const copy = {
@@ -18,7 +18,7 @@ export default async function AdminSettlementsPage({ searchParams }: { searchPar
   const params = await searchParams;
   const locale = getLocale(params);
   const t = copy[locale];
-  const user = await getSessionUser();
+  const user = await getAdminSessionUser();
   const state = typeof params.state === "string" ? params.state : undefined;
   const items = user ? await adminSettlementService.listQueue(user, { state }) : [];
 

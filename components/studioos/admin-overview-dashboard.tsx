@@ -111,14 +111,6 @@ function activityIcon(action: string) {
   return Megaphone;
 }
 
-function computeGrowthPercent(points: AdminOverviewPageData["gmvTrend"]["day"]) {
-  if (points.length < 14) return 0;
-  const recent = points.slice(-7).reduce((sum, p) => sum + p.gmv, 0);
-  const prior = points.slice(-14, -7).reduce((sum, p) => sum + p.gmv, 0);
-  if (prior === 0) return recent > 0 ? 100 : 0;
-  return Math.round(((recent - prior) / prior) * 100);
-}
-
 function TodoRow({ label, count, href, locale }: { label: string; count: number; href: string; locale: Locale }) {
   return (
     <Link
@@ -141,7 +133,6 @@ export function AdminOverviewDashboard({
   disputes: AdminDisputeView[];
 }) {
   const t = copy[locale];
-  const growth = computeGrowthPercent(overview.gmvTrend.day);
 
   const kpiCards = [
     { label: t.kpis.gmv, value: formatCurrency(overview.kpis.gmv) },
@@ -164,20 +155,6 @@ export function AdminOverviewDashboard({
 
   return (
     <div>
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h2 className="text-2xl font-semibold tracking-tight">{t.welcome}</h2>
-          <p className="mt-1 text-sm text-zinc-500">
-            {t.dateRange}
-            <span className="mx-2 text-zinc-300">·</span>
-            <span className={growth >= 0 ? "text-emerald-600" : "text-red-600"}>
-              {growth >= 0 ? "+" : ""}
-              {growth}% {t.growth}
-            </span>
-          </p>
-        </div>
-      </div>
-
       <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {kpiCards.map(({ label, value }) => (
           <Card key={label} className="border-zinc-200/80 shadow-none">

@@ -240,6 +240,10 @@ export class CampaignService {
     return campaignBrandPortalService.completeWizardStep(legacyProjectId, step, actorEmail);
   }
 
+  completeBrandWizardSteps(legacyProjectId: string, steps: number[], actorEmail?: string) {
+    return campaignBrandPortalService.completeWizardSteps(legacyProjectId, steps, actorEmail);
+  }
+
   saveBrandCreativeBrief(
     legacyProjectId: string,
     brief: Parameters<CampaignBrandPortalService["saveCreativeBrief"]>[1],

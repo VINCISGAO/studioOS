@@ -270,7 +270,11 @@ export class CampaignBrandPortalService {
   }
 
   async completeWizardStep(legacyProjectId: string, step: number, actorEmail?: string) {
-    if (!this.isEnabled()) return null;
+    return this.completeWizardSteps(legacyProjectId, [step], actorEmail);
+  }
+
+  async completeWizardSteps(legacyProjectId: string, steps: number[], actorEmail?: string) {
+    if (!this.isEnabled() || steps.length === 0) return null;
     const campaign = await this.loadCampaignForStatuses(legacyProjectId, [
       "DRAFT",
       "AI_PROCESSING",
@@ -279,8 +283,11 @@ export class CampaignBrandPortalService {
     ]);
     const memory = readCampaignMemory(campaign.campaignMemoryJson) as BrandCampaignMemory;
     const completed = new Set(memory.wizard?.completed_steps ?? []);
-    completed.add(step);
-    const wizardStep = Math.max(memory.wizard?.step ?? 1, Math.min(7, step + 1));
+    for (const step of steps) {
+      completed.add(step);
+    }
+    const maxStep = Math.max(...steps);
+    const wizardStep = Math.max(memory.wizard?.step ?? 1, Math.min(7, maxStep + 1));
 
     return this.updateProject(
       legacyProjectId,

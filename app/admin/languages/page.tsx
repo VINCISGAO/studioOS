@@ -10,8 +10,9 @@ import {
   toggleLanguageAction,
   upsertTranslationAction
 } from "@/app/admin/languages/actions";
+import { AdminFormCsrf } from "@/components/studioos/admin-form-csrf";
 import { languageService } from "@/features/i18n/language.service";
-import { getSessionUser } from "@/features/auth/session.service";
+import { getAdminSessionUser } from "@/features/admin/auth/admin-auth.service";
 import { getLocale, type SearchParams } from "@/lib/i18n";
 
 const copy = {
@@ -56,7 +57,7 @@ export default async function AdminLanguagesPage({
 }) {
   const locale = getLocale(await searchParams);
   const t = copy[locale];
-  const user = await getSessionUser();
+  const user = await getAdminSessionUser();
   const enabled = languageService.isEnabled();
   const [languages, keys] =
     enabled && user
@@ -111,6 +112,7 @@ export default async function AdminLanguagesPage({
                     <div className="mt-4 flex gap-2">
                       {!language.isDefault ? (
                         <form action={setDefaultLanguageAction}>
+                          <AdminFormCsrf />
                           <input type="hidden" name="code" value={language.code} />
                           <Button type="submit" size="sm" variant="outline">
                             {t.setDefault}
@@ -119,6 +121,7 @@ export default async function AdminLanguagesPage({
                       ) : null}
                       {!language.isDefault ? (
                         <form action={toggleLanguageAction}>
+                          <AdminFormCsrf />
                           <input type="hidden" name="code" value={language.code} />
                           <input type="hidden" name="enabled" value={language.isEnabled ? "0" : "1"} />
                           <Button type="submit" size="sm" variant="outline">
@@ -138,6 +141,7 @@ export default async function AdminLanguagesPage({
               <CardContent className="p-6">
                 <h2 className="font-semibold">{t.newKey}</h2>
                 <form action={upsertTranslationAction} className="mt-5 space-y-4">
+                  <AdminFormCsrf />
                   <div className="grid gap-3 sm:grid-cols-2">
                     <Input name="namespace" placeholder="campaign" required />
                     <Input name="key" placeholder="create" required />

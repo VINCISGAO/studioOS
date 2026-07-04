@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { adjustWalletAction } from "@/app/admin-actions";
 import { adminWalletService } from "@/features/admin/wallet/admin-wallet.service";
-import { getSessionUser } from "@/features/auth/session.service";
+import { getAdminSessionUser } from "@/features/admin/auth/admin-auth.service";
+import { AdminFormCsrf } from "@/components/studioos/admin-form-csrf";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -22,7 +23,7 @@ export default async function AdminWalletDetailPage({
 }) {
   const { userId } = await params;
   const locale = getLocale(await searchParams);
-  const user = await getSessionUser();
+  const user = await getAdminSessionUser();
   if (!user) notFound();
 
   let detail;
@@ -80,6 +81,7 @@ export default async function AdminWalletDetailPage({
         <CardContent className="p-6">
           <h2 className="font-semibold">{locale === "zh" ? "手动调整" : "Manual adjustment"}</h2>
           <form action={adjustWalletAction} className="mt-4 grid gap-3 sm:grid-cols-2">
+            <AdminFormCsrf />
             <input type="hidden" name="lang" value={locale} />
             <input type="hidden" name="user_id" value={userId} />
             <Input name="asset_code" defaultValue="USD" placeholder="Asset code" />

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { adminDepositService } from "@/features/admin/deposit/admin-deposit.service";
-import { getSessionUser } from "@/features/auth/session.service";
+import { getAdminSessionUser } from "@/features/admin/auth/admin-auth.service";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
@@ -35,7 +35,7 @@ type AdminDepositsPageProps = {
 export default async function AdminDepositsPage({ searchParams }: AdminDepositsPageProps) {
   const locale = getLocale(await searchParams);
   const t = copy[locale];
-  const user = await getSessionUser();
+  const user = await getAdminSessionUser();
   const deposits = user ? await adminDepositService.list(user) : [];
   const summary = user ? await adminDepositService.getSummary(user) : { totalAmount: 0, refundRequestedCount: 0, studioCount: 0 };
 

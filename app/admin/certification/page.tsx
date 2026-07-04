@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { adminCertificationService } from "@/features/admin/certification/admin-certification.service";
-import { getSessionUser } from "@/features/auth/session.service";
+import { getAdminSessionUser } from "@/features/admin/auth/admin-auth.service";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
 import { formatDate } from "@/lib/utils";
 
@@ -37,7 +37,7 @@ export default async function AdminCertificationPage({
 }) {
   const locale = getLocale(await searchParams);
   const t = copy[locale];
-  const user = await getSessionUser();
+  const user = await getAdminSessionUser();
   const forms = user ? await adminCertificationService.list(user) : [];
 
   return (

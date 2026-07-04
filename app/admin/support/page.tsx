@@ -2,12 +2,12 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { aiSupportConversationService } from "@/features/ai-support/conversation.service";
 import { adminSupportService } from "@/features/admin/support/admin-support.service";
-import { getSessionUser } from "@/features/auth/session.service";
+import { getAdminSessionUser } from "@/features/admin/auth/admin-auth.service";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
 
 export default async function AdminSupportPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const locale = getLocale(await searchParams);
-  const user = await getSessionUser();
+  const user = await getAdminSessionUser();
   const overview = user ? await adminSupportService.getOverview(user) : { openItems: 0 };
   const conversations =
     user && (user.role === "ADMIN" || user.role === "SUPPORT" || user.role === "SYSTEM")

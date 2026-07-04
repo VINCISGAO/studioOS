@@ -14,7 +14,7 @@ export function parseDemoSession(raw: string | undefined): DemoSession | null {
 
   try {
     const parsed = JSON.parse(raw) as DemoSession;
-    if (!parsed.email || !["client", "creator", "admin"].includes(parsed.role)) {
+    if (!parsed.email || !["client", "creator"].includes(parsed.role)) {
       return null;
     }
     return {

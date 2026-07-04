@@ -12,6 +12,7 @@ import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import {
   completeWizardStep,
+  completeWizardSteps,
   getProject,
   transitionProject,
   updateProject
@@ -777,7 +778,7 @@ export async function approveBrandCreativeDirectionAction(formData: FormData) {
     const linkedOrders = await listOrdersForProject(projectId);
     await Promise.all(linkedOrders.map((order) => updateOrderRequirements(order.id, frozen.full_text)));
 
-    await Promise.all([3, 4, 5, 6].map((step) => completeWizardStep(projectId, step)));
+    await completeWizardSteps(projectId, [3, 4, 5, 6]);
     await emitWizardProgress(projectId, {
       step: 6,
       phase: "idle",
@@ -856,7 +857,7 @@ export async function publishBrandCampaignAction(formData: FormData) {
 
   try {
     await runBrandWizardDemoPublish(projectId, lang, client.client_email, async () => {
-      await completeWizardStep(projectId, 7);
+      await completeWizardSteps(projectId, [1, 2, 3, 4, 5, 6]);
 
       const result = await transitionProject(projectId, "project.publish", {
         actor_role: "brand",
@@ -866,6 +867,8 @@ export async function publishBrandCampaignAction(formData: FormData) {
       if (!result.ok) {
         throw new Error(result.message);
       }
+
+      await completeWizardStep(projectId, 7);
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : lang === "zh" ? "发布失败" : "Publish failed";

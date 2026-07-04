@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { adminLedgerService } from "@/features/admin/ledger/admin-ledger.service";
-import { getSessionUser } from "@/features/auth/session.service";
+import { getAdminSessionUser } from "@/features/admin/auth/admin-auth.service";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,7 +12,7 @@ import { formatDate } from "@/lib/utils";
 export default async function AdminLedgerPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const params = await searchParams;
   const locale = getLocale(params);
-  const user = await getSessionUser();
+  const user = await getAdminSessionUser();
 
   const filters = {
     userId: typeof params.userId === "string" ? params.userId : undefined,

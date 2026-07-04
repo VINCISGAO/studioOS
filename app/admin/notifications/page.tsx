@@ -1,6 +1,7 @@
 import { retryNotificationAction } from "@/app/admin-actions";
+import { AdminFormCsrf } from "@/components/studioos/admin-form-csrf";
 import { adminNotificationService } from "@/features/admin/notification/admin-notification.service";
-import { getSessionUser } from "@/features/auth/session.service";
+import { getAdminSessionUser } from "@/features/admin/auth/admin-auth.service";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,7 +13,7 @@ import { formatDate } from "@/lib/utils";
 export default async function AdminNotificationsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const params = await searchParams;
   const locale = getLocale(params);
-  const user = await getSessionUser();
+  const user = await getAdminSessionUser();
 
   const filters = {
     failed: params.failed === "1",
@@ -64,6 +65,7 @@ export default async function AdminNotificationsPage({ searchParams }: { searchP
                   <TableCell>
                     {!row.isSent && (
                       <form action={retryNotificationAction}>
+                        <AdminFormCsrf />
                         <input type="hidden" name="lang" value={locale} />
                         <input type="hidden" name="notification_id" value={row.id} />
                         <Button type="submit" size="sm" variant="outline">{locale === "zh" ? "重试" : "Retry"}</Button>

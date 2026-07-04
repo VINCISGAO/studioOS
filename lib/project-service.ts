@@ -601,8 +601,20 @@ export async function completeWizardStep(
   step: number,
   actorEmail?: string
 ): Promise<StoredProject | null> {
+  return completeWizardSteps(projectId, [step], actorEmail);
+}
+
+export async function completeWizardSteps(
+  projectId: string,
+  steps: number[],
+  actorEmail?: string
+): Promise<StoredProject | null> {
+  if (steps.length === 0) {
+    return getProject(projectId);
+  }
+
   if (hasDatabaseUrl()) {
-    return campaignService.completeBrandWizardStep(projectId, step, actorEmail);
+    return campaignService.completeBrandWizardSteps(projectId, steps, actorEmail);
   }
 
   const project = await getProject(projectId);
@@ -610,12 +622,15 @@ export async function completeWizardStep(
     return null;
   }
 
-  const steps = new Set(project.wizard_completed_steps);
-  steps.add(step);
-  const wizard_step = Math.max(project.wizard_step, Math.min(7, step + 1));
+  const completed = new Set(project.wizard_completed_steps);
+  for (const step of steps) {
+    completed.add(step);
+  }
+  const maxStep = Math.max(...steps);
+  const wizard_step = Math.max(project.wizard_step, Math.min(7, maxStep + 1));
 
   return updateProject(projectId, {
-    wizard_completed_steps: [...steps].sort((a, b) => a - b),
+    wizard_completed_steps: [...completed].sort((a, b) => a - b),
     wizard_step
   });
 }

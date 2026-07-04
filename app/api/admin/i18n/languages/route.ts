@@ -1,10 +1,14 @@
 import { languageService } from "@/features/i18n/language.service";
-import { apiSuccess, handleRouteError, requireApiUser } from "@/lib/core/api-route";
+import {
+  requireAdminMutationUser,
+  requireAdminSession
+} from "@/features/admin/auth/admin-api-guard";
+import { apiSuccess, handleRouteError } from "@/lib/core/api-route";
 import { appError } from "@/lib/core/errors";
 
 export async function GET(request: Request) {
   try {
-    await requireApiUser(request);
+    await requireAdminSession(request);
     const languages = await languageService.listLanguages({ includeDisabled: true });
     return apiSuccess({ languages });
   } catch (error) {
@@ -14,7 +18,7 @@ export async function GET(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
-    const user = await requireApiUser(request);
+    const user = await requireAdminMutationUser(request);
     const body = (await request.json()) as Record<string, unknown>;
     const code = String(body.code ?? "").trim();
     if (!code) throw appError("VALIDATION_ERROR", "code is required");

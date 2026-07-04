@@ -6,13 +6,20 @@ import { userOAuthRepository } from "@/features/auth/user-oauth.repository";
 import { hasSupabaseConfig } from "@/lib/auth-config";
 import { resolvePostLoginDestination } from "@/lib/auth/post-login-redirect";
 import { recordCreatorSignIn } from "@/lib/auth/sign-in-service";
+import { isPlatformAdminUserRole } from "@/lib/auth/platform-admin-guard";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { demoRedirectForRole, type DemoRole } from "@/lib/demo-auth";
 import { setDemoSession } from "@/lib/demo-auth-server";
 import { withLocale, type Locale } from "@/lib/i18n";
 import { createClient } from "@/lib/supabase/server";
+import type { DemoSession } from "@/lib/demo-session";
 
 export type OAuthEntryRole = "brand" | "creator";
+
+export type OAuthSignInResult = {
+  redirectTo: string;
+  demoSession: DemoSession;
+};
 
 export function entryRoleToPrisma(role: OAuthEntryRole): UserRole {
   return role === "creator" ? "CREATOR" : "BRAND";
@@ -41,6 +48,19 @@ function supabaseProfileRoleToDemoRole(roleRaw: string | null | undefined): Demo
   return null;
 }
 
+function resolveOAuthSessionRole(
+  role: DemoRole | null | undefined,
+  entryRole: OAuthEntryRole
+): DemoSession["role"] {
+  if (role === "creator") {
+    return "creator";
+  }
+  if (role === "client") {
+    return "client";
+  }
+  return entryRole === "creator" ? "creator" : "client";
+}
+
 function resolveFullName(raw: string, email: string) {
   const trimmed = raw.trim();
   if (trimmed) {
@@ -53,15 +73,14 @@ async function upsertSupabaseProfile(input: {
   supabaseUserId: string;
   email: string;
   fullName: string;
-  demoRole: DemoRole;
+  demoRole: DemoSession["role"];
 }) {
   if (!hasSupabaseConfig()) {
     return;
   }
 
   const supabase = await createClient();
-  const profileRole =
-    input.demoRole === "creator" ? "studio" : input.demoRole === "admin" ? "admin" : "brand";
+  const profileRole = input.demoRole === "creator" ? "studio" : "brand";
 
   await supabase.from("profiles").upsert({
     id: input.supabaseUserId,
@@ -78,7 +97,7 @@ export async function completeOAuthSignIn(input: {
   entryRole: OAuthEntryRole;
   lang: Locale;
   nextPath?: string;
-}): Promise<{ redirectTo: string }> {
+}): Promise<OAuthSignInResult> {
   const normalizedEmail = input.email.trim().toLowerCase();
   const nextPath = input.nextPath?.trim() ?? "";
   const fullName = resolveFullName(input.fullName, normalizedEmail);
@@ -93,6 +112,10 @@ export async function completeOAuthSignIn(input: {
 
   if (hasDatabaseUrl()) {
     const existing = await userRepository.findByEmail(normalizedEmail);
+    if (existing && isPlatformAdminUserRole(existing.role)) {
+      throw new Error("Platform admin accounts must use /admin/login");
+    }
+
     const user =
       existing ??
       (await userRepository.createFromOAuth({
@@ -105,6 +128,10 @@ export async function completeOAuthSignIn(input: {
       await userRepository.touchLogin(existing.id, loginMeta);
     }
 
+    if (isPlatformAdminUserRole(user.role)) {
+      throw new Error("Platform admin accounts must use /admin/login");
+    }
+
     const authUser = {
       id: user.id,
       email: user.email,
@@ -114,11 +141,12 @@ export async function completeOAuthSignIn(input: {
       companyName: user.brandProfile?.companyName,
       displayName: user.creatorProfile?.displayName ?? undefined
     };
-    const demoRole = prismaRoleToDemoRole(authUser.role);
+    const sessionRole = resolveOAuthSessionRole(prismaRoleToDemoRole(authUser.role), input.entryRole);
+    const demoSession = buildSessionPayload(authUser, sessionRole);
 
-    await setDemoSession(buildSessionPayload(authUser, demoRole));
+    await setDemoSession(demoSession);
 
-    if (demoRole === "creator") {
+    if (sessionRole === "creator") {
       await recordCreatorSignIn(authUser.email);
       if (authUser.role === "CREATOR") {
         const { membershipService } = await import("@/features/membership/membership.service");
@@ -131,12 +159,13 @@ export async function completeOAuthSignIn(input: {
         supabaseUserId: input.supabaseUserId,
         email: normalizedEmail,
         fullName,
-        demoRole
+        demoRole: sessionRole
       });
     }
 
     return {
-      redirectTo: resolvePostLoginDestination({ role: demoRole }, nextPath, input.lang)
+      redirectTo: resolvePostLoginDestination({ role: sessionRole }, nextPath, input.lang),
+      demoSession
     };
   }
 
@@ -149,50 +178,53 @@ export async function completeOAuthSignIn(input: {
       .maybeSingle();
 
     const storedDemoRole = supabaseProfileRoleToDemoRole(profile?.role);
-    const demoRole =
-      storedDemoRole ?? (input.entryRole === "creator" ? "creator" : "client");
+    const sessionRole = resolveOAuthSessionRole(storedDemoRole, input.entryRole);
+    const demoSession: DemoSession = {
+      email: normalizedEmail,
+      role: sessionRole,
+      userId: input.supabaseUserId
+    };
 
     await upsertSupabaseProfile({
       supabaseUserId: input.supabaseUserId,
       email: normalizedEmail,
       fullName,
-      demoRole: storedDemoRole ?? demoRole
+      demoRole: sessionRole
     });
 
-    await setDemoSession({
-      email: normalizedEmail,
-      role: demoRole,
-      userId: input.supabaseUserId
-    });
+    await setDemoSession(demoSession);
 
-    if (demoRole === "creator") {
+    if (sessionRole === "creator") {
       await recordCreatorSignIn(normalizedEmail);
     }
 
     return {
-      redirectTo: resolvePostLoginDestination({ role: demoRole }, nextPath, input.lang)
+      redirectTo: resolvePostLoginDestination({ role: sessionRole }, nextPath, input.lang),
+      demoSession
     };
   }
 
-  const demoRole = input.entryRole === "creator" ? "creator" : "client";
+  const sessionRole = input.entryRole === "creator" ? "creator" : "client";
   const authUser = {
     id: `oauth_${normalizedEmail.replace(/[^a-z0-9]/gi, "_")}`,
     email: normalizedEmail,
     role: entryRoleToPrisma(input.entryRole),
     fullName,
     languageCode: "en",
-    companyName: demoRole === "client" ? fullName : undefined,
-    displayName: demoRole === "creator" ? fullName : undefined
+    companyName: sessionRole === "client" ? fullName : undefined,
+    displayName: sessionRole === "creator" ? fullName : undefined
   };
+  const demoSession = buildSessionPayload(authUser, sessionRole);
 
-  await setDemoSession(buildSessionPayload(authUser, demoRole));
+  await setDemoSession(demoSession);
 
-  if (demoRole === "creator") {
+  if (sessionRole === "creator") {
     await recordCreatorSignIn(normalizedEmail);
   }
 
   return {
-    redirectTo: resolvePostLoginDestination({ role: demoRole }, nextPath, input.lang)
+    redirectTo: resolvePostLoginDestination({ role: sessionRole }, nextPath, input.lang),
+    demoSession
   };
 }
 
@@ -208,7 +240,7 @@ export async function completeAlipaySignIn(input: {
   entryRole: OAuthEntryRole;
   lang: Locale;
   nextPath?: string;
-}): Promise<{ redirectTo: string; userId: string; email: string }> {
+}): Promise<{ redirectTo: string; userId: string; email: string; demoSession: DemoSession }> {
   const nextPath = input.nextPath?.trim() ?? "";
   const fullName = input.nickName.trim() || `Alipay用户${input.providerUserId.slice(-4)}`;
   const headerList = await headers();
@@ -249,6 +281,10 @@ export async function completeAlipaySignIn(input: {
     await userRepository.touchLogin(user.id, loginMeta);
   }
 
+  if (isPlatformAdminUserRole(user.role)) {
+    throw new Error("Platform admin accounts must use /admin/login");
+  }
+
   const authUser = {
     id: user.id,
     email: user.email,
@@ -258,11 +294,12 @@ export async function completeAlipaySignIn(input: {
     companyName: user.brandProfile?.companyName,
     displayName: user.creatorProfile?.displayName ?? undefined
   };
-  const demoRole = prismaRoleToDemoRole(authUser.role);
+  const sessionRole = resolveOAuthSessionRole(prismaRoleToDemoRole(authUser.role), input.entryRole);
+  const demoSession = buildSessionPayload(authUser, sessionRole);
 
-  await setDemoSession(buildSessionPayload(authUser, demoRole));
+  await setDemoSession(demoSession);
 
-  if (demoRole === "creator") {
+  if (sessionRole === "creator") {
     await recordCreatorSignIn(authUser.email);
     if (authUser.role === "CREATOR") {
       const { membershipService } = await import("@/features/membership/membership.service");
@@ -271,9 +308,10 @@ export async function completeAlipaySignIn(input: {
   }
 
   return {
-    redirectTo: resolvePostLoginDestination({ role: demoRole }, nextPath, input.lang),
+    redirectTo: resolvePostLoginDestination({ role: sessionRole }, nextPath, input.lang),
     userId: user.id,
-    email: user.email
+    email: user.email,
+    demoSession
   };
 }
 

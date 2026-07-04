@@ -11,6 +11,7 @@ import {
   retrySettlementAction
 } from "@/app/admin-actions";
 import type { AdminSettlementQueueItem } from "@/features/admin/settlement/admin-settlement.service";
+import { AdminFormCsrf } from "@/components/studioos/admin-form-csrf";
 import type { Locale } from "@/lib/i18n";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
@@ -81,6 +82,7 @@ export function AdminSettlementQueue({
                     <div className="flex flex-col gap-1">
                       {row.queueState === "READY" && (
                         <form action={releaseSettlementAction}>
+                          <AdminFormCsrf />
                           <input type="hidden" name="lang" value={locale} />
                           <input type="hidden" name="campaign_id" value={row.campaignId} />
                           <Button type="submit" size="sm" variant="outline">{t.release}</Button>
@@ -88,18 +90,21 @@ export function AdminSettlementQueue({
                       )}
                       {(row.queueState === "FAILED" || row.queueState === "LOCKED") && (
                         <form action={retrySettlementAction}>
+                          <AdminFormCsrf />
                           <input type="hidden" name="lang" value={locale} />
                           <input type="hidden" name="campaign_id" value={row.campaignId} />
                           <Button type="submit" size="sm" variant="outline">{t.retry}</Button>
                         </form>
                       )}
                       <form action={freezeSettlementAction} className="flex gap-1">
+                        <AdminFormCsrf />
                         <input type="hidden" name="lang" value={locale} />
                         <input type="hidden" name="campaign_id" value={row.campaignId} />
                         <input name="reason" placeholder="reason" className="w-20 rounded border px-1 text-xs" />
                         <Button type="submit" size="sm" variant="outline">{t.freeze}</Button>
                       </form>
                       <form action={cancelSettlementAction} className="flex gap-1">
+                        <AdminFormCsrf />
                         <input type="hidden" name="lang" value={locale} />
                         <input type="hidden" name="campaign_id" value={row.campaignId} />
                         <input name="note" placeholder="note" className="w-20 rounded border px-1 text-xs" />

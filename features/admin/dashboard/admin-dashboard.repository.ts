@@ -1,10 +1,16 @@
 import { prisma, hasDatabaseUrl } from "@/lib/core/database/prisma";
+import { CampaignStatus } from "@prisma/client";
 import { adminWithdrawalRepository } from "@/features/admin/withdrawal/admin-withdrawal.repository";
 import type {
   AdminOverviewGmvTrendPoint,
   AdminOverviewGmvTrendSeries,
   AdminOverviewPageData
 } from "@/features/admin/dashboard/admin-dashboard.types";
+
+const ACTIVE_CAMPAIGN_WHERE = {
+  deletedAt: null,
+  status: { notIn: [CampaignStatus.COMPLETED, CampaignStatus.CANCELLED] }
+};
 
 function startOfDay(date: Date) {
   const d = new Date(date);
@@ -135,8 +141,8 @@ export class AdminDashboardRepository {
     trendSince.setHours(0, 0, 0, 0);
 
     const [
-      escrowRows,
-      heldEscrows,
+      escrowAgg,
+      heldEscrowAgg,
       commissionAgg,
       campaignBudgetAgg,
       pendingWithdrawals,
@@ -151,13 +157,13 @@ export class AdminDashboardRepository {
       trendEscrows,
       trendCommissions
     ] = await Promise.all([
-      prisma.escrowPayment.findMany({
+      prisma.escrowPayment.aggregate({
         where: { status: { in: ["HELD", "PARTIAL_RELEASE", "FULL_RELEASE", "CLOSED"] } },
-        select: { amount: true }
+        _sum: { amount: true }
       }),
-      prisma.escrowPayment.findMany({
+      prisma.escrowPayment.aggregate({
         where: { status: "HELD" },
-        select: { remainingAmount: true }
+        _sum: { remainingAmount: true }
       }),
       prisma.orderCommission.aggregate({
         _sum: { platformTotalRevenue: true, clientServiceFeeAmount: true }
@@ -168,9 +174,7 @@ export class AdminDashboardRepository {
       }),
       adminWithdrawalRepository.countPendingRequests(),
       prisma.dispute.count({ where: { status: { in: ["OPEN", "PROCESSING"] } } }),
-      prisma.campaign.count({
-        where: { deletedAt: null, status: { notIn: ["COMPLETED", "CANCELLED"] } }
-      }),
+      prisma.campaign.count({ where: ACTIVE_CAMPAIGN_WHERE }),
       prisma.campaign.count({ where: { deletedAt: null, status: "UNDER_REVIEW" } }),
       prisma.campaign.count({
         where: {
@@ -182,7 +186,7 @@ export class AdminDashboardRepository {
       prisma.notification.count({ where: { isSent: false } }),
       prisma.activityLog.findMany({
         orderBy: { createdAt: "desc" },
-        take: 15,
+        take: 30,
         include: {
           campaign: { select: { id: true, title: true } },
           user: { select: { email: true } }
@@ -219,12 +223,12 @@ export class AdminDashboardRepository {
       })
     ]);
 
-    let gmv = escrowRows.reduce((sum, row) => sum + Number(row.amount), 0);
+    let gmv = Number(escrowAgg._sum.amount ?? 0);
     if (gmv === 0) {
       gmv = Number(campaignBudgetAgg._sum.budget ?? 0);
     }
 
-    const escrowHeld = heldEscrows.reduce((sum, row) => sum + Number(row.remainingAmount), 0);
+    const escrowHeld = Number(heldEscrowAgg._sum.remainingAmount ?? 0);
     const settlementPending = escrowHeld;
 
     return {

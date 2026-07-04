@@ -48,12 +48,6 @@ export const DEMO_USERS: DemoUser[] = [
     password: DEMO_PASSWORD,
     role: "creator",
     label: "Atlas UGC Systems"
-  },
-  {
-    email: "admin@studioos.test",
-    password: DEMO_PASSWORD,
-    role: "admin",
-    label: "Platform admin"
   }
 ];
 
@@ -66,9 +60,6 @@ export function findDemoUser(email: string, password: string) {
 }
 
 export function demoRedirectForRole(role: DemoRole) {
-  if (role === "admin") {
-    return "/admin";
-  }
   if (role === "creator") {
     return "/studio";
   }

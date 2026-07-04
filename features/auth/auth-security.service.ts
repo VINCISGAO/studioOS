@@ -585,7 +585,11 @@ export class AuthSecurityService {
     await userRepository.touchLogin(user.id, { ip: ctx.ip, device: ctx.userAgent });
     await audit({ userId: user.id, email, event: "LOGIN_SUCCESS", ctx });
 
-    const demoRole = user.role === "CREATOR" ? "creator" : user.role === "ADMIN" ? "admin" : "client";
+    if (user.role === "ADMIN" || user.role === "SUPPORT" || user.role === "SYSTEM") {
+      return { ok: false as const, error: AUTH_ERROR_COPY.credentialsInvalid };
+    }
+
+    const demoRole = user.role === "CREATOR" ? "creator" : "client";
     await setDemoSession(
       buildSessionPayload(
         {
@@ -639,6 +643,10 @@ export class AuthSecurityService {
       return { ok: false as const, error: AUTH_ERROR_COPY.credentialsInvalid };
     }
 
+    if (input.role === "ADMIN" || input.role === "SUPPORT" || input.role === "SYSTEM") {
+      return { ok: false as const, error: AUTH_ERROR_COPY.credentialsInvalid };
+    }
+
     const user = await userRepository.createWithPassword({
       email: payload.email,
       role: input.role,
@@ -650,7 +658,7 @@ export class AuthSecurityService {
     });
 
     await audit({ userId: user.id, email: payload.email, event: "SIGNUP_COMPLETED", ctx });
-    const demoRole = input.role === "CREATOR" ? "creator" : input.role === "ADMIN" ? "admin" : "client";
+    const demoRole = user.role === "CREATOR" ? "creator" : "client";
     await setDemoSession(
       buildSessionPayload(
         {

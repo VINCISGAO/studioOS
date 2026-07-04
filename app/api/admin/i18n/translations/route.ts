@@ -1,10 +1,14 @@
 import { languageService } from "@/features/i18n/language.service";
-import { apiSuccess, handleRouteError, requireApiUser } from "@/lib/core/api-route";
+import {
+  requireAdminMutationUser,
+  requireAdminSession
+} from "@/features/admin/auth/admin-api-guard";
+import { apiSuccess, handleRouteError } from "@/lib/core/api-route";
 import { appError } from "@/lib/core/errors";
 
 export async function GET(request: Request) {
   try {
-    await requireApiUser(request);
+    await requireAdminSession(request);
     const url = new URL(request.url);
     const keys = await languageService.listTranslationKeys({
       namespace: url.searchParams.get("namespace"),
@@ -19,7 +23,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const user = await requireApiUser(request);
+    const user = await requireAdminMutationUser(request);
     const body = (await request.json()) as Record<string, unknown>;
     const namespace = String(body.namespace ?? "").trim();
     const key = String(body.key ?? "").trim();

@@ -2,8 +2,10 @@ import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { preferDemoAuth } from "@/lib/runtime-flags";
 import { isAdminRouteRole, normalizeRouteRole } from "@/lib/auth/route-access";
+import { applyAdminSecurityHeaders, generateAdminCspNonce } from "@/lib/auth/admin-security-headers";
+import { applyBaselineSecurityHeaders } from "@/lib/auth/baseline-security-headers";
 import { demoRedirectForRole } from "@/lib/demo-auth";
-import { DEMO_SESSION_COOKIE, LOCALE_COOKIE } from "@/lib/auth-config";
+import { DEMO_SESSION_COOKIE, ADMIN_SESSION_COOKIE, LOCALE_COOKIE } from "@/lib/auth-config";
 import { parseDemoSession } from "@/lib/demo-session";
 
 function resolveLang(request: NextRequest) {
@@ -26,7 +28,7 @@ function withLang(url: URL, request: NextRequest) {
 }
 
 function isAuthMutationPath(pathname: string) {
-  if (pathname.startsWith("/api/auth/oauth/")) {
+  if (pathname.startsWith("/api/auth/oauth/") || pathname.startsWith("/api/admin/auth/")) {
     return false;
   }
   return (
@@ -156,14 +158,28 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  function nextWithPathHeaders() {
+  function nextWithPathHeaders(extraHeaders?: Record<string, string>) {
     const requestHeaders = new Headers(request.headers);
     requestHeaders.set("x-pathname", pathname);
     requestHeaders.set("x-search", request.nextUrl.searchParams.toString());
+    if (extraHeaders) {
+      for (const [key, value] of Object.entries(extraHeaders)) {
+        requestHeaders.set(key, value);
+      }
+    }
     return NextResponse.next({ request: { headers: requestHeaders } });
   }
 
-  let response = nextWithPathHeaders();
+  const isAdminSurface =
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/api/admin/") ||
+    pathname.startsWith("/api/v1/admin/");
+  const adminCspNonce = isAdminSurface ? generateAdminCspNonce() : undefined;
+  const isProduction = process.env.NODE_ENV === "production" || process.env.VERCEL === "1";
+
+  let response = nextWithPathHeaders(
+    adminCspNonce ? { "x-admin-csp-nonce": adminCspNonce } : undefined
+  );
 
   if (langParam === "zh" || langParam === "en") {
     response.cookies.set(LOCALE_COOKIE, langParam, {
@@ -175,15 +191,44 @@ export async function middleware(request: NextRequest) {
 
   const isDashboardRoute = pathname.startsWith("/dashboard");
   const isAdminLoginRoute = pathname === "/admin/login";
-  const isAdminRoute = pathname.startsWith("/admin") && !isAdminLoginRoute;
+  const isAdminSetupRoute = pathname === "/admin/setup-totp";
+  const isAdminPublicRoute = isAdminLoginRoute || isAdminSetupRoute;
+  const isAdminRoute = pathname.startsWith("/admin") && !isAdminPublicRoute;
+  const isAdminApiRoute = pathname.startsWith("/api/admin/");
+  const isLegacyAdminApiRoute = pathname.startsWith("/api/v1/admin/");
+  const isAdminAuthApiRoute = pathname.startsWith("/api/admin/auth/");
+  const isAdminSetupApiRoute = pathname.startsWith("/api/admin/setup-totp");
   const isCreatorWorkspaceRoute =
     pathname === "/creator" ||
     pathname.startsWith("/creator/orders") ||
     pathname.startsWith("/creator/profile");
   const isProtectedRoute = isDashboardRoute || isAdminRoute || isCreatorWorkspaceRoute;
 
+  function hasAdminSessionCookie(request: NextRequest) {
+    const token = request.cookies.get(ADMIN_SESSION_COOKIE)?.value;
+    return Boolean(token && token.length >= 32);
+  }
+
+  if ((isAdminApiRoute || isLegacyAdminApiRoute) && !isAdminAuthApiRoute && !isAdminSetupApiRoute) {
+    if (!hasAdminSessionCookie(request)) {
+      return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+    }
+    return applyAdminSecurityHeaders(response, { nonce: adminCspNonce, production: isProduction });
+  }
+
+  if (isAdminRoute) {
+    if (!hasAdminSessionCookie(request)) {
+      return redirectToAdminLogin(request);
+    }
+    return applyAdminSecurityHeaders(response, { nonce: adminCspNonce, production: isProduction });
+  }
+
+  if (isAdminPublicRoute || isAdminAuthApiRoute || isAdminSetupApiRoute) {
+    return applyAdminSecurityHeaders(response, { nonce: adminCspNonce, production: isProduction });
+  }
+
   if (!isProtectedRoute) {
-    return response;
+    return applyBaselineSecurityHeaders(response);
   }
 
   function redirectToRoleHome(request: NextRequest, role: ReturnType<typeof normalizeRouteRole>) {
@@ -202,7 +247,7 @@ export async function middleware(request: NextRequest) {
       return redirectToAdminLogin(request);
     }
 
-    if (isCreatorWorkspaceRoute && !["creator", "admin"].includes(demoSession.role)) {
+    if (isCreatorWorkspaceRoute && demoSession.role !== "creator") {
       return redirectToRoleHome(request, normalizeRouteRole(demoSession.role));
     }
 
@@ -280,7 +325,6 @@ function redirectToAdminLogin(request: NextRequest) {
   url.searchParams.set("next", `${request.nextUrl.pathname}${request.nextUrl.search}`);
   url.searchParams.set("lang", resolveLang(request));
   const response = NextResponse.redirect(url);
-  response.cookies.delete(DEMO_SESSION_COOKIE);
   return response;
 }
 
@@ -301,5 +345,15 @@ function redirectToLogin(request: NextRequest, error?: string) {
 }
 
 export const config = {
-  matcher: ["/api/auth/:path*", "/api/register", "/api/login", "/api/continue", "/api/user/create", "/api/account/:path*", "/((?!_next/static|_next/image|favicon.ico|api/|videos/|images/).*)"]
+  matcher: [
+    "/api/auth/:path*",
+    "/api/admin/:path*",
+    "/api/v1/admin/:path*",
+    "/api/register",
+    "/api/login",
+    "/api/continue",
+    "/api/user/create",
+    "/api/account/:path*",
+    "/((?!_next/static|_next/image|favicon.ico|api/|videos/|images/).*)"
+  ]
 };

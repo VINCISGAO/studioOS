@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
+import { getAlipayOAuthPublicConfig, hasAlipayOAuthConfig } from "@/lib/alipay/alipay-oauth-config";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { isObjectStorageConfigured } from "@/lib/core/config/video";
 
-export async function GET() {
+export async function GET(request: Request) {
   const checks: Record<string, "ok" | "skipped" | "error"> = {
     app: "ok",
     database: "skipped",
@@ -20,6 +21,14 @@ export async function GET() {
   }
 
   const healthy = Object.values(checks).every((v) => v === "ok" || v === "skipped");
+  const url = new URL(request.url);
+  const includeAlipay = url.searchParams.get("alipay") === "1";
+  const alipay =
+    includeAlipay && hasAlipayOAuthConfig()
+      ? getAlipayOAuthPublicConfig()
+      : includeAlipay
+        ? { configured: false as const }
+        : undefined;
 
   return NextResponse.json(
     {
@@ -27,7 +36,8 @@ export async function GET() {
       data: {
         service: "studioos",
         checks,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        ...(alipay ? { alipay } : {})
       }
     },
     { status: healthy ? 200 : 503 }

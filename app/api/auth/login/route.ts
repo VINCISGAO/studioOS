@@ -57,6 +57,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "email and password are required" }, { status: 400 });
   }
 
+  if (input.expectedRole === "admin") {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: input.lang === "zh" ? "登录失败，请检查账号信息。" : "Sign-in failed. Check your account details.",
+        errorCode: "invalid-credentials"
+      },
+      { status: 403 }
+    );
+  }
+
   const loginGate = await authSecurityService.assertPasswordLoginAllowed({
     request,
     email: input.email,

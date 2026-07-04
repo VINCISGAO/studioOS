@@ -1,6 +1,7 @@
 "use client";
 
 import { approveWithdrawalAction, rejectWithdrawalAction } from "@/app/admin-actions";
+import { AdminFormCsrf } from "@/components/studioos/admin-form-csrf";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -74,11 +75,13 @@ export function AdminWithdrawalQueue({
                   <TableCell>
                     <div className="flex flex-col gap-1">
                       <form action={approveWithdrawalAction}>
+                        <AdminFormCsrf />
                         <input type="hidden" name="lang" value={locale} />
                         <input type="hidden" name="withdraw_id" value={row.withdrawId} />
                         <Button type="submit" size="sm">{t.approve}</Button>
                       </form>
                       <form action={rejectWithdrawalAction} className="flex gap-1">
+                        <AdminFormCsrf />
                         <input type="hidden" name="lang" value={locale} />
                         <input type="hidden" name="withdraw_id" value={row.withdrawId} />
                         <input name="reason" required placeholder="reason" className="w-24 rounded border px-1 text-xs" />

@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { ArrowLeft, Scale } from "lucide-react";
 import { resolveDisputeAction } from "@/app/admin-actions";
+import { AdminFormCsrf } from "@/components/studioos/admin-form-csrf";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { disputeService } from "@/features/admin/dispute.service";
 import { adminRefundService } from "@/features/admin/refund/admin-refund.service";
-import { getSessionUser } from "@/features/auth/session.service";
+import { getAdminSessionUser } from "@/features/admin/auth/admin-auth.service";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
 import { adminPortalRoutes } from "@/lib/studioos/admin-portal-routes";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -43,7 +44,7 @@ const copy = {
 export default async function AdminDisputesPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const locale = getLocale(await searchParams);
   const t = copy[locale];
-  const user = await getSessionUser();
+  const user = await getAdminSessionUser();
   const disputes = user ? await disputeService.list(user) : [];
   const refundRequests = user ? await adminRefundService.list(user) : [];
 
@@ -97,6 +98,7 @@ export default async function AdminDisputesPage({ searchParams }: { searchParams
                     <TableCell>
                       {dispute.status === "OPEN" || dispute.status === "PROCESSING" ? (
                         <form action={resolveDisputeAction} className="flex flex-col gap-2">
+                          <AdminFormCsrf />
                           <input type="hidden" name="lang" value={locale} />
                           <input type="hidden" name="dispute_id" value={dispute.id} />
                           <input type="hidden" name="status" value="RESOLVED" />

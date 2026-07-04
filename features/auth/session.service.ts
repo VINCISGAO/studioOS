@@ -4,6 +4,7 @@ import { parseDemoSession, type DemoSession } from "@/lib/demo-session";
 import { authService, type AuthUserDto } from "@/features/auth/auth.service";
 import type { MvpProfile, MvpRole } from "@/lib/mvp/types";
 import type { UserRole } from "@prisma/client";
+import { isPlatformAdminUserRole } from "@/lib/auth/platform-admin-guard";
 
 export function prismaRoleToMvp(role: UserRole): MvpRole {
   if (role === "CREATOR") return "studio";
@@ -18,11 +19,11 @@ export async function getSessionUser(): Promise<AuthUserDto | null> {
 
   if (session.userId) {
     const user = await authService.getUserById(session.userId);
-    if (user) return user;
+    if (user && !isPlatformAdminUserRole(user.role)) return user;
   }
 
   const byEmail = await authService.getUserByEmail(session.email);
-  if (byEmail) return byEmail;
+  if (byEmail && !isPlatformAdminUserRole(byEmail.role)) return byEmail;
 
   return authService.getUserById(`demo_${session.email.replace(/[^a-z0-9]/gi, "_")}`);
 }

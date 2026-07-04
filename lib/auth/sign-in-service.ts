@@ -23,6 +23,7 @@ import { creators } from "@/lib/data";
 import { getCreatorById } from "@/lib/creator-service";
 import type { Locale } from "@/lib/i18n";
 import { createClient } from "@/lib/supabase/server";
+import { isPlatformAdminUserRole } from "@/lib/auth/platform-admin-guard";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 
 export type SignInInput = {
@@ -114,25 +115,21 @@ export async function performSignIn(input: SignInInput): Promise<SignInResult> {
   const trimmedEmail = email.trim();
   const trimmedPassword = password.trim();
   const allowDemoFallback =
-    preferDemoAuth() ||
-    expectedRole === "admin" ||
-    trimmedEmail.endsWith("@studioos.test");
+    preferDemoAuth() || trimmedEmail.endsWith("@studioos.test");
 
   const prismaUser = await authService.authenticate(trimmedEmail, trimmedPassword);
   if (prismaUser) {
-    const demoRole =
-      prismaUser.role === "CREATOR" ? "creator" : prismaUser.role === "ADMIN" ? "admin" : "client";
-
-    if (expectedRole === "admin" && demoRole !== "admin") {
+    if (isPlatformAdminUserRole(prismaUser.role)) {
       return {
         ok: false,
-        error:
-          lang === "zh" ? "该账号没有管理员权限。" : "This account does not have administrator access.",
-        errorCode: "admin-required"
+        error: lang === "zh" ? "登录失败，请检查账号信息。" : "Sign-in failed. Check your account details.",
+        errorCode: "invalid-credentials"
       };
     }
 
-    if (expectedRole === "brand" && demoRole !== "client" && demoRole !== "admin") {
+    const demoRole = prismaUser.role === "CREATOR" ? "creator" : "client";
+
+    if (expectedRole === "brand" && demoRole !== "client") {
       return {
         ok: false,
         error: lang === "zh" ? "该账号属于创作者身份，请切换到创作者登录。" : "This account is for creators. Switch to the creator tab.",
@@ -141,7 +138,7 @@ export async function performSignIn(input: SignInInput): Promise<SignInResult> {
       };
     }
 
-    if (expectedRole === "creator" && demoRole !== "creator" && demoRole !== "admin") {
+    if (expectedRole === "creator" && demoRole !== "creator") {
       return {
         ok: false,
         error: lang === "zh" ? "该账号属于广告主身份，请切换到广告主登录。" : "This account is for brands. Switch to the brand tab.",
@@ -168,16 +165,7 @@ export async function performSignIn(input: SignInInput): Promise<SignInResult> {
     ? await authenticateDemoLogin(trimmedEmail, trimmedPassword)
     : null;
   if (demoUser) {
-    if (expectedRole === "admin" && demoUser.role !== "admin") {
-      return {
-        ok: false,
-        error:
-          lang === "zh" ? "该账号没有管理员权限。" : "This account does not have administrator access.",
-        errorCode: "admin-required"
-      };
-    }
-
-    if (expectedRole === "brand" && demoUser.role !== "client" && demoUser.role !== "admin") {
+    if (expectedRole === "brand" && demoUser.role !== "client") {
       return {
         ok: false,
         error: lang === "zh" ? "该账号属于创作者身份，请切换到创作者登录。" : "This account is for creators. Switch to the creator tab.",
@@ -186,7 +174,7 @@ export async function performSignIn(input: SignInInput): Promise<SignInResult> {
       };
     }
 
-    if (expectedRole === "creator" && demoUser.role !== "creator" && demoUser.role !== "admin") {
+    if (expectedRole === "creator" && demoUser.role !== "creator") {
       return {
         ok: false,
         error: lang === "zh" ? "该账号属于广告主身份，请切换到广告主登录。" : "This account is for brands. Switch to the brand tab.",

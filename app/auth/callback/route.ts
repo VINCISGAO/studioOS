@@ -4,6 +4,7 @@ import {
   oauthFailureRedirect,
   type OAuthEntryRole
 } from "@/features/auth/oauth-auth.service";
+import { attachDemoSessionCookie } from "@/lib/demo-auth-server";
 import { createClient } from "@/lib/supabase/server";
 import type { Locale } from "@/lib/i18n";
 
@@ -69,7 +70,7 @@ export async function GET(request: Request) {
     user.email;
 
   try {
-    const { redirectTo } = await completeOAuthSignIn({
+    const { redirectTo, demoSession } = await completeOAuthSignIn({
       email: user.email,
       fullName,
       supabaseUserId: user.id,
@@ -78,7 +79,9 @@ export async function GET(request: Request) {
       nextPath
     });
 
-    return NextResponse.redirect(new URL(redirectTo, request.url));
+    const response = NextResponse.redirect(new URL(redirectTo, request.url));
+    attachDemoSessionCookie(response, demoSession);
+    return response;
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Unable to complete Google sign-in. Please try again.";

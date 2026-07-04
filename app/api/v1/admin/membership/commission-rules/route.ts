@@ -1,10 +1,11 @@
 import { membershipAdminService } from "@/features/membership/membership-admin.service";
-import { commissionRuleSchema, membershipPlanSchema } from "@/features/membership/membership.schemas";
-import { apiSuccess, handleRouteError, requireApiUser } from "@/lib/core/api-route";
+import { commissionRuleSchema } from "@/features/membership/membership.schemas";
+import { requireAdminAuthUser, requireAdminMutationUser } from "@/features/admin/auth/admin-api-guard";
+import { apiSuccess, handleRouteError } from "@/lib/core/api-route";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const user = await requireApiUser();
+    const user = await requireAdminAuthUser(request);
     const config = await membershipAdminService.getConfiguration(user);
     return apiSuccess(config);
   } catch (error) {
@@ -14,7 +15,7 @@ export async function GET() {
 
 export async function PATCH(request: Request) {
   try {
-    const user = await requireApiUser();
+    const user = await requireAdminMutationUser(request);
     const body = commissionRuleSchema.parse(await request.json());
     const rule = await membershipAdminService.upsertCommissionRule(user, body);
     return apiSuccess({ rule });

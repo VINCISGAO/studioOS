@@ -1,14 +1,14 @@
 import Link from "next/link";
 import { AdminAnalyticsDashboard } from "@/components/studioos/admin-analytics-dashboard";
 import { adminDashboardService } from "@/features/admin/dashboard/admin-dashboard.service";
-import { getSessionUser } from "@/features/auth/session.service";
+import { getAdminSessionUser } from "@/features/admin/auth/admin-auth.service";
 import { Button } from "@/components/ui/button";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
 import { adminPortalRoutes } from "@/lib/studioos/admin-portal-routes";
 
 export default async function AdminAnalyticsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const locale = getLocale(await searchParams);
-  const user = await getSessionUser();
+  const user = await getAdminSessionUser();
   const metrics = user ? await adminDashboardService.getMetrics(user) : null;
 
   return (

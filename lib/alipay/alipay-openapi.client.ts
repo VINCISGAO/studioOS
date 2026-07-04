@@ -77,7 +77,7 @@ export async function callAlipayOpenApi(input: {
 
   const errorNode = json.error_response;
   if (errorNode && typeof errorNode === "object") {
-    throw new Error(formatAlipayError(errorNode));
+    throw new Error(formatAlipayError(errorNode as Record<string, unknown>));
   }
 
   const businessError = findAlipayBusinessError(json);

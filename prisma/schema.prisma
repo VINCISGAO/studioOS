@@ -65,6 +65,7 @@ model User {
   walletAccount         WalletAccount?
   wallet                Wallet?
   oauthAccounts         UserOAuthAccount[]
+  adminProfile          AdminProfile?
 
   @@index([role])
   @@index([status])
@@ -162,6 +163,110 @@ model AuthAuditLog {
   @@index([emailHash, createdAt])
   @@index([event, createdAt])
   @@map("auth_audit_logs")
+}
+
+enum AdminAccountStatus {
+  PENDING_TOTP
+  ACTIVE
+  SUSPENDED
+  LOCKED
+}
+
+model AdminProfile {
+  id             String             @id @default(uuid())
+  userId         String             @unique @map("user_id")
+  isMaster       Boolean            @default(false) @map("is_master")
+  status         AdminAccountStatus @default(PENDING_TOTP)
+  totpSecretEnc  String?            @map("totp_secret_enc")
+  totpEnabled    Boolean            @default(false) @map("totp_enabled")
+  totpBoundAt    DateTime?          @map("totp_bound_at")
+  lastVerifiedAt DateTime?          @map("last_verified_at")
+  failedAttempts Int                @default(0) @map("failed_attempts")
+  lockedUntil    DateTime?          @map("locked_until")
+  permissions    Json?
+  createdAt      DateTime           @default(now()) @map("created_at")
+  updatedAt      DateTime           @updatedAt @map("updated_at")
+  user           User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessions       AdminSession[]
+  auditLogs      AdminAuthAuditLog[]
+  webAuthnCredentials AdminWebAuthnCredential[]
+  totpConsumptions    AdminTotpConsumption[]
+
+  @@index([status, totpEnabled])
+  @@index([isMaster])
+  @@map("admin_profiles")
+}
+
+model AdminWebAuthnCredential {
+  id             String       @id @default(uuid())
+  adminProfileId String       @map("admin_profile_id")
+  credentialId   String       @unique @map("credential_id")
+  publicKey      Bytes        @map("public_key")
+  counter        BigInt       @default(0)
+  deviceType     String?      @map("device_type")
+  backedUp       Boolean      @default(false) @map("backed_up")
+  transports     String?
+  label          String?
+  createdAt      DateTime     @default(now()) @map("created_at")
+  lastUsedAt     DateTime?    @map("last_used_at")
+  adminProfile   AdminProfile @relation(fields: [adminProfileId], references: [id], onDelete: Cascade)
+
+  @@index([adminProfileId])
+  @@map("admin_webauthn_credentials")
+}
+
+model AdminTotpConsumption {
+  id             String       @id @default(uuid())
+  adminProfileId String       @map("admin_profile_id")
+  timeStep       Int          @map("time_step")
+  codeHash       String       @map("code_hash")
+  purpose        String
+  expiresAt      DateTime     @map("expires_at")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  adminProfile   AdminProfile @relation(fields: [adminProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([adminProfileId, timeStep, codeHash])
+  @@index([expiresAt])
+  @@map("admin_totp_consumptions")
+}
+
+model AdminSession {
+  id             String       @id @default(uuid())
+  adminProfileId String       @map("admin_profile_id")
+  tokenHash      String       @unique @map("token_hash")
+  ipHash         String       @map("ip_hash")
+  userAgentHash  String       @map("user_agent_hash")
+  deviceLabel    String?      @map("device_label")
+  lastActiveAt   DateTime?    @map("last_active_at")
+  expiresAt      DateTime     @map("expires_at")
+  revokedAt      DateTime?    @map("revoked_at")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  adminProfile   AdminProfile @relation(fields: [adminProfileId], references: [id], onDelete: Cascade)
+
+  @@index([adminProfileId, expiresAt])
+  @@index([expiresAt])
+  @@map("admin_sessions")
+}
+
+model AdminAuthAuditLog {
+  id             String        @id @default(uuid())
+  adminId        String?       @map("admin_id")
+  adminProfileId String?       @map("admin_profile_id")
+  emailHash      String        @map("email_hash")
+  ipHash         String        @map("ip_hash")
+  userAgentHash  String        @map("user_agent_hash")
+  event          String
+  success        Boolean
+  failureReason  String?       @map("failure_reason")
+  metadata       Json?
+  createdAt      DateTime      @default(now()) @map("created_at")
+  adminProfile   AdminProfile? @relation(fields: [adminProfileId], references: [id], onDelete: SetNull)
+
+  @@index([adminProfileId, createdAt])
+  @@index([emailHash, createdAt])
+  @@index([ipHash, createdAt])
+  @@index([event, createdAt])
+  @@map("admin_auth_audit_logs")
 }
 
 model Language {

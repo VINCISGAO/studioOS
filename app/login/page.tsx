@@ -7,7 +7,6 @@ import { hasAlipayOAuthConfig } from "@/lib/alipay/alipay-oauth-config";
 import { type DemoRole } from "@/lib/demo-auth";
 import { getLocale, type Locale, type SearchParams, withLocale } from "@/lib/i18n";
 import { getCurrentSession } from "@/lib/session-user";
-import { isAdminRouteRole } from "@/lib/auth/route-access";
 import type { LoginRole } from "@/lib/studioos/login-theme";
 
 type LoginPageProps = {
@@ -163,11 +162,7 @@ function redirectIfAlreadySignedIn(
   nextPath: string,
   locale: Locale
 ) {
-  if (!session) {
-    return;
-  }
-
-  if (nextPath.startsWith("/admin") && !isAdminRouteRole(session.role)) {
+  if (!session || session.role === "admin") {
     return;
   }
 
@@ -177,11 +172,7 @@ function redirectIfAlreadySignedIn(
     redirect(destination);
   }
 
-  if (role === "creator" && (session.role === "creator" || session.role === "admin")) {
-    redirect(destination);
-  }
-
-  if (role === "brand" && session.role === "admin") {
+  if (role === "creator" && session.role === "creator") {
     redirect(destination);
   }
 }
@@ -222,8 +213,13 @@ function resolveLoginErrorCode(rawError: string | undefined) {
 }
 
 function resolveNextPath(raw: SearchParams["next"]) {
-  if (typeof raw === "string") return raw;
-  if (Array.isArray(raw)) return raw[0] ?? "";
+  if (typeof raw === "string") {
+    return raw.startsWith("/admin") ? "" : raw;
+  }
+  if (Array.isArray(raw)) {
+    const value = raw[0] ?? "";
+    return value.startsWith("/admin") ? "" : value;
+  }
   return "";
 }
 
@@ -231,14 +227,6 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams;
   const locale = getLocale(params);
   const nextPath = resolveNextPath(params.next);
-
-  if (nextPath.startsWith("/admin")) {
-    const adminUrl = withLocale(
-      `/admin/login?next=${encodeURIComponent(nextPath)}`,
-      locale
-    );
-    redirect(adminUrl);
-  }
 
   const t = copy[locale];
   const rawError = typeof params.error === "string" ? params.error : undefined;

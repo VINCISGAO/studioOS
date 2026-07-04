@@ -1,8 +1,21 @@
 import { adminDashboardRepository } from "@/features/admin/dashboard/admin-dashboard.repository";
-import type { AdminOverviewPageData } from "@/features/admin/dashboard/admin-dashboard.types";
+import type { AdminOverviewPageData, AdminOverviewActivityItem } from "@/features/admin/dashboard/admin-dashboard.types";
 import type { AuthUser } from "@/features/auth/permission.service";
 import { PermissionService } from "@/features/auth/permission.service";
 import { adminActivityLabel } from "@/lib/studioos/admin-i18n";
+
+function dedupeRecentActivity(items: AdminOverviewActivityItem[]) {
+  const seen = new Set<string>();
+  const deduped: AdminOverviewActivityItem[] = [];
+  for (const item of items) {
+    const key = `${item.action}:${item.campaignId ?? "none"}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    deduped.push(item);
+    if (deduped.length >= 8) break;
+  }
+  return deduped;
+}
 
 export type AdminDashboardMetrics = {
   gmv: number;
@@ -53,11 +66,13 @@ export class AdminDashboardService {
 
     return {
       ...page,
-      recentActivity: page.recentActivity.map((item) => ({
-        ...item,
-        labelEn: adminActivityLabel(item.action, "en"),
-        labelZh: adminActivityLabel(item.action, "zh")
-      }))
+      recentActivity: dedupeRecentActivity(
+        page.recentActivity.map((item) => ({
+          ...item,
+          labelEn: adminActivityLabel(item.action, "en"),
+          labelZh: adminActivityLabel(item.action, "zh")
+        }))
+      )
     };
   }
 

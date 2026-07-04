@@ -3,7 +3,7 @@ import { Database } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { adminDatabaseService } from "@/features/admin/database/admin-database.service";
-import { getSessionUser } from "@/features/auth/session.service";
+import { getAdminSessionUser } from "@/features/admin/auth/admin-auth.service";
 import { isPrismaAdminRole } from "@/lib/auth/route-access";
 import { getLocale, type SearchParams } from "@/lib/i18n";
 
@@ -54,7 +54,7 @@ export default async function AdminDatabasePage({
 }) {
   const locale = getLocale(await searchParams);
   const t = copy[locale];
-  const sessionUser = await getSessionUser();
+  const sessionUser = await getAdminSessionUser();
   const isAdmin = sessionUser ? isPrismaAdminRole(sessionUser.role) : false;
   const overview = isAdmin && sessionUser ? await adminDatabaseService.getOverview(sessionUser) : null;
 

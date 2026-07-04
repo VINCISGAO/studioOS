@@ -4,10 +4,10 @@ import { parseDemoSession, type DemoRole, type DemoSession } from "@/lib/demo-se
 import { getSessionUser } from "@/features/auth/session.service";
 import { createClient } from "@/lib/supabase/server";
 
-function resolveDemoRole(raw: unknown): DemoRole {
+function resolveDemoRole(raw: unknown): DemoRole | null {
   if (raw === "creator" || raw === "studio") return "creator";
-  if (raw === "admin") return "admin";
-  return "client";
+  if (raw === "client" || raw === "brand") return "client";
+  return null;
 }
 
 async function getSupabaseSession(): Promise<DemoSession | null> {
@@ -26,6 +26,9 @@ async function getSupabaseSession(): Promise<DemoSession | null> {
 
   const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
   const role = resolveDemoRole(profile?.role ?? user.user_metadata?.role);
+  if (!role) {
+    return null;
+  }
 
   return {
     email: user.email,

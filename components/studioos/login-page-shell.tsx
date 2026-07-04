@@ -72,7 +72,6 @@ type LoginPageShellProps = {
   demoMode: boolean;
   googleOAuthEnabled?: boolean;
   alipayOAuthEnabled?: boolean;
-  adminLoginMode?: boolean;
   t: LoginPageCopy;
 };
 
@@ -251,24 +250,12 @@ export function LoginPageShell({
   demoMode,
   googleOAuthEnabled = false,
   alipayOAuthEnabled = false,
-  adminLoginMode = false,
   t
 }: LoginPageShellProps) {
   const isBrand = role === "brand";
   const pageVisual = getLoginVisual(role);
   const formVisual = isBrand ? getLoginVisual("brand") : getLoginVisual("creator");
-  const desktopCardTitle = adminLoginMode
-    ? locale === "zh"
-      ? "管理后台登录"
-      : "Admin console sign in"
-    : locale === "zh"
-      ? "简单三步完成登录"
-      : "Sign in in three simple steps";
-  const cardSubtitle = adminLoginMode
-    ? locale === "zh"
-      ? "使用平台管理员账号登录 StudioOS Admin"
-      : "Sign in with a platform admin account for StudioOS Admin"
-    : null;
+  const desktopCardTitle = locale === "zh" ? "三步完成登录" : "Three quick steps to sign in";
 
   return (
     <main className="relative min-h-[100dvh] overflow-hidden">
@@ -374,12 +361,14 @@ export function LoginPageShell({
                   : "border border-white/70 bg-white/85 text-zinc-950 shadow-[0_28px_90px_-28px_rgba(88,28,135,0.35)]"
               )}
             >
-              <h2 className={cn("text-center text-2xl font-semibold tracking-[-0.03em] sm:text-[1.85rem]", isBrand ? "text-white" : "text-zinc-950")}>
+              <h2
+                className={cn(
+                  "text-center text-[15px] font-semibold leading-snug tracking-[-0.02em] sm:text-base",
+                  isBrand ? "text-white/90" : "text-zinc-800"
+                )}
+              >
                 {desktopCardTitle}
               </h2>
-              {cardSubtitle ? (
-                <p className={cn("mt-2 text-center text-[13px] leading-5 sm:text-sm", isBrand ? "text-zinc-300" : "text-zinc-600")}>{cardSubtitle}</p>
-              ) : null}
 
               <nav className={cn("mt-5 grid grid-cols-2 gap-1 rounded-xl sm:mt-6", formVisual.tabWrap)} aria-label={locale === "zh" ? "登录身份" : "Sign-in role"}>
                 <RoleTab href={roleTabHref(locale, "brand", nextPath)} active={isBrand} visual={formVisual} icon={UserRound}>

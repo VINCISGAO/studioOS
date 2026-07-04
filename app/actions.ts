@@ -18,6 +18,7 @@ import { createProject } from "@/lib/project-service";
 import { createClient } from "@/lib/supabase/server";
 import { getAppBaseUrl } from "@/lib/app-url";
 import { startOAuthSignInAction } from "@/features/auth/oauth-start.service";
+import { logoutAdminSession } from "@/features/admin/auth/admin-auth.service";
 
 type OAuthProvider = "google" | "apple" | "alipay" | "wechat" | "qq";
 type DemoSocialProvider = "google" | "apple" | "alipay" | "wechat" | "qq";
@@ -277,4 +278,16 @@ export async function signOutAction(formData?: FormData) {
   await clearDemoSession();
 
   redirect(`/?lang=${lang}`);
+}
+
+/** Admin portal sign-out — clears isolated admin session only, returns to /admin/login. */
+export async function adminSignOutAction(formData?: FormData) {
+  const lang = normalizeLang(formData?.get("lang") ?? null);
+  const headerList = await headers();
+  const request = new Request("https://studioos.local/admin", {
+    headers: new Headers(headerList)
+  });
+
+  await logoutAdminSession({ request });
+  redirect(withLocale("/admin/login?signedOut=1", lang));
 }

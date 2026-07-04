@@ -111,6 +111,68 @@ function checkPaymentService(): Step {
   };
 }
 
+function checkAdminSecrets(): Step {
+  const forbiddenPublic = Object.keys(process.env).filter((key) => {
+    if (!key.startsWith("NEXT_PUBLIC_")) return false;
+    const upper = key.toUpperCase();
+    return (
+      upper.includes("SECRET") ||
+      upper.includes("DATABASE") ||
+      upper.includes("PASSWORD") ||
+      upper.includes("TOTP")
+    );
+  });
+
+  if (forbiddenPublic.length > 0) {
+    return {
+      name: "admin.secrets_not_public",
+      ok: false,
+      detail: `Remove public env vars: ${forbiddenPublic.join(", ")}`
+    };
+  }
+
+  if (process.env.NEXT_PUBLIC_DATABASE_URL?.trim()) {
+    return {
+      name: "admin.secrets_not_public",
+      ok: false,
+      detail: "NEXT_PUBLIC_DATABASE_URL must not exist — use server-only DATABASE_URL"
+    };
+  }
+
+  const isProd = process.env.NODE_ENV === "production" || process.env.VERCEL === "1";
+  const dedicated = process.env.AUTH_SECURITY_SECRET?.trim() ?? "";
+
+  if (isProd && (dedicated.length < 32 || dedicated === "studioos-dev-auth-security-secret")) {
+    return {
+      name: "admin.auth_security_secret",
+      ok: false,
+      detail: "Set AUTH_SECURITY_SECRET explicitly in Vercel (32+ random chars) — not dev default or NEXTAUTH fallback"
+    };
+  }
+
+  if (isProd && !process.env.DATABASE_URL?.trim()) {
+    return {
+      name: "admin.database_url",
+      ok: false,
+      detail: "DATABASE_URL must be set in production (Neon connection string, server-only)"
+    };
+  }
+
+  if (isProd && !process.env.RESEND_API_KEY?.trim()) {
+    return {
+      name: "admin.resend_api_key",
+      ok: false,
+      detail: "RESEND_API_KEY required in production — sub-admin setup links are emailed directly"
+    };
+  }
+
+  return {
+    name: "admin.secrets_config",
+    ok: true,
+    detail: isProd ? "Production secrets configured" : "Dev secrets check passed"
+  };
+}
+
 function main() {
   console.log("\nProduction readiness verification");
   console.log("(build alone can take 1–3 minutes — progress prints below)\n");
@@ -127,6 +189,7 @@ function main() {
   steps.push(runCheck("migrations.payment_collection", checkMigrationFiles));
   steps.push(runCheck("prisma.payment_fields", checkPrismaSchema));
   steps.push(runCheck("payment.mvp_files", checkPaymentService));
+  steps.push(runCheck("admin.secrets_config", checkAdminSecrets));
 
   if (process.env.DATABASE_URL) {
     steps.push(runCmd("prisma.migrate_deploy", "npm run db:migrate:deploy"));

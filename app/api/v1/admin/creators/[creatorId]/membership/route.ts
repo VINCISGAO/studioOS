@@ -3,13 +3,14 @@ import {
   extendMembershipSchema,
   refundMembershipSchema
 } from "@/features/membership/membership.schemas";
-import { apiSuccess, handleRouteError, requireApiUser } from "@/lib/core/api-route";
+import { requireAdminAuthUser, requireAdminMutationUser } from "@/features/admin/auth/admin-api-guard";
+import { apiSuccess, handleRouteError } from "@/lib/core/api-route";
 
 type Params = { params: Promise<{ creatorId: string }> };
 
-export async function GET(_request: Request, { params }: Params) {
+export async function GET(request: Request, { params }: Params) {
   try {
-    const user = await requireApiUser();
+    const user = await requireAdminAuthUser(request);
     const { creatorId } = await params;
     const [history, commissions] = await Promise.all([
       membershipAdminService.getCreatorHistory(user, creatorId),
@@ -23,7 +24,7 @@ export async function GET(_request: Request, { params }: Params) {
 
 export async function POST(request: Request, { params }: Params) {
   try {
-    const user = await requireApiUser();
+    const user = await requireAdminMutationUser(request);
     const { creatorId } = await params;
     const body = (await request.json()) as { action: string; note?: string; extraDays?: number; membershipId?: string };
 

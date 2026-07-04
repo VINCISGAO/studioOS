@@ -3,7 +3,7 @@ import { ArrowLeft, BookOpen, CheckCircle2, Clock, GraduationCap } from "lucide-
 import { Badge, type BadgeProps } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { getSessionUser } from "@/features/auth/session.service";
+import { getAdminSessionUser } from "@/features/admin/auth/admin-auth.service";
 import { partnerAcademyAdminService } from "@/features/partner-academy/partner-academy-admin.service";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
 import { adminPortalRoutes } from "@/lib/studioos/admin-portal-routes";
@@ -58,7 +58,7 @@ export default async function AdminAcademyPage({
 }) {
   const locale = getLocale(await searchParams);
   const t = copy[locale];
-  const user = await getSessionUser();
+  const user = await getAdminSessionUser();
   const data = user
     ? await partnerAcademyAdminService.getAcademyDashboard(user)
     : { totals: { lessons: 0, minutes: 0, completions: 0, published: 0 }, byAudience: [], byStatus: [], courses: [] };

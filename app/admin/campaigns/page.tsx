@@ -1,6 +1,6 @@
 import { AdminCampaignList } from "@/components/studioos/admin-campaign-list";
 import { adminCampaignService } from "@/features/admin/campaign/admin-campaign.service";
-import { getSessionUser } from "@/features/auth/session.service";
+import { getAdminSessionUser } from "@/features/admin/auth/admin-auth.service";
 import { getLocale, type SearchParams } from "@/lib/i18n";
 
 const copy = {
@@ -18,7 +18,7 @@ export default async function AdminCampaignsPage({ searchParams }: { searchParam
   const params = await searchParams;
   const locale = getLocale(params);
   const t = copy[locale];
-  const user = await getSessionUser();
+  const user = await getAdminSessionUser();
 
   const filters = {
     search: typeof params.search === "string" ? params.search : undefined,
