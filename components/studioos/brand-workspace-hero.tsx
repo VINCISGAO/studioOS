@@ -1,12 +1,35 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { BrandStartBriefButton } from "@/components/studioos/brand-start-brief-button";
 import type { Locale } from "@/lib/i18n";
 import { CheckCircle2, ClipboardList, LayoutGrid, Pencil, Plus, Sparkles } from "lucide-react";
 
+type DayPart = "morning" | "afternoon" | "evening";
+
+function dayPartFromHour(hour: number): DayPart {
+  if (hour >= 5 && hour < 12) return "morning";
+  if (hour >= 12 && hour < 18) return "afternoon";
+  return "evening";
+}
+
+function useLocalDayPart() {
+  const [dayPart, setDayPart] = useState<DayPart | null>(null);
+
+  useEffect(() => {
+    setDayPart(dayPartFromHour(new Date().getHours()));
+  }, []);
+
+  return dayPart;
+}
+
 const copy = {
   en: {
-    greeting: (name: string) => `Hi, ${name} 👋`,
+    greeting: (name: string, dayPart: DayPart | null) => {
+      const prefix =
+        dayPart === "morning" ? "Good morning" : dayPart === "afternoon" ? "Good afternoon" : dayPart === "evening" ? "Good evening" : "Hi";
+      return `${prefix}, ${name} 👋`;
+    },
     headline: "What ad do you want to make today?",
     steps: "Three steps: brief, pick a studio, review and approve.",
     publish: "Publish ad brief",
@@ -19,7 +42,10 @@ const copy = {
     month: "vs last month"
   },
   zh: {
-    greeting: (name: string) => `${name}，早上好 👋`,
+    greeting: (name: string, dayPart: DayPart | null) => {
+      const prefix = dayPart === "morning" ? "早上好" : dayPart === "afternoon" ? "下午好" : dayPart === "evening" ? "晚上好" : "你好";
+      return `${name}，${prefix} 👋`;
+    },
     headline: "今天想做什么广告？",
     steps: "三步搞定：说清需求、选制作团队、审片验收。",
     publish: "发布广告需求",
@@ -47,6 +73,7 @@ export function BrandWorkspaceHero({
   active: number;
 }) {
   const t = copy[locale];
+  const dayPart = useLocalDayPart();
   const displayName = name.trim() || (locale === "zh" ? "朋友" : "there");
   const completed = Math.max(total - drafts - active, 0);
 
@@ -64,7 +91,7 @@ export function BrandWorkspaceHero({
       <div className="relative">
         <div className="max-w-3xl">
           <h1 className="text-4xl font-semibold tracking-tight text-zinc-950 sm:text-[42px]">
-            {t.greeting(displayName)}
+            {t.greeting(displayName, dayPart)}
           </h1>
           <p className="mt-5 text-lg font-semibold text-zinc-900">{t.headline}</p>
           <p className="mt-2 max-w-xl text-sm leading-relaxed text-zinc-500">{t.steps}</p>
