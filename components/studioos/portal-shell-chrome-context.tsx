@@ -5,6 +5,7 @@ import type { CreatorNotification } from "@/lib/notification-types";
 
 export type PortalShellChromeValue = {
   initials: string;
+  avatarUrl?: string;
   userName?: string;
   profileHref: string;
   roleLabel: string;

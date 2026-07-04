@@ -46,7 +46,7 @@ export function BrandPortalShell({
   pathname?: string;
   search: string;
   unreadMessageCount?: number;
-  brandAccount?: { name: string; email: string } | null;
+  brandAccount?: { name: string; email: string; avatarUrl?: string } | null;
   children: React.ReactNode;
 }) {
   return (
@@ -76,19 +76,21 @@ function BrandPortalShellInner({
   pathname?: string;
   search: string;
   unreadMessageCount?: number;
-  brandAccount?: { name: string; email: string } | null;
+  brandAccount?: { name: string; email: string; avatarUrl?: string } | null;
   children: React.ReactNode;
 }) {
   const pathname = usePathname() ?? pathnameProp ?? "/brand";
   const { isFocusMode: isReviewFocusMode } = usePortalReviewFocus();
   const nav = brandNav[locale];
   const initials = brandAccount ? brandInitials(brandAccount.name) : "BR";
+  const avatarUrl = brandAccount?.avatarUrl;
   const isProjectReview = isBrandPortalProjectReviewRoute(pathname);
   const focusRoute = isBrandPortalFocusRoute(pathname);
   const isWizardCreate = isBrandPortalWizardCreateRoute(pathname);
   const isProfileEditorPage = pathname === brandPortalRoutes.brandProfile || pathname === brandPortalRoutes.profile;
   const portalChrome = {
     initials,
+    avatarUrl,
     userName: brandAccount?.name,
     profileHref: brandPortalRoutes.brandProfile,
     roleLabel: locale === "zh" ? "品牌方" : "Brand",
@@ -244,6 +246,7 @@ function BrandPortalShellInner({
               <PortalSidebarAccountMenu
                 locale={locale}
                 initials={initials}
+                avatarUrl={avatarUrl}
                 name={brandAccount.name}
                 roleLabel={locale === "zh" ? "品牌方" : "Brand"}
                 profileHref={brandPortalRoutes.brandProfile}
@@ -302,6 +305,7 @@ function BrandPortalShellInner({
                   <StudioUserMenu
                     locale={locale}
                     initials={initials}
+                    avatarUrl={avatarUrl}
                     name={brandAccount?.name}
                     profileHref={brandPortalRoutes.brandProfile}
                     roleLabel={locale === "zh" ? "广告主" : "Brand"}

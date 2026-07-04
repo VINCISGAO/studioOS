@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { PortalAccountAvatar } from "@/components/studioos/portal-account-avatar";
 import { ChevronDown, LogOut, UserRound } from "lucide-react";
 
 const copy = {
@@ -23,6 +24,7 @@ const copy = {
 export function PortalSidebarAccountMenu({
   locale,
   initials,
+  avatarUrl,
   name,
   roleLabel,
   profileHref,
@@ -30,6 +32,7 @@ export function PortalSidebarAccountMenu({
 }: {
   locale: Locale;
   initials: string;
+  avatarUrl?: string;
   name: string;
   roleLabel: string;
   profileHref: string;
@@ -93,14 +96,7 @@ export function PortalSidebarAccountMenu({
           open && "bg-zinc-100"
         )}
       >
-        <div
-          className={cn(
-            "flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white",
-            accent === "violet" ? "bg-violet-600" : accent === "indigo" ? "bg-indigo-600" : "bg-zinc-900"
-          )}
-        >
-          {initials.slice(0, 2)}
-        </div>
+        <PortalAccountAvatar initials={initials} avatarUrl={avatarUrl} accent={accent} />
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-zinc-900">{name}</p>
           <p className="truncate text-xs text-zinc-500">{roleLabel}</p>

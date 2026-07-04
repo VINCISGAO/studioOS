@@ -55,6 +55,7 @@ export function ReviewerShellPortalActions({ locale }: { locale: Locale }) {
       <StudioUserMenu
         locale={locale}
         initials={chrome.initials}
+        avatarUrl={chrome.avatarUrl}
         name={chrome.userName}
         profileHref={chrome.profileHref}
         roleLabel={chrome.roleLabel}

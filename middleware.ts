@@ -26,6 +26,9 @@ function withLang(url: URL, request: NextRequest) {
 }
 
 function isAuthMutationPath(pathname: string) {
+  if (pathname.startsWith("/api/auth/oauth/")) {
+    return false;
+  }
   return (
     pathname.startsWith("/api/auth/") ||
     pathname === "/api/register" ||

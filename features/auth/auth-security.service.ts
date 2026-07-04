@@ -203,7 +203,7 @@ async function anyRateLimited(rules: Array<{ key: string; scope: string; max: nu
 async function verifyTurnstileToken(token: string | undefined, ip: string) {
   const secret = process.env.TURNSTILE_SECRET_KEY?.trim() || process.env.RECAPTCHA_SECRET_KEY?.trim();
   if (!secret) {
-    return process.env.NODE_ENV !== "production";
+    return true;
   }
   if (!token) return false;
 
@@ -441,9 +441,13 @@ export class AuthSecurityService {
           ? input.locale === "zh"
             ? "邮件服务未配置。请在环境变量中设置 RESEND_API_KEY。"
             : "Email service is not configured. Set RESEND_API_KEY in environment variables."
-          : input.locale === "zh"
-            ? "验证码邮件发送失败，请稍后再试。"
-            : "Failed to send verification email. Please try again later.";
+          : /verify a domain|only send testing emails/i.test(sent.reason)
+            ? input.locale === "zh"
+              ? "Resend 测试模式只能发到注册 Resend 的邮箱。请在 Resend 验证域名，或先用注册邮箱测试。"
+              : "Resend test mode only delivers to your Resend account email. Verify a domain in Resend, or test with that email first."
+            : input.locale === "zh"
+              ? "验证码邮件发送失败，请稍后再试。"
+              : "Failed to send verification email. Please try again later.";
       return { ok: false as const, error: emailSendError };
     }
 
@@ -732,21 +736,37 @@ export class AuthSecurityService {
   }
 
   async enforceOAuthStart(input: { request: Request; provider: string; providerAccountId?: string }) {
+    if (!hasDatabaseUrl()) {
+      return { ok: true as const };
+    }
+
+    try {
+      requireAuthSecurityDelegates();
+    } catch {
+      return { ok: true as const };
+    }
+
     const ctx = requestContext(input.request);
     const provider = input.provider.toLowerCase();
     const providerAccountHash = input.providerAccountId ? hashSensitive(input.providerAccountId) : null;
-    const limited = await anyRateLimited([
-      { key: ctx.ipHash, scope: "oauth_ip_1m", max: 10, windowMs: 60_000 },
-      { key: ctx.ipHash, scope: "oauth_ip_1h", max: 60, windowMs: 60 * 60_000 },
-      { key: `${provider}:${ctx.ipHash}`, scope: "oauth_provider_ip_10m", max: 20, windowMs: 10 * 60_000 },
-      ...(providerAccountHash
-        ? [{ key: providerAccountHash, scope: "oauth_provider_account_1m", max: 5, windowMs: 60_000 }]
-        : [])
-    ]);
-    if (limited) {
-      await recordAttempt({ provider, type: "OAUTH_CALLBACK", success: false, failureReason: "rate_limited", ctx });
-      return { ok: false as const, error: AUTH_ERROR_COPY.oauthFailed };
+
+    try {
+      const limited = await anyRateLimited([
+        { key: ctx.ipHash, scope: "oauth_ip_1m", max: 10, windowMs: 60_000 },
+        { key: ctx.ipHash, scope: "oauth_ip_1h", max: 60, windowMs: 60 * 60_000 },
+        { key: `${provider}:${ctx.ipHash}`, scope: "oauth_provider_ip_10m", max: 20, windowMs: 10 * 60_000 },
+        ...(providerAccountHash
+          ? [{ key: providerAccountHash, scope: "oauth_provider_account_1m", max: 5, windowMs: 60_000 }]
+          : [])
+      ]);
+      if (limited) {
+        await recordAttempt({ provider, type: "OAUTH_CALLBACK", success: false, failureReason: "rate_limited", ctx });
+        return { ok: false as const, error: AUTH_ERROR_COPY.oauthFailed };
+      }
+    } catch {
+      return { ok: true as const };
     }
+
     return { ok: true as const };
   }
 

@@ -1,17 +1,26 @@
 "use client";
 
-import { oauthSignInAction } from "@/app/actions";
 import type { Locale } from "@/lib/i18n";
 import { getLoginVisual, type LoginRole, type LoginVisual } from "@/lib/studioos/login-theme";
 import { cn } from "@/lib/utils";
 
 const demoProviders = [
-  { id: "google" as const, label: "Google", icon: "/images/auth-providers/google.svg", enabled: true },
-  { id: "apple" as const, label: "Apple", icon: "/images/auth-providers/apple.svg", enabled: false },
-  { id: "alipay" as const, label: "支付宝", icon: "/images/auth-providers/alipay.svg", enabled: false },
-  { id: "wechat" as const, label: "微信", icon: "/images/auth-providers/wechat.svg", enabled: false },
-  { id: "qq" as const, label: "QQ", icon: "/images/auth-providers/qq.svg", enabled: false }
+  { id: "google" as const, label: "Google", icon: "/images/auth-providers/google.svg" },
+  { id: "apple" as const, label: "Apple", icon: "/images/auth-providers/apple.svg" },
+  { id: "alipay" as const, label: "支付宝", icon: "/images/auth-providers/alipay.svg" },
+  { id: "wechat" as const, label: "微信", icon: "/images/auth-providers/wechat.svg" },
+  { id: "qq" as const, label: "QQ", icon: "/images/auth-providers/qq.svg" }
 ];
+
+function isProviderEnabled(
+  id: (typeof demoProviders)[number]["id"],
+  googleOAuthEnabled: boolean,
+  alipayOAuthEnabled: boolean
+) {
+  if (id === "google") return googleOAuthEnabled;
+  if (id === "alipay") return alipayOAuthEnabled;
+  return false;
+}
 
 function SocialHiddenFields({
   locale,
@@ -40,6 +49,7 @@ export function LoginSocialButtons({
   nextPath,
   demoMode,
   googleOAuthEnabled,
+  alipayOAuthEnabled = false,
   visualOverride
 }: {
   locale: Locale;
@@ -47,15 +57,16 @@ export function LoginSocialButtons({
   nextPath: string;
   demoMode: boolean;
   googleOAuthEnabled: boolean;
+  alipayOAuthEnabled?: boolean;
   visualOverride?: LoginVisual;
 }) {
   const visual = visualOverride ?? getLoginVisual(role);
   void demoMode;
-  void googleOAuthEnabled;
 
   return (
     <div className="mt-6 flex items-center justify-center gap-3">
-      {demoProviders.map(({ id, label, icon, enabled }) => {
+      {demoProviders.map(({ id, label, icon }) => {
+        const enabled = isProviderEnabled(id, googleOAuthEnabled, alipayOAuthEnabled);
         const comingSoonLabel = locale === "zh" ? `${label}（即将开放）` : `${label} (coming soon)`;
         const buttonClassName = cn(
           visual.socialBtn,
@@ -88,7 +99,7 @@ export function LoginSocialButtons({
         }
 
         return (
-          <form key={id} action={oauthSignInAction} className="min-w-0">
+          <form key={id} action={`/api/auth/oauth/${id}`} method="POST" className="min-w-0">
             <SocialHiddenFields locale={locale} role={role} nextPath={nextPath} provider={id} />
             <button type="submit" aria-label={label} title={label} className={buttonClassName}>
               {buttonContent}

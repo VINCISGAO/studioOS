@@ -71,6 +71,7 @@ type LoginPageShellProps = {
   errorCode?: string;
   demoMode: boolean;
   googleOAuthEnabled?: boolean;
+  alipayOAuthEnabled?: boolean;
   adminLoginMode?: boolean;
   t: LoginPageCopy;
 };
@@ -249,6 +250,7 @@ export function LoginPageShell({
   errorCode,
   demoMode,
   googleOAuthEnabled = false,
+  alipayOAuthEnabled = false,
   adminLoginMode = false,
   t
 }: LoginPageShellProps) {
@@ -413,6 +415,7 @@ export function LoginPageShell({
                 nextPath={nextPath}
                 demoMode={demoMode}
                 googleOAuthEnabled={googleOAuthEnabled}
+                alipayOAuthEnabled={alipayOAuthEnabled}
                 visualOverride={formVisual}
               />
             </div>

@@ -1,0 +1,65 @@
+import { NextResponse } from "next/server";
+import { alipayOAuthService } from "@/features/auth/alipay-oauth.service";
+import { authSecurityService } from "@/features/auth/auth-security.service";
+import {
+  completeAlipaySignIn,
+  oauthFailureRedirect
+} from "@/features/auth/oauth-auth.service";
+import { decodeOAuthState } from "@/features/auth/oauth-state";
+
+export const runtime = "nodejs";
+
+export async function GET(request: Request) {
+  const requestUrl = new URL(request.url);
+  const authCode = requestUrl.searchParams.get("auth_code");
+  const state = decodeOAuthState(requestUrl.searchParams.get("state"));
+  const entryRole = state?.entryRole ?? "brand";
+  const lang = state?.lang ?? "zh";
+  const nextPath = state?.nextPath ?? "";
+
+  if (!state) {
+    return NextResponse.redirect(
+      new URL(oauthFailureRedirect("支付宝登录状态无效，请重试。", entryRole, lang), request.url)
+    );
+  }
+
+  if (!authCode) {
+    const oauthError =
+      requestUrl.searchParams.get("error_description") ??
+      requestUrl.searchParams.get("error") ??
+      "支付宝授权已取消";
+    return NextResponse.redirect(new URL(oauthFailureRedirect(oauthError, entryRole, lang), request.url));
+  }
+
+  try {
+    const profile = await alipayOAuthService.exchangeAuthCode(authCode);
+    const { redirectTo, userId, email } = await completeAlipaySignIn({
+      providerUserId: profile.userId,
+      nickName: profile.nickName,
+      email: profile.email,
+      entryRole,
+      lang,
+      nextPath
+    });
+
+    await authSecurityService.recordOAuthCallback({
+      request,
+      provider: "alipay",
+      success: true,
+      email,
+      userId
+    });
+
+    return NextResponse.redirect(new URL(redirectTo, request.url));
+  } catch (error) {
+    await authSecurityService.recordOAuthCallback({
+      request,
+      provider: "alipay",
+      success: false
+    });
+
+    const message =
+      error instanceof Error ? error.message : "支付宝登录失败，请稍后再试。";
+    return NextResponse.redirect(new URL(oauthFailureRedirect(message, entryRole, lang), request.url));
+  }
+}

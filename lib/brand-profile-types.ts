@@ -22,6 +22,7 @@ export type StoredBrandProfile = {
   website: string;
   industry: string;
   logo_url: string;
+  cover_url: string;
   profile_completed_at: string | null;
   showcase_ads: BrandShowcaseAd[];
   updated_at: string;

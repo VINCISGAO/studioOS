@@ -64,12 +64,26 @@ model User {
   preferredLanguage     Language                   @relation(fields: [languageCode], references: [code])
   walletAccount         WalletAccount?
   wallet                Wallet?
+  oauthAccounts         UserOAuthAccount[]
 
   @@index([role])
   @@index([status])
   @@index([phone])
   @@index([languageCode])
   @@map("users")
+}
+
+model UserOAuthAccount {
+  id             String   @id @default(uuid())
+  userId         String   @map("user_id")
+  provider       String
+  providerUserId String   @map("provider_user_id")
+  createdAt      DateTime @default(now()) @map("created_at")
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerUserId])
+  @@index([userId])
+  @@map("user_oauth_accounts")
 }
 
 model AuthRateLimit {

@@ -178,7 +178,47 @@ export async function uploadBrandAvatarAction(formData: FormData) {
 
   revalidatePath("/brand/profile");
   revalidatePath("/brand");
+  revalidatePath("/brand", "layout");
   revalidatePath(`/brands/${profile.id}`);
 
   return { ok: true as const, logo_url: saved.url };
+}
+
+export async function uploadBrandCoverAction(formData: FormData) {
+  const lang = normalizeLang(formData.get("lang"));
+  const email = await requireBrandEmail();
+
+  const file = formData.get("cover_file");
+  if (!(file instanceof File)) {
+    return { ok: false as const, error: lang === "zh" ? "请选择图片" : "Choose an image file" };
+  }
+
+  const { saveBrandCoverUpload } = await import("@/lib/studioos/brand-avatar-upload");
+  const { getBrandProfileByEmail, updateBrandCoverUrl } = await import("@/lib/brand-profile-service");
+  const profile = await getBrandProfileByEmail(email);
+  if (!profile) {
+    return { ok: false as const, error: lang === "zh" ? "品牌资料不存在" : "Brand profile not found" };
+  }
+
+  const saved = await saveBrandCoverUpload(profile.id, file);
+  if (!saved.ok) {
+    return { ok: false as const, error: saved.error };
+  }
+
+  const updated = await updateBrandCoverUrl(email, saved.url, {
+    fileKey: saved.file_key,
+    storageProvider: saved.storage_provider,
+    fileName: saved.file_name,
+    mimeType: saved.mime_type,
+    sizeBytes: saved.size_bytes
+  });
+  if (!updated) {
+    return { ok: false as const, error: lang === "zh" ? "保存封面失败" : "Failed to save cover" };
+  }
+
+  revalidatePath("/brand/profile");
+  revalidatePath("/brand");
+  revalidatePath(`/brands/${profile.id}`);
+
+  return { ok: true as const, cover_url: saved.url };
 }

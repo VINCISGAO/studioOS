@@ -30,7 +30,8 @@ import {
 import {
   polishBrandProfileAction,
   saveBrandProfileAction,
-  uploadBrandAvatarAction
+  uploadBrandAvatarAction,
+  uploadBrandCoverAction
 } from "@/app/brand-profile-actions";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
@@ -575,13 +576,14 @@ export function BrandProfileEditor({ locale, profile }: BrandProfileEditorProps)
   });
   const [assets, setAssets] = useState<AssetState>({
     logo: profile.logo_url,
-    cover: null,
+    cover: profile.cover_url || null,
     product: null,
     reference: profile.showcase_ads.find((item) => item.thumbnail_url)?.thumbnail_url ?? null
   });
   const [toast, setToast] = useState<Toast | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [logoUploading, setLogoUploading] = useState(false);
+  const [coverUploading, setCoverUploading] = useState(false);
   const logoInputRef = useRef<HTMLInputElement | null>(null);
   const coverInputRef = useRef<HTMLInputElement | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -709,7 +711,37 @@ export function BrandProfileEditor({ locale, profile }: BrandProfileEditorProps)
     }
   }
 
-  function setLocalAsset(key: Exclude<AssetKey, "logo">, file: File) {
+  async function handleCoverFile(file: File) {
+    setCoverUploading(true);
+    try {
+      const uploadFile = await compressImageForUpload(file, {
+        maxBytes: 2.5 * 1024 * 1024,
+        maxDimension: 1920,
+        quality: 0.82,
+        fileNamePrefix: "brand-cover"
+      });
+      const fd = new FormData();
+      fd.set("lang", locale);
+      fd.set("cover_file", uploadFile);
+      const result = await uploadBrandCoverAction(fd);
+      if (!result.ok) {
+        notify(result.error, "error");
+        return;
+      }
+      setAssets((prev) => {
+        if (prev.cover?.startsWith("blob:")) URL.revokeObjectURL(prev.cover);
+        return { ...prev, cover: result.cover_url };
+      });
+      notify(locale === "zh" ? "封面已更新" : "Cover updated", "success");
+      router.refresh();
+    } catch {
+      notify(locale === "zh" ? "封面上传失败" : "Cover upload failed", "error");
+    } finally {
+      setCoverUploading(false);
+    }
+  }
+
+  function setLocalAsset(key: Exclude<AssetKey, "logo" | "cover">, file: File) {
     const nextUrl = URL.createObjectURL(file);
     setAssets((prev) => {
       const current = prev[key];
@@ -796,7 +828,7 @@ export function BrandProfileEditor({ locale, profile }: BrandProfileEditorProps)
               className="hidden"
               onChange={(event) => {
                 const file = event.target.files?.[0];
-                if (file) setLocalAsset("cover", file);
+                if (file) void handleCoverFile(file);
                 event.target.value = "";
               }}
             />
@@ -812,10 +844,11 @@ export function BrandProfileEditor({ locale, profile }: BrandProfileEditorProps)
                 ) : null}
                 <button
                   type="button"
-                  className="absolute right-4 top-4 rounded-2xl bg-white/90 px-3 py-2 text-xs font-semibold text-zinc-800 shadow-sm backdrop-blur transition hover:bg-white"
+                  disabled={coverUploading}
+                  className="absolute right-4 top-4 rounded-2xl bg-white/90 px-3 py-2 text-xs font-semibold text-zinc-800 shadow-sm backdrop-blur transition hover:bg-white disabled:opacity-60"
                   onClick={() => coverInputRef.current?.click()}
                 >
-                  {t.editCover}
+                  {coverUploading ? (locale === "zh" ? "上传中…" : "Uploading…") : t.editCover}
                 </button>
               </div>
 
@@ -1030,7 +1063,8 @@ export function BrandProfileEditor({ locale, profile }: BrandProfileEditorProps)
                   preview={assets.cover}
                   dragLabel={t.assets.drag}
                   readyLabel={t.assets.ready}
-                  onFile={(file) => setLocalAsset("cover", file)}
+                  busy={coverUploading}
+                  onFile={(file) => void handleCoverFile(file)}
                 />
                 <AssetUploadCard
                   title={t.assets.product}

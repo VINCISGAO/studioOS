@@ -11,12 +11,13 @@ import { demoRedirectForRole, demoUserForSocialProvider, parseDemoSession, DEMO_
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { isAdminRouteRole } from "@/lib/auth/route-access";
 import { AUTH_ERROR_COPY } from "@/features/auth/auth-error-copy";
-import { authSecurityService } from "@/features/auth/auth-security.service";
 import { withLocale, type Locale } from "@/lib/i18n";
 import { getOrCreateOpenInquiry } from "@/lib/chat-service";
 import { getOrCreateVisitorId } from "@/lib/client-session";
 import { createProject } from "@/lib/project-service";
 import { createClient } from "@/lib/supabase/server";
+import { getAppBaseUrl } from "@/lib/app-url";
+import { startOAuthSignInAction } from "@/features/auth/oauth-start.service";
 
 type OAuthProvider = "google" | "apple" | "alipay" | "wechat" | "qq";
 type DemoSocialProvider = "google" | "apple" | "alipay" | "wechat" | "qq";
@@ -233,7 +234,7 @@ export async function signUpAction(formData: FormData) {
     email,
     password,
     options: {
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/auth/callback`
+      emailRedirectTo: `${getAppBaseUrl()}/auth/callback`
     }
   });
 
@@ -255,56 +256,14 @@ export async function oauthSignInAction(formData: FormData) {
     method: "POST",
     headers: new Headers(headerList)
   });
-  const oauthGate = await authSecurityService.enforceOAuthStart({
+
+  await startOAuthSignInAction({
     request: actionRequest,
-    provider
+    provider,
+    lang,
+    entryRole,
+    nextPath
   });
-  if (!oauthGate.ok) {
-    redirect(`/login?error=${encodeURIComponent(AUTH_ERROR_COPY.oauthFailed)}&lang=${lang}&role=${entryRole}`);
-  }
-
-  if (!hasSupabaseConfig()) {
-    redirect(
-      `/login?error=${encodeURIComponent(AUTH_ERROR_COPY.oauthFailed)}&lang=${lang}&role=${entryRole}`
-    );
-  }
-
-  if (provider !== "google") {
-    redirect(`/login?error=${encodeURIComponent(AUTH_ERROR_COPY.oauthFailed)}&lang=${lang}&role=${entryRole}`);
-  }
-
-  const callbackUrl = new URL(
-    `${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/auth/callback`
-  );
-  callbackUrl.searchParams.set("role", entryRole);
-  callbackUrl.searchParams.set("lang", lang);
-  if (nextPath.startsWith("/")) {
-    callbackUrl.searchParams.set("next", nextPath);
-  }
-
-  const supabase = await createClient();
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: "google",
-    options: {
-      redirectTo: callbackUrl.toString(),
-      queryParams: {
-        prompt: "select_account"
-      }
-    }
-  });
-
-  if (error || !data.url) {
-    await authSecurityService.recordOAuthCallback({
-      request: actionRequest,
-      provider,
-      success: false
-    });
-    redirect(
-      `/login?error=${encodeURIComponent(AUTH_ERROR_COPY.oauthFailed)}&lang=${lang}&role=${entryRole}`
-    );
-  }
-
-  redirect(data.url);
 }
 
 export async function signOutAction(formData?: FormData) {

@@ -69,6 +69,51 @@ export async function saveBrandAvatarUpload(
     };
   }
 
+export async function saveBrandCoverUpload(
+  brandId: string,
+  file: File
+): Promise<
+  | {
+      ok: true;
+      url: string;
+      file_name: string;
+      file_key: string;
+      storage_provider: string;
+      mime_type: string;
+      size_bytes: number;
+    }
+  | { ok: false; error: string }
+> {
+  if (!file.size) {
+    return { ok: false, error: "Empty file" };
+  }
+
+  if (file.size > MAX_BYTES) {
+    return { ok: false, error: "File exceeds 5MB limit" };
+  }
+
+  const mime = file.type || "application/octet-stream";
+  if (!ALLOWED_MIME.has(mime)) {
+    return { ok: false, error: "Only JPEG, PNG, WebP, and GIF images are supported" };
+  }
+
+  const fileName = `cover_${Date.now()}.${extForMime(mime)}`;
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const fileKey = brandAvatarObjectKey(brandId, fileName);
+  let stored: Awaited<ReturnType<typeof putObject>>;
+  try {
+    stored = await putObject(fileKey, buffer, mime);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown storage error";
+    return {
+      ok: false,
+      error:
+        message.includes("Durable object storage")
+          ? "Production asset storage is not configured. Configure R2/S3 before uploading brand assets."
+          : `Failed to store brand asset: ${message}`
+    };
+  }
+
   return {
     ok: true,
     url: brandAvatarPublicUrl(brandId, fileName),

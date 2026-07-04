@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { PortalAccountAvatar } from "@/components/studioos/portal-account-avatar";
 import { ChevronDown, LogOut, UserRound } from "lucide-react";
 
 const copy = {
@@ -23,6 +24,7 @@ const copy = {
 export function StudioUserMenu({
   locale,
   initials,
+  avatarUrl,
   name,
   profileHref = "/studio/profile",
   roleLabel,
@@ -30,6 +32,7 @@ export function StudioUserMenu({
 }: {
   locale: Locale;
   initials: string;
+  avatarUrl?: string;
   name?: string;
   profileHref?: string;
   roleLabel?: string;
@@ -65,9 +68,7 @@ export function StudioUserMenu({
         )}
         onClick={() => setOpen((value) => !value)}
       >
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-900 text-xs font-semibold text-white">
-          {initials.slice(0, 2)}
-        </div>
+        <PortalAccountAvatar initials={initials} avatarUrl={avatarUrl} size="sm" />
         <ChevronDown className={cn("h-4 w-4 text-zinc-400 transition", open && "rotate-180")} />
       </button>
 

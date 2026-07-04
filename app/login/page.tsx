@@ -3,6 +3,7 @@ import { LoginPageShell, type LoginPageCopy } from "@/components/studioos/login-
 import { isDemoLoginUiEnabled, preferDemoAuth } from "@/lib/can-persist-local-store";
 import { resolvePostLoginDestination } from "@/lib/auth/post-login-redirect";
 import { hasSupabaseConfig } from "@/lib/auth-config";
+import { hasAlipayOAuthConfig } from "@/lib/alipay/alipay-oauth-config";
 import { type DemoRole } from "@/lib/demo-auth";
 import { getLocale, type Locale, type SearchParams, withLocale } from "@/lib/i18n";
 import { getCurrentSession } from "@/lib/session-user";
@@ -245,7 +246,9 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const role = resolveLoginRole(typeof params.role === "string" ? params.role : undefined);
 
   const demoMode = isDemoLoginUiEnabled();
-  const googleOAuthEnabled = hasSupabaseConfig() && !preferDemoAuth();
+  const oauthLive = !preferDemoAuth();
+  const googleOAuthEnabled = hasSupabaseConfig() && oauthLive;
+  const alipayOAuthEnabled = hasAlipayOAuthConfig() && oauthLive;
 
   if (session && !rawError) {
     redirect(resolvePostLoginDestination(session, nextPath, locale));
@@ -269,6 +272,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       errorCode={errorCode}
       demoMode={demoMode}
       googleOAuthEnabled={googleOAuthEnabled}
+      alipayOAuthEnabled={alipayOAuthEnabled}
       t={t}
     />
   );

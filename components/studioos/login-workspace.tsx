@@ -107,7 +107,7 @@ export function LoginWorkspace({
         const response = await fetch("/api/auth/continue", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, code, lang: locale, role })
+          body: JSON.stringify({ email, code, lang: locale, role, next: nextPath || undefined })
         });
         const data = (await response.json()) as {
           ok: boolean;

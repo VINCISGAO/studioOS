@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import type { UserRole } from "@prisma/client";
 import { buildSessionPayload } from "@/features/auth/session.service";
 import { userRepository } from "@/features/auth/user.repository";
+import { userOAuthRepository } from "@/features/auth/user-oauth.repository";
 import { hasSupabaseConfig } from "@/lib/auth-config";
 import { resolvePostLoginDestination } from "@/lib/auth/post-login-redirect";
 import { recordCreatorSignIn } from "@/lib/auth/sign-in-service";
@@ -192,6 +193,87 @@ export async function completeOAuthSignIn(input: {
 
   return {
     redirectTo: resolvePostLoginDestination({ role: demoRole }, nextPath, input.lang)
+  };
+}
+
+function alipaySyntheticEmail(providerUserId: string) {
+  const safe = providerUserId.replace(/[^a-zA-Z0-9]/g, "").slice(0, 48) || "user";
+  return `alipay+${safe}@oauth.studioos.app`;
+}
+
+export async function completeAlipaySignIn(input: {
+  providerUserId: string;
+  nickName: string;
+  email?: string;
+  entryRole: OAuthEntryRole;
+  lang: Locale;
+  nextPath?: string;
+}): Promise<{ redirectTo: string; userId: string; email: string }> {
+  const nextPath = input.nextPath?.trim() ?? "";
+  const fullName = input.nickName.trim() || `Alipay用户${input.providerUserId.slice(-4)}`;
+  const headerList = await headers();
+  const loginMeta = {
+    ip:
+      headerList.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+      headerList.get("x-real-ip") ??
+      undefined,
+    device: headerList.get("user-agent") ?? undefined
+  };
+
+  if (!hasDatabaseUrl()) {
+    throw new Error("Database is required for Alipay sign-in");
+  }
+
+  const linked = await userOAuthRepository.findLinkedUser("alipay", input.providerUserId);
+  let user =
+    linked ??
+    (input.email ? await userRepository.findByEmail(input.email) : null);
+
+  if (!user) {
+    const email = input.email?.toLowerCase() ?? alipaySyntheticEmail(input.providerUserId);
+    user = await userOAuthRepository.createUserWithOAuth({
+      provider: "alipay",
+      providerUserId: input.providerUserId,
+      email,
+      role: entryRoleToPrisma(input.entryRole),
+      fullName
+    });
+  } else {
+    if (!linked) {
+      await userOAuthRepository.linkAccount({
+        userId: user.id,
+        provider: "alipay",
+        providerUserId: input.providerUserId
+      });
+    }
+    await userRepository.touchLogin(user.id, loginMeta);
+  }
+
+  const authUser = {
+    id: user.id,
+    email: user.email,
+    role: user.role,
+    fullName: user.fullName,
+    languageCode: user.languageCode ?? user.language ?? "en",
+    companyName: user.brandProfile?.companyName,
+    displayName: user.creatorProfile?.displayName ?? undefined
+  };
+  const demoRole = prismaRoleToDemoRole(authUser.role);
+
+  await setDemoSession(buildSessionPayload(authUser, demoRole));
+
+  if (demoRole === "creator") {
+    await recordCreatorSignIn(authUser.email);
+    if (authUser.role === "CREATOR") {
+      const { membershipService } = await import("@/features/membership/membership.service");
+      await membershipService.ensureDefaultMembershipOnCreatorRegister(authUser.id).catch(() => null);
+    }
+  }
+
+  return {
+    redirectTo: resolvePostLoginDestination({ role: demoRole }, nextPath, input.lang),
+    userId: user.id,
+    email: user.email
   };
 }
 

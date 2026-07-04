@@ -4,9 +4,17 @@ export function canPersistLocalDataStore() {
   return process.env.VERCEL !== "1";
 }
 
-/** Demo auth works on Vercel even if Supabase env keys are present (not wired for brand portal yet). */
+function hasSupabaseEnv() {
+  return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+}
+
+/** Prefer demo/password shortcuts over Supabase session in middleware. */
 export function preferDemoAuth() {
-  return process.env.STUDIOOS_FORCE_SUPABASE_AUTH !== "1";
+  if (process.env.STUDIOOS_FORCE_SUPABASE_AUTH === "1") return false;
+  if (process.env.STUDIOOS_DEMO_AUTH === "1") return true;
+  // Vercel + Supabase → real auth (Google OAuth, email codes, DB users).
+  if (process.env.VERCEL === "1" && hasSupabaseEnv()) return false;
+  return process.env.NODE_ENV !== "production";
 }
 
 /** Show demo accounts + social shortcuts on the login page. */

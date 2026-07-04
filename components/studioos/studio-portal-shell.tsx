@@ -120,6 +120,7 @@ function StudioPortalShellInner({
   const partnerBadge = tCertificationExperience(locale).partnerBadge;
   const partnerBadgeSidebar = tCertificationExperience(locale).partnerBadgeSidebar;
   const initials = creator ? studioInitials(creator.name) : "CR";
+  const avatarUrl = creator?.avatar_url?.trim() || undefined;
   const [notificationBadgeSeen, setNotificationBadgeSeen] = useState(false);
   const visibleUnreadCount = notificationBadgeSeen ? 0 : unreadCount;
 
@@ -136,6 +137,7 @@ function StudioPortalShellInner({
       <PortalShellChromeProvider
         value={{
           initials,
+          avatarUrl,
           userName: creator?.name,
           profileHref: creatorPortalRoutes.profile,
           roleLabel: isVerified ? partnerBadge : locale === "zh" ? "创作者" : "Creator",
@@ -151,6 +153,7 @@ function StudioPortalShellInner({
 
   const portalChrome = {
     initials,
+    avatarUrl,
     userName: creator?.name,
     profileHref: creatorPortalRoutes.profile,
     roleLabel: isVerified ? partnerBadge : locale === "zh" ? "创作者" : "Creator",
@@ -204,6 +207,7 @@ function StudioPortalShellInner({
               <PortalSidebarAccountMenu
                 locale={locale}
                 initials={initials}
+                avatarUrl={avatarUrl}
                 name={creator.name}
                 roleLabel={locale === "zh" ? "创作者" : "Creator"}
                 profileHref={creatorPortalRoutes.profile}
@@ -260,6 +264,7 @@ function StudioPortalShellInner({
                   <StudioUserMenu
                     locale={locale}
                     initials={initials}
+                    avatarUrl={avatarUrl}
                     name={creator?.name}
                     profileHref={creatorPortalRoutes.profile}
                     roleLabel={isVerified ? partnerBadge : locale === "zh" ? "创作者" : "Creator"}

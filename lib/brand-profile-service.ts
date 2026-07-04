@@ -65,6 +65,7 @@ function mapPrismaBrandProfileToStored(input: {
     website: profile.website ?? "",
     industry: profile.industry ?? "",
     logo_url: profile.logoUrl ?? "",
+    cover_url: String(archive.cover_url ?? ""),
     profile_completed_at: null,
     showcase_ads: [],
     updated_at: profile.updatedAt.toISOString()
@@ -96,7 +97,7 @@ async function syncPrismaBrandProfile(
   clientEmail: string,
   input: Pick<
     StoredBrandProfile,
-    "company_name" | "display_name" | "headline" | "bio" | "website" | "industry" | "logo_url"
+    "company_name" | "display_name" | "headline" | "bio" | "website" | "industry" | "logo_url" | "cover_url"
   >
 ) {
   if (!hasDatabaseUrl()) return null;
@@ -119,6 +120,7 @@ async function syncPrismaBrandProfile(
     website: input.website,
     industry: input.industry,
     logo_url: input.logo_url,
+    cover_url: input.cover_url,
     archived_at: nowIso()
   };
   await prisma.user.update({
@@ -209,6 +211,71 @@ async function syncPrismaBrandLogoArchive(
   });
 }
 
+async function syncPrismaBrandCoverArchive(
+  clientEmail: string,
+  input: {
+    coverUrl: string;
+    fileKey?: string;
+    storageProvider?: string;
+    fileName?: string;
+    mimeType?: string;
+    sizeBytes?: number;
+  }
+) {
+  if (!hasDatabaseUrl()) return;
+  const user = await prisma.user.findUnique({
+    where: { email: clientEmail.toLowerCase() },
+    include: { brandProfile: true }
+  });
+  const profile = user?.brandProfile;
+  if (!user || !profile) return;
+  const current =
+    typeof profile.brandDnaJson === "object" && profile.brandDnaJson !== null && !Array.isArray(profile.brandDnaJson)
+      ? (profile.brandDnaJson as Record<string, unknown>)
+      : {};
+  const currentArchive =
+    typeof current.asset_archive === "object" && current.asset_archive !== null && !Array.isArray(current.asset_archive)
+      ? (current.asset_archive as Record<string, unknown>)
+      : {};
+  const coverHistory = Array.isArray(currentArchive.covers)
+    ? (currentArchive.covers as Record<string, unknown>[])
+    : [];
+  const coverArchive: Record<string, string | number> = {
+    url: input.coverUrl,
+    archived_at: nowIso()
+  };
+  if (input.fileKey) coverArchive.file_key = input.fileKey;
+  if (input.storageProvider) coverArchive.storage_provider = input.storageProvider;
+  if (input.fileName) coverArchive.file_name = input.fileName;
+  if (input.mimeType) coverArchive.mime_type = input.mimeType;
+  if (input.sizeBytes !== undefined) coverArchive.size_bytes = input.sizeBytes;
+
+  const profileArchive =
+    typeof current.profile_archive === "object" &&
+    current.profile_archive !== null &&
+    !Array.isArray(current.profile_archive)
+      ? (current.profile_archive as Record<string, unknown>)
+      : {};
+
+  await prisma.brandProfile.update({
+    where: { userId: user.id },
+    data: {
+      brandDnaJson: asInputJson({
+        ...current,
+        profile_archive: {
+          ...profileArchive,
+          cover_url: input.coverUrl
+        },
+        asset_archive: {
+          ...currentArchive,
+          cover: coverArchive,
+          covers: [coverArchive, ...coverHistory]
+        }
+      })
+    }
+  });
+}
+
 export function isBrandProfileComplete(profile: StoredBrandProfile | null | undefined) {
   return Boolean(profile?.profile_completed_at && profile.headline.trim() && profile.bio.trim());
 }
@@ -250,7 +317,8 @@ export async function getOrCreateBrandProfile(input: {
       bio: input.bio || databaseProfile.bio,
       website: input.website ?? databaseProfile.website,
       industry: input.industry ?? databaseProfile.industry,
-      logo_url: databaseProfile.logo_url
+      logo_url: databaseProfile.logo_url,
+      cover_url: databaseProfile.cover_url
     });
     return updated ?? databaseProfile;
   }
@@ -283,6 +351,7 @@ export async function getOrCreateBrandProfile(input: {
     website: input.website ?? "",
     industry: input.industry ?? "",
     logo_url: "",
+    cover_url: "",
     profile_completed_at: null,
     showcase_ads: [],
     updated_at: nowIso()
@@ -363,6 +432,42 @@ export async function updateBrandLogoUrl(
     sizeBytes: asset?.sizeBytes
   });
   if (updated) return updated;
+
+  store.profiles[next.id] = next;
+  await writeStore(store);
+  return next;
+}
+
+export async function updateBrandCoverUrl(
+  clientEmail: string,
+  coverUrl: string,
+  asset?: {
+    fileKey?: string;
+    storageProvider?: string;
+    fileName?: string;
+    mimeType?: string;
+    sizeBytes?: number;
+  }
+): Promise<StoredBrandProfile | null> {
+  const profile = await getBrandProfileByEmail(clientEmail);
+  if (!profile) return null;
+
+  const store = await readStore();
+  const next: StoredBrandProfile = {
+    ...profile,
+    cover_url: coverUrl,
+    updated_at: nowIso()
+  };
+  const updated = await syncPrismaBrandProfile(next.client_email, next);
+  await syncPrismaBrandCoverArchive(next.client_email, {
+    coverUrl,
+    fileKey: asset?.fileKey,
+    storageProvider: asset?.storageProvider,
+    fileName: asset?.fileName,
+    mimeType: asset?.mimeType,
+    sizeBytes: asset?.sizeBytes
+  });
+  if (updated) return { ...updated, cover_url: coverUrl };
 
   store.profiles[next.id] = next;
   await writeStore(store);
