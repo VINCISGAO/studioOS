@@ -14,6 +14,9 @@ import type {
 import { normalizeCopilotRole } from "@/features/ai-copilot/ai-copilot.types";
 import { appError } from "@/lib/core/errors";
 import { asInputJson } from "@/lib/core/prisma-json";
+import { getStoredCreatorProfile } from "@/lib/creator-profile-service";
+import { resolveBrandDisplayName } from "@/lib/studioos/brand-account-display";
+import { resolveCreatorIdByEmail } from "@/lib/studioos/creator-settings-service";
 
 function isZh(language: string) {
   return language === "zh-CN" || language === "zh-TW" || language === "zh";
@@ -244,7 +247,16 @@ function answerFromKnowledge(matches: Awaited<ReturnType<typeof findKnowledgeMat
   return matches[0]?.answer ?? null;
 }
 
-function buildWorkspaceSnapshot(user: AuthUserDto, role: string, context: AiCopilotContext) {
+async function resolveCreatorDisplayName(user: AuthUserDto, fallback: string) {
+  const creatorId = await resolveCreatorIdByEmail(user.email);
+  if (!creatorId) {
+    return user.displayName ?? user.fullName ?? fallback;
+  }
+  const profile = await getStoredCreatorProfile(creatorId);
+  return profile?.name.trim() || user.displayName || user.fullName || fallback;
+}
+
+async function buildWorkspaceSnapshot(user: AuthUserDto, role: string, context: AiCopilotContext) {
   const language = context.language;
   const zh = isZh(language);
   const summaries = context.summaries;
@@ -254,7 +266,7 @@ function buildWorkspaceSnapshot(user: AuthUserDto, role: string, context: AiCopi
     const creator = asRecord(summaries.creator);
     const invitations = asArray(summaries.invitations);
     const wallet = asRecord(summaries.wallet);
-    const workspaceName = String(creator.displayName ?? user.displayName ?? user.fullName ?? displayName);
+    const workspaceName = await resolveCreatorDisplayName(user, String(creator.displayName ?? displayName));
     return {
       roleLabel: zh ? "创作者" : "Creator",
       displayName: workspaceName,
@@ -291,7 +303,7 @@ function buildWorkspaceSnapshot(user: AuthUserDto, role: string, context: AiCopi
   }
 
   const brand = asRecord(summaries.brand);
-  const workspaceName = user.companyName ?? user.fullName ?? displayName;
+  const workspaceName = await resolveBrandDisplayName(user.email);
   return {
     roleLabel: zh ? "广告主" : "Brand",
     displayName: workspaceName,
@@ -317,6 +329,7 @@ export class AiCopilotService {
       aiCopilotRepository.listSessionsForUser(user.id),
       aiCopilotContextBuilder.build(user, { languageCode: input.languageCode ?? null })
     ]);
+    const workspace = await buildWorkspaceSnapshot(user, role, context);
     return {
       sessions: sessions.map((session) => ({
         id: session.id,
@@ -326,7 +339,7 @@ export class AiCopilotService {
         lastMessage: session.messages[0]?.content ?? null
       })),
       suggestedQuestions: suggestedQuestions(role, context.language),
-      workspace: buildWorkspaceSnapshot(user, role, context)
+      workspace
     };
   }
 

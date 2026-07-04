@@ -20,6 +20,11 @@ type ApiResponse<T> = {
 
 type SessionListData = {
   suggestedQuestions: string[];
+  workspace?: {
+    roleLabel: string;
+    displayName: string;
+    workspaceName: string;
+  };
 };
 
 type CopilotAnswerData = {
@@ -39,8 +44,6 @@ const DRAWER_COPY: Record<UiLocale, {
   currentEntity: string;
   openWorkspace: string;
   openWorkspaceAria: string;
-  introTitle: string;
-  introBody: string;
   loading: string;
   inputPlaceholder: string;
   unavailable: string;
@@ -55,8 +58,6 @@ const DRAWER_COPY: Record<UiLocale, {
     currentEntity: "当前",
     openWorkspace: "打开全屏 AI助手",
     openWorkspaceAria: "打开 AI助手工作区",
-    introTitle: "我是 StudioOS 内置 AI助手。",
-    introBody: "V1 只基于你有权限访问的真实数据做查询和解释，不会执行付款、删除、释放资金或修改订单状态。",
     loading: "正在读取 StudioOS 数据...",
     inputPlaceholder: "问 StudioOS AI助手...",
     unavailable: "AI助手暂时不可用，请稍后再试。",
@@ -71,9 +72,6 @@ const DRAWER_COPY: Record<UiLocale, {
     currentEntity: "current",
     openWorkspace: "Open full AI Assistant",
     openWorkspaceAria: "Open AI Assistant workspace",
-    introTitle: "I am the built-in StudioOS AI Assistant.",
-    introBody:
-      "V1 only queries and explains data you are allowed to access. It will not make payments, delete data, release funds, or change order status.",
     loading: "Reading StudioOS data...",
     inputPlaceholder: "Ask StudioOS AI Assistant...",
     unavailable: "AI Assistant is temporarily unavailable. Please try again later.",
@@ -109,6 +107,78 @@ function contextLabel(pathname: string, locale: UiLocale) {
   return "StudioOS";
 }
 
+function roleKindFromPath(pathname: string): "brand" | "creator" | "admin" | "auto" {
+  if (pathname.startsWith("/brand")) return "brand";
+  if (pathname.startsWith("/studio") || pathname.startsWith("/creator")) return "creator";
+  if (pathname.startsWith("/admin")) return "admin";
+  return "auto";
+}
+
+function localGreetingPrefix(locale: UiLocale, hour: number) {
+  if (locale === "zh") {
+    if (hour >= 5 && hour < 12) return "早上好";
+    if (hour >= 12 && hour < 18) return "下午好";
+    if (hour >= 18 && hour < 24) return "晚上好";
+    return "夜深了";
+  }
+  if (hour >= 5 && hour < 12) return "Good morning";
+  if (hour >= 12 && hour < 18) return "Good afternoon";
+  if (hour >= 18 && hour < 24) return "Good evening";
+  return "It is late";
+}
+
+function fallbackDisplayName(role: ReturnType<typeof roleKindFromPath>, locale: UiLocale) {
+  if (locale === "en") {
+    if (role === "creator") return "Creator";
+    if (role === "brand") return "Brand";
+    if (role === "admin") return "Admin";
+    return "there";
+  }
+  if (role === "creator") return "创作者";
+  if (role === "brand") return "品牌方";
+  if (role === "admin") return "管理员";
+  return "你好";
+}
+
+function welcomeBody(input: { pathname: string; role: ReturnType<typeof roleKindFromPath>; locale: UiLocale }) {
+  const { pathname, role, locale } = input;
+  if (locale === "en") {
+    if (pathname.startsWith("/brand/attribution")) {
+      return "I can help analyze attribution data for this campaign and identify which channels, creators, or content are driving better results.";
+    }
+    if (pathname.startsWith("/studio/ai") || pathname.startsWith("/studio/copilot")) {
+      return "This is your AI workspace. I can help review recent invitations, orders, earnings, and profile optimization ideas.";
+    }
+    if (role === "creator") {
+      return "I can help you review invitations, orders, earnings, and portfolio performance, or analyze what to improve on your profile.";
+    }
+    if (role === "brand") {
+      return "I can help you review campaigns, find recommended creators, analyze ad performance, and organize your next steps.";
+    }
+    if (role === "admin") {
+      return "I can help review platform health, order exceptions, withdrawal requests, user data, and operational tasks that need attention.";
+    }
+    return "Tell me what you are working on today, and I will help organize the key next steps.";
+  }
+
+  if (pathname.startsWith("/brand/attribution")) {
+    return "我可以帮你分析当前 Campaign 的归因数据，看看哪些渠道、Creator 或内容带来了更好的效果。";
+  }
+  if (pathname.startsWith("/studio/ai") || pathname.startsWith("/studio/copilot")) {
+    return "这里是你的 AI 工作台。我可以帮你查看最近的邀请、订单、收益和主页优化建议。";
+  }
+  if (role === "creator") {
+    return "我可以帮你查看邀请、订单、收益、作品表现，也可以帮你分析主页哪里还能优化。";
+  }
+  if (role === "brand") {
+    return "我可以帮你查看 Campaign、推荐 Creator、分析广告表现，也可以协助你整理下一步计划。";
+  }
+  if (role === "admin") {
+    return "我可以帮你查看平台状态、订单异常、提现申请、用户数据和需要处理的运营事项。";
+  }
+  return "你可以告诉我今天想处理什么，我会帮你把重点和下一步整理出来。";
+}
+
 function workspaceHref(pathname: string, searchParams: { get(name: string): string | null }) {
   const base = pathname.startsWith("/admin")
     ? "/admin/ai"
@@ -142,6 +212,8 @@ export function AiCopilotDrawer() {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<ChatLine[]>([]);
   const [suggestions, setSuggestions] = useState<string[]>(copy.defaultSuggestions);
+  const [workspace, setWorkspace] = useState<SessionListData["workspace"] | null>(null);
+  const [localHour, setLocalHour] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
@@ -157,7 +229,23 @@ export function AiCopilotDrawer() {
     return query ? `/api/ai-copilot?${query}` : "/api/ai-copilot";
   }, [pageContext.languageCode]);
   const roleLabel = contextLabel(pathname, locale);
+  const roleKind = roleKindFromPath(pathname);
+  const displayName = workspace?.displayName?.trim() || fallbackDisplayName(roleKind, locale);
+  const introTitle =
+    localHour == null
+      ? locale === "zh"
+        ? `你好，${displayName} 😊`
+        : `Hi, ${displayName} 😊`
+      : `${localGreetingPrefix(locale, localHour)}${locale === "zh" ? "，" : ", "}${displayName} 😊`;
+  const introBody = welcomeBody({ pathname, role: roleKind, locale });
   const workspaceUrl = workspaceHref(pathname, searchParams);
+
+  useEffect(() => {
+    const syncLocalHour = () => setLocalHour(new Date().getHours());
+    syncLocalHour();
+    const interval = window.setInterval(syncLocalHour, 60_000);
+    return () => window.clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (messages.length === 0) setSuggestions(copy.defaultSuggestions);
@@ -177,6 +265,7 @@ export function AiCopilotDrawer() {
       .then((payload) => {
         if (cancelled || !payload.data) return;
         setSuggestions(payload.data.suggestedQuestions);
+        setWorkspace(payload.data.workspace ?? null);
       })
       .catch((err) => {
         if (!cancelled) setError(err instanceof Error ? err.message : copy.unavailable);
@@ -290,8 +379,8 @@ export function AiCopilotDrawer() {
             <div className="flex-1 space-y-4 overflow-y-auto bg-[#fbfbff] p-5">
               {messages.length === 0 ? (
                 <div className="rounded-3xl border border-dashed border-violet-200 bg-white p-5 text-sm text-slate-600 shadow-sm">
-                  <p className="font-medium text-slate-950">{copy.introTitle}</p>
-                  <p className="mt-2">{copy.introBody}</p>
+                  <p className="font-medium text-slate-950">{introTitle}</p>
+                  <p className="mt-2">{introBody}</p>
                 </div>
               ) : null}
 
