@@ -1,6 +1,7 @@
 import "server-only";
 
 import crypto from "node:crypto";
+import { cookies } from "next/headers";
 import type { OAuthEntryRole } from "@/features/auth/oauth-auth.service";
 import type { Locale } from "@/lib/i18n";
 
@@ -14,6 +15,8 @@ export type OAuthStatePayload = {
 /** Alipay `state` must be base64url-only and <= 100 chars (no dots). */
 const ALIPAY_STATE_MAX_LEN = 100;
 const ALIPAY_STATE_SIG_LEN = 16;
+export const ALIPAY_OAUTH_PENDING_COOKIE = "studioos_alipay_oauth";
+const ALIPAY_OAUTH_PENDING_MAX_AGE_SEC = 600;
 
 function oauthStateSecret() {
   return (
@@ -84,6 +87,33 @@ export function decodeAlipayOAuthState(raw: string | null | undefined): OAuthSta
 /** Legacy encoder kept for backwards compatibility during rollout. */
 export function encodeOAuthState(payload: OAuthStatePayload) {
   return encodeAlipayOAuthState(payload);
+}
+
+/** Persist Alipay login context in a cookie — authorize URL omits `state` (Alipay rejects some values). */
+export async function stashAlipayOAuthState(payload: OAuthStatePayload) {
+  const cookieStore = await cookies();
+  cookieStore.set(ALIPAY_OAUTH_PENDING_COOKIE, encodeAlipayOAuthState(payload), {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: ALIPAY_OAUTH_PENDING_MAX_AGE_SEC,
+    path: "/"
+  });
+}
+
+export async function consumeAlipayOAuthState(
+  urlState: string | null | undefined
+): Promise<OAuthStatePayload | null> {
+  const cookieStore = await cookies();
+  const fromCookie = cookieStore.get(ALIPAY_OAUTH_PENDING_COOKIE)?.value;
+  cookieStore.delete(ALIPAY_OAUTH_PENDING_COOKIE);
+
+  if (fromCookie) {
+    const decoded = decodeAlipayOAuthState(fromCookie);
+    if (decoded) return decoded;
+  }
+
+  return decodeOAuthState(urlState);
 }
 
 export function decodeOAuthState(raw: string | null | undefined): OAuthStatePayload | null {

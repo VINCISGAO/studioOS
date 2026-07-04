@@ -26,14 +26,15 @@ export class AlipayOAuthService {
     return hasAlipayOAuthConfig();
   }
 
-  buildAuthorizeUrl(statePayload: OAuthStatePayload) {
+  buildAuthorizeUrl(statePayload: OAuthStatePayload, options?: { includeStateInUrl?: boolean }) {
     const config = getAlipayOAuthConfig();
     if (!config) {
       throw new Error("Alipay OAuth is not configured");
     }
 
     const redirectUri = alipayOAuthRedirectUri();
-    const state = encodeAlipayOAuthState(statePayload);
+    const includeStateInUrl = options?.includeStateInUrl ?? false;
+    const state = includeStateInUrl ? encodeAlipayOAuthState(statePayload) : "";
 
     if (alipayOAuthMode() === "gateway") {
       return buildAlipaySignedGatewayUrl({
@@ -44,7 +45,7 @@ export class AlipayOAuthService {
         params: { return_url: redirectUri },
         bizContent: {
           scopes: ["auth_user"],
-          state
+          ...(includeStateInUrl && state ? { state } : {})
         }
       });
     }
@@ -52,9 +53,11 @@ export class AlipayOAuthService {
     const params = new URLSearchParams({
       app_id: config.appId,
       scope: "auth_user",
-      redirect_uri: redirectUri,
-      state
+      redirect_uri: redirectUri
     });
+    if (includeStateInUrl && state) {
+      params.set("state", state);
+    }
 
     return `${config.authBaseUrl}/oauth2/publicAppAuthorize.htm?${params.toString()}`;
   }

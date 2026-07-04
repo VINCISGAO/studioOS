@@ -5,14 +5,14 @@ import {
   completeAlipaySignIn,
   oauthFailureRedirect
 } from "@/features/auth/oauth-auth.service";
-import { decodeOAuthState } from "@/features/auth/oauth-state";
+import { consumeAlipayOAuthState } from "@/features/auth/oauth-state";
 
 export const runtime = "nodejs";
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const authCode = requestUrl.searchParams.get("auth_code");
-  const state = decodeOAuthState(requestUrl.searchParams.get("state"));
+  const state = await consumeAlipayOAuthState(requestUrl.searchParams.get("state"));
   const entryRole = state?.entryRole ?? "brand";
   const lang = state?.lang ?? "zh";
   const nextPath = state?.nextPath ?? "";
