@@ -32,6 +32,7 @@ export async function GET() {
         "若仍报「数据出错」，在错误页按 Ctrl+A / Command+A 查看 E004 详情"
       ]
     },
-    sampleAuthorizeUrl: `${config.authorizePath}?app_id=${config.appId}&scope=auth_user&redirect_uri=${config.encodedRedirectUri}`
+    sampleAuthorizeUrl: config.sampleAuthorizeUrl,
+    note: "Login button uses the same URL (no state param). Context is stored in httpOnly cookie."
   });
 }

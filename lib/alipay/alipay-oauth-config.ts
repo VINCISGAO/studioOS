@@ -58,6 +58,11 @@ export function alipayOAuthMode(): "openauth" | "gateway" {
   return readEnv("ALIPAY_OAUTH_MODE") === "gateway" ? "gateway" : "openauth";
 }
 
+/** Canonical publicAppAuthorize URL — must match Alipay docs (redirect_uri encoded once, no state). */
+export function buildAlipayPublicAuthorizeUrl(config: AlipayOAuthConfig, redirectUri: string) {
+  return `${config.authBaseUrl}/oauth2/publicAppAuthorize.htm?app_id=${config.appId}&scope=auth_user&redirect_uri=${encodeURIComponent(redirectUri)}`;
+}
+
 export function getAlipayOAuthPublicConfig() {
   const config = getAlipayOAuthConfig();
   if (!config) return null;
@@ -69,6 +74,7 @@ export function getAlipayOAuthPublicConfig() {
     encodedRedirectUri: encodeURIComponent(redirectUri),
     authMode: alipayOAuthMode(),
     sandbox: config.authBaseUrl.includes("alipaydev"),
-    authorizePath: `${config.authBaseUrl}/oauth2/publicAppAuthorize.htm`
+    authorizePath: `${config.authBaseUrl}/oauth2/publicAppAuthorize.htm`,
+    sampleAuthorizeUrl: buildAlipayPublicAuthorizeUrl(config, redirectUri)
   };
 }

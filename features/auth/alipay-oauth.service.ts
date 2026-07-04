@@ -3,6 +3,7 @@ import "server-only";
 import {
   alipayOAuthMode,
   alipayOAuthRedirectUri,
+  buildAlipayPublicAuthorizeUrl,
   getAlipayOAuthConfig,
   hasAlipayOAuthConfig
 } from "@/lib/alipay/alipay-oauth-config";
@@ -26,17 +27,17 @@ export class AlipayOAuthService {
     return hasAlipayOAuthConfig();
   }
 
-  buildAuthorizeUrl(statePayload: OAuthStatePayload, options?: { includeStateInUrl?: boolean }) {
+  /** Openauth mode never puts `state` in the URL — Alipay rejects it; context is stored in a cookie. */
+  buildAuthorizeUrl(statePayload?: OAuthStatePayload) {
     const config = getAlipayOAuthConfig();
     if (!config) {
       throw new Error("Alipay OAuth is not configured");
     }
 
     const redirectUri = alipayOAuthRedirectUri();
-    const includeStateInUrl = options?.includeStateInUrl ?? false;
-    const state = includeStateInUrl ? encodeAlipayOAuthState(statePayload) : "";
 
     if (alipayOAuthMode() === "gateway") {
+      const state = statePayload ? encodeAlipayOAuthState(statePayload) : "";
       return buildAlipaySignedGatewayUrl({
         gatewayUrl: config.gatewayUrl,
         appId: config.appId,
@@ -45,21 +46,12 @@ export class AlipayOAuthService {
         params: { return_url: redirectUri },
         bizContent: {
           scopes: ["auth_user"],
-          ...(includeStateInUrl && state ? { state } : {})
+          ...(state ? { state } : {})
         }
       });
     }
 
-    const params = new URLSearchParams({
-      app_id: config.appId,
-      scope: "auth_user",
-      redirect_uri: redirectUri
-    });
-    if (includeStateInUrl && state) {
-      params.set("state", state);
-    }
-
-    return `${config.authBaseUrl}/oauth2/publicAppAuthorize.htm?${params.toString()}`;
+    return buildAlipayPublicAuthorizeUrl(config, redirectUri);
   }
 
   async exchangeAuthCode(authCode: string): Promise<AlipayOAuthProfile> {

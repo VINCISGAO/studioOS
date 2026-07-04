@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { startOAuthSignIn, type OAuthProvider } from "@/features/auth/oauth-start.service";
 import type { OAuthEntryRole } from "@/features/auth/oauth-auth.service";
+import {
+  ALIPAY_OAUTH_PENDING_COOKIE,
+  alipayOAuthPendingCookieOptions
+} from "@/features/auth/oauth-state";
 import type { Locale } from "@/lib/i18n";
 
 export const runtime = "nodejs";
@@ -62,7 +66,18 @@ async function handleOAuthStart(request: Request, providerRaw: string) {
     nextPath: parsed.nextPath
   });
 
-  return NextResponse.redirect(destination.startsWith("http") ? destination : new URL(destination, request.url));
+  if (typeof destination !== "string" && destination.kind === "alipay") {
+    const response = NextResponse.redirect(destination.authorizeUrl);
+    response.cookies.set(
+      ALIPAY_OAUTH_PENDING_COOKIE,
+      destination.pendingCookie,
+      alipayOAuthPendingCookieOptions(request)
+    );
+    return response;
+  }
+
+  const target = typeof destination === "string" ? destination : destination.authorizeUrl;
+  return NextResponse.redirect(target.startsWith("http") ? target : new URL(target, request.url));
 }
 
 export async function GET(

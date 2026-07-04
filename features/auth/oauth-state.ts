@@ -89,16 +89,31 @@ export function encodeOAuthState(payload: OAuthStatePayload) {
   return encodeAlipayOAuthState(payload);
 }
 
-/** Persist Alipay login context in a cookie — authorize URL omits `state` (Alipay rejects some values). */
-export async function stashAlipayOAuthState(payload: OAuthStatePayload) {
-  const cookieStore = await cookies();
-  cookieStore.set(ALIPAY_OAUTH_PENDING_COOKIE, encodeAlipayOAuthState(payload), {
+export function encodeAlipayOAuthPendingCookie(payload: OAuthStatePayload) {
+  return encodeAlipayOAuthState(payload);
+}
+
+export function alipayOAuthPendingCookieOptions(request: Request) {
+  const secure = new URL(request.url).protocol === "https:";
+  return {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    secure,
+    sameSite: "lax" as const,
     maxAge: ALIPAY_OAUTH_PENDING_MAX_AGE_SEC,
     path: "/"
-  });
+  };
+}
+
+/** @deprecated Prefer setting cookie on the redirect Response in the OAuth API route. */
+export async function stashAlipayOAuthState(payload: OAuthStatePayload, request?: Request) {
+  const cookieStore = await cookies();
+  const secureRequest =
+    request ?? new Request(process.env.NEXT_PUBLIC_APP_URL?.trim() || "http://localhost:3000");
+  cookieStore.set(
+    ALIPAY_OAUTH_PENDING_COOKIE,
+    encodeAlipayOAuthPendingCookie(payload),
+    alipayOAuthPendingCookieOptions(secureRequest)
+  );
 }
 
 export async function consumeAlipayOAuthState(

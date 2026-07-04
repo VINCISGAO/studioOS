@@ -17,18 +17,25 @@ export async function GET(request: Request) {
   const lang = state?.lang ?? "zh";
   const nextPath = state?.nextPath ?? "";
 
-  if (!state) {
-    return NextResponse.redirect(
-      new URL(oauthFailureRedirect("支付宝登录状态无效，请重试。", entryRole, lang), request.url)
-    );
-  }
-
   if (!authCode) {
     const oauthError =
       requestUrl.searchParams.get("error_description") ??
       requestUrl.searchParams.get("error") ??
       "支付宝授权已取消";
     return NextResponse.redirect(new URL(oauthFailureRedirect(oauthError, entryRole, lang), request.url));
+  }
+
+  if (!state) {
+    return NextResponse.redirect(
+      new URL(
+        oauthFailureRedirect(
+          "支付宝登录会话已过期，请从登录页重新点击支付宝图标（不要直接打开授权链接）。",
+          entryRole,
+          lang
+        ),
+        request.url
+      )
+    );
   }
 
   try {

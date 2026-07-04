@@ -1,8 +1,14 @@
 import "server-only";
 
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { alipayOAuthService } from "@/features/auth/alipay-oauth.service";
-import { stashAlipayOAuthState } from "@/features/auth/oauth-state";
+import {
+  ALIPAY_OAUTH_PENDING_COOKIE,
+  alipayOAuthPendingCookieOptions,
+  encodeAlipayOAuthPendingCookie,
+  type OAuthStatePayload
+} from "@/features/auth/oauth-state";
 import { authSecurityService } from "@/features/auth/auth-security.service";
 import { AUTH_ERROR_COPY } from "@/features/auth/auth-error-copy";
 import type { OAuthEntryRole } from "@/features/auth/oauth-auth.service";
@@ -23,11 +29,19 @@ export type OAuthStartInput = {
   nextPath: string;
 };
 
+export type AlipayOAuthStartResult = {
+  kind: "alipay";
+  authorizeUrl: string;
+  pendingCookie: string;
+};
+
+export type OAuthStartResult = string | AlipayOAuthStartResult;
+
 function loginErrorUrl(lang: Locale, entryRole: OAuthEntryRole, error: string) {
   return `/login?error=${encodeURIComponent(error)}&lang=${lang}&role=${entryRole}`;
 }
 
-export async function startOAuthSignIn(input: OAuthStartInput): Promise<string> {
+export async function startOAuthSignIn(input: OAuthStartInput): Promise<OAuthStartResult> {
   const { request, provider, lang, entryRole, nextPath } = input;
 
   const oauthGate = await authSecurityService.enforceOAuthStart({ request, provider });
@@ -44,14 +58,17 @@ export async function startOAuthSignIn(input: OAuthStartInput): Promise<string> 
       return loginErrorUrl(lang, entryRole, AUTH_ERROR_COPY.oauthFailed);
     }
 
-    const statePayload = {
-      provider: "alipay" as const,
+    const statePayload: OAuthStatePayload = {
+      provider: "alipay",
       entryRole,
       lang,
       nextPath
     };
-    await stashAlipayOAuthState(statePayload);
-    return alipayOAuthService.buildAuthorizeUrl(statePayload);
+    return {
+      kind: "alipay",
+      authorizeUrl: alipayOAuthService.buildAuthorizeUrl(statePayload),
+      pendingCookie: encodeAlipayOAuthPendingCookie(statePayload)
+    };
   }
 
   if (provider !== "google") {
@@ -91,5 +108,15 @@ export async function startOAuthSignIn(input: OAuthStartInput): Promise<string> 
 
 /** Used by server actions — throws redirect(). */
 export async function startOAuthSignInAction(input: OAuthStartInput): Promise<never> {
-  redirect(await startOAuthSignIn(input));
+  const result = await startOAuthSignIn(input);
+  if (typeof result !== "string" && result.kind === "alipay") {
+    const cookieStore = await cookies();
+    cookieStore.set(
+      ALIPAY_OAUTH_PENDING_COOKIE,
+      result.pendingCookie,
+      alipayOAuthPendingCookieOptions(input.request)
+    );
+    redirect(result.authorizeUrl);
+  }
+  redirect(typeof result === "string" ? result : result.authorizeUrl);
 }
