@@ -77,14 +77,33 @@ export async function callAlipayOpenApi(input: {
 
   const errorNode = json.error_response;
   if (errorNode && typeof errorNode === "object") {
-    const message =
-      "sub_msg" in errorNode && typeof errorNode.sub_msg === "string"
-        ? errorNode.sub_msg
-        : "msg" in errorNode && typeof errorNode.msg === "string"
-          ? errorNode.msg
-          : "Alipay API error";
-    throw new Error(message);
+    throw new Error(formatAlipayError(errorNode));
+  }
+
+  const businessError = findAlipayBusinessError(json);
+  if (businessError) {
+    throw new Error(businessError);
   }
 
   return json;
+}
+
+function formatAlipayError(errorNode: Record<string, unknown>) {
+  const subMsg = typeof errorNode.sub_msg === "string" ? errorNode.sub_msg : "";
+  const msg = typeof errorNode.msg === "string" ? errorNode.msg : "Alipay API error";
+  const subCode = typeof errorNode.sub_code === "string" ? errorNode.sub_code : "";
+  return [subMsg || msg, subCode ? `(${subCode})` : ""].filter(Boolean).join(" ");
+}
+
+function findAlipayBusinessError(json: Record<string, unknown>) {
+  for (const value of Object.values(json)) {
+    if (!value || typeof value !== "object") continue;
+    const node = value as Record<string, unknown>;
+    const code = node.code;
+    if (code === "10000" || code === 10000) continue;
+    if (typeof code === "string" || typeof code === "number") {
+      return formatAlipayError(node);
+    }
+  }
+  return null;
 }
