@@ -419,9 +419,9 @@ export function CreatorProfileStudio({
     setAvatarUploading(true);
     try {
       const uploadFile = await compressImageForUpload(file, {
-        maxBytes: 3.5 * 1024 * 1024,
-        maxDimension: 1200,
-        quality: 0.82,
+        maxBytes: 1.8 * 1024 * 1024,
+        maxDimension: 1000,
+        quality: 0.78,
         fileNamePrefix: "creator-avatar"
       });
       const fd = new FormData();

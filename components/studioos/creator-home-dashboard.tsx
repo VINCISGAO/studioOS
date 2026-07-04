@@ -42,7 +42,7 @@ function useLocalDayPart() {
 const copy = {
   zh: {
     welcome: (dayPart: DayPart | null) =>
-      dayPart === "morning" ? "早上好" : dayPart === "afternoon" ? "下午好" : dayPart === "evening" ? "晚上好" : "欢迎回来",
+      dayPart === "morning" ? "早上好" : dayPart === "afternoon" ? "下午好" : dayPart === "evening" ? "晚上好" : "你好",
     calendar: "日历视图",
     totalEarnings: "累计收入",
     activeProjects: "进行中项目",
@@ -66,7 +66,7 @@ const copy = {
           ? "Good afternoon"
           : dayPart === "evening"
             ? "Good evening"
-            : "Welcome back",
+            : "Hi",
     calendar: "Calendar",
     totalEarnings: "Total earnings",
     activeProjects: "Active projects",
@@ -107,13 +107,14 @@ export function CreatorHomeDashboard({
 }) {
   const t = copy[locale];
   const dayPart = useLocalDayPart();
+  const displayName = creatorName.trim() || (locale === "zh" ? "朋友" : "there");
   const dateLabel = useMemo(() => {
     if (useDemoDate) {
       return creatorHomeDemoDateLabel(locale);
     }
     const today = new Date();
     return locale === "zh"
-      ? `今天是 ${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日，${["日", "一", "二", "三", "四", "五", "六"][today.getDay()]}`
+      ? `今天是 ${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日，星期${["日", "一", "二", "三", "四", "五", "六"][today.getDay()]}`
       : today.toLocaleDateString("en-US", {
           weekday: "long",
           year: "numeric",
@@ -126,8 +127,8 @@ export function CreatorHomeDashboard({
     <div className="space-y-6">
       <section className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 sm:text-[28px]">
-            {t.welcome(dayPart)}，{creatorName} 👋
+          <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 sm:text-3xl lg:text-[34px]">
+            {t.welcome(dayPart)} 👋 {displayName}
           </h1>
           <p className="mt-1 text-sm text-zinc-500">{dateLabel}</p>
         </div>

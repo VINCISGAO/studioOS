@@ -11,11 +11,8 @@ import {
   Compass,
   Database,
   ExternalLink,
-  Home,
-  Layers3,
   Loader2,
   MessageSquare,
-  RotateCw,
   Send,
   Settings,
   Sparkles,
@@ -106,8 +103,6 @@ type UiLocale = "zh" | "en";
 const UI_COPY: Record<UiLocale, {
   title: string;
   subtitle: string;
-  rolePrefix: string;
-  workspacePrefix: string;
   nav: {
     copilot: string;
     chats: string;
@@ -121,7 +116,6 @@ const UI_COPY: Record<UiLocale, {
   proTipTitle: string;
   proTipBody: string;
   learnMore: string;
-  tryAsk: string;
   loadingWorkspaceName: string;
   loadingGreeting: string;
   inputPlaceholder: string;
@@ -143,8 +137,6 @@ const UI_COPY: Record<UiLocale, {
   zh: {
     title: "StudioOS AI助手",
     subtitle: "你的 AI 创作者操作系统",
-    rolePrefix: "角色",
-    workspacePrefix: "工作区",
     nav: {
       copilot: "AI助手",
       chats: "聊天",
@@ -158,7 +150,6 @@ const UI_COPY: Record<UiLocale, {
     proTipTitle: "使用建议",
     proTipBody: "AI 可以帮你分析表现、寻找创作者，并优化广告项目。",
     learnMore: "了解更多 →",
-    tryAsk: "你可以试着问我",
     loadingWorkspaceName: "正在读取数据库",
     loadingGreeting: "正在同步你的真实资料",
     inputPlaceholder: "询问任何关于 StudioOS 的问题...",
@@ -174,14 +165,12 @@ const UI_COPY: Record<UiLocale, {
     done: "完成",
     untitled: "未命名",
     disclaimer: "AI 生成的内容仅供参考，请结合实际情况判断和使用。",
-    toolSteps: ["读取项目数据", "分析创作者数据", "匹配度计算", "生成建议"],
+    toolSteps: ["项目数据", "用户资料", "匹配度", "生成建议"],
     compactPageTitle: "打开紧凑版 AI助手"
   },
   en: {
     title: "StudioOS AI Assistant",
     subtitle: "Your AI Creator Operating System",
-    rolePrefix: "Role",
-    workspacePrefix: "Workspace",
     nav: {
       copilot: "AI Assistant",
       chats: "Chats",
@@ -195,7 +184,6 @@ const UI_COPY: Record<UiLocale, {
     proTipTitle: "Pro Tip",
     proTipBody: "AI Assistant can help you analyze performance, find creators, and optimize campaigns.",
     learnMore: "Learn more →",
-    tryAsk: "You can ask me",
     loadingWorkspaceName: "Reading database",
     loadingGreeting: "Syncing your real profile",
     inputPlaceholder: "Ask anything about StudioOS...",
@@ -213,28 +201,6 @@ const UI_COPY: Record<UiLocale, {
     disclaimer: "AI-generated content is for reference only. Please use your own judgment.",
     toolSteps: ["Read project data", "Analyze creator data", "Calculate match score", "Generate suggestions"],
     compactPageTitle: "Open compact AI Assistant"
-  }
-};
-
-const WORKSPACE_COPY: Record<WorkspaceMode, {
-  role: string;
-  prompts: string[];
-}> = {
-  brand: {
-    role: "Brand",
-    prompts: ["为什么推荐这个创作者？", "我的项目现在到哪一步？", "我的预算健康度如何？", "最近 AI 学到了什么？"]
-  },
-  creator: {
-    role: "Creator",
-    prompts: ["为什么最近没接到单？", "我怎么提高接单率？", "我的主页哪里需要优化？", "我的收益什么时候可提现？"]
-  },
-  admin: {
-    role: "Admin",
-    prompts: ["今天成交多少？", "哪些订单异常？", "哪些 Creator 被投诉？", "哪些提现需要处理？"]
-  },
-  auto: {
-    role: "Auto",
-    prompts: ["我的项目现在到哪一步？", "下一步我应该做什么？", "查看订单", "查看通知"]
   }
 };
 
@@ -272,22 +238,6 @@ function uiLocaleFromSearch(searchParams: { get(name: string): string | null }):
   return searchParams.get("lang") === "en" ? "en" : "zh";
 }
 
-function roleName(mode: WorkspaceMode, locale: UiLocale) {
-  if (locale === "en") return WORKSPACE_COPY[mode].role;
-  if (mode === "brand") return "广告主";
-  if (mode === "creator") return "创作者";
-  if (mode === "admin") return "管理员";
-  return "自动识别";
-}
-
-function localizedRoleLabel(role: string, locale: UiLocale) {
-  if (locale === "en") return role;
-  if (role === "Brand") return "广告主";
-  if (role === "Creator") return "创作者";
-  if (role === "Admin") return "管理员";
-  return role;
-}
-
 function compactHref(mode: WorkspaceMode, searchParams: { get(name: string): string | null }) {
   const base = mode === "brand"
     ? "/brand/copilot"
@@ -322,7 +272,6 @@ export function AiWorkspacePage({ mode }: AiWorkspacePageProps) {
   const searchParams = useSearchParams();
   const uiLocale = useMemo(() => uiLocaleFromSearch(searchParams), [searchParams]);
   const ui = UI_COPY[uiLocale];
-  const copy = WORKSPACE_COPY[mode];
   const context = useMemo(
     () => ({ ...inferPageContext(pathname), languageCode: languageFromSearch(searchParams) }),
     [pathname, searchParams]
@@ -337,7 +286,6 @@ export function AiWorkspacePage({ mode }: AiWorkspacePageProps) {
   const [workspace, setWorkspace] = useState<WorkspaceSnapshot | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatLine[]>([]);
-  const [suggestions, setSuggestions] = useState<string[]>(copy.prompts);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [booting, setBooting] = useState(true);
@@ -359,7 +307,6 @@ export function AiWorkspacePage({ mode }: AiWorkspacePageProps) {
         if (cancelled || !payload.data) return;
         setSessions(payload.data.sessions);
         setWorkspace(payload.data.workspace ?? null);
-        setSuggestions(payload.data.suggestedQuestions.length ? payload.data.suggestedQuestions : copy.prompts);
       })
       .catch((err) => setError(err instanceof Error ? err.message : ui.unavailable))
       .finally(() => {
@@ -368,7 +315,7 @@ export function AiWorkspacePage({ mode }: AiWorkspacePageProps) {
     return () => {
       cancelled = true;
     };
-  }, [copy.prompts, sessionsUrl, ui.unavailable]);
+  }, [sessionsUrl, ui.unavailable]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -394,7 +341,6 @@ export function AiWorkspacePage({ mode }: AiWorkspacePageProps) {
       }
       setSessionId(payload.data.session.id);
       setMessages(payload.data.session.messages.filter((message) => message.role !== "SYSTEM"));
-      setSuggestions(payload.data.suggestedQuestions);
     } catch (err) {
       setError(err instanceof Error ? err.message : ui.loadFailed);
     } finally {
@@ -431,7 +377,6 @@ export function AiWorkspacePage({ mode }: AiWorkspacePageProps) {
       }
       const data = payload.data;
       setSessionId(data.sessionId);
-      setSuggestions(data.suggestedQuestions);
       setMessages((current) => [
         ...current,
         { id: data.messageId, role: "ASSISTANT", content: data.answer, feedback: null }
@@ -480,18 +425,16 @@ export function AiWorkspacePage({ mode }: AiWorkspacePageProps) {
     }
   }
 
-  const displayRole = localizedRoleLabel(workspace?.roleLabel ?? roleName(mode, uiLocale), uiLocale);
   const displayWorkspace = workspace?.workspaceName ?? ui.loadingWorkspaceName;
   const displayGreeting =
     workspace && localHour != null
       ? `${localGreetingPrefix(uiLocale, localHour)}${uiLocale === "zh" ? "，" : ", "}${workspace.displayName}`
       : workspace?.greeting ?? ui.loadingGreeting;
-  const displaySubtitle = workspace?.subtitle ?? ui.booting;
   const displayStats = workspace?.stats ?? [];
 
   return (
-    <main className="h-auto overflow-visible rounded-[2rem] border border-slate-200 bg-white text-[#171923] shadow-sm lg:h-[calc(100dvh-8.5rem)] lg:max-h-[calc(100dvh-8.5rem)] lg:overflow-hidden">
-      <div className="grid h-auto min-h-0 grid-cols-1 overflow-visible lg:h-full lg:overflow-hidden">
+    <main className="h-[calc(100dvh-7rem)] min-h-[640px] overflow-hidden bg-white text-[#171923] sm:rounded-[2rem] sm:border sm:border-slate-200 sm:shadow-sm lg:h-[calc(100dvh-8.5rem)] lg:max-h-[calc(100dvh-8.5rem)]">
+      <div className="grid h-full min-h-0 grid-cols-1 overflow-hidden">
         <aside className="hidden">
           <div className="flex items-center gap-2 text-lg font-semibold">
             <Sparkles className="h-5 w-5 fill-violet-500 text-violet-500" />
@@ -549,15 +492,15 @@ export function AiWorkspacePage({ mode }: AiWorkspacePageProps) {
           </div>
         </aside>
 
-        <section className="flex h-auto min-h-0 min-w-0 flex-col bg-white lg:h-full">
-          <header className="flex shrink-0 items-center justify-between border-b border-slate-100 px-5 py-4 sm:px-6">
-            <div className="flex items-center gap-4">
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-indigo-500 text-white shadow-lg shadow-violet-200">
-                <Sparkles className="h-7 w-7 fill-white" />
+        <section className="flex h-full min-h-0 min-w-0 flex-col bg-white">
+          <header className="flex shrink-0 items-center justify-between border-b border-slate-100 px-4 py-4 sm:px-6">
+            <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-indigo-500 text-white shadow-lg shadow-violet-200 sm:h-14 sm:w-14">
+                <Sparkles className="h-5 w-5 fill-white sm:h-7 sm:w-7" />
               </div>
-              <div>
-                <h1 className="text-xl font-semibold sm:text-2xl">{ui.title}</h1>
-                <p className="text-sm text-slate-500">{ui.subtitle}</p>
+              <div className="min-w-0">
+                <h1 className="truncate text-lg font-semibold sm:text-2xl">{ui.title}</h1>
+                <p className="truncate text-xs text-slate-500 sm:text-sm">{ui.subtitle}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -571,56 +514,35 @@ export function AiWorkspacePage({ mode }: AiWorkspacePageProps) {
             </div>
           </header>
 
-          <div className="flex min-h-0 flex-1 justify-center overflow-visible lg:overflow-hidden">
-            <div className="flex min-h-0 w-full max-w-none flex-col px-5 py-4 sm:px-6">
-              <div className="flex flex-wrap gap-3">
-                <span className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600 shadow-sm">
-                  <Home className="h-3.5 w-3.5 text-violet-500" />
-                  {ui.rolePrefix}: {displayRole}
-                </span>
-                <span className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600 shadow-sm">
-                  <Layers3 className="h-3.5 w-3.5 text-indigo-500" />
-                  {ui.workspacePrefix}: {displayWorkspace}
-                </span>
-              </div>
-
-              <div className="mt-3 shrink-0 rounded-[1.5rem] border border-violet-100 bg-gradient-to-br from-white via-white to-violet-50 p-3 shadow-sm sm:p-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <h2 className="text-2xl font-semibold">👋 {displayGreeting}</h2>
-                    <p className="mt-3 text-sm text-slate-600">{displaySubtitle}</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => void refreshSessions()}
-                    className="rounded-full border border-slate-200 bg-white p-2 text-slate-400 hover:text-slate-700"
-                  >
-                    <RotateCw className="h-4 w-4" />
-                  </button>
+          <div className="flex min-h-0 flex-1 justify-center overflow-hidden">
+            <div className="flex min-h-0 w-full max-w-none flex-1 flex-col px-4 py-4 sm:px-6">
+              <div className="shrink-0 rounded-[1.5rem] border border-violet-100 bg-gradient-to-br from-white via-white to-violet-50 p-3 shadow-sm sm:p-4 lg:p-3 xl:p-4">
+                <div className="min-w-0">
+                  <h2 className="text-xl font-semibold leading-snug sm:text-2xl">👋 {displayGreeting}</h2>
                 </div>
-                <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:mt-2">
                   {displayStats.length > 0
                     ? displayStats.map((stat) => {
                         const Icon = statIcon(stat.icon);
                         return (
                           <div
                             key={stat.label}
-                            className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-white px-4 py-3 shadow-sm"
+                            className="flex min-h-[52px] items-center justify-between gap-2 rounded-2xl border border-slate-100 bg-white px-3 py-2.5 shadow-sm xl:min-h-0 xl:gap-3 xl:px-4 xl:py-3"
                           >
-                            <div className="flex shrink-0 items-center gap-2.5">
-                              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-100 text-violet-600">
-                                <Icon className="h-4 w-4" />
+                            <div className="flex min-w-0 shrink-0 items-center gap-2">
+                              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-100 text-violet-600 sm:h-7 sm:w-7 xl:h-8 xl:w-8">
+                                <Icon className="h-4 w-4 sm:h-3.5 sm:w-3.5 xl:h-4 xl:w-4" />
                               </span>
-                              <span className="text-2xl font-semibold">{stat.value}</span>
+                              <span className="text-xl font-semibold sm:text-xl xl:text-2xl">{stat.value}</span>
                             </div>
-                            <p className="min-w-0 text-right text-sm font-medium text-slate-700">{stat.label}</p>
+                            <p className="min-w-0 flex-1 truncate text-right text-xs font-medium text-slate-700 xl:text-sm">{stat.label}</p>
                           </div>
                         );
                       })
                     : Array.from({ length: 4 }).map((_, index) => (
                         <div
                           key={index}
-                          className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-white px-4 py-3 shadow-sm"
+                          className="flex min-h-[52px] items-center justify-between gap-2 rounded-2xl border border-slate-100 bg-white px-3 py-2.5 shadow-sm xl:min-h-0 xl:gap-3 xl:px-4 xl:py-3"
                         >
                           <div className="flex shrink-0 items-center gap-2.5">
                             <span className="h-8 w-8 animate-pulse rounded-full bg-violet-100" />
@@ -632,29 +554,7 @@ export function AiWorkspacePage({ mode }: AiWorkspacePageProps) {
                 </div>
               </div>
 
-              <div className="mt-4 shrink-0">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold">{ui.tryAsk}</p>
-                  <button type="button" className="text-slate-400" onClick={() => setSuggestions(copy.prompts)}>
-                    <RotateCw className="h-4 w-4" />
-                  </button>
-                </div>
-                <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-                  {suggestions.slice(0, 4).map((prompt) => (
-                    <button
-                      key={prompt}
-                      type="button"
-                      onClick={() => void sendMessage(prompt)}
-                      className="flex min-h-[52px] items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-left text-sm text-slate-700 shadow-sm transition hover:border-violet-200 hover:bg-violet-50"
-                    >
-                      <Sparkles className="h-4 w-4 shrink-0 text-violet-500" />
-                      {prompt}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="mt-4 min-h-0 space-y-4 overflow-visible pb-4 lg:flex-1 lg:overflow-y-auto">
+              <div className="mt-4 min-h-0 flex-1 space-y-4 overflow-y-auto pb-4">
                 {sessions.length > 0 && messages.length === 0 ? (
                   <div className="flex gap-2 overflow-x-auto pb-1">
                     {sessions.slice(0, 6).map((session) => (
@@ -679,7 +579,7 @@ export function AiWorkspacePage({ mode }: AiWorkspacePageProps) {
                     ) : null}
                     <div
                       className={cn(
-                        "max-w-[min(680px,88%)] whitespace-pre-wrap rounded-3xl px-5 py-4 text-sm leading-relaxed",
+                        "max-w-[min(680px,88%)] whitespace-pre-wrap rounded-3xl px-4 py-3 text-sm leading-relaxed sm:px-5 sm:py-4",
                         message.role === "USER"
                           ? "bg-violet-600 text-white shadow-lg shadow-violet-100"
                           : "border border-slate-200 bg-white text-slate-800 shadow-sm"
@@ -732,24 +632,24 @@ export function AiWorkspacePage({ mode }: AiWorkspacePageProps) {
                 <div ref={bottomRef} />
               </div>
 
-              <div className="shrink-0 border-t border-slate-100 bg-white pb-4 pt-3">
+              <div className="mt-auto shrink-0 border-t border-slate-100 bg-white pb-4 pt-3">
                 <div className="mb-3 flex items-center gap-2 text-xs text-slate-500">
                   <Sparkles className="h-4 w-4 fill-violet-500 text-violet-500" />
                   <span>{loading ? ui.loading : booting ? ui.booting : ui.ready}</span>
                 </div>
-                <div className="mb-3 grid gap-2 md:grid-cols-2 xl:grid-cols-4">
+                <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
                   {toolSteps.map((step, index) => {
                     const Icon = step.icon;
                     return (
-                      <div key={step.label} className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs">
-                        <span className="flex items-center gap-2 text-slate-600">
+                      <div key={step.label} className="flex min-h-[40px] items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs">
+                        <span className="flex min-w-0 items-center gap-2 text-slate-600">
                           <Icon className="h-4 w-4 text-violet-500" />
-                          {ui.toolSteps[index] ?? step.label}
+                          <span className="truncate">{ui.toolSteps[index] ?? step.label}</span>
                         </span>
                         {loading && index === 3 ? (
                           <Loader2 className="h-4 w-4 animate-spin text-violet-500" />
                         ) : (
-                          <span className="flex items-center gap-1 text-emerald-600">
+                          <span className="flex shrink-0 items-center gap-1 text-emerald-600">
                             <Check className="h-3.5 w-3.5" />
                             {ui.done}
                           </span>

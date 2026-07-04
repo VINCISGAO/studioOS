@@ -491,16 +491,16 @@ export function BrandCampaignStepBrief({
     setPreviewUrl(localPreview);
 
     startUpload(async () => {
-      const uploadFile = await compressImageForUpload(file, {
-        maxBytes: 3.5 * 1024 * 1024,
-        maxDimension: 1600,
-        quality: 0.82,
-        fileNamePrefix: "product"
-      });
-      const fd = new FormData();
-      fd.set("image_file", uploadFile);
-
       try {
+        const uploadFile = await compressImageForUpload(file, {
+          maxBytes: 1.8 * 1024 * 1024,
+          maxDimension: 1400,
+          quality: 0.78,
+          fileNamePrefix: "product"
+        });
+        const fd = new FormData();
+        fd.set("image_file", uploadFile);
+
         const res = await fetch(
           `/api/brand/projects/${encodeURIComponent(projectId)}/product-image?lang=${locale}`,
           {
@@ -538,11 +538,14 @@ export function BrandCampaignStepBrief({
         setProductReady(true);
         setPreviewUrl(productPreviewSrc(result.preview_url ?? result.original?.file_url ?? localPreview));
         onProductUploaded?.();
-      } catch {
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "";
         setUploadError(
           locale === "zh"
-            ? "网络错误，请检查连接后重试"
-            : "Network error — check your connection and try again"
+            ? message.includes("too large")
+              ? "图片压缩后仍然过大，请换一张更小的图片"
+              : "图片处理或上传失败，请换一张更小的 JPG/PNG 图片"
+            : message || "Image processing failed — try a smaller image"
         );
         setProductReady(false);
       }
