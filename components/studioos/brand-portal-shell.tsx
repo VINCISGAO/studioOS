@@ -7,6 +7,7 @@ import { PortalMobileNav } from "@/components/studioos/portal-mobile-nav";
 import { LanguageSwitcher, LanguageSwitcherFallback } from "@/components/language-switcher";
 import { MarketingHomeLink } from "@/components/studioos/marketing-home-link";
 import { StudioUserMenu } from "@/components/studioos/studio-user-menu";
+import { PortalSidebarAccountMenu } from "@/components/studioos/portal-sidebar-account-menu";
 import { brandNav, studioOS } from "@/lib/studioos/vocabulary";
 import { brandPortalNavItems, type BrandPortalNavItem } from "@/lib/studioos/brand-portal-nav";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
@@ -23,7 +24,7 @@ import {
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
-import { Bell, ChevronDown, Home, LayoutDashboard, Sparkles } from "lucide-react";
+import { Bell, Home, LayoutDashboard, Sparkles } from "lucide-react";
 
 function brandInitials(name: string) {
   return name
@@ -90,7 +91,7 @@ function BrandPortalShellInner({
     initials,
     userName: brandAccount?.name,
     profileHref: brandPortalRoutes.brandProfile,
-    roleLabel: locale === "zh" ? "广告主" : "Brand",
+    roleLabel: locale === "zh" ? "品牌方" : "Brand",
     unreadMessageCount,
     messagesHref: brandPortalRoutes.messages
   };
@@ -240,18 +241,13 @@ function BrandPortalShellInner({
 
           <div className="mt-auto shrink-0 border-t border-zinc-100 p-4">
             {brandAccount ? (
-              <div className="flex items-center gap-3 rounded-xl bg-zinc-50 px-3 py-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-sm font-semibold text-white">
-                  {initials.slice(0, 2)}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-zinc-900">{brandAccount.name}</p>
-                  <p className="truncate text-xs text-zinc-500">
-                    {locale === "zh" ? "品牌管理员" : "Brand admin"}
-                  </p>
-                </div>
-                <ChevronDown className="h-4 w-4 shrink-0 text-zinc-400" />
-              </div>
+              <PortalSidebarAccountMenu
+                locale={locale}
+                initials={initials}
+                name={brandAccount.name}
+                roleLabel={locale === "zh" ? "品牌方" : "Brand"}
+                profileHref={brandPortalRoutes.brandProfile}
+              />
             ) : null}
           </div>
         </aside>

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { PortalMobileNav } from "@/components/studioos/portal-mobile-nav";
 import { StudioNotificationBell } from "@/components/studioos/studio-notification-bell";
 import { StudioUserMenu } from "@/components/studioos/studio-user-menu";
+import { PortalSidebarAccountMenu } from "@/components/studioos/portal-sidebar-account-menu";
 import { MarketingHomeLink } from "@/components/studioos/marketing-home-link";
 import { LanguageSwitcher, LanguageSwitcherFallback } from "@/components/language-switcher";
 import { CertifiedPartnerBadge } from "@/components/studioos/certification/certified-partner-badge";
@@ -200,22 +201,14 @@ function StudioPortalShellInner({
 
           <div className="mt-auto shrink-0 border-t border-zinc-100 p-4">
             {creator ? (
-              <div className="flex items-center gap-3 rounded-xl bg-zinc-50 px-3 py-3">
-                <div
-                  className={cn(
-                    "flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white",
-                    isVerified ? "bg-violet-600" : "bg-zinc-900"
-                  )}
-                >
-                  {initials.slice(0, 2)}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-zinc-900">{creator.name}</p>
-                  <p className="truncate text-xs text-zinc-500">
-                    {isVerified ? partnerBadge : nav.studioOwner}
-                  </p>
-                </div>
-              </div>
+              <PortalSidebarAccountMenu
+                locale={locale}
+                initials={initials}
+                name={creator.name}
+                roleLabel={locale === "zh" ? "创作者" : "Creator"}
+                profileHref={creatorPortalRoutes.profile}
+                accent={isVerified ? "violet" : "zinc"}
+              />
             ) : null}
           </div>
         </aside>
