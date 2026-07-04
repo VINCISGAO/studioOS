@@ -24,10 +24,7 @@ export function brandAvatarObjectKey(brandId: string, fileName: string) {
   return `brands/${brandId}/${fileName}`;
 }
 
-export async function saveBrandAvatarUpload(
-  brandId: string,
-  file: File
-): Promise<
+type BrandUploadResult =
   | {
       ok: true;
       url: string;
@@ -37,8 +34,13 @@ export async function saveBrandAvatarUpload(
       mime_type: string;
       size_bytes: number;
     }
-  | { ok: false; error: string }
-> {
+  | { ok: false; error: string };
+
+async function saveBrandImageUpload(
+  brandId: string,
+  file: File,
+  fileNamePrefix: "logo" | "cover"
+): Promise<BrandUploadResult> {
   if (!file.size) {
     return { ok: false, error: "Empty file" };
   }
@@ -52,54 +54,10 @@ export async function saveBrandAvatarUpload(
     return { ok: false, error: "Only JPEG, PNG, WebP, and GIF images are supported" };
   }
 
-  const fileName = `logo_${Date.now()}.${extForMime(mime)}`;
+  const fileName = `${fileNamePrefix}_${Date.now()}.${extForMime(mime)}`;
   const buffer = Buffer.from(await file.arrayBuffer());
   const fileKey = brandAvatarObjectKey(brandId, fileName);
-  let stored: Awaited<ReturnType<typeof putObject>>;
-  try {
-    stored = await putObject(fileKey, buffer, mime);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown storage error";
-    return {
-      ok: false,
-      error:
-        message.includes("Durable object storage")
-          ? "Production asset storage is not configured. Configure R2/S3 before uploading brand assets."
-          : `Failed to store brand asset: ${message}`
-    };
-  }
 
-export async function saveBrandCoverUpload(
-  brandId: string,
-  file: File
-): Promise<
-  | {
-      ok: true;
-      url: string;
-      file_name: string;
-      file_key: string;
-      storage_provider: string;
-      mime_type: string;
-      size_bytes: number;
-    }
-  | { ok: false; error: string }
-> {
-  if (!file.size) {
-    return { ok: false, error: "Empty file" };
-  }
-
-  if (file.size > MAX_BYTES) {
-    return { ok: false, error: "File exceeds 5MB limit" };
-  }
-
-  const mime = file.type || "application/octet-stream";
-  if (!ALLOWED_MIME.has(mime)) {
-    return { ok: false, error: "Only JPEG, PNG, WebP, and GIF images are supported" };
-  }
-
-  const fileName = `cover_${Date.now()}.${extForMime(mime)}`;
-  const buffer = Buffer.from(await file.arrayBuffer());
-  const fileKey = brandAvatarObjectKey(brandId, fileName);
   let stored: Awaited<ReturnType<typeof putObject>>;
   try {
     stored = await putObject(fileKey, buffer, mime);
@@ -123,4 +81,12 @@ export async function saveBrandCoverUpload(
     mime_type: mime,
     size_bytes: file.size
   };
+}
+
+export async function saveBrandAvatarUpload(brandId: string, file: File): Promise<BrandUploadResult> {
+  return saveBrandImageUpload(brandId, file, "logo");
+}
+
+export async function saveBrandCoverUpload(brandId: string, file: File): Promise<BrandUploadResult> {
+  return saveBrandImageUpload(brandId, file, "cover");
 }
