@@ -103,7 +103,7 @@ export function AdminLoginShell({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email,
-          code,
+          code: code.replace(/\s/g, ""),
           lang: locale,
           next: nextPath
         })

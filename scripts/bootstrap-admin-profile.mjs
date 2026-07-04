@@ -91,6 +91,29 @@ function permissionsWithoutBackupCodes(permissions) {
   return rest;
 }
 
+const BASE32_TOTP_PATTERN = /^[A-Z2-7]+=*$/;
+
+function assertValidAdminTotpSecret(secret, source) {
+  const normalized = secret.replace(/\s/g, "").toUpperCase();
+  if (normalized.length < 16) {
+    console.error(
+      `\nInvalid ADMIN_TOTP_SECRET from ${source}: too short (${normalized.length} chars).\n` +
+        "Do NOT paste placeholder text like「你的验证器密钥」.\n" +
+        "Run: node scripts/generate-admin-totp-secret.mjs gwxaxxw@gmail.com\n" +
+        "Then export the ADMIN_TOTP_SECRET=... line from that output.\n"
+    );
+    process.exit(1);
+  }
+  if (!BASE32_TOTP_PATTERN.test(normalized)) {
+    console.error(
+      `\nInvalid ADMIN_TOTP_SECRET from ${source}: must be Base32 (A-Z and 2-7 only).\n` +
+        "Run: node scripts/generate-admin-totp-secret.mjs gwxaxxw@gmail.com\n"
+    );
+    process.exit(1);
+  }
+  return normalized;
+}
+
 async function main() {
   if (isProductionRuntime() && !isBootstrapAllowedInProduction()) {
     console.error(
@@ -137,7 +160,7 @@ async function main() {
     let preservedTotp = false;
     const envSecret = process.env.ADMIN_TOTP_SECRET?.replace(/\s/g, "").toUpperCase();
     if (envSecret) {
-      secret = envSecret;
+      secret = assertValidAdminTotpSecret(envSecret, "environment");
       console.log("Using ADMIN_TOTP_SECRET from environment.");
     } else if (!rotateTotp && existingProfile?.totpSecretEnc) {
       try {
@@ -154,6 +177,7 @@ async function main() {
       }
     } else {
       secret = toBase32(randomBytes(20));
+      assertValidAdminTotpSecret(secret, "generator");
       console.log(rotateTotp ? "Generated new TOTP secret (--rotate-totp)." : "Generated new TOTP secret.");
     }
 

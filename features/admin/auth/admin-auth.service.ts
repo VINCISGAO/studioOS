@@ -19,7 +19,7 @@ import {
   setAdminSessionCookie
 } from "@/features/admin/auth/admin-session-server";
 import { assertAuthSecuritySecret, isProductionRuntime } from "@/lib/auth/admin-security-config";
-import { assertAdminSecretsProductionReady } from "@/lib/auth/admin-secrets-guard";
+import { assertAdminCoreSecretsProductionReady } from "@/lib/auth/admin-secrets-guard";
 import { notifyAdminLoginSuccess } from "@/features/admin/auth/admin-security-alert.service";
 import { verifyAndConsumeAdminTotp } from "@/features/admin/auth/admin-totp-replay.service";
 import { deriveDeviceLabel } from "@/features/admin/auth/admin-session-management.service";
@@ -126,7 +126,7 @@ export async function loginAdminWithTotp(input: {
   });
 
   try {
-    assertAdminSecretsProductionReady();
+    assertAdminCoreSecretsProductionReady();
     assertAuthSecuritySecret();
   } catch {
     return { ok: false as const, error: publicLoginFailure(locale, "securityMisconfigured") };

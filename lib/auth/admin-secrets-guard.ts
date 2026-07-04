@@ -28,8 +28,8 @@ function isWeakSecret(value: string) {
   return WEAK_SECRET_PATTERNS.some((pattern) => normalized.includes(pattern));
 }
 
-/** Fail fast when admin crypto secrets are missing or exposed in production. */
-export function assertAdminSecretsProductionReady() {
+/** Core secrets required for admin login, sessions, and TOTP crypto. */
+export function assertAdminCoreSecretsProductionReady() {
   if (!isProductionRuntime()) return;
 
   const dedicated = process.env.AUTH_SECURITY_SECRET?.trim();
@@ -41,12 +41,6 @@ export function assertAdminSecretsProductionReady() {
 
   if (!process.env.DATABASE_URL?.trim()) {
     throw new Error("DATABASE_URL must be set in production (server-only env, never NEXT_PUBLIC_).");
-  }
-
-  if (!process.env.RESEND_API_KEY?.trim()) {
-    throw new Error(
-      "RESEND_API_KEY must be set in production — sub-admin setup links must be emailed directly, not returned via API."
-    );
   }
 
   for (const [key, value] of Object.entries(process.env)) {
@@ -61,6 +55,19 @@ export function assertAdminSecretsProductionReady() {
     ) {
       throw new Error(`Sensitive env var must not use NEXT_PUBLIC_ prefix: ${key}`);
     }
+  }
+}
+
+/** Full production guard — includes email delivery for sub-admin provisioning. */
+export function assertAdminSecretsProductionReady() {
+  assertAdminCoreSecretsProductionReady();
+
+  if (!isProductionRuntime()) return;
+
+  if (!process.env.RESEND_API_KEY?.trim()) {
+    throw new Error(
+      "RESEND_API_KEY must be set in production — sub-admin setup links must be emailed directly, not returned via API."
+    );
   }
 }
 

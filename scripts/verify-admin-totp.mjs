@@ -66,6 +66,7 @@ function hotp(secretBuf, counter) {
 
 async function main() {
   const email = process.argv[2]?.trim().toLowerCase() ?? "gwxaxxw@gmail.com";
+  const codeArg = process.argv[3]?.replace(/\s/g, "") ?? "";
   const prisma = new PrismaClient();
   try {
     const profile = await prisma.adminProfile.findFirst({
@@ -87,11 +88,22 @@ async function main() {
     });
 
     const secretUsed = resolveSecret();
-    console.log("Resolved AUTH key source:", {
+    const authMeta = {
       hasAuthSecuritySecret: Boolean(process.env.AUTH_SECURITY_SECRET?.trim()),
       hasNextAuthSecret: Boolean(process.env.NEXTAUTH_SECRET?.trim()),
       usingDefault: secretUsed === DEFAULT_DEV_SECRET
-    });
+    };
+    console.log("Resolved AUTH key source:", authMeta);
+
+    if (authMeta.usingDefault) {
+      console.warn(
+        "\n⚠️  AUTH_SECURITY_SECRET not set locally — DB TOTP was likely encrypted with dev default.\n" +
+          "   Production Vercel requires a real AUTH_SECURITY_SECRET. Set it in .env.local and Vercel,\n" +
+          "   then re-run: npm run bootstrap:admin -- --master " +
+          email +
+          "\n"
+      );
+    }
 
     let plain;
     try {
@@ -102,9 +114,12 @@ async function main() {
       if (secretUsed !== DEFAULT_DEV_SECRET) {
         try {
           plain = decryptTotpSecret(profile.totpSecretEnc, DEFAULT_DEV_SECRET);
-          console.log("Decrypt OK with DEFAULT dev secret — AUTH_SECURITY_SECRET mismatch!");
+          console.log("\n❌ DB was encrypted with DEV default secret, but .env.local AUTH differs.");
+          console.log("   Fix: re-bootstrap after AUTH_SECURITY_SECRET is final:\n");
+          console.log("   export ADMIN_TOTP_SECRET=<your authenticator base32>");
+          console.log("   npm run bootstrap:admin -- --master " + email + "\n");
         } catch {
-          console.error("Also failed with default dev secret.");
+          console.error("Also failed with default dev secret — re-bootstrap required.");
         }
       }
       process.exit(1);
@@ -112,11 +127,27 @@ async function main() {
 
     const key = base32ToBuffer(plain);
     const counter = Math.floor(Date.now() / 1000 / 30);
-    console.log("Expected codes now:", {
+    const codes = {
       prev: hotp(key, counter - 1),
       now: hotp(key, counter),
       next: hotp(key, counter + 1)
-    });
+    };
+    console.log("Expected codes now:", codes);
+
+    if (/^\d{6}$/.test(codeArg)) {
+      const match =
+        codeArg === codes.now || codeArg === codes.prev || codeArg === codes.next;
+      console.log(match ? "\n✅ Code matches — login should work if Vercel uses the SAME AUTH_SECURITY_SECRET." : "\n❌ Code does NOT match — re-scan otpauth URI or re-bootstrap ADMIN_TOTP_SECRET.");
+    } else if (codeArg) {
+      console.warn("\n⚠️  Pass a 6-digit code as 3rd argument to verify a specific attempt.");
+    }
+
+    console.log(
+      "\nProduction checklist:\n" +
+        "  1. Vercel → AUTH_SECURITY_SECRET = same value as .env.local (Value field only, no KEY=)\n" +
+        "  2. Redeploy after saving env\n" +
+        "  3. Use a fresh 6-digit code (never reuse within 2 minutes)\n"
+    );
   } finally {
     await prisma.$disconnect();
   }

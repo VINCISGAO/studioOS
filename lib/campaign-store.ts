@@ -255,7 +255,8 @@ export async function getCreativeBrief(projectId: string): Promise<StoredCreativ
 export function buildTemplateBrief(project: StoredProject, referenceCount: number): StoredCreativeBrief {
   const product = project.product_name || project.company_name;
   const objective = project.commercial_objective || project.campaign_goal || "launch";
-  const summary = `Launch a ${objective}-focused commercial for ${product}. Style aligns to ${project.style_presets.join(", ") || project.brand_style || "premium minimal"}. Optimized for ${project.aspect_ratios.join(", ") || "9:16"} short-form placements.`;
+  const styles = (project.style_presets ?? []).join(", ") || project.brand_style || "premium minimal";
+  const summary = `Launch a ${objective}-focused commercial for ${product}. Style aligns to ${styles}. Optimized for ${(project.aspect_ratios ?? []).join(", ") || "9:16"} short-form placements.`;
 
   return {
     id: createId("brief"),
@@ -273,7 +274,7 @@ export function buildTemplateBrief(project: StoredProject, referenceCount: numbe
     commercial_objective: String(objective),
     competitor_style: "Avoid generic UGC; lean cinematic with clear product education.",
     executive_summary: summary,
-    full_brief_md: `# Creative Brief — ${product}\n\n${summary}\n\n## References analyzed\n${referenceCount} reference(s) inform pacing and hook structure.\n\n## Deliverables\n${project.output_quantity || project.video_count} video(s), ${project.video_lengths.join(", ") || "30s"}, ${project.aspect_ratios.join(", ") || "9:16"}.`,
+    full_brief_md: `# Creative Brief — ${product}\n\n${summary}\n\n## References analyzed\n${referenceCount} reference(s) inform pacing and hook structure.\n\n## Deliverables\n${project.output_quantity || project.video_count} video(s), ${(project.video_lengths ?? []).join(", ") || "30s"}, ${(project.aspect_ratios ?? []).join(", ") || "9:16"}.`,
     confidence_score: referenceCount >= 2 ? 0.82 : 0.65,
     ai_model: "template",
     created_at: new Date().toISOString()

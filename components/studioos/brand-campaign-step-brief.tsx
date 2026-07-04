@@ -654,7 +654,10 @@ export function BrandCampaignStepBrief({
 
     const payloadAll = resolveBriefForContinue(form);
     const hasVisual = Boolean(form.productUrl.trim()) || productReady;
-    const hasBrief = payloadAll.productDescription.trim() || payloadAll.rawSummary.trim();
+    const hasBrief =
+      payloadAll.productDescription.trim() ||
+      payloadAll.rawSummary.trim() ||
+      payloadAll.productName.trim();
 
     if (!hasVisual || !hasBrief) {
       setLocalError(t.needInput);

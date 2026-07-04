@@ -39,7 +39,7 @@ import {
   resolveDeliveryTimelineFromProject
 } from "@/lib/studioos/brand-campaign-options";
 import { cn } from "@/lib/utils";
-import { Check, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 
 type WizardData = {
   project: StoredProject;
@@ -230,14 +230,26 @@ export function BrandCampaignWizard({
     fd.set("project_id", projectId);
     appendBriefForm(fd, state);
 
+    const timeoutMs = 45_000;
+    const timeoutError =
+      locale === "zh"
+        ? "保存超时，请检查网络后重试；草稿已尽量保留在本地。"
+        : "Save timed out. Check your connection and try again.";
+
     try {
-      const result = await saveBrandCampaignSetupAction(fd);
+      const result = await Promise.race([
+        saveBrandCampaignSetupAction(fd),
+        new Promise<{ ok: false; error: string }>((resolve) => {
+          window.setTimeout(() => resolve({ ok: false, error: timeoutError }), timeoutMs);
+        })
+      ]);
+
       if (!result.ok) {
         setError(result.error);
         return;
       }
-      router.refresh();
       goStep(2);
+      router.refresh();
     } catch {
       setError(locale === "zh" ? "保存失败，请重试" : "Save failed — try again");
     } finally {
@@ -245,16 +257,16 @@ export function BrandCampaignWizard({
     }
   }
 
-  const maxWidth = step === 1 || step === 2 ? "max-w-6xl" : "max-w-3xl";
+  const maxWidth = step === 1 ? "max-w-6xl" : step === 2 ? "max-w-[1440px]" : "max-w-3xl";
 
   return (
     <div className={cn("mx-auto w-full", maxWidth)}>
+      {step !== 2 ? (
       <div className="mb-8">
         <WizardStepper locale={locale} currentStep={step} variant="brand" />
         <div className="mt-6 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
           <div className={cn("max-w-2xl", step === 3 && "mx-auto text-center lg:mx-0 lg:text-left")}>
             <h1 className="flex items-center justify-center gap-2 text-3xl font-semibold tracking-tight text-zinc-950 sm:text-[32px] lg:justify-start">
-              {step === 2 ? <Sparkles className="h-7 w-7 text-violet-600" /> : null}
               {meta.headline[locale]}
               {step === 3 ? <Sparkles className="h-7 w-7 text-violet-600" /> : null}
             </h1>
@@ -272,23 +284,10 @@ export function BrandCampaignWizard({
                 <Sparkles className="h-3.5 w-3.5" />
               </div>
             </div>
-          ) : step === 2 ? (
-            <div className="relative hidden h-44 w-52 shrink-0 lg:block" aria-hidden>
-              <div className="absolute inset-0 rounded-[28px] bg-gradient-to-br from-violet-100 via-indigo-50 to-white shadow-[0_20px_60px_rgba(99,102,241,0.18)]" />
-              <div className="absolute left-7 top-8 h-28 w-24 rotate-[-6deg] rounded-2xl bg-white shadow-lg ring-1 ring-violet-100" />
-              <div className="absolute left-10 top-12 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-500 text-white shadow-md">
-                <Check className="h-8 w-8" />
-              </div>
-              <div className="absolute right-6 top-6 flex h-10 w-10 items-center justify-center rounded-full bg-violet-600 text-white shadow-md">
-                <Sparkles className="h-4 w-4" />
-              </div>
-              <div className="absolute bottom-7 right-8 flex h-9 w-9 items-center justify-center rounded-full bg-indigo-500/90 text-white shadow-md">
-                <span className="ml-0.5 text-xs font-bold">▶</span>
-              </div>
-            </div>
           ) : null}
         </div>
       </div>
+      ) : null}
 
       {step === 1 ? (
         <BrandCampaignStepBrief
@@ -315,8 +314,11 @@ export function BrandCampaignWizard({
           project={initialData.project}
           budget={budget}
           delivery={delivery}
+          productImageUrl={productImageUrl}
           error={error}
           onBack={() => goStep(1)}
+          onSaveDraft={() => saveDraft(briefInitial)}
+          isSavingDraft={isSavingDraft}
           onConfirmed={() => {
             router.refresh();
             goStep(3);

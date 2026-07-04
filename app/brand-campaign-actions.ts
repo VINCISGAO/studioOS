@@ -445,7 +445,8 @@ export async function saveBrandCampaignSetupAction(formData: FormData) {
   const hasBrief =
     input.rawSummary ||
     input.productDescription ||
-    String(formData.get("campaign_goal") ?? "").trim();
+    String(formData.get("campaign_goal") ?? "").trim() ||
+    product_name;
 
   if (!hasBrief) {
     return {
@@ -542,15 +543,7 @@ export async function saveBrandCampaignSetupAction(formData: FormData) {
 
   revalidateBrandCampaign(projectId);
 
-  try {
-    await runBrandWizardDemoPrepareInstant(projectId, lang);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : lang === "zh" ? "方案生成失败" : "Plan generation failed";
-    return { ok: false as const, error: message };
-  }
-
-  revalidateBrandCampaign(projectId);
-  return { ok: true as const, nextStep: 2, prepared: true as const };
+  return { ok: true as const, nextStep: 2, prepared: false as const };
 }
 
 /** @deprecated Use saveBrandCampaignSetupAction */

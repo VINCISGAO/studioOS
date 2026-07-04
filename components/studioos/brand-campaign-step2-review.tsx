@@ -1,80 +1,81 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState, useTransition } from "react";
 import {
   approveBrandCreativeDirectionAction,
   generateBrandCreativeDirectionsAction
 } from "@/app/brand-campaign-actions";
-import { BrandCampaignStep2PlanPanel } from "@/components/studioos/brand-campaign-step2-plan-panel";
-import { Button } from "@/components/ui/button";
-import type { CreativeDirection } from "@/features/ai/creative-direction.types";
-import type { Locale } from "@/lib/i18n";
-import { withLocale } from "@/lib/i18n";
 import {
-  deliveryTimelineLabel,
-  resolveAspectRatioFromProject,
-  resolveDeliveryTimelineFromProject
-} from "@/lib/studioos/brand-campaign-options";
+  BrandCampaignStep2CompactScheme,
+  BrandCampaignStep2FeaturedScheme
+} from "@/components/studioos/brand-campaign-step2-scheme-cards";
+import { BrandCampaignStep2SchemeSidebar } from "@/components/studioos/brand-campaign-step2-scheme-sidebar";
+import { BrandCampaignStep2Footer } from "@/components/studioos/brand-campaign-step2-footer";
+import { WizardStepper } from "@/components/studioos/ui/wizard-stepper";
+import type { CreativeDirection } from "@/features/ai/creative-direction.types";
 import type { StoredProject } from "@/lib/project-types";
-import { ArrowRight, CheckCircle2, Loader2, Pencil, Sparkles } from "lucide-react";
+import { buildSchemeDisplayMetrics } from "@/lib/studioos/brand-campaign-scheme-metrics";
+import type { Locale } from "@/lib/i18n";
+import {
+  Brain,
+  Loader2,
+  Sparkles,
+  Target,
+  TrendingUp,
+  Zap
+} from "lucide-react";
 
 const copy = {
   en: {
-    edit: "Back to edit",
-    confirm: "Choose and freeze Production Brief",
-    generating: "AI is generating creative directions...",
-    chooseTitle: "Choose one creative direction",
-    chooseBody: "StudioOS will freeze the selected direction into the Production Brief. Matching will use this brief, not the draft.",
-    selected: "Selected",
-    choose: "Choose",
-    coreIdea: "Core idea",
-    hook: "Hook",
-    story: "Story",
-    tone: "Tone",
-    visualStyle: "Visual style",
-    shotList: "Shot list",
-    cta: "CTA",
-    recommendedCreatorType: "Recommended creator type",
-    recommendedBudget: "Recommended budget",
-    expectedOutcome: "Expected outcome"
+    generated: "schemes generated",
+    headline: "AI generated 3 high-conversion creative schemes for you",
+    subtitle:
+      "Each scheme is tailored to your brief, product strengths, and audience — pick one to freeze into your Production Brief.",
+    tagInsight: "Deep product insight",
+    tagAudience: "Audience psychology",
+    tagPlatform: "Platform algorithm fit",
+    tagPerformance: "Performance forecast",
+    generating: "Generating creative schemes…",
+    chooseError: "Choose one creative direction"
   },
   zh: {
-    edit: "返回修改",
-    confirm: "选择并冻结 Production Brief",
-    generating: "AI 正在生成创意方向...",
-    chooseTitle: "选择一个创意方向",
-    chooseBody: "StudioOS 会把你选择的方向冻结成 Production Brief。后续匹配只读取这份 Brief，不读取草稿。",
-    selected: "已选择",
-    choose: "选择",
-    coreIdea: "核心创意",
-    hook: "Hook",
-    story: "Story",
-    tone: "Tone",
-    visualStyle: "视觉风格",
-    shotList: "Shot List",
-    cta: "CTA",
-    recommendedCreatorType: "推荐创作者类型",
-    recommendedBudget: "推荐预算",
-    expectedOutcome: "预期效果"
+    generated: "套方案已生成",
+    headline: "AI 已为你生成 3 套高转化创意方案",
+    subtitle: "每套方案均基于你的需求、产品卖点与目标受众定制 — 选择一套后将冻结为 Production Brief。",
+    tagInsight: "深度洞察产品卖点",
+    tagAudience: "匹配受众心理",
+    tagPlatform: "平台算法偏好",
+    tagPerformance: "预测投放效果",
+    generating: "AI 正在生成创意方案…",
+    chooseError: "请先选择一个创意方向"
   }
 } as const;
+
+function parseBudgetFallback(budget: string) {
+  const match = budget.replace(/,/g, "").match(/\d+/);
+  return match ? Number(match[0]) : 300;
+}
 
 export function BrandCampaignStep2Review({
   locale,
   project,
   budget,
-  delivery,
+  productImageUrl,
   error,
   onBack,
+  onSaveDraft,
+  isSavingDraft,
   onConfirmed
 }: {
   locale: Locale;
   project: StoredProject;
   budget: string;
+  productImageUrl?: string | null;
   delivery: string;
   error?: string | null;
   onBack: () => void;
+  onSaveDraft?: () => void;
+  isSavingDraft?: boolean;
   onConfirmed: () => void;
 }) {
   const t = copy[locale];
@@ -84,17 +85,17 @@ export function BrandCampaignStep2Review({
   const [loadingDirections, setLoadingDirections] = useState(true);
   const [isPending, startTransition] = useTransition();
 
-  const timelineId = resolveDeliveryTimelineFromProject(project);
-  const deliveryLabel = deliveryTimelineLabel(timelineId, locale) || delivery;
-  const aspectRatio = resolveAspectRatioFromProject(project);
   const platforms =
-    project.target_platform ||
-    ((project.settings_json?.brand_questionnaire as { platforms?: string[] } | undefined)?.platforms?.join(
-      ", "
-    ) ??
-      "TikTok, Meta");
+    project.target_platform?.split(",").map((item) => item.trim()).filter(Boolean) ??
+    ((project.settings_json?.brand_questionnaire as { platforms?: string[] } | undefined)?.platforms ?? [
+      "TikTok",
+      "Instagram",
+      "YouTube"
+    ]);
 
+  const fallbackBudget = parseBudgetFallback(budget);
   const displayError = localError || error;
+  const schemeCount = directions.length || 3;
 
   useEffect(() => {
     let cancelled = false;
@@ -122,7 +123,7 @@ export function BrandCampaignStep2Review({
 
   function handleConfirm() {
     if (!selectedId) {
-      setLocalError(locale === "zh" ? "请先选择一个创意方向" : "Choose one creative direction");
+      setLocalError(t.chooseError);
       return;
     }
 
@@ -141,115 +142,124 @@ export function BrandCampaignStep2Review({
     });
   }
 
+  const featureTags = [
+    { icon: Brain, label: t.tagInsight },
+    { icon: Target, label: t.tagAudience },
+    { icon: Zap, label: t.tagPlatform },
+    { icon: TrendingUp, label: t.tagPerformance }
+  ];
+
+  const featured = directions[0];
+  const compact = directions.slice(1);
+
   return (
-    <div className="space-y-8 pb-28">
-      <BrandCampaignStep2PlanPanel
-        locale={locale}
-        projectId={project.id}
-        budget={budget}
-        deliveryLabel={deliveryLabel}
-        aspectRatio={aspectRatio}
-        platforms={platforms}
-        disabled={isPending}
-        onBack={onBack}
-      />
-
-      <section className="rounded-[28px] border border-violet-100 bg-white p-5 shadow-sm sm:p-6">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <p className="inline-flex items-center gap-1.5 rounded-full bg-violet-50 px-3 py-1 text-xs font-semibold text-violet-700">
-              <Sparkles className="h-3.5 w-3.5" />
-              CREATIVE_OPTIONS
-            </p>
-            <h2 className="mt-3 text-xl font-semibold text-zinc-950">{t.chooseTitle}</h2>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-500">{t.chooseBody}</p>
-          </div>
-          {loadingDirections ? (
-            <span className="inline-flex items-center gap-2 rounded-full bg-zinc-100 px-3 py-1.5 text-sm text-zinc-600">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              {t.generating}
-            </span>
-          ) : null}
-        </div>
-
-        <div className="mt-6 grid gap-4 lg:grid-cols-3">
-          {directions.map((direction, index) => {
-            const selected = selectedId === direction.id;
-            return (
-              <button
-                key={direction.id}
-                type="button"
-                onClick={() => {
-                  setSelectedId(direction.id);
-                  setLocalError(null);
-                }}
-                className={[
-                  "rounded-2xl border p-4 text-left transition",
-                  selected
-                    ? "border-violet-500 bg-violet-50 shadow-[0_16px_40px_rgba(124,58,237,0.14)]"
-                    : "border-zinc-200 bg-white hover:border-violet-200 hover:bg-violet-50/40"
-                ].join(" ")}
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-600">
-                    Direction {String.fromCharCode(65 + index)}
-                  </p>
-                  <span className={selected ? "text-xs font-semibold text-violet-700" : "text-xs text-zinc-400"}>
-                    {selected ? t.selected : t.choose}
-                  </span>
-                </div>
-                <h3 className="mt-3 text-lg font-semibold text-zinc-950">{direction.title}</h3>
-                <div className="mt-4 space-y-3 text-sm leading-6 text-zinc-600">
-                  <p><span className="font-semibold text-zinc-900">{t.coreIdea}:</span> {direction.coreIdea}</p>
-                  <p><span className="font-semibold text-zinc-900">{t.hook}:</span> {direction.hook}</p>
-                  <p><span className="font-semibold text-zinc-900">{t.story}:</span> {direction.story}</p>
-                  <p><span className="font-semibold text-zinc-900">{t.tone}:</span> {direction.tone}</p>
-                  <p><span className="font-semibold text-zinc-900">{t.visualStyle}:</span> {direction.visualStyle}</p>
-                  <div>
-                    <p className="font-semibold text-zinc-900">{t.shotList}</p>
-                    <ol className="mt-1 list-decimal space-y-1 pl-5">
-                      {direction.shotList.map((shot) => (
-                        <li key={shot}>{shot}</li>
-                      ))}
-                    </ol>
-                  </div>
-                  <p><span className="font-semibold text-zinc-900">{t.cta}:</span> {direction.cta}</p>
-                  <p><span className="font-semibold text-zinc-900">{t.recommendedCreatorType}:</span> {direction.recommendedCreatorType}</p>
-                  <p><span className="font-semibold text-zinc-900">{t.recommendedBudget}:</span> {direction.recommendedBudget}</p>
-                  <p><span className="font-semibold text-zinc-900">{t.expectedOutcome}:</span> {direction.expectedOutcome}</p>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </section>
-
-      {displayError ? <p className="text-sm text-red-600">{displayError}</p> : null}
-
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-zinc-200/80 bg-white/95 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-          <Button asChild variant="outline" className="h-11 rounded-xl border-zinc-200 bg-white">
-            <Link href={withLocale(`/brand/projects/new?project=${project.id}&step=1`, locale)}>
-              <Pencil className="mr-2 h-4 w-4" />
-              {t.edit}
-            </Link>
-          </Button>
-          <Button
-            type="button"
-            className="h-11 rounded-xl bg-violet-600 px-8 hover:bg-violet-700 disabled:opacity-50"
-            disabled={isPending || loadingDirections || !selectedId}
-            onClick={handleConfirm}
-          >
-            {isPending ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <CheckCircle2 className="mr-2 h-4 w-4" />
-            )}
-            {t.confirm}
-            {!isPending ? <ArrowRight className="ml-2 h-4 w-4" /> : null}
-          </Button>
+    <div className="pb-28">
+      <div className="mb-6 space-y-4">
+        <WizardStepper locale={locale} currentStep={2} variant="brand" />
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-500">
+          <span>
+            {locale === "zh" ? "已生成" : ""} {schemeCount} {t.generated}
+          </span>
+          <span>{locale === "zh" ? "67% 完成" : "67% complete"}</span>
         </div>
       </div>
+
+      <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="max-w-3xl">
+          <h1 className="flex items-start gap-2 text-2xl font-semibold tracking-tight text-zinc-950 sm:text-[28px]">
+            <Sparkles className="mt-1 h-7 w-7 shrink-0 text-violet-600" />
+            {t.headline}
+          </h1>
+          <p className="mt-3 text-sm leading-6 text-zinc-500 sm:text-base">{t.subtitle}</p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {featureTags.map(({ icon: Icon, label }) => (
+              <span
+                key={label}
+                className="inline-flex items-center gap-1.5 rounded-full border border-violet-100 bg-violet-50/80 px-3 py-1.5 text-xs font-medium text-violet-700"
+              >
+                <Icon className="h-3.5 w-3.5" />
+                {label}
+              </span>
+            ))}
+          </div>
+        </div>
+        <div className="relative hidden h-36 w-44 shrink-0 lg:block" aria-hidden>
+          <div className="absolute inset-0 rounded-[28px] bg-gradient-to-br from-violet-100 via-indigo-50 to-white shadow-[0_20px_60px_rgba(99,102,241,0.18)]" />
+          <div className="absolute left-7 top-8 h-24 w-20 rotate-[-6deg] rounded-2xl bg-white shadow-lg ring-1 ring-violet-100" />
+          <div className="absolute right-5 top-5 flex h-10 w-10 items-center justify-center rounded-full bg-violet-600 text-white shadow-md">
+            <Sparkles className="h-4 w-4" />
+          </div>
+          <div className="absolute bottom-6 right-7 flex h-9 w-9 items-center justify-center rounded-full bg-indigo-500 text-white shadow-md">
+            <span className="ml-0.5 text-xs font-bold">▶</span>
+          </div>
+        </div>
+      </div>
+
+      {loadingDirections ? (
+        <div className="flex items-center justify-center gap-2 rounded-2xl border border-zinc-200 bg-white py-20 text-sm text-zinc-600">
+          <Loader2 className="h-5 w-5 animate-spin text-violet-600" />
+          {t.generating}
+        </div>
+      ) : (
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
+          <div className="space-y-4">
+            {featured ? (
+              <BrandCampaignStep2FeaturedScheme
+                locale={locale}
+                direction={featured}
+                metrics={buildSchemeDisplayMetrics(featured, 0, locale, fallbackBudget)}
+                selected={selectedId === featured.id}
+                productImageUrl={productImageUrl ?? null}
+                platforms={platforms}
+                onSelect={() => {
+                  setSelectedId(featured.id);
+                  setLocalError(null);
+                }}
+              />
+            ) : null}
+
+            {compact.length ? (
+              <div className="grid gap-4 md:grid-cols-2">
+                {compact.map((direction, index) => (
+                  <BrandCampaignStep2CompactScheme
+                    key={direction.id}
+                    locale={locale}
+                    direction={direction}
+                    metrics={buildSchemeDisplayMetrics(direction, index + 1, locale, fallbackBudget)}
+                    selected={selectedId === direction.id}
+                    productImageUrl={productImageUrl ?? null}
+                    onSelect={() => {
+                      setSelectedId(direction.id);
+                      setLocalError(null);
+                    }}
+                  />
+                ))}
+              </div>
+            ) : null}
+          </div>
+
+          <BrandCampaignStep2SchemeSidebar
+            locale={locale}
+            directions={directions}
+            selectedId={selectedId}
+            platforms={platforms}
+            fallbackBudget={fallbackBudget}
+          />
+        </div>
+      )}
+
+      {displayError ? <p className="mt-4 text-sm text-red-600">{displayError}</p> : null}
+
+      <BrandCampaignStep2Footer
+        locale={locale}
+        isPending={isPending}
+        loadingDirections={loadingDirections}
+        selectedId={selectedId}
+        isSavingDraft={isSavingDraft}
+        onBack={onBack}
+        onSaveDraft={onSaveDraft}
+        onConfirm={handleConfirm}
+      />
     </div>
   );
 }

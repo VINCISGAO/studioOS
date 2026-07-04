@@ -198,26 +198,45 @@ export function LoginWorkspace({
             </div>
           </div>
           <div>
-            <h3 className="text-2xl font-semibold tracking-tight text-zinc-950">
+            <h3
+              className={cn(
+                "text-2xl font-semibold tracking-tight",
+                darkPanel ? "text-white" : "text-zinc-950"
+              )}
+            >
               {locale === "zh" ? "登录成功！" : "You're in!"}
             </h3>
-            <p className={cn("mt-2 text-sm", visual.cardMuted)}>
+            <p className={cn("mt-2 text-sm", darkPanel ? "text-zinc-200" : "text-zinc-600")}>
               {locale === "zh" ? "欢迎回到 StudioOS，你的工作台已准备好" : "Welcome back to StudioOS. Your workspace is ready."}
             </p>
           </div>
-          <div className="mx-auto max-w-sm rounded-2xl border border-violet-100 bg-violet-50/60 p-4 text-left">
+          <div
+            className={cn(
+              "mx-auto max-w-sm rounded-2xl border p-4 text-left",
+              darkPanel
+                ? "border-white/15 bg-white/[0.1]"
+                : "border-violet-100 bg-violet-50/80"
+            )}
+          >
             {[
               { icon: Rocket, title: locale === "zh" ? "开始你的创作" : "Start creating", body: locale === "zh" ? "创建项目，邀请团队，开启高效协作" : "Create projects and collaborate with your team" },
               { icon: Sparkles, title: locale === "zh" ? "探索强大功能" : "Explore AI tools", body: locale === "zh" ? "体验 AI 工具、项目管理与数据分析" : "Use AI, project management, and analytics" },
               { icon: Users, title: locale === "zh" ? "连接全球创作者" : "Connect globally", body: locale === "zh" ? "与优秀创作者和品牌建立合作" : "Work with top creators and brands" }
             ].map(({ icon: Icon, title, body }) => (
               <div key={title} className="flex gap-3 py-2">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-violet-600">
+                <span
+                  className={cn(
+                    "flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
+                    darkPanel ? "bg-violet-500/20 text-violet-200" : "bg-white text-violet-600"
+                  )}
+                >
                   <Icon className="h-4 w-4" />
                 </span>
                 <div>
-                  <p className="text-sm font-semibold text-zinc-900">{title}</p>
-                  <p className="mt-0.5 text-xs text-zinc-500">{body}</p>
+                  <p className={cn("text-sm font-semibold", darkPanel ? "text-white" : "text-zinc-900")}>{title}</p>
+                  <p className={cn("mt-0.5 text-xs leading-relaxed", darkPanel ? "text-zinc-300" : "text-zinc-600")}>
+                    {body}
+                  </p>
                 </div>
               </div>
             ))}
@@ -233,7 +252,7 @@ export function LoginWorkspace({
             {locale === "zh" ? "进入 StudioOS" : "Enter StudioOS"}
             <ArrowRight className="h-4 w-4" />
           </Button>
-          <p className={cn("text-xs", visual.cardMuted)}>
+          <p className={cn("text-xs", darkPanel ? "text-zinc-400" : "text-zinc-500")}>
             {locale === "zh" ? "我们重视你的数据安全，所有信息均加密保护" : "Your data is protected with encrypted security controls."}
           </p>
         </div>
