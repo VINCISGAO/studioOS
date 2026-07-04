@@ -1,4 +1,14 @@
 /** Video Engine config — Vol 06 + ADR-002 */
+function normalizeObjectStorageEndpoint(raw: string | undefined, bucket: string) {
+  const value = raw?.trim();
+  if (!value) return null;
+  const trimmed = value.replace(/\/+$/u, "");
+  const bucketSuffix = `/${bucket}`;
+  return trimmed.endsWith(bucketSuffix) ? trimmed.slice(0, -bucketSuffix.length) : trimmed;
+}
+
+const r2Bucket = process.env.R2_BUCKET?.trim() || "studioos";
+
 export const videoConfig = {
   /** simulate = demo/local manifest; ffmpeg = real transcode pipeline */
   workerMode: (process.env.VIDEO_WORKER_MODE ?? "simulate") as "simulate" | "ffmpeg",
@@ -15,10 +25,10 @@ export const videoConfig = {
   redisUrl: process.env.REDIS_URL?.trim() || null,
   queueName: "video.transcode",
   r2: {
-    endpoint: process.env.R2_ENDPOINT?.trim() || null,
+    endpoint: normalizeObjectStorageEndpoint(process.env.R2_ENDPOINT, r2Bucket),
     accessKey: process.env.R2_ACCESS_KEY?.trim() || null,
     secretKey: process.env.R2_SECRET_KEY?.trim() || null,
-    bucket: process.env.R2_BUCKET?.trim() || "studioos",
+    bucket: r2Bucket,
     region: process.env.R2_REGION?.trim() || "auto"
   },
   demoHlsUrl:

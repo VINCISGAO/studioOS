@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
+import { isObjectStorageConfigured } from "@/lib/core/config/video";
 
 export async function GET() {
   const checks: Record<string, "ok" | "skipped" | "error"> = {
     app: "ok",
-    database: "skipped"
+    database: "skipped",
+    objectStorage: isObjectStorageConfigured() ? "ok" : "skipped"
   };
 
   if (hasDatabaseUrl()) {
