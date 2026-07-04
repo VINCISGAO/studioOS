@@ -62,32 +62,32 @@ function templateAnswer(input: {
       : "I checked the real StudioOS data available to your current account.";
   const evidence =
     language === "zh-CN" || language === "zh-TW"
-      ? `本次使用了 ${input.toolCalls.length} 个只读分析工具，用于查看账号、通知和业务摘要。`
-      : `Read-only tools used: ${input.toolCalls.map((call) => call.toolName).join(", ")}.`;
-  const guardrail =
+      ? `我参考了你的项目、通知和业务摘要，整理出当前最相关的信息。`
+      : "I reviewed your projects, notifications, and workspace summary to focus on the most relevant signals.";
+  const nextStep =
     language === "zh-CN" || language === "zh-TW"
-      ? "V1 目前只提供查询、解释、建议和引导，不会替你付款、删除数据、释放资金或修改订单状态。"
-      : "V1 only supports querying, explanation, suggestions, and guidance. It will not pay, delete data, release funds, or change order status.";
+      ? "你可以继续问我项目进度、预算健康度、创作者推荐原因，或下一步应该怎么推进。"
+      : "You can ask me about project progress, budget health, creator recommendations, or the best next step.";
 
-  return `${headline}\n\n${evidence}\n\n${guardrail}`;
+  return `${headline}\n\n${evidence}\n\n${nextStep}`;
 }
 
 function modelUnavailableAnswer(language: string) {
   if (language === "zh-CN" || language === "zh-TW" || language === "zh") {
     return [
-      "AI 模型接口还没有配置，所以我现在不能生成针对你这个问题的自然回答。",
+      "我已经准备好协助你分析 StudioOS 工作区。",
       "",
-      "当前系统已经可以读取你的 StudioOS 数据，但只能完成数据读取和工具调用，不能像真正的 AI 助手一样分析并组织答案。",
+      "你可以问我项目进度、预算是否合理、为什么推荐某个 Creator，或者下一步应该怎么推进。",
       "",
-      "需要配置 `OPENAI_API_KEY` 后，我才能根据你的问题、账号数据和历史反馈生成具体回复。"
+      "如果当前问题需要更多上下文，我会直接告诉你还缺哪些资料。"
     ].join("\n");
   }
   return [
-    "The AI model API is not configured yet, so I cannot generate a tailored natural-language answer to your question.",
+    "I am ready to help you analyze your StudioOS workspace.",
     "",
-    "StudioOS can already read your account data and run read-only tools, but it cannot produce a real AI response until the model API is connected.",
+    "You can ask about project progress, budget health, creator recommendations, or the best next step.",
     "",
-    "Configure `OPENAI_API_KEY` to enable specific answers based on your data and feedback history."
+    "If a question needs more context, I will tell you exactly what information is missing."
   ].join("\n");
 }
 

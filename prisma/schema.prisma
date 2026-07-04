@@ -362,6 +362,33 @@ enum CreatorMembershipHistoryAction {
   UPGRADE_DECLINED
 }
 
+enum PartnerStatus {
+  ACTIVE
+  PAUSED
+  PENDING
+  ARCHIVED
+}
+
+enum PartnerTier {
+  STARTER
+  GROWTH
+  STRATEGIC
+}
+
+enum AcademyAudience {
+  BRAND
+  CREATOR
+  PARTNER
+  ADMIN
+  ALL
+}
+
+enum AcademyContentStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
 // ─── Users ───────────────────────────────────────────────────────────────────
 
 model User {
@@ -809,6 +836,8 @@ model Campaign {
   ledgerEntries   LedgerEntry[]
   conversations   Conversation[]
   attributions    Attribution[]
+  partnerPrograms PartnerProgram[]
+  academyCourses  AcademyCourse[]
 
   @@index([brandId])
   @@index([creatorId])
@@ -1512,7 +1541,7 @@ model AiJob {
 }
 
 model AIEvent {
-  id         String   @id @default(uuid())
+  id         String   @id @default(dbgenerated("gen_random_uuid()"))
   eventType  String   @map("event_type")
   entityType String   @map("entity_type")
   entityId   String   @map("entity_id")
@@ -1528,7 +1557,7 @@ model AIEvent {
 }
 
 model AILearning {
-  id            String   @id @default(uuid())
+  id            String   @id @default(dbgenerated("gen_random_uuid()"))
   sourceEventId String   @map("source_event_id")
   entityType    String   @map("entity_type")
   entityId      String   @map("entity_id")
@@ -1948,4 +1977,64 @@ model CreatorMembershipHistory {
 
   @@index([creatorId, createdAt])
   @@map("creator_membership_history")
+}
+
+model PartnerProgram {
+  id                    String        @id @default(dbgenerated("gen_random_uuid()"))
+  campaignId            String?       @map("campaign_id")
+  name                  String
+  slug                  String        @unique
+  tier                  PartnerTier   @default(STARTER)
+  status                PartnerStatus @default(ACTIVE)
+  contactName           String?       @map("contact_name")
+  contactEmail          String?       @map("contact_email")
+  region                String?
+  referralCode          String        @unique @map("referral_code")
+  commissionRate        Decimal       @default(10) @map("commission_rate") @db.Decimal(5, 2)
+  attributedBrands      Int           @default(0) @map("attributed_brands")
+  attributedCreators    Int           @default(0) @map("attributed_creators")
+  attributedRevenue     Decimal       @default(0) @map("attributed_revenue") @db.Decimal(18, 2)
+  pendingCommission     Decimal       @default(0) @map("pending_commission") @db.Decimal(18, 2)
+  paidCommission        Decimal       @default(0) @map("paid_commission") @db.Decimal(18, 2)
+  notes                 String?       @db.Text
+  metadataJson          Json?         @map("metadata_json")
+  createdAt             DateTime      @default(now()) @map("created_at")
+  updatedAt             DateTime      @updatedAt @map("updated_at")
+
+  campaign Campaign? @relation(fields: [campaignId], references: [id])
+
+  @@index([campaignId])
+  @@index([status])
+  @@index([tier])
+  @@index([region])
+  @@map("partner_programs")
+}
+
+model AcademyCourse {
+  id              String               @id @default(dbgenerated("gen_random_uuid()"))
+  campaignId      String?              @map("campaign_id")
+  slug            String               @unique
+  title           String
+  subtitle        String?
+  audience        AcademyAudience
+  status          AcademyContentStatus @default(DRAFT)
+  level           String               @default("Beginner")
+  durationMinutes Int                  @default(15) @map("duration_minutes")
+  lessonCount     Int                  @default(1) @map("lesson_count")
+  completionCount Int                  @default(0) @map("completion_count")
+  owner           String               @default("StudioOS")
+  description     String?              @db.Text
+  outcomesJson    Json?                @map("outcomes_json")
+  metadataJson    Json?                @map("metadata_json")
+  publishedAt     DateTime?            @map("published_at")
+  createdAt       DateTime             @default(now()) @map("created_at")
+  updatedAt       DateTime             @updatedAt @map("updated_at")
+
+  campaign Campaign? @relation(fields: [campaignId], references: [id])
+
+  @@index([campaignId])
+  @@index([audience])
+  @@index([status])
+  @@index([publishedAt])
+  @@map("academy_courses")
 }

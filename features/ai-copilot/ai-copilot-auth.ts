@@ -6,6 +6,7 @@ import { getSessionUser } from "@/features/auth/session.service";
 import { hashPassword } from "@/lib/core/password-crypto";
 import { appError } from "@/lib/core/errors";
 import { enforceApiRateLimit } from "@/lib/core/security/rate-limit.service";
+import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { DEMO_PASSWORD, DEMO_USERS, type DemoUser } from "@/lib/demo-auth";
 
 function demoEmailFromId(id: string) {
@@ -30,6 +31,18 @@ function mapUser(user: UserWithProfiles): AuthUserDto {
   };
 }
 
+function aiDatabaseUnavailableMessage() {
+  return process.env.NODE_ENV === "production"
+    ? "AI 数据库未连接。请在 Vercel 环境变量中配置 DATABASE_URL（或 POSTGRES_PRISMA_URL / POSTGRES_URL），重新部署后再使用 StudioOS AI。"
+    : "AI 数据库连接失败。请确认本地 PostgreSQL 已启动，并重启 npm run dev:fix。";
+}
+
+function aiDatabaseConnectionFailedMessage() {
+  return process.env.NODE_ENV === "production"
+    ? "AI 数据库连接失败。请检查 Vercel 的 DATABASE_URL、数据库 SSL/权限与迁移状态，然后重新部署。"
+    : "AI 数据库连接失败。请确认本地 PostgreSQL 已启动，并重启 npm run dev:fix。";
+}
+
 export async function requireAiCopilotUser(request?: Request): Promise<AuthUserDto> {
   if (request) {
     const pathname = new URL(request.url).pathname;
@@ -43,6 +56,10 @@ export async function requireAiCopilotUser(request?: Request): Promise<AuthUserD
 
   if (!user.id.startsWith("demo_")) {
     return user;
+  }
+
+  if (!hasDatabaseUrl()) {
+    throw appError("SYSTEM_ERROR", aiDatabaseUnavailableMessage());
   }
 
   try {
@@ -69,6 +86,6 @@ export async function requireAiCopilotUser(request?: Request): Promise<AuthUserD
     return mapUser(created);
   } catch (error) {
     if (error instanceof Error && error.name === "AppError") throw error;
-    throw appError("SYSTEM_ERROR", "AI 数据库连接失败。请确认本地 PostgreSQL 已启动，并重启 npm run dev:fix。");
+    throw appError("SYSTEM_ERROR", aiDatabaseConnectionFailedMessage());
   }
 }

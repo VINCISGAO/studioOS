@@ -257,6 +257,168 @@ async function seedFeatureFlags() {
   }
 }
 
+async function seedPartnerAcademy() {
+  const partners = [
+    {
+      slug: "creator-growth-asia",
+      name: "Creator Growth Asia",
+      tier: "STRATEGIC" as const,
+      status: "ACTIVE" as const,
+      contactName: "Mia Chen",
+      contactEmail: "mia@creatorgrowth.example",
+      region: "Asia",
+      referralCode: "CGA-STUDIOOS",
+      commissionRate: 12,
+      attributedBrands: 18,
+      attributedCreators: 64,
+      attributedRevenue: 48200,
+      pendingCommission: 3180,
+      paidCommission: 2604,
+      notes: "Strategic creator acquisition and Academy onboarding partner."
+    },
+    {
+      slug: "brand-launch-labs",
+      name: "Brand Launch Labs",
+      tier: "GROWTH" as const,
+      status: "ACTIVE" as const,
+      contactName: "Jordan Lee",
+      contactEmail: "partners@brandlaunch.example",
+      region: "North America",
+      referralCode: "BLL-STUDIOOS",
+      commissionRate: 10,
+      attributedBrands: 11,
+      attributedCreators: 8,
+      attributedRevenue: 28600,
+      pendingCommission: 1440,
+      paidCommission: 1420,
+      notes: "Brand-side education and campaign onboarding partner."
+    },
+    {
+      slug: "academy-ambassador-program",
+      name: "Academy Ambassador Program",
+      tier: "STARTER" as const,
+      status: "PENDING" as const,
+      contactName: "StudioOS Ops",
+      contactEmail: "ops@studioos.test",
+      region: "Global",
+      referralCode: "ACADEMY-V1",
+      commissionRate: 8,
+      attributedBrands: 3,
+      attributedCreators: 21,
+      attributedRevenue: 7200,
+      pendingCommission: 576,
+      paidCommission: 0,
+      notes: "Pilot program for Academy-led referrals."
+    }
+  ];
+
+  for (const partner of partners) {
+    await prisma.partnerProgram.upsert({
+      where: { slug: partner.slug },
+      update: {
+        ...partner,
+        metadataJson: {
+          source: "seed",
+          version: "partner_academy_v1"
+        }
+      },
+      create: {
+        ...partner,
+        metadataJson: {
+          source: "seed",
+          version: "partner_academy_v1"
+        }
+      }
+    });
+  }
+
+  const now = new Date();
+  const courses = [
+    {
+      slug: "brand-first-campaign",
+      title: "Brand: Launch your first Campaign",
+      subtitle: "从需求填写到 Creator 匹配的完整入门课",
+      audience: "BRAND" as const,
+      status: "PUBLISHED" as const,
+      level: "Beginner",
+      durationMinutes: 18,
+      lessonCount: 5,
+      completionCount: 42,
+      owner: "StudioOS Academy",
+      description: "Teach brands how to create a complete brief, set budget, and prepare assets.",
+      outcomesJson: ["Create a clear campaign brief", "Avoid missing assets", "Understand matching signals"],
+      publishedAt: now
+    },
+    {
+      slug: "creator-profile-that-converts",
+      title: "Creator: Build a profile that converts",
+      subtitle: "让主页、作品和报价更容易被品牌选中",
+      audience: "CREATOR" as const,
+      status: "PUBLISHED" as const,
+      level: "Beginner",
+      durationMinutes: 22,
+      lessonCount: 6,
+      completionCount: 57,
+      owner: "Creator Success",
+      description: "Help creators improve profile quality, portfolio positioning, and invitation response rate.",
+      outcomesJson: ["Improve profile trust", "Upload better portfolio work", "Respond to invitations faster"],
+      publishedAt: now
+    },
+    {
+      slug: "partner-referral-playbook",
+      title: "Partner: Referral playbook",
+      subtitle: "合伙人如何介绍 StudioOS 并追踪推荐收入",
+      audience: "PARTNER" as const,
+      status: "PUBLISHED" as const,
+      level: "Intermediate",
+      durationMinutes: 16,
+      lessonCount: 4,
+      completionCount: 19,
+      owner: "Partnerships",
+      description: "Standardize partner messaging, attribution expectations, and referral quality rules.",
+      outcomesJson: ["Explain StudioOS clearly", "Use referral codes", "Qualify brands and creators"],
+      publishedAt: now
+    },
+    {
+      slug: "admin-partner-academy-ops",
+      title: "Admin: Partner & Academy operations",
+      subtitle: "后台运营、课程状态和合伙人佣金风险检查",
+      audience: "ADMIN" as const,
+      status: "DRAFT" as const,
+      level: "Advanced",
+      durationMinutes: 25,
+      lessonCount: 7,
+      completionCount: 0,
+      owner: "StudioOS Ops",
+      description: "Internal operations guide for Partner and Academy V1.",
+      outcomesJson: ["Review partner health", "Audit commission exposure", "Maintain Academy content"],
+      publishedAt: null
+    }
+  ];
+
+  for (const course of courses) {
+    await prisma.academyCourse.upsert({
+      where: { slug: course.slug },
+      update: {
+        ...course,
+        metadataJson: {
+          source: "seed",
+          version: "partner_academy_v1"
+        }
+      },
+      create: {
+        ...course,
+        metadataJson: {
+          source: "seed",
+          version: "partner_academy_v1"
+        }
+      }
+    });
+  }
+
+  console.log(`Seeded Partner & Academy V1: ${partners.length} partners, ${courses.length} courses`);
+}
+
 type ParsedKnowledgeQa = {
   sourceKey: string;
   languageCode: string;
@@ -389,6 +551,7 @@ async function main() {
   await seedMembershipConfig();
   await seedCreatorMemberships();
   await seedFeatureFlags();
+  await seedPartnerAcademy();
   await enrichCreatorProfiles();
 
   const brand = await prisma.user.findUniqueOrThrow({
@@ -429,7 +592,7 @@ async function main() {
       });
     }
     await seedDemoDispute(existing.id, "client.arc@studioos.test");
-    await seedAdminDashboardDemo();
+    await seedAdminDashboardDemoIfEnabled();
     console.log("Demo campaign already exists:", existing.id);
     return;
   }
@@ -512,7 +675,7 @@ async function main() {
 
   console.log("Seeded campaign:", campaign.id, "linked to", DEMO_PROJECT_ID);
   await seedDemoDispute(campaign.id, brand.email);
-  await seedAdminDashboardDemo();
+  await seedAdminDashboardDemoIfEnabled();
 }
 
 const ADMIN_DEMO_MARKER = "[Admin Demo]";
@@ -527,6 +690,15 @@ type AdminDemoCampaign = {
   commission?: boolean;
   daysAgo?: number;
 };
+
+async function seedAdminDashboardDemoIfEnabled() {
+  if (process.env.STUDIOOS_SEED_ADMIN_DEMO !== "1") {
+    console.log("Skipped admin dashboard demo campaigns (set STUDIOOS_SEED_ADMIN_DEMO=1 to seed them)");
+    return;
+  }
+
+  await seedAdminDashboardDemo();
+}
 
 async function seedAdminDashboardDemo() {
   const brand = await prisma.user.findUniqueOrThrow({
