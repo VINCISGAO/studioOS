@@ -6,7 +6,7 @@ import {
   hasAlipayOAuthConfig
 } from "@/lib/alipay/alipay-oauth-config";
 import { callAlipayOpenApi } from "@/lib/alipay/alipay-openapi.client";
-import { encodeOAuthState, type OAuthStatePayload } from "@/features/auth/oauth-state";
+import { encodeAlipayOAuthState, type OAuthStatePayload } from "@/features/auth/oauth-state";
 
 export type AlipayOAuthProfile = {
   userId: string;
@@ -32,7 +32,7 @@ export class AlipayOAuthService {
     }
 
     const redirectUri = encodeURIComponent(alipayOAuthRedirectUri());
-    const state = encodeURIComponent(encodeOAuthState(statePayload));
+    const state = encodeURIComponent(encodeAlipayOAuthState(statePayload));
     return `${config.authBaseUrl}/oauth2/publicAppAuthorize.htm?app_id=${config.appId}&scope=auth_user&redirect_uri=${redirectUri}&state=${state}`;
   }
 

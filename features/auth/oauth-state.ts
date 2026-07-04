@@ -11,6 +11,10 @@ export type OAuthStatePayload = {
   nextPath: string;
 };
 
+/** Alipay `state` must be base64url-only and <= 100 chars (no dots). */
+const ALIPAY_STATE_MAX_LEN = 100;
+const ALIPAY_STATE_SIG_LEN = 16;
+
 function oauthStateSecret() {
   return (
     process.env.AUTH_SECURITY_SECRET?.trim() ||
@@ -24,13 +28,68 @@ function signPayload(encoded: string) {
   return crypto.createHmac("sha256", oauthStateSecret()).update(encoded).digest("base64url");
 }
 
+function alipayStateSignature(encoded: string) {
+  return signPayload(encoded).slice(0, ALIPAY_STATE_SIG_LEN);
+}
+
+function compactAlipayPlain(payload: OAuthStatePayload, includeNextPath: boolean) {
+  const roleChar = payload.entryRole === "creator" ? "c" : "b";
+  const langChar = payload.lang === "zh" ? "z" : "e";
+  const nextPath =
+    includeNextPath && payload.nextPath.startsWith("/") ? payload.nextPath.slice(0, 48) : "";
+  return `${roleChar}${langChar}${nextPath}`;
+}
+
+function parseCompactAlipayPlain(plain: string): OAuthStatePayload | null {
+  if (plain.length < 2) return null;
+  const entryRole = plain[0] === "c" ? "creator" : plain[0] === "b" ? "brand" : null;
+  const lang = plain[1] === "z" ? "zh" : plain[1] === "e" ? "en" : null;
+  if (!entryRole || !lang) return null;
+  const nextPath = plain.slice(2);
+  if (nextPath && !nextPath.startsWith("/")) return null;
+  return { provider: "alipay", entryRole, lang, nextPath };
+}
+
+/** Encode OAuth state for Alipay authorize URL. */
+export function encodeAlipayOAuthState(payload: OAuthStatePayload) {
+  for (const includeNextPath of [true, false] as const) {
+    const encoded = Buffer.from(compactAlipayPlain(payload, includeNextPath), "utf8").toString("base64url");
+    const state = `${encoded}${alipayStateSignature(encoded)}`;
+    if (state.length <= ALIPAY_STATE_MAX_LEN && /^[A-Za-z0-9_-]+$/.test(state)) {
+      return state;
+    }
+  }
+
+  throw new Error("Alipay OAuth state exceeds allowed length");
+}
+
+export function decodeAlipayOAuthState(raw: string | null | undefined): OAuthStatePayload | null {
+  if (!raw || raw.length > ALIPAY_STATE_MAX_LEN || !/^[A-Za-z0-9_-]+$/.test(raw)) {
+    return null;
+  }
+  if (raw.length <= ALIPAY_STATE_SIG_LEN) return null;
+
+  const encoded = raw.slice(0, -ALIPAY_STATE_SIG_LEN);
+  const signature = raw.slice(-ALIPAY_STATE_SIG_LEN);
+  if (!encoded || alipayStateSignature(encoded) !== signature) return null;
+
+  try {
+    const plain = Buffer.from(encoded, "base64url").toString("utf8");
+    return parseCompactAlipayPlain(plain);
+  } catch {
+    return null;
+  }
+}
+
+/** Legacy encoder kept for backwards compatibility during rollout. */
 export function encodeOAuthState(payload: OAuthStatePayload) {
-  const encoded = Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
-  const signature = signPayload(encoded);
-  return `${encoded}.${signature}`;
+  return encodeAlipayOAuthState(payload);
 }
 
 export function decodeOAuthState(raw: string | null | undefined): OAuthStatePayload | null {
+  const alipay = decodeAlipayOAuthState(raw);
+  if (alipay) return alipay;
+
   if (!raw?.includes(".")) return null;
   const [encoded, signature] = raw.split(".", 2);
   if (!encoded || !signature) return null;
