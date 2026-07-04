@@ -397,9 +397,9 @@ export function LoginPageShell({
 
               <p className={cn("mt-6 text-center text-sm", visual.cardMuted)}>
                 {t.noAccount}{" "}
-                <button type="button" className={cn("font-medium", visual.link)}>
+                <Link href={`/signup?lang=${locale}&role=${role}`} className={cn("font-medium", visual.link)}>
                   {t.signUp}
-                </button>
+                </Link>
               </p>
             </div>
 
