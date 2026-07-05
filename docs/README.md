@@ -1,4 +1,4 @@
-# StudioOS Documentation Index
+# VINCIS Documentation Index
 
 > Documentation v2 structure — per Developer Documentation Vol 18
 

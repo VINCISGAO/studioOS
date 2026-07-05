@@ -206,7 +206,7 @@ export function LoginWorkspace({
               {locale === "zh" ? "登录成功！" : "You're in!"}
             </h3>
             <p className={cn("mt-2 text-sm", darkPanel ? "text-zinc-200" : "text-zinc-600")}>
-              {locale === "zh" ? "欢迎回到 StudioOS，你的工作台已准备好" : "Welcome back to StudioOS. Your workspace is ready."}
+              {locale === "zh" ? "欢迎回到 VINCIS，你的工作台已准备好" : "Welcome back to VINCIS. Your workspace is ready."}
             </p>
           </div>
           <div
@@ -248,7 +248,7 @@ export function LoginWorkspace({
               router.refresh();
             }}
           >
-            {locale === "zh" ? "进入 StudioOS" : "Enter StudioOS"}
+            {locale === "zh" ? "进入 VINCIS" : "Enter VINCIS"}
             <ArrowRight className="h-4 w-4" />
           </Button>
           <p className={cn("text-xs", darkPanel ? "text-zinc-400" : "text-zinc-500")}>
@@ -352,7 +352,7 @@ export function LoginWorkspace({
         <Button type="submit" disabled={submitting} className={cn("gap-2", visual.btn)}>
           {step === "email"
             ? locale === "zh" ? "发送验证码" : "Send code"
-            : locale === "zh" ? "进入 StudioOS" : "Enter StudioOS"}
+            : locale === "zh" ? "进入 VINCIS" : "Enter VINCIS"}
           {submitting ? <LoginSubmitSpinner visible /> : <ArrowRight className="h-4 w-4" />}
         </Button>
         {step !== "email" ? (

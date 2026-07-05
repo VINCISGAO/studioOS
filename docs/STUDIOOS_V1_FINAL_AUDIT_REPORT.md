@@ -1,4 +1,4 @@
-# StudioOS v1.0 Final Audit Report
+# VINCIS v1.0 Final Audit Report
 
 **Date:** 2026-07-01  
 **Scope:** Main transaction happy path (Brand ↔ Studio), Prisma-first UI reads, JSON write-through bridges  

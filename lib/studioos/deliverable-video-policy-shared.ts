@@ -29,7 +29,7 @@ export function deliverableVideoPolicyNotice(locale: Locale) {
     title: "Video storage policy",
     timing:
       "The deletion countdown starts only after the brand successfully downloads the final master for a completed order — creator uploads do not start the clock.",
-    body: `StudioOS does not keep completed order masters indefinitely. Within ${period} of the brand's first successful final download, the server copy is permanently deleted — save your own backup. Content you voluntarily upload (portfolio, profile assets, etc.) is excluded.`,
+    body: `VINCIS does not keep completed order masters indefinitely. Within ${period} of the brand's first successful final download, the server copy is permanently deleted — save your own backup. Content you voluntarily upload (portfolio, profile assets, etc.) is excluded.`,
     uploadLimit: "Max 500 MB per file · MP4 / MOV. Uploading does not start the retention countdown."
   };
 }

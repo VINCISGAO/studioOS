@@ -1,6 +1,5 @@
 import type { ReviewComment, ReviewVersion } from "@/features/review/review.types";
-
-export const REVIEW_ANNOTATION_COLOR = "#5B5CFF";
+import { REVIEW_ANNOTATION_COLOR } from "@/features/review/review.constants";
 
 export const mockReviewVersions: ReviewVersion[] = [
   { version: 1, label: "Version 1", uploadedAt: "2026-06-28T10:00:00.000Z" },

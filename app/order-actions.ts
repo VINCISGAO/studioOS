@@ -156,7 +156,7 @@ export async function payOrderAction(formData: FormData) {
             currency: "usd",
             unit_amount: Math.round(order.amount * 100),
             product_data: {
-              name: `StudioOS order ${order.id}`,
+              name: `VINCIS order ${order.id}`,
               description: order.title
             }
           }

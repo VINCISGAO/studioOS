@@ -13,7 +13,7 @@ async function requireCreatorUser() {
   if (!user || user.id.startsWith("demo_")) {
     throw new Error("Sign in with a database account");
   }
-  if (user.role !== "CREATOR" && user.role !== "ADMIN") {
+  if (!user.hasCreatorProfile && user.role !== "CREATOR") {
     throw new Error("Creator access only");
   }
   return user;

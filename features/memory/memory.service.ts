@@ -105,7 +105,7 @@ export class MemoryService {
 
   async getBrandDna(user: AuthUser) {
     PermissionService.assert(user, "campaign.read");
-    if (user.role !== "BRAND" && user.role !== "ADMIN") {
+    if (!user.hasBrandProfile && user.role !== "BRAND" && user.role !== "ADMIN") {
       throw appError("FORBIDDEN", "Brand DNA is for brand accounts");
     }
     return brandDnaService.buildSnapshot(user.id);
@@ -113,7 +113,7 @@ export class MemoryService {
 
   async getCreatorDna(user: AuthUser) {
     PermissionService.assert(user, "campaign.read");
-    if (user.role !== "CREATOR" && user.role !== "ADMIN") {
+    if (!user.hasCreatorProfile && user.role !== "CREATOR" && user.role !== "ADMIN") {
       throw appError("FORBIDDEN", "Creator DNA is for creator accounts");
     }
     return creatorDnaService.buildSnapshot(user.id);

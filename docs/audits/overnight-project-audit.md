@@ -1,4 +1,4 @@
-# StudioOS 全项目深度工程审计报告
+# VINCIS 全项目深度工程审计报告
 
 **审计日期：** 2026-07-05  
 **审计模式：** 只读（本报告为唯一产出物；未修改任何业务代码）  
@@ -9,7 +9,7 @@
 
 ## 执行摘要
 
-StudioOS 是一个 **Next.js 15 单体应用**，采用 **Feature First + Campaign Aggregate Root** 架构，同时仍保留大量 **JSON file store 遗留层** 与 **三套并行审片 UI 栈**。Prisma/PostgreSQL 路径在核心交易链路上已基本落地，但 legacy `lib/order-service.ts`、`lib/project-service.ts` 与 `app/review-actions.ts` 仍承担大量双写/桥接职责。
+VINCIS 是一个 **Next.js 15 单体应用**，采用 **Feature First + Campaign Aggregate Root** 架构，同时仍保留大量 **JSON file store 遗留层** 与 **三套并行审片 UI 栈**。Prisma/PostgreSQL 路径在核心交易链路上已基本落地，但 legacy `lib/order-service.ts`、`lib/project-service.ts` 与 `app/review-actions.ts` 仍承担大量双写/桥接职责。
 
 | 维度 | 评级 | 一句话 |
 |------|------|--------|

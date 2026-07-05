@@ -16,7 +16,11 @@ import {
   ShieldCheck,
   X
 } from "lucide-react";
-import { saveCreatorProfileClientAction, uploadCreatorAvatarAction } from "@/app/profile-actions";
+import {
+  saveCreatorProfileClientAction,
+  uploadCreatorAvatarAction,
+  uploadCreatorCoverAction
+} from "@/app/profile-actions";
 import {
   mergeCreatorProfile,
   readProfileDraft,
@@ -74,12 +78,13 @@ const copy = {
     minimumProjectBudget: "Minimum project budget",
     viewAsBrand: "View as Brand",
     verifiedCreator: "Verified Creator",
-    verifiedCreatorNote: "Your profile is public and visible to brands on StudioOS.",
+    verifiedCreatorNote: "Your profile is public and visible to brands on VINCIS.",
     allChangesSaved: "All changes saved",
     unsavedChanges: "Unsaved changes",
     cancel: "Cancel",
     profileUpdated: "Profile updated.",
     avatarFailed: "Could not update photo. Try again.",
+    coverFailed: "Could not update cover. Try again.",
     discardChanges: "Discard changes?",
     sections: {
       basicTitle: "Basic Information",
@@ -147,12 +152,13 @@ const copy = {
     minimumProjectBudget: "最低项目预算",
     viewAsBrand: "以品牌方视角查看",
     verifiedCreator: "已认证创作者",
-    verifiedCreatorNote: "你的主页已公开，品牌方可在 StudioOS 上看到。",
+    verifiedCreatorNote: "你的主页已公开，品牌方可在 VINCIS 上看到。",
     allChangesSaved: "所有修改已保存",
     unsavedChanges: "你有未保存的修改",
     cancel: "取消",
     profileUpdated: "资料已更新。",
     avatarFailed: "头像更新失败，请重试。",
+    coverFailed: "封面更新失败，请重试。",
     discardChanges: "放弃未保存修改？",
     sections: {
       basicTitle: "基础信息",
@@ -400,6 +406,7 @@ export function CreatorPublicProfileEditor({
   const [hydrated, setHydrated] = useState(false);
   const [toast, setToast] = useState<ToastState | null>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
+  const [coverUploading, setCoverUploading] = useState(false);
   const [isPending, startTransition] = useTransition();
   const initialSnapshot = useRef("");
   const avatarInputRef = useRef<HTMLInputElement | null>(null);
@@ -521,7 +528,8 @@ export function CreatorPublicProfileEditor({
       tools,
       delivery_speed: deliverySpeed,
       min_project_budget_usd: minBudget,
-      avatar_url: creator.avatar_url
+      avatar_url: creator.avatar_url,
+      cover_url: creator.cover_url
     };
   }
 
@@ -622,11 +630,41 @@ export function CreatorPublicProfileEditor({
     }
   }
 
-  function handleCoverFile(file: File) {
+  async function handleCoverUpload(file: File) {
     const nextUrl = URL.createObjectURL(file);
     if (coverPreview) URL.revokeObjectURL(coverPreview);
     setCoverPreview(nextUrl);
-    setDirty(true);
+    setCoverUploading(true);
+    try {
+      const uploadFile = await compressImageForUpload(file, {
+        maxBytes: 2.5 * 1024 * 1024,
+        maxDimension: 1800,
+        quality: 0.82,
+        fileNamePrefix: "creator-cover"
+      });
+      const fd = new FormData();
+      fd.set("lang", locale);
+      fd.set("cover_file", uploadFile);
+      const result = await uploadCreatorCoverAction(fd);
+      if (!result.ok) {
+        URL.revokeObjectURL(nextUrl);
+        setCoverPreview(null);
+        setToast({ message: result.error, variant: "error" });
+        return;
+      }
+      const nextDraft = { ...buildDraft(), cover_url: result.cover_url };
+      writeProfileDraft(baseCreator.id, nextDraft);
+      setCreator((prev) => ({ ...prev, cover_url: result.cover_url }));
+      URL.revokeObjectURL(nextUrl);
+      setCoverPreview(null);
+      setToast({ message: t.profileUpdated, variant: "success" });
+    } catch {
+      URL.revokeObjectURL(nextUrl);
+      setCoverPreview(null);
+      setToast({ message: t.coverFailed, variant: "error" });
+    } finally {
+      setCoverUploading(false);
+    }
   }
 
   return (
@@ -697,15 +735,18 @@ export function CreatorPublicProfileEditor({
                 {coverPreview ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={coverPreview} alt="" className="h-full w-full object-cover" />
+                ) : creator.cover_url ? (
+                  <Image src={creator.cover_url} alt="" fill className="object-cover" unoptimized />
                 ) : (
                   <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.16),transparent_40%),linear-gradient(315deg,rgba(124,58,237,0.45),transparent_45%)]" />
                 )}
                 <button
                   type="button"
                   onClick={() => coverInputRef.current?.click()}
+                  disabled={coverUploading}
                   className="absolute right-3 top-3 rounded-full bg-white/90 px-3 py-1.5 text-xs font-semibold text-zinc-800 shadow-sm backdrop-blur hover:bg-white"
                 >
-                  {t.editCover}
+                  {coverUploading ? (locale === "zh" ? "上传中…" : "Uploading…") : t.editCover}
                 </button>
                 <input
                   ref={coverInputRef}
@@ -714,7 +755,7 @@ export function CreatorPublicProfileEditor({
                   className="hidden"
                   onChange={(event) => {
                     const file = event.target.files?.[0];
-                    if (file) handleCoverFile(file);
+                    if (file) void handleCoverUpload(file);
                     event.target.value = "";
                   }}
                 />

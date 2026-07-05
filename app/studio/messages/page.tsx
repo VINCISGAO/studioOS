@@ -86,8 +86,8 @@ async function buildMessageDetail(
   const category = messageCategoryFromType(notification.type);
   const senderName = isCertificationMessage
     ? locale === "zh"
-      ? "StudioOS 系统"
-      : "StudioOS System"
+      ? "VINCIS 系统"
+      : "VINCIS System"
     : senderDisplayName(notification.company_name, locale);
   const progressSteps = buildMessageProgressSteps(order, notification.type, locale);
   const projectCode = buildProjectCode(projectId);

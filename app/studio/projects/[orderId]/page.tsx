@@ -8,6 +8,10 @@ import { getCurrentCreator } from "@/lib/creator-session";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
 import { resolveCreatorCommercialStep } from "@/lib/studioos/commercial-lifecycle";
 import { creatorPortalRoutes } from "@/lib/studioos/creator-portal-routes";
+import {
+  creatorUploadActionLabel,
+  isCreatorUploadActionable
+} from "@/lib/studioos/creator-order-lifecycle";
 import { listReviewComments } from "@/lib/studioos/review-store";
 import { isCreatorVerified } from "@/lib/studioos/deposit-guard";
 import { getDeliverables, getOrder } from "@/lib/order-service";
@@ -43,6 +47,7 @@ export default async function StudioProjectPage({
   ]);
 
   const canUpload = ["in_production", "revision", "review"].includes(order.status);
+  const uploadActionable = isCreatorUploadActionable(order, deliverables.length);
   const creatorCommercialStep = resolveCreatorCommercialStep({
     invitationStatus: "selected",
     order,
@@ -71,7 +76,11 @@ export default async function StudioProjectPage({
         >
           <span className="inline-flex items-center gap-2 font-medium">
             <Clapperboard className="h-4 w-4" />
-            {deliverables.length
+            {uploadActionable
+              ? locale === "zh"
+                ? `${creatorUploadActionLabel(locale, order.status)} — 打开审片中心`
+                : `${creatorUploadActionLabel(locale, order.status)} in review center`
+              : deliverables.length
               ? locale === "zh"
                 ? "进入审片中心 — 与品牌同步批注与版本"
                 : "Open review center — synced with brand feedback"

@@ -61,6 +61,7 @@ async function getDatabaseCreatorProfile(creatorId: string): Promise<StoredCreat
     headline: profile.headline ?? "",
     bio: profile.bio ?? "",
     avatar_url: profile.user.avatarUrl ?? (typeof dna.avatar_url === "string" ? dna.avatar_url : undefined),
+    cover_url: profile.portfolioCover ?? (typeof dna.cover_url === "string" ? dna.cover_url : undefined),
     country: profile.country ?? "",
     portfolio_url: profile.portfolioUrl ?? stringValue(dna.portfolio_url),
     specialties: stringList(profile.specialtiesJson ?? dna.specialties),
@@ -94,6 +95,7 @@ async function saveDatabaseCreatorProfile(
   const creatorDnaJson = {
     ...existingDna,
     avatar_url: nextAvatarUrl,
+    cover_url: profile.cover_url ?? (typeof existingDna.cover_url === "string" ? existingDna.cover_url : null),
     portfolio_url: profile.portfolio_url,
     specialties: profile.specialties,
     expertise_domains: profile.expertise_domains,
@@ -117,6 +119,7 @@ async function saveDatabaseCreatorProfile(
       expertiseDomainsJson: asInputJson(profile.expertise_domains),
       profileCompletedAt: profile.profile_completed_at ? new Date(profile.profile_completed_at) : null,
       minBudget: profile.min_project_budget_usd || null,
+      portfolioCover: profile.cover_url || null,
       creatorDnaJson: asInputJson(creatorDnaJson)
     },
     include: { user: { select: { avatarUrl: true } } }
@@ -170,6 +173,7 @@ export async function saveCreatorProfileDraft(
       input.min_project_budget_usd ?? existing?.min_project_budget_usd ?? 0
     ),
     avatar_url: input.avatar_url ?? existing?.avatar_url,
+    cover_url: input.cover_url ?? existing?.cover_url,
     ai_tags,
     profile_completed_at: existing?.profile_completed_at ?? null,
     updated_at: new Date().toISOString()
@@ -241,6 +245,36 @@ export async function updateCreatorAvatarUrl(
       headline: existing?.headline ?? base.headline ?? "",
       bio: existing?.bio ?? base.bio ?? "",
       avatar_url: avatarUrl,
+      cover_url: existing?.cover_url ?? base.cover_url,
+      country: existing?.country ?? base.country,
+      portfolio_url: existing?.portfolio_url ?? base.portfolio_url,
+      specialties: existing?.specialties ?? base.specialties,
+      expertise_domains: existing?.expertise_domains ?? base.expertise_domains ?? [],
+      tools: existing?.tools ?? base.tools,
+      delivery_speed: existing?.delivery_speed ?? base.delivery_speed,
+      min_project_budget_usd: normalizeCreatorMinBudget(
+        existing?.min_project_budget_usd ?? base.min_project_budget_usd ?? 0
+      )
+    },
+    works
+  );
+}
+
+export async function updateCreatorCoverUrl(
+  creatorId: string,
+  coverUrl: string,
+  base: Creator,
+  works: CreatorWork[]
+): Promise<StoredCreatorProfile> {
+  const existing = await getStoredCreatorProfile(creatorId);
+  return saveCreatorProfileDraft(
+    creatorId,
+    {
+      name: existing?.name ?? base.name,
+      headline: existing?.headline ?? base.headline ?? "",
+      bio: existing?.bio ?? base.bio ?? "",
+      avatar_url: existing?.avatar_url ?? base.avatar_url,
+      cover_url: coverUrl,
       country: existing?.country ?? base.country,
       portfolio_url: existing?.portfolio_url ?? base.portfolio_url,
       specialties: existing?.specialties ?? base.specialties,
@@ -266,6 +300,7 @@ export function applyStoredProfileToCreator(base: Creator, profile: StoredCreato
     headline: profile.headline,
     bio: profile.bio,
     avatar_url: profile.avatar_url,
+    cover_url: profile.cover_url,
     country: profile.country,
     portfolio_url: profile.portfolio_url,
     specialties: profile.specialties,

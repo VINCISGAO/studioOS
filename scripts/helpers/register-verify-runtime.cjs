@@ -1,4 +1,4 @@
-/** Verify/seed runtime: load env + stub server-only for tsx scripts. */
+/** Verify/seed runtime: load env + stub server-only for TypeScript scripts. */
 require("./load-env.cjs");
 
 process.env.STUDIOOS_SCRIPT_RUNTIME = process.env.STUDIOOS_SCRIPT_RUNTIME || "verify";

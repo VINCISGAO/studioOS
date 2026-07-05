@@ -1714,7 +1714,7 @@ model AcademyCourse {
   durationMinutes Int                  @default(15) @map("duration_minutes")
   lessonCount     Int                  @default(1) @map("lesson_count")
   completionCount Int                  @default(0) @map("completion_count")
-  owner           String               @default("StudioOS")
+  owner           String               @default("VINCIS")
   description     String?
   outcomesJson    Json?                @map("outcomes_json")
   metadataJson    Json?                @map("metadata_json")

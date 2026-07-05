@@ -15,11 +15,7 @@ export async function GET() {
         ])
       : [[], []];
 
-    const dashboard = await brandPortalService.getDashboard(
-      { id: user.id, role: user.role },
-      orders,
-      projects
-    );
+    const dashboard = await brandPortalService.getDashboard(user, orders, projects);
 
     return apiSuccess({ dashboard, orders, projects });
   } catch (error) {

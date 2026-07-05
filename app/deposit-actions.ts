@@ -23,6 +23,7 @@ function parsePaymentMethod(raw: FormDataEntryValue | null): PayoutMethodType | 
 
 function revalidateCertificationPaths() {
   revalidatePath("/studio");
+  revalidatePath("/studio", "layout");
   revalidatePath("/studio/deposit");
   revalidatePath("/studio/messages");
   revalidatePath("/studio/invitations");

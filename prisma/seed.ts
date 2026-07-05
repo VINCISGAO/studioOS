@@ -1,5 +1,5 @@
 /**
- * StudioOS database seed — demo users + brand/creator + campaign in review
+ * VINCIS database seed — demo users + brand/creator + campaign in review
  * Run: npm run db:seed
  */
 import { PrismaClient, UserRole, type CampaignStatus, type EscrowStatus } from "@prisma/client";
@@ -298,7 +298,7 @@ async function seedPartnerAcademy() {
       name: "Academy Ambassador Program",
       tier: "STARTER" as const,
       status: "PENDING" as const,
-      contactName: "StudioOS Ops",
+      contactName: "VINCIS Ops",
       contactEmail: "ops@studioos.test",
       region: "Global",
       referralCode: "ACADEMY-V1",
@@ -344,7 +344,7 @@ async function seedPartnerAcademy() {
       durationMinutes: 18,
       lessonCount: 5,
       completionCount: 42,
-      owner: "StudioOS Academy",
+      owner: "VINCIS Academy",
       description: "Teach brands how to create a complete brief, set budget, and prepare assets.",
       outcomesJson: ["Create a clear campaign brief", "Avoid missing assets", "Understand matching signals"],
       publishedAt: now
@@ -367,7 +367,7 @@ async function seedPartnerAcademy() {
     {
       slug: "partner-referral-playbook",
       title: "Partner: Referral playbook",
-      subtitle: "合伙人如何介绍 StudioOS 并追踪推荐收入",
+      subtitle: "合伙人如何介绍 VINCIS 并追踪推荐收入",
       audience: "PARTNER" as const,
       status: "PUBLISHED" as const,
       level: "Intermediate",
@@ -376,7 +376,7 @@ async function seedPartnerAcademy() {
       completionCount: 19,
       owner: "Partnerships",
       description: "Standardize partner messaging, attribution expectations, and referral quality rules.",
-      outcomesJson: ["Explain StudioOS clearly", "Use referral codes", "Qualify brands and creators"],
+      outcomesJson: ["Explain VINCIS clearly", "Use referral codes", "Qualify brands and creators"],
       publishedAt: now
     },
     {
@@ -389,7 +389,7 @@ async function seedPartnerAcademy() {
       durationMinutes: 25,
       lessonCount: 7,
       completionCount: 0,
-      owner: "StudioOS Ops",
+      owner: "VINCIS Ops",
       description: "Internal operations guide for Partner and Academy V1.",
       outcomesJson: ["Review partner health", "Audit commission exposure", "Maintain Academy content"],
       publishedAt: null

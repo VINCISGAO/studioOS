@@ -1,4 +1,4 @@
-# StudioOS MVP — Review & Approval Workspace
+# VINCIS MVP — Review & Approval Workspace
 
 Video ad review and approval — **not** chat, **not** a marketplace, **not** an editor.
 
@@ -8,7 +8,7 @@ Video ad review and approval — **not** chat, **not** a marketplace, **not** an
 npm run dev
 ```
 
-1. Sign in at `/login` with demo accounts (`TempStudioOS2026!`):
+1. Sign in at `/login` with demo accounts (`TempVINCIS2026!`):
    - **Brand:** `client.arc@studioos.test`
    - **Studio:** `creator.nova@studioos.test`
    - **Admin:** `admin@studioos.test`

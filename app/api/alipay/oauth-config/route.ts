@@ -30,11 +30,11 @@ export async function GET() {
     ],
     setup: {
       zh: [
-        "登录 open.alipay.com → 网页应用 StudioOS登录 → 开发信息",
+        "登录 open.alipay.com → 网页应用 VINCIS登录 → 开发信息",
         "「授权回调地址」填入 redirectUri（必须完全一致，https，无尾斜杠）",
         "可调用产品 → 会员 → 获取会员信息（已开通 alipay.user.info.share）",
         "应用公钥与部署环境 ALIPAY_PRIVATE_KEY 为同一对 RSA2 密钥",
-        "ALIPAY_APP_ID 与控制台 AppID 一致（StudioOS登录）",
+        "ALIPAY_APP_ID 与控制台 AppID 一致（VINCIS登录）",
         "本地验证：npm run alipay:verify"
       ]
     },

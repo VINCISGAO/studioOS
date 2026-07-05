@@ -1,4 +1,4 @@
-# StudioOS 完整产品开发路线图
+# VINCIS 完整产品开发路线图
 
 > 依据 Development Bible + Developer Documentation 制定。  
 > 原则：**Campaign 为唯一 Aggregate Root**，所有模块必须关联 `campaign_id`。

@@ -9,7 +9,7 @@ import { WizardStepper } from "@/components/studioos/ui/wizard-stepper";
 import { radius, spacing, studioClasses, typography } from "@/lib/design/tokens";
 
 export const metadata = {
-  title: "Design System — StudioOS"
+  title: "Design System — VINCIS"
 };
 
 export default function DesignSystemPage() {
@@ -18,7 +18,7 @@ export default function DesignSystemPage() {
       <div className="mx-auto max-w-5xl px-6 py-12">
         <PageHeader
           eyebrow="Sprint 11"
-          title="StudioOS Design System"
+          title="VINCIS Design System"
           description="Token 统一参考页 — 禁止页面自行发明 padding / radius / 语义色。"
         />
 

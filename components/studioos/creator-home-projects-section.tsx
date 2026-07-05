@@ -130,7 +130,7 @@ export function CreatorHomeProjectsSection({
                   </div>
                 ) : null}
                 <span className="text-sm font-medium text-violet-600">
-                  {detailLabel} {locale === "zh" ? ">" : "›"}
+                  {project.actionLabel ?? detailLabel} {locale === "zh" ? ">" : "›"}
                 </span>
               </div>
             </Link>

@@ -1,4 +1,4 @@
-/** Load DATABASE_URL from .env.local / .env for tsx scripts (Next.js uses .env.local). */
+/** Load DATABASE_URL from .env.local / .env for TypeScript scripts (Next.js uses .env.local). */
 const fs = require("node:fs");
 const path = require("node:path");
 

@@ -54,6 +54,7 @@ export type AdminNavKey =
   | "brands"
   | "studios"
   | "payments"
+  | "membership"
   | "settlements"
   | "wallets"
   | "withdrawals"
@@ -80,6 +81,7 @@ export const adminNavLabels: Record<AdminNavKey, Record<Locale, string>> = {
   brands: { en: "Advertisers", zh: "广告主" },
   studios: { en: "Creators", zh: "创作者" },
   payments: { en: "Payments", zh: "支付" },
+  membership: { en: "Membership", zh: "会员" },
   settlements: { en: "Settlements", zh: "结算" },
   wallets: { en: "Wallets", zh: "钱包" },
   withdrawals: { en: "Withdrawals", zh: "提现" },

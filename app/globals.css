@@ -45,6 +45,9 @@
     --sidebar-compact: 248px;
     --motion-micro: 200ms;
     --motion-page: 300ms;
+    --font-landing-sans: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    --font-landing-cjk: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+    --font-landing-serif: Georgia, "Times New Roman", serif;
   }
 
   * {
@@ -102,6 +105,16 @@
 }
 
 @layer utilities {
+  .font-landing-system {
+    --font-landing-sans: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    --font-landing-cjk: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+    --font-landing-serif: Georgia, "Times New Roman", serif;
+  }
+
+  .font-marketing-headline {
+    font-family: "Plus Jakarta Sans", var(--font-landing-sans);
+  }
+
   .text-balance {
     text-wrap: balance;
   }

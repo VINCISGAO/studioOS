@@ -331,7 +331,7 @@ export async function notifyBrandRequirementPublished(input: {
     body: copy.body,
     project_id: input.projectId,
     creator_id: "system",
-    creator_name: "StudioOS"
+    creator_name: "VINCIS"
   });
 }
 

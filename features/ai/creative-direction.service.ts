@@ -163,7 +163,7 @@ export class CreativeDirectionService {
       });
       await notifyBrandAiProgress(campaign, {
         title: "AI is analyzing your campaign",
-        content: `StudioOS is analyzing "${campaign.title}" and preparing creative directions.`,
+        content: `VINCIS is analyzing "${campaign.title}" and preparing creative directions.`,
         template: "ai.analysis_started"
       });
     }
@@ -211,7 +211,7 @@ export class CreativeDirectionService {
       });
       await notifyBrandAiProgress(finalCampaign, {
         title: "Creative directions are ready",
-        content: `StudioOS generated ${directions.length} creative directions for "${finalCampaign.title}".`,
+        content: `VINCIS generated ${directions.length} creative directions for "${finalCampaign.title}".`,
         template: "ai.creative_directions_ready",
         priority: "HIGH"
       });
@@ -249,7 +249,7 @@ export class CreativeDirectionService {
         });
         await notifyBrandAiProgress(campaign, {
           title: "AI is analyzing your campaign",
-          content: `StudioOS is analyzing "${campaign.title}" and preparing creative directions.`,
+          content: `VINCIS is analyzing "${campaign.title}" and preparing creative directions.`,
           template: "ai.analysis_started"
         });
       }

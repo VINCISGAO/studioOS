@@ -1,4 +1,4 @@
--- StudioOS Internationalization (i18n) Specification V1.0
+-- VINCIS Internationalization (i18n) Specification V1.0
 -- Adds database-managed languages, translation keys, translations, and user language preference.
 
 CREATE TABLE "languages" (

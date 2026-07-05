@@ -2,7 +2,9 @@ import type { Locale } from "@/lib/i18n";
 import type { StoredOrder } from "@/lib/order-types";
 import type { CreatorPortalInvitationView } from "@/features/creator/creator-portal.types";
 import {
+  creatorUploadActionLabel,
   creatorTodayTaskLabels,
+  isCreatorUploadActionable,
   type CreatorTodayTask
 } from "@/lib/studioos/creator-order-lifecycle";
 import { creatorPortalRoutes } from "@/lib/studioos/creator-portal-routes";
@@ -38,6 +40,7 @@ export type CreatorHomeProjectRow = {
   dateLabel: string;
   progress?: number;
   href: string;
+  actionLabel?: string;
   thumbnailUrl?: string;
   listTab?: CreatorProjectTab | "all_only";
   listTabs?: CreatorProjectTab[];
@@ -212,6 +215,7 @@ export function buildCreatorPendingTaskCards(input: {
   tasks: CreatorTodayTask[];
   orders: StoredOrder[];
   invitations: CreatorPortalInvitationView[];
+  deliverableCounts?: Record<string, number>;
 }): CreatorPendingTaskCard[] {
   const labels = creatorTodayTaskLabels[input.locale];
   const cards: CreatorPendingTaskCard[] = [];
@@ -236,16 +240,21 @@ export function buildCreatorPendingTaskCards(input: {
 
   if (input.tasks.includes("upload_work")) {
     const order =
-      input.orders.find(
-        (item) =>
-          ["in_production", "revision"].includes(item.status) &&
-          item.title.length > 0
+      input.orders.find((item) =>
+        isCreatorUploadActionable(item, input.deliverableCounts?.[item.id] ?? 0)
       ) ?? input.orders.find((item) => item.status === "in_production");
+    const isRevision = order?.status === "revision";
     cards.push({
       id: "upload_work",
       tone: "blue",
       tag: input.locale === "zh" ? "待上传" : "Upload needed",
-      title: input.locale === "zh" ? "上传第一版" : labels.upload_work,
+      title: isRevision
+        ? input.locale === "zh"
+          ? "上传修改版"
+          : "Upload revision"
+        : input.locale === "zh"
+          ? "上传第一版"
+          : labels.upload_work,
       subtitle: order?.title ?? order?.company_name ?? "Project",
       metaLines:
         input.locale === "zh"
@@ -254,7 +263,11 @@ export function buildCreatorPendingTaskCards(input: {
       href: order
         ? withLocale(creatorPortalRoutes.review(order.id), input.locale)
         : withLocale(creatorPortalRoutes.projects, input.locale),
-      actionLabel: input.locale === "zh" ? "去上传" : "Upload"
+      actionLabel: order
+        ? creatorUploadActionLabel(input.locale, order.status)
+        : input.locale === "zh"
+          ? "去上传"
+          : "Upload"
     });
   }
 
@@ -300,7 +313,7 @@ export function buildDemoCreatorPendingTaskCards(locale: Locale): CreatorPending
         title: "上传第一版",
         subtitle: "Apple iPhone 18 发布视频",
         metaLines: ["截止时间：剩余 1 天"],
-        href: withLocale(creatorPortalRoutes.projects, locale),
+        href: withLocale(creatorPortalRoutes.reviewHub, locale),
         actionLabel: "去上传"
       },
       {
@@ -334,7 +347,7 @@ export function buildDemoCreatorPendingTaskCards(locale: Locale): CreatorPending
       title: "Upload first cut",
       subtitle: "Apple iPhone 18 launch film",
       metaLines: ["Deadline: 1 day left"],
-      href: withLocale(creatorPortalRoutes.projects, locale),
+      href: withLocale(creatorPortalRoutes.reviewHub, locale),
       actionLabel: "Upload"
     },
     {
@@ -353,6 +366,7 @@ export function buildDemoCreatorPendingTaskCards(locale: Locale): CreatorPending
 export function buildCreatorHomeProjects(input: {
   locale: Locale;
   orders: StoredOrder[];
+  deliverableCounts?: Record<string, number>;
 }): CreatorHomeProjectRow[] {
   const labels = input.locale === "zh" ? statusLabelsZh : statusLabelsEn;
 
@@ -361,6 +375,10 @@ export function buildCreatorHomeProjects(input: {
     .slice(0, 6)
     .map((order, index) => {
       const deadline = order.completed_at ?? order.paid_at ?? order.created_at;
+      const uploadActionable = isCreatorUploadActionable(
+        order,
+        input.deliverableCounts?.[order.id] ?? 0
+      );
       return {
         id: order.id,
         title: order.title || order.company_name,
@@ -378,7 +396,13 @@ export function buildCreatorHomeProjects(input: {
             : order.status === "review"
               ? 80
               : undefined,
-        href: withLocale(creatorPortalRoutes.project(order.id), input.locale)
+        href: withLocale(
+          uploadActionable ? creatorPortalRoutes.review(order.id) : creatorPortalRoutes.project(order.id),
+          input.locale
+        ),
+        actionLabel: uploadActionable
+          ? creatorUploadActionLabel(input.locale, order.status)
+          : undefined
       };
     });
 }
@@ -416,7 +440,8 @@ export function buildDemoCreatorHomeProjects(locale: Locale): CreatorHomeProject
         deadline: "2025-06-06",
         dateLabel: "2025-06-06",
         progress: 60,
-        href: projectsHref,
+        href: withLocale(creatorPortalRoutes.reviewHub, locale),
+        actionLabel: "上传视频",
         thumbnailUrl:
           "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?q=80&w=240&auto=format&fit=crop",
         listTab: "production"
@@ -501,7 +526,8 @@ export function buildDemoCreatorHomeProjects(locale: Locale): CreatorHomeProject
       deadline: "2025-06-06",
       dateLabel: "Jun 6, 2025",
       progress: 60,
-      href: projectsHref,
+      href: withLocale(creatorPortalRoutes.reviewHub, locale),
+      actionLabel: "Upload video",
       thumbnailUrl:
         "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?q=80&w=240&auto=format&fit=crop",
       listTab: "production"

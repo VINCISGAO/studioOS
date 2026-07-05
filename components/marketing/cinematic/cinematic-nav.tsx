@@ -30,7 +30,7 @@ export function CinematicNav({
           <span className="flex h-8 w-8 items-center justify-center rounded-md bg-white text-black">
             <Layers3 className="h-4 w-4" />
           </span>
-          <span className="truncate text-sm font-semibold tracking-tight sm:text-base">StudioOS</span>
+          <span className="truncate text-sm font-semibold tracking-tight sm:text-base">VINCIS</span>
         </Link>
 
         <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-7 text-sm text-zinc-400 lg:flex">

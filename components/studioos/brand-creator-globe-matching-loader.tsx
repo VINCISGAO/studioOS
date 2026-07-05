@@ -33,7 +33,7 @@ const copy = {
         { icon: Zap, label: "Fast response", detail: "Quick connect" },
         { icon: ShieldCheck, label: "Vetted talent", detail: "Quality assured" }
       ],
-      footnote: "StudioOS makes brand–creator collaboration simpler and more successful"
+      footnote: "VINCIS makes brand–creator collaboration simpler and more successful"
     },
     zh: {
       titleLead: "正在匹配全球",
@@ -47,7 +47,7 @@ const copy = {
         { icon: Zap, label: "高效响应", detail: "快速连接" },
         { icon: ShieldCheck, label: "严格审核", detail: "品质保障" }
       ],
-      footnote: "StudioOS 让品牌与创作者的合作更简单、更高效、更成功"
+      footnote: "VINCIS 让品牌与创作者的合作更简单、更高效、更成功"
     }
   },
   schemes: {
@@ -63,7 +63,7 @@ const copy = {
         { icon: Zap, label: "Fast draft", detail: "Schemes A / B / C" },
         { icon: ShieldCheck, label: "Production ready", detail: "Brief-ready output" }
       ],
-      footnote: "StudioOS turns your brief into actionable creative directions"
+      footnote: "VINCIS turns your brief into actionable creative directions"
     },
     zh: {
       titleLead: "AI 正在为你生成 ",
@@ -77,7 +77,7 @@ const copy = {
         { icon: Zap, label: "快速出稿", detail: "方案 A / B / C" },
         { icon: ShieldCheck, label: "可执行", detail: "Brief 就绪" }
       ],
-      footnote: "StudioOS 将你的需求转化为可执行的创意方向"
+      footnote: "VINCIS 将你的需求转化为可执行的创意方向"
     }
   }
 } as const;
@@ -151,7 +151,7 @@ export function BrandCreatorGlobeMatchingLoader({
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-violet-600 to-indigo-600 text-white shadow-sm">
             S
           </span>
-          StudioOS
+          VINCIS
         </div>
 
         <h2 className={cn("max-w-2xl font-semibold tracking-tight text-zinc-950", compact ? "text-2xl" : "text-3xl sm:text-4xl")}>

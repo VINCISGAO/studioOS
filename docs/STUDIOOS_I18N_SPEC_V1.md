@@ -1,6 +1,6 @@
-# StudioOS Internationalization (i18n) Specification V1.0
+# VINCIS Internationalization (i18n) Specification V1.0
 
-StudioOS uses a database-backed language system so UI copy, AI output, notifications, emails, errors, and admin content can share one translation source.
+VINCIS uses a database-backed language system so UI copy, AI output, notifications, emails, errors, and admin content can share one translation source.
 
 ## Supported Languages
 

@@ -154,7 +154,7 @@ const UI_COPY: Record<UiLocale, {
   compactPageTitle: string;
 }> = {
   zh: {
-    title: "StudioOS AI助手",
+    title: "VINCIS AI助手",
     subtitle: "你的 AI 创作者操作系统",
     nav: {
       copilot: "AI助手",
@@ -171,7 +171,7 @@ const UI_COPY: Record<UiLocale, {
     learnMore: "了解更多 →",
     loadingWorkspaceName: "正在读取数据库",
     loadingGreeting: "正在同步你的真实资料",
-    inputPlaceholder: "询问任何关于 StudioOS 的问题...",
+    inputPlaceholder: "询问任何关于 VINCIS 的问题...",
     ready: "AI助手工作区已就绪",
     loading: "AI 正在为你分析",
     booting: "正在加载 AI 工作区",
@@ -188,7 +188,7 @@ const UI_COPY: Record<UiLocale, {
     compactPageTitle: "打开紧凑版 AI助手"
   },
   en: {
-    title: "StudioOS AI Assistant",
+    title: "VINCIS AI Assistant",
     subtitle: "Your AI Creator Operating System",
     nav: {
       copilot: "AI Assistant",
@@ -205,7 +205,7 @@ const UI_COPY: Record<UiLocale, {
     learnMore: "Learn more →",
     loadingWorkspaceName: "Reading database",
     loadingGreeting: "Syncing your real profile",
-    inputPlaceholder: "Ask anything about StudioOS...",
+    inputPlaceholder: "Ask anything about VINCIS...",
     ready: "AI Assistant workspace is ready",
     loading: "AI is analyzing for you",
     booting: "Loading AI workspace",
@@ -456,7 +456,7 @@ export function AiWorkspacePage({ mode }: AiWorkspacePageProps) {
         <aside className="hidden">
           <div className="flex items-center gap-2 text-lg font-semibold">
             <Sparkles className="h-5 w-5 fill-violet-500 text-violet-500" />
-            StudioOS AI
+            VINCIS AI
           </div>
 
           <nav className="mt-8 space-y-2 text-sm">

@@ -84,7 +84,7 @@ export class NotificationService {
             headline: input.title,
             body: input.content,
             actionUrl: input.actionUrl,
-            actionLabel: "View in StudioOS"
+            actionLabel: "View in VINCIS"
           })
         });
         if (emailResult.ok && !emailResult.skipped) {

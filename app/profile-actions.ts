@@ -192,3 +192,44 @@ export async function uploadCreatorAvatarAction(formData: FormData) {
   revalidateCreatorProfilePaths(creatorId);
   return { ok: true as const, avatar_url: saved.url };
 }
+
+export async function uploadCreatorCoverAction(formData: FormData) {
+  const lang = normalizeLang(formData.get("lang"));
+  const creatorId = await getCurrentCreatorId();
+  if (!creatorId) {
+    return { ok: false as const, error: lang === "zh" ? "请先登录" : "Sign in required" };
+  }
+
+  const file = formData.get("cover_file");
+  if (!(file instanceof File)) {
+    return { ok: false as const, error: lang === "zh" ? "请选择图片" : "Choose an image file" };
+  }
+
+  const { saveCreatorCoverUpload } = await import("@/lib/studioos/creator-avatar-upload");
+  const saved = await saveCreatorCoverUpload(creatorId, file);
+  if (!saved.ok) {
+    return { ok: false as const, error: saved.error };
+  }
+
+  const { getCreatorById } = await import("@/lib/creator-service");
+  const { updateCreatorCoverUrl } = await import("@/lib/creator-profile-service");
+  const creator = await getCreatorById(creatorId);
+  if (!creator) {
+    return { ok: false as const, error: lang === "zh" ? "Studio 不存在" : "Studio not found" };
+  }
+
+  const works = await getWorksForCreator(creatorId, { ownerView: true });
+  await updateCreatorCoverUrl(creatorId, saved.url, creator, works);
+  const { storageFileService } = await import("@/features/storage/storage-file.service");
+  await storageFileService.recordCreatorCover(creatorId, {
+    fileName: saved.file_name,
+    fileKey: saved.file_key,
+    publicUrl: saved.url,
+    mimeType: saved.mime_type,
+    fileSize: saved.size_bytes,
+    provider: saved.storage_provider
+  });
+
+  revalidateCreatorProfilePaths(creatorId);
+  return { ok: true as const, cover_url: saved.url };
+}

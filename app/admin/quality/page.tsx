@@ -15,18 +15,18 @@ export default async function AdminQualityPage({ searchParams }: { searchParams:
     const store = JSON.parse(raw) as { orders: { id: string; title: string }[] };
     orderIds = store.orders.slice(0, 3).map((o) => ({ id: o.id, title: o.title }));
   } catch {
-    orderIds = [{ id: "demo", title: "Demo campaign" }];
+    orderIds = [];
   }
 
   const sampleReports = await Promise.all(
     orderIds.map(async (order) => {
-      const deliverables = order.id === "demo" ? [] : await getDeliverables(order.id);
+      const deliverables = await getDeliverables(order.id);
       const latest = deliverables[0];
       return {
         order,
         report: await runQualityChecksAsync(order.id, {
           hasDeliverable: deliverables.length > 0,
-          videoUrl: latest?.file_url ?? "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
+          videoUrl: latest?.file_url ?? null
         })
       };
     })
@@ -41,16 +41,24 @@ export default async function AdminQualityPage({ searchParams }: { searchParams:
           : "Platform-wide AI quality — ffprobe reads real deliverable metadata when available."}
       </p>
       <div className="mt-8 space-y-6">
-        {sampleReports.map(({ order, report }) => (
-          <Card key={order.id} className="border-zinc-200/80 shadow-none">
-            <CardContent className="p-6">
-              <p className="font-medium">{order.title || order.id}</p>
-              <div className="mt-4">
-                <QualityCenterPanel locale={locale} report={report} />
-              </div>
+        {sampleReports.length ? (
+          sampleReports.map(({ order, report }) => (
+            <Card key={order.id} className="border-zinc-200/80 shadow-none">
+              <CardContent className="p-6">
+                <p className="font-medium">{order.title || order.id}</p>
+                <div className="mt-4">
+                  <QualityCenterPanel locale={locale} report={report} />
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          <Card className="border-zinc-200/80 shadow-none">
+            <CardContent className="p-6 text-sm text-zinc-500">
+              {locale === "zh" ? "暂无真实订单可质检。" : "No real orders available for quality checks yet."}
             </CardContent>
           </Card>
-        ))}
+        )}
       </div>
     </div>
   );

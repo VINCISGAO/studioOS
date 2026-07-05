@@ -700,7 +700,7 @@ function ReviewerTimestampWorkspaceInner({
               <DialogDescription className="mt-3 max-w-[320px] text-sm leading-6 text-zinc-500">
                 {locale === "zh"
                   ? "商家账户余额不足，系统已自动拉起本次加购付款账单。完成支付后将立即解锁第 4–5 轮修订。"
-                  : "Your brand account balance is insufficient, so StudioOS opened this add-on payment invoice. Payment unlocks rounds 4-5 immediately."}
+                  : "Your brand account balance is insufficient, so VINCIS opened this add-on payment invoice. Payment unlocks rounds 4-5 immediately."}
               </DialogDescription>
             </DialogHeader>
             <div className="mt-6 space-y-4 rounded-2xl border border-zinc-100 bg-zinc-50 p-4 text-left">

@@ -25,9 +25,10 @@ export function creatorAvatarObjectKey(creatorId: string, fileName: string) {
   return `creators/${creatorId}/${fileName}`;
 }
 
-export async function saveCreatorAvatarUpload(
+async function saveCreatorImageUpload(
   creatorId: string,
-  file: File
+  file: File,
+  fileNamePrefix: "avatar" | "cover"
 ): Promise<
   | {
       ok: true;
@@ -53,7 +54,7 @@ export async function saveCreatorAvatarUpload(
     return { ok: false, error: "Only JPEG, PNG, WebP, and GIF images are supported" };
   }
 
-  const fileName = `avatar_${Date.now()}.${extForMime(mime)}`;
+  const fileName = `${fileNamePrefix}_${Date.now()}.${extForMime(mime)}`;
   const buffer = Buffer.from(await file.arrayBuffer());
   const fileKey = creatorAvatarObjectKey(creatorId, fileName);
   let stored: Awaited<ReturnType<typeof putObject>>;
@@ -79,4 +80,12 @@ export async function saveCreatorAvatarUpload(
     mime_type: mime,
     size_bytes: file.size
   };
+}
+
+export async function saveCreatorAvatarUpload(creatorId: string, file: File) {
+  return saveCreatorImageUpload(creatorId, file, "avatar");
+}
+
+export async function saveCreatorCoverUpload(creatorId: string, file: File) {
+  return saveCreatorImageUpload(creatorId, file, "cover");
 }

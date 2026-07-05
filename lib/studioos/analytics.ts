@@ -23,100 +23,6 @@ export type CreativeInsight = {
   category: "hook" | "length" | "style" | "cta";
 };
 
-const demoAds: AdMetric[] = [
-  {
-    id: "ad_001",
-    name: "TikTok Launch — v2",
-    platform: "TikTok",
-    ctr: 2.4,
-    hookScore: 78,
-    retention3s: 48,
-    watchTime: 8.2,
-    engagement: 5.1,
-    conversion: 1.8,
-    deliveredAt: "2026-06-12"
-  },
-  {
-    id: "ad_002",
-    name: "Black Friday Hero",
-    platform: "Meta",
-    ctr: 1.9,
-    hookScore: 71,
-    retention3s: 41,
-    watchTime: 6.5,
-    engagement: 3.8,
-    conversion: 2.2,
-    deliveredAt: "2026-05-28"
-  },
-  {
-    id: "ad_003",
-    name: "Holiday Campaign",
-    platform: "TikTok",
-    ctr: 3.1,
-    hookScore: 85,
-    retention3s: 52,
-    watchTime: 9.1,
-    engagement: 6.4,
-    conversion: 2.0,
-    deliveredAt: "2026-06-20"
-  }
-];
-
-const demoInsights: CreativeInsight[] = [
-  {
-    id: "ins_1",
-    title: {
-      en: "First-person hooks outperform product macro",
-      zh: "第一人称开场优于产品特写"
-    },
-    body: {
-      en: "Past 30 days: first-person openers on TikTok drove 18% higher CTR vs product close-ups for your category.",
-      zh: "过去 30 天：TikTok 上第一人称开场的点击率比产品特写高 18%。"
-    },
-    impact: "high",
-    category: "hook"
-  },
-  {
-    id: "ins_2",
-    title: {
-      en: "9s beats 20s in your vertical",
-      zh: "9 秒优于 20 秒"
-    },
-    body: {
-      en: "Peer brands in your space shifted to 9-second cuts — 22% better completion rate than 20s variants.",
-      zh: "同行业品牌转向 9 秒短片 — 完播率比 20 秒版本高 22%。"
-    },
-    impact: "high",
-    category: "length"
-  },
-  {
-    id: "ins_3",
-    title: {
-      en: "Minimal end cards convert better",
-      zh: "极简尾帧转化更高"
-    },
-    body: {
-      en: "Single CTA end cards outperformed dual-offer layouts by 11% on conversion.",
-      zh: "单一 CTA 尾帧比双优惠布局转化率高 11%。"
-    },
-    impact: "medium",
-    category: "cta"
-  },
-  {
-    id: "ins_4",
-    title: {
-      en: "UGC pacing aligns with your DNA",
-      zh: "UGC 节奏与 DNA 一致"
-    },
-    body: {
-      en: "Handheld UGC-style cuts match your Creative DNA pacing profile — recommend for next brief.",
-      zh: "手持 UGC 风格切片与你的 Creative DNA 节奏一致 — 建议下次 Brief 采用。"
-    },
-    impact: "medium",
-    category: "style"
-  }
-];
-
 export type AnalyticsSummary = {
   avgCtr: number;
   avgHookScore: number;
@@ -126,7 +32,7 @@ export type AnalyticsSummary = {
   monthSpend: number;
 };
 
-export type AnalyticsDataSource = "live" | "demo" | "mixed" | "attributed";
+export type AnalyticsDataSource = "live" | "mixed" | "attributed" | "empty";
 
 function summarize(ads: AdMetric[]): AnalyticsSummary {
   if (!ads.length) {
@@ -142,7 +48,7 @@ function summarize(ads: AdMetric[]): AnalyticsSummary {
   };
 }
 
-/** Sync demo-only (legacy). */
+/** Sync empty fallback for callers that cannot await provider data. */
 export function getCreativeAnalytics(_brandEmail?: string): {
   ads: AdMetric[];
   insights: CreativeInsight[];
@@ -150,12 +56,11 @@ export function getCreativeAnalytics(_brandEmail?: string): {
   dataSource: AnalyticsDataSource;
 } {
   void _brandEmail;
-  const ads = demoAds;
   return {
-    ads,
-    insights: demoInsights,
-    summary: summarize(ads),
-    dataSource: "demo"
+    ads: [],
+    insights: [],
+    summary: summarize([]),
+    dataSource: "empty"
   };
 }
 
@@ -213,8 +118,8 @@ export async function getCreativeAnalyticsAsync(brandEmail?: string): Promise<{
       const monthSpend = records.reduce((sum, item) => sum + item.spend_usd, 0);
       return {
         ads,
-        insights: storedInsights.length ? storedInsightsToCreative(storedInsights) : demoInsights,
-        summary: { ...summarize(ads), monthSpend: monthSpend || 4900 },
+        insights: storedInsights.length ? storedInsightsToCreative(storedInsights) : [],
+        summary: { ...summarize(ads), monthSpend },
         dataSource: "attributed",
         connectedPlatforms
       };
@@ -222,22 +127,21 @@ export async function getCreativeAnalyticsAsync(brandEmail?: string): Promise<{
   }
 
   if (!connectedPlatforms.length) {
-    const demo = getCreativeAnalytics();
-    return { ...demo, connectedPlatforms: [] };
+    const empty = getCreativeAnalytics();
+    return { ...empty, connectedPlatforms: [] };
   }
 
   const live = await fetchLiveAdAnalytics();
   if (!live.ads.length) {
-    const demo = getCreativeAnalytics();
-    return { ...demo, connectedPlatforms, dataSource: "demo" };
+    const empty = getCreativeAnalytics();
+    return { ...empty, connectedPlatforms };
   }
 
-  const insights = live.insights.length ? live.insights : demoInsights;
   const dataSource: AnalyticsDataSource = live.sources.length === connectedPlatforms.length ? "live" : "mixed";
 
   return {
     ads: live.ads,
-    insights,
+    insights: live.insights,
     summary: summarize(live.ads),
     dataSource,
     connectedPlatforms

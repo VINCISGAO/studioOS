@@ -52,28 +52,28 @@ const DRAWER_COPY: Record<UiLocale, {
 }> = {
   zh: {
     launcher: "AI助手",
-    title: "StudioOS AI助手",
+    title: "VINCIS AI助手",
     subtitle: "查询、解释、建议、引导",
     rolePrefix: "角色",
     currentEntity: "当前",
     openWorkspace: "打开全屏 AI助手",
     openWorkspaceAria: "打开 AI助手工作区",
-    loading: "正在读取 StudioOS 数据...",
-    inputPlaceholder: "问 StudioOS AI助手...",
+    loading: "正在读取 VINCIS 数据...",
+    inputPlaceholder: "问 VINCIS AI助手...",
     unavailable: "AI助手暂时不可用，请稍后再试。",
     requestFailed: "AI助手请求失败",
     defaultSuggestions: ["我的项目现在到哪一步？", "下一步我应该做什么？", "我的预算合理吗？"]
   },
   en: {
     launcher: "AI Assistant",
-    title: "StudioOS AI Assistant",
+    title: "VINCIS AI Assistant",
     subtitle: "Search, explain, suggest, and guide",
     rolePrefix: "Role",
     currentEntity: "current",
     openWorkspace: "Open full AI Assistant",
     openWorkspaceAria: "Open AI Assistant workspace",
-    loading: "Reading StudioOS data...",
-    inputPlaceholder: "Ask StudioOS AI Assistant...",
+    loading: "Reading VINCIS data...",
+    inputPlaceholder: "Ask VINCIS AI Assistant...",
     unavailable: "AI Assistant is temporarily unavailable. Please try again later.",
     requestFailed: "AI Assistant request failed",
     defaultSuggestions: ["Where is my project now?", "What should I do next?", "Is my budget reasonable?"]
@@ -104,7 +104,7 @@ function contextLabel(pathname: string, locale: UiLocale) {
   if (pathname.startsWith("/brand")) return locale === "zh" ? "广告主" : "Brand";
   if (pathname.startsWith("/studio") || pathname.startsWith("/creator")) return locale === "zh" ? "创作者" : "Creator";
   if (pathname.startsWith("/admin")) return locale === "zh" ? "管理员" : "Admin";
-  return "StudioOS";
+  return "VINCIS";
 }
 
 function roleKindFromPath(pathname: string): "brand" | "creator" | "admin" | "auto" {

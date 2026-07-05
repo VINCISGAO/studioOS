@@ -1,4 +1,4 @@
--- StudioOS AI Copilot V1
+-- VINCIS AI Copilot V1
 -- Read-only AI assistant session/message/tool/context audit tables.
 
 CREATE TABLE "chat_sessions" (

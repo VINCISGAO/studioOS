@@ -1,4 +1,4 @@
--- StudioOS auth hardening: rate limits, verification codes, attempts, locks, audit logs.
+-- VINCIS auth hardening: rate limits, verification codes, attempts, locks, audit logs.
 
 CREATE TYPE "AuthVerificationPurpose" AS ENUM ('SIGNUP_LOGIN', 'RESET_PASSWORD', 'SECURITY_CHECK');
 CREATE TYPE "AuthAttemptType" AS ENUM ('EMAIL_START', 'CODE_VERIFY', 'PASSWORD_LOGIN', 'OAUTH_CALLBACK');

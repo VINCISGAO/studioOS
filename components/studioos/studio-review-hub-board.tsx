@@ -15,7 +15,8 @@ import {
   Play,
   Search,
   TrendingDown,
-  TrendingUp
+  TrendingUp,
+  UploadCloud
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Locale } from "@/lib/i18n";
@@ -43,6 +44,8 @@ const copy = {
     dateRange: "开始日期 → 结束日期",
     sort: "最新更新",
     open: "进入审片",
+    uploadVideo: "上传视频",
+    uploadRevision: "上传修改版",
     versions: "个版本",
     comments: "条未解决批注",
     updated: "更新时间",
@@ -51,6 +54,8 @@ const copy = {
     days: "天",
     progress: "进度",
     uploadedAt: "上传于",
+    notUploaded: "尚未上传视频",
+    awaitingVideo: "等待上传视频",
     uploader: "上传者: 我",
     helpTitle: "如何使用审片中心？",
     helpBody: "所有与品牌方共享的版本、批注、审核状态都在这里同步更新，确保信息一致，减少沟通成本。",
@@ -77,6 +82,8 @@ const copy = {
     dateRange: "Start → end date",
     sort: "Latest update",
     open: "Open review",
+    uploadVideo: "Upload video",
+    uploadRevision: "Upload revision",
     versions: "versions",
     comments: "open comments",
     updated: "Updated",
@@ -85,6 +92,8 @@ const copy = {
     days: "d",
     progress: "Progress",
     uploadedAt: "Uploaded",
+    notUploaded: "No video uploaded yet",
+    awaitingVideo: "Awaiting video upload",
     uploader: "By you",
     helpTitle: "How to use review center?",
     helpBody: "Versions, comments, and approval states sync here with your brand partners.",
@@ -222,7 +231,18 @@ export function StudioReviewHubBoard({ locale, items }: { locale: Locale; items:
         </div>
       ) : (
         <div className={cn(view === "grid" ? "grid gap-4 xl:grid-cols-2" : "space-y-4")}>
-          {filtered.map((item) => (
+          {filtered.map((item) => {
+            const isAwaitingUpload = item.status === "in_production" && item.deliverableCount === 0;
+            const isRevisionUpload = item.status === "revision";
+            const usesUploadAction = isAwaitingUpload || isRevisionUpload;
+            const ActionIcon = usesUploadAction ? UploadCloud : Play;
+            const actionLabel = isRevisionUpload
+              ? t.uploadRevision
+              : isAwaitingUpload
+                ? t.uploadVideo
+                : t.open;
+
+            return (
             <article
               key={item.orderId}
               className="overflow-hidden rounded-[24px] border border-zinc-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]"
@@ -254,8 +274,8 @@ export function StudioReviewHubBoard({ locale, items }: { locale: Locale; items:
                 </div>
                 <Button asChild className="h-11 min-w-[112px] justify-center whitespace-nowrap rounded-xl bg-violet-600 px-5 hover:bg-violet-700">
                   <Link href={withLocale(item.reviewHref, locale)}>
-                    <Play className="mr-2 h-4 w-4" />
-                    {t.open}
+                    <ActionIcon className="mr-2 h-4 w-4" />
+                    {actionLabel}
                   </Link>
                 </Button>
               </div>
@@ -266,15 +286,19 @@ export function StudioReviewHubBoard({ locale, items }: { locale: Locale; items:
                 </div>
                 <div className="space-y-2 text-sm">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-semibold text-zinc-900">V{item.latestVersion ?? 1}.{item.latestVersion ? 2 : 0}</span>
+                    <span className="font-semibold text-zinc-900">
+                      {item.latestVersion ? `V${item.latestVersion}.2` : t.awaitingVideo}
+                    </span>
                     <span className="rounded-full bg-violet-50 px-2 py-0.5 text-xs font-medium text-violet-700">
                       {t.status[item.status as keyof typeof t.status] ?? item.status}
                     </span>
                   </div>
                   <p className="text-zinc-500">
-                    {t.uploadedAt} {item.latestVersionUploadedAt ? formatDate(item.latestVersionUploadedAt) : formatDate(item.updatedAt)}
+                    {item.latestVersionUploadedAt
+                      ? `${t.uploadedAt} ${formatDate(item.latestVersionUploadedAt)}`
+                      : t.notUploaded}
                   </p>
-                  <p className="text-zinc-500">{t.uploader}</p>
+                  {item.latestVersionUploadedAt ? <p className="text-zinc-500">{t.uploader}</p> : null}
                   <p className="inline-flex items-center gap-1 text-zinc-600">
                     <MessageSquareText className="h-4 w-4" />
                     {item.openCommentCount} {locale === "zh" ? t.comments : t.comments}
@@ -298,7 +322,8 @@ export function StudioReviewHubBoard({ locale, items }: { locale: Locale; items:
                 </div>
               </div>
             </article>
-          ))}
+            );
+          })}
         </div>
       )}
 

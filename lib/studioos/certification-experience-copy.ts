@@ -13,7 +13,7 @@ export const certificationExperienceCopy = {
   en: {
     modalTitle: "🎉 Certified Service Partner",
     modalSubtitle:
-      "Congratulations — you're a StudioOS Certified Service Partner. Accept unlimited projects and collaborate with global brands.",
+      "Congratulations — you're a VINCIS Certified Service Partner. Accept unlimited projects and collaborate with global brands.",
     benefits: [
       {
         title: "Unlimited project invitations",
@@ -41,14 +41,14 @@ export const certificationExperienceCopy = {
     partnerBadge: "Certified Service Partner",
     partnerBadgeSidebar: "Verified Partner",
     unlockLabel: "Unlocked",
-    welcomeTitle: "Welcome to the StudioOS Certified Service Partner program!",
+    welcomeTitle: "Welcome to the VINCIS Certified Service Partner program!",
     welcomeBody:
       "Unlimited orders, official certification, and your full workspace are live — start collaborating with global brands now.",
     welcomeDismiss: "Dismiss"
   },
   zh: {
     modalTitle: "🎉 恭喜成为认证服务商",
-    modalSubtitle: "您已成为 StudioOS 认证服务商。您已解锁全部创作者功能，现在可以无限接单，与全球品牌合作。",
+    modalSubtitle: "您已成为 VINCIS 认证服务商。您已解锁全部创作者功能，现在可以无限接单，与全球品牌合作。",
     benefits: [
       {
         title: "无限接收项目邀请",
@@ -76,7 +76,7 @@ export const certificationExperienceCopy = {
     partnerBadge: "认证服务商",
     partnerBadgeSidebar: "认证服务商",
     unlockLabel: "已解锁",
-    welcomeTitle: "🎉 欢迎加入 StudioOS 认证服务商计划！",
+    welcomeTitle: "🎉 欢迎加入 VINCIS 认证服务商计划！",
     welcomeBody:
       "您已解锁无限接单权限、官方认证标识及全部工作台功能，立即开始接收全球品牌合作。",
     welcomeDismiss: "关闭"

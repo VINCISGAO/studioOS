@@ -74,7 +74,7 @@ export function findAdminTotpTimeStep(secret: string, token: string, windowSteps
   return null;
 }
 
-export function buildAdminTotpOtpAuthUri(email: string, secret: string, issuer = "StudioOS Admin") {
+export function buildAdminTotpOtpAuthUri(email: string, secret: string, issuer = "VINCIS Admin") {
   const label = encodeURIComponent(`${issuer}:${email}`);
   const params = new URLSearchParams({
     secret: secret.replace(/\s/g, "").toUpperCase(),

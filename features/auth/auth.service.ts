@@ -13,6 +13,8 @@ export type AuthUserDto = {
   languageCode: string;
   companyName?: string;
   displayName?: string;
+  hasBrandProfile: boolean;
+  hasCreatorProfile: boolean;
 };
 
 function mapPrismaUser(user: UserWithProfiles): AuthUserDto {
@@ -23,7 +25,9 @@ function mapPrismaUser(user: UserWithProfiles): AuthUserDto {
     fullName: user.fullName,
     languageCode: user.languageCode ?? user.language ?? "en",
     companyName: user.brandProfile?.companyName,
-    displayName: user.creatorProfile?.displayName ?? undefined
+    displayName: user.creatorProfile?.displayName ?? undefined,
+    hasBrandProfile: user.role === "BRAND" || Boolean(user.brandProfile),
+    hasCreatorProfile: user.role === "CREATOR" || Boolean(user.creatorProfile)
   };
 }
 
@@ -60,13 +64,52 @@ export class AuthService {
     }
 
     const normalized = input.email.trim().toLowerCase();
-    const fullName = input.fullName.trim() || normalized.split("@")[0] || "StudioOS User";
+    const fullName = input.fullName.trim() || normalized.split("@")[0] || "VINCIS User";
     if (!normalized.includes("@") || !isStrongPassword(input.password)) {
       return { ok: false, error: "invalid" };
     }
 
     const existing = await userRepository.findByEmail(normalized);
     if (existing) {
+      if (
+        existing.role === "ADMIN" ||
+        existing.role === "SUPPORT" ||
+        existing.role === "SYSTEM" ||
+        !existing.passwordHash ||
+        !verifyPassword(input.password, existing.passwordHash)
+      ) {
+        return { ok: false, error: "email-taken" };
+      }
+
+      if (input.role === "BRAND") {
+        if (existing.brandProfile) {
+          return { ok: false, error: "email-taken" };
+        }
+
+        const user = await userRepository.ensureBrandProfileForUser({
+          userId: existing.id,
+          companyName: input.companyName ?? fullName
+        });
+        return { ok: true, user: mapPrismaUser(user) };
+      }
+
+      if (input.role === "CREATOR") {
+        if (existing.creatorProfile) {
+          return { ok: false, error: "email-taken" };
+        }
+
+        const user = await userRepository.ensureCreatorProfileForUser({
+          userId: existing.id,
+          displayName: input.displayName ?? fullName
+        });
+        const { membershipService } = await import("@/features/membership/membership.service");
+        await membershipService.ensureDefaultMembershipOnCreatorRegister(
+          user.id,
+          user.creatorProfile?.id
+        );
+        return { ok: true, user: mapPrismaUser(user) };
+      }
+
       return { ok: false, error: "email-taken" };
     }
 
@@ -146,7 +189,9 @@ export class AuthService {
       fullName: demo.label,
       languageCode: "en",
       companyName: demo.role === "client" ? demo.label : undefined,
-      displayName: demo.role === "creator" ? demo.label : undefined
+      displayName: demo.role === "creator" ? demo.label : undefined,
+      hasBrandProfile: demo.role === "client",
+      hasCreatorProfile: demo.role === "creator"
     };
   }
 
@@ -160,7 +205,11 @@ export class AuthService {
         email: demo.email,
         role: demoRoleToPrisma(demo.role),
         fullName: demo.label,
-        languageCode: "en"
+        languageCode: "en",
+        companyName: demo.role === "client" ? demo.label : undefined,
+        displayName: demo.role === "creator" ? demo.label : undefined,
+        hasBrandProfile: demo.role === "client",
+        hasCreatorProfile: demo.role === "creator"
       };
     }
 

@@ -1,9 +1,9 @@
 ---
-description: StudioOS Development Bible — 工程铁律与 Feature First 架构
+description: VINCIS Development Bible — 工程铁律与 Feature First 架构
 alwaysApply: true
 ---
 
-# StudioOS Engineering Rules
+# VINCIS Engineering Rules
 
 参考 `docs/STUDIOOS_ROADMAP.md` 与开发者文档 Bible。
 

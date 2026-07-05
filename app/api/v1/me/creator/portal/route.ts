@@ -8,10 +8,7 @@ export async function GET() {
     const user = await requireApiUser();
     const creatorId = await getCurrentCreatorId();
     const orders = creatorId ? await listOrdersForCreator(creatorId) : [];
-    const dashboard = await creatorPortalService.getDashboard(
-      { id: user.id, role: user.role },
-      orders
-    );
+    const dashboard = await creatorPortalService.getDashboard(user, orders);
     return apiSuccess({ dashboard, orders });
   } catch (error) {
     return handleRouteError(error);

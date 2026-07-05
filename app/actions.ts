@@ -220,7 +220,7 @@ export async function signUpAction(formData: FormData) {
       email,
       password,
       role: isCreator ? "CREATOR" : "BRAND",
-      fullName: email.split("@")[0] || "StudioOS User",
+      fullName: email.split("@")[0] || "VINCIS User",
       companyName: isCreator ? undefined : email.split("@")[0],
       displayName: isCreator ? email.split("@")[0] : undefined
     });

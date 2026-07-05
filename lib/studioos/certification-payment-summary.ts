@@ -79,7 +79,7 @@ export function buildCertificationPaymentSummaryFields(
         };
 
   const certificationType =
-    locale === "zh" ? "StudioOS 认证服务商" : "StudioOS Verified Studio";
+    locale === "zh" ? "VINCIS 认证服务商" : "VINCIS Verified Studio";
   const status = locale === "zh" ? "已付款" : "Paid";
 
   return [

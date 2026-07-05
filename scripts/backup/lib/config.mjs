@@ -9,9 +9,9 @@ export const PROJECT_ROOT = resolve(__dirname, "../../..");
 function readPackageName() {
   try {
     const pkg = JSON.parse(readFileSync(join(PROJECT_ROOT, "package.json"), "utf8"));
-    return pkg.name ?? "StudioOS";
+    return pkg.name ?? "VINCIS";
   } catch {
-    return "StudioOS";
+    return "VINCIS";
   }
 }
 
@@ -24,7 +24,7 @@ function capitalize(value) {
 
 /** Default: sibling folder outside the repo — not served by Next.js */
 export const BACKUP_ROOT = resolve(
-  process.env.BACKUP_ROOT ?? join(homedir(), "StudioOS-Backups")
+  process.env.BACKUP_ROOT ?? join(homedir(), "VINCIS-Backups")
 );
 
 export const BACKUP_DIRS = {

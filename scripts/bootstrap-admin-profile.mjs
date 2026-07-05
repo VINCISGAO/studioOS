@@ -198,10 +198,10 @@ async function main() {
       console.log("Master account set. Other admin accounts suspended.");
     }
 
-    const label = encodeURIComponent(`StudioOS Admin:${email}`);
+    const label = encodeURIComponent(`VINCIS Admin:${email}`);
     const params = new URLSearchParams({
       secret,
-      issuer: "StudioOS Admin",
+      issuer: "VINCIS Admin",
       algorithm: "SHA1",
       digits: "6",
       period: "30"

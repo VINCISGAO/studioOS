@@ -180,6 +180,7 @@ export function CreatorProfileHero({
   headline,
   initials,
   avatarUrl,
+  coverUrl,
   avatarEditable = false,
   avatarUploading = false,
   editAvatarLabel,
@@ -195,6 +196,7 @@ export function CreatorProfileHero({
   headline?: string;
   initials: string;
   avatarUrl?: string;
+  coverUrl?: string;
   avatarEditable?: boolean;
   avatarUploading?: boolean;
   editAvatarLabel?: string;
@@ -207,8 +209,14 @@ export function CreatorProfileHero({
   actions: ReactNode;
 }) {
   return (
-    <section className="rounded-[24px] border border-zinc-200/80 bg-white p-6 shadow-sm sm:p-7">
-      <div className="flex flex-col gap-6">
+    <section className="overflow-hidden rounded-[24px] border border-zinc-200/80 bg-white shadow-sm">
+      {coverUrl ? (
+        <div className="relative h-40 bg-zinc-100 sm:h-48">
+          <Image src={coverUrl} alt="" fill className="object-cover" sizes="(min-width: 1024px) 896px, 100vw" unoptimized />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+        </div>
+      ) : null}
+      <div className="flex flex-col gap-6 p-6 sm:p-7">
         <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
           <div className="flex min-w-0 items-start gap-5">
             {avatarEditable ? (

@@ -44,7 +44,7 @@ export function AdminPageHeader({
   title: string;
   analyticsLabel: string;
 }) {
-  const eyebrow = locale === "zh" ? "StudioOS 管理后台" : "StudioOS Admin";
+  const eyebrow = locale === "zh" ? "VINCIS 管理后台" : "VINCIS Admin";
 
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

@@ -89,8 +89,8 @@ export async function generateCopilotWithAI(
             role: "system",
             content:
               locale === "zh"
-                ? "你是 StudioOS Production Copilot，专为商业广告制作生成 Brief、脚本、分镜等生产资产。输出简洁、可执行，不要闲聊。"
-                : "You are StudioOS Production Copilot. Generate production-ready commercial ad assets. Be concise and actionable. No small talk."
+                ? "你是 VINCIS Production Copilot，专为商业广告制作生成 Brief、脚本、分镜等生产资产。输出简洁、可执行，不要闲聊。"
+                : "You are VINCIS Production Copilot. Generate production-ready commercial ad assets. Be concise and actionable. No small talk."
           },
           {
             role: "user",

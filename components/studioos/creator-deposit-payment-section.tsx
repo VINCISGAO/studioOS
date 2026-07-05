@@ -6,12 +6,14 @@ import {
   Bitcoin,
   Check,
   Copy,
+  CreditCard,
   Loader2,
   Lock,
   MessageCircle,
   Shield,
   Smartphone,
-  Wallet
+  Wallet,
+  X
 } from "lucide-react";
 import { submitDepositPaymentAction } from "@/app/deposit-actions";
 import { CreatorDepositPendingCard } from "@/components/studioos/creator-deposit-pending-card";
@@ -33,14 +35,29 @@ const copyExtra = {
   en: {
     copy: "Copy",
     copied: "Copied",
-    submitting: "Submitting for review...",
-    submittingHint: "Payment submitted. Confirming certification status now."
+    payNow: "Pay now",
+    checkoutTitle: "Complete certification payment",
+    checkoutBody:
+      "This will simulate the provider deposit payment in the local environment and activate certification immediately.",
+    amountDue: "Amount due",
+    selectedMethod: "Payment method",
+    changeMethod: "Change method",
+    completePayment: "Complete payment",
+    processingPayment: "Processing payment...",
+    submittingHint: "Payment is being confirmed. Redirecting to your certification celebration."
   },
   zh: {
     copy: "复制",
     copied: "已复制",
-    submitting: "正在提交审核...",
-    submittingHint: "已收到提交，正在确认认证状态。"
+    payNow: "去付款",
+    checkoutTitle: "完成认证付款",
+    checkoutBody: "本地环境会模拟拉起付款，点击完成付款后立即激活认证服务商。",
+    amountDue: "应付金额",
+    selectedMethod: "支付方式",
+    changeMethod: "更换方式",
+    completePayment: "完成付款",
+    processingPayment: "正在确认付款...",
+    submittingHint: "正在确认付款，完成后会跳转到认证成功页面。"
   }
 } as const;
 
@@ -95,8 +112,10 @@ export function CreatorDepositPaymentSection({
   const [method, setMethod] = useState<PayoutMethodType>("alipay");
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
 
   const account = useMemo(() => getPlatformCorporateAccount(method, creatorId, locale), [method, creatorId, locale]);
+  const SelectedMethodIcon = methodIcons[method];
 
   useEffect(() => {
     if (!scrollToPayment) return;
@@ -235,11 +254,73 @@ export function CreatorDepositPaymentSection({
           </div>
         ) : null}
 
-        <SubmitPaymentButton
-          label={t.submit}
-          pendingLabel={extra.submitting}
-          submitting={isSubmittingPayment}
-        />
+        <Button
+          type="button"
+          size="lg"
+          className="h-12 w-full rounded-xl bg-zinc-900 text-sm font-medium hover:bg-zinc-800"
+          disabled={isSubmittingPayment}
+          onClick={() => setCheckoutOpen(true)}
+        >
+          <CreditCard className="h-4 w-4" />
+          {extra.payNow}
+        </Button>
+
+        {checkoutOpen ? (
+          <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 px-4 py-6 backdrop-blur-sm sm:items-center">
+            <div className="w-full max-w-md overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-[0_24px_80px_rgba(0,0,0,0.25)]">
+              <div className="flex items-start justify-between gap-4 border-b border-zinc-100 px-5 py-4">
+                <div>
+                  <h3 className="text-base font-semibold text-zinc-950">{extra.checkoutTitle}</h3>
+                  <p className="mt-1 text-sm leading-6 text-zinc-500">{extra.checkoutBody}</p>
+                </div>
+                <button
+                  type="button"
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-900 disabled:opacity-50"
+                  aria-label={locale === "zh" ? "关闭" : "Close"}
+                  disabled={isSubmittingPayment}
+                  onClick={() => setCheckoutOpen(false)}
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="space-y-4 px-5 py-5">
+                <div className="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-4">
+                  <p className="text-xs font-medium uppercase tracking-wide text-emerald-700">{extra.amountDue}</p>
+                  <p className="mt-1 text-3xl font-semibold tracking-tight text-zinc-950">
+                    {formatCurrency(snapshot.amount_usd)}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+                  <p className="text-xs font-medium text-zinc-500">{extra.selectedMethod}</p>
+                  <div className="mt-2 flex items-center justify-between gap-3">
+                    <div className="inline-flex items-center gap-2 text-sm font-semibold text-zinc-950">
+                      <SelectedMethodIcon className="h-4 w-4 text-emerald-600" />
+                      {paymentMethodLabel(method, locale)}
+                    </div>
+                    <button
+                      type="button"
+                      className="text-xs font-semibold text-zinc-500 underline-offset-4 hover:text-zinc-900 hover:underline disabled:opacity-50"
+                      disabled={isSubmittingPayment}
+                      onClick={() => setCheckoutOpen(false)}
+                    >
+                      {extra.changeMethod}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t border-zinc-100 px-5 py-4">
+                <SubmitPaymentButton
+                  label={extra.completePayment}
+                  pendingLabel={extra.processingPayment}
+                  submitting={isSubmittingPayment}
+                />
+              </div>
+            </div>
+          </div>
+        ) : null}
       </form>
     </section>
   );

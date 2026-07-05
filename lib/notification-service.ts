@@ -185,10 +185,10 @@ function ensureDemoNotifications(store: NotificationStore): NotificationStore {
     {
       id: "ntf_demo_system_cert",
       type: "invitation_match" as const,
-      title: "您的 StudioOS 认证已通过",
-      body: "恭喜！您已通过 StudioOS 专业创作者认证，现在可以接收更多品牌项目邀请。",
+      title: "您的 VINCIS 认证已通过",
+      body: "恭喜！您已通过 VINCIS 专业创作者认证，现在可以接收更多品牌项目邀请。",
       company_name: "系统通知",
-      client_name: "StudioOS",
+      client_name: "VINCIS",
       project_id: null,
       order_id: null,
       read_at: "2026-06-16T09:00:00.000Z",

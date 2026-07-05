@@ -48,7 +48,7 @@ export async function GET() {
         signature: "invalid",
         error: message,
         hint:
-          "Vercel 的 ALIPAY_PRIVATE_KEY 与网页应用 StudioOS登录 里上传的应用公钥不是同一对，请重新生成并上传。"
+          "Vercel 的 ALIPAY_PRIVATE_KEY 与网页应用 VINCIS登录 里上传的应用公钥不是同一对，请重新生成并上传。"
       });
     }
 

@@ -5,7 +5,7 @@ import { campaignRepository } from "@/features/campaign/campaign.repository";
 import { prisma } from "@/lib/core/database/prisma";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 
-/** Platform-wide text localization — any text entering StudioOS gets AI Communication treatment. */
+/** Platform-wide text localization — any text entering VINCIS gets AI Communication treatment. */
 export class PlatformLocalizationService {
   async localizeText(input: {
     content: string;

@@ -203,7 +203,7 @@ export function BriefBuilderWizard({ locale }: { locale: Locale }) {
             <input
               type="hidden"
               name="notes"
-              value={`Target audience: ${audience}\nBrief generated via StudioOS wizard.`}
+              value={`Target audience: ${audience}\nBrief generated via VINCIS wizard.`}
             />
             <Button type="submit" size="lg" className="w-full rounded-full">
               {t.generate} <Sparkles className="h-4 w-4" />

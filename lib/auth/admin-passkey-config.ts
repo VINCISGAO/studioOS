@@ -15,7 +15,7 @@ export function getAdminPasskeyConfig() {
     "localhost";
 
   return {
-    rpName: "StudioOS Admin",
+    rpName: "VINCIS Admin",
     rpID,
     origin
   };

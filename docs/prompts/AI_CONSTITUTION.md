@@ -1,4 +1,4 @@
-# StudioOS AI Engineering Constitution
+# VINCIS AI Engineering Constitution
 
 ## Article 1 — Source of Truth
 

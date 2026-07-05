@@ -446,7 +446,7 @@ Portfolio discovery OK; inquiry should create Project draft, not orphan thread.
 **Labels:** `phase-0`, `milestone-6`, `area:ux`, `priority:p2`
 
 ### Context
-Consistent StudioOS vocabulary across UI.
+Consistent VINCIS vocabulary across UI.
 
 ### Spec references
 - `lib/studioos/vocabulary.ts`

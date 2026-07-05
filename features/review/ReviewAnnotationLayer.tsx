@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReviewAnnotation, ReviewTool } from "@/features/review/review.types";
-import { REVIEW_ANNOTATION_COLOR } from "@/features/review/review.mock";
+import { REVIEW_ANNOTATION_COLOR } from "@/features/review/review.constants";
 import { cn } from "@/lib/utils";
 
 function AnnotationShape({

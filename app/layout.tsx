@@ -5,7 +5,7 @@ import { studioOS } from "@/lib/studioos/vocabulary";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "StudioOS | Hollywood Quality. Without Hollywood Costs.",
+  title: "VINCIS | Hollywood Quality. Without Hollywood Costs.",
   description: studioOS.hero.en
 };
 

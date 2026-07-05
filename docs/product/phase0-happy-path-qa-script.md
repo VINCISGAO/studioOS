@@ -1,8 +1,8 @@
-# StudioOS — 15-Step Happy Path QA Script
+# VINCIS — 15-Step Happy Path QA Script
 
 **用途：** 投资人 Demo · 回归测试 · 新成员 Onboarding  
 **时长：** 约 25–35 分钟（双浏览器）或 40 分钟（单人切换账号）  
-**密码（Demo）：** `TempStudioOS2026!`
+**密码（Demo）：** `TempVINCIS2026!`
 
 **Spec refs:** Architect #1 Wizard · #2 State machine §13.1 · #3 Contract · #4 Phase 0
 
@@ -69,7 +69,7 @@
 
 | # | 操作 | 预期结果 |
 |---|------|----------|
-| 1.1 | 打开 Landing | 看到 StudioOS；双入口「I need Ads / I want Projects」✅ 🔄 当前可能仅单 CTA |
+| 1.1 | 打开 Landing | 看到 VINCIS；双入口「I need Ads / I want Projects」✅ 🔄 当前可能仅单 CTA |
 | 1.2 | 点击 **I need Ads** | 跳转 Wizard 或 Login |
 | 1.3 | 登录 `client.arc@studioos.test` | 进入 Brand Portal |
 | 1.4 | 导航 **Create Campaign** / `/brand/projects/new` | Wizard Step 1；进度条 1/6 |
@@ -454,7 +454,7 @@
 Brand:  client.arc@studioos.test
 Studio: creator.nova@studioos.test
 Admin:  admin@studioos.test
-Pass:   TempStudioOS2026!
+Pass:   TempVINCIS2026!
 
 Nova creator_id: creator_01
 Sample budget:   $1,800

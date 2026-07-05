@@ -1,6 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 
-export const DEMO_PASSWORD = "TempStudioOS2026!";
+export const DEMO_PASSWORD = "TempVINCIS2026!";
 
 export const DEMO_ACCOUNTS = {
   brand: { email: "client.arc@studioos.test", role: "brand" as const },

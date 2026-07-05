@@ -1,9 +1,10 @@
 import { redirect } from "next/navigation";
-import { CalendarDays, FileText, Inbox, PieChart, ShieldCheck, WalletCards, Zap } from "lucide-react";
+import { CalendarDays, FileText, Inbox, PieChart, WalletCards, Zap } from "lucide-react";
 import {
   rechargeBrandWalletAction,
   resetBrandWalletBalanceForTestingAction
 } from "@/app/brand-account-actions";
+import { BrandWalletRechargeForm } from "@/components/studioos/brand-wallet-recharge-form";
 import { getBrandWalletSnapshot } from "@/features/wallet/brand-wallet.service";
 import { getCurrentClientEmail } from "@/lib/client-session";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
@@ -69,8 +70,8 @@ export default async function BrandFinanceAccountPage({
       title: locale === "zh" ? "直接充值" : "Direct top-up",
       body:
         locale === "zh"
-          ? "商家可以在这里提前充值，测试环境会模拟付款完成并立即入账。"
-          : "Top up in advance; local testing credits instantly."
+          ? "商家可以在这里提前充值，确认后会模拟付款完成并入账。"
+          : "Top up in advance; local testing credits after confirmation."
     },
     {
       icon: CalendarDays,
@@ -182,7 +183,7 @@ export default async function BrandFinanceAccountPage({
                 <p className="mt-5 max-w-xl text-sm leading-6 text-zinc-500">
                   {locale === "zh"
                     ? "确认加购修订时，系统会先从这里扣款；余额不够时才拉取新的支付账单并补足差额。"
-                    : "When confirming a paid revision add-on, StudioOS charges this balance first; only a shortfall creates a new invoice."}
+                    : "When confirming a paid revision add-on, VINCIS charges this balance first; only a shortfall creates a new invoice."}
                 </p>
 
                 <div className="mt-7 grid max-w-lg grid-cols-2 gap-4">
@@ -228,69 +229,14 @@ export default async function BrandFinanceAccountPage({
               </div>
             </div>
 
-            <form
+            <BrandWalletRechargeForm
               action={rechargeBrandWalletAction}
-              className="rounded-2xl border border-zinc-100 bg-white p-7 shadow-[0_18px_42px_rgba(15,23,42,0.07)]"
-            >
-              <input type="hidden" name="lang" value={locale} />
-              {returnTo ? <input type="hidden" name="return_to" value={returnTo} /> : null}
-              <label className="text-sm font-semibold text-zinc-900" htmlFor="brand-wallet-amount">
-                {hasPendingInvoice
-                  ? locale === "zh"
-                    ? "支付账单金额"
-                    : "Invoice amount"
-                  : locale === "zh"
-                    ? "充值金额"
-                    : "Top-up amount"}
-              </label>
-              <div className="mt-5 flex items-center rounded-xl border border-zinc-200 bg-white px-4 shadow-sm">
-                <span className="text-sm font-semibold text-zinc-500">$</span>
-                <input
-                  id="brand-wallet-amount"
-                  name="amount"
-                  type="number"
-                  min="1"
-                  step="1"
-                  defaultValue={hasPendingInvoice ? invoiceAmount : 500}
-                  className="h-14 min-w-0 flex-1 bg-transparent px-3 text-lg font-semibold text-zinc-950 outline-none"
-                />
-              </div>
-              {!hasPendingInvoice ? <div className="mt-3 grid grid-cols-3 gap-2">
-                {[200, 500, 1000].map((amount) => (
-                  <button
-                    key={amount}
-                    type="submit"
-                    name="amount"
-                    value={amount}
-                    className={
-                      amount === 500
-                        ? "rounded-lg border border-violet-300 bg-white px-3 py-2.5 text-xs font-semibold text-violet-700 shadow-[inset_0_0_0_1px_rgba(124,58,237,0.10)] transition hover:bg-violet-50"
-                        : "rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-xs font-semibold text-zinc-700 transition hover:bg-zinc-50 focus:border-violet-300 focus:text-violet-700 focus:outline-none"
-                    }
-                  >
-                    {money(amount, snapshot.wallet.currency, locale)}
-                  </button>
-                ))}
-              </div> : null}
-              <button
-                type="submit"
-                className="mt-4 h-12 w-full rounded-xl bg-violet-600 text-sm font-semibold text-white shadow-[0_14px_26px_rgba(124,58,237,0.24)] transition hover:bg-violet-700"
-              >
-                {hasPendingInvoice
-                  ? locale === "zh"
-                    ? "支付账单"
-                    : "Pay invoice"
-                  : locale === "zh"
-                    ? "充值到账户"
-                    : "Top up account"}
-              </button>
-              <p className="mt-4 flex items-start gap-2 text-xs leading-5 text-zinc-500">
-                <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-violet-500" />
-                {locale === "zh"
-                  ? "本地测试环境会模拟支付完成并立即入账。"
-                  : "In local testing, payment is simulated and credited immediately."}
-              </p>
-            </form>
+              locale={locale}
+              currency={snapshot.wallet.currency}
+              hasPendingInvoice={hasPendingInvoice}
+              invoiceAmount={invoiceAmount}
+              returnTo={returnTo}
+            />
           </section>
 
           <section className="overflow-hidden rounded-2xl border border-zinc-100 bg-white shadow-[0_18px_42px_rgba(15,23,42,0.06)]">

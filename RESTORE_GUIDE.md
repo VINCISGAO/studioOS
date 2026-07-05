@@ -1,4 +1,4 @@
-# StudioOS — Disaster Recovery & Restore Guide
+# VINCIS — Disaster Recovery & Restore Guide
 
 This guide explains how to recover the project if your computer fails, files are deleted, or you need to redeploy from backup.
 
@@ -36,7 +36,7 @@ npm run backup:verify
 
 Requirements:
 
-- Node.js 20–22 (`nvm use` if `.nvmrc` exists)
+- Node.js 20, 22, or 24. Use Node 24 for local development (`nvm use` reads `.nvmrc`).
 - Docker Desktop (local Postgres, Redis, MinIO)
 - `zip` and `pg_dump` (or Docker for database export)
 
@@ -72,7 +72,7 @@ npm run db:generate
 ZIP backups are stored **outside the repo** by default:
 
 ```
-~/StudioOS-Backups/project/StudioOS_Backup_YYYY-MM-DD_HH-mm.zip
+~/VINCIS-Backups/project/VINCIS_Backup_YYYY-MM-DD_HH-mm.zip
 ```
 
 ### Steps
@@ -80,7 +80,7 @@ ZIP backups are stored **outside the repo** by default:
 1. Extract to a new folder (do not overwrite an active dev tree blindly):
    ```bash
    mkdir -p ~/restored-studioos
-   unzip ~/StudioOS-Backups/project/StudioOS_Backup_2026-06-30_09-00.zip -d ~/restored-studioos
+   unzip ~/VINCIS-Backups/project/VINCIS_Backup_2026-06-30_09-00.zip -d ~/restored-studioos
    ```
 2. Reinstall dependencies (ZIP excludes `node_modules`):
    ```bash
@@ -109,7 +109,7 @@ Download with AWS CLI or your S3/R2 dashboard, then extract as above.
 Database dumps are stored separately:
 
 ```
-~/StudioOS-Backups/database/Database_Backup_YYYY-MM-DD_HH-mm.sql
+~/VINCIS-Backups/database/Database_Backup_YYYY-MM-DD_HH-mm.sql
 ```
 
 ### Local Docker Postgres
@@ -117,7 +117,7 @@ Database dumps are stored separately:
 ```bash
 docker compose up -d postgres
 docker compose exec -T postgres psql -U studioos -d studioos -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
-docker compose exec -T postgres psql -U studioos -d studioos < ~/StudioOS-Backups/database/Database_Backup_YYYY-MM-DD_HH-mm.sql
+docker compose exec -T postgres psql -U studioos -d studioos < ~/VINCIS-Backups/database/Database_Backup_YYYY-MM-DD_HH-mm.sql
 npm run db:generate
 ```
 
@@ -156,8 +156,8 @@ npm run db:migrate:deploy
 
 1. **Code:** Clone private GitHub repo on a new machine.
 2. **Secrets:** Restore `.env.local` from password manager / cloud secret store.
-3. **Database:** Download latest `Database_Backup_*.sql` from `~/StudioOS-Backups` or S3/R2; restore into new Postgres.
-4. **Uncommitted work:** Restore latest `StudioOS_Backup_*.zip` if Git did not have it.
+3. **Database:** Download latest `Database_Backup_*.sql` from `~/VINCIS-Backups` or S3/R2; restore into new Postgres.
+4. **Uncommitted work:** Restore latest `VINCIS_Backup_*.zip` if Git did not have it.
 5. **Verify:** `npm run backup:verify` and `npm run build`.
 6. **Redeploy** if this was production.
 
@@ -176,14 +176,14 @@ npm run db:migrate:deploy
 ### Retention
 
 - Keeps latest **30** non-protected backups (configurable via `BACKUP_RETENTION_COUNT`).
-- Deletions are logged to `~/StudioOS-Backups/logs/retention.log`.
+- Deletions are logged to `~/VINCIS-Backups/logs/retention.log`.
 
 ### Schedule daily backups (macOS cron example)
 
 ```bash
 crontab -e
 # Add:
-0 9 * * * cd /path/to/studioos && npm run backup:daily >> ~/StudioOS-Backups/logs/cron.log 2>&1
+0 9 * * * cd /path/to/studioos && npm run backup:daily >> ~/VINCIS-Backups/logs/cron.log 2>&1
 ```
 
 ---

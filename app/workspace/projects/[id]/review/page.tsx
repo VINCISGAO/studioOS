@@ -9,9 +9,11 @@ import {
 } from "@/lib/mvp/campaign-review-bridge";
 import { getReviewBundle } from "@/lib/mvp/store";
 import { getMvpProfile } from "@/lib/mvp/session";
-import type { MvpRole, ProjectStatus } from "@/lib/mvp/types";
+import type { MvpRole, ProjectStatus, ReviewBundle, VideoComment } from "@/lib/mvp/types";
 import { getDeliverables, getOrderForProject } from "@/lib/order-service";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
+import type { ReviewAnnotation, ReviewComment } from "@/features/review/review.types";
+import { REVIEW_ANNOTATION_COLOR } from "@/features/review/review.constants";
 
 function mapMvpRole(role: MvpRole): "brand" | "creator" {
   return role === "studio" ? "creator" : "brand";
@@ -23,6 +25,41 @@ function mapProjectStatus(status: ProjectStatus): "review" | "revision" | "compl
     return "completed";
   }
   return "review";
+}
+
+function mapCommentAnnotation(comment: VideoComment): ReviewAnnotation[] {
+  const type = comment.annotation_type;
+  if (type !== "circle" && type !== "rect" && type !== "arrow") return [];
+  if (comment.pos_x == null || comment.pos_y == null) return [];
+
+  return [
+    {
+      id: `${comment.id}_annotation`,
+      type,
+      time: comment.timestamp_seconds,
+      x: comment.pos_x,
+      y: comment.pos_y,
+      width: comment.width ?? undefined,
+      height: comment.height ?? undefined,
+      endX: type === "arrow" ? comment.pos_x + (comment.width ?? 0.12) : undefined,
+      endY: type === "arrow" ? comment.pos_y + (comment.height ?? 0.08) : undefined,
+      color: comment.color ?? REVIEW_ANNOTATION_COLOR
+    }
+  ];
+}
+
+function mapReviewComments(bundle: ReviewBundle): ReviewComment[] {
+  const versionNumberById = new Map(bundle.versions.map((version) => [version.id, version.version_number]));
+
+  return bundle.comments.map((comment) => ({
+    id: comment.id,
+    time: comment.timestamp_seconds,
+    content: comment.comment_text,
+    createdBy: bundle.profiles[comment.user_id]?.name ?? bundle.profiles[comment.user_id]?.email ?? "Reviewer",
+    createdAt: comment.created_at,
+    version: versionNumberById.get(comment.video_version_id) ?? 1,
+    annotations: mapCommentAnnotation(comment)
+  }));
 }
 
 export default async function ProjectReviewPage({
@@ -91,6 +128,7 @@ export default async function ProjectReviewPage({
     label: `Version ${version.version_number}`,
     uploadedAt: version.created_at
   }));
+  const reviewComments = mapReviewComments(bundle);
 
   return (
     <div className="min-h-screen bg-zinc-50">
@@ -118,6 +156,7 @@ export default async function ProjectReviewPage({
         orderStatus={mapProjectStatus(bundle.project.status)}
         createdAt={bundle.project.created_at}
         versions={reviewVersions}
+        initialComments={reviewComments}
         backHref={withLocale("/workspace", locale)}
         variant="full"
       />

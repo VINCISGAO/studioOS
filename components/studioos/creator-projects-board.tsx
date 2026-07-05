@@ -15,7 +15,8 @@ import {
   MoreHorizontal,
   Search,
   TrendingDown,
-  TrendingUp
+  TrendingUp,
+  UploadCloud
 } from "lucide-react";
 import type { StoredOrder } from "@/lib/order-types";
 import { Button } from "@/components/ui/button";
@@ -308,11 +309,19 @@ export function CreatorProjectsBoard({
                       <div className="flex items-center justify-end gap-2">
                         <Button
                           asChild
-                          variant="outline"
+                          variant={row.actionVariant === "upload" ? "default" : "outline"}
                           size="sm"
-                          className="shrink-0 whitespace-nowrap rounded-lg border-zinc-200 px-3"
+                          className={cn(
+                            "shrink-0 whitespace-nowrap rounded-lg px-3",
+                            row.actionVariant === "upload"
+                              ? "border border-blue-600 bg-blue-600 text-white hover:bg-blue-700"
+                              : "border-zinc-200"
+                          )}
                         >
-                          <Link href={withLocale(row.href, locale)}>{t.detail}</Link>
+                          <Link href={withLocale(row.actionHref, locale)}>
+                            {row.actionVariant === "upload" ? <UploadCloud className="mr-1.5 h-3.5 w-3.5" /> : null}
+                            {row.actionLabel}
+                          </Link>
                         </Button>
                         <button
                           type="button"

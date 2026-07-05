@@ -31,7 +31,7 @@ export default async function BrandHomePage({ searchParams }: { searchParams: Pr
     query.error === "wizard-access"
       ? locale === "zh"
         ? "无法打开该广告草稿。系统已阻止访问不属于当前账号的草稿，请重新点击发布广告需求。"
-        : "Could not open that ad draft. StudioOS blocked access to a draft outside this account. Click Publish ad brief again."
+        : "Could not open that ad draft. VINCIS blocked access to a draft outside this account. Click Publish ad brief again."
       : query.error === "start-brief" || query.error === "draft-failed"
       ? locale === "zh"
         ? "广告需求草稿创建失败，请刷新后重试。如果仍失败，请检查 production database。"

@@ -120,7 +120,7 @@ export async function requestReviewChangesAction(reviewSessionId: string, locale
   });
 
   if (isFrameIoDemoMode()) {
-    await requestOrderRevision(order.id, "Changes requested from StudioOS review room");
+    await requestOrderRevision(order.id, "Changes requested from VINCIS review room");
   } else {
     await syncOrderFromReviewSession(order.id, "changes_requested", order.project_id);
   }

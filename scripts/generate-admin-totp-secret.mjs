@@ -26,7 +26,7 @@ function toBase32(bytes) {
 
 const email = process.argv[2] ?? "admin@studioos.test";
 const secret = toBase32(randomBytes(20));
-const issuer = "StudioOS Admin";
+const issuer = "VINCIS Admin";
 const label = encodeURIComponent(`${issuer}:${email}`);
 const params = new URLSearchParams({
   secret,

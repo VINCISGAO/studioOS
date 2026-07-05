@@ -4,7 +4,7 @@ import { apiSuccess, handleRouteError, requireApiUser } from "@/lib/core/api-rou
 export async function GET() {
   try {
     const user = await requireApiUser();
-    const dna = await memoryService.getBrandDna({ id: user.id, role: user.role });
+    const dna = await memoryService.getBrandDna(user);
     return apiSuccess({ brandDna: dna });
   } catch (error) {
     return handleRouteError(error);

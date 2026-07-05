@@ -166,6 +166,7 @@ export function CreatorPublicProfile({
         headline={creator.headline}
         initials={initials}
         avatarUrl={creator.avatar_url}
+        coverUrl={creator.cover_url}
         stats={[
           { label: t.posts, value: String(works.length) },
           { label: t.turnaround, value: labelDeliverySpeed(creator.delivery_speed, locale) },

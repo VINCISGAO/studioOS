@@ -1,4 +1,4 @@
--- Link external OAuth providers (Alipay, WeChat, QQ) to StudioOS users.
+-- Link external OAuth providers (Alipay, WeChat, QQ) to VINCIS users.
 
 CREATE TABLE "user_oauth_accounts" (
   "id" TEXT NOT NULL DEFAULT gen_random_uuid(),

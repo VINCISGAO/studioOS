@@ -51,7 +51,7 @@ const copy = {
     paidBody: "Your campaign is funded. Creator matching can begin.",
     copy: "Copy",
     copied: "Copied",
-    corporateAccount: "StudioOS corporate account"
+    corporateAccount: "VINCIS corporate account"
   },
   zh: {
     amountDue: "应付金额",
@@ -71,7 +71,7 @@ const copy = {
     paidBody: "Campaign 已付款，可以开始匹配 Studio。",
     copy: "复制",
     copied: "已复制",
-    corporateAccount: "StudioOS 对公账户"
+    corporateAccount: "VINCIS 对公账户"
   }
 };
 

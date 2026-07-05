@@ -14,7 +14,7 @@ export async function resolveAiSupportCreatorId(user: AuthUserDto, requestedCrea
     return requestedCreatorId;
   }
 
-  if (user.role !== "CREATOR") {
+  if (!user.hasCreatorProfile && user.role !== "CREATOR") {
     throw appError("FORBIDDEN", "Only creators and support users can manage AI support settings");
   }
 

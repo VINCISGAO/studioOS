@@ -1,9 +1,12 @@
 import type { Locale } from "@/lib/i18n";
 import type { StoredOrder } from "@/lib/order-types";
+import { creatorPortalRoutes } from "@/lib/studioos/creator-portal-routes";
 import type { CreatorProjectFilter } from "@/lib/studioos/creator-order-lifecycle";
 import {
+  creatorUploadActionLabel,
   isCreatorOrderInProgress,
   isCreatorOrderPendingReview,
+  isCreatorUploadActionable,
   matchesCreatorProjectFilter
 } from "@/lib/studioos/creator-order-lifecycle";
 
@@ -34,6 +37,9 @@ export type CreatorProjectTableRow = {
   amount: number;
   latestUpdate: string;
   href: string;
+  actionHref: string;
+  actionLabel: string;
+  actionVariant: "detail" | "upload";
   thumbSeed: string;
 };
 
@@ -183,6 +189,7 @@ export function buildCreatorProjectRows(input: {
     .map((order, index) => {
       const deliverableCount = input.deliverableCounts[order.id] ?? 0;
       const deadline = order.completed_at ?? order.paid_at ?? order.created_at;
+      const uploadActionable = isCreatorUploadActionable(order, deliverableCount);
       return {
         id: order.id,
         title: order.title || order.company_name,
@@ -196,7 +203,16 @@ export function buildCreatorProjectRows(input: {
         progress: progressForOrder(order, deliverableCount),
         amount: order.creator_payout,
         latestUpdate: latestUpdateForOrder(input.locale, order),
-        href: `/studio/projects/${order.id}`,
+        href: creatorPortalRoutes.project(order.id),
+        actionHref: uploadActionable
+          ? creatorPortalRoutes.review(order.id)
+          : creatorPortalRoutes.project(order.id),
+        actionLabel: uploadActionable
+          ? creatorUploadActionLabel(input.locale, order.status)
+          : input.locale === "zh"
+            ? "查看详情"
+            : "View details",
+        actionVariant: uploadActionable ? "upload" : "detail",
         thumbSeed: order.company_name || order.title
       };
     });

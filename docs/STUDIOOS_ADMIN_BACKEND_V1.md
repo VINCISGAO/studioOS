@@ -1,6 +1,6 @@
-# StudioOS Admin Backend V1
+# VINCIS Admin Backend V1
 
-Prisma-backed admin console for StudioOS operations (Night Mode P1).
+Prisma-backed admin console for VINCIS operations (Night Mode P1).
 
 **Last updated:** 2026-07-01
 

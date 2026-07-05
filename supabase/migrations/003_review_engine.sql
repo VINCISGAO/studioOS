@@ -1,4 +1,4 @@
--- StudioOS Review Engine v1 — Frame.io external review sessions
+-- VINCIS Review Engine v1 — Frame.io external review sessions
 -- Apply via Supabase SQL editor or migration runner when Postgres is primary store.
 
 create table if not exists public.review_sessions (

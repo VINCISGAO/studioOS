@@ -10,7 +10,7 @@ export type DemoUser = {
   label: string;
 };
 
-export const DEMO_PASSWORD = "TempStudioOS2026!";
+export const DEMO_PASSWORD = "TempVINCIS2026!";
 
 export const DEMO_USERS: DemoUser[] = [
   {

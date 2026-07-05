@@ -59,7 +59,7 @@ export const cinematicCopy = {
       agency: "Traditional Agency",
       agencyPrice: 50000,
       agencyLabel: "Average campaign",
-      studio: "StudioOS",
+      studio: "VINCIS",
       studioPrice: 8000,
       studioLabel: "Same deliverable tier",
       save: "Save up to 84%"
@@ -70,7 +70,7 @@ export const cinematicCopy = {
       agency: "传统广告公司",
       agencyPrice: 360000,
       agencyLabel: "平均投放项目",
-      studio: "StudioOS",
+      studio: "VINCIS",
       studioPrice: 58000,
       studioLabel: "同等交付标准",
       save: "节省最高 84%"

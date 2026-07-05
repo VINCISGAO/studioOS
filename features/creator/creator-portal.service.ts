@@ -56,7 +56,7 @@ function mapCampaign(
 
 export class CreatorPortalService {
   private assertCreator(user: AuthUser) {
-    if (user.role.toUpperCase() !== "CREATOR" && user.role.toUpperCase() !== "ADMIN") {
+    if (!user.hasCreatorProfile && user.role.toUpperCase() !== "CREATOR" && user.role.toUpperCase() !== "ADMIN") {
       throw appError("FORBIDDEN", "Creator access only");
     }
   }

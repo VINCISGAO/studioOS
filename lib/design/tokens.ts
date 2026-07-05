@@ -1,5 +1,5 @@
 /**
- * StudioOS Design Tokens — single source of truth (Sprint 11)
+ * VINCIS Design Tokens — single source of truth (Sprint 11)
  * Synced to globals.css CSS variables + tailwind.config.ts
  * @see docs/design/DESIGN_SYSTEM.md
  */

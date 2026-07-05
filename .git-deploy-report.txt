@@ -19,7 +19,7 @@ Prisma demo reset complete.
   demo users: client.bright@studioos.test, client.north@studioos.test, creator.nova@studioos.test, creator.signal@studioos.test, creator.atlas@studioos.test, client.arc@studioos.test
 Demo account reset complete.
 
-Creators (password: TempStudioOS2026!):
+Creators (password: TempVINCIS2026!):
   creator.nova@studioos.test → Nova Motion Studio
     certification · projects · invitations · messages · earnings: cleared
   creator.signal@studioos.test → Signal Frame Lab

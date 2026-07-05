@@ -1,14 +1,11 @@
 import { aiWorkerService } from "@/features/ai/ai-worker.service";
-import { apiSuccess, handleRouteError, requireApiUser } from "@/lib/core/api-route";
-import { appError } from "@/lib/core/errors";
+import { requireAdminMutationUser } from "@/features/admin/auth/admin-api-guard";
+import { apiSuccess, handleRouteError } from "@/lib/core/api-route";
 
 /** Dev/admin — process next queued AI job. */
-export async function POST() {
+export async function POST(request: Request) {
   try {
-    const user = await requireApiUser();
-    if (user.role.toUpperCase() !== "ADMIN") {
-      throw appError("FORBIDDEN", "Admin only");
-    }
+    await requireAdminMutationUser(request);
     const result = await aiWorkerService.processNextWaiting();
     return apiSuccess({ processed: result });
   } catch (error) {

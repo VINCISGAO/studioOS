@@ -44,7 +44,7 @@ export function ReviewWatermarkOverlay({
           {sessionId} · {locale === "zh" ? "禁止商用" : "Commercial Use Prohibited"}
         </div>
         <div className="absolute bottom-[22%] left-[28%] rotate-[-8deg] text-[11px] font-medium tracking-wide text-white/[0.15]">
-          {locale === "zh" ? "StudioOS 保护" : "Protected by StudioOS"}
+          {locale === "zh" ? "VINCIS 保护" : "Protected by VINCIS"}
         </div>
       </div>
     </>

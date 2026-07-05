@@ -23,7 +23,7 @@ git status -sb
 echo ""
 echo "Next steps:"
 echo "  1. Create empty repo on GitHub (no README)"
-echo "  2. git commit -m \"Prepare StudioOS for Vercel deploy\""
+echo "  2. git commit -m \"Prepare VINCIS for Vercel deploy\""
 echo "  3. git remote add origin https://github.com/YOU/studioos.git"
 echo "  4. git push -u origin main"
 echo "  5. Open https://vercel.com/new → Import repo → Deploy"

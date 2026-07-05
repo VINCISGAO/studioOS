@@ -111,12 +111,23 @@ const ROLE_PERMISSIONS: Record<string, Permission[]> = {
 export type AuthUser = {
   id: string;
   role: string;
+  hasBrandProfile?: boolean;
+  hasCreatorProfile?: boolean;
 };
 
 export class PermissionService {
+  private static rolesForUser(user: AuthUser): string[] {
+    const roles = new Set([user.role.toUpperCase()]);
+    if (user.hasBrandProfile) roles.add("BRAND");
+    if (user.hasCreatorProfile) roles.add("CREATOR");
+    return [...roles];
+  }
+
   static can(user: AuthUser, permission: Permission): boolean {
-    const perms = ROLE_PERMISSIONS[user.role.toUpperCase()] ?? [];
-    return perms.includes(permission);
+    return this.rolesForUser(user).some((role) => {
+      const perms = ROLE_PERMISSIONS[role] ?? [];
+      return perms.includes(permission);
+    });
   }
 
   static assert(user: AuthUser, permission: Permission): void {
@@ -128,8 +139,8 @@ export class PermissionService {
   /** Object-level: brand can only access own campaigns */
   static canAccessCampaign(user: AuthUser, campaign: { brandId: string; creatorId?: string | null }): boolean {
     if (user.role.toUpperCase() === "ADMIN") return true;
-    if (user.role.toUpperCase() === "BRAND" && campaign.brandId === user.id) return true;
-    if (user.role.toUpperCase() === "CREATOR" && campaign.creatorId === user.id) return true;
+    if ((user.role.toUpperCase() === "BRAND" || user.hasBrandProfile) && campaign.brandId === user.id) return true;
+    if ((user.role.toUpperCase() === "CREATOR" || user.hasCreatorProfile) && campaign.creatorId === user.id) return true;
     return false;
   }
 

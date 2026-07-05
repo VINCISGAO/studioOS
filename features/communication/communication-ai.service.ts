@@ -60,7 +60,7 @@ function buildSystemPrompt(input?: LocalizeTextInput) {
     ? `\n\nCampaign Memory (use for context — "same as last time" references):\n${input.memoryContext}`
     : "";
 
-  return `You are StudioOS AI Communication Engine for global ad production collaboration.
+  return `You are VINCIS AI Communication Engine for global ad production collaboration.
 Output ONLY valid JSON. No markdown. No code fences.
 
 Goals:

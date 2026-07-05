@@ -6,7 +6,7 @@ import { hasSupabaseConfig } from "@/lib/auth-config";
 import { isAlipayOAuthLive } from "@/lib/alipay/alipay-oauth-config";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { type DemoRole } from "@/lib/demo-auth";
-import { getLocale, type Locale, type SearchParams, withLocale } from "@/lib/i18n";
+import { getLocale, type Locale, type SearchParams } from "@/lib/i18n";
 import { getCurrentSession } from "@/lib/session-user";
 import type { LoginRole } from "@/lib/studioos/login-theme";
 
@@ -157,6 +157,23 @@ function resolveLoginRole(raw?: string): LoginRole {
   return raw === "creator" ? "creator" : "brand";
 }
 
+function sessionMatchesRequestedRole(
+  session: { role: DemoRole } | null,
+  requestedRole: LoginRole,
+  hasExplicitRole: boolean
+) {
+  if (!session || session.role === "admin") {
+    return false;
+  }
+  if (!hasExplicitRole) {
+    return true;
+  }
+  return (
+    (requestedRole === "brand" && session.role === "client") ||
+    (requestedRole === "creator" && session.role === "creator")
+  );
+}
+
 function redirectIfAlreadySignedIn(
   session: { email: string; role: DemoRole } | null,
   role: LoginRole,
@@ -232,14 +249,15 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const t = copy[locale];
   const rawError = typeof params.error === "string" ? params.error : undefined;
   const session = await getCurrentSession();
-  const role = resolveLoginRole(typeof params.role === "string" ? params.role : undefined);
+  const hasExplicitRole = typeof params.role === "string";
+  const role = resolveLoginRole(hasExplicitRole ? params.role : undefined);
 
   const demoMode = isDemoLoginUiEnabled();
   const oauthLive = !preferDemoAuth();
   const googleOAuthEnabled = hasSupabaseConfig() && oauthLive;
   const alipayOAuthEnabled = isAlipayOAuthLive() && hasDatabaseUrl();
 
-  if (session && !rawError) {
+  if (session && sessionMatchesRequestedRole(session, role, hasExplicitRole) && !rawError) {
     redirect(resolvePostLoginDestination(session, nextPath, locale));
   }
 

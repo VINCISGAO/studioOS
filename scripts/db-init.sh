@@ -115,7 +115,7 @@ ensure_migration() {
 
 echo ""
 echo "=========================================="
-echo "  StudioOS Sprint 1 — Database Init"
+echo "  VINCIS Sprint 1 — Database Init"
 echo "=========================================="
 echo ""
 

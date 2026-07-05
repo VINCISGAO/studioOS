@@ -13,10 +13,10 @@ const PLATFORM_ACCOUNTS: Record<PayoutMethodType, PlatformCorporateAccount> = {
   bank_wire: {
     type: "bank_wire",
     label: "Bank wire (corporate)",
-    account_holder: "StudioOS Inc.",
+    account_holder: "VINCIS Inc.",
     details: [
       { key: "Bank", value: "JPMorgan Chase Bank, N.A." },
-      { key: "Account name", value: "StudioOS Inc." },
+      { key: "Account name", value: "VINCIS Inc." },
       { key: "Account number", value: "88392018801" },
       { key: "Routing (ACH)", value: "021000021" },
       { key: "SWIFT / BIC", value: "CHASUS33" },
@@ -27,7 +27,7 @@ const PLATFORM_ACCOUNTS: Record<PayoutMethodType, PlatformCorporateAccount> = {
   paypal: {
     type: "paypal",
     label: "PayPal (corporate)",
-    account_holder: "StudioOS Treasury",
+    account_holder: "VINCIS Treasury",
     details: [
       { key: "PayPal email", value: "treasury@studioos.com" },
       { key: "Note", value: "Studio deposit — DEP-{creatorId}" }
@@ -36,31 +36,31 @@ const PLATFORM_ACCOUNTS: Record<PayoutMethodType, PlatformCorporateAccount> = {
   alipay: {
     type: "alipay",
     label: "Alipay (corporate)",
-    account_holder: "StudioOS 对公账户",
+    account_holder: "VINCIS 对公账户",
     details: [
       { key: "Account", value: "treasury@studioos.com" },
-      { key: "Company", value: "StudioOS Technology Co., Ltd." },
+      { key: "Company", value: "VINCIS Technology Co., Ltd." },
       { key: "Remark", value: "保证金 DEP-{creatorId}" }
     ]
   },
   wechat: {
     type: "wechat",
     label: "WeChat Pay (corporate)",
-    account_holder: "StudioOS 对公账户",
+    account_holder: "VINCIS 对公账户",
     details: [
-      { key: "Merchant ID", value: "StudioOS-Treasury" },
-      { key: "Company", value: "StudioOS Technology Co., Ltd." },
+      { key: "Merchant ID", value: "VINCIS-Treasury" },
+      { key: "Company", value: "VINCIS Technology Co., Ltd." },
       { key: "Remark", value: "保证金 DEP-{creatorId}" }
     ]
   },
   crypto: {
     type: "crypto",
     label: "Cryptocurrency (corporate wallet)",
-    account_holder: "StudioOS Treasury",
+    account_holder: "VINCIS Treasury",
     details: [
       { key: "Asset", value: "USDT" },
       { key: "Network", value: "TRC20" },
-      { key: "Wallet", value: "TStudioOS8Treasury9CorpWallet7Demo" },
+      { key: "Wallet", value: "TVINCIS8Treasury9CorpWallet7Demo" },
       { key: "Memo", value: "DEP-{creatorId}" }
     ],
     note: "Send exactly the deposit amount. Network fees are not credited."

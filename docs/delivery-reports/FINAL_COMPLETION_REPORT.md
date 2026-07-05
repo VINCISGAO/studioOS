@@ -1,4 +1,4 @@
-# StudioOS — Final Completion Report
+# VINCIS — Final Completion Report
 
 **Date:** 2026-06-30  
 **Scope:** Sprints 1–22 + MVP Payment Collection  
@@ -101,7 +101,7 @@ npm run deploy
 - Events: `checkout.session.completed`, `checkout.session.expired`, `checkout.session.async_payment_failed`, `payment_intent.payment_failed`
 
 **Demo accounts:**
-- Brand: `client.arc@studioos.test` / `TempStudioOS2026!`
+- Brand: `client.arc@studioos.test` / `TempVINCIS2026!`
 - Creator: `creator.nova@studioos.test` / same
 - Admin: `admin@studioos.test` / same
 

@@ -95,12 +95,15 @@ function BrandPortalShellInner({
     return Number(parseReviewSearchParams(search).get("step")) || 1;
   });
   const isWizardStep2 = isWizardCreate && brandWizardStep === 2;
-  const isProfileEditorPage = pathname === brandPortalRoutes.brandProfile || pathname === brandPortalRoutes.profile;
+  const isProfileEditorPage =
+    pathname === brandPortalRoutes.brandCenter ||
+    pathname === brandPortalRoutes.brandProfile ||
+    pathname === brandPortalRoutes.profile;
   const portalChrome = {
     initials,
     avatarUrl,
     userName: brandAccount?.name,
-    profileHref: brandPortalRoutes.brandProfile,
+    profileHref: brandPortalRoutes.brandCenter,
     roleLabel: locale === "zh" ? "品牌方" : "Brand",
     unreadMessageCount,
     messagesHref: brandPortalRoutes.messages
@@ -302,7 +305,7 @@ function BrandPortalShellInner({
                 avatarUrl={avatarUrl}
                 name={brandAccount.name}
                 roleLabel={locale === "zh" ? "品牌方" : "Brand"}
-                profileHref={brandPortalRoutes.brandProfile}
+                profileHref={brandPortalRoutes.brandCenter}
               />
             ) : null}
           </div>
@@ -360,7 +363,7 @@ function BrandPortalShellInner({
                     initials={initials}
                     avatarUrl={avatarUrl}
                     name={brandAccount?.name}
-                    profileHref={brandPortalRoutes.brandProfile}
+                    profileHref={brandPortalRoutes.brandCenter}
                     roleLabel={locale === "zh" ? "广告主" : "Brand"}
                   />
                 </div>

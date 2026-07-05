@@ -5,7 +5,6 @@ import { useMemo, useRef, useState, useEffect } from "react";
 import { ArrowLeft, CheckCircle2, RotateCcw } from "lucide-react";
 import { ReviewCommentPanel } from "@/features/review/ReviewCommentPanel";
 import { ReviewVideoPlayer } from "@/features/review/ReviewVideoPlayer";
-import { mockReviewComments } from "@/features/review/review.mock";
 import type { ReviewAnnotation, ReviewComment, ReviewTool, ReviewVersion } from "@/features/review/review.types";
 import type { Locale } from "@/lib/i18n";
 import { cn, formatDate } from "@/lib/utils";
@@ -56,7 +55,8 @@ export function ReviewWorkspace({
   onApprove,
   onRequestChanges,
   headerSlot,
-  variant = "full"
+  variant = "full",
+  initialComments = []
 }: {
   locale: Locale;
   role: "brand" | "creator";
@@ -75,6 +75,7 @@ export function ReviewWorkspace({
   onRequestChanges?: () => void;
   headerSlot?: React.ReactNode;
   variant?: "full" | "content";
+  initialComments?: ReviewComment[];
 }) {
   const t = copy[locale];
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -96,7 +97,7 @@ export function ReviewWorkspace({
     }
     setInternalVersion(version);
   }
-  const [comments, setComments] = useState<ReviewComment[]>(mockReviewComments);
+  const [comments, setComments] = useState<ReviewComment[]>(initialComments);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);

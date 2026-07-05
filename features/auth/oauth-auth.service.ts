@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import type { UserRole } from "@prisma/client";
 import { buildSessionPayload } from "@/features/auth/session.service";
-import { userRepository } from "@/features/auth/user.repository";
+import { userRepository, type UserWithProfiles } from "@/features/auth/user.repository";
 import { userOAuthRepository } from "@/features/auth/user-oauth.repository";
 import { hasSupabaseConfig } from "@/lib/auth-config";
 import { resolvePostLoginDestination } from "@/lib/auth/post-login-redirect";
@@ -61,6 +61,47 @@ function resolveOAuthSessionRole(
   return entryRole === "creator" ? "creator" : "client";
 }
 
+function resolveOAuthSessionRoleForUser(
+  user: UserWithProfiles,
+  entryRole: OAuthEntryRole
+): DemoSession["role"] {
+  if (entryRole === "creator" && (user.role === "CREATOR" || user.creatorProfile)) {
+    return "creator";
+  }
+  if (entryRole === "brand" && (user.role === "BRAND" || user.brandProfile)) {
+    return "client";
+  }
+  return resolveOAuthSessionRole(prismaRoleToDemoRole(user.role), entryRole);
+}
+
+async function ensureEntryRoleProfile(
+  user: UserWithProfiles,
+  entryRole: OAuthEntryRole,
+  fullName: string
+): Promise<UserWithProfiles> {
+  if (entryRole === "brand" && !user.brandProfile) {
+    return userRepository.ensureBrandProfileForUser({
+      userId: user.id,
+      companyName: fullName
+    });
+  }
+
+  if (entryRole === "creator" && !user.creatorProfile) {
+    const updated = await userRepository.ensureCreatorProfileForUser({
+      userId: user.id,
+      displayName: fullName
+    });
+    const { membershipService } = await import("@/features/membership/membership.service");
+    await membershipService.ensureDefaultMembershipOnCreatorRegister(
+      updated.id,
+      updated.creatorProfile?.id
+    );
+    return updated;
+  }
+
+  return user;
+}
+
 function resolveFullName(raw: string, email: string) {
   const trimmed = raw.trim();
   if (trimmed) {
@@ -116,7 +157,7 @@ export async function completeOAuthSignIn(input: {
       throw new Error("Platform admin accounts must use /admin/login");
     }
 
-    const user =
+    let user =
       existing ??
       (await userRepository.createFromOAuth({
         email: normalizedEmail,
@@ -124,8 +165,10 @@ export async function completeOAuthSignIn(input: {
         fullName
       }));
 
+    user = await ensureEntryRoleProfile(user, input.entryRole, fullName);
+
     if (existing) {
-      await userRepository.touchLogin(existing.id, loginMeta);
+      await userRepository.touchLogin(user.id, loginMeta);
     }
 
     if (isPlatformAdminUserRole(user.role)) {
@@ -139,9 +182,11 @@ export async function completeOAuthSignIn(input: {
       fullName: user.fullName,
       languageCode: user.languageCode ?? user.language ?? "en",
       companyName: user.brandProfile?.companyName,
-      displayName: user.creatorProfile?.displayName ?? undefined
+      displayName: user.creatorProfile?.displayName ?? undefined,
+      hasBrandProfile: user.role === "BRAND" || Boolean(user.brandProfile),
+      hasCreatorProfile: user.role === "CREATOR" || Boolean(user.creatorProfile)
     };
-    const sessionRole = resolveOAuthSessionRole(prismaRoleToDemoRole(authUser.role), input.entryRole);
+    const sessionRole = resolveOAuthSessionRoleForUser(user, input.entryRole);
     const demoSession = buildSessionPayload(authUser, sessionRole);
 
     await setDemoSession(demoSession);
@@ -212,7 +257,9 @@ export async function completeOAuthSignIn(input: {
     fullName,
     languageCode: "en",
     companyName: sessionRole === "client" ? fullName : undefined,
-    displayName: sessionRole === "creator" ? fullName : undefined
+    displayName: sessionRole === "creator" ? fullName : undefined,
+    hasBrandProfile: sessionRole === "client",
+    hasCreatorProfile: sessionRole === "creator"
   };
   const demoSession = buildSessionPayload(authUser, sessionRole);
 
@@ -294,6 +341,8 @@ export async function completeAlipaySignIn(input: {
     throw new Error("Platform admin accounts must use /admin/login");
   }
 
+  user = await ensureEntryRoleProfile(user, input.entryRole, fullName);
+
   const authUser = {
     id: user.id,
     email: user.email,
@@ -301,9 +350,11 @@ export async function completeAlipaySignIn(input: {
     fullName: user.fullName,
     languageCode: user.languageCode ?? user.language ?? "en",
     companyName: user.brandProfile?.companyName,
-    displayName: user.creatorProfile?.displayName ?? undefined
+    displayName: user.creatorProfile?.displayName ?? undefined,
+    hasBrandProfile: user.role === "BRAND" || Boolean(user.brandProfile),
+    hasCreatorProfile: user.role === "CREATOR" || Boolean(user.creatorProfile)
   };
-  const sessionRole = resolveOAuthSessionRole(prismaRoleToDemoRole(authUser.role), input.entryRole);
+  const sessionRole = resolveOAuthSessionRoleForUser(user, input.entryRole);
   const demoSession = buildSessionPayload(authUser, sessionRole);
 
   await setDemoSession(demoSession);

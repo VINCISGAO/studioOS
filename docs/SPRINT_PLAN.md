@@ -95,7 +95,7 @@ npm run db:init          # Docker + migrate + seed
 npm run sprint1:verify   # DB + 登录 + seed 检查
 npm run dev
 curl http://localhost:3000/api/v1/health
-# 登录: client.arc@studioos.test / TempStudioOS2026!
+# 登录: client.arc@studioos.test / TempVINCIS2026!
 ```
 
 ## 当前 Sprint 2 任务
@@ -372,7 +372,7 @@ npm run sprint13:verify
 npm run typecheck
 # 浏览器: /studio (dashboard + invitations)
 # /studio/invitations · /studio/review · /studio/delivery
-# 登录: creator.nova@studioos.test / TempStudioOS2026!
+# 登录: creator.nova@studioos.test / TempVINCIS2026!
 ```
 
 ## Sprint 14 — Brand Portal 统一 ✅
@@ -392,7 +392,7 @@ npm run db:seed
 npm run sprint14:verify
 npm run typecheck
 # 浏览器: /brand · /brand/review · /brand/settlement
-# 登录: client.arc@studioos.test / TempStudioOS2026!
+# 登录: client.arc@studioos.test / TempVINCIS2026!
 ```
 
 ## Sprint 15 — Admin + Dispute + Audit ✅
@@ -411,7 +411,7 @@ npm run typecheck
 npm run db:seed
 npm run sprint15:verify
 # 浏览器: /admin · /admin/disputes · /admin/audit · /admin/feature-flags
-# 登录: admin@studioos.test / TempStudioOS2026!
+# 登录: admin@studioos.test / TempVINCIS2026!
 ```
 
 ```bash

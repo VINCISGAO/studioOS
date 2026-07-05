@@ -1,4 +1,5 @@
 import type { StoredOrder } from "@/lib/order-types";
+import type { Locale } from "@/lib/i18n";
 
 /** Creator project list tabs under 我的项目 */
 export type CreatorProjectFilter = "in_progress" | "pending_review" | "completed" | "history";
@@ -56,6 +57,32 @@ export function isCreatorOrderInProgress(status: StoredOrder["status"]): boolean
 
 export function isCreatorOrderPendingReview(status: StoredOrder["status"]): boolean {
   return status === "review";
+}
+
+export function isCreatorUploadActionable(
+  order: Pick<StoredOrder, "payment_status" | "status">,
+  deliverableCount: number
+): boolean {
+  if (order.payment_status === "unpaid" || order.status === "waiting_payment") {
+    return false;
+  }
+
+  if (order.status === "revision") {
+    return true;
+  }
+
+  if (order.status === "in_production" || order.status === "review") {
+    return deliverableCount === 0;
+  }
+
+  return false;
+}
+
+export function creatorUploadActionLabel(locale: Locale, status: StoredOrder["status"]): string {
+  if (status === "revision") {
+    return locale === "zh" ? "上传修改版" : "Upload revision";
+  }
+  return locale === "zh" ? "上传视频" : "Upload video";
 }
 
 export function matchesCreatorProjectFilter(
@@ -119,18 +146,18 @@ export function deriveCreatorTodayTasks(input: {
     tasks.push("wait_brand_selection");
   }
 
-  const needsUpload = input.orders.some(
-    (order) =>
-      ["in_production", "revision"].includes(order.status) &&
-      order.payment_status !== "unpaid" &&
-      order.status !== "waiting_payment" &&
-      (input.deliverableCounts[order.id] ?? 0) === 0
+  const needsUpload = input.orders.some((order) =>
+    isCreatorUploadActionable(order, input.deliverableCounts[order.id] ?? 0)
   );
   if (needsUpload) {
     tasks.push("upload_work");
   }
 
-  if (input.orders.some((order) => order.status === "review")) {
+  if (
+    input.orders.some(
+      (order) => order.status === "review" && (input.deliverableCounts[order.id] ?? 0) > 0
+    )
+  ) {
     tasks.push("brand_review");
   }
 

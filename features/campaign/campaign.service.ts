@@ -121,11 +121,11 @@ export class CampaignService {
   async create(user: AuthUser, body: CreateCampaignBody) {
     this.assertDb();
     PermissionService.assert(user, "campaign.create");
-    if (user.role.toUpperCase() !== "BRAND" && user.role.toUpperCase() !== "ADMIN") {
+    if (!user.hasBrandProfile && user.role.toUpperCase() !== "BRAND" && user.role.toUpperCase() !== "ADMIN") {
       throw appError("FORBIDDEN", "Only brands can create campaigns");
     }
 
-    const brandId = user.role.toUpperCase() === "ADMIN" ? user.id : user.id;
+    const brandId = user.id;
     const campaign = await campaignRepository.createDraft({
       brandId,
       title: body.title,

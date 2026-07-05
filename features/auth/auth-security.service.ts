@@ -156,6 +156,23 @@ function isWeakPassword(password: string) {
   return WEAK_PASSWORDS.has(normalized);
 }
 
+function sessionRoleForUserProfiles(
+  user: {
+    role: UserRole;
+    brandProfile?: unknown;
+    creatorProfile?: unknown;
+  },
+  requestedRole: UserRole
+) {
+  if (requestedRole === "CREATOR" && (user.role === "CREATOR" || user.creatorProfile)) {
+    return "creator" as const;
+  }
+  if (requestedRole === "BRAND" && (user.role === "BRAND" || user.brandProfile)) {
+    return "client" as const;
+  }
+  return user.role === "CREATOR" ? ("creator" as const) : ("client" as const);
+}
+
 async function hitRateLimit(input: {
   key: string;
   scope: string;
@@ -312,8 +329,8 @@ async function sendAuthVerificationCode(
 
   const resend = getResend();
   if (!resend) return { ok: false as const, reason: "RESEND_NOT_CONFIGURED" as const };
-  const from = process.env.AUTH_EMAIL_FROM || process.env.RESEND_FROM_EMAIL || "StudioOS <onboarding@resend.dev>";
-  const subject = locale === "zh" ? "你的 StudioOS 验证码" : "Your StudioOS verification code";
+  const from = process.env.AUTH_EMAIL_FROM || process.env.RESEND_FROM_EMAIL || "VINCIS <onboarding@resend.dev>";
+  const subject = locale === "zh" ? "你的 VINCIS 验证码" : "Your VINCIS verification code";
   const headline = locale === "zh" ? "验证你的邮箱" : "Verify your email";
   const body =
     locale === "zh"
@@ -327,7 +344,7 @@ async function sendAuthVerificationCode(
     html: `
       <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fafaf8;padding:32px 16px;">
         <div style="max-width:520px;margin:0 auto;background:#fff;border:1px solid #e4e4e7;border-radius:16px;padding:32px;">
-          <p style="margin:0 0 8px;font-size:12px;font-weight:700;letter-spacing:.08em;color:#71717a;">StudioOS</p>
+          <p style="margin:0 0 8px;font-size:12px;font-weight:700;letter-spacing:.08em;color:#71717a;">VINCIS</p>
           <h1 style="margin:0 0 12px;font-size:22px;color:#09090b;">${headline}</h1>
           <p style="margin:0 0 20px;font-size:15px;line-height:1.7;color:#52525b;">${body}</p>
           <div style="font-size:32px;font-weight:800;letter-spacing:.28em;color:#18181b;">${code}</div>
@@ -574,12 +591,27 @@ export class AuthSecurityService {
       user = await userRepository.createPasswordless({
         email,
         role: input.role,
-        fullName: email.split("@")[0] || "StudioOS User",
-        companyName: input.role === "BRAND" ? email.split("@")[0] || "StudioOS" : undefined,
+        fullName: email.split("@")[0] || "VINCIS User",
+        companyName: input.role === "BRAND" ? email.split("@")[0] || "VINCIS" : undefined,
         displayName: input.role === "CREATOR" ? email.split("@")[0] || "Creator" : undefined,
         emailVerifiedAt: now()
       });
       await audit({ userId: user.id, email, event: "SIGNUP_COMPLETED", ctx });
+    } else if (input.role === "BRAND" && !user.brandProfile) {
+      user = await userRepository.ensureBrandProfileForUser({
+        userId: user.id,
+        companyName: user.fullName
+      });
+    } else if (input.role === "CREATOR" && !user.creatorProfile) {
+      user = await userRepository.ensureCreatorProfileForUser({
+        userId: user.id,
+        displayName: user.fullName
+      });
+      const { membershipService } = await import("@/features/membership/membership.service");
+      await membershipService.ensureDefaultMembershipOnCreatorRegister(
+        user.id,
+        user.creatorProfile?.id
+      );
     }
 
     await userRepository.touchLogin(user.id, { ip: ctx.ip, device: ctx.userAgent });
@@ -589,7 +621,7 @@ export class AuthSecurityService {
       return { ok: false as const, error: AUTH_ERROR_COPY.credentialsInvalid };
     }
 
-    const demoRole = user.role === "CREATOR" ? "creator" : "client";
+    const demoRole = sessionRoleForUserProfiles(user, input.role);
     await setDemoSession(
       buildSessionPayload(
         {
@@ -599,7 +631,9 @@ export class AuthSecurityService {
           fullName: user.fullName,
           languageCode: user.languageCode ?? user.language ?? "en",
           companyName: user.brandProfile?.companyName,
-          displayName: user.creatorProfile?.displayName ?? undefined
+          displayName: user.creatorProfile?.displayName ?? undefined,
+          hasBrandProfile: user.role === "BRAND" || Boolean(user.brandProfile),
+          hasCreatorProfile: user.role === "CREATOR" || Boolean(user.creatorProfile)
         },
         demoRole
       )
@@ -668,7 +702,9 @@ export class AuthSecurityService {
           fullName: user.fullName,
           languageCode: user.languageCode ?? user.language ?? "en",
           companyName: user.brandProfile?.companyName,
-          displayName: user.creatorProfile?.displayName ?? undefined
+          displayName: user.creatorProfile?.displayName ?? undefined,
+          hasBrandProfile: user.role === "BRAND" || Boolean(user.brandProfile),
+          hasCreatorProfile: user.role === "CREATOR" || Boolean(user.creatorProfile)
         },
         demoRole
       )

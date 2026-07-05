@@ -1,0 +1,1 @@
+export const REVIEW_ANNOTATION_COLOR = "#5B5CFF";

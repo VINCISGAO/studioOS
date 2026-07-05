@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 const copy = {
   en: {
     eyebrow: "Creator onboarding",
-    title: "Apply to become a vetted StudioOS production partner.",
+    title: "Apply to become a vetted VINCIS production partner.",
     subtitle:
       "Submit your studio profile for admin review. After approval, pay the guarantee deposit and start receiving quote requests.",
     submit: "Submit application",
@@ -37,7 +37,7 @@ const copy = {
     placeholders: {
       specialties: "Beauty, DTC, SaaS, TikTok, YouTube...",
       tools: "Runway, Kling, Midjourney, After Effects...",
-      note: "Tell StudioOS what kind of advertising work you are strongest at.",
+      note: "Tell VINCIS what kind of advertising work you are strongest at.",
       delivery_speed: "48-72 hours"
     },
     rules: ["No unfinished orders", "No active dispute", "Admin review required"],
@@ -60,7 +60,7 @@ const copy = {
   },
   zh: {
     eyebrow: "承接人入驻",
-    title: "申请成为 StudioOS 严选广告制作承接方。",
+    title: "申请成为 VINCIS 严选广告制作承接方。",
     subtitle: "提交工作室资料后进入平台审核。通过审核、缴纳保证金，即可开始接收品牌询价。",
     submit: "提交入驻申请",
     deposit: "保证金",
@@ -80,7 +80,7 @@ const copy = {
     placeholders: {
       specialties: "美妆、DTC、SaaS、TikTok、YouTube...",
       tools: "Runway、Kling、Midjourney、After Effects...",
-      note: "告诉 StudioOS 你最擅长哪类广告制作。",
+      note: "告诉 VINCIS 你最擅长哪类广告制作。",
       delivery_speed: "48–72 小时"
     },
     rules: ["没有未完成订单", "没有进行中争议", "需要管理员审核"],

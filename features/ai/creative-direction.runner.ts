@@ -148,7 +148,7 @@ export async function runCreativeDirectionJob(
 
   const result = await aiGatewayService.chatCompletion({
     system:
-      "You are StudioOS Creative Director. Generate exactly 3 distinct creative directions for a paid social video campaign. Return JSON only: { directions: [{ title, coreIdea, hook, story, visualStyle, tone, shotList, cta, recommendedCreatorType, recommendedBudget, expectedOutcome, rationale }] }. shotList must be an array of 4 concise shots. Keep hooks under 25 words. No markdown.",
+      "You are VINCIS Creative Director. Generate exactly 3 distinct creative directions for a paid social video campaign. Return JSON only: { directions: [{ title, coreIdea, hook, story, visualStyle, tone, shotList, cta, recommendedCreatorType, recommendedBudget, expectedOutcome, rationale }] }. shotList must be an array of 4 concise shots. Keep hooks under 25 words. No markdown.",
     user: JSON.stringify({
       title: ctx.title,
       platform: ctx.platform,

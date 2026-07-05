@@ -1,6 +1,5 @@
 "use client";
 
-import { demoSocialSignInAction } from "@/app/actions";
 import { demoUserForSocialProvider, isTestSocialProvider, type DemoSocialProvider } from "@/lib/demo-auth";
 import type { Locale } from "@/lib/i18n";
 import { getLoginVisual, type LoginRole, type LoginVisual } from "@/lib/studioos/login-theme";
@@ -110,7 +109,7 @@ export function LoginSocialButtons({
 
         if (useTestAccount) {
           return (
-            <form key={id} action={demoSocialSignInAction} className="min-w-0">
+            <form key={id} action="/api/auth/demo-social" method="POST" className="min-w-0">
               <SocialHiddenFields locale={locale} role={role} nextPath={nextPath} provider={id} />
               <button type="submit" aria-label={testLabel} title={testLabel} className={buttonClassName}>
                 {buttonContent}

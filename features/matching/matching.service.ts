@@ -235,7 +235,7 @@ export class MatchingService {
       userId: campaign.brandId,
       campaignId: campaign.id,
       title: "AI found creator matches",
-      content: `StudioOS found ${ranked.length} creator matches using the Final Production Brief.`,
+      content: `VINCIS found ${ranked.length} creator matches using the Final Production Brief.`,
       actionUrl: `${getAppBaseUrl()}/brand/projects/${campaign.id}/studios`,
       template: "ai.matching_complete",
       priority: "HIGH",

@@ -35,7 +35,7 @@ export async function signUpMvpAction(formData: FormData) {
       email,
       password,
       role: isCreator ? "CREATOR" : "BRAND",
-      fullName: name || company || email.split("@")[0] || "StudioOS User",
+      fullName: name || company || email.split("@")[0] || "VINCIS User",
       companyName: isCreator ? undefined : company || name,
       displayName: isCreator ? name || company || email.split("@")[0] : undefined
     });

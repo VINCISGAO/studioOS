@@ -1,4 +1,4 @@
-# StudioOS — Agent Instructions
+# VINCIS — Agent Instructions
 
 **Read AGENT.md before making any changes.**
 

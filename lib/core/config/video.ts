@@ -20,7 +20,7 @@ export const videoConfig = {
   tokenTtlSec: Number(process.env.PLAYBACK_TOKEN_TTL_SEC ?? 3600),
   hlsSegmentSeconds: 6,
   targetHeight: 720,
-  watermarkText: process.env.VIDEO_WATERMARK_TEXT ?? "StudioOS Preview",
+  watermarkText: process.env.VIDEO_WATERMARK_TEXT ?? "VINCIS Preview",
   maxUploadBytes: 300 * 1024 * 1024,
   redisUrl: process.env.REDIS_URL?.trim() || null,
   queueName: "video.transcode",

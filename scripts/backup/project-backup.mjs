@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Create a ZIP backup of the project (excludes secrets, node_modules, build artifacts).
- * Output: ~/StudioOS-Backups/project/{ProjectName}_Backup_YYYY-MM-DD_HH-mm.zip
+ * Output: ~/VINCIS-Backups/project/{ProjectName}_Backup_YYYY-MM-DD_HH-mm.zip
  *
  * Usage: npm run backup:project
  */

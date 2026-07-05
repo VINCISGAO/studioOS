@@ -61,6 +61,28 @@ export class StorageFileService {
     });
   }
 
+  async recordCreatorCover(
+    legacyCreatorId: string,
+    input: Omit<RecordStorageFileInput, "userId" | "fileType">
+  ) {
+    if (!hasDatabaseUrl()) return null;
+
+    const profileId = await resolveCreatorProfileIdForLegacyId(legacyCreatorId);
+    if (!profileId) return null;
+
+    const profile = await prisma.creatorProfile.findUnique({
+      where: { id: profileId },
+      select: { userId: true }
+    });
+    if (!profile) return null;
+
+    return this.record({
+      ...input,
+      userId: profile.userId,
+      fileType: "USER_COVER"
+    });
+  }
+
   async recordBrandAvatar(
     brandProfileId: string,
     input: Omit<RecordStorageFileInput, "userId" | "fileType">
@@ -77,6 +99,25 @@ export class StorageFileService {
       ...input,
       userId: profile.userId,
       fileType: "BRAND_AVATAR"
+    });
+  }
+
+  async recordBrandCover(
+    brandProfileId: string,
+    input: Omit<RecordStorageFileInput, "userId" | "fileType">
+  ) {
+    if (!hasDatabaseUrl()) return null;
+
+    const profile = await prisma.brandProfile.findUnique({
+      where: { id: brandProfileId },
+      select: { userId: true }
+    });
+    if (!profile) return null;
+
+    return this.record({
+      ...input,
+      userId: profile.userId,
+      fileType: "BRAND_COVER"
     });
   }
 }

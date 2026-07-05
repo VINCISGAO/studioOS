@@ -1,7 +1,7 @@
 # FINAL PROJECT REPORT
 
-**Date:** 2026-06-30  
-**Project:** StudioOS / StudioOS MVP  
+**Date:** 2026-06-30
+**Project:** VINCIS / VINCIS MVP
 **Sprints:** 1–22 complete (code)
 
 ---
@@ -101,8 +101,8 @@ npm run db:init
 npm run production:verify
 ```
 
-**Demo accounts:** `client.arc@studioos.test` · `creator.nova@studioos.test` · `admin@studioos.test`  
-**Password:** `TempStudioOS2026!`
+**Demo accounts:** `client.arc@studioos.test` · `creator.nova@studioos.test` · `admin@studioos.test`
+**Password:** `TempVINCIS2026!`
 
 ---
 

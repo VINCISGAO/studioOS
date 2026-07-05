@@ -27,13 +27,15 @@ function mapUser(user: UserWithProfiles): AuthUserDto {
     fullName: user.fullName,
     languageCode: user.languageCode ?? user.language ?? "en",
     companyName: user.brandProfile?.companyName,
-    displayName: user.creatorProfile?.displayName ?? undefined
+    displayName: user.creatorProfile?.displayName ?? undefined,
+    hasBrandProfile: user.role === "BRAND" || Boolean(user.brandProfile),
+    hasCreatorProfile: user.role === "CREATOR" || Boolean(user.creatorProfile)
   };
 }
 
 function aiDatabaseUnavailableMessage() {
   return process.env.NODE_ENV === "production"
-    ? "AI 数据库未连接。请在 Vercel 环境变量中配置 DATABASE_URL（或 POSTGRES_PRISMA_URL / POSTGRES_URL），重新部署后再使用 StudioOS AI。"
+    ? "AI 数据库未连接。请在 Vercel 环境变量中配置 DATABASE_URL（或 POSTGRES_PRISMA_URL / POSTGRES_URL），重新部署后再使用 VINCIS AI。"
     : "AI 数据库连接失败。请确认本地 PostgreSQL 已启动，并重启 npm run dev:fix。";
 }
 
@@ -71,7 +73,7 @@ export async function requireAiCopilotUser(request?: Request): Promise<AuthUserD
 
     const demo = DEMO_USERS.find((item) => item.email === user.email || item.email === demoEmailFromId(user.id));
     if (!demo) {
-      throw appError("UNAUTHORIZED", "请使用数据库账号登录后再使用 StudioOS AI。");
+      throw appError("UNAUTHORIZED", "请使用数据库账号登录后再使用 VINCIS AI。");
     }
 
     const created = await userRepository.upsertDemoUser({

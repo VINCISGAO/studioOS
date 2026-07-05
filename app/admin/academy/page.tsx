@@ -12,7 +12,7 @@ const copy = {
   en: {
     back: "Back to admin",
     kicker: "Enablement",
-    title: "StudioOS Academy",
+    title: "VINCIS Academy",
     subtitle: "Manage onboarding, creator training, brand education, and partner enablement content from the database.",
     published: "Published",
     lessons: "Lessons",
@@ -29,7 +29,7 @@ const copy = {
   zh: {
     back: "返回管理后台",
     kicker: "培训赋能",
-    title: "StudioOS 学院",
+    title: "VINCIS 学院",
     subtitle: "从数据库管理入驻培训、创作者课程、品牌教育和合伙人赋能内容。",
     published: "已发布",
     lessons: "课程节数",

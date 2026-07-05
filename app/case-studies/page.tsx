@@ -21,7 +21,7 @@ export default async function CaseStudiesPage({ searchParams }: { searchParams: 
         <p className="mt-4 max-w-2xl text-lg text-zinc-500">
           {locale === "zh"
             ? "真实 Studio 交付的高转化广告样片。"
-            : "High-performing ads delivered through StudioOS production studios."}
+            : "High-performing ads delivered through VINCIS production studios."}
         </p>
         <div className="mt-12">
           <HomePortfolioShowcase

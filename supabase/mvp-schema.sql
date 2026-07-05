@@ -1,4 +1,4 @@
--- StudioOS MVP — Review & approval workspace
+-- VINCIS MVP — Review & approval workspace
 -- Run on a Supabase project (can coexist with legacy schema using separate tables)
 
 create extension if not exists "pgcrypto";

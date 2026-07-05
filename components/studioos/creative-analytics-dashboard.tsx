@@ -33,7 +33,7 @@ export function CreativeAnalyticsDashboard({
   summary,
   ads,
   insights,
-  dataSource = "demo",
+  dataSource = "empty",
   connectedPlatforms = [],
   rawInsights = []
 }: Props) {
@@ -73,8 +73,8 @@ export function CreativeAnalyticsDashboard({
                   ? "归因数据"
                   : "Attributed"
                 : locale === "zh"
-                  ? "演示数据"
-                  : "Demo data"}
+                  ? "暂无数据"
+                  : "No data"}
         </Badge>
         {connectedPlatforms.map((p) => (
           <Badge key={p} variant="outline">
@@ -120,18 +120,26 @@ export function CreativeAnalyticsDashboard({
                 </tr>
               </thead>
               <tbody>
-                {ads.map((ad) => (
-                  <tr key={ad.id} className="border-b last:border-0">
-                    <td className="px-6 py-4">
-                      <p className="font-medium">{ad.name}</p>
-                      <p className="text-xs text-zinc-500">{ad.platform}</p>
+                {ads.length ? (
+                  ads.map((ad) => (
+                    <tr key={ad.id} className="border-b last:border-0">
+                      <td className="px-6 py-4">
+                        <p className="font-medium">{ad.name}</p>
+                        <p className="text-xs text-zinc-500">{ad.platform}</p>
+                      </td>
+                      <td className="px-4 py-4">{ad.ctr.toFixed(1)}%</td>
+                      <td className="px-4 py-4">{ad.hookScore}</td>
+                      <td className="px-4 py-4">{ad.retention3s}%</td>
+                      <td className="px-4 py-4">{ad.conversion.toFixed(1)}%</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-10 text-center text-sm text-zinc-500">
+                      {locale === "zh" ? "上传归因数据或连接广告平台后，这里会显示真实广告表现。" : "Upload attribution data or connect an ad platform to see real ad performance here."}
                     </td>
-                    <td className="px-4 py-4">{ad.ctr.toFixed(1)}%</td>
-                    <td className="px-4 py-4">{ad.hookScore}</td>
-                    <td className="px-4 py-4">{ad.retention3s}%</td>
-                    <td className="px-4 py-4">{ad.conversion.toFixed(1)}%</td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
@@ -151,7 +159,8 @@ export function CreativeAnalyticsDashboard({
             : "Subscription value — data-driven recommendations for your next campaign."}
         </p>
         <div className="mt-4 grid gap-3 lg:grid-cols-2">
-          {insights.map((insight) => {
+          {insights.length ? (
+            insights.map((insight) => {
             const raw = rawInsights.find((item) => item.id === insight.id);
             const params = raw ? insightToQueryParams(raw) : {};
             const applyHref = withLocale(
@@ -189,7 +198,14 @@ export function CreativeAnalyticsDashboard({
               </CardContent>
             </Card>
             );
-          })}
+          })
+          ) : (
+            <Card className="border-zinc-200/80 shadow-none lg:col-span-2">
+              <CardContent className="p-6 text-sm text-zinc-500">
+                {locale === "zh" ? "暂无真实洞察。导入表现数据后，系统会生成可复用建议。" : "No real insights yet. Import performance data to generate reusable recommendations."}
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>

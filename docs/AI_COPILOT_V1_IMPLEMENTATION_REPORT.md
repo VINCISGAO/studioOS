@@ -1,12 +1,12 @@
-# StudioOS AI Copilot V1 Implementation Report
+# VINCIS AI Copilot V1 Implementation Report
 
 ## Scope
 
-StudioOS AI Copilot V1 is an authenticated, database-backed assistant for logged-in Brand, Creator, Admin, and Support users.
+VINCIS AI Copilot V1 is an authenticated, database-backed assistant for logged-in Brand, Creator, Admin, and Support users.
 
 V1 supports:
 
-- Querying real StudioOS business summaries.
+- Querying real VINCIS business summaries.
 - Explaining current state.
 - Giving suggestions and next-step guidance.
 - Respecting user language through `User.languageCode`.

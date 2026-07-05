@@ -7,7 +7,7 @@ cd "$ROOT"
 LOG="${ROOT}/.verify-run.log"
 
 {
-  echo "=== StudioOS verify-local $(date -u +"%Y-%m-%dT%H:%M:%SZ") ==="
+  echo "=== VINCIS verify-local $(date -u +"%Y-%m-%dT%H:%M:%SZ") ==="
   echo "Node: $(node -v 2>/dev/null || echo unknown)"
   echo "PWD: $ROOT"
   echo ""

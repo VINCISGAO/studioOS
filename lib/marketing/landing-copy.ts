@@ -1,6 +1,6 @@
 import type { Locale } from "@/lib/i18n";
 
-/** StudioOS marketing copy. */
+/** VINCIS marketing copy. */
 export const landingCopy = {
   nav: {
     en: {
@@ -28,7 +28,7 @@ export const landingCopy = {
       panelTitle: "Sign in or create an account",
       panelSubtitle: "Choose your workspace — brands launch campaigns, creators deliver cinema-grade work.",
       welcomeBack: "Welcome back",
-      loggedInSubtitle: "Continue to your StudioOS workspace.",
+      loggedInSubtitle: "Continue to your VINCIS workspace.",
       brandTab: "Brand",
       creatorTab: "Creator",
       emailLabel: "Work email",
@@ -37,7 +37,7 @@ export const landingCopy = {
       orDivider: "or",
       signInBrand: "Brand sign in",
       signInCreator: "Creator sign in",
-      noAccount: "New to StudioOS?",
+      noAccount: "New to VINCIS?",
       createAccount: "Create account",
       explorePricing: "View pricing",
       legalNotice: "By continuing you agree to our Terms and Privacy Policy.",
@@ -48,7 +48,7 @@ export const landingCopy = {
       panelTitle: "登录或注册账号",
       panelSubtitle: "选择您的工作台 — 品牌方发起项目，创作者交付电影级作品",
       welcomeBack: "欢迎回来",
-      loggedInSubtitle: "继续进入您的 StudioOS 工作台。",
+      loggedInSubtitle: "继续进入您的 VINCIS 工作台。",
       brandTab: "品牌方",
       creatorTab: "创作者",
       emailLabel: "工作邮箱",
@@ -135,7 +135,7 @@ export const landingCopy = {
       pains: ["High agency markup", "8–12 week timelines", "Limited creator access", "Endless revision loops"],
       compareTitle: "See the difference",
       traditional: "Traditional Agency",
-      studio: "StudioOS",
+      studio: "VINCIS",
       saveBadge: "Save about 80%",
       savings: ["Budget saved about 80%", "Time saved about 95-96%"],
       rows: [
@@ -151,7 +151,7 @@ export const landingCopy = {
       pains: ["代理层层加价", "8–12 周制作周期", "创作者触达受限", "修改陷入循环"],
       compareTitle: "一眼看懂差异",
       traditional: "传统广告公司",
-      studio: "StudioOS",
+      studio: "VINCIS",
       saveBadge: "节省约 99%",
       savings: ["经费节约约 99%", "时间节约约 95-96%"],
       rows: [
@@ -192,7 +192,7 @@ export const landingCopy = {
       titleLine1: "Move commercial production out of manual coordination",
       titleLine2: "into one controlled operating system",
       subtitle:
-        "StudioOS gives brand teams one place to brief, match studios, review cuts, protect payment, and release campaign-ready assets.",
+        "VINCIS gives brand teams one place to brief, match studios, review cuts, protect payment, and release campaign-ready assets.",
       items: ["Structured brief intake", "Vetted studio matching", "Frame review and escrow delivery"],
       trustLabel: "Built for global brand standards",
       brands: ["Google", "Coca-Cola", "Samsung", "Airbnb", "TikTok", "Shopify", "Amazon", "Meta"]
@@ -202,7 +202,7 @@ export const landingCopy = {
       titleLine1: "把广告制作从人工协调",
       titleLine2: "升级成一套可控的制作系统",
       subtitle:
-        "StudioOS 让品牌团队在一个工作流里完成需求简报、制作方匹配、审片、资金托管和成片交付",
+        "VINCIS 让品牌团队在一个工作流里完成需求简报、制作方匹配、审片、资金托管和成片交付",
       items: ["把需求变成可执行简报", "按作品集匹配制作团队", "用审片与托管锁定交付质量"],
       trustLabel: "以全球品牌级标准设计",
       brands: ["Google", "Coca-Cola", "Samsung", "Airbnb", "TikTok", "Shopify", "Amazon", "Meta"]

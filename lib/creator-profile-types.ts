@@ -4,6 +4,7 @@ export type StoredCreatorProfile = {
   headline: string;
   bio: string;
   avatar_url?: string;
+  cover_url?: string;
   country: string;
   portfolio_url: string;
   specialties: string[];

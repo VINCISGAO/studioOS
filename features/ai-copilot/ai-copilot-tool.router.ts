@@ -133,7 +133,7 @@ function outputForTool(toolName: ToolName, context: AiCopilotContext): Record<st
     case "get_attribution_summary":
       return { campaigns: summaries.campaigns ?? [] };
     case "get_ai_memory_summary":
-      return { memory: "V1 only reads saved StudioOS summaries. No raw database dump is sent to AI." };
+      return { memory: "V1 only reads saved VINCIS summaries. No raw database dump is sent to AI." };
     case "get_notifications":
       return { notifications: summaries.notifications ?? [] };
     case "get_timeline":

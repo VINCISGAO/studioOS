@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Export PostgreSQL database to SQL file.
- * Output: ~/StudioOS-Backups/database/Database_Backup_YYYY-MM-DD_HH-mm.sql
+ * Output: ~/VINCIS-Backups/database/Database_Backup_YYYY-MM-DD_HH-mm.sql
  *
  * Usage: npm run backup:database
  */

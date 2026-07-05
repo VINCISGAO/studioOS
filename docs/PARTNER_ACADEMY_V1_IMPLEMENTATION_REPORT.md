@@ -1,7 +1,7 @@
 # Partner & Academy V1 Implementation Report
 
 Status: implemented from available product context.  
-Source document note: `/Users/linkele/Desktop/合伙人开发文档 Partner & Academy 技术开发需求 V1.pdf` could not be read by the current tool session, so V1 was built from existing StudioOS Partner/Academy stubs, membership/commission/referral context, and current admin portal patterns.
+Source document note: `/Users/linkele/Desktop/合伙人开发文档 Partner & Academy 技术开发需求 V1.pdf` could not be read by the current tool session, so V1 was built from existing VINCIS Partner/Academy stubs, membership/commission/referral context, and current admin portal patterns.
 
 ## What Was Added
 

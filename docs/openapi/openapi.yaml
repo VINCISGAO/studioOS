@@ -1,12 +1,12 @@
 openapi: 3.0.3
 info:
-  title: StudioOS API
+  title: VINCIS API
   version: 1.0.0
   description: |
-    Contract-driven REST API for StudioOS (Campaign aggregate root).
+    Contract-driven REST API for VINCIS (Campaign aggregate root).
     All authenticated routes require session cookie from `/api/auth/login` or `/api/v1/auth/me`.
   contact:
-    name: StudioOS Platform
+    name: VINCIS Platform
 
 servers:
   - url: http://localhost:3000

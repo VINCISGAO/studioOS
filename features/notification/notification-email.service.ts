@@ -26,7 +26,7 @@ export async function sendNotificationEmail(input: {
     return { ok: true as const, skipped: true };
   }
 
-  const from = process.env.RESEND_FROM_EMAIL ?? "StudioOS <onboarding@resend.dev>";
+  const from = process.env.RESEND_FROM_EMAIL ?? "VINCIS <onboarding@resend.dev>";
 
   try {
     const result = await resend.emails.send({
@@ -94,7 +94,7 @@ export function buildSimpleNotificationEmail(input: {
   return `
     <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fafaf8;padding:32px 16px;">
       <div style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #e4e4e7;border-radius:16px;padding:32px;">
-        <p style="margin:0 0 8px;font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#71717a;">StudioOS</p>
+        <p style="margin:0 0 8px;font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#71717a;">VINCIS</p>
         <h1 style="margin:0 0 12px;font-size:22px;line-height:1.2;color:#09090b;">${escapeHtml(input.headline)}</h1>
         <p style="margin:0 0 20px;font-size:15px;line-height:1.7;color:#52525b;">${escapeHtml(input.body)}</p>
         ${cta}

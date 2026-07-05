@@ -10,7 +10,7 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error("[StudioOS page error]", error);
+    console.error("[VINCIS page error]", error);
   }, [error]);
 
   return (

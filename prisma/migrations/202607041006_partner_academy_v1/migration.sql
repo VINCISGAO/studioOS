@@ -40,7 +40,7 @@ CREATE TABLE "academy_courses" (
     "duration_minutes" INTEGER NOT NULL DEFAULT 15,
     "lesson_count" INTEGER NOT NULL DEFAULT 1,
     "completion_count" INTEGER NOT NULL DEFAULT 0,
-    "owner" TEXT NOT NULL DEFAULT 'StudioOS',
+    "owner" TEXT NOT NULL DEFAULT 'VINCIS',
     "description" TEXT,
     "outcomes_json" JSONB,
     "metadata_json" JSONB,

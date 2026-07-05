@@ -1,8 +1,8 @@
 import type { Locale } from "@/lib/i18n";
 
-/** StudioOS product language — Brand & Studio, not Client & Creator marketplace. */
+/** VINCIS product language — Brand & Studio, not Client & Creator marketplace. */
 export const studioOS = {
-  productName: "StudioOS",
+  productName: "VINCIS",
   tagline: {
     en: "Infrastructure connecting global brands with AI-powered creative production.",
     zh: "连接全球品牌与 AI 驱动创意制作的基础设施。"
@@ -41,8 +41,8 @@ export const brandNav = {
     campaigns: "My ads",
     finance: "Finance",
     brandAccount: "Brand account",
-    brandCenter: "Brand center",
-    brandLibrary: "Brand library",
+    brandCenter: "Brand homepage",
+    brandLibrary: "Brand homepage",
     creators: "Creators",
     dataAnalysis: "Analytics",
     messages: "Messages",
@@ -67,8 +67,8 @@ export const brandNav = {
     campaigns: "我的广告",
     finance: "财务中心",
     brandAccount: "商家账户",
-    brandCenter: "品牌中心",
-    brandLibrary: "品牌库",
+    brandCenter: "品牌主页",
+    brandLibrary: "品牌主页",
     creators: "创作者",
     dataAnalysis: "数据分析",
     messages: "消息中心",

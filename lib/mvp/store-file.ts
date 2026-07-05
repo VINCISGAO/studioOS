@@ -63,7 +63,7 @@ function seedStore(): MvpStore {
         email: "admin@studioos.test",
         role: "admin",
         name: "Platform Admin",
-        company_name: "StudioOS",
+        company_name: "VINCIS",
         created_at: t
       },
       {

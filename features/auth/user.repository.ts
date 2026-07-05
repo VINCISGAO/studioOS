@@ -40,7 +40,7 @@ export class UserRepository {
   }): Promise<UserWithProfiles> {
     const existing = await this.findByEmail(input.email);
     if (existing) {
-      return prisma.user.update({
+      let updated = await prisma.user.update({
         where: { id: existing.id },
         data: {
           fullName: input.fullName,
@@ -50,6 +50,27 @@ export class UserRepository {
         },
         include: { brandProfile: true, creatorProfile: true }
       });
+
+      if (input.role === "BRAND" && !updated.brandProfile) {
+        updated = await this.ensureBrandProfileForUser({
+          userId: updated.id,
+          companyName: input.companyName ?? input.fullName
+        });
+      }
+
+      if (input.role === "CREATOR" && !updated.creatorProfile) {
+        updated = await this.ensureCreatorProfileForUser({
+          userId: updated.id,
+          displayName: input.displayName ?? input.fullName
+        });
+        const { membershipService } = await import("@/features/membership/membership.service");
+        await membershipService.ensureDefaultMembershipOnCreatorRegister(
+          updated.id,
+          updated.creatorProfile?.id
+        );
+      }
+
+      return updated;
     }
 
     const user = await prisma.user.create({
@@ -180,6 +201,48 @@ export class UserRepository {
     }
 
     return user;
+  }
+
+  async ensureBrandProfileForUser(input: {
+    userId: string;
+    companyName?: string;
+  }): Promise<UserWithProfiles> {
+    const existing = await this.findById(input.userId);
+    if (!existing) {
+      throw new Error("User not found");
+    }
+
+    if (!existing.brandProfile) {
+      await prisma.brandProfile.create({
+        data: {
+          userId: existing.id,
+          companyName: input.companyName?.trim() || existing.fullName
+        }
+      });
+    }
+
+    return (await this.findById(existing.id)) ?? existing;
+  }
+
+  async ensureCreatorProfileForUser(input: {
+    userId: string;
+    displayName?: string;
+  }): Promise<UserWithProfiles> {
+    const existing = await this.findById(input.userId);
+    if (!existing) {
+      throw new Error("User not found");
+    }
+
+    if (!existing.creatorProfile) {
+      await prisma.creatorProfile.create({
+        data: {
+          userId: existing.id,
+          displayName: input.displayName?.trim() || existing.fullName
+        }
+      });
+    }
+
+    return (await this.findById(existing.id)) ?? existing;
   }
 
   async createPasswordless(input: {

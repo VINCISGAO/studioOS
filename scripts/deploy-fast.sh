@@ -6,7 +6,7 @@ cd "$ROOT"
 
 echo ""
 echo "========================================"
-echo "  StudioOS / studioos — Vercel deploy"
+echo "  VINCIS / studioos — Vercel deploy"
 echo "========================================"
 echo ""
 

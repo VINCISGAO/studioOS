@@ -1,7 +1,7 @@
 import type { Locale } from "@/lib/i18n";
 
 /**
- * StudioOS AI matching policy — frozen system rules.
+ * VINCIS AI matching policy — frozen system rules.
  *
  * Weights are compiled into the product runtime. They are NOT stored in the database,
  * NOT exposed in admin UI, and NOT user-configurable. Change only via code deploy.
@@ -40,7 +40,7 @@ export function orderRatingMatchPoints(rating: number, orderReviewCount: number)
 export const aiMatchingPolicyCopy = {
   en: {
     title: "Order rating system",
-    body: "Brands rate completed orders. AI ranks studios using fixed rules built into StudioOS — weights cannot be changed in admin or by studios.",
+    body: "Brands rate completed orders. AI ranks studios using fixed rules built into VINCIS — weights cannot be changed in admin or by studios.",
     footnote: "Match weights are AI-applied system rules, not manual settings.",
     currentRating: "Current rating",
     noReviews: "No order reviews yet",

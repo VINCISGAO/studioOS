@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# StudioOS — local ↔ GitHub main sync (safe, no force push)
+# VINCIS — local ↔ GitHub main sync (safe, no force push)
 set -euo pipefail
 
 ROOT="/Users/linkele/Projects/studioOS"
 cd "$ROOT"
 
 echo "=========================================="
-echo "  StudioOS GitHub Sync Check"
+echo "  VINCIS GitHub Sync Check"
 echo "  $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
 echo "=========================================="
 echo ""

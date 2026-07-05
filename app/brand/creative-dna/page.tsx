@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { getCurrentClientEmail } from "@/lib/client-session";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
 import { dnaProfileToFields } from "@/lib/studioos/creative-dna-service";
-import { demoCreativeDna } from "@/lib/studioos/creative-dna";
 import { getDnaProfile, orgIdFromEmail } from "@/lib/studioos/creative-performance-store";
 import { Dna } from "lucide-react";
 
@@ -13,14 +12,18 @@ const copy = {
     title: "Creative DNA",
     subtitle: "Brand memory — color, pacing, hook, CTA. Every next campaign starts here.",
     auto: "Auto-learned from attributed ad performance",
-    fallback: "Demo profile — upload ad data in Attribution to auto-learn",
+    fallback: "No learned profile yet",
+    empty: "Upload attributed ad data to teach VINCIS your brand's patterns.",
+    upload: "Upload attribution data",
     version: "Version"
   },
   zh: {
     title: "Creative DNA",
     subtitle: "品牌记忆 — 色彩、节奏、钩子、CTA。下一次 Campaign 从这里自动开始。",
     auto: "来自归因广告表现的自动学习",
-    fallback: "演示档案 — 在归因中心上传广告后台数据后可自动学习",
+    fallback: "暂无已学习档案",
+    empty: "上传已归因的广告数据后，VINCIS 会自动学习你的品牌规律。",
+    upload: "上传归因数据",
     version: "版本"
   }
 };
@@ -30,7 +33,7 @@ export default async function CreativeDnaPage({ searchParams }: { searchParams: 
   const t = copy[locale];
   const clientEmail = await getCurrentClientEmail();
   const profile = clientEmail ? await getDnaProfile(orgIdFromEmail(clientEmail)) : null;
-  const fields = profile ? dnaProfileToFields(profile, locale) : demoCreativeDna;
+  const fields = profile ? dnaProfileToFields(profile, locale) : [];
 
   return (
     <div>
@@ -56,18 +59,29 @@ export default async function CreativeDnaPage({ searchParams }: { searchParams: 
         ) : null}
       </div>
 
-      <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        {fields.map((field) => (
-          <Card key={field.key} className="border-zinc-200/80 shadow-none">
-            <CardContent className="p-5">
-              <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                {field.label[locale]}
-              </p>
-              <p className="mt-2 text-sm leading-6 text-zinc-800">{field.value}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {profile ? (
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          {fields.map((field) => (
+            <Card key={field.key} className="border-zinc-200/80 shadow-none">
+              <CardContent className="p-5">
+                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                  {field.label[locale]}
+                </p>
+                <p className="mt-2 text-sm leading-6 text-zinc-800">{field.value}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <Card className="mt-4 border-zinc-200/80 shadow-none">
+          <CardContent className="p-6">
+            <p className="text-sm text-zinc-500">{t.empty}</p>
+            <Button asChild variant="outline" className="mt-5 rounded-full">
+              <Link href={withLocale("/brand/attribution", locale)}>{t.upload}</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {profile ? (
         <div className="mt-8">

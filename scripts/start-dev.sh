@@ -13,7 +13,7 @@ cd "$ROOT"
 PORT=3000
 
 echo ""
-echo "StudioOS 本地预览 · http://127.0.0.1:${PORT}/?lang=zh"
+echo "VINCIS 本地预览 · http://127.0.0.1:${PORT}/?lang=zh"
 echo ""
 
 if ! command -v node >/dev/null 2>&1; then

@@ -1,9 +1,16 @@
 import { redirect } from "next/navigation";
 import { CertificationWelcomeBanner } from "@/components/studioos/certification/certification-welcome-banner";
 import { CreatorHomeDashboard } from "@/components/studioos/creator-home-dashboard";
+import { CreatorMembershipPanel } from "@/components/studioos/creator-membership-panel";
+import type {
+  CreatorMembershipStatusView,
+  MembershipPlanView
+} from "@/features/membership/membership.types";
+import { membershipService } from "@/features/membership/membership.service";
 import { getCurrentCreator } from "@/lib/creator-session";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
 import { listNotificationsForCreator } from "@/lib/notification-service";
+import { getCurrentSession } from "@/lib/session-user";
 import { getDeliverables, listOrdersForCreator } from "@/lib/order-service";
 import {
   buildCreatorHomeProjects,
@@ -29,19 +36,44 @@ import { getCreatorIncomeSnapshot } from "@/lib/studioos/withdrawal-service";
 
 export default async function StudioHomePage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const locale = getLocale(await searchParams);
-  const creator = await getCurrentCreator();
+  const [creator, session] = await Promise.all([getCurrentCreator(), getCurrentSession()]);
 
   if (!creator) {
     redirect(withLocale("/login?role=creator", locale));
   }
 
-  const [orders, invitations, income, levelUpSeen, welcomeDismissed, notifications] = await Promise.all([
+  const membershipPromise =
+    session?.role === "creator" && session.userId
+      ? Promise.all([
+          membershipService.getCreatorMembershipStatus(session.userId),
+          membershipService.requireVerifiedPlan()
+        ])
+          .then(([status, verifiedPlan]) => ({ status, verifiedPlan }))
+          .catch((error) => {
+            console.error("[studio.membership]", error);
+            return null;
+          })
+      : Promise.resolve<{
+          status: CreatorMembershipStatusView;
+          verifiedPlan: MembershipPlanView;
+        } | null>(null);
+
+  const [
+    orders,
+    invitations,
+    income,
+    levelUpSeen,
+    welcomeDismissed,
+    notifications,
+    membership
+  ] = await Promise.all([
     listOrdersForCreator(creator.id),
     listInvitationsForCreator(creator.id),
     getCreatorIncomeSnapshot(creator.id),
     hasSeenCertificationLevelUp(creator.id),
     hasDismissedCertificationWelcomeBanner(creator.id),
-    listNotificationsForCreator(creator.id, locale)
+    listNotificationsForCreator(creator.id, locale),
+    membershipPromise
   ]);
 
   const showWelcomeBanner =
@@ -78,10 +110,11 @@ export default async function StudioHomePage({ searchParams }: { searchParams: P
     locale,
     tasks,
     orders,
-    invitations
+    invitations,
+    deliverableCounts
   });
 
-  const projects = buildCreatorHomeProjects({ locale, orders });
+  const projects = buildCreatorHomeProjects({ locale, orders, deliverableCounts });
 
   const phases = buildCreatorPhaseCounts({ invitations, orders });
 
@@ -107,6 +140,14 @@ export default async function StudioHomePage({ searchParams }: { searchParams: P
         messages={messages}
         aiMatchHealth={aiMatchHealth}
       />
+      {membership ? (
+        <CreatorMembershipPanel
+          locale={locale}
+          status={membership.status}
+          verifiedPlan={membership.verifiedPlan}
+          stripeConfigured={Boolean(process.env.STRIPE_SECRET_KEY?.trim())}
+        />
+      ) : null}
     </div>
   );
 }

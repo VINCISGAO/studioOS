@@ -3,9 +3,9 @@ import type { brandNav } from "@/lib/studioos/vocabulary";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
 import {
   BarChart3,
+  Building2,
   Clapperboard,
   CreditCard,
-  FolderOpen,
   LayoutDashboard,
   Megaphone,
   MessageSquare,
@@ -33,6 +33,12 @@ export const brandPortalNavItems: BrandPortalNavItem[] = [
     mobileIconKey: "layoutDashboard"
   },
   {
+    href: brandPortalRoutes.brandCenter,
+    labelKey: "brandCenter",
+    icon: Building2,
+    mobileIconKey: "brandCenter"
+  },
+  {
     href: `${brandPortalRoutes.dashboard}#my-ads`,
     labelKey: "adRequirements",
     icon: Megaphone,
@@ -49,12 +55,6 @@ export const brandPortalNavItems: BrandPortalNavItem[] = [
     labelKey: "brandAccount",
     icon: CreditCard,
     mobileIconKey: "finance"
-  },
-  {
-    href: brandPortalRoutes.brandCenter,
-    labelKey: "brandLibrary",
-    icon: FolderOpen,
-    mobileIconKey: "brandCenter"
   },
   {
     href: brandPortalRoutes.attribution,

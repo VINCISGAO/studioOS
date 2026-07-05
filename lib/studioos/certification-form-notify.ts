@@ -18,15 +18,15 @@ function certificationMessageCopy(locale: Locale) {
     return {
       title: "认证保证金付款成功",
       body: "你的认证保证金已支付成功。请查看下方付款明细，系统正在同步你的认证服务商身份。",
-      company_name: "StudioOS 系统",
-      client_name: "StudioOS"
+      company_name: "VINCIS 系统",
+      client_name: "VINCIS"
     };
   }
   return {
     title: "Certification deposit paid",
     body: "Your certification deposit was received. Review the payment summary below while we sync your verified studio status.",
-    company_name: "StudioOS System",
-    client_name: "StudioOS"
+    company_name: "VINCIS System",
+    client_name: "VINCIS"
   };
 }
 

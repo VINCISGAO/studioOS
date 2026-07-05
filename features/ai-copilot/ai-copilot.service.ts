@@ -61,8 +61,8 @@ function templateAnswer(input: {
 
   const headline =
     language === "zh-CN" || language === "zh-TW"
-      ? "我已经读取了你当前账号有权限访问的真实 StudioOS 数据。"
-      : "I checked the real StudioOS data available to your current account.";
+      ? "我已经读取了你当前账号有权限访问的真实 VINCIS 数据。"
+      : "I checked the real VINCIS data available to your current account.";
   const evidence =
     language === "zh-CN" || language === "zh-TW"
       ? `我参考了你的项目、通知和业务摘要，整理出当前最相关的信息。`
@@ -78,7 +78,7 @@ function templateAnswer(input: {
 function modelUnavailableAnswer(language: string) {
   if (language === "zh-CN" || language === "zh-TW" || language === "zh") {
     return [
-      "我已经准备好协助你分析 StudioOS 工作区。",
+      "我已经准备好协助你分析 VINCIS 工作区。",
       "",
       "你可以问我项目进度、预算是否合理、为什么推荐某个 Creator，或者下一步应该怎么推进。",
       "",
@@ -86,7 +86,7 @@ function modelUnavailableAnswer(language: string) {
     ].join("\n");
   }
   return [
-    "I am ready to help you analyze your StudioOS workspace.",
+    "I am ready to help you analyze your VINCIS workspace.",
     "",
     "You can ask about project progress, budget health, creator recommendations, or the best next step.",
     "",
@@ -96,7 +96,7 @@ function modelUnavailableAnswer(language: string) {
 
 function buildSystemPrompt(context: AiCopilotContext) {
   return [
-    "You are StudioOS AI Assistant V1, an embedded SaaS assistant.",
+    "You are VINCIS AI Assistant V1, an embedded SaaS assistant.",
     "You can query, explain, suggest, and guide. You must not execute dangerous write operations.",
     "Forbidden operations: direct payment, fund release, data deletion, delivery confirmation, order status changes, sending invitations, or choosing creators for the user.",
     "Only answer from the provided context and tool outputs. If data is missing, say you do not have enough data.",
@@ -260,7 +260,7 @@ async function buildWorkspaceSnapshot(user: AuthUserDto, role: string, context: 
   const language = context.language;
   const zh = isZh(language);
   const summaries = context.summaries;
-  const displayName = user.displayName ?? user.companyName ?? user.fullName ?? user.email.split("@")[0] ?? "StudioOS";
+  const displayName = user.displayName ?? user.companyName ?? user.fullName ?? user.email.split("@")[0] ?? "VINCIS";
 
   if (role === "CREATOR") {
     const creator = asRecord(summaries.creator);

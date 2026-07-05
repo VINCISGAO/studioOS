@@ -84,6 +84,7 @@ export type Creator = {
   headline?: string;
   bio?: string;
   avatar_url?: string;
+  cover_url?: string;
   country: string;
   email: string;
   portfolio_url: string;

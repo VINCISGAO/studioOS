@@ -266,7 +266,9 @@ function adminUserToSessionDto(admin: AdminUser): AuthUserDto {
     email: admin.email,
     fullName: admin.fullName,
     role: "ADMIN",
-    languageCode: "en"
+    languageCode: "en",
+    hasBrandProfile: false,
+    hasCreatorProfile: false
   };
 }
 

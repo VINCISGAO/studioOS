@@ -9,12 +9,11 @@ export default async function AdminSupportPage({ searchParams }: { searchParams:
   const locale = getLocale(await searchParams);
   const user = await getAdminSessionUser();
   const overview = user ? await adminSupportService.getOverview(user) : { openItems: 0 };
-  const conversations =
-    user && (user.role === "ADMIN" || user.role === "SUPPORT" || user.role === "SYSTEM")
-      ? await aiSupportConversationService.listConversations({
-          limit: 8
-        })
-      : [];
+  const conversations = user
+    ? await aiSupportConversationService.listConversations({
+        limit: 8
+      })
+    : [];
 
   return (
     <div>

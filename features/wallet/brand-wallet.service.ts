@@ -26,7 +26,7 @@ export async function getBrandWalletSnapshot(brandEmail: string, limit = 12) {
   }
 
   const user = await userRepository.findByEmail(brandEmail.trim().toLowerCase());
-  if (!user || user.role !== "BRAND") {
+  if (!user || (user.role !== "BRAND" && !user.brandProfile)) {
     return { enabled: false as const };
   }
 

@@ -57,6 +57,8 @@ export async function saveBrandProfileAction(formData: FormData) {
   });
 
   revalidatePath("/brand/profile");
+  revalidatePath("/brand/brand-center");
+  revalidatePath("/brand/brand-center/profile");
   revalidatePath("/brand");
   revalidatePath(`/brands/${profile.id}`);
 
@@ -118,6 +120,8 @@ export async function syncBrandShowcaseAction(formData: FormData) {
   const email = await requireBrandEmail();
   const profile = await syncBrandShowcaseFromOrders(email);
   revalidatePath("/brand/profile");
+  revalidatePath("/brand/brand-center");
+  revalidatePath("/brand/brand-center/profile");
   revalidatePath(`/brands/${profile.id}`);
   return { ok: true as const, count: profile.showcase_ads.length };
 }
@@ -131,6 +135,8 @@ export async function toggleBrandShowcaseAdAction(formData: FormData) {
     return { ok: false as const, error: "not-found" };
   }
   revalidatePath("/brand/profile");
+  revalidatePath("/brand/brand-center");
+  revalidatePath("/brand/brand-center/profile");
   revalidatePath(`/brands/${profile.id}`);
   return { ok: true as const };
 }
@@ -177,6 +183,8 @@ export async function uploadBrandAvatarAction(formData: FormData) {
   });
 
   revalidatePath("/brand/profile");
+  revalidatePath("/brand/brand-center");
+  revalidatePath("/brand/brand-center/profile");
   revalidatePath("/brand");
   revalidatePath("/brand", "layout");
   revalidatePath(`/brands/${profile.id}`);
@@ -215,8 +223,19 @@ export async function uploadBrandCoverAction(formData: FormData) {
   if (!updated) {
     return { ok: false as const, error: lang === "zh" ? "保存封面失败" : "Failed to save cover" };
   }
+  const { storageFileService } = await import("@/features/storage/storage-file.service");
+  await storageFileService.recordBrandCover(profile.id, {
+    fileName: saved.file_name,
+    fileKey: saved.file_key,
+    publicUrl: saved.url,
+    mimeType: saved.mime_type,
+    fileSize: saved.size_bytes,
+    provider: saved.storage_provider
+  });
 
   revalidatePath("/brand/profile");
+  revalidatePath("/brand/brand-center");
+  revalidatePath("/brand/brand-center/profile");
   revalidatePath("/brand");
   revalidatePath(`/brands/${profile.id}`);
 

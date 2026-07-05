@@ -16,6 +16,7 @@ import {
   BookOpen,
   Building2,
   CreditCard,
+  Crown,
   Flag,
   GraduationCap,
   Headphones,
@@ -49,6 +50,7 @@ const navItems: NavItem[] = [
   { key: "brands", href: adminPortalRoutes.brands, icon: Building2, iconKey: "brands", section: "primary" },
   { key: "studios", href: adminPortalRoutes.studios, icon: Users, iconKey: "studios", section: "primary" },
   { key: "payments", href: adminPortalRoutes.payments, icon: CreditCard, iconKey: "payments", section: "primary" },
+  { key: "membership", href: adminPortalRoutes.membership, icon: Crown, iconKey: "membership", section: "primary" },
   { key: "settlements", href: adminPortalRoutes.settlements, icon: ArrowDownToLine, iconKey: "settlements", section: "primary" },
   { key: "wallets", href: adminPortalRoutes.wallets, icon: Wallet, iconKey: "adminWallets", section: "primary" },
   { key: "withdrawals", href: adminPortalRoutes.withdrawals, icon: ArrowUpFromLine, iconKey: "withdrawals", section: "primary" },
@@ -98,7 +100,7 @@ export function AdminPortalShell({
                 <Sparkles className="h-4 w-4" />
               </span>
               <div>
-                <p className="text-sm font-semibold">StudioOS Admin</p>
+                <p className="text-sm font-semibold">VINCIS Admin</p>
                 <p className="text-xs text-zinc-500">{locale === "zh" ? "管理后台" : "Control center"}</p>
               </div>
             </Link>

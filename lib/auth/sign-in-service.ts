@@ -50,6 +50,23 @@ function demoRoleToPrisma(role: DemoUser["role"]): UserRole {
   return "BRAND";
 }
 
+function hasBrandAccess(user: { role: UserRole; hasBrandProfile?: boolean }) {
+  return user.role === "BRAND" || Boolean(user.hasBrandProfile);
+}
+
+function hasCreatorAccess(user: { role: UserRole; hasCreatorProfile?: boolean }) {
+  return user.role === "CREATOR" || Boolean(user.hasCreatorProfile);
+}
+
+function sessionRoleForUser(
+  user: { role: UserRole; hasBrandProfile?: boolean; hasCreatorProfile?: boolean },
+  expectedRole: SignInInput["expectedRole"]
+): DemoUser["role"] {
+  if (expectedRole === "creator" && hasCreatorAccess(user)) return "creator";
+  if (expectedRole === "brand" && hasBrandAccess(user)) return "client";
+  return user.role === "CREATOR" ? "creator" : "client";
+}
+
 async function authenticateDemoLogin(email: string, password: string): Promise<DemoUser | null> {
   const normalized = email.trim().toLowerCase();
   const normalizedPassword = password.trim();
@@ -127,9 +144,9 @@ export async function performSignIn(input: SignInInput): Promise<SignInResult> {
       };
     }
 
-    const demoRole = prismaUser.role === "CREATOR" ? "creator" : "client";
+    const demoRole = sessionRoleForUser(prismaUser, expectedRole);
 
-    if (expectedRole === "brand" && demoRole !== "client") {
+    if (expectedRole === "brand" && !hasBrandAccess(prismaUser)) {
       return {
         ok: false,
         error: lang === "zh" ? "该账号属于创作者身份，请切换到创作者登录。" : "This account is for creators. Switch to the creator tab.",
@@ -138,7 +155,7 @@ export async function performSignIn(input: SignInInput): Promise<SignInResult> {
       };
     }
 
-    if (expectedRole === "creator" && demoRole !== "creator") {
+    if (expectedRole === "creator" && !hasCreatorAccess(prismaUser)) {
       return {
         ok: false,
         error: lang === "zh" ? "该账号属于广告主身份，请切换到广告主登录。" : "This account is for brands. Switch to the brand tab.",
@@ -215,7 +232,9 @@ export async function performSignIn(input: SignInInput): Promise<SignInResult> {
           fullName: demoUser.label,
           languageCode: synced?.languageCode ?? synced?.language ?? "en",
           companyName: demoUser.role === "client" ? demoUser.label : undefined,
-          displayName: demoUser.role === "creator" ? demoUser.label : undefined
+          displayName: demoUser.role === "creator" ? demoUser.label : undefined,
+          hasBrandProfile: demoUser.role === "client",
+          hasCreatorProfile: demoUser.role === "creator"
         },
         demoUser.role
       )

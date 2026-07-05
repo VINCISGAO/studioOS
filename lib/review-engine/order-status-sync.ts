@@ -6,7 +6,7 @@ import {
 import { syncProjectAfterDeliverable } from "@/lib/studioos/project-order-sync";
 import type { ReviewSessionStatus } from "@/lib/review-engine/types";
 
-/** Map review session status → StudioOS order status side effects. */
+/** Map review session status → VINCIS order status side effects. */
 export async function syncOrderFromReviewSession(
   orderId: string,
   sessionStatus: ReviewSessionStatus,

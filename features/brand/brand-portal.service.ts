@@ -80,7 +80,7 @@ function computeLegacyStats(orders: StoredOrder[], projects: StoredProject[]): B
 
 export class BrandPortalService {
   private assertBrand(user: AuthUser) {
-    if (user.role.toUpperCase() !== "BRAND" && user.role.toUpperCase() !== "ADMIN") {
+    if (!user.hasBrandProfile && user.role.toUpperCase() !== "BRAND" && user.role.toUpperCase() !== "ADMIN") {
       throw appError("FORBIDDEN", "Brand access only");
     }
   }

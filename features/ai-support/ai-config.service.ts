@@ -37,7 +37,7 @@ export class CreatorAiSupportConfigService {
     return prisma.creatorAiConfig.create({
       data: {
         creatorId,
-        aiName: "StudioOS AI",
+        aiName: "VINCIS AI",
         persona: "Helpful creator studio receptionist.",
         welcomeMessage: "Welcome. Share your project goals and timeline, and I will help collect the details.",
         serviceIntro: null,
@@ -58,7 +58,7 @@ export class CreatorAiSupportConfigService {
       where: { creatorId },
       create: {
         creatorId,
-        aiName: data.aiName?.trim() || "StudioOS AI",
+        aiName: data.aiName?.trim() || "VINCIS AI",
         persona: data.persona ?? null,
         welcomeMessage: data.welcomeMessage ?? null,
         serviceIntro: data.serviceIntro ?? null,
@@ -73,7 +73,7 @@ export class CreatorAiSupportConfigService {
         isEnabled: data.isEnabled ?? true
       },
       update: {
-        ...(data.aiName !== undefined ? { aiName: data.aiName.trim() || "StudioOS AI" } : {}),
+        ...(data.aiName !== undefined ? { aiName: data.aiName.trim() || "VINCIS AI" } : {}),
         ...(data.persona !== undefined ? { persona: data.persona } : {}),
         ...(data.welcomeMessage !== undefined ? { welcomeMessage: data.welcomeMessage } : {}),
         ...(data.serviceIntro !== undefined ? { serviceIntro: data.serviceIntro } : {}),

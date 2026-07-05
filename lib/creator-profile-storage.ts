@@ -6,6 +6,7 @@ export type CreatorProfileDraft = Pick<
   | "headline"
   | "bio"
   | "avatar_url"
+  | "cover_url"
   | "country"
   | "portfolio_url"
   | "specialties"
@@ -62,7 +63,8 @@ export function mergeCreatorProfile(base: Creator, draft: Partial<CreatorProfile
     ...draft,
     specialties: draft.specialties ?? base.specialties,
     tools: draft.tools ?? base.tools,
-    avatar_url: draft.avatar_url ?? base.avatar_url
+    avatar_url: draft.avatar_url ?? base.avatar_url,
+    cover_url: draft.cover_url ?? base.cover_url
   };
 }
 

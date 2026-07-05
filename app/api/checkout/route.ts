@@ -37,7 +37,7 @@ export async function POST(request: Request) {
           currency: "usd",
           unit_amount: Math.round(amount * 100),
           product_data: {
-            name: body.creatorName ? `StudioOS quote with ${body.creatorName}` : "StudioOS accepted quote",
+            name: body.creatorName ? `VINCIS quote with ${body.creatorName}` : "VINCIS accepted quote",
             description: body.description ?? "Escrow payment for an accepted AI advertising production quote."
           }
         }

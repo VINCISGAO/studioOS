@@ -107,7 +107,7 @@ const FRESH_ACCOUNT_STORES = {
         email: "admin@studioos.test",
         role: "admin",
         name: "Platform Admin",
-        company_name: "StudioOS",
+        company_name: "VINCIS",
         created_at: "2026-06-28T10:00:00.000Z"
       },
       {
@@ -194,7 +194,7 @@ runPrismaReset();
 
 console.log("Demo account reset complete.");
 console.log("");
-console.log("Creators (password: TempStudioOS2026!):");
+console.log("Creators (password: TempVINCIS2026!):");
 for (const creator of DEMO_CREATORS) {
   console.log(`  ${creator.email} → ${creator.label}`);
   console.log(`    certification · projects · invitations · messages · earnings: cleared`);
