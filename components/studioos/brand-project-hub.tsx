@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { creators } from "@/lib/data";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
-import type { StoredDeliverable, StoredOrder } from "@/lib/order-types";
+import { isOrderPaymentEscrowed, type StoredDeliverable, type StoredOrder } from "@/lib/order-types";
 import type { StoredProject } from "@/lib/project-types";
 import {
   brandCommercialPhaseLabel,
@@ -315,6 +315,7 @@ export function BrandProjectHub({
   reviewComments,
   acceptedInvitations = [],
   projectInvitations = [],
+  selectedCreatorId = null,
   brandCommercialStep,
   notificationCount = 0,
   aiMatchStatistics
@@ -327,6 +328,7 @@ export function BrandProjectHub({
   reviewComments: ReviewComment[];
   acceptedInvitations?: StoredCreatorInvitation[];
   projectInvitations?: StoredCreatorInvitation[];
+  selectedCreatorId?: string | null;
   brandCommercialStep: BrandCommercialStep;
   notificationCount?: number;
   aiMatchStatistics?: AiMatchReportStatistics | null;
@@ -335,6 +337,11 @@ export function BrandProjectHub({
   const status = project.status;
   const commercialContext = { project, order: linkedOrder };
   const awaitingPayment = isBrandAwaitingPayment(commercialContext);
+  const hasStartedProduction = ["production", "in_review", "delivered", "completed"].includes(status);
+  const paymentSettled =
+    hasStartedProduction ||
+    Boolean(linkedOrder && isOrderPaymentEscrowed(linkedOrder.payment_status));
+  const canPayFromProject = Boolean(linkedOrder) && awaitingPayment && !hasStartedProduction;
   const studio = project.selected_studio_id
     ? creators.find((item) => item.id === project.selected_studio_id)
     : linkedOrder
@@ -454,6 +461,7 @@ export function BrandProjectHub({
               projectStatus={status}
               initialInvitations={projectInvitations}
               initialAccepted={acceptedInvitations}
+              selectedCreatorId={selectedCreatorId}
               notificationCount={notificationCount}
               projectBudgetRange={project.budget_range}
               aiMatchStatistics={aiMatchStatistics}
@@ -506,7 +514,7 @@ export function BrandProjectHub({
                 {t.proposalTitle}
               </h2>
               <p className="mt-2 text-sm leading-relaxed text-zinc-600">{t.proposalBody}</p>
-              {linkedOrder?.payment_status === "unpaid" ? (
+              {linkedOrder?.payment_status === "unpaid" && canPayFromProject ? (
                 <BrandPaymentDeadlineNotice locale={locale} order={linkedOrder} className="mt-4" />
               ) : null}
               {linkedOrder ? (
@@ -516,16 +524,18 @@ export function BrandProjectHub({
                     ${linkedOrder.amount.toLocaleString()}
                   </p>
                   <Badge variant="outline" className="mt-3 font-normal">
-                    {linkedOrder.payment_status === "unpaid" ? t.unpaid : t.paid}
+                    {paymentSettled ? t.paid : t.unpaid}
                   </Badge>
                 </div>
               ) : null}
-              <Button asChild className="mt-6 rounded-xl">
-                <Link href={withLocale(`/brand/projects/${project.id}/checkout`, locale)}>
-                  {t.goCheckout}
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
+              {canPayFromProject ? (
+                <Button asChild className="mt-6 rounded-xl">
+                  <Link href={withLocale(`/brand/projects/${project.id}/checkout`, locale)}>
+                    {t.goCheckout}
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+              ) : null}
             </div>
           ) : null}
 

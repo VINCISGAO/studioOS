@@ -13,6 +13,11 @@ export type CreatorCommercialContext = {
 };
 
 export function isBrandAwaitingPayment(context: BrandCommercialContext): boolean {
+  const projectStatus = context.project ? normalizeCampaignStatus(context.project.status) : null;
+  if (projectStatus && ["production", "in_review", "delivered", "completed"].includes(projectStatus)) {
+    return false;
+  }
+
   const paymentStatus = context.order?.payment_status;
   if (paymentStatus && isOrderPaymentEscrowed(paymentStatus)) {
     return false;
@@ -21,7 +26,6 @@ export function isBrandAwaitingPayment(context: BrandCommercialContext): boolean
   if (paymentStatus === "unpaid") return true;
   if (context.order?.status === "waiting_payment") return true;
 
-  const projectStatus = context.project ? normalizeCampaignStatus(context.project.status) : null;
   if (
     projectStatus &&
     ["payment_pending", "contract_pending", "studio_selected", "proposal"].includes(projectStatus)

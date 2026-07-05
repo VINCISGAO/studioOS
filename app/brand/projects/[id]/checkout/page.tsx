@@ -112,14 +112,12 @@ export default async function BrandCheckoutPage({ params, searchParams }: Props)
   const paidReady = orderFunded;
   const orderCancelled = order.status === "cancelled" || campaignStatus === "cancelled";
   const cancelReason = readCancellationReason(project, locale, order.cancel_reason);
-  const inProductionPhase = ["production", "in_review", "delivered", "completed"].includes(
-    campaignStatus
-  );
-  const showProductionCta = paidReady && (inProductionPhase || Boolean(creatorId));
+  const projectAlreadyStarted = ["production", "in_review", "delivered", "completed"].includes(campaignStatus);
+  if (!orderCancelled && projectAlreadyStarted) {
+    redirect(withLocale(`${brandPortalRoutes.project(id)}?tab=proposal`, locale));
+  }
   const projectDetailHref = withLocale(
-    showProductionCta
-      ? `${brandPortalRoutes.project(id)}?tab=production`
-      : `${brandPortalRoutes.project(id)}?tab=match`,
+    `${brandPortalRoutes.project(id)}?tab=match`,
     locale
   );
   if (!orderCancelled && paidReady) {

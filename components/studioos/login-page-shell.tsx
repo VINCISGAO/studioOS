@@ -97,6 +97,14 @@ function CreatorHeadlineGradient({ children }: { children: React.ReactNode }) {
   );
 }
 
+function BrandHeadlineGradient({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="inline bg-gradient-to-r from-white via-sky-100 to-cyan-200 bg-clip-text text-transparent drop-shadow-[0_0_18px_rgba(125,211,252,0.16)]">
+      {children}
+    </span>
+  );
+}
+
 function CreatorHeadlineLine({
   lead,
   tail,
@@ -157,7 +165,7 @@ function LoginMarketingHeadline({
         <>
           <span className="block">{formatHeroHeadlineLine1(t.brandHeroLine1)}</span>
           <span className="mt-3 block">
-            <CreatorHeadlineGradient>{t.brandHeroLine2}</CreatorHeadlineGradient>
+            <BrandHeadlineGradient>{t.brandHeroLine2}</BrandHeadlineGradient>
           </span>
         </>
       ) : (
@@ -219,15 +227,6 @@ function LoginMobileIntro({
   return (
     <div className="mb-6 space-y-3 sm:mb-8 lg:hidden">
       <LoginMarketingHeadline role={role} locale={locale} t={t} className="text-[2.125rem] sm:text-[2.5rem]" />
-      <div
-        className={cn(
-          "h-0.5 w-9 rounded-full",
-          isBrand
-            ? "bg-gradient-to-r from-violet-400 via-indigo-300 to-violet-400"
-            : "bg-gradient-to-r from-violet-600 via-indigo-500 to-violet-500"
-        )}
-        aria-hidden
-      />
       <p
         className={cn(
           "text-[13px] leading-6 sm:text-sm sm:leading-7",

@@ -163,12 +163,14 @@ export function BrandProjectMatchBoard({
   locale,
   projectId,
   invitations,
-  projectBudgetRange
+  projectBudgetRange,
+  selectionLocked = false
 }: {
   locale: Locale;
   projectId: string;
   invitations: StoredCreatorInvitation[];
   projectBudgetRange?: string | null;
+  selectionLocked?: boolean;
 }) {
   const t = copy[locale];
   const groups = groupBrandMatchInvitations(invitations);
@@ -244,7 +246,7 @@ export function BrandProjectMatchBoard({
               invitation={invitation}
               projectId={projectId}
               projectBudgetRange={projectBudgetRange}
-              showActions={activeTab === "accepted"}
+              showActions={activeTab === "accepted" && !selectionLocked}
             />
           ))}
         </ul>

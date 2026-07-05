@@ -26,6 +26,7 @@ import { syncBrandOrderPaid } from "@/lib/studioos/brand-checkout-service";
 import { campaignRepository } from "@/features/campaign/campaign.repository";
 import { reviewPortalService } from "@/features/review/review-portal.service";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
+import { getAppBaseUrl } from "@/lib/app-url";
 
 function normalizeLang(raw: FormDataEntryValue | null): Locale {
   return String(raw ?? "en") === "zh" ? "zh" : "en";
@@ -147,7 +148,7 @@ export async function payOrderAction(formData: FormData) {
 
   if (process.env.STRIPE_SECRET_KEY) {
     const stripe = getStripe();
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+    const appUrl = getAppBaseUrl();
     const successPath = order.project_id
       ? `/brand/projects/${order.project_id}?tab=match&lang=${lang}`
       : `/dashboard/orders/${order.id}?paid=1&lang=${lang}`;

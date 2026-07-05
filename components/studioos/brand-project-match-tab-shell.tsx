@@ -10,6 +10,7 @@ export function BrandProjectMatchTabShell({
   projectId,
   initialInvitations,
   initialAccepted,
+  selectedCreatorId = null,
   notificationCount = 0,
   projectBudgetRange,
   aiMatchStatistics
@@ -19,6 +20,7 @@ export function BrandProjectMatchTabShell({
   projectStatus?: string;
   initialInvitations: StoredCreatorInvitation[];
   initialAccepted: StoredCreatorInvitation[];
+  selectedCreatorId?: string | null;
   notificationCount?: number;
   projectBudgetRange?: string | null;
   aiMatchStatistics?: AiMatchReportStatistics | null;
@@ -29,6 +31,7 @@ export function BrandProjectMatchTabShell({
       projectId={projectId}
       invitations={initialInvitations}
       accepted={initialAccepted}
+      selectedCreatorId={selectedCreatorId}
       notificationCount={notificationCount}
       projectBudgetRange={projectBudgetRange}
       aiMatchStatistics={aiMatchStatistics}

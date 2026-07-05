@@ -22,7 +22,7 @@ import { Button } from "@/components/ui/button";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import type { ReviewHubItem } from "@/lib/studioos/review-hub";
-import { cn, formatDate } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 const copy = {
   zh: {
@@ -46,6 +46,21 @@ const copy = {
     open: "进入审片",
     uploadVideo: "上传第一版视频",
     uploadRevision: "上传修改版",
+    uploadVersion: "上传视频版本",
+    orderDetail: "查看订单详情",
+    projectNo: "项目编号",
+    paid: "已付款",
+    brand: "品牌方",
+    orderAmount: "订单金额",
+    paymentStatus: "付款状态",
+    dueDate: "交付截止",
+    confirmed: "订单已确认",
+    uploadVersionStep: "上传视频版本",
+    brandReviewStep: "品牌方审核",
+    projectDoneStep: "项目完成",
+    waitUpload: "等待上传",
+    waitStart: "待开始",
+    waitComplete: "待完成",
     versions: "个版本",
     comments: "条未解决批注",
     updated: "更新时间",
@@ -60,8 +75,40 @@ const copy = {
     helpTitle: "如何使用审片中心？",
     helpBody: "所有与品牌方共享的版本、批注、审核状态都在这里同步更新，确保信息一致，减少沟通成本。",
     helpLink: "查看使用指南",
+    guideIntro:
+      "审片中心是品牌方与创作者共同协作审核视频的地方。所有版本、批注和审核记录都会实时同步，避免重复沟通，确保每一次修改都有据可查。",
+    guideSteps: [
+      {
+        title: "1. 上传新版本",
+        body: "创作者每完成一次修改，即可上传新的视频版本。系统会自动保留历史版本，方便随时对比和回溯。"
+      },
+      {
+        title: "2. 添加批注",
+        body: "点击视频任意时间点即可留下批注，支持文字说明，让反馈更加准确，不再需要反复截图或发送消息。"
+      },
+      {
+        title: "3. 查看修改状态",
+        body: "每条批注都会显示处理状态，例如：待处理、修改中、已完成。品牌方可以实时查看修改进度。"
+      },
+      {
+        title: "4. 审核并确认",
+        body: "确认当前版本符合要求后，点击审核通过即可进入下一阶段。如仍需调整，可继续添加批注并等待新的版本。"
+      },
+      {
+        title: "5. 查看历史版本",
+        body: "所有历史版本都会永久保存，可随时切换查看，对比修改效果，确保不会遗漏任何内容。"
+      }
+    ],
+    guideWhyTitle: "为什么使用审片中心？",
+    guideWhyItems: [
+      "所有反馈集中管理，不再分散在微信、邮件或聊天工具。",
+      "精准定位视频时间点，沟通更加高效。",
+      "每次修改都有完整记录，可随时追溯。",
+      "品牌方与创作者始终保持同一审核进度。",
+      "减少沟通成本，让项目交付更加顺畅。"
+    ],
     empty: "暂无审片项目。",
-    status: { review: "待审核", revision: "待修改", in_production: "待上传", completed: "已完成" }
+    status: { paid: "待上传", review: "待审核", revision: "待修改", in_production: "待上传", completed: "已完成" }
   },
   en: {
     title: "Review center",
@@ -84,6 +131,21 @@ const copy = {
     open: "Open review",
     uploadVideo: "Upload first video",
     uploadRevision: "Upload revision",
+    uploadVersion: "Upload video version",
+    orderDetail: "View order details",
+    projectNo: "Project ID",
+    paid: "Paid",
+    brand: "Brand",
+    orderAmount: "Order amount",
+    paymentStatus: "Payment",
+    dueDate: "Due date",
+    confirmed: "Order confirmed",
+    uploadVersionStep: "Upload video version",
+    brandReviewStep: "Brand review",
+    projectDoneStep: "Project complete",
+    waitUpload: "Waiting upload",
+    waitStart: "Not started",
+    waitComplete: "Not complete",
     versions: "versions",
     comments: "open comments",
     updated: "Updated",
@@ -98,21 +160,60 @@ const copy = {
     helpTitle: "How to use review center?",
     helpBody: "Versions, comments, and approval states sync here with your brand partners.",
     helpLink: "View guide",
+    guideIntro:
+      "The review center is where brands and creators review videos together. Versions, comments, and review records stay synced so every change is traceable.",
+    guideSteps: [
+      {
+        title: "1. Upload a new version",
+        body: "Creators can upload a new video version after each revision. Historical versions are kept for comparison and rollback."
+      },
+      {
+        title: "2. Add comments",
+        body: "Click any video timestamp to leave written feedback, so review notes are precise without repeated screenshots or side messages."
+      },
+      {
+        title: "3. Track revision status",
+        body: "Each comment shows its status, such as pending, in progress, or completed, so brands can follow progress in real time."
+      },
+      {
+        title: "4. Review and approve",
+        body: "Approve the current version when it meets requirements. If more changes are needed, add comments and wait for the next version."
+      },
+      {
+        title: "5. View version history",
+        body: "All historical versions are saved so you can switch back, compare changes, and avoid missing details."
+      }
+    ],
+    guideWhyTitle: "Why use review center?",
+    guideWhyItems: [
+      "Keep all feedback in one place instead of chat, email, or screenshots.",
+      "Pin feedback to exact video timestamps.",
+      "Keep a complete record of every revision.",
+      "Keep brands and creators aligned on the same review status.",
+      "Reduce communication cost and make delivery smoother."
+    ],
     empty: "No review projects yet.",
-    status: { review: "Pending review", revision: "Revision", in_production: "Awaiting upload", completed: "Completed" }
+    status: { paid: "Awaiting upload", review: "Pending review", revision: "Revision", in_production: "Awaiting upload", completed: "Completed" }
   }
 } as const;
 
-function brandInitial(name: string) {
-  return name.trim().slice(0, 1).toUpperCase() || "B";
+function formatMoney(amount: number) {
+  return `$${amount.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 }
 
-function relativeTime(iso: string, locale: Locale) {
-  const diff = Date.now() - new Date(iso).getTime();
-  const hours = Math.round(diff / 3_600_000);
-  if (hours < 24) return locale === "zh" ? `${Math.max(1, hours)} 小时前` : `${Math.max(1, hours)}h ago`;
-  const days = Math.round(hours / 24);
-  return locale === "zh" ? `${days} 天前` : `${days}d ago`;
+function shortDate(iso: string | null) {
+  if (!iso) return "--";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return iso;
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const dd = String(date.getDate()).padStart(2, "0");
+  return `${date.getFullYear()}-${mm}-${dd}`;
+}
+
+function activeStep(item: ReviewHubItem) {
+  if (item.status === "completed") return 5;
+  if (item.status === "review" || item.status === "revision" || item.deliverableCount > 0) return 4;
+  return 3;
 }
 
 export function StudioReviewHubBoard({ locale, items }: { locale: Locale; items: ReviewHubItem[] }) {
@@ -232,93 +333,126 @@ export function StudioReviewHubBoard({ locale, items }: { locale: Locale; items:
       ) : (
         <div className={cn(view === "grid" ? "grid gap-4 xl:grid-cols-2" : "space-y-4")}>
           {filtered.map((item) => {
-            const isAwaitingUpload = item.status === "in_production" && item.deliverableCount === 0;
+            const isAwaitingUpload =
+              (item.status === "paid" || item.status === "in_production") && item.deliverableCount === 0;
             const isRevisionUpload = item.status === "revision";
             const usesUploadAction = isAwaitingUpload || isRevisionUpload;
-            const ActionIcon = usesUploadAction ? UploadCloud : Play;
             const actionLabel = isRevisionUpload
               ? t.uploadRevision
               : isAwaitingUpload
-                ? t.uploadVideo
+                ? t.uploadVersion
                 : t.open;
+            const currentStep = activeStep(item);
+            const projectCode = item.projectId ?? item.orderId;
+            const steps = [
+              { label: t.confirmed, meta: shortDate(item.updatedAt).slice(5) },
+              { label: t.paid, meta: shortDate(item.updatedAt).slice(5) },
+              {
+                label: t.uploadVersionStep,
+                meta: item.latestVersionUploadedAt ? shortDate(item.latestVersionUploadedAt).slice(5) : t.waitUpload
+              },
+              { label: t.brandReviewStep, meta: t.waitStart },
+              { label: t.projectDoneStep, meta: item.status === "completed" ? t.projectDoneStep : t.waitComplete }
+            ];
 
             return (
             <article
               key={item.orderId}
-              className="overflow-hidden rounded-[24px] border border-zinc-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]"
+              className="overflow-hidden rounded-[18px] border border-zinc-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]"
             >
-              <div className="grid gap-5 border-b border-zinc-100 p-5 lg:grid-cols-[minmax(0,1fr)_144px] lg:items-start">
-                <div className="flex min-w-0 gap-4">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-zinc-900 text-sm font-semibold text-white">
-                    {brandInitial(item.brandName)}
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h2 className="min-w-0 truncate text-lg font-semibold leading-6 text-zinc-950">{item.title}</h2>
-                      <span className="rounded-full bg-violet-50 px-2.5 py-0.5 text-xs font-medium text-violet-700">
-                        {t.status[item.status as keyof typeof t.status] ?? item.status}
-                      </span>
+              <div className="grid gap-5 px-5 pb-4 pt-5 lg:grid-cols-[200px_minmax(0,1fr)_170px] lg:items-start">
+                <div className="relative h-[118px] overflow-hidden rounded-xl bg-zinc-100">
+                  {item.thumbnailUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={item.thumbnailUrl} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-zinc-200 to-zinc-100 text-zinc-400">
+                      <Play className="h-8 w-8" />
                     </div>
-                    <p className="mt-1 text-sm text-zinc-500">
-                      {item.brandName} · {locale === "zh" ? "创建于" : "Created"} {formatDate(item.updatedAt)}
-                    </p>
-                    {item.description ? (
-                      <p className="mt-2 line-clamp-2 max-w-4xl text-sm leading-6 text-zinc-600">{item.description}</p>
-                    ) : null}
-                    <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-zinc-500">
-                      <span>{item.deliverableCount} {locale === "zh" ? t.versions : t.versions}</span>
-                      <span>{item.openCommentCount} {locale === "zh" ? t.comments : t.comments}</span>
-                      <span>{t.updated} {relativeTime(item.updatedAt, locale)}</span>
-                    </div>
-                  </div>
+                  )}
+                  <span className="absolute bottom-2 right-2 rounded bg-black/55 px-2 py-0.5 text-[11px] font-medium text-white">
+                    02:15
+                  </span>
                 </div>
-                <Button asChild className="h-11 min-w-[112px] justify-center whitespace-nowrap rounded-xl bg-violet-600 px-5 hover:bg-violet-700">
-                  <Link href={withLocale(item.reviewHref, locale)}>
-                    <ActionIcon className="mr-2 h-4 w-4" />
-                    {actionLabel}
-                  </Link>
-                </Button>
-              </div>
-              <div className="grid gap-5 p-5 lg:grid-cols-[160px_minmax(0,1fr)_180px] lg:items-center">
-                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-zinc-800 to-zinc-600 px-4 py-8 text-white">
-                  <Play className="mx-auto h-8 w-8 opacity-90" />
-                  <p className="mt-2 text-center text-xs opacity-80">02:45</p>
-                </div>
-                <div className="space-y-2 text-sm">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-semibold text-zinc-900">
-                      {item.latestVersion ? `V${item.latestVersion}.2` : t.awaitingVideo}
-                    </span>
-                    <span className="rounded-full bg-violet-50 px-2 py-0.5 text-xs font-medium text-violet-700">
+
+                <div className="min-w-0">
+                  <h2 className="truncate text-[20px] font-semibold leading-7 text-zinc-950">{item.title}</h2>
+                  <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 font-medium text-emerald-600">
+                      <CheckCircle2 className="h-3.5 w-3.5" />
                       {t.status[item.status as keyof typeof t.status] ?? item.status}
                     </span>
+                    <span className="text-zinc-400">·</span>
+                    <span className="text-zinc-500">
+                      {t.projectNo}: {projectCode}
+                    </span>
                   </div>
-                  <p className="text-zinc-500">
-                    {item.latestVersionUploadedAt
-                      ? `${t.uploadedAt} ${formatDate(item.latestVersionUploadedAt)}`
-                      : t.notUploaded}
-                  </p>
-                  {item.latestVersionUploadedAt ? <p className="text-zinc-500">{t.uploader}</p> : null}
-                  <p className="inline-flex items-center gap-1 text-zinc-600">
-                    <MessageSquareText className="h-4 w-4" />
-                    {item.openCommentCount} {locale === "zh" ? t.comments : t.comments}
-                    {item.latestCommentAt ? ` · ${t.latestFeedback}: ${relativeTime(item.latestCommentAt, locale)}` : ""}
-                  </p>
+
+                  <div className="mt-5 grid grid-cols-2 gap-x-5 gap-y-3 text-sm text-zinc-500 lg:grid-cols-4">
+                    <div className="min-w-0">
+                      <p className="text-xs text-zinc-400">{t.brand}</p>
+                      <p className="mt-1 truncate font-medium text-zinc-800">{item.brandName}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-zinc-400">{t.orderAmount}</p>
+                      <p className="mt-1 font-semibold text-zinc-900">{formatMoney(item.amount)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-zinc-400">{t.paymentStatus}</p>
+                      <p className="mt-1 inline-flex items-center gap-1 font-medium text-emerald-600">
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        {t.paid}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-zinc-400">{t.dueDate}</p>
+                      <p className="mt-1 font-medium text-zinc-800">{shortDate(item.deadline)}</p>
+                    </div>
+                  </div>
                 </div>
-                <div className="rounded-2xl bg-zinc-50 p-4">
-                  <div className="mb-3">
-                    <p className="text-xs text-zinc-500">{item.deadline ? formatDate(item.deadline) : formatDate(item.updatedAt)}</p>
-                    <p className="text-xs font-medium text-amber-600">{t.remaining} 2 {t.days}</p>
-                  </div>
-                  <div>
-                    <div className="mb-1 flex justify-between text-xs text-zinc-500">
-                      <span>{t.progress}</span>
-                      <span>80%</span>
-                    </div>
-                    <div className="h-2 rounded-full bg-zinc-100">
-                      <div className="h-full w-[80%] rounded-full bg-violet-600" />
-                    </div>
-                  </div>
+
+                <div className="flex flex-col gap-3 lg:items-stretch">
+                  <Button asChild className="h-11 rounded-xl bg-violet-600 px-5 text-sm font-semibold hover:bg-violet-700">
+                    <Link href={withLocale(item.reviewHref, locale)}>
+                      {usesUploadAction ? <UploadCloud className="mr-2 h-4 w-4" /> : <Play className="mr-2 h-4 w-4" />}
+                      {actionLabel}
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline" className="h-11 rounded-xl border-zinc-200 bg-white px-5 text-sm font-semibold">
+                    <Link href={withLocale(`/studio/projects/${item.orderId}`, locale)}>
+                      {t.orderDetail}
+                      <ChevronRight className="ml-2 h-4 w-4" />
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+
+              <div className="border-t border-zinc-100 px-5 py-4">
+                <div className="grid grid-cols-5 items-start gap-2">
+                  {steps.map((step, index) => {
+                    const stepNumber = index + 1;
+                    const done = stepNumber < currentStep;
+                    const active = stepNumber === currentStep;
+                    return (
+                      <div key={step.label} className="relative text-center">
+                        {index > 0 ? (
+                          <span className="absolute right-1/2 top-3 h-px w-full bg-zinc-200" aria-hidden />
+                        ) : null}
+                        <span
+                          className={cn(
+                            "relative z-10 mx-auto flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold",
+                            done && "bg-violet-100 text-violet-600",
+                            active && "bg-violet-600 text-white shadow-[0_6px_14px_rgba(124,58,237,0.24)]",
+                            !done && !active && "border border-zinc-200 bg-white text-zinc-300"
+                          )}
+                        >
+                          {done ? <CheckCircle2 className="h-4 w-4" /> : stepNumber}
+                        </span>
+                        <p className="mt-2 text-xs font-medium text-zinc-700">{step.label}</p>
+                        <p className="mt-0.5 text-[11px] text-zinc-400">{step.meta}</p>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </article>
@@ -327,20 +461,41 @@ export function StudioReviewHubBoard({ locale, items }: { locale: Locale; items:
         </div>
       )}
 
-      <section className="flex flex-col gap-3 rounded-2xl border border-violet-100 bg-violet-50/60 p-5 sm:flex-row sm:items-center sm:justify-between">
+      <section className="rounded-2xl border border-violet-100 bg-violet-50/60 p-5">
         <div className="flex items-start gap-3">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-600 text-white">
             <Lightbulb className="h-5 w-5" />
           </span>
-          <div>
+          <div className="min-w-0 flex-1">
             <p className="font-semibold text-zinc-950">{t.helpTitle}</p>
             <p className="mt-1 text-sm text-zinc-600">{t.helpBody}</p>
+            <details className="group mt-4">
+              <summary className="inline-flex cursor-pointer list-none items-center text-sm font-medium text-violet-700 hover:text-violet-800">
+                {t.helpLink}
+                <ChevronRight className="ml-1 h-4 w-4 transition group-open:rotate-90" />
+              </summary>
+              <div className="mt-4 space-y-4 rounded-2xl border border-violet-100 bg-white/80 p-4 text-sm leading-6 text-zinc-600">
+                <p>{t.guideIntro}</p>
+                <div className="space-y-3">
+                  {t.guideSteps.map((step) => (
+                    <div key={step.title}>
+                      <p className="font-semibold text-zinc-900">{step.title}</p>
+                      <p className="mt-1">{step.body}</p>
+                    </div>
+                  ))}
+                </div>
+                <div>
+                  <p className="font-semibold text-zinc-900">{t.guideWhyTitle}</p>
+                  <ul className="mt-2 list-disc space-y-1 pl-5">
+                    {t.guideWhyItems.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </details>
           </div>
         </div>
-        <Link href={withLocale("/faq", locale)} className="inline-flex items-center text-sm font-medium text-violet-700 hover:text-violet-800">
-          {t.helpLink}
-          <ChevronRight className="ml-1 h-4 w-4" />
-        </Link>
       </section>
     </div>
   );

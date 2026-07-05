@@ -23,9 +23,9 @@ const copy: Record<Locale, LoginPageCopy & { configError: string; unsupported: s
     creatorWelcomeSubtitle: "Sign in in three simple steps.",
     brandTab: "Brand",
     creatorTab: "Creator",
-    brandHeroLine1: "Lowest budget",
-    brandHeroLine2: "Hollywood-level ads",
-    brandHeroHighlight: "Hollywood-level",
+    brandHeroLine1: "Connect global creators",
+    brandHeroLine2: "Creativity without borders",
+    brandHeroHighlight: "Creativity without borders",
     brandHeroSubtitle:
       "AI matches global creators — from brief and production to review and delivery, all in one place.",
     brandFeatures: [
@@ -92,9 +92,9 @@ const copy: Record<Locale, LoginPageCopy & { configError: string; unsupported: s
     creatorWelcomeSubtitle: "简单三步完成登录",
     brandTab: "广告主",
     creatorTab: "创作者",
-    brandHeroLine1: "最低的预算",
-    brandHeroLine2: "最高的质量",
-    brandHeroHighlight: "最高的质量",
+    brandHeroLine1: "连接全球创作者",
+    brandHeroLine2: "让创意没有边界",
+    brandHeroHighlight: "让创意没有边界",
     brandHeroSubtitle: "AI 智能匹配全球创作者，从想法到交付，一站完成高质量广告制作。",
     brandFeatures: [
       {

@@ -93,9 +93,10 @@ export function buildSchemeDisplayMetrics(
   const post = Math.round(budgetTotal * 0.14);
   const other = Math.max(0, budgetTotal - creatorFee - production - equipment - post);
 
+  const shotList = Array.isArray(direction.shotList) ? direction.shotList : [];
   const highlights =
-    direction.shotList.length >= 3
-      ? direction.shotList.slice(0, 3)
+    shotList.length >= 3
+      ? shotList.slice(0, 3)
       : [
           direction.hook,
           direction.coreIdea,

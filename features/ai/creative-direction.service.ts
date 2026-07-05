@@ -17,6 +17,41 @@ import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { asInputJson } from "@/lib/core/prisma-json";
 import type { Campaign } from "@prisma/client";
 
+function normalizeCreativeDirection(raw: unknown, index: number): CreativeDirection {
+  const value = raw && typeof raw === "object" ? (raw as Partial<CreativeDirection>) : {};
+  const fallbackTitle = `Direction ${index + 1}`;
+  const title = String(value.title ?? fallbackTitle);
+  const coreIdea = String(value.coreIdea ?? value.rationale ?? title);
+  const hook = String(value.hook ?? coreIdea);
+  const story = String(value.story ?? coreIdea);
+  const visualStyle = String(value.visualStyle ?? "");
+  const tone = String(value.tone ?? "");
+  const cta = String(value.cta ?? "");
+  const recommendedCreatorType = String(value.recommendedCreatorType ?? "");
+  const recommendedBudget = String(value.recommendedBudget ?? "");
+  const expectedOutcome = String(value.expectedOutcome ?? "");
+  const rationale = String(value.rationale ?? coreIdea);
+  const shotList = Array.isArray(value.shotList)
+    ? value.shotList.map(String).filter(Boolean)
+    : [];
+
+  return {
+    id: String(value.id ?? `direction-${index + 1}`),
+    title,
+    coreIdea,
+    hook,
+    story,
+    visualStyle,
+    tone,
+    shotList,
+    cta,
+    recommendedCreatorType,
+    recommendedBudget,
+    expectedOutcome,
+    rationale
+  };
+}
+
 function buildFrozenProductionBrief(campaign: Campaign, direction: CreativeDirection): FrozenProductionBrief {
   const brief = (campaign.productionBrief ?? {}) as {
     product?: FrozenProductionBrief["product"];
@@ -128,8 +163,10 @@ export class CreativeDirectionService {
   }
 
   readDirections(campaign: Campaign): CreativeDirection[] {
-    const brief = (campaign.productionBrief ?? {}) as { creative_directions?: CreativeDirection[] };
-    return Array.isArray(brief.creative_directions) ? brief.creative_directions : [];
+    const brief = (campaign.productionBrief ?? {}) as { creative_directions?: unknown[] };
+    return Array.isArray(brief.creative_directions)
+      ? brief.creative_directions.map((direction, index) => normalizeCreativeDirection(direction, index))
+      : [];
   }
 
   async listDirections(campaignId: string, user: AuthUser) {

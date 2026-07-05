@@ -26,10 +26,16 @@ import { hasDatabaseUrl, prisma } from "@/lib/core/database/prisma";
 import { logger } from "@/lib/core/logger";
 import { runTransition } from "@/lib/core/transition-runner";
 
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
 function mergeBrief(existing: unknown, patch: UpdateProjectInput): BrandProductionBrief {
   const brief = readProductionBrief(existing) as BrandProductionBrief;
   const settings = (patch.settings_json ?? {}) as Record<string, unknown>;
-  const questionnaire = (settings.brand_questionnaire ?? brief.questionnaire) as Record<string, unknown>;
+  const questionnaire = asRecord(settings.brand_questionnaire ?? brief.questionnaire);
 
   return {
     ...brief,

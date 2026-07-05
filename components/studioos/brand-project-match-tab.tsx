@@ -11,6 +11,7 @@ export function BrandProjectMatchTab({
   projectId,
   invitations,
   accepted,
+  selectedCreatorId = null,
   notificationCount = 0,
   projectBudgetRange,
   aiMatchStatistics
@@ -19,6 +20,7 @@ export function BrandProjectMatchTab({
   projectId: string;
   invitations: StoredCreatorInvitation[];
   accepted: StoredCreatorInvitation[];
+  selectedCreatorId?: string | null;
   notificationCount?: number;
   projectBudgetRange?: string | null;
   aiMatchStatistics?: AiMatchReportStatistics | null;
@@ -38,7 +40,7 @@ export function BrandProjectMatchTab({
           invitations={invitations}
           notificationCount={notificationCount}
         />
-        {accepted.length > 0 ? (
+        {accepted.length > 0 && !selectedCreatorId ? (
           <BrandMatchRecommendationPanel
             locale={locale}
             projectId={projectId}
@@ -53,6 +55,7 @@ export function BrandProjectMatchTab({
         projectId={projectId}
         invitations={invitations}
         projectBudgetRange={projectBudgetRange}
+        selectionLocked={Boolean(selectedCreatorId)}
       />
     </div>
   );

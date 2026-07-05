@@ -1,3 +1,7 @@
 {
-  "comments": []
+  "comments": [],
+  "dismissed_demo_order_ids": [
+    "ord_demo_arc_nova",
+    "ord_demo_nova_active"
+  ]
 }

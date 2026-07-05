@@ -1,5 +1,6 @@
 import type { StoredOrder } from "@/lib/order-types";
 import { getDeliverables, listOrdersForClient, listOrdersForCreator } from "@/lib/order-service";
+import { listAssetsForProject } from "@/lib/campaign-store";
 import { getProject } from "@/lib/project-service";
 import { listReviewComments, countUnresolvedReviewComments } from "@/lib/studioos/review-store";
 
@@ -19,9 +20,13 @@ export type ReviewHubItem = {
   latestCommentAt: string | null;
   deadline: string | null;
   budget: number;
+  amount: number;
+  paymentStatus: StoredOrder["payment_status"];
+  thumbnailUrl: string | null;
 };
 
 const REVIEW_ORDER_STATUSES = new Set<StoredOrder["status"]>([
+  "paid",
   "in_production",
   "review",
   "revision",
@@ -44,7 +49,8 @@ async function toReviewHubItem(
     listReviewComments(order.id)
   ]);
 
-  const awaitingFirstUpload = !deliverables.length && order.status === "in_production";
+  const awaitingFirstUpload =
+    !deliverables.length && (order.status === "paid" || order.status === "in_production");
   if (awaitingFirstUpload && !options?.includeAwaitingFirstUpload) {
     return null;
   }
@@ -61,14 +67,22 @@ async function toReviewHubItem(
   let brandName = order.company_name || order.client_name;
   let description = order.requirements ?? "";
   let projectDeadline: string | null = null;
+  let thumbnailUrl: string | null = null;
   if (order.project_id) {
-    const project = await getProject(order.project_id);
+    const [project, assets] = await Promise.all([
+      getProject(order.project_id),
+      listAssetsForProject(order.project_id).catch(() => [])
+    ]);
     if (project) {
       title = project.title || project.product_name || project.company_name || title;
       brandName = project.company_name || project.client_name || brandName;
       description = project.campaign_goal || project.notes || description;
       projectDeadline = project.deadline ?? null;
     }
+    thumbnailUrl =
+      assets.find((item) => item.type === "product_image")?.file_url ??
+      assets.find((item) => item.type === "product_image_original")?.file_url ??
+      null;
   }
 
   const latestDeliverable = deliverables.sort((a, b) => b.version - a.version)[0];
@@ -91,7 +105,10 @@ async function toReviewHubItem(
     latestVersionUploadedAt: latestDeliverable?.created_at ?? null,
     latestCommentAt: latestComment?.created_at ?? null,
     deadline: projectDeadline,
-    budget: order.creator_payout
+    budget: order.creator_payout,
+    amount: order.amount,
+    paymentStatus: order.payment_status,
+    thumbnailUrl
   };
 }
 

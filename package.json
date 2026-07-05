@@ -25,7 +25,6 @@
     "reset:demo-review-flow": "node --require ./scripts/helpers/load-env.cjs --import tsx scripts/reset-demo-review-flow.ts",
     "demo:review-video": "node scripts/ensure-demo-review-video.mjs",
     "reset:demo-prisma": "node --require ./scripts/helpers/load-env.cjs --import tsx scripts/reset-demo-prisma.ts",
-    "data:purge": "STUDIOOS_PURGE_RUNTIME_DATA=YES node --require ./scripts/helpers/load-env.cjs --import tsx scripts/purge-runtime-data.ts",
     "reset:demo-accounts": "node scripts/reset-demo-accounts.mjs",
     "purge:review-media": "node scripts/purge-review-media.mjs",
     "reset:deploy": "bash scripts/reset-and-deploy.sh",
