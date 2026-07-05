@@ -48,7 +48,7 @@ export default async function StudioProjectPage({
     order.project_id ? listPackItems(order.project_id) : Promise.resolve([])
   ]);
 
-  const canUpload = ["in_production", "revision", "review"].includes(order.status);
+  const canUpload = ["paid", "in_production", "revision", "review"].includes(order.status);
   const uploadActionable = isCreatorUploadActionable(order, deliverables.length);
   const creatorCommercialStep = resolveCreatorCommercialStep({
     invitationStatus: "selected",

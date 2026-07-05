@@ -71,7 +71,7 @@ export function isCreatorUploadActionable(
     return true;
   }
 
-  if (order.status === "in_production" || order.status === "review") {
+  if (order.status === "in_production" || order.status === "review" || order.status === "paid") {
     return deliverableCount === 0;
   }
 

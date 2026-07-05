@@ -116,6 +116,9 @@ function currentTaskForOrder(
   if (order.status === "waiting_payment" || order.payment_status === "unpaid") {
     return locale === "zh" ? "等待品牌付款后开始制作" : "Waiting for brand payment before production";
   }
+  if (deliverableCount === 0 && ["paid", "in_production", "review", "revision"].includes(order.status)) {
+    return locale === "zh" ? "上传第一版视频" : "Upload version 1 video";
+  }
   if (order.status === "review") {
     return locale === "zh" ? "等待品牌审核" : "Waiting for brand review";
   }

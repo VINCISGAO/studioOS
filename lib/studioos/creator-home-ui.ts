@@ -243,7 +243,8 @@ export function buildCreatorPendingTaskCards(input: {
       input.orders.find((item) =>
         isCreatorUploadActionable(item, input.deliverableCounts?.[item.id] ?? 0)
       ) ?? input.orders.find((item) => item.status === "in_production");
-    const isRevision = order?.status === "revision";
+    const deliverableCount = order ? (input.deliverableCounts?.[order.id] ?? 0) : 0;
+    const isRevision = order?.status === "revision" && deliverableCount > 0;
     cards.push({
       id: "upload_work",
       tone: "blue",
@@ -253,7 +254,7 @@ export function buildCreatorPendingTaskCards(input: {
           ? "上传修改版"
           : "Upload revision"
         : input.locale === "zh"
-          ? "上传第一版"
+          ? "上传第一版视频"
           : labels.upload_work,
       subtitle: order?.title ?? order?.company_name ?? "Project",
       metaLines:
@@ -264,15 +265,40 @@ export function buildCreatorPendingTaskCards(input: {
         ? withLocale(creatorPortalRoutes.review(order.id), input.locale)
         : withLocale(creatorPortalRoutes.projects, input.locale),
       actionLabel: order
-        ? creatorUploadActionLabel(input.locale, order.status)
+        ? isRevision
+          ? creatorUploadActionLabel(input.locale, order.status)
+          : input.locale === "zh"
+            ? "去上传"
+            : "Upload"
         : input.locale === "zh"
           ? "去上传"
           : "Upload"
     });
   }
 
-  if (input.tasks.includes("brand_review") || input.tasks.includes("wait_brand_selection")) {
-    const order = input.orders.find((item) => item.status === "revision" || item.status === "review");
+  if (input.tasks.includes("wait_brand_selection")) {
+    const invitation = input.invitations.find((item) => item.status === "accepted");
+    cards.push({
+      id: "wait_brand_selection",
+      tone: "orange",
+      tag: input.locale === "zh" ? "等待品牌" : "Waiting",
+      title: input.locale === "zh" ? "等待品牌最终选定" : labels.wait_brand_selection,
+      subtitle: invitation?.title ?? invitation?.brandName ?? "Project",
+      metaLines:
+        input.locale === "zh"
+          ? ["你已接受邀请，请等待品牌方确认合作人选"]
+          : ["You accepted the invitation. Wait for the brand to select a creator."],
+      href: withLocale(creatorPortalRoutes.invitations, input.locale),
+      actionLabel: input.locale === "zh" ? "去查看" : "View"
+    });
+  }
+
+  if (input.tasks.includes("brand_review")) {
+    const order = input.orders.find(
+      (item) =>
+        (item.status === "revision" || item.status === "review") &&
+        (input.deliverableCounts?.[item.id] ?? 0) > 0
+    );
     cards.push({
       id: "revision",
       tone: "orange",

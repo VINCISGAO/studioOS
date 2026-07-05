@@ -27,6 +27,7 @@ export type ReviewPortalUiState = {
 };
 
 const UPLOADABLE_CAMPAIGN_STATUSES = new Set<string>([
+  CampaignState.ESCROW_FUNDED,
   CampaignState.PRODUCING,
   CampaignState.UNDER_REVIEW
 ]);
@@ -108,7 +109,7 @@ function workspaceStatusFromOrderStatus(
 ): ReviewPortalUiState["workspaceStatus"] {
   if (status === "completed") return "completed";
   if (status === "revision") return "revision";
-  if (status === "in_production") return "in_production";
+  if (status === "in_production" || status === "paid") return "in_production";
   if (status === "ready_for_completion" || status === "settling") return "review";
   return "review";
 }
@@ -120,7 +121,7 @@ function legacyFallback(order: StoredOrder, deliverableCount: number): ReviewPor
     source: "legacy",
     derivedOrderStatus,
     canBrandReview: ["review", "revision"].includes(derivedOrderStatus),
-    canCreatorUpload: ["in_production", "revision", "review"].includes(derivedOrderStatus),
+    canCreatorUpload: ["paid", "in_production", "revision", "review"].includes(derivedOrderStatus),
     orderApproved: derivedOrderStatus === "completed",
     canDecide:
       (derivedOrderStatus === "review" || derivedOrderStatus === "revision") &&

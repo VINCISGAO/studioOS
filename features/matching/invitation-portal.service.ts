@@ -21,7 +21,9 @@ import { listCreatorsForMatching } from "@/lib/creator-service";
 import { creators } from "@/lib/data";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { getProject } from "@/lib/project-service";
+import { createCreatorNotification, findNotificationByProject } from "@/lib/notification-service";
 import { matchCreatorsForProjectWithDemoFallback } from "@/lib/matching-engine";
+import { getConfirmedBriefText } from "@/lib/studioos/confirmed-brief";
 import type { CreatorPortalInvitationView } from "@/features/creator/creator-portal.types";
 import type { InvitationDeclineFeedback } from "@/features/matching/invitation-decline-feedback";
 import type { StoredCreatorInvitation } from "@/lib/studioos/creator-invitation-types";
@@ -151,6 +153,7 @@ export class InvitationPortalService {
 
     const brandName = project.company_name || project.client_name || "Brand";
     const projectTitle = project.title || project.product_name || brandName;
+    const requirementsText = getConfirmedBriefText(project, locale);
 
     for (const match of matches) {
       const creatorProfileId = await resolveCreatorProfileIdForLegacyId(match.creator_id);
@@ -186,6 +189,25 @@ export class InvitationPortalService {
         actionUrl: "/studio/invitations",
         email: false
       }).catch(() => undefined);
+
+      const existingCreatorNotification = await findNotificationByProject(
+        match.creator_id,
+        project.id,
+        "invitation_match"
+      );
+      if (!existingCreatorNotification) {
+        await createCreatorNotification({
+          creator_id: match.creator_id,
+          type: "invitation_match",
+          title: copy.title,
+          body: copy.body,
+          project_id: project.id,
+          order_id: null,
+          client_name: brandName,
+          company_name: brandName,
+          requirements_text: requirementsText
+        }).catch(() => undefined);
+      }
     }
 
     if (campaign.status === "MATCHING") {

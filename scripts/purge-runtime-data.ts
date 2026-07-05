@@ -15,6 +15,9 @@ const CONFIRM_ENV = "STUDIOOS_PURGE_RUNTIME_DATA";
 const CONFIRM_VALUE = "YES";
 
 type JsonValue = Record<string, unknown> | unknown[];
+type PrismaPurgeResult =
+  | { skipped: true; reason: string }
+  | { skipped: false; deleted: Record<string, number> };
 
 const EMPTY_RUNTIME_STORES: Record<string, JsonValue> = {
   "order-store.json": {
@@ -132,7 +135,7 @@ async function resetWalletBalances(prisma: PrismaClient) {
   });
 }
 
-async function clearPrismaRuntimeData() {
+async function clearPrismaRuntimeData(): Promise<PrismaPurgeResult> {
   if (!process.env.DATABASE_URL) {
     return { skipped: true, reason: "DATABASE_URL is not set" };
   }

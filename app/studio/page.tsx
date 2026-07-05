@@ -18,6 +18,7 @@ import {
   buildCreatorPendingTaskCards,
   buildCreatorPhaseCounts
 } from "@/lib/studioos/creator-home-ui";
+import { latestSubmittedDeliverableVersion } from "@/lib/studioos/review-upload-version";
 import { buildCreatorAiMatchHealth } from "@/lib/studioos/creator-ai-match-health";
 import {
   countAwaitingBrandSelection,
@@ -83,7 +84,7 @@ export default async function StudioHomePage({ searchParams }: { searchParams: P
   const deliverableCounts: Record<string, number> = {};
   await Promise.all(
     orders.map(async (order) => {
-      deliverableCounts[order.id] = (await getDeliverables(order.id)).length;
+      deliverableCounts[order.id] = latestSubmittedDeliverableVersion(await getDeliverables(order.id));
     })
   );
 

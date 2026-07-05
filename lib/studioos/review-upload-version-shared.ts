@@ -54,6 +54,7 @@ export function isAwaitingCreatorFirstDraft(input: {
   orderStatus: OrderStatus;
 }) {
   if (
+    input.orderStatus !== "paid" &&
     input.orderStatus !== "in_production" &&
     input.orderStatus !== "review" &&
     input.orderStatus !== "revision"

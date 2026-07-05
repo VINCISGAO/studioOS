@@ -3,6 +3,7 @@ import { CreatorProjectsBoard } from "@/components/studioos/creator-projects-boa
 import { getCurrentCreatorId } from "@/lib/creator-session";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
 import { getDeliverables, listOrdersForCreator, repairSelectedCreatorCampaignOrders } from "@/lib/order-service";
+import { latestSubmittedDeliverableVersion } from "@/lib/studioos/review-upload-version";
 
 export default async function StudioProjectsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const locale = getLocale(await searchParams);
@@ -14,7 +15,7 @@ export default async function StudioProjectsPage({ searchParams }: { searchParam
   const deliverableCounts: Record<string, number> = {};
   await Promise.all(
     orders.map(async (order) => {
-      deliverableCounts[order.id] = (await getDeliverables(order.id)).length;
+      deliverableCounts[order.id] = latestSubmittedDeliverableVersion(await getDeliverables(order.id));
     })
   );
 
