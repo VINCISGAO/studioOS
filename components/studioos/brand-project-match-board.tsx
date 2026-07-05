@@ -89,7 +89,7 @@ function CreatorReplyRow({
 }) {
   const t = copy[locale];
   const creator = resolveCreatorForInvitation(invitation.creatorId);
-  const name = creator?.name ?? invitation.creatorId;
+  const name = invitation.creatorName ?? creator?.name ?? invitation.creatorId;
   const row = buildAcceptedCreatorRow(invitation, locale, projectBudgetRange);
   const tags = creator ? buildCreatorMatchTags(creator, locale) : row.tags;
   const etaHours = estimatePendingReplyHours(invitation.creatorId, invitation.id);
@@ -111,8 +111,10 @@ function CreatorReplyRow({
           <p className="truncate text-sm font-semibold text-zinc-950">{name}</p>
           {verified ? <BadgeCheck className="h-4 w-4 shrink-0 text-violet-500" aria-label="Verified" /> : null}
         </div>
-        {creator?.headline ? (
-          <p className="mt-1 line-clamp-2 text-xs leading-5 text-zinc-500">{creator.headline}</p>
+        {invitation.creatorHeadline || creator?.headline ? (
+          <p className="mt-1 line-clamp-2 text-xs leading-5 text-zinc-500">
+            {invitation.creatorHeadline ?? creator?.headline}
+          </p>
         ) : null}
         {tags.length ? (
           <div className="mt-2 flex flex-wrap gap-1.5">

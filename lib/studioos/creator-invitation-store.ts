@@ -8,7 +8,7 @@ import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { isMissingPrismaMigrationError } from "@/lib/core/database/prisma-migration-errors";
 import { logger } from "@/lib/core/logger";
 import { createSerializedStoreReader, writeJsonFileAtomic } from "@/lib/json-file-store";
-import { listCreatorsForMatching } from "@/lib/creator-service";
+import { getCreatorById, listCreatorsForMatching } from "@/lib/creator-service";
 import { dataStorePath, readDataJson } from "@/lib/serverless-store";
 import type { InvitationLifecycleStatus } from "@/lib/studioos/campaign-closed-loop";
 import { setupBrandCheckout } from "@/lib/studioos/brand-checkout-service";
@@ -19,8 +19,13 @@ import {
 } from "@/lib/studioos/invitation-lifecycle";
 import { getProject } from "@/lib/project-service";
 import type { StoredProject } from "@/lib/project-types";
+import {
+  createCreatorNotification,
+  findNotificationByProject
+} from "@/lib/notification-service";
 import { getWorksForCreator } from "@/lib/works-catalog";
 import { matchCreatorsForProjectWithDemoFallback } from "@/lib/matching-engine";
+import { getConfirmedBriefText } from "@/lib/studioos/confirmed-brief";
 import { parseBudgetMidpoint } from "@/lib/studioos/brand-checkout-utils";
 import type { InvitationDeclineFeedback } from "@/features/matching/invitation-decline-feedback";
 
@@ -51,12 +56,102 @@ async function writeStore(store: CreatorInvitationStore) {
   await writeJsonFileAtomic(STORE_PATH, store);
 }
 
-export async function listInvitationsForCreator(creatorId: string): Promise<CreatorPortalInvitationView[]> {
+function invitationNotificationCopy(locale: "zh" | "en", brandName: string, projectTitle: string) {
+  if (locale === "zh") {
+    return {
+      title: "你收到一个新的合作邀请",
+      body: `${brandName} 邀请你参与「${projectTitle}」。接受邀请表示你有合作意向，最终是否合作由品牌方决定。`
+    };
+  }
+  return {
+    title: "You received a new collaboration invitation",
+    body: `${brandName} invited you to "${projectTitle}". Accepting shows interest — the brand makes the final selection.`
+  };
+}
+
+async function ensureCreatorInvitationNotifications(
+  creatorId: string,
+  invitations: CreatorPortalInvitationView[],
+  locale: "zh" | "en" = "zh"
+) {
+  await Promise.all(
+    invitations
+      .filter((invitation) => invitation.status === "pending")
+      .map(async (invitation) => {
+        try {
+          const existing = await findNotificationByProject(
+            creatorId,
+            invitation.campaignId,
+            "invitation_match"
+          );
+          if (existing) return;
+
+          const project = await getProject(invitation.campaignId);
+          const brandName = invitation.brandName || project?.company_name || project?.client_name || "Brand";
+          const projectTitle = invitation.title || project?.title || project?.product_name || brandName;
+          const requirementsText = project ? getConfirmedBriefText(project, locale) : "";
+          const copy = invitationNotificationCopy(locale, brandName, projectTitle);
+
+          await createCreatorNotification({
+            creator_id: creatorId,
+            type: "invitation_match",
+            title: copy.title,
+            body: copy.body,
+            project_id: invitation.campaignId,
+            order_id: null,
+            client_name: brandName,
+            company_name: brandName,
+            requirements_text: requirementsText
+          });
+        } catch (error) {
+          logger.error("Failed to backfill creator invitation notification", {
+            service: "creator-invitation-store",
+            creatorId,
+            invitationId: invitation.id,
+            error: error instanceof Error ? error.message : String(error)
+          });
+        }
+      })
+  );
+}
+
+export async function enrichStoredCreatorInvitations(
+  invitations: StoredCreatorInvitation[]
+): Promise<StoredCreatorInvitation[]> {
+  const uniqueCreatorIds = [...new Set(invitations.map((item) => item.creatorId))];
+  const creatorsById = new Map<string, NonNullable<Awaited<ReturnType<typeof getCreatorById>>>>();
+
+  await Promise.all(
+    uniqueCreatorIds.map(async (creatorId) => {
+      const creator = await getCreatorById(creatorId);
+      if (creator) {
+        creatorsById.set(creatorId, creator);
+      }
+    })
+  );
+
+  return invitations.map((invitation) => {
+    const creator = creatorsById.get(invitation.creatorId);
+    if (!creator) return invitation;
+    return {
+      ...invitation,
+      creatorName: creator.name,
+      creatorHeadline: creator.headline
+    };
+  });
+}
+
+export async function listInvitationsForCreator(
+  creatorId: string,
+  locale: "zh" | "en" = "zh"
+): Promise<CreatorPortalInvitationView[]> {
   if (hasDatabaseUrl()) {
     try {
       const profileId = await resolveCreatorProfileIdForLegacyId(creatorId);
       if (profileId) {
-        return await invitationService.listForLegacyCreator(creatorId);
+        const invitations = await invitationService.listForLegacyCreator(creatorId);
+        await ensureCreatorInvitationNotifications(creatorId, invitations, locale);
+        return invitations;
       }
     } catch (error) {
       if (!isMissingPrismaMigrationError(error)) throw error;
@@ -68,7 +163,7 @@ export async function listInvitationsForCreator(creatorId: string): Promise<Crea
   }
 
   const store = await readStore();
-  return store.invitations
+  const invitations = store.invitations
     .filter((item) => item.creatorId === creatorId)
     .map((item) => ({
       id: item.id,
@@ -85,6 +180,8 @@ export async function listInvitationsForCreator(creatorId: string): Promise<Crea
       createdAt: item.createdAt,
       ...(item.declineFeedback ? { declineFeedback: item.declineFeedback } : {})
     }));
+  await ensureCreatorInvitationNotifications(creatorId, invitations, locale);
+  return invitations;
 }
 
 export async function listAcceptedInvitationsForProject(projectId: string) {
@@ -92,7 +189,7 @@ export async function listAcceptedInvitationsForProject(projectId: string) {
     try {
       const campaign = await campaignRepository.findByLegacyProjectId(projectId);
       if (campaign) {
-        return await invitationService.listAcceptedForLegacyProject(projectId);
+        return enrichStoredCreatorInvitations(await invitationService.listAcceptedForLegacyProject(projectId));
       }
     } catch (error) {
       if (!isMissingPrismaMigrationError(error)) {
@@ -111,8 +208,8 @@ export async function listAcceptedInvitationsForProject(projectId: string) {
   }
 
   const store = await readStore();
-  return store.invitations.filter(
-    (item) => item.projectId === projectId && item.status === "accepted"
+  return enrichStoredCreatorInvitations(
+    store.invitations.filter((item) => item.projectId === projectId && item.status === "accepted")
   );
 }
 
@@ -121,7 +218,7 @@ export async function listInvitationsForProject(projectId: string) {
     try {
       const campaign = await campaignRepository.findByLegacyProjectId(projectId);
       if (campaign) {
-        return await invitationService.listForLegacyProject(projectId);
+        return enrichStoredCreatorInvitations(await invitationService.listForLegacyProject(projectId));
       }
     } catch (error) {
       if (!isMissingPrismaMigrationError(error)) {
@@ -140,7 +237,7 @@ export async function listInvitationsForProject(projectId: string) {
   }
 
   const store = await readStore();
-  return store.invitations.filter((item) => item.projectId === projectId);
+  return enrichStoredCreatorInvitations(store.invitations.filter((item) => item.projectId === projectId));
 }
 
 export async function getInvitationById(id: string) {
@@ -148,7 +245,7 @@ export async function getInvitationById(id: string) {
     try {
       const prismaInvitation = await invitationService.getPortalInvitationById(id);
       if (prismaInvitation) {
-        return prismaInvitation;
+        return (await enrichStoredCreatorInvitations([prismaInvitation]))[0] ?? prismaInvitation;
       }
     } catch (error) {
       if (!isMissingPrismaMigrationError(error)) throw error;
@@ -160,7 +257,8 @@ export async function getInvitationById(id: string) {
   }
 
   const store = await readStore();
-  return store.invitations.find((item) => item.id === id) ?? null;
+  const invitation = store.invitations.find((item) => item.id === id) ?? null;
+  return invitation ? (await enrichStoredCreatorInvitations([invitation]))[0] ?? invitation : null;
 }
 
 export async function acceptInvitation(id: string, creatorId: string, locale: "en" | "zh" = "en") {
@@ -300,7 +398,7 @@ export async function ensureCampaignInvitationsForProject(project: StoredProject
     try {
       const campaign = await campaignRepository.findByLegacyProjectId(project.id);
       if (campaign) {
-        return await invitationService.ensureForProject(project, locale);
+        return enrichStoredCreatorInvitations(await invitationService.ensureForProject(project, locale));
       }
     } catch (error) {
       if (!isMissingPrismaMigrationError(error)) {
@@ -321,7 +419,7 @@ export async function ensureCampaignInvitationsForProject(project: StoredProject
   const store = await readStore();
   const existing = store.invitations.filter((item) => item.projectId === project.id);
   if (existing.length > 0) {
-    return existing;
+    return enrichStoredCreatorInvitations(existing);
   }
 
   const enrichedCreators = await listCreatorsForMatching();
@@ -358,7 +456,7 @@ export async function ensureCampaignInvitationsForProject(project: StoredProject
   }
 
   await writeStore(store);
-  return store.invitations.filter((item) => item.projectId === project.id);
+  return enrichStoredCreatorInvitations(store.invitations.filter((item) => item.projectId === project.id));
 }
 
 export type { InvitationLifecycleStatus };

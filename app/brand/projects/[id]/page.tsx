@@ -8,7 +8,12 @@ import { getProject } from "@/lib/project-service";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
 import { enforceBrandPaymentDeadlineForProject } from "@/lib/studioos/brand-payment-expiry.service";
 import { isBrandAwaitingPayment, resolveBrandCommercialStep } from "@/lib/studioos/commercial-lifecycle";
-import { listAcceptedInvitationsForProject, listInvitationsForProject, ensureCampaignInvitationsForProject } from "@/lib/studioos/creator-invitation-store";
+import {
+  enrichStoredCreatorInvitations,
+  ensureCampaignInvitationsForProject,
+  listAcceptedInvitationsForProject,
+  listInvitationsForProject
+} from "@/lib/studioos/creator-invitation-store";
 import type { StoredCreatorInvitation } from "@/lib/studioos/creator-invitation-types";
 import { countUnreadBrandNotifications } from "@/lib/studioos/brand-notification-service";
 import { getAiMatchReportStatisticsForProject } from "@/lib/studioos/ai-match-report-statistics";
@@ -162,8 +167,8 @@ export default async function BrandProjectHubPage({
     project,
     linkedOrder
   });
-  projectInvitations = selectedInvitationState.invitations;
-  acceptedInvitations = selectedInvitationState.accepted;
+  projectInvitations = await enrichStoredCreatorInvitations(selectedInvitationState.invitations);
+  acceptedInvitations = await enrichStoredCreatorInvitations(selectedInvitationState.accepted);
   const notificationCount = clientEmail ? await countUnreadBrandNotifications(clientEmail) : 0;
   const aiMatchStatistics = await getAiMatchReportStatisticsForProject(id).catch(() => null);
   const brandCommercialStep = resolveBrandCommercialStep({

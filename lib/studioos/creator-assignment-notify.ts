@@ -11,7 +11,7 @@ import {
 } from "@/lib/notification-service";
 import type { CreatorNotificationType } from "@/lib/notification-types";
 import { updateOrderRequirements } from "@/lib/order-service";
-import type { StoredOrder } from "@/lib/order-types";
+import { isOrderPaymentEscrowed, type StoredOrder } from "@/lib/order-types";
 import { getProject } from "@/lib/project-service";
 import type { StoredProject } from "@/lib/project-types";
 import { getConfirmedBriefText } from "@/lib/studioos/confirmed-brief";
@@ -171,4 +171,38 @@ export async function notifyCreatorAssignment(input: {
   }
 
   return notification;
+}
+
+function assignmentTypeForOrder(order: StoredOrder): CreatorNotificationType | null {
+  if (
+    isOrderPaymentEscrowed(order.payment_status) ||
+    ["paid", "in_production", "review", "revision", "ready_for_completion", "settling"].includes(order.status)
+  ) {
+    return "project_funded";
+  }
+  if (order.status === "waiting_payment") return "creator_selected";
+  return null;
+}
+
+export async function ensureCreatorAssignmentNotificationsForOrders(input: {
+  creatorId: string;
+  orders: StoredOrder[];
+  locale: Locale;
+}) {
+  await Promise.all(
+    input.orders
+      .filter((order) => order.creator_id === input.creatorId)
+      .map(async (order) => {
+        const type = assignmentTypeForOrder(order);
+        if (!type) return null;
+        const project = order.project_id ? await getProject(order.project_id) : null;
+        return notifyCreatorAssignment({
+          type,
+          creatorId: input.creatorId,
+          order,
+          project,
+          locale: input.locale
+        }).catch(() => null);
+      })
+  );
 }

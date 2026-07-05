@@ -13,6 +13,7 @@ import { getLocale, withLocale } from "@/lib/i18n";
 import { listOrdersForCreator } from "@/lib/order-service";
 import { listNotificationsForCreator } from "@/lib/notification-service";
 import { countInvitationsByTab, listInvitationsForCreator } from "@/lib/studioos/creator-invitation-store";
+import { ensureCreatorAssignmentNotificationsForOrders } from "@/lib/studioos/creator-assignment-notify";
 import { enforceBrandPaymentDeadlinesForCreator } from "@/lib/studioos/brand-payment-expiry.service";
 import {
   isStudioFeaturePath,
@@ -36,15 +37,25 @@ export default async function StudioLayout({ children }: { children: React.React
   const profileComplete = hasCompletedCreatorProfile(creator);
   const canUseBusinessFeatures = access?.canUseBusinessFeatures ?? false;
   const isVerified = access?.isVerified ?? false;
+  const invitations =
+    creator && canUseBusinessFeatures
+      ? await listInvitationsForCreator(creator.id, locale)
+      : [];
+  if (creator && (canUseBusinessFeatures || isVerified)) {
+    await ensureCreatorAssignmentNotificationsForOrders({
+      creatorId: creator.id,
+      orders,
+      locale
+    });
+  }
   const notifications =
     creator && (canUseBusinessFeatures || isVerified)
       ? await listNotificationsForCreator(creator.id, locale)
       : [];
   const unreadCount = notifications.filter((item) => !item.read_at).length;
-  const invitationCounts =
-    creator && canUseBusinessFeatures
-      ? countInvitationsByTab(await listInvitationsForCreator(creator.id))
-      : { pending: 0, accepted: 0, declined: 0, expired: 0 };
+  const invitationCounts = creator && canUseBusinessFeatures
+    ? countInvitationsByTab(invitations)
+    : { pending: 0, accepted: 0, declined: 0, expired: 0 };
   const levelUpSeen = creator ? await hasSeenCertificationLevelUp(creator.id) : true;
 
   if (creator && isStudioFeaturePath(pathname)) {

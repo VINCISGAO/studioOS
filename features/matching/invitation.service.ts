@@ -17,6 +17,12 @@ import type { StoredProject } from "@/lib/project-types";
 import { hasDatabaseUrl, prisma } from "@/lib/core/database/prisma";
 import { notificationService } from "@/features/notification/notification.service";
 import { getAppBaseUrl } from "@/lib/app-url";
+import { resolveLegacyProjectId } from "@/features/matching/invitation.mapper";
+import {
+  createCreatorNotification,
+  findNotificationByProject
+} from "@/lib/notification-service";
+import { resolveLegacyCreatorIdForProfile } from "@/features/matching/invitation-creator-bridge";
 
 export function serializeInvitation(
   invitation: Awaited<ReturnType<typeof invitationRepository.listForCampaign>>[number]
@@ -101,6 +107,28 @@ export class InvitationService {
         priority: "HIGH",
         email: false
       });
+      const legacyCreatorId = await resolveLegacyCreatorIdForProfile(created.creator);
+      if (legacyCreatorId) {
+        const notificationProjectId = resolveLegacyProjectId(campaign);
+        const existingCreatorNotification = await findNotificationByProject(
+          legacyCreatorId,
+          notificationProjectId,
+          "invitation_match"
+        );
+        if (!existingCreatorNotification) {
+          await createCreatorNotification({
+            creator_id: legacyCreatorId,
+            type: "invitation_match",
+            title: "New collaboration invitation",
+            body: `You received a creator invitation for "${campaign.title}". Review the brief and respond.`,
+            project_id: notificationProjectId,
+            order_id: null,
+            client_name: campaign.title,
+            company_name: campaign.title,
+            requirements_text: ""
+          });
+        }
+      }
     }
 
     if (campaign.status === CampaignState.CREATIVE_APPROVED) {

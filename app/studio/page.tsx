@@ -34,6 +34,7 @@ import { isCreatorVerified } from "@/lib/studioos/deposit-guard";
 import { creatorPortalRoutes } from "@/lib/studioos/creator-portal-routes";
 import { formatMessageListTime } from "@/lib/studioos/creator-messages-ui";
 import { getCreatorIncomeSnapshot } from "@/lib/studioos/withdrawal-service";
+import { ensureCreatorAssignmentNotificationsForOrders } from "@/lib/studioos/creator-assignment-notify";
 
 export default async function StudioHomePage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const locale = getLocale(await searchParams);
@@ -61,21 +62,24 @@ export default async function StudioHomePage({ searchParams }: { searchParams: P
 
   const [
     orders,
-    invitations,
     income,
     levelUpSeen,
     welcomeDismissed,
-    notifications,
     membership
   ] = await Promise.all([
     listOrdersForCreator(creator.id),
-    listInvitationsForCreator(creator.id),
     getCreatorIncomeSnapshot(creator.id),
     hasSeenCertificationLevelUp(creator.id),
     hasDismissedCertificationWelcomeBanner(creator.id),
-    listNotificationsForCreator(creator.id, locale),
     membershipPromise
   ]);
+  const invitations = await listInvitationsForCreator(creator.id, locale);
+  await ensureCreatorAssignmentNotificationsForOrders({
+    creatorId: creator.id,
+    orders,
+    locale
+  });
+  const notifications = await listNotificationsForCreator(creator.id, locale);
 
   const showWelcomeBanner =
     isCreatorVerified(creator) && levelUpSeen && !welcomeDismissed;

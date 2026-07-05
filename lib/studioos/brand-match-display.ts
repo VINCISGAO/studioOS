@@ -159,12 +159,12 @@ export function buildBrandMatchRecommendation(
   return {
     invitation: top,
     creator,
-    creatorName: creator.name,
+    creatorName: top.creatorName ?? creator.name,
     compositeScore,
     starDisplay: formatStarRating(creator.rating),
     matchPercent: Math.round(top.matchScore),
     reasons,
-    headline: creator.headline ?? ""
+    headline: top.creatorHeadline ?? creator.headline ?? ""
   };
 }
 
@@ -174,7 +174,7 @@ export function buildAcceptedCreatorRow(
   projectBudgetRange?: string | null
 ) {
   const creator = resolveCreatorForInvitation(invitation.creatorId);
-  const name = creator?.name ?? invitation.creatorId;
+  const name = invitation.creatorName ?? creator?.name ?? invitation.creatorId;
   return {
     invitation,
     creator,

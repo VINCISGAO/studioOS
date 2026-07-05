@@ -127,7 +127,7 @@ export async function POST(request: Request) {
       }
     }
 
-    if (!["in_production", "revision", "review"].includes(order.status)) {
+    if (!["paid", "in_production", "revision", "review"].includes(order.status)) {
       return NextResponse.json(
         {
           ok: false,

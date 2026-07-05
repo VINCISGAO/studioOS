@@ -975,7 +975,7 @@ export async function addDeliverable(
 ): Promise<StoredDeliverable | null> {
   const store = await readStore();
   const order = store.orders.find((item) => item.id === orderId);
-  if (!order || !["in_production", "revision", "review"].includes(order.status)) {
+  if (!order || !["paid", "in_production", "revision", "review"].includes(order.status)) {
     return null;
   }
 
@@ -1033,7 +1033,7 @@ export async function upsertJsonDeliverable(
     });
   }
 
-  if (["in_production", "revision", "review"].includes(order.status)) {
+  if (["paid", "in_production", "revision", "review"].includes(order.status)) {
     order.status = "review";
   }
 
@@ -1131,7 +1131,7 @@ export async function syncOrderToReviewPhase(orderId: string): Promise<StoredOrd
   const order = store.orders.find((item) => item.id === orderId);
   if (!order) return null;
   if (["review", "completed"].includes(order.status)) return order;
-  if (!["in_production", "revision", "review"].includes(order.status)) return order;
+  if (!["paid", "in_production", "revision", "review"].includes(order.status)) return order;
 
   order.status = "review";
   await writeStore(store);

@@ -419,4 +419,13 @@ export async function syncBrandOrderPaid(order: StoredOrder) {
   }
 
   await syncProjectFromOrderEvent(order.project_id, "project.payment_received", "brand");
+  const refreshed = (await getProject(order.project_id)) ?? project;
+  const { notifyCreatorAssignment } = await import("@/lib/studioos/creator-assignment-notify");
+  await notifyCreatorAssignment({
+    type: "project_funded",
+    creatorId: order.creator_id,
+    order,
+    project: refreshed,
+    locale: order.client_locale === "zh" ? "zh" : "en"
+  });
 }

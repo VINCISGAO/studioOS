@@ -5,7 +5,8 @@ import { getCurrentCreator } from "@/lib/creator-session";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
 import type { CreatorNotification } from "@/lib/notification-types";
 import { listNotificationsForCreator } from "@/lib/notification-service";
-import { getOrder } from "@/lib/order-service";
+import { listInvitationsForCreator } from "@/lib/studioos/creator-invitation-store";
+import { getOrder, listOrdersForCreator } from "@/lib/order-service";
 import { getProject } from "@/lib/project-service";
 import { resolveCreatorNotificationAction } from "@/lib/studioos/commercial-notification-routes";
 import { getCertificationFormForMessage } from "@/lib/studioos/certification-form-service";
@@ -25,6 +26,7 @@ import {
 } from "@/lib/studioos/creator-messages-ui";
 import { buildMessageProgressSteps } from "@/lib/studioos/message-order-progress";
 import { enforceBrandPaymentDeadlinesForCreator } from "@/lib/studioos/brand-payment-expiry.service";
+import { ensureCreatorAssignmentNotificationsForOrders } from "@/lib/studioos/creator-assignment-notify";
 import { creatorPortalRoutes } from "@/lib/studioos/creator-portal-routes";
 import type { Locale } from "@/lib/i18n";
 
@@ -208,6 +210,13 @@ export default async function StudioMessagesPage({ searchParams }: { searchParam
   }
 
   await enforceBrandPaymentDeadlinesForCreator(creator.id);
+  await listInvitationsForCreator(creator.id, locale);
+  const orders = await listOrdersForCreator(creator.id);
+  await ensureCreatorAssignmentNotificationsForOrders({
+    creatorId: creator.id,
+    orders,
+    locale
+  });
   const notifications = await listNotificationsForCreator(creator.id, locale);
   const payload = await buildMessageCenterPayload(notifications, creator.name, locale);
   const initialSelectedId =

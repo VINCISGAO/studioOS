@@ -5,5 +5,7 @@ export type StoredCreatorInvitation = CreatorPortalInvitationView & {
   creatorId: string;
   projectId: string;
   brandEmail?: string;
+  creatorName?: string;
+  creatorHeadline?: string;
   declineFeedback?: InvitationDeclineFeedback;
 };

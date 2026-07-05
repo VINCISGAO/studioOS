@@ -347,6 +347,15 @@ export function BrandProjectHub({
     : linkedOrder
       ? creators.find((item) => item.id === linkedOrder.creator_id)
       : null;
+  const selectedCreatorProfile =
+    projectInvitations.find((item) => item.creatorId === selectedCreatorId) ??
+    acceptedInvitations.find((item) => item.creatorId === selectedCreatorId) ??
+    (linkedOrder
+      ? projectInvitations.find((item) => item.creatorId === linkedOrder.creator_id) ??
+        acceptedInvitations.find((item) => item.creatorId === linkedOrder.creator_id)
+      : null);
+  const studioDisplayName = selectedCreatorProfile?.creatorName ?? studio?.name;
+  const studioHeadline = selectedCreatorProfile?.creatorHeadline ?? studio?.specialties.join(" · ");
   const openComments = reviewComments.filter((item) => item.status !== "resolved").length;
   const action = primaryAction(project, locale, deliverables.length);
   const latestDeliverable = deliverables[deliverables.length - 1];
@@ -691,11 +700,13 @@ export function BrandProjectHub({
             </div>
           ) : null}
 
-          {studio ? (
+          {studioDisplayName ? (
             <div className="rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-sm">
               <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">{t.studio}</p>
-              <p className="mt-2 font-semibold text-zinc-900">{studio.name}</p>
-              <p className="mt-1 text-xs leading-relaxed text-zinc-500">{studio.specialties.join(" · ")}</p>
+              <p className="mt-2 font-semibold text-zinc-900">{studioDisplayName}</p>
+              {studioHeadline ? (
+                <p className="mt-1 text-xs leading-relaxed text-zinc-500">{studioHeadline}</p>
+              ) : null}
             </div>
           ) : null}
         </aside>
