@@ -57,8 +57,10 @@ export class VersionRepository {
       fileName: input.fileName ?? null,
       mimeType: input.mimeType ?? null,
       fileSizeBytes: input.fileSizeBytes ?? null,
-      status: VersionStatus.READY,
-      reviewStatus: ReviewStatus.READY,
+      hlsUrl: null,
+      thumbnailUrl: null,
+      status: VersionStatus.UPLOADING,
+      reviewStatus: ReviewStatus.WAITING,
       watermark: true,
       deletedAt: null
     };
@@ -119,11 +121,13 @@ export class VersionRepository {
       data: {
         videoKey: input.videoKey,
         videoUrl: input.videoUrl,
+        hlsUrl: null,
+        thumbnailUrl: null,
         fileName: input.fileName ?? existing.fileName,
         mimeType: input.mimeType ?? existing.mimeType,
         fileSizeBytes: input.fileSizeBytes ?? existing.fileSizeBytes,
-        status: VersionStatus.READY,
-        reviewStatus: ReviewStatus.READY,
+        status: VersionStatus.UPLOADING,
+        reviewStatus: ReviewStatus.WAITING,
         deletedAt: null
       }
     });

@@ -1,8 +1,6 @@
 import { activityService } from "@/features/campaign/activity.service";
-import { reviewBridgeService } from "@/features/review/review-bridge.service";
 import { campaignRepository } from "@/features/campaign/campaign.repository";
-import { campaignService } from "@/features/campaign/campaign.service";
-import { CampaignEvent, CampaignState } from "@/features/campaign/campaign.state-machine";
+import { CampaignState } from "@/features/campaign/campaign.state-machine";
 import {
   MAX_CAMPAIGN_VERSIONS,
   versionRepository
@@ -12,12 +10,15 @@ import { userRepository } from "@/features/auth/user.repository";
 import { hasDatabaseUrl, prisma } from "@/lib/core/database/prisma";
 import type { Locale } from "@/lib/i18n";
 import type { OrderStatus, StoredDeliverable } from "@/lib/order-types";
+import { resolveReviewUploadVersionForOrder } from "@/lib/studioos/review-upload-version";
 import {
-  resolveReviewUploadVersionForOrder,
-  reviewVideoUrlForVersion
-} from "@/lib/studioos/review-upload-version";
+  findReviewVideoFile,
+  findReviewVideoObject,
+  reviewVideoObjectKey
+} from "@/lib/studioos/video-upload";
 
 const UPLOADABLE_CAMPAIGN_STATUSES = new Set<string>([
+  CampaignState.ESCROW_FUNDED,
   CampaignState.PRODUCING,
   CampaignState.UNDER_REVIEW
 ]);
@@ -44,6 +45,44 @@ export type VersionUploadInput = {
 function deriveFileKey(orderId: string, versionNumber: number, fileName: string) {
   const safeName = fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
   return `review/${orderId}/v${versionNumber}/${safeName}`;
+}
+
+async function resolveReviewVideoSource(input: {
+  orderId: string;
+  versionNumber: number;
+  fileName: string;
+  videoKey: string;
+}) {
+  const object = await findReviewVideoObject(input.orderId, input.versionNumber);
+  if (object) {
+    return {
+      videoKey: object.key,
+      sourceObjectKey: object.key,
+      sourcePath: null as string | null,
+      mimeType: object.contentType,
+      fileSizeBytes: object.contentLength
+    };
+  }
+
+  const file = await findReviewVideoFile(input.orderId, input.versionNumber);
+  if (file) {
+    const extension = file.extension === "mov" ? "mov" : "mp4";
+    return {
+      videoKey: reviewVideoObjectKey(input.orderId, input.versionNumber, extension),
+      sourceObjectKey: null as string | null,
+      sourcePath: file.path,
+      mimeType: file.contentType,
+      fileSizeBytes: null as number | null
+    };
+  }
+
+  return {
+    videoKey: input.videoKey,
+    sourceObjectKey: null as string | null,
+    sourcePath: null as string | null,
+    mimeType: null as string | null,
+    fileSizeBytes: null as number | null
+  };
 }
 
 function inferUploadMeta(input: {
@@ -167,7 +206,14 @@ export class VersionService {
       mimeType: input.mimeType,
       fileSizeBytes: input.fileSizeBytes
     });
-    const videoKey = deriveFileKey(input.orderId, versionNumber, meta.fileName);
+    const inferredVideoKey = deriveFileKey(input.orderId, versionNumber, meta.fileName);
+    const source = await resolveReviewVideoSource({
+      orderId: input.orderId,
+      versionNumber,
+      fileName: meta.fileName,
+      videoKey: inferredVideoKey
+    });
+    const videoKey = source.videoKey;
 
     const creatorUser = await userRepository.findById(campaign.creatorId);
     if (!creatorUser) {
@@ -184,8 +230,8 @@ export class VersionService {
           videoKey,
           videoUrl: input.videoUrl,
           fileName: meta.fileName,
-          mimeType: meta.mimeType,
-          fileSizeBytes: meta.fileSizeBytes,
+          mimeType: source.mimeType ?? meta.mimeType,
+          fileSizeBytes: source.fileSizeBytes ?? meta.fileSizeBytes,
           notes: input.notes?.trim() || null
         })
       : await versionRepository.createVersion({
@@ -195,8 +241,8 @@ export class VersionService {
           videoKey,
           videoUrl: input.videoUrl,
           fileName: meta.fileName,
-          mimeType: meta.mimeType,
-          fileSizeBytes: meta.fileSizeBytes,
+          mimeType: source.mimeType ?? meta.mimeType,
+          fileSizeBytes: source.fileSizeBytes ?? meta.fileSizeBytes,
           notes: input.notes?.trim() || null
         });
 
@@ -208,14 +254,9 @@ export class VersionService {
       await campaignRepository.setCurrentVersion(campaign.id, versionNumber);
     }
 
-    await campaignService.transition(campaign.id, CampaignEvent.VERSION_UPLOAD, {
-      id: creatorUser.id,
-      role: creatorUser.role
-    });
-
     await activityService.write(
       campaign.id,
-      "version.uploaded",
+      "version.upload_processing",
       {
         userId: creatorUser.id,
         email: creatorUser.email,
@@ -227,14 +268,29 @@ export class VersionService {
         version_number: versionNumber,
         video_url: input.videoUrl,
         video_key: videoKey,
+        source_object_key: source.sourceObjectKey,
+        source_path: source.sourcePath,
         file_name: meta.fileName,
-        mime_type: meta.mimeType,
-        file_size_bytes: meta.fileSizeBytes,
+        mime_type: source.mimeType ?? meta.mimeType,
+        file_size_bytes: source.fileSizeBytes ?? meta.fileSizeBytes,
         notes: input.notes?.trim() || null
       }
     );
 
-    await reviewBridgeService.syncLegacyOrderStatusAfterUpload(campaign.id);
+    const { videoWorkerService } = await import("@/features/video/video-worker.service");
+    const job = await videoWorkerService.enqueueTranscode({
+      campaignId: campaign.id,
+      versionId: version.id,
+      videoUrl: input.videoUrl,
+      watermark: true,
+      sourceObjectKey: source.sourceObjectKey,
+      sourcePath: source.sourcePath,
+      legacyOrderId: input.orderId,
+      legacyProjectId: input.legacyProjectId,
+      legacyCreatorId: input.legacyCreatorId,
+      locale: input.locale
+    });
+    videoWorkerService.scheduleProcess(job.id);
 
     const deliverable = mapVersionToDeliverable(
       version,

@@ -277,7 +277,12 @@ export function buildCreatorPendingTaskCards(input: {
   }
 
   if (input.tasks.includes("wait_brand_selection")) {
-    const invitation = input.invitations.find((item) => item.status === "accepted");
+    const orderedProjectIds = new Set(
+      input.orders.map((order) => order.project_id).filter((id): id is string => Boolean(id))
+    );
+    const invitation = input.invitations.find(
+      (item) => item.status === "accepted" && !orderedProjectIds.has(item.campaignId)
+    );
     cards.push({
       id: "wait_brand_selection",
       tone: "orange",

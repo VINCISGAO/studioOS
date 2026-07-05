@@ -90,7 +90,7 @@ export default async function StudioHomePage({ searchParams }: { searchParams: P
 
   const tasks = deriveCreatorTodayTasks({
     pendingInvitations: invitationCounts.pending,
-    awaitingBrandSelection: countAwaitingBrandSelection(invitations),
+    awaitingBrandSelection: countAwaitingBrandSelection(invitations, orders),
     orders,
     deliverableCounts
   });

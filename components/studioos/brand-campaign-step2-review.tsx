@@ -56,6 +56,7 @@ export function BrandCampaignStep2Review({
   directionsEnabled = true,
   briefSnapshot = null,
   awaitingBriefSave = false,
+  minGeneratingUntil = 0,
   onBack,
   onSaveDraft,
   onConfirmed
@@ -69,6 +70,7 @@ export function BrandCampaignStep2Review({
   directionsEnabled?: boolean;
   briefSnapshot?: WizardBriefSnapshot | null;
   awaitingBriefSave?: boolean;
+  minGeneratingUntil?: number;
   onBack: () => void;
   onSaveDraft?: () => void;
   onConfirmed: (directionId: string) => void;
@@ -76,6 +78,7 @@ export function BrandCampaignStep2Review({
   const t = copy[locale];
   const [localError, setLocalError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [now, setNow] = useState(() => Date.now());
 
   const { directions, status, showImages, error: loadError, isLoading } = useBrandCampaignDirections(
     locale,
@@ -92,9 +95,19 @@ export function BrandCampaignStep2Review({
 
   const fallbackBudget = parseBudgetFallback(budget);
   const displayError = localError || error || loadError;
-  const showGeneratingOverlay = awaitingBriefSave || isLoading;
+  const minGeneratingActive = now < minGeneratingUntil;
+  const showGeneratingOverlay = awaitingBriefSave || isLoading || minGeneratingActive;
   const showContent = directions.length > 0 && status === "ready";
   const progressHint = showContent && !showImages ? t.loadingImages : null;
+
+  useEffect(() => {
+    if (Date.now() >= minGeneratingUntil) {
+      setNow(Date.now());
+      return;
+    }
+    const timer = window.setTimeout(() => setNow(Date.now()), minGeneratingUntil - Date.now());
+    return () => window.clearTimeout(timer);
+  }, [minGeneratingUntil]);
 
   useEffect(() => {
     if (directions.length && !selectedId) {
@@ -158,7 +171,7 @@ export function BrandCampaignStep2Review({
             : "flex min-h-full flex-1 flex-col"
         }
       >
-        <div className="flex-1 space-y-6 bg-[#f8f9fb] px-3 pb-6 pt-4 sm:px-4 sm:pt-5 lg:px-5 lg:pt-6">
+        <div className="flex-1 space-y-6 bg-[#f8f9fb] px-3 pb-[calc(6.5rem+env(safe-area-inset-bottom))] pt-4 sm:px-4 sm:pt-5 lg:px-5 lg:pt-6 xl:pb-6">
           <div className={MAIN_SIDEBAR_GRID}>
             <WizardStepper locale={locale} currentStep={2} variant="brand" />
             <div className="hidden xl:block" aria-hidden />

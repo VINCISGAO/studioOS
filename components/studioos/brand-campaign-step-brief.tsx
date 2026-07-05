@@ -74,7 +74,7 @@ const copy = {
     uploadFailed: "Upload failed",
     clickToUpload: "Click to choose an image",
     clickToUploadDrag: "Click to choose an image or drag here",
-    formats: "JPG, PNG, WebP · max 10MB",
+    formats: "JPG, PNG, WebP · max 10MB · compressed automatically",
     q1: "What are you promoting?",
     q1Hint: "Describe the product in your own words.",
     q2: "Main goal",
@@ -152,7 +152,7 @@ const copy = {
     uploadFailed: "上传失败",
     clickToUpload: "点击选择图片",
     clickToUploadDrag: "点击选择图片或拖拽到此处",
-    formats: "JPG、PNG、WebP · 最大 10MB",
+    formats: "JPG、PNG、WebP · 最大 10MB · 自动压缩",
     q1: "你要推广什么？",
     q1Hint: "用你自己的话介绍产品。",
     q2: "广告目标",
@@ -502,14 +502,26 @@ export function BrandCampaignStepBrief({
     onProductUploaded?.(localPreview);
 
     startUpload(async () => {
-      const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+      const MAX_SOURCE_BYTES = 10 * 1024 * 1024;
+      const MAX_REQUEST_SAFE_BYTES = 3.5 * 1024 * 1024;
 
       try {
+        if (file.size > MAX_SOURCE_BYTES) {
+          setUploadError(
+            locale === "zh"
+              ? "图片超过 10MB，请换一张更小的 JPG/PNG 图片"
+              : "Image exceeds 10MB — choose a smaller JPG or PNG"
+          );
+          setProductReady(false);
+          setPreviewUrl(initialProductImageUrl ?? null);
+          return;
+        }
+
         let uploadFile = file;
-        if (file.size > MAX_UPLOAD_BYTES) {
+        if (file.size > MAX_REQUEST_SAFE_BYTES) {
           try {
             uploadFile = await compressImageForUpload(file, {
-              maxBytes: MAX_UPLOAD_BYTES,
+              maxBytes: MAX_REQUEST_SAFE_BYTES,
               maxDimension: 1600,
               quality: 0.82,
               fileNamePrefix: "product"
@@ -517,8 +529,8 @@ export function BrandCampaignStepBrief({
           } catch {
             setUploadError(
               locale === "zh"
-                ? "图片超过 10MB，请换一张更小的 JPG/PNG 图片"
-                : "Image exceeds 10MB — choose a smaller JPG or PNG"
+                ? "图片较大且浏览器压缩失败，请换一张更小的 JPG/PNG 图片"
+                : "This image is large and could not be compressed — choose a smaller JPG or PNG"
             );
             setProductReady(false);
             setPreviewUrl(initialProductImageUrl ?? null);
@@ -552,7 +564,11 @@ export function BrandCampaignStepBrief({
             ok: false,
             error:
               locale === "zh"
-                ? `上传失败（HTTP ${res.status}），请稍后重试`
+                ? res.status === 413
+                  ? "图片过大，请换一张更小的图片后重试"
+                  : `上传失败（HTTP ${res.status}），请稍后重试`
+                : res.status === 413
+                  ? "Image is too large — choose a smaller image and try again"
                 : `Upload failed (HTTP ${res.status}) — try again`
           };
         }

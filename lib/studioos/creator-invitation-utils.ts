@@ -1,4 +1,5 @@
 import type { CreatorPortalInvitationView } from "@/features/creator/creator-portal.types";
+import type { StoredOrder } from "@/lib/order-types";
 
 export type CreatorInvitationTab = "pending" | "accepted" | "declined" | "expired";
 
@@ -57,6 +58,14 @@ export function countPendingInvitationsForCreator(invitations: CreatorPortalInvi
   return invitations.filter((item) => item.status === "pending").length;
 }
 
-export function countAwaitingBrandSelection(invitations: CreatorPortalInvitationView[]) {
-  return invitations.filter((item) => item.status === "accepted").length;
+export function countAwaitingBrandSelection(
+  invitations: CreatorPortalInvitationView[],
+  orders: Pick<StoredOrder, "project_id">[] = []
+) {
+  const selectedProjectIds = new Set(
+    orders.map((order) => order.project_id).filter((id): id is string => Boolean(id))
+  );
+  return invitations.filter(
+    (item) => item.status === "accepted" && !selectedProjectIds.has(item.campaignId)
+  ).length;
 }

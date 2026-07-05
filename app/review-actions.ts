@@ -41,7 +41,7 @@ import { campaignRepository } from "@/features/campaign/campaign.repository";
 import { userRepository } from "@/features/auth/user.repository";
 import { creatorRevertUploadService } from "@/features/delivery/creator-revert-upload.service";
 import { versionService } from "@/features/delivery/version.service";
-import { MAX_CAMPAIGN_VERSIONS } from "@/features/delivery/version.repository";
+import { MAX_CAMPAIGN_VERSIONS, versionRepository } from "@/features/delivery/version.repository";
 import { reviewPortalService } from "@/features/review/review-portal.service";
 import { settlementService } from "@/features/settlement/settlement.service";
 import { SettlementState, type SettlementStateValue } from "@/features/settlement/settlement.state-machine";
@@ -670,6 +670,22 @@ export async function requestBrandReviewAction(formData: FormData) {
       ok: false as const,
       error: lang === "zh" ? "视频文件未保存成功，请重新上传" : "Video file was not saved. Please upload again."
     };
+  }
+
+  if (hasDatabaseUrl() && order.project_id) {
+    const campaign = await campaignRepository.findByLegacyProjectId(order.project_id);
+    const campaignVersion = campaign
+      ? await versionRepository.findByCampaignAndVersionNumber(campaign.id, version)
+      : null;
+    if (campaignVersion && (campaignVersion.status !== "READY" || campaignVersion.reviewStatus !== "READY")) {
+      return {
+        ok: true as const,
+        message:
+          lang === "zh"
+            ? `V${version} 正在转码处理中，完成后会自动通知项目方审片`
+            : `V${version} is still processing. The brand will be notified automatically when it is ready.`
+      };
+    }
   }
 
   if (order.project_id) {

@@ -3,6 +3,14 @@ import { NextResponse } from "next/server";
 import { getCurrentClientEmail } from "@/lib/client-session";
 import { getCurrentCreatorId } from "@/lib/creator-session";
 import { getDeliverables, getOrder } from "@/lib/order-service";
+import { campaignRepository } from "@/features/campaign/campaign.repository";
+import { userRepository } from "@/features/auth/user.repository";
+import { versionRepository } from "@/features/delivery/version.repository";
+import {
+  createPlaybackToken,
+  signedPlaybackManifestUrl
+} from "@/features/video/playback-token.service";
+import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { readDemoReviewVideoBytes } from "@/lib/studioos/demo-review-video-bytes";
 import {
   assertDeliverableVideoAccess,
@@ -123,6 +131,48 @@ export async function GET(
   }
 
   const { order, deliverable, isBrand } = access;
+
+  if (download && (!isBrand || order.status !== "completed")) {
+    return NextResponse.json(
+      { error: "Original downloads are only available after final approval." },
+      { status: 403 }
+    );
+  }
+
+  if (!download && isBrand && hasDatabaseUrl() && order.project_id && clientEmail) {
+    const campaign = await campaignRepository.findByLegacyProjectId(order.project_id);
+    const brandUser = await userRepository.findByEmail(clientEmail.toLowerCase());
+    const campaignVersion = campaign
+      ? await versionRepository.findByCampaignAndVersionNumber(campaign.id, versionNum)
+      : null;
+
+    if (campaignVersion) {
+      if (campaignVersion.status !== "READY" || campaignVersion.reviewStatus !== "READY") {
+        return NextResponse.json(
+          { error: "Video is still processing. Please try again after transcoding completes." },
+          { status: 409 }
+        );
+      }
+
+      if (!campaignVersion.hlsUrl) {
+        return NextResponse.json(
+          { error: "HLS playback is not ready yet." },
+          { status: 409 }
+        );
+      }
+
+      if (!campaign || !brandUser) {
+        return NextResponse.json({ error: "Playback user not found" }, { status: 403 });
+      }
+
+      const token = createPlaybackToken({
+        versionId: campaignVersion.id,
+        userId: brandUser.id,
+        campaignId: campaign.id
+      });
+      return NextResponse.redirect(new URL(signedPlaybackManifestUrl(token), request.url));
+    }
+  }
 
   const videoObject = await findReviewVideoObject(orderId, versionNum);
   const videoFile = videoObject ? null : await findReviewVideoFile(orderId, versionNum);

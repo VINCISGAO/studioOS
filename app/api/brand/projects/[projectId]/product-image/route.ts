@@ -36,8 +36,8 @@ export async function POST(
         ok: false,
         error:
           lang === "zh"
-            ? "图片上传失败，请稍后重试"
-            : "Upload failed — try again"
+            ? "图片过大，请选择 10MB 以内的 JPG/PNG/WebP 图片"
+            : "Image is too large. Choose a JPG/PNG/WebP image under 10MB."
       },
       { status: 413 }
     );

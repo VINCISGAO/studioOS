@@ -37,15 +37,15 @@ export function BrandCampaignStep2Footer({
   return (
     <div
       className={cn(
-        "sticky bottom-0 z-20 shrink-0 border-t border-zinc-200 bg-white/95 backdrop-blur",
+        "fixed inset-x-0 bottom-0 z-40 shrink-0 border-t border-zinc-200 bg-white/95 backdrop-blur lg:left-[248px] xl:sticky xl:left-auto",
         "supports-[backdrop-filter]:bg-white/90"
       )}
     >
       <div
         className={cn(
-          "flex h-14 items-center justify-between gap-4",
-          "px-3 sm:px-4 lg:px-5",
-          "pr-20 sm:pr-24"
+          "flex min-h-14 flex-wrap items-center justify-between gap-3 py-2",
+          "px-3 pb-[calc(0.5rem+env(safe-area-inset-bottom))] sm:px-4 lg:px-5 xl:pb-2",
+          "pr-3 sm:pr-4 lg:pr-5"
         )}
       >
         <button
@@ -57,7 +57,7 @@ export function BrandCampaignStep2Footer({
           <span className="truncate">{t.back}</span>
         </button>
 
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="ml-auto flex min-w-0 shrink-0 items-center gap-2 max-[430px]:w-full max-[430px]:justify-end">
           {onSaveDraft ? (
             <button
               type="button"
@@ -72,7 +72,7 @@ export function BrandCampaignStep2Footer({
             type="button"
             disabled={!directionsReady || !selectedId}
             onClick={onConfirm}
-            className="inline-flex h-9 max-w-[min(100vw-8rem,280px)] items-center justify-center gap-2 truncate rounded-lg bg-violet-600 px-3 text-sm font-semibold text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50 sm:h-10 sm:max-w-none sm:px-5"
+            className="inline-flex h-9 max-w-[min(100vw-7rem,280px)] items-center justify-center gap-2 truncate rounded-lg bg-violet-600 px-3 text-sm font-semibold text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50 sm:h-10 sm:max-w-none sm:px-5"
           >
             <span className="truncate">{t.confirm}</span>
             <ArrowRight className="h-4 w-4 shrink-0" />

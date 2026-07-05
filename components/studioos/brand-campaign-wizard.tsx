@@ -174,6 +174,7 @@ export function BrandCampaignWizard({
   const [step2Mounted, setStep2Mounted] = useState(initialStep >= 2 || hasSavedBrief);
   const [step3Mounted, setStep3Mounted] = useState(initialStep >= 3);
   const [canLoadDirections, setCanLoadDirections] = useState(initialStep >= 2 || hasSavedBrief);
+  const [schemeGeneratingUntil, setSchemeGeneratingUntil] = useState(0);
   const directionsEnabled = step2Mounted && canLoadDirections;
   const [briefSnapshot, setBriefSnapshot] = useState<WizardBriefSnapshot | null>(() => {
     const initial = readStoredQuestionnaire(wizardData.project);
@@ -305,6 +306,7 @@ export function BrandCampaignWizard({
     setBriefSnapshot(snapshot);
     setStep2Mounted(true);
     setCanLoadDirections(true);
+    setSchemeGeneratingUntil(Date.now() + 3000);
     goStep(2);
 
     const fd = new FormData();
@@ -406,6 +408,7 @@ export function BrandCampaignWizard({
             directionsEnabled={directionsEnabled}
             briefSnapshot={briefSnapshot}
             awaitingBriefSave={false}
+            minGeneratingUntil={schemeGeneratingUntil}
             onBack={() => goStep(1)}
             onSaveDraft={() => saveDraft(briefInitial)}
             onConfirmed={confirmDirection}

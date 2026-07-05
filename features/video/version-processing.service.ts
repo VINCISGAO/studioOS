@@ -1,6 +1,6 @@
 import { videoRepository } from "@/features/video/video.repository";
 import { campaignService } from "@/features/campaign/campaign.service";
-import { CampaignEvent } from "@/features/campaign/campaign.state-machine";
+import { CampaignEvent, CampaignState } from "@/features/campaign/campaign.state-machine";
 import type { AuthUser } from "@/features/auth/permission.service";
 import { PermissionService } from "@/features/auth/permission.service";
 import { runTransition } from "@/lib/core/transition-runner";
@@ -110,16 +110,21 @@ export class VersionProcessingService {
     }
 
     const campaign = version.campaign;
-    if (["PRODUCING", "UNDER_REVIEW"].includes(campaign.status)) {
-      await campaignService.transition(campaign.id, CampaignEvent.VERSION_UPLOAD, actor ?? {
-        id: version.uploadedBy,
-        role: "CREATOR"
-      });
-      await prisma.campaign.update({
-        where: { id: campaign.id },
-        data: { currentVersion: version.versionNumber }
-      });
+    const campaignActor = actor ?? {
+      id: version.uploadedBy,
+      role: "CREATOR"
+    };
+    if (campaign.status === CampaignState.ESCROW_FUNDED) {
+      await campaignService.transition(campaign.id, CampaignEvent.START_PRODUCTION, campaignActor);
+      await campaignService.transition(campaign.id, CampaignEvent.VERSION_UPLOAD, campaignActor);
+    } else if (campaign.status === CampaignState.PRODUCING || campaign.status === CampaignState.UNDER_REVIEW) {
+      await campaignService.transition(campaign.id, CampaignEvent.VERSION_UPLOAD, campaignActor);
     }
+
+    await prisma.campaign.update({
+      where: { id: campaign.id },
+      data: { currentVersion: version.versionNumber }
+    });
 
     await prisma.campaignVersion.update({
       where: { id: versionId },
