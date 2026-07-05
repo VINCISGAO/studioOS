@@ -31,7 +31,7 @@ export function BrandProjectMatchTab({
   });
 
   return (
-    <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1.55fr)_minmax(320px,1fr)]">
+    <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(340px,420px)]">
       <div className="space-y-5">
         <BrandInvitationStatusPanel
           locale={locale}

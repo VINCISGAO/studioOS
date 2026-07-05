@@ -118,8 +118,7 @@ export function LoginWorkspace({
           setFormError(data.error ?? (locale === "zh" ? "验证码不正确或已过期。" : "Invalid or expired code."));
           return;
         }
-        setRedirectTo(data.redirectTo);
-        setStep("success");
+        router.push(data.redirectTo);
         return;
       }
     } catch {

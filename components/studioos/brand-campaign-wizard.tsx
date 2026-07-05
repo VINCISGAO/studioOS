@@ -1,11 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  approveBrandCreativeDirectionAction,
   saveBrandCampaignDraftAction,
   saveBrandCampaignSetupAction
 } from "@/app/brand-campaign-actions";
+import { loadWizardDataAction } from "@/app/project-wizard-actions";
 import { BrandCampaignStep3Publish } from "@/components/studioos/brand-campaign-step3-publish";
 import { BrandCampaignStep2Review } from "@/components/studioos/brand-campaign-step2-review";
 import {
@@ -38,6 +40,12 @@ import {
   resolveAspectRatioFromProject,
   resolveDeliveryTimelineFromProject
 } from "@/lib/studioos/brand-campaign-options";
+import { runInBackground, syncBrandWizardStepUrl } from "@/lib/studioos/instant-nav";
+import {
+  isWizardBriefReady,
+  snapshotFromBriefForm,
+  type WizardBriefSnapshot
+} from "@/lib/studioos/brand-wizard-brief-snapshot";
 import { cn } from "@/lib/utils";
 import { Sparkles } from "lucide-react";
 
@@ -152,16 +160,90 @@ export function BrandCampaignWizard({
 }) {
   const router = useRouter();
   const projectId = initialData.project.id;
+  const [wizardData, setWizardData] = useState(initialData);
   const migrated = initialStep <= BRAND_WIZARD_VISIBLE_STEP_COUNT ? initialStep : migrateLegacyBrandWizardStep(initialStep);
   const [step, setStep] = useState(clampBrandVisibleStep(migrated));
-  const [isSaving, setIsSaving] = useState(false);
-  const [isSavingDraft, setIsSavingDraft] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const questionnaire = readStoredQuestionnaire(wizardData.project);
+  const hasSavedBrief = Boolean(
+    questionnaire.productName?.trim() ||
+      questionnaire.rawSummary?.trim() ||
+      questionnaire.productDescription?.trim() ||
+      wizardData.project.campaign_goal?.trim()
+  );
+  const [step2Mounted, setStep2Mounted] = useState(initialStep >= 2 || hasSavedBrief);
+  const [step3Mounted, setStep3Mounted] = useState(initialStep >= 3);
+  const [canLoadDirections, setCanLoadDirections] = useState(initialStep >= 2 || hasSavedBrief);
+  const directionsEnabled = step2Mounted && canLoadDirections;
+  const [briefSnapshot, setBriefSnapshot] = useState<WizardBriefSnapshot | null>(() => {
+    const initial = readStoredQuestionnaire(wizardData.project);
+    const snap = snapshotFromBriefForm(initial);
+    const hasProductAsset = initialData.assets.some(
+      (item) => item.type === "product_image_original" || item.type === "product_image"
+    );
+    const hasProduct = hasProductAsset || Boolean(initial.productUrl?.trim());
+    return isWizardBriefReady(snap, hasProduct) ? snap : null;
+  });
+  const prefetchTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-  const budget = estimateBudgetRange(initialData.project.budget_range);
-  const deliveryTimelineId = resolveDeliveryTimelineFromProject(initialData.project);
+  const scheduleBriefPrefetch = useCallback((form: BriefFormState, productReady: boolean) => {
+    const snapshot = snapshotFromBriefForm(form);
+    setBriefSnapshot(snapshot);
+    if (prefetchTimerRef.current) clearTimeout(prefetchTimerRef.current);
+    prefetchTimerRef.current = setTimeout(() => {
+      if (!isWizardBriefReady(snapshot, productReady)) return;
+      setStep2Mounted(true);
+      setCanLoadDirections(true);
+    }, 600);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (prefetchTimerRef.current) clearTimeout(prefetchTimerRef.current);
+    };
+  }, []);
+
+  const applyProductImagePreview = useCallback((previewUrl: string) => {
+    setWizardData((prev) => ({
+      ...prev,
+      assets: [
+        ...prev.assets.filter(
+          (item) => item.type !== "product_image_original" && item.type !== "product_image"
+        ),
+        {
+          id: `product_preview_${Date.now()}`,
+          project_id: projectId,
+          type: "product_image_original",
+          file_name: "product.jpg",
+          file_url: previewUrl,
+          mime_type: "image/jpeg",
+          size_bytes: 0,
+          created_at: new Date().toISOString()
+        }
+      ]
+    }));
+  }, [projectId]);
+
+  const refreshWizardMedia = useCallback(() => {
+    runInBackground(async () => {
+      const data = await loadWizardDataAction(projectId);
+      setWizardData((prev) => ({
+        ...prev,
+        assets: data.assets,
+        references: data.references
+      }));
+    }, "refresh-wizard-media");
+  }, [projectId]);
+
+  useEffect(() => {
+    if (initialData.assets.length && initialData.references.length) return;
+    refreshWizardMedia();
+  }, [initialData.assets.length, initialData.references.length, refreshWizardMedia]);
+
+  const budget = estimateBudgetRange(wizardData.project.budget_range);
+  const deliveryTimelineId = resolveDeliveryTimelineFromProject(wizardData.project);
   const delivery = estimateDeliveryDays(
-    initialData.project.deadline,
+    wizardData.project.deadline,
     deliveryTimelineLabel(deliveryTimelineId, locale)
   );
 
@@ -179,27 +261,26 @@ export function BrandCampaignWizard({
       budgetRange: defaultBrandBudget(),
       deliveryTimeline: defaultBrandTimeline(),
       aspectRatio: defaultBrandAspectRatio(),
-      ...readStoredQuestionnaire(initialData.project)
+      ...readStoredQuestionnaire(wizardData.project)
     }),
-    [initialData.project]
+    [wizardData.project]
   );
 
   const meta = brandWizardStepMeta(locale, step);
   const productImageUrl = useMemo(() => {
-    const asset = initialData.assets.find(
+    const asset = wizardData.assets.find(
       (item) => item.type === "product_image_original" || item.type === "product_image"
     );
     return asset?.file_url ?? null;
-  }, [initialData.assets]);
+  }, [wizardData.assets]);
 
   function goStep(next: number) {
     const clamped = clampBrandVisibleStep(next);
-    router.push(withLocale(`/brand/projects/new?project=${projectId}&step=${clamped}`, locale));
     setStep(clamped);
+    syncBrandWizardStepUrl(projectId, clamped, locale);
   }
 
   async function saveDraft(state: BriefFormState) {
-    setIsSavingDraft(true);
     setError(null);
 
     const fd = new FormData();
@@ -207,60 +288,61 @@ export function BrandCampaignWizard({
     fd.set("project_id", projectId);
     appendBriefForm(fd, state);
 
-    try {
+    router.push(withLocale("/brand?draft=saved#my-ads", locale));
+
+    runInBackground(async () => {
       const result = await saveBrandCampaignDraftAction(fd);
       if (!result.ok) {
         setError(result.error);
-        return;
       }
-      router.push(withLocale("/brand?draft=saved#my-ads", locale));
-    } catch {
-      setError(locale === "zh" ? "保存失败，请重试" : "Save failed — try again");
-    } finally {
-      setIsSavingDraft(false);
-    }
+    }, "save-draft");
   }
 
   async function saveSetup(state: BriefFormState) {
-    setIsSaving(true);
     setError(null);
+
+    const snapshot = snapshotFromBriefForm(state);
+    setBriefSnapshot(snapshot);
+    setStep2Mounted(true);
+    setCanLoadDirections(true);
+    goStep(2);
 
     const fd = new FormData();
     fd.set("lang", locale);
     fd.set("project_id", projectId);
     appendBriefForm(fd, state);
 
-    const timeoutMs = 45_000;
-    const timeoutError =
-      locale === "zh"
-        ? "保存超时，请检查网络后重试；草稿已尽量保留在本地。"
-        : "Save timed out. Check your connection and try again.";
-
-    try {
-      const result = await Promise.race([
-        saveBrandCampaignSetupAction(fd),
-        new Promise<{ ok: false; error: string }>((resolve) => {
-          window.setTimeout(() => resolve({ ok: false, error: timeoutError }), timeoutMs);
-        })
-      ]);
-
+    runInBackground(async () => {
+      const result = await saveBrandCampaignSetupAction(fd);
       if (!result.ok) {
         setError(result.error);
-        return;
       }
-      goStep(2);
-      router.refresh();
-    } catch {
-      setError(locale === "zh" ? "保存失败，请重试" : "Save failed — try again");
-    } finally {
-      setIsSaving(false);
-    }
+    }, "save-setup");
   }
 
-  const maxWidth = step === 1 ? "max-w-6xl" : step === 2 ? "max-w-[1440px]" : "max-w-3xl";
+  function confirmDirection(directionId: string) {
+    setError(null);
+    setStep3Mounted(true);
+    goStep(3);
+
+    const fd = new FormData();
+    fd.set("lang", locale);
+    fd.set("project_id", projectId);
+    fd.set("direction_id", directionId);
+
+    runInBackground(async () => {
+      const result = await approveBrandCreativeDirectionAction(fd);
+      if (!result.ok) {
+        setError(result.error);
+      }
+    }, "approve-direction");
+  }
+
+  const maxWidth = step === 1 ? "max-w-6xl" : step === 2 ? "max-w-none" : "max-w-3xl";
+  const step2FullBleed = step === 2 ? "min-h-[calc(100dvh-3.5rem)] w-full" : "";
 
   return (
-    <div className={cn("mx-auto w-full", maxWidth)}>
+    <div className={cn("mx-auto w-full", maxWidth, step2FullBleed)}>
       {step !== 2 ? (
       <div className="mb-8">
         <WizardStepper locale={locale} currentStep={step} variant="brand" />
@@ -295,44 +377,51 @@ export function BrandCampaignWizard({
           projectId={projectId}
           initial={briefInitial}
           initialProductImageUrl={productImageUrl}
-          initialReferences={initialData.references}
+          initialReferences={wizardData.references}
           stepMode="all"
           hideTopBar
-          isPending={isSaving}
+          isPending={false}
           error={error}
-          onProductUploaded={() => router.refresh()}
-          onReferencesUpdated={() => router.refresh()}
+          onProductUploaded={(previewUrl) => {
+            applyProductImagePreview(previewUrl);
+          }}
+          onBriefChange={scheduleBriefPrefetch}
+          onReferencesUpdated={refreshWizardMedia}
           onContinue={saveSetup}
           onSaveDraft={saveDraft}
-          isSavingDraft={isSavingDraft}
+          isSavingDraft={false}
         />
       ) : null}
 
-      {step === 2 ? (
-        <BrandCampaignStep2Review
-          locale={locale}
-          project={initialData.project}
-          budget={budget}
-          delivery={delivery}
-          productImageUrl={productImageUrl}
-          error={error}
-          onBack={() => goStep(1)}
-          onSaveDraft={() => saveDraft(briefInitial)}
-          isSavingDraft={isSavingDraft}
-          onConfirmed={() => {
-            router.refresh();
-            goStep(3);
-          }}
-        />
+      {/* Mount early when draft exists so AI can load while user edits step 1 */}
+      {step2Mounted ? (
+        <div className={cn(step !== 2 && "hidden")} aria-hidden={step !== 2}>
+          <BrandCampaignStep2Review
+            locale={locale}
+            project={wizardData.project}
+            budget={budget}
+            delivery={delivery}
+            productImageUrl={productImageUrl}
+            error={error}
+            directionsEnabled={directionsEnabled}
+            briefSnapshot={briefSnapshot}
+            awaitingBriefSave={false}
+            onBack={() => goStep(1)}
+            onSaveDraft={() => saveDraft(briefInitial)}
+            onConfirmed={confirmDirection}
+          />
+        </div>
       ) : null}
 
-      {step === 3 ? (
-        <BrandCampaignStep3Publish
-          locale={locale}
-          projectId={projectId}
-          error={error}
-          onBack={() => goStep(2)}
-        />
+      {step3Mounted ? (
+        <div className={cn(step !== 3 && "hidden")} aria-hidden={step !== 3}>
+          <BrandCampaignStep3Publish
+            locale={locale}
+            projectId={projectId}
+            error={error}
+            onBack={() => goStep(2)}
+          />
+        </div>
       ) : null}
     </div>
   );

@@ -1,7 +1,7 @@
 import "server-only";
 
 import { createHash } from "node:crypto";
-import type { AdminProfileWithUser } from "@/features/admin/auth/admin-profile.repository";
+import type { AdminUser } from "@/features/admin/auth/admin-user.repository";
 import { prisma } from "@/lib/core/database/prisma";
 
 const STEP_UP_TTL_MS = 10 * 60 * 1000;
@@ -14,13 +14,13 @@ function hashSessionToken(token: string) {
   return createHash("sha256").update(token).digest("hex");
 }
 
-export async function recordMasterStepUp(adminProfileId: string, sessionToken: string) {
-  const profile = await prisma.adminProfile.findUnique({ where: { id: adminProfileId } });
+export async function recordMasterStepUp(adminUserId: string, sessionToken: string) {
+  const profile = await prisma.adminUser.findUnique({ where: { id: adminUserId } });
   if (!profile) return;
 
   const permissions = readPermissions(profile.permissions);
-  await prisma.adminProfile.update({
-    where: { id: adminProfileId },
+  await prisma.adminUser.update({
+    where: { id: adminUserId },
     data: {
       permissions: {
         ...permissions,
@@ -31,7 +31,7 @@ export async function recordMasterStepUp(adminProfileId: string, sessionToken: s
   });
 }
 
-export function hasValidMasterStepUp(profile: AdminProfileWithUser, sessionToken: string | null) {
+export function hasValidMasterStepUp(profile: AdminUser, sessionToken: string | null) {
   if (!sessionToken) return false;
 
   const permissions = readPermissions(profile.permissions);

@@ -45,6 +45,65 @@ export function WizardStepper({
   );
   const percent = isBrand ? brandWizardProgressPercent(current) : wizardProgressPercent(current);
 
+  if (isBrand) {
+    return (
+      <div className={cn("w-full space-y-3", className)}>
+        <div className="flex items-center justify-between gap-4 text-caption">
+          <span>
+            {locale === "zh" ? "第" : "Step"} {current}{" "}
+            {locale === "zh" ? "步，共" : "of"} {stepCount}{" "}
+            {locale === "zh" ? "步" : "steps"}
+          </span>
+          <span className="shrink-0 tabular-nums">
+            {percent}%
+            {locale === "zh" ? " 完成" : " complete"}
+          </span>
+        </div>
+        <div className="h-1.5 w-full overflow-hidden rounded-full bg-violet-100">
+          <div
+            className="h-full rounded-full bg-violet-600 transition-all duration-page"
+            style={{ width: `${percent}%` }}
+          />
+        </div>
+        {!compact ? (
+          <ol
+            className="flex w-full justify-between gap-4 pt-1"
+            aria-label={locale === "zh" ? "Campaign 向导步骤" : "Campaign wizard steps"}
+          >
+            {steps.map((step) => {
+              const isCurrent = step.id === current;
+              const isDone = done.has(step.id);
+              return (
+                <li key={step.id} className="flex min-w-0 items-center gap-2.5">
+                  <span
+                    className={cn(
+                      "flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-xs font-semibold transition-transform duration-micro",
+                      isDone
+                        ? "border-violet-600 bg-violet-600 text-white"
+                        : isCurrent
+                          ? "border-violet-600 bg-violet-600 text-white"
+                          : "border-zinc-200 bg-white text-zinc-400"
+                    )}
+                  >
+                    {isDone ? <Check className="h-4 w-4" /> : step.id}
+                  </span>
+                  <span
+                    className={cn(
+                      "truncate text-sm font-medium",
+                      isCurrent ? "text-violet-700" : "text-zinc-400"
+                    )}
+                  >
+                    {step.label[locale]}
+                  </span>
+                </li>
+              );
+            })}
+          </ol>
+        ) : null}
+      </div>
+    );
+  }
+
   return (
     <div className={cn("space-y-3", className)}>
       <div className="flex items-center justify-between text-caption">

@@ -66,13 +66,32 @@ export function demoRedirectForRole(role: DemoRole) {
   return "/brand";
 }
 
+export type DemoSocialProvider = "google" | "apple" | "alipay" | "wechat" | "qq";
+
+/** Providers without real OAuth — each maps to a distinct @studioos.test account. */
+export const TEST_SOCIAL_PROVIDERS = ["apple", "wechat", "qq"] as const satisfies readonly DemoSocialProvider[];
+
+export type TestSocialProvider = (typeof TEST_SOCIAL_PROVIDERS)[number];
+
+export function isTestSocialProvider(provider: string): provider is TestSocialProvider {
+  return (TEST_SOCIAL_PROVIDERS as readonly string[]).includes(provider);
+}
+
 /** Social providers map deterministically to demo accounts for each role tab. */
-export function demoUserForSocialProvider(
-  provider: "google" | "apple" | "alipay" | "wechat" | "qq",
-  tabRole: "brand" | "creator"
-) {
+export function demoUserForSocialProvider(provider: DemoSocialProvider, tabRole: "brand" | "creator") {
   const demoRole = tabRole === "creator" ? "creator" : "client";
   const accounts = DEMO_USERS.filter((user) => user.role === demoRole);
-  const index = provider === "google" || provider === "wechat" ? 0 : provider === "apple" || provider === "qq" ? 1 : 2;
+
+  const testProviderIndex: Record<TestSocialProvider, number> = {
+    apple: 0,
+    wechat: 1,
+    qq: 2
+  };
+
+  if (isTestSocialProvider(provider)) {
+    return accounts[testProviderIndex[provider]] ?? accounts[0] ?? null;
+  }
+
+  const index = provider === "google" ? 0 : provider === "alipay" ? 2 : 1;
   return accounts[index] ?? accounts[0] ?? null;
 }

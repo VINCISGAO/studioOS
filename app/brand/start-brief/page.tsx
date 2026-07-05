@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getOrCreateEphemeralWizardProject } from "@/lib/brand-start-brief";
 import { requireBrandPortalClientEmail } from "@/lib/client-session";
-import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { brandWizardStep1Href, getLocale, type SearchParams, withLocale } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
@@ -26,5 +26,5 @@ export default async function BrandStartBriefPage({
     redirect(withLocale("/brand?error=start-brief", locale));
   }
 
-  redirect(withLocale(`/brand/projects/new?project=${project.id}&step=1`, locale));
+  redirect(brandWizardStep1Href(locale, project.id));
 }

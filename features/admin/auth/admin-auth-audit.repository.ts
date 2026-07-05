@@ -36,8 +36,7 @@ export class AdminAuthAuditRepository {
     event: AdminAuthAuditEvent;
     success: boolean;
     email?: string;
-    adminId?: string;
-    adminProfileId?: string;
+    adminUserId?: string;
     ipHash: string;
     userAgentHash: string;
     failureReason?: string;
@@ -50,8 +49,7 @@ export class AdminAuthAuditRepository {
         data: {
           event: input.event,
           success: input.success,
-          adminId: input.adminId,
-          adminProfileId: input.adminProfileId,
+          adminUserId: input.adminUserId,
           emailHash: hashAdminSensitive((input.email ?? "unknown").trim().toLowerCase()),
           ipHash: input.ipHash,
           userAgentHash: input.userAgentHash,
@@ -116,13 +114,13 @@ export class AdminAuthAuditRepository {
     }
   }
 
-  async countRecentFailuresForProfile(input: { adminProfileId: string; ipHash: string; since: Date }) {
+  async countRecentFailuresForUser(input: { adminUserId: string; ipHash: string; since: Date }) {
     if (!hasDatabaseUrl()) return 0;
 
     try {
       return prisma.adminAuthAuditLog.count({
         where: {
-          adminProfileId: input.adminProfileId,
+          adminUserId: input.adminUserId,
           ipHash: input.ipHash,
           event: { in: ["admin_totp_failed", "admin_login_failed"] },
           success: false,
@@ -135,6 +133,15 @@ export class AdminAuthAuditRepository {
       }
       throw error;
     }
+  }
+
+  /** @deprecated use countRecentFailuresForUser */
+  async countRecentFailuresForProfile(input: { adminProfileId: string; ipHash: string; since: Date }) {
+    return this.countRecentFailuresForUser({
+      adminUserId: input.adminProfileId,
+      ipHash: input.ipHash,
+      since: input.since
+    });
   }
 
   async countRecentSetupFailures(input: { ipHash: string; since: Date }) {

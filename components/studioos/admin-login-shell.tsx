@@ -1,15 +1,17 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState } from "react";
+import { useFormStatus } from "react-dom";
 import { AlertCircle, Fingerprint, KeyRound, Mail, ShieldCheck } from "lucide-react";
+import { adminLoginAction } from "@/app/actions";
 import { LoginLanguageSwitcher } from "@/components/studioos/login-language-switcher";
 import { LoginSubmitSpinner } from "@/components/studioos/login-demo-accounts";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { Locale } from "@/lib/i18n";
 import { studioOS } from "@/lib/studioos/vocabulary";
-import { cn } from "@/lib/utils";
 import { loginWithAdminPasskey } from "@/lib/studioos/admin-passkey-client";
+import { cn } from "@/lib/utils";
 
 export type AdminLoginCopy = {
   consoleTitle: string;
@@ -57,6 +59,30 @@ function AdminLogoMark() {
   );
 }
 
+function AdminLoginSubmitButton({
+  label,
+  disabled
+}: {
+  label: string;
+  disabled: boolean;
+}) {
+  const { pending } = useFormStatus();
+
+  return (
+    <Button
+      type="submit"
+      disabled={disabled || pending}
+      className={cn(
+        "h-11 w-full gap-2 rounded-xl bg-violet-600 text-sm font-semibold text-white shadow-sm",
+        "hover:bg-violet-700 focus-visible:ring-violet-500"
+      )}
+    >
+      {label}
+      <LoginSubmitSpinner visible={pending} />
+    </Button>
+  );
+}
+
 export function AdminLoginShell({
   locale,
   nextPath,
@@ -71,68 +97,11 @@ export function AdminLoginShell({
 }: AdminLoginShellProps) {
   const [email, setEmail] = useState(initialEmail);
   const [code, setCode] = useState("");
-  const [submitting, setSubmitting] = useState(false);
   const [passkeySubmitting, setPasskeySubmitting] = useState(false);
   const [formError, setFormError] = useState<string | undefined>(error);
 
   const displayError = formError ?? error;
-
-  const loginReady = !loginUnavailable;
-
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (loginUnavailable) {
-      setFormError(showOpsHint ? t.unavailableOps : t.notConfigured);
-      return;
-    }
-    if (!schemaReady) {
-      setFormError(showOpsHint ? t.schemaNotReady : t.notConfigured);
-      return;
-    }
-    if (!totpConfigured) {
-      setFormError(showOpsHint ? t.notConfigured : t.notConfigured);
-      return;
-    }
-
-    setSubmitting(true);
-    setFormError(undefined);
-
-    try {
-      const response = await fetch("/api/admin/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          code: code.replace(/\s/g, ""),
-          lang: locale,
-          next: nextPath
-        })
-      });
-
-      const data = (await response.json()) as {
-        ok: boolean;
-        redirectTo?: string;
-        error?: string;
-        errorCode?: string;
-      };
-
-      if (data.ok && data.redirectTo) {
-        window.location.assign(data.redirectTo);
-        return;
-      }
-
-      setFormError(
-        data.error ??
-          (data.errorCode === "admin-totp-not-configured"
-            ? t.notConfigured
-            : t.invalidCredentials)
-      );
-    } catch {
-      setFormError(t.networkError);
-    } finally {
-      setSubmitting(false);
-    }
-  }
+  const loginReady = !loginUnavailable && schemaReady && totpConfigured;
 
   async function handlePasskeyLogin() {
     if (loginUnavailable || !email.trim()) {
@@ -206,7 +175,10 @@ export function AdminLoginShell({
             </div>
           ) : null}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form action={adminLoginAction} className="space-y-4">
+            <input type="hidden" name="lang" value={locale} />
+            <input type="hidden" name="next" value={nextPath} />
+
             <div className="space-y-1.5">
               <label htmlFor="admin-email" className="text-xs font-medium text-zinc-700 sm:text-sm">
                 {t.email}
@@ -215,6 +187,7 @@ export function AdminLoginShell({
                 <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
                 <Input
                   id="admin-email"
+                  name="email"
                   type="email"
                   autoComplete="username"
                   required
@@ -234,6 +207,7 @@ export function AdminLoginShell({
                 <KeyRound className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
                 <Input
                   id="admin-totp"
+                  name="code"
                   type="text"
                   inputMode="numeric"
                   autoComplete="one-time-code"
@@ -248,22 +222,12 @@ export function AdminLoginShell({
               </div>
             </div>
 
-            <div className="border-t border-zinc-100 pt-4 space-y-3">
-              <Button
-                type="submit"
-                disabled={submitting || passkeySubmitting || !loginReady}
-                className={cn(
-                  "h-11 w-full gap-2 rounded-xl bg-violet-600 text-sm font-semibold text-white shadow-sm",
-                  "hover:bg-violet-700 focus-visible:ring-violet-500"
-                )}
-              >
-                {t.signIn}
-                <LoginSubmitSpinner visible={submitting} />
-              </Button>
+            <div className="space-y-3 border-t border-zinc-100 pt-4">
+              <AdminLoginSubmitButton label={t.signIn} disabled={!loginReady || passkeySubmitting} />
               <Button
                 type="button"
                 variant="outline"
-                disabled={submitting || passkeySubmitting || !loginReady}
+                disabled={!loginReady || passkeySubmitting}
                 onClick={() => void handlePasskeyLogin()}
                 className="h-11 w-full gap-2 rounded-xl border-zinc-200 text-sm font-semibold"
               >

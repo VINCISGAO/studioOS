@@ -4,7 +4,6 @@ import { SchemeBudgetDonut } from "@/components/studioos/brand-campaign-step2-sc
 import type { CreativeDirection } from "@/features/ai/creative-direction.types";
 import {
   buildSchemeDisplayMetrics,
-  schemeLetter,
   type SchemeDisplayMetrics
 } from "@/lib/studioos/brand-campaign-scheme-metrics";
 import type { Locale } from "@/lib/i18n";
@@ -14,6 +13,7 @@ import { Download, Star } from "lucide-react";
 const copy = {
   en: {
     compare: "Scheme comparison",
+    customCompare: "Custom comparison",
     scheme: "Scheme",
     aiScore: "AI score",
     ctr: "CTR lift",
@@ -32,6 +32,7 @@ const copy = {
   },
   zh: {
     compare: "方案对比",
+    customCompare: "自定义对比",
     scheme: "方案",
     aiScore: "AI 评分",
     ctr: "CTR 提升",
@@ -49,6 +50,8 @@ const copy = {
     export: "导出全部方案 (PDF)"
   }
 } as const;
+
+const DEFAULT_PLATFORMS = ["TikTok", "Meta"];
 
 function DifficultyStars({ count }: { count: number }) {
   return (
@@ -85,24 +88,31 @@ export function BrandCampaignStep2SchemeSidebar({
     directions.findIndex((direction) => direction.id === selectedId)
   );
   const selectedMetrics = metricsList[selectedIndex] ?? metricsList[0];
+  const platformLabel = (platforms.length ? platforms : DEFAULT_PLATFORMS).slice(0, 2).join(", ");
 
   if (!selectedMetrics) return null;
 
   return (
     <aside className="space-y-4 xl:sticky xl:top-4 xl:self-start">
       <section className="rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-sm">
-        <h3 className="text-sm font-semibold text-zinc-950">{t.compare}</h3>
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="text-sm font-semibold text-zinc-950">{t.compare}</h3>
+          <button type="button" className="text-xs font-medium text-violet-600 hover:text-violet-700">
+            {t.customCompare}
+          </button>
+        </div>
         <div className="mt-3 overflow-x-auto">
           <table className="w-full min-w-[280px] text-left text-xs">
             <thead>
               <tr className="border-b border-zinc-100 text-zinc-500">
                 <th className="pb-2 pr-2 font-medium">{t.scheme}</th>
-                {metricsList.map((metrics) => (
+                {metricsList.map((metrics, colIndex) => (
                   <th
                     key={metrics.label}
                     className={cn(
-                      "pb-2 px-1 text-center font-medium",
-                      metrics.recommended && "text-violet-700"
+                      "px-1 pb-2 text-center font-medium",
+                      colIndex === selectedIndex ? "rounded-t-lg bg-violet-50 text-violet-700" : "",
+                      metrics.recommended && colIndex !== selectedIndex && "text-violet-700"
                     )}
                   >
                     {metrics.label}
@@ -127,14 +137,12 @@ export function BrandCampaignStep2SchemeSidebar({
               ].map((row) => (
                 <tr key={row.label} className="border-b border-zinc-50 last:border-0">
                   <td className="py-2 pr-2 text-zinc-500">{row.label}</td>
-                  {metricsList.map((metrics) => (
+                  {metricsList.map((metrics, colIndex) => (
                     <td
                       key={`${row.label}-${metrics.label}`}
                       className={cn(
-                        "py-2 px-1 text-center font-medium",
-                        directions[selectedIndex]?.id &&
-                          metrics.label === schemeLetter(selectedIndex) &&
-                          "rounded-lg bg-violet-50 text-violet-800"
+                        "px-1 py-2 text-center font-medium",
+                        colIndex === selectedIndex && "bg-violet-50 text-violet-800"
                       )}
                     >
                       {row.stars ? <DifficultyStars count={row.render(metrics) as number} /> : row.render(metrics)}
@@ -144,9 +152,15 @@ export function BrandCampaignStep2SchemeSidebar({
               ))}
               <tr>
                 <td className="py-2 pr-2 text-zinc-500">{t.platforms}</td>
-                {metricsList.map((metrics) => (
-                  <td key={`platforms-${metrics.label}`} className="py-2 px-1 text-center text-[10px] leading-4">
-                    {platforms.slice(0, 2).join(", ")}
+                {metricsList.map((metrics, colIndex) => (
+                  <td
+                    key={`platforms-${metrics.label}`}
+                    className={cn(
+                      "px-1 py-2 text-center text-[10px] leading-4",
+                      colIndex === selectedIndex && "rounded-b-lg bg-violet-50 text-violet-800"
+                    )}
+                  >
+                    {platformLabel}
                   </td>
                 ))}
               </tr>
@@ -185,7 +199,7 @@ export function BrandCampaignStep2SchemeSidebar({
 
       <button
         type="button"
-        className="flex w-full items-center justify-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-medium text-violet-700 transition hover:bg-violet-100"
+        className="flex w-full items-center justify-center gap-2 rounded-xl border border-violet-200 bg-white px-4 py-3 text-sm font-medium text-violet-700 transition hover:bg-violet-50"
       >
         <Download className="h-4 w-4" />
         {t.export}

@@ -1,14 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { Check, ChevronDown, Clock, ExternalLink, Hourglass } from "lucide-react";
+import { useMemo, useState } from "react";
+import { ArrowRight, BadgeCheck, Check, ChevronDown, Clock, ExternalLink } from "lucide-react";
 import { selectCreatorFromInvitationsAction } from "@/app/brand-selection-actions";
 import { Button } from "@/components/ui/button";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import {
   buildAcceptedCreatorRow,
+  buildCreatorMatchTags,
   estimatePendingReplyHours,
   formatPendingReplyEta,
   groupBrandMatchInvitations,
@@ -18,34 +19,34 @@ import type { StoredCreatorInvitation } from "@/lib/studioos/creator-invitation-
 import { creatorAvatarTone, creatorInitials } from "@/lib/studioos/creator-display";
 import { cn } from "@/lib/utils";
 
+type MatchTab = "pending" | "accepted" | "declined" | "expired";
+
 const copy = {
   en: {
     title: "Creator responses",
-    waitMore: "Keep waiting for replies",
-    waitingHint: "You can still select anytime — new acceptances will appear here.",
-    accepted: (n: number) => `Accepted creators (${n})`,
+    allStatus: "All statuses",
     pending: (n: number) => `Awaiting reply (${n})`,
+    accepted: (n: number) => `Accepted (${n})`,
     declined: (n: number) => `Declined (${n})`,
+    expired: (n: number) => `Closed (${n})`,
+    match: "Match",
     selectNow: "Select now",
     viewProfile: "View profile",
-    match: "Match",
-    emptyAccepted: "No acceptances yet — responses will appear here.",
-    emptyPending: "All invited creators have responded.",
-    emptyDeclined: "No declines yet."
+    viewAll: "View all invitations",
+    empty: "No creators in this status yet."
   },
   zh: {
     title: "Creator 回复",
-    waitMore: "继续等待更多回复",
-    waitingHint: "你可随时选定 Creator — 新的接受者会实时出现在列表中。",
-    accepted: (n: number) => `已接受 Creator (${n})`,
+    allStatus: "全部状态",
     pending: (n: number) => `等待回复 (${n})`,
-    declined: (n: number) => `拒绝 (${n})`,
+    accepted: (n: number) => `已接受 (${n})`,
+    declined: (n: number) => `已拒绝 (${n})`,
+    expired: (n: number) => `已失效 (${n})`,
+    match: "匹配度",
     selectNow: "立即选择",
     viewProfile: "查看主页",
-    match: "匹配度",
-    emptyAccepted: "还没有 Creator 接受 — 回复会显示在这里。",
-    emptyPending: "所有邀请已收到回复。",
-    emptyDeclined: "暂无拒绝。"
+    viewAll: "查看全部邀约",
+    empty: "暂无该状态的 Creator。"
   }
 };
 
@@ -65,7 +66,7 @@ function SelectCreatorForm({
       <input type="hidden" name="lang" value={locale} />
       <input type="hidden" name="projectId" value={projectId} />
       <input type="hidden" name="creatorId" value={creatorId} />
-      <Button type="submit" size="sm" className="h-9 rounded-xl bg-zinc-900 px-3.5 text-xs font-medium">
+      <Button type="submit" size="sm" className="h-8 rounded-lg bg-zinc-900 px-3 text-xs font-medium">
         <Check className="h-3.5 w-3.5" />
         {label}
       </Button>
@@ -73,57 +74,86 @@ function SelectCreatorForm({
   );
 }
 
-function AcceptedRow({
+function CreatorReplyRow({
   locale,
-  projectId,
   invitation,
-  projectBudgetRange
+  projectId,
+  projectBudgetRange,
+  showActions = false
 }: {
   locale: Locale;
-  projectId: string;
   invitation: StoredCreatorInvitation;
+  projectId: string;
   projectBudgetRange?: string | null;
+  showActions?: boolean;
 }) {
   const t = copy[locale];
+  const creator = resolveCreatorForInvitation(invitation.creatorId);
+  const name = creator?.name ?? invitation.creatorId;
   const row = buildAcceptedCreatorRow(invitation, locale, projectBudgetRange);
+  const tags = creator ? buildCreatorMatchTags(creator, locale) : row.tags;
+  const etaHours = estimatePendingReplyHours(invitation.creatorId, invitation.id);
+  const verified = Boolean(creator?.profile_completed_at);
 
   return (
-    <li className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-      <div className="flex min-w-0 items-start gap-3">
-        <span
-          className={cn(
-            "flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
-            creatorAvatarTone(invitation.creatorId)
-          )}
-        >
-          {creatorInitials(row.name, invitation.creatorId)}
-        </span>
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="truncate text-sm font-semibold text-zinc-950">{row.name}</p>
-            <span className="text-xs text-amber-600">{row.starDisplay}</span>
-            <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-600">
-              {t.match} {row.matchPercent}%
-            </span>
-          </div>
-          {row.creator?.headline ? (
-            <p className="mt-1 line-clamp-2 text-xs leading-5 text-zinc-500">{row.creator.headline}</p>
-          ) : null}
+    <li className="flex gap-3 border-b border-zinc-100 px-5 py-4 last:border-0 sm:px-6">
+      <span
+        className={cn(
+          "flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
+          creatorAvatarTone(invitation.creatorId)
+        )}
+      >
+        {creatorInitials(name, invitation.creatorId)}
+      </span>
+
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <p className="truncate text-sm font-semibold text-zinc-950">{name}</p>
+          {verified ? <BadgeCheck className="h-4 w-4 shrink-0 text-violet-500" aria-label="Verified" /> : null}
         </div>
+        {creator?.headline ? (
+          <p className="mt-1 line-clamp-2 text-xs leading-5 text-zinc-500">{creator.headline}</p>
+        ) : null}
+        {tags.length ? (
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {tags.map((tag) => (
+              <span
+                key={tag}
+                className="rounded-md border border-zinc-200/80 bg-zinc-50 px-2 py-0.5 text-[11px] font-medium text-zinc-600"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        ) : null}
+        {showActions ? (
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <SelectCreatorForm
+              locale={locale}
+              projectId={projectId}
+              creatorId={invitation.creatorId}
+              label={t.selectNow}
+            />
+            <Button asChild variant="outline" size="sm" className="h-8 rounded-lg px-3 text-xs">
+              <Link href={withLocale(row.profileHref, locale)} target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="h-3.5 w-3.5" />
+                {t.viewProfile}
+              </Link>
+            </Button>
+          </div>
+        ) : null}
       </div>
-      <div className="flex shrink-0 items-center gap-2 sm:ml-4">
-        <SelectCreatorForm
-          locale={locale}
-          projectId={projectId}
-          creatorId={invitation.creatorId}
-          label={t.selectNow}
-        />
-        <Button asChild variant="outline" size="sm" className="h-9 rounded-xl px-3.5 text-xs">
-          <Link href={withLocale(row.profileHref, locale)} target="_blank" rel="noopener noreferrer">
-            <ExternalLink className="h-3.5 w-3.5" />
-            {t.viewProfile}
-          </Link>
-        </Button>
+
+      <div className="flex shrink-0 flex-col items-end gap-1 text-right">
+        {invitation.status === "pending" ? (
+          <span className="inline-flex items-center gap-1 text-xs text-zinc-500">
+            <Clock className="h-3.5 w-3.5" />
+            {formatPendingReplyEta(etaHours, locale)}
+          </span>
+        ) : null}
+        <span className="text-xs font-semibold text-emerald-600">
+          {t.match} {row.matchPercent}%
+        </span>
       </div>
     </li>
   );
@@ -142,131 +172,93 @@ export function BrandProjectMatchBoard({
 }) {
   const t = copy[locale];
   const groups = groupBrandMatchInvitations(invitations);
-  const [waitingForMore, setWaitingForMore] = useState(false);
-  const showSelection = groups.accepted.length > 0;
+  const expired = invitations.filter(
+    (item) => item.status === "expired" || item.status === "not_selected"
+  );
+
+  const counts = {
+    pending: groups.pending.length,
+    accepted: groups.accepted.length,
+    declined: groups.declined.length,
+    expired: expired.length
+  };
+
+  const defaultTab: MatchTab =
+    counts.pending > 0 ? "pending" : counts.accepted > 0 ? "accepted" : "pending";
+
+  const [activeTab, setActiveTab] = useState<MatchTab>(defaultTab);
+
+  const visibleInvitations = useMemo(() => {
+    if (activeTab === "pending") return groups.pending;
+    if (activeTab === "accepted") return groups.accepted;
+    if (activeTab === "declined") return groups.declined;
+    return expired;
+  }, [activeTab, expired, groups.accepted, groups.declined, groups.pending]);
+
+  const tabs: { id: MatchTab; label: string }[] = [
+    { id: "pending", label: t.pending(counts.pending) },
+    { id: "accepted", label: t.accepted(counts.accepted) },
+    { id: "declined", label: t.declined(counts.declined) },
+    { id: "expired", label: t.expired(counts.expired) }
+  ];
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-sm">
-      <div className="flex items-start justify-between gap-3 border-b border-zinc-100 px-5 py-5 sm:px-6">
-        <div>
-          <h2 className="text-base font-semibold text-zinc-950 sm:text-lg">{t.title}</h2>
-          {showSelection && waitingForMore ? (
-            <p className="mt-2 text-sm leading-relaxed text-zinc-500">{t.waitingHint}</p>
-          ) : null}
-        </div>
-        {showSelection ? (
-          <Button
-            type="button"
-            variant={waitingForMore ? "default" : "outline"}
-            size="sm"
-            className={cn(
-              "shrink-0 rounded-xl text-xs font-medium",
-              waitingForMore ? "bg-violet-600 hover:bg-violet-700" : ""
-            )}
-            onClick={() => setWaitingForMore((value) => !value)}
-          >
-            <Hourglass className="h-3.5 w-3.5" />
-            {t.waitMore}
-          </Button>
-        ) : null}
+      <div className="flex items-center justify-between gap-3 border-b border-zinc-100 px-5 py-4 sm:px-6">
+        <h2 className="text-base font-semibold text-zinc-950">{t.title}</h2>
+        <button
+          type="button"
+          className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-600"
+        >
+          {t.allStatus}
+          <ChevronDown className="h-3.5 w-3.5 text-zinc-400" />
+        </button>
       </div>
 
-      {showSelection ? (
-        <section>
-          <header className="border-b border-zinc-100 bg-emerald-50/40 px-5 py-3 sm:px-6">
-            <h3 className="text-sm font-semibold text-emerald-900">{t.accepted(groups.accepted.length)}</h3>
-          </header>
-          {groups.accepted.length ? (
-            <ul className="divide-y divide-zinc-100">
-              {groups.accepted.map((invitation) => (
-                <AcceptedRow
-                  key={invitation.id}
-                  locale={locale}
-                  projectId={projectId}
-                  invitation={invitation}
-                  projectBudgetRange={projectBudgetRange}
-                />
-              ))}
-            </ul>
-          ) : (
-            <p className="px-6 py-8 text-center text-sm text-zinc-500">{t.emptyAccepted}</p>
-          )}
-        </section>
-      ) : null}
+      <div className="flex gap-1 overflow-x-auto border-b border-zinc-100 px-5 sm:px-6">
+        {tabs.map((tab) => {
+          const active = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              className={cn(
+                "relative shrink-0 px-1 py-3 text-xs font-medium transition sm:text-sm",
+                active ? "font-semibold text-violet-700" : "text-zinc-500 hover:text-zinc-800"
+              )}
+            >
+              {tab.label}
+              {active ? <span className="absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-violet-600" /> : null}
+            </button>
+          );
+        })}
+      </div>
 
-      {groups.pending.length > 0 ? (
-        <section className={cn(showSelection ? "border-t border-zinc-100" : "")}>
-          <header className="border-b border-zinc-100 bg-amber-50/30 px-5 py-3 sm:px-6">
-            <h3 className="text-sm font-semibold text-amber-900">{t.pending(groups.pending.length)}</h3>
-          </header>
-          <ul className="divide-y divide-zinc-100">
-            {groups.pending.map((invitation) => {
-              const creator = resolveCreatorForInvitation(invitation.creatorId);
-              const name = creator?.name ?? invitation.creatorId;
-              const etaHours = estimatePendingReplyHours(invitation.creatorId, invitation.id);
-              return (
-                <li key={invitation.id} className="flex items-center gap-3 px-5 py-4 sm:px-6">
-                  <span
-                    className={cn(
-                      "flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
-                      creatorAvatarTone(invitation.creatorId)
-                    )}
-                  >
-                    {creatorInitials(name, invitation.creatorId)}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-zinc-950">{name}</p>
-                    {creator?.headline ? (
-                      <p className="mt-0.5 line-clamp-1 text-xs text-zinc-500">{creator.headline}</p>
-                    ) : null}
-                  </div>
-                  <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-medium text-amber-700">
-                    <Clock className="h-3 w-3" />
-                    {formatPendingReplyEta(etaHours, locale)}
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
-        </section>
-      ) : showSelection ? (
-        <section className="border-t border-zinc-100">
-          <header className="border-b border-zinc-100 px-5 py-3 sm:px-6">
-            <h3 className="text-sm font-semibold text-zinc-700">{t.pending(0)}</h3>
-          </header>
-          <p className="px-6 py-6 text-center text-sm text-zinc-500">{t.emptyPending}</p>
-        </section>
-      ) : null}
+      {visibleInvitations.length ? (
+        <ul className="min-h-[280px] flex-1">
+          {visibleInvitations.map((invitation) => (
+            <CreatorReplyRow
+              key={invitation.id}
+              locale={locale}
+              invitation={invitation}
+              projectId={projectId}
+              projectBudgetRange={projectBudgetRange}
+              showActions={activeTab === "accepted"}
+            />
+          ))}
+        </ul>
+      ) : (
+        <p className="px-6 py-12 text-center text-sm text-zinc-500">{t.empty}</p>
+      )}
 
-      {groups.declined.length > 0 ? (
-        <details className="group border-t border-zinc-100">
-          <summary className="flex cursor-pointer list-none items-center justify-between bg-zinc-50/60 px-5 py-3 sm:px-6 [&::-webkit-details-marker]:hidden">
-            <h3 className="text-sm font-semibold text-zinc-600">{t.declined(groups.declined.length)}</h3>
-            <ChevronDown className="h-4 w-4 text-zinc-400 transition group-open:rotate-180" />
-          </summary>
-          <ul className="divide-y divide-zinc-100">
-            {groups.declined.map((invitation) => {
-              const creator = resolveCreatorForInvitation(invitation.creatorId);
-              const name = creator?.name ?? invitation.creatorId;
-              return (
-                <li key={invitation.id} className="flex items-center gap-3 px-5 py-3.5 sm:px-6">
-                  <span
-                    className={cn(
-                      "flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold opacity-60",
-                      creatorAvatarTone(invitation.creatorId)
-                    )}
-                  >
-                    {creatorInitials(name, invitation.creatorId)}
-                  </span>
-                  <div className="min-w-0">
-                    <p className="truncate text-sm text-zinc-600">{name}</p>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        </details>
-      ) : null}
+      <Link
+        href={withLocale(`/brand/projects/${projectId}?tab=match`, locale)}
+        className="mt-auto flex items-center gap-1 border-t border-zinc-100 px-5 py-3.5 text-sm font-medium text-violet-700 transition hover:bg-violet-50/50 sm:px-6"
+      >
+        {t.viewAll}
+        <ArrowRight className="h-4 w-4" />
+      </Link>
     </div>
   );
 }

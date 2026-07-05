@@ -9,13 +9,18 @@ import { logger } from "@/lib/core/logger";
 import { AiJobState, MAX_AI_RETRIES } from "@/features/shared/state-machines/ai-job.state-machine";
 import { prisma, hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { normalizeLanguageCode } from "@/features/i18n/language.constants";
+import type { WizardBriefSnapshot } from "@/lib/studioos/brand-wizard-brief-snapshot";
 
 export class AiWorkerService {
   private assertDb() {
     if (!hasDatabaseUrl()) throw appError("SYSTEM_ERROR", "DATABASE_URL not configured");
   }
 
-  async enqueueCreativeDirection(campaignId: string, actorUserId: string) {
+  async enqueueCreativeDirection(
+    campaignId: string,
+    actorUserId: string,
+    extras?: { briefSnapshot?: WizardBriefSnapshot; language?: string }
+  ) {
     this.assertDb();
     const campaign = await campaignRepository.findById(campaignId);
     if (!campaign) throw appError("NOT_FOUND", "Campaign not found");
@@ -23,7 +28,7 @@ export class AiWorkerService {
       where: { id: actorUserId },
       select: { languageCode: true, language: true }
     });
-    const language = normalizeLanguageCode(actor?.languageCode ?? actor?.language);
+    const language = normalizeLanguageCode(extras?.language ?? actor?.languageCode ?? actor?.language);
 
     return aiJobRepository.create({
       campaignId,
@@ -37,7 +42,8 @@ export class AiWorkerService {
         platform: campaign.platform,
         aspectRatio: campaign.aspectRatio,
         budget: Number(campaign.budget),
-        language
+        language,
+        ...(extras?.briefSnapshot ? { briefSnapshot: extras.briefSnapshot } : {})
       }
     });
   }
@@ -124,7 +130,11 @@ export class AiWorkerService {
     const campaign = await campaignRepository.findById(campaignId);
     if (!campaign) throw new Error("Campaign not found");
 
-    const input = job.inputJson as { actorUserId?: string; language?: string };
+    const input = job.inputJson as {
+      actorUserId?: string;
+      language?: string;
+      briefSnapshot?: WizardBriefSnapshot;
+    };
     const actorUserId = String(input.actorUserId ?? campaign.brandId);
     const language = normalizeLanguageCode(input.language);
     const actor = { id: actorUserId, role: "BRAND" as const };
@@ -135,7 +145,10 @@ export class AiWorkerService {
       await campaignService.transition(campaignId, CampaignEvent.START_AI, actor);
     }
 
-    const result = await runCreativeDirectionJob(campaign, { language });
+    const result = await runCreativeDirectionJob(campaign, {
+      language,
+      briefSnapshot: input.briefSnapshot ?? null
+    });
 
     const brief = {
       ...((campaign.productionBrief as Record<string, unknown> | null) ?? {}),

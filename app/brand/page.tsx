@@ -4,10 +4,9 @@ import { BrandWorkspaceOverview } from "@/components/studioos/brand-workspace-ov
 import { DEMO_SESSION_COOKIE } from "@/lib/auth-config";
 import { parseDemoSession } from "@/lib/demo-auth";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
-import { listOrdersForClient } from "@/lib/order-service";
-import { listProjectsForClient } from "@/lib/project-service";
-import { resolveBrandDisplayName } from "@/lib/studioos/brand-account-display";
+import { getBrandPortalDisplayName, getBrandPortalOrders, getBrandPortalProjects } from "@/lib/studioos/brand-portal-data";
 import { toBrandProjectRows } from "@/lib/studioos/brand-dashboard";
+import { pickLatestEphemeralWizardProject } from "@/lib/studioos/brand-wizard-session";
 
 export default async function BrandHomePage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const query = await searchParams;
@@ -20,9 +19,12 @@ export default async function BrandHomePage({ searchParams }: { searchParams: Pr
   }
 
   const clientEmail = session.email.toLowerCase();
-  const brandName = await resolveBrandDisplayName(clientEmail);
-  const orders = await listOrdersForClient(clientEmail);
-  const projects = await listProjectsForClient(clientEmail);
+  const [brandName, orders, projects] = await Promise.all([
+    getBrandPortalDisplayName(clientEmail),
+    getBrandPortalOrders(clientEmail),
+    getBrandPortalProjects(clientEmail)
+  ]);
+  const wizardProject = pickLatestEphemeralWizardProject(projects);
   const rows = toBrandProjectRows(orders, projects, locale);
   const orderProjectMap = Object.fromEntries(orders.map((order) => [order.id, order.project_id]));
   const startBriefError =
@@ -48,6 +50,7 @@ export default async function BrandHomePage({ searchParams }: { searchParams: Pr
         name={brandName}
         rows={rows}
         orderProjectMap={orderProjectMap}
+        wizardProjectId={wizardProject?.id}
       />
     </div>
   );

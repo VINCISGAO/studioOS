@@ -58,7 +58,7 @@ export async function POST(request: Request) {
 
     if (action === "revoke_session" && typeof record?.sessionId === "string") {
       const result = await revokeAdminSessionById({
-        adminProfileId: profile.id,
+        adminUserId: profile.id,
         sessionId: record.sessionId,
         currentToken: token
       });
@@ -76,7 +76,7 @@ export async function POST(request: Request) {
     if (action === "delete_passkey" && typeof record?.credentialRowId === "string") {
       assertPasskeyStepUp(profile, token);
       const result = await deleteAdminPasskey({
-        adminProfileId: profile.id,
+        adminUserId: profile.id,
         credentialRowId: record.credentialRowId
       });
       return NextResponse.json(result, { status: result.ok ? 200 : 404 });

@@ -27,6 +27,16 @@ function withLang(url: URL, request: NextRequest) {
   return url;
 }
 
+/** Next.js RSC / Server Action / prefetch — must not receive HTML redirects. */
+function isNextInternalNavigationRequest(request: NextRequest) {
+  return (
+    request.headers.get("RSC") === "1" ||
+    request.headers.get("Next-Router-Prefetch") === "1" ||
+    request.headers.get("Next-Action") !== null ||
+    request.nextUrl.searchParams.has("_rsc")
+  );
+}
+
 function isAuthMutationPath(pathname: string) {
   if (pathname.startsWith("/api/auth/oauth/") || pathname.startsWith("/api/admin/auth/")) {
     return false;
@@ -103,14 +113,18 @@ export async function middleware(request: NextRequest) {
 
   if (!isApiRoute) {
     const sanitized = sanitizeBrokenLocaleSearch(request);
-    if (sanitized) {
+    if (sanitized && !isNextInternalNavigationRequest(request)) {
       return sanitized;
     }
   }
 
   // Fix broken links like /?lang%3Dzh → /?lang=zh
   const rawSearch = request.nextUrl.search;
-  if (!isApiRoute && (rawSearch === "?lang%3Dzh" || rawSearch === "?lang%3Den")) {
+  if (
+    !isApiRoute &&
+    !isNextInternalNavigationRequest(request) &&
+    (rawSearch === "?lang%3Dzh" || rawSearch === "?lang%3Den")
+  ) {
     const url = request.nextUrl.clone();
     url.search = rawSearch.includes("zh") ? "?lang=zh" : "?lang=en";
     return NextResponse.redirect(url);
@@ -119,7 +133,7 @@ export async function middleware(request: NextRequest) {
   const langParam = request.nextUrl.searchParams.get("lang");
   const savedLang = request.cookies.get(LOCALE_COOKIE)?.value;
 
-  if (!isApiRoute && !langParam && (savedLang === "zh" || savedLang === "en")) {
+  if (!isApiRoute && !langParam && !isNextInternalNavigationRequest(request) && (savedLang === "zh" || savedLang === "en")) {
     const url = request.nextUrl.clone();
     url.searchParams.set("lang", savedLang);
     return NextResponse.redirect(url);

@@ -29,7 +29,7 @@ export async function POST(request: Request) {
     const sessionToken = await readAdminSessionToken();
     assertPasskeyStepUp(profile, sessionToken);
     const result = await finishAdminPasskeyRegistration({
-      adminProfileId: profile.id,
+      adminUserId: profile.id,
       response,
       label
     });

@@ -8,6 +8,7 @@ import { campaignService } from "@/features/campaign/campaign.service";
 import { CampaignEvent, CampaignState } from "@/features/campaign/campaign.state-machine";
 import type { AuthUser } from "@/features/auth/permission.service";
 import { PermissionService } from "@/features/auth/permission.service";
+import type { WizardBriefSnapshot } from "@/lib/studioos/brand-wizard-brief-snapshot";
 import { memoryRepository } from "@/features/memory/memory.repository";
 import { notificationService } from "@/features/notification/notification.service";
 import { appError } from "@/lib/core/errors";
@@ -131,6 +132,12 @@ export class CreativeDirectionService {
     return Array.isArray(brief.creative_directions) ? brief.creative_directions : [];
   }
 
+  async listDirections(campaignId: string, user: AuthUser) {
+    const campaign = await this.getCampaignForBrand(campaignId, user);
+    PermissionService.assert(user, "campaign.read");
+    return this.readDirections(campaign);
+  }
+
   async generate(campaignId: string, user: AuthUser) {
     const campaign = await this.getCampaignForBrand(campaignId, user);
     PermissionService.assert(user, "campaign.update");
@@ -212,37 +219,46 @@ export class CreativeDirectionService {
     return directions;
   }
 
-  async generateAsync(campaignId: string, user: AuthUser) {
+  async generateAsync(
+    campaignId: string,
+    user: AuthUser,
+    options?: { wizardFastPath?: boolean; briefSnapshot?: WizardBriefSnapshot; language?: string }
+  ) {
     const campaign = await this.getCampaignForBrand(campaignId, user);
     PermissionService.assert(user, "campaign.update");
 
     const actor = { id: user.id, role: user.role };
     if (campaign.status === CampaignState.DRAFT) {
       await campaignService.transition(campaignId, CampaignEvent.START_AI, actor);
-      await activityService.write(campaignId, "ai.analysis_started", {
-        userId: user.id,
-        email: user.id,
-        role: "brand"
-      }, {
-        campaignStatus: CampaignState.AI_PROCESSING
-      });
-      await recordCampaignAiEvidence({
-        campaign,
-        eventType: "AIAnalysisStarted",
-        learningType: "creative_analysis_started",
-        payload: { campaignId, title: campaign.title, platform: campaign.platform },
-        after: { status: CampaignState.AI_PROCESSING },
-        memoryKey: "analysis_status",
-        memoryValue: "AI_ANALYZING"
-      });
-      await notifyBrandAiProgress(campaign, {
-        title: "AI is analyzing your campaign",
-        content: `StudioOS is analyzing "${campaign.title}" and preparing creative directions.`,
-        template: "ai.analysis_started"
-      });
+      if (!options?.wizardFastPath) {
+        await activityService.write(campaignId, "ai.analysis_started", {
+          userId: user.id,
+          email: user.id,
+          role: "brand"
+        }, {
+          campaignStatus: CampaignState.AI_PROCESSING
+        });
+        await recordCampaignAiEvidence({
+          campaign,
+          eventType: "AIAnalysisStarted",
+          learningType: "creative_analysis_started",
+          payload: { campaignId, title: campaign.title, platform: campaign.platform },
+          after: { status: CampaignState.AI_PROCESSING },
+          memoryKey: "analysis_status",
+          memoryValue: "AI_ANALYZING"
+        });
+        await notifyBrandAiProgress(campaign, {
+          title: "AI is analyzing your campaign",
+          content: `StudioOS is analyzing "${campaign.title}" and preparing creative directions.`,
+          template: "ai.analysis_started"
+        });
+      }
     }
 
-    const job = await aiWorkerService.enqueueCreativeDirection(campaignId, user.id);
+    const job = await aiWorkerService.enqueueCreativeDirection(campaignId, user.id, {
+      briefSnapshot: options?.briefSnapshot,
+      language: options?.language
+    });
     aiWorkerService.scheduleProcess(job.id);
 
     return {

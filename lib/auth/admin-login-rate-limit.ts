@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { adminAuthAuditRepository } from "@/features/admin/auth/admin-auth-audit.repository";
-import { adminProfileRepository } from "@/features/admin/auth/admin-profile.repository";
+import { adminUserRepository } from "@/features/admin/auth/admin-user.repository";
 import { adminRequestContext } from "@/lib/auth/admin-request-context";
 import { appError } from "@/lib/core/errors";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
@@ -97,7 +97,7 @@ async function enforceDbLoginLimit(input: {
 export async function enforceAdminLoginRateLimit(request: Request, email: string) {
   const ctx = adminRequestContext(request);
   const normalizedEmail = email.trim().toLowerCase();
-  const isMaster = await adminProfileRepository.isMasterLoginEmail(normalizedEmail);
+  const isMaster = await adminUserRepository.isMasterLoginEmail(normalizedEmail);
 
   if (hasDatabaseUrl()) {
     await enforceDbLoginLimit({

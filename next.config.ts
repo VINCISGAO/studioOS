@@ -11,7 +11,10 @@ const nextConfig: NextConfig = {
   experimental: {
     serverActions: {
       bodySizeLimit: "320mb"
-    }
+    },
+    // Avoid race where page-data collection starts before some app routes finish compiling
+    // (PageNotFoundError: Cannot find module for page /admin/* during `next build`).
+    webpackBuildWorker: false
   },
   images: {
     localPatterns: [

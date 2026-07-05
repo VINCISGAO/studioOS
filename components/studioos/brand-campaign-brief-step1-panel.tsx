@@ -407,7 +407,7 @@ export function BrandCampaignBriefStep1Panel(props: BrandCampaignBriefStep1Panel
             />
             <button
               type="button"
-              disabled={isUploading || isPending}
+              disabled={isPending || (isUploading && !productReady)}
               onClick={onUploadClick}
               className={cn(
                 "flex min-h-[132px] w-full flex-col items-center justify-center rounded-2xl border border-dashed px-4 py-6 text-center transition",
@@ -429,7 +429,13 @@ export function BrandCampaignBriefStep1Panel(props: BrandCampaignBriefStep1Panel
                 </div>
               )}
               <p className="text-sm font-medium text-zinc-800">
-                {isUploading ? t.uploading : productReady ? t.uploaded : t.clickToUploadDrag}
+                {productReady
+                  ? isUploading
+                    ? t.savingPhoto
+                    : t.uploaded
+                  : isUploading
+                    ? t.uploading
+                    : t.clickToUploadDrag}
               </p>
               {!productReady && !isUploading ? (
                 <p className="mt-1 text-xs text-zinc-400">{t.formats}</p>

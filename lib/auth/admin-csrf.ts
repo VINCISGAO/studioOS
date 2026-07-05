@@ -15,7 +15,7 @@ export function adminCsrfCookieOptions(maxAgeSec: number) {
   return {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "strict" as const,
+    sameSite: "lax" as const,
     path: "/",
     maxAge: maxAgeSec
   };

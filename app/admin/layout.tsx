@@ -6,6 +6,8 @@ import { clearAdminSessionCookie, readAdminSessionToken } from "@/features/admin
 import { buildAdminCsrfToken } from "@/lib/auth/admin-csrf";
 import { getLocale, withLocale } from "@/lib/i18n";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const headerList = await (await import("next/headers")).headers();
   const pathname = headerList.get("x-pathname") ?? "/admin";

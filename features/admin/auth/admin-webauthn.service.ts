@@ -12,12 +12,11 @@ import type {
   RegistrationResponseJSON
 } from "@simplewebauthn/server";
 import { cookies } from "next/headers";
-import { adminProfileRepository } from "@/features/admin/auth/admin-profile.repository";
+import { adminUserRepository } from "@/features/admin/auth/admin-user.repository";
 import { completeAdminLogin } from "@/features/admin/auth/admin-auth.service";
 import { adminAuthAuditRepository } from "@/features/admin/auth/admin-auth-audit.repository";
 import { adminRequestContext } from "@/lib/auth/admin-request-context";
 import { getAdminPasskeyConfig } from "@/lib/auth/admin-passkey-config";
-import { isPrismaAdminRole } from "@/lib/auth/route-access";
 import { prisma, hasDatabaseUrl } from "@/lib/core/database/prisma";
 import type { Locale } from "@/lib/i18n";
 
@@ -26,7 +25,7 @@ const CHALLENGE_TTL_SEC = 5 * 60;
 
 type PendingChallenge = {
   challenge: string;
-  adminProfileId: string;
+  adminUserId: string;
   email: string;
   purpose: "login" | "register";
 };
@@ -59,7 +58,7 @@ async function consumeChallenge(expectedPurpose: PendingChallenge["purpose"]) {
 
   try {
     const parsed = JSON.parse(raw) as PendingChallenge;
-    if (parsed.purpose !== expectedPurpose || !parsed.challenge || !parsed.adminProfileId) {
+    if (parsed.purpose !== expectedPurpose || !parsed.challenge || !parsed.adminUserId) {
       return null;
     }
     return parsed;
@@ -72,13 +71,13 @@ export async function beginAdminPasskeyLogin(input: { request: Request; email: s
   if (!hasDatabaseUrl()) return { ok: false as const, error: "unavailable" as const };
 
   const email = input.email.trim().toLowerCase();
-  const profile = await adminProfileRepository.findLoginCandidateByEmail(email);
-  if (!profile || !isPrismaAdminRole(profile.user.role) || profile.status !== "ACTIVE") {
+  const profile = await adminUserRepository.findLoginCandidateByEmail(email);
+  if (!profile || profile.status !== "ACTIVE") {
     return { ok: false as const, error: "not_found" as const };
   }
 
   const credentials = await prisma.adminWebAuthnCredential.findMany({
-    where: { adminProfileId: profile.id },
+    where: { adminUserId: profile.id },
     select: { credentialId: true, transports: true }
   });
 
@@ -98,7 +97,7 @@ export async function beginAdminPasskeyLogin(input: { request: Request; email: s
 
   await storeChallenge({
     challenge: options.challenge,
-    adminProfileId: profile.id,
+    adminUserId: profile.id,
     email,
     purpose: "login"
   });
@@ -119,15 +118,15 @@ export async function finishAdminPasskeyLogin(input: {
   const email = input.email.trim().toLowerCase();
   if (email !== pending.email) return { ok: false as const, error: "challenge_expired" as const };
 
-  const profile = await adminProfileRepository.findLoginCandidateByEmail(email);
-  if (!profile || profile.id !== pending.adminProfileId) {
+  const profile = await adminUserRepository.findLoginCandidateByEmail(email);
+  if (!profile || profile.id !== pending.adminUserId) {
     return { ok: false as const, error: "not_found" as const };
   }
 
   const credential = await prisma.adminWebAuthnCredential.findUnique({
     where: { credentialId: input.response.id }
   });
-  if (!credential || credential.adminProfileId !== profile.id) {
+  if (!credential || credential.adminUserId !== profile.id) {
     return { ok: false as const, error: "invalid_credential" as const };
   }
 
@@ -170,12 +169,12 @@ export async function finishAdminPasskeyLogin(input: {
 }
 
 export async function beginAdminPasskeyRegistration(input: {
-  adminProfileId: string;
+  adminUserId: string;
   email: string;
 }) {
   const { rpID, rpName, origin } = getAdminPasskeyConfig();
   const existing = await prisma.adminWebAuthnCredential.findMany({
-    where: { adminProfileId: input.adminProfileId },
+    where: { adminUserId: input.adminUserId },
     select: { credentialId: true, transports: true }
   });
 
@@ -195,7 +194,7 @@ export async function beginAdminPasskeyRegistration(input: {
 
   await storeChallenge({
     challenge: options.challenge,
-    adminProfileId: input.adminProfileId,
+    adminUserId: input.adminUserId,
     email: input.email,
     purpose: "register"
   });
@@ -204,12 +203,12 @@ export async function beginAdminPasskeyRegistration(input: {
 }
 
 export async function finishAdminPasskeyRegistration(input: {
-  adminProfileId: string;
+  adminUserId: string;
   response: RegistrationResponseJSON;
   label?: string;
 }) {
   const pending = await consumeChallenge("register");
-  if (!pending || pending.adminProfileId !== input.adminProfileId) {
+  if (!pending || pending.adminUserId !== input.adminUserId) {
     return { ok: false as const, error: "challenge_expired" as const };
   }
 
@@ -229,7 +228,7 @@ export async function finishAdminPasskeyRegistration(input: {
 
   await prisma.adminWebAuthnCredential.create({
     data: {
-      adminProfileId: input.adminProfileId,
+      adminUserId: input.adminUserId,
       credentialId: credential.id,
       publicKey: Buffer.from(credential.publicKey),
       counter: BigInt(credential.counter),
@@ -244,9 +243,9 @@ export async function finishAdminPasskeyRegistration(input: {
   return { ok: true as const };
 }
 
-export async function listAdminPasskeys(adminProfileId: string) {
+export async function listAdminPasskeys(adminUserId: string) {
   const rows = await prisma.adminWebAuthnCredential.findMany({
-    where: { adminProfileId },
+    where: { adminUserId },
     orderBy: { createdAt: "desc" },
     select: {
       id: true,
@@ -268,9 +267,9 @@ export async function listAdminPasskeys(adminProfileId: string) {
   }));
 }
 
-export async function deleteAdminPasskey(input: { adminProfileId: string; credentialRowId: string }) {
+export async function deleteAdminPasskey(input: { adminUserId: string; credentialRowId: string }) {
   const row = await prisma.adminWebAuthnCredential.findFirst({
-    where: { id: input.credentialRowId, adminProfileId: input.adminProfileId }
+    where: { id: input.credentialRowId, adminUserId: input.adminUserId }
   });
   if (!row) return { ok: false as const, error: "not_found" as const };
 
@@ -278,6 +277,6 @@ export async function deleteAdminPasskey(input: { adminProfileId: string; creden
   return { ok: true as const };
 }
 
-export async function countAdminPasskeys(adminProfileId: string) {
-  return prisma.adminWebAuthnCredential.count({ where: { adminProfileId } });
+export async function countAdminPasskeys(adminUserId: string) {
+  return prisma.adminWebAuthnCredential.count({ where: { adminUserId } });
 }

@@ -29,19 +29,18 @@ function toBase32(bytes: Buffer) {
   return output;
 }
 
-type AdminProfilePermissions = Record<string, unknown>;
+type AdminUserPermissions = Record<string, unknown>;
 
-function readPermissions(raw: unknown): AdminProfilePermissions {
-  return raw && typeof raw === "object" ? (raw as AdminProfilePermissions) : {};
+function readPermissions(raw: unknown): AdminUserPermissions {
+  return raw && typeof raw === "object" ? (raw as AdminUserPermissions) : {};
 }
 
 async function loadPendingProfile(token: string) {
   const parsed = verifyAdminSetupToken(token);
   if (!parsed) return null;
 
-  const profile = await prisma.adminProfile.findUnique({
-    where: { id: parsed.adminProfileId },
-    include: { user: true }
+  const profile = await prisma.adminUser.findUnique({
+    where: { id: parsed.adminUserId }
   });
 
   if (!profile || profile.status !== "PENDING_TOTP" || profile.totpEnabled) return null;
@@ -53,15 +52,15 @@ async function loadPendingProfile(token: string) {
 }
 
 async function claimSetupDeviceBinding(
-  profileId: string,
+  adminUserId: string,
   ctx: ReturnType<typeof adminRequestContext>
 ): Promise<
   | { ok: false; error: "invalid_or_expired" | "device_mismatch" }
-  | { ok: true; permissions: AdminProfilePermissions }
+  | { ok: true; permissions: AdminUserPermissions }
 > {
   return prisma.$transaction(async (tx) => {
     const rows = await tx.$queryRaw<Array<{ permissions: Prisma.JsonValue }>>`
-      SELECT permissions FROM admin_profiles WHERE id = ${profileId} FOR UPDATE
+      SELECT permissions FROM admin_users WHERE id = ${adminUserId} FOR UPDATE
     `;
     const row = rows[0];
     if (!row) return { ok: false as const, error: "invalid_or_expired" as const };
@@ -84,8 +83,8 @@ async function claimSetupDeviceBinding(
       setupBindUserAgentHash: ctx.userAgentHash
     };
 
-    await tx.adminProfile.update({
-      where: { id: profileId },
+    await tx.adminUser.update({
+      where: { id: adminUserId },
       data: { permissions: nextPermissions as Prisma.InputJsonValue }
     });
 
@@ -108,7 +107,7 @@ export async function getAdminSetupTotpChallenge(token: string, request: Request
   if (secretAlreadyIssued) {
     return {
       ok: true as const,
-      email: profile.user.email,
+      email: profile.email,
       secretAlreadyIssued: true as const
     };
   }
@@ -124,7 +123,7 @@ export async function getAdminSetupTotpChallenge(token: string, request: Request
   const secret = decryptTotpSecret(pendingSecretEnc);
   const issuedAt = new Date().toISOString();
 
-  await prisma.adminProfile.update({
+  await prisma.adminUser.update({
     where: { id: profile.id },
     data: {
       permissions: {
@@ -137,9 +136,9 @@ export async function getAdminSetupTotpChallenge(token: string, request: Request
 
   return {
     ok: true as const,
-    email: profile.user.email,
+    email: profile.email,
     secretAlreadyIssued: false as const,
-    otpauthUri: buildAdminTotpOtpAuthUri(profile.user.email, secret)
+    otpauthUri: buildAdminTotpOtpAuthUri(profile.email, secret)
   };
 }
 
@@ -174,7 +173,7 @@ export async function completeAdminSetupTotp(input: {
   }
 
   const valid = await verifyAndConsumeAdminTotp({
-    adminProfileId: profile.id,
+    adminUserId: profile.id,
     secret,
     code: input.code,
     purpose: "setup"
@@ -183,9 +182,8 @@ export async function completeAdminSetupTotp(input: {
     void adminAuthAuditRepository.write({
       event: "admin_setup_totp_failed",
       success: false,
-      email: profile.user.email,
-      adminId: profile.user.id,
-      adminProfileId: profile.id,
+      email: profile.email,
+      adminUserId: profile.id,
       ipHash: ctx.ipHash,
       userAgentHash: ctx.userAgentHash,
       failureReason: "invalid_totp"
@@ -202,7 +200,7 @@ export async function completeAdminSetupTotp(input: {
     ...restPermissions
   } = boundPermissions;
 
-  await prisma.adminProfile.update({
+  await prisma.adminUser.update({
     where: { id: profile.id },
     data: {
       status: "ACTIVE",
@@ -216,13 +214,12 @@ export async function completeAdminSetupTotp(input: {
   await adminAuthAuditRepository.write({
     event: "admin_sensitive_action",
     success: true,
-    email: profile.user.email,
-    adminId: profile.user.id,
-    adminProfileId: profile.id,
+    email: profile.email,
+    adminUserId: profile.id,
     ipHash: ctx.ipHash,
     userAgentHash: ctx.userAgentHash,
     metadata: { action: "admin_totp_bound" }
   });
 
-  return { ok: true as const, email: profile.user.email };
+  return { ok: true as const, email: profile.email };
 }

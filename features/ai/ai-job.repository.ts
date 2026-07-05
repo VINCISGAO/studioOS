@@ -35,6 +35,25 @@ export class AiJobRepository {
     });
   }
 
+  async findActiveForCampaign(campaignId: string, type: string) {
+    if (!hasDatabaseUrl()) return null;
+    return prisma.aiJob.findFirst({
+      where: {
+        campaignId,
+        type,
+        status: { in: ["QUEUED", "RUNNING", "RETRYING"] }
+      },
+      orderBy: { createdAt: "desc" }
+    });
+  }
+
+  async updateInputJson(id: string, inputJson: Record<string, unknown>) {
+    return prisma.aiJob.update({
+      where: { id },
+      data: { inputJson: asInputJson(inputJson)! }
+    });
+  }
+
   async claimNext(): Promise<AiJob | null> {
     const job = await prisma.aiJob.findFirst({
       where: { status: { in: ["QUEUED", "RETRYING"] } },

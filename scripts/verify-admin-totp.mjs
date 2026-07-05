@@ -69,12 +69,11 @@ async function main() {
   const codeArg = process.argv[3]?.replace(/\s/g, "") ?? "";
   const prisma = new PrismaClient();
   try {
-    const profile = await prisma.adminProfile.findFirst({
-      where: { user: { email } },
-      include: { user: true }
+    const profile = await prisma.adminUser.findFirst({
+      where: { email, deletedAt: null }
     });
     if (!profile) {
-      console.error("No admin profile for", email);
+      console.error("No admin user for", email);
       process.exit(1);
     }
     console.log("Profile:", {

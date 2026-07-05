@@ -36,6 +36,25 @@ export class BrandCampaignRepository {
     });
   }
 
+  /** Lightweight lookup for asset uploads — skips loading all campaign assets. */
+  async findUploadContextByLegacyProjectId(legacyProjectId: string) {
+    this.assertDb();
+    return prisma.campaign.findFirst({
+      where: {
+        deletedAt: null,
+        productionBrief: {
+          path: ["legacy_project_id"],
+          equals: legacyProjectId
+        }
+      },
+      select: {
+        id: true,
+        brandId: true,
+        brand: { select: { email: true } }
+      }
+    });
+  }
+
   async listByBrandEmail(email: string) {
     this.assertDb();
     const user = await userRepository.findByEmail(email.toLowerCase());

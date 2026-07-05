@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Suspense } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { PortalMobileNav } from "@/components/studioos/portal-mobile-nav";
 import { LanguageSwitcher, LanguageSwitcherFallback } from "@/components/language-switcher";
 import { MarketingHomeLink } from "@/components/studioos/marketing-home-link";
@@ -11,10 +11,12 @@ import { PortalSidebarAccountMenu } from "@/components/studioos/portal-sidebar-a
 import { brandNav, studioOS } from "@/lib/studioos/vocabulary";
 import { brandPortalNavItems, type BrandPortalNavItem } from "@/lib/studioos/brand-portal-nav";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
+import { readBrandWizardStepFromLocation } from "@/lib/studioos/instant-nav";
 import {
   isBrandPortalFocusRoute,
   isBrandPortalProjectReviewRoute,
-  isBrandPortalWizardCreateRoute
+  isBrandPortalWizardCreateRoute,
+  parseReviewSearchParams
 } from "@/lib/studioos/portal-focus-mode";
 import { PortalShellChromeProvider } from "@/components/studioos/portal-shell-chrome-context";
 import {
@@ -80,6 +82,7 @@ function BrandPortalShellInner({
   children: React.ReactNode;
 }) {
   const pathname = usePathname() ?? pathnameProp ?? "/brand";
+  const [locationHash, setLocationHash] = useState("");
   const { isFocusMode: isReviewFocusMode } = usePortalReviewFocus();
   const nav = brandNav[locale];
   const initials = brandAccount ? brandInitials(brandAccount.name) : "BR";
@@ -87,6 +90,11 @@ function BrandPortalShellInner({
   const isProjectReview = isBrandPortalProjectReviewRoute(pathname);
   const focusRoute = isBrandPortalFocusRoute(pathname);
   const isWizardCreate = isBrandPortalWizardCreateRoute(pathname);
+  const [brandWizardStep, setBrandWizardStep] = useState(() => {
+    if (!isBrandPortalWizardCreateRoute(pathname)) return 1;
+    return Number(parseReviewSearchParams(search).get("step")) || 1;
+  });
+  const isWizardStep2 = isWizardCreate && brandWizardStep === 2;
   const isProfileEditorPage = pathname === brandPortalRoutes.brandProfile || pathname === brandPortalRoutes.profile;
   const portalChrome = {
     initials,
@@ -98,6 +106,32 @@ function BrandPortalShellInner({
     messagesHref: brandPortalRoutes.messages
   };
 
+  useEffect(() => {
+    const syncHash = () => setLocationHash(window.location.hash);
+    syncHash();
+    window.addEventListener("hashchange", syncHash);
+    return () => window.removeEventListener("hashchange", syncHash);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!isWizardCreate) return;
+    const syncStep = () => setBrandWizardStep(readBrandWizardStepFromLocation());
+    syncStep();
+    window.addEventListener("brand-wizard-step", syncStep);
+    window.addEventListener("popstate", syncStep);
+    return () => {
+      window.removeEventListener("brand-wizard-step", syncStep);
+      window.removeEventListener("popstate", syncStep);
+    };
+  }, [isWizardCreate, pathname]);
+
+  const scrollToMyAds = useCallback(() => {
+    document.getElementById("my-ads")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    const url = withLocale(`${brandPortalRoutes.dashboard}#my-ads`, locale);
+    window.history.replaceState(window.history.state, "", url);
+    setLocationHash("#my-ads");
+  }, [locale]);
+
   if (isProjectReview && isReviewFocusMode) {
     return (
       <PortalShellChromeProvider value={portalChrome}>
@@ -108,10 +142,14 @@ function BrandPortalShellInner({
 
   function isActive(item: BrandPortalNavItem) {
     if (item.labelKey === "workspace") {
-      return pathname === brandPortalRoutes.dashboard;
+      return pathname === brandPortalRoutes.dashboard && locationHash !== "#my-ads";
     }
     if (item.labelKey === "adRequirements") {
-      return pathname === brandPortalRoutes.campaigns || pathname.startsWith("/brand/campaigns/");
+      return (
+        pathname === brandPortalRoutes.campaigns ||
+        pathname.startsWith("/brand/campaigns/") ||
+        (pathname === brandPortalRoutes.dashboard && locationHash === "#my-ads")
+      );
     }
     if (item.labelKey === "team") {
       return pathname === brandPortalRoutes.brandTeam || pathname === brandPortalRoutes.team;
@@ -221,6 +259,21 @@ function BrandPortalShellInner({
                   </div>
                 );
               }
+              if (item.labelKey === "adRequirements" && pathname === brandPortalRoutes.dashboard) {
+                return (
+                  <button
+                    key={item.href + item.labelKey}
+                    type="button"
+                    onClick={scrollToMyAds}
+                    className={sidebarLinkClass(active, false)}
+                  >
+                    <Icon className="h-[18px] w-[18px] shrink-0" />
+                    <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
+                      <span>{nav[item.labelKey]}</span>
+                    </span>
+                  </button>
+                );
+              }
               return (
                 <Link
                   key={item.href + item.labelKey}
@@ -324,7 +377,17 @@ function BrandPortalShellInner({
                       id: labelKey,
                       href,
                       label: nav[labelKey],
-                      iconKey: mobileIconKey
+                      iconKey: mobileIconKey,
+                      onClick:
+                        labelKey === "adRequirements" && pathname === brandPortalRoutes.dashboard
+                          ? scrollToMyAds
+                          : undefined,
+                      active:
+                        labelKey === "workspace"
+                          ? pathname === brandPortalRoutes.dashboard && locationHash !== "#my-ads"
+                          : labelKey === "adRequirements"
+                            ? pathname === brandPortalRoutes.dashboard && locationHash === "#my-ads"
+                            : undefined
                     }))}
                 />
               </div>
@@ -337,10 +400,16 @@ function BrandPortalShellInner({
               "min-h-0 min-w-0 flex-1",
               isProjectReview
                 ? "flex w-full flex-col overflow-hidden p-0"
-                : cn(
-                    "mx-auto w-full px-4 py-6 sm:px-6 lg:px-8 lg:py-8 lg:overflow-y-auto",
-                    isProfileEditorPage ? "max-w-none" : focusRoute ? "max-w-[920px] lg:max-w-[1280px]" : "max-w-[1280px]"
-                  )
+                : isWizardStep2
+                  ? "mx-auto flex w-full max-w-none flex-col overflow-y-auto p-0"
+                  : cn(
+                      "mx-auto w-full px-4 py-6 sm:px-6 lg:px-8 lg:py-8 lg:overflow-y-auto",
+                      isProfileEditorPage || isWizardCreate
+                        ? "max-w-none"
+                        : focusRoute
+                          ? "max-w-[920px] lg:max-w-[1280px]"
+                          : "max-w-[1280px]"
+                    )
             )}
           >
             {children}

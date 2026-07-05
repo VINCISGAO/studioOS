@@ -48,6 +48,13 @@ async function parseFormInput(request: Request, providerRaw: string) {
   };
 }
 
+function oauthStartRedirect(target: string, request: Request) {
+  const url = target.startsWith("http") ? target : new URL(target, request.url);
+  // POST form → OAuth provider must use 303 so the browser follows with GET.
+  // Default 307 would re-POST to Google/Alipay and trigger a file download.
+  return NextResponse.redirect(url, 303);
+}
+
 async function handleOAuthStart(request: Request, providerRaw: string) {
   const parsed =
     request.method === "GET"
@@ -55,7 +62,7 @@ async function handleOAuthStart(request: Request, providerRaw: string) {
       : await parseFormInput(request, providerRaw);
 
   if (!parsed || !supportedProviders.has(parsed.provider)) {
-    return NextResponse.redirect(new URL("/login?error=unsupported-provider", request.url));
+    return oauthStartRedirect("/login?error=unsupported-provider", request);
   }
 
   const destination = await startOAuthSignIn({
@@ -67,7 +74,7 @@ async function handleOAuthStart(request: Request, providerRaw: string) {
   });
 
   if (typeof destination !== "string" && destination.kind === "alipay") {
-    const response = NextResponse.redirect(destination.authorizeUrl);
+    const response = oauthStartRedirect(destination.authorizeUrl, request);
     response.cookies.set(
       ALIPAY_OAUTH_PENDING_COOKIE,
       destination.pendingCookie,
@@ -77,7 +84,7 @@ async function handleOAuthStart(request: Request, providerRaw: string) {
   }
 
   const target = typeof destination === "string" ? destination : destination.authorizeUrl;
-  return NextResponse.redirect(target.startsWith("http") ? target : new URL(target, request.url));
+  return oauthStartRedirect(target, request);
 }
 
 export async function GET(

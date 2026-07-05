@@ -108,6 +108,15 @@ function isWizardMetadataPatch(patch: UpdateProjectInput): boolean {
   return keys.length > 0 && keys.every((key) => ["settings_json", "wizard_step", "wizard_completed_steps"].includes(key));
 }
 
+const BRAND_WIZARD_EDIT_STATUSES = ["DRAFT", "AI_PROCESSING", "CREATIVE_READY", "CREATIVE_APPROVED"] as const;
+
+/** Step 1 setup saves questionnaire + product fields while the user is still in the wizard. */
+function isBrandWizardSetupPatch(patch: UpdateProjectInput): boolean {
+  if (isWizardMetadataPatch(patch)) return true;
+  const settings = patch.settings_json as Record<string, unknown> | undefined;
+  return Boolean(settings && "brand_questionnaire" in settings);
+}
+
 /** Brand wizard portal — legacy `proj_*` URLs mapped to Prisma campaigns. */
 export class CampaignBrandPortalService {
   isEnabled() {
@@ -233,9 +242,7 @@ export class CampaignBrandPortalService {
 
     const campaign = await this.loadCampaignForStatuses(
       legacyProjectId,
-      isWizardMetadataPatch(patch)
-        ? ["DRAFT", "AI_PROCESSING", "CREATIVE_READY", "CREATIVE_APPROVED"]
-        : ["DRAFT"]
+      isBrandWizardSetupPatch(patch) ? [...BRAND_WIZARD_EDIT_STATUSES] : ["DRAFT"]
     );
     const productionBrief = mergeBrief(campaign.productionBrief, patch);
     const campaignMemory = mergeMemory(campaign.campaignMemoryJson, patch);

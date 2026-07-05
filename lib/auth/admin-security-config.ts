@@ -33,7 +33,8 @@ export function assertAuthSecuritySecret() {
 export function isStrictAdminSessionBinding() {
   if (process.env.ADMIN_SESSION_STRICT_BIND === "0") return false;
   if (process.env.ADMIN_SESSION_STRICT_BIND === "1") return true;
-  return isProductionRuntime();
+  // Local dev (even with VERCEL=1 in .env) must not bind sessions to IP/UA — headers differ between fetch and RSC.
+  return process.env.NODE_ENV === "production";
 }
 
 export function isBootstrapAllowedInProduction() {

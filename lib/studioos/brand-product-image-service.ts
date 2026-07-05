@@ -1,38 +1,33 @@
 import { addProjectAsset } from "@/lib/campaign-store";
 import { mapCampaignAssetToStoredProjectAsset } from "@/features/campaign/brand-campaign/brand-campaign.mapper";
 import { brandCampaignRepository } from "@/features/campaign/brand-campaign/brand-campaign.repository";
+import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { getProject } from "@/lib/project-service";
 import { saveProjectAssetUpload } from "@/lib/studioos/project-asset-upload";
 import type { StoredProjectAsset } from "@/lib/campaign-types";
 
+type UploadCampaignContext = {
+  id: string;
+  brandId: string;
+  brand: { email: string | null };
+};
+
 async function resolveAccessibleProject(projectId: string, clientEmail: string) {
   const normalizedEmail = clientEmail.toLowerCase();
-  const project = await getProject(projectId);
+
+  const projectPromise = getProject(projectId);
+  const campaignPromise = hasDatabaseUrl()
+    ? brandCampaignRepository.findUploadContextByLegacyProjectId(projectId).catch(() => null)
+    : Promise.resolve(null);
+
+  const [project, campaign] = await Promise.all([projectPromise, campaignPromise]);
+
   if (project?.client_email.toLowerCase() === normalizedEmail) {
-    const campaign = await brandCampaignRepository.findByLegacyProjectId(projectId).catch(() => null);
-    return { ok: true as const, campaign };
+    return { ok: true as const, campaign: campaign as UploadCampaignContext | null };
   }
 
-  try {
-    const campaign = await brandCampaignRepository.findByLegacyProjectId(projectId);
-    if (campaign?.brand?.email?.toLowerCase() === normalizedEmail) {
-      return { ok: true as const, campaign };
-    }
-  } catch {
-    // Fall through to the broad brand-owned campaign lookup below.
-  }
-
-  try {
-    const campaigns = await brandCampaignRepository.listByBrandEmail(normalizedEmail);
-    const campaign = campaigns.find((item) => {
-      const productionBrief = item.productionBrief as { legacy_project_id?: string } | null;
-      return item.id === projectId || productionBrief?.legacy_project_id === projectId;
-    });
-    if (campaign) {
-      return { ok: true as const, campaign };
-    }
-  } catch {
-    // If Prisma is unavailable, keep the standard denied result.
+  if (campaign?.brand?.email?.toLowerCase() === normalizedEmail) {
+    return { ok: true as const, campaign: campaign as UploadCampaignContext };
   }
 
   return { ok: false as const, campaign: null };

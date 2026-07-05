@@ -112,7 +112,7 @@ export function BrandCampaignListRow({
               )}
               variant={isPayCta ? "default" : "outline"}
             >
-              <Link href={withLocale(href, locale)}>
+              <Link href={withLocale(href, locale)} prefetch={true}>
                 {row.cta || openLabel}
                 <ArrowRight className="h-3.5 w-3.5" />
               </Link>

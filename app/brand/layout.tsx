@@ -4,8 +4,7 @@ import { BrandPortalShell } from "@/components/studioos/brand-portal-shell";
 import { DEMO_SESSION_COOKIE } from "@/lib/auth-config";
 import { parseDemoSession } from "@/lib/demo-auth";
 import { getLocale, encodeBrandLoginNext, withLocale } from "@/lib/i18n";
-import { getBrandProfileByEmail } from "@/lib/brand-profile-service";
-import { countUnreadBrandNotifications } from "@/lib/studioos/brand-notification-service";
+import { getBrandPortalProfile, getBrandPortalUnreadCount } from "@/lib/studioos/brand-portal-data";
 import { fallbackBrandDisplayName } from "@/lib/studioos/brand-account-display";
 
 type BrandLayoutProps = {
@@ -25,8 +24,8 @@ export default async function BrandLayout({ children }: BrandLayoutProps) {
     redirect(withLocale(`/login?role=brand&next=${next}`, locale));
   }
 
-  const unreadMessages = await countUnreadBrandNotifications(session.email);
-  const profile = await getBrandProfileByEmail(session.email.toLowerCase());
+  const unreadMessages = await getBrandPortalUnreadCount(session.email);
+  const profile = await getBrandPortalProfile(session.email);
   const brandName =
     profile?.display_name.trim() || profile?.company_name.trim() || fallbackBrandDisplayName(session.email);
   const avatarUrl = profile?.logo_url?.trim() || undefined;

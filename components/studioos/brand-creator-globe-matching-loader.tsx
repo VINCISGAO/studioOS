@@ -20,53 +20,94 @@ const ORBIT_AVATARS = creators.slice(0, 6).map((creator, index) => ({
 }));
 
 const copy = {
-  en: {
-    titleLead: "Matching the world's ",
-    titleHighlight: "best-fit",
-    titleTail: " creators",
-    subtitle: "AI analysis in progress — please wait…",
-    matching: "Smart matching",
-    features: [
-      { icon: Globe2, label: "120+ countries", detail: "Creator network" },
-      { icon: BrainCircuit, label: "AI matching", detail: "Precision fit" },
-      { icon: Zap, label: "Fast response", detail: "Quick connect" },
-      { icon: ShieldCheck, label: "Vetted talent", detail: "Quality assured" }
-    ],
-    footnote: "StudioOS makes brand–creator collaboration simpler and more successful"
+  creators: {
+    en: {
+      titleLead: "Matching the world's ",
+      titleHighlight: "best-fit",
+      titleTail: " creators",
+      subtitle: "AI analysis in progress — please wait…",
+      matching: "Smart matching",
+      features: [
+        { icon: Globe2, label: "120+ countries", detail: "Creator network" },
+        { icon: BrainCircuit, label: "AI matching", detail: "Precision fit" },
+        { icon: Zap, label: "Fast response", detail: "Quick connect" },
+        { icon: ShieldCheck, label: "Vetted talent", detail: "Quality assured" }
+      ],
+      footnote: "StudioOS makes brand–creator collaboration simpler and more successful"
+    },
+    zh: {
+      titleLead: "正在匹配全球",
+      titleHighlight: "最合适的",
+      titleTail: "创作者",
+      subtitle: "AI 智能分析中，请稍候…",
+      matching: "智能匹配中",
+      features: [
+        { icon: Globe2, label: "全球 120+ 国家", detail: "创作者资源" },
+        { icon: BrainCircuit, label: "AI 智能算法", detail: "精准匹配" },
+        { icon: Zap, label: "高效响应", detail: "快速连接" },
+        { icon: ShieldCheck, label: "严格审核", detail: "品质保障" }
+      ],
+      footnote: "StudioOS 让品牌与创作者的合作更简单、更高效、更成功"
+    }
   },
-  zh: {
-    titleLead: "正在匹配全球",
-    titleHighlight: "最合适的",
-    titleTail: "创作者",
-    subtitle: "AI 智能分析中，请稍候…",
-    matching: "智能匹配中",
-    features: [
-      { icon: Globe2, label: "全球 120+ 国家", detail: "创作者资源" },
-      { icon: BrainCircuit, label: "AI 智能算法", detail: "精准匹配" },
-      { icon: Zap, label: "高效响应", detail: "快速连接" },
-      { icon: ShieldCheck, label: "严格审核", detail: "品质保障" }
-    ],
-    footnote: "StudioOS 让品牌与创作者的合作更简单、更高效、更成功"
+  schemes: {
+    en: {
+      titleLead: "AI is crafting ",
+      titleHighlight: "3 high-conversion",
+      titleTail: " creative schemes",
+      subtitle: "Tailored to your brief, product, and audience — just a moment…",
+      matching: "Generating schemes",
+      features: [
+        { icon: BrainCircuit, label: "Deep insight", detail: "Product & audience" },
+        { icon: Globe2, label: "Platform fit", detail: "TikTok · Meta · YouTube" },
+        { icon: Zap, label: "Fast draft", detail: "Schemes A / B / C" },
+        { icon: ShieldCheck, label: "Production ready", detail: "Brief-ready output" }
+      ],
+      footnote: "StudioOS turns your brief into actionable creative directions"
+    },
+    zh: {
+      titleLead: "AI 正在为你生成 ",
+      titleHighlight: "3 套高转化",
+      titleTail: "创意方案",
+      subtitle: "基于你的需求、产品与受众定制 — 请稍候…",
+      matching: "方案生成中",
+      features: [
+        { icon: BrainCircuit, label: "深度洞察", detail: "产品与受众" },
+        { icon: Globe2, label: "平台偏好", detail: "TikTok · Meta · YouTube" },
+        { icon: Zap, label: "快速出稿", detail: "方案 A / B / C" },
+        { icon: ShieldCheck, label: "可执行", detail: "Brief 就绪" }
+      ],
+      footnote: "StudioOS 将你的需求转化为可执行的创意方向"
+    }
   }
 } as const;
 
 const MATCH_STATUS = {
-  en: ["Scanning creator network…", "Analyzing style fit…", "Checking availability…", "Smart matching"],
-  zh: ["扫描全球创作者库…", "分析风格匹配度…", "评估档期与预算…", "智能匹配中"]
+  creators: {
+    en: ["Scanning creator network…", "Analyzing style fit…", "Checking availability…", "Smart matching"],
+    zh: ["扫描全球创作者库…", "分析风格匹配度…", "评估档期与预算…", "智能匹配中"]
+  },
+  schemes: {
+    en: ["Reading your brief…", "Generating scheme A…", "Generating schemes B & C…", "Polishing recommendations…"],
+    zh: ["读取你的需求…", "生成方案 A…", "生成方案 B / C…", "优化推荐结果…"]
+  }
 } as const;
 
 export function BrandCreatorGlobeMatchingLoader({
   locale,
   className,
   compact = false,
-  complete = false
+  complete = false,
+  variant = "creators"
 }: {
   locale: Locale;
   className?: string;
   compact?: boolean;
   complete?: boolean;
+  variant?: "creators" | "schemes";
 }) {
-  const t = copy[locale];
+  const t = copy[variant][locale];
+  const statusLines = MATCH_STATUS[variant][locale];
   const [progress, setProgress] = useState(12);
   const [statusIndex, setStatusIndex] = useState(0);
 
@@ -86,14 +127,14 @@ export function BrandCreatorGlobeMatchingLoader({
     }, 100);
 
     const statusTimer = window.setInterval(() => {
-      setStatusIndex((value) => (value + 1) % MATCH_STATUS[locale].length);
+      setStatusIndex((value) => (value + 1) % statusLines.length);
     }, 720);
 
     return () => {
       window.clearInterval(progressTimer);
       window.clearInterval(statusTimer);
     };
-  }, [complete, locale]);
+  }, [complete, locale, statusLines.length]);
 
   return (
     <div
@@ -150,7 +191,7 @@ export function BrandCreatorGlobeMatchingLoader({
           <div className="absolute left-1/2 top-1/2 z-10 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center">
             <p className="text-4xl font-bold tabular-nums text-violet-600 sm:text-5xl">{progress}%</p>
             <p className="mt-1 text-xs font-medium text-zinc-500 sm:text-sm">
-              {complete ? t.matching : MATCH_STATUS[locale][statusIndex]}
+              {complete ? t.matching : statusLines[statusIndex]}
             </p>
           </div>
         </div>

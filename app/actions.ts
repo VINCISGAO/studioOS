@@ -7,7 +7,15 @@ import { authService } from "@/features/auth/auth.service";
 import { preferDemoAuth } from "@/lib/can-persist-local-store";
 import { DEMO_SESSION_COOKIE, hasSupabaseConfig } from "@/lib/auth-config";
 import { clearDemoSession, setDemoSession } from "@/lib/demo-auth-server";
-import { demoRedirectForRole, demoUserForSocialProvider, parseDemoSession, DEMO_USERS } from "@/lib/demo-auth";
+import {
+  demoRedirectForRole,
+  demoUserForSocialProvider,
+  isTestSocialProvider,
+  parseDemoSession,
+  DEMO_PASSWORD,
+  DEMO_USERS,
+  type DemoSocialProvider
+} from "@/lib/demo-auth";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { isAdminRouteRole } from "@/lib/auth/route-access";
 import { AUTH_ERROR_COPY } from "@/features/auth/auth-error-copy";
@@ -18,11 +26,12 @@ import { createProject } from "@/lib/project-service";
 import { createClient } from "@/lib/supabase/server";
 import { getAppBaseUrl } from "@/lib/app-url";
 import { startOAuthSignInAction } from "@/features/auth/oauth-start.service";
-import { logoutAdminSession } from "@/features/admin/auth/admin-auth.service";
+import { loginAdminWithTotp, logoutAdminSession } from "@/features/admin/auth/admin-auth.service";
+import { adminAuthError } from "@/lib/auth/admin-auth-errors";
+import { enforceAdminLoginRateLimit } from "@/lib/auth/admin-login-rate-limit";
+import { adminRequestFromHeaders } from "@/lib/auth/admin-request-from-headers";
 
 type OAuthProvider = "google" | "apple" | "alipay" | "wechat" | "qq";
-type DemoSocialProvider = "google" | "apple" | "alipay" | "wechat" | "qq";
-
 function normalizeLang(raw: FormDataEntryValue | null): Locale {
   return String(raw ?? "en") === "zh" ? "zh" : "en";
 }
@@ -160,7 +169,8 @@ export async function demoSocialSignInAction(formData: FormData) {
   const expectedRole = String(formData.get("expected_role") ?? "brand");
   const nextPath = String(formData.get("next") ?? "").trim();
 
-  if (!preferDemoAuth()) {
+  const allowTestProvider = isTestSocialProvider(provider);
+  if (!preferDemoAuth() && !allowTestProvider) {
     redirect(`/login?error=unsupported-provider&lang=${lang}&role=${expectedRole}`);
   }
 
@@ -177,22 +187,25 @@ export async function demoSocialSignInAction(formData: FormData) {
     );
   }
 
-  await setDemoSession({ email: demoUser.email, role: demoUser.role });
-  if (demoUser.role === "creator") {
-    await recordCreatorSignIn(demoUser.email);
-  }
-  if (nextPath.startsWith("/admin") && !isAdminRouteRole(demoUser.role)) {
+  const result = await performSignIn({
+    email: demoUser.email,
+    password: DEMO_PASSWORD,
+    lang,
+    expectedRole: tabRole,
+    nextPath
+  });
+
+  if (!result.ok) {
+    const errorQuery = result.errorCode ?? encodeURIComponent(result.error);
     redirect(
       withLocale(
-        `/login?next=${encodeURIComponent(nextPath)}&error=admin-required&role=brand`,
+        `/login?error=${errorQuery}&role=${expectedRole}${result.email ? `&email=${encodeURIComponent(result.email)}` : ""}`,
         lang
       )
     );
   }
-  if (nextPath.startsWith("/")) {
-    redirect(withLocale(nextPath, lang));
-  }
-  redirect(`${demoRedirectForRole(demoUser.role)}?lang=${lang}`);
+
+  redirect(result.redirectTo);
 }
 
 export async function signUpAction(formData: FormData) {
@@ -280,13 +293,42 @@ export async function signOutAction(formData?: FormData) {
   redirect(`/?lang=${lang}`);
 }
 
+/** Admin TOTP login — Server Action sets HttpOnly session cookie then redirects (reliable vs fetch + JSON). */
+export async function adminLoginAction(formData: FormData) {
+  const lang = normalizeLang(formData.get("lang"));
+  const email = String(formData.get("email") ?? "").trim();
+  const code = String(formData.get("code") ?? "").replace(/\s/g, "");
+  const nextPath = String(formData.get("next") ?? "").trim();
+  const request = await adminRequestFromHeaders("/admin/login");
+
+  try {
+    await enforceAdminLoginRateLimit(request, email);
+  } catch {
+    redirect(
+      withLocale(
+        `/admin/login?error=${encodeURIComponent(adminAuthError(lang, "rateLimited"))}&email=${encodeURIComponent(email)}`,
+        lang
+      )
+    );
+  }
+
+  const result = await loginAdminWithTotp({ request, email, code, lang, nextPath });
+  if (!result.ok) {
+    redirect(
+      withLocale(
+        `/admin/login?error=${encodeURIComponent(result.error)}&email=${encodeURIComponent(email)}`,
+        lang
+      )
+    );
+  }
+
+  redirect(result.redirectTo);
+}
+
 /** Admin portal sign-out — clears isolated admin session only, returns to /admin/login. */
 export async function adminSignOutAction(formData?: FormData) {
   const lang = normalizeLang(formData?.get("lang") ?? null);
-  const headerList = await headers();
-  const request = new Request("https://studioos.local/admin", {
-    headers: new Headers(headerList)
-  });
+  const request = await adminRequestFromHeaders("/admin");
 
   await logoutAdminSession({ request });
   redirect(withLocale("/admin/login?signedOut=1", lang));

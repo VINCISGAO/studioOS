@@ -182,6 +182,27 @@ export function buildAcceptedCreatorRow(
     starDisplay: formatStarRating(creator?.rating ?? 4.5),
     matchPercent: Math.round(invitation.matchScore),
     profileHref: `/creators/${invitation.creatorId}`,
-    reasons: creator ? buildMatchReasons(creator, invitation, locale, projectBudgetRange) : []
+    reasons: creator ? buildMatchReasons(creator, invitation, locale, projectBudgetRange) : [],
+    tags: creator ? buildCreatorMatchTags(creator, locale) : []
   };
+}
+
+export function buildCreatorMatchTags(creator: Creator, locale: Locale): string[] {
+  const zhMap: Record<string, string> = {
+    Beauty: locale === "zh" ? "美妆" : "Beauty",
+    "Consumer tech": locale === "zh" ? "科技数码" : "Consumer tech",
+    TikTok: "TikTok",
+    CPG: locale === "zh" ? "快消" : "CPG",
+    UGC: "UGC",
+    Meta: "Meta",
+    DTC: "DTC",
+    "Product demos": locale === "zh" ? "产品广告" : "Product ads"
+  };
+
+  const fromAi = (creator.ai_tags ?? []).slice(0, 2);
+  const fromSpecialties = creator.specialties.slice(0, 3).map((item) => zhMap[item] ?? item);
+  const defaults =
+    locale === "zh" ? ["AI 视频", "产品广告"] : ["AI video", "Product ads"];
+
+  return [...new Set([...fromAi, ...fromSpecialties, ...defaults])].slice(0, 4);
 }

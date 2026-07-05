@@ -64,13 +64,15 @@ export function BrandWorkspaceHero({
   name,
   total,
   drafts,
-  active
+  active,
+  wizardProjectId
 }: {
   locale: Locale;
   name: string;
   total: number;
   drafts: number;
   active: number;
+  wizardProjectId?: string;
 }) {
   const t = copy[locale];
   const dayPart = useLocalDayPart();
@@ -110,6 +112,7 @@ export function BrandWorkspaceHero({
         <div className="flex flex-wrap gap-3 sm:justify-end">
           <BrandStartBriefButton
             locale={locale}
+            projectId={wizardProjectId}
             size="lg"
             className="inline-flex h-12 items-center gap-3 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 px-6 text-sm font-semibold text-white shadow-[0_14px_28px_rgba(109,40,217,0.22)] hover:from-violet-700 hover:to-indigo-700"
           >

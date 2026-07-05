@@ -56,9 +56,9 @@ export function BrandInvitationStatusPanel({
   ];
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-sm">
-      <div className="px-5 py-5 sm:px-6 sm:py-6">
-        <h2 className="text-base font-semibold text-zinc-950 sm:text-lg">{t.title}</h2>
+    <div className="overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-sm">
+      <div className="px-5 py-5 sm:px-6">
+        <h2 className="text-base font-semibold text-zinc-950">{t.title}</h2>
         <p className="mt-2 text-sm leading-relaxed text-zinc-500">{t.subtitle}</p>
 
         {accepted > 0 ? (
@@ -73,13 +73,13 @@ export function BrandInvitationStatusPanel({
             return (
               <div
                 key={item.label}
-                className="rounded-xl border border-zinc-200/80 bg-zinc-50/30 px-4 py-4"
+                className="rounded-xl border border-zinc-200/80 bg-zinc-50/20 px-4 py-3.5"
               >
                 <span className={cn("inline-flex h-8 w-8 items-center justify-center rounded-lg", item.tone)}>
                   <Icon className="h-4 w-4" />
                 </span>
-                <p className="mt-3 text-xs text-zinc-500">{item.label}</p>
-                <p className="mt-1 text-2xl font-semibold tabular-nums text-zinc-950">{item.value}</p>
+                <p className="mt-2.5 text-xs text-zinc-500">{item.label}</p>
+                <p className="mt-0.5 text-2xl font-semibold tabular-nums leading-none text-zinc-950">{item.value}</p>
               </div>
             );
           })}
@@ -88,7 +88,7 @@ export function BrandInvitationStatusPanel({
 
       <Link
         href={withLocale(`${brandPortalRoutes.messages}?tab=project`, locale)}
-        className="mt-auto flex items-center justify-between border-t border-zinc-200/80 bg-zinc-50/50 px-5 py-4 text-sm font-medium text-zinc-800 transition hover:bg-zinc-50 sm:px-6"
+        className="flex items-center justify-between border-t border-zinc-100 bg-zinc-50/40 px-5 py-3.5 text-sm font-medium text-zinc-800 transition hover:bg-zinc-50 sm:px-6"
       >
         <span className="inline-flex items-center gap-2">
           <Bell className="h-4 w-4 text-zinc-500" />

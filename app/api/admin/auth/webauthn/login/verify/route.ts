@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { finishAdminPasskeyLogin } from "@/features/admin/auth/admin-webauthn.service";
+import { buildAdminLoginSuccessResponse } from "@/features/admin/auth/admin-session-server";
 import { handleRouteError } from "@/lib/core/api-route";
 import type { AuthenticationResponseJSON } from "@simplewebauthn/server";
 import type { Locale } from "@/lib/i18n";
@@ -29,7 +30,10 @@ export async function POST(request: Request) {
     if (!result.ok) {
       return NextResponse.json({ ok: false, error: "login_failed" }, { status: 401 });
     }
-    return NextResponse.json(result);
+    return buildAdminLoginSuccessResponse({
+      redirectTo: result.redirectTo,
+      sessionToken: result.sessionToken
+    });
   } catch (error) {
     return handleRouteError(error);
   }

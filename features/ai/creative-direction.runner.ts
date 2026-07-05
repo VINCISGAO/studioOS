@@ -3,6 +3,8 @@ import type { CreativeDirection } from "@/features/ai/creative-direction.types";
 import { aiGatewayService } from "@/features/ai/ai-gateway.service";
 import { aiConfig } from "@/lib/core/config/ai";
 import type { Campaign } from "@prisma/client";
+import { Prisma } from "@prisma/client";
+import type { WizardBriefSnapshot } from "@/lib/studioos/brand-wizard-brief-snapshot";
 
 function buildTemplateDirections(campaign: Campaign, language = "en"): CreativeDirection[] {
   const platform = campaign.platform ?? "TikTok";
@@ -100,7 +102,29 @@ function parseDirectionsFromJson(raw: string, campaign: Campaign, language: stri
   }
 }
 
-export async function runCreativeDirectionJob(campaign: Campaign, options: { language?: string } = {}): Promise<{
+function parseBudgetFromRange(raw: string | undefined, fallback: number) {
+  const match = raw?.replace(/,/g, "").match(/\d+/);
+  return match ? Number(match[0]) : fallback;
+}
+
+function campaignWithBriefSnapshot(campaign: Campaign, snapshot?: WizardBriefSnapshot | null): Campaign {
+  if (!snapshot) return campaign;
+  const fallbackBudget = Number(campaign.budget) || 300;
+  const budget = parseBudgetFromRange(snapshot.budgetRange, fallbackBudget);
+  return {
+    ...campaign,
+    title: snapshot.title || snapshot.productName || campaign.title,
+    description: snapshot.campaignGoal || snapshot.notes || snapshot.productDescription || campaign.description,
+    platform: snapshot.platforms.length ? snapshot.platforms.join(", ") : campaign.platform,
+    aspectRatio: snapshot.aspectRatio || campaign.aspectRatio,
+    budget: new Prisma.Decimal(budget)
+  };
+}
+
+export async function runCreativeDirectionJob(
+  campaign: Campaign,
+  options: { language?: string; briefSnapshot?: WizardBriefSnapshot | null } = {}
+): Promise<{
   directions: CreativeDirection[];
   provider: string;
   tokenInput: number;
@@ -109,8 +133,9 @@ export async function runCreativeDirectionJob(campaign: Campaign, options: { lan
   latencyMs: number;
 }> {
   const language = options.language ?? "en";
+  const ctx = campaignWithBriefSnapshot(campaign, options.briefSnapshot);
   if (!aiGatewayService.isConfigured()) {
-    const directions = buildTemplateDirections(campaign, language);
+    const directions = buildTemplateDirections(ctx, language);
     return {
       directions,
       provider: "template",
@@ -125,11 +150,15 @@ export async function runCreativeDirectionJob(campaign: Campaign, options: { lan
     system:
       "You are StudioOS Creative Director. Generate exactly 3 distinct creative directions for a paid social video campaign. Return JSON only: { directions: [{ title, coreIdea, hook, story, visualStyle, tone, shotList, cta, recommendedCreatorType, recommendedBudget, expectedOutcome, rationale }] }. shotList must be an array of 4 concise shots. Keep hooks under 25 words. No markdown.",
     user: JSON.stringify({
-      title: campaign.title,
-      platform: campaign.platform,
-      aspectRatio: campaign.aspectRatio,
-      budget: Number(campaign.budget),
-      description: campaign.description,
+      title: ctx.title,
+      platform: ctx.platform,
+      aspectRatio: ctx.aspectRatio,
+      budget: Number(ctx.budget),
+      description: ctx.description,
+      productName: options.briefSnapshot?.productName,
+      audience: options.briefSnapshot?.targetAudience,
+      objective: options.briefSnapshot?.objective,
+      notes: options.briefSnapshot?.notes,
       language
     }),
     language,
@@ -137,8 +166,8 @@ export async function runCreativeDirectionJob(campaign: Campaign, options: { lan
     temperature: 0.5
   });
 
-  const parsed = parseDirectionsFromJson(result.content, campaign, language);
-  const directions = parsed ?? buildTemplateDirections(campaign, language);
+  const parsed = parseDirectionsFromJson(result.content, ctx, language);
+  const directions = parsed ?? buildTemplateDirections(ctx, language);
   const provider = parsed ? result.provider : "template-fallback";
 
   return {

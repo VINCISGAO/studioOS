@@ -2,15 +2,14 @@ import "server-only";
 
 import { cache } from "react";
 import type { AdminAccountStatus } from "@prisma/client";
-import { headers } from "next/headers";
+import { adminRequestFromHeaders } from "@/lib/auth/admin-request-from-headers";
 import { adminAuthError } from "@/lib/auth/admin-auth-errors";
 import { adminRequestContext } from "@/lib/auth/admin-request-context";
 import { decryptTotpSecret } from "@/lib/auth/admin-totp-crypto";
-import { isPrismaAdminRole } from "@/lib/auth/route-access";
 import { withLocale, type Locale } from "@/lib/i18n";
-import { authService, type AuthUserDto } from "@/features/auth/auth.service";
+import type { AuthUserDto } from "@/features/auth/auth.service";
 import { adminAuthAuditRepository } from "@/features/admin/auth/admin-auth-audit.repository";
-import { adminProfileRepository, type AdminProfileWithUser } from "@/features/admin/auth/admin-profile.repository";
+import { adminUserRepository, type AdminUser } from "@/features/admin/auth/admin-user.repository";
 import { adminSessionRepository } from "@/features/admin/auth/admin-session.repository";
 import {
   clearAdminSessionCookie,
@@ -52,7 +51,7 @@ function readPermissions(raw: unknown) {
 }
 
 export async function completeAdminLogin(input: {
-  profile: AdminProfileWithUser;
+  profile: AdminUser;
   email: string;
   ctx: ReturnType<typeof adminRequestContext>;
   locale: Locale;
@@ -62,7 +61,7 @@ export async function completeAdminLogin(input: {
 }) {
   await adminSessionRepository.revokeAllForProfile(input.profile.id);
   const session = await adminSessionRepository.createSession({
-    adminProfileId: input.profile.id,
+    adminUserId: input.profile.id,
     ipHash: input.ctx.ipHash,
     userAgentHash: input.ctx.userAgentHash,
     deviceLabel: input.deviceLabel ?? deriveDeviceLabel(
@@ -73,14 +72,14 @@ export async function completeAdminLogin(input: {
   });
 
   await setAdminSessionCookie(session.token);
-  void adminProfileRepository.recordSuccessfulLogin(input.profile.id);
+  void adminUserRepository.recordSuccessfulLogin(input.profile.id);
 
   const permissions = readPermissions(input.profile.permissions);
   const lastLoginIpHash =
     typeof permissions.lastLoginIpHash === "string" ? permissions.lastLoginIpHash : null;
   const isNewIp = Boolean(lastLoginIpHash && lastLoginIpHash !== input.ctx.ipHash);
 
-  void prisma.adminProfile.update({
+  void prisma.adminUser.update({
     where: { id: input.profile.id },
     data: {
       permissions: {
@@ -100,7 +99,8 @@ export async function completeAdminLogin(input: {
 
   return {
     ok: true as const,
-    redirectTo: resolveAdminNextPath(input.nextPath, input.locale)
+    redirectTo: resolveAdminNextPath(input.nextPath, input.locale),
+    sessionToken: session.token
   };
 }
 
@@ -144,8 +144,8 @@ export async function loginAdminWithTotp(input: {
     return { ok: false as const, error: publicLoginFailure(locale) };
   }
 
-  const profile = await adminProfileRepository.findLoginCandidateByEmail(email);
-  if (!profile || !isPrismaAdminRole(profile.user.role)) {
+  const profile = await adminUserRepository.findLoginCandidateByEmail(email);
+  if (!profile) {
     void adminAuthAuditRepository.write({
       event: "admin_login_failed",
       success: false,
@@ -162,8 +162,7 @@ export async function loginAdminWithTotp(input: {
       event: "admin_login_failed",
       success: false,
       email,
-      adminId: profile.user.id,
-      adminProfileId: profile.id,
+      adminUserId: profile.id,
       ipHash: ctx.ipHash,
       userAgentHash: ctx.userAgentHash,
       failureReason: "pending_setup"
@@ -176,8 +175,7 @@ export async function loginAdminWithTotp(input: {
       event: "admin_login_failed",
       success: false,
       email,
-      adminId: profile.user.id,
-      adminProfileId: profile.id,
+      adminUserId: profile.id,
       ipHash: ctx.ipHash,
       userAgentHash: ctx.userAgentHash,
       failureReason: "locked"
@@ -189,7 +187,7 @@ export async function loginAdminWithTotp(input: {
   try {
     const secret = decryptTotpSecret(profile.totpSecretEnc);
     totpValid = await verifyAndConsumeAdminTotp({
-      adminProfileId: profile.id,
+      adminUserId: profile.id,
       secret,
       code,
       purpose: "login"
@@ -199,8 +197,7 @@ export async function loginAdminWithTotp(input: {
       event: "admin_login_failed",
       success: false,
       email,
-      adminId: profile.user.id,
-      adminProfileId: profile.id,
+      adminUserId: profile.id,
       ipHash: ctx.ipHash,
       userAgentHash: ctx.userAgentHash,
       failureReason: "totp_decrypt_failed"
@@ -213,8 +210,7 @@ export async function loginAdminWithTotp(input: {
       event: "admin_totp_failed",
       success: false,
       email,
-      adminId: profile.user.id,
-      adminProfileId: profile.id,
+      adminUserId: profile.id,
       ipHash: ctx.ipHash,
       userAgentHash: ctx.userAgentHash,
       failureReason: "invalid_totp"
@@ -224,8 +220,8 @@ export async function loginAdminWithTotp(input: {
       return { ok: false as const, error: publicLoginFailure(locale) };
     }
 
-    const ipFailures = await adminAuthAuditRepository.countRecentFailuresForProfile({
-      adminProfileId: profile.id,
+    const ipFailures = await adminAuthAuditRepository.countRecentFailuresForUser({
+      adminUserId: profile.id,
       ipHash: ctx.ipHash,
       since: new Date(Date.now() - IP_FAILURE_LOCK_WINDOW_MS)
     });
@@ -240,8 +236,7 @@ export async function loginAdminWithTotp(input: {
         event: "admin_locked",
         success: false,
         email,
-        adminId: profile.user.id,
-        adminProfileId: profile.id,
+        adminUserId: profile.id,
         ipHash: ctx.ipHash,
         userAgentHash: ctx.userAgentHash,
         failureReason: "totp_failed_10",
@@ -252,7 +247,7 @@ export async function loginAdminWithTotp(input: {
     }
 
     if (lockedUntil) {
-      void adminProfileRepository.recordFailedLogin(profile.id, failedAttempts, lockedUntil, status);
+      void adminUserRepository.recordFailedLogin(profile.id, failedAttempts, lockedUntil, status);
     }
 
     return {
@@ -265,8 +260,14 @@ export async function loginAdminWithTotp(input: {
   return completeAdminLogin({ profile, email, ctx, locale, nextPath });
 }
 
-function mapAdminUser(profile: { user: { id: string } }): Promise<AuthUserDto | null> {
-  return authService.getUserById(profile.user.id);
+function adminUserToSessionDto(admin: AdminUser): AuthUserDto {
+  return {
+    id: admin.id,
+    email: admin.email,
+    fullName: admin.fullName,
+    role: "ADMIN",
+    languageCode: "en"
+  };
 }
 
 export async function logoutAdminSession(input: { request: Request; emailHint?: string }) {
@@ -290,9 +291,7 @@ export const validateAdminSession = cache(async function validateAdminSession(re
 
   const ctx = request
     ? adminRequestContext(request)
-    : adminRequestContext(
-        new Request("https://studioos.local/admin", { headers: await headers() })
-      );
+    : adminRequestContext(await adminRequestFromHeaders("/admin"));
 
   const profile = await adminSessionRepository.findValidSession({
     token,
@@ -300,7 +299,7 @@ export const validateAdminSession = cache(async function validateAdminSession(re
     userAgentHash: ctx.userAgentHash
   });
 
-  if (!profile || profile.status !== "ACTIVE" || !profile.totpEnabled || !isPrismaAdminRole(profile.user.role)) {
+  if (!profile || profile.status !== "ACTIVE" || !profile.totpEnabled) {
     if (token) {
       await revokeAdminSessionToken(token);
       await clearAdminSessionCookie();
@@ -328,7 +327,7 @@ export async function getAdminSessionProfile(request?: Request) {
 export async function verifyAdminStepUpTotp(input: {
   request: Request;
   totpCode: string;
-}): Promise<{ ok: true; profile: AdminProfileWithUser } | { ok: false; error: "no_session" | "invalid_totp" }> {
+}): Promise<{ ok: true; profile: AdminUser } | { ok: false; error: "no_session" | "invalid_totp" }> {
   const profile = await validateAdminSession(input.request);
   if (!profile) return { ok: false, error: "no_session" };
 
@@ -338,7 +337,7 @@ export async function verifyAdminStepUpTotp(input: {
   try {
     const secret = decryptTotpSecret(profile.totpSecretEnc);
     const valid = await verifyAndConsumeAdminTotp({
-      adminProfileId: profile.id,
+      adminUserId: profile.id,
       secret,
       code,
       purpose: "step_up"
@@ -356,7 +355,7 @@ export async function verifyMasterStepUpTotp(input: {
   totpCode: string | null;
   skipTotp?: boolean;
 }): Promise<
-  | { ok: true; profile: AdminProfileWithUser & { isMaster: true } }
+  | { ok: true; profile: AdminUser & { isMaster: true } }
   | { ok: false; error: "no_session" | "not_master" | "invalid_totp" }
 > {
   const profile = await validateAdminSession(input.request);
@@ -375,7 +374,7 @@ export async function verifyMasterStepUpTotp(input: {
     try {
       const secret = decryptTotpSecret(profile.totpSecretEnc);
       const valid = await verifyAndConsumeAdminTotp({
-        adminProfileId: profile.id,
+        adminUserId: profile.id,
         secret,
         code,
         purpose: "step_up"
@@ -393,18 +392,18 @@ export async function verifyMasterStepUpTotp(input: {
     }
   }
 
-  return { ok: true, profile: profile as AdminProfileWithUser & { isMaster: true } };
+  return { ok: true, profile: profile as AdminUser & { isMaster: true } };
 }
 
 export async function getAdminSessionUser(request?: Request): Promise<AuthUserDto | null> {
   const profile = await validateAdminSession(request);
   if (!profile) return null;
-  return mapAdminUser(profile);
+  return adminUserToSessionDto(profile);
 }
 
 export async function requireAdminSessionUser(request?: Request): Promise<AuthUserDto> {
   const user = await getAdminSessionUser(request);
-  if (!user || !isPrismaAdminRole(user.role)) {
+  if (!user) {
     throw new Error("ADMIN_SESSION_REQUIRED");
   }
   return user;

@@ -1,5 +1,7 @@
 "use client";
 
+import { demoSocialSignInAction } from "@/app/actions";
+import { demoUserForSocialProvider, isTestSocialProvider, type DemoSocialProvider } from "@/lib/demo-auth";
 import type { Locale } from "@/lib/i18n";
 import { getLoginVisual, type LoginRole, type LoginVisual } from "@/lib/studioos/login-theme";
 import { cn } from "@/lib/utils";
@@ -12,14 +14,18 @@ const demoProviders = [
   { id: "qq" as const, label: "QQ", icon: "/images/auth-providers/qq.svg" }
 ];
 
-function isProviderEnabled(
-  id: (typeof demoProviders)[number]["id"],
+function isProviderOAuthEnabled(
+  id: DemoSocialProvider,
   googleOAuthEnabled: boolean,
   alipayOAuthEnabled: boolean
 ) {
   if (id === "google") return googleOAuthEnabled;
   if (id === "alipay") return alipayOAuthEnabled;
   return false;
+}
+
+function testAccountLabel(locale: Locale, accountLabel: string) {
+  return locale === "zh" ? `${accountLabel}（测试号）` : `${accountLabel} (test account)`;
 }
 
 function SocialHiddenFields({
@@ -61,17 +67,21 @@ export function LoginSocialButtons({
   visualOverride?: LoginVisual;
 }) {
   const visual = visualOverride ?? getLoginVisual(role);
-  void demoMode;
+  const tabRole = role === "creator" ? "creator" : "brand";
 
   return (
     <div className="mt-6 flex items-center justify-center gap-3">
       {demoProviders.map(({ id, label, icon }) => {
-        const enabled = isProviderEnabled(id, googleOAuthEnabled, alipayOAuthEnabled);
+        const oauthEnabled = isProviderOAuthEnabled(id, googleOAuthEnabled, alipayOAuthEnabled);
+        const testAccount = demoUserForSocialProvider(id, tabRole);
+        const useTestAccount =
+          !oauthEnabled && Boolean(testAccount) && (demoMode || isTestSocialProvider(id));
         const comingSoonLabel = locale === "zh" ? `${label}（即将开放）` : `${label} (coming soon)`;
+        const testLabel = testAccount ? testAccountLabel(locale, testAccount.label) : comingSoonLabel;
         const buttonClassName = cn(
           visual.socialBtn,
           "h-12 w-12 rounded-full bg-white p-2.5 shadow-sm",
-          enabled ? "hover:bg-white" : "cursor-not-allowed opacity-40"
+          oauthEnabled || useTestAccount ? "hover:bg-white" : "cursor-not-allowed opacity-40"
         );
         const buttonContent = (
           <img
@@ -82,7 +92,7 @@ export function LoginSocialButtons({
           />
         );
 
-        if (!enabled) {
+        if (!oauthEnabled && !useTestAccount) {
           return (
             <div key={id} className="min-w-0">
               <button
@@ -95,6 +105,17 @@ export function LoginSocialButtons({
                 {buttonContent}
               </button>
             </div>
+          );
+        }
+
+        if (useTestAccount) {
+          return (
+            <form key={id} action={demoSocialSignInAction} className="min-w-0">
+              <SocialHiddenFields locale={locale} role={role} nextPath={nextPath} provider={id} />
+              <button type="submit" aria-label={testLabel} title={testLabel} className={buttonClassName}>
+                {buttonContent}
+              </button>
+            </form>
           );
         }
 

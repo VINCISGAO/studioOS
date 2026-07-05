@@ -1,4 +1,3 @@
-import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { getCurrentClientEmail } from "@/lib/client-session";
 import { logger } from "@/lib/core/logger";
@@ -37,8 +36,8 @@ export async function POST(
         ok: false,
         error:
           lang === "zh"
-            ? "图片上传失败，请尝试更小的 JPG/PNG 文件"
-            : "Upload failed — try a smaller JPG or PNG"
+            ? "图片上传失败，请稍后重试"
+            : "Upload failed — try again"
       },
       { status: 413 }
     );
@@ -81,10 +80,6 @@ export async function POST(
   if (!result.ok) {
     return NextResponse.json({ ok: false, error: result.error }, { status: result.status ?? 400 });
   }
-
-  revalidatePath("/brand");
-  revalidatePath("/brand/projects/new");
-  revalidatePath(`/brand/projects/${projectId}`);
 
   return NextResponse.json({
     ok: true,

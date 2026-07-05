@@ -95,11 +95,18 @@ export async function listAcceptedInvitationsForProject(projectId: string) {
         return await invitationService.listAcceptedForLegacyProject(projectId);
       }
     } catch (error) {
-      if (!isMissingPrismaMigrationError(error)) throw error;
-      logger.error("Prisma invitation schema is not migrated; falling back to legacy accepted invitations", {
-        service: "creator-invitation-store",
-        projectId
-      });
+      if (!isMissingPrismaMigrationError(error)) {
+        logger.error("Prisma accepted invitation list failed; falling back to legacy store", {
+          service: "creator-invitation-store",
+          projectId,
+          error: error instanceof Error ? error.message : String(error)
+        });
+      } else {
+        logger.error("Prisma invitation schema is not migrated; falling back to legacy accepted invitations", {
+          service: "creator-invitation-store",
+          projectId
+        });
+      }
     }
   }
 
@@ -117,11 +124,18 @@ export async function listInvitationsForProject(projectId: string) {
         return await invitationService.listForLegacyProject(projectId);
       }
     } catch (error) {
-      if (!isMissingPrismaMigrationError(error)) throw error;
-      logger.error("Prisma invitation schema is not migrated; falling back to legacy project invitations", {
-        service: "creator-invitation-store",
-        projectId
-      });
+      if (!isMissingPrismaMigrationError(error)) {
+        logger.error("Prisma invitation list failed; falling back to legacy project invitations", {
+          service: "creator-invitation-store",
+          projectId,
+          error: error instanceof Error ? error.message : String(error)
+        });
+      } else {
+        logger.error("Prisma invitation schema is not migrated; falling back to legacy project invitations", {
+          service: "creator-invitation-store",
+          projectId
+        });
+      }
     }
   }
 
@@ -289,11 +303,18 @@ export async function ensureCampaignInvitationsForProject(project: StoredProject
         return await invitationService.ensureForProject(project, locale);
       }
     } catch (error) {
-      if (!isMissingPrismaMigrationError(error)) throw error;
-      logger.error("Prisma invitation schema is not migrated; falling back to legacy invitation creation", {
-        service: "creator-invitation-store",
-        projectId: project.id
-      });
+      if (!isMissingPrismaMigrationError(error)) {
+        logger.error("Prisma invitation ensure failed; falling back to legacy invitation creation", {
+          service: "creator-invitation-store",
+          projectId: project.id,
+          error: error instanceof Error ? error.message : String(error)
+        });
+      } else {
+        logger.error("Prisma invitation schema is not migrated; falling back to legacy invitation creation", {
+          service: "creator-invitation-store",
+          projectId: project.id
+        });
+      }
     }
   }
 

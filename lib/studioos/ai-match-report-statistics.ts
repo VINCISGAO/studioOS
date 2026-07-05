@@ -61,7 +61,14 @@ export async function getAiMatchReportStatisticsForProject(
       learningDeclineCount: learningRows.length
     };
   } catch (error) {
-    if (!isMissingPrismaMigrationError(error)) throw error;
+    if (!isMissingPrismaMigrationError(error)) {
+      logger.error("AI match report statistics skipped due to query failure", {
+        service: "ai-match-report-statistics",
+        projectId,
+        error: error instanceof Error ? error.message : String(error)
+      });
+      return null;
+    }
     logger.error("AI match report statistics skipped because production database schema is not migrated", {
       service: "ai-match-report-statistics",
       projectId

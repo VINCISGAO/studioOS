@@ -1,7 +1,7 @@
 import "server-only";
 
 import { adminAuthAuditRepository } from "@/features/admin/auth/admin-auth-audit.repository";
-import { adminProfileRepository } from "@/features/admin/auth/admin-profile.repository";
+import { adminUserRepository } from "@/features/admin/auth/admin-user.repository";
 import { validateAdminSession, verifyMasterStepUpTotp } from "@/features/admin/auth/admin-auth.service";
 import { notifyAdminSetupLinkSent } from "@/features/admin/auth/admin-security-alert.service";
 import {
@@ -40,11 +40,11 @@ function buildSetupPath(token: string) {
   return `/admin/setup-totp?token=${encodeURIComponent(token)}`;
 }
 
-function mapAccounts(rows: Awaited<ReturnType<typeof adminProfileRepository.listActiveAccounts>>) {
+function mapAccounts(rows: Awaited<ReturnType<typeof adminUserRepository.listActiveAccounts>>) {
   return rows.map((row) => ({
     id: row.id,
-    email: row.user.email,
-    fullName: row.user.fullName,
+    email: row.email,
+    fullName: row.fullName,
     isMaster: row.isMaster,
     status: row.status,
     totpEnabled: row.totpEnabled,
@@ -70,7 +70,7 @@ export async function listAdminAccountsForMaster(request: Request, totpCode?: st
     return { ok: false as const, error: "step_up_required" as const };
   }
 
-  const rows = await adminProfileRepository.listActiveAccounts();
+  const rows = await adminUserRepository.listActiveAccounts();
   return { ok: true as const, accounts: mapAccounts(rows) };
 }
 
@@ -102,44 +102,28 @@ export async function provisionAdminAccount(input: {
       : { ok: false as const, error: t.masterOnly };
   }
 
-  if (email === gate.profile.user.email.toLowerCase()) {
+  if (email === gate.profile.email.toLowerCase()) {
     return { ok: false as const, error: t.selfEmail };
   }
 
-  const existingUser = await prisma.user.findUnique({ where: { email } });
-  if (existingUser) {
-    const existingProfile = await prisma.adminProfile.findUnique({ where: { userId: existingUser.id } });
-    if (existingProfile?.status === "ACTIVE" && existingProfile.totpEnabled) {
-      return { ok: false as const, error: t.emailTaken };
-    }
+  const existingAdmin = await prisma.adminUser.findUnique({ where: { email } });
+  if (existingAdmin?.status === "ACTIVE" && existingAdmin.totpEnabled) {
+    return { ok: false as const, error: t.emailTaken };
   }
 
-  const user =
-    existingUser ??
-    (await prisma.user.create({
-      data: {
-        email,
-        role: "ADMIN",
-        fullName,
-        emailVerified: true
-      }
-    }));
-
-  if (existingUser && existingUser.role !== "ADMIN" && existingUser.role !== "SUPPORT" && existingUser.role !== "SYSTEM") {
-    await prisma.user.update({ where: { id: existingUser.id }, data: { role: "ADMIN", fullName } });
-  }
-
-  const profile = await prisma.adminProfile.upsert({
-    where: { userId: user.id },
+  const adminUser = await prisma.adminUser.upsert({
+    where: { email },
     create: {
-      userId: user.id,
+      email,
+      fullName,
       isMaster: false,
       status: "PENDING_TOTP",
       totpEnabled: false,
       totpSecretEnc: null,
-      permissions: { provisionedBy: gate.profile.user.id }
+      permissions: { provisionedBy: gate.profile.id }
     },
     update: {
+      fullName,
       isMaster: false,
       status: "PENDING_TOTP",
       totpEnabled: false,
@@ -147,17 +131,17 @@ export async function provisionAdminAccount(input: {
       totpBoundAt: null,
       failedAttempts: 0,
       lockedUntil: null,
-      permissions: { provisionedBy: gate.profile.user.id }
-    },
-    include: { user: true }
+      deletedAt: null,
+      permissions: { provisionedBy: gate.profile.id }
+    }
   });
 
-  const setupToken = createAdminSetupToken(profile.id);
-  await prisma.adminProfile.update({
-    where: { id: profile.id },
+  const setupToken = createAdminSetupToken(adminUser.id);
+  await prisma.adminUser.update({
+    where: { id: adminUser.id },
     data: {
       permissions: {
-        provisionedBy: gate.profile.user.id,
+        provisionedBy: gate.profile.id,
         setupTokenHash: hashSetupToken(setupToken)
       }
     }
@@ -170,7 +154,7 @@ export async function provisionAdminAccount(input: {
     toEmail: email,
     setupUrl,
     locale: input.locale,
-    masterEmail: gate.profile.user.email
+    masterEmail: gate.profile.email
   });
 
   if (!emailResult.ok && isProductionRuntime()) {
@@ -180,15 +164,14 @@ export async function provisionAdminAccount(input: {
   await adminAuthAuditRepository.write({
     event: "admin_sensitive_action",
     success: true,
-    email: gate.profile.user.email,
-    adminId: gate.profile.user.id,
-    adminProfileId: gate.profile.id,
+    email: gate.profile.email,
+    adminUserId: gate.profile.id,
     ipHash: ctx.ipHash,
     userAgentHash: ctx.userAgentHash,
     metadata: {
       action: "admin_user_provisioned",
       targetEmail: email,
-      targetProfileId: profile.id,
+      targetAdminUserId: adminUser.id,
       setupDelivery: emailResult.ok ? "email" : "manual"
     }
   });
@@ -196,7 +179,7 @@ export async function provisionAdminAccount(input: {
   if (emailResult.ok) {
     void notifyAdminSetupLinkSent({
       targetEmail: email,
-      masterEmail: gate.profile.user.email,
+      masterEmail: gate.profile.email,
       ipHash: ctx.ipHash
     });
   }
@@ -204,9 +187,9 @@ export async function provisionAdminAccount(input: {
   return {
     ok: true as const,
     account: {
-      id: profile.id,
-      email: profile.user.email,
-      fullName: profile.user.fullName,
+      id: adminUser.id,
+      email: adminUser.email,
+      fullName: adminUser.fullName,
       isMaster: false,
       status: "PENDING_TOTP"
     },

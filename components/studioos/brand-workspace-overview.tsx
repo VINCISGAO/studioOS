@@ -1,7 +1,10 @@
+"use client";
+
 import { BrandCampaignList } from "@/components/studioos/brand-campaign-list";
 import { BrandWorkspaceHero } from "@/components/studioos/brand-workspace-hero";
 import type { Locale } from "@/lib/i18n";
 import type { BrandProjectRow } from "@/lib/studioos/brand-dashboard";
+import { useEffect } from "react";
 
 const copy = {
   en: {
@@ -24,27 +27,46 @@ export function BrandWorkspaceOverview({
   locale,
   name,
   rows,
-  orderProjectMap
+  orderProjectMap,
+  wizardProjectId
 }: {
   locale: Locale;
   name: string;
   rows: BrandProjectRow[];
   orderProjectMap: Record<string, string | null | undefined>;
+  wizardProjectId?: string;
 }) {
   const t = copy[locale];
   const total = rows.length;
   const drafts = rows.filter((row) => row.phase === "draft").length;
   const active = rows.filter((row) => row.phase === "active").length;
 
+  useEffect(() => {
+    if (window.location.hash !== "#my-ads") return;
+    document.getElementById("my-ads")?.scrollIntoView({ block: "start" });
+  }, []);
+
   return (
     <div className="space-y-8">
-      <BrandWorkspaceHero locale={locale} name={name} total={total} drafts={drafts} active={active} />
+      <BrandWorkspaceHero
+        locale={locale}
+        name={name}
+        total={total}
+        drafts={drafts}
+        active={active}
+        wizardProjectId={wizardProjectId}
+      />
       <section id="my-ads" className="space-y-4 scroll-mt-6">
         <div>
           <h2 className="text-xl font-semibold tracking-tight text-zinc-950">{t.projectsTitle}</h2>
           <p className="mt-1 text-sm text-zinc-500">{t.projectsHint}</p>
         </div>
-        <BrandCampaignList locale={locale} rows={rows} orderProjectMap={orderProjectMap} />
+        <BrandCampaignList
+          locale={locale}
+          rows={rows}
+          orderProjectMap={orderProjectMap}
+          wizardProjectId={wizardProjectId}
+        />
       </section>
     </div>
   );

@@ -13,8 +13,8 @@ export async function POST(request: Request) {
     const sessionToken = await readAdminSessionToken();
     assertPasskeyStepUp(profile, sessionToken);
     const result = await beginAdminPasskeyRegistration({
-      adminProfileId: profile.id,
-      email: profile.user.email
+      adminUserId: profile.id,
+      email: profile.email
     });
     return NextResponse.json(result);
   } catch (error) {

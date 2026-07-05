@@ -33,7 +33,6 @@ function LanguageSwitcherInner({ locale, tone = "light" }: { locale: Locale; ton
       params.set("lang", next);
       const query = params.toString();
       router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
-      router.refresh();
     },
     [current, pathname, router, searchParams]
   );

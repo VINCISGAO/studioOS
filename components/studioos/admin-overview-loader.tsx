@@ -6,21 +6,20 @@ import { AdminOverviewSkeleton } from "@/components/studioos/admin-overview-skel
 import { validateAdminSession } from "@/features/admin/auth/admin-auth.service";
 import { adminDashboardService } from "@/features/admin/dashboard/admin-dashboard.service";
 import type { AuthUser } from "@/features/auth/permission.service";
-import { isPrismaAdminRole } from "@/lib/auth/route-access";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import { adminPortalRoutes } from "@/lib/studioos/admin-portal-routes";
 
 function toAuthUser(profile: NonNullable<Awaited<ReturnType<typeof validateAdminSession>>>): AuthUser {
   return {
-    id: profile.user.id,
-    role: profile.user.role
+    id: profile.id,
+    role: "ADMIN"
   };
 }
 
 async function AdminOverviewSection({ locale }: { locale: Locale }) {
   const profile = await validateAdminSession();
-  if (!profile || !isPrismaAdminRole(profile.user.role)) {
+  if (!profile) {
     return null;
   }
 

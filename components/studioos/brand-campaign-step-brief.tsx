@@ -25,6 +25,7 @@ import {
   BRAND_BUDGET_MIN_USD,
   BRAND_VIDEO_ASPECT_RATIOS,
   customBudgetInputFromStored,
+  defaultBrandAspectRatio,
   defaultBrandBudget,
   isPresetBudget,
   normalizeCustomBudgetInput,
@@ -69,6 +70,7 @@ const copy = {
     uploadProduct: "Upload product photo",
     uploaded: "Photo uploaded — click to replace",
     uploading: "Uploading…",
+    savingPhoto: "Saved locally — syncing…",
     uploadFailed: "Upload failed",
     clickToUpload: "Click to choose an image",
     clickToUploadDrag: "Click to choose an image or drag here",
@@ -146,6 +148,7 @@ const copy = {
     uploadProduct: "上传产品图",
     uploaded: "已上传，点击更换",
     uploading: "上传中…",
+    savingPhoto: "已添加，后台保存中…",
     uploadFailed: "上传失败",
     clickToUpload: "点击选择图片",
     clickToUploadDrag: "点击选择图片或拖拽到此处",
@@ -319,6 +322,7 @@ export function BrandCampaignStepBrief({
   isPending,
   error,
   onProductUploaded,
+  onBriefChange,
   onReferencesUpdated,
   onContinue,
   onSaveDraft,
@@ -333,7 +337,8 @@ export function BrandCampaignStepBrief({
   hideTopBar?: boolean;
   isPending: boolean;
   error: string | null;
-  onProductUploaded?: () => void;
+  onProductUploaded?: (previewUrl: string) => void;
+  onBriefChange?: (state: BriefFormState, productReady: boolean) => void;
   onReferencesUpdated?: () => void;
   onContinue: (state: BriefFormState) => void;
   onSaveDraft?: (state: BriefFormState) => void;
@@ -366,6 +371,10 @@ export function BrandCampaignStepBrief({
   useEffect(() => {
     setReferences(initialReferences);
   }, [initialReferences]);
+
+  useEffect(() => {
+    onBriefChange?.(form, productReady);
+  }, [form, productReady, onBriefChange]);
 
   function togglePlatform(platform: string) {
     setForm((prev) => ({
@@ -489,15 +498,34 @@ export function BrandCampaignStepBrief({
     setUploadError(null);
     const localPreview = URL.createObjectURL(file);
     setPreviewUrl(localPreview);
+    setProductReady(true);
+    onProductUploaded?.(localPreview);
 
     startUpload(async () => {
+      const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+
       try {
-        const uploadFile = await compressImageForUpload(file, {
-          maxBytes: 1.8 * 1024 * 1024,
-          maxDimension: 1400,
-          quality: 0.78,
-          fileNamePrefix: "product"
-        });
+        let uploadFile = file;
+        if (file.size > MAX_UPLOAD_BYTES) {
+          try {
+            uploadFile = await compressImageForUpload(file, {
+              maxBytes: MAX_UPLOAD_BYTES,
+              maxDimension: 1600,
+              quality: 0.82,
+              fileNamePrefix: "product"
+            });
+          } catch {
+            setUploadError(
+              locale === "zh"
+                ? "图片超过 10MB，请换一张更小的 JPG/PNG 图片"
+                : "Image exceeds 10MB — choose a smaller JPG or PNG"
+            );
+            setProductReady(false);
+            setPreviewUrl(initialProductImageUrl ?? null);
+            return;
+          }
+        }
+
         const fd = new FormData();
         fd.set("image_file", uploadFile);
 
@@ -524,30 +552,36 @@ export function BrandCampaignStepBrief({
             ok: false,
             error:
               locale === "zh"
-                ? `上传接口异常（HTTP ${res.status}）`
-                : `Upload endpoint error (HTTP ${res.status})`
+                ? `上传失败（HTTP ${res.status}），请稍后重试`
+                : `Upload failed (HTTP ${res.status}) — try again`
           };
         }
 
         if (!res.ok || !result.ok) {
           setUploadError(result.error ?? `${t.uploadFailed} (HTTP ${res.status})`);
           setProductReady(false);
+          setPreviewUrl(initialProductImageUrl ?? null);
           return;
         }
 
-        setProductReady(true);
-        setPreviewUrl(productPreviewSrc(result.preview_url ?? result.original?.file_url ?? localPreview));
-        onProductUploaded?.();
+        const savedPreview = productPreviewSrc(
+          result.preview_url ?? result.original?.file_url ?? localPreview
+        );
+        setPreviewUrl(savedPreview);
+        onProductUploaded?.(savedPreview);
       } catch (error) {
         const message = error instanceof Error ? error.message : "";
         setUploadError(
           locale === "zh"
-            ? message.includes("too large")
-              ? "图片压缩后仍然过大，请换一张更小的图片"
-              : "图片处理或上传失败，请换一张更小的 JPG/PNG 图片"
-            : message || "Image processing failed — try a smaller image"
+            ? message.includes("too large") || message.includes("10MB")
+              ? "图片超过 10MB，请换一张更小的图片"
+              : message.includes("load failed") || message.includes("compression")
+                ? "浏览器无法处理这张图片，请换 JPG 或 PNG 格式"
+                : message || "上传失败，请稍后重试"
+            : message || "Upload failed — try again"
         );
         setProductReady(false);
+        setPreviewUrl(initialProductImageUrl ?? null);
       }
     });
   }
@@ -652,7 +686,10 @@ export function BrandCampaignStepBrief({
       return;
     }
 
-    const payloadAll = resolveBriefForContinue(form);
+    const payloadAll = {
+      ...resolveBriefForContinue(form),
+      aspectRatio: resolveBriefForContinue(form).aspectRatio || defaultBrandAspectRatio()
+    };
     const hasVisual = Boolean(form.productUrl.trim()) || productReady;
     const hasBrief =
       payloadAll.productDescription.trim() ||
@@ -661,12 +698,6 @@ export function BrandCampaignStepBrief({
 
     if (!hasVisual || !hasBrief) {
       setLocalError(t.needInput);
-      return;
-    }
-
-    if (!payloadAll.aspectRatio) {
-      setAspectRatioError(t.aspectRatioError);
-      setLocalError(t.aspectRatioError);
       return;
     }
 
@@ -697,9 +728,9 @@ export function BrandCampaignStepBrief({
   const continueDisabled =
     isPending ||
     isSavingDraft ||
-    isUploading ||
+    (isUploading && !productReady) ||
     isRefPending ||
-    (stepMode === "product" && isUploading) ||
+    (stepMode === "product" && isUploading && !productReady) ||
     (stepMode === "references" && isRefPending);
 
   const showBrief = stepMode === "brief" || stepMode === "all";
@@ -1062,14 +1093,14 @@ export function BrandCampaignStepBrief({
               />
               <button
                 type="button"
-                disabled={isUploading || isPending}
+                disabled={isPending || (isUploading && !productReady)}
                 onClick={() => fileInputRef.current?.click()}
                 className={cn(
                   "relative flex h-28 w-full cursor-pointer items-center gap-4 overflow-hidden rounded-xl border border-dashed px-4 transition",
                   productReady
                     ? "border-emerald-300 bg-emerald-50/50"
                     : "border-zinc-200 bg-zinc-50/50 hover:border-zinc-300 hover:bg-zinc-50",
-                  (isUploading || isPending) && "cursor-wait opacity-80"
+                  isPending && "cursor-wait opacity-80"
                 )}
               >
                 {previewUrl ? (
@@ -1086,13 +1117,23 @@ export function BrandCampaignStepBrief({
                 )}
                 <div className="min-w-0 text-left">
                   <p className="text-sm font-medium text-zinc-800">
-                    {isUploading ? t.uploading : productReady ? t.uploaded : t.clickToUpload}
+                    {productReady
+                      ? isUploading
+                        ? t.savingPhoto
+                        : t.uploaded
+                      : isUploading
+                        ? t.uploading
+                        : t.clickToUpload}
                   </p>
                   {!productReady && !isUploading ? (
                     <p className="mt-0.5 text-xs text-zinc-400">{t.formats}</p>
                   ) : null}
                 </div>
-                {!isUploading ? <Upload className="ml-auto h-4 w-4 shrink-0 text-zinc-300" /> : null}
+                {isUploading && !productReady ? (
+                  <Loader2 className="ml-auto h-4 w-4 shrink-0 animate-spin text-zinc-400" />
+                ) : (
+                  <Upload className="ml-auto h-4 w-4 shrink-0 text-zinc-300" />
+                )}
               </button>
               {uploadError ? <p className="text-xs text-red-600">{uploadError}</p> : null}
             </div>

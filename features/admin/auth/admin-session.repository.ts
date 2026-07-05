@@ -1,10 +1,10 @@
 import "server-only";
 
-import { randomBytes, createHash } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { prisma, hasDatabaseUrl } from "@/lib/core/database/prisma";
-import { isStrictAdminSessionBinding } from "@/lib/auth/admin-security-config";
 import { ADMIN_SESSION_MAX_AGE_SEC } from "@/lib/auth-config";
-import type { AdminProfileWithUser } from "@/features/admin/auth/admin-profile.repository";
+import { isStrictAdminSessionBinding } from "@/lib/auth/admin-security-config";
+import type { AdminUser } from "@/features/admin/auth/admin-user.repository";
 
 function hashToken(token: string) {
   return createHash("sha256").update(token).digest("hex");
@@ -12,7 +12,7 @@ function hashToken(token: string) {
 
 export class AdminSessionRepository {
   async createSession(input: {
-    adminProfileId: string;
+    adminUserId: string;
     ipHash: string;
     userAgentHash: string;
     deviceLabel?: string;
@@ -23,7 +23,7 @@ export class AdminSessionRepository {
 
     await prisma.adminSession.create({
       data: {
-        adminProfileId: input.adminProfileId,
+        adminUserId: input.adminUserId,
         tokenHash: hashToken(token),
         ipHash: input.ipHash,
         userAgentHash: input.userAgentHash,
@@ -40,7 +40,7 @@ export class AdminSessionRepository {
     token: string;
     ipHash: string;
     userAgentHash: string;
-  }): Promise<AdminProfileWithUser | null> {
+  }): Promise<AdminUser | null> {
     if (!hasDatabaseUrl()) return null;
 
     const strict = isStrictAdminSessionBinding();
@@ -52,17 +52,15 @@ export class AdminSessionRepository {
         ...(strict ? { ipHash: input.ipHash, userAgentHash: input.userAgentHash } : {})
       },
       include: {
-        adminProfile: {
-          include: { user: true }
-        }
+        adminUser: true
       }
     });
 
-    if (!row?.adminProfile?.user || row.adminProfile.user.deletedAt) {
+    if (!row?.adminUser || row.adminUser.deletedAt) {
       return null;
     }
 
-    return row.adminProfile;
+    return row.adminUser;
   }
 
   async revokeByToken(token: string) {
@@ -72,11 +70,16 @@ export class AdminSessionRepository {
     });
   }
 
-  async revokeAllForProfile(adminProfileId: string) {
+  async revokeAllForUser(adminUserId: string) {
     await prisma.adminSession.updateMany({
-      where: { adminProfileId, revokedAt: null },
+      where: { adminUserId, revokedAt: null },
       data: { revokedAt: new Date() }
     });
+  }
+
+  /** @deprecated use revokeAllForUser */
+  async revokeAllForProfile(adminUserId: string) {
+    return this.revokeAllForUser(adminUserId);
   }
 }
 

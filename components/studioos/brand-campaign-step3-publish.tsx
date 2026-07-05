@@ -19,9 +19,8 @@ import {
   Shield
 } from "lucide-react";
 
-/** Minimum time on the matching screen so the search feels real. */
-const MATCH_MIN_MS = 2500;
-const MATCH_FINISH_MS = 400;
+/** Show matching overlay while publish runs in background; redirect as soon as checkout is ready. */
+const MATCH_FINISH_MS = 200;
 
 const copy = {
   en: {
@@ -139,13 +138,7 @@ export function BrandCampaignStep3Publish({
     formData.set("lang", locale);
     formData.set("project_id", projectId);
 
-    const started = Date.now();
     const result = await publishBrandCampaignAction(formData);
-    const elapsed = Date.now() - started;
-    const waitMs = Math.max(0, MATCH_MIN_MS - elapsed);
-    if (waitMs > 0) {
-      await new Promise((resolve) => window.setTimeout(resolve, waitMs));
-    }
 
     if (!result.ok) {
       setIsMatching(false);

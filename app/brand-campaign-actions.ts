@@ -35,6 +35,8 @@ import { upsertBrandProfileFromBrief } from "@/lib/brand-profile-service";
 import { listOrdersForProject, updateOrderRequirements } from "@/lib/order-service";
 import { buildConfirmedBriefSnapshot } from "@/lib/studioos/confirmed-brief";
 import { creativeDirectionService } from "@/features/ai/creative-direction.service";
+import { aiJobRepository } from "@/features/ai/ai-job.repository";
+import type { CreativeDirection } from "@/features/ai/creative-direction.types";
 import { brandCampaignRepository } from "@/features/campaign/brand-campaign/brand-campaign.repository";
 import { mapCampaignToStoredProject } from "@/features/campaign/brand-campaign/brand-campaign.mapper";
 import type { BrandProductionBrief } from "@/features/campaign/brand-campaign/brand-campaign.types";
@@ -47,6 +49,9 @@ import {
   WIZARD_EPHEMERAL_KEY,
   WIZARD_SAVED_AT_KEY
 } from "@/lib/studioos/brand-wizard-session";
+import {
+  parseWizardBriefSnapshot,
+} from "@/lib/studioos/brand-wizard-brief-snapshot";
 
 async function requireBrandClient(): Promise<
   | { ok: true; client_email: string; client_name: string; company_name: string }
@@ -425,125 +430,132 @@ export async function saveBrandCampaignDraftAction(formData: FormData) {
 /** Brand 3-step wizard — saves brief, product, and references in one submit. */
 export async function saveBrandCampaignSetupAction(formData: FormData) {
   const lang = normalizeLang(formData.get("lang"));
-  const projectId = String(formData.get("project_id") ?? "");
-  const ctx = await resolveBrandCampaignContext(projectId, lang);
-  if (!ctx.ok) return ctx;
-  const { client } = ctx;
 
-  const product_url = String(formData.get("product_url") ?? "").trim();
-  const product_name = String(formData.get("product_name") ?? "").trim();
-  const hasProduct = await hasProductVisual(projectId);
-  const input = readQuestionnaire(formData, lang);
+  try {
+    const projectId = String(formData.get("project_id") ?? "");
+    const ctx = await resolveBrandCampaignContext(projectId, lang);
+    if (!ctx.ok) return ctx;
+    const { client } = ctx;
 
-  if (!product_url && !hasProduct) {
-    return {
-      ok: false as const,
-      error: lang === "zh" ? "请上传产品图，或填写产品链接" : "Upload a product photo or add a product link"
-    };
-  }
+    const product_url = String(formData.get("product_url") ?? "").trim();
+    const product_name = String(formData.get("product_name") ?? "").trim();
+    const hasProduct = await hasProductVisual(projectId);
+    const input = readQuestionnaire(formData, lang);
 
-  const hasBrief =
-    input.rawSummary ||
-    input.productDescription ||
-    String(formData.get("campaign_goal") ?? "").trim() ||
-    product_name;
-
-  if (!hasBrief) {
-    return {
-      ok: false as const,
-      error: lang === "zh" ? "请描述你想做的广告，或使用 AI 整理" : "Describe your campaign or use AI polish"
-    };
-  }
-
-  const refinedGoal = String(formData.get("campaign_goal") ?? "").trim();
-  const refinedAudience = String(formData.get("target_audience") ?? "").trim();
-  const refinedTitle = String(formData.get("title") ?? "").trim();
-  const refinedNotes = String(formData.get("notes") ?? "").trim();
-
-  const brief =
-    refinedGoal
-      ? {
-          campaign_goal: refinedGoal,
-          product_name: input.productName || deriveProductName(product_url, "My Product"),
-          target_audience: refinedAudience || input.audienceDescription || "25-40",
-          title: refinedTitle || `${input.productName || deriveProductName(product_url, "My Product")} Campaign`,
-          notes: refinedNotes || [input.productDescription, input.extraNotes, input.rawSummary].filter(Boolean).join("\n\n"),
-          source: "openai" as const
-        }
-      : templateReorganizeBrandBrief(input, lang);
-
-  const resolvedName = product_name || brief.product_name || deriveProductName(product_url, "My Product");
-  const category = "CPG";
-  const target_platform = input.platforms.length ? input.platforms.join(", ") : "TikTok, Meta";
-  const budget_range = String(formData.get("budget_range") ?? "").trim() || defaultBrandBudget();
-  const delivery_timeline = String(formData.get("delivery_timeline") ?? "").trim() || defaultBrandTimeline();
-  const aspect_ratio_raw = String(formData.get("aspect_ratio") ?? "").trim();
-  if (!isValidBrandAspectRatio(aspect_ratio_raw)) {
-    return {
-      ok: false as const,
-      error: lang === "zh" ? "请选择视频比例" : "Select a video aspect ratio"
-    };
-  }
-
-  const deadline = deadlineFromTimeline(delivery_timeline);
-  const existingProject = await getProject(projectId);
-  const priorSettings = existingProject?.settings_json ?? {};
-  const { confirmed_brief: _removed, ...priorWithoutConfirm } = priorSettings as Record<string, unknown>;
-  const refs = await listReferencesForProject(projectId);
-
-  await updateProject(projectId, {
-    product_name: resolvedName,
-    product_url,
-    category,
-    commercial_objective: input.objective,
-    commercial_objective_note: input.extraNotes,
-    target_audience: brief.target_audience,
-    target_platform,
-    title: brief.title,
-    campaign_goal: brief.campaign_goal,
-    notes: brief.notes,
-    budget_range,
-    deadline,
-    video_format: aspect_ratio_raw,
-    aspect_ratios: [aspect_ratio_raw],
-    reference_links: refs.map((item) => item.source_url).join("\n"),
-    settings_json: {
-      ...priorWithoutConfirm,
-      brand_questionnaire: {
-        ...input,
-        budgetRange: budget_range,
-        deliveryTimeline: delivery_timeline,
-        aspectRatio: aspect_ratio_raw,
-        refined_brief: brief,
-        refined_at: new Date().toISOString()
-      }
+    if (!product_url && !hasProduct) {
+      return {
+        ok: false as const,
+        error: lang === "zh" ? "请上传产品图，或填写产品链接" : "Upload a product photo or add a product link"
+      };
     }
-  });
 
-  await completeWizardStep(projectId, 1);
-  await completeWizardStep(projectId, 2);
-  await completeWizardStep(projectId, 3);
-  await emitWizardProgress(projectId, {
-    step: 3,
-    phase: "idle",
-    progressMessage: lang === "zh" ? "需求已保存" : "Campaign details saved"
-  });
+    const hasBrief =
+      input.rawSummary ||
+      input.productDescription ||
+      String(formData.get("campaign_goal") ?? "").trim() ||
+      product_name;
 
-  const project = await getProject(projectId);
-  if (project) {
-    const profile = await upsertBrandProfileFromBrief(client.client_email, {
-      company_name: project.company_name || client.company_name,
+    if (!hasBrief) {
+      return {
+        ok: false as const,
+        error: lang === "zh" ? "请描述你想做的广告，或使用 AI 整理" : "Describe your campaign or use AI polish"
+      };
+    }
+
+    const refinedGoal = String(formData.get("campaign_goal") ?? "").trim();
+    const refinedAudience = String(formData.get("target_audience") ?? "").trim();
+    const refinedTitle = String(formData.get("title") ?? "").trim();
+    const refinedNotes = String(formData.get("notes") ?? "").trim();
+
+    const brief =
+      refinedGoal
+        ? {
+            campaign_goal: refinedGoal,
+            product_name: input.productName || deriveProductName(product_url, "My Product"),
+            target_audience: refinedAudience || input.audienceDescription || "25-40",
+            title: refinedTitle || `${input.productName || deriveProductName(product_url, "My Product")} Campaign`,
+            notes: refinedNotes || [input.productDescription, input.extraNotes, input.rawSummary].filter(Boolean).join("\n\n"),
+            source: "openai" as const
+          }
+        : templateReorganizeBrandBrief(input, lang);
+
+    const resolvedName = product_name || brief.product_name || deriveProductName(product_url, "My Product");
+    const category = "CPG";
+    const target_platform = input.platforms.length ? input.platforms.join(", ") : "TikTok, Meta";
+    const budget_range = String(formData.get("budget_range") ?? "").trim() || defaultBrandBudget();
+    const delivery_timeline = String(formData.get("delivery_timeline") ?? "").trim() || defaultBrandTimeline();
+    const aspect_ratio_raw = String(formData.get("aspect_ratio") ?? "").trim();
+    const aspect_ratio = isValidBrandAspectRatio(aspect_ratio_raw)
+      ? aspect_ratio_raw
+      : defaultBrandAspectRatio();
+
+    const deadline = deadlineFromTimeline(delivery_timeline);
+    const existingProject = await getProject(projectId);
+    const priorSettings = existingProject?.settings_json ?? {};
+    const { confirmed_brief: _removed, ...priorWithoutConfirm } = priorSettings as Record<string, unknown>;
+    const refs = await listReferencesForProject(projectId);
+
+    await updateProject(projectId, {
+      product_name: resolvedName,
+      product_url,
+      category,
+      commercial_objective: input.objective,
+      commercial_objective_note: input.extraNotes,
+      target_audience: brief.target_audience,
+      target_platform,
+      title: brief.title,
+      campaign_goal: brief.campaign_goal,
+      notes: brief.notes,
+      budget_range,
+      deadline,
+      video_format: aspect_ratio,
+      aspect_ratios: [aspect_ratio],
+      reference_links: refs.map((item) => item.source_url).join("\n"),
+      settings_json: {
+        ...priorWithoutConfirm,
+        brand_questionnaire: {
+          ...input,
+          budgetRange: budget_range,
+          deliveryTimeline: delivery_timeline,
+          aspectRatio: aspect_ratio,
+          refined_brief: brief,
+          refined_at: new Date().toISOString()
+        }
+      }
+    });
+
+    await completeWizardStep(projectId, 1);
+    await emitWizardProgress(projectId, {
+      step: 1,
+      phase: "idle",
+      progressMessage: lang === "zh" ? "需求已保存" : "Campaign details saved"
+    });
+
+    void upsertBrandProfileFromBrief(client.client_email, {
+      company_name: existingProject?.company_name || client.company_name,
       product_name: resolvedName,
       product_url,
       industry: category,
       campaign_goal: brief.campaign_goal
-    });
-    revalidatePath(`/brands/${profile.id}`);
+    }).catch(() => undefined);
+
+    revalidateBrandCampaign(projectId);
+
+    return { ok: true as const, nextStep: 2, prepared: false as const };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    return {
+      ok: false as const,
+      error:
+        lang === "zh"
+          ? message.includes("Campaign not found") || message.includes("not found")
+            ? "项目不存在或无权访问"
+            : "保存失败，请重试"
+          : message.includes("Campaign not found")
+            ? "Project not found or access denied"
+            : "Save failed — try again"
+    };
   }
-
-  revalidateBrandCampaign(projectId);
-
-  return { ok: true as const, nextStep: 2, prepared: false as const };
 }
 
 /** @deprecated Use saveBrandCampaignSetupAction */
@@ -688,6 +700,120 @@ export async function prepareBrandCampaignAction(formData: FormData) {
   }
 }
 
+async function finalizeBrandCreativeDirections(
+  projectId: string,
+  lang: Locale,
+  directions: CreativeDirection[],
+  options?: { wizardFastPath?: boolean }
+) {
+  await completeWizardStep(projectId, 2);
+  if (!options?.wizardFastPath) {
+    await emitWizardProgress(projectId, {
+      step: 2,
+      phase: "idle",
+      progressMessage: lang === "zh" ? "AI 已生成 3 个创意方向" : "AI generated 3 creative directions"
+    });
+    revalidateBrandCampaign(projectId);
+  }
+  return directions;
+}
+
+/** Returns cached directions or starts async AI generation (non-blocking). */
+export async function startBrandCreativeDirectionsAction(formData: FormData) {
+  const lang = normalizeLang(formData.get("lang"));
+  const projectId = String(formData.get("project_id") ?? "");
+  const wizardFastPath = formData.get("wizard_fast_path") === "1";
+  const briefSnapshot = parseWizardBriefSnapshot(String(formData.get("brief_snapshot") ?? ""));
+  const ctx = await resolveBrandCampaignContext(projectId, lang);
+  if (!ctx.ok) return ctx;
+
+  const campaignId = await campaignBridgeService.resolvePrismaCampaignId(projectId);
+  if (!campaignId) {
+    return {
+      ok: false as const,
+      error: lang === "zh" ? "Campaign 尚未连接到 AI 创意流程" : "Campaign is not connected to the AI creative flow"
+    };
+  }
+
+  try {
+    const user = await requireBrandCampaignUser(ctx.client.client_email);
+    const existing = await creativeDirectionService.listDirections(campaignId, user);
+    if (existing.length >= 3) {
+      const directions = await finalizeBrandCreativeDirections(projectId, lang, existing, { wizardFastPath });
+      return { ok: true as const, status: "ready" as const, directions };
+    }
+
+    const activeJob = await aiJobRepository.findActiveForCampaign(campaignId, "CREATIVE_DIRECTION");
+    if (activeJob) {
+      if (briefSnapshot && activeJob.status === "QUEUED") {
+        const input = (activeJob.inputJson ?? {}) as Record<string, unknown>;
+        await aiJobRepository.updateInputJson(activeJob.id, {
+          ...input,
+          briefSnapshot
+        });
+      }
+      return { ok: true as const, status: "pending" as const, jobId: activeJob.id };
+    }
+
+    const started = await creativeDirectionService.generateAsync(campaignId, user, {
+      wizardFastPath,
+      briefSnapshot: briefSnapshot ?? undefined,
+      language: lang
+    });
+    return { ok: true as const, status: "pending" as const, jobId: started.jobId };
+  } catch (error) {
+    return {
+      ok: false as const,
+      error: error instanceof Error ? error.message : lang === "zh" ? "创意方向生成失败" : "Creative directions failed"
+    };
+  }
+}
+
+/** Poll async AI job — returns directions when 3 schemes are ready. */
+export async function pollBrandCreativeDirectionsAction(formData: FormData) {
+  const lang = normalizeLang(formData.get("lang"));
+  const projectId = String(formData.get("project_id") ?? "");
+  const jobId = String(formData.get("job_id") ?? "").trim();
+  const wizardFastPath = formData.get("wizard_fast_path") === "1";
+  const ctx = await resolveBrandCampaignContext(projectId, lang);
+  if (!ctx.ok) return ctx;
+
+  const campaignId = await campaignBridgeService.resolvePrismaCampaignId(projectId);
+  if (!campaignId) {
+    return {
+      ok: false as const,
+      error: lang === "zh" ? "Campaign 尚未连接到 AI 创意流程" : "Campaign is not connected to the AI creative flow"
+    };
+  }
+
+  try {
+    const user = await requireBrandCampaignUser(ctx.client.client_email);
+    const directions = await creativeDirectionService.listDirections(campaignId, user);
+    if (directions.length >= 3) {
+      const ready = await finalizeBrandCreativeDirections(projectId, lang, directions, { wizardFastPath });
+      return { ok: true as const, status: "ready" as const, directions: ready };
+    }
+
+    if (jobId) {
+      const job = await aiJobRepository.findById(jobId);
+      if (job?.status === "FAILED" || job?.status === "DEAD") {
+        return {
+          ok: false as const,
+          error: lang === "zh" ? "AI 创意生成失败，请返回上一步重试" : "AI creative generation failed — go back and try again"
+        };
+      }
+    }
+
+    return { ok: true as const, status: "pending" as const, directions: [] as CreativeDirection[] };
+  } catch (error) {
+    return {
+      ok: false as const,
+      error: error instanceof Error ? error.message : lang === "zh" ? "创意方向加载失败" : "Creative directions failed to load"
+    };
+  }
+}
+
+/** @deprecated Prefer start + poll for progressive Step 2 loading. */
 export async function generateBrandCreativeDirectionsAction(formData: FormData) {
   const lang = normalizeLang(formData.get("lang"));
   const projectId = String(formData.get("project_id") ?? "");
@@ -705,13 +831,7 @@ export async function generateBrandCreativeDirectionsAction(formData: FormData) 
   try {
     const user = await requireBrandCampaignUser(ctx.client.client_email);
     const directions = await creativeDirectionService.generate(campaignId, user);
-    await completeWizardStep(projectId, 2);
-    await emitWizardProgress(projectId, {
-      step: 2,
-      phase: "idle",
-      progressMessage: lang === "zh" ? "AI 已生成 3 个创意方向" : "AI generated 3 creative directions"
-    });
-    revalidateBrandCampaign(projectId);
+    await finalizeBrandCreativeDirections(projectId, lang, directions);
     return { ok: true as const, directions };
   } catch (error) {
     return {

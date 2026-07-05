@@ -8,7 +8,7 @@ export const runtime = "nodejs";
 export async function POST(request: Request) {
   try {
     const profile = await requireAdminMutation(request);
-    await logoutAdminSession({ request, emailHint: profile.user.email });
+    await logoutAdminSession({ request, emailHint: profile.email });
     return NextResponse.json({ ok: true });
   } catch (error) {
     return handleRouteError(error);

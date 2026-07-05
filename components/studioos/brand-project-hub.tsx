@@ -94,7 +94,9 @@ const copy = {
     quantity: "Deliverables",
     goal: "Goal",
     product: "Product",
-    projectBadge: "Ad project"
+    projectBadge: "Ad project",
+    totalBudget: "Total budget",
+    daysLeft: (n: number) => `${n} day${n === 1 ? "" : "s"} left`
   },
   zh: {
     back: "返回工作台",
@@ -142,7 +144,9 @@ const copy = {
     quantity: "交付数量",
     goal: "广告目标",
     product: "产品",
-    projectBadge: "广告项目"
+    projectBadge: "广告项目",
+    totalBudget: "总预算",
+    daysLeft: (n: number) => `剩余 ${n} 天`
   }
 };
 
@@ -248,14 +252,46 @@ function TimelineStep({
   );
 }
 
-function MetaChip({ icon: Icon, label, value }: { icon: typeof Calendar; label: string; value: string }) {
+function daysUntilDeadline(deadline: string): number | null {
+  const parsed = Date.parse(deadline);
+  if (Number.isNaN(parsed)) return null;
+  return Math.max(0, Math.ceil((parsed - Date.now()) / 86400000));
+}
+
+function categorySublabel(category: string, locale: Locale): string | null {
+  const normalized = category.trim().toLowerCase();
+  if (locale === "zh") {
+    if (normalized.includes("cpg") || normalized.includes("快消")) return "快消品";
+    if (normalized.includes("beauty") || normalized.includes("美妆")) return "美妆个护";
+    if (normalized.includes("tech") || normalized.includes("科技")) return "科技数码";
+  }
+  if (normalized.includes("cpg")) return "Consumer goods";
+  if (normalized.includes("beauty")) return "Beauty & personal care";
+  if (normalized.includes("tech")) return "Consumer tech";
+  return null;
+}
+
+function ProjectHeaderStat({
+  icon: Icon,
+  label,
+  value,
+  sublabel
+}: {
+  icon: typeof Calendar;
+  label: string;
+  value: string;
+  sublabel?: string | null;
+}) {
   return (
-    <div className="rounded-xl border border-zinc-200/90 bg-white px-4 py-3.5">
-      <div className="flex items-center gap-1.5 text-xs text-zinc-500">
-        <Icon className="h-3.5 w-3.5" />
+    <div className="min-w-[88px] text-right sm:min-w-[100px]">
+      <div className="flex items-center justify-end gap-1.5 text-xs text-zinc-500">
+        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-violet-50 text-violet-600">
+          <Icon className="h-3.5 w-3.5" />
+        </span>
         {label}
       </div>
-      <p className="mt-1.5 text-sm font-semibold text-zinc-900">{value}</p>
+      <p className="mt-1.5 text-base font-semibold tabular-nums text-zinc-950">{value}</p>
+      {sublabel ? <p className="mt-0.5 text-xs text-zinc-400">{sublabel}</p> : null}
     </div>
   );
 }
@@ -309,6 +345,8 @@ export function BrandProjectHub({
   const latestDeliverable = deliverables[deliverables.length - 1];
   const isRecruiting = status === "matching" || status === "studio_selected";
   const showAside = activeTab !== "match" && (latestDeliverable || studio);
+  const daysLeft = project.deadline ? daysUntilDeadline(project.deadline) : null;
+  const categorySub = project.category ? categorySublabel(project.category, locale) : null;
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -324,7 +362,7 @@ export function BrandProjectHub({
                   variant="outline"
                   className={cn(
                     "rounded-full font-normal",
-                    isRecruiting && "border-emerald-200 bg-emerald-50 text-emerald-700",
+                    isRecruiting && "border-violet-200 bg-violet-50 text-violet-700",
                     status === "production" && "border-violet-200 bg-violet-50 text-violet-800",
                     status === "in_review" && "border-emerald-200 bg-emerald-50 text-emerald-800"
                   )}
@@ -339,22 +377,45 @@ export function BrandProjectHub({
                 <p className="mt-2 max-w-3xl text-sm leading-relaxed text-zinc-500">{project.campaign_goal}</p>
               ) : null}
             </div>
-            {action && !(isRecruiting && activeTab === "match") ? (
-              <Button asChild size="lg" className="h-11 shrink-0 rounded-xl px-6">
+
+            <div className="flex shrink-0 flex-wrap items-start gap-6 lg:gap-8">
+              {project.budget_range ? (
+                <ProjectHeaderStat
+                  icon={CircleDollarSign}
+                  label={t.budget}
+                  value={project.budget_range.replace(/\s*总预算.*$/i, "").trim()}
+                  sublabel={t.totalBudget}
+                />
+              ) : null}
+              {project.deadline ? (
+                <ProjectHeaderStat
+                  icon={Calendar}
+                  label={t.deadline}
+                  value={project.deadline.split("T")[0] ?? project.deadline}
+                  sublabel={daysLeft !== null ? t.daysLeft(daysLeft) : null}
+                />
+              ) : null}
+              {project.category ? (
+                <ProjectHeaderStat
+                  icon={Layers}
+                  label={t.category}
+                  value={project.category.split(/[/·|]/)[0]?.trim() ?? project.category}
+                  sublabel={categorySub}
+                />
+              ) : null}
+            </div>
+          </div>
+
+          {action && !(isRecruiting && activeTab === "match") ? (
+            <div className="mt-6 lg:hidden">
+              <Button asChild size="lg" className="h-11 w-full rounded-xl px-6 sm:w-auto">
                 <Link href={action.href}>
                   {action.label}
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
-            ) : null}
-          </div>
-
-          <div className="mt-6 grid gap-3 sm:grid-cols-3">
-            {project.budget_range ? <MetaChip icon={CircleDollarSign} label={t.budget} value={project.budget_range} /> : null}
-            {project.deadline ? <MetaChip icon={Calendar} label={t.deadline} value={project.deadline} /> : null}
-            {project.category ? <MetaChip icon={Layers} label={t.category} value={project.category} /> : null}
-            {studio && !isRecruiting ? <MetaChip icon={Users} label={t.studio} value={studio.name} /> : null}
-          </div>
+            </div>
+          ) : null}
         </div>
 
         <nav className="flex gap-1 overflow-x-auto border-b border-zinc-100 px-4 sm:px-6" aria-label="Campaign steps">

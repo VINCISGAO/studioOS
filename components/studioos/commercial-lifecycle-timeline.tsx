@@ -25,35 +25,49 @@ import {
 import { normalizeCampaignStatus } from "@/lib/studioos/project-status";
 import { portalChrome } from "@/lib/studioos/product-theme";
 import { cn } from "@/lib/utils";
-import { Check, Hourglass } from "lucide-react";
+import { Hourglass } from "lucide-react";
 
 const copy = {
   en: {
     brandTitle: "Project progress",
     creatorTitle: "Project progress",
     current: "Current stage",
-    next: "Next step"
+    next: "Next step",
+    eta: "Estimated time remaining"
   },
   zh: {
     brandTitle: "项目进度",
     creatorTitle: "项目进度",
     current: "当前阶段",
-    next: "下一步"
+    next: "下一步",
+    eta: "预计剩余时间"
   }
 };
+
+function recruitingEtaLabel(locale: Locale, pendingInvitations: number) {
+  if (pendingInvitations <= 0) {
+    return locale === "zh" ? "1-2 天" : "1–2 days";
+  }
+  if (pendingInvitations >= 3) {
+    return locale === "zh" ? "2-3 天" : "2–3 days";
+  }
+  return locale === "zh" ? "1-2 天" : "1–2 days";
+}
 
 function HorizontalPhaseTimeline({
   locale,
   side,
   currentPhase,
   nextHint,
-  currentLabelOverride
+  currentLabelOverride,
+  estimatedRemaining
 }: {
   locale: Locale;
   side: "brand" | "creator";
   currentPhase: UserCommercialPhase;
   nextHint: string;
   currentLabelOverride?: string;
+  estimatedRemaining?: string | null;
 }) {
   const t = copy[locale];
   const currentIndex = userCommercialPhaseIndex(currentPhase);
@@ -62,57 +76,77 @@ function HorizontalPhaseTimeline({
   const currentLabel =
     currentLabelOverride ??
     (side === "brand" ? brandUserPhaseLabel(currentPhase, locale) : creatorUserPhaseLabel(currentPhase, locale));
+  const showEta = currentPhase === "recruiting" && estimatedRemaining;
 
   return (
-    <section className={cn(portalChrome.card, "p-4 sm:p-5")}>
-      <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+    <section className={cn(portalChrome.card, "overflow-hidden")}>
+      <div className="flex flex-col gap-2 border-b border-zinc-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
         <h2 className="text-sm font-semibold text-zinc-950">{side === "brand" ? t.brandTitle : t.creatorTitle}</h2>
-        <span className="w-fit rounded-full bg-sky-50 px-2.5 py-1 text-[11px] font-medium text-sky-700">
-          {t.current}: {currentLabel}
+        <span className="w-fit rounded-full bg-violet-50 px-3 py-1 text-xs font-medium text-violet-700">
+          {t.current}：{currentLabel}
         </span>
       </div>
 
-      <ol className="grid gap-4 sm:grid-cols-4">
-        {userCommercialPhases.map((phase, index) => {
-          const done = index < currentIndex;
-          const active = index === currentIndex;
+      <div className="px-5 py-5 sm:px-6">
+        <ol className="grid gap-4 sm:grid-cols-4">
+          {userCommercialPhases.map((phase, index) => {
+            const done = index < currentIndex;
+            const active = index === currentIndex;
 
-          return (
-            <li key={phase} className="relative min-w-0">
-              {index < userCommercialPhases.length - 1 ? (
-                <span
-                  className="absolute left-[calc(50%+14px)] top-3 hidden h-px w-[calc(100%-28px)] bg-zinc-200 sm:block"
-                  aria-hidden
-                />
-              ) : null}
-              <div className="flex flex-col items-center text-center">
-                <span
-                  className={cn(
-                    "flex h-7 w-7 items-center justify-center rounded-full text-[11px] font-semibold",
-                    done ? "bg-zinc-900 text-white" : active ? "bg-violet-600 text-white" : "border border-zinc-200 bg-white text-zinc-400"
-                  )}
-                >
-                  {done ? <Check className="h-3.5 w-3.5" /> : index + 1}
-                </span>
-                <p className={cn("mt-2 text-sm font-semibold", active ? "text-violet-950" : done ? "text-zinc-800" : "text-zinc-400")}>
-                  {phaseLabels[phase]}
-                </p>
-                {active ? (
-                  <p className="mt-1 text-xs leading-relaxed text-violet-700/80">{phaseSubtitles[phase]}</p>
+            return (
+              <li key={phase} className="relative min-w-0">
+                {index < userCommercialPhases.length - 1 ? (
+                  <span
+                    className={cn(
+                      "absolute left-[calc(50%+14px)] top-3.5 hidden h-px sm:block",
+                      done ? "w-[calc(100%-28px)] bg-violet-200" : "w-[calc(100%-28px)] bg-zinc-200"
+                    )}
+                    aria-hidden
+                  />
                 ) : null}
-              </div>
-            </li>
-          );
-        })}
-      </ol>
+                <div className="flex flex-col items-center text-center">
+                  <span
+                    className={cn(
+                      "flex h-7 w-7 items-center justify-center rounded-full text-[11px] font-semibold",
+                      done || active
+                        ? "bg-violet-600 text-white"
+                        : "border border-zinc-200 bg-white text-zinc-400"
+                    )}
+                  >
+                    {index + 1}
+                  </span>
+                  <p
+                    className={cn(
+                      "mt-2 text-sm font-semibold",
+                      active ? "text-violet-700" : done ? "text-zinc-800" : "text-zinc-400"
+                    )}
+                  >
+                    {phaseLabels[phase]}
+                  </p>
+                  <p className={cn("mt-1 text-xs leading-relaxed", active ? "text-violet-600/80" : "text-zinc-400")}>
+                    {phaseSubtitles[phase]}
+                  </p>
+                </div>
+              </li>
+            );
+          })}
+        </ol>
+      </div>
 
-      <p className="mt-5 flex items-start gap-2 rounded-xl border border-zinc-200/80 bg-zinc-50 px-3 py-2.5 text-sm text-zinc-700">
-        <Hourglass className="mt-0.5 h-4 w-4 shrink-0 text-zinc-500" />
-        <span>
-          <span className="font-medium text-zinc-900">{t.next}：</span>
-          {nextHint.replace(/^(下一步：|Next: )/, "")}
-        </span>
-      </p>
+      <div className="flex flex-col gap-2 border-t border-violet-100 bg-violet-50/70 px-5 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <p className="flex items-center gap-2 text-sm text-violet-900">
+          <Hourglass className="h-4 w-4 shrink-0 text-violet-500" />
+          <span>
+            <span className="font-medium">{t.next}：</span>
+            {nextHint.replace(/^(下一步：|Next: )/, "")}
+          </span>
+        </p>
+        {showEta ? (
+          <p className="text-sm text-violet-700/80">
+            {t.eta}：{estimatedRemaining}
+          </p>
+        ) : null}
+      </div>
     </section>
   );
 }
@@ -123,7 +157,8 @@ function UserPhaseTimeline({
   currentPhase,
   nextHint,
   compact = false,
-  currentLabelOverride
+  currentLabelOverride,
+  estimatedRemaining
 }: {
   locale: Locale;
   side: "brand" | "creator";
@@ -131,6 +166,7 @@ function UserPhaseTimeline({
   nextHint: string;
   compact?: boolean;
   currentLabelOverride?: string;
+  estimatedRemaining?: string | null;
 }) {
   if (compact) {
     return (
@@ -140,6 +176,7 @@ function UserPhaseTimeline({
         currentPhase={currentPhase}
         nextHint={nextHint}
         currentLabelOverride={currentLabelOverride}
+        estimatedRemaining={estimatedRemaining}
       />
     );
   }
@@ -156,7 +193,7 @@ function UserPhaseTimeline({
     <section className={cn(portalChrome.card, "p-5 sm:p-6")}>
       <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-sm font-semibold text-zinc-950">{side === "brand" ? t.brandTitle : t.creatorTitle}</h2>
-        <span className="w-fit rounded-full bg-indigo-50 px-2.5 py-1 text-[11px] font-medium text-indigo-700">
+        <span className="w-fit rounded-full bg-violet-50 px-2.5 py-1 text-[11px] font-medium text-violet-700">
           {t.current}: {currentLabel}
         </span>
       </div>
@@ -172,7 +209,7 @@ function UserPhaseTimeline({
               <div
                 className={cn(
                   "flex items-start gap-3 rounded-xl px-3 py-3",
-                  active && "bg-indigo-50 ring-1 ring-indigo-100",
+                  active && "bg-violet-50 ring-1 ring-violet-100",
                   done && !active && "text-zinc-700",
                   upcoming && "text-zinc-400"
                 )}
@@ -180,17 +217,17 @@ function UserPhaseTimeline({
                 <span
                   className={cn(
                     "mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold",
-                    done ? "bg-zinc-900 text-white" : active ? "bg-indigo-600 text-white" : "border border-zinc-200 bg-white text-zinc-400"
+                    done ? "bg-violet-600 text-white" : active ? "bg-violet-600 text-white" : "border border-zinc-200 bg-white text-zinc-400"
                   )}
                 >
-                  {done ? <Check className="h-3.5 w-3.5" /> : index + 1}
+                  {index + 1}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className={cn("text-sm font-semibold leading-snug", active && "text-indigo-950")}>
+                  <p className={cn("text-sm font-semibold leading-snug", active && "text-violet-950")}>
                     {phaseLabels[phase]}
                   </p>
                   {(active || done) && (
-                    <p className={cn("mt-0.5 text-xs leading-relaxed", active ? "text-indigo-800/80" : "text-zinc-500")}>
+                    <p className={cn("mt-0.5 text-xs leading-relaxed", active ? "text-violet-800/80" : "text-zinc-500")}>
                       {phaseSubtitles[phase]}
                     </p>
                   )}
@@ -206,8 +243,8 @@ function UserPhaseTimeline({
         })}
       </ol>
 
-      <p className="mt-4 rounded-xl bg-zinc-50 px-3 py-2.5 text-sm text-zinc-700">
-        <span className="font-medium text-zinc-900">{t.next}：</span>
+      <p className="mt-4 rounded-xl bg-violet-50 px-3 py-2.5 text-sm text-violet-900">
+        <span className="font-medium">{t.next}：</span>
         {nextHint.replace(/^(下一步：|Next: )/, "")}
       </p>
     </section>
@@ -221,7 +258,8 @@ export function BrandCommercialTimeline({
   orderStatus = null,
   paymentStatus = null,
   projectStatus = null,
-  hasOpenComments = false
+  hasOpenComments = false,
+  pendingInvitationCount = 0
 }: {
   locale: Locale;
   currentStep: BrandCommercialStep;
@@ -230,6 +268,7 @@ export function BrandCommercialTimeline({
   paymentStatus?: string | null;
   projectStatus?: string | null;
   hasOpenComments?: boolean;
+  pendingInvitationCount?: number;
 }) {
   const commercialContext: BrandCommercialContext = {
     order:
@@ -261,6 +300,9 @@ export function BrandCommercialTimeline({
         hasOpenComments,
         commercialContext
       })}
+      estimatedRemaining={
+        currentPhase === "recruiting" ? recruitingEtaLabel(locale, pendingInvitationCount) : null
+      }
       compact={compact}
     />
   );

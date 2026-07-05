@@ -279,86 +279,86 @@ export function creatorCommercialStatusLabel(
 }
 
 /** User-facing commercial phases — backend keeps granular steps; UI shows four. */
-export type UserCommercialPhase = "recruiting" | "in_production" | "review_delivery" | "completed";
+export type UserCommercialPhase = "publish_requirement" | "recruiting" | "in_production" | "completed";
 
 export const userCommercialPhases: UserCommercialPhase[] = [
+  "publish_requirement",
   "recruiting",
   "in_production",
-  "review_delivery",
   "completed"
 ];
 
 export const brandUserPhaseLabels = {
   en: {
+    publish_requirement: "Publish requirements",
     recruiting: "Recruiting",
     in_production: "In production",
-    review_delivery: "Review & payment",
     completed: "Completed"
   },
   zh: {
+    publish_requirement: "发布需求",
     recruiting: "招募中",
     in_production: "制作中",
-    review_delivery: "审核支付",
     completed: "已完成"
   }
 } as const;
 
 export const creatorUserPhaseLabels = {
   en: {
+    publish_requirement: "Requirements",
     recruiting: "Project invitation",
     in_production: "In production",
-    review_delivery: "Review & delivery",
     completed: "Completed"
   },
   zh: {
+    publish_requirement: "需求发布",
     recruiting: "项目邀请",
     in_production: "制作中",
-    review_delivery: "审核交付",
     completed: "已完成"
   }
 } as const;
 
 export const brandUserPhaseSubtitles = {
   en: {
+    publish_requirement: "Brand publishes the project brief",
     recruiting: "Finding the right creator",
-    in_production: "Creator selected — production started",
-    review_delivery: "Reviewing and confirming delivery",
-    completed: "Project closed — escrow released automatically"
+    in_production: "Creator is producing",
+    completed: "Project successfully completed"
   },
   zh: {
-    recruiting: "正在找合适的 Creator",
-    in_production: "已选定 Creator，项目开始制作",
-    review_delivery: "双方反复修改直到确认交付",
-    completed: "项目结束，托管款已自动释放"
+    publish_requirement: "项目方发布需求",
+    recruiting: "正在寻找合适的 Creator",
+    in_production: "Creator 创作中",
+    completed: "项目已圆满完成"
   }
 } as const;
 
 export const creatorUserPhaseSubtitles = {
   en: {
+    publish_requirement: "Brand publishes requirements",
     recruiting: "Brand invitation and shortlist",
     in_production: "You were selected — start producing",
-    review_delivery: "Revisions until brand approves",
     completed: "Project closed — escrow released to your income"
   },
   zh: {
+    publish_requirement: "项目方发布需求",
     recruiting: "收到项目方邀请与候选流程",
     in_production: "已被选中，开始制作",
-    review_delivery: "修改与交付直到品牌确认",
     completed: "项目结束，托管款已自动释放"
   }
 } as const;
 
 const brandStepToPhase: Record<BrandCommercialStep, UserCommercialPhase> = {
-  publish_requirement: "recruiting",
+  publish_requirement: "publish_requirement",
   matching: "recruiting",
   invitations_sent: "recruiting",
   collecting_candidates: "recruiting",
   select_creator: "recruiting",
   creator_selected: "in_production",
   in_production: "in_production",
-  under_review: "review_delivery",
-  approved: "review_delivery",
-  pending_delivery: "review_delivery",
+  under_review: "in_production",
+  approved: "in_production",
+  pending_delivery: "in_production",
   pending_settlement: "completed",
   completed: "completed"
 };
@@ -369,9 +369,9 @@ const creatorStepToPhase: Record<CreatorCommercialStep, UserCommercialPhase> = {
   waiting_brand_selection: "recruiting",
   selected: "in_production",
   in_production: "in_production",
-  pending_review: "review_delivery",
-  pending_revision: "review_delivery",
-  pending_delivery: "review_delivery",
+  pending_review: "in_production",
+  pending_revision: "in_production",
+  pending_delivery: "in_production",
   pending_settlement: "completed",
   completed: "completed"
 };
@@ -445,6 +445,10 @@ export function resolveBrandNextActorHint(
   const hasOpenComments = context?.hasOpenComments ?? false;
   const awaitingPayment = commercialContext ? isBrandAwaitingPayment(commercialContext) : false;
 
+  if (phase === "publish_requirement") {
+    return locale === "zh" ? "下一步：完善需求并发布招募" : "Next: finalize the brief and start recruiting";
+  }
+
   if (phase === "recruiting") {
     if (step === "creator_selected" && awaitingPayment) {
       return locale === "zh" ? "下一步：完成托管付款" : "Next: complete escrow payment";
@@ -455,17 +459,10 @@ export function resolveBrandNextActorHint(
     if (step === "collecting_candidates" || step === "invitations_sent") {
       return locale === "zh" ? "下一步：等待 Creator 响应" : "Next: waiting for creator responses";
     }
-    return locale === "zh" ? "下一步：您发布需求并招募 Creator" : "Next: publish and recruit creators";
+    return locale === "zh" ? "下一步：向 Creator 发出邀请" : "Next: invite creators";
   }
 
   if (phase === "in_production") {
-    if (step === "creator_selected") {
-      return locale === "zh" ? "下一步：Creator 开始制作" : "Next: creator starts production";
-    }
-    return locale === "zh" ? "下一步：Creator 制作中" : "Next: creator is producing";
-  }
-
-  if (phase === "review_delivery") {
     if (orderStatus === "revision") {
       return locale === "zh" ? "下一步：Creator 修改中" : "Next: creator is revising";
     }
@@ -475,7 +472,10 @@ export function resolveBrandNextActorHint(
     if (step === "under_review") {
       return locale === "zh" ? "下一步：请您审片验收" : "Next: review and approve delivery";
     }
-    return locale === "zh" ? "下一步：确认最终交付" : "Next: confirm final delivery";
+    if (step === "creator_selected") {
+      return locale === "zh" ? "下一步：Creator 开始制作" : "Next: creator starts production";
+    }
+    return locale === "zh" ? "下一步：Creator 制作中" : "Next: creator is producing";
   }
 
   if (step === "pending_settlement") {
@@ -513,20 +513,16 @@ export function resolveCreatorNextActorHint(
   }
 
   if (phase === "in_production") {
-    if (step === "selected") {
-      return locale === "zh" ? "下一步：进入项目工作台开始制作" : "Next: open workspace and start producing";
-    }
-    return locale === "zh" ? "下一步：上传审片版本" : "Next: upload review version";
-  }
-
-  if (phase === "review_delivery") {
     if (step === "pending_revision" || orderStatus === "revision") {
       return locale === "zh" ? "下一步：修改并上传新版本" : "Next: revise and upload a new version";
     }
     if (step === "pending_review") {
       return locale === "zh" ? "下一步：等待品牌审片" : "Next: waiting for brand review";
     }
-    return locale === "zh" ? "下一步：等待品牌确认交付" : "Next: waiting for brand approval";
+    if (step === "selected") {
+      return locale === "zh" ? "下一步：进入项目工作台开始制作" : "Next: open workspace and start producing";
+    }
+    return locale === "zh" ? "下一步：上传审片版本" : "Next: upload review version";
   }
 
   if (step === "pending_settlement") {

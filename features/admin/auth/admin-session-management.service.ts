@@ -20,13 +20,13 @@ function summarizeUserAgent(userAgent: string) {
   return "Browser";
 }
 
-export async function listAdminSessionsForProfile(adminProfileId: string, currentToken: string | null) {
+export async function listAdminSessionsForProfile(adminUserId: string, currentToken: string | null) {
   if (!hasDatabaseUrl()) return [];
 
   const currentHash = currentToken ? hashToken(currentToken) : null;
   const rows = await prisma.adminSession.findMany({
     where: {
-      adminProfileId,
+      adminUserId,
       revokedAt: null,
       expiresAt: { gt: new Date() }
     },
@@ -45,14 +45,14 @@ export async function listAdminSessionsForProfile(adminProfileId: string, curren
 }
 
 export async function revokeAdminSessionById(input: {
-  adminProfileId: string;
+  adminUserId: string;
   sessionId: string;
   currentToken: string | null;
 }) {
   const row = await prisma.adminSession.findFirst({
     where: {
       id: input.sessionId,
-      adminProfileId: input.adminProfileId,
+      adminUserId: input.adminUserId,
       revokedAt: null
     }
   });
@@ -70,12 +70,12 @@ export async function revokeAdminSessionById(input: {
   return { ok: true as const, revokedCurrent: false as const };
 }
 
-export async function revokeOtherAdminSessions(adminProfileId: string, currentToken: string | null) {
+export async function revokeOtherAdminSessions(adminUserId: string, currentToken: string | null) {
   if (!currentToken) return 0;
   const currentHash = hashToken(currentToken);
   const result = await prisma.adminSession.updateMany({
     where: {
-      adminProfileId,
+      adminUserId,
       revokedAt: null,
       tokenHash: { not: currentHash }
     },

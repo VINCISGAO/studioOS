@@ -8,15 +8,15 @@ export type AdminTotpPurpose = "login" | "step_up" | "setup" | "provision";
 
 const REPLAY_TTL_MS = 120_000;
 
-function hashConsumedCode(adminProfileId: string, code: string, timeStep: number) {
+function hashConsumedCode(adminUserId: string, code: string, timeStep: number) {
   return createHash("sha256")
-    .update(`${adminProfileId}:${code}:${timeStep}`)
+    .update(`${adminUserId}:${code}:${timeStep}`)
     .digest("hex");
 }
 
 /** Verify TOTP and atomically consume the code to block replay within the replay window. */
 export async function verifyAndConsumeAdminTotp(input: {
-  adminProfileId: string;
+  adminUserId: string;
   secret: string;
   code: string;
   purpose: AdminTotpPurpose;
@@ -27,12 +27,12 @@ export async function verifyAndConsumeAdminTotp(input: {
 
   if (!hasDatabaseUrl()) return true;
 
-  const codeHash = hashConsumedCode(input.adminProfileId, normalized, matchedStep);
+  const codeHash = hashConsumedCode(input.adminUserId, normalized, matchedStep);
 
   try {
     await prisma.adminTotpConsumption.create({
       data: {
-        adminProfileId: input.adminProfileId,
+        adminUserId: input.adminUserId,
         timeStep: matchedStep,
         codeHash,
         purpose: input.purpose,

@@ -137,24 +137,8 @@ async function main() {
 
   const prisma = new PrismaClient();
   try {
-    let user = await prisma.user.findUnique({ where: { email } });
-    if (!user) {
-      user = await prisma.user.create({
-        data: {
-          email,
-          role: "ADMIN",
-          fullName: "Platform Admin",
-          emailVerified: true
-        }
-      });
-      console.log("Created admin user:", user.id);
-    } else if (user.role !== "ADMIN" && user.role !== "SUPPORT" && user.role !== "SYSTEM") {
-      user = await prisma.user.update({ where: { id: user.id }, data: { role: "ADMIN" } });
-      console.log("Upgraded user role to ADMIN");
-    }
-
-    const existingProfile = await prisma.adminProfile.findUnique({ where: { userId: user.id } });
-    const permissions = permissionsWithoutBackupCodes(existingProfile?.permissions);
+    const existing = await prisma.adminUser.findUnique({ where: { email } });
+    const permissions = permissionsWithoutBackupCodes(existing?.permissions);
 
     let secret;
     let preservedTotp = false;
@@ -162,9 +146,9 @@ async function main() {
     if (envSecret) {
       secret = assertValidAdminTotpSecret(envSecret, "environment");
       console.log("Using ADMIN_TOTP_SECRET from environment.");
-    } else if (!rotateTotp && existingProfile?.totpSecretEnc) {
+    } else if (!rotateTotp && existing?.totpSecretEnc) {
       try {
-        secret = decryptTotpSecret(existingProfile.totpSecretEnc);
+        secret = decryptTotpSecret(existing.totpSecretEnc);
         preservedTotp = true;
         console.log("Preserved existing TOTP secret (Authenticator entry unchanged).");
       } catch {
@@ -182,10 +166,11 @@ async function main() {
     }
 
     const totpSecretEnc = encryptTotpSecret(secret);
-    await prisma.adminProfile.upsert({
-      where: { userId: user.id },
+    const adminUser = await prisma.adminUser.upsert({
+      where: { email },
       create: {
-        userId: user.id,
+        email,
+        fullName: "Platform Admin",
         isMaster,
         status: "ACTIVE",
         totpSecretEnc,
@@ -198,7 +183,7 @@ async function main() {
         status: "ACTIVE",
         totpSecretEnc,
         totpEnabled: true,
-        totpBoundAt: preservedTotp ? existingProfile?.totpBoundAt ?? new Date() : new Date(),
+        totpBoundAt: preservedTotp ? existing?.totpBoundAt ?? new Date() : new Date(),
         failedAttempts: 0,
         lockedUntil: null,
         permissions
@@ -206,11 +191,11 @@ async function main() {
     });
 
     if (isMaster) {
-      await prisma.adminProfile.updateMany({
-        where: { userId: { not: user.id } },
+      await prisma.adminUser.updateMany({
+        where: { email: { not: email } },
         data: { isMaster: false, status: "SUSPENDED", totpEnabled: false }
       });
-      console.log("Master account set. Other admin profiles suspended.");
+      console.log("Master account set. Other admin accounts suspended.");
     }
 
     const label = encodeURIComponent(`StudioOS Admin:${email}`);
@@ -222,7 +207,8 @@ async function main() {
       period: "30"
     });
 
-    console.log("\nAdmin profile ready.");
+    console.log("\nAdmin account ready (independent from public users).");
+    console.log("Admin ID:", adminUser.id);
     console.log("Email:", email);
     if (isMaster) console.log("Role: MASTER (only this account can provision other admins)");
     if (isProductionRuntime()) {

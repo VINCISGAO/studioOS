@@ -136,28 +136,36 @@ export async function deleteBrandProjectsAction(formData: FormData) {
 }
 
 export async function ensureBrandProjectMatchAction(projectId: string, locale: Locale) {
-  const auth = await requireBrandEmail(locale);
-  if (!auth.ok) {
-    return auth;
+  try {
+    const auth = await requireBrandEmail(locale);
+    if (!auth.ok) {
+      return auth;
+    }
+
+    const project = await getProject(projectId);
+    if (!project) {
+      return { ok: false as const, error: locale === "zh" ? "项目不存在" : "Project not found" };
+    }
+
+    if (project.client_email.toLowerCase() !== auth.email) {
+      return { ok: false as const, error: locale === "zh" ? "无权访问此项目" : "Not allowed for this project" };
+    }
+
+    const invitations = await ensureCampaignInvitationsForProject(project, locale);
+    const accepted = await listAcceptedInvitationsForProject(projectId);
+
+    revalidatePath(`/brand/projects/${projectId}`, "page");
+
+    return {
+      ok: true as const,
+      invitations,
+      accepted
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Match ensure failed";
+    return {
+      ok: false as const,
+      error: locale === "zh" ? "加载匹配结果失败，请刷新页面重试。" : `Could not load matches: ${message}`
+    };
   }
-
-  const project = await getProject(projectId);
-  if (!project) {
-    return { ok: false as const, error: locale === "zh" ? "项目不存在" : "Project not found" };
-  }
-
-  if (project.client_email.toLowerCase() !== auth.email) {
-    return { ok: false as const, error: locale === "zh" ? "无权访问此项目" : "Not allowed for this project" };
-  }
-
-  const invitations = await ensureCampaignInvitationsForProject(project, locale);
-  const accepted = await listAcceptedInvitationsForProject(projectId);
-
-  revalidatePath(`/brand/projects/${projectId}`, "page");
-
-  return {
-    ok: true as const,
-    invitations,
-    accepted
-  };
 }

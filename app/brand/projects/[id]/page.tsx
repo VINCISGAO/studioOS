@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { BrandCommercialTimeline } from "@/components/studioos/commercial-lifecycle-timeline";
 import { BrandProjectHub } from "@/components/studioos/brand-project-hub";
@@ -9,7 +8,7 @@ import { getProject } from "@/lib/project-service";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
 import { enforceBrandPaymentDeadlineForProject } from "@/lib/studioos/brand-payment-expiry.service";
 import { isBrandAwaitingPayment, resolveBrandCommercialStep } from "@/lib/studioos/commercial-lifecycle";
-import { listAcceptedInvitationsForProject, listInvitationsForProject } from "@/lib/studioos/creator-invitation-store";
+import { listAcceptedInvitationsForProject, listInvitationsForProject, ensureCampaignInvitationsForProject } from "@/lib/studioos/creator-invitation-store";
 import { countUnreadBrandNotifications } from "@/lib/studioos/brand-notification-service";
 import { getAiMatchReportStatisticsForProject } from "@/lib/studioos/ai-match-report-statistics";
 import { listReviewComments } from "@/lib/studioos/review-store";
@@ -53,7 +52,7 @@ export default async function BrandProjectHubPage({
     redirect(withLocale("/brand", locale));
   }
 
-  await enforceBrandPaymentDeadlineForProject(id);
+  await enforceBrandPaymentDeadlineForProject(id).catch(() => false);
   project = (await getProject(id)) ?? project;
 
   const linkedOrder = await getOrderForProject(id);
@@ -74,10 +73,23 @@ export default async function BrandProjectHubPage({
   }
 
   const reviewComments = linkedOrder ? await listReviewComments(linkedOrder.id) : [];
-  const projectInvitations = await listInvitationsForProject(id);
-  const acceptedInvitations = await listAcceptedInvitationsForProject(id);
+  let projectInvitations = await listInvitationsForProject(id).catch(() => [] as Awaited<
+    ReturnType<typeof listInvitationsForProject>
+  >);
+  if (
+    activeTab === "match" &&
+    (project.status === "matching" || project.status === "studio_selected") &&
+    projectInvitations.length === 0
+  ) {
+    projectInvitations = await ensureCampaignInvitationsForProject(project, locale).catch(
+      () => projectInvitations
+    );
+  }
+  const acceptedInvitations = await listAcceptedInvitationsForProject(id).catch(() => [] as Awaited<
+    ReturnType<typeof listAcceptedInvitationsForProject>
+  >);
   const notificationCount = clientEmail ? await countUnreadBrandNotifications(clientEmail) : 0;
-  const aiMatchStatistics = await getAiMatchReportStatisticsForProject(id);
+  const aiMatchStatistics = await getAiMatchReportStatisticsForProject(id).catch(() => null);
   const brandCommercialStep = resolveBrandCommercialStep({
     project,
     order: linkedOrder,
@@ -87,12 +99,6 @@ export default async function BrandProjectHubPage({
 
   return (
     <div className="space-y-6">
-      <Link
-        href={withLocale("/brand", locale)}
-        className="inline-flex items-center text-sm text-zinc-500 transition hover:text-zinc-900"
-      >
-        ← {locale === "zh" ? "返回工作台" : "Back to workspace"}
-      </Link>
       <BrandCommercialTimeline
         locale={locale}
         currentStep={brandCommercialStep}
@@ -100,6 +106,7 @@ export default async function BrandProjectHubPage({
         paymentStatus={linkedOrder?.payment_status ?? null}
         projectStatus={project.status}
         hasOpenComments={reviewComments.some((item) => isReviewCommentUnresolved(item.status))}
+        pendingInvitationCount={projectInvitations.filter((item) => item.status === "pending").length}
         compact
       />
       <BrandProjectHub

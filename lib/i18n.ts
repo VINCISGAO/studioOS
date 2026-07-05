@@ -42,9 +42,17 @@ export function encodeBrandLoginNext(pathname: string, search: string) {
   return encodeURIComponent(next);
 }
 
-/** Opens the brand campaign wizard with a fresh draft project. */
+/** Opens the brand campaign wizard at step 1 (skips legacy /brand/start-brief hop). */
+export function brandWizardStep1Href(locale: Locale, projectId?: string) {
+  const path = projectId
+    ? `/brand/projects/new?project=${encodeURIComponent(projectId)}&step=1`
+    : "/brand/projects/new?step=1";
+  return withLocale(path, locale);
+}
+
+/** @deprecated Use brandWizardStep1Href */
 export function brandStartBriefHref(locale: Locale) {
-  return withLocale("/brand/start-brief", locale);
+  return brandWizardStep1Href(locale);
 }
 
 export function isZh(locale: Locale) {

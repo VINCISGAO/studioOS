@@ -1,7 +1,7 @@
 import "server-only";
 
 import { createHash } from "node:crypto";
-import type { AdminProfileWithUser } from "@/features/admin/auth/admin-profile.repository";
+import type { AdminUser } from "@/features/admin/auth/admin-user.repository";
 import { verifyAndConsumeAdminTotp } from "@/features/admin/auth/admin-totp-replay.service";
 import { decryptTotpSecret } from "@/lib/auth/admin-totp-crypto";
 import { prisma } from "@/lib/core/database/prisma";
@@ -17,13 +17,13 @@ function hashSessionToken(token: string) {
   return createHash("sha256").update(token).digest("hex");
 }
 
-export async function recordPasskeyStepUp(adminProfileId: string, sessionToken: string) {
-  const profile = await prisma.adminProfile.findUnique({ where: { id: adminProfileId } });
+export async function recordPasskeyStepUp(adminUserId: string, sessionToken: string) {
+  const profile = await prisma.adminUser.findUnique({ where: { id: adminUserId } });
   if (!profile) return;
 
   const permissions = readPermissions(profile.permissions);
-  await prisma.adminProfile.update({
-    where: { id: adminProfileId },
+  await prisma.adminUser.update({
+    where: { id: adminUserId },
     data: {
       permissions: {
         ...permissions,
@@ -34,7 +34,7 @@ export async function recordPasskeyStepUp(adminProfileId: string, sessionToken: 
   });
 }
 
-export function hasValidPasskeyStepUp(profile: AdminProfileWithUser, sessionToken: string | null) {
+export function hasValidPasskeyStepUp(profile: AdminUser, sessionToken: string | null) {
   if (!sessionToken) return false;
 
   const permissions = readPermissions(profile.permissions);
@@ -51,7 +51,7 @@ export function hasValidPasskeyStepUp(profile: AdminProfileWithUser, sessionToke
 }
 
 export async function unlockPasskeyStepUp(input: {
-  profile: AdminProfileWithUser;
+  profile: AdminUser;
   sessionToken: string;
   totpCode: string;
 }): Promise<{ ok: true } | { ok: false; error: "invalid_totp" }> {
@@ -68,7 +68,7 @@ export async function unlockPasskeyStepUp(input: {
   }
 
   const valid = await verifyAndConsumeAdminTotp({
-    adminProfileId: input.profile.id,
+    adminUserId: input.profile.id,
     secret,
     code,
     purpose: "step_up"
@@ -81,7 +81,7 @@ export async function unlockPasskeyStepUp(input: {
   return { ok: true };
 }
 
-export function assertPasskeyStepUp(profile: AdminProfileWithUser, sessionToken: string | null) {
+export function assertPasskeyStepUp(profile: AdminUser, sessionToken: string | null) {
   if (!hasValidPasskeyStepUp(profile, sessionToken)) {
     throw appError("FORBIDDEN", "Passkey step-up required");
   }

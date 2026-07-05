@@ -29,7 +29,14 @@ export function PortalMobileNav({
 }: {
   locale: Locale;
   pathname: string;
-  items: { id: string; href: string; label: string; iconKey: PortalMobileNavIconKey | string }[];
+  items: {
+    id: string;
+    href: string;
+    label: string;
+    iconKey: PortalMobileNavIconKey | string;
+    onClick?: () => void;
+    active?: boolean;
+  }[];
 }) {
   const pathnameFromRouter = usePathname();
   const pathname = pathnameFromRouter ?? pathnameProp;
@@ -39,13 +46,22 @@ export function PortalMobileNav({
       className="flex gap-1.5 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:hidden"
       aria-label={locale === "zh" ? "门户导航" : "Portal navigation"}
     >
-      {items.map(({ id, href, label, iconKey }) => {
+      {items.map(({ id, href, label, iconKey, onClick, active: activeOverride }) => {
         const Icon = resolvePortalNavIcon(isPortalMobileNavIconKey(iconKey) ? iconKey : undefined);
-        const active = isNavItemActive(pathname, href);
+        const active = activeOverride ?? isNavItemActive(pathname, href);
         const className = cn(
           "inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-xs font-medium transition",
           active ? "bg-zinc-900 text-white" : "bg-white text-zinc-600 ring-1 ring-zinc-200"
         );
+
+        if (onClick) {
+          return (
+            <button key={id} type="button" onClick={onClick} className={className}>
+              <Icon className="h-3.5 w-3.5 shrink-0" />
+              <span className="whitespace-nowrap">{label}</span>
+            </button>
+          );
+        }
 
         if (href === "/") {
           return (
