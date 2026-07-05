@@ -101,6 +101,17 @@ export class CampaignRepository {
     });
   }
 
+  async findByIdWithBrandAndAssets(id: string): Promise<CampaignWithBrandAndAssets | null> {
+    if (!hasDatabaseUrl()) return null;
+    return prisma.campaign.findFirst({
+      where: { id, deletedAt: null },
+      include: {
+        brand: { include: { brandProfile: true } },
+        assets: { where: { deletedAt: null }, orderBy: { createdAt: "desc" } }
+      }
+    });
+  }
+
   async listByBrandEmail(email: string): Promise<CampaignWithBrandAndAssets[]> {
     if (!hasDatabaseUrl()) return [];
     const user = await userRepository.findByEmail(email.toLowerCase());

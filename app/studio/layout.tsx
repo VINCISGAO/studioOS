@@ -13,6 +13,7 @@ import { getLocale, withLocale } from "@/lib/i18n";
 import { listOrdersForCreator } from "@/lib/order-service";
 import { listNotificationsForCreator } from "@/lib/notification-service";
 import { countInvitationsByTab, listInvitationsForCreator } from "@/lib/studioos/creator-invitation-store";
+import { enforceBrandPaymentDeadlinesForCreator } from "@/lib/studioos/brand-payment-expiry.service";
 import {
   isStudioFeaturePath,
   studioCertificationRedirectPath,
@@ -25,6 +26,9 @@ export default async function StudioLayout({ children }: { children: React.React
   const search = headerList.get("x-search") ?? "";
   const locale = getLocale({ lang: new URLSearchParams(search).get("lang") ?? undefined });
   const creator = await getCurrentCreator();
+  if (creator) {
+    await enforceBrandPaymentDeadlinesForCreator(creator.id);
+  }
   const orders = creator ? await listOrdersForCreator(creator.id) : [];
   const access = creator
     ? await resolveCreatorCertificationAccessFromOrders(creator.id, orders)

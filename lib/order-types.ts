@@ -19,6 +19,7 @@ export type OrderStatus =
   | "cancelled";
 
 export type PayoutStatus = "held" | "approved" | "paid";
+export type OrderCancellationActor = "brand" | "studio" | "admin" | "system";
 
 export type StoredQuote = {
   id: string;
@@ -60,6 +61,9 @@ export type StoredOrder = {
   review_round?: number;
   /** Paid revision pack (0 = locked, 1 = one add-on purchased — unlocks V4 + V5). */
   paid_revision_slots_unlocked?: number;
+  cancelled_at?: string | null;
+  cancelled_by?: OrderCancellationActor | null;
+  cancel_reason?: string | null;
 };
 
 export type StoredDeliverable = {

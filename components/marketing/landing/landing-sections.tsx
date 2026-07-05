@@ -158,7 +158,7 @@ export function LandingWhy({ locale }: { locale: Locale }) {
               const Icon = icons[index] ?? FileText;
               return (
                 <motion.div
-                  key={item}
+                  key={`why-item-${index}`}
                   variants={rowItem}
                     whileHover={
                       reduce

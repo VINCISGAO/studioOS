@@ -13,11 +13,13 @@ export type NotificationAction = {
 const brandLabels = {
   en: {
     openMatch: "Open match tab",
-    openReview: "Open review"
+    openReview: "Open review",
+    openHome: "Back to brand home"
   },
   zh: {
     openMatch: "查看匹配页",
-    openReview: "前往审片"
+    openReview: "前往审片",
+    openHome: "返回品牌首页"
   }
 } as const;
 
@@ -46,6 +48,13 @@ export function resolveBrandNotificationAction(
     return {
       href: withLocale(brandPortalRoutes.projectReview(input.project_id), locale),
       label: labels.openReview
+    };
+  }
+
+  if (input.type === "order_cancelled_unpaid") {
+    return {
+      href: withLocale(brandPortalRoutes.dashboard, locale),
+      label: labels.openHome
     };
   }
 

@@ -4,7 +4,8 @@ import { Clapperboard } from "lucide-react";
 import { CreatorCommercialTimeline } from "@/components/studioos/commercial-lifecycle-timeline";
 import { StudioCreativeWorkspace } from "@/components/studioos/studio-creative-workspace";
 import { getCreativeBrief, listPackItems } from "@/lib/campaign-store";
-import { getCurrentCreator } from "@/lib/creator-session";
+import { getCreatorById } from "@/lib/creator-service";
+import { getCurrentCreatorId } from "@/lib/creator-session";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
 import { resolveCreatorCommercialStep } from "@/lib/studioos/commercial-lifecycle";
 import { creatorPortalRoutes } from "@/lib/studioos/creator-portal-routes";
@@ -14,7 +15,7 @@ import {
 } from "@/lib/studioos/creator-order-lifecycle";
 import { listReviewComments } from "@/lib/studioos/review-store";
 import { isCreatorVerified } from "@/lib/studioos/deposit-guard";
-import { getDeliverables, getOrder } from "@/lib/order-service";
+import { getDeliverables, getOrder, repairSelectedCreatorCampaignOrders } from "@/lib/order-service";
 import { getProject } from "@/lib/project-service";
 
 export default async function StudioProjectPage({
@@ -26,14 +27,15 @@ export default async function StudioProjectPage({
 }) {
   const [{ orderId }, query] = await Promise.all([params, searchParams]);
   const locale = getLocale(query);
-  const creator = await getCurrentCreator();
+  const creatorId = await getCurrentCreatorId();
 
-  if (!creator) {
+  if (!creatorId) {
     redirect(withLocale("/login?role=creator", locale));
   }
 
-  const order = await getOrder(orderId);
-  if (!order || order.creator_id !== creator.id) {
+  await repairSelectedCreatorCampaignOrders(creatorId);
+  const [creator, order] = await Promise.all([getCreatorById(creatorId), getOrder(orderId)]);
+  if (!order || order.creator_id !== creatorId) {
     redirect(withLocale("/studio", locale));
   }
 
@@ -93,8 +95,8 @@ export default async function StudioProjectPage({
       ) : null}
       <StudioCreativeWorkspace
           locale={locale}
-          studioName={creator.name}
-          isVerified={isCreatorVerified(creator)}
+          studioName={creator?.name ?? order.company_name ?? "Creator"}
+          isVerified={creator ? isCreatorVerified(creator) : false}
           order={order}
           project={project}
           brief={brief}

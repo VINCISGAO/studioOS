@@ -29,6 +29,7 @@ const copy = {
     selectedTitle: "Congratulations — you were selected",
     awaitingPaymentHint: "Waiting for brand payment before production",
     enterProject: "Open project",
+    enterProjectUpload: "Open project to upload V1",
     expired: "Closed",
     expiredHint: "Another creator was selected for this project.",
     ended: "Ended",
@@ -44,6 +45,7 @@ const copy = {
     selectedTitle: "🎉 恭喜，你已被品牌选中",
     awaitingPaymentHint: "等待品牌付款后再开始制作",
     enterProject: "进入项目",
+    enterProjectUpload: "进入项目上传 V1",
     expired: "已失效",
     expiredHint: "本项目已由其他 Creator 成功接单。",
     ended: "已结束",
@@ -123,7 +125,7 @@ function CardActions({
         <Button asChild size="sm" className="h-10 w-full rounded-xl bg-violet-600 hover:bg-violet-700">
           <Link href={href}>
             <Sparkles className="h-4 w-4" />
-            {t.enterProject}
+            {orderId ? t.enterProjectUpload : t.enterProject}
           </Link>
         </Button>
       </div>

@@ -1,8 +1,14 @@
 import { redirect } from "next/navigation";
 import { ReviewerTimestampWorkspace } from "@/components/studioos/reviewer-skeleton/reviewer-timestamp-workspace";
-import { getCurrentCreator } from "@/lib/creator-session";
+import { getCreatorById } from "@/lib/creator-service";
+import { getCurrentCreatorId } from "@/lib/creator-session";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
-import { getDeliverables, getOrder, listDeliverablesForUpload } from "@/lib/order-service";
+import {
+  getDeliverables,
+  getOrder,
+  listDeliverablesForUpload,
+  repairSelectedCreatorCampaignOrders
+} from "@/lib/order-service";
 import { getProject } from "@/lib/project-service";
 import { creatorPortalRoutes } from "@/lib/studioos/creator-portal-routes";
 import { creatorRevertUploadService } from "@/features/delivery/creator-revert-upload.service";
@@ -25,13 +31,14 @@ export default async function StudioReviewOrderPage({
 }) {
   const [{ orderId }, query] = await Promise.all([params, searchParams]);
   const locale = getLocale(query);
-  const creator = await getCurrentCreator();
-  if (!creator) {
+  const creatorId = await getCurrentCreatorId();
+  if (!creatorId) {
     redirect(withLocale("/login?role=creator", locale));
   }
 
-  const order = await getOrder(orderId);
-  if (!order || order.creator_id !== creator.id) {
+  await repairSelectedCreatorCampaignOrders(creatorId);
+  const [creator, order] = await Promise.all([getCreatorById(creatorId), getOrder(orderId)]);
+  if (!order || order.creator_id !== creatorId) {
     redirect(withLocale(creatorPortalRoutes.reviewHub, locale));
   }
 
@@ -78,7 +85,7 @@ export default async function StudioReviewOrderPage({
       : { canRevert: false };
 
   const title =
-    project?.title || project?.product_name || order.title || order.company_name || creator.name;
+    project?.title || project?.product_name || order.title || order.company_name || creator?.name || "Creator";
 
   return (
     <ReviewerTimestampWorkspace

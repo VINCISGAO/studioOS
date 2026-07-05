@@ -27,6 +27,7 @@ function friendlyName(raw: string): string {
 }
 
 function statusBadgeClass(normalized: string) {
+  if (normalized === "payment_expired") return "border-amber-300 bg-amber-50 text-amber-800";
   if (normalized === "payment_pending") return "border-amber-200 bg-amber-50 text-amber-800";
   if (normalized === "production") return "border-sky-200 bg-sky-50 text-sky-800";
   if (normalized === "in_review" || normalized === "delivered") return "border-emerald-200 bg-emerald-50 text-emerald-800";
@@ -52,9 +53,14 @@ export function BrandCampaignListRow({
 }) {
   const stepLabels = steps[locale];
   const normalized = normalizeCampaignStatus(row.status);
-  const statusLabel = brandCampaignStatusLabel(row.status, locale);
+  const statusKey = row.paymentExpired ? "payment_expired" : normalized;
+  const statusLabel = row.paymentExpired
+    ? locale === "zh"
+      ? "已超时，请重新下单"
+      : "Expired, create a new order"
+    : brandCampaignStatusLabel(row.status, locale);
   const stepIndex = brandCampaignStepIndex(row.status);
-  const isPayCta = normalized === "payment_pending";
+  const isPayCta = normalized === "payment_pending" && !row.paymentExpired;
 
   return (
     <div className="flex gap-4 px-4 py-4 sm:px-5">
@@ -77,7 +83,7 @@ export function BrandCampaignListRow({
                   CPG
                 </Badge>
               )}
-              <Badge variant="outline" className={cn("rounded-full font-normal", statusBadgeClass(normalized))}>
+              <Badge variant="outline" className={cn("rounded-full font-normal", statusBadgeClass(statusKey))}>
                 {statusLabel}
               </Badge>
             </div>

@@ -1,5 +1,6 @@
 import type { OrderStatus, Prisma } from "@prisma/client";
 import { hasDatabaseUrl, prisma } from "@/lib/core/database/prisma";
+import { asInputJson } from "@/lib/core/prisma-json";
 
 export type CreateOrderInput = {
   campaignId?: string | null;
@@ -106,6 +107,18 @@ export class OrderRepository {
         ...(status === "COMPLETED" ? { completedAt: now } : {}),
         ...(status === "CANCELLED" ? { cancelledAt: now } : {}),
         ...(status === "REFUNDED" ? { refundedAt: now } : {})
+      }
+    });
+  }
+
+  cancelPendingOrder(orderId: string, metadataJson?: Record<string, unknown>) {
+    const now = new Date();
+    return prisma.order.update({
+      where: { id: orderId },
+      data: {
+        status: "CANCELLED",
+        cancelledAt: now,
+        ...(metadataJson !== undefined ? { metadataJson: asInputJson(metadataJson) } : {})
       }
     });
   }

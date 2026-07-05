@@ -52,6 +52,13 @@ export type BrandCampaignSelection = {
   selected_by_email?: string;
 };
 
+export type BrandCampaignCancellation = {
+  reason?: string | null;
+  cancelled_at: string;
+  cancelled_by: "brand" | "studio" | "admin" | "system";
+  order_id?: string | null;
+};
+
 export type BrandCampaignMemory = {
   wizard?: {
     step?: number;
@@ -69,6 +76,7 @@ export type BrandCampaignMemory = {
   org_id?: string | null;
   pack_items?: unknown[];
   selection?: BrandCampaignSelection;
+  cancellation?: BrandCampaignCancellation;
 };
 
 export type BrandCampaignActor = {

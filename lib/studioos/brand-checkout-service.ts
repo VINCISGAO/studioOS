@@ -200,18 +200,54 @@ export async function setupBrandCheckout(input: {
 
   if (existing) {
     await updateProject(project.id, { selected_studio_id: input.creatorId });
-    if (existing.payment_status === "unpaid") {
+    let selectedOrder = existing;
+
+    if (existing.creator_id !== input.creatorId) {
+      const briefText = getConfirmedBriefText(project, input.locale);
+      const message = [
+        input.locale === "zh" ? "【Campaign 选定】" : "[Campaign selected]",
+        project.title || project.product_name || project.company_name,
+        "",
+        briefText
+      ]
+        .filter(Boolean)
+        .join("\n");
+
+      const inquiry = await createInquiry({
+        creator_id: input.creatorId,
+        work_id: input.workId,
+        project_id: project.id,
+        client_name: input.client.client_name,
+        client_email: input.client.client_email,
+        company_name: project.company_name || input.client.company_name,
+        budget_range: project.budget_range,
+        message
+      });
+
+      await linkInquiryToProject(inquiry.id, project.id);
+      await updateInquiryStatus(inquiry.id, "escrow_pending");
+
+      selectedOrder =
+        (await assignOrderCreator({
+          orderId: existing.id,
+          creatorId: input.creatorId,
+          inquiryId: inquiry.id,
+          workId: input.workId
+        })) ?? existing;
+    }
+
+    if (selectedOrder.payment_status === "unpaid") {
       await advanceProjectToPaymentPending(project.id);
     }
     const { notifyCreatorAssignment } = await import("@/lib/studioos/creator-assignment-notify");
     await notifyCreatorAssignment({
-      type: creatorAssignmentNotificationType(existing.payment_status),
+      type: creatorAssignmentNotificationType(selectedOrder.payment_status),
       creatorId: input.creatorId,
-      order: existing,
+      order: selectedOrder,
       project,
       locale: input.locale
     });
-    return { order: existing, inquiryId: existing.inquiry_id };
+    return { order: selectedOrder, inquiryId: selectedOrder.inquiry_id };
   }
 
   const briefText = getConfirmedBriefText(project, input.locale);

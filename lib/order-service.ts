@@ -1,5 +1,6 @@
 import type {
   CreateQuoteInput,
+  OrderCancellationActor,
   OrderStore,
   StoredDeliverable,
   StoredOrder,
@@ -7,7 +8,8 @@ import type {
 } from "@/lib/order-types";
 import { createSerializedStoreReader, writeJsonFileAtomic } from "@/lib/json-file-store-core";
 import { canPersistLocalDataStore } from "@/lib/can-persist-local-store";
-import { getProject } from "@/lib/project-service";
+import { getCreatorIdForDemoEmail } from "@/lib/creator-session";
+import { getProject, updateProject } from "@/lib/project-service";
 import type { StoredProject } from "@/lib/project-types";
 import { readDataJson, dataStorePath } from "@/lib/serverless-store-core";
 import {
@@ -26,6 +28,8 @@ import { versionService } from "@/features/delivery/version.service";
 import { campaignRepository } from "@/features/campaign/campaign.repository";
 import { orderRepository } from "@/features/order/order.repository";
 import { userRepository } from "@/features/auth/user.repository";
+import { paymentRepository } from "@/features/payment/payment.repository";
+import { EscrowState } from "@/features/shared/state-machines/escrow.state-machine";
 import { resolveCreatorProfileIdForLegacyId } from "@/features/matching/invitation-creator-bridge";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { DEMO_REVIEW_VIDEO_URL } from "@/lib/studioos/review-video-url";
@@ -36,6 +40,7 @@ import {
   prunePhantomReviewDeliverables
 } from "@/lib/studioos/review-upload-version";
 import { hasReviewVideoFileOnDisk } from "@/lib/studioos/video-upload";
+import type { BrandCampaignMemory } from "@/features/campaign/brand-campaign/brand-campaign.types";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 
@@ -50,6 +55,12 @@ const DEMO_ORDER_IDS = new Set([
   "ord_demo_nova_completed",
   "ord_demo_nova_active",
   "ord_demo_nova_first"
+]);
+
+const FUNDED_ESCROW_STATES = new Set<string>([
+  EscrowState.HELD,
+  EscrowState.PARTIAL_RELEASE,
+  EscrowState.FULL_RELEASE
 ]);
 
 function isDemoOrderDismissed(store: OrderStore, id: string) {
@@ -324,6 +335,10 @@ function splitFees(amount: number) {
   return { platform_fee, creator_payout };
 }
 
+function isOrderCancellationActor(value: unknown): value is OrderCancellationActor {
+  return value === "brand" || value === "studio" || value === "admin" || value === "system";
+}
+
 type PrismaOrderLike = NonNullable<Awaited<ReturnType<typeof orderRepository.findById>>>;
 
 function prismaOrderToStored(order: PrismaOrderLike): StoredOrder {
@@ -331,6 +346,16 @@ function prismaOrderToStored(order: PrismaOrderLike): StoredOrder {
     typeof order.metadataJson === "object" && order.metadataJson !== null && !Array.isArray(order.metadataJson)
       ? (order.metadataJson as Record<string, unknown>)
       : {};
+  const cancelledBy = isOrderCancellationActor(metadata.cancelled_by) ? metadata.cancelled_by : null;
+  const cancelReason =
+    typeof metadata.cancel_reason === "string" && metadata.cancel_reason.trim()
+      ? metadata.cancel_reason.trim()
+      : null;
+  const legacyCreatorId =
+    order.creatorProfile?.legacyCreatorId ??
+    getCreatorIdForDemoEmail(order.creator.email ?? "") ??
+    order.creatorProfileId ??
+    order.creatorId;
   const status =
     order.status === "COMPLETED"
       ? "completed"
@@ -345,7 +370,7 @@ function prismaOrderToStored(order: PrismaOrderLike): StoredOrder {
     project_id: order.campaignId ?? (typeof metadata.project_id === "string" ? metadata.project_id : null),
     inquiry_id: typeof metadata.inquiry_id === "string" ? metadata.inquiry_id : order.conversationId ?? order.id,
     quote_id: typeof metadata.quote_id === "string" ? metadata.quote_id : order.id,
-    creator_id: order.creatorProfile?.legacyCreatorId ?? order.creatorProfileId ?? order.creatorId,
+    creator_id: legacyCreatorId,
     client_email: order.client.email,
     client_name: order.client.fullName,
     company_name: typeof metadata.company_name === "string" ? metadata.company_name : order.client.fullName,
@@ -362,7 +387,10 @@ function prismaOrderToStored(order: PrismaOrderLike): StoredOrder {
     payout_status: order.status === "COMPLETED" ? "approved" : "held",
     created_at: order.createdAt.toISOString(),
     paid_at: order.status === "PENDING" ? null : order.updatedAt.toISOString(),
-    completed_at: order.completedAt?.toISOString() ?? null
+    completed_at: order.completedAt?.toISOString() ?? null,
+    cancelled_at: order.cancelledAt?.toISOString() ?? null,
+    cancelled_by: cancelledBy,
+    cancel_reason: cancelReason
   };
 }
 
@@ -714,7 +742,212 @@ export async function markOrderPaid(orderId: string): Promise<StoredOrder | null
   return order;
 }
 
-export async function cancelUnpaidOrder(orderId: string): Promise<StoredOrder | null> {
+export async function markLegacyOrderPaidForProject(projectId: string): Promise<StoredOrder | null> {
+  const store = await readStore();
+  const order =
+    store.orders
+      .filter((item) => item.project_id === projectId)
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0] ??
+    null;
+
+  if (!order) {
+    return null;
+  }
+
+  let currentOrder = order;
+
+  if (order.payment_status === "unpaid") {
+    const paidOrder = await markOrderPaid(order.id);
+    if (!paidOrder) {
+      return null;
+    }
+    currentOrder = paidOrder;
+  }
+
+  if (currentOrder.creator_id === CAMPAIGN_PENDING_CREATOR_ID) {
+    const project = await getProject(projectId);
+    if (project?.selected_studio_id) {
+      return (
+        (await assignOrderCreator({
+          orderId: currentOrder.id,
+          creatorId: project.selected_studio_id,
+          inquiryId: currentOrder.inquiry_id,
+          workId: currentOrder.work_id
+        })) ?? currentOrder
+      );
+    }
+  }
+
+  return currentOrder;
+}
+
+async function isDatabaseEscrowFundedForProject(projectId: string) {
+  if (!hasDatabaseUrl()) {
+    return false;
+  }
+
+  const campaign = await campaignRepository.findByLegacyProjectId(projectId);
+  if (!campaign) {
+    return false;
+  }
+
+  const escrow = await paymentRepository.findByCampaignId(campaign.id);
+  return escrow ? FUNDED_ESCROW_STATES.has(escrow.status) : false;
+}
+
+export async function repairSelectedCreatorCampaignOrders(creatorId: string): Promise<void> {
+  const store = await readStore();
+  let changed = false;
+
+  for (const order of store.orders) {
+    if (order.creator_id !== CAMPAIGN_PENDING_CREATOR_ID || !order.project_id) {
+      continue;
+    }
+
+    const project = await getProject(order.project_id);
+    if (project?.selected_studio_id !== creatorId) {
+      continue;
+    }
+
+    order.creator_id = creatorId;
+
+    if (
+      order.payment_status === "unpaid" &&
+      (await isDatabaseEscrowFundedForProject(order.project_id))
+    ) {
+      order.payment_status = "escrowed";
+      order.paid_at = order.paid_at ?? new Date().toISOString();
+    }
+
+    if (order.payment_status !== "unpaid" && order.status === "waiting_payment") {
+      order.status = "in_production";
+    }
+
+    changed = true;
+  }
+
+  if (changed) {
+    await writeStore(store);
+  }
+}
+
+type OrderCancellationSnapshot = {
+  reason: string | null;
+  actorRole: OrderCancellationActor;
+  cancelledAt: string;
+  orderId: string;
+  projectId?: string | null;
+};
+
+function createCancellationSnapshot(
+  orderId: string,
+  options: { reason?: string | null; actorRole?: OrderCancellationActor; projectId?: string | null } = {}
+): OrderCancellationSnapshot {
+  const reason = options.reason?.trim() || null;
+  return {
+    reason,
+    actorRole: options.actorRole ?? "system",
+    cancelledAt: new Date().toISOString(),
+    orderId,
+    projectId: options.projectId ?? null
+  };
+}
+
+function cancellationMetadata(snapshot: OrderCancellationSnapshot) {
+  return {
+    reason: snapshot.reason,
+    cancelled_at: snapshot.cancelledAt,
+    cancelled_by: snapshot.actorRole,
+    order_id: snapshot.orderId
+  };
+}
+
+async function syncProjectCancellation(
+  order: StoredOrder,
+  snapshot: OrderCancellationSnapshot
+) {
+  const projectId = snapshot.projectId ?? order.project_id;
+  if (!projectId) return;
+
+  const cancellation = cancellationMetadata(snapshot);
+
+  if (hasDatabaseUrl()) {
+    const campaign = await campaignRepository.findByLegacyProjectId(projectId);
+    if (!campaign) return;
+
+    const campaignMemory =
+      typeof campaign.campaignMemoryJson === "object" &&
+      campaign.campaignMemoryJson !== null &&
+      !Array.isArray(campaign.campaignMemoryJson)
+        ? (campaign.campaignMemoryJson as BrandCampaignMemory)
+        : {};
+
+    await campaignRepository.updateBrandCampaign(campaign.id, {
+      status: "CANCELLED",
+      campaignMemoryJson: {
+        ...campaignMemory,
+        cancellation
+      }
+    });
+    return;
+  }
+
+  await syncProjectFromOrderEvent(projectId, "project.cancelled", snapshot.actorRole);
+  const project = await getProject(projectId);
+  if (!project) return;
+
+  await updateProject(projectId, {
+    settings_json: {
+      ...project.settings_json,
+      cancellation
+    }
+  });
+}
+
+export async function cancelUnpaidOrder(
+  orderId: string,
+  options: { reason?: string | null; actorRole?: OrderCancellationActor; projectId?: string | null } = {}
+): Promise<StoredOrder | null> {
+  const snapshot = createCancellationSnapshot(orderId, options);
+
+  if (hasDatabaseUrl()) {
+    const prismaOrder = await orderRepository.findById(orderId);
+    if (prismaOrder) {
+      const order = prismaOrderToStored(prismaOrder);
+      if (order.payment_status !== "unpaid" || order.status === "cancelled") {
+        return null;
+      }
+
+      const existingMetadata =
+        typeof prismaOrder.metadataJson === "object" &&
+        prismaOrder.metadataJson !== null &&
+        !Array.isArray(prismaOrder.metadataJson)
+          ? (prismaOrder.metadataJson as Record<string, unknown>)
+          : {};
+
+      await orderRepository.cancelPendingOrder(orderId, {
+        ...existingMetadata,
+        project_id: snapshot.projectId ?? existingMetadata.project_id ?? order.project_id,
+        cancel_reason: snapshot.reason,
+        cancelled_by: snapshot.actorRole,
+        cancelled_at: snapshot.cancelledAt
+      });
+
+      const cancelled = await orderRepository.findById(orderId);
+      const stored = cancelled
+        ? prismaOrderToStored(cancelled)
+        : {
+            ...order,
+            status: "cancelled" as const,
+            cancelled_at: snapshot.cancelledAt,
+            cancelled_by: snapshot.actorRole,
+            cancel_reason: snapshot.reason
+          };
+      await syncProjectCancellation(stored, snapshot);
+      return stored;
+    }
+  }
+
   const store = await readStore();
   const order = store.orders.find((item) => item.id === orderId);
   if (!order || order.payment_status !== "unpaid" || order.status === "cancelled") {
@@ -722,7 +955,11 @@ export async function cancelUnpaidOrder(orderId: string): Promise<StoredOrder | 
   }
 
   order.status = "cancelled";
+  order.cancelled_at = snapshot.cancelledAt;
+  order.cancelled_by = snapshot.actorRole;
+  order.cancel_reason = snapshot.reason;
   await writeStore(store);
+  await syncProjectCancellation(order, snapshot);
   return order;
 }
 
@@ -1172,12 +1409,8 @@ export async function getDeliverables(orderId: string): Promise<StoredDeliverabl
 }
 
 
-export function canDeleteOrder(_order: Pick<StoredOrder, "status" | "payment_status">) {
-  void _order;
-  if (process.env.NODE_ENV === "development") {
-    return true;
-  }
-  return false;
+export function canDeleteOrder(order: Pick<StoredOrder, "status" | "payment_status">) {
+  return order.status === "completed";
 }
 
 export async function deleteOrdersForProjectId(
@@ -1223,11 +1456,12 @@ export async function deleteOrderForClient(
     return { ok: false, code: "NOT_FOUND", message: "Order not found" };
   }
 
-  if (process.env.NODE_ENV !== "development") {
+  const order = store.orders[index];
+  if (!canDeleteOrder(order)) {
     return {
       ok: false,
       code: "LOCKED",
-      message: "Orders cannot be deleted"
+      message: "Only completed orders can be deleted"
     };
   }
 

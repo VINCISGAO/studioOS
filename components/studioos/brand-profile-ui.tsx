@@ -301,14 +301,21 @@ export function BrandAdsGrid({
               !ad.visible && "opacity-60"
             )}
           />
-          <Link
-            href={withLocale(`/creators/${ad.creator_id}`, locale)}
-            className="inline-flex items-center gap-1.5 px-0.5 text-xs font-medium text-indigo-700 hover:text-indigo-900"
-          >
-            <UserRound className="h-3.5 w-3.5" />
-            {byStudioLabel}: {ad.creator_name}
-            <ArrowRight className="h-3 w-3" />
-          </Link>
+          {ad.creator_id === "brand" ? (
+            <span className="inline-flex items-center gap-1.5 px-0.5 text-xs font-medium text-indigo-700">
+              <UserRound className="h-3.5 w-3.5" />
+              {byStudioLabel}: {ad.creator_name}
+            </span>
+          ) : (
+            <Link
+              href={withLocale(`/creators/${ad.creator_id}`, locale)}
+              className="inline-flex items-center gap-1.5 px-0.5 text-xs font-medium text-indigo-700 hover:text-indigo-900"
+            >
+              <UserRound className="h-3.5 w-3.5" />
+              {byStudioLabel}: {ad.creator_name}
+              <ArrowRight className="h-3 w-3" />
+            </Link>
+          )}
           {ownerActions ? ownerActions(ad) : null}
         </div>
       ))}

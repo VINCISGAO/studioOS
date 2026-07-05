@@ -25,6 +25,33 @@ function emptyStore(): BrandProfileStore {
   return { profiles: {} };
 }
 
+function parseBrandShowcaseAds(value: unknown): BrandShowcaseAd[] {
+  if (!Array.isArray(value)) return [];
+  const ads: BrandShowcaseAd[] = [];
+  for (const item of value) {
+    if (typeof item !== "object" || item === null || Array.isArray(item)) continue;
+    const raw = item as Record<string, unknown>;
+    const id = String(raw.id ?? "").trim();
+    const title = String(raw.title ?? "").trim();
+    const videoUrl = String(raw.video_url ?? "").trim();
+    if (!id || !title || !videoUrl) continue;
+    ads.push({
+      id,
+      title,
+      video_url: videoUrl,
+      thumbnail_url: String(raw.thumbnail_url ?? videoUrl),
+      creator_id: String(raw.creator_id ?? "brand"),
+      creator_name: String(raw.creator_name ?? "Brand"),
+      project_id: typeof raw.project_id === "string" ? raw.project_id : null,
+      order_id: typeof raw.order_id === "string" ? raw.order_id : null,
+      platform: typeof raw.platform === "string" ? raw.platform : undefined,
+      published_at: String(raw.published_at ?? nowIso()),
+      visible: raw.visible !== false
+    });
+  }
+  return ads;
+}
+
 async function readStore(): Promise<BrandProfileStore> {
   return readDataJson(STORE_PATH, () => emptyStore());
 }
@@ -67,7 +94,7 @@ function mapPrismaBrandProfileToStored(input: {
     logo_url: profile.logoUrl ?? "",
     cover_url: String(archive.cover_url ?? ""),
     profile_completed_at: null,
-    showcase_ads: [],
+    showcase_ads: parseBrandShowcaseAds(dna.showcase_ads),
     updated_at: profile.updatedAt.toISOString()
   };
 }
@@ -271,6 +298,30 @@ async function syncPrismaBrandCoverArchive(
           cover: coverArchive,
           covers: [coverArchive, ...coverHistory]
         }
+      })
+    }
+  });
+}
+
+async function syncPrismaBrandShowcaseAds(clientEmail: string, showcaseAds: BrandShowcaseAd[]) {
+  if (!hasDatabaseUrl()) return;
+  const user = await prisma.user.findUnique({
+    where: { email: clientEmail.toLowerCase() },
+    include: { brandProfile: true }
+  });
+  const profile = user?.brandProfile;
+  if (!user || !profile) return;
+  const current =
+    typeof profile.brandDnaJson === "object" && profile.brandDnaJson !== null && !Array.isArray(profile.brandDnaJson)
+      ? (profile.brandDnaJson as Record<string, unknown>)
+      : {};
+
+  await prisma.brandProfile.update({
+    where: { userId: user.id },
+    data: {
+      brandDnaJson: asInputJson({
+        ...current,
+        showcase_ads: showcaseAds
       })
     }
   });
@@ -527,9 +578,50 @@ export async function syncBrandShowcaseFromOrders(clientEmail: string): Promise<
     showcase_ads: [...additions, ...profile.showcase_ads],
     updated_at: nowIso()
   };
+  await syncPrismaBrandShowcaseAds(next.client_email, next.showcase_ads);
   store.profiles[next.id] = next;
   await writeStore(store);
   return next;
+}
+
+export async function addBrandShowcaseVideo(
+  clientEmail: string,
+  input: {
+    title: string;
+    video_url: string;
+    thumbnail_url?: string;
+    platform?: string;
+  }
+): Promise<{ profile: StoredBrandProfile; ad: BrandShowcaseAd }> {
+  const profile = await getOrCreateBrandProfile({
+    client_email: clientEmail,
+    company_name: clientEmail.split("@")[0] ?? "Brand"
+  });
+
+  const ad: BrandShowcaseAd = {
+    id: createId("bad"),
+    title: input.title.trim() || "Brand showcase video",
+    video_url: input.video_url,
+    thumbnail_url: input.thumbnail_url?.trim() || input.video_url,
+    creator_id: "brand",
+    creator_name: profile.display_name || profile.company_name,
+    project_id: null,
+    order_id: null,
+    platform: input.platform?.trim() || undefined,
+    published_at: nowIso(),
+    visible: true
+  };
+
+  const store = await readStore();
+  const next: StoredBrandProfile = {
+    ...profile,
+    showcase_ads: [ad, ...profile.showcase_ads.filter((item) => item.video_url !== ad.video_url)],
+    updated_at: nowIso()
+  };
+  await syncPrismaBrandShowcaseAds(next.client_email, next.showcase_ads);
+  store.profiles[next.id] = next;
+  await writeStore(store);
+  return { profile: next, ad };
 }
 
 export async function setBrandShowcaseVisibility(
@@ -546,6 +638,7 @@ export async function setBrandShowcaseVisibility(
     showcase_ads: profile.showcase_ads.map((item) => (item.id === adId ? { ...item, visible } : item)),
     updated_at: nowIso()
   };
+  await syncPrismaBrandShowcaseAds(next.client_email, next.showcase_ads);
   store.profiles[next.id] = next;
   await writeStore(store);
   return next;

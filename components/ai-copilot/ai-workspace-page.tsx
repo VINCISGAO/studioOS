@@ -113,6 +113,10 @@ async function fetchJson<T>(input: RequestInfo | URL, init?: RequestInit): Promi
   };
 }
 
+function isAbortError(error: unknown) {
+  return error instanceof DOMException && error.name === "AbortError";
+}
+
 type AiWorkspacePageProps = {
   mode: WorkspaceMode;
 };
@@ -315,8 +319,9 @@ export function AiWorkspacePage({ mode }: AiWorkspacePageProps) {
 
   useEffect(() => {
     let cancelled = false;
+    const controller = new AbortController();
     setBooting(true);
-    fetchJson<ApiResponse<SessionListData>>(sessionsUrl)
+    fetchJson<ApiResponse<SessionListData>>(sessionsUrl, { signal: controller.signal })
       .then(({ response, payload }) => {
         if (!response.ok || !payload?.success) throw new Error(payload?.error?.message ?? ui.unavailable);
         return payload;
@@ -326,12 +331,16 @@ export function AiWorkspacePage({ mode }: AiWorkspacePageProps) {
         setSessions(payload.data.sessions);
         setWorkspace(payload.data.workspace ?? null);
       })
-      .catch((err) => setError(err instanceof Error ? err.message : ui.unavailable))
+      .catch((err) => {
+        if (cancelled || isAbortError(err)) return;
+        setError(err instanceof Error ? err.message : ui.unavailable);
+      })
       .finally(() => {
         if (!cancelled) setBooting(false);
       });
     return () => {
       cancelled = true;
+      controller.abort();
     };
   }, [sessionsUrl, ui.unavailable]);
 

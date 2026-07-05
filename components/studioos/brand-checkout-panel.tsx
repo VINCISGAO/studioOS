@@ -6,74 +6,60 @@ import {
   BadgeCheck,
   Bitcoin,
   Check,
-  CheckCircle2,
   CreditCard,
   Info,
   Landmark,
   Loader2,
+  Lock,
   MessageCircle,
   Shield,
   Smartphone,
   Wallet
 } from "lucide-react";
-import { payBrandCampaignCheckoutAction } from "@/app/brand-payment-actions";
-import { BrandPaymentDeadlineNotice } from "@/components/studioos/brand-payment-deadline-notice";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import type { Locale } from "@/lib/i18n";
 import type { StoredOrder } from "@/lib/order-types";
-import {
-  getPlatformCorporateAccount,
-  paymentMethodLabel
-} from "@/lib/studioos/deposit-utils";
+import { getPlatformCorporateAccount, paymentMethodLabel } from "@/lib/studioos/deposit-utils";
 import type { PayoutMethodType } from "@/lib/studioos/withdrawal-types";
 import { cn, formatCurrency } from "@/lib/utils";
 
-const BRAND_PAYMENT_METHODS: PayoutMethodType[] = ["alipay", "wechat", "paypal", "crypto", "bank_wire"];
+const BRAND_PAYMENT_METHODS: PayoutMethodType[] = ["paypal", "bank_wire", "alipay", "wechat", "crypto"];
 
 const copy = {
   en: {
     amountDue: "Amount due",
-    secureBadge: "256-bit encrypted · Escrow protected · Funds released per policy",
-    title: "Escrow payment",
-    subtitle: "Matching starts after payment. Funds release after you approve delivery.",
     amount: "Order total",
     fee: "Platform fee",
     payout: "Studio payout",
     method: "Payment method",
+    accountTitle: "Receiving account",
     reference: "Transfer reference (optional)",
-    referenceHint: "Add your bank or wallet reference so we can match your payment faster.",
     referencePlaceholder: "e.g. Campaign transfer ID",
     payDemo: "Confirm payment & start matching",
     payCard: "Pay with card (Stripe)",
     paidTitle: "Payment in escrow",
     paidBody: "Your campaign is funded. Creator matching can begin.",
     copy: "Copy",
-    copied: "Copied",
-    corporateAccount: "VINCIS corporate account"
+    copied: "Copied"
   },
   zh: {
-    amountDue: "应付金额",
-    secureBadge: "256 位加密 · 托管保障 / 资金安全，按规则释放",
-    title: "托管付款",
-    subtitle: "款项托管至你确认交付后释放。付款完成后才开始匹配 Studio。",
+    amountDue: "付款总额",
     amount: "订单总额",
     fee: "平台服务费",
     payout: "Studio 收入",
-    method: "付款方式",
+    method: "支付方式",
+    accountTitle: "收款账户信息",
     reference: "转账备注（选填）",
-    referenceHint: "填写银行或钱包备注，便于我们更快对账。",
     referencePlaceholder: "例如：Campaign 转账单号",
     payDemo: "确认付款并开始匹配",
     payCard: "信用卡付款（Stripe）",
     paidTitle: "托管中",
     paidBody: "Campaign 已付款，可以开始匹配 Studio。",
     copy: "复制",
-    copied: "已复制",
-    corporateAccount: "VINCIS 对公账户"
+    copied: "已复制"
   }
-};
+} as const;
 
 const methodIcons: Record<PayoutMethodType, typeof Landmark> = {
   bank_wire: CreditCard,
@@ -89,32 +75,12 @@ function PaySubmitButton({ label }: { label: string }) {
     <Button
       type="submit"
       size="lg"
-      className="mt-6 h-12 w-full rounded-xl bg-indigo-600 text-base font-medium hover:bg-indigo-700"
+      className="h-12 w-full rounded-[10px] bg-indigo-600 text-sm font-semibold shadow-[0_14px_26px_rgba(79,70,229,0.25)] hover:bg-indigo-700"
       disabled={pending}
     >
-      {pending ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <CheckCircle2 className="mr-2 h-5 w-5" />}
+      {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Lock className="mr-2 h-4 w-4" />}
       {label}
     </Button>
-  );
-}
-
-function BreakdownBox({
-  label,
-  value,
-  showInfo
-}: {
-  label: string;
-  value: string;
-  showInfo?: boolean;
-}) {
-  return (
-    <div className="min-w-0 flex-1 rounded-xl bg-zinc-50 px-4 py-3 ring-1 ring-zinc-100">
-      <p className="flex items-center gap-1 text-xs text-zinc-500">
-        {label}
-        {showInfo ? <Info className="h-3.5 w-3.5 text-zinc-400" /> : null}
-      </p>
-      <p className="mt-1 text-lg font-semibold text-zinc-950">{value}</p>
-    </div>
   );
 }
 
@@ -143,11 +109,6 @@ export function BrandCheckoutPanel({
     [method, order.id, locale]
   );
 
-  const accountTitle =
-    locale === "zh" && (method === "alipay" || method === "wechat")
-      ? `${paymentMethodLabel(method, locale)} ${t.corporateAccount}`
-      : account.label;
-
   function copyValue(key: string, value: string) {
     void navigator.clipboard.writeText(value);
     setCopiedKey(key);
@@ -156,7 +117,7 @@ export function BrandCheckoutPanel({
 
   if (order.payment_status !== "unpaid" || paid || escrowFunded) {
     return (
-      <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 p-6">
+      <div className="rounded-[14px] border border-emerald-200 bg-emerald-50/80 p-6">
         <div className="flex items-start gap-4">
           <BadgeCheck className="mt-0.5 h-8 w-8 shrink-0 text-emerald-700" />
           <div>
@@ -172,115 +133,135 @@ export function BrandCheckoutPanel({
   }
 
   return (
-    <div className="space-y-5">
-      <BrandPaymentDeadlineNotice locale={locale} order={order} />
-      <div className="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="text-sm text-zinc-500">{t.amountDue}</p>
-            <p className="mt-1 text-4xl font-semibold tracking-tight text-indigo-600">
-              {formatCurrency(order.amount)}
-            </p>
+    <form action={`/brand/projects/${projectId}/checkout/pay`} method="post" className="mt-0 self-start space-y-4">
+      <input type="hidden" name="lang" value={locale} />
+      <input type="hidden" name="order_id" value={order.id} />
+      <input type="hidden" name="project_id" value={projectId} />
+      <input type="hidden" name="payment_method" value={method} />
+      <input type="hidden" name="payment_reference" value={reference} />
+
+      <div className="rounded-[14px] border border-zinc-200/80 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
+        <div className="mb-5 flex items-center gap-2">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+            <Landmark className="h-4 w-4" />
           </div>
-          <div className="hidden max-w-[220px] rounded-xl border border-indigo-100 bg-indigo-50/60 px-3 py-2.5 text-[11px] leading-relaxed text-indigo-700 sm:block">
-            <div className="mb-1 flex items-center gap-1.5 font-medium">
-              <Shield className="h-3.5 w-3.5" />
-              {locale === "zh" ? "托管保障" : "Escrow"}
-            </div>
-            {t.secureBadge}
+          <p className="text-sm font-semibold text-zinc-900">{t.amountDue}</p>
+        </div>
+        <p className="text-4xl font-semibold tracking-tight text-indigo-600">{formatCurrency(order.amount)}</p>
+        <div className="mt-5 space-y-3 border-t border-zinc-100 pt-4 text-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-zinc-500">{t.amount}</span>
+            <span className="font-semibold text-zinc-950">{formatCurrency(order.amount)}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="flex items-center gap-1 text-zinc-500">
+              {t.fee}
+              <Info className="h-3.5 w-3.5 text-zinc-400" />
+            </span>
+            <span className="font-semibold text-zinc-950">{formatCurrency(order.platform_fee)}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="flex items-center gap-1 text-zinc-500">
+              {t.payout}
+              <Info className="h-3.5 w-3.5 text-zinc-400" />
+            </span>
+            <span className="font-semibold text-zinc-950">{formatCurrency(order.creator_payout)}</span>
           </div>
         </div>
       </div>
 
-      <div className="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm">
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0 flex-1">
-            <h2 className="text-lg font-semibold text-zinc-950">{t.title}</h2>
-            <p className="mt-2 text-sm leading-relaxed text-zinc-500">{t.subtitle}</p>
-            <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-              <BreakdownBox label={t.amount} value={formatCurrency(order.amount)} />
-              <BreakdownBox label={t.fee} value={formatCurrency(order.platform_fee)} showInfo />
-              <BreakdownBox label={t.payout} value={formatCurrency(order.creator_payout)} showInfo />
-            </div>
+      <div className="rounded-[14px] border border-zinc-200/80 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
+        <div className="mb-4 flex items-center gap-2">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+            <CreditCard className="h-4 w-4" />
           </div>
-          <div className="relative hidden h-24 w-24 shrink-0 lg:block" aria-hidden>
-            <div className="absolute inset-0 rounded-[20px] bg-gradient-to-br from-sky-100 to-indigo-100" />
-            <div className="absolute left-3 top-5 h-14 w-16 rounded-xl bg-white shadow-md ring-1 ring-indigo-100" />
-            <div className="absolute left-6 top-8 h-8 w-10 rounded-md bg-indigo-500/90" />
-            <div className="absolute bottom-4 right-4 h-3 w-3 rounded-full bg-indigo-400" />
-          </div>
+          <p className="text-sm font-semibold text-zinc-900">{t.method}</p>
         </div>
-      </div>
-
-      <div className="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm">
-        <form action={payBrandCampaignCheckoutAction}>
-          <input type="hidden" name="lang" value={locale} />
-          <input type="hidden" name="order_id" value={order.id} />
-          <input type="hidden" name="project_id" value={projectId} />
-          <input type="hidden" name="payment_method" value={method} />
-          <input type="hidden" name="payment_reference" value={reference} />
-
-          <p className="text-sm font-semibold text-zinc-950">{t.method}</p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {BRAND_PAYMENT_METHODS.map((item) => {
-              const Icon = methodIcons[item];
-              const active = method === item;
-              return (
-                <button
-                  key={item}
-                  type="button"
-                  onClick={() => setMethod(item)}
+        <div className="space-y-2">
+          {BRAND_PAYMENT_METHODS.map((item) => {
+            const Icon = methodIcons[item];
+            const active = method === item;
+            return (
+              <button
+                key={item}
+                type="button"
+                onClick={() => setMethod(item)}
+                className={cn(
+                  "flex h-10 w-full items-center justify-between rounded-[10px] border px-3 text-sm font-medium transition",
+                  active
+                    ? "border-indigo-500 bg-indigo-50/60 text-zinc-950 shadow-[inset_0_0_0_1px_rgba(79,70,229,0.16)]"
+                    : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300"
+                )}
+              >
+                <span className="flex items-center gap-3">
+                  <span
+                    className={cn(
+                      "flex h-5 w-5 items-center justify-center rounded text-[11px] font-bold text-white",
+                      item === "alipay" && "bg-blue-500",
+                      item === "wechat" && "bg-green-500",
+                      item === "paypal" && "bg-blue-700",
+                      item === "crypto" && "bg-amber-500",
+                      item === "bank_wire" && "bg-zinc-500"
+                    )}
+                  >
+                    {item === "alipay" ? "支" : item === "wechat" ? "微" : <Icon className="h-3.5 w-3.5" />}
+                  </span>
+                  {item === "bank_wire" ? (locale === "zh" ? "银行卡" : "Bank card") : paymentMethodLabel(item, locale)}
+                </span>
+                <span
                   className={cn(
-                    "inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition",
-                    active
-                      ? "border-indigo-600 bg-indigo-50 text-indigo-700 shadow-[inset_0_0_0_1px_rgba(79,70,229,0.12)]"
-                      : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300"
+                    "flex h-4 w-4 items-center justify-center rounded-full border",
+                    active ? "border-indigo-600 bg-indigo-600 text-white" : "border-zinc-200 bg-white"
                   )}
                 >
-                  {active ? <Check className="h-4 w-4" /> : <Icon className="h-4 w-4" />}
-                  {item === "bank_wire" ? (locale === "zh" ? "银行卡" : "Bank card") : paymentMethodLabel(item, locale)}
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="mt-5 rounded-xl border border-zinc-200 bg-zinc-50/80 p-4">
-            <p className="text-sm font-semibold text-zinc-900">{accountTitle}</p>
-            <dl className="mt-4 space-y-3">
-              {account.details.map((row) => (
-                <div key={row.key} className="flex flex-wrap items-center justify-between gap-2 text-sm">
-                  <dt className="text-zinc-500">{row.key}</dt>
-                  <dd className="flex items-center gap-2 font-medium text-zinc-900">
-                    <span className="break-all">{row.value}</span>
-                    <button
-                      type="button"
-                      className="shrink-0 text-xs text-indigo-600 hover:text-indigo-700"
-                      onClick={() => copyValue(row.key, row.value)}
-                    >
-                      {copiedKey === row.key ? t.copied : t.copy}
-                    </button>
-                  </dd>
-                </div>
-              ))}
-            </dl>
-            {account.note ? <p className="mt-3 text-xs leading-5 text-zinc-500">{account.note}</p> : null}
-          </div>
-
-          <div className="mt-5 space-y-2">
-            <Label htmlFor="payment-reference">{t.reference}</Label>
-            <Input
-              id="payment-reference"
-              value={reference}
-              onChange={(event) => setReference(event.target.value)}
-              placeholder={t.referencePlaceholder}
-              className="h-11 rounded-xl"
-            />
-            <p className="text-xs text-zinc-500">{t.referenceHint}</p>
-          </div>
-
-          <PaySubmitButton label={method === "bank_wire" ? t.payCard : t.payDemo} />
-        </form>
+                  {active ? <Check className="h-3 w-3" /> : null}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
-    </div>
+
+      <div className="rounded-[14px] border border-zinc-200/80 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
+        <div className="mb-4 flex items-center gap-2">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+            <Shield className="h-4 w-4" />
+          </div>
+          <p className="text-sm font-semibold text-zinc-900">{t.accountTitle}</p>
+        </div>
+        <dl className="space-y-3">
+          {account.details.map((row) => (
+            <div key={row.key} className="text-sm">
+              <dt className="text-xs text-zinc-500">{row.key}</dt>
+              <dd className="mt-1 flex items-center justify-between gap-3">
+                <span className="break-all text-xs font-medium text-zinc-900">{row.value}</span>
+                <button
+                  type="button"
+                  className="shrink-0 text-xs font-medium text-indigo-600 hover:text-indigo-700"
+                  onClick={() => copyValue(row.key, row.value)}
+                >
+                  {copiedKey === row.key ? t.copied : t.copy}
+                </button>
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+
+      <div className="rounded-[14px] border border-zinc-200/80 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
+        <label htmlFor="payment-reference" className="text-sm font-semibold text-zinc-900">
+          {t.reference}
+        </label>
+        <Input
+          id="payment-reference"
+          value={reference}
+          onChange={(event) => setReference(event.target.value)}
+          placeholder={t.referencePlaceholder}
+          className="mt-3 h-11 rounded-[10px] border-zinc-200 bg-zinc-50/70"
+        />
+      </div>
+
+      <PaySubmitButton label={method === "bank_wire" ? t.payCard : t.payDemo} />
+    </form>
   );
 }

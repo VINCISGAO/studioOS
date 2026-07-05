@@ -156,12 +156,14 @@ export function BrandPublicProfile({
                   title={previewAd.title}
                 />
               </div>
-              <Button asChild className="w-full rounded-xl bg-indigo-600 hover:bg-indigo-700">
-                <Link href={withLocale(`/creators/${previewAd.creator_id}`, locale)}>
-                  <UserRound className="h-4 w-4" />
-                  {t.visitStudio}: {previewAd.creator_name}
-                </Link>
-              </Button>
+              {previewAd.creator_id !== "brand" ? (
+                <Button asChild className="w-full rounded-xl bg-indigo-600 hover:bg-indigo-700">
+                  <Link href={withLocale(`/creators/${previewAd.creator_id}`, locale)}>
+                    <UserRound className="h-4 w-4" />
+                    {t.visitStudio}: {previewAd.creator_name}
+                  </Link>
+                </Button>
+              ) : null}
             </>
           ) : null}
         </DialogContent>

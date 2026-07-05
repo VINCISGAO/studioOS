@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Check, ChevronLeft, ChevronRight, Clock, X } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Clapperboard, Clock, X } from "lucide-react";
 import { CreatorInvitationCard } from "@/components/studioos/creator-invitation-card";
 import type { CreatorInvitationCardModel } from "@/lib/studioos/creator-invitation-display";
 import type { Locale } from "@/lib/i18n";
@@ -21,12 +21,18 @@ const copy = {
     title: "Project invitations",
     subtitle:
       "Accepting an invitation puts you on the brand shortlist — not a confirmed booking. Production starts only after the brand selects you and completes escrow payment.",
-    empty: "No invitations in this tab."
+    empty: "No invitations in this tab.",
+    uploadTitle: "Where to upload Version 1",
+    uploadHint: "After the brand selects you and pays escrow, open Order management, enter the project, then open the review center to upload Version 1.",
+    openProjects: "Open order management"
   },
   zh: {
     title: "项目邀请",
     subtitle: "接受邀请只表示合作意向，不等于正式中标。品牌选定你并完成托管付款后，项目才会正式开始。",
-    empty: "当前分类下没有邀请。"
+    empty: "当前分类下没有邀请。",
+    uploadTitle: "第一版视频在哪里上传？",
+    uploadHint: "品牌选中你并完成托管付款后，到「订单管理」进入对应项目，再打开「审片中心」上传 Version 1。",
+    openProjects: "打开订单管理"
   }
 } as const;
 
@@ -103,6 +109,24 @@ export function CreatorInvitationsBoard({
         </h1>
         <p className="mt-2 max-w-3xl text-sm leading-relaxed text-zinc-500">{t.subtitle}</p>
       </header>
+
+      <div className="flex flex-col gap-3 rounded-2xl border border-violet-100 bg-violet-50/70 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-violet-700 shadow-sm ring-1 ring-violet-100">
+            <Clapperboard className="h-5 w-5" />
+          </span>
+          <div>
+            <p className="text-sm font-semibold text-violet-950">{t.uploadTitle}</p>
+            <p className="mt-1 text-sm leading-6 text-violet-800/80">{t.uploadHint}</p>
+          </div>
+        </div>
+        <a
+          href={locale === "zh" ? "/studio/projects?lang=zh" : "/studio/projects?lang=en"}
+          className="inline-flex h-10 shrink-0 items-center justify-center rounded-xl bg-violet-600 px-4 text-sm font-medium text-white transition hover:bg-violet-700"
+        >
+          {t.openProjects}
+        </a>
+      </div>
 
       {actionError ? (
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{actionError}</div>

@@ -5,6 +5,7 @@ export type BrandNotificationType =
   | "comment_resolved"
   | "requirement_published"
   | "payment_required"
+  | "order_cancelled_unpaid"
   | "paid_revision_unlocked"
   | "order_completed"
   | "final_download_ready";

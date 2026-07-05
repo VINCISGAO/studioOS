@@ -220,6 +220,10 @@ export class CampaignService {
     return campaignBrandPortalService.getByLegacyProjectId(legacyProjectId);
   }
 
+  getByProjectOrCampaignId(projectOrCampaignId: string) {
+    return campaignBrandPortalService.getByProjectOrCampaignId(projectOrCampaignId);
+  }
+
   listForClientEmail(clientEmail: string) {
     return campaignBrandPortalService.listForClientEmail(clientEmail);
   }

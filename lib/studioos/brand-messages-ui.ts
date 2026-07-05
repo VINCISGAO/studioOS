@@ -38,6 +38,8 @@ const brandCategoryLabels = {
 
 export function brandMessageCategoryFromType(type: BrandNotificationType): MessageCategory {
   switch (type) {
+    case "order_cancelled_unpaid":
+      return "payment";
     case "invitation_accepted":
     case "invitation_declined":
       return "brand";

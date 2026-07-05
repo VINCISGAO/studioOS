@@ -20,6 +20,7 @@ import {
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import type { StoredDeliverable, StoredOrder } from "@/lib/order-types";
+import { creatorPortalRoutes } from "@/lib/studioos/creator-portal-routes";
 import type { QualityReport } from "@/lib/studioos/quality-types";
 import type { ReviewComment } from "@/lib/studioos/review-comment-types";
 import { deliverableNotesForViewer } from "@/lib/studioos/deliverable-notes";
@@ -361,7 +362,7 @@ export function StudioDeliveryHub({
                   </p>
                 </div>
                 <Button asChild size="lg" className="rounded-lg bg-white text-black hover:bg-zinc-200">
-                  <Link href={withLocale(`/creator/orders/${selected.order.id}/review-upload`, locale)}>
+                  <Link href={withLocale(creatorPortalRoutes.review(selected.order.id), locale)}>
                     {t.openReview}
                     <ArrowRight className="h-4 w-4" />
                   </Link>
@@ -378,7 +379,7 @@ export function StudioDeliveryHub({
                   />
                   <div className="absolute inset-0 flex items-center justify-center">
                     <Button asChild size="lg" className="rounded-full bg-white/10 text-white backdrop-blur hover:bg-white/20">
-                      <Link href={withLocale(`/creator/orders/${selected.order.id}/review-upload`, locale)}>
+                      <Link href={withLocale(creatorPortalRoutes.review(selected.order.id), locale)}>
                         <Clapperboard className="h-5 w-5" />
                         {t.openReview}
                       </Link>
@@ -439,7 +440,7 @@ export function StudioDeliveryHub({
                         {t.submitted} · {formatDate(item.created_at)}
                       </p>
                       <Button asChild size="sm" variant="ghost" className="mt-2 h-8 px-0 text-violet-700">
-                        <Link href={withLocale(`/creator/orders/${selected.order.id}/review-upload`, locale)}>
+                        <Link href={withLocale(creatorPortalRoutes.review(selected.order.id), locale)}>
                           {t.openReview} <ArrowRight className="h-3.5 w-3.5" />
                         </Link>
                       </Button>

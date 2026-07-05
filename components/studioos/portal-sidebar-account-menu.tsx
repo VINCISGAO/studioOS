@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { signOutAction } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
@@ -71,7 +70,7 @@ export function PortalSidebarAccountMenu({
               <UserRound className="h-4 w-4 text-zinc-400" />
               {t.profile}
             </Link>
-            <form action={signOutAction}>
+            <form action="/auth/sign-out" method="post">
               <input type="hidden" name="lang" value={locale} />
               <Button
                 type="submit"

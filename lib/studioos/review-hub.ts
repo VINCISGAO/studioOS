@@ -44,15 +44,16 @@ async function toReviewHubItem(
     listReviewComments(order.id)
   ]);
 
-  if (
-    !deliverables.length &&
-    order.status === "in_production" &&
-    !options?.includeAwaitingFirstUpload
-  ) {
+  const awaitingFirstUpload = !deliverables.length && order.status === "in_production";
+  if (awaitingFirstUpload && !options?.includeAwaitingFirstUpload) {
     return null;
   }
 
-  if (!deliverables.length && !["review", "revision", "completed"].includes(order.status)) {
+  if (
+    !deliverables.length &&
+    !awaitingFirstUpload &&
+    !["review", "revision", "completed"].includes(order.status)
+  ) {
     return null;
   }
 

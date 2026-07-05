@@ -31,7 +31,8 @@ import {
   polishBrandProfileAction,
   saveBrandProfileAction,
   uploadBrandAvatarAction,
-  uploadBrandCoverAction
+  uploadBrandCoverAction,
+  uploadBrandShowcaseVideoAction
 } from "@/app/brand-profile-actions";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
@@ -100,6 +101,8 @@ const copy = {
     profilePublished: "Brand profile published.",
     logoUpdated: "Logo updated.",
     logoFailed: "Logo upload failed.",
+    showcaseUploaded: "Brand video added to your public page.",
+    showcaseFailed: "Video upload failed.",
     describeFirst: "Describe your brand first.",
     aiGenerated: "AI generated your public profile.",
     fallbackHeadline: "Premium DTC skincare brand built for social-first growth.",
@@ -130,6 +133,8 @@ const copy = {
       addTag: "Add tag",
       assetsTitle: "Assets",
       assetsHelper: "Add assets to help creators understand your brand.",
+      showcaseTitle: "Public Brand Video",
+      showcaseTitlePlaceholder: "Video title shown on your public page",
       visibilityTitle: "Visibility",
       visibilityHelper: "Control what creators can see before accepting your campaigns."
     },
@@ -137,7 +142,7 @@ const copy = {
       logo: "Logo",
       cover: "Cover Image",
       product: "Product Image",
-      reference: "Reference",
+      reference: "Brand Video",
       drag: "Drag file here",
       ready: "Ready"
     },
@@ -172,6 +177,8 @@ const copy = {
     profilePublished: "品牌主页已发布。",
     logoUpdated: "Logo 已更新。",
     logoFailed: "Logo 上传失败。",
+    showcaseUploaded: "品牌视频已加入公开主页。",
+    showcaseFailed: "视频上传失败。",
     describeFirst: "请先描述你的品牌。",
     aiGenerated: "AI 已生成公开主页文案。",
     fallbackHeadline: "为社交增长打造的高端 DTC 护肤品牌。",
@@ -201,6 +208,8 @@ const copy = {
       addTag: "添加标签",
       assetsTitle: "品牌资产",
       assetsHelper: "上传素材，帮助创作者理解你的品牌。",
+      showcaseTitle: "公开品牌视频",
+      showcaseTitlePlaceholder: "显示在公开主页上的视频标题",
       visibilityTitle: "可见性",
       visibilityHelper: "控制创作者在接受 Campaign 前能看到哪些信息。"
     },
@@ -208,7 +217,7 @@ const copy = {
       logo: "Logo",
       cover: "封面图",
       product: "产品图",
-      reference: "参考素材",
+      reference: "品牌视频",
       drag: "拖拽文件到这里",
       ready: "已就绪"
     },
@@ -485,6 +494,7 @@ function AssetUploadCard({
 }) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const isVideoPreview = Boolean(preview && /\.(mp4|mov|webm)(\?|$)/i.test(preview));
 
   function handleDrop(event: DragEvent<HTMLButtonElement>) {
     event.preventDefault();
@@ -531,7 +541,9 @@ function AssetUploadCard({
       </div>
       <div className="mt-4 flex h-[78px] items-center justify-center overflow-hidden rounded-xl border border-zinc-100 bg-zinc-50">
         {preview ? (
-          preview.startsWith("blob:") ? (
+          isVideoPreview ? (
+            <video src={preview} className="h-full w-full bg-black object-cover" muted playsInline />
+          ) : preview.startsWith("blob:") ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={preview} alt="" className="h-full w-full object-cover" />
           ) : (
@@ -567,6 +579,7 @@ export function BrandProfileEditor({ locale, profile }: BrandProfileEditorProps)
   const [tags, setTags] = useState(() => defaultTags(profile));
   const [tagDraft, setTagDraft] = useState("");
   const [draggedTag, setDraggedTag] = useState<string | null>(null);
+  const [showcaseTitle, setShowcaseTitle] = useState("");
   const [visibility, setVisibility] = useState<Visibility>({
     publicProfile: true,
     website: true,
@@ -584,11 +597,11 @@ export function BrandProfileEditor({ locale, profile }: BrandProfileEditorProps)
   const [formError, setFormError] = useState<string | null>(null);
   const [logoUploading, setLogoUploading] = useState(false);
   const [coverUploading, setCoverUploading] = useState(false);
+  const [showcaseUploading, setShowcaseUploading] = useState(false);
   const logoInputRef = useRef<HTMLInputElement | null>(null);
   const coverInputRef = useRef<HTMLInputElement | null>(null);
   const [isPending, startTransition] = useTransition();
   const [isPolishing, startPolish] = useTransition();
-  const isPublished = Boolean(profile.profile_completed_at);
   const publicHref = withLocale(`/brands/${profile.id}`, locale);
 
   const initials = useMemo(() => initialsFor(displayName || companyName), [companyName, displayName]);
@@ -738,6 +751,29 @@ export function BrandProfileEditor({ locale, profile }: BrandProfileEditorProps)
       notify(locale === "zh" ? "封面上传失败" : "Cover upload failed", "error");
     } finally {
       setCoverUploading(false);
+    }
+  }
+
+  async function handleShowcaseVideoFile(file: File) {
+    setShowcaseUploading(true);
+    try {
+      const fd = new FormData();
+      fd.set("lang", locale);
+      fd.set("video_file", file);
+      fd.set("title", showcaseTitle.trim() || file.name.replace(/\.[^.]+$/, ""));
+      const result = await uploadBrandShowcaseVideoAction(fd);
+      if (!result.ok) {
+        notify(result.error, "error");
+        return;
+      }
+      setAssets((prev) => ({ ...prev, reference: result.ad.video_url }));
+      setShowcaseTitle("");
+      notify(t.showcaseUploaded, "success");
+      router.refresh();
+    } catch {
+      notify(t.showcaseFailed, "error");
+    } finally {
+      setShowcaseUploading(false);
     }
   }
 
@@ -1045,6 +1081,15 @@ export function BrandProfileEditor({ locale, profile }: BrandProfileEditorProps)
             </SectionCard>
 
             <SectionCard index="5" title={t.sections.assetsTitle} helper={t.sections.assetsHelper}>
+              <label className="mb-4 block space-y-2">
+                <span className="text-sm font-medium text-zinc-900">{t.sections.showcaseTitle}</span>
+                <input
+                  value={showcaseTitle}
+                  onChange={(event) => setShowcaseTitle(event.target.value)}
+                  placeholder={t.sections.showcaseTitlePlaceholder}
+                  className="h-12 w-full rounded-2xl border border-[#E8E8EC] bg-white px-4 text-sm outline-none transition focus:border-violet-200 focus:ring-4 focus:ring-violet-100"
+                />
+              </label>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <AssetUploadCard
                   title={t.assets.logo}
@@ -1077,13 +1122,14 @@ export function BrandProfileEditor({ locale, profile }: BrandProfileEditorProps)
                 />
                 <AssetUploadCard
                   title={t.assets.reference}
-                  helper="MP4, MOV"
+                  helper="MP4, MOV, WebM"
                   icon={<FileVideo className="h-4 w-4" />}
                   preview={assets.reference}
                   dragLabel={t.assets.drag}
                   readyLabel={t.assets.ready}
-                  accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/quicktime"
-                  onFile={(file) => setLocalAsset("reference", file)}
+                  accept="video/mp4,video/quicktime,video/webm"
+                  busy={showcaseUploading}
+                  onFile={(file) => void handleShowcaseVideoFile(file)}
                 />
               </div>
             </SectionCard>

@@ -35,7 +35,14 @@ function brandPayReturnPath(order: { id: string; project_id?: string | null }, l
   if (order.project_id) {
     return withLocale(`/brand/projects/${order.project_id}/checkout${query}`, lang);
   }
-  return withLocale(`/orders/${order.id}${query}`, lang);
+  return withLocale(`/dashboard/orders/${order.id}${query}`, lang);
+}
+
+function brandPaySuccessPath(order: { id: string; project_id?: string | null }, lang: Locale) {
+  if (order.project_id) {
+    return withLocale(`/brand/projects/${order.project_id}?tab=match`, lang);
+  }
+  return withLocale(`/dashboard/orders/${order.id}?paid=1`, lang);
 }
 
 export async function submitQuoteAction(formData: FormData) {
@@ -120,7 +127,7 @@ export async function acceptQuoteAction(formData: FormData) {
   redirect(
     order.project_id
       ? withLocale(`/brand/projects/${order.project_id}/checkout`, lang)
-      : withLocale(`/orders/${order.id}?pay=1`, lang)
+      : withLocale(`/dashboard/orders/${order.id}?pay=1`, lang)
   );
 }
 
@@ -129,7 +136,7 @@ export async function payOrderAction(formData: FormData) {
   const orderId = String(formData.get("order_id") ?? "");
   const order = await getOrder(orderId);
 
-  if (!order || order.payment_status !== "unpaid") {
+  if (!order || order.payment_status !== "unpaid" || order.status === "cancelled") {
     redirect(brandPayReturnPath({ id: orderId, project_id: order?.project_id }, lang, "?error=pay"));
   }
 
@@ -142,11 +149,11 @@ export async function payOrderAction(formData: FormData) {
     const stripe = getStripe();
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
     const successPath = order.project_id
-      ? `/brand/projects/${order.project_id}/checkout?paid=1&lang=${lang}`
-      : `/orders/${order.id}?paid=1&lang=${lang}`;
+      ? `/brand/projects/${order.project_id}?tab=match&lang=${lang}`
+      : `/dashboard/orders/${order.id}?paid=1&lang=${lang}`;
     const cancelPath = order.project_id
       ? `/brand/projects/${order.project_id}/checkout?pay=cancelled&lang=${lang}`
-      : `/orders/${order.id}?pay=cancelled&lang=${lang}`;
+      : `/dashboard/orders/${order.id}?pay=cancelled&lang=${lang}`;
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       line_items: [
@@ -189,7 +196,7 @@ export async function payOrderAction(formData: FormData) {
     revalidatePath(`/brand/projects/${order.project_id}/checkout`);
   }
 
-  redirect(brandPayReturnPath(order, lang, "?paid=1"));
+  redirect(brandPaySuccessPath(order, lang));
 }
 
 export async function submitDeliverableAction(formData: FormData) {

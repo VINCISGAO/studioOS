@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { cookies, headers } from "next/headers";
 import { Sparkles } from "lucide-react";
-import { signOutAction } from "@/app/actions";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { Button } from "@/components/ui/button";
 import { DEMO_SESSION_COOKIE } from "@/lib/auth-config";
@@ -82,7 +81,7 @@ export async function SiteHeader({ locale }: { locale: Locale }) {
         <div className="flex items-center gap-2">
           <LanguageSwitcher locale={locale} pathname={pathname} search={search} />
           {session ? (
-            <form action={signOutAction}>
+            <form action="/auth/sign-out" method="post">
               <input type="hidden" name="lang" value={locale} />
               <Button type="submit" variant="outline" size="sm">
                 {t.signOut}

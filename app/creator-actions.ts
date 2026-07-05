@@ -44,6 +44,30 @@ export async function publishWorkAction(formData: FormData) {
   revalidateWorkPaths(creatorId);
 }
 
+export async function uploadCreatorWorkVideoAction(formData: FormData) {
+  const creatorId = await requireCreatorId();
+  const lang = String(formData.get("lang") ?? "en") === "zh" ? "zh" : "en";
+  const file = formData.get("video_file");
+
+  if (!(file instanceof File)) {
+    return { ok: false as const, error: lang === "zh" ? "请选择视频文件" : "Choose a video file" };
+  }
+
+  const { saveCreatorWorkVideoUpload } = await import("@/lib/studioos/creator-avatar-upload");
+  const saved = await saveCreatorWorkVideoUpload(creatorId, file);
+  if (!saved.ok) {
+    return { ok: false as const, error: saved.error };
+  }
+
+  return {
+    ok: true as const,
+    video_url: saved.url,
+    file_name: saved.file_name,
+    mime_type: saved.mime_type,
+    size_bytes: saved.size_bytes
+  };
+}
+
 export async function syncWorksAction(formData: FormData) {
   const creatorId = await requireCreatorId();
   const works = JSON.parse(String(formData.get("works") ?? "[]")) as CreatorWork[];

@@ -123,7 +123,11 @@ export class PaymentService {
     });
   }
 
-  async startCheckout(campaignId: string, user: AuthUser & { email?: string }) {
+  async startCheckout(
+    campaignId: string,
+    user: AuthUser & { email?: string },
+    options: { portalProjectId?: string } = {}
+  ) {
     const campaign = await this.getCampaignForPayment(campaignId, user);
     PermissionService.assert(user, "payment.read");
 
@@ -163,7 +167,8 @@ export class PaymentService {
       amount: Number(campaign.budget),
       currency: campaign.currency.toLowerCase(),
       title: campaign.title,
-      brandEmail: user.email
+      brandEmail: user.email,
+      portalProjectId: options.portalProjectId
     });
 
     await paymentRepository.updatePaymentMeta(campaignId, {
@@ -330,7 +335,9 @@ export class PaymentService {
 
     try {
       if (stripeCheckoutService.isConfigured()) {
-        const checkout = await this.startCheckout(campaign.id, actor);
+        const checkout = await this.startCheckout(campaign.id, actor, {
+          portalProjectId: input.legacyProjectId
+        });
         if (checkout.mode === "stripe" && checkout.checkoutUrl) {
           return { ok: true, mode: "stripe", checkoutUrl: checkout.checkoutUrl };
         }

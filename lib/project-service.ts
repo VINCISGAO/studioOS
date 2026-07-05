@@ -566,7 +566,7 @@ export async function createProject(input: CreateProjectInput): Promise<StoredPr
 
 export async function getProject(id: string): Promise<StoredProject | null> {
   if (hasDatabaseUrl()) {
-    const prismaProject = await campaignService.getByLegacyProjectId(id);
+    const prismaProject = await campaignService.getByProjectOrCampaignId(id);
     if (prismaProject) {
       return prismaProject;
     }
@@ -761,10 +761,7 @@ export async function listProjectsForClient(clientEmail: string): Promise<Stored
 
 export function canDeleteProject(status: string) {
   const normalized = normalizeCampaignStatus(status);
-  if (process.env.NODE_ENV === "development") {
-    return normalized !== "cancelled";
-  }
-  return normalized === "draft";
+  return normalized === "draft" || normalized === "completed";
 }
 
 async function deletePrismaCampaignForClient(
@@ -803,7 +800,7 @@ async function deletePrismaCampaignForClient(
     return {
       ok: false,
       code: "LOCKED",
-      message: "Only draft projects can be deleted"
+      message: "Only draft or completed projects can be deleted"
     };
   }
 
@@ -862,11 +859,11 @@ export async function deleteProjectForClient(
 
   const project = store.projects[index];
 
-  if (normalizeCampaignStatus(project.status) !== "draft") {
+  if (!canDeleteProject(project.status)) {
     return {
       ok: false,
       code: "LOCKED",
-      message: "Only draft projects can be deleted"
+      message: "Only draft or completed projects can be deleted"
     };
   }
 

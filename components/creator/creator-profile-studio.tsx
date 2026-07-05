@@ -1,6 +1,12 @@
 "use client";
 
-import { deleteWorkAction, hideWorkAction, publishWorkAction, syncWorksAction } from "@/app/creator-actions";
+import {
+  deleteWorkAction,
+  hideWorkAction,
+  publishWorkAction,
+  syncWorksAction,
+  uploadCreatorWorkVideoAction
+} from "@/app/creator-actions";
 import { uploadCreatorAvatarAction } from "@/app/profile-actions";
 import { saveCreatorProfileClientAction } from "@/app/profile-actions";
 import { WorkCoverImage } from "@/components/creator/work-cover-image";
@@ -17,9 +23,9 @@ import { StudioWorksProfileHero } from "@/components/studioos/studio-works-profi
 import type { WorkEngagementSnapshot } from "@/lib/work-engagement-utils";
 import { CreatorMinBudgetField } from "@/components/creator/creator-min-budget-field";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Clapperboard, Check, ExternalLink, Loader2, Pencil, Plus, XCircle } from "lucide-react";
+import { Clapperboard, Check, ExternalLink, FileVideo, Loader2, Pencil, Plus, UploadCloud, XCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -99,7 +105,11 @@ const copy = {
     editProfileTitle: "Edit your public profile",
     editProfileBody: "Brands see this on your creator page. Keep it clear and portfolio-first.",
     publishTitle: "Publish a portfolio video",
-    publishBody: "Paste a video link. YouTube links auto-generate a cover. Optional: add a separate image URL.",
+    publishBody: "Upload a local video or paste a video link. YouTube links auto-generate a cover.",
+    uploadVideo: "Upload video",
+    uploadVideoHint: "MP4, MOV, or WebM up to 300MB",
+    videoUploaded: "Video uploaded",
+    videoRequired: "Upload a video file or paste a video link.",
     fields: {
       name: "Display name",
       headline: "Headline",
@@ -164,7 +174,11 @@ const copy = {
     editProfileTitle: "编辑公开主页",
     editProfileBody: "品牌方会在你的创作者主页看到这些信息，建议突出风格和案例。",
     publishTitle: "发布作品视频",
-    publishBody: "把视频链接加入公开作品墙。YouTube 链接会自动生成封面；也可单独填写封面图链接。",
+    publishBody: "可以直接上传本地视频，也可以粘贴视频链接。YouTube 链接会自动生成封面。",
+    uploadVideo: "上传视频文件",
+    uploadVideoHint: "支持 MP4、MOV、WebM，单文件最高 300MB",
+    videoUploaded: "视频已上传",
+    videoRequired: "请上传视频文件，或填写视频链接。",
     fields: {
       name: "展示名称",
       headline: "一句话介绍",
@@ -823,20 +837,56 @@ function PublishWorkDialog({
   const turnaroundOptions = useMemo(() => getTurnaroundOptions(locale), [locale]);
   const [formKey, setFormKey] = useState(0);
   const [submitting, setSubmitting] = useState(false);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [uploadedVideoUrl, setUploadedVideoUrl] = useState("");
+  const [uploadedVideoName, setUploadedVideoName] = useState("");
+  const [error, setError] = useState("");
+  const videoInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (!open) {
       setFormKey((key) => key + 1);
       setSubmitting(false);
+      setUploadingVideo(false);
+      setUploadedVideoUrl("");
+      setUploadedVideoName("");
+      setError("");
     }
   }, [open]);
 
+  async function handleVideoFile(file: File) {
+    setError("");
+    setUploadingVideo(true);
+    try {
+      const fd = new FormData();
+      fd.set("lang", locale);
+      fd.set("video_file", file);
+      const result = await uploadCreatorWorkVideoAction(fd);
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      setUploadedVideoUrl(result.video_url);
+      setUploadedVideoName(result.file_name || file.name);
+    } catch {
+      setError(t.publishFailed);
+    } finally {
+      setUploadingVideo(false);
+    }
+  }
+
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setError("");
     const formData = new FormData(event.currentTarget);
-    const videoUrl = sanitizeVideoUrl(String(formData.get("video_url") ?? ""));
+    const videoUrl = uploadedVideoUrl || sanitizeVideoUrl(String(formData.get("video_url") ?? ""));
     const thumbnailInput = String(formData.get("thumbnail_url") ?? "").trim();
     const title = String(formData.get("title") ?? "").trim();
+
+    if (!videoUrl) {
+      setError(t.videoRequired);
+      return;
+    }
 
     setSubmitting(true);
     const ok = await onPublish({
@@ -906,11 +956,53 @@ function PublishWorkDialog({
               required
             />
           </div>
+          <div className="rounded-2xl border border-dashed border-zinc-200 bg-zinc-50/80 p-4">
+            <input
+              ref={videoInputRef}
+              type="file"
+              accept="video/mp4,video/quicktime,video/webm"
+              className="hidden"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (file) void handleVideoFile(file);
+                event.target.value = "";
+              }}
+            />
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex min-w-0 items-start gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-zinc-500 ring-1 ring-zinc-100">
+                  <FileVideo className="h-4 w-4" />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-zinc-900">{t.uploadVideo}</p>
+                  <p className="mt-1 text-xs leading-5 text-zinc-500">{t.uploadVideoHint}</p>
+                  {uploadedVideoName ? (
+                    <p className="mt-2 truncate text-xs font-medium text-emerald-600">
+                      {t.videoUploaded}: {uploadedVideoName}
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                className="shrink-0 rounded-xl"
+                disabled={uploadingVideo || submitting}
+                onClick={() => videoInputRef.current?.click()}
+              >
+                {uploadingVideo ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <UploadCloud className="h-4 w-4" />
+                )}
+                {t.uploadVideo}
+              </Button>
+            </div>
+          </div>
           <Field
             name="video_url"
             label={t.fields.video}
             placeholder={publishPlaceholder("videoUrl", locale)}
-            required
           />
           <Field
             name="thumbnail_url"
@@ -919,11 +1011,16 @@ function PublishWorkDialog({
           />
           <TextField name="description" label={t.fields.description} required />
           <Field name="tags" label={t.fields.tags} placeholder={publishPlaceholder("tags", locale)} />
+          {error ? (
+            <div className="rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-sm text-red-700">
+              {error}
+            </div>
+          ) : null}
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={submitting}>
               {t.cancel}
             </Button>
-            <Button type="submit" disabled={submitting}>
+            <Button type="submit" disabled={submitting || uploadingVideo}>
               {submitting ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" /> {locale === "zh" ? "发布中…" : "Publishing…"}

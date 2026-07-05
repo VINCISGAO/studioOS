@@ -1,6 +1,7 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import type { FormEvent, PointerEvent as ReactPointerEvent } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { ExternalLink, Loader2, Send, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,45 @@ type CopilotAnswerData = {
 };
 
 type UiLocale = "zh" | "en";
+
+type FloatingLauncherPosition = {
+  side: "left" | "right";
+  y: number;
+};
+
+type FloatingLauncherPreview = {
+  x: number;
+  y: number;
+};
+
+type FloatingLauncherDrag = {
+  pointerId: number;
+  startX: number;
+  startY: number;
+  originX: number;
+  originY: number;
+  currentX: number;
+  currentY: number;
+  moved: boolean;
+};
+
+const AI_WORKSPACE_PATHS = new Set([
+  "/copilot",
+  "/brand/ai",
+  "/brand/copilot",
+  "/studio/ai",
+  "/studio/copilot",
+  "/admin/ai",
+  "/admin/copilot",
+  "/creator/ai"
+]);
+
+const FLOATING_LAUNCHER_STORAGE_KEY = "vincis-ai-copilot-launcher-position";
+const FLOATING_LAUNCHER_SIZE = 48;
+const FLOATING_LAUNCHER_EDGE_OFFSET = 20;
+const FLOATING_LAUNCHER_TOP_SAFE = 96;
+const FLOATING_LAUNCHER_BOTTOM_SAFE = 128;
+const FLOATING_LAUNCHER_CLICK_THRESHOLD = 5;
 
 const DRAWER_COPY: Record<UiLocale, {
   launcher: string;
@@ -202,6 +242,73 @@ function localeFromSearch(searchParams: { get(name: string): string | null }): U
   return searchParams.get("lang") === "en" ? "en" : "zh";
 }
 
+function isAiWorkspacePath(pathname: string) {
+  return AI_WORKSPACE_PATHS.has(pathname);
+}
+
+function clampLauncherY(y: number) {
+  if (typeof window === "undefined") return y;
+  const maxY = Math.max(
+    FLOATING_LAUNCHER_TOP_SAFE,
+    window.innerHeight - FLOATING_LAUNCHER_BOTTOM_SAFE - FLOATING_LAUNCHER_SIZE
+  );
+  return Math.min(Math.max(y, FLOATING_LAUNCHER_TOP_SAFE), maxY);
+}
+
+function clampLauncherX(x: number) {
+  if (typeof window === "undefined") return x;
+  const maxX = Math.max(
+    FLOATING_LAUNCHER_EDGE_OFFSET,
+    window.innerWidth - FLOATING_LAUNCHER_EDGE_OFFSET - FLOATING_LAUNCHER_SIZE
+  );
+  return Math.min(Math.max(x, FLOATING_LAUNCHER_EDGE_OFFSET), maxX);
+}
+
+function defaultLauncherPosition(): FloatingLauncherPosition {
+  return {
+    side: "right",
+    y: clampLauncherY(typeof window === "undefined" ? 360 : window.innerHeight * 0.62)
+  };
+}
+
+function normalizeLauncherPosition(position: FloatingLauncherPosition): FloatingLauncherPosition {
+  return {
+    side: position.side === "left" ? "left" : "right",
+    y: clampLauncherY(position.y)
+  };
+}
+
+function readStoredLauncherPosition(): FloatingLauncherPosition {
+  if (typeof window === "undefined") return defaultLauncherPosition();
+
+  try {
+    const stored = window.localStorage.getItem(FLOATING_LAUNCHER_STORAGE_KEY);
+    if (!stored) return defaultLauncherPosition();
+    const parsed = JSON.parse(stored) as Partial<FloatingLauncherPosition>;
+    if ((parsed.side === "left" || parsed.side === "right") && typeof parsed.y === "number") {
+      return normalizeLauncherPosition({ side: parsed.side, y: parsed.y });
+    }
+  } catch {
+    return defaultLauncherPosition();
+  }
+
+  return defaultLauncherPosition();
+}
+
+function storeLauncherPosition(position: FloatingLauncherPosition) {
+  if (typeof window === "undefined") return;
+
+  try {
+    window.localStorage.setItem(FLOATING_LAUNCHER_STORAGE_KEY, JSON.stringify(position));
+  } catch {
+    // Position memory is a convenience, so storage failures should not block the launcher.
+  }
+}
+
+function isAbortError(error: unknown) {
+  return error instanceof DOMException && error.name === "AbortError";
+}
+
 export function AiCopilotDrawer() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -216,7 +323,11 @@ export function AiCopilotDrawer() {
   const [localHour, setLocalHour] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [launcherPosition, setLauncherPosition] = useState<FloatingLauncherPosition>(() => defaultLauncherPosition());
+  const [launcherPreview, setLauncherPreview] = useState<FloatingLauncherPreview | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  const launcherDragRef = useRef<FloatingLauncherDrag | null>(null);
+  const suppressLauncherClickRef = useRef(false);
 
   const pageContext = useMemo(
     () => ({ ...inferPageContext(pathname), languageCode: languageFromSearch(searchParams) }),
@@ -239,6 +350,28 @@ export function AiCopilotDrawer() {
       : `${localGreetingPrefix(locale, localHour)}${locale === "zh" ? "，" : ", "}${displayName} 😊`;
   const introBody = welcomeBody({ pathname, role: roleKind, locale });
   const workspaceUrl = workspaceHref(pathname, searchParams);
+  const hideFloatingLauncher = isAiWorkspacePath(pathname);
+
+  useEffect(() => {
+    setLauncherPosition(readStoredLauncherPosition());
+
+    const handleResize = () => {
+      setLauncherPosition((current) => {
+        const next = normalizeLauncherPosition(current);
+        storeLauncherPosition(next);
+        return next;
+      });
+      setLauncherPreview(null);
+      launcherDragRef.current = null;
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (hideFloatingLauncher) setOpen(false);
+  }, [hideFloatingLauncher]);
 
   useEffect(() => {
     const syncLocalHour = () => setLocalHour(new Date().getHours());
@@ -254,7 +387,8 @@ export function AiCopilotDrawer() {
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
-    fetch(sessionsUrl)
+    const controller = new AbortController();
+    fetch(sessionsUrl, { signal: controller.signal })
       .then(async (response) => {
         const payload = (await response.json().catch(() => null)) as ApiResponse<SessionListData> | null;
         if (!response.ok || !payload?.success) {
@@ -268,10 +402,12 @@ export function AiCopilotDrawer() {
         setWorkspace(payload.data.workspace ?? null);
       })
       .catch((err) => {
-        if (!cancelled) setError(err instanceof Error ? err.message : copy.unavailable);
+        if (cancelled || isAbortError(err)) return;
+        setError(err instanceof Error ? err.message : copy.unavailable);
       });
     return () => {
       cancelled = true;
+      controller.abort();
     };
   }, [copy.unavailable, open, sessionsUrl]);
 
@@ -321,18 +457,98 @@ export function AiCopilotDrawer() {
     void sendMessage(input);
   }
 
+  function startLauncherDrag(event: ReactPointerEvent<HTMLButtonElement>) {
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+
+    const rect = event.currentTarget.getBoundingClientRect();
+    launcherDragRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      originX: rect.left,
+      originY: rect.top,
+      currentX: rect.left,
+      currentY: rect.top,
+      moved: false
+    };
+    setLauncherPreview({ x: rect.left, y: rect.top });
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function moveLauncherDrag(event: ReactPointerEvent<HTMLButtonElement>) {
+    const drag = launcherDragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+
+    const deltaX = event.clientX - drag.startX;
+    const deltaY = event.clientY - drag.startY;
+    const nextX = clampLauncherX(drag.originX + deltaX);
+    const nextY = clampLauncherY(drag.originY + deltaY);
+    const moved = Math.hypot(deltaX, deltaY) > FLOATING_LAUNCHER_CLICK_THRESHOLD;
+
+    launcherDragRef.current = {
+      ...drag,
+      currentX: nextX,
+      currentY: nextY,
+      moved: drag.moved || moved
+    };
+    setLauncherPreview({ x: nextX, y: nextY });
+  }
+
+  function finishLauncherDrag(event: ReactPointerEvent<HTMLButtonElement>) {
+    const drag = launcherDragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+
+    const side = drag.currentX + FLOATING_LAUNCHER_SIZE / 2 < window.innerWidth / 2 ? "left" : "right";
+    const nextPosition = normalizeLauncherPosition({ side, y: drag.currentY });
+    setLauncherPosition(nextPosition);
+    storeLauncherPosition(nextPosition);
+    setLauncherPreview(null);
+    suppressLauncherClickRef.current = drag.moved;
+    launcherDragRef.current = null;
+
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+  }
+
+  function openLauncher() {
+    if (suppressLauncherClickRef.current) {
+      suppressLauncherClickRef.current = false;
+      return;
+    }
+    setOpen(true);
+  }
+
+  if (hideFloatingLauncher) {
+    return null;
+  }
+
+  const launcherStyle = launcherPreview
+    ? { left: `${launcherPreview.x}px`, top: `${launcherPreview.y}px` }
+    : launcherPosition.side === "left"
+      ? { left: `${FLOATING_LAUNCHER_EDGE_OFFSET}px`, top: `${launcherPosition.y}px` }
+      : { right: `${FLOATING_LAUNCHER_EDGE_OFFSET}px`, top: `${launcherPosition.y}px` };
+
   return (
     <>
       <Button
         type="button"
-        onClick={() => setOpen(true)}
+        aria-label={copy.launcher}
+        title={copy.launcher}
+        onClick={openLauncher}
+        onPointerDown={startLauncherDrag}
+        onPointerMove={moveLauncherDrag}
+        onPointerUp={finishLauncherDrag}
+        onPointerCancel={finishLauncherDrag}
+        style={launcherStyle}
         className={cn(
-          "fixed bottom-5 right-5 z-50 h-12 rounded-full px-4 shadow-xl",
-          "bg-slate-950 text-white hover:bg-slate-800"
+          "fixed z-50 h-12 w-12 touch-none select-none rounded-full p-0 shadow-xl shadow-slate-950/20",
+          "bg-slate-950 text-white ring-1 ring-white/20 hover:bg-slate-800",
+          launcherPreview ? "cursor-grabbing transition-none" : "cursor-grab transition-[top,left,right,box-shadow] duration-200"
         )}
       >
         <Sparkles className="h-5 w-5 fill-white" />
-        {copy.launcher}
+        <span className="sr-only">{copy.launcher}</span>
       </Button>
 
       {open ? (

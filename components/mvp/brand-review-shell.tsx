@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { signOutAction } from "@/app/actions";
 import { LanguageSwitcher, LanguageSwitcherFallback } from "@/components/language-switcher";
 import { StudioNotificationBell } from "@/components/studioos/studio-notification-bell";
 import { StudioUserMenu } from "@/components/studioos/studio-user-menu";
@@ -108,7 +107,7 @@ export function BrandReviewShell({
                 <p className="truncate text-xs text-zinc-500">{locale === "zh" ? "品牌方" : "Brand"}</p>
               </div>
             </div>
-            <form action={signOutAction}>
+            <form action="/auth/sign-out" method="post">
               <input type="hidden" name="lang" value={locale} />
               <Button
                 type="submit"

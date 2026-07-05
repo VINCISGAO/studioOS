@@ -120,6 +120,7 @@ export function mapCampaignToStoredProject(campaign: CampaignWithBrand): StoredP
       selected_direction_id: brief.selected_direction_id,
       wizard_ephemeral: memory.wizard?.ephemeral === true,
       wizard_saved_at: memory.wizard?.saved_at,
+      ...(memory.cancellation ? { cancellation: memory.cancellation } : {}),
       prisma_campaign_id: campaign.id
     },
     product_url: brief.product?.url ?? "",

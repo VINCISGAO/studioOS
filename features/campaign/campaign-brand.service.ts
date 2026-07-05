@@ -200,6 +200,15 @@ export class CampaignBrandPortalService {
     return mapCampaignToStoredProject(campaign);
   }
 
+  async getByProjectOrCampaignId(projectOrCampaignId: string): Promise<StoredProject | null> {
+    if (!this.isEnabled()) return null;
+    const campaign =
+      (await campaignRepository.findByLegacyProjectIdWithRelations(projectOrCampaignId)) ??
+      (await campaignRepository.findByIdWithBrandAndAssets(projectOrCampaignId));
+    if (!campaign) return null;
+    return mapCampaignToStoredProject(campaign);
+  }
+
   async listForClientEmail(clientEmail: string): Promise<StoredProject[]> {
     if (!this.isEnabled()) return [];
     const campaigns = await campaignRepository.listByBrandEmail(clientEmail);

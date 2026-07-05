@@ -2,14 +2,15 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
 import { payOrderAction } from "@/app/order-actions";
-import { DEMO_SESSION_COOKIE } from "@/lib/auth-config";
-import { parseDemoSession } from "@/lib/demo-auth";
 import { campaignRepository } from "@/features/campaign/campaign.repository";
 import { paymentService } from "@/features/payment/payment.service";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { withLocale, type Locale } from "@/lib/i18n";
+import { cancelUnpaidOrder, getOrder, markLegacyOrderPaidForProject } from "@/lib/order-service";
+import { getProject } from "@/lib/project-service";
+import { getCurrentSession } from "@/lib/session-user";
+import { syncBrandOrderPaid } from "@/lib/studioos/brand-checkout-service";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
 
 function normalizeLang(raw: FormDataEntryValue | null): Locale {
@@ -22,13 +23,16 @@ function revalidateCheckoutPaths(projectId: string) {
   revalidatePath(brandPortalRoutes.projectCheckout(projectId));
 }
 
+function brandPaymentSuccessPath(projectId: string) {
+  return `${brandPortalRoutes.project(projectId)}?tab=match`;
+}
+
 export async function payBrandCampaignCheckoutAction(formData: FormData) {
   const lang = normalizeLang(formData.get("lang"));
   const projectId = String(formData.get("project_id") ?? "");
   const orderId = String(formData.get("order_id") ?? "");
 
-  const cookieStore = await cookies();
-  const session = parseDemoSession(cookieStore.get(DEMO_SESSION_COOKIE)?.value);
+  const session = await getCurrentSession();
   if (!session || session.role !== "client") {
     redirect(withLocale("/login?role=brand", lang));
   }
@@ -55,8 +59,13 @@ export async function payBrandCampaignCheckoutAction(formData: FormData) {
         redirect(result.checkoutUrl);
       }
 
+      const paidLegacyOrder = await markLegacyOrderPaidForProject(projectId);
+      if (paidLegacyOrder) {
+        await syncBrandOrderPaid(paidLegacyOrder);
+      }
+
       revalidateCheckoutPaths(projectId);
-      redirect(withLocale(`${brandPortalRoutes.projectCheckout(projectId)}?paid=1`, lang));
+      redirect(withLocale(brandPaymentSuccessPath(projectId), lang));
     }
   }
 
@@ -65,4 +74,48 @@ export async function payBrandCampaignCheckoutAction(formData: FormData) {
   }
 
   return payOrderAction(formData);
+}
+
+export async function cancelBrandCampaignCheckoutAction(formData: FormData) {
+  const lang = normalizeLang(formData.get("lang"));
+  const projectId = String(formData.get("project_id") ?? "");
+  const orderId = String(formData.get("order_id") ?? "");
+  const reason = String(formData.get("cancel_reason") ?? "").trim();
+  const checkoutPath = projectId ? brandPortalRoutes.projectCheckout(projectId) : "/brand";
+
+  const session = await getCurrentSession();
+  if (!session || session.role !== "client") {
+    redirect(withLocale("/login?role=brand", lang));
+  }
+
+  if (!projectId || !orderId) {
+    redirect(withLocale(`${checkoutPath}?error=cancel`, lang));
+  }
+
+  if (!reason) {
+    redirect(withLocale(`${checkoutPath}?error=cancel-reason`, lang));
+  }
+
+  const [project, order] = await Promise.all([getProject(projectId), getOrder(orderId)]);
+  const sessionEmail = session.email.toLowerCase();
+  if (!project || !order || project.client_email !== sessionEmail || order.client_email.toLowerCase() !== sessionEmail) {
+    redirect(withLocale("/brand", lang));
+  }
+
+  if (order.status === "cancelled") {
+    redirect(withLocale(`${checkoutPath}?cancelled=1`, lang));
+  }
+
+  const cancelled = await cancelUnpaidOrder(orderId, {
+    reason,
+    actorRole: "brand",
+    projectId
+  });
+
+  if (!cancelled) {
+    redirect(withLocale(`${checkoutPath}?error=cancel`, lang));
+  }
+
+  revalidateCheckoutPaths(projectId);
+  redirect(withLocale(`${checkoutPath}?cancelled=1`, lang));
 }

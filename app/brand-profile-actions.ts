@@ -5,6 +5,7 @@ import { getCurrentClientEmail } from "@/lib/client-session";
 import { DEMO_USERS } from "@/lib/demo-auth";
 import type { Locale } from "@/lib/i18n";
 import {
+  addBrandShowcaseVideo,
   saveBrandProfile,
   setBrandShowcaseVisibility,
   syncBrandShowcaseFromOrders,
@@ -139,6 +140,55 @@ export async function toggleBrandShowcaseAdAction(formData: FormData) {
   revalidatePath("/brand/brand-center/profile");
   revalidatePath(`/brands/${profile.id}`);
   return { ok: true as const };
+}
+
+export async function uploadBrandShowcaseVideoAction(formData: FormData) {
+  const lang = normalizeLang(formData.get("lang"));
+  const email = await requireBrandEmail();
+  const file = formData.get("video_file");
+  const title = String(formData.get("title") ?? "").trim();
+  const platform = String(formData.get("platform") ?? "").trim();
+
+  if (!(file instanceof File)) {
+    return { ok: false as const, error: lang === "zh" ? "请选择视频文件" : "Choose a video file" };
+  }
+
+  const { saveBrandShowcaseVideoUpload } = await import("@/lib/studioos/brand-avatar-upload");
+  const { getBrandProfileByEmail } = await import("@/lib/brand-profile-service");
+  const profile = await getBrandProfileByEmail(email);
+  if (!profile) {
+    return { ok: false as const, error: lang === "zh" ? "品牌资料不存在" : "Brand profile not found" };
+  }
+
+  const saved = await saveBrandShowcaseVideoUpload(profile.id, file);
+  if (!saved.ok) {
+    return { ok: false as const, error: saved.error };
+  }
+
+  const { profile: updated, ad } = await addBrandShowcaseVideo(email, {
+    title: title || file.name.replace(/\.[^.]+$/, "") || (lang === "zh" ? "品牌主页视频" : "Brand profile video"),
+    video_url: saved.url,
+    platform
+  });
+
+  const { storageFileService } = await import("@/features/storage/storage-file.service");
+  await storageFileService.record({
+    fileName: saved.file_name,
+    fileType: "BRAND_SHOWCASE_VIDEO",
+    fileKey: saved.file_key,
+    publicUrl: saved.url,
+    mimeType: saved.mime_type,
+    fileSize: saved.size_bytes,
+    provider: saved.storage_provider
+  });
+
+  revalidatePath("/brand/profile");
+  revalidatePath("/brand/brand-center");
+  revalidatePath("/brand/brand-center/profile");
+  revalidatePath("/brand");
+  revalidatePath(`/brands/${updated.id}`);
+
+  return { ok: true as const, ad };
 }
 
 export async function uploadBrandAvatarAction(formData: FormData) {

@@ -1,9 +1,7 @@
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
 import { BrandWorkspaceOverview } from "@/components/studioos/brand-workspace-overview";
-import { DEMO_SESSION_COOKIE } from "@/lib/auth-config";
-import { parseDemoSession } from "@/lib/demo-auth";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { getCurrentSession } from "@/lib/session-user";
 import { getBrandPortalDisplayName, getBrandPortalOrders, getBrandPortalProjects } from "@/lib/studioos/brand-portal-data";
 import { toBrandProjectRows } from "@/lib/studioos/brand-dashboard";
 import { pickLatestEphemeralWizardProject } from "@/lib/studioos/brand-wizard-session";
@@ -11,8 +9,7 @@ import { pickLatestEphemeralWizardProject } from "@/lib/studioos/brand-wizard-se
 export default async function BrandHomePage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const query = await searchParams;
   const locale = getLocale(query);
-  const cookieStore = await cookies();
-  const session = parseDemoSession(cookieStore.get(DEMO_SESSION_COOKIE)?.value);
+  const session = await getCurrentSession();
 
   if (!session || session.role !== "client") {
     redirect(withLocale("/login?role=brand", locale));

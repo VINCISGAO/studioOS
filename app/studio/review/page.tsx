@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import { StudioReviewHubBoard } from "@/components/studioos/studio-review-hub-board";
-import { getCurrentCreator } from "@/lib/creator-session";
+import { getCurrentCreatorId } from "@/lib/creator-session";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { repairSelectedCreatorCampaignOrders } from "@/lib/order-service";
 import { listCreatorReviewHubItems } from "@/lib/studioos/review-hub";
 
 export default async function StudioReviewHubPage({
@@ -10,12 +11,13 @@ export default async function StudioReviewHubPage({
   searchParams: Promise<SearchParams>;
 }) {
   const locale = getLocale(await searchParams);
-  const creator = await getCurrentCreator();
-  if (!creator) {
+  const creatorId = await getCurrentCreatorId();
+  if (!creatorId) {
     redirect(withLocale("/login?role=creator", locale));
   }
 
-  const items = await listCreatorReviewHubItems(creator.id);
+  await repairSelectedCreatorCampaignOrders(creatorId);
+  const items = await listCreatorReviewHubItems(creatorId);
 
   return <StudioReviewHubBoard locale={locale} items={items} />;
 }

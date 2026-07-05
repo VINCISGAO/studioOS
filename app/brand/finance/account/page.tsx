@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { CalendarDays, FileText, Inbox, PieChart, WalletCards, Zap } from "lucide-react";
 import {
@@ -94,6 +95,9 @@ export default async function BrandFinanceAccountPage({
   return (
     <div className="space-y-7">
       <header className="space-y-2">
+        <Link href={withLocale("/brand", locale)} className="text-sm text-zinc-500 hover:text-zinc-900">
+          ← {locale === "zh" ? "返回首页" : "Back home"}
+        </Link>
         <h1 className="text-3xl font-semibold tracking-tight text-zinc-950">
           {locale === "zh" ? "账户余额" : "Account balance"}
         </h1>

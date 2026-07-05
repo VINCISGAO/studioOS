@@ -14,6 +14,7 @@ export class StripeCheckoutService {
     currency: string;
     title: string;
     brandEmail?: string;
+    portalProjectId?: string;
   }): Promise<Stripe.Checkout.Session> {
     if (!this.isConfigured()) {
       throw new Error("Stripe is not configured");
@@ -21,6 +22,7 @@ export class StripeCheckoutService {
 
     const stripe = getStripe();
     const appUrl = getAppBaseUrl();
+    const portalProjectId = input.portalProjectId ?? input.campaignId;
 
     return stripe.checkout.sessions.create({
       mode: "payment",
@@ -42,8 +44,8 @@ export class StripeCheckoutService {
         campaign_id: input.campaignId,
         escrow_id: input.escrowId
       },
-      success_url: `${appUrl}/brand/projects/${input.campaignId}/checkout?paid=1`,
-      cancel_url: `${appUrl}/brand/projects/${input.campaignId}/checkout?pay=cancelled`
+      success_url: `${appUrl}/brand/projects/${portalProjectId}?tab=match`,
+      cancel_url: `${appUrl}/brand/projects/${portalProjectId}/checkout?pay=cancelled`
     });
   }
 }

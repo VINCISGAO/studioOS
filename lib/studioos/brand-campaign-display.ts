@@ -97,8 +97,11 @@ export function brandCampaignHref(input: {
   if (input.status === "waiting_payment" && input.projectId) {
     return `/brand/projects/${input.projectId}/checkout`;
   }
+  if (input.status === "waiting_payment") {
+    return `/dashboard/orders/${input.id}?pay=1`;
+  }
   if (input.projectId) return `/brand/projects/${input.projectId}/review`;
-  return `/orders/${input.id}`;
+  return `/dashboard/orders/${input.id}`;
 }
 
 export function estimateBudgetRange(budget?: string | null): string {

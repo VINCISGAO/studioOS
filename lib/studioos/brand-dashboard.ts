@@ -3,6 +3,7 @@ import type { StoredProject } from "@/lib/project-types";
 import { canDeleteOrder } from "@/lib/order-service";
 import { projectCta, projectHref, canDeleteProject } from "@/lib/project-service";
 import { brandCampaignHref } from "@/lib/studioos/brand-campaign-display";
+import { isBrandPaymentTimeoutCancellation } from "@/lib/studioos/brand-payment-deadline";
 import { isVisibleBrandDraftProject } from "@/lib/studioos/brand-wizard-session";
 import { normalizeCampaignStatus, type CampaignProjectStatus } from "@/lib/studioos/project-status";
 
@@ -52,6 +53,7 @@ export type BrandProjectRow = {
   wizardStep?: number;
   progress?: number;
   canDelete?: boolean;
+  paymentExpired?: boolean;
   phase: "draft" | "active" | "done";
 };
 
@@ -68,57 +70,79 @@ export function toBrandProjectRows(
   locale: "en" | "zh"
 ): BrandProjectRow[] {
   const projectIds = new Set(projects.map((project) => project.id));
+  const orderByProjectId = new Map(
+    orders
+      .filter((order) => order.project_id)
+      .map((order) => [order.project_id as string, order])
+  );
 
   const campaignRows: BrandProjectRow[] = projects
     .filter(isVisibleBrandDraftProject)
     .map((project) => {
-    const status = normalizeCampaignStatus(project.status);
-    return {
-    id: project.id,
-    kind: "campaign",
-    name: project.title || project.product_name || project.campaign_goal || project.company_name,
-    status,
-    updatedAt: project.updated_at ?? project.created_at,
-    href: projectHref(project),
-    cta: projectCta(project, locale),
-    category: project.category || undefined,
-    budgetRange: project.budget_range || undefined,
-    deadline: project.deadline || undefined,
-    wizardStep: status === "draft" ? project.wizard_step : undefined,
-    progress:
-      status === "draft"
-        ? Math.round((project.wizard_completed_steps.length / 7) * 100)
-        : undefined,
-    canDelete: canDeleteProject(status),
-    phase: projectPhase(status)
-  };
-  });
+      const status = normalizeCampaignStatus(project.status);
+      const linkedOrder = orderByProjectId.get(project.id);
+      const paymentExpired = linkedOrder ? isBrandPaymentTimeoutCancellation(linkedOrder) : false;
+      return {
+        id: project.id,
+        kind: "campaign",
+        name: project.title || project.product_name || project.campaign_goal || project.company_name,
+        status,
+        updatedAt: project.updated_at ?? project.created_at,
+        href: paymentExpired ? "/brand/projects/new" : projectHref(project),
+        cta: paymentExpired
+          ? locale === "zh"
+            ? "重新下单"
+            : "Create new order"
+          : projectCta(project, locale),
+        category: project.category || undefined,
+        budgetRange: project.budget_range || undefined,
+        deadline: project.deadline || undefined,
+        wizardStep: status === "draft" ? project.wizard_step : undefined,
+        progress:
+          status === "draft"
+            ? Math.round((project.wizard_completed_steps.length / 7) * 100)
+            : undefined,
+        canDelete: canDeleteProject(status),
+        paymentExpired,
+        phase: projectPhase(status)
+      };
+    });
 
   const orderRows: BrandProjectRow[] = orders
     .filter((order) => !order.project_id || !projectIds.has(order.project_id))
-    .map((order) => ({
-      id: order.id,
-      kind: "order",
-      name: order.title || order.company_name,
-      status: order.status,
-      updatedAt: order.completed_at ?? order.paid_at ?? order.created_at,
-      href: brandCampaignHref({
+    .map((order) => {
+      const paymentExpired = isBrandPaymentTimeoutCancellation(order);
+      return {
         id: order.id,
         kind: "order",
+        name: order.title || order.company_name,
         status: order.status,
-        projectId: order.project_id
-      }),
-      cta:
-        order.status === "waiting_payment"
-          ? locale === "zh"
-            ? "去付款"
-            : "Pay now"
-          : locale === "zh"
-            ? "打开订单"
-            : "Open order",
-      phase: projectPhase(order.status),
-      canDelete: canDeleteOrder(order)
-    }));
+        updatedAt: order.completed_at ?? order.paid_at ?? order.created_at,
+        href: paymentExpired
+          ? "/brand/projects/new"
+          : brandCampaignHref({
+              id: order.id,
+              kind: "order",
+              status: order.status,
+              projectId: order.project_id
+            }),
+        cta:
+          paymentExpired
+            ? locale === "zh"
+              ? "重新下单"
+              : "Create new order"
+            : order.status === "waiting_payment"
+              ? locale === "zh"
+                ? "去付款"
+                : "Pay now"
+              : locale === "zh"
+                ? "打开订单"
+                : "Open order",
+        paymentExpired,
+        phase: projectPhase(order.status),
+        canDelete: canDeleteOrder(order)
+      };
+    });
 
   return [...campaignRows, ...orderRows].sort(
     (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()

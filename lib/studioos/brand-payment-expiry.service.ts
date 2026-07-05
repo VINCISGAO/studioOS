@@ -16,7 +16,14 @@ import type { StoredOrder } from "@/lib/order-types";
 import { getProject, transitionProject } from "@/lib/project-service";
 import type { StoredProject } from "@/lib/project-types";
 import { CAMPAIGN_PENDING_CREATOR_ID } from "@/lib/studioos/brand-checkout-utils";
-import { isBrandPaymentDeadlineExpired } from "@/lib/studioos/brand-payment-deadline";
+import {
+  BRAND_PAYMENT_TIMEOUT_CANCEL_REASON,
+  isBrandPaymentDeadlineExpired
+} from "@/lib/studioos/brand-payment-deadline";
+import {
+  createBrandNotification,
+  hasBrandNotification
+} from "@/lib/studioos/brand-notification-service";
 import { normalizeCampaignStatus } from "@/lib/studioos/project-status";
 
 function resolveCreatorEmail(creatorId: string): string | null {
@@ -73,11 +80,11 @@ async function notifyCreatorOrderCancelledUnpaid(input: {
     input.locale === "zh"
       ? {
           title: `${brandName} 的订单已取消`,
-          body: `「${projectTitle}」因品牌方 3 小时内未完成付款已自动取消，你无需继续等待或开始制作。`
+          body: `「${projectTitle}」因品牌方 30 分钟内未完成付款已自动取消，你无需继续等待或开始制作。`
         }
       : {
           title: `Order cancelled — ${brandName}`,
-          body: `"${projectTitle}" was automatically cancelled because the brand did not pay within 3 hours. No further action is needed on your side.`
+          body: `"${projectTitle}" was automatically cancelled because the brand did not pay within 30 minutes. No further action is needed on your side.`
         };
 
   const notification = await createCreatorNotification({
@@ -114,6 +121,52 @@ async function notifyCreatorOrderCancelledUnpaid(input: {
   }
 }
 
+async function notifyBrandOrderCancelledUnpaid(input: {
+  order: StoredOrder;
+  project: StoredProject;
+  locale: Locale;
+}) {
+  const brandEmail = input.order.client_email.trim().toLowerCase();
+  if (!brandEmail) return;
+
+  const creatorId = input.order.creator_id || CAMPAIGN_PENDING_CREATOR_ID;
+  const creator = creatorId !== CAMPAIGN_PENDING_CREATOR_ID ? getCreatorByIdSync(creatorId) : null;
+  const creatorName = creator?.name ?? "Studio";
+  const projectTitle =
+    input.project.title || input.project.product_name || input.order.title || input.order.company_name;
+
+  const exists = await hasBrandNotification({
+    brand_email: brandEmail,
+    project_id: input.project.id,
+    creator_id: creatorId,
+    type: "order_cancelled_unpaid",
+    order_id: input.order.id
+  });
+  if (exists) return;
+
+  const copy =
+    input.locale === "zh"
+      ? {
+          title: "订单已超时取消",
+          body: `「${projectTitle}」因 30 分钟内未完成付款已自动取消。该订单无法继续付款，请重新下单。`
+        }
+      : {
+          title: "Order cancelled after payment timeout",
+          body: `"${projectTitle}" was automatically cancelled because payment was not completed within 30 minutes. This order can no longer be paid; please create a new order.`
+        };
+
+  await createBrandNotification({
+    brand_email: brandEmail,
+    type: "order_cancelled_unpaid",
+    title: copy.title,
+    body: copy.body,
+    project_id: input.project.id,
+    creator_id: creatorId,
+    creator_name: creatorName,
+    order_id: input.order.id
+  });
+}
+
 async function expireUnpaidOrder(input: {
   order: StoredOrder;
   project: StoredProject;
@@ -122,7 +175,11 @@ async function expireUnpaidOrder(input: {
     return false;
   }
 
-  const cancelled = await cancelUnpaidOrder(input.order.id);
+  const cancelled = await cancelUnpaidOrder(input.order.id, {
+    reason: BRAND_PAYMENT_TIMEOUT_CANCEL_REASON,
+    actorRole: "system",
+    projectId: input.project.id
+  });
   if (!cancelled) return false;
 
   const status = normalizeCampaignStatus(input.project.status);
@@ -135,6 +192,11 @@ async function expireUnpaidOrder(input: {
 
   const locale: Locale = input.order.client_locale === "zh" ? "zh" : "en";
   await notifyCreatorOrderCancelledUnpaid({
+    order: cancelled,
+    project: input.project,
+    locale
+  });
+  await notifyBrandOrderCancelledUnpaid({
     order: cancelled,
     project: input.project,
     locale
