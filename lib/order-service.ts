@@ -231,6 +231,7 @@ const readStore = createSerializedStoreReader(readStoreInner);
 
 async function writeStore(store: OrderStore) {
   await writeJsonFileAtomic(STORE_PATH, store);
+  readStore.invalidate();
 }
 
 function ensureDemoIncomeOrders(store: OrderStore): OrderStore {
@@ -559,6 +560,11 @@ export async function linkOrderToProject(orderId: string, projectId: string): Pr
 }
 
 export async function listOrdersForProject(projectId: string): Promise<StoredOrder[]> {
+  const store = await readStore();
+  const jsonOrders = store.orders
+    .filter((item) => item.project_id === projectId)
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
   if (hasDatabaseUrl()) {
     const rows = await orderRepository.listAll();
     const details = await Promise.all(
@@ -566,17 +572,24 @@ export async function listOrdersForProject(projectId: string): Promise<StoredOrd
         .filter((item) => item.campaignId === projectId)
         .map((item) => orderRepository.findById(item.id))
     );
-    return details.filter((item): item is PrismaOrderLike => Boolean(item)).map(prismaOrderToStored);
+    const prismaOrders = details
+      .filter((item): item is PrismaOrderLike => Boolean(item))
+      .map(prismaOrderToStored)
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    if (prismaOrders.length > 0) {
+      return prismaOrders;
+    }
   }
 
-  const store = await readStore();
-  return store.orders.filter((item) => item.project_id === projectId);
+  return jsonOrders;
 }
 
 export async function getOrder(id: string): Promise<StoredOrder | null> {
   if (hasDatabaseUrl()) {
     const order = await orderRepository.findById(id);
-    return order ? prismaOrderToStored(order) : null;
+    if (order) {
+      return prismaOrderToStored(order);
+    }
   }
 
   const store = await readStore();

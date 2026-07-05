@@ -2,7 +2,12 @@ export type BrandNotificationType =
   | "invitation_accepted"
   | "invitation_declined"
   | "deliverable_uploaded"
-  | "comment_resolved";
+  | "comment_resolved"
+  | "requirement_published"
+  | "payment_required"
+  | "paid_revision_unlocked"
+  | "order_completed"
+  | "final_download_ready";
 
 export type BrandNotification = {
   id: string;

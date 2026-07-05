@@ -241,6 +241,16 @@ export class UserRepository {
     });
   }
 
+  async updateAvatarIfEmpty(userId: string, avatarUrl: string) {
+    const trimmed = avatarUrl.trim();
+    if (!trimmed) return;
+
+    await prisma.user.updateMany({
+      where: { id: userId, avatarUrl: null },
+      data: { avatarUrl: trimmed }
+    });
+  }
+
   /** Ensure a PostgreSQL brand account exists for wizard / draft creation. */
   async ensureBrandPortalUser(input: {
     email: string;

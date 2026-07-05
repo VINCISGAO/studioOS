@@ -23,16 +23,22 @@ export async function GET() {
     encodedRedirectUri: config.encodedRedirectUri,
     authMode: config.authMode,
     sandbox: config.sandbox,
+    memberInfoApis: [
+      "alipay.system.oauth.token",
+      "alipay.user.info.share",
+      "alipay.open.auth.userauth.relationship.query"
+    ],
     setup: {
       zh: [
-        "登录 open.alipay.com → 你的网页应用 → 开发信息",
-        "找到「授权回调地址」，填入 redirectUri（必须完全一致）",
-        "确认已添加并开通「获取会员信息」能力",
-        "应用公钥与 Vercel 中 ALIPAY_PRIVATE_KEY 为同一对密钥",
-        "若仍报「数据出错」，在错误页按 Ctrl+A / Command+A 查看 E004 详情"
+        "登录 open.alipay.com → 网页应用 StudioOS登录 → 开发信息",
+        "「授权回调地址」填入 redirectUri（必须完全一致，https，无尾斜杠）",
+        "可调用产品 → 会员 → 获取会员信息（已开通 alipay.user.info.share）",
+        "应用公钥与部署环境 ALIPAY_PRIVATE_KEY 为同一对 RSA2 密钥",
+        "ALIPAY_APP_ID 与控制台 AppID 一致（StudioOS登录）",
+        "本地验证：npm run alipay:verify"
       ]
     },
     sampleAuthorizeUrl: config.sampleAuthorizeUrl,
-    note: "Login button uses the same URL (no state param). Context is stored in httpOnly cookie."
+    note: "Login button uses publicAppAuthorize (scope=auth_user). Context is stored in httpOnly cookie."
   });
 }

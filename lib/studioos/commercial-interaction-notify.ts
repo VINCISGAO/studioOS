@@ -11,7 +11,7 @@ import {
 import type { StoredOrder } from "@/lib/order-types";
 import { getProject } from "@/lib/project-service";
 import type { StoredProject } from "@/lib/project-types";
-import { createBrandNotification } from "@/lib/studioos/brand-notification-service";
+import { createBrandNotification, hasBrandNotification } from "@/lib/studioos/brand-notification-service";
 import { getConfirmedBriefText } from "@/lib/studioos/confirmed-brief";
 import type { ReviewComment } from "@/lib/studioos/review-store";
 import { formatTimestamp } from "@/lib/studioos/review-utils";
@@ -295,6 +295,209 @@ export async function notifyCreatorsInvitationExpired(input: {
       });
     })
   );
+}
+
+export async function notifyBrandRequirementPublished(input: {
+  brandEmail: string;
+  projectId: string;
+  projectTitle: string;
+  locale?: Locale;
+}) {
+  const brandEmail = input.brandEmail.trim().toLowerCase();
+  const locale = input.locale ?? "zh";
+  const alreadyNotified = await hasBrandNotification({
+    brand_email: brandEmail,
+    project_id: input.projectId,
+    creator_id: "system",
+    type: "requirement_published"
+  });
+  if (alreadyNotified) return null;
+
+  const copy =
+    locale === "zh"
+      ? {
+          title: "需求发布成功",
+          body: `「${input.projectTitle}」已发布，Creator 招募已开始。`
+        }
+      : {
+          title: "Requirement published",
+          body: `"${input.projectTitle}" is live — creator matching has started.`
+        };
+
+  return createBrandNotification({
+    brand_email: brandEmail,
+    type: "requirement_published",
+    title: copy.title,
+    body: copy.body,
+    project_id: input.projectId,
+    creator_id: "system",
+    creator_name: "StudioOS"
+  });
+}
+
+export async function notifyBrandPaymentRequired(input: {
+  order: StoredOrder;
+  locale?: Locale;
+  nextRevisionRound?: number;
+}) {
+  const brandEmail = input.order.client_email?.trim().toLowerCase();
+  const projectId = input.order.project_id;
+  if (!brandEmail || !projectId) return null;
+
+  const locale = input.locale ?? input.order.client_locale ?? "zh";
+  const round = input.nextRevisionRound ?? 4;
+  const projectTitle = await resolveProjectTitle(input.order);
+
+  const copy =
+    locale === "zh"
+      ? {
+          title: "需要支付才能继续",
+          body: `「${projectTitle}」第 3 版已完成。进入第 ${round} 轮修订需先完成加购（项目金额 20%），解锁 V4–V5。`
+        }
+      : {
+          title: "Payment required to continue",
+          body: `"${projectTitle}" — V3 is done. A one-time add-on (20% of project amount) unlocks rounds 4–5 (V4–V5).`
+        };
+
+  return createBrandNotification({
+    brand_email: brandEmail,
+    type: "payment_required",
+    title: copy.title,
+    body: copy.body,
+    project_id: projectId,
+    creator_id: input.order.creator_id,
+    creator_name: resolveCreatorName(input.order.creator_id),
+    order_id: input.order.id
+  });
+}
+
+export async function notifyBrandPaidRevisionUnlocked(input: {
+  order: StoredOrder;
+  locale?: Locale;
+}) {
+  const brandEmail = input.order.client_email?.trim().toLowerCase();
+  const projectId = input.order.project_id;
+  if (!brandEmail || !projectId) return null;
+
+  const exists = await hasBrandNotification({
+    brand_email: brandEmail,
+    project_id: projectId,
+    creator_id: input.order.creator_id,
+    type: "paid_revision_unlocked",
+    order_id: input.order.id
+  });
+  if (exists) return null;
+
+  const locale = input.locale ?? input.order.client_locale ?? "zh";
+  const projectTitle = await resolveProjectTitle(input.order);
+
+  const copy =
+    locale === "zh"
+      ? {
+          title: "支付成功，第 4–5 版已解锁",
+          body: `「${projectTitle}」加购已完成。第 4 版与第 5 版修订已开启，可继续反馈并要求修改。`
+        }
+      : {
+          title: "Payment successful — V4 and V5 unlocked",
+          body: `"${projectTitle}" add-on paid. Revision rounds 4 and 5 (V4–V5) are now open.`
+        };
+
+  return createBrandNotification({
+    brand_email: brandEmail,
+    type: "paid_revision_unlocked",
+    title: copy.title,
+    body: copy.body,
+    project_id: projectId,
+    creator_id: input.order.creator_id,
+    creator_name: resolveCreatorName(input.order.creator_id),
+    order_id: input.order.id
+  });
+}
+
+export async function notifyBrandOrderCompleted(input: {
+  order: StoredOrder;
+  locale?: Locale;
+}) {
+  const brandEmail = input.order.client_email?.trim().toLowerCase();
+  const projectId = input.order.project_id;
+  if (!brandEmail || !projectId) return null;
+
+  const exists = await hasBrandNotification({
+    brand_email: brandEmail,
+    project_id: projectId,
+    creator_id: input.order.creator_id,
+    type: "order_completed",
+    order_id: input.order.id
+  });
+  if (exists) return null;
+
+  const locale = input.locale ?? input.order.client_locale ?? "zh";
+  const projectTitle = await resolveProjectTitle(input.order);
+
+  const copy =
+    locale === "zh"
+      ? {
+          title: "订单已完成",
+          body: `「${projectTitle}」最终稿已通过验收，订单已完成。`
+        }
+      : {
+          title: "Order completed",
+          body: `"${projectTitle}" final delivery approved — this order is complete.`
+        };
+
+  return createBrandNotification({
+    brand_email: brandEmail,
+    type: "order_completed",
+    title: copy.title,
+    body: copy.body,
+    project_id: projectId,
+    creator_id: input.order.creator_id,
+    creator_name: resolveCreatorName(input.order.creator_id),
+    order_id: input.order.id
+  });
+}
+
+export async function notifyBrandFinalDownloadReady(input: {
+  order: StoredOrder;
+  locale?: Locale;
+}) {
+  const brandEmail = input.order.client_email?.trim().toLowerCase();
+  const projectId = input.order.project_id;
+  if (!brandEmail || !projectId) return null;
+
+  const exists = await hasBrandNotification({
+    brand_email: brandEmail,
+    project_id: projectId,
+    creator_id: input.order.creator_id,
+    type: "final_download_ready",
+    order_id: input.order.id
+  });
+  if (exists) return null;
+
+  const locale = input.locale ?? input.order.client_locale ?? "zh";
+  const projectTitle = await resolveProjectTitle(input.order);
+
+  const copy =
+    locale === "zh"
+      ? {
+          title: "文件已可下载",
+          body: `「${projectTitle}」最终成片已就绪，可在项目页下载。`
+        }
+      : {
+          title: "Final file ready to download",
+          body: `"${projectTitle}" final delivery is ready — download from the project page.`
+        };
+
+  return createBrandNotification({
+    brand_email: brandEmail,
+    type: "final_download_ready",
+    title: copy.title,
+    body: copy.body,
+    project_id: projectId,
+    creator_id: input.order.creator_id,
+    creator_name: resolveCreatorName(input.order.creator_id),
+    order_id: input.order.id
+  });
 }
 
 /** @deprecated Use notifyCreatorsInvitationExpired */

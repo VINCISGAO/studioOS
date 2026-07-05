@@ -237,6 +237,7 @@ export async function completeAlipaySignIn(input: {
   providerUserId: string;
   nickName: string;
   email?: string;
+  avatar?: string;
   entryRole: OAuthEntryRole;
   lang: Locale;
   nextPath?: string;
@@ -268,7 +269,8 @@ export async function completeAlipaySignIn(input: {
       providerUserId: input.providerUserId,
       email,
       role: entryRoleToPrisma(input.entryRole),
-      fullName
+      fullName,
+      avatarUrl: input.avatar
     });
   } else {
     if (!linked) {
@@ -279,6 +281,13 @@ export async function completeAlipaySignIn(input: {
       });
     }
     await userRepository.touchLogin(user.id, loginMeta);
+  }
+
+  if (input.avatar?.trim()) {
+    await userRepository.updateAvatarIfEmpty(user.id, input.avatar.trim());
+    if (!user.avatarUrl) {
+      user = { ...user, avatarUrl: input.avatar.trim() };
+    }
   }
 
   if (isPlatformAdminUserRole(user.role)) {

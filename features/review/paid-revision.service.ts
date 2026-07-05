@@ -188,6 +188,19 @@ export class PaidRevisionService {
 
     await syncLegacyOrderPaidSlots(input.orderId, nextCount);
 
+    const refreshedOrder = await getOrder(input.orderId);
+    if (refreshedOrder) {
+      const { notifyCreatorPaidRevisionUnlocked, notifyBrandPaidRevisionUnlocked } = await import(
+        "@/lib/studioos/commercial-interaction-notify"
+      );
+      await notifyCreatorPaidRevisionUnlocked({ order: refreshedOrder, locale: input.locale }).catch(
+        () => undefined
+      );
+      await notifyBrandPaidRevisionUnlocked({ order: refreshedOrder, locale: input.locale }).catch(
+        () => undefined
+      );
+    }
+
     const packLabel = paidRevisionPackLabel(input.locale);
     const message =
       input.locale === "zh"

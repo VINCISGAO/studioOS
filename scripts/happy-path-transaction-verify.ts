@@ -5,7 +5,6 @@
  * Run: npm run happy-path:verify
  * Requires: DATABASE_URL, demo seed (npm run db:seed)
  */
-import { PrismaClient } from "@prisma/client";
 import { CampaignState } from "../features/campaign/campaign.state-machine";
 import { campaignBrandPortalService } from "../features/campaign/campaign-brand.service";
 import { campaignRepository } from "../features/campaign/campaign.repository";
@@ -21,8 +20,13 @@ import { reviewPortalService } from "../features/review/review-portal.service";
 import { settlementService } from "../features/settlement/settlement.service";
 import { walletRepository } from "../features/wallet/wallet.repository";
 import { withdrawService } from "../features/wallet/withdraw.service";
-import { hasDatabaseUrl } from "../lib/core/database/prisma";
+import { hasDatabaseUrl, prisma } from "../lib/core/database/prisma";
 import { paymentConfig } from "../lib/core/config/payment";
+import { getOrderForProject } from "../lib/order-service";
+import { getProject } from "../lib/project-service";
+import { setupBrandCampaignPayment } from "../lib/studioos/brand-checkout-service";
+import { prepareCampaignForPublish } from "./helpers/prepare-campaign-for-publish";
+import { withVerifyTransactionRetry } from "./helpers/verify-transaction-retry";
 
 const DEMO_VIDEO =
   "https://devstreaming-cdn.apple.com/videos/streaming/examples/img_bipbop_adv_example_ts/v2/prog_index.m3u8";
@@ -40,14 +44,6 @@ function report(checks: Check[]) {
   console.log(failed ? `\n${failed} step(s) failed` : "\nAll transaction steps passed");
 }
 
-function confirmedBrief() {
-  return {
-    confirmed_at: new Date().toISOString(),
-    fields: [{ section: "verify", label: "Goal", value: "Happy path E2E" }],
-    full_text: "Happy path automated verify"
-  };
-}
-
 async function main() {
   const checks: Check[] = [];
 
@@ -57,7 +53,6 @@ async function main() {
     process.exit(1);
   }
 
-  const prisma = new PrismaClient();
   let legacyProjectId = "";
   let campaignId = "";
   let orderId = "";
@@ -106,8 +101,11 @@ async function main() {
 
     campaignId = campaignRow.id;
     const brief = readProductionBrief(campaignRow.productionBrief) as BrandProductionBrief;
-    await campaignRepository.updateBrandCampaign(campaignRow.id, {
-      productionBrief: { ...brief, confirmed_brief: confirmedBrief() }
+    await prepareCampaignForPublish({
+      campaignId: campaignRow.id,
+      legacyProjectId,
+      brandUserId: brand.id,
+      productionBrief: brief
     });
 
     checks.push({ step: 1, name: "create_draft", ok: true, detail: legacyProjectId });
@@ -123,7 +121,16 @@ async function main() {
       detail: published?.status ?? "null"
     });
 
-    await invitationService.ensureForProject(published!, "en");
+    if (published?.status === "matching") {
+      const projectForCheckout = (await getProject(legacyProjectId)) ?? published;
+      await setupBrandCampaignPayment({
+        project: projectForCheckout,
+        client,
+        locale: "en"
+      });
+    }
+
+    await withVerifyTransactionRetry(() => invitationService.ensureForProject(published!, "en"));
     const invitations = await invitationService.listForLegacyProject(legacyProjectId);
     const novaInvite = invitations.find((item) => item.creatorId === "creator_01");
     checks.push({
@@ -178,13 +185,21 @@ async function main() {
       detail: afterPay?.status
     });
 
-    orderId = `ord_verify_${legacyProjectId.slice(-8)}`;
+    const legacyOrder = await getOrderForProject(legacyProjectId);
+    orderId = legacyOrder?.id ?? "";
+    checks.push({
+      step: 6,
+      name: "legacy_order_created",
+      ok: Boolean(legacyOrder?.id),
+      detail: legacyOrder?.id ?? "missing after checkout setup"
+    });
+
     const escrow = await paymentRepository.findByCampaignId(campaignId);
     checks.push({
       step: 6,
       name: "escrow_order",
       ok: escrow?.status === "HELD" || escrow?.status === "PARTIAL_RELEASE",
-      detail: escrow ? `${escrow.status} id=${orderId}` : `no escrow id=${orderId}`
+      detail: escrow ? `${escrow.status} id=${orderId || escrow.id}` : "no prisma escrow"
     });
 
     const uploaded = await versionService.uploadForLegacyOrder({

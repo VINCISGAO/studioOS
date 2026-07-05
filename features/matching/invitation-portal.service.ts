@@ -299,7 +299,18 @@ export class InvitationPortalService {
         .catch(() => undefined);
     }
 
-    const updated = await this.getById(invitationId);
+    const updatedInvitation = await this.getById(invitationId);
+    if (updatedInvitation) {
+      const { notifyBrandInvitationResponse } = await import("@/lib/studioos/campaign-invitation-notify");
+      await notifyBrandInvitationResponse({
+        invitation: updatedInvitation,
+        project,
+        action: "accepted",
+        locale
+      }).catch(() => undefined);
+    }
+
+    const updated = updatedInvitation ?? (await this.getById(invitationId));
     if (!updated) return { ok: false, error: "not-found" };
     return { ok: true, invitation: updated };
   }

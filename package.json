@@ -77,6 +77,8 @@
     "payment:verify": "tsx -r ./scripts/helpers/register-verify-runtime.cjs scripts/payment-collection-verify.ts",
     "production:verify": "tsx -r ./scripts/helpers/load-env.cjs scripts/production-ready-verify.ts",
     "happy-path:verify": "STUDIOOS_SCRIPT_RUNTIME=verify tsx -r ./scripts/helpers/register-verify-runtime.cjs scripts/happy-path-transaction-verify.ts",
+    "revision-five-round:verify": "STUDIOOS_SCRIPT_RUNTIME=verify tsx -r ./scripts/helpers/register-verify-runtime.cjs scripts/revision-five-round-verify.ts",
+    "alipay:verify": "tsx -r ./scripts/helpers/register-verify-runtime.cjs scripts/alipay-oauth-verify.ts",
     "membership-ui:verify": "tsx scripts/membership-ui-verify.ts",
     "membership:expire": "tsx scripts/membership-expiration.ts",
     "night:deliver": "node scripts/night-shift-deliver.mjs",

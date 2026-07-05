@@ -55,8 +55,6 @@ export function CreatorDepositPendingCard({
           if (result.can_accept_orders) {
             router.replace(withLocale("/studio", locale));
             router.refresh();
-          } else {
-            router.refresh();
           }
         } catch {
           setPollError(locale === "zh" ? "状态刷新失败，请稍后重试。" : "Could not refresh status. Retrying…");

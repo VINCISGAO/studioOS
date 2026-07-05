@@ -3,7 +3,8 @@ import { safeTransition } from "@/lib/core/state-machine";
 import { appError } from "@/lib/core/errors";
 import { publishEvent } from "@/lib/core/event-bus-core";
 import { logger } from "@/lib/core/logger";
-import { prisma, hasDatabaseUrl } from "@/lib/core/database/prisma";
+import { hasDatabaseUrl } from "@/lib/core/database/prisma";
+import { withPrismaTransaction } from "@/lib/core/database/prisma-transaction";
 import type { DomainEvent } from "@/features/shared/types/events";
 import type { AuthUser } from "@/features/auth/permission.service";
 
@@ -46,7 +47,7 @@ export async function runTransition<TState extends string, TEvent extends string
     return result.status;
   }
 
-  await prisma.$transaction(async (tx) => {
+  await withPrismaTransaction(async (tx) => {
     await persist(result.status);
 
     if (context.campaignId) {

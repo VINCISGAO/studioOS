@@ -394,8 +394,41 @@ export class CampaignBrandPortalService {
       }
     );
 
+    const { notifyBrandRequirementPublished } = await import(
+      "@/lib/studioos/commercial-interaction-notify"
+    );
+    await notifyBrandRequirementPublished({
+      brandEmail: actor.email,
+      projectId: legacyProjectId,
+      projectTitle: campaign.title || "Project",
+      locale: "zh"
+    }).catch(() => undefined);
+
     const updated = await campaignRepository.findByLegacyProjectIdWithRelations(legacyProjectId);
-    return updated ? mapCampaignToStoredProject(updated) : null;
+    const mapped = updated ? mapCampaignToStoredProject(updated) : null;
+    if (mapped) {
+      const { preparePublishedCampaignCheckout } = await import("@/lib/studioos/brand-checkout-service");
+      await preparePublishedCampaignCheckout({
+        project: mapped,
+        client: {
+          client_email: actor.email,
+          client_name: memory.client?.name ?? campaign.brand?.fullName ?? actor.email.split("@")[0],
+          company_name:
+            memory.client?.company_name ??
+            campaign.brand?.brandProfile?.companyName ??
+            memory.client?.name ??
+            "Brand"
+        },
+        locale: "zh"
+      }).catch((error) => {
+        logger.warn("Legacy checkout setup after publish failed", {
+          service: "campaign-brand",
+          legacyProjectId,
+          error: error instanceof Error ? error.message : String(error)
+        });
+      });
+    }
+    return mapped;
   }
 }
 

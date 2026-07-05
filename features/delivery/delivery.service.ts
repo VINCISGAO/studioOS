@@ -8,6 +8,7 @@ import { resolveCreatorProfileIdForLegacyId } from "@/features/matching/invitati
 import { notificationService } from "@/features/notification/notification.service";
 import { userRepository } from "@/features/auth/user.repository";
 import { getAppBaseUrl } from "@/lib/app-url";
+import { getOrder } from "@/lib/order-service";
 import { hasDatabaseUrl, prisma } from "@/lib/core/database/prisma";
 import type { Locale } from "@/lib/i18n";
 import { readProductionBrief } from "@/features/campaign/brand-campaign/brand-campaign.utils";
@@ -167,6 +168,14 @@ export class DeliveryService {
         email: false
       })
       .catch(() => undefined);
+
+    const order = await getOrder(input.orderId);
+    if (order) {
+      const { notifyBrandFinalDownloadReady } = await import(
+        "@/lib/studioos/commercial-interaction-notify"
+      );
+      await notifyBrandFinalDownloadReady({ order, locale: input.locale }).catch(() => undefined);
+    }
 
     const row = await deliveryRepository.findByCampaignIdWithVersion(campaign.id);
     if (!row) {

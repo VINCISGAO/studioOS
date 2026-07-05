@@ -22,6 +22,11 @@ export function hasAlipayOAuthConfig() {
   return Boolean(readEnv("ALIPAY_APP_ID") && readEnv("ALIPAY_PRIVATE_KEY"));
 }
 
+/** Live Alipay login — independent of demo-auth shortcuts (needs DB + keys). */
+export function isAlipayOAuthLive() {
+  return hasAlipayOAuthConfig();
+}
+
 export function getAlipayOAuthConfig(): AlipayOAuthConfig | null {
   const appId = readEnv("ALIPAY_APP_ID");
   const privateKey = normalizePrivateKey(readEnv("ALIPAY_PRIVATE_KEY"));

@@ -45,6 +45,7 @@ export async function GET(request: Request) {
       providerUserId: profile.userId,
       nickName: profile.nickName,
       email: profile.email,
+      avatar: profile.avatar,
       entryRole,
       lang,
       nextPath

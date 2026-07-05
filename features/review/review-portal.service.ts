@@ -624,6 +624,20 @@ export class ReviewPortalService {
     } catch (error) {
       const { isAppError } = await import("@/lib/core/errors");
       if (isAppError(error)) {
+        if (error.code === "PAYMENT_REQUIRED") {
+          const { getOrder } = await import("@/lib/order-service");
+          const { notifyBrandPaymentRequired } = await import(
+            "@/lib/studioos/commercial-interaction-notify"
+          );
+          const order = await getOrder(input.orderId);
+          if (order) {
+            await notifyBrandPaymentRequired({
+              order,
+              locale: input.locale,
+              nextRevisionRound: version.versionNumber + 1
+            }).catch(() => undefined);
+          }
+        }
         return { ok: false, error: error.code };
       }
       throw error;

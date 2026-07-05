@@ -61,7 +61,11 @@ import { notifyBrandDeliverableUploaded } from "@/lib/studioos/brand-deliverable
 import {
   notifyCreatorDeliveryApproved,
   notifyCreatorEscrowReleased,
-  notifyCreatorRevisionRequested
+  notifyCreatorRevisionRequested,
+  notifyCreatorPaidRevisionUnlocked,
+  notifyBrandPaymentRequired,
+  notifyBrandPaidRevisionUnlocked,
+  notifyBrandOrderCompleted
 } from "@/lib/studioos/commercial-interaction-notify";
 import { hasBrandNotification } from "@/lib/studioos/brand-notification-service";
 
@@ -818,6 +822,11 @@ export async function requestReviewRevisionAction(formData: FormData) {
       });
 
       if (!result.ok) {
+        if (result.error === "PAYMENT_REQUIRED") {
+          await notifyBrandPaymentRequired({ order, locale: lang, nextRevisionRound: version + 1 }).catch(
+            () => undefined
+          );
+        }
         return { ok: false as const, error: reviewPortalErrorMessage(result.error, lang) };
       }
 
@@ -890,6 +899,8 @@ export async function unlockPaidRevisionSlotAction(formData: FormData) {
   }
 
   revalidateReview(orderId, order.project_id);
+  await notifyCreatorPaidRevisionUnlocked({ order, locale: lang }).catch(() => undefined);
+  await notifyBrandPaidRevisionUnlocked({ order, locale: lang }).catch(() => undefined);
   return {
     ok: true as const,
     message: result.message,
@@ -1124,6 +1135,7 @@ export async function confirmReviewApproveAndSettleAction(formData: FormData) {
 
       await notifyCreatorDeliveryApproved({ order, locale: lang });
       await notifyCreatorEscrowReleased({ order, locale: lang });
+      await notifyBrandOrderCompleted({ order, locale: lang }).catch(() => undefined);
       revalidateReview(orderId, legacyProjectId);
       return {
         ok: true as const,

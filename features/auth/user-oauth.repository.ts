@@ -53,12 +53,14 @@ export class UserOAuthRepository {
     email: string;
     role: UserRole;
     fullName: string;
+    avatarUrl?: string;
   }): Promise<UserWithProfiles> {
     const user = await prisma.user.create({
       data: {
         email: input.email.toLowerCase(),
         role: input.role,
         fullName: input.fullName,
+        avatarUrl: input.avatarUrl?.trim() || null,
         passwordHash: null,
         emailVerified: true,
         emailVerifiedAt: new Date(),

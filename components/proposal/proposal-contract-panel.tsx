@@ -55,8 +55,8 @@ export function ProposalContractPanel({
   inquiry,
   messages,
   inquiryId,
-  clientEmail,
-  clientName,
+  clientEmail: _clientEmail,
+  clientName: _clientName,
   viewerRole,
   quote,
   order,
@@ -75,8 +75,6 @@ export function ProposalContractPanel({
   proposalLocked: boolean;
   depositPaid?: boolean;
 }) {
-  void clientEmail;
-  void clientName;
   const t = copy[locale];
   const contract = quote ? buildProjectContract(inquiry, quote, messages) : null;
 

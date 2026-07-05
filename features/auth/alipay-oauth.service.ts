@@ -74,10 +74,11 @@ export class AlipayOAuthService {
     const tokenResponse = readResponseNode<{
       access_token?: string;
       user_id?: string;
+      open_id?: string;
     }>(tokenJson, "alipay_system_oauth_token_response");
 
     const accessToken = tokenResponse?.access_token;
-    const userId = tokenResponse?.user_id;
+    const userId = tokenResponse?.user_id ?? tokenResponse?.open_id;
     if (!accessToken || !userId) {
       throw new Error("Alipay did not return an access token");
     }
@@ -96,11 +97,14 @@ export class AlipayOAuthService {
       nick_name?: string;
       avatar?: string;
       email?: string;
+      user_id?: string;
     }>(profileJson, "alipay_user_info_share_response");
 
+    const resolvedUserId = profileResponse?.user_id ?? userId;
+
     return {
-      userId,
-      nickName: profileResponse?.nick_name?.trim() || `Alipay用户${userId.slice(-4)}`,
+      userId: resolvedUserId,
+      nickName: profileResponse?.nick_name?.trim() || `Alipay用户${resolvedUserId.slice(-4)}`,
       avatar: profileResponse?.avatar,
       email: profileResponse?.email?.trim() || undefined
     };

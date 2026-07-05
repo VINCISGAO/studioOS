@@ -110,7 +110,7 @@ export function StudioCreativeWorkspace({
   isVerified = false,
   order,
   project,
-  brief,
+  brief: _brief,
   pack,
   deliverables,
   comments: initialComments,
@@ -127,7 +127,6 @@ export function StudioCreativeWorkspace({
   comments: ReviewComment[];
   canUpload: boolean;
 }) {
-  void brief;
   const t = copy[locale];
   const partnerBadge = tCertificationExperience(locale).partnerBadge;
   const router = useRouter();

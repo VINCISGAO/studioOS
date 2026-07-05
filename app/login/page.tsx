@@ -3,7 +3,8 @@ import { LoginPageShell, type LoginPageCopy } from "@/components/studioos/login-
 import { isDemoLoginUiEnabled, preferDemoAuth } from "@/lib/can-persist-local-store";
 import { resolvePostLoginDestination } from "@/lib/auth/post-login-redirect";
 import { hasSupabaseConfig } from "@/lib/auth-config";
-import { hasAlipayOAuthConfig } from "@/lib/alipay/alipay-oauth-config";
+import { isAlipayOAuthLive } from "@/lib/alipay/alipay-oauth-config";
+import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { type DemoRole } from "@/lib/demo-auth";
 import { getLocale, type Locale, type SearchParams, withLocale } from "@/lib/i18n";
 import { getCurrentSession } from "@/lib/session-user";
@@ -236,7 +237,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const demoMode = isDemoLoginUiEnabled();
   const oauthLive = !preferDemoAuth();
   const googleOAuthEnabled = hasSupabaseConfig() && oauthLive;
-  const alipayOAuthEnabled = hasAlipayOAuthConfig() && oauthLive;
+  const alipayOAuthEnabled = isAlipayOAuthLive() && hasDatabaseUrl();
 
   if (session && !rawError) {
     redirect(resolvePostLoginDestination(session, nextPath, locale));
