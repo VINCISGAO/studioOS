@@ -34,6 +34,8 @@ import {
   MAX_CAMPAIGN_INVITATIONS
 } from "@/lib/studioos/invitation-lifecycle";
 import { getWorksForCreator } from "@/lib/works-catalog-core";
+import { getOrderForProject } from "@/lib/order-service";
+import { isOrderPaymentEscrowed } from "@/lib/order-types";
 
 function resolveCreatorName(creatorId: string): string {
   return creators.find((item) => item.id === creatorId)?.name ?? creatorId;
@@ -137,6 +139,10 @@ export class InvitationPortalService {
     const existing = await mapRowsForCampaign(campaign.id);
     if (existing.length > 0) {
       return existing;
+    }
+    const escrowOrder = await getOrderForProject(project.id);
+    if (!escrowOrder || !isOrderPaymentEscrowed(escrowOrder.payment_status)) {
+      return [];
     }
 
     const enrichedCreators = await listCreatorsForMatching();

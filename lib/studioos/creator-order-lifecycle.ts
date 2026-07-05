@@ -63,7 +63,7 @@ export function isCreatorUploadActionable(
   order: Pick<StoredOrder, "payment_status" | "status">,
   deliverableCount: number
 ): boolean {
-  if (order.payment_status === "unpaid" || order.status === "waiting_payment") {
+  if (order.payment_status === "unpaid") {
     return false;
   }
 

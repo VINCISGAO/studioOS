@@ -6,6 +6,7 @@ import type { Locale } from "@/lib/i18n";
 import {
   createCreatorNotification,
   findNotification,
+  findNotificationByProject,
   markNotificationEmailSent,
   patchNotificationRequirements
 } from "@/lib/notification-service";
@@ -171,6 +172,46 @@ export async function notifyCreatorAssignment(input: {
   }
 
   return notification;
+}
+
+export async function notifyCreatorProjectSelected(input: {
+  creatorId: string;
+  project: StoredProject;
+  order?: StoredOrder | null;
+  locale: Locale;
+}) {
+  if (input.order) {
+    const existingOrderNotification = await findNotification(
+      input.creatorId,
+      input.order.id,
+      "creator_selected"
+    );
+    if (existingOrderNotification) return existingOrderNotification;
+  }
+
+  const existingProjectNotification = await findNotificationByProject(
+    input.creatorId,
+    input.project.id,
+    "creator_selected"
+  );
+  if (existingProjectNotification) return existingProjectNotification;
+
+  const brandName = input.project.company_name || input.project.client_name || "Brand";
+  const projectTitle = input.project.title || input.project.product_name || brandName;
+  const requirementsText = getConfirmedBriefText(input.project, input.locale) || buildProjectRequirementsText(input.project, input.locale);
+  const copy = notificationCopy(input.locale, "creator_selected", brandName, projectTitle);
+
+  return createCreatorNotification({
+    creator_id: input.creatorId,
+    type: "creator_selected",
+    title: copy.title,
+    body: copy.body,
+    project_id: input.project.id,
+    order_id: input.order?.id ?? null,
+    client_name: input.project.client_name,
+    company_name: input.project.company_name,
+    requirements_text: requirementsText
+  });
 }
 
 function assignmentTypeForOrder(order: StoredOrder): CreatorNotificationType | null {

@@ -26,6 +26,7 @@ import {
 import { getConfirmedBriefText } from "@/lib/studioos/confirmed-brief";
 import { normalizeCampaignStatus } from "@/lib/studioos/project-status";
 import { syncProjectFromOrderEvent } from "@/lib/studioos/project-order-sync";
+import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 
 function creatorAssignmentNotificationType(
   paymentStatus: StoredOrder["payment_status"]
@@ -391,6 +392,14 @@ export async function syncBrandOrderPaid(order: StoredOrder) {
 
   const project = await getProject(order.project_id);
   if (!project) return;
+  if (hasDatabaseUrl()) {
+    const { campaignRepository } = await import("@/features/campaign/campaign.repository");
+    const { orderRepository } = await import("@/features/order/order.repository");
+    const campaign = await campaignRepository.findByLegacyProjectId(order.project_id);
+    if (campaign) {
+      await orderRepository.confirmPendingCampaignOrders(campaign.id);
+    }
+  }
 
   const status = normalizeCampaignStatus(project.status);
   const isCampaignEscrow =

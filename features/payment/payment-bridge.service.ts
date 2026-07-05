@@ -1,4 +1,5 @@
 import { campaignRepository } from "@/features/campaign/campaign.repository";
+import { orderRepository } from "@/features/order/order.repository";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { logger } from "@/lib/core/logger";
 
@@ -13,6 +14,15 @@ export class PaymentBridgeService {
 
     const campaign = await campaignRepository.findById(campaignId);
     if (!campaign) return;
+
+    const confirmed = await orderRepository.confirmPendingCampaignOrders(campaignId);
+    if (confirmed.count > 0) {
+      logger.info("Prisma orders confirmed after escrow funded", {
+        service: "PaymentBridgeService",
+        campaignId,
+        count: confirmed.count
+      });
+    }
 
     const legacyProjectId = readLegacyProjectId(campaign);
     if (!legacyProjectId) return;

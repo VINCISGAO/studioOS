@@ -842,6 +842,40 @@ export async function requestReviewRevisionAction(formData: FormData) {
           await notifyBrandPaymentRequired({ order, locale: lang, nextRevisionRound: version + 1 }).catch(
             () => undefined
           );
+        } else if (result.error === "REVIEW_LOCKED") {
+          const campaign = await campaignRepository.findByLegacyProjectId(legacyProjectId);
+          const brandUser = campaign
+            ? await userRepository.findByEmail(clientEmail)
+            : null;
+          if (campaign && brandUser) {
+            await activityService.write(
+              campaign.id,
+              "review.platform_intervention_required",
+              {
+                userId: brandUser.id,
+                email: clientEmail,
+                role: "brand"
+              },
+              {
+                order_id: orderId,
+                version_number: version,
+                reason: "max_revision_rounds_reached"
+              }
+            );
+            await notificationService
+              .notify({
+                userId: brandUser.id,
+                campaignId: campaign.id,
+                title: lang === "zh" ? "第五稿后需平台介入" : "Platform intervention required",
+                content:
+                  lang === "zh"
+                    ? `「${campaign.title}」已到 V5，第五轮后仍未通过请联系平台客服仲裁。`
+                    : `"${campaign.title}" reached V5. Further changes require support arbitration.`,
+                actionUrl: `${getAppBaseUrl()}/studio/review/${orderId}`,
+                email: false
+              })
+              .catch(() => undefined);
+          }
         }
         return { ok: false as const, error: reviewPortalErrorMessage(result.error, lang) };
       }

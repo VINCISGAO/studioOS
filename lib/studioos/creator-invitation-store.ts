@@ -28,6 +28,8 @@ import { matchCreatorsForProjectWithDemoFallback } from "@/lib/matching-engine";
 import { getConfirmedBriefText } from "@/lib/studioos/confirmed-brief";
 import { parseBudgetMidpoint } from "@/lib/studioos/brand-checkout-utils";
 import type { InvitationDeclineFeedback } from "@/features/matching/invitation-decline-feedback";
+import { getOrderForProject } from "@/lib/order-service";
+import { isOrderPaymentEscrowed } from "@/lib/order-types";
 
 export type { StoredCreatorInvitation } from "@/lib/studioos/creator-invitation-types";
 export {
@@ -346,6 +348,13 @@ export async function selectCreatorForProject(input: {
       (item) => item.projectId === input.projectId && item.status === "selected"
     );
     if (alreadySelected?.creatorId === input.creatorId) {
+      const { notifyCreatorProjectSelected } = await import("@/lib/studioos/creator-assignment-notify");
+      await notifyCreatorProjectSelected({
+        creatorId: input.creatorId,
+        project,
+        order: null,
+        locale: input.locale
+      }).catch(() => undefined);
       const checkout = await setupBrandCheckout({
         project,
         creatorId: input.creatorId,
@@ -373,6 +382,14 @@ export async function selectCreatorForProject(input: {
   }
   await writeStore(store);
 
+  const { notifyCreatorProjectSelected } = await import("@/lib/studioos/creator-assignment-notify");
+  await notifyCreatorProjectSelected({
+    creatorId: input.creatorId,
+    project,
+    order: null,
+    locale: input.locale
+  }).catch(() => undefined);
+
   const checkout = await setupBrandCheckout({
     project,
     creatorId: input.creatorId,
@@ -394,10 +411,19 @@ export async function selectCreatorForProject(input: {
 }
 
 export async function ensureCampaignInvitationsForProject(project: StoredProject, locale: "en" | "zh" = "en") {
+  const existingLegacyStore = await readStore();
+  const existingLegacy = existingLegacyStore.invitations.filter((item) => item.projectId === project.id);
+  const escrowOrder = await getOrderForProject(project.id);
+  const canCreateInvitations = Boolean(escrowOrder && isOrderPaymentEscrowed(escrowOrder.payment_status));
+
   if (hasDatabaseUrl()) {
     try {
       const campaign = await campaignRepository.findByLegacyProjectId(project.id);
       if (campaign) {
+        const existing = await invitationService.listForLegacyProject(project.id);
+        if (existing.length > 0 || !canCreateInvitations) {
+          return enrichStoredCreatorInvitations(existing.length > 0 ? existing : existingLegacy);
+        }
         return enrichStoredCreatorInvitations(await invitationService.ensureForProject(project, locale));
       }
     } catch (error) {
@@ -416,10 +442,13 @@ export async function ensureCampaignInvitationsForProject(project: StoredProject
     }
   }
 
-  const store = await readStore();
+  const store = existingLegacyStore;
   const existing = store.invitations.filter((item) => item.projectId === project.id);
   if (existing.length > 0) {
     return enrichStoredCreatorInvitations(existing);
+  }
+  if (!canCreateInvitations) {
+    return [];
   }
 
   const enrichedCreators = await listCreatorsForMatching();

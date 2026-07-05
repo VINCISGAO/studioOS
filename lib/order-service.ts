@@ -367,7 +367,7 @@ function prismaOrderToStored(order: PrismaOrderLike): StoredOrder {
 
   return {
     id: order.id,
-    project_id: order.campaignId ?? (typeof metadata.project_id === "string" ? metadata.project_id : null),
+    project_id: typeof metadata.project_id === "string" ? metadata.project_id : order.campaignId,
     inquiry_id: typeof metadata.inquiry_id === "string" ? metadata.inquiry_id : order.conversationId ?? order.id,
     quote_id: typeof metadata.quote_id === "string" ? metadata.quote_id : order.id,
     creator_id: legacyCreatorId,
@@ -567,7 +567,7 @@ export async function beginOrderProduction(orderId: string): Promise<StoredOrder
     return order;
   }
 
-  if (order.payment_status === "unpaid" || order.status === "waiting_payment") {
+  if (order.payment_status === "unpaid") {
     return order;
   }
 
@@ -595,14 +595,11 @@ export async function listOrdersForProject(projectId: string): Promise<StoredOrd
 
   if (hasDatabaseUrl()) {
     const rows = await orderRepository.listAll();
-    const details = await Promise.all(
-      rows
-        .filter((item) => item.campaignId === projectId)
-        .map((item) => orderRepository.findById(item.id))
-    );
+    const details = await Promise.all(rows.map((item) => orderRepository.findById(item.id)));
     const prismaOrders = details
       .filter((item): item is PrismaOrderLike => Boolean(item))
       .map(prismaOrderToStored)
+      .filter((item) => item.project_id === projectId)
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     if (prismaOrders.length > 0) {
       return prismaOrders;
@@ -694,20 +691,28 @@ export async function listOrdersForClient(clientEmail: string): Promise<StoredOr
 }
 
 export async function listOrdersForCreator(creatorId: string): Promise<StoredOrder[]> {
+  const store = await readStore();
+  const jsonOrders = store.orders.filter((item) => item.creator_id === creatorId);
+
   if (hasDatabaseUrl()) {
     const rows = await orderRepository.listAll();
     const details = await Promise.all(rows.map((item) => orderRepository.findById(item.id)));
-    return details
+    const prismaOrders = details
       .filter((item): item is PrismaOrderLike => Boolean(item))
       .map(prismaOrderToStored)
       .filter((item) => item.creator_id === creatorId)
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+    const seenIds = new Set(prismaOrders.map((item) => item.id));
+    const seenProjects = new Set(prismaOrders.map((item) => item.project_id).filter(Boolean));
+    const merged = [
+      ...prismaOrders,
+      ...jsonOrders.filter((item) => !seenIds.has(item.id) && !seenProjects.has(item.project_id))
+    ];
+    return merged.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   }
 
-  const store = await readStore();
-  return store.orders
-    .filter((item) => item.creator_id === creatorId)
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  return jsonOrders.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 }
 
 export async function markOrderPaid(orderId: string): Promise<StoredOrder | null> {
@@ -796,6 +801,22 @@ async function isDatabaseEscrowFundedForProject(projectId: string) {
 }
 
 export async function repairSelectedCreatorCampaignOrders(creatorId: string): Promise<void> {
+  if (hasDatabaseUrl()) {
+    const rows = await orderRepository.listAll();
+    await Promise.all(
+      rows.map(async (row) => {
+        const detail = await orderRepository.findById(row.id);
+        if (!detail || detail.status !== "PENDING") return;
+
+        const stored = prismaOrderToStored(detail);
+        if (stored.creator_id !== creatorId || !stored.project_id) return;
+        if (!(await isDatabaseEscrowFundedForProject(stored.project_id))) return;
+
+        await orderRepository.updateStatus(detail.id, "CONFIRMED");
+      })
+    );
+  }
+
   const store = await readStore();
   let changed = false;
 
@@ -1198,7 +1219,7 @@ export async function syncOrderToInProduction(orderId: string): Promise<StoredOr
   const store = await readStore();
   const order = store.orders.find((item) => item.id === orderId);
   if (!order) return null;
-  if (order.payment_status === "unpaid" || order.status === "waiting_payment") {
+  if (order.payment_status === "unpaid") {
     return order;
   }
   if (["in_production", "review", "revision", "completed"].includes(order.status)) {

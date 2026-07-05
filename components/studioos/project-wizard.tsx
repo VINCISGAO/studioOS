@@ -57,7 +57,7 @@ const STEP_META = {
     { headline: "Analyzing your inputs", subtitle: "We analyze references and draft a creative direction." },
     { headline: "Choose your ad specs", subtitle: "Pick style, length, and budget — you can change these later." },
     { headline: "Review your creative pack", subtitle: "Storyboard and script generated from your brief." },
-    { headline: "Ready to publish?", subtitle: "Publish to start matching with Studios worldwide." }
+    { headline: "Ready to publish?", subtitle: "Publish to open escrow checkout. Matching starts after payment." }
   ],
   zh: [
     { headline: "这次广告想达成什么？", subtitle: "选择品类、目标和受众 — 大约 1 分钟。" },
@@ -66,7 +66,7 @@ const STEP_META = {
     { headline: "正在分析", subtitle: "分析参考视频，生成创意 Brief。" },
     { headline: "选择广告规格", subtitle: "选风格、时长和预算，之后还可以改。" },
     { headline: "看看创意方案", subtitle: "根据 Brief 自动生成的分镜和脚本。" },
-    { headline: "确认发布？", subtitle: "发布后系统将为你匹配全球 Studio。" }
+    { headline: "确认发布？", subtitle: "发布后进入托管付款，付款成功后再匹配并发送邀约。" }
   ]
 } as const;
 
@@ -812,8 +812,8 @@ export function ProjectWizard({
               />
               <span>
                 {locale === "zh"
-                  ? "我确认 Brief 已就绪，发布后将进入 Studio 匹配。"
-                  : "I confirm this brief is ready. Publishing starts studio matching."}
+                  ? "我确认 Brief 已就绪，发布后进入托管付款；付款成功后才开始匹配。"
+                  : "I confirm this brief is ready. Publishing opens escrow checkout; matching starts after payment."}
               </span>
             </label>
           </div>

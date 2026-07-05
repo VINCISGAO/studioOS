@@ -22,6 +22,8 @@ import { userRepository } from "@/features/auth/user.repository";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { reviewBridgeService } from "@/features/review/review-bridge.service";
 import { paymentRepository } from "@/features/payment/payment.repository";
+import { aiLearningEventRepository } from "@/features/ai/ai-learning-event.repository";
+import { aiLearningWorkerService } from "@/features/ai/ai-learning-worker.service";
 import { EscrowState } from "@/features/shared/state-machines/escrow.state-machine";
 import { getProject } from "@/lib/project-service";
 import { setupBrandCheckout } from "@/lib/studioos/brand-checkout-service";
@@ -33,12 +35,12 @@ function selectedCreatorCopy(locale: Locale, brandName: string, projectTitle: st
   if (locale === "zh") {
     return {
       title: `🎉 恭喜，你已被品牌选中`,
-      body: `「${projectTitle}」— 品牌已确认与你合作。请等待品牌完成托管付款，收到付款通知后再开始制作。`
+      body: `「${projectTitle}」— 品牌已确认与你合作，项目表单已生成。现在可以进入审片中心上传 V1 初稿。`
     };
   }
   return {
     title: `${brandName} selected you for this project`,
-    body: `"${projectTitle}" — the brand confirmed you as their creator. Wait for escrow payment before starting production.`
+    body: `"${projectTitle}" — the brand confirmed you as their creator. Your project is ready; open the review center and upload V1.`
   };
 }
 
@@ -142,6 +144,13 @@ export class CampaignSelectionService {
     const expiredCreatorIds = portalInvitations
       .filter((item) => item.creatorId !== input.creatorId && item.status !== "declined")
       .map((item) => item.creatorId);
+    const topRecommended = [...portalInvitations]
+      .filter((item) => item.status === "accepted")
+      .sort((a, b) => b.matchScore - a.matchScore)[0];
+    const selectedMatchScore = Number(winnerRow.matchScore ?? 0);
+    const selectedNonRecommended = Boolean(
+      topRecommended && topRecommended.creatorId !== input.creatorId
+    );
 
     await invitationRepository.expireNonWinners(campaign.id, winnerRow.id);
 
@@ -188,6 +197,33 @@ export class CampaignSelectionService {
         creator_user_id: creatorUserId
       }
     );
+    const selectionLearningEvent = await aiLearningEventRepository.append({
+      eventType: selectedNonRecommended ? "BrandSelectedNonRecommendedCreator" : "BrandSelectedCreator",
+      entityType: "Campaign",
+      entityId: campaign.id,
+      payload: {
+        legacy_project_id: legacyProjectId,
+        campaignId: campaign.id,
+        selected_legacy_creator_id: input.creatorId,
+        selected_creator_profile_id: creatorProfileId,
+        selected_creator_user_id: creatorUserId,
+        selected_match_score: selectedMatchScore,
+        recommended_legacy_creator_id: topRecommended?.creatorId ?? input.creatorId,
+        recommended_match_score: topRecommended?.matchScore ?? selectedMatchScore,
+        accepted_creator_count: portalInvitations.filter((item) => item.status === "accepted").length
+      },
+      learningType: "Preference",
+      after: {
+        selected_legacy_creator_id: input.creatorId,
+        selected_creator_profile_id: creatorProfileId,
+        selected_non_recommended: selectedNonRecommended,
+        recommended_legacy_creator_id: topRecommended?.creatorId ?? input.creatorId
+      },
+      confidence: selectedNonRecommended ? 0.85 : 0.8
+    });
+    if (selectionLearningEvent?.eventId) {
+      await aiLearningWorkerService.processEvent(selectionLearningEvent.eventId);
+    }
 
     const brandName = input.client.company_name || input.client.client_name || "Brand";
     const projectTitle =
@@ -196,6 +232,7 @@ export class CampaignSelectionService {
 
     const legacyProject = await getProject(legacyProjectId);
     let studioActionUrl = "/studio/projects";
+    let checkoutOrder: Awaited<ReturnType<typeof setupBrandCheckout>>["order"] | null = null;
     if (legacyProject) {
       const checkout = await setupBrandCheckout({
         project: legacyProject,
@@ -205,8 +242,19 @@ export class CampaignSelectionService {
         locale: input.locale
       }).catch(() => null);
       if (checkout?.order.id) {
+        checkoutOrder = checkout.order;
         studioActionUrl = `/studio/projects/${checkout.order.id}`;
       }
+    }
+
+    if (legacyProject) {
+      const { notifyCreatorProjectSelected } = await import("@/lib/studioos/creator-assignment-notify");
+      await notifyCreatorProjectSelected({
+        creatorId: input.creatorId,
+        project: legacyProject,
+        order: checkoutOrder,
+        locale: input.locale
+      }).catch(() => undefined);
     }
 
     await notificationService

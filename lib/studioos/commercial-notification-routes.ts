@@ -130,8 +130,11 @@ export function resolveCreatorNotificationAction(
 
   if (input.project_id) {
     return {
-      href: withLocale(creatorPortalRoutes.invitations, locale),
-      label: labels.invitations
+      href: withLocale(
+        input.type === "creator_selected" ? creatorPortalRoutes.projects : creatorPortalRoutes.invitations,
+        locale
+      ),
+      label: input.type === "creator_selected" ? labels.project : labels.invitations
     };
   }
 

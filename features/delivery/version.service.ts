@@ -10,6 +10,8 @@ import { userRepository } from "@/features/auth/user.repository";
 import { hasDatabaseUrl, prisma } from "@/lib/core/database/prisma";
 import type { Locale } from "@/lib/i18n";
 import type { OrderStatus, StoredDeliverable } from "@/lib/order-types";
+import { notificationService } from "@/features/notification/notification.service";
+import { getAppBaseUrl } from "@/lib/app-url";
 import { resolveReviewUploadVersionForOrder } from "@/lib/studioos/review-upload-version";
 import {
   findReviewVideoFile,
@@ -302,6 +304,20 @@ export class VersionService {
 
     const { upsertJsonDeliverable } = await import("@/lib/order-service");
     await upsertJsonDeliverable(input.orderId, deliverable);
+
+    await notificationService
+      .notify({
+        userId: campaign.brandId,
+        campaignId: campaign.id,
+        title: input.locale === "zh" ? `创作者已上传 V${versionNumber}` : `Creator uploaded V${versionNumber}`,
+        content:
+          input.locale === "zh"
+            ? `「${campaign.title}」V${versionNumber} 已上传，请进入审片中心审核。`
+            : `"${campaign.title}" V${versionNumber} is ready for brand review.`,
+        actionUrl: `${getAppBaseUrl()}/studio/review/${input.orderId}`,
+        email: false
+      })
+      .catch(() => undefined);
 
     return {
       ok: true,

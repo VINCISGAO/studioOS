@@ -111,6 +111,18 @@ export class OrderRepository {
     });
   }
 
+  confirmPendingCampaignOrders(campaignId: string) {
+    return prisma.order.updateMany({
+      where: {
+        campaignId,
+        status: "PENDING"
+      },
+      data: {
+        status: "CONFIRMED"
+      }
+    });
+  }
+
   cancelPendingOrder(orderId: string, metadataJson?: Record<string, unknown>) {
     const now = new Date();
     return prisma.order.update({
