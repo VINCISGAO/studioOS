@@ -278,15 +278,22 @@ function SectionCard({
   eyebrow,
   title,
   helper,
-  children
+  children,
+  className
 }: {
   eyebrow: string;
   title: string;
   helper: string;
   children: ReactNode;
+  className?: string;
 }) {
   return (
-    <section className="rounded-[26px] border border-[#E5E7EB] bg-white/95 p-5 shadow-[0_18px_50px_rgba(36,24,80,0.055)] transition duration-150 hover:-translate-y-0.5 hover:border-violet-100 hover:shadow-[0_24px_70px_rgba(109,76,255,0.10)] sm:p-6">
+    <section
+      className={cn(
+        "rounded-[26px] border border-[#E5E7EB] bg-white/95 p-5 shadow-[0_18px_50px_rgba(36,24,80,0.055)] transition duration-150 hover:-translate-y-0.5 hover:border-violet-100 hover:shadow-[0_24px_70px_rgba(109,76,255,0.10)] sm:p-6",
+        className
+      )}
+    >
       <div className="mb-6 flex gap-3">
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-100 text-xs font-semibold text-violet-700 ring-4 ring-violet-50">
           {eyebrow}
@@ -729,8 +736,8 @@ export function CreatorPublicProfileEditor({
         </header>
 
         <div className="grid min-h-0 flex-1 gap-6 md:grid-cols-[minmax(300px,340px)_minmax(0,1fr)] md:items-start xl:grid-cols-[360px_minmax(0,1fr)]">
-          <aside className="md:sticky md:top-4 md:max-h-[calc(100dvh-7rem)] md:overflow-y-auto md:pr-1">
-            <div className="rounded-[28px] border border-[#E5E7EB] bg-white p-4 shadow-[0_24px_70px_rgba(36,24,80,0.08)]">
+          <aside className="md:row-span-2 md:self-stretch md:pr-1">
+            <div className="flex h-full flex-col rounded-[28px] border border-[#E5E7EB] bg-white p-4 shadow-[0_24px_70px_rgba(36,24,80,0.08)]">
               <div className="relative h-[144px] overflow-hidden rounded-[22px] bg-[radial-gradient(circle_at_20%_15%,#8b5cf6_0,#3b1978_32%,#0b1020_70%,#111827_100%)]">
                 {coverPreview ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -794,7 +801,7 @@ export function CreatorPublicProfileEditor({
                 />
               </div>
 
-              <div className="px-3 pb-4 pt-4">
+              <div className="flex flex-1 flex-col px-3 pb-4 pt-4">
                 <div className="flex items-center gap-2">
                   <h2 className="text-lg font-semibold tracking-[-0.02em] text-zinc-950">{displayName || t.fallback.name}</h2>
                   <BadgeCheck className="h-4 w-4 text-violet-600" />
@@ -857,7 +864,7 @@ export function CreatorPublicProfileEditor({
                   {t.viewAsBrand} <ArrowUpRight className="h-4 w-4" />
                 </Link>
 
-                <div className="mt-4 flex items-start gap-3 rounded-2xl bg-violet-50/70 p-4">
+                <div className="mt-auto flex items-start gap-3 rounded-2xl bg-violet-50/70 p-4">
                   <ShieldCheck className="mt-0.5 h-5 w-5 text-zinc-700" />
                   <div>
                     <p className="text-sm font-semibold text-zinc-900">{t.verifiedCreator}</p>
@@ -870,8 +877,13 @@ export function CreatorPublicProfileEditor({
             </div>
           </aside>
 
-          <form className="space-y-6 md:min-h-0 md:overflow-y-auto md:pr-2" onSubmit={(event) => event.preventDefault()}>
-            <SectionCard eyebrow="1" title={t.sections.basicTitle} helper={t.sections.basicHelper}>
+          <form className="contents" onSubmit={(event) => event.preventDefault()}>
+            <SectionCard
+              eyebrow="1"
+              title={t.sections.basicTitle}
+              helper={t.sections.basicHelper}
+              className="md:col-start-2 md:row-start-1"
+            >
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <FieldLabel label={t.sections.displayName} helper={t.sections.displayNameHelper} />
@@ -935,7 +947,12 @@ export function CreatorPublicProfileEditor({
               </div>
             </SectionCard>
 
-            <SectionCard eyebrow="2" title={t.sections.expertiseTitle} helper={t.sections.expertiseHelper}>
+            <SectionCard
+              eyebrow="2"
+              title={t.sections.expertiseTitle}
+              helper={t.sections.expertiseHelper}
+              className="md:col-start-2 md:row-start-2"
+            >
               <div className="flex flex-wrap gap-2">
                 {specialties.map((item) => (
                   <Chip
@@ -970,7 +987,12 @@ export function CreatorPublicProfileEditor({
               </div>
             </SectionCard>
 
-            <SectionCard eyebrow="3" title={t.sections.toolsTitle} helper={t.sections.toolsHelper}>
+            <SectionCard
+              eyebrow="3"
+              title={t.sections.toolsTitle}
+              helper={t.sections.toolsHelper}
+              className="md:col-span-2"
+            >
               <div className="flex flex-wrap gap-2">
                 {toolOptions.map((item) => {
                   const selected = tools.includes(item);
@@ -990,7 +1012,12 @@ export function CreatorPublicProfileEditor({
               </div>
             </SectionCard>
 
-            <SectionCard eyebrow="4" title={t.sections.deliveryTitle} helper={t.sections.deliveryHelper}>
+            <SectionCard
+              eyebrow="4"
+              title={t.sections.deliveryTitle}
+              helper={t.sections.deliveryHelper}
+              className="md:col-span-2"
+            >
               <div className="grid gap-3 sm:grid-cols-5">
                 {deliveryOptions.map((option) => {
                   const selected = selectedDelivery.value === option.value;
@@ -1016,7 +1043,12 @@ export function CreatorPublicProfileEditor({
               </div>
             </SectionCard>
 
-            <SectionCard eyebrow="5" title={t.sections.budgetTitle} helper={t.sections.budgetHelper}>
+            <SectionCard
+              eyebrow="5"
+              title={t.sections.budgetTitle}
+              helper={t.sections.budgetHelper}
+              className="md:col-span-2"
+            >
               <div className="flex flex-col gap-4">
                 <div className="flex items-end justify-between gap-4">
                   <div>
@@ -1073,7 +1105,12 @@ export function CreatorPublicProfileEditor({
               </div>
             </SectionCard>
 
-            <SectionCard eyebrow="6" title={t.sections.visibilityTitle} helper={t.sections.visibilityHelper}>
+            <SectionCard
+              eyebrow="6"
+              title={t.sections.visibilityTitle}
+              helper={t.sections.visibilityHelper}
+              className="md:col-span-2"
+            >
               <div className="grid gap-x-8 gap-y-1 sm:grid-cols-2">
                 <ToggleRow
                   label={t.visibility.publicProfile}

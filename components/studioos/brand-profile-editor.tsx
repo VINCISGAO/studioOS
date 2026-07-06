@@ -319,7 +319,8 @@ function SectionCard({
   helper,
   children,
   tinted = false,
-  action
+  action,
+  className
 }: {
   index: string;
   title: string;
@@ -327,6 +328,7 @@ function SectionCard({
   children: ReactNode;
   tinted?: boolean;
   action?: ReactNode;
+  className?: string;
 }) {
   return (
     <section
@@ -334,7 +336,8 @@ function SectionCard({
         "rounded-[26px] border border-[#E8E8EC] p-5 shadow-[0_18px_50px_rgba(36,24,80,0.055)] transition duration-150 hover:-translate-y-0.5 hover:border-violet-100 hover:shadow-[0_24px_70px_rgba(109,76,255,0.10)] sm:p-6",
         tinted
           ? "bg-[linear-gradient(135deg,#fbf8ff_0%,#f5efff_58%,#ffffff_100%)]"
-          : "bg-white/95"
+          : "bg-white/95",
+        className
       )}
     >
       <div className="mb-6 flex items-start justify-between gap-4">
@@ -846,8 +849,8 @@ export function BrandProfileEditor({ locale, profile }: BrandProfileEditorProps)
           </div>
         </header>
 
-        <div className="grid min-h-0 flex-1 gap-6 md:grid-cols-[minmax(300px,340px)_minmax(0,1fr)] md:items-start xl:grid-cols-[360px_minmax(0,1fr)]">
-          <aside className="space-y-6 md:min-h-0 md:overflow-y-auto md:pr-1">
+        <div className="grid min-h-0 flex-1 gap-6 md:grid-cols-[minmax(300px,340px)_minmax(0,1fr)] md:items-stretch xl:grid-cols-[360px_minmax(0,1fr)]">
+          <aside className="md:row-span-2 md:self-stretch md:pr-1">
             <input
               ref={logoInputRef}
               type="file"
@@ -870,7 +873,7 @@ export function BrandProfileEditor({ locale, profile }: BrandProfileEditorProps)
                 event.target.value = "";
               }}
             />
-            <div className="overflow-hidden rounded-[28px] border border-[#E8E8EC] bg-white shadow-[0_24px_70px_rgba(36,24,80,0.08)] transition duration-150 hover:-translate-y-0.5 hover:shadow-[0_30px_90px_rgba(109,76,255,0.12)]">
+            <div className="flex h-full flex-col overflow-hidden rounded-[28px] border border-[#E8E8EC] bg-white shadow-[0_24px_70px_rgba(36,24,80,0.08)] transition duration-150 hover:-translate-y-0.5 hover:shadow-[0_30px_90px_rgba(109,76,255,0.12)]">
               <div className="relative h-[144px] bg-[radial-gradient(circle_at_18%_18%,#fff_0,#f8d5e5_24%,#eadcff_52%,#dbeafe_100%)]">
                 {assets.cover ? (
                   assets.cover.startsWith("blob:") ? (
@@ -890,7 +893,7 @@ export function BrandProfileEditor({ locale, profile }: BrandProfileEditorProps)
                 </button>
               </div>
 
-              <div className="-mt-9 px-5 pb-5">
+              <div className="-mt-9 flex flex-1 flex-col px-5 pb-5">
                 <button
                   type="button"
                   className="group relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-[18px] border-4 border-white bg-[#FFE4DE] text-center text-lg font-semibold leading-6 text-zinc-950 shadow-[0_10px_28px_rgba(15,23,42,0.12)]"
@@ -944,7 +947,7 @@ export function BrandProfileEditor({ locale, profile }: BrandProfileEditorProps)
                   {t.viewPublicPage} <ArrowUpRight className="h-4 w-4" />
                 </Link>
 
-                <div className="mt-6 flex gap-3 rounded-2xl bg-violet-50 p-4">
+                <div className="mt-auto flex gap-3 rounded-2xl bg-violet-50 p-4">
                   <Users className="mt-0.5 h-5 w-5 text-violet-600" />
                   <div>
                     <p className="text-sm font-semibold text-violet-950">{t.publicBrandPage}</p>
@@ -956,93 +959,15 @@ export function BrandProfileEditor({ locale, profile }: BrandProfileEditorProps)
               </div>
             </div>
 
-            <SectionCard index="5" title={t.sections.assetsTitle} helper={t.sections.assetsHelper}>
-              <label className="mb-4 block space-y-2">
-                <span className="text-sm font-medium text-zinc-900">{t.sections.showcaseTitle}</span>
-                <input
-                  value={showcaseTitle}
-                  onChange={(event) => setShowcaseTitle(event.target.value)}
-                  placeholder={t.sections.showcaseTitlePlaceholder}
-                  className="h-12 w-full rounded-2xl border border-[#E8E8EC] bg-white px-4 text-sm outline-none transition focus:border-violet-200 focus:ring-4 focus:ring-violet-100"
-                />
-              </label>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <AssetUploadCard
-                  title={t.assets.logo}
-                  helper="PNG, SVG"
-                  icon={<ImageIcon className="h-4 w-4" />}
-                  preview={assets.logo}
-                  dragLabel={t.assets.drag}
-                  readyLabel={t.assets.ready}
-                  busy={logoUploading}
-                  onFile={(file) => void handleLogoFile(file)}
-                />
-                <AssetUploadCard
-                  title={t.assets.cover}
-                  helper="JPG, PNG"
-                  icon={<ImageIcon className="h-4 w-4" />}
-                  preview={assets.cover}
-                  dragLabel={t.assets.drag}
-                  readyLabel={t.assets.ready}
-                  busy={coverUploading}
-                  onFile={(file) => void handleCoverFile(file)}
-                />
-                <AssetUploadCard
-                  title={t.assets.product}
-                  helper="JPG, PNG"
-                  icon={<Package className="h-4 w-4" />}
-                  preview={assets.product}
-                  dragLabel={t.assets.drag}
-                  readyLabel={t.assets.ready}
-                  onFile={(file) => setLocalAsset("product", file)}
-                />
-                <AssetUploadCard
-                  title={t.assets.reference}
-                  helper="MP4, MOV, WebM"
-                  icon={<FileVideo className="h-4 w-4" />}
-                  preview={assets.reference}
-                  dragLabel={t.assets.drag}
-                  readyLabel={t.assets.ready}
-                  accept="video/mp4,video/quicktime,video/webm"
-                  busy={showcaseUploading}
-                  onFile={(file) => void handleShowcaseVideoFile(file)}
-                />
-              </div>
-            </SectionCard>
-
-            <SectionCard index="6" title={t.sections.visibilityTitle} helper={t.sections.visibilityHelper}>
-              <div className="grid gap-x-8 gap-y-1 sm:grid-cols-2">
-                <ToggleRow
-                  label={t.visibility.publicProfile}
-                  checked={visibility.publicProfile}
-                  onChange={(value) => setVisibility((prev) => ({ ...prev, publicProfile: value }))}
-                />
-                <ToggleRow
-                  label={t.visibility.website}
-                  checked={visibility.website}
-                  onChange={(value) => setVisibility((prev) => ({ ...prev, website: value }))}
-                />
-                <ToggleRow
-                  label={t.visibility.portfolio}
-                  checked={visibility.portfolio}
-                  onChange={(value) => setVisibility((prev) => ({ ...prev, portfolio: value }))}
-                />
-                <ToggleRow
-                  label={t.visibility.campaignHistory}
-                  checked={visibility.campaignHistory}
-                  onChange={(value) => setVisibility((prev) => ({ ...prev, campaignHistory: value }))}
-                />
-                <ToggleRow
-                  label={t.visibility.followers}
-                  checked={visibility.followers}
-                  onChange={(value) => setVisibility((prev) => ({ ...prev, followers: value }))}
-                />
-              </div>
-            </SectionCard>
           </aside>
 
-          <div className="space-y-6 md:min-h-0 md:overflow-y-auto md:pr-2">
-            <SectionCard index="1" title={t.sections.basicTitle} helper={t.sections.basicHelper}>
+          <div className="contents">
+            <SectionCard
+              index="1"
+              title={t.sections.basicTitle}
+              helper={t.sections.basicHelper}
+              className="md:col-start-2 md:row-start-1"
+            >
               <div className="grid gap-4 md:grid-cols-3">
                 <Field label={t.sections.companyName} value={companyName} onChange={setCompanyName} required />
                 <Field label={t.sections.displayName} value={displayName} onChange={setDisplayName} required />
@@ -1071,6 +996,7 @@ export function BrandProfileEditor({ locale, profile }: BrandProfileEditorProps)
               title={t.sections.aiTitle}
               helper={t.sections.aiHelper}
               tinted
+              className="md:col-start-2 md:row-start-2"
               action={
                 <button
                   type="button"
@@ -1095,7 +1021,12 @@ export function BrandProfileEditor({ locale, profile }: BrandProfileEditorProps)
               </div>
             </SectionCard>
 
-            <SectionCard index="3" title={t.sections.publicTitle} helper={t.sections.publicHelper}>
+            <SectionCard
+              index="3"
+              title={t.sections.publicTitle}
+              helper={t.sections.publicHelper}
+              className="md:col-span-2"
+            >
               <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
                 <label className="space-y-2">
                   <span className="text-sm font-medium text-zinc-900">{t.sections.headline} <span className="text-red-500">*</span></span>
@@ -1121,7 +1052,12 @@ export function BrandProfileEditor({ locale, profile }: BrandProfileEditorProps)
               </div>
             </SectionCard>
 
-            <SectionCard index="4" title={t.sections.tagsTitle} helper={t.sections.tagsHelper}>
+            <SectionCard
+              index="4"
+              title={t.sections.tagsTitle}
+              helper={t.sections.tagsHelper}
+              className="md:col-span-2"
+            >
               <div className="flex flex-wrap gap-2">
                 {tags.map((tag) => (
                   <span
@@ -1166,8 +1102,102 @@ export function BrandProfileEditor({ locale, profile }: BrandProfileEditorProps)
               </div>
             </SectionCard>
 
+            <SectionCard
+              index="5"
+              title={t.sections.assetsTitle}
+              helper={t.sections.assetsHelper}
+              className="md:col-span-2"
+            >
+              <label className="mb-4 block space-y-2">
+                <span className="text-sm font-medium text-zinc-900">{t.sections.showcaseTitle}</span>
+                <input
+                  value={showcaseTitle}
+                  onChange={(event) => setShowcaseTitle(event.target.value)}
+                  placeholder={t.sections.showcaseTitlePlaceholder}
+                  className="h-12 w-full rounded-2xl border border-[#E8E8EC] bg-white px-4 text-sm outline-none transition focus:border-violet-200 focus:ring-4 focus:ring-violet-100"
+                />
+              </label>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <AssetUploadCard
+                  title={t.assets.logo}
+                  helper="PNG, SVG"
+                  icon={<ImageIcon className="h-4 w-4" />}
+                  preview={assets.logo}
+                  dragLabel={t.assets.drag}
+                  readyLabel={t.assets.ready}
+                  busy={logoUploading}
+                  onFile={(file) => void handleLogoFile(file)}
+                />
+                <AssetUploadCard
+                  title={t.assets.cover}
+                  helper="JPG, PNG"
+                  icon={<ImageIcon className="h-4 w-4" />}
+                  preview={assets.cover}
+                  dragLabel={t.assets.drag}
+                  readyLabel={t.assets.ready}
+                  busy={coverUploading}
+                  onFile={(file) => void handleCoverFile(file)}
+                />
+                <AssetUploadCard
+                  title={t.assets.product}
+                  helper="JPG, PNG"
+                  icon={<Package className="h-4 w-4" />}
+                  preview={assets.product}
+                  dragLabel={t.assets.drag}
+                  readyLabel={t.assets.ready}
+                  onFile={(file) => setLocalAsset("product", file)}
+                />
+                <AssetUploadCard
+                  title={t.assets.reference}
+                  helper="MP4, MOV, WebM"
+                  icon={<FileVideo className="h-4 w-4" />}
+                  preview={assets.reference}
+                  dragLabel={t.assets.drag}
+                  readyLabel={t.assets.ready}
+                  accept="video/mp4,video/quicktime,video/webm"
+                  busy={showcaseUploading}
+                  onFile={(file) => void handleShowcaseVideoFile(file)}
+                />
+              </div>
+            </SectionCard>
+
+            <SectionCard
+              index="6"
+              title={t.sections.visibilityTitle}
+              helper={t.sections.visibilityHelper}
+              className="md:col-span-2"
+            >
+              <div className="grid gap-x-8 gap-y-1 sm:grid-cols-2 lg:grid-cols-3">
+                <ToggleRow
+                  label={t.visibility.publicProfile}
+                  checked={visibility.publicProfile}
+                  onChange={(value) => setVisibility((prev) => ({ ...prev, publicProfile: value }))}
+                />
+                <ToggleRow
+                  label={t.visibility.website}
+                  checked={visibility.website}
+                  onChange={(value) => setVisibility((prev) => ({ ...prev, website: value }))}
+                />
+                <ToggleRow
+                  label={t.visibility.portfolio}
+                  checked={visibility.portfolio}
+                  onChange={(value) => setVisibility((prev) => ({ ...prev, portfolio: value }))}
+                />
+                <ToggleRow
+                  label={t.visibility.campaignHistory}
+                  checked={visibility.campaignHistory}
+                  onChange={(value) => setVisibility((prev) => ({ ...prev, campaignHistory: value }))}
+                />
+                <ToggleRow
+                  label={t.visibility.followers}
+                  checked={visibility.followers}
+                  onChange={(value) => setVisibility((prev) => ({ ...prev, followers: value }))}
+                />
+              </div>
+            </SectionCard>
+
             {formError ? (
-              <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">{formError}</div>
+              <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700 md:col-span-2">{formError}</div>
             ) : null}
           </div>
         </div>
