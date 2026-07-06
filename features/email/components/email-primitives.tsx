@@ -6,11 +6,12 @@ export type EmailDetail = {
 };
 
 const card = {
-  margin: "26px 0 0",
-  padding: "20px",
-  border: "1px solid #303030",
-  borderRadius: "18px",
-  backgroundColor: "#121212"
+  margin: "28px 0 0",
+  padding: "22px",
+  border: "1px solid #343434",
+  borderRadius: "22px",
+  backgroundColor: "#0f0f0f",
+  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)"
 };
 
 const label = {
@@ -38,9 +39,9 @@ const detailDivider = {
 
 const button = {
   display: "inline-block",
-  marginTop: "24px",
+  marginTop: "28px",
   borderRadius: "999px",
-  backgroundColor: "#f4f4f4",
+  backgroundColor: "#f2f2f2",
   color: "#090909",
   fontSize: "14px",
   lineHeight: "20px",
@@ -50,36 +51,38 @@ const button = {
 };
 
 const codeBlock = {
-  margin: "28px 0 0",
-  padding: "24px 18px",
-  border: "1px solid #555555",
-  borderRadius: "16px",
-  backgroundColor: "#111111",
-  color: "#f8f8f8",
-  fontSize: "42px",
-  lineHeight: "52px",
+  margin: "16px 0 0",
+  padding: "28px 18px",
+  border: "1px solid #4f4f4f",
+  borderRadius: "20px",
+  backgroundColor: "#0b0b0b",
+  color: "#ffffff",
+  fontSize: "46px",
+  lineHeight: "56px",
   fontWeight: "800",
-  letterSpacing: "0.34em",
-  textAlign: "center" as const
+  letterSpacing: "0.32em",
+  textAlign: "center" as const,
+  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.14), 0 18px 42px rgba(0,0,0,0.36)"
 };
 
 const muted = {
-  margin: "14px 0 0",
-  color: "#b8b8b8",
+  margin: "18px 0 0",
+  color: "#bdbdbd",
   fontSize: "14px",
   lineHeight: "22px",
   textAlign: "center" as const
 };
 
 const note = {
-  margin: "26px 0 0",
-  padding: "18px",
-  border: "1px solid #242424",
-  borderRadius: "16px",
-  backgroundColor: "#101010",
-  color: "#d7d7d7",
+  margin: "28px 0 0",
+  padding: "20px 22px",
+  border: "1px solid #262626",
+  borderRadius: "18px",
+  backgroundColor: "#0c0c0c",
+  color: "#dcdcdc",
   fontSize: "14px",
-  lineHeight: "23px"
+  lineHeight: "24px",
+  textAlign: "center" as const
 };
 
 const paragraph = {
