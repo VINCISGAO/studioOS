@@ -34,7 +34,7 @@ export async function ensureBrandBriefClientEmail(): Promise<{
   }
 
   const visitorId = `vis_${Date.now()}_${randomBytes(4).toString("hex")}`;
-  return { email: `${visitorId}@visitor.studioos.local`, visitorId };
+  return { email: `${visitorId}@visitor.vincis.local`, visitorId };
 }
 
 export async function createBrandBriefDraftProjectForEmail(

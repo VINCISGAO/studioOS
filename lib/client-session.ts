@@ -15,7 +15,7 @@ export async function getCurrentClientEmail(): Promise<string | null> {
   if (!hasSupabaseConfig()) {
     const visitorId = cookieStore.get(VISITOR_COOKIE)?.value;
     if (visitorId) {
-      return `${visitorId}@visitor.studioos.local`;
+      return `${visitorId}@visitor.vincis.local`;
     }
   }
 

@@ -52,7 +52,7 @@ async function resolveInquiryClient(lang: Locale) {
 
   return {
     client_name: lang === "zh" ? "访客品牌方" : "Guest brand",
-    client_email: `${await getOrCreateVisitorId()}@visitor.studioos.local`,
+    client_email: `${await getOrCreateVisitorId()}@visitor.vincis.local`,
     company_name: ""
   };
 }
@@ -266,7 +266,7 @@ export async function oauthSignInAction(formData: FormData) {
   const entryRole = expectedRole === "creator" ? "creator" : "brand";
   const nextPath = String(formData.get("next") ?? "").trim();
   const headerList = await headers();
-  const actionRequest = new Request("https://studioos.local/api/auth/oauth/action", {
+  const actionRequest = new Request(`${getAppBaseUrl()}/api/auth/oauth/action`, {
     method: "POST",
     headers: new Headers(headerList)
   });

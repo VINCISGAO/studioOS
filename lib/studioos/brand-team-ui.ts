@@ -348,7 +348,7 @@ export function filterBrandTeamMembers(
   });
 }
 
-export const BRAND_TEAM_INVITE_LINK = "https://studioos.app/invite/brand/arcalloy?token=demo";
+export const BRAND_TEAM_INVITE_LINK = "https://vincis.app/brand/team?invite=demo";
 
 export const brandTeamInviteRoleOptions: BrandTeamRole[] = [
   "member",

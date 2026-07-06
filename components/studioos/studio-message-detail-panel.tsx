@@ -7,6 +7,7 @@ import { ClientBriefFormCard } from "@/components/studioos/client-brief-form-car
 import type { MessageDetailPayload } from "@/components/studioos/studio-message-center.types";
 import { Button } from "@/components/ui/button";
 import type { Locale } from "@/lib/i18n";
+import { normalizeInternalActionHref } from "@/lib/studioos/internal-action-href";
 import { cn } from "@/lib/utils";
 import { Info, MoreHorizontal, Share2, Shield, Star } from "lucide-react";
 
@@ -43,6 +44,12 @@ export function StudioMessageDetailPanel({
       </section>
     );
   }
+
+  const projectHref = detail.projectInfo
+    ? normalizeInternalActionHref(detail.projectInfo.href, locale)
+    : "";
+  const actionHref = normalizeInternalActionHref(detail.actionHref, locale);
+  const replyHref = normalizeInternalActionHref(detail.replyHref, locale);
 
   return (
     <section className="overflow-hidden rounded-[20px] border border-zinc-200/80 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
@@ -114,7 +121,7 @@ export function StudioMessageDetailPanel({
                 </div>
               </div>
               <Button asChild variant="outline" size="sm" className="rounded-lg border-zinc-200 bg-white">
-                <Link href={detail.projectInfo.href}>{t.viewProjectDetail}</Link>
+                <Link href={projectHref}>{t.viewProjectDetail}</Link>
               </Button>
             </div>
           </div>
@@ -147,15 +154,15 @@ export function StudioMessageDetailPanel({
       <div className="flex flex-col gap-3 border-t border-zinc-100 px-5 py-4 sm:flex-row">
         {detail.type === "certification_approved" ? (
           <Button asChild className="rounded-xl bg-violet-600 hover:bg-violet-700 sm:flex-1">
-            <Link href={detail.actionHref}>{detail.actionLabel}</Link>
+            <Link href={actionHref}>{detail.actionLabel}</Link>
           </Button>
         ) : (
           <>
             <Button asChild className="rounded-xl bg-violet-600 hover:bg-violet-700 sm:flex-1">
-              <Link href={detail.actionHref}>{detail.actionLabel || t.viewProject}</Link>
+              <Link href={actionHref}>{detail.actionLabel || t.viewProject}</Link>
             </Button>
             <Button asChild variant="outline" className="rounded-xl border-zinc-200 sm:flex-1">
-              <Link href={detail.replyHref}>{detail.replyLabel || t.replyBrand}</Link>
+              <Link href={replyHref}>{detail.replyLabel || t.replyBrand}</Link>
             </Button>
           </>
         )}

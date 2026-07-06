@@ -100,7 +100,6 @@ export function AdminPortalShell({
             <Link href={withLocale(adminPortalRoutes.dashboard, locale)} className="flex items-center gap-2.5">
               <BrandLogoLockup
                 contrastOn="light"
-                className="gap-2"
                 markClassName="h-8 w-8 rounded-lg shadow-sm"
                 wordmarkClassName="h-[17px] w-[106px]"
                 priority

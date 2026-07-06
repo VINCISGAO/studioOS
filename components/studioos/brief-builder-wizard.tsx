@@ -199,7 +199,7 @@ export function BriefBuilderWizard({ locale }: { locale: Locale }) {
             <input type="hidden" name="video_count" value="1" />
             <input type="hidden" name="budget_range" value="$1,000-$2,500" />
             <input type="hidden" name="company_name" value="Brand Campaign" />
-            <input type="hidden" name="email" value="brand@studioos.local" />
+            <input type="hidden" name="email" value="brand@vincis.local" />
             <input
               type="hidden"
               name="notes"

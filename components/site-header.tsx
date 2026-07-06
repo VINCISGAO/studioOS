@@ -65,7 +65,6 @@ export async function SiteHeader({ locale }: { locale: Locale }) {
         <Link href={withLocale("/", locale)} className="flex items-center gap-2 text-sm font-semibold">
           <BrandLogoLockup
             contrastOn="light"
-            className="gap-2"
             markClassName="h-8 w-8 rounded-lg shadow-sm"
             wordmarkClassName="h-[17px] w-[106px]"
             priority

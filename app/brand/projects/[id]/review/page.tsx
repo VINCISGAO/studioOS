@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 import { ArrowLeft, Clock3, Film, MessageSquareText, UploadCloud } from "lucide-react";
 import { ReviewerTimestampWorkspace } from "@/components/studioos/reviewer-skeleton/reviewer-timestamp-workspace";
 import { getCurrentClientEmail } from "@/lib/client-session";
@@ -33,7 +33,7 @@ export default async function BrandProjectReviewPage({ params, searchParams }: P
   const resolvedProjectId = project?.id ?? linkedOrder?.project_id ?? id;
 
   if (!project && !linkedOrder) {
-    notFound();
+    redirect(withLocale(brandPortalRoutes.dashboard, locale));
   }
 
   if (project && project.client_email.toLowerCase() !== clientEmail.toLowerCase()) {
@@ -46,7 +46,7 @@ export default async function BrandProjectReviewPage({ params, searchParams }: P
 
   const orderForReview = linkedOrder ?? (resolvedProjectId ? await getOrderForProject(resolvedProjectId) : null);
   if (!orderForReview) {
-    notFound();
+    redirect(withLocale(`${brandPortalRoutes.project(resolvedProjectId)}?tab=production`, locale));
   }
 
   const [deliverables, comments] = await Promise.all([

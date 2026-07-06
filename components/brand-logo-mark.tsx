@@ -18,14 +18,14 @@ export function BrandLogoMark({
   priority?: boolean;
 }) {
   return (
-    <span className={cn("relative inline-flex shrink-0 overflow-hidden rounded-xl", className)}>
+    <span className={cn("relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-xl", className)}>
       <Image
         src={mainLogoSrc}
         alt="VINCIS"
         fill
         sizes="40px"
         priority={priority}
-        className={cn("object-cover", imageClassName)}
+        className={cn("object-contain object-center", imageClassName)}
       />
     </span>
   );
@@ -49,14 +49,14 @@ export function BrandLogoLockup({
   const wordmarkTone = contrastOn ? (contrastOn === "dark" ? "white" : "black") : tone;
 
   return (
-    <span className={cn("inline-flex shrink-0 items-center gap-3", className)} aria-label="VINCIS">
-      <BrandLogoMark className={cn("h-9 w-9 rounded-xl shadow-sm", markClassName)} priority={priority} />
-      <span className={cn("relative block h-[21px] w-[134px] shrink-0", wordmarkClassName)}>
+    <span className={cn("inline-flex shrink-0 items-center justify-center gap-3.5", className)} aria-label="VINCIS">
+      <BrandLogoMark className={cn("h-10 w-10 rounded-[14px] shadow-sm", markClassName)} priority={priority} />
+      <span className={cn("relative block h-[24px] w-[151px] shrink-0", wordmarkClassName)}>
         <Image
           src={wordmarkSrc[wordmarkTone]}
           alt=""
           fill
-          sizes="134px"
+          sizes="151px"
           priority={priority}
           className="object-contain object-left"
         />

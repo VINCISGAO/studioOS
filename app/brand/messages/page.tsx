@@ -32,6 +32,7 @@ import {
 } from "@/lib/studioos/brand-messages-ui";
 import { resolveBrandNotificationAction } from "@/lib/studioos/commercial-notification-routes";
 import { getConfirmedBriefFields } from "@/lib/studioos/confirmed-brief";
+import { normalizeInternalActionHref } from "@/lib/studioos/internal-action-href";
 import { buildBrandMessageProgressSteps } from "@/lib/studioos/message-order-progress";
 import type { Locale } from "@/lib/i18n";
 
@@ -52,6 +53,7 @@ async function buildBrandMessageDetail(
   const project = await getProject(notification.project_id);
   const order = notification.order_id ? await getOrder(notification.order_id) : null;
   const action = resolveBrandNotificationAction(notification, locale);
+  const actionHref = normalizeInternalActionHref(action.href, locale, withLocale("/brand/messages", locale));
   const category = brandMessageCategoryFromType(notification.type);
   const senderName = brandSenderDisplayName(notification.creator_name, locale);
   const progressSteps = buildBrandMessageProgressSteps(project, order, notification.type, locale);
@@ -87,12 +89,12 @@ async function buildBrandMessageDetail(
       code: projectCode,
       stage: buildMessageProjectStage(progressSteps, locale),
       thumbnailUrl: DEFAULT_PROJECT_THUMB,
-      href: action.href
+      href: actionHref
     },
     nextStep: buildBrandMessageNextStep(notification.type, locale),
-    actionHref: action.href,
+    actionHref,
     actionLabel: action.label,
-    replyHref: action.href,
+    replyHref: actionHref,
     replyLabel: locale === "zh" ? "回复创作者" : "Reply to creator"
   };
 }

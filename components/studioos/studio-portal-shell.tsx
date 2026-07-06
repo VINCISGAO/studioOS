@@ -13,6 +13,7 @@ import { CertifiedPartnerBadge } from "@/components/studioos/certification/certi
 import { StudioCertificationOrchestrator } from "@/components/studioos/certification/studio-certification-orchestrator";
 import { StudioPortalSidebarNav } from "@/components/studioos/certification/studio-portal-sidebar-nav";
 import { studioNav } from "@/lib/studioos/vocabulary";
+import { buildAvatarInitials } from "@/lib/studioos/avatar-initials";
 import { creatorPortalNavItems } from "@/lib/studioos/creator-portal-nav";
 import { creatorPortalRoutes } from "@/lib/studioos/creator-portal-routes";
 import { isCreatorPortalReviewRoute } from "@/lib/studioos/portal-focus-mode";
@@ -26,14 +27,6 @@ import type { Locale } from "@/lib/i18n";
 import type { CreatorNotification } from "@/lib/notification-types";
 import type { Creator } from "@/lib/types";
 import { cn } from "@/lib/utils";
-
-function studioInitials(name: string) {
-  return name
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? "")
-    .join("");
-}
 
 export function StudioPortalShell({
   locale,
@@ -67,6 +60,7 @@ export function StudioPortalShell({
   return (
     <ReviewFocusModeProvider searchFallback={search}>
       <StudioPortalShellInner
+        key={`${pathnameProp ?? "studio"}?${search}`}
         locale={locale}
         pathname={pathnameProp}
         search={search}
@@ -119,7 +113,7 @@ function StudioPortalShellInner({
   const nav = studioNav[locale];
   const partnerBadge = tCertificationExperience(locale).partnerBadge;
   const partnerBadgeSidebar = tCertificationExperience(locale).partnerBadgeSidebar;
-  const initials = creator ? studioInitials(creator.name) : "CR";
+  const initials = buildAvatarInitials(creator?.name, "CR");
   const avatarUrl = creator?.avatar_url?.trim() || undefined;
   const visibleUnreadCount = unreadCount;
 
@@ -168,7 +162,6 @@ function StudioPortalShellInner({
           >
             <BrandLogoLockup
               contrastOn="light"
-              className="gap-2"
               markClassName="h-8 w-8 rounded-lg shadow-sm ring-1 ring-violet-100"
               wordmarkClassName="h-[17px] w-[106px]"
               priority
@@ -221,7 +214,6 @@ function StudioPortalShellInner({
                   <MarketingHomeLink locale={locale} className="flex items-center gap-2 font-semibold text-zinc-950">
                     <BrandLogoLockup
                       contrastOn="light"
-                      className="gap-1.5"
                       markClassName="h-6 w-6 rounded-md shadow-sm"
                       wordmarkClassName="h-[13px] w-[82px]"
                     />

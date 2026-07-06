@@ -516,7 +516,7 @@ function AssetUploadCard({
       onDragLeave={() => setIsDragging(false)}
       onDrop={handleDrop}
       className={cn(
-        "group min-h-[150px] rounded-2xl border border-[#E8E8EC] bg-white p-4 text-left transition duration-120 hover:-translate-y-0.5 hover:shadow-[0_10px_22px_rgba(15,23,42,0.06)]",
+        "group min-h-[150px] min-w-0 rounded-2xl border border-[#E8E8EC] bg-white p-4 text-left transition duration-120 hover:-translate-y-0.5 hover:shadow-[0_10px_22px_rgba(15,23,42,0.06)]",
         isDragging && "border-violet-300 bg-violet-50"
       )}
     >
@@ -531,15 +531,15 @@ function AssetUploadCard({
           event.target.value = "";
         }}
       />
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-zinc-50 text-zinc-500">{icon}</span>
-          <div>
-            <p className="text-sm font-semibold text-zinc-900">{title}</p>
-            <p className="text-xs text-zinc-500">{helper}</p>
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex min-w-0 items-start gap-2">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-zinc-50 text-zinc-500">{icon}</span>
+          <div className="min-w-0">
+            <p className="break-words text-sm font-semibold leading-5 text-zinc-900">{title}</p>
+            <p className="mt-0.5 break-words text-xs leading-4 text-zinc-500">{helper}</p>
           </div>
         </div>
-        {busy ? <Loader2 className="h-4 w-4 animate-spin text-violet-600" /> : <UploadCloud className="h-4 w-4 text-zinc-400" />}
+        {busy ? <Loader2 className="h-4 w-4 shrink-0 animate-spin text-violet-600" /> : <UploadCloud className="h-4 w-4 shrink-0 text-zinc-400" />}
       </div>
       <div className="mt-4 flex h-[78px] items-center justify-center overflow-hidden rounded-xl border border-zinc-100 bg-zinc-50">
         {preview ? (
@@ -552,7 +552,7 @@ function AssetUploadCard({
             <Image src={preview} alt="" width={180} height={90} className="h-full w-full object-cover" unoptimized />
           )
         ) : (
-          <div className="flex flex-col items-center gap-1 text-xs text-zinc-400">
+          <div className="flex flex-col items-center gap-1 px-2 text-center text-xs leading-4 text-zinc-400">
             <UploadCloud className="h-5 w-5" />
             {dragLabel}
           </div>
@@ -966,7 +966,7 @@ export function BrandProfileEditor({ locale, profile }: BrandProfileEditorProps)
                   className="h-12 w-full rounded-2xl border border-[#E8E8EC] bg-white px-4 text-sm outline-none transition focus:border-violet-200 focus:ring-4 focus:ring-violet-100"
                 />
               </label>
-              <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <AssetUploadCard
                   title={t.assets.logo}
                   helper="PNG, SVG"

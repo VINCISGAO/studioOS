@@ -74,7 +74,6 @@ export function BrandReviewShell({
           <div className="flex items-center gap-2.5 px-5 py-5">
             <BrandLogoLockup
               contrastOn="light"
-              className="gap-2"
               markClassName="h-8 w-8 rounded-lg shadow-sm"
               wordmarkClassName="h-[17px] w-[106px]"
               priority

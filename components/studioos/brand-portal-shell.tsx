@@ -13,6 +13,7 @@ import { PortalSidebarAccountMenu } from "@/components/studioos/portal-sidebar-a
 import { brandNav } from "@/lib/studioos/vocabulary";
 import { brandPortalNavItems, type BrandPortalNavItem } from "@/lib/studioos/brand-portal-nav";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
+import { buildAvatarInitials } from "@/lib/studioos/avatar-initials";
 import { readBrandWizardStepFromLocation } from "@/lib/studioos/instant-nav";
 import {
   isBrandPortalFocusRoute,
@@ -29,14 +30,6 @@ import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { Home, LayoutDashboard } from "lucide-react";
-
-function brandInitials(name: string) {
-  return name
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? "")
-    .join("");
-}
 
 export function BrandPortalShell({
   locale,
@@ -56,6 +49,7 @@ export function BrandPortalShell({
   return (
     <ReviewFocusModeProvider searchFallback={search}>
       <BrandPortalShellInner
+        key={`${pathnameProp ?? "brand"}?${search}`}
         locale={locale}
         pathname={pathnameProp}
         search={search}
@@ -87,7 +81,7 @@ function BrandPortalShellInner({
   const [locationHash, setLocationHash] = useState("");
   const { isFocusMode: isReviewFocusMode } = usePortalReviewFocus();
   const nav = brandNav[locale];
-  const initials = brandAccount ? brandInitials(brandAccount.name) : "BR";
+  const initials = buildAvatarInitials(brandAccount?.name, "BR");
   const avatarUrl = brandAccount?.avatarUrl;
   const isProjectReview = isBrandPortalProjectReviewRoute(pathname);
   const focusRoute = isBrandPortalFocusRoute(pathname);
@@ -236,7 +230,6 @@ function BrandPortalShellInner({
           >
             <BrandLogoLockup
               contrastOn="light"
-              className="gap-2"
               markClassName="h-8 w-8 rounded-lg shadow-sm ring-1 ring-violet-100"
               wordmarkClassName="h-[17px] w-[106px]"
               priority
@@ -336,7 +329,6 @@ function BrandPortalShellInner({
                     <MarketingHomeLink locale={locale} className="flex items-center gap-2 font-semibold text-zinc-950">
                       <BrandLogoLockup
                         contrastOn="light"
-                        className="gap-1.5"
                         markClassName="h-6 w-6 rounded-md shadow-sm"
                         wordmarkClassName="h-[13px] w-[82px]"
                       />

@@ -50,7 +50,6 @@ export function MarketingFooter({
             >
               <BrandLogoLockup
                 contrastOn={dark ? "dark" : "light"}
-                className="gap-2.5"
                 markClassName="h-8 w-8 rounded-lg"
                 wordmarkClassName="h-[17px] w-[106px]"
               />

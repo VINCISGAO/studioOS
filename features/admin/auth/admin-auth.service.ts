@@ -19,6 +19,7 @@ import {
 } from "@/features/admin/auth/admin-session-server";
 import { assertAuthSecuritySecret, isProductionRuntime } from "@/lib/auth/admin-security-config";
 import { assertAdminCoreSecretsProductionReady } from "@/lib/auth/admin-secrets-guard";
+import { getAppBaseUrl } from "@/lib/app-url";
 import { notifyAdminLoginSuccess } from "@/features/admin/auth/admin-security-alert.service";
 import { verifyAndConsumeAdminTotp } from "@/features/admin/auth/admin-totp-replay.service";
 import { deriveDeviceLabel } from "@/features/admin/auth/admin-session-management.service";
@@ -65,7 +66,7 @@ export async function completeAdminLogin(input: {
     ipHash: input.ctx.ipHash,
     userAgentHash: input.ctx.userAgentHash,
     deviceLabel: input.deviceLabel ?? deriveDeviceLabel(
-      new Request("https://studioos.local", {
+      new Request(getAppBaseUrl(), {
         headers: { "user-agent": input.ctx.userAgent }
       })
     )

@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { buildAvatarInitials } from "@/lib/studioos/avatar-initials";
 import { cn } from "@/lib/utils";
 
 export function PortalAccountAvatar({
@@ -22,6 +23,7 @@ export function PortalAccountAvatar({
   const bg =
     accent === "violet" ? "bg-violet-600" : accent === "indigo" ? "bg-indigo-600" : "bg-zinc-900";
   const imageSrc = avatarUrl && !imageFailed ? avatarUrl : null;
+  const safeInitials = buildAvatarInitials(initials);
 
   useEffect(() => {
     setImageFailed(false);
@@ -49,7 +51,7 @@ export function PortalAccountAvatar({
           onError={() => setImageFailed(true)}
         />
       ) : (
-        initials.slice(0, 2)
+        safeInitials
       )}
     </div>
   );

@@ -13,6 +13,7 @@ import {
   type EnterpriseTemplateId
 } from "@/features/email/templates/enterprise-email-templates";
 import type { EmailDetail } from "@/features/email/components/email-primitives";
+import { getAppBaseUrl } from "@/lib/app-url";
 
 const enterpriseTemplateIds = new Set<EnterpriseTemplateId>([
   "auth.login_verification",
@@ -73,7 +74,7 @@ function buildStructuredNotificationEmail(input: {
   metadata?: unknown;
 }) {
   const metadata = metadataRecord(input.metadata);
-  const actionUrl = input.actionUrl ?? "https://vincis.app";
+  const actionUrl = input.actionUrl ?? getAppBaseUrl();
 
   if (input.template === "invitation.received") {
     return buildInvitationReceivedEmail({

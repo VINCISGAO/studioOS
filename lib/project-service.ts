@@ -227,7 +227,7 @@ function seedStore(): ProjectStore {
   const projects: StoredProject[] = seedProjects.map((item) =>
     migrateStoredProject({
       id: item.id,
-      client_email: `${item.user_id}@seed.studioos.local`,
+      client_email: `${item.user_id}@seed.vincis.local`,
       client_name: item.company_name,
       company_name: item.company_name,
       email: item.email,

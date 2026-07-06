@@ -127,7 +127,6 @@ export function AdminLoginShell({
         <div className="flex items-start gap-3">
           <BrandLogoLockup
             contrastOn="light"
-            className="gap-2.5 sm:gap-3"
             markClassName="h-8 w-8 sm:h-9 sm:w-9"
             wordmarkClassName="h-[18px] w-[112px] sm:h-[21px] sm:w-[134px]"
             priority

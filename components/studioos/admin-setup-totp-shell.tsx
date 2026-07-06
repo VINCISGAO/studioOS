@@ -152,7 +152,6 @@ export function AdminSetupTotpShell({ locale, token }: { locale: Locale; token: 
       <div className="mb-6 flex justify-center">
         <BrandLogoLockup
           contrastOn="light"
-          className="gap-2.5"
           markClassName="h-8 w-8 rounded-lg shadow-sm"
           wordmarkClassName="h-[17px] w-[106px]"
           priority

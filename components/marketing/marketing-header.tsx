@@ -49,7 +49,6 @@ export async function MarketingHeader({ locale }: { locale: Locale }) {
         >
           <BrandLogoLockup
             contrastOn={isHome ? "dark" : "light"}
-            className="gap-2"
             markClassName="h-8 w-8 rounded-lg"
             wordmarkClassName="h-[17px] w-[106px]"
             priority

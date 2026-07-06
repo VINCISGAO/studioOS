@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 import { ArrowRight, Star } from "lucide-react";
 import { WorkCoverImage } from "@/components/creator/work-cover-image";
 import { CertifiedPartnerBadge } from "@/components/studioos/certification/certified-partner-badge";
@@ -34,7 +34,7 @@ export default async function BrandStudiosPage({ params, searchParams }: Props) 
   const clientEmail = await getCurrentClientEmail();
   const project = await getProject(id);
 
-  if (!project) notFound();
+  if (!project) redirect(withLocale(brandPortalRoutes.dashboard, locale));
   if (clientEmail && project.client_email !== clientEmail.toLowerCase()) {
     redirect(withLocale("/brand", locale));
   }

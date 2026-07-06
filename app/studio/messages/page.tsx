@@ -30,6 +30,7 @@ import { buildMessageProgressSteps } from "@/lib/studioos/message-order-progress
 import { enforceBrandPaymentDeadlinesForCreator } from "@/lib/studioos/brand-payment-expiry.service";
 import { ensureCreatorAssignmentNotificationsForOrders } from "@/lib/studioos/creator-assignment-notify";
 import { creatorPortalRoutes } from "@/lib/studioos/creator-portal-routes";
+import { normalizeInternalActionHref } from "@/lib/studioos/internal-action-href";
 import type { Locale } from "@/lib/i18n";
 
 const CERTIFICATION_MESSAGE_PROJECT_KEY = "certification_onboarding";
@@ -88,7 +89,11 @@ function buildUnifiedMessageCenterPayload(
               (locale === "zh" ? "品牌方" : "Brand"),
             locale
           );
-    const actionHref = notification.actionUrl ?? withLocale("/studio/messages", locale);
+    const actionHref = normalizeInternalActionHref(
+      notification.actionUrl,
+      locale,
+      withLocale("/studio/messages", locale)
+    );
     const projectTitle =
       stringFromMetadata(metadata, ["projectTitle", "campaignTitle", "title"]) ?? notification.title;
 

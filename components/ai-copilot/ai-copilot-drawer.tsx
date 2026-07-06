@@ -92,28 +92,28 @@ const DRAWER_COPY: Record<UiLocale, {
 }> = {
   zh: {
     launcher: "AI助手",
-    title: "VINCIS AI助手",
+    title: "AI助手",
     subtitle: "查询、解释、建议、引导",
     rolePrefix: "角色",
     currentEntity: "当前",
     openWorkspace: "打开全屏 AI助手",
     openWorkspaceAria: "打开 AI助手工作区",
     loading: "正在读取 VINCIS 数据...",
-    inputPlaceholder: "问 VINCIS AI助手...",
+    inputPlaceholder: "问 AI助手...",
     unavailable: "AI助手暂时不可用，请稍后再试。",
     requestFailed: "AI助手请求失败",
     defaultSuggestions: ["我的项目现在到哪一步？", "下一步我应该做什么？", "我的预算合理吗？"]
   },
   en: {
     launcher: "AI Assistant",
-    title: "VINCIS AI Assistant",
+    title: "AI Assistant",
     subtitle: "Search, explain, suggest, and guide",
     rolePrefix: "Role",
     currentEntity: "current",
     openWorkspace: "Open full AI Assistant",
     openWorkspaceAria: "Open AI Assistant workspace",
     loading: "Reading VINCIS data...",
-    inputPlaceholder: "Ask VINCIS AI Assistant...",
+    inputPlaceholder: "Ask AI Assistant...",
     unavailable: "AI Assistant is temporarily unavailable. Please try again later.",
     requestFailed: "AI Assistant request failed",
     defaultSuggestions: ["Where is my project now?", "What should I do next?", "Is my budget reasonable?"]

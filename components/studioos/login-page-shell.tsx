@@ -286,7 +286,6 @@ export function LoginPageShell({
           <MarketingHomeLink locale={locale} className="inline-flex items-center">
             <BrandLogoLockup
               contrastOn={isBrand ? "dark" : "light"}
-              className="gap-2.5 sm:gap-3"
               markClassName={cn("h-6 w-6 sm:h-9 sm:w-9", isBrand && "rounded-md ring-1 ring-white/15 sm:rounded-xl")}
               wordmarkClassName="h-[13px] w-[81px] sm:h-[21px] sm:w-[134px]"
               priority

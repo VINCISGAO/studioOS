@@ -3,6 +3,7 @@ import "server-only";
 import crypto from "node:crypto";
 import { cookies } from "next/headers";
 import type { OAuthEntryRole } from "@/features/auth/oauth-auth.service";
+import { getAppBaseUrl } from "@/lib/app-url";
 import type { Locale } from "@/lib/i18n";
 
 export type OAuthStatePayload = {
@@ -107,8 +108,7 @@ export function alipayOAuthPendingCookieOptions(request: Request) {
 /** @deprecated Prefer setting cookie on the redirect Response in the OAuth API route. */
 export async function stashAlipayOAuthState(payload: OAuthStatePayload, request?: Request) {
   const cookieStore = await cookies();
-  const secureRequest =
-    request ?? new Request(process.env.NEXT_PUBLIC_APP_URL?.trim() || "http://localhost:3000");
+  const secureRequest = request ?? new Request(getAppBaseUrl());
   cookieStore.set(
     ALIPAY_OAUTH_PENDING_COOKIE,
     encodeAlipayOAuthPendingCookie(payload),

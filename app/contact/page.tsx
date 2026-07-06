@@ -18,7 +18,7 @@ export default async function ContactPage({ searchParams }: { searchParams: Prom
         </p>
         <Card className="mt-10 border-zinc-200/80 shadow-none">
           <CardContent className="space-y-4 p-8">
-            <p className="text-sm text-zinc-600">hello@studioos.app</p>
+            <p className="text-sm text-zinc-600">hello@vincis.app</p>
             <Button asChild className="w-full rounded-full">
               <Link href={withLocale("/brand/brief/new", locale)}>
                 {locale === "zh" ? "直接开始 Brief" : "Start a brief instead"}

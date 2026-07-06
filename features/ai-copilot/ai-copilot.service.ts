@@ -78,7 +78,7 @@ function templateAnswer(input: {
 function modelUnavailableAnswer(language: string) {
   if (language === "zh-CN" || language === "zh-TW" || language === "zh") {
     return [
-      "我已经准备好协助你分析 VINCIS 工作区。",
+      "我已经准备好协助你分析工作区。",
       "",
       "你可以问我项目进度、预算是否合理、为什么推荐某个 Creator，或者下一步应该怎么推进。",
       "",
@@ -86,7 +86,7 @@ function modelUnavailableAnswer(language: string) {
     ].join("\n");
   }
   return [
-    "I am ready to help you analyze your VINCIS workspace.",
+    "I am ready to help you analyze your workspace.",
     "",
     "You can ask about project progress, budget health, creator recommendations, or the best next step.",
     "",

@@ -1,13 +1,12 @@
-/** Public site URL — works on Vercel without manual setup on first deploy. */
+/** Public site URL for emails, notifications, OAuth redirects, and server-side links. */
 export function getAppBaseUrl() {
-  const configured = process.env.NEXT_PUBLIC_APP_URL?.trim();
+  const configured = process.env.VINCIS_APP_URL?.trim() || process.env.NEXT_PUBLIC_APP_URL?.trim();
   if (configured) {
     return configured.replace(/\/$/, "");
   }
 
-  const vercelUrl = process.env.VERCEL_URL?.trim();
-  if (vercelUrl) {
-    return `https://${vercelUrl.replace(/^https?:\/\//, "")}`;
+  if (process.env.VERCEL === "1" || process.env.VERCEL_ENV === "production" || process.env.NODE_ENV === "production") {
+    return "https://vincis.app";
   }
 
   return "http://localhost:3000";

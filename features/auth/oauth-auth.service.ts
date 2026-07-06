@@ -277,7 +277,7 @@ export async function completeOAuthSignIn(input: {
 
 function alipaySyntheticEmail(providerUserId: string) {
   const safe = providerUserId.replace(/[^a-zA-Z0-9]/g, "").slice(0, 48) || "user";
-  return `alipay+${safe}@oauth.studioos.app`;
+  return `alipay+${safe}@oauth.vincis.app`;
 }
 
 export async function completeAlipaySignIn(input: {

@@ -1,4 +1,4 @@
-import { notFound, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 import { CommunicationChatPanel } from "@/components/studioos/communication/communication-chat-panel";
 import { getSessionUser } from "@/features/auth/session.service";
 import { platformLocalizationService } from "@/features/communication/platform-localization.service";
@@ -22,7 +22,7 @@ export default async function BrandProjectCommunicationPage({
   }
 
   const project = await getProject(id);
-  if (!project) notFound();
+  if (!project) redirect(withLocale("/brand", locale));
 
   const prismaCampaignId = await platformLocalizationService.resolveCampaignIdFromLegacyProject(id);
   const localizedBrief = prismaCampaignId

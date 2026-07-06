@@ -158,7 +158,7 @@ const UI_COPY: Record<UiLocale, {
   compactPageTitle: string;
 }> = {
   zh: {
-    title: "VINCIS AI助手",
+    title: "AI助手",
     subtitle: "你的 AI 创作者操作系统",
     nav: {
       copilot: "AI助手",
@@ -192,7 +192,7 @@ const UI_COPY: Record<UiLocale, {
     compactPageTitle: "打开紧凑版 AI助手"
   },
   en: {
-    title: "VINCIS AI Assistant",
+    title: "AI Assistant",
     subtitle: "Your AI Creator Operating System",
     nav: {
       copilot: "AI Assistant",

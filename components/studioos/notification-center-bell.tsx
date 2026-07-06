@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { Bell, CheckCheck, ExternalLink, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Locale } from "@/lib/i18n";
+import { normalizeInternalActionHref } from "@/lib/studioos/internal-action-href";
 import { cn } from "@/lib/utils";
 
 type NotificationCategory =
@@ -77,17 +78,6 @@ const categoryCopy: Record<NotificationCategory, { en: string; zh: string }> = {
   ATTRIBUTION: { en: "Attribution", zh: "归因" },
   SYSTEM: { en: "System", zh: "系统" }
 };
-
-function normalizeHref(href: string, locale: Locale) {
-  try {
-    const url = new URL(href, window.location.origin);
-    if (url.origin !== window.location.origin) return url.toString();
-    if (!url.searchParams.has("lang")) url.searchParams.set("lang", locale);
-    return `${url.pathname}${url.search}${url.hash}`;
-  } catch {
-    return href;
-  }
-}
 
 function relativeTime(value: string, locale: Locale) {
   const diffSeconds = Math.max(1, Math.floor((Date.now() - new Date(value).getTime()) / 1000));
@@ -238,7 +228,7 @@ export function NotificationCenterBell({
 
       setOpen(false);
       if (item.actionUrl) {
-        const href = normalizeHref(item.actionUrl, locale);
+        const href = normalizeInternalActionHref(item.actionUrl, locale);
         if (href.startsWith("http")) {
           window.location.assign(href);
           return;
@@ -284,7 +274,7 @@ export function NotificationCenterBell({
       {open ? (
         <div
           className={cn(
-            "absolute right-0 z-50 mt-2 w-[min(25rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-xl",
+            "fixed left-3 right-3 top-16 z-50 mt-0 max-h-[calc(100vh-5rem)] overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-xl sm:absolute sm:left-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-[min(25rem,calc(100vw-2rem))]",
             panelClassName
           )}
         >
@@ -303,7 +293,7 @@ export function NotificationCenterBell({
             ) : null}
           </div>
 
-          <ul className="max-h-[28rem] overflow-y-auto">
+          <ul className="max-h-[calc(100vh-10rem)] overflow-y-auto sm:max-h-[28rem]">
             {sortedItems.length ? (
               sortedItems.slice(0, 15).map((item) => (
                 <li key={item.id} className="border-b border-zinc-50 last:border-0">

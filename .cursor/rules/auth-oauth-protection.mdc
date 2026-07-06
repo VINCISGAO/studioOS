@@ -1,0 +1,30 @@
+---
+description: Protect Google and Alipay login configuration and flows
+alwaysApply: true
+---
+
+# Google / Alipay Login Protection
+
+Google 登录和支付宝登录属于 VINCIS 生产级身份入口。没有项目 owner 在当前对话中的明确授权，禁止修改以下内容：
+
+- Google OAuth / One Tap 的域名、Client ID 读取方式、Supabase 回调、`/auth/callback`、`/api/auth/oauth/google`、`/api/auth/google-one-tap`。
+- Supabase Auth 生产配置假设：`Site URL = https://vincis.app`，允许回调包含 `https://vincis.app/auth/callback`，Google Cloud redirect URI 为 Supabase callback。
+- 支付宝登录的 OAuth 回调、签名、`auth_token` 参数位置、`VINCIS_ALIPAY_*` 环境变量读取、`/auth/alipay/callback`。
+- 登录页社交按钮的基本策略：Google 使用官方 OAuth / One Tap；支付宝不得 iframe 内嵌官方授权页，默认跳转官方授权页。
+- 登录成功后的角色跳转和 session/cookie 逻辑。
+
+允许的修改仅限：
+
+- 修复明确可复现的登录 bug。
+- 更新文档或环境变量说明。
+- 在 owner 明确要求的情况下调整 OAuth 体验。
+
+修改前必须先说明影响范围；修改后必须跑：
+
+```bash
+npm run typecheck
+npm run build
+npm run production:verify
+```
+
+禁止为了“优化”“重构”“统一样式”顺手改动登录流程。

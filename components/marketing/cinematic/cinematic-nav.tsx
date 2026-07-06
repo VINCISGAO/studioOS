@@ -31,7 +31,6 @@ export function CinematicNav({
         <Link href={withLocale("/", locale)} className="flex min-w-0 items-center text-white">
           <BrandLogoLockup
             contrastOn="dark"
-            className="gap-2.5 sm:gap-3"
             markClassName="h-6 w-6 rounded-md ring-1 ring-white/15 sm:h-9 sm:w-9 sm:rounded-xl"
             wordmarkClassName="h-[13px] w-[81px] sm:h-[21px] sm:w-[134px]"
             priority

@@ -1,4 +1,4 @@
-import { notFound, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 import { BrandCommercialTimeline } from "@/components/studioos/commercial-lifecycle-timeline";
 import { BrandProjectHub } from "@/components/studioos/brand-project-hub";
 import { getCurrentClientEmail } from "@/lib/client-session";
@@ -119,7 +119,7 @@ export default async function BrandProjectHubPage({
     if (order) {
       redirect(withLocale(brandPortalRoutes.projectReview(id), locale));
     }
-    notFound();
+    redirect(withLocale(brandPortalRoutes.dashboard, locale));
   }
 
   if (clientEmail && project.client_email !== clientEmail.toLowerCase()) {

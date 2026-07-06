@@ -28,7 +28,7 @@ const copy = {
     greeting: (name: string, dayPart: DayPart | null) => {
       const prefix =
         dayPart === "morning" ? "Good morning" : dayPart === "afternoon" ? "Good afternoon" : dayPart === "evening" ? "Good evening" : "Hi";
-      return `${prefix} 👋 ${name}`;
+      return `${prefix}, ${name}`;
     },
     headline: "What ad do you want to make today?",
     steps: "Three steps: brief, pick a studio, review and approve.",
@@ -44,7 +44,7 @@ const copy = {
   zh: {
     greeting: (name: string, dayPart: DayPart | null) => {
       const prefix = dayPart === "morning" ? "早上好" : dayPart === "afternoon" ? "下午好" : dayPart === "evening" ? "晚上好" : "你好";
-      return `${prefix} 👋 ${name}`;
+      return `${prefix}，${name}`;
     },
     headline: "今天想做什么广告？",
     steps: "三步搞定：说清需求、选制作团队、审片验收。",

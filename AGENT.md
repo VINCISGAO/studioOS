@@ -42,6 +42,19 @@ No half-finished implementations.
 
 Every feature should feel production-ready.
 
+### Protected Auth Entrypoints
+
+Google OAuth / One Tap and Alipay OAuth are protected production login flows. Do not change their callback URLs, provider configuration assumptions, environment variable names, session completion logic, social login button behavior, or role redirects unless the project owner explicitly authorizes that change in the current conversation.
+
+Production assumptions:
+
+- App domain: `https://vincis.app`
+- Supabase site URL: `https://vincis.app`
+- Supabase app callback: `https://vincis.app/auth/callback`
+- Google Cloud redirect URI: Supabase `/auth/v1/callback`
+- Alipay callback: `https://vincis.app/auth/alipay/callback`
+- Alipay authorization must not be embedded with an iframe; use the official authorization redirect unless a supported official QR flow is implemented.
+
 ---
 
 ## Engineering Standards

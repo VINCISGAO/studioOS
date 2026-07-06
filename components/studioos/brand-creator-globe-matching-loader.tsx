@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { BrandLogoMark } from "@/components/brand-logo-mark";
+import { BrandLogoLockup } from "@/components/brand-logo-mark";
 import { creators } from "@/lib/data";
 import type { Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -148,10 +148,12 @@ export function BrandCreatorGlobeMatchingLoader({
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_38%,rgba(139,92,246,0.12),transparent_58%)]" />
 
       <div className="relative mx-auto flex max-w-3xl flex-col items-center text-center">
-        <div className="mb-6 flex items-center gap-2 text-sm font-semibold text-zinc-900">
-          <BrandLogoMark className="h-8 w-8 rounded-lg shadow-sm" />
-          VINCIS
-        </div>
+        <BrandLogoLockup
+          contrastOn="light"
+          className="mb-6"
+          markClassName="h-8 w-8 rounded-[10px] shadow-sm"
+          wordmarkClassName="h-[17px] w-[107px]"
+        />
 
         <h2 className={cn("max-w-2xl font-semibold tracking-tight text-zinc-950", compact ? "text-2xl" : "text-3xl sm:text-4xl")}>
           {t.titleLead}
