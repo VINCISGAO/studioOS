@@ -42,6 +42,21 @@ function loginErrorUrl(lang: Locale, entryRole: OAuthEntryRole, error: string) {
 
 function resolveOAuthCallbackUrl(request: Request) {
   const requestUrl = new URL(request.url);
+  const configuredAppUrl =
+    process.env.VINCIS_APP_URL?.trim() ||
+    process.env.NEXT_PUBLIC_APP_URL?.trim() ||
+    process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (configuredAppUrl) {
+    const normalized = configuredAppUrl.startsWith("http")
+      ? configuredAppUrl
+      : `https://${configuredAppUrl}`;
+    return new URL("/auth/callback", normalized);
+  }
+
+  if (process.env.VERCEL === "1") {
+    return new URL("/auth/callback", "https://vincis.app");
+  }
+
   const forwardedProto = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim();
   const forwardedHost = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim();
   const protocol = forwardedProto || requestUrl.protocol.replace(/:$/, "");

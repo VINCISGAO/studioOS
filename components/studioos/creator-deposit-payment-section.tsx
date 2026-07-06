@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { useFormStatus } from "react-dom";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import {
   Bitcoin,
   Check,
@@ -72,24 +71,24 @@ const methodIcons: Record<PayoutMethodType, typeof Smartphone> = {
 function SubmitPaymentButton({
   label,
   pendingLabel,
-  submitting
+  submitting,
+  onClick
 }: {
   label: string;
   pendingLabel: string;
   submitting: boolean;
+  onClick: () => void;
 }) {
-  const { pending } = useFormStatus();
-  const isSubmitting = pending || submitting;
-
   return (
     <Button
-      type="submit"
+      type="button"
       size="lg"
       className="h-12 w-full rounded-xl bg-zinc-900 text-sm font-medium hover:bg-zinc-800"
-      disabled={isSubmitting}
+      disabled={submitting}
+      onClick={onClick}
     >
-      {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lock className="h-4 w-4" />}
-      {isSubmitting ? pendingLabel : label}
+      {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lock className="h-4 w-4" />}
+      {submitting ? pendingLabel : label}
     </Button>
   );
 }
@@ -113,6 +112,8 @@ export function CreatorDepositPaymentSection({
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [paymentPending, startPaymentTransition] = useTransition();
+  const formRef = useRef<HTMLFormElement>(null);
 
   const account = useMemo(() => getPlatformCorporateAccount(method, creatorId, locale), [method, creatorId, locale]);
   const SelectedMethodIcon = methodIcons[method];
@@ -127,6 +128,15 @@ export function CreatorDepositPaymentSection({
     void navigator.clipboard.writeText(value);
     setCopiedKey(key);
     window.setTimeout(() => setCopiedKey(null), 1500);
+  }
+
+  function completeSimulatedPayment() {
+    if (!formRef.current || isSubmittingPayment || paymentPending) return;
+    setIsSubmittingPayment(true);
+    const formData = new FormData(formRef.current);
+    startPaymentTransition(async () => {
+      await submitDepositPaymentAction(formData);
+    });
   }
 
   if (submitted || snapshot.pending_payment) {
@@ -148,9 +158,13 @@ export function CreatorDepositPaymentSection({
       </div>
 
       <form
+        ref={formRef}
         action={submitDepositPaymentAction}
         className="space-y-6 p-5 sm:p-6"
-        onSubmit={() => setIsSubmittingPayment(true)}
+        onSubmit={(event) => {
+          event.preventDefault();
+          completeSimulatedPayment();
+        }}
       >
         <input type="hidden" name="lang" value={locale} />
         <input type="hidden" name="payment_method" value={method} />
@@ -315,7 +329,8 @@ export function CreatorDepositPaymentSection({
                 <SubmitPaymentButton
                   label={extra.completePayment}
                   pendingLabel={extra.processingPayment}
-                  submitting={isSubmittingPayment}
+                  submitting={isSubmittingPayment || paymentPending}
+                  onClick={completeSimulatedPayment}
                 />
               </div>
             </div>

@@ -11,6 +11,7 @@ import {
   Users
 } from "lucide-react";
 import { BrandLogoLockup } from "@/components/brand-logo-mark";
+import { GoogleOneTap } from "@/components/studioos/google-one-tap";
 import { LoginLanguageSwitcher } from "@/components/studioos/login-language-switcher";
 import { LoginSocialButtons } from "@/components/studioos/login-social-buttons";
 import { LoginWorkspace } from "@/components/studioos/login-workspace";
@@ -71,6 +72,7 @@ type LoginPageShellProps = {
   errorCode?: string;
   demoMode: boolean;
   googleOAuthEnabled?: boolean;
+  googleOneTapClientId?: string;
   alipayOAuthEnabled?: boolean;
   t: LoginPageCopy;
 };
@@ -258,6 +260,7 @@ export function LoginPageShell({
   errorCode,
   demoMode,
   googleOAuthEnabled = false,
+  googleOneTapClientId = "",
   alipayOAuthEnabled = false,
   t
 }: LoginPageShellProps) {
@@ -268,6 +271,13 @@ export function LoginPageShell({
 
   return (
     <main className="relative min-h-[100dvh] overflow-hidden">
+      <GoogleOneTap
+        clientId={googleOneTapClientId}
+        locale={locale}
+        role={role}
+        nextPath={nextPath}
+        enabled={googleOAuthEnabled}
+      />
       <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${pageVisual.bg})` }} aria-hidden />
       <div className="absolute inset-0" style={{ background: pageVisual.overlay }} aria-hidden />
 

@@ -27,6 +27,18 @@ function testAccountLabel(locale: Locale, accountLabel: string) {
   return locale === "zh" ? `${accountLabel}（测试号）` : `${accountLabel} (test account)`;
 }
 
+function oauthHref(provider: DemoSocialProvider, locale: Locale, role: LoginRole, nextPath: string) {
+  const params = new URLSearchParams({
+    lang: locale,
+    role,
+    expected_role: role
+  });
+  if (nextPath) {
+    params.set("next", nextPath);
+  }
+  return `/api/auth/oauth/${provider}?${params.toString()}`;
+}
+
 function SocialHiddenFields({
   locale,
   role,
@@ -118,13 +130,13 @@ export function LoginSocialButtons({
           );
         }
 
+        const href = oauthHref(id, locale, role, nextPath);
         return (
-          <form key={id} action={`/api/auth/oauth/${id}`} method="POST" className="min-w-0">
-            <SocialHiddenFields locale={locale} role={role} nextPath={nextPath} provider={id} />
-            <button type="submit" aria-label={label} title={label} className={buttonClassName}>
+          <div key={id} className="min-w-0">
+            <a href={href} aria-label={label} title={label} className={buttonClassName}>
               {buttonContent}
-            </button>
-          </form>
+            </a>
+          </div>
         );
       })}
     </div>

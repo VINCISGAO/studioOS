@@ -255,6 +255,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const demoMode = isDemoLoginUiEnabled();
   const oauthLive = !preferDemoAuth();
   const googleOAuthEnabled = hasSupabaseConfig() && oauthLive;
+  const googleOneTapClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID?.trim() ?? "";
   const alipayOAuthEnabled = isAlipayOAuthLive() && hasDatabaseUrl();
 
   if (session && sessionMatchesRequestedRole(session, role, hasExplicitRole) && !rawError) {
@@ -279,6 +280,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       errorCode={errorCode}
       demoMode={demoMode}
       googleOAuthEnabled={googleOAuthEnabled}
+      googleOneTapClientId={googleOneTapClientId}
       alipayOAuthEnabled={alipayOAuthEnabled}
       t={t}
     />

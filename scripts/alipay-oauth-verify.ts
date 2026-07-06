@@ -27,15 +27,20 @@ async function main() {
   const checks: Check[] = [];
 
   checks.push({
-    name: "env.ALIPAY_APP_ID",
-    ok: Boolean(process.env.ALIPAY_APP_ID?.trim()),
-    detail: process.env.ALIPAY_APP_ID?.trim() || "missing"
+    name: "env.VINCIS_ALIPAY_APP_ID",
+    ok: Boolean(process.env.VINCIS_ALIPAY_APP_ID?.trim() || process.env.ALIPAY_APP_ID?.trim()),
+    detail: process.env.VINCIS_ALIPAY_APP_ID?.trim() || process.env.ALIPAY_APP_ID?.trim() || "missing"
   });
 
   checks.push({
-    name: "env.ALIPAY_PRIVATE_KEY",
-    ok: Boolean(process.env.ALIPAY_PRIVATE_KEY?.trim()),
-    detail: process.env.ALIPAY_PRIVATE_KEY?.trim() ? "present" : "missing"
+    name: "env.VINCIS_ALIPAY_PRIVATE_KEY",
+    ok: Boolean(
+      process.env.VINCIS_ALIPAY_PRIVATE_KEY?.trim() || process.env.ALIPAY_PRIVATE_KEY?.trim()
+    ),
+    detail:
+      process.env.VINCIS_ALIPAY_PRIVATE_KEY?.trim() || process.env.ALIPAY_PRIVATE_KEY?.trim()
+        ? "present"
+        : "missing"
   });
 
   if (!hasAlipayOAuthConfig()) {
@@ -94,7 +99,7 @@ async function main() {
       checks.push({
         name: "signature.probe",
         ok: false,
-        detail: "invalid — 应用公钥与 ALIPAY_PRIVATE_KEY 不是同一对"
+        detail: "invalid — 应用公钥与 VINCIS_ALIPAY_PRIVATE_KEY 不是同一对"
       });
     } else if (
       message.includes("invalid-auth-code") ||

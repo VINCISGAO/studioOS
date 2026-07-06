@@ -7,8 +7,8 @@ export type AlipayOAuthConfig = {
   gatewayUrl: string;
 };
 
-function readEnv(name: string) {
-  return process.env[name]?.trim() ?? "";
+function readEnv(name: string, legacyName?: string) {
+  return process.env[name]?.trim() || (legacyName ? process.env[legacyName]?.trim() : "") || "";
 }
 
 function normalizePrivateKey(raw: string) {
@@ -19,7 +19,10 @@ function normalizePrivateKey(raw: string) {
 }
 
 export function hasAlipayOAuthConfig() {
-  return Boolean(readEnv("ALIPAY_APP_ID") && readEnv("ALIPAY_PRIVATE_KEY"));
+  return Boolean(
+    readEnv("VINCIS_ALIPAY_APP_ID", "ALIPAY_APP_ID") &&
+      readEnv("VINCIS_ALIPAY_PRIVATE_KEY", "ALIPAY_PRIVATE_KEY")
+  );
 }
 
 /** Live Alipay login — independent of demo-auth shortcuts (needs DB + keys). */
@@ -28,31 +31,35 @@ export function isAlipayOAuthLive() {
 }
 
 export function getAlipayOAuthConfig(): AlipayOAuthConfig | null {
-  const appId = readEnv("ALIPAY_APP_ID");
-  const privateKey = normalizePrivateKey(readEnv("ALIPAY_PRIVATE_KEY"));
+  const appId = readEnv("VINCIS_ALIPAY_APP_ID", "ALIPAY_APP_ID");
+  const privateKey = normalizePrivateKey(
+    readEnv("VINCIS_ALIPAY_PRIVATE_KEY", "ALIPAY_PRIVATE_KEY")
+  );
   if (!appId || !privateKey) {
     return null;
   }
 
-  const sandbox = readEnv("ALIPAY_SANDBOX") === "1" || readEnv("ALIPAY_SANDBOX") === "true";
+  const sandbox =
+    readEnv("VINCIS_ALIPAY_SANDBOX", "ALIPAY_SANDBOX") === "1" ||
+    readEnv("VINCIS_ALIPAY_SANDBOX", "ALIPAY_SANDBOX") === "true";
 
   return {
     appId,
     privateKey,
     authBaseUrl:
-      readEnv("ALIPAY_AUTH_BASE_URL") ||
+      readEnv("VINCIS_ALIPAY_AUTH_BASE_URL", "ALIPAY_AUTH_BASE_URL") ||
       (sandbox
         ? "https://openauth-sandbox.dl.alipaydev.com"
         : "https://openauth.alipay.com"),
     gatewayUrl:
-      readEnv("ALIPAY_GATEWAY_URL") ||
+      readEnv("VINCIS_ALIPAY_GATEWAY_URL", "ALIPAY_GATEWAY_URL") ||
       (sandbox ? "https://openapi.alipaydev.com/gateway.do" : "https://openapi.alipay.com/gateway.do")
   };
 }
 
 /** Must match Alipay open platform「授权回调地址」exactly (https, no trailing slash). */
 export function alipayOAuthRedirectUri() {
-  const override = readEnv("ALIPAY_REDIRECT_URI");
+  const override = readEnv("VINCIS_ALIPAY_REDIRECT_URI", "ALIPAY_REDIRECT_URI");
   if (override) {
     return override.replace(/\/$/, "");
   }
@@ -60,7 +67,9 @@ export function alipayOAuthRedirectUri() {
 }
 
 export function alipayOAuthMode(): "openauth" | "gateway" {
-  return readEnv("ALIPAY_OAUTH_MODE") === "gateway" ? "gateway" : "openauth";
+  return readEnv("VINCIS_ALIPAY_OAUTH_MODE", "ALIPAY_OAUTH_MODE") === "gateway"
+    ? "gateway"
+    : "openauth";
 }
 
 /** Canonical publicAppAuthorize URL — must match Alipay docs (redirect_uri encoded once, no state). */

@@ -88,7 +88,7 @@ export class AlipayOAuthService {
       appId: config.appId,
       privateKey: config.privateKey,
       method: "alipay.user.info.share",
-      bizContent: {
+      params: {
         auth_token: accessToken
       }
     });

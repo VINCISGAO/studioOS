@@ -221,9 +221,9 @@ function StudioPortalShellInner({
                   <MarketingHomeLink locale={locale} className="flex items-center gap-2 font-semibold text-zinc-950">
                     <BrandLogoLockup
                       contrastOn="light"
-                      className="gap-2"
-                      markClassName="h-7 w-7 rounded-lg shadow-sm"
-                      wordmarkClassName="h-[15px] w-[94px]"
+                      className="gap-1.5"
+                      markClassName="h-6 w-6 rounded-md shadow-sm"
+                      wordmarkClassName="h-[13px] w-[82px]"
                     />
                   </MarketingHomeLink>
                   {isVerified ? (

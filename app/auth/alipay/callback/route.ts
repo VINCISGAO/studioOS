@@ -73,7 +73,7 @@ export async function GET(request: Request) {
     const message = raw.includes("invalid-signature") || raw.includes("验签")
       ? "支付宝应用密钥不匹配，请检查网页应用 VINCIS登录 的应用公钥与 Vercel 私钥是否为同一对。"
       : raw.includes("AUTH_REDIRECT") || raw.includes("redirect")
-        ? "支付宝授权回调地址不匹配，请在开放平台开发设置中填写 https://studio-os-sigma.vercel.app/auth/alipay/callback"
+        ? "支付宝授权回调地址不匹配，请在开放平台开发设置中填写 https://vincis.app/auth/alipay/callback"
         : raw;
     return NextResponse.redirect(new URL(oauthFailureRedirect(message, entryRole, lang), request.url));
   }
