@@ -122,11 +122,16 @@ export function NotificationCenterBell({
   const [toast, setToast] = useState<NotificationCenterItem | null>(null);
   const [streamEnabled, setStreamEnabled] = useState(initialItems.length > 0);
   const [isPending, startTransition] = useTransition();
+  const itemsRef = useRef(initialItems);
 
   const sortedItems = useMemo(
     () => [...items].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
     [items]
   );
+
+  useEffect(() => {
+    itemsRef.current = items;
+  }, [items]);
 
   useEffect(() => {
     let cancelled = false;
@@ -169,6 +174,9 @@ export function NotificationCenterBell({
     if (!streamEnabled) return;
 
     async function poll() {
+      if (document.hidden) {
+        return;
+      }
       try {
         const response = await fetch("/api/v1/notifications?limit=30", { credentials: "same-origin" });
         if (!response.ok) return;
@@ -179,13 +187,12 @@ export function NotificationCenterBell({
         if (!payload.success || !payload.data) return;
 
         const nextItems = payload.data.items;
-        setItems((current) => {
-          const seen = new Set(current.map((item) => item.id));
-          const fresh = nextItems.filter((item) => !seen.has(item.id));
-          if (!fresh.length) return current;
+        const seen = new Set(itemsRef.current.map((item) => item.id));
+        const fresh = nextItems.filter((item) => !seen.has(item.id));
+        if (fresh.length) {
           setToast(fresh[fresh.length - 1] ?? null);
-          return nextItems;
-        });
+          setItems(nextItems);
+        }
         setUnreadCount(payload.data.unreadCount);
       } catch {
         // Notification refresh is best-effort and must never break navigation.
@@ -193,7 +200,16 @@ export function NotificationCenterBell({
     }
 
     const interval = window.setInterval(() => void poll(), 5000);
-    return () => window.clearInterval(interval);
+    const onVisibilityChange = () => {
+      if (!document.hidden) {
+        void poll();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
   }, [streamEnabled]);
 
   useEffect(() => {

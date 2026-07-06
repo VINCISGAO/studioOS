@@ -21,6 +21,9 @@ export class NotificationRepository {
     content: string;
     actionUrl?: string;
   }): Promise<Notification> {
+    if (!hasDatabaseUrl()) {
+      throw new Error("DATABASE_URL not configured");
+    }
     return prisma.notification.create({
       data: {
         userId: input.userId,
@@ -48,14 +51,17 @@ export class NotificationRepository {
   }
 
   async countUnread(userId: string) {
+    if (!hasDatabaseUrl()) return 0;
     return prisma.notification.count({ where: { userId, isRead: false } });
   }
 
   async findById(id: string) {
+    if (!hasDatabaseUrl()) return null;
     return prisma.notification.findUnique({ where: { id } });
   }
 
   async markRead(id: string, userId: string) {
+    if (!hasDatabaseUrl()) return { count: 0 };
     return prisma.notification.updateMany({
       where: { id, userId, isRead: false },
       data: { isRead: true, readAt: new Date() }
@@ -63,6 +69,7 @@ export class NotificationRepository {
   }
 
   async markAllRead(userId: string) {
+    if (!hasDatabaseUrl()) return { count: 0 };
     return prisma.notification.updateMany({
       where: { userId, isRead: false },
       data: { isRead: true, readAt: new Date() }
@@ -70,12 +77,16 @@ export class NotificationRepository {
   }
 
   async deleteMany(ids: string[], userId: string) {
+    if (!hasDatabaseUrl()) return { count: 0 };
     return prisma.notification.deleteMany({
       where: { id: { in: ids }, userId }
     });
   }
 
   async markSent(id: string) {
+    if (!hasDatabaseUrl()) {
+      throw new Error("DATABASE_URL not configured");
+    }
     return prisma.notification.update({
       where: { id },
       data: { isSent: true }
@@ -83,6 +94,7 @@ export class NotificationRepository {
   }
 
   async listSince(userId: string, since: Date) {
+    if (!hasDatabaseUrl()) return [];
     return prisma.notification.findMany({
       where: { userId, createdAt: { gt: since } },
       orderBy: { createdAt: "asc" },

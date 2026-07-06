@@ -1,13 +1,13 @@
 import { cookies } from "next/headers";
 import { resolveBrandBriefEmailFromCookieValues } from "@/lib/brand-brief-session";
 import { DEMO_SESSION_COOKIE, VISITOR_COOKIE, hasSupabaseConfig } from "@/lib/auth-config";
-import { parseDemoSession } from "@/lib/demo-auth";
+import { parseServerDemoSession } from "@/lib/demo-session-server";
 
 export { brandDraftEmailForSession } from "@/lib/brand-brief-session";
 
 export async function getCurrentClientEmail(): Promise<string | null> {
   const cookieStore = await cookies();
-  const session = parseDemoSession(cookieStore.get(DEMO_SESSION_COOKIE)?.value);
+  const session = parseServerDemoSession(cookieStore.get(DEMO_SESSION_COOKIE)?.value);
   if (session?.role === "client") {
     return session.email.toLowerCase();
   }

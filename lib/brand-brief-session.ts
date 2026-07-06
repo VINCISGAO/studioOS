@@ -1,5 +1,5 @@
 import { randomBytes } from "crypto";
-import { parseDemoSession } from "@/lib/demo-session";
+import { parseServerDemoSession } from "@/lib/demo-session-server";
 
 /** Stable guest brand identity for a signed-in non-brand session (no cookie writes). */
 export function brandDraftEmailForSession(email: string, role: string) {
@@ -12,7 +12,7 @@ export function resolveBrandBriefEmailFromCookieValues(
   demoSessionRaw?: string,
   visitorIdRaw?: string
 ): string | null {
-  const session = parseDemoSession(demoSessionRaw);
+  const session = parseServerDemoSession(demoSessionRaw);
 
   if (session?.role === "client") {
     return session.email.toLowerCase();

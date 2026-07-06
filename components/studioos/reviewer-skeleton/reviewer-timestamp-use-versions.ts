@@ -42,6 +42,7 @@ export function useReviewerTimestampVersions({
   const fileRef = useRef<HTMLInputElement>(null);
   const xhrRef = useRef<XMLHttpRequest | null>(null);
   const stopProgressRef = useRef<(() => void) | null>(null);
+  const readyTimerRef = useRef<number | null>(null);
   const usedFallbackRef = useRef(false);
   const fallbackIndexRef = useRef(0);
   const [uploadNotes, setUploadNotes] = useState("");
@@ -64,6 +65,9 @@ export function useReviewerTimestampVersions({
     return () => {
       xhrRef.current?.abort();
       stopProgressRef.current?.();
+      if (readyTimerRef.current != null) {
+        window.clearTimeout(readyTimerRef.current);
+      }
     };
   }, []);
 
@@ -220,7 +224,10 @@ export function useReviewerTimestampVersions({
         [result.deliverable.version]: "processing"
       }));
 
-      window.setTimeout(() => {
+      if (readyTimerRef.current != null) {
+        window.clearTimeout(readyTimerRef.current);
+      }
+      readyTimerRef.current = window.setTimeout(() => {
         setVersionReadyState((prev) => ({
           ...prev,
           [result.deliverable.version]: "ready"

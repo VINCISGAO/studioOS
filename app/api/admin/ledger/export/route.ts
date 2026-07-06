@@ -23,7 +23,9 @@ export async function GET(request: Request) {
     return new NextResponse(csv, {
       headers: {
         "Content-Type": "text/csv; charset=utf-8",
-        "Content-Disposition": `attachment; filename="ledger-export-${Date.now()}.csv"`
+        "Content-Disposition": `attachment; filename="ledger-export-${Date.now()}.csv"`,
+        "Cache-Control": "no-store",
+        Pragma: "no-cache"
       }
     });
   } catch (error) {

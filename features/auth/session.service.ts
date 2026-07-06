@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { DEMO_SESSION_COOKIE } from "@/lib/auth-config";
-import { parseDemoSession, type DemoSession } from "@/lib/demo-session";
+import { type DemoSession } from "@/lib/demo-session";
+import { parseServerDemoSession } from "@/lib/demo-session-server";
 import { authService, type AuthUserDto } from "@/features/auth/auth.service";
 import type { MvpProfile, MvpRole } from "@/lib/mvp/types";
 import type { UserRole } from "@prisma/client";
@@ -14,12 +15,19 @@ export function prismaRoleToMvp(role: UserRole): MvpRole {
 
 export async function getSessionUser(): Promise<AuthUserDto | null> {
   const cookieStore = await cookies();
-  const session = parseDemoSession(cookieStore.get(DEMO_SESSION_COOKIE)?.value);
+  const session = parseServerDemoSession(cookieStore.get(DEMO_SESSION_COOKIE)?.value);
   if (!session) return null;
 
   if (session.userId) {
     const user = await authService.getUserById(session.userId);
-    if (user && !isPlatformAdminUserRole(user.role)) return user;
+    if (
+      user &&
+      user.email.toLowerCase() === session.email.toLowerCase() &&
+      !isPlatformAdminUserRole(user.role)
+    ) {
+      return user;
+    }
+    return null;
   }
 
   const byEmail = await authService.getUserByEmail(session.email);

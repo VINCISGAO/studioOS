@@ -35,10 +35,11 @@ export function deliverableVideoPolicyNotice(locale: Locale) {
 }
 
 export function deliverableDownloadHref(fileUrl: string) {
-  if (!fileUrl.startsWith("/api/review-video/")) {
-    return fileUrl;
+  const trimmed = fileUrl.trim();
+  if (!trimmed.startsWith("/api/review-video/")) {
+    return "";
   }
-  return fileUrl.includes("?") ? `${fileUrl}&download=1` : `${fileUrl}?download=1`;
+  return trimmed.includes("?") ? `${trimmed}&download=1` : `${trimmed}?download=1`;
 }
 
 export function isDeliverableVideoPurged(deliverable: { file_url: string }) {

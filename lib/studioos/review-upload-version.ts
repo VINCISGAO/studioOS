@@ -34,18 +34,31 @@ async function loadVideoUploadServer() {
   return import("@/lib/studioos/video-upload");
 }
 
+async function createReviewVideoExistenceChecker(orderId: string) {
+  const { hasReviewVideoFileOnDisk } = await loadVideoUploadServer();
+  const cache = new Map<number, Promise<boolean>>();
+
+  return (version: number) => {
+    const cached = cache.get(version);
+    if (cached) return cached;
+    const next = hasReviewVideoFileOnDisk(orderId, version);
+    cache.set(version, next);
+    return next;
+  };
+}
+
 export async function filterPlayableDeliverables(
   orderId: string,
   deliverables: StoredDeliverable[]
 ): Promise<StoredDeliverable[]> {
   const { hasPlayableReviewVideo } = await loadVideoUploadServer();
-  const playable: StoredDeliverable[] = [];
-  for (const item of deliverables) {
-    if (await hasPlayableReviewVideo(orderId, item.version)) {
-      playable.push(item);
-    }
-  }
-  return playable;
+  const checks = await Promise.all(
+    deliverables.map(async (item) => ({
+      item,
+      playable: await hasPlayableReviewVideo(orderId, item.version)
+    }))
+  );
+  return checks.filter((entry) => entry.playable).map((entry) => entry.item);
 }
 
 /** Drop DB rows for vN when the real file lives on a lower slot (legacy upload mismatch). */
@@ -53,7 +66,7 @@ export async function prunePhantomReviewDeliverables(
   orderId: string,
   deliverables: StoredDeliverable[]
 ): Promise<StoredDeliverable[]> {
-  const { hasReviewVideoFileOnDisk } = await loadVideoUploadServer();
+  const hasExactReviewVideo = await createReviewVideoExistenceChecker(orderId);
   const sorted = [...deliverables].sort((a, b) => a.version - b.version);
   const kept: StoredDeliverable[] = [];
 
@@ -63,7 +76,7 @@ export async function prunePhantomReviewDeliverables(
       continue;
     }
 
-    const hasExactFile = await hasReviewVideoFileOnDisk(orderId, item.version);
+    const hasExactFile = await hasExactReviewVideo(item.version);
     if (hasExactFile) {
       kept.push(item);
       continue;
@@ -71,7 +84,7 @@ export async function prunePhantomReviewDeliverables(
 
     const lowerHasExact = await Promise.all(
       kept.map(async (existing) =>
-        existing.version < item.version ? hasReviewVideoFileOnDisk(orderId, existing.version) : false
+        existing.version < item.version ? hasExactReviewVideo(existing.version) : false
       )
     );
     if (lowerHasExact.some(Boolean)) {
@@ -148,7 +161,7 @@ export async function resolveReviewUploadVersionForOrder(
   orderStatus?: OrderStatus,
   paidSlotsUnlocked = 0
 ): Promise<{ version: number; replace: boolean }> {
-  const { hasReviewVideoFileOnDisk } = await loadVideoUploadServer();
+  const hasExactReviewVideo = await createReviewVideoExistenceChecker(orderId);
   const catalog = await prunePhantomReviewDeliverables(orderId, deliverables);
   const latestSubmitted = latestSubmittedDeliverableVersion(catalog);
   const revertedUploadVersion = latestUnsubmittedDeliverableVersion(catalog);
@@ -172,7 +185,7 @@ export async function resolveReviewUploadVersionForOrder(
     .sort((a, b) => a.version - b.version);
 
   for (const item of replaceCandidates) {
-    if (!(await hasReviewVideoFileOnDisk(orderId, item.version))) {
+    if (!(await hasExactReviewVideo(item.version))) {
       return { version: item.version, replace: true };
     }
   }
@@ -188,7 +201,7 @@ export async function resolveCreatorReplaceUploadSlot(
   orderId: string,
   deliverables: StoredDeliverable[]
 ): Promise<number | null> {
-  const { hasReviewVideoFileOnDisk } = await loadVideoUploadServer();
+  const hasExactReviewVideo = await createReviewVideoExistenceChecker(orderId);
   const catalog = await prunePhantomReviewDeliverables(orderId, deliverables);
   const latestSubmitted = latestSubmittedDeliverableVersion(catalog);
   const revertedUploadVersion = latestUnsubmittedDeliverableVersion(catalog);
@@ -203,7 +216,7 @@ export async function resolveCreatorReplaceUploadSlot(
     .sort((a, b) => b.version - a.version);
 
   for (const item of sorted) {
-    if (!(await hasReviewVideoFileOnDisk(orderId, item.version))) {
+    if (!(await hasExactReviewVideo(item.version))) {
       return item.version;
     }
   }

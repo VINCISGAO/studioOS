@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { DEMO_SESSION_COOKIE, hasSupabaseConfig } from "@/lib/auth-config";
-import { parseDemoSession, type DemoRole, type DemoSession } from "@/lib/demo-session";
+import { type DemoRole, type DemoSession } from "@/lib/demo-session";
+import { parseServerDemoSession } from "@/lib/demo-session-server";
 import { getSessionUser } from "@/features/auth/session.service";
 import { createClient } from "@/lib/supabase/server";
 
@@ -39,7 +40,7 @@ async function getSupabaseSession(): Promise<DemoSession | null> {
 
 export async function getCurrentSession(): Promise<DemoSession | null> {
   const cookieStore = await cookies();
-  const demoSession = parseDemoSession(cookieStore.get(DEMO_SESSION_COOKIE)?.value);
+  const demoSession = parseServerDemoSession(cookieStore.get(DEMO_SESSION_COOKIE)?.value);
   if (demoSession) {
     return demoSession;
   }

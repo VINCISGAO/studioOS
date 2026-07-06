@@ -12,6 +12,7 @@ import { ReviewerApproveSettlementDialog } from "@/components/studioos/reviewer-
 import { Button } from "@/components/ui/button";
 import type { Locale } from "@/lib/i18n";
 import type { OrderStatus } from "@/lib/order-types";
+import { deliverableDownloadHref } from "@/lib/studioos/deliverable-video-policy-shared";
 import type { ReviewSettlementPreview } from "@/lib/studioos/reviewer-settlement-ui";
 import { cn } from "@/lib/utils";
 
@@ -66,7 +67,8 @@ export function ReviewerHeaderActions({
   const canMarkNoChanges =
     role === "brand" && !reviewCompleted && ["review", "revision"].includes(orderStatus);
   const canConfirmDelivery = role === "brand" && !reviewCompleted && orderStatus === "ready_for_completion";
-  const canDownload = role === "brand" && reviewCompleted && Boolean(downloadUrl);
+  const safeDownloadUrl = deliverableDownloadHref(downloadUrl);
+  const canDownload = role === "brand" && reviewCompleted && Boolean(safeDownloadUrl);
   const compact = variant === "shell";
 
   function markReadyForCompletion() {
@@ -157,7 +159,7 @@ export function ReviewerHeaderActions({
             compact ? "h-8 gap-1 rounded-lg px-2.5 text-xs" : "h-9 gap-1.5 rounded-lg px-3 text-xs"
           )}
         >
-          <a href={`${downloadUrl}${downloadUrl.includes("?") ? "&" : "?"}download=1`} download>
+          <a href={safeDownloadUrl} download>
             <Download className="h-3.5 w-3.5" />
             {compact ? t.downloadShort : t.download}
           </a>

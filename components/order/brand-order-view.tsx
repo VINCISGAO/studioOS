@@ -192,6 +192,7 @@ export async function BrandOrderView({
                       order.status === "completed" && !purged
                         ? deliverableDownloadHref(deliverable.file_url)
                         : deliverable.file_url;
+                    const canDownload = Boolean(downloadHref);
 
                     return (
                     <div key={deliverable.id} className="rounded-lg border p-4">
@@ -202,7 +203,7 @@ export async function BrandOrderView({
                           </p>
                           <p className="mt-1 text-xs text-muted-foreground">{formatDate(deliverable.created_at)}</p>
                         </div>
-                        {purged ? (
+                        {purged || !canDownload ? (
                           <p className="text-xs text-muted-foreground">{t.purged}</p>
                         ) : (
                           <Button asChild size="sm" variant="outline">

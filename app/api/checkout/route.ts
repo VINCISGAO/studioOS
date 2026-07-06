@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import { getAppBaseUrl } from "@/lib/app-url";
+import { getCurrentClientEmail } from "@/lib/client-session";
+import { getInquiry } from "@/lib/chat-service";
+import { getQuote } from "@/lib/order-service";
 import { getStripe } from "@/lib/stripe";
 
 export async function POST(request: Request) {
@@ -12,8 +15,35 @@ export async function POST(request: Request) {
   };
   const appUrl = getAppBaseUrl();
   const amount = Number(body.amount);
+  const clientEmail = await getCurrentClientEmail();
+
+  if (!clientEmail) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   if (!Number.isFinite(amount) || amount <= 0) {
+    return NextResponse.json(
+      { error: "A confirmed quote amount is required before Checkout." },
+      { status: 400 }
+    );
+  }
+  const quoteId = String(body.quoteId ?? "").trim();
+  if (!quoteId) {
+    return NextResponse.json(
+      { error: "A confirmed quote amount is required before Checkout." },
+      { status: 400 }
+    );
+  }
+  const quote = await getQuote(quoteId);
+  const inquiry = quote ? await getInquiry(quote.inquiry_id) : null;
+  if (
+    !quote ||
+    quote.status !== "pending" ||
+    !inquiry ||
+    inquiry.client_email.toLowerCase() !== clientEmail.toLowerCase() ||
+    (body.projectId && inquiry.project_id && body.projectId !== inquiry.project_id) ||
+    Math.round(quote.amount * 100) !== Math.round(amount * 100)
+  ) {
     return NextResponse.json(
       { error: "A confirmed quote amount is required before Checkout." },
       { status: 400 }
@@ -30,6 +60,7 @@ export async function POST(request: Request) {
   const stripe = getStripe();
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
+    customer_email: clientEmail,
     line_items: [
       {
         quantity: 1,
@@ -44,8 +75,8 @@ export async function POST(request: Request) {
       }
     ],
     metadata: {
-      project_id: body.projectId ?? "",
-      quote_id: body.quoteId ?? ""
+      project_id: body.projectId ?? inquiry.project_id ?? "",
+      quote_id: quote.id
     },
     success_url: `${appUrl}/dashboard?checkout=success`,
     cancel_url: `${appUrl}/creators?checkout=cancelled`

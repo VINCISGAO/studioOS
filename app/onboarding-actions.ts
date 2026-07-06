@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { guardAdminServerActionUser } from "@/features/admin/auth/admin-mutation-guard";
 import { withLocale, type Locale } from "@/lib/i18n";
 import { approveApplication, createApplication, rejectApplication } from "@/lib/onboarding-service";
 
@@ -42,6 +43,7 @@ export async function submitOnboardingAction(formData: FormData) {
 export async function approveOnboardingAction(formData: FormData) {
   const lang = normalizeLang(formData.get("lang"));
   const applicationId = String(formData.get("application_id") ?? "");
+  await guardAdminServerActionUser(formData);
   await approveApplication(applicationId);
   redirect(withLocale("/admin?approved=1", lang));
 }
@@ -49,6 +51,7 @@ export async function approveOnboardingAction(formData: FormData) {
 export async function rejectOnboardingAction(formData: FormData) {
   const lang = normalizeLang(formData.get("lang"));
   const applicationId = String(formData.get("application_id") ?? "");
+  await guardAdminServerActionUser(formData);
   await rejectApplication(applicationId);
   redirect(withLocale("/admin?rejected=1", lang));
 }

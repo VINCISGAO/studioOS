@@ -31,6 +31,7 @@ export class VersionRepository {
   }
 
   async getNextVersionNumber(campaignId: string): Promise<number> {
+    if (!hasDatabaseUrl()) return 1;
     const latest = await prisma.campaignVersion.findFirst({
       where: { campaignId, deletedAt: null },
       orderBy: { versionNumber: "desc" },

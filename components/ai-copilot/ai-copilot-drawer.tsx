@@ -281,7 +281,7 @@ function clampLauncherX(x: number) {
 function defaultLauncherPosition(): FloatingLauncherPosition {
   return {
     side: "right",
-    y: clampLauncherY(typeof window === "undefined" ? 360 : window.innerHeight * 0.62)
+    y: 360
   };
 }
 

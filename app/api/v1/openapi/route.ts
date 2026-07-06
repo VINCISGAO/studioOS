@@ -8,7 +8,7 @@ export async function GET() {
   return new NextResponse(yaml, {
     headers: {
       "Content-Type": "application/yaml; charset=utf-8",
-      "Cache-Control": "public, max-age=3600"
+      "Cache-Control": "private, no-store"
     }
   });
 }

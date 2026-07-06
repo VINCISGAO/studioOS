@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AlertCircle, KeyRound, Loader2, ShieldCheck } from "lucide-react";
 import { BrandLogoLockup } from "@/components/brand-logo-mark";
@@ -68,6 +68,15 @@ export function AdminSetupTotpShell({ locale, token }: { locale: Locale; token: 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
+  const redirectTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (redirectTimerRef.current != null) {
+        window.clearTimeout(redirectTimerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -125,7 +134,10 @@ export function AdminSetupTotpShell({ locale, token }: { locale: Locale; token: 
         return;
       }
       setDone(true);
-      window.setTimeout(() => {
+      if (redirectTimerRef.current != null) {
+        window.clearTimeout(redirectTimerRef.current);
+      }
+      redirectTimerRef.current = window.setTimeout(() => {
         router.push(withLocale("/admin/login", locale));
       }, 1200);
     } catch {

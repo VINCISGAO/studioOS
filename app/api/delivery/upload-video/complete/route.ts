@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { completeMultipartObjectUpload } from "@/lib/studioos/object-storage";
-import { reviewVideoPublicUrl } from "@/lib/studioos/video-upload";
+import { reviewVideoObjectKey, reviewVideoPublicUrl } from "@/lib/studioos/video-upload";
 
 export const runtime = "nodejs";
 
@@ -30,10 +30,24 @@ export async function POST(request: Request) {
   if (!uploadId || !orderId || !key || !Number.isInteger(version) || version < 1 || !parts.length) {
     return NextResponse.json({ ok: false, error: "Invalid upload completion request" }, { status: 400 });
   }
+  if (
+    !parts.every(
+      (part) =>
+        Number.isInteger(part.partNumber) &&
+        part.partNumber >= 1 &&
+        typeof part.etag === "string" &&
+        part.etag.trim().length > 0
+    )
+  ) {
+    return NextResponse.json({ ok: false, error: "Invalid upload completion request" }, { status: 400 });
+  }
 
   const order = await getOrder(orderId);
   if (!order || order.creator_id !== creatorId) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+  }
+  if (key !== reviewVideoObjectKey(orderId, version, "mp4") && key !== reviewVideoObjectKey(orderId, version, "mov")) {
+    return NextResponse.json({ ok: false, error: "Invalid upload completion request" }, { status: 400 });
   }
 
   try {

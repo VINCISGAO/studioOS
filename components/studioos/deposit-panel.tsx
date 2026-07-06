@@ -374,15 +374,19 @@ function PendingPaymentCard({
     }
 
     setElapsedSec(0);
+    let cancelled = false;
     const startedAt = Date.now();
     const tick = window.setInterval(() => {
-      setElapsedSec(Math.floor((Date.now() - startedAt) / 1000));
+      if (!cancelled) {
+        setElapsedSec(Math.floor((Date.now() - startedAt) / 1000));
+      }
     }, 1000);
 
     const poll = window.setInterval(() => {
       void (async () => {
         try {
           const result = await pollDepositStatusAction();
+          if (cancelled) return;
           if (!result.ok) {
             return;
           }
@@ -392,12 +396,14 @@ function PendingPaymentCard({
             router.refresh();
           }
         } catch {
+          if (cancelled) return;
           setPollError(locale === "zh" ? "状态刷新失败，请稍后重试。" : "Could not refresh status. Retrying…");
         }
       })();
     }, 2000);
 
     void pollDepositStatusAction().then((result) => {
+      if (cancelled) return;
       if (result.ok && result.can_accept_orders) {
         router.replace(withLocale("/studio", locale));
         router.refresh();
@@ -405,6 +411,7 @@ function PendingPaymentCard({
     });
 
     return () => {
+      cancelled = true;
       window.clearInterval(tick);
       window.clearInterval(poll);
     };

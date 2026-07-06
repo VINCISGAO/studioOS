@@ -19,5 +19,7 @@ export async function POST(request: Request) {
 
   await clearDemoSession();
 
-  return NextResponse.redirect(new URL(withLocale("/", locale), request.url), 303);
+  const response = NextResponse.redirect(new URL(withLocale("/", locale), request.url), 303);
+  response.headers.set("Cache-Control", "no-store");
+  return response;
 }

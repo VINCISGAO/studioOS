@@ -40,6 +40,6 @@ export async function GET(request: Request) {
         ...(alipay ? { alipay } : {})
       }
     },
-    { status: healthy ? 200 : 503 }
+    { status: healthy ? 200 : 503, headers: { "Cache-Control": "no-store" } }
   );
 }

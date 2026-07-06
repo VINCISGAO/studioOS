@@ -1,8 +1,6 @@
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { DEMO_SESSION_COOKIE } from "@/lib/auth-config";
-import { parseDemoSession } from "@/lib/demo-auth";
-import { getCreatorIdForDemoEmail } from "@/lib/creator-session";
+import { getCurrentClientEmail } from "@/lib/client-session";
+import { getCurrentCreatorId } from "@/lib/creator-session";
 import { addMessage, getInquiry, getMessagesForPair, resolveCanonicalInquiry } from "@/lib/chat-service";
 import type { ChatSender } from "@/lib/chat-types";
 import { getOrderForPair } from "@/lib/order-service";
@@ -12,13 +10,11 @@ type RouteContext = {
   params: Promise<{ id: string }>;
 };
 
-async function resolveCreatorId() {
-  const cookieStore = await cookies();
-  const session = parseDemoSession(cookieStore.get(DEMO_SESSION_COOKIE)?.value);
-  if (!session || session.role !== "creator") {
-    return null;
-  }
-  return getCreatorIdForDemoEmail(session.email);
+async function resolveInquiryViewer(inquiry: { client_email: string; creator_id: string }) {
+  const [clientEmail, creatorId] = await Promise.all([getCurrentClientEmail(), getCurrentCreatorId()]);
+  const isBrand = clientEmail?.toLowerCase() === inquiry.client_email.toLowerCase();
+  const isCreator = creatorId === inquiry.creator_id;
+  return { isBrand, isCreator };
 }
 
 export async function GET(request: Request, context: RouteContext) {
@@ -27,6 +23,10 @@ export async function GET(request: Request, context: RouteContext) {
 
   if (!inquiry) {
     return NextResponse.json({ error: "Inquiry not found" }, { status: 404 });
+  }
+  const viewer = await resolveInquiryViewer(inquiry);
+  if (!viewer.isBrand && !viewer.isCreator) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const after = new URL(request.url).searchParams.get("after") ?? undefined;
@@ -62,12 +62,13 @@ export async function POST(request: Request, context: RouteContext) {
   }
 
   const targetInquiry = (await resolveCanonicalInquiry(inquiry.client_email, inquiry.creator_id)) ?? inquiry;
+  const viewer = await resolveInquiryViewer(inquiry);
 
-  if (sender === "creator") {
-    const creatorId = await resolveCreatorId();
-    if (!creatorId || creatorId !== inquiry.creator_id) {
-      return NextResponse.json({ error: "Not authorized as studio" }, { status: 403 });
-    }
+  if (sender === "creator" && !viewer.isCreator) {
+    return NextResponse.json({ error: "Not authorized as studio" }, { status: 403 });
+  }
+  if (sender === "brand" && !viewer.isBrand) {
+    return NextResponse.json({ error: "Not authorized as brand" }, { status: 403 });
   }
 
   const message = await addMessage(targetInquiry.id, sender, body);

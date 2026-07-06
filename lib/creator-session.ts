@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { DEMO_SESSION_COOKIE, hasSupabaseConfig } from "@/lib/auth-config";
-import { parseDemoSession } from "@/lib/demo-auth";
+import { parseServerDemoSession } from "@/lib/demo-session-server";
 import { getCreatorById } from "@/lib/creator-service";
 import {
   isCreatorAccountDeleted,
@@ -27,7 +27,7 @@ export async function resolveCurrentCreatorIdFromEmail(email: string) {
 
 export async function getCurrentCreatorId(): Promise<string | null> {
   const cookieStore = await cookies();
-  const session = parseDemoSession(cookieStore.get(DEMO_SESSION_COOKIE)?.value);
+  const session = parseServerDemoSession(cookieStore.get(DEMO_SESSION_COOKIE)?.value);
 
   if (!session || session.role !== "creator") {
     return null;
