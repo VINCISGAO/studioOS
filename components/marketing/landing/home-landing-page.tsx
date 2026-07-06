@@ -6,13 +6,15 @@ import type { WorkEngagementSnapshot } from "@/lib/work-engagement-utils";
 /** Cinematic marketing homepage — login lives at /login only. */
 export function HomeLandingPage({
   locale,
-  workspaceCta,
+  portalHref,
+  portalLabel,
   featuredWorks,
   engagement,
   isLoggedIn
 }: {
   locale: Locale;
-  workspaceCta?: { href: string; label: string } | null;
+  portalHref: string;
+  portalLabel: string;
   featuredWorks: CreatorWork[];
   engagement: Record<string, WorkEngagementSnapshot>;
   isLoggedIn: boolean;
@@ -20,7 +22,8 @@ export function HomeLandingPage({
   return (
     <CinematicHomePage
       locale={locale}
-      workspaceCta={workspaceCta}
+      portalHref={portalHref}
+      portalLabel={portalLabel}
       featuredWorks={featuredWorks}
       engagement={engagement}
       isLoggedIn={isLoggedIn}

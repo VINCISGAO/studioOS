@@ -2,7 +2,8 @@ import { HomeLandingPage } from "@/components/marketing/landing/home-landing-pag
 import { creatorWorks } from "@/lib/data";
 import { getLocale, type SearchParams } from "@/lib/i18n";
 import {
-  resolveMarketingWorkspaceCta
+  resolveMarketingPortalHref,
+  resolveMarketingPortalLabel
 } from "@/lib/marketing/portal-entry";
 import { getCurrentSession } from "@/lib/session-user";
 import { baseViewCount } from "@/lib/work-engagement-utils";
@@ -14,7 +15,8 @@ type HomePageProps = {
 export default async function HomePage({ searchParams }: HomePageProps) {
   const locale = getLocale(await searchParams);
   const session = await getCurrentSession();
-  const workspaceCta = resolveMarketingWorkspaceCta(locale, session);
+  const portalHref = resolveMarketingPortalHref(locale, session);
+  const portalLabel = resolveMarketingPortalLabel(locale, session);
 
   const featuredWorks = creatorWorks.filter((work) => !work.hidden).slice(0, 8);
   const engagement = Object.fromEntries(
@@ -27,7 +29,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   return (
     <HomeLandingPage
       locale={locale}
-      workspaceCta={workspaceCta}
+      portalHref={portalHref}
+      portalLabel={portalLabel}
       featuredWorks={featuredWorks}
       engagement={engagement}
       isLoggedIn={Boolean(session)}

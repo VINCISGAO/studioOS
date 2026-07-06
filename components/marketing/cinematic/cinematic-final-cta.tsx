@@ -67,7 +67,7 @@ export function CinematicFinalCta({
           </Link>
         </motion.div>
 
-        <p className="mt-24 font-mono text-[10px] uppercase tracking-[0.4em] text-zinc-700">VINCIS — End of reel</p>
+        <p className="mt-24 font-mono text-[10px] uppercase tracking-[0.4em] text-zinc-700">StudioOS — End of reel</p>
       </motion.div>
     </section>
   );

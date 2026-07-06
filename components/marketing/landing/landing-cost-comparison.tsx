@@ -1,39 +1,19 @@
 "use client";
 
-import { motion, useReducedMotion, type Variants } from "framer-motion";
-import { Check, X } from "lucide-react";
-import { cinematicEase } from "@/components/marketing/landing/landing-motion";
-import {
-  LandingEyebrow,
-  LandingHeadline,
-  LandingLead,
-  LandingSection,
-  LandingShell
-} from "@/components/marketing/landing/landing-ui";
+import { motion, useReducedMotion } from "framer-motion";
+import { Banknote, Check, Clock3, CreditCard, Globe2, PencilLine, Sparkles, Users, X } from "lucide-react";
+import { LandingSection, LandingShell } from "@/components/marketing/landing/landing-ui";
 import { landingText } from "@/lib/marketing/landing-copy";
 import type { Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 function LegacyMark({ className }: { className?: string }) {
-  return <X className={cn("h-4 w-4 text-red-500", className)} strokeWidth={2.4} aria-hidden />;
+  return <X className={cn("h-4 w-4 text-rose-300/80", className)} strokeWidth={2.2} aria-hidden />;
 }
 
-const spring = { type: "spring" as const, stiffness: 420, damping: 34, mass: 0.82 };
-
-const headerStagger: Variants = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.09, delayChildren: 0.04 } }
-};
-
-const fadeUpItem: Variants = {
-  hidden: { opacity: 0, y: 28, filter: "blur(8px)" },
-  visible: {
-    opacity: 1,
-    y: 0,
-    filter: "blur(0px)",
-    transition: { duration: 0.95, ease: cinematicEase }
-  }
-};
+function StudioMark({ className }: { className?: string }) {
+  return <Check className={cn("h-4 w-4 text-[#e8e0d0]", className)} strokeWidth={2.15} aria-hidden />;
+}
 
 export function LandingCostComparison({ locale }: { locale: Locale }) {
   const t = landingText("cost", locale);
@@ -42,7 +22,7 @@ export function LandingCostComparison({ locale }: { locale: Locale }) {
   const workflowRows = t.rows.slice(2);
 
   return (
-    <LandingSection className="relative overflow-hidden bg-[#000000] py-16 sm:py-24 lg:py-28">
+    <LandingSection className="relative overflow-hidden bg-[#000000] py-5 sm:py-16 lg:py-20">
       <div
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_55%_at_50%_-10%,rgba(255,255,255,0.07),transparent_55%)]"
         aria-hidden
@@ -53,281 +33,252 @@ export function LandingCostComparison({ locale }: { locale: Locale }) {
       />
 
       <LandingShell className="relative">
-        <motion.div
-          initial={reduce ? false : "hidden"}
-          whileInView="visible"
-          viewport={{ once: true, margin: "-10%" }}
-          variants={headerStagger}
-          className="mx-auto max-w-3xl text-center"
-        >
-          <motion.div variants={fadeUpItem}>
-            <LandingEyebrow className="!font-sans !text-[13px] !font-semibold !normal-case !tracking-[0.22em] !text-zinc-400 sm:!text-sm sm:!tracking-[0.26em]">
-              {locale === "zh" ? "成本对比" : "Cost comparison"}
-            </LandingEyebrow>
-          </motion.div>
-          <motion.div variants={fadeUpItem}>
-            <LandingHeadline className="mx-auto mt-5 text-[2rem] font-semibold tracking-[-0.04em] text-white sm:text-[2.75rem] lg:text-[3.25rem]">
-              {t.title}
-            </LandingHeadline>
-          </motion.div>
-          <motion.div variants={fadeUpItem}>
-            <LandingLead className="mx-auto mt-5 max-w-2xl whitespace-pre-line text-center text-[15px] leading-7 text-zinc-400 sm:text-base sm:leading-8">
-              {t.body}
-            </LandingLead>
-          </motion.div>
-        </motion.div>
-
-        <motion.div
-          initial={reduce ? false : { opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-6%" }}
-          transition={{ duration: 1.05, ease: cinematicEase, delay: 0.12 }}
-          className="relative mx-auto mt-12 max-w-5xl lg:mt-16"
-        >
-          <div className="grid gap-5 lg:grid-cols-[1fr_auto_1fr] lg:items-stretch lg:gap-6">
-            <ComparePanel
-              title={t.traditional}
-              variant="legacy"
-              rows={costRows.map((row) => ({ label: row.label, value: row.trad }))}
-              footerRows={workflowRows.map((row) => ({ label: row.label, value: row.trad }))}
-              delay={0.05}
-              reduce={reduce}
-            />
-
-            <VsMark reduce={reduce} />
-
-            <ComparePanel
-              title={t.studio}
-              variant="studio"
-              badges={t.savings}
-              rows={costRows.map((row) => ({ label: row.label, value: row.studio }))}
-              footerRows={workflowRows.map((row) => ({ label: row.label, value: row.studio }))}
-              delay={0.14}
-              reduce={reduce}
-            />
-          </div>
-        </motion.div>
+        <ComparisonBoard
+          locale={locale}
+          title={t.compareTitle}
+          traditional={t.traditional}
+          studio={t.studio}
+          labels={
+            locale === "zh"
+              ? {
+                  model: "对比模型",
+                  legacy: "传统链路",
+                  studio: "系统化交付",
+                  pain: "传统模式的问题",
+                  workflow: "对比项",
+                  faster: "更快",
+                  cheaper: "更便宜",
+                  smarter: "更智能",
+                  creatorCta: "一眼看懂差异",
+                  creatorSub: "已经有 100+ 品牌和创作者在 VINCIS 完成合作",
+                  cases: "了解更多案例",
+                  start: "立即开始"
+                }
+              : {
+                  model: "Comparison model",
+                  legacy: "Legacy stack",
+                  studio: "Operating system",
+                  pain: "Why it feels heavy",
+                  workflow: "Compare",
+                  faster: "Faster",
+                  cheaper: "Cheaper",
+                  smarter: "Smarter",
+                  creatorCta: "Connect global creators, ship better creative",
+                  creatorSub: "100+ brands and creators have collaborated through VINCIS",
+                  cases: "View cases",
+                  start: "Start now"
+                }
+          }
+          badges={t.savings}
+          painPoints={t.pains}
+          costRows={costRows}
+          workflowRows={workflowRows}
+          reduce={reduce}
+        />
       </LandingShell>
     </LandingSection>
   );
 }
 
-function VsMark({ reduce }: { reduce: boolean | null }) {
-  return (
-    <div className="relative flex min-h-10 items-center justify-center py-2 lg:min-h-full lg:px-1">
-      <div className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-gradient-to-b from-transparent via-white/10 to-transparent lg:hidden" />
-      <motion.div
-        initial={reduce ? false : { opacity: 0, scale: 0.72 }}
-        whileInView={{ opacity: 1, scale: 1 }}
-        viewport={{ once: true }}
-        transition={{ ...spring, delay: 0.18 }}
-        whileHover={reduce ? undefined : { scale: 1.06 }}
-        className="relative z-10 grid h-11 w-11 place-items-center rounded-full border border-white/20 bg-white/[0.08] text-[10px] font-semibold tracking-[0.22em] text-white/90 shadow-[0_0_40px_rgba(255,255,255,0.12)] backdrop-blur-xl sm:h-12 sm:w-12"
-      >
-        VS
-      </motion.div>
-    </div>
-  );
-}
-
-function ComparePanel({
-  title,
-  variant,
+function ComparisonBoard({
+  locale,
+  traditional,
+  studio,
+  labels,
   badges,
-  rows,
-  footerRows,
-  delay,
+  costRows,
+  workflowRows,
   reduce
 }: {
+  locale: Locale;
   title: string;
-  variant: "legacy" | "studio";
-  badges?: readonly string[];
-  rows: Array<{ label: string; value: string }>;
-  footerRows: Array<{ label: string; value: string }>;
-  delay: number;
+  traditional: string;
+  studio: string;
+  labels: {
+    model: string;
+    legacy: string;
+    studio: string;
+    pain: string;
+    workflow: string;
+    faster: string;
+    cheaper: string;
+    smarter: string;
+    creatorCta: string;
+    creatorSub: string;
+    cases: string;
+    start: string;
+  };
+  badges: readonly string[];
+  painPoints: readonly string[];
+  costRows: Array<{ label: string; trad: string; studio: string }>;
+  workflowRows: Array<{ label: string; trad: string; studio: string }>;
   reduce: boolean | null;
 }) {
-  const isStudio = variant === "studio";
+  const comparisonRows = [
+    { icon: Banknote, label: costRows[0]?.label ?? "", trad: costRows[0]?.trad ?? "", studio: costRows[0]?.studio ?? "" },
+    { icon: Clock3, label: costRows[1]?.label ?? "", trad: costRows[1]?.trad ?? "", studio: costRows[1]?.studio ?? "" },
+    { icon: Users, label: workflowRows[0]?.label ?? "", trad: workflowRows[0]?.trad ?? "", studio: workflowRows[0]?.studio ?? "" },
+    { icon: PencilLine, label: workflowRows[1]?.label ?? "", trad: workflowRows[1]?.trad ?? "", studio: workflowRows[1]?.studio ?? "" },
+    {
+      icon: CreditCard,
+      label: locale === "zh" ? "支付方式" : "Payment",
+      trad: locale === "zh" ? "传统合同" : "Traditional contract",
+      studio: locale === "zh" ? "平台托管支付" : "Platform escrow"
+    },
+    {
+      icon: Sparkles,
+      label: locale === "zh" ? "AI & 智能" : "AI & automation",
+      trad: locale === "zh" ? "无" : "None",
+      studio: locale === "zh" ? "AI 赋能全流程" : "AI-assisted workflow"
+    }
+  ];
+
+  const stats = [
+    {
+      icon: Banknote,
+      label: locale === "zh" ? "节省成本" : "Cost saved",
+      value: "70%+",
+      caption: locale === "zh" ? "相比传统广告公司" : "Compared with agencies"
+    },
+    {
+      icon: Clock3,
+      label: locale === "zh" ? "交付时间" : "Delivery time",
+      value: "80%+",
+      caption: locale === "zh" ? "更快完成项目" : "Faster project delivery"
+    },
+    {
+      icon: Globe2,
+      label: locale === "zh" ? "覆盖全球" : "Global reach",
+      value: "20+",
+      caption: locale === "zh" ? "国家和地区的创作者" : "countries and regions"
+    }
+  ];
 
   return (
-    <motion.article
-      initial={reduce ? false : { opacity: 0, y: isStudio ? 36 : 24, scale: isStudio ? 0.96 : 0.98 }}
-      whileInView={{ opacity: 1, y: 0, scale: 1 }}
-      viewport={{ once: true, margin: "-8%" }}
-      transition={{ ...spring, delay }}
-      whileHover={
-        reduce
-          ? undefined
-          : {
-              y: isStudio ? -6 : -2,
-              transition: { type: "spring", stiffness: 380, damping: 28 }
-            }
-      }
-      className={cn(
-        "group relative overflow-hidden rounded-[1.75rem] border p-6 sm:p-7 lg:p-8",
-        "backdrop-blur-2xl transition-[box-shadow,border-color] duration-500",
-        isStudio
-          ? "border-white/20 bg-white/[0.08] shadow-[0_40px_120px_-60px_rgba(255,255,255,0.55)] hover:border-white/30 hover:shadow-[0_50px_140px_-50px_rgba(255,255,255,0.65)]"
-          : "border-white/[0.06] bg-white/[0.02] hover:border-white/10"
-      )}
+    <motion.div
+      className="relative mx-auto mt-0 max-w-6xl"
     >
-      <div
-        className={cn(
-          "pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent to-transparent",
-          isStudio ? "via-white/50" : "via-white/10"
-        )}
-      />
-      {isStudio ? (
-        <div
-          className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-white/[0.06] blur-3xl transition-opacity duration-700 group-hover:opacity-100"
-          aria-hidden
-        />
-      ) : null}
-
-      <div className="relative flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <h3
-          className={cn(
-            "text-lg font-semibold tracking-[-0.03em] sm:text-xl",
-            isStudio ? "text-white" : "text-zinc-500"
-          )}
-        >
-          {title}
+      <div className="pointer-events-none absolute inset-x-8 top-8 h-52 rounded-full bg-[#e8e0d0]/[0.055] blur-3xl" />
+      <div className="relative">
+        <div className="mx-auto flex max-w-3xl justify-center">
+          <span className="rounded-full border border-white/[0.08] bg-white/[0.045] px-4 py-1.5 text-[11px] font-medium tracking-[0.08em] text-zinc-300">
+            {labels.faster} · {labels.cheaper} · {labels.smarter}
+          </span>
+        </div>
+        <h3 className="mt-4 text-center text-[2rem] font-semibold tracking-[-0.055em] text-white sm:mt-5 sm:text-[2.9rem]">
+          {locale === "zh" ? "为什么选择 VINCIS?" : "Why choose VINCIS?"}
         </h3>
-        {badges?.length ? (
-          <div className="flex flex-wrap gap-2">
-            {badges.map((badge, index) => (
-              <motion.span
-                key={badge}
-                initial={reduce ? false : { opacity: 0, y: 8 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.7, ease: cinematicEase, delay: delay + 0.12 + index * 0.06 }}
-                className="rounded-full border border-emerald-400/25 bg-emerald-400/[0.08] px-3 py-1 text-[11px] font-medium tracking-wide text-emerald-200/90"
-              >
-                {badge}
-              </motion.span>
+        <p className="mx-auto mt-2 max-w-2xl text-center text-sm leading-6 text-zinc-500 sm:mt-3 sm:text-base">
+          {locale === "zh"
+            ? "用 AI 和全球创作者网络，重新定义广告制作流程"
+            : "Redefine commercial production with AI and a global creator network"}
+        </p>
+      </div>
+
+      <motion.div
+        whileHover={
+          reduce
+            ? undefined
+            : {
+                y: -3,
+                transition: { type: "spring", stiffness: 360, damping: 30 }
+              }
+        }
+        className="relative mt-7 overflow-hidden rounded-[1.65rem] border border-white/[0.12] bg-[linear-gradient(180deg,rgba(255,255,255,0.07),rgba(255,255,255,0.02))] shadow-[0_48px_150px_-90px_rgba(255,255,255,0.65)] backdrop-blur-2xl"
+      >
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-[38%] bg-[radial-gradient(ellipse_at_center,rgba(232,224,208,0.13),transparent_65%)]" />
+        <div className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-[#e8e0d0]/45 to-transparent" />
+
+        <div className="relative grid items-stretch lg:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="min-w-0 lg:flex lg:h-full lg:flex-col">
+            <div className="grid shrink-0 grid-cols-[minmax(0,0.9fr)_minmax(92px,0.75fr)_minmax(112px,0.9fr)] border-b border-white/[0.08] text-[12px] font-semibold tracking-[0.08em] text-zinc-400 sm:grid-cols-[minmax(0,1fr)_minmax(180px,0.9fr)_minmax(220px,1fr)] sm:text-[13px]">
+              <div className="px-4 py-4 text-center sm:px-7">{labels.workflow}</div>
+              <div className="border-l border-white/[0.08] px-3 py-4 text-center sm:px-6">{traditional}</div>
+              <div className="relative border-l border-[#e8e0d0]/[0.14] bg-white/[0.04] px-3 py-4 text-center text-white sm:px-6">
+                <span className="inline-flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-[#e8e0d0] shadow-[0_0_18px_rgba(232,224,208,0.7)]" />
+                  VINCIS
+                </span>
+              </div>
+            </div>
+
+        {comparisonRows.map((row) => (
+          <ComparisonTableRow key={row.label} row={row} />
             ))}
           </div>
-        ) : null}
-      </div>
 
-      <div className="relative mt-7 grid gap-3 sm:grid-cols-2">
-        {rows.map((row, index) => (
-          <MetricTile
-            key={row.label}
-            label={row.label}
-            value={row.value}
-            isStudio={isStudio}
-            index={index}
-            delay={delay}
-            reduce={reduce}
-          />
-        ))}
-      </div>
+          <div className="grid h-full gap-3 border-t border-white/[0.08] p-4 sm:grid-cols-3 lg:grid-cols-1 lg:border-l lg:border-t-0 lg:p-5">
+            {stats.map((stat) => {
+              const Icon = stat.icon;
+              return (
+                <div
+                  key={stat.label}
+                  className="flex h-full items-center gap-4 rounded-2xl border border-white/[0.075] bg-white/[0.04] px-5 py-3.5"
+                >
+                  <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-white/[0.065] text-[#e8e0d0] ring-1 ring-white/[0.06]">
+                    <Icon className="h-5 w-5" strokeWidth={1.8} />
+                  </span>
+                  <span>
+                    <span className="block text-[12px] font-medium text-zinc-400">{stat.label}</span>
+                    <span className="block text-2xl font-semibold tracking-[-0.05em] text-[#e8e0d0]">{stat.value}</span>
+                    <span className="block text-[11px] text-zinc-500">{stat.caption}</span>
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
 
-      <div className="relative mt-6 space-y-0 divide-y divide-white/[0.06] border-t border-white/[0.06]">
-        {footerRows.map((row, index) => (
-          <CompareRow
-            key={row.label}
-            label={row.label}
-            value={row.value}
-            isStudio={isStudio}
-            index={index}
-            delay={delay}
-            reduce={reduce}
-          />
-        ))}
-      </div>
-    </motion.article>
-  );
-}
-
-function MetricTile({
-  label,
-  value,
-  isStudio,
-  index,
-  delay,
-  reduce
-}: {
-  label: string;
-  value: string;
-  isStudio: boolean;
-  index: number;
-  delay: number;
-  reduce: boolean | null;
-}) {
-  return (
-    <motion.div
-      initial={reduce ? false : { opacity: 0, y: 16, scale: 0.98 }}
-      whileInView={{ opacity: 1, y: 0, scale: 1 }}
-      viewport={{ once: true }}
-      transition={{ ...spring, delay: delay + 0.08 + index * 0.05 }}
-      whileHover={reduce ? undefined : { scale: 1.02 }}
-      className={cn(
-        "rounded-2xl border px-4 py-5 text-center transition-colors duration-300",
-        isStudio
-          ? "border-white/10 bg-black/20 group-hover:border-white/15"
-          : "border-white/[0.05] bg-black/25"
-      )}
-    >
-      <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-500">{label}</p>
-      <div className="mt-3 flex items-center justify-center gap-2">
-        {isStudio ? (
-          <Check className="h-4 w-4 text-emerald-300/90" strokeWidth={2.2} />
-        ) : (
-          <LegacyMark />
-        )}
-        <p
-          className={cn(
-            "font-semibold tracking-[-0.03em]",
-            isStudio ? "text-[1.75rem] text-white sm:text-[2rem]" : "text-2xl text-zinc-500 sm:text-[1.75rem]"
-          )}
-        >
-          {value}
-        </p>
-      </div>
+        <div className="relative grid gap-4 border-t border-white/[0.08] px-5 py-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:px-7">
+          <div className="text-center">
+            <p className="text-base font-semibold tracking-[-0.035em] text-white">{labels.creatorCta}</p>
+            <p className="mt-1 text-sm text-zinc-500">{labels.creatorSub}</p>
+          </div>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <a
+              href="#work"
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-white/[0.12] px-5 text-sm font-medium text-zinc-200 transition hover:border-white/25 hover:bg-white/[0.05]"
+            >
+              {labels.cases}
+              <span aria-hidden>→</span>
+            </a>
+            <a
+              href={locale === "zh" ? "/login?role=brand&lang=zh" : "/login?role=brand&lang=en"}
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-white px-5 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-200"
+            >
+              {labels.start}
+              <span aria-hidden>→</span>
+            </a>
+          </div>
+        </div>
+      </motion.div>
     </motion.div>
   );
 }
 
-function CompareRow({
-  label,
-  value,
-  isStudio,
-  index,
-  delay,
-  reduce
+function ComparisonTableRow({
+  row
 }: {
-  label: string;
-  value: string;
-  isStudio: boolean;
-  index: number;
-  delay: number;
-  reduce: boolean | null;
+  row: { icon: typeof Banknote; label: string; trad: string; studio: string };
 }) {
+  const Icon = row.icon;
+
   return (
-    <motion.div
-      initial={reduce ? false : { opacity: 0, x: isStudio ? 12 : -8 }}
-      whileInView={{ opacity: 1, x: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.75, ease: cinematicEase, delay: delay + 0.16 + index * 0.05 }}
-      className={cn(
-        "grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 py-4 transition-colors duration-300",
-        isStudio && "rounded-xl px-1 hover:bg-white/[0.03]"
-      )}
+    <div
+      className="grid grid-cols-[minmax(0,0.9fr)_minmax(92px,0.75fr)_minmax(112px,0.9fr)] border-b border-white/[0.07] text-[12px] last:border-b-0 sm:grid-cols-[minmax(0,1fr)_minmax(180px,0.9fr)_minmax(220px,1fr)] sm:text-sm lg:flex-1"
     >
-      <p className="text-[13px] font-medium text-zinc-500">{label}</p>
-      <div className="flex items-center gap-2 text-right">
-        {isStudio ? (
-          <Check className="h-4 w-4 text-white/80" strokeWidth={2} />
-        ) : (
-          <LegacyMark className="h-3.5 w-3.5" />
-        )}
-        <p className={cn("text-[15px] font-semibold tracking-[-0.02em]", isStudio ? "text-white" : "text-zinc-500")}>
-          {value}
-        </p>
+      <div className="flex items-center justify-center gap-2 px-4 py-3.5 text-center font-medium text-zinc-300 sm:px-7">
+        <Icon className="h-4 w-4 shrink-0 text-zinc-500" strokeWidth={1.7} />
+        <span>{row.label}</span>
       </div>
-    </motion.div>
+      <div className="flex items-center justify-center gap-2 border-l border-white/[0.08] px-3 py-3.5 font-medium text-zinc-400 sm:px-6">
+        <LegacyMark className="hidden h-3.5 w-3.5 sm:block" />
+        <span>{row.trad}</span>
+      </div>
+      <div className="relative flex items-center justify-center gap-2 border-l border-[#e8e0d0]/[0.14] bg-white/[0.04] px-3 py-3.5 font-semibold text-white sm:px-6">
+        <StudioMark className="h-3.5 w-3.5" />
+        <span>{row.studio}</span>
+      </div>
+    </div>
   );
 }

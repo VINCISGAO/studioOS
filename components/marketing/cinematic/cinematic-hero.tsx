@@ -8,7 +8,7 @@ import { CinematicHeroFeatures } from "@/components/marketing/cinematic/cinemati
 import { landingText } from "@/lib/marketing/landing-copy";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
-import { marketingSilverGradientClassName } from "@/lib/studioos/marketing-headline-font";
+import { marketingHeadlineClassName, marketingSilverGradientClassName } from "@/lib/studioos/marketing-headline-font";
 import { cn } from "@/lib/utils";
 
 const HERO_BG = "/api/home-hero-space";
@@ -24,7 +24,17 @@ const TRUST_BRANDS = [
   "Coca-Cola"
 ] as const;
 
-export function CinematicHero({ locale }: { locale: Locale }) {
+export function CinematicHero({
+  locale,
+  portalHref,
+  portalLabel,
+  isLoggedIn = false
+}: {
+  locale: Locale;
+  portalHref: string;
+  portalLabel?: string;
+  isLoggedIn?: boolean;
+}) {
   const t = landingText("hero", locale);
   const sectionRef = useRef<HTMLElement>(null);
   const reduce = useReducedMotion();
@@ -35,20 +45,23 @@ export function CinematicHero({ locale }: { locale: Locale }) {
   const contentOpacity = useTransform(scrollYProgress, [0, 0.58, 0.88], [1, 1, 0]);
   const contentY = useTransform(scrollYProgress, [0, 0.58, 0.88], [0, 0, -80]);
 
-  const primaryLabel = t.primary;
-  const primaryHref = withLocale("/login?role=brand", locale);
+  const primaryLabel = isLoggedIn
+    ? (portalLabel ?? (locale === "zh" ? "品牌方门户" : "Brand portal"))
+    : t.primary;
+  const primaryHref = isLoggedIn ? portalHref : withLocale("/login?role=brand", locale);
   const secondaryLabel = t.secondary;
   const secondaryHref = withLocale("/login?role=creator", locale);
+  const isEnglish = locale === "en";
   const primaryDescription = locale === "zh" ? "匹配优质创作者" : "Match with vetted AI Studios";
   const secondaryDescription = locale === "zh" ? "入驻获取全球订单" : "Join to get global orders";
 
   return (
     <section
       ref={sectionRef}
-      className="relative flex min-h-[100dvh] flex-col overflow-hidden bg-[#050607] text-white"
+      className="relative flex flex-col overflow-hidden bg-[#050607] text-white sm:min-h-[100dvh]"
     >
       <div
-        className="pointer-events-none absolute inset-0 bg-cover bg-no-repeat bg-[102%_26%] sm:bg-[88%_42%] lg:bg-[98%_42%]"
+        className="pointer-events-none absolute inset-0 bg-[length:auto_86%] bg-no-repeat bg-[86%_0%] sm:bg-cover sm:bg-[88%_42%] lg:bg-[98%_42%]"
         style={{ backgroundImage: `url(${HERO_BG})` }}
         aria-hidden
       />
@@ -66,81 +79,89 @@ export function CinematicHero({ locale }: { locale: Locale }) {
       />
       <div className="absolute inset-x-0 bottom-0 h-px bg-white/10" aria-hidden />
 
-      <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col px-4 pb-8 pt-24 sm:px-8 sm:pt-24 md:pt-28 lg:pb-10 lg:pt-20">
+      <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col px-4 pb-0 pt-[5.35rem] sm:px-8 sm:pb-8 sm:pt-24 md:pt-28 lg:pb-10 lg:pt-20">
         <motion.div
           style={reduce ? undefined : { opacity: contentOpacity, y: contentY }}
-          className="flex flex-1 flex-col justify-center"
+          className="flex flex-none flex-col justify-start pt-12 sm:flex-1 sm:justify-center sm:pt-0"
         >
-          <div className="w-full max-w-3xl sm:max-w-xl">
-            <p className="inline-flex max-w-full items-center gap-2 rounded-md border border-white/12 bg-white/[0.06] px-3 py-1.5 text-[10px] font-medium leading-5 text-zinc-200 sm:px-3.5 sm:text-[11px]">
+          <div className={cn(isEnglish ? "max-w-none" : "w-full max-w-3xl sm:max-w-xl")}>
+            <p className="inline-flex max-w-full items-center gap-2 rounded-md border border-white/18 bg-white/[0.07] px-3 py-1.5 text-[10px] font-medium leading-5 text-zinc-200 shadow-[0_12px_36px_-24px_rgba(255,255,255,0.7)] backdrop-blur-md sm:px-3.5 sm:text-[11px]">
               <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-[#c7d1df]" />
               <span className="min-w-0 text-wrap">{t.eyebrow}</span>
             </p>
 
-            <h1 className="mt-5 w-full max-w-none text-[clamp(2.65rem,10.2vw,4.35rem)] font-semibold tracking-[-0.04em] sm:mt-6 sm:text-[4.35rem] md:text-[4.5rem] lg:text-[4.5rem] xl:text-[4.55rem]">
-              <span className={cn("inline-block w-full", marketingSilverGradientClassName())}>
-                {t.titleLine2 ? (
-                  <>
-                    <span className="block whitespace-nowrap leading-[1.02] max-sm:text-[clamp(1.95rem,7.85vw,2.95rem)]">
-                      {t.titleLine1}
-                    </span>
-                    <span className="block whitespace-nowrap leading-[1.02] max-sm:text-[clamp(1.95rem,7.85vw,2.95rem)]">
-                      {t.titleLine2}
-                    </span>
-                  </>
-                ) : (
-                  <span className="block leading-[1.08]">{t.titleLine1}</span>
+            <h1
+              className={cn(
+                "mt-4 font-semibold tracking-[-0.04em] sm:mt-6",
+                isEnglish
+                  ? "max-w-none text-[clamp(1.45rem,6.15vw,2.15rem)] leading-[1.05] sm:text-[clamp(2.35rem,3.8vw,3.85rem)] sm:leading-[1.02] lg:text-[3.85rem] xl:text-[4.1rem]"
+                  : "w-full max-w-none text-[clamp(1.7rem,7.2vw,2.9rem)] leading-[1.04] sm:text-[4.35rem] md:text-[4.5rem] lg:text-[4.5rem] xl:text-[4.55rem]",
+                isEnglish ? marketingHeadlineClassName("en") : "text-pretty"
+              )}
+            >
+              <span
+                className={cn(
+                  "block w-full whitespace-nowrap",
+                  isEnglish ? "text-white" : marketingSilverGradientClassName()
                 )}
+              >
+                {t.titleLine1}
               </span>
+              {isEnglish && t.titleHighlight ? (
+                <span className="mt-3 block whitespace-nowrap text-white sm:mt-4">{t.titleHighlight}</span>
+              ) : null}
+              {isEnglish && t.titleLine2 ? (
+                <span className="mt-3 block whitespace-nowrap text-zinc-300 sm:mt-4">{t.titleLine2}</span>
+              ) : null}
             </h1>
 
-            <p className="mt-5 max-w-2xl whitespace-pre-line text-[15px] leading-7 text-zinc-300 sm:mt-6 sm:text-base md:text-[17px] md:leading-8">
+            <p className="mt-4 max-w-2xl whitespace-pre-line text-[15px] leading-7 text-zinc-300 sm:mt-6 sm:text-base md:text-[17px] md:leading-8">
               {t.subtitle}
             </p>
 
-            <div className="mt-7 grid w-full grid-cols-1 gap-3 sm:mt-8 sm:grid-cols-2">
+            <div className="mt-5 grid w-[88%] grid-cols-2 gap-2.5 sm:mt-8 sm:w-full sm:gap-3">
               <Link
                 href={primaryHref}
-                className="group flex min-h-[78px] items-center justify-between gap-4 rounded-lg border border-white bg-white px-5 py-4 text-left text-black shadow-[0_24px_64px_-28px_rgba(255,255,255,0.75)] transition duration-300 hover:-translate-y-0.5 hover:bg-zinc-100"
+                className="group flex min-h-[70px] items-center justify-between gap-2.5 rounded-xl border border-white bg-white px-3.5 py-3 text-left text-black shadow-[0_24px_64px_-30px_rgba(255,255,255,0.82)] transition duration-300 hover:-translate-y-0.5 hover:bg-zinc-100 sm:min-h-[78px] sm:gap-4 sm:rounded-lg sm:px-5 sm:py-4"
               >
                 <span className="min-w-0">
-                  <span className="block text-[18px] font-semibold leading-6">{primaryLabel}</span>
-                  <span className="mt-1 block text-[13px] font-medium leading-5 text-zinc-500">
+                  <span className="block text-[15px] font-semibold leading-5 sm:text-[18px] sm:leading-6">{primaryLabel}</span>
+                  <span className="mt-0.5 block text-[12px] font-medium leading-4 text-zinc-500 sm:mt-1 sm:text-[13px] sm:leading-5">
                     {primaryDescription}
                   </span>
                 </span>
-                <ArrowRight className="h-5 w-5 shrink-0 transition duration-300 group-hover:translate-x-1" />
+                <ArrowRight className="h-4.5 w-4.5 shrink-0 transition duration-300 group-hover:translate-x-1 sm:h-5 sm:w-5" />
               </Link>
               <Link
                 href={secondaryHref}
-                className="group flex min-h-[78px] items-center justify-between gap-4 rounded-lg border border-white/28 bg-white/[0.035] px-5 py-4 text-left text-white backdrop-blur-sm transition duration-300 hover:-translate-y-0.5 hover:border-white/45 hover:bg-white/[0.075]"
+                className="group flex min-h-[70px] items-center justify-between gap-2.5 rounded-xl border border-white/32 bg-white/[0.05] px-3.5 py-3 text-left text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-md transition duration-300 hover:-translate-y-0.5 hover:border-white/45 hover:bg-white/[0.075] sm:min-h-[78px] sm:gap-4 sm:rounded-lg sm:px-5 sm:py-4"
               >
                 <span className="min-w-0">
-                  <span className="block text-[18px] font-semibold leading-6">{secondaryLabel}</span>
-                  <span className="mt-1 block text-[13px] font-medium leading-5 text-zinc-400">
+                  <span className="block text-[15px] font-semibold leading-5 sm:text-[18px] sm:leading-6">{secondaryLabel}</span>
+                  <span className="mt-0.5 block text-[12px] font-medium leading-4 text-zinc-400 sm:mt-1 sm:text-[13px] sm:leading-5">
                     {secondaryDescription}
                   </span>
                 </span>
-                <ArrowRight className="h-5 w-5 shrink-0 transition duration-300 group-hover:translate-x-1" />
+                <ArrowRight className="h-4.5 w-4.5 shrink-0 transition duration-300 group-hover:translate-x-1 sm:h-5 sm:w-5" />
               </Link>
             </div>
 
-            <div className="mt-7 grid w-full grid-cols-3 gap-2 border-y border-white/10 py-4 sm:mt-8 sm:gap-3 sm:py-5">
+            <div className="mt-6 grid w-full grid-cols-3 gap-2 border-y border-white/10 py-3.5 text-center sm:mt-8 sm:gap-3 sm:py-5 sm:text-left">
               <div>
-                <p className="text-lg font-semibold text-white sm:text-xl">$200+</p>
-                <p className="mt-1 text-[10px] leading-4 text-zinc-400 sm:text-xs sm:text-zinc-500">
+                <p className="text-[1.15rem] font-semibold tracking-[-0.02em] text-white sm:text-xl">$200+</p>
+                <p className="mt-1 text-[10px] leading-4 text-zinc-400/90 sm:text-xs sm:text-zinc-500">
                   {locale === "zh" ? "起步制作预算" : "Starting production budget"}
                 </p>
               </div>
               <div>
-                <p className="text-lg font-semibold text-white sm:text-xl">72h</p>
-                <p className="mt-1 text-[10px] leading-4 text-zinc-400 sm:text-xs sm:text-zinc-500">
+                <p className="text-[1.15rem] font-semibold tracking-[-0.02em] text-white sm:text-xl">72h</p>
+                <p className="mt-1 text-[10px] leading-4 text-zinc-400/90 sm:text-xs sm:text-zinc-500">
                   {locale === "zh" ? "首轮方案窗口" : "First concept window"}
                 </p>
               </div>
               <div>
-                <p className="text-lg font-semibold text-white sm:text-xl">1080P/4K</p>
-                <p className="mt-1 text-[10px] leading-4 text-zinc-400 sm:text-xs sm:text-zinc-500">
+                <p className="text-[1.15rem] font-semibold tracking-[-0.02em] text-white sm:text-xl">1080P/4K</p>
+                <p className="mt-1 text-[10px] leading-4 text-zinc-400/90 sm:text-xs sm:text-zinc-500">
                   {locale === "zh" ? "交付与版权标准" : "Delivery and rights standard"}
                 </p>
               </div>
@@ -148,19 +169,21 @@ export function CinematicHero({ locale }: { locale: Locale }) {
           </div>
         </motion.div>
 
-        <div className="mt-auto">
-          <div className="overflow-hidden border-y border-white/[0.08] py-5 sm:py-6">
+        <div className="mt-0 sm:mt-auto">
+          <CinematicHeroFeatures locale={locale} />
+
+          <div className="overflow-hidden border-y border-white/[0.08] py-4 sm:py-6">
             <p className="text-center text-[10px] font-medium tracking-[0.18em] text-zinc-500 sm:text-[11px] sm:tracking-[0.24em]">
               {locale === "zh" ? "全球品牌信赖" : "TRUSTED BY GLOBAL BRAND TEAMS"}
             </p>
-            <div className="relative mt-4">
+            <div className="relative mt-3 sm:mt-4">
               <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-gradient-to-r from-[#050607] to-transparent" />
               <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-[#050607] to-transparent" />
-              <div className="animate-cinematic-marquee flex w-max items-center gap-x-8 pr-8 sm:gap-x-12 sm:pr-12">
+              <div className="animate-cinematic-marquee flex w-max items-center gap-x-7 pr-7 sm:gap-x-12 sm:pr-12">
                 {[...TRUST_BRANDS, ...TRUST_BRANDS].map((brand, index) => (
                   <span
                     key={`${brand}-${index}`}
-                    className="text-base font-semibold tracking-tight text-zinc-500/80 grayscale sm:text-lg"
+                    className="text-[15px] font-semibold tracking-tight text-zinc-500/80 grayscale sm:text-lg"
                   >
                     {brand}
                   </span>
@@ -168,8 +191,6 @@ export function CinematicHero({ locale }: { locale: Locale }) {
               </div>
             </div>
           </div>
-
-          <CinematicHeroFeatures locale={locale} />
         </div>
       </div>
     </section>

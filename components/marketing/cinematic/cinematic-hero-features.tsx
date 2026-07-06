@@ -21,7 +21,7 @@ export function CinematicHeroFeatures({ locale }: { locale: Locale }) {
   const [activeIndex, setActiveIndex] = useState(0);
 
   return (
-    <div className="mx-auto mt-6 w-full pt-1 sm:mt-12 sm:pt-2">
+    <div className="mx-auto mt-0 w-full pt-0 sm:mt-12 sm:pt-2">
       <div className="grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-4">
         {features.map((feature, index) => {
           const Icon = featureIcons[feature.icon];
@@ -38,10 +38,10 @@ export function CinematicHeroFeatures({ locale }: { locale: Locale }) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.75, ease: cinematicEase, delay: 0.55 + index * 0.08 }}
               className={cn(
-                "group flex min-h-[136px] flex-col items-center justify-center rounded-lg border p-3 text-center transition duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 sm:min-h-[172px] sm:p-5",
+                "group flex min-h-[126px] flex-col items-center justify-center rounded-xl border p-3 text-center backdrop-blur-[2px] transition duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 sm:min-h-[172px] sm:rounded-lg sm:p-5",
                 isActive
-                  ? "border-white/24 bg-white/[0.085] shadow-[0_20px_60px_-34px_rgba(255,255,255,0.55)]"
-                  : "border-white/10 bg-black/20 hover:-translate-y-1 hover:border-white/20 hover:bg-white/[0.045]"
+                  ? "border-white/45 bg-white/[0.075] shadow-[0_20px_60px_-36px_rgba(255,255,255,0.58)]"
+                  : "border-white/[0.085] bg-black/24 hover:-translate-y-1 hover:border-white/20 hover:bg-white/[0.045]"
               )}
             >
               <span

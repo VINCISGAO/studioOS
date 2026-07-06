@@ -10,32 +10,31 @@ import { LandingRecentWork } from "@/components/marketing/landing/landing-recent
 import { LandingCta, LandingHowItWorks, LandingWhy } from "@/components/marketing/landing/landing-sections";
 import { MarketingFooter } from "@/components/marketing/marketing-footer";
 import type { Locale } from "@/lib/i18n";
-import { withLocale } from "@/lib/i18n";
 import type { CreatorWork } from "@/lib/types";
 import type { WorkEngagementSnapshot } from "@/lib/work-engagement-utils";
 
 export function CinematicHomePage({
   locale,
-  workspaceCta,
+  portalHref,
+  portalLabel,
   featuredWorks,
   engagement,
   isLoggedIn = false
 }: {
   locale: Locale;
-  workspaceCta?: { href: string; label: string } | null;
+  portalHref: string;
+  portalLabel: string;
   featuredWorks: CreatorWork[];
   engagement: Record<string, WorkEngagementSnapshot>;
   isLoggedIn?: boolean;
 }) {
-  const brandEntryHref = withLocale("/login?role=brand", locale);
-
   return (
     <div className="relative bg-black text-white">
-      <CinematicNav locale={locale} workspaceCta={workspaceCta} />
+      <CinematicNav locale={locale} />
 
       <main className="scroll-smooth">
         {/* 图一 — 宇宙风 Hero */}
-        <CinematicHero locale={locale} />
+        <CinematicHero locale={locale} portalHref={portalHref} portalLabel={portalLabel} isLoggedIn={isLoggedIn} />
 
         <HomePageScreen id="why" className="bg-[#f6f5f1] py-0">
           <LandingWhy locale={locale} />
@@ -63,7 +62,11 @@ export function CinematicHomePage({
         </HomePageScreen>
 
         <HomePageScreen id="cta" className="bg-black py-0">
-          <LandingCta locale={locale} portalHref={brandEntryHref} />
+          <LandingCta
+            locale={locale}
+            portalHref={portalHref}
+            portalLabel={isLoggedIn ? portalLabel : undefined}
+          />
         </HomePageScreen>
       </main>
 
