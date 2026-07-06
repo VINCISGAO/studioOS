@@ -61,7 +61,7 @@ export function CinematicHero({
       className="relative flex flex-col overflow-hidden bg-[#050607] text-white sm:min-h-[100dvh]"
     >
       <div
-        className="pointer-events-none absolute inset-0 bg-[length:auto_86%] bg-no-repeat bg-[86%_0%] sm:bg-cover sm:bg-[88%_42%] lg:bg-[98%_42%]"
+        className="pointer-events-none absolute inset-0 bg-[length:auto_86%] bg-no-repeat bg-[86%_0%] sm:bg-cover sm:bg-[88%_42%] md:bg-[82%_42%] xl:bg-[82%_42%]"
         style={{ backgroundImage: `url(${HERO_BG})` }}
         aria-hidden
       />
@@ -149,19 +149,19 @@ export function CinematicHero({
             <div className="mt-6 grid w-full grid-cols-3 gap-2 border-y border-white/10 py-3.5 text-center sm:mt-8 sm:gap-3 sm:py-5 sm:text-left">
               <div>
                 <p className="text-[1.15rem] font-semibold tracking-[-0.02em] text-white sm:text-xl">$200+</p>
-                <p className="mt-1 text-[10px] leading-4 text-zinc-400/90 sm:text-xs sm:text-zinc-500">
+                <p className="mt-1 text-[10px] leading-4 text-white sm:text-xs sm:text-white">
                   {locale === "zh" ? "起步制作预算" : "Starting production budget"}
                 </p>
               </div>
               <div>
                 <p className="text-[1.15rem] font-semibold tracking-[-0.02em] text-white sm:text-xl">72h</p>
-                <p className="mt-1 text-[10px] leading-4 text-zinc-400/90 sm:text-xs sm:text-zinc-500">
+                <p className="mt-1 text-[10px] leading-4 text-white sm:text-xs sm:text-white">
                   {locale === "zh" ? "首轮方案窗口" : "First concept window"}
                 </p>
               </div>
               <div>
                 <p className="text-[1.15rem] font-semibold tracking-[-0.02em] text-white sm:text-xl">1080P/4K</p>
-                <p className="mt-1 text-[10px] leading-4 text-zinc-400/90 sm:text-xs sm:text-zinc-500">
+                <p className="mt-1 text-[10px] leading-4 text-white sm:text-xs sm:text-white">
                   {locale === "zh" ? "交付与版权标准" : "Delivery and rights standard"}
                 </p>
               </div>

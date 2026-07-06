@@ -93,15 +93,15 @@ export const landingCopy = {
   heroFeatures: {
     en: [
       { title: "Studio matching", desc: "Vetted teams ranked by portfolio fit", icon: "users" as const },
-      { title: "Review rooms", desc: "Frame notes, versions, and approvals", icon: "play" as const },
+      { title: "Review rooms", desc: "Frame-level notes and approval management", icon: "play" as const },
       { title: "Escrow workflow", desc: "Milestone-based payment protection", icon: "shield" as const },
-      { title: "Creative velocity", desc: "Launch more tests with fewer layers", icon: "zap" as const }
+      { title: "Creative velocity", desc: "Fewer layers, much higher efficiency", icon: "zap" as const }
     ],
     zh: [
       { title: "制作方匹配", desc: "按作品集与品类精准推荐", icon: "users" as const },
-      { title: "审片工作室", desc: "帧级批注、版本、审批统一管理", icon: "play" as const },
+      { title: "审片工作室", desc: "帧级批注，审批管理", icon: "play" as const },
       { title: "托管流程", desc: "按里程碑保护付款与交付", icon: "shield" as const },
-      { title: "创意速度", desc: "减少中间层，快速测试更多素材", icon: "zap" as const }
+      { title: "创意速度", desc: "减少中间层，大幅提升效率", icon: "zap" as const }
     ]
   },
   stats: {
