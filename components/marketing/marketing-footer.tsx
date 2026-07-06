@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BrandLogoLockup } from "@/components/brand-logo-mark";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import { studioOS } from "@/lib/studioos/vocabulary";
@@ -45,9 +46,14 @@ export function MarketingFooter({
           <div className="max-w-xs">
             <Link
               href={withLocale("/", locale)}
-              className={cn("text-[15px] font-medium tracking-[-0.02em]", dark ? "text-white" : "text-zinc-950")}
+              className="inline-flex transition hover:opacity-80"
             >
-              {studioOS.productName}
+              <BrandLogoLockup
+                contrastOn={dark ? "dark" : "light"}
+                className="gap-2.5"
+                markClassName="h-8 w-8 rounded-lg"
+                wordmarkClassName="h-[17px] w-[106px]"
+              />
             </Link>
             <p className={cn("mt-4 text-[14px] leading-7", dark ? "text-zinc-500" : "text-zinc-500")}>
               {locale === "zh" ? studioOS.tagline.zh : studioOS.tagline.en}

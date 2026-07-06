@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AlertCircle, KeyRound, Loader2, ShieldCheck } from "lucide-react";
+import { BrandLogoLockup } from "@/components/brand-logo-mark";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { Locale } from "@/lib/i18n";
@@ -136,6 +137,15 @@ export function AdminSetupTotpShell({ locale, token }: { locale: Locale; token: 
 
   return (
     <div className="mx-auto flex min-h-dvh max-w-lg flex-col justify-center px-4 py-10">
+      <div className="mb-6 flex justify-center">
+        <BrandLogoLockup
+          contrastOn="light"
+          className="gap-2.5"
+          markClassName="h-8 w-8 rounded-lg shadow-sm"
+          wordmarkClassName="h-[17px] w-[106px]"
+          priority
+        />
+      </div>
       <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm sm:p-8">
         <div className="mb-6 flex flex-col items-center text-center">
           <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-violet-50">

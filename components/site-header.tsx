@@ -1,13 +1,12 @@
 import Link from "next/link";
 import { cookies, headers } from "next/headers";
-import { Sparkles } from "lucide-react";
+import { BrandLogoLockup } from "@/components/brand-logo-mark";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { Button } from "@/components/ui/button";
 import { DEMO_SESSION_COOKIE } from "@/lib/auth-config";
 import { parseDemoSession } from "@/lib/demo-auth";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
-import { studioOS } from "@/lib/studioos/vocabulary";
 
 const navText = {
   en: {
@@ -64,10 +63,13 @@ export async function SiteHeader({ locale }: { locale: Locale }) {
     <header className="sticky top-0 z-40 border-b bg-background/85 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link href={withLocale("/", locale)} className="flex items-center gap-2 text-sm font-semibold">
-          <span className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground shadow-sm">
-            <Sparkles className="h-4 w-4" />
-          </span>
-          <span className="text-base">{studioOS.productName}</span>
+          <BrandLogoLockup
+            contrastOn="light"
+            className="gap-2"
+            markClassName="h-8 w-8 rounded-lg shadow-sm"
+            wordmarkClassName="h-[17px] w-[106px]"
+            priority
+          />
         </Link>
 
         <nav className="hidden items-center gap-1 rounded-md border bg-white/70 p-1 text-sm text-muted-foreground shadow-sm backdrop-blur md:flex">

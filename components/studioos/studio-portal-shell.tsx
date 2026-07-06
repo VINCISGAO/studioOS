@@ -1,9 +1,10 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense } from "react";
 import { usePathname } from "next/navigation";
+import { BrandLogoLockup } from "@/components/brand-logo-mark";
+import { NotificationCenterBell } from "@/components/studioos/notification-center-bell";
 import { PortalMobileNav } from "@/components/studioos/portal-mobile-nav";
-import { StudioNotificationBell } from "@/components/studioos/studio-notification-bell";
 import { StudioUserMenu } from "@/components/studioos/studio-user-menu";
 import { PortalSidebarAccountMenu } from "@/components/studioos/portal-sidebar-account-menu";
 import { MarketingHomeLink } from "@/components/studioos/marketing-home-link";
@@ -25,7 +26,6 @@ import type { Locale } from "@/lib/i18n";
 import type { CreatorNotification } from "@/lib/notification-types";
 import type { Creator } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { Sparkles } from "lucide-react";
 
 function studioInitials(name: string) {
   return name
@@ -121,12 +121,7 @@ function StudioPortalShellInner({
   const partnerBadgeSidebar = tCertificationExperience(locale).partnerBadgeSidebar;
   const initials = creator ? studioInitials(creator.name) : "CR";
   const avatarUrl = creator?.avatar_url?.trim() || undefined;
-  const [notificationBadgeSeen, setNotificationBadgeSeen] = useState(false);
-  const visibleUnreadCount = notificationBadgeSeen ? 0 : unreadCount;
-
-  useEffect(() => {
-    setNotificationBadgeSeen(false);
-  }, [unreadCount]);
+  const visibleUnreadCount = unreadCount;
 
   const isReviewPage = isCreatorPortalReviewRoute(pathname);
   const hidePortalHeader = isReviewPage;
@@ -171,18 +166,14 @@ function StudioPortalShellInner({
             locale={locale}
             className="flex shrink-0 items-center gap-2.5 px-5 py-5 transition hover:opacity-80"
           >
-            <span
-              className={cn(
-                "flex h-9 w-9 items-center justify-center rounded-xl text-white shadow-sm",
-                isVerified ? "bg-violet-600" : "bg-indigo-600"
-              )}
-            >
-              <Sparkles className="h-4 w-4" />
-            </span>
+            <BrandLogoLockup
+              contrastOn="light"
+              className="gap-2"
+              markClassName="h-8 w-8 rounded-lg shadow-sm ring-1 ring-violet-100"
+              wordmarkClassName="h-[17px] w-[106px]"
+              priority
+            />
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-zinc-950">
-                {locale === "zh" ? "创作者工作台" : "Creator workspace"}
-              </p>
               {isVerified ? (
                 <CertifiedPartnerBadge
                   label={partnerBadgeSidebar}
@@ -228,15 +219,12 @@ function StudioPortalShellInner({
               <div className="flex h-14 items-center justify-between px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center gap-2 lg:hidden">
                   <MarketingHomeLink locale={locale} className="flex items-center gap-2 font-semibold text-zinc-950">
-                    <span
-                      className={cn(
-                        "flex h-8 w-8 items-center justify-center rounded-lg text-white",
-                        isVerified ? "bg-violet-600" : "bg-indigo-600"
-                      )}
-                    >
-                      <Sparkles className="h-4 w-4" />
-                    </span>
-                    {locale === "zh" ? "创作者工作台" : "Creator workspace"}
+                    <BrandLogoLockup
+                      contrastOn="light"
+                      className="gap-2"
+                      markClassName="h-7 w-7 rounded-lg shadow-sm"
+                      wordmarkClassName="h-[15px] w-[94px]"
+                    />
                   </MarketingHomeLink>
                   {isVerified ? (
                     <CertifiedPartnerBadge
@@ -252,15 +240,7 @@ function StudioPortalShellInner({
                   <Suspense fallback={<LanguageSwitcherFallback locale={locale} />}>
                     <LanguageSwitcher locale={locale} pathname={pathname} search={search} />
                   </Suspense>
-                  {canUseBusinessFeatures ? (
-                    <StudioNotificationBell
-                      locale={locale}
-                      notifications={notifications}
-                      unreadCount={unreadCount}
-                      badgeCount={visibleUnreadCount}
-                      onBadgeSeen={() => setNotificationBadgeSeen(true)}
-                    />
-                  ) : null}
+                  {canUseBusinessFeatures ? <NotificationCenterBell locale={locale} /> : null}
                   <StudioUserMenu
                     locale={locale}
                     initials={initials}

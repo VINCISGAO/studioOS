@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BrandLogoLockup } from "@/components/brand-logo-mark";
 import { PortalMobileNav } from "@/components/studioos/portal-mobile-nav";
 import { adminSignOutAction } from "@/app/actions";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -31,7 +32,6 @@ import {
   Search,
   Settings,
   ShieldCheck,
-  Sparkles,
   Users,
   Wallet
 } from "lucide-react";
@@ -80,11 +80,13 @@ export function AdminPortalShell({
   locale,
   pathname,
   search,
+  failedNotificationCount = 0,
   children
 }: {
   locale: Locale;
   pathname: string;
   search: string;
+  failedNotificationCount?: number;
   children: React.ReactNode;
 }) {
   const primaryItems = navItems.filter((item) => item.section === "primary");
@@ -96,11 +98,14 @@ export function AdminPortalShell({
         <aside className="hidden w-64 shrink-0 border-r border-zinc-200 bg-white lg:flex lg:flex-col">
           <div className="border-b border-zinc-100 px-5 py-5">
             <Link href={withLocale(adminPortalRoutes.dashboard, locale)} className="flex items-center gap-2.5">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-zinc-900 text-white">
-                <Sparkles className="h-4 w-4" />
-              </span>
+              <BrandLogoLockup
+                contrastOn="light"
+                className="gap-2"
+                markClassName="h-8 w-8 rounded-lg shadow-sm"
+                wordmarkClassName="h-[17px] w-[106px]"
+                priority
+              />
               <div>
-                <p className="text-sm font-semibold">VINCIS Admin</p>
                 <p className="text-xs text-zinc-500">{locale === "zh" ? "管理后台" : "Control center"}</p>
               </div>
             </Link>
@@ -162,16 +167,18 @@ export function AdminPortalShell({
                 />
               </div>
               <div className="ml-auto flex items-center gap-2">
-                <button
-                  type="button"
-                  className="relative inline-flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-200 text-zinc-600"
+                <Link
+                  href={withLocale(adminPortalRoutes.notifications, locale)}
+                  className="relative inline-flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-200 text-zinc-600 transition hover:bg-zinc-50"
                   aria-label={locale === "zh" ? "通知" : "Notifications"}
                 >
                   <Bell className="h-4 w-4" />
-                  <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">
-                    3
-                  </span>
-                </button>
+                  {failedNotificationCount > 0 ? (
+                    <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">
+                      {failedNotificationCount > 99 ? "99+" : failedNotificationCount}
+                    </span>
+                  ) : null}
+                </Link>
                 <LanguageSwitcher locale={locale} pathname={pathname} search={search} />
                 <div className="hidden items-center gap-2 rounded-lg border border-zinc-200 px-3 py-1.5 sm:flex">
                   <span className="flex h-7 w-7 items-center justify-center rounded-full bg-zinc-900 text-xs font-semibold text-white">

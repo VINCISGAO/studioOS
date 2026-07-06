@@ -1,16 +1,17 @@
 import Link from "next/link";
 import { Suspense } from "react";
+import { BrandLogoLockup } from "@/components/brand-logo-mark";
 import { LanguageSwitcher, LanguageSwitcherFallback } from "@/components/language-switcher";
 import { StudioNotificationBell } from "@/components/studioos/studio-notification-bell";
 import { StudioUserMenu } from "@/components/studioos/studio-user-menu";
 import { Button } from "@/components/ui/button";
-import { brandNav, studioOS } from "@/lib/studioos/vocabulary";
+import { brandNav } from "@/lib/studioos/vocabulary";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import type { MvpProfile } from "@/lib/mvp/types";
 import type { CreatorNotification } from "@/lib/notification-types";
 import { cn } from "@/lib/utils";
-import { Clapperboard, LayoutGrid, LogOut, Settings, Sparkles } from "lucide-react";
+import { Clapperboard, LayoutGrid, LogOut, Settings } from "lucide-react";
 
 const brandReviewNav = [
   { href: "/brand", labelKey: "dashboard" as const, icon: LayoutGrid },
@@ -71,12 +72,13 @@ export function BrandReviewShell({
       <div className={cn("flex", reviewMode ? "h-full" : "min-h-screen")}>
         <aside className="hidden w-[248px] shrink-0 flex-col border-r border-zinc-200/80 bg-white lg:flex">
           <div className="flex items-center gap-2.5 px-5 py-5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-zinc-900 text-white shadow-sm">
-              <Sparkles className="h-4 w-4" />
-            </span>
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-zinc-950">{studioOS.productName}</p>
-            </div>
+            <BrandLogoLockup
+              contrastOn="light"
+              className="gap-2"
+              markClassName="h-8 w-8 rounded-lg shadow-sm"
+              wordmarkClassName="h-[17px] w-[106px]"
+              priority
+            />
             <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium text-zinc-500">
               {locale === "zh" ? "品牌" : "Brand"}
             </span>

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { cookies, headers } from "next/headers";
-import { Sparkles } from "lucide-react";
+import { BrandLogoLockup } from "@/components/brand-logo-mark";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { Button } from "@/components/ui/button";
 import { DEMO_SESSION_COOKIE } from "@/lib/auth-config";
@@ -11,7 +11,6 @@ import {
   resolveMarketingPortalHref,
   resolveMarketingPortalLabel
 } from "@/lib/marketing/portal-entry";
-import { studioOS } from "@/lib/studioos/vocabulary";
 import { cn } from "@/lib/utils";
 
 async function getNavSession() {
@@ -54,15 +53,13 @@ export async function MarketingHeader({ locale }: { locale: Locale }) {
           href={withLocale("/", locale)}
           className={cn("flex items-center gap-2 font-semibold", isHome ? "text-white" : "text-zinc-950")}
         >
-          <span
-            className={cn(
-              "flex h-8 w-8 items-center justify-center rounded-lg",
-              isHome ? "bg-white text-zinc-950" : "bg-zinc-900 text-white"
-            )}
-          >
-            <Sparkles className="h-4 w-4" />
-          </span>
-          {studioOS.productName}
+          <BrandLogoLockup
+            contrastOn={isHome ? "dark" : "light"}
+            className="gap-2"
+            markClassName="h-8 w-8 rounded-lg"
+            wordmarkClassName="h-[17px] w-[106px]"
+            priority
+          />
         </Link>
         <nav className="hidden items-center gap-6 text-sm md:flex">
           {links.map((link) => (

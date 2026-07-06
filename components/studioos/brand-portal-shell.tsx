@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState } from "react";
+import { BrandLogoLockup } from "@/components/brand-logo-mark";
+import { NotificationCenterBell } from "@/components/studioos/notification-center-bell";
 import { PortalMobileNav } from "@/components/studioos/portal-mobile-nav";
 import { LanguageSwitcher, LanguageSwitcherFallback } from "@/components/language-switcher";
 import { MarketingHomeLink } from "@/components/studioos/marketing-home-link";
 import { StudioUserMenu } from "@/components/studioos/studio-user-menu";
 import { PortalSidebarAccountMenu } from "@/components/studioos/portal-sidebar-account-menu";
-import { brandNav, studioOS } from "@/lib/studioos/vocabulary";
+import { brandNav } from "@/lib/studioos/vocabulary";
 import { brandPortalNavItems, type BrandPortalNavItem } from "@/lib/studioos/brand-portal-nav";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
 import { readBrandWizardStepFromLocation } from "@/lib/studioos/instant-nav";
@@ -26,7 +28,7 @@ import {
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
-import { Bell, Home, LayoutDashboard, Sparkles } from "lucide-react";
+import { Home, LayoutDashboard } from "lucide-react";
 
 function brandInitials(name: string) {
   return name
@@ -232,14 +234,13 @@ function BrandPortalShellInner({
             locale={locale}
             className="flex shrink-0 items-center gap-2.5 px-5 py-5 transition hover:opacity-80"
           >
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-600 text-white shadow-sm">
-              <Sparkles className="h-4 w-4" />
-            </span>
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-zinc-950">
-                {locale === "zh" ? "品牌方工作台" : "Brand workspace"}
-              </p>
-            </div>
+            <BrandLogoLockup
+              contrastOn="light"
+              className="gap-2"
+              markClassName="h-8 w-8 rounded-lg shadow-sm ring-1 ring-violet-100"
+              wordmarkClassName="h-[17px] w-[106px]"
+              priority
+            />
           </MarketingHomeLink>
 
           <nav className="min-h-0 flex-1 space-y-0.5 overflow-y-auto px-3 pb-3">
@@ -333,10 +334,12 @@ function BrandPortalShellInner({
                 ) : (
                   <div className="flex items-center gap-2 lg:hidden">
                     <MarketingHomeLink locale={locale} className="flex items-center gap-2 font-semibold text-zinc-950">
-                      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-900 text-white">
-                        <Sparkles className="h-4 w-4" />
-                      </span>
-                      {studioOS.productName}
+                      <BrandLogoLockup
+                        contrastOn="light"
+                        className="gap-2"
+                        markClassName="h-7 w-7 rounded-lg shadow-sm"
+                        wordmarkClassName="h-[15px] w-[94px]"
+                      />
                     </MarketingHomeLink>
                   </div>
                 )}
@@ -345,19 +348,7 @@ function BrandPortalShellInner({
                   <Suspense fallback={<LanguageSwitcherFallback locale={locale} />}>
                     <LanguageSwitcher locale={locale} pathname={pathname} search={search} />
                   </Suspense>
-                  <Link
-                    href={withLocale(brandPortalRoutes.messages, locale)}
-                    className={cn(
-                      "relative flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-600 transition hover:bg-zinc-50",
-                      isWizardCreate && "hidden lg:flex"
-                    )}
-                    aria-label={locale === "zh" ? "通知" : "Notifications"}
-                  >
-                    <Bell className="h-4 w-4" />
-                    {unreadMessageCount > 0 ? (
-                      <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-white" />
-                    ) : null}
-                  </Link>
+                  <NotificationCenterBell locale={locale} className={cn(isWizardCreate && "hidden lg:block")} />
                   <StudioUserMenu
                     locale={locale}
                     initials={initials}

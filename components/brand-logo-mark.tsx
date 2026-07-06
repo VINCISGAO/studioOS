@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 
-const logoAssetVersion = "20260706";
+const logoAssetVersion = "202607061900";
 const mainLogoSrc = `/images/LOGO.png?v=${logoAssetVersion}`;
 const wordmarkSrc = {
   black: `/images/logo-black.png?v=${logoAssetVersion}`,
