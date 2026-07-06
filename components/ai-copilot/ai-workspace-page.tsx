@@ -460,7 +460,7 @@ export function AiWorkspacePage({ mode }: AiWorkspacePageProps) {
   const displayStats = workspace?.stats ?? [];
 
   return (
-    <main className="h-[calc(100dvh-7rem)] min-h-[640px] overflow-hidden bg-white text-[#171923] sm:rounded-[2rem] sm:border sm:border-slate-200 sm:shadow-sm lg:h-[calc(100dvh-8.5rem)] lg:max-h-[calc(100dvh-8.5rem)]">
+    <main className="h-[calc(100dvh-10rem)] min-h-0 overflow-hidden bg-white text-[#171923] sm:rounded-[2rem] sm:border sm:border-slate-200 sm:shadow-sm md:h-[calc(100dvh-9rem)] lg:h-[calc(100dvh-8.5rem)] lg:max-h-[calc(100dvh-8.5rem)]">
       <div className="grid h-full min-h-0 grid-cols-1 overflow-hidden">
         <aside className="hidden">
           <div className="flex items-center gap-2 text-lg font-semibold">
@@ -659,7 +659,7 @@ export function AiWorkspacePage({ mode }: AiWorkspacePageProps) {
                 <div ref={bottomRef} />
               </div>
 
-              <div className="mt-auto shrink-0 border-t border-slate-100 bg-white pb-4 pt-3">
+              <div className="mt-auto shrink-0 border-t border-slate-100 bg-white pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3">
                 <div className="mb-3 flex items-center gap-2 text-xs text-slate-500">
                   <Sparkles className="h-4 w-4 fill-violet-500 text-violet-500" />
                   <span>{loading ? ui.loading : booting ? ui.booting : ui.ready}</span>

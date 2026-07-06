@@ -91,6 +91,15 @@ export class NotificationService {
     return { updated: updated.count };
   }
 
+  async deleteMany(notificationIds: string[], user: AuthUser) {
+    this.assertDb();
+    if (!notificationIds.length) {
+      return { deleted: 0 };
+    }
+    const deleted = await notificationRepository.deleteMany(notificationIds, user.id);
+    return { deleted: deleted.count };
+  }
+
   async notify(input: NotifyInput) {
     this.assertDb();
     const type = normalizeNotificationType(input);

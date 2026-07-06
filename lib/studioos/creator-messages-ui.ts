@@ -1,6 +1,5 @@
 import type { MessageCategory, MessageDetailPayload, ProgressStep } from "@/components/studioos/studio-message-center.types";
 import type { Locale } from "@/lib/i18n";
-import type { CreatorNotificationType } from "@/lib/notification-types";
 
 export type MessageStatCard = {
   key: MessageCategory | "all";
@@ -27,7 +26,7 @@ const categoryLabels = {
   }
 } as const;
 
-export function messageCategoryFromType(type: CreatorNotificationType): MessageCategory {
+export function messageCategoryFromType(type: string): MessageCategory {
   switch (type) {
     case "project_funded":
     case "escrow_released":
@@ -166,7 +165,7 @@ export function buildMessageProjectStage(progressSteps: ProgressStep[], locale: 
 }
 
 export function buildMessageNextStep(
-  type: CreatorNotificationType,
+  type: string,
   locale: Locale
 ): MessageDetailPayload["nextStep"] {
   if (locale === "zh") {

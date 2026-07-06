@@ -729,8 +729,8 @@ export function CreatorPublicProfileEditor({
         </header>
 
         <div className="grid min-h-0 flex-1 gap-6 md:grid-cols-[minmax(300px,340px)_minmax(0,1fr)] md:items-start xl:grid-cols-[360px_minmax(0,1fr)]">
-          <aside className="md:min-h-0 md:overflow-y-auto md:pr-1">
-            <div className="rounded-[28px] border border-[#E5E7EB] bg-white p-4 shadow-[0_24px_70px_rgba(36,24,80,0.08)] transition duration-150 hover:-translate-y-0.5 hover:shadow-[0_30px_90px_rgba(109,76,255,0.12)]">
+          <aside className="md:sticky md:top-4 md:max-h-[calc(100dvh-7rem)] md:overflow-y-auto md:pr-1">
+            <div className="rounded-[28px] border border-[#E5E7EB] bg-white p-4 shadow-[0_24px_70px_rgba(36,24,80,0.08)]">
               <div className="relative h-[144px] overflow-hidden rounded-[22px] bg-[radial-gradient(circle_at_20%_15%,#8b5cf6_0,#3b1978_32%,#0b1020_70%,#111827_100%)]">
                 {coverPreview ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -744,7 +744,7 @@ export function CreatorPublicProfileEditor({
                   type="button"
                   onClick={() => coverInputRef.current?.click()}
                   disabled={coverUploading}
-                  className="absolute right-3 top-3 rounded-full bg-white/92 px-3 py-1.5 text-xs font-semibold text-zinc-800 shadow-sm ring-1 ring-white/80 backdrop-blur hover:bg-white"
+                  className="absolute right-3 top-3 rounded-full border border-white/80 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-950 shadow-[0_8px_22px_rgba(15,23,42,0.18)] backdrop-blur transition hover:bg-violet-50 disabled:cursor-not-allowed disabled:opacity-70"
                 >
                   {coverUploading ? (locale === "zh" ? "上传中…" : "Uploading…") : t.editCover}
                 </button>

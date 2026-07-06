@@ -821,42 +821,56 @@ export class AuthSecurityService {
     email?: string | null;
     userId?: string | null;
   }) {
-    const ctx = requestContext(input.request);
-    await recordAttempt({
-      email: input.email,
-      provider: input.provider,
-      type: "OAUTH_CALLBACK",
-      success: input.success,
-      failureReason: input.success ? undefined : "oauth_callback_failed",
-      ctx
-    });
-    await audit({
-      userId: input.userId,
-      email: input.email,
-      event: input.success ? "OAUTH_SUCCESS" : "OAUTH_FAILED",
-      ctx,
-      metadata: { provider: input.provider }
-    });
+    if (!hasDatabaseUrl()) {
+      return;
+    }
 
-    if (!input.success) {
-      const failures = await prisma.authAttempt.count({
-        where: {
-          provider: input.provider,
-          ipHash: ctx.ipHash,
-          type: "OAUTH_CALLBACK",
-          success: false,
-          createdAt: { gte: addMs(now(), -10 * 60_000) }
-        }
+    try {
+      requireAuthSecurityDelegates();
+    } catch {
+      return;
+    }
+
+    const ctx = requestContext(input.request);
+    try {
+      await recordAttempt({
+        email: input.email,
+        provider: input.provider,
+        type: "OAUTH_CALLBACK",
+        success: input.success,
+        failureReason: input.success ? undefined : "oauth_callback_failed",
+        ctx
       });
-      if (failures >= 10) {
-        await prisma.authLock.create({
-          data: {
+      await audit({
+        userId: input.userId,
+        email: input.email,
+        event: input.success ? "OAUTH_SUCCESS" : "OAUTH_FAILED",
+        ctx,
+        metadata: { provider: input.provider }
+      });
+
+      if (!input.success) {
+        const failures = await prisma.authAttempt.count({
+          where: {
+            provider: input.provider,
             ipHash: ctx.ipHash,
-            reason: "oauth_callback_failed",
-            lockedUntil: addMs(now(), LOCK_15_MIN_MS)
+            type: "OAUTH_CALLBACK",
+            success: false,
+            createdAt: { gte: addMs(now(), -10 * 60_000) }
           }
         });
+        if (failures >= 10) {
+          await prisma.authLock.create({
+            data: {
+              ipHash: ctx.ipHash,
+              reason: "oauth_callback_failed",
+              lockedUntil: addMs(now(), LOCK_15_MIN_MS)
+            }
+          });
+        }
       }
+    } catch {
+      // OAuth audit logging must never block the user-facing sign-in flow.
     }
   }
 }

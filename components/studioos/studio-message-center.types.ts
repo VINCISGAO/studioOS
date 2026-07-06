@@ -1,7 +1,4 @@
-import type { CreatorNotificationType } from "@/lib/notification-types";
-import type { BrandNotificationType } from "@/lib/studioos/brand-notification-types";
-
-export type MessageNotificationType = CreatorNotificationType | BrandNotificationType;
+export type MessageNotificationType = string;
 
 export type MessageCategory = "project" | "brand" | "payment" | "system";
 

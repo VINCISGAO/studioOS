@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { StudioMessageCenter } from "@/components/studioos/studio-message-center";
 import type { MessageDetailPayload, MessageListItem } from "@/components/studioos/studio-message-center.types";
+import { notificationService } from "@/features/notification/notification.service";
+import { getSessionUser } from "@/features/auth/session.service";
 import { getCurrentCreator } from "@/lib/creator-session";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
 import type { CreatorNotification } from "@/lib/notification-types";
@@ -40,6 +42,115 @@ const PROJECT_THUMBNAILS: Record<string, string> = {
   ntf_demo_arc_funded:
     "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=200&auto=format&fit=crop"
 };
+
+type UnifiedNotificationItem = Awaited<ReturnType<typeof notificationService.listForUser>>["items"][number];
+
+function metadataRecord(metadata: unknown): Record<string, unknown> {
+  return typeof metadata === "object" && metadata !== null && !Array.isArray(metadata)
+    ? (metadata as Record<string, unknown>)
+    : {};
+}
+
+function stringFromMetadata(metadata: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const value = metadata[key];
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  return null;
+}
+
+function messageCategoryFromUnified(item: UnifiedNotificationItem) {
+  if (item.category === "PAYMENT" || item.category === "SETTLEMENT") return "payment" as const;
+  if (item.category === "SYSTEM" || item.category === "MEMBERSHIP" || item.category === "AI") return "system" as const;
+  if (item.category === "INVITATION" || item.category === "MATCHING" || item.category === "COLLABORATION") return "brand" as const;
+  return "project" as const;
+}
+
+function buildUnifiedMessageCenterPayload(
+  notifications: UnifiedNotificationItem[],
+  creatorName: string,
+  locale: Locale
+) {
+  const details: MessageDetailPayload[] = notifications.map((notification) => {
+    const metadata = metadataRecord(notification.metadata);
+    const category = messageCategoryFromUnified(notification);
+    const projectId =
+      notification.campaignId ??
+      stringFromMetadata(metadata, ["projectId", "project_id", "legacyProjectId", "legacy_project_id"]);
+    const orderId = stringFromMetadata(metadata, ["orderId", "order_id"]);
+    const senderName =
+      category === "system"
+        ? locale === "zh"
+          ? "VINCIS 系统"
+          : "VINCIS System"
+        : senderDisplayName(
+            stringFromMetadata(metadata, ["brandName", "companyName", "company_name", "clientName"]) ??
+              (locale === "zh" ? "品牌方" : "Brand"),
+            locale
+          );
+    const actionHref = notification.actionUrl ?? withLocale("/studio/messages", locale);
+    const projectTitle =
+      stringFromMetadata(metadata, ["projectTitle", "campaignTitle", "title"]) ?? notification.title;
+
+    return {
+      notificationId: notification.id,
+      type: notification.type,
+      category,
+      categoryLabel: messageCategoryLabel(category, locale),
+      senderName,
+      senderInitials: senderInitials(senderName),
+      senderAvatarTone: senderAvatarTone(senderName),
+      title: notification.title,
+      detailTitle: notification.title,
+      salutation: buildMessageSalutation(creatorName, locale),
+      body: notification.content,
+      createdAt: notification.createdAt,
+      detailTimeLabel: formatMessageDetailTime(notification.createdAt, locale),
+      readAt: notification.readAt,
+      orderId,
+      projectId,
+      projectTitle,
+      formId: buildProjectCode(projectId),
+      fields: [],
+      attachments: [],
+      briefPdfUrl: projectId ? `/api/projects/${projectId}/brief.pdf?lang=${locale}` : "",
+      progressSteps: [],
+      projectInfo: projectId
+        ? {
+            title: projectTitle,
+            code: buildProjectCode(projectId),
+            stage: locale === "zh" ? "通知事件" : "Notification event",
+            thumbnailUrl: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=200&auto=format&fit=crop",
+            href: actionHref
+          }
+        : null,
+      nextStep: buildMessageNextStep(notification.type, locale),
+      actionHref,
+      actionLabel: locale === "zh" ? "查看" : "Open",
+      replyHref: actionHref,
+      replyLabel: locale === "zh" ? "查看详情" : "View details"
+    };
+  });
+
+  const list: MessageListItem[] = details.map((detail) => ({
+    id: detail.notificationId,
+    type: detail.type,
+    category: detail.category,
+    senderName: detail.senderName,
+    senderInitials: detail.senderInitials,
+    senderAvatarTone: detail.senderAvatarTone,
+    title: detail.title,
+    preview: detail.body,
+    createdAt: detail.createdAt,
+    timeLabel: formatMessageListTime(detail.createdAt, locale),
+    readAt: detail.readAt,
+    orderId: detail.orderId,
+    actionHref: detail.actionHref,
+    actionLabel: detail.actionLabel
+  }));
+
+  return { list, details };
+}
 
 function fallbackBrandGuideAttachment(projectId: string, locale: Locale) {
   return {
@@ -217,6 +328,42 @@ export default async function StudioMessagesPage({ searchParams }: { searchParam
     orders,
     locale
   });
+  const sessionUser = await getSessionUser();
+  if (sessionUser && !sessionUser.id.startsWith("demo_")) {
+    try {
+      const unified = await notificationService.listForUser(
+        { id: sessionUser.id, role: sessionUser.role },
+        200
+      );
+      const payload = buildUnifiedMessageCenterPayload(unified.items, creator.name, locale);
+      const initialSelectedId =
+        typeof query.id === "string" && payload.list.some((item) => item.id === query.id)
+          ? query.id
+          : payload.list[0]?.id ?? null;
+
+      return (
+        <div className="space-y-6">
+          <header>
+            <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 sm:text-3xl">
+              {locale === "zh" ? "消息中心" : "Messages"}
+            </h1>
+            <p className="mt-2 text-sm text-zinc-500">
+              {locale === "zh" ? "项目消息、品牌消息与系统通知。" : "Project, brand, and system notifications."}
+            </p>
+          </header>
+          <StudioMessageCenter
+            locale={locale}
+            list={payload.list}
+            details={payload.details}
+            initialSelectedId={initialSelectedId}
+          />
+        </div>
+      );
+    } catch {
+      // Fall back to the legacy creator notification store when the database notification center is unavailable.
+    }
+  }
+
   const notifications = await listNotificationsForCreator(creator.id, locale);
   const payload = await buildMessageCenterPayload(notifications, creator.name, locale);
   const initialSelectedId =

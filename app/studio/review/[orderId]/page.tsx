@@ -98,7 +98,7 @@ export default async function StudioReviewOrderPage({
       initialVersion={await resolveActiveReviewPlaybackVersion(order.id, workspaceDeliverables)}
       portalUi={portalUi}
       backHref={withLocale(creatorPortalRoutes.reviewHub, locale)}
-      backLabel={locale === "zh" ? "返回审片中心" : "Back to review center"}
+      backLabel={locale === "zh" ? "返回上一步" : "Back"}
       replaceUploadVersion={replaceUploadVersion}
       canRevertUpload={revertGate.canRevert}
     />

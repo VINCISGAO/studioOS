@@ -7,14 +7,12 @@ import {
   CheckCircle2,
   ChevronRight,
   Clapperboard,
-  Clock3,
   Grid3X3,
   LayoutList,
   Lightbulb,
   MessageSquareText,
   Play,
   Search,
-  TrendingDown,
   TrendingUp,
   UploadCloud
 } from "lucide-react";
@@ -30,14 +28,12 @@ const copy = {
     subtitle: "与品牌方共享同一套审片数据：版本、时间码批注、通过/修改状态实时同步。",
     pendingReview: "待审核版本",
     pendingRevision: "待修改反馈",
-    dueToday: "今日待处理",
     approved: "已通过版本",
     avgReview: "平均审核时长",
     needBrand: "需要品牌方确认",
     waitBrand: "等待品牌方意见",
-    deadlineToday: "截止时间今天",
-    passedMonth: "本月通过",
-    faster: "较上月 ↓ 0.6天",
+    passedMonth: "累计通过",
+    avgReviewBase: "基于已完成版本",
     search: "搜索 Campaign / 品牌 / 项目名称",
     allBrands: "所有品牌",
     allStatus: "所有状态",
@@ -115,14 +111,12 @@ const copy = {
     subtitle: "Share the same review data with brands — versions, timed comments, and approvals stay in sync.",
     pendingReview: "Pending review",
     pendingRevision: "Revision feedback",
-    dueToday: "Due today",
     approved: "Approved versions",
     avgReview: "Avg review time",
     needBrand: "Needs brand confirmation",
     waitBrand: "Waiting for brand feedback",
-    deadlineToday: "Due today",
-    passedMonth: "Approved this month",
-    faster: "vs last month ↓ 0.6d",
+    passedMonth: "Total approved",
+    avgReviewBase: "Based on completed versions",
     search: "Search campaign / brand / project",
     allBrands: "All brands",
     allStatus: "All statuses",
@@ -216,18 +210,48 @@ function activeStep(item: ReviewHubItem) {
   return 3;
 }
 
+function reviewDurationDays(item: ReviewHubItem) {
+  if (item.status !== "completed" || !item.latestVersionUploadedAt) {
+    return null;
+  }
+  const startedAt = new Date(item.latestVersionUploadedAt).getTime();
+  const completedAt = new Date(item.updatedAt).getTime();
+  if (Number.isNaN(startedAt) || Number.isNaN(completedAt) || completedAt < startedAt) {
+    return null;
+  }
+  return (completedAt - startedAt) / (1000 * 60 * 60 * 24);
+}
+
+function formatAvgReviewDays(locale: Locale, value: number) {
+  if (value <= 0) {
+    return locale === "zh" ? "0天" : "0d";
+  }
+  const rounded = Math.round(value * 10) / 10;
+  return locale === "zh" ? `${rounded}天` : `${rounded}d`;
+}
+
 export function StudioReviewHubBoard({ locale, items }: { locale: Locale; items: ReviewHubItem[] }) {
   const t = copy[locale];
   const [query, setQuery] = useState("");
   const [view, setView] = useState<"list" | "grid">("list");
 
   const stats = useMemo(
-    () => ({
-      pendingReview: items.filter((item) => item.status === "review").length,
-      pendingRevision: items.filter((item) => item.status === "revision").length,
-      dueToday: items.filter((item) => item.status === "review" || item.status === "revision").length,
-      approved: items.filter((item) => item.status === "completed").length
-    }),
+    () => {
+      const reviewDurations = items
+        .map(reviewDurationDays)
+        .filter((value): value is number => value != null);
+      const avgReviewDays =
+        reviewDurations.length > 0
+          ? reviewDurations.reduce((sum, value) => sum + value, 0) / reviewDurations.length
+          : 0;
+
+      return {
+        pendingReview: items.filter((item) => item.status === "review").length,
+        pendingRevision: items.filter((item) => item.status === "revision").length,
+        approved: items.filter((item) => item.status === "completed").length,
+        avgReviewDays
+      };
+    },
     [items]
   );
 
@@ -245,9 +269,8 @@ export function StudioReviewHubBoard({ locale, items }: { locale: Locale; items:
   const statCards = [
     { label: t.pendingReview, value: stats.pendingReview, sub: t.needBrand, icon: Clapperboard, tone: "violet" },
     { label: t.pendingRevision, value: stats.pendingRevision, sub: t.waitBrand, icon: MessageSquareText, tone: "amber" },
-    { label: t.dueToday, value: Math.max(1, stats.dueToday), sub: t.deadlineToday, icon: Clock3, tone: "blue" },
-    { label: t.approved, value: Math.max(stats.approved, 8), sub: t.passedMonth, icon: CheckCircle2, tone: "emerald" },
-    { label: t.avgReview, value: locale === "zh" ? "1.8天" : "1.8d", sub: t.faster, icon: TrendingUp, tone: "violet", trendDown: true }
+    { label: t.approved, value: stats.approved, sub: t.passedMonth, icon: CheckCircle2, tone: "emerald" },
+    { label: t.avgReview, value: formatAvgReviewDays(locale, stats.avgReviewDays), sub: t.avgReviewBase, icon: TrendingUp, tone: "violet" }
   ];
 
   return (
@@ -257,7 +280,7 @@ export function StudioReviewHubBoard({ locale, items }: { locale: Locale; items:
         <p className="max-w-3xl text-sm leading-6 text-zinc-500">{t.subtitle}</p>
       </header>
 
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      <section className="grid grid-cols-2 gap-2.5 sm:gap-4 xl:grid-cols-4">
         {statCards.map((card) => {
           const Icon = card.icon;
           const iconTone =
@@ -271,24 +294,18 @@ export function StudioReviewHubBoard({ locale, items }: { locale: Locale; items:
           return (
             <div
               key={card.label}
-              className="min-h-[132px] rounded-[22px] border border-zinc-200/80 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]"
+              className="rounded-2xl border border-zinc-200/80 bg-white p-3 shadow-sm transition hover:-translate-y-0.5 hover:border-violet-200 hover:shadow-md sm:p-5"
             >
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-[13px] font-medium text-zinc-500">{card.label}</p>
-                  <p className="mt-3 text-[32px] font-semibold leading-none tracking-[-0.04em] text-zinc-950">{card.value}</p>
-                  <p className="mt-2 text-xs leading-5 text-zinc-500">{card.sub}</p>
+              <div className="flex items-start justify-between gap-2 sm:gap-3">
+                <div className="min-w-0">
+                  <p className="truncate text-xs font-medium text-zinc-500 sm:text-sm">{card.label}</p>
+                  <p className="mt-1 text-2xl font-semibold tracking-tight text-zinc-950 sm:mt-2 sm:text-3xl">{card.value}</p>
                 </div>
-                <span className={cn("flex h-10 w-10 items-center justify-center rounded-xl", iconTone)}>
-                  <Icon className="h-5 w-5" />
+                <span className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-xl sm:h-12 sm:w-12 sm:rounded-2xl", iconTone)}>
+                  <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
                 </span>
               </div>
-              {"trendDown" in card && card.trendDown ? (
-                <p className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-emerald-600">
-                  <TrendingDown className="h-3.5 w-3.5" />
-                  {t.faster}
-                </p>
-              ) : null}
+              <p className="mt-1 text-xs text-zinc-500">{card.sub}</p>
             </div>
           );
         })}

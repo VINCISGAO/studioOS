@@ -43,6 +43,8 @@ export function PortalAccountAvatar({
           fill
           className="object-cover"
           sizes="40px"
+          loading="eager"
+          fetchPriority="high"
           unoptimized
           onError={() => setImageFailed(true)}
         />

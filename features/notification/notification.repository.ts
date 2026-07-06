@@ -69,6 +69,12 @@ export class NotificationRepository {
     });
   }
 
+  async deleteMany(ids: string[], userId: string) {
+    return prisma.notification.deleteMany({
+      where: { id: { in: ids }, userId }
+    });
+  }
+
   async markSent(id: string) {
     return prisma.notification.update({
       where: { id },

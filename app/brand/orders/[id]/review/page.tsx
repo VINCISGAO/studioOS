@@ -34,7 +34,7 @@ export default async function BrandOrderReviewPage({ params, searchParams }: Pag
     listReviewComments(order.id)
   ]);
 
-  const campaignTitle = locale === "zh" ? "审批中心" : "Review center";
+  const campaignTitle = locale === "zh" ? "审片中心" : "Review center";
 
   if (!deliverables.length) {
     return (
@@ -43,7 +43,7 @@ export default async function BrandOrderReviewPage({ params, searchParams }: Pag
           href={withLocale(brandPortalRoutes.reviewHub, locale)}
           className="inline-flex items-center gap-1.5 text-sm text-zinc-500 transition hover:text-zinc-900"
         >
-          ← {locale === "zh" ? "返回审片中心" : "Back to review center"}
+          ← {locale === "zh" ? "返回上一步" : "Back"}
         </Link>
         <div className="rounded-2xl border border-zinc-200 bg-white p-8 text-center shadow-sm">
           <h1 className="text-xl font-semibold text-zinc-900">{locale === "zh" ? "审片" : "Review"}</h1>
@@ -67,7 +67,7 @@ export default async function BrandOrderReviewPage({ params, searchParams }: Pag
       initialComments={comments}
       initialVersion={await resolveActiveReviewPlaybackVersion(order.id, deliverables)}
       backHref={withLocale(brandPortalRoutes.reviewHub, locale)}
-      backLabel={locale === "zh" ? "返回审片中心" : "Back to review center"}
+      backLabel={locale === "zh" ? "返回上一步" : "Back"}
     />
   );
 }

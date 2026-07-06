@@ -147,6 +147,20 @@ function contextLabel(pathname: string, locale: UiLocale) {
   return "VINCIS";
 }
 
+function pageContextLabel(input: { pathname: string; entityType: string | null; locale: UiLocale }) {
+  const { pathname, entityType, locale } = input;
+  if (entityType === "review") return locale === "zh" ? "当前：审片中心" : "Current: Review center";
+  if (entityType === "campaign") return locale === "zh" ? "当前：项目页面" : "Current: Project page";
+  if (entityType === "order") return locale === "zh" ? "当前：订单页面" : "Current: Order page";
+  if (entityType === "attribution") return locale === "zh" ? "当前：归因分析" : "Current: Attribution";
+  if (pathname.startsWith("/studio/messages")) return locale === "zh" ? "当前：消息中心" : "Current: Messages";
+  if (pathname.startsWith("/studio/profile")) return locale === "zh" ? "当前：个人资料" : "Current: Profile";
+  if (pathname.startsWith("/brand")) return locale === "zh" ? "当前：广告主工作台" : "Current: Brand workspace";
+  if (pathname.startsWith("/studio") || pathname.startsWith("/creator")) return locale === "zh" ? "当前：创作者工作台" : "Current: Creator workspace";
+  if (pathname.startsWith("/admin")) return locale === "zh" ? "当前：管理后台" : "Current: Admin";
+  return locale === "zh" ? "当前：VINCIS" : "Current: VINCIS";
+}
+
 function roleKindFromPath(pathname: string): "brand" | "creator" | "admin" | "auto" {
   if (pathname.startsWith("/brand")) return "brand";
   if (pathname.startsWith("/studio") || pathname.startsWith("/creator")) return "creator";
@@ -552,8 +566,8 @@ export function AiCopilotDrawer() {
       </Button>
 
       {open ? (
-        <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/30 backdrop-blur-[1px]">
-          <aside className="flex h-full w-full max-w-[460px] flex-col border-l border-violet-100 bg-[#fbfbff] shadow-2xl">
+        <div className="fixed inset-0 z-50 flex h-[100dvh] max-h-[100dvh] justify-end overflow-hidden bg-slate-950/30 backdrop-blur-[1px]">
+          <aside className="flex h-[100dvh] max-h-[100dvh] min-h-0 w-full max-w-[460px] flex-col overflow-hidden border-l border-violet-100 bg-[#fbfbff] shadow-2xl">
             <header className="border-b border-violet-100 bg-white p-5">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
@@ -581,7 +595,11 @@ export function AiCopilotDrawer() {
                   {copy.rolePrefix}: {roleLabel}
                 </span>
                 <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
-                  {pageContext.entityType ? `${pageContext.entityType}:${pageContext.entityId ?? copy.currentEntity}` : pathname}
+                  {pageContextLabel({
+                    pathname,
+                    entityType: pageContext.entityType,
+                    locale
+                  })}
                 </span>
                 <a
                   href={workspaceUrl}
@@ -592,7 +610,7 @@ export function AiCopilotDrawer() {
               </div>
             </header>
 
-            <div className="flex-1 space-y-4 overflow-y-auto bg-[#fbfbff] p-5">
+            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto bg-[#fbfbff] p-5">
               {messages.length === 0 ? (
                 <div className="rounded-3xl border border-dashed border-violet-200 bg-white p-5 text-sm text-slate-600 shadow-sm">
                   <p className="font-medium text-slate-950">{introTitle}</p>
@@ -633,7 +651,7 @@ export function AiCopilotDrawer() {
               <div ref={bottomRef} />
             </div>
 
-            <div className="border-t border-violet-100 bg-white p-4">
+            <div className="shrink-0 border-t border-violet-100 bg-white px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-4">
               <div className="mb-3 flex gap-2 overflow-x-auto pb-1">
                 {suggestions.map((question) => (
                   <button

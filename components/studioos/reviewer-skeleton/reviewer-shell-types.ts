@@ -12,7 +12,7 @@ export function reviewStatusLabel(locale: Locale, status: string) {
     if (status === "waiting_payment") return "待付款";
     if (status === "paid") return "已付款";
     if (status === "in_production") return "制作中";
-    if (status === "review") return "等待审批";
+    if (status === "review") return "审片中";
     if (status === "revision") return "修改中";
     if (status === "ready_for_completion") return "等待最终确认";
     if (status === "settling") return "结算中";

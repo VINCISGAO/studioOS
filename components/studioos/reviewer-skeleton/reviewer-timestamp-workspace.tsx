@@ -655,9 +655,6 @@ function ReviewerTimestampWorkspaceInner({
       backLabel={backLabel}
       focusMode={false}
       onEnterFocusMode={enterFocusMode}
-      activeVersion={activeVersion}
-      versions={sortedVersions}
-      onSelectVersion={handleSelectVersion}
       errorMessage={error}
       onDismissError={() => setError(null)}
       info={headerInfo}

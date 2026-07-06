@@ -190,15 +190,6 @@ export function ReviewerTimestampPlayer({
           </span>
         ) : null}
 
-        {portalLayout ? (
-          <button
-            type="button"
-            className="absolute right-3 top-3 z-30 rounded-lg border border-white/15 bg-black/45 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur-sm transition hover:bg-black/60"
-          >
-            {locale === "zh" ? "对比" : "Compare"}
-          </button>
-        ) : null}
-
         <div className={cn("relative h-full w-full", focusLayout && "max-lg:flex max-lg:items-start")}>
           {videoUrl && videoStatus !== "error" ? (
             <video

@@ -13,7 +13,6 @@ import { authSecurityService } from "@/features/auth/auth-security.service";
 import { AUTH_ERROR_COPY } from "@/features/auth/auth-error-copy";
 import type { OAuthEntryRole } from "@/features/auth/oauth-auth.service";
 import { hasAlipayOAuthConfig } from "@/lib/alipay/alipay-oauth-config";
-import { getAppBaseUrl } from "@/lib/app-url";
 import { hasSupabaseConfig } from "@/lib/auth-config";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import type { Locale } from "@/lib/i18n";
@@ -39,6 +38,16 @@ export type OAuthStartResult = string | AlipayOAuthStartResult;
 
 function loginErrorUrl(lang: Locale, entryRole: OAuthEntryRole, error: string) {
   return `/login?error=${encodeURIComponent(error)}&lang=${lang}&role=${entryRole}`;
+}
+
+function resolveOAuthCallbackUrl(request: Request) {
+  const requestUrl = new URL(request.url);
+  const forwardedProto = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim();
+  const forwardedHost = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim();
+  const protocol = forwardedProto || requestUrl.protocol.replace(/:$/, "");
+  const host = forwardedHost || requestUrl.host;
+
+  return new URL("/auth/callback", `${protocol}://${host}`);
 }
 
 export async function startOAuthSignIn(input: OAuthStartInput): Promise<OAuthStartResult> {
@@ -75,7 +84,7 @@ export async function startOAuthSignIn(input: OAuthStartInput): Promise<OAuthSta
     return loginErrorUrl(lang, entryRole, AUTH_ERROR_COPY.oauthFailed);
   }
 
-  const callbackUrl = new URL(`${getAppBaseUrl()}/auth/callback`);
+  const callbackUrl = resolveOAuthCallbackUrl(request);
   callbackUrl.searchParams.set("role", entryRole);
   callbackUrl.searchParams.set("lang", lang);
   if (nextPath.startsWith("/")) {

@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { brandAvatarObjectKey } from "@/lib/studioos/brand-avatar-upload";
 import { getObject, getObjectMetadata, getObjectRange } from "@/lib/studioos/object-storage";
 
+const ASSET_CACHE_CONTROL = "public, max-age=31536000, immutable";
+
 function mimeForFileName(fileName: string) {
   const ext = fileName.split(".").pop()?.toLowerCase();
   if (ext === "png") return "image/png";
@@ -39,9 +41,14 @@ export async function GET(
   const mime = mimeForFileName(safeName);
 
   try {
-    const metadata = await getObjectMetadata(fileKey);
-    const range = parseRange(request.headers.get("range"), metadata?.contentLength ?? null);
-    if (range) {
+    const rangeHeader = request.headers.get("range");
+    if (rangeHeader) {
+      const metadata = await getObjectMetadata(fileKey);
+      const range = parseRange(rangeHeader, metadata?.contentLength ?? null);
+      if (!range) {
+        return NextResponse.json({ error: "Invalid range" }, { status: 416 });
+      }
+
       const chunk = await getObjectRange(fileKey, range);
       if (!chunk) {
         return NextResponse.json({ error: "Asset not found" }, { status: 404 });
@@ -53,7 +60,7 @@ export async function GET(
           "Content-Length": String(chunk.length),
           "Content-Range": `bytes ${range.start}-${range.end}/${metadata?.contentLength ?? "*"}`,
           "Accept-Ranges": "bytes",
-          "Cache-Control": "private, max-age=3600"
+          "Cache-Control": ASSET_CACHE_CONTROL
         }
       });
     }
@@ -66,8 +73,9 @@ export async function GET(
     return new NextResponse(new Uint8Array(data), {
       headers: {
         "Content-Type": mime,
+        "Content-Length": String(data.length),
         "Accept-Ranges": "bytes",
-        "Cache-Control": "private, max-age=3600"
+        "Cache-Control": ASSET_CACHE_CONTROL
       }
     });
   } catch {
