@@ -6,7 +6,12 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "VINCIS | Hollywood Quality. Without Hollywood Costs.",
-  description: studioOS.hero.en
+  description: studioOS.hero.en,
+  icons: {
+    icon: "/images/LOGO.png",
+    shortcut: "/images/LOGO.png",
+    apple: "/images/LOGO.png"
+  }
 };
 
 export default function RootLayout({
