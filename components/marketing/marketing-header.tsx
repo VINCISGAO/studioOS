@@ -1,22 +1,16 @@
 import Link from "next/link";
-import { cookies, headers } from "next/headers";
+import { headers } from "next/headers";
 import { BrandLogoLockup } from "@/components/brand-logo-mark";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { Button } from "@/components/ui/button";
-import { DEMO_SESSION_COOKIE } from "@/lib/auth-config";
-import { parseDemoSession } from "@/lib/demo-auth";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import {
   resolveMarketingPortalHref,
   resolveMarketingPortalLabel
 } from "@/lib/marketing/portal-entry";
+import { getCurrentSession } from "@/lib/session-user";
 import { cn } from "@/lib/utils";
-
-async function getNavSession() {
-  const cookieStore = await cookies();
-  return parseDemoSession(cookieStore.get(DEMO_SESSION_COOKIE)?.value);
-}
 
 export async function MarketingHeader({ locale }: { locale: Locale }) {
   const nav = {
@@ -28,7 +22,7 @@ export async function MarketingHeader({ locale }: { locale: Locale }) {
   const headerList = await headers();
   const pathname = headerList.get("x-pathname") ?? "/";
   const search = headerList.get("x-search") ?? "";
-  const session = await getNavSession();
+  const session = await getCurrentSession();
   const isHome = pathname === "/";
   const portalHref = resolveMarketingPortalHref(locale, session);
   const portalLabel = resolveMarketingPortalLabel(locale, session);

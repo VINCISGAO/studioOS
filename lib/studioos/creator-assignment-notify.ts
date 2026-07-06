@@ -63,7 +63,7 @@ function notificationCopy(
     }
     return {
       title: `🎉 恭喜，你已被品牌选中`,
-      body: `项目方选择了你负责「${projectTitle}」。请等待品牌完成托管付款，收到付款通知后再开始制作。`
+      body: `「${projectTitle}」已经正式达成合作，项目表单已生成。现在可以进入审片中心上传 V1 初稿。`
     };
   }
 
@@ -83,7 +83,7 @@ function notificationCopy(
 
   return {
     title: `Selected by ${brandName}`,
-    body: `You were chosen for "${projectTitle}". Wait for the brand to complete escrow payment — you'll be notified when production can begin.`
+    body: `"${projectTitle}" is now a confirmed collaboration. Your project is ready; open the review center and upload V1.`
   };
 }
 
@@ -154,7 +154,7 @@ export async function notifyCreatorAssignment(input: {
   const creator = getCreatorByIdSync(input.creatorId);
   const email = resolveCreatorEmail(input.creatorId);
   if (email) {
-    const actionUrl = `${appBaseUrl()}/studio/projects/${input.order.id}?lang=${input.locale}`;
+    const actionUrl = `${appBaseUrl()}/studio/review/${input.order.id}?lang=${input.locale}`;
     const result = await sendCreatorNotificationEmail({
       to: email,
       creatorName: creator?.name ?? "Creator",

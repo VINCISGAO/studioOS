@@ -75,9 +75,9 @@ export class SettlementService {
     }
 
     if (
-      ctx.delivery?.status === "LOCKED" &&
       ctx.escrow?.status === EscrowState.HELD &&
-      ctx.campaign.status === CampaignState.MASTER_UPLOADED &&
+      (ctx.campaign.status === CampaignState.APPROVED ||
+        (ctx.delivery?.status === "LOCKED" && ctx.campaign.status === CampaignState.MASTER_UPLOADED)) &&
       Number(ctx.escrow.remainingAmount) > 0
     ) {
       return SettlementState.READY;
@@ -169,7 +169,10 @@ export class SettlementService {
     const refreshed = await campaignRepository.findById(ctx.campaign.id);
     if (!refreshed) return;
 
-    if (refreshed.status === CampaignState.MASTER_UPLOADED) {
+    if (
+      refreshed.status === CampaignState.APPROVED ||
+      refreshed.status === CampaignState.MASTER_UPLOADED
+    ) {
       await campaignService.transition(refreshed.id, CampaignEvent.RELEASE_PAYMENT, actor);
     }
 
@@ -264,7 +267,10 @@ export class SettlementService {
 
     await settlementRepository.markCreatorPayoutReleased(ctx.campaign.id, input.actor.id);
 
-    if (ctx.campaign.status === CampaignState.MASTER_UPLOADED) {
+    if (
+      ctx.campaign.status === CampaignState.APPROVED ||
+      ctx.campaign.status === CampaignState.MASTER_UPLOADED
+    ) {
       await campaignService.transition(ctx.campaign.id, CampaignEvent.RELEASE_PAYMENT, input.actor);
     }
 

@@ -309,12 +309,6 @@ export function ReviewerPortalVersionSection({
     openBrandCommentCount > 0;
   const canCreatorUpload = !reviewCompleted && uploadContext.canUpload && !mustProcessBrandComments;
   const showBrandActionCards = canBrandActOnVersion;
-  const hideDirectApprovalAfterPaidUnlock =
-    role === "brand" &&
-    paidPackUnlocked &&
-    orderStatus === "review" &&
-    latestSubmittedVersion === 3 &&
-    activeVersion === latestSubmittedVersion;
   const showBrandWaitingForStudio =
     role === "brand" &&
     !reviewCompleted &&
@@ -864,21 +858,19 @@ export function ReviewerPortalVersionSection({
               }
             />
           )}
-          {hideDirectApprovalAfterPaidUnlock ? null : (
-            <PortalVersionActionCard
-              borderClass="border-zinc-200"
-              title={t.approve}
-              titleClass="text-emerald-600"
-              hint={t.approveHint}
-              pending={approvePending}
-              onClick={() => setDirectApproveConfirmOpen(true)}
-              icon={
-                <span className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-emerald-500 text-emerald-600">
-                  <Play className="h-4 w-4 fill-emerald-600 text-emerald-600" />
-                </span>
-              }
-            />
-          )}
+          <PortalVersionActionCard
+            borderClass="border-zinc-200"
+            title={t.approve}
+            titleClass="text-emerald-600"
+            hint={t.approveHint}
+            pending={approvePending}
+            onClick={() => setDirectApproveConfirmOpen(true)}
+            icon={
+              <span className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-emerald-500 text-emerald-600">
+                <Play className="h-4 w-4 fill-emerald-600 text-emerald-600" />
+              </span>
+            }
+          />
         </div>
       ) : showBrandWaitingForStudio ? (
         <div className="flex items-center gap-3 rounded-2xl border border-zinc-200 bg-zinc-50/80 px-4 py-4 text-left">

@@ -286,9 +286,9 @@ function SectionCard({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-[24px] border border-[#E5E7EB] bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+    <section className="rounded-[26px] border border-[#E5E7EB] bg-white/95 p-5 shadow-[0_18px_50px_rgba(36,24,80,0.055)] transition duration-150 hover:-translate-y-0.5 hover:border-violet-100 hover:shadow-[0_24px_70px_rgba(109,76,255,0.10)] sm:p-6">
       <div className="mb-6 flex gap-3">
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-zinc-100 text-xs font-semibold text-zinc-700">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-100 text-xs font-semibold text-violet-700 ring-4 ring-violet-50">
           {eyebrow}
         </div>
         <div>
@@ -668,7 +668,7 @@ export function CreatorPublicProfileEditor({
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col text-zinc-950">
+    <div className="flex h-full min-h-0 flex-col rounded-[28px] bg-[radial-gradient(circle_at_0%_0%,rgba(124,58,237,0.06),transparent_34%),linear-gradient(180deg,#ffffff_0%,#fafaff_100%)] text-zinc-950">
       {toast ? (
         <div className="fixed inset-x-0 top-5 z-50 flex justify-center px-4">
           <div
@@ -692,8 +692,8 @@ export function CreatorPublicProfileEditor({
         </div>
       ) : null}
 
-      <main className="flex min-h-0 flex-1 flex-col">
-        <header className="mb-6 shrink-0 px-1 lg:px-0 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <main className="flex min-h-0 flex-1 flex-col px-1 pb-2 sm:px-2">
+        <header className="mb-6 shrink-0 rounded-[24px] border border-white/70 bg-white/80 px-4 py-4 shadow-[0_12px_45px_rgba(15,23,42,0.045)] backdrop-blur flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-[24px] font-semibold leading-8 tracking-[-0.03em] text-zinc-950">
               {t.title}
@@ -728,10 +728,10 @@ export function CreatorPublicProfileEditor({
           </div>
         </header>
 
-        <div className="grid min-h-0 flex-1 gap-8 lg:grid-cols-[360px_minmax(0,1fr)] lg:items-start">
-          <aside className="lg:min-h-0 lg:overflow-hidden">
-            <div className="rounded-[24px] border border-[#E5E7EB] bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
-              <div className="relative h-[132px] overflow-hidden rounded-[20px] bg-[radial-gradient(circle_at_20%_15%,#7c3aed_0,#271347_30%,#0b1020_68%,#111827_100%)]">
+        <div className="grid min-h-0 flex-1 gap-6 md:grid-cols-[minmax(300px,340px)_minmax(0,1fr)] md:items-start xl:grid-cols-[360px_minmax(0,1fr)]">
+          <aside className="md:min-h-0 md:overflow-y-auto md:pr-1">
+            <div className="rounded-[28px] border border-[#E5E7EB] bg-white p-4 shadow-[0_24px_70px_rgba(36,24,80,0.08)] transition duration-150 hover:-translate-y-0.5 hover:shadow-[0_30px_90px_rgba(109,76,255,0.12)]">
+              <div className="relative h-[144px] overflow-hidden rounded-[22px] bg-[radial-gradient(circle_at_20%_15%,#8b5cf6_0,#3b1978_32%,#0b1020_70%,#111827_100%)]">
                 {coverPreview ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={coverPreview} alt="" className="h-full w-full object-cover" />
@@ -744,7 +744,7 @@ export function CreatorPublicProfileEditor({
                   type="button"
                   onClick={() => coverInputRef.current?.click()}
                   disabled={coverUploading}
-                  className="absolute right-3 top-3 rounded-full bg-white/90 px-3 py-1.5 text-xs font-semibold text-zinc-800 shadow-sm backdrop-blur hover:bg-white"
+                  className="absolute right-3 top-3 rounded-full bg-white/92 px-3 py-1.5 text-xs font-semibold text-zinc-800 shadow-sm ring-1 ring-white/80 backdrop-blur hover:bg-white"
                 >
                   {coverUploading ? (locale === "zh" ? "上传中…" : "Uploading…") : t.editCover}
                 </button>
@@ -765,7 +765,7 @@ export function CreatorPublicProfileEditor({
                 <button
                   type="button"
                   onClick={() => avatarInputRef.current?.click()}
-                  className="group relative h-16 w-16 overflow-hidden rounded-[18px] border-4 border-white bg-zinc-950 text-lg font-semibold text-white shadow-sm"
+                  className="group relative h-16 w-16 overflow-hidden rounded-[18px] border-4 border-white bg-zinc-950 text-lg font-semibold text-white shadow-[0_10px_28px_rgba(15,23,42,0.16)]"
                   aria-label={t.uploadAvatar}
                 >
                   {creator.avatar_url ? (
@@ -807,7 +807,7 @@ export function CreatorPublicProfileEditor({
                   {labelCountry(country, locale) || "South Korea"}
                 </p>
 
-                <div className="mt-5 grid grid-cols-3 gap-2 rounded-2xl border border-zinc-100 bg-zinc-50 p-2 text-center">
+                <div className="mt-5 grid grid-cols-3 gap-2 rounded-[20px] border border-zinc-100 bg-zinc-50 p-2 text-center shadow-[0_10px_30px_rgba(15,23,42,0.035)]">
                   {[
                     ["96%", t.responseRate],
                     ["72h", t.avgDelivery],
@@ -842,7 +842,7 @@ export function CreatorPublicProfileEditor({
                   </div>
                 </div>
 
-                <div className="mt-6 rounded-2xl border border-zinc-200 bg-white p-4">
+                <div className="mt-6 rounded-[20px] border border-violet-100 bg-[linear-gradient(135deg,#ffffff_0%,#f6f0ff_100%)] p-4 shadow-[0_12px_35px_rgba(109,76,255,0.08)]">
                   <p className="text-[13px] font-medium text-zinc-500">{t.startingFrom}</p>
                   <p className="mt-1 text-2xl font-semibold tracking-[-0.03em] text-zinc-950">
                     ${minBudget.toLocaleString()}
@@ -857,7 +857,7 @@ export function CreatorPublicProfileEditor({
                   {t.viewAsBrand} <ArrowUpRight className="h-4 w-4" />
                 </Link>
 
-                <div className="mt-4 flex items-start gap-3 rounded-2xl bg-zinc-50 p-4">
+                <div className="mt-4 flex items-start gap-3 rounded-2xl bg-violet-50/70 p-4">
                   <ShieldCheck className="mt-0.5 h-5 w-5 text-zinc-700" />
                   <div>
                     <p className="text-sm font-semibold text-zinc-900">{t.verifiedCreator}</p>
@@ -870,7 +870,7 @@ export function CreatorPublicProfileEditor({
             </div>
           </aside>
 
-          <form className="space-y-6 lg:min-h-0 lg:overflow-y-auto lg:pr-2" onSubmit={(event) => event.preventDefault()}>
+          <form className="space-y-6 md:min-h-0 md:overflow-y-auto md:pr-2" onSubmit={(event) => event.preventDefault()}>
             <SectionCard eyebrow="1" title={t.sections.basicTitle} helper={t.sections.basicHelper}>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">

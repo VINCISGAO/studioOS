@@ -5,7 +5,7 @@ import { getBrandProfileByEmail } from "@/lib/brand-profile-service";
 import { listOrdersForClient } from "@/lib/order-service";
 import { listProjectsForClient } from "@/lib/project-service";
 import { countUnreadBrandNotifications } from "@/lib/studioos/brand-notification-service";
-import { fallbackBrandDisplayName } from "@/lib/studioos/brand-account-display";
+import { fallbackBrandDisplayName, sanitizeBrandDisplayName } from "@/lib/studioos/brand-account-display";
 
 /** Per-request dedupe for brand layout + dashboard (avoids duplicate DB hits on navigation). */
 export const getBrandPortalProfile = cache((email: string) => getBrandProfileByEmail(email.toLowerCase()));
@@ -20,5 +20,9 @@ export const getBrandPortalOrders = cache((email: string) => listOrdersForClient
 
 export const getBrandPortalDisplayName = cache(async (email: string) => {
   const profile = await getBrandPortalProfile(email);
-  return profile?.display_name.trim() || profile?.company_name.trim() || fallbackBrandDisplayName(email);
+  return (
+    sanitizeBrandDisplayName(profile?.display_name.trim() ?? "") ||
+    sanitizeBrandDisplayName(profile?.company_name.trim() ?? "") ||
+    fallbackBrandDisplayName(email)
+  );
 });

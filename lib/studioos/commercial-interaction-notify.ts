@@ -500,6 +500,66 @@ export async function notifyBrandFinalDownloadReady(input: {
   });
 }
 
+export async function notifyPlatformInterventionRequired(input: {
+  order: StoredOrder;
+  locale?: Locale;
+  version?: number | null;
+}) {
+  const locale = input.locale ?? input.order.client_locale ?? "zh";
+  const projectId = input.order.project_id;
+  const projectTitle = await resolveProjectTitle(input.order);
+  const versionLabel = input.version ? `V${input.version}` : "V5";
+  const creatorName = resolveCreatorName(input.order.creator_id);
+
+  if (projectId) {
+    const brandExists = await hasBrandNotification({
+      brand_email: input.order.client_email,
+      project_id: projectId,
+      creator_id: input.order.creator_id,
+      type: "platform_intervention_required",
+      order_id: input.order.id
+    });
+    if (!brandExists) {
+      await createBrandNotification({
+        brand_email: input.order.client_email,
+        type: "platform_intervention_required",
+        title: locale === "zh" ? "第五稿后需平台介入" : "Platform intervention required",
+        body:
+          locale === "zh"
+            ? `「${projectTitle}」已到 ${versionLabel}，第五轮后仍未通过请联系平台客服仲裁。`
+            : `"${projectTitle}" reached ${versionLabel}. Further changes require support arbitration.`,
+        project_id: projectId,
+        creator_id: input.order.creator_id,
+        creator_name: creatorName,
+        order_id: input.order.id,
+        deliverable_version: input.version ?? null
+      });
+    }
+  }
+
+  const creatorExists = await hasNotification(
+    input.order.creator_id,
+    input.order.id,
+    "platform_intervention_required"
+  );
+  if (creatorExists) return null;
+
+  return createCreatorNotification({
+    creator_id: input.order.creator_id,
+    type: "platform_intervention_required",
+    title: locale === "zh" ? "项目进入平台介入" : "Project moved to platform intervention",
+    body:
+      locale === "zh"
+        ? `「${projectTitle}」已完成最多 5 版审片，后续将由平台客服介入仲裁。`
+        : `"${projectTitle}" has reached the 5-version review limit. Support will arbitrate next steps.`,
+    project_id: projectId,
+    order_id: input.order.id,
+    client_name: input.order.client_name,
+    company_name: input.order.company_name,
+    requirements_text: ""
+  });
+}
+
 /** @deprecated Use notifyCreatorsInvitationExpired */
 export async function notifyCreatorsNotSelected(input: {
   project: StoredProject;

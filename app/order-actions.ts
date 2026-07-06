@@ -41,7 +41,7 @@ function brandPayReturnPath(order: { id: string; project_id?: string | null }, l
 
 function brandPaySuccessPath(order: { id: string; project_id?: string | null }, lang: Locale) {
   if (order.project_id) {
-    return withLocale(`/brand/projects/${order.project_id}?tab=match`, lang);
+    return withLocale(`/brand/projects/${order.project_id}?tab=match&matching=1`, lang);
   }
   return withLocale(`/dashboard/orders/${order.id}?paid=1`, lang);
 }
@@ -150,7 +150,7 @@ export async function payOrderAction(formData: FormData) {
     const stripe = getStripe();
     const appUrl = getAppBaseUrl();
     const successPath = order.project_id
-      ? `/brand/projects/${order.project_id}?tab=match&lang=${lang}`
+      ? `/brand/projects/${order.project_id}?tab=match&matching=1&lang=${lang}`
       : `/dashboard/orders/${order.id}?paid=1&lang=${lang}`;
     const cancelPath = order.project_id
       ? `/brand/projects/${order.project_id}/checkout?pay=cancelled&lang=${lang}`

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import { AlertCircle, Fingerprint, KeyRound, Mail, ShieldCheck } from "lucide-react";
 import { adminLoginAction } from "@/app/actions";
+import { BrandLogoLockup } from "@/components/brand-logo-mark";
 import { LoginLanguageSwitcher } from "@/components/studioos/login-language-switcher";
 import { LoginSubmitSpinner } from "@/components/studioos/login-demo-accounts";
 import { Button } from "@/components/ui/button";
@@ -47,17 +48,6 @@ type AdminLoginShellProps = {
   totpConfigured: boolean;
   t: AdminLoginCopy;
 };
-
-function AdminLogoMark() {
-  return (
-    <div
-      className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 via-indigo-500 to-violet-400 text-sm font-bold text-white shadow-sm"
-      aria-hidden
-    >
-      S
-    </div>
-  );
-}
 
 function AdminLoginSubmitButton({
   label,
@@ -135,9 +125,14 @@ export function AdminLoginShell({
 
       <header className="relative z-10 flex items-start justify-between px-6 py-6 sm:px-10 sm:py-8">
         <div className="flex items-start gap-3">
-          <AdminLogoMark />
+          <BrandLogoLockup
+            contrastOn="light"
+            className="gap-2.5 sm:gap-3"
+            markClassName="h-8 w-8 sm:h-9 sm:w-9"
+            wordmarkClassName="h-[18px] w-[112px] sm:h-[21px] sm:w-[134px]"
+            priority
+          />
           <div>
-            <p className="text-base font-semibold tracking-tight text-zinc-900 sm:text-lg">{studioOS.productName}</p>
             <p className="text-sm text-zinc-500 sm:text-[15px]">{t.productLabel}</p>
           </div>
         </div>

@@ -9,6 +9,7 @@ export type CreatorNotificationType =
   | "paid_revision_unlocked"
   | "delivery_approved"
   | "escrow_released"
+  | "platform_intervention_required"
   | "not_selected";
 
 export type CreatorNotification = {

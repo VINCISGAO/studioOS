@@ -3,7 +3,6 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { publishBrandCampaignAction } from "@/app/brand-campaign-actions";
-import { BrandCreatorGlobeMatchingLoader } from "@/components/studioos/brand-creator-globe-matching-loader";
 import { Button } from "@/components/ui/button";
 import type { Locale } from "@/lib/i18n";
 import {
@@ -19,9 +18,6 @@ import {
   Shield
 } from "lucide-react";
 
-/** Show matching overlay while publish runs in background; redirect as soon as checkout is ready. */
-const MATCH_FINISH_MS = 200;
-
 const copy = {
   en: {
     readyTitle: "Your brief is ready to publish 🎉",
@@ -34,34 +30,38 @@ const copy = {
     privacyTitle: "Privacy",
     privacyBody: "Only matched creators can see your requirements.",
     publish: "Publish and pay",
-    publishing: "Publishing…",
+    publishing: "Creating invoice…",
+    billingTitle: "Creating your escrow invoice",
+    billingBody: "You will be sent to payment before creator matching starts.",
     nextTitle: "What happens next?",
-    next1Title: "Brief published",
-    next1Body: "Your brief goes to matched creators.",
-    next2Title: "Creator responses",
-    next2Body: "Creators accept or decline your invitation.",
+    next1Title: "Invoice created",
+    next1Body: "Confirm the order and complete escrow payment.",
+    next2Title: "Matching starts",
+    next2Body: "Creator invitations go out only after payment is confirmed.",
     next3Title: "Choose a partner",
     next3Body: "Pick the best fit from respondents.",
     back: "Back to previous step"
   },
   zh: {
     readyTitle: "需求已准备发布 🎉",
-    readyBody: "确认无误后发布并进入托管付款。付款完成后，系统才会向匹配的 Creator 发出意向发单。",
+    readyBody: "确认无误后发布并进入托管付款。付款完成后，系统才会向匹配的创作者发出意向发单。",
     escrowTitle: "安全托管",
     escrowBody: "资金由平台托管，双方权益有保障",
     matchTitle: "精准匹配",
-    matchBody: "快速向合适的 Creator 发出意向",
+    matchBody: "快速向合适的创作者发出意向",
     privacyTitle: "隐私保护",
-    privacyBody: "仅匹配 Creator 可见你的需求",
+    privacyBody: "仅匹配创作者可见你的需求",
     publish: "发布并去付款",
-    publishing: "正在发布…",
+    publishing: "正在创建账单…",
+    billingTitle: "正在创建托管账单",
+    billingBody: "系统会先带你完成付款，付款确认后才会开始匹配创作者。",
     nextTitle: "接下来会发生什么？",
-    next1Title: "需求发布成功",
-    next1Body: "你的需求将发送给匹配的 Creator",
-    next2Title: "Creator 响应",
-    next2Body: "Creator 会接受或拒绝你的需求",
+    next1Title: "账单创建成功",
+    next1Body: "先确认订单并完成托管付款",
+    next2Title: "付款后开始匹配",
+    next2Body: "付款确认后，系统才会向创作者发出意向",
     next3Title: "选择合作方",
-    next3Body: "从响应列表中选择最合适的 Creator",
+    next3Body: "从响应列表中选择最合适的创作者",
     back: "返回上一步"
   }
 } as const;
@@ -123,16 +123,12 @@ export function BrandCampaignStep3Publish({
   const router = useRouter();
   const [publishError, setPublishError] = useState<string | null>(error ?? null);
   const [isPublishing, setIsPublishing] = useState(false);
-  const [isMatching, setIsMatching] = useState(false);
-  const [matchComplete, setMatchComplete] = useState(false);
 
   async function handlePublish() {
     if (isPublishing) return;
 
     setIsPublishing(true);
     setPublishError(null);
-    setIsMatching(true);
-    setMatchComplete(false);
 
     const formData = new FormData();
     formData.set("lang", locale);
@@ -141,30 +137,30 @@ export function BrandCampaignStep3Publish({
     const result = await publishBrandCampaignAction(formData);
 
     if (!result.ok) {
-      setIsMatching(false);
-      setMatchComplete(false);
       setPublishError(result.error);
       setIsPublishing(false);
       return;
     }
 
-    setMatchComplete(true);
-    await new Promise((resolve) => window.setTimeout(resolve, MATCH_FINISH_MS));
     router.push(result.checkoutPath);
   }
 
   return (
     <>
-      {isMatching ? (
+      {isPublishing ? (
         <div
           className="fixed inset-0 z-[120] flex items-center justify-center overflow-y-auto bg-white/96 p-4 backdrop-blur-md sm:p-8"
           role="dialog"
           aria-modal="true"
-          aria-busy={!matchComplete}
-          aria-label={locale === "zh" ? "正在匹配创作者" : "Matching creators"}
+          aria-busy="true"
+          aria-label={t.billingTitle}
         >
-          <div className="w-full max-w-4xl animate-in fade-in zoom-in-95 duration-300">
-            <BrandCreatorGlobeMatchingLoader locale={locale} complete={matchComplete} className="shadow-lg" />
+          <div className="w-full max-w-md animate-in fade-in zoom-in-95 rounded-3xl border border-zinc-200/80 bg-white p-8 text-center shadow-lg duration-300">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-100 text-violet-700">
+              <Loader2 className="h-6 w-6 animate-spin" />
+            </div>
+            <h2 className="mt-5 text-xl font-semibold text-zinc-950">{t.billingTitle}</h2>
+            <p className="mt-2 text-sm leading-6 text-zinc-500">{t.billingBody}</p>
           </div>
         </div>
       ) : null}

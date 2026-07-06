@@ -65,6 +65,7 @@ function scoreCreatorForProject(
   options?: {
     studioPerformanceLift?: Map<string, number>;
     creatorLearningMemory?: Map<string, CreatorLearningMatchMemory>;
+    includeColdStartRegisteredCreators?: boolean;
   }
 ): CreatorMatch | null {
   const brief = frozenBriefFromProject(project);
@@ -72,7 +73,10 @@ function scoreCreatorForProject(
     return null;
   }
 
-  if (!ACTIVE_CREATOR_STATUSES.has(creator.status)) {
+  const isColdStartEligible =
+    options?.includeColdStartRegisteredCreators === true &&
+    ["active", "approved", "deposit_required"].includes(creator.status);
+  if (!ACTIVE_CREATOR_STATUSES.has(creator.status) && !isColdStartEligible) {
     return null;
   }
 
@@ -80,7 +84,7 @@ function scoreCreatorForProject(
     return null;
   }
 
-  if (creator.deposit_status !== "paid" || !creator.profile_completed_at) {
+  if (!isColdStartEligible && (creator.deposit_status !== "paid" || !creator.profile_completed_at)) {
     return null;
   }
 
@@ -215,6 +219,11 @@ function scoreCreatorForProject(
       en: "Profile completed with AI tags",
       zh: "已完成主页入驻并生成 AI 标签"
     });
+  } else if (isColdStartEligible) {
+    reasons.push({
+      en: "Registered creator included for launch-stage cold start",
+      zh: "上线冷启动阶段优先纳入已注册创作者"
+    });
   }
 
   if (creator.status === "active") {
@@ -289,6 +298,7 @@ export function matchCreatorsForProjectWithDemoFallback(
   options?: {
     studioPerformanceLift?: Map<string, number>;
     creatorLearningMemory?: Map<string, CreatorLearningMatchMemory>;
+    includeColdStartRegisteredCreators?: boolean;
   }
 ): CreatorMatch[] {
   const matches = matchCreatorsForProject(project, creators, works, options);
@@ -311,6 +321,7 @@ export function matchCreatorsForProject(
   options?: {
     studioPerformanceLift?: Map<string, number>;
     creatorLearningMemory?: Map<string, CreatorLearningMatchMemory>;
+    includeColdStartRegisteredCreators?: boolean;
   }
 ): CreatorMatch[] {
   return creators

@@ -12,6 +12,9 @@ export type AdminNotificationView = {
   userEmail: string | null;
   campaignId: string | null;
   campaignTitle: string | null;
+  type: string;
+  category: string;
+  eventName: string | null;
   title: string;
   content: string;
   channel: string;
@@ -32,6 +35,9 @@ export class AdminNotificationService {
       userEmail: row.user.email,
       campaignId: row.campaignId,
       campaignTitle: row.campaign?.title ?? null,
+      type: row.type,
+      category: row.category,
+      eventName: row.eventName,
       title: row.title,
       content: row.content,
       channel: row.channel,
@@ -49,6 +55,10 @@ export class AdminNotificationService {
     await notificationService.notify({
       userId: row.userId,
       campaignId: row.campaignId ?? undefined,
+      type: row.type,
+      category: row.category,
+      eventName: row.eventName ?? undefined,
+      metadata: row.metadataJson ?? undefined,
       title: row.title,
       content: row.content,
       actionUrl: row.actionUrl ?? undefined,
@@ -56,6 +66,11 @@ export class AdminNotificationService {
     });
 
     return { ok: true };
+  }
+
+  async countFailed(user: AuthUser) {
+    PermissionService.assert(user, "admin.notification.read");
+    return adminNotificationRepository.countFailed();
   }
 }
 

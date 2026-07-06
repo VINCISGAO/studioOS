@@ -47,6 +47,7 @@ export default async function AdminNotificationsPage({ searchParams }: { searchP
               <TableRow>
                 <TableHead>Time</TableHead>
                 <TableHead>User</TableHead>
+                <TableHead>Category</TableHead>
                 <TableHead>Title</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Action</TableHead>
@@ -57,6 +58,12 @@ export default async function AdminNotificationsPage({ searchParams }: { searchP
                 <TableRow key={row.id}>
                   <TableCell>{formatDate(row.createdAt)}</TableCell>
                   <TableCell className="text-xs">{row.userEmail ?? row.userId}</TableCell>
+                  <TableCell>
+                    <div className="space-y-1">
+                      <Badge variant="outline">{row.category}</Badge>
+                      <p className="text-[11px] text-zinc-400">{row.type}</p>
+                    </div>
+                  </TableCell>
                   <TableCell className="max-w-xs truncate">{row.title}</TableCell>
                   <TableCell>
                     {!row.isSent && <Badge variant="warning">unsent</Badge>}

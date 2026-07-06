@@ -318,7 +318,8 @@ export function BrandProjectHub({
   selectedCreatorId = null,
   brandCommercialStep,
   notificationCount = 0,
-  aiMatchStatistics
+  aiMatchStatistics,
+  showPaymentSuccessMatching = false
 }: {
   locale: Locale;
   project: StoredProject;
@@ -332,6 +333,7 @@ export function BrandProjectHub({
   brandCommercialStep: BrandCommercialStep;
   notificationCount?: number;
   aiMatchStatistics?: AiMatchReportStatistics | null;
+  showPaymentSuccessMatching?: boolean;
 }) {
   const t = copy[locale];
   const status = project.status;
@@ -474,6 +476,7 @@ export function BrandProjectHub({
               notificationCount={notificationCount}
               projectBudgetRange={project.budget_range}
               aiMatchStatistics={aiMatchStatistics}
+              showPaymentSuccessMatching={showPaymentSuccessMatching}
             />
           </div>
         ) : null}

@@ -49,6 +49,19 @@ async function advanceProjectToPaymentPending(projectId: string) {
   }
 }
 
+async function assertCreatorAcceptedOrSelected(projectId: string, creatorId: string) {
+  const { listInvitationsForProject } = await import("@/lib/studioos/creator-invitation-store");
+  const invitations = await listInvitationsForProject(projectId);
+  const allowed = invitations.some(
+    (item) =>
+      item.creatorId === creatorId &&
+      (item.status === "accepted" || item.status === "selected")
+  );
+  if (!allowed) {
+    throw new Error("Creator must accept the invitation before brand final selection can create an order");
+  }
+}
+
 /** After wizard publish — escrow order + payment_pending before checkout UI. */
 export async function preparePublishedCampaignCheckout(input: {
   project: StoredProject;
@@ -187,6 +200,7 @@ export async function setupBrandCheckout(input: {
 }): Promise<{ order: StoredOrder; inquiryId: string }> {
   const existing = await getOrderForProject(input.project.id);
   const project = (await getProject(input.project.id)) ?? input.project;
+  await assertCreatorAcceptedOrSelected(project.id, input.creatorId);
 
   if (existing && isOrderPaymentEscrowed(existing.payment_status)) {
     return assignCreatorToFundedCampaign({

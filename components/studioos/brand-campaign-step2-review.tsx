@@ -13,6 +13,7 @@ import { buildSchemeDisplayMetrics } from "@/lib/studioos/brand-campaign-scheme-
 import type { Locale } from "@/lib/i18n";
 import type { WizardBriefSnapshot } from "@/lib/studioos/brand-wizard-brief-snapshot";
 import { STEP2_SCHEME_LAYOUT } from "@/lib/studioos/brand-campaign-step2-layout";
+import { localizeCreativeDirection } from "@/lib/studioos/creative-direction-localization";
 import { Brain, Loader2, Sparkles, Target, TrendingUp, Zap } from "lucide-react";
 
 const copy = {
@@ -28,8 +29,8 @@ const copy = {
     chooseError: "Choose one creative direction"
   },
   zh: {
-    headline: "AI 已为你生成 3 套高转化创意方案",
-    subtitle: "每套方案均基于你的需求、产品卖点与目标受众定制 — 选择一套后将冻结为 Production Brief。",
+    headline: "智能系统已为你生成 3 套高转化创意方案",
+    subtitle: "每套方案均基于你的需求、产品卖点与目标受众定制，选择一套后将冻结为正式制作简报。",
     tagInsight: "深度洞察产品卖点",
     tagAudience: "匹配受众心理",
     tagPlatform: "平台算法偏好",
@@ -99,6 +100,7 @@ export function BrandCampaignStep2Review({
   const showGeneratingOverlay = awaitingBriefSave || isLoading || minGeneratingActive;
   const showContent = directions.length > 0 && status === "ready";
   const progressHint = showContent && !showImages ? t.loadingImages : null;
+  const displayDirections = directions.map((direction) => localizeCreativeDirection(direction, locale));
 
   useEffect(() => {
     if (Date.now() >= minGeneratingUntil) {
@@ -133,12 +135,12 @@ export function BrandCampaignStep2Review({
 
   /** 上方预览 = 当前选中方案；下方两枚 = 其余方案缩略图，点击切换预览 */
   const selectedDirection =
-    directions.find((item) => item.id === selectedId) ?? directions[0] ?? null;
-  const thumbnailDirections = directions.filter((item) => item.id !== selectedDirection?.id);
+    displayDirections.find((item) => item.id === selectedId) ?? displayDirections[0] ?? null;
+  const thumbnailDirections = displayDirections.filter((item) => item.id !== selectedDirection?.id);
 
   function directionIndex(direction: (typeof directions)[number]) {
     return Math.max(
-      directions.findIndex((item) => item.id === direction.id),
+      displayDirections.findIndex((item) => item.id === direction.id),
       0
     );
   }
@@ -253,7 +255,7 @@ export function BrandCampaignStep2Review({
             {showContent ? (
               <BrandCampaignStep2SchemeSidebar
                 locale={locale}
-                directions={directions}
+                directions={displayDirections}
                 selectedId={selectedId}
                 platforms={platforms}
                 fallbackBudget={fallbackBudget}

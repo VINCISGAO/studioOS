@@ -2,8 +2,10 @@ import { adminRepository } from "@/features/admin/admin.repository";
 import type { AdminDisputeView } from "@/features/admin/admin.types";
 import type { AuthUser } from "@/features/auth/permission.service";
 import { PermissionService } from "@/features/auth/permission.service";
+import { notificationService } from "@/features/notification/notification.service";
 import { appError } from "@/lib/core/errors";
-import { hasDatabaseUrl } from "@/lib/core/database/prisma";
+import { hasDatabaseUrl, prisma } from "@/lib/core/database/prisma";
+import { getAppBaseUrl } from "@/lib/app-url";
 import type { DisputeStatus } from "@prisma/client";
 import { activityLogWriter } from "@/features/admin/activity-log.service";
 import { campaignRepository } from "@/features/campaign/campaign.repository";
@@ -84,6 +86,29 @@ export class DisputeService {
 
     const updated = await adminRepository.findDisputeById(id);
     if (!updated) throw appError("NOT_FOUND", "Dispute not found");
+    const recipientIds = [updated.campaign.brandId, updated.campaign.creatorId].filter(
+      (value): value is string => Boolean(value)
+    );
+    await Promise.all(
+      recipientIds.map((userId) =>
+        notificationService.notify({
+          userId,
+          campaignId: updated.campaignId,
+          type: "arbitration.resolved",
+          category: "ARBITRATION",
+          title: "Arbitration updated",
+          content: `Platform arbitration for "${updated.campaign.title}" is now ${input.status}.`,
+          actionUrl:
+            userId === updated.campaign.brandId
+              ? `${getAppBaseUrl()}/brand/projects/${updated.campaignId}`
+              : `${getAppBaseUrl()}/studio/projects`,
+          template: "arbitration.resolved",
+          priority: input.status === "CLOSED" ? "HIGH" : "NORMAL",
+          email: false,
+          metadata: { disputeId: id, status: input.status }
+        }).catch(() => undefined)
+      )
+    );
     return mapDispute(updated);
   }
 
@@ -118,6 +143,50 @@ export class DisputeService {
 
     const row = await adminRepository.findDisputeById(dispute.id);
     if (!row) throw appError("NOT_FOUND", "Dispute not found");
+    const adminUsers = await prisma.user.findMany({
+      where: { role: { in: ["ADMIN", "SUPPORT"] }, deletedAt: null },
+      select: { id: true }
+    });
+    const participantIds = [row.campaign.brandId, row.campaign.creatorId].filter(
+      (value): value is string => Boolean(value && value !== user.id)
+    );
+    const adminUrl = `${getAppBaseUrl()}/admin/disputes/${row.id}`;
+
+    await Promise.all([
+      ...adminUsers.map((admin) =>
+        notificationService.notify({
+          userId: admin.id,
+          campaignId,
+          type: "arbitration.opened",
+          category: "ARBITRATION",
+          title: "New arbitration case opened",
+          content: `${row.campaign.title}: ${reason}`,
+          actionUrl: adminUrl,
+          template: "arbitration.opened",
+          priority: "URGENT",
+          email: false,
+          metadata: { disputeId: row.id, openedBy: user.id }
+        }).catch(() => undefined)
+      ),
+      ...participantIds.map((participantId) =>
+        notificationService.notify({
+          userId: participantId,
+          campaignId,
+          type: "arbitration.opened",
+          category: "ARBITRATION",
+          title: "Arbitration started",
+          content: `A platform arbitration case has started for "${row.campaign.title}".`,
+          actionUrl:
+            participantId === row.campaign.brandId
+              ? `${getAppBaseUrl()}/brand/projects/${campaignId}`
+              : `${getAppBaseUrl()}/studio/projects`,
+          template: "arbitration.opened",
+          priority: "URGENT",
+          email: false,
+          metadata: { disputeId: row.id, openedBy: user.id }
+        }).catch(() => undefined)
+      )
+    ]);
     return mapDispute(row);
   }
 

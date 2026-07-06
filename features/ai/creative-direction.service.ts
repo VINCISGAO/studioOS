@@ -52,7 +52,7 @@ function normalizeCreativeDirection(raw: unknown, index: number): CreativeDirect
   };
 }
 
-function buildFrozenProductionBrief(campaign: Campaign, direction: CreativeDirection): FrozenProductionBrief {
+function buildFrozenProductionBrief(campaign: Campaign, direction: CreativeDirection, language: "en" | "zh" = "en"): FrozenProductionBrief {
   const brief = (campaign.productionBrief ?? {}) as {
     product?: FrozenProductionBrief["product"];
     audience?: string;
@@ -60,19 +60,34 @@ function buildFrozenProductionBrief(campaign: Campaign, direction: CreativeDirec
     delivery?: Record<string, unknown>;
   };
   const shotList = direction.shotList.length ? direction.shotList : ["Hero hook", "Story setup", "Product proof", "CTA"];
-  const fullText = [
-    `Title: ${direction.title}`,
-    `Core idea: ${direction.coreIdea}`,
-    `Hook: ${direction.hook}`,
-    `Story: ${direction.story}`,
-    `Tone: ${direction.tone}`,
-    `Visual style: ${direction.visualStyle}`,
-    `Shot list:\n${shotList.map((shot, index) => `${index + 1}. ${shot}`).join("\n")}`,
-    `CTA: ${direction.cta}`,
-    `Recommended creator type: ${direction.recommendedCreatorType}`,
-    `Recommended budget: ${direction.recommendedBudget}`,
-    `Expected outcome: ${direction.expectedOutcome}`
-  ].join("\n\n");
+  const fullText =
+    language === "zh"
+      ? [
+          `标题：${direction.title}`,
+          `核心创意：${direction.coreIdea}`,
+          `开场钩子：${direction.hook}`,
+          `故事结构：${direction.story}`,
+          `语气：${direction.tone}`,
+          `视觉风格：${direction.visualStyle}`,
+          `分镜清单：\n${shotList.map((shot, index) => `${index + 1}. ${shot}`).join("\n")}`,
+          `行动引导：${direction.cta}`,
+          `推荐创作者类型：${direction.recommendedCreatorType}`,
+          `建议预算：${direction.recommendedBudget}`,
+          `预期效果：${direction.expectedOutcome}`
+        ].join("\n\n")
+      : [
+          `Title: ${direction.title}`,
+          `Core idea: ${direction.coreIdea}`,
+          `Hook: ${direction.hook}`,
+          `Story: ${direction.story}`,
+          `Tone: ${direction.tone}`,
+          `Visual style: ${direction.visualStyle}`,
+          `Shot list:\n${shotList.map((shot, index) => `${index + 1}. ${shot}`).join("\n")}`,
+          `CTA: ${direction.cta}`,
+          `Recommended creator type: ${direction.recommendedCreatorType}`,
+          `Recommended budget: ${direction.recommendedBudget}`,
+          `Expected outcome: ${direction.expectedOutcome}`
+        ].join("\n\n");
 
   return {
     frozen_at: new Date().toISOString(),
@@ -136,12 +151,14 @@ async function notifyBrandAiProgress(campaign: Campaign, input: {
   template: string;
   priority?: "LOW" | "NORMAL" | "HIGH" | "URGENT";
 }) {
+  const brief = campaign.productionBrief as { legacy_project_id?: string } | null;
+  const projectId = brief?.legacy_project_id ?? campaign.id;
   await notificationService.notify({
     userId: campaign.brandId,
     campaignId: campaign.id,
     title: input.title,
     content: input.content,
-    actionUrl: `${getAppBaseUrl()}/brand/projects/new?project=${encodeURIComponent(campaign.id)}`,
+    actionUrl: `${getAppBaseUrl()}/brand/projects/new?project=${encodeURIComponent(projectId)}`,
     template: input.template,
     priority: input.priority ?? "NORMAL"
   });
@@ -305,7 +322,7 @@ export class CreativeDirectionService {
     };
   }
 
-  async approve(campaignId: string, user: AuthUser, directionId: string) {
+  async approve(campaignId: string, user: AuthUser, directionId: string, options?: { language?: "en" | "zh" }) {
     const campaign = await this.getCampaignForBrand(campaignId, user);
     PermissionService.assert(user, "campaign.approve");
 
@@ -318,7 +335,7 @@ export class CreativeDirectionService {
       creative_directions: directions,
       selected_direction_id: directionId,
       approved_at: new Date().toISOString(),
-      frozen_production_brief: buildFrozenProductionBrief(campaign, selected)
+      frozen_production_brief: buildFrozenProductionBrief(campaign, selected, options?.language ?? "en")
     };
 
     await campaignRepository.updateCreativeBrief(campaignId, asInputJson(brief)!, selected.title);
@@ -347,8 +364,11 @@ export class CreativeDirectionService {
       memoryValue: selected.title
     });
     await notifyBrandAiProgress(campaign, {
-      title: "Creative direction selected",
-      content: `"${selected.title}" is now frozen as the Production Brief for matching and production.`,
+      title: options?.language === "zh" ? "创意方案已选择" : "Creative direction selected",
+      content:
+        options?.language === "zh"
+          ? `「${selected.title}」已冻结为正式制作简报，将用于匹配和制作。`
+          : `"${selected.title}" is now frozen as the Production Brief for matching and production.`,
       template: "ai.direction_selected",
       priority: "HIGH"
     });

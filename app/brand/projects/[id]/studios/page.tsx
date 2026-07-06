@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ArrowRight, Star } from "lucide-react";
-import { connectCreatorFromMatchAction } from "@/app/project-actions";
 import { WorkCoverImage } from "@/components/creator/work-cover-image";
 import { CertifiedPartnerBadge } from "@/components/studioos/certification/certified-partner-badge";
 import { Badge } from "@/components/ui/badge";
@@ -12,10 +11,14 @@ import { listCreatorsForMatching } from "@/lib/creator-service";
 import { getWorksForCreator } from "@/lib/works-catalog";
 import { clampBrandVisibleStep, migrateLegacyBrandWizardStep } from "@/lib/campaign/wizard-steps";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
-import { getStudioPerformanceLiftForOrg, matchCreatorsForProjectWithDemoFallback } from "@/lib/matching-engine";
+import { getStudioPerformanceLiftForOrg, matchCreatorsForProject } from "@/lib/matching-engine";
 import { resolveWorkThumbnail } from "@/lib/media-url";
 import { getProject } from "@/lib/project-service";
+import { getOrderForProject } from "@/lib/order-service";
+import { isOrderPaymentEscrowed } from "@/lib/order-types";
+import { isBrandAwaitingPayment } from "@/lib/studioos/commercial-lifecycle";
 import { normalizeCampaignStatus } from "@/lib/studioos/project-status";
+import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
 import { orgIdFromEmail } from "@/lib/studioos/creative-performance-store";
 import { tCertificationExperience } from "@/lib/studioos/certification-experience-copy";
 import { isCreatorVerified } from "@/lib/studioos/deposit-guard";
@@ -40,7 +43,14 @@ export default async function BrandStudiosPage({ params, searchParams }: Props) 
     redirect(withLocale(`/brand/projects/new?project=${id}&step=${resumeStep}`, locale));
   }
 
+  const order = await getOrderForProject(id);
   const status = normalizeCampaignStatus(project.status);
+  const matchingRequiresPayment =
+    status === "matching" && (!order || !isOrderPaymentEscrowed(order.payment_status));
+  if (isBrandAwaitingPayment({ project, order }) || matchingRequiresPayment) {
+    redirect(withLocale(brandPortalRoutes.projectCheckout(id), locale));
+  }
+
   if (status === "matching") {
     redirect(withLocale(`/brand/projects/${id}?tab=match`, locale));
   }
@@ -52,7 +62,7 @@ export default async function BrandStudiosPage({ params, searchParams }: Props) 
   const allWorks = (
     await Promise.all(enrichedCreators.map((creator) => getWorksForCreator(creator.id)))
   ).flat();
-  const matches = matchCreatorsForProjectWithDemoFallback(project, enrichedCreators, allWorks, {
+  const matches = matchCreatorsForProject(project, enrichedCreators, allWorks, {
     studioPerformanceLift
   }).slice(0, 6);
 
@@ -132,20 +142,16 @@ export default async function BrandStudiosPage({ params, searchParams }: Props) 
                   ) : null}
 
                   <div className="mt-6 flex flex-wrap gap-2">
-                    <form action={connectCreatorFromMatchAction}>
-                      <input type="hidden" name="lang" value={locale} />
-                      <input type="hidden" name="project_id" value={project.id} />
-                      <input type="hidden" name="creator_id" value={creator.id} />
-                      <input type="hidden" name="work_id" value={works[0]?.id ?? ""} />
-                      <Button type="submit">
-                        {locale === "zh" ? "选择并去付款" : "Select & checkout"}
-                      </Button>
-                    </form>
                     <Button asChild variant="outline">
                       <Link href={withLocale(`/creators/${creator.id}`, locale)}>
                         {locale === "zh" ? "查看主页" : "View Profile"} <ArrowRight className="h-4 w-4" />
                       </Link>
                     </Button>
+                    <p className="text-xs text-zinc-500">
+                      {locale === "zh"
+                        ? "付款成功后，系统会进入正式匹配邀约；品牌只能从已接受邀约的创作者中最终选定。"
+                        : "After escrow payment, matching invitations start; final selection is made from creators who accept."}
+                    </p>
                   </div>
                 </CardContent>
               </Card>

@@ -2,6 +2,7 @@ import { activityService } from "@/features/campaign/activity.service";
 import { campaignRepository } from "@/features/campaign/campaign.repository";
 import { userRepository } from "@/features/auth/user.repository";
 import { payBrandWalletCharge } from "@/features/wallet/brand-wallet.service";
+import { notificationService } from "@/features/notification/notification.service";
 import {
   hasPaidRevisionPackUnlocked,
   MAX_REVISION_ROUNDS,
@@ -13,6 +14,7 @@ import {
 } from "@/features/review/review-round-policy";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import type { Locale } from "@/lib/i18n";
+import { getAppBaseUrl } from "@/lib/app-url";
 import { getOrder, syncOrderPaidRevisionSlots } from "@/lib/order-service";
 
 export type ReviewRoundPolicySnapshot = {
@@ -187,6 +189,58 @@ export class PaidRevisionService {
     }
 
     await syncLegacyOrderPaidSlots(input.orderId, nextCount);
+
+    if (hasDatabaseUrl() && campaignId && brandUserId) {
+      const campaign = await campaignRepository.findById(campaignId);
+      if (campaign) {
+        await notificationService.notify({
+          userId: brandUserId,
+          campaignId,
+          type: "revision.paid_addon_unlocked",
+          category: "REVISION",
+          title: input.locale === "zh" ? "第 4-5 轮修订已解锁" : "Paid revision rounds unlocked",
+          content:
+            input.locale === "zh"
+              ? `「${campaign.title}」已解锁第 4-5 轮修订，加购金额 ${currency} ${addOnAmount.toFixed(2)}。`
+              : `"${campaign.title}" now has revision rounds 4-5 unlocked. Add-on: ${currency} ${addOnAmount.toFixed(2)}.`,
+          actionUrl: `${getAppBaseUrl()}/brand/projects/${input.projectId ?? campaignId}/review`,
+          template: "revision.paid_addon_unlocked",
+          priority: "HIGH",
+          email: false,
+          metadata: {
+            orderId: input.orderId,
+            unlockedFromVersion: unlockedVersion,
+            unlockedThroughVersion: MAX_REVISION_ROUNDS,
+            addOnAmount,
+            currency,
+            paymentSource
+          }
+        });
+
+        if (campaign.creatorId) {
+          await notificationService.notify({
+            userId: campaign.creatorId,
+            campaignId,
+            type: "revision.paid_addon_unlocked",
+            category: "REVISION",
+            title: input.locale === "zh" ? "品牌已解锁第 4-5 轮修订" : "Brand unlocked paid revision rounds",
+            content:
+              input.locale === "zh"
+                ? `「${campaign.title}」现在可进入 V4-V5 修订流程。`
+                : `"${campaign.title}" can now continue through V4-V5 revisions.`,
+            actionUrl: `${getAppBaseUrl()}/studio/review/${input.orderId}`,
+            template: "revision.paid_addon_unlocked",
+            priority: "HIGH",
+            email: false,
+            metadata: {
+              orderId: input.orderId,
+              unlockedFromVersion: unlockedVersion,
+              unlockedThroughVersion: MAX_REVISION_ROUNDS
+            }
+          });
+        }
+      }
+    }
 
     const refreshedOrder = await getOrder(input.orderId);
     if (refreshedOrder) {

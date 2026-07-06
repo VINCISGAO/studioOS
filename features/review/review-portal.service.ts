@@ -624,17 +624,23 @@ export class ReviewPortalService {
     } catch (error) {
       const { isAppError } = await import("@/lib/core/errors");
       if (isAppError(error)) {
-        if (error.code === "PAYMENT_REQUIRED") {
+        if (error.code === "PAYMENT_REQUIRED" || error.code === "REVIEW_LOCKED") {
           const { getOrder } = await import("@/lib/order-service");
-          const { notifyBrandPaymentRequired } = await import(
+          const { notifyBrandPaymentRequired, notifyPlatformInterventionRequired } = await import(
             "@/lib/studioos/commercial-interaction-notify"
           );
           const order = await getOrder(input.orderId);
-          if (order) {
+          if (order && error.code === "PAYMENT_REQUIRED") {
             await notifyBrandPaymentRequired({
               order,
               locale: input.locale,
               nextRevisionRound: version.versionNumber + 1
+            }).catch(() => undefined);
+          } else if (order) {
+            await notifyPlatformInterventionRequired({
+              order,
+              locale: input.locale,
+              version: version.versionNumber
             }).catch(() => undefined);
           }
         }
@@ -725,9 +731,9 @@ export class ReviewPortalService {
           title: input.locale === "zh" ? "品牌已通过交付" : "Brand approved delivery",
           content:
             input.locale === "zh"
-              ? `「${ctx.campaign.title}」Version ${version.versionNumber} 已通过，请标记最终版供品牌下载。`
-              : `"${ctx.campaign.title}" — Version ${version.versionNumber} approved. Mark the final master for brand download.`,
-          actionUrl: `${getAppBaseUrl()}/studio/review/${input.orderId}`,
+              ? `「${ctx.campaign.title}」V${version.versionNumber} 已通过，托管款正在释放，项目即将完成。`
+              : `"${ctx.campaign.title}" V${version.versionNumber} was approved. Escrow is releasing and the project is completing.`,
+          actionUrl: `${getAppBaseUrl()}/studio/income`,
           email: false
         })
         .catch(() => undefined);

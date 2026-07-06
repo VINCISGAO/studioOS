@@ -54,6 +54,7 @@ export function normalizeCampaignStatus(raw: string): CampaignProjectStatus {
     contract_pending: "contract_pending",
     waiting_payment: "payment_pending",
     payment_pending: "payment_pending",
+    confirmed: "payment_pending",
     paid: "production",
     production: "production",
     in_production: "production",
@@ -76,7 +77,7 @@ type TransitionRule = {
 };
 
 export const PROJECT_TRANSITIONS: Partial<Record<ProjectEventName, TransitionRule>> = {
-  "project.publish": { from: ["draft"], to: "matching" },
+  "project.publish": { from: ["draft"], to: "payment_pending" },
   "project.campaign_funded": { from: ["payment_pending"], to: "matching" },
   "project.creator_assigned": { from: ["matching"], to: "production" },
   "project.studio_selected": { from: ["matching"], to: "studio_selected" },

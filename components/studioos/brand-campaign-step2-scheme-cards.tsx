@@ -12,11 +12,13 @@ const copy = {
   en: {
     scheme: "Scheme",
     aiScore: "AI score",
+    ctr: "CTR",
     mediaComingSoon: "Coming soon"
   },
   zh: {
     scheme: "方案",
-    aiScore: "AI 评分",
+    aiScore: "智能评分",
+    ctr: "点击率",
     mediaComingSoon: "即将开放"
   }
 } as const;
@@ -124,7 +126,7 @@ export function BrandCampaignStep2CompactScheme({
               <p className="text-sm font-semibold text-violet-700">{metrics.aiScore}</p>
             </div>
             <div className="rounded-lg border border-zinc-100 bg-zinc-50/80 py-1.5">
-              <p className="text-[10px] text-zinc-500">CTR</p>
+              <p className="text-[10px] text-zinc-500">{t.ctr}</p>
               <p className="text-sm font-semibold text-emerald-600">+{metrics.ctrLift}%</p>
             </div>
             <div className="rounded-lg border border-zinc-100 bg-zinc-50/80 py-1.5">

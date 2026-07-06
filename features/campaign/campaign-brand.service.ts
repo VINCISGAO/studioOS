@@ -377,7 +377,7 @@ export class CampaignBrandPortalService {
     await runTransition({
       machine: campaignStateMachine,
       current: "CREATIVE_APPROVED",
-      event: CampaignEvent.START_MATCHING,
+      event: CampaignEvent.PUBLISH,
       context: {
         aggregateType: "campaign",
         aggregateId: campaign.id,
@@ -394,7 +394,7 @@ export class CampaignBrandPortalService {
         name: CampaignEvents.UPDATED,
         aggregateType: "campaign",
         aggregateId: campaign.id,
-        payload: { event: CampaignEvent.START_MATCHING, from: "CREATIVE_APPROVED", legacy_project_id: legacyProjectId }
+        payload: { event: CampaignEvent.PUBLISH, from: "CREATIVE_APPROVED", legacy_project_id: legacyProjectId }
       }
     });
 
@@ -405,7 +405,7 @@ export class CampaignBrandPortalService {
       {
         legacy_project_id: legacyProjectId,
         from_status: "CREATIVE_APPROVED",
-        to_status: "MATCHING"
+        to_status: "ESCROW_PENDING"
       }
     );
 

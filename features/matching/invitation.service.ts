@@ -16,6 +16,8 @@ import type { Locale } from "@/lib/i18n";
 import type { StoredProject } from "@/lib/project-types";
 import { hasDatabaseUrl, prisma } from "@/lib/core/database/prisma";
 import { notificationService } from "@/features/notification/notification.service";
+import { paymentRepository } from "@/features/payment/payment.repository";
+import { EscrowState } from "@/features/shared/state-machines/escrow.state-machine";
 import { getAppBaseUrl } from "@/lib/app-url";
 import { resolveLegacyProjectId } from "@/features/matching/invitation.mapper";
 import {
@@ -68,8 +70,20 @@ export class InvitationService {
       throw appError("FORBIDDEN", "Not allowed for this campaign");
     }
 
-    if (!["CREATIVE_APPROVED", "MATCHING", "INVITATION_SENT"].includes(campaign.status)) {
-      throw appError("INVALID_TRANSITION", "Campaign must be in matching phase");
+    const invitationAllowedStatuses = new Set<string>([
+      CampaignState.MATCHING,
+      CampaignState.INVITATION_SENT
+    ]);
+    if (!invitationAllowedStatuses.has(campaign.status)) {
+      throw appError("INVALID_TRANSITION", "Invitations can only be sent after escrow-funded matching starts");
+    }
+    const escrow = await paymentRepository.findByCampaignId(campaignId);
+    const escrowFunded =
+      escrow?.status === EscrowState.HELD ||
+      escrow?.status === EscrowState.PARTIAL_RELEASE ||
+      escrow?.status === EscrowState.FULL_RELEASE;
+    if (!escrowFunded) {
+      throw appError("INVALID_TRANSITION", "Escrow must be funded before sending invitations");
     }
 
     const matches = await matchingService.matchCreatorsForCampaign(campaignId, user, 20);
@@ -131,10 +145,7 @@ export class InvitationService {
       }
     }
 
-    if (campaign.status === CampaignState.CREATIVE_APPROVED) {
-      await campaignService.transition(campaignId, CampaignEvent.START_MATCHING, actor);
-      await campaignService.transition(campaignId, CampaignEvent.SEND_INVITATION, actor);
-    } else if (campaign.status === CampaignState.MATCHING) {
+    if (campaign.status === CampaignState.MATCHING) {
       await campaignService.transition(campaignId, CampaignEvent.SEND_INVITATION, actor);
     }
 
@@ -155,11 +166,16 @@ export class InvitationService {
       throw appError("CAMPAIGN_LOCKED", "Invitation already responded");
     }
 
-    const actor = { id: user.id, role: user.role };
-    await campaignService.transition(invitation.campaignId, CampaignEvent.CREATOR_ACCEPT, actor);
-    await campaignRepository.setCreator(invitation.campaignId, invitation.creator.userId);
     await invitationRepository.updateStatus(invitationId, "ACCEPTED");
-    await invitationRepository.declineOthers(invitation.campaignId, invitationId);
+    await notificationService.notify({
+      userId: invitation.campaign.brandId,
+      campaignId: invitation.campaignId,
+      title: "Creator accepted your invitation",
+      content: `${invitation.creator.displayName} accepted the invitation for "${invitation.campaign.title}". Review accepted creators and make the final selection.`,
+      actionUrl: `${getAppBaseUrl()}/brand/projects/${resolveLegacyProjectId(invitation.campaign)}`,
+      template: "invitation.accepted",
+      priority: "HIGH"
+    });
 
     const updated = await invitationRepository.findById(invitationId);
     if (!updated) throw appError("NOT_FOUND", "Invitation not found");
@@ -181,6 +197,15 @@ export class InvitationService {
     }
 
     await invitationRepository.declineWithFeedback(invitationId, feedback);
+    await notificationService.notify({
+      userId: invitation.campaign.brandId,
+      campaignId: invitation.campaignId,
+      title: "Creator declined your invitation",
+      content: `${invitation.creator.displayName} declined the invitation for "${invitation.campaign.title}". Reason: ${feedback.reason}.`,
+      actionUrl: `${getAppBaseUrl()}/brand/projects/${resolveLegacyProjectId(invitation.campaign)}`,
+      template: "invitation.declined",
+      priority: "NORMAL"
+    });
     const learningEvent = await aiLearningEventRepository.append({
       eventType: "CreatorRejected",
       entityType: "CreatorInvitation",

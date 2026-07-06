@@ -29,10 +29,10 @@ const copy = {
     scheme: "方案",
     coreCreative: "核心创意",
     highlights: "创意亮点",
-    aiScore: "AI 评分",
-    ctr: "预计 CTR 提升",
+    aiScore: "智能评分",
+    ctr: "预计点击率提升",
     conversion: "预计转化提升",
-    roi: "ROI 预测",
+    roi: "回报率预测",
     mediaComingSoon: "即将开放",
     frame: "分镜"
   }

@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { ArrowRight, Sparkles, Star } from "lucide-react";
-import { connectCreatorFromMatchAction } from "@/app/project-actions";
 import { PageShell } from "@/components/page-shell";
 import { WorkCoverImage } from "@/components/creator/work-cover-image";
 import { Badge } from "@/components/ui/badge";
@@ -24,7 +23,7 @@ const copy = {
     score: "Match",
     reasons: "Why matched",
     portfolio: "Relevant work",
-    connect: "Open Proposal Room",
+    connect: "Open project match",
     viewProfile: "View studio",
     empty: "No studios matched yet.",
     brief: "Creative Brief V1",
@@ -42,7 +41,7 @@ const copy = {
     score: "匹配度",
     reasons: "匹配原因",
     portfolio: "相关作品",
-    connect: "进入 Proposal Room",
+    connect: "进入正式匹配页",
     viewProfile: "查看 Studio",
     empty: "暂时没有匹配的 Studio。",
     brief: "Creative Brief V1",
@@ -188,13 +187,11 @@ export default async function MatchPage({ params, searchParams }: MatchPageProps
                       ) : null}
 
                       <div className="mt-6 flex flex-wrap gap-2">
-                        <form action={connectCreatorFromMatchAction}>
-                          <input type="hidden" name="lang" value={locale} />
-                          <input type="hidden" name="project_id" value={project.id} />
-                          <input type="hidden" name="creator_id" value={creator.id} />
-                          <input type="hidden" name="work_id" value={works[0]?.id ?? ""} />
-                          <Button type="submit">{t.connect}</Button>
-                        </form>
+                        <Button asChild>
+                          <Link href={withLocale(`/brand/projects/${project.id}?tab=match`, locale)}>
+                            {t.connect}
+                          </Link>
+                        </Button>
                         <Button asChild variant="outline">
                           <Link href={withLocale(`/creators/${creator.id}`, locale)}>
                             {t.viewProfile} <ArrowRight className="h-4 w-4" />

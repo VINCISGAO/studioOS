@@ -1,10 +1,20 @@
-import type { Notification, NotificationChannel, NotificationPriority } from "@prisma/client";
+import type {
+  Notification,
+  NotificationCategory,
+  NotificationChannel,
+  NotificationPriority,
+  Prisma
+} from "@prisma/client";
 import { prisma, hasDatabaseUrl } from "@/lib/core/database/prisma";
 
 export class NotificationRepository {
   async create(input: {
     userId: string;
     campaignId?: string;
+    type?: string;
+    category?: NotificationCategory;
+    eventName?: string;
+    metadataJson?: Prisma.InputJsonValue;
     channel?: NotificationChannel;
     priority?: NotificationPriority;
     title: string;
@@ -15,6 +25,10 @@ export class NotificationRepository {
       data: {
         userId: input.userId,
         campaignId: input.campaignId,
+        type: input.type ?? "system",
+        category: input.category ?? "SYSTEM",
+        eventName: input.eventName,
+        metadataJson: input.metadataJson,
         channel: input.channel ?? "IN_APP",
         priority: input.priority ?? "NORMAL",
         title: input.title,

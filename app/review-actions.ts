@@ -59,13 +59,10 @@ import {
 } from "@/lib/studioos/review-upload-version";
 import { notifyBrandDeliverableUploaded } from "@/lib/studioos/brand-deliverable-notify";
 import {
-  notifyCreatorDeliveryApproved,
-  notifyCreatorEscrowReleased,
   notifyCreatorRevisionRequested,
-  notifyCreatorPaidRevisionUnlocked,
   notifyBrandPaymentRequired,
-  notifyBrandPaidRevisionUnlocked,
-  notifyBrandOrderCompleted
+  notifyBrandOrderCompleted,
+  notifyPlatformInterventionRequired
 } from "@/lib/studioos/commercial-interaction-notify";
 import { hasBrandNotification } from "@/lib/studioos/brand-notification-service";
 
@@ -173,7 +170,7 @@ export async function addReviewCommentAction(formData: FormData) {
   ) {
     return {
       ok: false as const,
-      error: lang === "zh" ? "修改次数已达交付上限" : "Revision limit reached"
+      error: paidRevisionErrorMessage("PAYMENT_REQUIRED", lang)
     };
   }
 
@@ -595,6 +592,11 @@ export async function uploadVideoVersionAction(formData: FormData) {
       });
 
       if (prismaResult.ok) {
+        await notifyBrandDeliverableUploaded({
+          order,
+          deliverable: prismaResult.deliverable,
+          locale: clientLocale
+        }).catch(() => undefined);
         revalidateReview(orderId, order.project_id);
         return {
           ok: true as const,
@@ -635,6 +637,11 @@ export async function uploadVideoVersionAction(formData: FormData) {
     };
   }
 
+  await notifyBrandDeliverableUploaded({
+    order,
+    deliverable,
+    locale: clientLocale
+  }).catch(() => undefined);
   revalidateReview(orderId, order.project_id);
   return { ok: true as const, deliverable, translated: translation.translated };
 }
@@ -871,11 +878,12 @@ export async function requestReviewRevisionAction(formData: FormData) {
                   lang === "zh"
                     ? `「${campaign.title}」已到 V5，第五轮后仍未通过请联系平台客服仲裁。`
                     : `"${campaign.title}" reached V5. Further changes require support arbitration.`,
-                actionUrl: `${getAppBaseUrl()}/studio/review/${orderId}`,
+                actionUrl: `${getAppBaseUrl()}/brand/projects/${legacyProjectId}/review`,
                 email: false
               })
               .catch(() => undefined);
           }
+          await notifyPlatformInterventionRequired({ order, locale: lang, version }).catch(() => undefined);
         }
         return { ok: false as const, error: reviewPortalErrorMessage(result.error, lang) };
       }
@@ -890,6 +898,25 @@ export async function requestReviewRevisionAction(formData: FormData) {
             : `V${version} review is complete. Waiting for Studio to upload V${version + 1}.`
       };
     }
+  }
+
+  const deliverables = await listDeliverablesForUpload(orderId);
+  const latestSubmitted = latestSubmittedDeliverableVersion(deliverables);
+  const revisionGate = assertRevisionRequestAllowed({
+    currentVersionNumber: latestSubmitted,
+    paidSlotsUnlocked: order.paid_revision_slots_unlocked ?? 0
+  });
+  if (!revisionGate.ok) {
+    if (revisionGate.code === "PAYMENT_REQUIRED") {
+      await notifyBrandPaymentRequired({ order, locale: lang, nextRevisionRound: revisionGate.nextRevisionRound }).catch(
+        () => undefined
+      );
+    } else if (revisionGate.code === "REVIEW_LOCKED") {
+      await notifyPlatformInterventionRequired({ order, locale: lang, version: latestSubmitted }).catch(
+        () => undefined
+      );
+    }
+    return { ok: false as const, error: reviewPortalErrorMessage(revisionGate.code, lang) };
   }
 
   const updated = await requestOrderRevision(orderId, revisionNotes);
@@ -949,8 +976,6 @@ export async function unlockPaidRevisionSlotAction(formData: FormData) {
   }
 
   revalidateReview(orderId, order.project_id);
-  await notifyCreatorPaidRevisionUnlocked({ order, locale: lang }).catch(() => undefined);
-  await notifyBrandPaidRevisionUnlocked({ order, locale: lang }).catch(() => undefined);
   return {
     ok: true as const,
     message: result.message,
@@ -1103,11 +1128,6 @@ export async function confirmReviewApproveAndSettleAction(formData: FormData) {
     return { ok: false as const, error: lang === "zh" ? "找不到项目" : "Project not found" };
   }
 
-  const completedOrder = await approveOrderDelivery(orderId);
-  if (!completedOrder) {
-    return { ok: false as const, error: lang === "zh" ? "审片完成失败" : "Could not complete review" };
-  }
-
   if (hasDatabaseUrl()) {
     const campaign = await campaignRepository.findByLegacyProjectId(legacyProjectId);
     if (campaign) {
@@ -1120,11 +1140,7 @@ export async function confirmReviewApproveAndSettleAction(formData: FormData) {
 
       if (!approveResult.ok) {
         revalidateReview(orderId, legacyProjectId);
-        return {
-          ok: true as const,
-          message:
-            lang === "zh" ? "交付已确认，原片下载已开放" : "Delivery confirmed. Original download is now available."
-        };
+        return { ok: false as const, error: reviewPortalErrorMessage(approveResult.error, lang) };
       }
 
       const brandUser = await userRepository.ensureBrandPortalUser({
@@ -1177,14 +1193,15 @@ export async function confirmReviewApproveAndSettleAction(formData: FormData) {
       if (!settlementResult.ok) {
         revalidateReview(orderId, legacyProjectId);
         return {
-          ok: true as const,
-          message:
-            lang === "zh" ? "交付已确认，原片下载已开放" : "Delivery confirmed. Original download is now available."
+          ok: false as const,
+          error:
+            lang === "zh"
+              ? `结算失败：${settlementResult.error}`
+              : `Settlement failed: ${settlementResult.error}`
         };
       }
 
-      await notifyCreatorDeliveryApproved({ order, locale: lang });
-      await notifyCreatorEscrowReleased({ order, locale: lang });
+      await approveOrderDelivery(orderId);
       await notifyBrandOrderCompleted({ order, locale: lang }).catch(() => undefined);
       revalidateReview(orderId, legacyProjectId);
       return {
@@ -1193,6 +1210,11 @@ export async function confirmReviewApproveAndSettleAction(formData: FormData) {
           lang === "zh" ? "交付已确认，原片下载已开放" : "Delivery confirmed. Original download is now available."
       };
     }
+  }
+
+  const completedOrder = await approveOrderDelivery(orderId);
+  if (!completedOrder) {
+    return { ok: false as const, error: lang === "zh" ? "审片完成失败" : "Could not complete review" };
   }
 
   revalidateReview(orderId, legacyProjectId);

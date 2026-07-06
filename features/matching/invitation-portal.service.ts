@@ -22,7 +22,7 @@ import { creators } from "@/lib/data";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { getProject } from "@/lib/project-service";
 import { createCreatorNotification, findNotificationByProject } from "@/lib/notification-service";
-import { matchCreatorsForProjectWithDemoFallback } from "@/lib/matching-engine";
+import { matchCreatorsForProject } from "@/lib/matching-engine";
 import { getConfirmedBriefText } from "@/lib/studioos/confirmed-brief";
 import type { CreatorPortalInvitationView } from "@/features/creator/creator-portal.types";
 import type { InvitationDeclineFeedback } from "@/features/matching/invitation-decline-feedback";
@@ -150,8 +150,9 @@ export class InvitationPortalService {
       await Promise.all(enrichedCreators.map((creator) => getWorksForCreator(creator.id)))
     ).flat();
     const creatorLearningMemory = await buildCreatorLearningMemoryMap(enrichedCreators.map((creator) => creator.id));
-    const matches = matchCreatorsForProjectWithDemoFallback(project, enrichedCreators, allWorks, {
-      creatorLearningMemory
+    const matches = matchCreatorsForProject(project, enrichedCreators, allWorks, {
+      creatorLearningMemory,
+      includeColdStartRegisteredCreators: true
     }).slice(
       0,
       MAX_CAMPAIGN_INVITATIONS

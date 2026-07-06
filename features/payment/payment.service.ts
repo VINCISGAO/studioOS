@@ -23,10 +23,8 @@ import { CampaignEvents } from "@/features/shared/types/events";
 import type { Locale } from "@/lib/i18n";
 
 const PAYABLE_CAMPAIGN_STATES = new Set<string>([
-  CampaignState.CREATOR_ACCEPTED,
+  CampaignState.CREATIVE_APPROVED,
   CampaignState.ESCROW_PENDING,
-  CampaignState.MATCHING,
-  CampaignState.INVITATION_SENT
 ]);
 
 export type BrandCampaignPaymentResult =
@@ -147,7 +145,7 @@ export class PaymentService {
 
     if (escrow.status === EscrowState.CREATED) {
       await this.transitionEscrow(campaignId, "START_PAYMENT", actor);
-      if (campaign.status === CampaignState.CREATOR_ACCEPTED) {
+      if (campaign.status === CampaignState.CREATIVE_APPROVED) {
         await campaignService.transition(campaignId, CampaignEvent.START_PAYMENT, actor);
       }
       escrow = await paymentRepository.findByCampaignId(campaignId);
@@ -217,14 +215,8 @@ export class PaymentService {
 
     if (escrow.status === EscrowState.CREATED) {
       await this.transitionEscrow(input.campaignId, "START_PAYMENT", actor);
-      if (
-        campaign.status === CampaignState.CREATOR_ACCEPTED ||
-        campaign.status === CampaignState.MATCHING ||
-        campaign.status === CampaignState.INVITATION_SENT
-      ) {
-        if (campaign.status === CampaignState.CREATOR_ACCEPTED) {
-          await campaignService.transition(input.campaignId, CampaignEvent.START_PAYMENT, actor);
-        }
+      if (campaign.status === CampaignState.CREATIVE_APPROVED) {
+        await campaignService.transition(input.campaignId, CampaignEvent.START_PAYMENT, actor);
       }
       escrow = (await paymentRepository.findByCampaignId(input.campaignId))!;
     }
@@ -245,17 +237,15 @@ export class PaymentService {
     }
 
     const afterCreate = await prisma.campaign.findUniqueOrThrow({ where: { id: input.campaignId } });
-    if (
-      [CampaignState.ESCROW_PENDING, CampaignState.CREATOR_ACCEPTED].includes(
-        afterCreate.status as typeof CampaignState.ESCROW_PENDING
-      )
-    ) {
+    if (afterCreate.status === CampaignState.ESCROW_PENDING) {
       await campaignService.transition(input.campaignId, CampaignEvent.PAYMENT_SUCCESS, actor);
     }
 
     const afterPay = await prisma.campaign.findUniqueOrThrow({ where: { id: input.campaignId } });
     if (afterPay.status === CampaignState.ESCROW_FUNDED && afterPay.creatorId) {
       await campaignService.transition(input.campaignId, CampaignEvent.START_PRODUCTION, actor);
+    } else if (afterPay.status === CampaignState.ESCROW_FUNDED) {
+      await campaignService.transition(input.campaignId, CampaignEvent.START_MATCHING, actor);
     }
 
     await paymentBridgeService.syncLegacyAfterEscrowFunded(input.campaignId);

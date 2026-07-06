@@ -8,7 +8,15 @@ import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import { motion, useScroll, useTransform } from "framer-motion";
 
-export function CinematicNav({ locale }: { locale: Locale }) {
+export function CinematicNav({
+  locale,
+  portalHref,
+  portalLabel
+}: {
+  locale: Locale;
+  portalHref: string;
+  portalLabel: string;
+}) {
   const t = cinematicText("nav", locale);
   const { scrollY } = useScroll();
   const bg = useTransform(scrollY, [0, 120], ["rgba(0,0,0,0)", "rgba(0,0,0,0.82)"]);
@@ -24,8 +32,8 @@ export function CinematicNav({ locale }: { locale: Locale }) {
           <BrandLogoLockup
             contrastOn="dark"
             className="gap-2.5 sm:gap-3"
-            markClassName="h-8 w-8 rounded-lg ring-1 ring-white/15 sm:h-9 sm:w-9 sm:rounded-xl"
-            wordmarkClassName="h-[17px] w-[108px] sm:h-[21px] sm:w-[134px]"
+            markClassName="h-6 w-6 rounded-md ring-1 ring-white/15 sm:h-9 sm:w-9 sm:rounded-xl"
+            wordmarkClassName="h-[13px] w-[81px] sm:h-[21px] sm:w-[134px]"
             priority
           />
         </Link>
@@ -51,10 +59,10 @@ export function CinematicNav({ locale }: { locale: Locale }) {
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
           <LanguageSwitcher locale={locale} tone="dark" />
           <Link
-            href={withLocale("/login", locale)}
+            href={portalHref}
             className="inline-flex h-9 items-center rounded-md border border-white/25 px-3 text-sm text-white transition hover:bg-white/10 sm:px-4"
           >
-            {t.login}
+            {portalLabel || t.login}
           </Link>
         </div>
       </div>

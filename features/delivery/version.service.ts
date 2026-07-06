@@ -314,7 +314,7 @@ export class VersionService {
           input.locale === "zh"
             ? `「${campaign.title}」V${versionNumber} 已上传，请进入审片中心审核。`
             : `"${campaign.title}" V${versionNumber} is ready for brand review.`,
-        actionUrl: `${getAppBaseUrl()}/studio/review/${input.orderId}`,
+        actionUrl: `${getAppBaseUrl()}/brand/projects/${input.legacyProjectId}/review`,
         email: false
       })
       .catch(() => undefined);

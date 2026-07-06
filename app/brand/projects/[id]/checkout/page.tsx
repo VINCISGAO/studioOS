@@ -21,7 +21,7 @@ import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 
 type Props = {
   params: Promise<{ id: string }>;
-  searchParams: Promise<SearchParams & { paid?: string }>;
+  searchParams: Promise<SearchParams>;
 };
 
 function readCancellationReason(
@@ -51,7 +51,6 @@ function readCancellationReason(
 export default async function BrandCheckoutPage({ params, searchParams }: Props) {
   const [{ id }, query] = await Promise.all([params, searchParams]);
   const locale = getLocale(query);
-  const paid = query.paid === "1";
   const session = await getCurrentSession();
   if (!session || session.role !== "client") {
     redirect(withLocale(`/login?role=brand&next=${encodeURIComponent(`/brand/projects/${id}/checkout?lang=${locale}`)}`, locale));
@@ -107,8 +106,7 @@ export default async function BrandCheckoutPage({ params, searchParams }: Props)
     order = (await markLegacyOrderPaidForProject(id)) ?? order;
   }
 
-  const orderFunded =
-    isOrderPaymentEscrowed(order.payment_status) || paid || prismaEscrowFunded;
+  const orderFunded = isOrderPaymentEscrowed(order.payment_status) || prismaEscrowFunded;
   const paidReady = orderFunded;
   const orderCancelled = order.status === "cancelled" || campaignStatus === "cancelled";
   const cancelReason = readCancellationReason(project, locale, order.cancel_reason);
@@ -167,7 +165,6 @@ export default async function BrandCheckoutPage({ params, searchParams }: Props)
               order={order}
               projectId={id}
               studioName={studio?.name ?? "Studio"}
-              paid={paid}
               escrowFunded={prismaEscrowFunded}
             />
           ) : null}

@@ -9,7 +9,13 @@ type InvitationWithCampaign = CreatorInvitation & {
   campaign: Campaign & {
     brand?: User & { brandProfile?: { companyName: string } | null };
   };
-  creator: { userId: string; displayName: string; headline?: string | null; user?: User };
+  creator: {
+    userId: string;
+    displayName: string;
+    headline?: string | null;
+    legacyCreatorId?: string | null;
+    user?: User;
+  };
 };
 
 export function prismaInvitationStatusToPortal(status: InvitationStatus): string {

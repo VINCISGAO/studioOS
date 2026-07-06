@@ -4,6 +4,8 @@ import { activityService } from "@/features/campaign/activity.service";
 import { memoryRepository } from "@/features/memory/memory.repository";
 import { relationshipDnaService } from "@/features/memory/relationship-dna.service";
 import { campaignRepository } from "@/features/campaign/campaign.repository";
+import { paymentRepository } from "@/features/payment/payment.repository";
+import { EscrowState } from "@/features/shared/state-machines/escrow.state-machine";
 import type { BrandProductionBrief } from "@/features/campaign/brand-campaign/brand-campaign.types";
 import type { AuthUser } from "@/features/auth/permission.service";
 import { PermissionService } from "@/features/auth/permission.service";
@@ -75,6 +77,11 @@ function frozenBriefForMatching(campaign: Campaign): FrozenMatchingBrief | null 
       .filter(Boolean)
       .join(" ")
   };
+}
+
+function resolveLegacyProjectId(campaign: Campaign) {
+  const brief = (campaign.productionBrief ?? {}) as BrandProductionBrief;
+  return brief.legacy_project_id ?? campaign.id;
 }
 
 function baseScore(
@@ -156,9 +163,17 @@ export class MatchingService {
       throw appError("FORBIDDEN", "Not allowed for this campaign");
     }
 
-    const allowedStatuses = new Set(["MATCHING", "INVITATION_SENT", "CREATOR_ACCEPTED", "CREATIVE_APPROVED"]);
+    const allowedStatuses = new Set(["MATCHING", "INVITATION_SENT"]);
     if (!allowedStatuses.has(campaign.status)) {
-      throw appError("INVALID_TRANSITION", "Matching is available after creative approval");
+      throw appError("INVALID_TRANSITION", "Matching is available only after escrow payment is funded");
+    }
+    const escrow = await paymentRepository.findByCampaignId(campaignId);
+    const escrowFunded =
+      escrow?.status === EscrowState.HELD ||
+      escrow?.status === EscrowState.PARTIAL_RELEASE ||
+      escrow?.status === EscrowState.FULL_RELEASE;
+    if (!escrowFunded) {
+      throw appError("INVALID_TRANSITION", "Escrow must be funded before matching creators");
     }
     const matchingBrief = frozenBriefForMatching(campaign);
     if (!matchingBrief) {
@@ -231,12 +246,13 @@ export class MatchingService {
       sourceType: "AIEvent",
       sourceRefId: learningEvent?.eventId ?? undefined
     });
+    const legacyProjectId = resolveLegacyProjectId(campaign);
     await notificationService.notify({
       userId: campaign.brandId,
       campaignId: campaign.id,
       title: "AI found creator matches",
       content: `VINCIS found ${ranked.length} creator matches using the Final Production Brief.`,
-      actionUrl: `${getAppBaseUrl()}/brand/projects/${campaign.id}/studios`,
+      actionUrl: `${getAppBaseUrl()}/brand/projects/${legacyProjectId}?tab=match`,
       template: "ai.matching_complete",
       priority: "HIGH",
       email: false

@@ -4,6 +4,7 @@ import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { addReviewCommentAction, uploadVideoVersionAction } from "@/app/review-actions";
 import type { Locale } from "@/lib/i18n";
+import { uploadReviewVideoFile } from "@/lib/studioos/reviewer-version-upload-client";
 import type { ReviewComment } from "@/lib/studioos/review-comment-types";
 import type { PinDraft } from "@/components/studioos/review-engine/review-center-player";
 
@@ -53,13 +54,9 @@ export function useReviewCenterActions({
   function uploadVersion(file: File, uploadNotes: string) {
     startTransition(async () => {
       onError(null);
-      const uploadFd = new FormData();
-      uploadFd.set("order_id", orderId);
-      uploadFd.set("video_file", file);
-      const uploadRes = await fetch("/api/delivery/upload-video", { method: "POST", body: uploadFd });
-      const uploadResult = (await uploadRes.json()) as { ok: boolean; url?: string; error?: string };
-      if (!uploadRes.ok || !uploadResult.ok || !uploadResult.url) {
-        onError(uploadResult.error ?? (locale === "zh" ? "视频上传失败" : "Upload failed"));
+      const uploadResult = await uploadReviewVideoFile(orderId, file, () => undefined);
+      if (!uploadResult.ok) {
+        onError(uploadResult.error || (locale === "zh" ? "视频上传失败" : "Upload failed"));
         return;
       }
       const fd = new FormData();

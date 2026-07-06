@@ -1,13 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { CalendarDays } from "lucide-react";
 import { CreatorAiMatchHealthCard } from "@/components/studioos/creator-ai-match-health-card";
 import { CreatorHomeBottomPanels } from "@/components/studioos/creator-home-bottom-panels";
 import { CreatorHomeProjectsSection } from "@/components/studioos/creator-home-projects-section";
 import { CreatorHomeStatCards } from "@/components/studioos/creator-home-stat-cards";
 import { CreatorHomeTodayTasks } from "@/components/studioos/creator-home-today-tasks";
-import { Button } from "@/components/ui/button";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import type {
@@ -43,10 +41,8 @@ const copy = {
   zh: {
     welcome: (dayPart: DayPart | null) =>
       dayPart === "morning" ? "早上好" : dayPart === "afternoon" ? "下午好" : dayPart === "evening" ? "晚上好" : "你好",
-    calendar: "日历视图",
     totalEarnings: "累计收入",
     activeProjects: "进行中项目",
-    pendingTasks: "待处理事项",
     verification: "认证状态",
     responseTime: "平均响应时间",
     proCreator: "专业创作者",
@@ -67,10 +63,8 @@ const copy = {
           : dayPart === "evening"
             ? "Good evening"
             : "Hi",
-    calendar: "Calendar",
     totalEarnings: "Total earnings",
     activeProjects: "Active projects",
-    pendingTasks: "Pending tasks",
     verification: "Verification",
     responseTime: "Avg response",
     proCreator: "Pro creator",
@@ -125,24 +119,19 @@ export function CreatorHomeDashboard({
 
   return (
     <div className="space-y-6">
-      <section className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <section>
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 sm:text-3xl lg:text-[34px]">
             {t.welcome(dayPart)} 👋 {displayName}
           </h1>
           <p className="mt-1 text-sm text-zinc-500">{dateLabel}</p>
         </div>
-        <Button variant="outline" className="h-10 rounded-xl border-zinc-200 bg-white text-zinc-700 shadow-sm">
-          <CalendarDays className="mr-2 h-4 w-4" />
-          {t.calendar}
-        </Button>
       </section>
 
       <CreatorHomeStatCards
         labels={{
           totalEarnings: t.totalEarnings,
           activeProjects: t.activeProjects,
-          pendingTasks: t.pendingTasks,
           verification: t.verification,
           responseTime: t.responseTime,
           proCreator: t.proCreator

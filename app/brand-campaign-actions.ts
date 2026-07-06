@@ -862,7 +862,7 @@ export async function approveBrandCreativeDirectionAction(formData: FormData) {
 
   try {
     const user = await requireBrandCampaignUser(ctx.client.client_email);
-    const selected = await creativeDirectionService.approve(campaignId, user, directionId);
+    const selected = await creativeDirectionService.approve(campaignId, user, directionId, { language: lang });
     const campaign = await brandCampaignRepository.findByLegacyProjectId(projectId);
     const brief = (campaign?.productionBrief ?? {}) as BrandProductionBrief;
     const frozen = brief.frozen_production_brief;
@@ -878,10 +878,26 @@ export async function approveBrandCreativeDirectionAction(formData: FormData) {
         confirmed_brief: {
           confirmed_at: frozen.frozen_at,
           fields: [
-            { section: "Creative", label: "Hook", value: frozen.hook },
-            { section: "Creative", label: "Story", value: frozen.story },
-            { section: "Creative", label: "Tone", value: frozen.tone },
-            { section: "Creative", label: "CTA", value: frozen.cta }
+            {
+              section: lang === "zh" ? "创意" : "Creative",
+              label: lang === "zh" ? "开场钩子" : "Hook",
+              value: frozen.hook
+            },
+            {
+              section: lang === "zh" ? "创意" : "Creative",
+              label: lang === "zh" ? "故事结构" : "Story",
+              value: frozen.story
+            },
+            {
+              section: lang === "zh" ? "创意" : "Creative",
+              label: lang === "zh" ? "语气" : "Tone",
+              value: frozen.tone
+            },
+            {
+              section: lang === "zh" ? "创意" : "Creative",
+              label: lang === "zh" ? "行动引导" : "CTA",
+              value: frozen.cta
+            }
           ],
           full_text: frozen.full_text
         }

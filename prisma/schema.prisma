@@ -1201,23 +1201,30 @@ model DomainEvent {
 }
 
 model Notification {
-  id         String               @id @default(uuid())
-  userId     String               @map("user_id")
-  campaignId String?              @map("campaign_id")
-  channel    NotificationChannel  @default(IN_APP)
-  priority   NotificationPriority @default(NORMAL)
-  title      String
-  content    String
-  actionUrl  String?              @map("action_url")
-  isRead     Boolean              @default(false) @map("is_read")
-  isSent     Boolean              @default(false) @map("is_sent")
-  createdAt  DateTime             @default(now()) @map("created_at")
-  readAt     DateTime?            @map("read_at")
-  campaign   Campaign?            @relation(fields: [campaignId], references: [id])
-  user       User                 @relation(fields: [userId], references: [id])
+  id           String               @id @default(uuid())
+  userId       String               @map("user_id")
+  campaignId   String?              @map("campaign_id")
+  type         String               @default("system")
+  category     NotificationCategory @default(SYSTEM)
+  eventName    String?              @map("event_name")
+  metadataJson Json?                @map("metadata_json")
+  channel      NotificationChannel  @default(IN_APP)
+  priority     NotificationPriority @default(NORMAL)
+  title        String
+  content      String
+  actionUrl    String?              @map("action_url")
+  isRead       Boolean              @default(false) @map("is_read")
+  isSent       Boolean              @default(false) @map("is_sent")
+  createdAt    DateTime             @default(now()) @map("created_at")
+  readAt       DateTime?            @map("read_at")
+  campaign     Campaign?            @relation(fields: [campaignId], references: [id])
+  user         User                 @relation(fields: [userId], references: [id])
 
   @@index([userId])
+  @@index([userId, isRead, createdAt])
   @@index([campaignId])
+  @@index([type])
+  @@index([category])
   @@index([isRead])
   @@map("notifications")
 }
@@ -2054,6 +2061,22 @@ enum NotificationPriority {
   NORMAL
   HIGH
   URGENT
+}
+
+enum NotificationCategory {
+  AI
+  PAYMENT
+  MATCHING
+  INVITATION
+  COLLABORATION
+  DELIVERY
+  REVIEW
+  REVISION
+  SETTLEMENT
+  ARBITRATION
+  MEMBERSHIP
+  ATTRIBUTION
+  SYSTEM
 }
 
 enum EventStatus {

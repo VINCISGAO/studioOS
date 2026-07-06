@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { AdminPortalShell } from "@/components/studioos/admin-portal-shell";
 import { AdminCsrfProvider } from "@/components/studioos/admin-csrf-provider";
 import { validateAdminSession } from "@/features/admin/auth/admin-auth.service";
+import { adminNotificationService } from "@/features/admin/notification/admin-notification.service";
 import { clearAdminSessionCookie, readAdminSessionToken } from "@/features/admin/auth/admin-session-server";
 import { buildAdminCsrfToken } from "@/lib/auth/admin-csrf";
 import { getLocale, withLocale } from "@/lib/i18n";
@@ -27,10 +28,16 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   const sessionToken = await readAdminSessionToken();
   const adminCsrfToken = sessionToken ? buildAdminCsrfToken(sessionToken) : "";
+  const failedNotificationCount = await adminNotificationService.countFailed({ id: profile.id, role: "ADMIN" });
 
   return (
     <AdminCsrfProvider token={adminCsrfToken}>
-      <AdminPortalShell locale={locale} pathname={pathname} search={search}>
+      <AdminPortalShell
+        locale={locale}
+        pathname={pathname}
+        search={search}
+        failedNotificationCount={failedNotificationCount}
+      >
         {children}
       </AdminPortalShell>
     </AdminCsrfProvider>

@@ -68,7 +68,7 @@ const copy: Record<Locale, LoginPageCopy & { configError: string; unsupported: s
         icon: "shield"
       }
     ],
-    brandLogos: ["GOOGLE", "COCA-COLA", "P&G", "SAMSUNG", "NIKE"],
+    brandLogos: ["GOOGLE", "COCA-COLA", "SAMSUNG", "NIKE"],
     email: "Enter email",
     emailPlaceholder: "you@company.com",
     password: "Password",
@@ -135,7 +135,7 @@ const copy: Record<Locale, LoginPageCopy & { configError: string; unsupported: s
         icon: "shield"
       }
     ],
-    brandLogos: ["GOOGLE", "COCA-COLA", "P&G", "SAMSUNG", "NIKE"],
+    brandLogos: ["GOOGLE", "COCA-COLA", "SAMSUNG", "NIKE"],
     email: "输入邮箱",
     emailPlaceholder: "you@company.com",
     password: "密码",

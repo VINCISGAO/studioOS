@@ -18,20 +18,15 @@ async function loadCampaign(campaignId: string) {
   });
 }
 
-async function onCreatorAccepted(event: DomainEvent) {
-  const campaignId = event.aggregateId;
-  const campaign = await loadCampaign(campaignId);
-  if (!campaign?.creatorId) return;
+function resolveLegacyProjectId(campaign: { productionBrief?: unknown; id: string }) {
+  const brief = campaign.productionBrief as { legacy_project_id?: string } | null;
+  return brief?.legacy_project_id ?? campaign.id;
+}
 
-  await notificationService.notify({
-    userId: campaign.creatorId,
-    campaignId,
-    title: "New campaign invitation accepted",
-    content: `You were selected for "${campaign.title}". Review the brief and prepare for production.`,
-    actionUrl: `${getAppBaseUrl()}/creator/orders`,
-    template: "campaign.creator_accepted",
-    email: true
-  });
+async function onCreatorAccepted(event: DomainEvent) {
+  // Invitation acceptance is only collaboration intent. Final selection
+  // notifications are emitted by CampaignSelectionService after brand choice.
+  void event;
 }
 
 async function onEscrowFunded(event: DomainEvent) {
@@ -45,6 +40,9 @@ async function onEscrowFunded(event: DomainEvent) {
     title: "Escrow funded — start production",
     content: `Payment for "${campaign.title}" is secured. You can begin production and upload review versions.`,
     actionUrl: `${getAppBaseUrl()}/studio/delivery`,
+    type: "payment.escrow_funded",
+    category: "PAYMENT",
+    eventName: event.name,
     template: "campaign.escrow_funded",
     priority: "HIGH"
   });
@@ -67,6 +65,9 @@ async function onRevisionRequested(event: DomainEvent) {
     title: "Revision requested",
     content: `The brand requested changes on "${campaign.title}". Upload a new review version when ready.`,
     actionUrl: `${getAppBaseUrl()}/studio/delivery`,
+    type: "review.revision_requested",
+    category: "REVISION",
+    eventName: event.name,
     template: "review.revision_requested"
   });
 }
@@ -84,24 +85,97 @@ async function onReviewApproved(event: DomainEvent) {
     campaignId: version.campaignId,
     title: "Review approved",
     content: `"${version.campaign.title}" was approved by the brand.`,
-    actionUrl: notificationService.campaignActionUrl(version.campaignId, "/review"),
+    actionUrl: `${getAppBaseUrl()}/studio/income`,
+    type: "review.approved",
+    category: "REVIEW",
+    eventName: event.name,
     template: "review.approved"
   });
 }
 
 async function onCampaignUpdated(event: DomainEvent) {
   const inner = event.payload.event;
+  const campaign = await loadCampaign(event.aggregateId);
+  if (!campaign) return;
+  const legacyProjectId = resolveLegacyProjectId(campaign);
+
+  if (inner === "AI_SUCCESS") {
+    await notificationService.notify({
+      userId: campaign.brandId,
+      campaignId: campaign.id,
+      title: "AI creative directions are ready",
+      content: `VINCIS finished creative direction generation for "${campaign.title}". Review and approve the direction to continue.`,
+      actionUrl: `${getAppBaseUrl()}/brand/projects/new?project=${encodeURIComponent(legacyProjectId)}`,
+      type: "ai.creative_generated",
+      category: "AI",
+      eventName: event.name,
+      template: "ai.creative_generated",
+      email: false
+    });
+    return;
+  }
+
+  if (inner === "START_MATCHING") {
+    await notificationService.notify({
+      userId: campaign.brandId,
+      campaignId: campaign.id,
+      title: "AI matching started",
+      content: `VINCIS is matching creators for "${campaign.title}". You will be notified when recommendations are ready.`,
+      actionUrl: `${getAppBaseUrl()}/brand/projects/${legacyProjectId}?tab=match`,
+      type: "ai.matching_started",
+      category: "MATCHING",
+      eventName: event.name,
+      template: "ai.matching_started",
+      email: false
+    });
+    return;
+  }
+
   if (inner === "CREATOR_ACCEPT") return onCreatorAccepted(event);
+  if (inner === "START_PRODUCTION" && campaign.creatorId) {
+    await notificationService.notify({
+      userId: campaign.creatorId,
+      campaignId: campaign.id,
+      title: "Collaboration is live",
+      content: `"${campaign.title}" is now in production. Upload V1 when the first draft is ready.`,
+      actionUrl: `${getAppBaseUrl()}/studio/delivery`,
+      type: "collaboration.started",
+      category: "COLLABORATION",
+      eventName: event.name,
+      template: "collaboration.started",
+      priority: "HIGH",
+      email: false
+    });
+    return;
+  }
+
   if (inner === "VERSION_UPLOAD") {
-    const campaign = await loadCampaign(event.aggregateId);
-    if (!campaign) return;
     await notificationService.notify({
       userId: campaign.brandId,
       campaignId: campaign.id,
       title: "New review version uploaded",
       content: `A new version is ready for review on "${campaign.title}".`,
-      actionUrl: notificationService.campaignActionUrl(campaign.id, "/review"),
+      actionUrl: `${getAppBaseUrl()}/brand/projects/${legacyProjectId}/review`,
+      type: "delivery.version_uploaded",
+      category: "DELIVERY",
+      eventName: event.name,
       template: "review.version_uploaded"
+    });
+    return;
+  }
+
+  if (inner === "RELEASE_PAYMENT" && campaign.creatorId) {
+    await notificationService.notify({
+      userId: campaign.creatorId,
+      campaignId: campaign.id,
+      title: "Payment release started",
+      content: `Settlement has started for "${campaign.title}". Your payout will be updated in income soon.`,
+      actionUrl: `${getAppBaseUrl()}/studio/income`,
+      type: "settlement.release_started",
+      category: "SETTLEMENT",
+      eventName: event.name,
+      template: "settlement.release_started",
+      priority: "HIGH"
     });
   }
 }

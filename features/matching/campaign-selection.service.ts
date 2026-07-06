@@ -243,7 +243,7 @@ export class CampaignSelectionService {
       }).catch(() => null);
       if (checkout?.order.id) {
         checkoutOrder = checkout.order;
-        studioActionUrl = `/studio/projects/${checkout.order.id}`;
+        studioActionUrl = `/studio/review/${checkout.order.id}`;
       }
     }
 
@@ -281,15 +281,8 @@ export class CampaignSelectionService {
       (escrow.status === EscrowState.HELD || escrow.status === EscrowState.PARTIAL_RELEASE)
     ) {
       await campaignService
-        .transition(campaign.id, CampaignEvent.PAYMENT_SUCCESS, actor)
+        .transition(campaign.id, CampaignEvent.START_PRODUCTION, actor)
         .catch(() => undefined);
-
-      const afterFund = await campaignRepository.findById(campaign.id);
-      if (afterFund?.status === CampaignState.ESCROW_FUNDED) {
-        await campaignService
-          .transition(campaign.id, CampaignEvent.START_PRODUCTION, actor)
-          .catch(() => undefined);
-      }
     }
 
     const invitation = mapInvitationToStored(

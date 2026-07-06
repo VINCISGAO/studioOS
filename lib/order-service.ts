@@ -1002,6 +1002,14 @@ export async function addDeliverable(
 
   const version =
     store.deliverables.filter((item) => item.order_id === orderId).length + 1;
+  const { assertReviewVersionUploadAllowed } = await import("@/features/review/review-round-policy");
+  const uploadGate = assertReviewVersionUploadAllowed({
+    targetVersion: version,
+    paidSlotsUnlocked: order.paid_revision_slots_unlocked ?? 0
+  });
+  if (!uploadGate.ok) {
+    return null;
+  }
 
   const notes = input.notes?.trim() || "";
   const notesForClient = input.notes_for_client?.trim() || notes;
@@ -1353,6 +1361,11 @@ export async function assignOrderCreator(input: {
 }
 
 export async function getOrderForProject(projectId: string): Promise<StoredOrder | null> {
+  const orders = await listOrdersForProject(projectId);
+  if (orders.length > 0) {
+    return orders[0] ?? null;
+  }
+
   const store = await readStore();
   return (
     store.orders

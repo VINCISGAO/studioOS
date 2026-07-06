@@ -23,8 +23,9 @@ import {
   createCreatorNotification,
   findNotificationByProject
 } from "@/lib/notification-service";
+import { createBrandNotification } from "@/lib/studioos/brand-notification-service";
 import { getWorksForCreator } from "@/lib/works-catalog";
-import { matchCreatorsForProjectWithDemoFallback } from "@/lib/matching-engine";
+import { matchCreatorsForProject } from "@/lib/matching-engine";
 import { getConfirmedBriefText } from "@/lib/studioos/confirmed-brief";
 import { parseBudgetMidpoint } from "@/lib/studioos/brand-checkout-utils";
 import type { InvitationDeclineFeedback } from "@/features/matching/invitation-decline-feedback";
@@ -109,6 +110,52 @@ async function ensureCreatorInvitationNotifications(
           logger.error("Failed to backfill creator invitation notification", {
             service: "creator-invitation-store",
             creatorId,
+            invitationId: invitation.id,
+            error: error instanceof Error ? error.message : String(error)
+          });
+        }
+      })
+  );
+}
+
+async function ensureProjectInvitationNotifications(
+  project: StoredProject,
+  invitations: StoredCreatorInvitation[],
+  locale: "zh" | "en" = "zh"
+) {
+  const brandName = project.company_name || project.client_name || "Brand";
+  const projectTitle = project.title || project.product_name || brandName;
+  const requirementsText = getConfirmedBriefText(project, locale);
+  const copy = invitationNotificationCopy(locale, brandName, projectTitle);
+
+  await Promise.all(
+    invitations
+      .filter((invitation) => invitation.status === "pending")
+      .map(async (invitation) => {
+        try {
+          const existing = await findNotificationByProject(
+            invitation.creatorId,
+            invitation.projectId,
+            "invitation_match"
+          );
+          if (existing) return;
+
+          await createCreatorNotification({
+            creator_id: invitation.creatorId,
+            type: "invitation_match",
+            title: copy.title,
+            body: copy.body,
+            project_id: invitation.projectId,
+            order_id: null,
+            client_name: brandName,
+            company_name: brandName,
+            requirements_text: requirementsText
+          });
+        } catch (error) {
+          logger.error("Failed to ensure project invitation notification", {
+            service: "creator-invitation-store",
+            projectId: project.id,
+            creatorId: invitation.creatorId,
             invitationId: invitation.id,
             error: error instanceof Error ? error.message : String(error)
           });
@@ -283,6 +330,21 @@ export async function acceptInvitation(id: string, creatorId: string, locale: "e
 
   item.status = "accepted";
   await writeStore(store);
+  if (project) {
+    const creator = await getCreatorById(creatorId);
+    await createBrandNotification({
+      brand_email: project.client_email,
+      type: "invitation_accepted",
+      title: locale === "zh" ? "创作者接受了邀约" : "Creator accepted your invitation",
+      body:
+        locale === "zh"
+          ? `${creator?.name ?? creatorId} 已接受「${project.title || project.product_name}」的合作邀约，请在候选列表中最终选定合作方。`
+          : `${creator?.name ?? creatorId} accepted the invitation for "${project.title || project.product_name}". Review accepted creators and make the final selection.`,
+      project_id: item.projectId,
+      creator_id: creatorId,
+      creator_name: creator?.name ?? creatorId
+    }).catch(() => undefined);
+  }
   return { ok: true as const, invitation: item };
 }
 
@@ -312,6 +374,21 @@ export async function declineInvitation(
   item.status = "declined";
   item.declineFeedback = feedback;
   await writeStore(store);
+  if (project) {
+    const creator = await getCreatorById(creatorId);
+    await createBrandNotification({
+      brand_email: project.client_email,
+      type: "invitation_declined",
+      title: locale === "zh" ? "创作者拒绝了邀约" : "Creator declined your invitation",
+      body:
+        locale === "zh"
+          ? `${creator?.name ?? creatorId} 已拒绝「${project.title || project.product_name}」的合作邀约。原因：${feedback.reason}。`
+          : `${creator?.name ?? creatorId} declined the invitation for "${project.title || project.product_name}". Reason: ${feedback.reason}.`,
+      project_id: item.projectId,
+      creator_id: creatorId,
+      creator_name: creator?.name ?? creatorId
+    }).catch(() => undefined);
+  }
   return { ok: true as const, invitation: item };
 }
 
@@ -422,9 +499,17 @@ export async function ensureCampaignInvitationsForProject(project: StoredProject
       if (campaign) {
         const existing = await invitationService.listForLegacyProject(project.id);
         if (existing.length > 0 || !canCreateInvitations) {
-          return enrichStoredCreatorInvitations(existing.length > 0 ? existing : existingLegacy);
+          const invitations = await enrichStoredCreatorInvitations(
+            existing.length > 0 ? existing : existingLegacy
+          );
+          await ensureProjectInvitationNotifications(project, invitations, locale);
+          return invitations;
         }
-        return enrichStoredCreatorInvitations(await invitationService.ensureForProject(project, locale));
+        const invitations = await enrichStoredCreatorInvitations(
+          await invitationService.ensureForProject(project, locale)
+        );
+        await ensureProjectInvitationNotifications(project, invitations, locale);
+        return invitations;
       }
     } catch (error) {
       if (!isMissingPrismaMigrationError(error)) {
@@ -445,7 +530,9 @@ export async function ensureCampaignInvitationsForProject(project: StoredProject
   const store = existingLegacyStore;
   const existing = store.invitations.filter((item) => item.projectId === project.id);
   if (existing.length > 0) {
-    return enrichStoredCreatorInvitations(existing);
+    const invitations = await enrichStoredCreatorInvitations(existing);
+    await ensureProjectInvitationNotifications(project, invitations, locale);
+    return invitations;
   }
   if (!canCreateInvitations) {
     return [];
@@ -455,10 +542,9 @@ export async function ensureCampaignInvitationsForProject(project: StoredProject
   const allWorks = (
     await Promise.all(enrichedCreators.map((creator) => getWorksForCreator(creator.id)))
   ).flat();
-  const matches = matchCreatorsForProjectWithDemoFallback(project, enrichedCreators, allWorks).slice(
-    0,
-    MAX_CAMPAIGN_INVITATIONS
-  );
+  const matches = matchCreatorsForProject(project, enrichedCreators, allWorks, {
+    includeColdStartRegisteredCreators: true
+  }).slice(0, MAX_CAMPAIGN_INVITATIONS);
 
   const now = Date.now();
   const budget = parseBudgetMidpoint(project.budget_range);
@@ -485,7 +571,11 @@ export async function ensureCampaignInvitationsForProject(project: StoredProject
   }
 
   await writeStore(store);
-  return enrichStoredCreatorInvitations(store.invitations.filter((item) => item.projectId === project.id));
+  const invitations = await enrichStoredCreatorInvitations(
+    store.invitations.filter((item) => item.projectId === project.id)
+  );
+  await ensureProjectInvitationNotifications(project, invitations, locale);
+  return invitations;
 }
 
 export type { InvitationLifecycleStatus };

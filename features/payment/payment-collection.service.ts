@@ -10,6 +10,11 @@ import { getAppBaseUrl } from "@/lib/app-url";
 import { logger } from "@/lib/core/logger";
 import type { CommissionBreakdown } from "@/features/membership/membership.types";
 
+function resolveLegacyProjectId(campaign: { productionBrief?: unknown; id: string }) {
+  const brief = campaign.productionBrief as { legacy_project_id?: string } | null;
+  return brief?.legacy_project_id ?? campaign.id;
+}
+
 export type PaymentRecordView = {
   campaignId: string;
   campaignTitle: string;
@@ -78,18 +83,32 @@ export class PaymentCollectionService {
       where: { id: input.campaignId },
       include: { brand: true, creator: true }
     });
-    if (!campaign.creatorId) {
-      throw appError("INVALID_TRANSITION", "Campaign has no creator");
-    }
 
     const escrow = await escrowRepository.findByCampaignId(input.campaignId);
     if (!escrow || escrow.status !== "HELD") {
       throw appError("INVALID_TRANSITION", "Escrow must be HELD before payment finalization");
     }
 
+    if (!campaign.creatorId) {
+      await paymentCollectionRepository.markPaymentCollected(input.campaignId, {
+        stripePaymentId: input.stripePaymentId,
+        stripeSessionId: input.stripeSessionId
+      });
+      return { deferred: true, commission: null };
+    }
+
+    if (escrow.creatorId !== campaign.creatorId) {
+      await prisma.escrowPayment.update({
+        where: { campaignId: input.campaignId },
+        data: { creatorId: campaign.creatorId }
+      });
+    }
+
     if (escrow.paymentStatus === "PAID") {
       const existing = await membershipService.getOrderCommissionSnapshot(input.campaignId);
-      return { alreadyFinalized: true, commission: existing };
+      if (existing) {
+        return { alreadyFinalized: true, commission: existing };
+      }
     }
 
     await paymentCollectionRepository.markPaymentCollected(input.campaignId, {
@@ -150,9 +169,10 @@ export class PaymentCollectionService {
 
     const campaign = await prisma.campaign.findUnique({
       where: { id: campaignId },
-      select: { id: true, title: true, brandId: true }
+      select: { id: true, title: true, brandId: true, productionBrief: true }
     });
     if (campaign) {
+      const legacyProjectId = resolveLegacyProjectId(campaign);
       const title =
         input.reason === "CANCELLED" ? "Payment cancelled" : "Payment failed";
       const content =
@@ -165,7 +185,7 @@ export class PaymentCollectionService {
         campaignId: campaign.id,
         title,
         content,
-        actionUrl: `${getAppBaseUrl()}/brand/projects/${campaign.id}/checkout`,
+        actionUrl: `${getAppBaseUrl()}/brand/projects/${legacyProjectId}/checkout`,
         template: input.reason === "CANCELLED" ? "payment.cancelled" : "payment.failed",
         priority: "HIGH"
       });
@@ -211,7 +231,7 @@ export class PaymentCollectionService {
         campaignId,
         title: "Payout marked as paid",
         content: `Your payout of ${commission.currency} ${Number(commission.creatorPayoutAmount).toFixed(2)} for "${campaign.title}" has been processed.`,
-        actionUrl: `${getAppBaseUrl()}/studio/wallet`,
+        actionUrl: `${getAppBaseUrl()}/studio/income`,
         template: "payment.creator_payout_paid",
         priority: "HIGH"
       });
@@ -248,13 +268,13 @@ export class PaymentCollectionService {
       select: { productionBrief: true }
     });
     const brief = campaign?.productionBrief as { legacy_project_id?: string } | null;
-    const legacyProjectId = brief?.legacy_project_id;
+    const legacyProjectId = brief?.legacy_project_id ?? input.campaignId;
     let creatorActionUrl = `${appUrl}/studio/projects`;
     if (legacyProjectId) {
       const { getOrderForProject } = await import("@/lib/order-service");
       const legacyOrder = await getOrderForProject(legacyProjectId);
       if (legacyOrder) {
-        creatorActionUrl = `${appUrl}/studio/projects/${legacyOrder.id}`;
+        creatorActionUrl = `${appUrl}/studio/review/${legacyOrder.id}`;
       }
     }
 
@@ -263,7 +283,7 @@ export class PaymentCollectionService {
       campaignId: input.campaignId,
       title: "Payment received",
       content: `Your payment of ${amountLabel} for "${input.campaignTitle}" is confirmed. Production can begin.`,
-      actionUrl: `${appUrl}/brand/projects/${input.campaignId}`,
+      actionUrl: `${appUrl}/brand/projects/${legacyProjectId}?tab=match`,
       template: "payment.brand_success",
       priority: "HIGH"
     });

@@ -44,7 +44,14 @@ export function resolveBrandNotificationAction(
 ): NotificationAction {
   const labels = brandLabels[locale];
 
-  if (input.type === "deliverable_uploaded" || input.type === "comment_resolved") {
+  if (
+    input.type === "deliverable_uploaded" ||
+    input.type === "comment_resolved" ||
+    input.type === "payment_required" ||
+    input.type === "paid_revision_unlocked" ||
+    input.type === "platform_intervention_required" ||
+    input.type === "order_completed"
+  ) {
     return {
       href: withLocale(brandPortalRoutes.projectReview(input.project_id), locale),
       label: labels.openReview
@@ -104,11 +111,16 @@ export function resolveCreatorNotificationAction(
       input.type === "revision_requested" ||
       input.type === "project_funded" ||
       input.type === "creator_selected" ||
-      input.type === "delivery_approved")
+      input.type === "delivery_approved" ||
+      input.type === "platform_intervention_required")
   ) {
     const reviewTypes = new Set<CreatorNotificationType>([
       "review_comment_added",
-      "revision_requested"
+      "revision_requested",
+      "creator_selected",
+      "project_funded",
+      "paid_revision_unlocked",
+      "platform_intervention_required"
     ]);
     return {
       href: withLocale(

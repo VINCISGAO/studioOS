@@ -155,7 +155,6 @@ export async function findReviewVideoObject(
   orderId: string,
   version: number
 ): Promise<ReviewVideoObject | null> {
-  if (!isObjectStorageConfigured()) return null;
   for (const extension of ["mp4", "mov"] as const) {
     const key = reviewVideoObjectKey(orderId, version, extension);
     const metadata = await getObjectMetadata(key);

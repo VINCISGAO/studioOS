@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { BrandLogoMark } from "@/components/brand-logo-mark";
 import { creators } from "@/lib/data";
 import type { Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -148,9 +149,7 @@ export function BrandCreatorGlobeMatchingLoader({
 
       <div className="relative mx-auto flex max-w-3xl flex-col items-center text-center">
         <div className="mb-6 flex items-center gap-2 text-sm font-semibold text-zinc-900">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-violet-600 to-indigo-600 text-white shadow-sm">
-            S
-          </span>
+          <BrandLogoMark className="h-8 w-8 rounded-lg shadow-sm" />
           VINCIS
         </div>
 

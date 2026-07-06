@@ -2,6 +2,7 @@ import "server-only";
 
 import { promises as fs } from "node:fs";
 import path from "node:path";
+import { randomBytes } from "node:crypto";
 import {
   CompleteMultipartUploadCommand,
   CreateMultipartUploadCommand,
@@ -16,6 +17,7 @@ import { isObjectStorageConfigured, videoConfig } from "@/lib/core/config/video"
 import { canPersistLocalDataStore } from "@/lib/runtime-flags";
 
 const LOCAL_ROOT = path.join(process.cwd(), ".data", "object-storage");
+const LOCAL_MULTIPART_ROOT = path.join(process.cwd(), ".data", "object-storage-multipart");
 
 let s3Client: S3Client | null = null;
 
@@ -182,7 +184,21 @@ export async function deleteObject(key: string): Promise<void> {
 }
 
 export async function createMultipartObjectUpload(key: string, contentType: string) {
-  const client = requireS3Client();
+  const client = getS3Client();
+  if (!client) {
+    if (!canPersistLocalDataStore()) {
+      throw new Error("Durable object storage is required for production asset uploads");
+    }
+    const uploadId = `local_${Date.now()}_${randomBytes(8).toString("hex")}`;
+    const uploadDir = path.join(LOCAL_MULTIPART_ROOT, uploadId);
+    await fs.mkdir(uploadDir, { recursive: true });
+    await fs.writeFile(
+      path.join(uploadDir, "manifest.json"),
+      JSON.stringify({ key, contentType, createdAt: new Date().toISOString() }, null, 2)
+    );
+    return { uploadId, key };
+  }
+
   const res = await client.send(
     new CreateMultipartUploadCommand({
       Bucket: videoConfig.r2.bucket,
@@ -202,7 +218,20 @@ export async function uploadMultipartObjectPart(input: {
   partNumber: number;
   body: Buffer;
 }) {
-  const client = requireS3Client();
+  const client = getS3Client();
+  if (!client) {
+    if (!canPersistLocalDataStore()) {
+      throw new Error("Durable object storage is required for production asset uploads");
+    }
+    if (!input.uploadId.startsWith("local_")) {
+      throw new Error("Invalid local multipart upload id");
+    }
+    const uploadDir = path.join(LOCAL_MULTIPART_ROOT, input.uploadId);
+    await fs.mkdir(uploadDir, { recursive: true });
+    await fs.writeFile(path.join(uploadDir, `${input.partNumber}.part`), input.body);
+    return { partNumber: input.partNumber, etag: `local-${input.partNumber}-${input.body.length}` };
+  }
+
   const res = await client.send(
     new UploadPartCommand({
       Bucket: videoConfig.r2.bucket,
@@ -223,7 +252,30 @@ export async function completeMultipartObjectUpload(input: {
   uploadId: string;
   parts: Array<{ partNumber: number; etag: string }>;
 }) {
-  const client = requireS3Client();
+  const client = getS3Client();
+  if (!client) {
+    if (!canPersistLocalDataStore()) {
+      throw new Error("Durable object storage is required for production asset uploads");
+    }
+    if (!input.uploadId.startsWith("local_")) {
+      throw new Error("Invalid local multipart upload id");
+    }
+    const uploadDir = path.join(LOCAL_MULTIPART_ROOT, input.uploadId);
+    const filePath = localPathForKey(input.key);
+    await fs.mkdir(path.dirname(filePath), { recursive: true });
+    const handle = await fs.open(filePath, "w");
+    try {
+      for (const part of [...input.parts].sort((a, b) => a.partNumber - b.partNumber)) {
+        const chunk = await fs.readFile(path.join(uploadDir, `${part.partNumber}.part`));
+        await handle.write(chunk);
+      }
+    } finally {
+      await handle.close();
+    }
+    await fs.rm(uploadDir, { recursive: true, force: true });
+    return;
+  }
+
   await client.send(
     new CompleteMultipartUploadCommand({
       Bucket: videoConfig.r2.bucket,

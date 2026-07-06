@@ -13,7 +13,7 @@ const copy = {
   zh: {
     back: "返回上一步",
     saveDraft: "保存草稿",
-    confirm: "选择并冻结 Production Brief"
+    confirm: "选择并冻结正式制作简报"
   }
 } as const;
 

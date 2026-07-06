@@ -7,6 +7,7 @@ export type BrandNotificationType =
   | "payment_required"
   | "order_cancelled_unpaid"
   | "paid_revision_unlocked"
+  | "platform_intervention_required"
   | "order_completed"
   | "final_download_ready";
 

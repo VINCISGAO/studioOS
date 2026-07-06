@@ -89,14 +89,12 @@ export function BrandCheckoutPanel({
   order,
   projectId,
   studioName,
-  paid,
   escrowFunded
 }: {
   locale: Locale;
   order: StoredOrder;
   projectId: string;
   studioName: string;
-  paid?: boolean;
   escrowFunded?: boolean;
 }) {
   const t = copy[locale];
@@ -115,7 +113,7 @@ export function BrandCheckoutPanel({
     window.setTimeout(() => setCopiedKey(null), 1500);
   }
 
-  if (order.payment_status !== "unpaid" || paid || escrowFunded) {
+  if (order.payment_status !== "unpaid" || escrowFunded) {
     return (
       <div className="rounded-[14px] border border-emerald-200 bg-emerald-50/80 p-6">
         <div className="flex items-start gap-4">

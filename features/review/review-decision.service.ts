@@ -48,9 +48,9 @@ export class ReviewDecisionService {
       await notificationService.notify({
         userId: version.campaign.creatorId,
         campaignId: version.campaignId,
-        title: "Campaign approved",
-        content: `"${version.campaign.title}" was approved by the brand.`,
-        actionUrl: `${getAppBaseUrl()}/studio/projects`,
+        title: "Campaign approved — escrow releasing",
+        content: `"${version.campaign.title}" was approved by the brand. Escrow settlement is starting.`,
+        actionUrl: `${getAppBaseUrl()}/studio/income`,
         template: "review.approved",
         priority: "HIGH",
         email: false

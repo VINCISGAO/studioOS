@@ -4,6 +4,7 @@ import { BrandProjectHub } from "@/components/studioos/brand-project-hub";
 import { getCurrentClientEmail } from "@/lib/client-session";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
 import { getDeliverables, getOrder, getOrderForProject } from "@/lib/order-service";
+import { isOrderPaymentEscrowed } from "@/lib/order-types";
 import { getProject } from "@/lib/project-service";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
 import { enforceBrandPaymentDeadlineForProject } from "@/lib/studioos/brand-payment-expiry.service";
@@ -103,7 +104,7 @@ export default async function BrandProjectHubPage({
   searchParams
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<SearchParams & { tab?: string }>;
+  searchParams: Promise<SearchParams & { matching?: string; tab?: string }>;
 }) {
   const [{ id }, query] = await Promise.all([params, searchParams]);
   const locale = getLocale(query);
@@ -141,7 +142,12 @@ export default async function BrandProjectHubPage({
     redirect(withLocale(`/brand/projects/${id}/review`, locale));
   }
 
-  if (activeTab === "production" && isBrandAwaitingPayment({ project, order: linkedOrder })) {
+  const awaitingPayment = isBrandAwaitingPayment({ project, order: linkedOrder });
+  const matchingRequiresPayment =
+    activeTab === "match" &&
+    (!linkedOrder || !isOrderPaymentEscrowed(linkedOrder.payment_status));
+
+  if (((activeTab === "match" || activeTab === "production") && awaitingPayment) || matchingRequiresPayment) {
     redirect(withLocale(brandPortalRoutes.projectCheckout(id), locale));
   }
 
@@ -203,6 +209,7 @@ export default async function BrandProjectHubPage({
         brandCommercialStep={brandCommercialStep}
         notificationCount={notificationCount}
         aiMatchStatistics={aiMatchStatistics}
+        showPaymentSuccessMatching={activeTab === "match" && query.matching === "1"}
       />
     </div>
   );

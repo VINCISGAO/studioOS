@@ -66,7 +66,7 @@ export async function POST(request: Request) {
   if (!order || order.creator_id !== creatorId) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
   }
-  if (!["in_production", "revision", "review"].includes(order.status)) {
+  if (!["paid", "in_production", "revision", "review"].includes(order.status)) {
     return NextResponse.json({ ok: false, error: "Cannot upload in the current order status" }, { status: 400 });
   }
 
@@ -129,6 +129,6 @@ export async function POST(request: Request) {
     key,
     version: uploadTarget.version,
     url: reviewVideoPublicUrl(orderId, uploadTarget.version),
-    part_size: 6 * 1024 * 1024
+    part_size: 16 * 1024 * 1024
   });
 }

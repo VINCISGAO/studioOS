@@ -8,6 +8,58 @@ import type { AuthUser } from "@/features/auth/permission.service";
 import { appError } from "@/lib/core/errors";
 import { hasDatabaseUrl, prisma } from "@/lib/core/database/prisma";
 import { getAppBaseUrl } from "@/lib/app-url";
+import type { NotificationCategory, Prisma } from "@prisma/client";
+
+type NotifyInput = {
+  userId: string;
+  campaignId?: string;
+  type?: string;
+  category?: NotificationCategory;
+  eventName?: string;
+  metadata?: Prisma.InputJsonValue;
+  title: string;
+  content: string;
+  actionUrl?: string;
+  email?: boolean;
+  template?: string;
+  priority?: "LOW" | "NORMAL" | "HIGH" | "URGENT";
+};
+
+const categoryRules: Array<{ category: NotificationCategory; patterns: string[] }> = [
+  { category: "SETTLEMENT", patterns: ["settlement", "payout", "release"] },
+  { category: "PAYMENT", patterns: ["payment", "escrow", "checkout"] },
+  { category: "MATCHING", patterns: ["matching", "match"] },
+  { category: "INVITATION", patterns: ["invitation", "invite"] },
+  { category: "COLLABORATION", patterns: ["selection", "selected", "collaboration", "production"] },
+  { category: "DELIVERY", patterns: ["delivery", "upload", "version", "video", "master"] },
+  { category: "REVISION", patterns: ["revision", "changes"] },
+  { category: "REVIEW", patterns: ["review", "approved", "approve"] },
+  { category: "ARBITRATION", patterns: ["arbitration", "dispute"] },
+  { category: "MEMBERSHIP", patterns: ["membership", "certification"] },
+  { category: "ATTRIBUTION", patterns: ["attribution", "performance"] },
+  { category: "AI", patterns: ["ai", "creative", "direction"] }
+];
+
+function normalizeNotificationType(input: NotifyInput) {
+  return (input.type ?? input.template ?? input.eventName ?? "system").trim() || "system";
+}
+
+function resolveNotificationCategory(input: NotifyInput): NotificationCategory {
+  if (input.category) return input.category;
+
+  const haystack = [
+    input.type,
+    input.template,
+    input.eventName,
+    input.title,
+    input.content
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  return categoryRules.find((rule) => rule.patterns.some((pattern) => haystack.includes(pattern)))?.category ?? "SYSTEM";
+}
 
 export class NotificationService {
   private assertDb() {
@@ -39,21 +91,18 @@ export class NotificationService {
     return { updated: updated.count };
   }
 
-  async notify(input: {
-    userId: string;
-    campaignId?: string;
-    title: string;
-    content: string;
-    actionUrl?: string;
-    email?: boolean;
-    template?: string;
-    priority?: "LOW" | "NORMAL" | "HIGH" | "URGENT";
-  }) {
+  async notify(input: NotifyInput) {
     this.assertDb();
+    const type = normalizeNotificationType(input);
+    const category = resolveNotificationCategory(input);
 
-    const inApp = await notificationRepository.create({
+    let inApp = await notificationRepository.create({
       userId: input.userId,
       campaignId: input.campaignId,
+      type,
+      category,
+      eventName: input.eventName,
+      metadataJson: input.metadata,
       title: input.title,
       content: input.content,
       actionUrl: input.actionUrl,
@@ -72,7 +121,9 @@ export class NotificationService {
       )
       .catch(() => undefined);
 
-    if (input.email !== false) {
+    if (input.email === false) {
+      inApp = await notificationRepository.markSent(inApp.id);
+    } else {
       const user = await prisma.user.findUnique({ where: { id: input.userId } });
       if (user?.email) {
         const emailResult = await sendNotificationEmail({

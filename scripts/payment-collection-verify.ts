@@ -4,6 +4,7 @@
  */
 import { PrismaClient } from "@prisma/client";
 import { campaignService } from "../features/campaign/campaign.service";
+import { campaignRepository } from "../features/campaign/campaign.repository";
 import { creativeDirectionService } from "../features/ai/creative-direction.service";
 import { invitationService } from "../features/matching/invitation.service";
 import { escrowService } from "../features/payment/escrow.service";
@@ -45,9 +46,6 @@ async function main() {
     const directions = await creativeDirectionService.generate(campaignId, { id: brand.id, role: "BRAND" });
     await creativeDirectionService.approve(campaignId, { id: brand.id, role: "BRAND" }, directions[0]!.id);
 
-    const invitations = await invitationService.send(campaignId, { id: brand.id, role: "BRAND" }, [nova.id]);
-    await invitationService.accept(invitations[0]!.id, { id: creatorUser.id, role: "CREATOR" });
-
     const checkout = await escrowService.startCheckout(campaignId, {
       id: brand.id,
       role: "BRAND",
@@ -64,6 +62,18 @@ async function main() {
       name: "payment.escrow_held",
       ok: paid.escrow?.status === "HELD",
       detail: paid.escrow?.status
+    });
+
+    const invitations = await invitationService.send(campaignId, { id: brand.id, role: "BRAND" }, [nova.id]);
+    await invitationService.accept(invitations[0]!.id, { id: creatorUser.id, role: "CREATOR" });
+    await campaignRepository.selectCreator({
+      campaignId,
+      creatorUserId: creatorUser.id
+    });
+    await paymentCollectionService.finalizeSuccessfulPayment({
+      campaignId,
+      stripePaymentId: paid.escrow?.stripePaymentId ?? undefined,
+      stripeSessionId: paid.escrow?.stripeSessionId ?? undefined
     });
 
     const escrow = await prisma.escrowPayment.findUniqueOrThrow({ where: { campaignId } });

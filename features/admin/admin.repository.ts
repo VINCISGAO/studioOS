@@ -63,6 +63,7 @@ export class AdminRepository {
             id: true,
             title: true,
             brandId: true,
+            creatorId: true,
             brand: { select: { fullName: true, brandProfile: { select: { companyName: true } } } }
           }
         }

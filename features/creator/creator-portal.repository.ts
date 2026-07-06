@@ -38,7 +38,7 @@ export class CreatorPortalRepository {
         creatorId: creatorUserId,
         deletedAt: null,
         status: {
-          notIn: ["COMPLETED", "CANCELLED"]
+          in: ["PRODUCING", "UNDER_REVIEW", "APPROVED", "MASTER_UPLOADED", "SETTLEMENT"]
         }
       },
       orderBy: { updatedAt: "desc" }

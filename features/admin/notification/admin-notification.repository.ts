@@ -38,6 +38,11 @@ export class AdminNotificationRepository {
   async findById(id: string) {
     return prisma.notification.findUnique({ where: { id } });
   }
+
+  async countFailed() {
+    if (!hasDatabaseUrl()) return 0;
+    return prisma.notification.count({ where: { isSent: false } });
+  }
 }
 
 export const adminNotificationRepository = new AdminNotificationRepository();

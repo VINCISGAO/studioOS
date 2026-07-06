@@ -5,12 +5,12 @@ import {
   Clapperboard,
   Globe2,
   ShieldCheck,
-  Sparkles,
   Target,
   TrendingUp,
   UserRound,
   Users
 } from "lucide-react";
+import { BrandLogoLockup } from "@/components/brand-logo-mark";
 import { LoginLanguageSwitcher } from "@/components/studioos/login-language-switcher";
 import { LoginSocialButtons } from "@/components/studioos/login-social-buttons";
 import { LoginWorkspace } from "@/components/studioos/login-workspace";
@@ -91,7 +91,7 @@ const featureIcons = {
 
 function CreatorHeadlineGradient({ children }: { children: React.ReactNode }) {
   return (
-    <span className="inline bg-gradient-to-r from-violet-600 via-indigo-500 to-violet-500 bg-clip-text text-transparent">
+    <span className="inline bg-gradient-to-r from-[#111111] from-0% via-[#6d5cff] via-38% to-[#6d5cff] bg-clip-text text-transparent drop-shadow-[0_0_14px_rgba(109,92,255,0.12)]">
       {children}
     </span>
   );
@@ -99,7 +99,7 @@ function CreatorHeadlineGradient({ children }: { children: React.ReactNode }) {
 
 function BrandHeadlineGradient({ children }: { children: React.ReactNode }) {
   return (
-    <span className="inline bg-gradient-to-r from-white via-sky-100 to-cyan-200 bg-clip-text text-transparent drop-shadow-[0_0_18px_rgba(125,211,252,0.16)]">
+    <span className="inline bg-gradient-to-r from-white via-[#dfe7ff] to-[#b8c2ff] bg-clip-text text-transparent drop-shadow-[0_0_18px_rgba(184,194,255,0.14)]">
       {children}
     </span>
   );
@@ -163,14 +163,16 @@ function LoginMarketingHeadline({
     >
       {isBrand ? (
         <>
-          <span className="block">{formatHeroHeadlineLine1(t.brandHeroLine1)}</span>
+          <span className="block">
+            <BrandHeadlineGradient>{formatHeroHeadlineLine1(t.brandHeroLine1)}</BrandHeadlineGradient>
+          </span>
           <span className="mt-3 block">
             <BrandHeadlineGradient>{t.brandHeroLine2}</BrandHeadlineGradient>
           </span>
         </>
       ) : (
         <>
-          <span className="block">
+          <span className={cn("block", locale === "en" && "lg:whitespace-nowrap")}>
             <CreatorHeadlineLine
               lead={formatHeroHeadlineLine1(t.creatorHeroLine1)}
               tail={t.creatorHeroLine1Tail}
@@ -178,7 +180,7 @@ function LoginMarketingHeadline({
               stacked={locale === "en" && Boolean(t.creatorHeroLine1Tail)}
             />
           </span>
-          <span className="mt-3 block">
+          <span className={cn("mt-3 block", locale === "en" && "lg:whitespace-nowrap")}>
             <CreatorHeadlineLine
               lead={t.creatorHeroLine2}
               tail={t.creatorHeroLine2Tail}
@@ -192,15 +194,23 @@ function LoginMarketingHeadline({
   );
 }
 
-function LoginTrustLogos({ logos, isBrand }: { logos: string[]; isBrand: boolean }) {
+function LoginTrustLogos({
+  logos,
+  isBrand,
+  className
+}: {
+  logos: string[];
+  isBrand: boolean;
+  className?: string;
+}) {
   return (
-    <div className="mt-12 hidden flex-wrap items-center gap-x-8 gap-y-3 opacity-70 lg:flex">
+    <div className={cn("flex flex-wrap items-center gap-x-8 gap-y-3", className)}>
       {logos.map((logo) => (
         <span
           key={logo}
           className={cn(
             "text-sm font-semibold tracking-[0.18em]",
-            isBrand ? "text-white/80" : "text-zinc-500"
+            isBrand ? "text-white/80" : "text-zinc-950"
           )}
         >
           {logo}
@@ -262,17 +272,15 @@ export function LoginPageShell({
       <div className="absolute inset-0" style={{ background: pageVisual.overlay }} aria-hidden />
 
       <div className={cn("relative z-10 flex min-h-[100dvh] flex-col", pageVisual.panelText)}>
-        <header className="mx-auto flex w-full max-w-[1320px] items-center justify-between px-5 py-5 sm:px-8 sm:py-6 lg:px-10 xl:px-12">
-          <MarketingHomeLink locale={locale} className="inline-flex items-center gap-2.5">
-            <span
-              className={cn(
-                "flex h-9 w-9 items-center justify-center rounded-xl",
-                isBrand ? "bg-white text-zinc-950" : "bg-zinc-950 text-white"
-              )}
-            >
-              <Sparkles className="h-4 w-4" />
-            </span>
-            <span className="text-sm font-semibold tracking-tight">{studioOS.productName}</span>
+        <header className="relative mx-auto flex min-h-16 w-full max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-8">
+          <MarketingHomeLink locale={locale} className="inline-flex items-center">
+            <BrandLogoLockup
+              contrastOn={isBrand ? "dark" : "light"}
+              className="gap-2.5 sm:gap-3"
+              markClassName={cn("h-6 w-6 sm:h-9 sm:w-9", isBrand && "rounded-md ring-1 ring-white/15 sm:rounded-xl")}
+              wordmarkClassName="h-[13px] w-[81px] sm:h-[21px] sm:w-[134px]"
+              priority
+            />
           </MarketingHomeLink>
 
           <div className="flex items-center gap-2">
@@ -294,7 +302,15 @@ export function LoginPageShell({
           <section className="hidden min-w-0 lg:block lg:flex-1 lg:pl-6 lg:py-6 xl:max-w-[820px] xl:pl-14">
             {isBrand ? (
               <>
-                <LoginMarketingHeadline role={role} locale={locale} t={t} className="text-[2rem] sm:text-[2.75rem] lg:text-[3.25rem]" />
+                <LoginMarketingHeadline
+                  role={role}
+                  locale={locale}
+                  t={t}
+                  className={cn(
+                    "text-[2rem] sm:text-[2.75rem]",
+                    locale === "en" ? "lg:text-[2.45rem] xl:text-[3.05rem]" : "lg:text-[3.25rem]"
+                  )}
+                />
                 <p
                   className={cn(
                     "mt-4 text-[13px] leading-6 text-white lg:whitespace-nowrap xl:text-[15px] xl:leading-7"
@@ -318,11 +334,19 @@ export function LoginPageShell({
                     );
                   })}
                 </ul>
-                <LoginTrustLogos logos={t.brandLogos} isBrand={isBrand} />
+                <LoginTrustLogos logos={t.brandLogos} isBrand={isBrand} className="mt-12 hidden lg:flex" />
               </>
             ) : (
               <>
-                <LoginMarketingHeadline role={role} locale={locale} t={t} className="text-[2rem] sm:text-[2.75rem] lg:text-[3.25rem]" />
+                <LoginMarketingHeadline
+                  role={role}
+                  locale={locale}
+                  t={t}
+                  className={cn(
+                    "text-[2rem] sm:text-[2.75rem]",
+                    locale === "en" ? "lg:text-[2.55rem] xl:text-[3.05rem]" : "lg:text-[3.25rem]"
+                  )}
+                />
                 <p className={cn("mt-4 max-w-lg text-[15px] leading-7 sm:text-base", pageVisual.panelMuted)}>{t.creatorHeroSubtitle}</p>
                 <ul className="mt-8 space-y-5 sm:mt-10">
                   {t.creatorFeatures.map((feature, index) => {
@@ -340,7 +364,7 @@ export function LoginPageShell({
                     );
                   })}
                 </ul>
-                <LoginTrustLogos logos={t.brandLogos} isBrand={isBrand} />
+                <LoginTrustLogos logos={t.brandLogos} isBrand={isBrand} className="mt-12 hidden lg:flex" />
               </>
             )}
 
@@ -406,6 +430,17 @@ export function LoginPageShell({
                 alipayOAuthEnabled={alipayOAuthEnabled}
                 visualOverride={formVisual}
               />
+            </div>
+
+            <div className={cn("mt-8 pb-4 lg:hidden", isBrand ? "text-white" : "text-zinc-950")}>
+              <LoginTrustLogos
+                logos={t.brandLogos}
+                isBrand={isBrand}
+                className="justify-center gap-x-7 gap-y-3 text-center opacity-55"
+              />
+              <p className={cn("mt-8 text-center text-xs", pageVisual.panelMuted)}>
+                © {new Date().getFullYear()} {studioOS.productName}. {t.rights}
+              </p>
             </div>
           </section>
         </div>

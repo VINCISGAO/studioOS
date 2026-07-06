@@ -24,7 +24,7 @@ function revalidateCheckoutPaths(projectId: string) {
 }
 
 function brandPaymentSuccessPath(projectId: string) {
-  return `${brandPortalRoutes.project(projectId)}?tab=match`;
+  return `${brandPortalRoutes.project(projectId)}?tab=match&matching=1`;
 }
 
 export async function payBrandCampaignCheckoutAction(formData: FormData) {

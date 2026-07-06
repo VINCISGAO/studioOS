@@ -34,8 +34,8 @@ const copy = {
     compare: "方案对比",
     customCompare: "自定义对比",
     scheme: "方案",
-    aiScore: "AI 评分",
-    ctr: "CTR 提升",
+    aiScore: "智能评分",
+    ctr: "点击率提升",
     conversion: "转化提升",
     difficulty: "制作难度",
     budget: "预算",
@@ -45,9 +45,9 @@ const copy = {
     expected: "预期效果",
     avgWatch: "平均观看时长",
     engagement: "互动率",
-    cpm: "CPM 预测",
-    roi: "ROI 预测",
-    export: "导出全部方案 (PDF)"
+    cpm: "千次曝光成本预测",
+    roi: "回报率预测",
+    export: "导出全部方案"
   }
 } as const;
 
