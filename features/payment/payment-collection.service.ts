@@ -270,10 +270,12 @@ export class PaymentCollectionService {
     const brief = campaign?.productionBrief as { legacy_project_id?: string } | null;
     const legacyProjectId = brief?.legacy_project_id ?? input.campaignId;
     let creatorActionUrl = `${appUrl}/studio/projects`;
+    let hasLegacyOrder = false;
     if (legacyProjectId) {
       const { getOrderForProject } = await import("@/lib/order-service");
       const legacyOrder = await getOrderForProject(legacyProjectId);
       if (legacyOrder) {
+        hasLegacyOrder = true;
         creatorActionUrl = `${appUrl}/studio/review/${legacyOrder.id}`;
       }
     }
@@ -295,7 +297,8 @@ export class PaymentCollectionService {
       content: `"${input.campaignTitle}" is escrow-funded (${amountLabel}). You can start production now. Payable after commission: ${input.currency} ${input.commission.creatorPayoutAmount.toFixed(2)}.`,
       actionUrl: creatorActionUrl,
       template: "payment.creator_funded",
-      priority: "HIGH"
+      priority: "HIGH",
+      email: !hasLegacyOrder
     });
   }
 }

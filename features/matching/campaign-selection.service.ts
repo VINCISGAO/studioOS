@@ -264,6 +264,8 @@ export class CampaignSelectionService {
         title: copy.title,
         content: copy.body,
         actionUrl: studioActionUrl,
+        template: "collaboration.selected",
+        priority: "HIGH",
         email: false
       })
       .catch(() => undefined);

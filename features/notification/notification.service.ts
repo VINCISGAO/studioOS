@@ -1,9 +1,5 @@
 import { notificationRepository } from "@/features/notification/notification.repository";
 import { serializeNotification } from "@/features/notification/notification.serializer";
-import {
-  buildSimpleNotificationEmail,
-  sendNotificationEmail
-} from "@/features/notification/notification-email.service";
 import type { AuthUser } from "@/features/auth/permission.service";
 import { appError } from "@/lib/core/errors";
 import { hasDatabaseUrl, prisma } from "@/lib/core/database/prisma";
@@ -135,17 +131,23 @@ export class NotificationService {
     } else {
       const user = await prisma.user.findUnique({ where: { id: input.userId } });
       if (user?.email) {
+        const { buildSimpleNotificationEmail, sendNotificationEmail } = await import(
+          "@/features/notification/notification-email.service"
+        );
+        const email = await buildSimpleNotificationEmail({
+          headline: input.title,
+          body: input.content,
+          actionUrl: input.actionUrl,
+          actionLabel: "View in VINCIS",
+          template: input.template,
+          metadata: input.metadata
+        });
         const emailResult = await sendNotificationEmail({
           userId: input.userId,
           toEmail: user.email,
-          subject: input.title,
-          template: input.template ?? "notification.generic",
-          html: buildSimpleNotificationEmail({
-            headline: input.title,
-            body: input.content,
-            actionUrl: input.actionUrl,
-            actionLabel: "View in VINCIS"
-          })
+          subject: email.subject,
+          template: input.template ?? email.template,
+          html: email.html
         });
         if (emailResult.ok && !emailResult.skipped) {
           await notificationRepository.markSent(inApp.id);

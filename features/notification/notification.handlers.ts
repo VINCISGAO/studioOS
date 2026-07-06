@@ -43,8 +43,9 @@ async function onEscrowFunded(event: DomainEvent) {
     type: "payment.escrow_funded",
     category: "PAYMENT",
     eventName: event.name,
-    template: "campaign.escrow_funded",
-    priority: "HIGH"
+    template: "notification.generic",
+    priority: "HIGH",
+    email: false
   });
 }
 
@@ -58,6 +59,12 @@ async function onRevisionRequested(event: DomainEvent) {
 
   const campaign = await loadCampaign(campaignId);
   if (!campaign?.creatorId) return;
+  const feedback =
+    typeof event.payload.reason === "string"
+      ? event.payload.reason
+      : typeof event.payload.comment === "string"
+        ? event.payload.comment
+        : "Review feedback is available in VINCIS.";
 
   await notificationService.notify({
     userId: campaign.creatorId,
@@ -68,7 +75,13 @@ async function onRevisionRequested(event: DomainEvent) {
     type: "review.revision_requested",
     category: "REVISION",
     eventName: event.name,
-    template: "review.revision_requested"
+    template: "review.revision_requested",
+    metadata: {
+      project: campaign.title,
+      version: campaign.currentVersion || 1,
+      comments: feedback,
+      pendingItems: "Upload a revised version when ready"
+    }
   });
 }
 
@@ -89,7 +102,12 @@ async function onReviewApproved(event: DomainEvent) {
     type: "review.approved",
     category: "REVIEW",
     eventName: event.name,
-    template: "review.approved"
+    template: "review.approved",
+    metadata: {
+      project: version.campaign.title,
+      version: version.versionNumber,
+      approvedTime: new Date().toISOString()
+    }
   });
 }
 
@@ -142,9 +160,12 @@ async function onCampaignUpdated(event: DomainEvent) {
       type: "collaboration.started",
       category: "COLLABORATION",
       eventName: event.name,
-      template: "collaboration.started",
+      template: "collaboration.selected",
       priority: "HIGH",
-      email: false
+      email: false,
+      metadata: {
+        project: campaign.title
+      }
     });
     return;
   }
@@ -159,7 +180,12 @@ async function onCampaignUpdated(event: DomainEvent) {
       type: "delivery.version_uploaded",
       category: "DELIVERY",
       eventName: event.name,
-      template: "review.version_uploaded"
+      template: "review.version_uploaded",
+      metadata: {
+        project: campaign.title,
+        version: campaign.currentVersion || 1,
+        uploadTime: new Date().toISOString()
+      }
     });
     return;
   }
@@ -174,8 +200,13 @@ async function onCampaignUpdated(event: DomainEvent) {
       type: "settlement.release_started",
       category: "SETTLEMENT",
       eventName: event.name,
-      template: "settlement.release_started",
-      priority: "HIGH"
+      template: "settlement.payment_released",
+      priority: "HIGH",
+      metadata: {
+        project: campaign.title,
+        amount: "See settlement",
+        transactionId: "Pending"
+      }
     });
   }
 }

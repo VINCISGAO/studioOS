@@ -1,10 +1,8 @@
-import { bootstrapEventSystem } from "@/features/events/bootstrap";
 import { notificationService } from "@/features/notification/notification.service";
 import { apiSuccess, handleRouteError, requireApiUser } from "@/lib/core/api-route";
 
 export async function GET(request: Request) {
   try {
-    bootstrapEventSystem();
     const user = await requireApiUser();
     const url = new URL(request.url);
     const limit = Number(url.searchParams.get("limit") ?? "30");

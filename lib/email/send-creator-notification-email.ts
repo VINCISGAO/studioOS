@@ -1,6 +1,10 @@
-import { getResend } from "@/lib/resend";
 import type { Locale } from "@/lib/i18n";
 import type { CreatorNotificationType } from "@/lib/notification-types";
+import { sendEnterpriseEmail } from "@/features/email/email-delivery.service";
+import {
+  buildCollaborationSelectedEmail,
+  buildPlainLifecycleEmail
+} from "@/features/email/templates/enterprise-email-templates";
 
 type SendCreatorEmailInput = {
   to: string;
@@ -67,66 +71,36 @@ export async function sendCreatorNotificationEmail(input: SendCreatorEmailInput)
   skipped?: boolean;
   error?: string;
 }> {
-  if (!process.env.RESEND_API_KEY) {
-    console.info("[email:creator-notification:skipped]", {
-      to: input.to,
-      type: input.type,
-      project: input.projectTitle
-    });
-    return { ok: true, skipped: true };
-  }
-
-  const resend = getResend();
-  if (!resend) {
-    return { ok: true, skipped: true };
-  }
-
-  const from = process.env.RESEND_FROM_EMAIL ?? "VINCIS <onboarding@resend.dev>";
   const copy = emailCopy(input.locale, input.type);
-  const requirementsHtml = input.requirementsText
-    .split("\n")
-    .filter(Boolean)
-    .map((line) => `<p style="margin:0 0 8px;font-size:14px;line-height:1.6;color:#3f3f46;">${escapeHtml(line)}</p>`)
-    .join("");
+  const rendered =
+    input.type === "creator_selected"
+      ? await buildCollaborationSelectedEmail({
+          brand: input.brandName,
+          project: input.projectTitle,
+          budget: "Pending escrow",
+          deadline: "See project workspace",
+          actionUrl: input.actionUrl
+        })
+      : await buildPlainLifecycleEmail({
+          template: "notification.generic",
+          subject: copy.subject(input.brandName),
+          title: copy.headline,
+          subtitle: copy.lead,
+          details: [
+            { label: input.locale === "zh" ? "客户需求" : "Client brief", value: input.projectTitle },
+            { label: "Brand", value: input.brandName }
+          ],
+          actionUrl: input.actionUrl,
+          actionLabel: copy.cta,
+          note: input.requirementsText
+        });
 
-  try {
-    const result = await resend.emails.send({
-      from,
-      to: input.to,
-      subject: copy.subject(input.brandName),
-      html: `
-        <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fafaf8;padding:32px 16px;">
-          <div style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #e4e4e7;border-radius:16px;padding:32px;">
-            <p style="margin:0 0 8px;font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#71717a;">VINCIS</p>
-            <h1 style="margin:0 0 12px;font-size:24px;line-height:1.2;color:#09090b;">${escapeHtml(copy.headline)}</h1>
-            <p style="margin:0 0 20px;font-size:15px;line-height:1.7;color:#52525b;">${escapeHtml(copy.lead)}</p>
-            <div style="margin:0 0 24px;padding:16px 18px;border-radius:12px;background:#fafafa;border:1px solid #ececec;">
-              <p style="margin:0 0 8px;font-size:12px;font-weight:600;color:#71717a;text-transform:uppercase;letter-spacing:0.06em;">${input.locale === "zh" ? "客户需求" : "Client brief"}</p>
-              <p style="margin:0 0 12px;font-size:16px;font-weight:600;color:#18181b;">${escapeHtml(input.projectTitle)} · ${escapeHtml(input.brandName)}</p>
-              ${requirementsHtml}
-            </div>
-            <a href="${escapeHtml(input.actionUrl)}" style="display:inline-block;background:#18181b;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;padding:12px 18px;border-radius:10px;">${escapeHtml(copy.cta)}</a>
-            <p style="margin:24px 0 0;font-size:12px;line-height:1.6;color:#a1a1aa;">${input.locale === "zh" ? `你好 ${escapeHtml(input.creatorName)}，` : `Hi ${escapeHtml(input.creatorName)}, `}${input.locale === "zh" ? "如有问题可在平台内与品牌方沟通。" : "reply in the workspace if you have questions."}</p>
-          </div>
-        </div>
-      `
-    });
+  const result = await sendEnterpriseEmail({
+    to: input.to,
+    subject: rendered.subject,
+    template: rendered.template,
+    html: rendered.html
+  });
 
-    if (result.error) {
-      return { ok: false, error: result.error.message };
-    }
-
-    return { ok: true };
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Email send failed";
-    return { ok: false, error: message };
-  }
-}
-
-function escapeHtml(value: string) {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+  return result.ok ? result : { ok: false, error: result.error };
 }

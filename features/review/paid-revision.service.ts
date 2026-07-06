@@ -204,14 +204,15 @@ export class PaidRevisionService {
               ? `「${campaign.title}」已解锁第 4-5 轮修订，加购金额 ${currency} ${addOnAmount.toFixed(2)}。`
               : `"${campaign.title}" now has revision rounds 4-5 unlocked. Add-on: ${currency} ${addOnAmount.toFixed(2)}.`,
           actionUrl: `${getAppBaseUrl()}/brand/projects/${input.projectId ?? campaignId}/review`,
-          template: "revision.paid_addon_unlocked",
+          template: "revision.additional_purchased",
           priority: "HIGH",
-          email: false,
           metadata: {
             orderId: input.orderId,
             unlockedFromVersion: unlockedVersion,
             unlockedThroughVersion: MAX_REVISION_ROUNDS,
             addOnAmount,
+            additionalPayment: "20%",
+            currentStage: `Version ${unlockedVersion}`,
             currency,
             paymentSource
           }
@@ -229,13 +230,14 @@ export class PaidRevisionService {
                 ? `「${campaign.title}」现在可进入 V4-V5 修订流程。`
                 : `"${campaign.title}" can now continue through V4-V5 revisions.`,
             actionUrl: `${getAppBaseUrl()}/studio/review/${input.orderId}`,
-            template: "revision.paid_addon_unlocked",
+            template: "revision.additional_purchased",
             priority: "HIGH",
-            email: false,
             metadata: {
               orderId: input.orderId,
               unlockedFromVersion: unlockedVersion,
-              unlockedThroughVersion: MAX_REVISION_ROUNDS
+              unlockedThroughVersion: MAX_REVISION_ROUNDS,
+              additionalPayment: "20%",
+              currentStage: `Version ${unlockedVersion}`
             }
           });
         }

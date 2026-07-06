@@ -3,7 +3,6 @@ import "server-only";
 import { createHash, randomInt, timingSafeEqual, createHmac } from "node:crypto";
 import { prisma, hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { hashPassword } from "@/lib/core/password-crypto";
-import { getResend } from "@/lib/resend";
 import { userRepository } from "@/features/auth/user.repository";
 import { setDemoSession } from "@/lib/demo-auth-server";
 import { buildSessionPayload } from "@/features/auth/session.service";
@@ -11,6 +10,8 @@ import { resolvePostLoginDestination } from "@/lib/auth/post-login-redirect";
 import type { Locale } from "@/lib/i18n";
 import type { Prisma, UserRole } from "@prisma/client";
 import { AUTH_ERROR_COPY } from "@/features/auth/auth-error-copy";
+import { sendEnterpriseEmail } from "@/features/email/email-delivery.service";
+import { buildLoginVerificationEmail } from "@/features/email/templates/enterprise-email-templates";
 
 export { AUTH_ERROR_COPY } from "@/features/auth/auth-error-copy";
 
@@ -315,7 +316,7 @@ async function recordAttempt(input: {
 async function sendAuthVerificationCode(
   email: string,
   code: string,
-  locale: Locale
+  _locale: Locale
 ): Promise<
   | { ok: true; debugCode?: string }
   | { ok: false; reason: string }
@@ -327,35 +328,18 @@ async function sendAuthVerificationCode(
     return { ok: true as const, debugCode: code };
   }
 
-  const resend = getResend();
-  if (!resend) return { ok: false as const, reason: "RESEND_NOT_CONFIGURED" as const };
-  const from = process.env.AUTH_EMAIL_FROM || process.env.RESEND_FROM_EMAIL || "VINCIS <onboarding@resend.dev>";
-  const subject = locale === "zh" ? "你的 VINCIS 验证码" : "Your VINCIS verification code";
-  const headline = locale === "zh" ? "验证你的邮箱" : "Verify your email";
-  const body =
-    locale === "zh"
-      ? "请输入以下 6 位验证码。验证码 5 分钟内有效。"
-      : "Enter this 6-digit code. It expires in 5 minutes.";
-
-  const result = await resend.emails.send({
+  const from = process.env.AUTH_EMAIL_FROM || process.env.RESEND_FROM_EMAIL || "VINCIS <hello@vincis.app>";
+  const emailTemplate = await buildLoginVerificationEmail({ code });
+  const result = await sendEnterpriseEmail({
     from,
     to: email,
-    subject,
-    html: `
-      <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fafaf8;padding:32px 16px;">
-        <div style="max-width:520px;margin:0 auto;background:#fff;border:1px solid #e4e4e7;border-radius:16px;padding:32px;">
-          <p style="margin:0 0 8px;font-size:12px;font-weight:700;letter-spacing:.08em;color:#71717a;">VINCIS</p>
-          <h1 style="margin:0 0 12px;font-size:22px;color:#09090b;">${headline}</h1>
-          <p style="margin:0 0 20px;font-size:15px;line-height:1.7;color:#52525b;">${body}</p>
-          <div style="font-size:32px;font-weight:800;letter-spacing:.28em;color:#18181b;">${code}</div>
-        </div>
-      </div>
-    `
+    subject: emailTemplate.subject,
+    template: emailTemplate.template,
+    html: emailTemplate.html,
+    requireProvider: true
   });
 
-  return result.error
-    ? { ok: false as const, reason: result.error.message || "RESEND_SEND_FAILED" }
-    : { ok: true as const };
+  return result.ok ? { ok: true as const } : { ok: false as const, reason: result.error };
 }
 
 export class AuthSecurityService {

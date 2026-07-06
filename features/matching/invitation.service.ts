@@ -88,6 +88,13 @@ export class InvitationService {
 
     const matches = await matchingService.matchCreatorsForCampaign(campaignId, user, 20);
     const matchMap = new Map(matches.map((m) => [m.creatorProfileId, m.matchScore]));
+    const brand = await prisma.user.findUnique({
+      where: { id: campaign.brandId },
+      include: { brandProfile: true }
+    });
+    const brandName = brand?.brandProfile?.companyName ?? brand?.fullName ?? "Brand";
+    const budgetLabel = `${campaign.currency} ${campaign.budget.toFixed(2)}`;
+    const deliveryTime = campaign.deadline.toISOString();
     const actor = { id: user.id, role: user.role };
 
     for (const creatorProfileId of creatorProfileIds) {
@@ -117,9 +124,14 @@ export class InvitationService {
         title: "New collaboration invitation",
         content: `You received a creator invitation for "${campaign.title}". Review the brief and respond.`,
         actionUrl: `${getAppBaseUrl()}/studio/invitations`,
-        template: "invitation.sent",
+        template: "invitation.received",
         priority: "HIGH",
-        email: false
+        metadata: {
+          brand: brandName,
+          project: campaign.title,
+          budget: budgetLabel,
+          deliveryTime
+        }
       });
       const legacyCreatorId = await resolveLegacyCreatorIdForProfile(created.creator);
       if (legacyCreatorId) {
@@ -174,7 +186,11 @@ export class InvitationService {
       content: `${invitation.creator.displayName} accepted the invitation for "${invitation.campaign.title}". Review accepted creators and make the final selection.`,
       actionUrl: `${getAppBaseUrl()}/brand/projects/${resolveLegacyProjectId(invitation.campaign)}`,
       template: "invitation.accepted",
-      priority: "HIGH"
+      priority: "HIGH",
+      metadata: {
+        creator: invitation.creator.displayName,
+        project: invitation.campaign.title
+      }
     });
 
     const updated = await invitationRepository.findById(invitationId);
@@ -204,7 +220,12 @@ export class InvitationService {
       content: `${invitation.creator.displayName} declined the invitation for "${invitation.campaign.title}". Reason: ${feedback.reason}.`,
       actionUrl: `${getAppBaseUrl()}/brand/projects/${resolveLegacyProjectId(invitation.campaign)}`,
       template: "invitation.declined",
-      priority: "NORMAL"
+      priority: "NORMAL",
+      metadata: {
+        creator: invitation.creator.displayName,
+        project: invitation.campaign.title,
+        rejectReason: feedback.reason
+      }
     });
     const learningEvent = await aiLearningEventRepository.append({
       eventType: "CreatorRejected",

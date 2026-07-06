@@ -162,10 +162,15 @@ export class DisputeService {
           title: "New arbitration case opened",
           content: `${row.campaign.title}: ${reason}`,
           actionUrl: adminUrl,
-          template: "arbitration.opened",
+          template: "arbitration.started",
           priority: "URGENT",
-          email: false,
-          metadata: { disputeId: row.id, openedBy: user.id }
+          metadata: {
+            disputeId: row.id,
+            openedBy: user.id,
+            project: row.campaign.title,
+            status: "Open",
+            expectedResolution: "Platform review in progress"
+          }
         }).catch(() => undefined)
       ),
       ...participantIds.map((participantId) =>
@@ -180,10 +185,15 @@ export class DisputeService {
             participantId === row.campaign.brandId
               ? `${getAppBaseUrl()}/brand/projects/${campaignId}`
               : `${getAppBaseUrl()}/studio/projects`,
-          template: "arbitration.opened",
+          template: "arbitration.started",
           priority: "URGENT",
-          email: false,
-          metadata: { disputeId: row.id, openedBy: user.id }
+          metadata: {
+            disputeId: row.id,
+            openedBy: user.id,
+            project: row.campaign.title,
+            status: "Open",
+            expectedResolution: "Platform review in progress"
+          }
         }).catch(() => undefined)
       )
     ]);
