@@ -8,9 +8,9 @@ export const metadata: Metadata = {
   title: "VINCIS | Hollywood Quality. Without Hollywood Costs.",
   description: studioOS.hero.en,
   icons: {
-    icon: "/images/LOGO.png",
-    shortcut: "/images/LOGO.png",
-    apple: "/images/LOGO.png"
+    icon: "/images/LOGO.png?v=20260706",
+    shortcut: "/images/LOGO.png?v=20260706",
+    apple: "/images/LOGO.png?v=20260706"
   }
 };
 

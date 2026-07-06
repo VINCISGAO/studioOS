@@ -1,10 +1,11 @@
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 
-const mainLogoSrc = "/images/LOGO.png";
+const logoAssetVersion = "20260706";
+const mainLogoSrc = `/images/LOGO.png?v=${logoAssetVersion}`;
 const wordmarkSrc = {
-  black: "/images/logo-black.png",
-  white: "/images/logo-white.png"
+  black: `/images/logo-black.png?v=${logoAssetVersion}`,
+  white: `/images/logo-white.png?v=${logoAssetVersion}`
 };
 
 export function BrandLogoMark({
