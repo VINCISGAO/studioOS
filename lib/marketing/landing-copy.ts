@@ -67,11 +67,11 @@ export const landingCopy = {
   hero: {
     en: {
       eyebrow: "Commercial production infrastructure for global brands",
-      titleLine1: "Connecting global ad",
+      titleLine1: "Connecting global brands",
       titleHighlight: "",
-      titleLine2: "supply & demand",
+      titleLine2: "with AI creators",
       subtitle:
-        "Connects brand teams with vetted AI production studios\nBrands get product ads at lower cost, creators win more global orders.",
+        "Great ideas are no longer limited by cost, time, or resources.\nWorld-class advertising is no longer reserved for big brands.",
       primary: "Start as a brand",
       secondary: "Join as a studio",
       trusted: "Built for brand teams shipping paid-social creative at speed",
@@ -79,11 +79,11 @@ export const landingCopy = {
     },
     zh: {
       eyebrow: "面向全球品牌的商业制作基础设施",
-      titleLine1: "连接全球广告供需",
+      titleLine1: "连接全球品牌与AI创作者",
       titleHighlight: "",
       titleLine2: "",
       subtitle:
-        "连接品牌团队与严选 AI 制作方\n品牌更低成本获得产品广告，创作者获得更多全球订单。",
+        "让每一个伟大的创意，不再因为成本、时间或资源限制而被埋没。\n让世界级广告，不再是大公司的专属。",
       primary: "我是项目方",
       secondary: "我是创作者",
       trusted: "为需要高速投放素材的品牌团队而建",

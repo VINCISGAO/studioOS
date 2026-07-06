@@ -2,12 +2,14 @@
 
 **Status:** Canonical anchor for the marketing homepage.
 
-**Branch:** `homepage-golden`  
-**Tag:** `homepage-v1`
+**Current golden baseline:** the owner-approved homepage in the current working tree.
+
+**Legacy branch:** `homepage-golden`  
+**Legacy tag:** `homepage-v1`
 
 ## Policy
 
-The homepage is **frozen**. Do not change structure, visual hierarchy, interaction design, or animations unless the project owner explicitly requests a homepage redesign or override.
+The homepage is **frozen**. Do not change copy, layout, spacing, responsiveness, structure, visual hierarchy, interaction design, animations, assets, or logo treatment unless the project owner explicitly commands that exact homepage change in the current conversation.
 
 See:
 
@@ -16,7 +18,7 @@ See:
 
 ## Allowed without redesign
 
-Bug fixes, accessibility improvements, localization, and content updates — **only if** they do not change homepage structure, visual hierarchy, or interaction design.
+Bug fixes, accessibility improvements, localization, and content updates — **only when explicitly requested by the owner** and only if they do not exceed the requested scope.
 
 ## Restore homepage only
 
@@ -40,7 +42,7 @@ git checkout homepage-golden -- public/images/login/
 
 ## Owner override
 
-Only replace or redesign homepage files when the owner **explicitly** says to override the frozen homepage in the current task.
+Only replace, redesign, or edit homepage files when the owner **explicitly** commands that exact change in the current task.
 
 ## Publish / re-anchor this baseline
 

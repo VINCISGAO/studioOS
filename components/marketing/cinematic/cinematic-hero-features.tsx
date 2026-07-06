@@ -21,7 +21,7 @@ export function CinematicHeroFeatures({ locale }: { locale: Locale }) {
   const [activeIndex, setActiveIndex] = useState(0);
 
   return (
-    <div className="mx-auto mt-0 w-full pt-0 sm:mt-12 sm:pt-2">
+    <div className="mx-auto mt-8 w-full pt-0 sm:mt-8 sm:pt-2">
       <div className="grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-4">
         {features.map((feature, index) => {
           const Icon = featureIcons[feature.icon];

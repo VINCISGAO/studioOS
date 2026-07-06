@@ -103,11 +103,13 @@ Never ask for confirmation unless the decision changes product behavior, busines
 
 The marketing homepage is a **protected asset**.
 
-Golden baseline: **`homepage-golden`** branch · **`homepage-v1`** tag
+Golden baseline: **the current owner-approved homepage in this working tree**. Treat the current homepage as the latest golden standard unless the project owner explicitly re-anchors it.
+
+Legacy anchors: **`homepage-golden`** branch · **`homepage-v1`** tag
 
 Canonical UI: **`components/marketing/`** — see [`components/marketing/README.md`](components/marketing/README.md) and [`docs/HOMEPAGE_GOLDEN.md`](docs/HOMEPAGE_GOLDEN.md).
 
-Unless the user **explicitly requests a homepage redesign**, you **MUST NOT**:
+Unless the project owner **explicitly commands a homepage change in the current conversation**, you **MUST NOT**:
 
 - refactor layout
 - replace components
@@ -115,13 +117,14 @@ Unless the user **explicitly requests a homepage redesign**, you **MUST NOT**:
 - remove sections
 - change visual hierarchy
 - optimize by deletion
+- change homepage copy, spacing, responsiveness, assets, or logo treatment
 
 If a requested change **might affect the homepage structure**, **stop and ask for confirmation first**.
 
 Allowed without a redesign request:
 
 - bug fixes
-- changes the user explicitly requested in the current task
+- changes the owner explicitly requested in the current task
 - when unsure, **preserve the existing homepage**
 
 Bug fixes, accessibility improvements, localization, and content updates are allowed, provided they do not change the homepage structure, visual hierarchy, or interaction design.

@@ -84,7 +84,7 @@ export function CinematicHero({
           style={reduce ? undefined : { opacity: contentOpacity, y: contentY }}
           className="flex flex-none flex-col justify-start pt-12 sm:flex-1 sm:justify-center sm:pt-0"
         >
-          <div className={cn(isEnglish ? "max-w-none" : "w-full max-w-3xl sm:max-w-xl")}>
+          <div className="w-full max-w-3xl sm:max-w-xl">
             <p className="inline-flex max-w-full items-center gap-2 rounded-md border border-white/18 bg-white/[0.07] px-3 py-1.5 text-[10px] font-medium leading-5 text-zinc-200 shadow-[0_12px_36px_-24px_rgba(255,255,255,0.7)] backdrop-blur-md sm:px-3.5 sm:text-[11px]">
               <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-[#c7d1df]" />
               <span className="min-w-0 text-wrap">{t.eyebrow}</span>
@@ -94,8 +94,8 @@ export function CinematicHero({
               className={cn(
                 "mt-4 font-semibold tracking-[-0.04em] sm:mt-6",
                 isEnglish
-                  ? "max-w-none text-[clamp(1.45rem,6.15vw,2.15rem)] leading-[1.05] sm:text-[clamp(2.35rem,3.8vw,3.85rem)] sm:leading-[1.02] lg:text-[3.85rem] xl:text-[4.1rem]"
-                  : "w-full max-w-none text-[clamp(1.7rem,7.2vw,2.9rem)] leading-[1.04] sm:text-[4.35rem] md:text-[4.5rem] lg:text-[4.5rem] xl:text-[4.55rem]",
+                  ? "w-full max-w-none text-[clamp(1.7rem,7.2vw,2.9rem)] leading-[1.04] sm:text-[3rem] md:text-[3.15rem] lg:text-[3.15rem] xl:text-[4.3rem]"
+                  : "w-[min(100vw-2rem,52rem)] max-w-none text-[clamp(1.7rem,7.2vw,2.9rem)] leading-[1.04] sm:text-[clamp(2.5rem,4.35vw,4.1rem)]",
                 isEnglish ? marketingHeadlineClassName("en") : "text-pretty"
               )}
             >
@@ -110,12 +110,19 @@ export function CinematicHero({
               {isEnglish && t.titleHighlight ? (
                 <span className="mt-3 block whitespace-nowrap text-white sm:mt-4">{t.titleHighlight}</span>
               ) : null}
-              {isEnglish && t.titleLine2 ? (
-                <span className="mt-3 block whitespace-nowrap text-zinc-300 sm:mt-4">{t.titleLine2}</span>
+              {t.titleLine2 ? (
+                <span
+                  className={cn(
+                    "mt-3 block whitespace-nowrap sm:mt-4",
+                    isEnglish ? "text-zinc-300" : marketingSilverGradientClassName()
+                  )}
+                >
+                  {t.titleLine2}
+                </span>
               ) : null}
             </h1>
 
-            <p className="mt-4 max-w-2xl whitespace-pre-line text-[15px] leading-7 text-zinc-300 sm:mt-6 sm:text-base md:text-[17px] md:leading-8">
+            <p className="mt-4 max-w-2xl whitespace-pre-line text-[13px] leading-6 text-zinc-300 sm:mt-6 sm:text-base md:text-[17px] md:leading-8">
               {t.subtitle}
             </p>
 
@@ -172,7 +179,7 @@ export function CinematicHero({
         <div className="mt-0 sm:mt-auto">
           <CinematicHeroFeatures locale={locale} />
 
-          <div className="overflow-hidden border-y border-white/[0.08] py-4 sm:py-6">
+          <div className="mt-5 overflow-hidden border-y border-white/[0.08] py-4 sm:mt-6 sm:py-6">
             <p className="text-center text-[10px] font-medium tracking-[0.18em] text-zinc-500 sm:text-[11px] sm:tracking-[0.24em]">
               {locale === "zh" ? "全球品牌信赖" : "TRUSTED BY GLOBAL BRAND TEAMS"}
             </p>
