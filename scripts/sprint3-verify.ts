@@ -127,6 +127,7 @@ async function main() {
     });
   } finally {
     if (campaignId) {
+      await prisma.notification.deleteMany({ where: { campaignId } });
       await prisma.creatorInvitation.deleteMany({ where: { campaignId } });
       await prisma.aiJob.deleteMany({ where: { campaignId } });
       await prisma.campaign.update({

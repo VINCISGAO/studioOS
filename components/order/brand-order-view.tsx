@@ -112,7 +112,10 @@ export async function BrandOrderView({
           {t.back}
         </Link>
         <Link
-          href={withLocale(order.inquiry_id ? `/proposal/${order.inquiry_id}` : `/brand/projects/${order.id}/review`, locale)}
+          href={withLocale(
+            order.inquiry_id ? `/proposal/${order.inquiry_id}` : `/brand/projects/${order.project_id ?? order.id}/review`,
+            locale
+          )}
           className="text-sm text-muted-foreground hover:text-foreground"
         >
           {order.payment_status !== "unpaid" && order.status !== "waiting_payment"

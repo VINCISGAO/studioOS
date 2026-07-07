@@ -30,6 +30,7 @@ import {
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import { getCountryOptions, labelCountry } from "@/lib/localized-options";
+import { buildAvatarInitials } from "@/lib/studioos/avatar-initials";
 import { normalizeCreatorMinBudget } from "@/lib/studioos/creator-price-preference";
 import { compressImageForUpload } from "@/lib/studioos/image-upload-client";
 import type { Creator } from "@/lib/types";
@@ -230,15 +231,6 @@ type CreatorPublicProfileEditorProps = {
   baseCreator: Creator;
 };
 
-function initialsFor(name: string) {
-  return name
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? "")
-    .join("")
-    .slice(0, 2);
-}
-
 function normalizeSpecialties(items: string[]) {
   return [...new Set(items.map((item) => item.trim()).filter(Boolean))];
 }
@@ -420,7 +412,7 @@ export function CreatorPublicProfileEditor({
   const coverInputRef = useRef<HTMLInputElement | null>(null);
 
   const countryOptions = useMemo(() => getCountryOptions(locale, country), [locale, country]);
-  const initials = useMemo(() => initialsFor(displayName), [displayName]);
+  const initials = useMemo(() => buildAvatarInitials(displayName, "C"), [displayName]);
   const selectedDelivery = deliveryOptions.find((item) => item.value === deliverySpeed) ?? deliveryOptions[1];
 
   const formSnapshot = useMemo(

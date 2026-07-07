@@ -55,6 +55,19 @@ Production assumptions:
 - Alipay callback: `https://vincis.app/auth/alipay/callback`
 - Alipay authorization must not be embedded with an iframe; use the official authorization redirect unless a supported official QR flow is implemented.
 
+### Protected AI Learning Foundation
+
+AI Preference Engine, AI Learning Events, Memory Facts, Brand / Creator / Relationship DNA, Brand AI Taste, Creative DNA, and Matching Memory are protected platform foundations.
+
+Canonical docs:
+
+- `docs/AI_PREFERENCE_ENGINE.md`
+- `docs/AI_LEARNING_FOUNDATION.md`
+
+Protected assets include `AiPreference`, `MemoryFact`, `RelationshipDna`, `AIEvent`, `AILearning`, `AiJob`, `features/memory/**`, `features/ai/ai-learning-*`, `features/ai-support/**`, `components/ai-copilot/**`, `features/ai/creator-matching-memory.service.ts`, Creative DNA, matching memory/reporting utilities, language database assets, system reply knowledge, and email/notification template knowledge.
+
+Do not delete these during cleanup, dead-code audits, or refactors. They may only be upgraded, migrated, versioned, or replaced with an explicit historical-data migration plan.
+
 ---
 
 ## Engineering Standards

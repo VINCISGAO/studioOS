@@ -30,6 +30,26 @@
 | **11** | Vol 15 OpenAPI | 契约驱动 API、SDK 生成 | ✅ |
 | **12** | 集成 & QA | Happy Path E2E、95% 核心模块测试 | ✅ |
 | **13** | MVP Payment Collection | Webhook + Commission + Manual payout | ✅ |
+| **14** | AI Preference Engine | Save Creator、AI Learning Rules、Brand AI Taste、Preference Vector、Taste Matching | 📌 Strategic Engine |
+
+---
+
+## Strategic AI Engines
+
+### AI Preference Engine
+
+AI Preference Engine（AI 偏好引擎）是 VINCIS 的核心护城河之一，不是 Like 功能。
+
+- Creator 页面使用 **Save Creator / 收藏创作者**，不使用 Like Creator。
+- Save、浏览、作品查看、联系、邀请、成交、快速退出、拒绝等行为都必须进入 AI Learning。
+- AI 学习的目标不是“谁被收藏”，而是“广告主为什么收藏/邀请/成交”。
+- 这些行为形成 Brand Preference Vector 与 Brand AI Taste。
+- 后续 Creator Ranking 必须逐步使用 Taste Matching，而不是只按已收藏 creator 排序。
+- 权重不得写死在代码中；必须由 `ai_learning_rules` 这类可配置规则驱动。
+
+Canonical spec: [`docs/AI_PREFERENCE_ENGINE.md`](./AI_PREFERENCE_ENGINE.md)
+
+Protected AI database and engine inventory: [`docs/AI_LEARNING_FOUNDATION.md`](./AI_LEARNING_FOUNDATION.md)
 
 ---
 

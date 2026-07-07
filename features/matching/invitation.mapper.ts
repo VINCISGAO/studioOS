@@ -52,7 +52,7 @@ export function portalInvitationStatusToPrismaRespondable(status: string): Invit
   return [];
 }
 
-export function resolveLegacyProjectId(campaign: Campaign): string {
+export function resolveLegacyProjectId(campaign: { id: string; productionBrief?: unknown }): string {
   const brief = readProductionBrief(campaign.productionBrief) as { legacy_project_id?: string };
   const legacy = brief.legacy_project_id;
   return typeof legacy === "string" && legacy.trim() ? legacy : campaign.id;

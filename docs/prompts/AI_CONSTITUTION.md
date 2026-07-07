@@ -2,7 +2,11 @@
 
 ## Article 1 — Source of Truth
 
-业务规则只来自：Prisma · OpenAPI · State Machine · Feature Spec · Design System
+业务规则只来自：Prisma · OpenAPI · State Machine · Feature Spec · Design System · AI Learning Rules
+
+AI Preference Engine 是 VINCIS 的核心 AI 学习引擎。Creator 收藏必须被视为 `Save Creator` 行为和 AI Learning Event，而不是普通 Like 功能。相关规则以 `docs/AI_PREFERENCE_ENGINE.md` 为准。
+
+AI Learning Foundation 是平台长期数据资产。`AiPreference`、`MemoryFact`、`RelationshipDna`、`AIEvent`、`AILearning`、`AiJob`、`features/memory/**`、`features/ai/ai-learning-*`、`features/ai-support/**`、AI Copilot、Creative DNA、Matching Memory、语言数据库、系统回复库、邮件/通知模板知识等只能迁移、扩展、升级，禁止作为僵尸代码删除。保护清单以 `docs/AI_LEARNING_FOUNDATION.md` 为准。
 
 ## Article 2 — Never Guess
 

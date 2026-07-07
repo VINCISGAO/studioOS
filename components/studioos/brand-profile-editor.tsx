@@ -37,6 +37,7 @@ import {
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import type { StoredBrandProfile } from "@/lib/brand-profile-types";
+import { buildAvatarInitials } from "@/lib/studioos/avatar-initials";
 import { compressImageForUpload } from "@/lib/studioos/image-upload-client";
 import { cn } from "@/lib/utils";
 
@@ -261,15 +262,6 @@ type BrandProfileEditorProps = {
   locale: Locale;
   profile: StoredBrandProfile;
 };
-
-function initialsFor(name: string) {
-  return name
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? "")
-    .join("")
-    .slice(0, 2);
-}
 
 function normalizeTags(items: string[]) {
   return [...new Set(items.map((item) => item.trim()).filter(Boolean))];
@@ -605,11 +597,12 @@ export function BrandProfileEditor({ locale, profile }: BrandProfileEditorProps)
   const [showcaseUploading, setShowcaseUploading] = useState(false);
   const logoInputRef = useRef<HTMLInputElement | null>(null);
   const coverInputRef = useRef<HTMLInputElement | null>(null);
+  const toastTimerRef = useRef<number | null>(null);
   const [isPending, startTransition] = useTransition();
   const [isPolishing, startPolish] = useTransition();
   const publicHref = withLocale(`/brands/${profile.id}`, locale);
 
-  const initials = useMemo(() => initialsFor(displayName || companyName), [companyName, displayName]);
+  const initials = useMemo(() => buildAvatarInitials(displayName || companyName, "B"), [companyName, displayName]);
   const campaignCount = profile.showcase_ads.length;
   const formatCountry = (value: string) => countryLabels[locale][value] ?? value;
   const formatIndustry = (value: string) => industryLabels[locale][value] ?? value;
@@ -620,6 +613,9 @@ export function BrandProfileEditor({ locale, profile }: BrandProfileEditorProps)
 
   useEffect(() => {
     return () => {
+      if (toastTimerRef.current) {
+        window.clearTimeout(toastTimerRef.current);
+      }
       for (const url of [assets.cover, assets.product, assets.reference]) {
         if (url?.startsWith("blob:")) URL.revokeObjectURL(url);
       }
@@ -627,8 +623,11 @@ export function BrandProfileEditor({ locale, profile }: BrandProfileEditorProps)
   }, [assets.cover, assets.product, assets.reference]);
 
   function notify(message: string, variant: Toast["variant"] = "success", detail?: string) {
+    if (toastTimerRef.current) {
+      window.clearTimeout(toastTimerRef.current);
+    }
     setToast({ message, variant, detail });
-    window.setTimeout(() => setToast(null), variant === "success" ? 4200 : 3200);
+    toastTimerRef.current = window.setTimeout(() => setToast(null), variant === "success" ? 4200 : 3200);
   }
 
   function buildFormData(markComplete: boolean) {

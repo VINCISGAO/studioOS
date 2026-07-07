@@ -85,7 +85,7 @@ export function CreatorPortalSections({
                   </p>
                 </div>
                 <Button asChild size="sm" variant="outline" className="rounded-xl">
-                  <Link href={withLocale(creatorPortalRoutes.campaignReview(campaign.id), locale)}>
+                  <Link href={withLocale(creatorPortalRoutes.campaignReview(campaign.legacyProjectId ?? campaign.id), locale)}>
                     <Clapperboard className="h-4 w-4" />
                     {t.review}
                   </Link>

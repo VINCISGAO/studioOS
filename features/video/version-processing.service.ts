@@ -114,10 +114,7 @@ export class VersionProcessingService {
       id: version.uploadedBy,
       role: "CREATOR"
     };
-    if (campaign.status === CampaignState.ESCROW_FUNDED) {
-      await campaignService.transition(campaign.id, CampaignEvent.START_PRODUCTION, campaignActor);
-      await campaignService.transition(campaign.id, CampaignEvent.VERSION_UPLOAD, campaignActor);
-    } else if (campaign.status === CampaignState.PRODUCING || campaign.status === CampaignState.UNDER_REVIEW) {
+    if (campaign.status === CampaignState.PRODUCING || campaign.status === CampaignState.UNDER_REVIEW) {
       await campaignService.transition(campaign.id, CampaignEvent.VERSION_UPLOAD, campaignActor);
     }
 

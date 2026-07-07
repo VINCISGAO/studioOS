@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import type { BrandShowcaseAd } from "@/lib/brand-profile-types";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
+import { buildAvatarInitials } from "@/lib/studioos/avatar-initials";
 import { brandTheme } from "@/lib/studioos/brand-theme";
 import { cn } from "@/lib/utils";
 import { ArrowRight, Building2, Camera, Globe, Loader2, Megaphone, UserRound } from "lucide-react";
@@ -37,7 +38,7 @@ export function BrandAvatar({
       {avatarUrl ? (
         <Image src={avatarUrl} alt="" fill className="object-cover" sizes="96px" unoptimized />
       ) : (
-        initials.slice(0, 2) || "B"
+        buildAvatarInitials(initials, "B")
       )}
     </div>
   );
@@ -83,7 +84,7 @@ export function BrandEditableAvatar({
             text
           )}
         >
-          {initials.slice(0, 2) || "B"}
+          {buildAvatarInitials(initials, "B")}
         </div>
       )}
       {editable ? (

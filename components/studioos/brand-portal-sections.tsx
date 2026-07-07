@@ -78,7 +78,7 @@ export function BrandPortalSections({
                   </p>
                 </div>
                 <Button asChild size="sm" className="rounded-xl bg-emerald-700 hover:bg-emerald-800">
-                  <Link href={withLocale(brandPortalRoutes.projectReview(item.id), locale)}>
+                  <Link href={withLocale(brandPortalRoutes.projectReview(item.legacyProjectId ?? item.id), locale)}>
                     <Clapperboard className="h-4 w-4" />
                     {t.openReview}
                   </Link>

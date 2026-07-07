@@ -16,6 +16,8 @@ alwaysApply: true
 - **事件驱动** — 副作用（邮件/通知/日志）监听 Event，不在 Action 里 inline
 - **订单生命周期不可改写** — 涉及发布、付款、匹配、邀约、选定、项目生成、审片、加购、结算时，必须严格遵守 `docs/VINCIS_ORDER_LIFECYCLE_SPEC.md`
 - **真实 AI 匹配邀约** — 真实 Campaign 的邀约必须来自 frozen production brief + 已注册创作者真实资料 + AI 学习记忆的匹配结果；禁止伪造候选人或 demo fallback
+- **AI Preference Engine 是战略引擎** — Creator 收藏必须是 `Save Creator` / AI Learning Event，不是 Like；偏好权重必须遵守 `docs/AI_PREFERENCE_ENGINE.md`，禁止在 matching 代码里硬编码权重
+- **AI Learning Foundation 只可升级不可删除** — `AiPreference`、`MemoryFact`、`RelationshipDna`、`AIEvent`、`AILearning`、`AiJob`、`features/memory/**`、`features/ai/ai-learning-*`、`features/ai-support/**`、`components/ai-copilot/**`、Creative DNA、Matching Memory、语言库、系统回复库、邮件/通知模板知识都是长期数据资产；僵尸代码清理前必须查 `docs/AI_LEARNING_FOUNDATION.md`
 
 ## 订单 / 邀约 / 项目闭环
 

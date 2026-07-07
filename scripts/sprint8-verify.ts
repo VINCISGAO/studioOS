@@ -126,6 +126,7 @@ async function main() {
     });
   } finally {
     if (campaignId) {
+      await prisma.notification.deleteMany({ where: { campaignId } });
       await prisma.orderCommission.deleteMany({ where: { campaignId } });
       await prisma.activityLog.deleteMany({ where: { campaignId } });
       await prisma.transaction.deleteMany({ where: { campaignId } });

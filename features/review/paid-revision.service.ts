@@ -16,6 +16,7 @@ import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import type { Locale } from "@/lib/i18n";
 import { getAppBaseUrl } from "@/lib/app-url";
 import { getOrder, syncOrderPaidRevisionSlots } from "@/lib/order-service";
+import { resolveLegacyProjectId } from "@/features/matching/invitation.mapper";
 
 export type ReviewRoundPolicySnapshot = {
   paidRevisionSlotsUnlocked: number;
@@ -193,6 +194,7 @@ export class PaidRevisionService {
     if (hasDatabaseUrl() && campaignId && brandUserId) {
       const campaign = await campaignRepository.findById(campaignId);
       if (campaign) {
+        const legacyProjectId = input.projectId ?? resolveLegacyProjectId(campaign);
         await notificationService.notify({
           userId: brandUserId,
           campaignId,
@@ -203,7 +205,7 @@ export class PaidRevisionService {
             input.locale === "zh"
               ? `「${campaign.title}」已解锁第 4-5 轮修订，加购金额 ${currency} ${addOnAmount.toFixed(2)}。`
               : `"${campaign.title}" now has revision rounds 4-5 unlocked. Add-on: ${currency} ${addOnAmount.toFixed(2)}.`,
-          actionUrl: `${getAppBaseUrl()}/brand/projects/${input.projectId ?? campaignId}/review`,
+          actionUrl: `${getAppBaseUrl()}/brand/projects/${legacyProjectId}/review`,
           template: "revision.additional_purchased",
           priority: "HIGH",
           metadata: {

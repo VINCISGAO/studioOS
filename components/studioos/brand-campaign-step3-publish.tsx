@@ -133,6 +133,7 @@ export function BrandCampaignStep3Publish({
     const formData = new FormData();
     formData.set("lang", locale);
     formData.set("project_id", projectId);
+    formData.set("confirmed", "1");
 
     const result = await publishBrandCampaignAction(formData);
 
@@ -143,6 +144,7 @@ export function BrandCampaignStep3Publish({
     }
 
     router.push(result.checkoutPath);
+    router.refresh();
   }
 
   return (

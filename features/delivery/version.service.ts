@@ -20,7 +20,6 @@ import {
 } from "@/lib/studioos/video-upload";
 
 const UPLOADABLE_CAMPAIGN_STATUSES = new Set<string>([
-  CampaignState.ESCROW_FUNDED,
   CampaignState.PRODUCING,
   CampaignState.UNDER_REVIEW
 ]);

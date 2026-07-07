@@ -27,7 +27,6 @@ export type ReviewPortalUiState = {
 };
 
 const UPLOADABLE_CAMPAIGN_STATUSES = new Set<string>([
-  CampaignState.ESCROW_FUNDED,
   CampaignState.PRODUCING,
   CampaignState.UNDER_REVIEW
 ]);
@@ -85,15 +84,10 @@ function deriveOrderStatusFromCampaign(input: {
   }
 
   if (
-    campaignStatus === CampaignState.ESCROW_FUNDED
-  ) {
-    return "in_production";
-  }
-
-  if (
     [
       CampaignState.CREATOR_ACCEPTED,
       CampaignState.ESCROW_PENDING,
+      CampaignState.ESCROW_FUNDED,
       CampaignState.MATCHING,
       CampaignState.INVITATION_SENT
     ].includes(campaignStatus as typeof CampaignState.CREATOR_ACCEPTED)

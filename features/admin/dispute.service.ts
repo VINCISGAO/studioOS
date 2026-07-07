@@ -9,6 +9,7 @@ import { getAppBaseUrl } from "@/lib/app-url";
 import type { DisputeStatus } from "@prisma/client";
 import { activityLogWriter } from "@/features/admin/activity-log.service";
 import { campaignRepository } from "@/features/campaign/campaign.repository";
+import { resolveLegacyProjectId } from "@/features/matching/invitation.mapper";
 
 function mapDispute(
   row: NonNullable<Awaited<ReturnType<typeof adminRepository.findDisputeById>>>
@@ -86,6 +87,7 @@ export class DisputeService {
 
     const updated = await adminRepository.findDisputeById(id);
     if (!updated) throw appError("NOT_FOUND", "Dispute not found");
+    const legacyProjectId = resolveLegacyProjectId(updated.campaign);
     const recipientIds = [updated.campaign.brandId, updated.campaign.creatorId].filter(
       (value): value is string => Boolean(value)
     );
@@ -100,7 +102,7 @@ export class DisputeService {
           content: `Platform arbitration for "${updated.campaign.title}" is now ${input.status}.`,
           actionUrl:
             userId === updated.campaign.brandId
-              ? `${getAppBaseUrl()}/brand/projects/${updated.campaignId}`
+              ? `${getAppBaseUrl()}/brand/projects/${legacyProjectId}`
               : `${getAppBaseUrl()}/studio/projects`,
           template: "arbitration.resolved",
           priority: input.status === "CLOSED" ? "HIGH" : "NORMAL",
@@ -143,6 +145,7 @@ export class DisputeService {
 
     const row = await adminRepository.findDisputeById(dispute.id);
     if (!row) throw appError("NOT_FOUND", "Dispute not found");
+    const legacyProjectId = resolveLegacyProjectId(row.campaign);
     const adminUsers = await prisma.user.findMany({
       where: { role: { in: ["ADMIN", "SUPPORT"] }, deletedAt: null },
       select: { id: true }
@@ -183,7 +186,7 @@ export class DisputeService {
           content: `A platform arbitration case has started for "${row.campaign.title}".`,
           actionUrl:
             participantId === row.campaign.brandId
-              ? `${getAppBaseUrl()}/brand/projects/${campaignId}`
+              ? `${getAppBaseUrl()}/brand/projects/${legacyProjectId}`
               : `${getAppBaseUrl()}/studio/projects`,
           template: "arbitration.started",
           priority: "URGENT",

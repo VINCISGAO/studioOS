@@ -1,6 +1,21 @@
 import type { Locale } from "@/lib/i18n";
 
-const internalAppPathPrefixes = ["/brand", "/studio", "/admin", "/login", "/auth", "/creator", "/api"];
+const internalAppPathPrefixes = [
+  "/brand",
+  "/studio",
+  "/admin",
+  "/login",
+  "/auth",
+  "/creator",
+  "/api",
+  "/orders",
+  "/proposal",
+  "/dashboard",
+  "/projects",
+  "/match",
+  "/creators",
+  "/brands"
+];
 const appHostnames = new Set(["vincis.app", "www.vincis.app", "localhost", "127.0.0.1"]);
 const fallbackOrigin = "https://vincis.app";
 

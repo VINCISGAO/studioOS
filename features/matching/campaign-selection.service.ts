@@ -30,6 +30,7 @@ import { setupBrandCheckout } from "@/lib/studioos/brand-checkout-service";
 import { notifyCreatorsInvitationExpired } from "@/lib/studioos/commercial-interaction-notify";
 import type { StoredCreatorInvitation } from "@/lib/studioos/creator-invitation-types";
 import { isInvitationRecruitmentClosed } from "@/lib/studioos/invitation-lifecycle";
+import { logger } from "@/lib/core/logger";
 
 function selectedCreatorCopy(locale: Locale, brandName: string, projectTitle: string) {
   if (locale === "zh") {
@@ -284,7 +285,15 @@ export class CampaignSelectionService {
     ) {
       await campaignService
         .transition(campaign.id, CampaignEvent.START_PRODUCTION, actor)
-        .catch(() => undefined);
+        .catch((error) => {
+          logger.warn("Campaign start production after creator selection failed", {
+            service: "CampaignSelectionService",
+            campaignId: campaign.id,
+            legacyProjectId,
+            creatorId: input.creatorId,
+            error: error instanceof Error ? error.message : String(error)
+          });
+        });
     }
 
     const invitation = mapInvitationToStored(

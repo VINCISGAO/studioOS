@@ -53,11 +53,19 @@ export class InvitationService {
     this.assertDb();
     const campaign = await campaignRepository.findById(campaignId);
     if (!campaign) throw appError("NOT_FOUND", "Campaign not found");
-    if (!PermissionService.canAccessCampaign(user, campaign) && !user.hasCreatorProfile && user.role.toUpperCase() !== "CREATOR") {
-      throw appError("FORBIDDEN", "Not allowed");
-    }
     const items = await invitationRepository.listForCampaign(campaignId);
-    return items.map(serializeInvitation);
+    if (PermissionService.canAccessCampaign(user, campaign) || user.role.toUpperCase() === "ADMIN") {
+      return items.map(serializeInvitation);
+    }
+
+    if (user.hasCreatorProfile || user.role.toUpperCase() === "CREATOR") {
+      const ownInvitations = items.filter((item) => item.creator.userId === user.id);
+      if (ownInvitations.length > 0) {
+        return ownInvitations.map(serializeInvitation);
+      }
+    }
+
+    throw appError("FORBIDDEN", "Not allowed");
   }
 
   async send(campaignId: string, user: AuthUser, creatorProfileIds: string[]) {

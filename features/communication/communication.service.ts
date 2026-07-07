@@ -11,6 +11,7 @@ import { appError } from "@/lib/core/errors";
 import { hasDatabaseUrl, prisma } from "@/lib/core/database/prisma";
 import { memoryService } from "@/features/memory/memory.service";
 import { communicationConfig, languageDisplay, normalizeLanguageCode } from "@/lib/core/config/communication";
+import { resolveLegacyProjectId } from "@/features/matching/invitation.mapper";
 
 function todosFromStrings(items: string[]): CommunicationTodo[] {
   return items.map((text) => ({ id: randomId(), text, done: false }));
@@ -151,6 +152,13 @@ export class CommunicationService {
     }
 
     if (translationFailed && message.receiverId) {
+      const campaign = message.campaignId ? await campaignRepository.findById(message.campaignId) : null;
+      const legacyProjectId = campaign ? resolveLegacyProjectId(campaign) : message.campaignId;
+      const actionUrl =
+        campaign?.brandId === message.receiverId && legacyProjectId
+          ? `/brand/projects/${legacyProjectId}/communication`
+          : "/studio/projects";
+
       await prisma.notification.create({
         data: {
           userId: message.receiverId,
@@ -159,7 +167,7 @@ export class CommunicationService {
           priority: "NORMAL",
           title: "Translation temporarily unavailable",
           content: "Showing original message while AI localization retries.",
-          actionUrl: message.campaignId ? `/brand/projects/${message.campaignId}` : undefined
+          actionUrl
         }
       });
     }

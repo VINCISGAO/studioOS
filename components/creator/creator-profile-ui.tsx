@@ -13,6 +13,7 @@ import {
 import type { CreatorWork } from "@/lib/types";
 import type { Locale } from "@/lib/i18n";
 import { labelPlatform } from "@/lib/localized-options";
+import { buildAvatarInitials } from "@/lib/studioos/avatar-initials";
 import type { WorkEngagementSnapshot } from "@/lib/work-engagement-utils";
 import { baseViewCount } from "@/lib/work-engagement-utils";
 import { cn } from "@/lib/utils";
@@ -90,7 +91,7 @@ export function CreatorAvatar({
         <Image src={avatarUrl} alt="" fill className="object-cover" sizes="112px" unoptimized />
       ) : (
         <div className={cn("flex h-full w-full items-center justify-center font-medium text-white", text)}>
-          {initials.slice(0, 2)}
+          {buildAvatarInitials(initials, "C")}
         </div>
       )}
     </div>
@@ -132,7 +133,7 @@ export function CreatorEditableAvatar({
         <Image src={avatarUrl} alt="" fill className="object-cover" sizes="112px" unoptimized />
       ) : (
         <div className={cn("flex h-full w-full items-center justify-center bg-zinc-900 font-medium text-white", text)}>
-          {initials.slice(0, 2)}
+          {buildAvatarInitials(initials, "C")}
         </div>
       )}
       {editable ? (

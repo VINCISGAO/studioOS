@@ -79,12 +79,13 @@ export function ProposalContractPanel({
   const contract = quote ? buildProjectContract(inquiry, quote, messages) : null;
 
   if (proposalLocked && order) {
+    const reviewProjectId = order.project_id ?? order.id;
     return (
       <Card className="mt-6 border-zinc-200 bg-zinc-50 shadow-none">
         <CardContent className="p-5">
           <p className="text-sm text-zinc-600">{t.locked}</p>
           <Button asChild className="mt-4 rounded-full">
-            <Link href={withLocale(`/brand/projects/${order.id}/review`, locale)}>{t.reviewCenter}</Link>
+            <Link href={withLocale(`/brand/projects/${reviewProjectId}/review`, locale)}>{t.reviewCenter}</Link>
           </Button>
         </CardContent>
       </Card>

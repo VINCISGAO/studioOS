@@ -1,5 +1,6 @@
 import type { MessageCategory, MessageDetailPayload } from "@/components/studioos/studio-message-center.types";
 import type { Locale } from "@/lib/i18n";
+import { buildAvatarInitials } from "@/lib/studioos/avatar-initials";
 import type { BrandNotificationType } from "@/lib/studioos/brand-notification-types";
 import {
   buildMessageProjectStage,
@@ -65,11 +66,7 @@ export function brandSenderDisplayName(creatorName: string, locale: Locale) {
 
 export function brandSenderInitials(name: string) {
   const cleaned = name.replace(/创作者/g, "").trim();
-  const parts = cleaned.split(/\s+/).filter(Boolean);
-  if (parts.length >= 2) {
-    return `${parts[0]?.[0] ?? ""}${parts[1]?.[0] ?? ""}`.toUpperCase();
-  }
-  return cleaned.slice(0, 2).toUpperCase() || "CR";
+  return buildAvatarInitials(cleaned, "CR");
 }
 
 export function brandSenderAvatarTone(name: string) {
