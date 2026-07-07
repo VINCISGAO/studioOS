@@ -159,6 +159,20 @@ The saved creator can rank high, but the engine should also surface creators wit
   - Price value
   - Future collaboration
 
+## AI Creative Collaboration
+
+AI creative generation is a collaboration draft tool, not an automatic pre-payment step.
+
+Rules:
+
+- AI creative ideas must be triggered by explicit Brand or Creator clicks.
+- AI creative generation must not consume tokens before escrow payment.
+- Generated ideas are reference drafts until Brand and Creator confirm a direction.
+- Brand-selected, Creator-sent, Brand-rejected, deepened, skipped, and final confirmed ideas are AI learning signals.
+- Final confirmed creative direction becomes a future Brand AI Taste and Creator Creative DNA input.
+
+Canonical spec: [`docs/AI_CREATIVE_COLLABORATION_FLOW.md`](./AI_CREATIVE_COLLABORATION_FLOW.md)
+
 ## Engineering Rules
 
 - Every learning event tied to a Campaign must include `campaign_id`.
@@ -167,6 +181,7 @@ The saved creator can rank high, but the engine should also surface creators wit
 - Actions record behavior; services resolve learning rules; repositories persist events and profiles.
 - Ranking changes must be testable and explainable.
 - Do not change order lifecycle, payment, invitation, or review state machines to implement this engine.
+- Creative collaboration AI generation must include actor, role, project, campaign, trigger source, and parent idea when derived.
 
 ## Implementation Status
 

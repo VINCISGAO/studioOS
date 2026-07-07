@@ -17,6 +17,7 @@ alwaysApply: true
 - **订单生命周期不可改写** — 涉及发布、付款、匹配、邀约、选定、项目生成、审片、加购、结算时，必须严格遵守 `docs/VINCIS_ORDER_LIFECYCLE_SPEC.md`
 - **真实 AI 匹配邀约** — 真实 Campaign 的邀约必须来自 frozen production brief + 已注册创作者真实资料 + AI 学习记忆的匹配结果；禁止伪造候选人或 demo fallback
 - **AI Preference Engine 是战略引擎** — Creator 收藏必须是 `Save Creator` / AI Learning Event，不是 Like；偏好权重必须遵守 `docs/AI_PREFERENCE_ENGINE.md`，禁止在 matching 代码里硬编码权重
+- **AI Creative Collaboration 是付款后协作草稿流** — AI 创意只能由 Brand / Creator 主动点击触发，必须遵守 `docs/AI_CREATIVE_COLLABORATION_FLOW.md`；禁止系统自动生成创意、禁止付款前消耗 token、禁止把 AI 草稿当最终稿
 - **AI Learning Foundation 只可升级不可删除** — `AiPreference`、`MemoryFact`、`RelationshipDna`、`AIEvent`、`AILearning`、`AiJob`、`features/memory/**`、`features/ai/ai-learning-*`、`features/ai-support/**`、`components/ai-copilot/**`、Creative DNA、Matching Memory、语言库、系统回复库、邮件/通知模板知识都是长期数据资产；僵尸代码清理前必须查 `docs/AI_LEARNING_FOUNDATION.md`
 
 ## 订单 / 邀约 / 项目闭环
@@ -24,7 +25,8 @@ alwaysApply: true
 - `docs/VINCIS_ORDER_LIFECYCLE_SPEC.md` 中“中文最高优先级流程”是订单生命周期唯一业务真相
 - 发布只进入托管付款；**付款成功后**才允许 AI 匹配创作者并发送邀约
 - 广告主选中 AI 创意后进入付款；付款成功后进入匹配阶段，不能直接进入制作
-- AI 生成 3 个创意、广告主选择创意、拒绝邀约、广告主不选 AI 推荐人，都必须写入 AI 学习
+- AI 创意协作是付款后、正式合作后的草稿确认流；Brand / Creator 主动点击 `AI 帮我想想` 才能生成，生成结果只是参考草稿，最终方向必须由双方确认
+- Brand 选择/深挖/发送 AI 创意、Creator 生成/发送方向、Brand 确认/拒绝/再衍生、final creative direction confirmed，都必须写入 AI 学习
 - 邀约必须是 AI / matching service 对已注册创作者的真实匹配结果；上线冷启动阶段可优先邀约测试/注册创作者，但不得伪造不存在的候选人
 - 用户和履约数据增长后，匹配必须逐步以作品、偏好、接受/拒绝历史、履约表现、评分、Relationship DNA 等数据为准
 - 创作者接受邀约只代表「有合作意向」，**绝不能**生成正式项目 / 订单 / 上传入口
@@ -67,4 +69,6 @@ alwaysApply: true
 - 未付款就创建 creator invitations
 - 未品牌最终选定就创建 creator order/project
 - 未正式达成合作就在创作者工作台展示项目表单或 V1 上传入口
+- 自动触发 AI 创意生成或在付款前消耗 AI token
+- 把 AI 创意草稿当成最终制作方向
 - 在真实 Campaign 中使用 demo fallback / placeholder shortlist 伪造邀约；测试账号必须是真实注册 creator account

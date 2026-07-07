@@ -32,19 +32,24 @@ import {
   isValidBrandAspectRatio
 } from "@/lib/studioos/brand-campaign-options";
 import { upsertBrandProfileFromBrief } from "@/lib/brand-profile-service";
-import { listOrdersForProject, updateOrderRequirements } from "@/lib/order-service";
+import { getOrderForProject, listOrdersForProject, updateOrderRequirements } from "@/lib/order-service";
+import { isOrderPaymentEscrowed } from "@/lib/order-types";
 import { buildConfirmedBriefSnapshot } from "@/lib/studioos/confirmed-brief";
 import { creativeDirectionService } from "@/features/ai/creative-direction.service";
 import { aiJobRepository } from "@/features/ai/ai-job.repository";
+import { aiLearningEventRepository } from "@/features/ai/ai-learning-event.repository";
 import type { CreativeDirection } from "@/features/ai/creative-direction.types";
 import { brandCampaignRepository } from "@/features/campaign/brand-campaign/brand-campaign.repository";
 import { mapCampaignToStoredProject } from "@/features/campaign/brand-campaign/brand-campaign.mapper";
 import type { BrandProductionBrief } from "@/features/campaign/brand-campaign/brand-campaign.types";
+import { campaignService } from "@/features/campaign/campaign.service";
+import { CampaignEvent, CampaignState } from "@/features/campaign/campaign.state-machine";
 import { campaignBridgeService } from "@/features/campaign/campaign-bridge.service";
 import { emitWizardProgress } from "@/lib/campaign/wizard-progress.service";
 import { runBrandWizardDemoPrepareInstant, runBrandWizardDemoPublish } from "@/lib/campaign/brand-wizard-demo-prepare";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
 import { preparePublishedCampaignCheckout } from "@/lib/studioos/brand-checkout-service";
+import { parseBudgetMidpoint } from "@/lib/studioos/brand-checkout-utils";
 import {
   WIZARD_EPHEMERAL_KEY,
   WIZARD_SAVED_AT_KEY
@@ -147,12 +152,111 @@ function revalidateBrandCampaign(projectId: string) {
   revalidatePath("/studio/invitations");
 }
 
+async function recordAiCreativeGenerationClick(input: {
+  campaignId: string;
+  projectId: string;
+  userId: string;
+  language: Locale;
+  source: string;
+}) {
+  await aiLearningEventRepository.append({
+    eventType: "CreativeDirectionGenerationRequested",
+    entityType: "Campaign",
+    entityId: input.campaignId,
+    payload: {
+      campaignId: input.campaignId,
+      legacy_project_id: input.projectId,
+      requested_by: input.userId,
+      language: input.language,
+      source: input.source
+    },
+    learningType: "creative_generation_click",
+    after: {
+      manual_trigger: true,
+      source: input.source
+    },
+    confidence: 0.9
+  });
+}
+
+async function assertAiTokensAllowedAfterPayment(projectId: string, lang: Locale) {
+  const order = await getOrderForProject(projectId);
+  if (!order || !isOrderPaymentEscrowed(order.payment_status)) {
+    return {
+      ok: false as const,
+      error:
+        lang === "zh"
+          ? "付款成功后才能使用 AI 生成。请先提交需求并完成托管付款。"
+          : "AI generation is available after escrow payment. Submit the brief and complete payment first."
+    };
+  }
+  return { ok: true as const };
+}
+
 async function requireBrandCampaignUser(email: string) {
   const user = await brandCampaignRepository.findBrandUserByEmail(email);
   if (!user) {
     throw new Error("Brand user not found");
   }
   return { id: user.id, role: user.role };
+}
+
+async function syncBrandCampaignBriefToPrisma(input: {
+  projectId: string;
+  title: string;
+  description: string;
+  productName: string;
+  productUrl: string;
+  category: string;
+  objective: CommercialObjective;
+  objectiveNotes: string;
+  audience: string;
+  goal: string;
+  notes: string;
+  questionnaire: BrandQuestionnaireInput;
+  budgetRange: string;
+  deadline: string;
+  platform: string;
+  aspectRatio: string;
+}) {
+  const campaign = await brandCampaignRepository.findByLegacyProjectId(input.projectId).catch(() => null);
+  if (!campaign) return;
+
+  const existingBrief = (campaign.productionBrief ?? {}) as BrandProductionBrief;
+  await brandCampaignRepository.updateCampaign(campaign.id, {
+    title: input.title,
+    description: input.description,
+    budget: parseBudgetMidpoint(input.budgetRange),
+    deadline: new Date(input.deadline),
+    platform: input.platform,
+    aspectRatio: input.aspectRatio,
+    productionBrief: {
+      ...existingBrief,
+      legacy_project_id: existingBrief.legacy_project_id ?? input.projectId,
+      product: {
+        ...(existingBrief.product ?? {}),
+        name: input.productName,
+        url: input.productUrl,
+        category: input.category
+      },
+      objective: {
+        type: input.objective,
+        notes: input.objectiveNotes
+      },
+      audience: input.audience,
+      goal: input.goal,
+      notes: input.notes,
+      questionnaire: {
+        ...input.questionnaire,
+        budgetRange: input.budgetRange,
+        aspectRatio: input.aspectRatio
+      },
+      budget: {
+        ...(existingBrief.budget ?? {}),
+        range: input.budgetRange
+      }
+    }
+  });
 }
 
 function parseObjective(raw: FormDataEntryValue | null): CommercialObjective {
@@ -193,6 +297,8 @@ export async function refineBrandBriefAction(formData: FormData) {
   const projectId = String(formData.get("project_id") ?? "");
   const ctx = await resolveBrandCampaignContext(projectId, lang);
   if (!ctx.ok) return ctx;
+  const aiGate = await assertAiTokensAllowedAfterPayment(projectId, lang);
+  if (!aiGate.ok) return aiGate;
 
   const input = readQuestionnaire(formData, lang);
   const hasText =
@@ -248,7 +354,7 @@ export async function saveBrandCampaignBriefAction(formData: FormData) {
           notes: refinedNotes || [input.productDescription, input.extraNotes, input.rawSummary].filter(Boolean).join("\n\n"),
           source: "openai" as const
         }
-      : await reorganizeBrandBriefWithAI(input, lang);
+      : templateReorganizeBrandBrief(input, lang);
 
   const category = "CPG";
   const target_platform = input.platforms.length ? input.platforms.join(", ") : "TikTok, Meta";
@@ -291,6 +397,24 @@ export async function saveBrandCampaignBriefAction(formData: FormData) {
         refined_at: new Date().toISOString()
       }
     }
+  });
+  await syncBrandCampaignBriefToPrisma({
+    projectId,
+    title: brief.title,
+    description: brief.notes,
+    productName: brief.product_name,
+    productUrl: product_url,
+    category,
+    objective: input.objective,
+    objectiveNotes: input.extraNotes ?? "",
+    audience: brief.target_audience,
+    goal: brief.campaign_goal,
+    notes: brief.notes,
+    questionnaire: input,
+    budgetRange: budget_range,
+    deadline,
+    platform: target_platform,
+    aspectRatio: aspect_ratio_raw
   });
 
   await completeWizardStep(projectId, 1);
@@ -523,6 +647,24 @@ export async function saveBrandCampaignSetupAction(formData: FormData) {
         }
       }
     });
+    await syncBrandCampaignBriefToPrisma({
+      projectId,
+      title: brief.title,
+      description: brief.notes,
+      productName: resolvedName,
+      productUrl: product_url,
+      category,
+      objective: input.objective,
+      objectiveNotes: input.extraNotes ?? "",
+      audience: brief.target_audience,
+      goal: brief.campaign_goal,
+      notes: brief.notes,
+      questionnaire: input,
+      budgetRange: budget_range,
+      deadline,
+      platform: target_platform,
+      aspectRatio: aspect_ratio
+    });
 
     await completeWizardStep(projectId, 1);
     await emitWizardProgress(projectId, {
@@ -604,7 +746,7 @@ export async function saveBrandCampaignStep1Action(formData: FormData) {
           notes: refinedNotes || [input.productDescription, input.extraNotes, input.rawSummary].filter(Boolean).join("\n\n"),
           source: "openai" as const
         }
-      : await reorganizeBrandBriefWithAI(input, lang);
+      : templateReorganizeBrandBrief(input, lang);
 
   const product_name = brief.product_name || deriveProductName(product_url, "My Product");
   const category = "CPG";
@@ -653,6 +795,24 @@ export async function saveBrandCampaignStep1Action(formData: FormData) {
       }
     }
   });
+  await syncBrandCampaignBriefToPrisma({
+    projectId,
+    title: brief.title,
+    description: brief.notes,
+    productName: product_name,
+    productUrl: product_url,
+    category,
+    objective: input.objective,
+    objectiveNotes: input.extraNotes ?? "",
+    audience: brief.target_audience,
+    goal: brief.campaign_goal,
+    notes: brief.notes,
+    questionnaire: input,
+    budgetRange: budget_range,
+    deadline,
+    platform: target_platform,
+    aspectRatio: aspect_ratio
+  });
 
   const refs = await listReferencesForProject(projectId);
 
@@ -688,6 +848,8 @@ export async function prepareBrandCampaignAction(formData: FormData) {
   const projectId = String(formData.get("project_id") ?? "");
   const ctx = await resolveBrandCampaignContext(projectId, lang);
   if (!ctx.ok) return ctx;
+  const aiGate = await assertAiTokensAllowedAfterPayment(projectId, lang);
+  if (!aiGate.ok) return aiGate;
 
   try {
     const result = await runBrandWizardDemoPrepareInstant(projectId, lang);
@@ -726,6 +888,8 @@ export async function startBrandCreativeDirectionsAction(formData: FormData) {
   const briefSnapshot = parseWizardBriefSnapshot(String(formData.get("brief_snapshot") ?? ""));
   const ctx = await resolveBrandCampaignContext(projectId, lang);
   if (!ctx.ok) return ctx;
+  const aiGate = await assertAiTokensAllowedAfterPayment(projectId, lang);
+  if (!aiGate.ok) return aiGate;
 
   const campaignId = await campaignBridgeService.resolvePrismaCampaignId(projectId);
   if (!campaignId) {
@@ -755,6 +919,13 @@ export async function startBrandCreativeDirectionsAction(formData: FormData) {
       return { ok: true as const, status: "pending" as const, jobId: activeJob.id };
     }
 
+    await recordAiCreativeGenerationClick({
+      campaignId,
+      projectId,
+      userId: user.id,
+      language: lang,
+      source: wizardFastPath ? "wizard_fast_path" : "brand_manual_click"
+    });
     const started = await creativeDirectionService.generateAsync(campaignId, user, {
       wizardFastPath,
       briefSnapshot: briefSnapshot ?? undefined,
@@ -777,6 +948,8 @@ export async function pollBrandCreativeDirectionsAction(formData: FormData) {
   const wizardFastPath = formData.get("wizard_fast_path") === "1";
   const ctx = await resolveBrandCampaignContext(projectId, lang);
   if (!ctx.ok) return ctx;
+  const aiGate = await assertAiTokensAllowedAfterPayment(projectId, lang);
+  if (!aiGate.ok) return aiGate;
 
   const campaignId = await campaignBridgeService.resolvePrismaCampaignId(projectId);
   if (!campaignId) {
@@ -819,6 +992,8 @@ export async function generateBrandCreativeDirectionsAction(formData: FormData) 
   const projectId = String(formData.get("project_id") ?? "");
   const ctx = await resolveBrandCampaignContext(projectId, lang);
   if (!ctx.ok) return ctx;
+  const aiGate = await assertAiTokensAllowedAfterPayment(projectId, lang);
+  if (!aiGate.ok) return aiGate;
 
   const campaignId = await campaignBridgeService.resolvePrismaCampaignId(projectId);
   if (!campaignId) {
@@ -830,6 +1005,13 @@ export async function generateBrandCreativeDirectionsAction(formData: FormData) 
 
   try {
     const user = await requireBrandCampaignUser(ctx.client.client_email);
+    await recordAiCreativeGenerationClick({
+      campaignId,
+      projectId,
+      userId: user.id,
+      language: lang,
+      source: "brand_manual_click_sync"
+    });
     const directions = await creativeDirectionService.generate(campaignId, user);
     await finalizeBrandCreativeDirections(projectId, lang, directions);
     return { ok: true as const, directions };
@@ -968,18 +1150,12 @@ export async function publishBrandCampaignAction(formData: FormData) {
   if (!ctx.ok) return ctx;
   const { client, project } = ctx;
 
-  const frozenBrief = project.settings_json?.frozen_production_brief as { full_text?: string } | undefined;
-  if (!frozenBrief?.full_text?.trim()) {
-    return {
-      ok: false as const,
-      error: lang === "zh" ? "请先选择创意方向并冻结 Production Brief" : "Choose a creative direction and freeze the Production Brief before publishing"
-    };
-  }
-
+  const confirmedBrief = buildConfirmedBriefSnapshot(project, lang);
   const priorSettings = project.settings_json ?? {};
   await updateProject(projectId, {
     settings_json: {
       ...priorSettings,
+      confirmed_brief: priorSettings.confirmed_brief ?? confirmedBrief,
       [WIZARD_EPHEMERAL_KEY]: false
     }
   });
@@ -999,6 +1175,20 @@ export async function publishBrandCampaignAction(formData: FormData) {
 
       await completeWizardStep(projectId, 7);
     });
+
+    const campaign = await brandCampaignRepository.findByLegacyProjectId(projectId).catch(() => null);
+    const publishableStatuses = new Set<string>([
+      CampaignState.DRAFT,
+      CampaignState.CREATIVE_READY,
+      CampaignState.CREATIVE_APPROVED
+    ]);
+    if (campaign && publishableStatuses.has(campaign.status)) {
+      const user = await requireBrandCampaignUser(client.client_email);
+      await campaignService.transition(campaign.id, CampaignEvent.PUBLISH, {
+        id: user.id,
+        role: user.role
+      });
+    }
   } catch (error) {
     const message = error instanceof Error ? error.message : lang === "zh" ? "发布失败" : "Publish failed";
     await emitWizardProgress(projectId, { phase: "idle", progressMessage: message });

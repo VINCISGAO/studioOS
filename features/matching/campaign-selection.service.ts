@@ -170,7 +170,7 @@ export class CampaignSelectionService {
       const brandUser = await userRepository.findByEmail(input.client.client_email.toLowerCase());
       await campaignService.transition(
         campaign.id,
-        CampaignEvent.CREATOR_ACCEPT,
+        CampaignEvent.BRAND_SELECT_CREATOR,
         brandUser ? { id: brandUser.id, role: brandUser.role } : undefined
       );
     }

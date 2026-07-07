@@ -27,11 +27,12 @@ export const CampaignEvent = {
   AI_SUCCESS: "AI_SUCCESS",
   AI_FAILED: "AI_FAILED",
   APPROVE_CREATIVE: "APPROVE_CREATIVE",
-  /** Legacy alias kept for callers; publish requires Creative Direction approval. */
+  /** Publishing saves requirements and opens escrow checkout; AI creative generation is optional and manual. */
   PUBLISH: "PUBLISH",
   START_MATCHING: "START_MATCHING",
   SEND_INVITATION: "SEND_INVITATION",
   CREATOR_ACCEPT: "CREATOR_ACCEPT",
+  BRAND_SELECT_CREATOR: "BRAND_SELECT_CREATOR",
   START_PAYMENT: "START_PAYMENT",
   PAYMENT_SUCCESS: "PAYMENT_SUCCESS",
   START_PRODUCTION: "START_PRODUCTION",
@@ -52,13 +53,15 @@ export const campaignStateMachine = createStateMachine<CampaignStateValue, Campa
   AI_SUCCESS: { from: [CampaignState.AI_PROCESSING], to: CampaignState.CREATIVE_READY },
   AI_FAILED: { from: [CampaignState.AI_PROCESSING], to: CampaignState.DRAFT },
   APPROVE_CREATIVE: { from: [CampaignState.CREATIVE_READY], to: CampaignState.CREATIVE_APPROVED },
-  PUBLISH: { from: [CampaignState.CREATIVE_APPROVED], to: CampaignState.ESCROW_PENDING },
+  PUBLISH: { from: [CampaignState.DRAFT, CampaignState.CREATIVE_READY, CampaignState.CREATIVE_APPROVED], to: CampaignState.ESCROW_PENDING },
   START_MATCHING: { from: [CampaignState.ESCROW_FUNDED], to: CampaignState.MATCHING },
   SEND_INVITATION: { from: [CampaignState.MATCHING], to: CampaignState.INVITATION_SENT },
+  /** Legacy alias: this state means the brand has selected a creator, not merely that a creator accepted. */
   CREATOR_ACCEPT: { from: [CampaignState.MATCHING, CampaignState.INVITATION_SENT], to: CampaignState.CREATOR_ACCEPTED },
-  START_PAYMENT: { from: [CampaignState.CREATIVE_APPROVED, CampaignState.ESCROW_PENDING], to: CampaignState.ESCROW_PENDING },
+  BRAND_SELECT_CREATOR: { from: [CampaignState.MATCHING, CampaignState.INVITATION_SENT], to: CampaignState.CREATOR_ACCEPTED },
+  START_PAYMENT: { from: [CampaignState.DRAFT, CampaignState.CREATIVE_READY, CampaignState.CREATIVE_APPROVED, CampaignState.ESCROW_PENDING], to: CampaignState.ESCROW_PENDING },
   PAYMENT_SUCCESS: { from: [CampaignState.ESCROW_PENDING], to: CampaignState.ESCROW_FUNDED },
-  START_PRODUCTION: { from: [CampaignState.ESCROW_FUNDED, CampaignState.CREATOR_ACCEPTED], to: CampaignState.PRODUCING },
+  START_PRODUCTION: { from: [CampaignState.CREATOR_ACCEPTED], to: CampaignState.PRODUCING },
   VERSION_UPLOAD: { from: [CampaignState.PRODUCING, CampaignState.UNDER_REVIEW], to: CampaignState.UNDER_REVIEW },
   /** Brand has not started annotating — creator may revert and replace the current draft. */
   REQUEST_REVISION: { from: [CampaignState.UNDER_REVIEW], to: CampaignState.PRODUCING },

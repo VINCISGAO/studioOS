@@ -31,6 +31,7 @@ import { parseBudgetMidpoint } from "@/lib/studioos/brand-checkout-utils";
 import type { InvitationDeclineFeedback } from "@/features/matching/invitation-decline-feedback";
 import { getOrderForProject } from "@/lib/order-service";
 import { isOrderPaymentEscrowed } from "@/lib/order-types";
+import { aiLearningEventRepository } from "@/features/ai/ai-learning-event.repository";
 
 export type { StoredCreatorInvitation } from "@/lib/studioos/creator-invitation-types";
 export {
@@ -419,6 +420,8 @@ export async function selectCreatorForProject(input: {
   );
   const winner = accepted.find((item) => item.creatorId === input.creatorId);
   if (!winner) return { ok: false as const, error: "creator-not-accepted" };
+  const topRecommended = [...accepted].sort((a, b) => b.matchScore - a.matchScore)[0];
+  const selectedNonRecommended = Boolean(topRecommended && topRecommended.creatorId !== input.creatorId);
 
   if (isInvitationRecruitmentClosed(store.invitations, input.projectId, project)) {
     const alreadySelected = store.invitations.find(
@@ -473,6 +476,27 @@ export async function selectCreatorForProject(input: {
     workId: null,
     client: input.client,
     locale: input.locale
+  });
+
+  await aiLearningEventRepository.append({
+    eventType: selectedNonRecommended ? "BrandSelectedNonRecommendedCreator" : "BrandSelectedCreator",
+    entityType: "Campaign",
+    entityId: project.id,
+    payload: {
+      legacy_project_id: project.id,
+      selected_legacy_creator_id: input.creatorId,
+      selected_match_score: winner.matchScore,
+      recommended_legacy_creator_id: topRecommended?.creatorId ?? input.creatorId,
+      recommended_match_score: topRecommended?.matchScore ?? winner.matchScore,
+      accepted_creator_count: accepted.length
+    },
+    learningType: "Preference",
+    after: {
+      selected_legacy_creator_id: input.creatorId,
+      selected_non_recommended: selectedNonRecommended,
+      recommended_legacy_creator_id: topRecommended?.creatorId ?? input.creatorId
+    },
+    confidence: selectedNonRecommended ? 0.85 : 0.8
   });
 
   if (expiredCreatorIds.length) {

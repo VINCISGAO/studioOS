@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, Bell, Clock, TimerOff, UserCheck, UserX } from "lucide-react";
+import { rerollCreatorInvitationsAction } from "@/app/brand-selection-actions";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
@@ -16,7 +17,8 @@ const copy = {
     declined: "Declined",
     expired: "Closed",
     viewMessages: "View notifications",
-    startSelecting: "Creators are ready — start selecting"
+    startSelecting: "Creators are ready — start selecting",
+    reroll: "Show another batch"
   },
   zh: {
     title: "意向邀请已发出",
@@ -27,18 +29,23 @@ const copy = {
     declined: "已拒绝",
     expired: "已失效",
     viewMessages: "查看通知",
-    startSelecting: "开始选择 Creator"
+    startSelecting: "开始选择 Creator",
+    reroll: "换一批 Creator"
   }
 };
 
 export function BrandInvitationStatusPanel({
   locale,
+  projectId,
   invitations,
-  notificationCount = 0
+  notificationCount = 0,
+  canReroll = false
 }: {
   locale: Locale;
+  projectId: string;
   invitations: StoredCreatorInvitation[];
   notificationCount?: number;
+  canReroll?: boolean;
 }) {
   const t = copy[locale];
   const pending = invitations.filter((item) => item.status === "pending").length;
@@ -65,6 +72,19 @@ export function BrandInvitationStatusPanel({
           <div className="mt-4 rounded-xl border border-emerald-200/80 bg-emerald-50/50 px-4 py-3">
             <p className="text-sm font-medium text-emerald-800">{t.startSelecting}</p>
           </div>
+        ) : null}
+
+        {canReroll ? (
+          <form action={rerollCreatorInvitationsAction} className="mt-4">
+            <input type="hidden" name="lang" value={locale} />
+            <input type="hidden" name="projectId" value={projectId} />
+            <button
+              type="submit"
+              className="inline-flex h-10 items-center justify-center rounded-xl border border-zinc-200 bg-white px-4 text-sm font-semibold text-zinc-800 transition hover:bg-zinc-50"
+            >
+              {t.reroll}
+            </button>
+          </form>
         ) : null}
 
         <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">

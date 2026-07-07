@@ -329,6 +329,7 @@ export class CreativeDirectionService {
     const directions = this.readDirections(campaign);
     const selected = directions.find((d) => d.id === directionId);
     if (!selected) throw appError("VALIDATION_ERROR", "Creative direction not found");
+    const rejectedDirections = directions.filter((direction) => direction.id !== directionId);
 
     const brief = {
       ...((campaign.productionBrief as Record<string, unknown> | null) ?? {}),
@@ -358,8 +359,18 @@ export class CreativeDirectionService {
       campaign,
       eventType: "CreativeDirectionSelected",
       learningType: "creative_direction_selected",
-      payload: { campaignId, directionId, title: selected.title },
-      after: { selected_direction_id: directionId, frozen_production_brief: true },
+      payload: {
+        campaignId,
+        directionId,
+        title: selected.title,
+        rejected_direction_ids: rejectedDirections.map((direction) => direction.id),
+        rejected_direction_titles: rejectedDirections.map((direction) => direction.title)
+      },
+      after: {
+        selected_direction_id: directionId,
+        rejected_direction_ids: rejectedDirections.map((direction) => direction.id),
+        frozen_production_brief: true
+      },
       memoryKey: "selected_direction",
       memoryValue: selected.title
     });

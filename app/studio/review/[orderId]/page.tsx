@@ -22,6 +22,15 @@ import {
 import { listReviewComments } from "@/lib/studioos/review-store";
 import { hasBrandNotification } from "@/lib/studioos/brand-notification-service";
 
+function hasConfirmedCreativeDirection(project: Awaited<ReturnType<typeof getProject>>): boolean {
+  if (!project) return false;
+  const settings = project.settings_json ?? {};
+  const finalCreativeDirection = settings.final_creative_direction;
+  const confirmedCreativeDirection = settings.confirmed_creative_direction;
+  const frozenProductionBrief = settings.frozen_production_brief;
+  return Boolean(finalCreativeDirection || confirmedCreativeDirection || frozenProductionBrief);
+}
+
 export default async function StudioReviewOrderPage({
   params,
   searchParams
@@ -86,21 +95,36 @@ export default async function StudioReviewOrderPage({
 
   const title =
     project?.title || project?.product_name || order.title || order.company_name || creator?.name || "Creator";
+  const creativeDirectionConfirmed = hasConfirmedCreativeDirection(project);
 
   return (
-    <ReviewerTimestampWorkspace
-      locale={locale}
-      role="creator"
-      order={effectiveOrder}
-      campaignTitle={title}
-      deliverables={workspaceDeliverables}
-      initialComments={comments}
-      initialVersion={await resolveActiveReviewPlaybackVersion(order.id, workspaceDeliverables)}
-      portalUi={portalUi}
-      backHref={withLocale(creatorPortalRoutes.reviewHub, locale)}
-      backLabel={locale === "zh" ? "返回上一步" : "Back"}
-      replaceUploadVersion={replaceUploadVersion}
-      canRevertUpload={revertGate.canRevert}
-    />
+    <div className="min-h-screen bg-[#F7F7FA]">
+      {!creativeDirectionConfirmed ? (
+        <div className="border-b border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 sm:px-6">
+          <p className="font-semibold">
+            {locale === "zh" ? "请先确认创意方向，再开始制作。" : "Confirm the creative direction before production."}
+          </p>
+          <p className="mt-1 text-amber-800">
+            {locale === "zh"
+              ? "未确认创意方向，仍可继续上传，但存在返工风险。"
+              : "No creative direction is confirmed yet. Upload is still allowed, but rework risk is higher."}
+          </p>
+        </div>
+      ) : null}
+      <ReviewerTimestampWorkspace
+        locale={locale}
+        role="creator"
+        order={effectiveOrder}
+        campaignTitle={title}
+        deliverables={workspaceDeliverables}
+        initialComments={comments}
+        initialVersion={await resolveActiveReviewPlaybackVersion(order.id, workspaceDeliverables)}
+        portalUi={portalUi}
+        backHref={withLocale(creatorPortalRoutes.reviewHub, locale)}
+        backLabel={locale === "zh" ? "返回上一步" : "Back"}
+        replaceUploadVersion={replaceUploadVersion}
+        canRevertUpload={revertGate.canRevert}
+      />
+    </div>
   );
 }

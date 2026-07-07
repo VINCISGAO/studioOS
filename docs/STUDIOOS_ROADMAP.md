@@ -51,6 +51,19 @@ Canonical spec: [`docs/AI_PREFERENCE_ENGINE.md`](./AI_PREFERENCE_ENGINE.md)
 
 Protected AI database and engine inventory: [`docs/AI_LEARNING_FOUNDATION.md`](./AI_LEARNING_FOUNDATION.md)
 
+### AI Creative Collaboration Flow
+
+AI Creative Collaboration（AI 创意协作机制）是付款后、正式合作后的 Brand-Creator 创意草稿协作流，不是自动生成创意，也不是付款前必选流程。
+
+- AI 创意必须由 Brand 或 Creator 主动点击 `AI 帮我想想` 才能生成。
+- 系统自动流程不得消耗 AI token。
+- AI 创意只是参考草稿，最终创意方向必须由 Brand 与 Creator 确认。
+- Brand 可以选择、深挖、发送 AI 创意方向给 Creator，也可以跳过。
+- Creator 可以基于 Brand 方向二创衍生，也可以主动创建方向发给 Brand 确认。
+- 最终确认的 creative direction 进入 Brand AI Taste、Creator Creative DNA 与 Campaign memory。
+
+Canonical spec: [`docs/AI_CREATIVE_COLLABORATION_FLOW.md`](./AI_CREATIVE_COLLABORATION_FLOW.md)
+
 ---
 
 ## 目录规范（Feature First）

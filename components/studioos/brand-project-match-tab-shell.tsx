@@ -34,7 +34,7 @@ export function BrandProjectMatchTabShell({
   useEffect(() => {
     if (!showPaymentSuccessMatching) return;
 
-    const hideTimer = window.setTimeout(() => setShowMatching(false), 1400);
+    const hideTimer = window.setTimeout(() => setShowMatching(false), 3000);
     const url = new URL(window.location.href);
     if (url.searchParams.get("matching") === "1") {
       url.searchParams.delete("matching");

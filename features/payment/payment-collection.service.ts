@@ -284,7 +284,7 @@ export class PaymentCollectionService {
       userId: input.brandId,
       campaignId: input.campaignId,
       title: "Payment received",
-      content: `Your payment of ${amountLabel} for "${input.campaignTitle}" is confirmed. Production can begin.`,
+      content: `Your payment of ${amountLabel} for "${input.campaignTitle}" is confirmed. AI creator matching can begin.`,
       actionUrl: `${appUrl}/brand/projects/${legacyProjectId}?tab=match`,
       template: "payment.brand_success",
       priority: "HIGH"
@@ -293,8 +293,8 @@ export class PaymentCollectionService {
     await notificationService.notify({
       userId: input.creatorId,
       campaignId: input.campaignId,
-      title: "Payment received — start production",
-      content: `"${input.campaignTitle}" is escrow-funded (${amountLabel}). You can start production now. Payable after commission: ${input.currency} ${input.commission.creatorPayoutAmount.toFixed(2)}.`,
+      title: "Escrow funded",
+      content: `"${input.campaignTitle}" is escrow-funded (${amountLabel}). The project becomes upload-ready after formal creator selection. Payable after commission: ${input.currency} ${input.commission.creatorPayoutAmount.toFixed(2)}.`,
       actionUrl: creatorActionUrl,
       template: "payment.creator_funded",
       priority: "HIGH",

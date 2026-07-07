@@ -10,6 +10,9 @@ import { getProject } from "@/lib/project-service";
 import { selectCreatorForProject } from "@/lib/studioos/creator-invitation-store";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
 import { creatorPortalRoutes } from "@/lib/studioos/creator-portal-routes";
+import { invitationPortalService } from "@/features/matching/invitation-portal.service";
+import { brandCampaignRepository } from "@/features/campaign/brand-campaign/brand-campaign.repository";
+import { aiLearningEventRepository } from "@/features/ai/ai-learning-event.repository";
 
 function revalidateClosedLoopPaths(projectId: string) {
   revalidatePath("/brand");
@@ -56,5 +59,70 @@ export async function selectCreatorFromInvitationsAction(formData: FormData) {
     redirect(withLocale(`${brandPortalRoutes.project(projectId)}?tab=match&error=${result.error}`, locale));
   }
 
-  redirect(withLocale(brandPortalRoutes.projectCheckout(projectId), locale));
+  redirect(withLocale(`${brandPortalRoutes.project(projectId)}?tab=match`, locale));
+}
+
+export async function rerollCreatorInvitationsAction(formData: FormData) {
+  const locale = (formData.get("lang") as Locale) || "en";
+  const projectId = String(formData.get("projectId") ?? "");
+
+  const cookieStore = await cookies();
+  const session = parseDemoSession(cookieStore.get(DEMO_SESSION_COOKIE)?.value);
+  if (!session || session.role !== "client") {
+    redirect(withLocale("/login?role=brand", locale));
+  }
+
+  const project = await getProject(projectId);
+  if (!project || project.client_email.toLowerCase() !== session.email.toLowerCase()) {
+    redirect(withLocale(`${brandPortalRoutes.project(projectId)}?tab=match&error=project-not-found`, locale));
+  }
+
+  const result = await invitationPortalService.rerollForProject(projectId, locale);
+  revalidateClosedLoopPaths(projectId);
+
+  if (!result.ok) {
+    const refund = result.refundAvailable ? "&refund=1" : "";
+    redirect(withLocale(`${brandPortalRoutes.project(projectId)}?tab=match&error=${result.error}${refund}`, locale));
+  }
+
+  redirect(withLocale(`${brandPortalRoutes.project(projectId)}?tab=match&reroll=${result.rerollCount}`, locale));
+}
+
+export async function trackBrandCreatorProfileViewAction(formData: FormData) {
+  const locale = (formData.get("lang") as Locale) || "en";
+  const projectId = String(formData.get("projectId") ?? "");
+  const creatorId = String(formData.get("creatorId") ?? "");
+
+  const cookieStore = await cookies();
+  const session = parseDemoSession(cookieStore.get(DEMO_SESSION_COOKIE)?.value);
+  if (!session || session.role !== "client") {
+    redirect(withLocale("/login?role=brand", locale));
+  }
+
+  const project = await getProject(projectId);
+  if (!project || project.client_email.toLowerCase() !== session.email.toLowerCase()) {
+    redirect(withLocale(`${brandPortalRoutes.project(projectId)}?tab=match&error=project-not-found`, locale));
+  }
+
+  const campaign = await brandCampaignRepository.findByLegacyProjectId(projectId).catch(() => null);
+  await aiLearningEventRepository.append({
+    eventType: "BrandViewedCreatorProfile",
+    entityType: "Campaign",
+    entityId: campaign?.id ?? projectId,
+    payload: {
+      campaignId: campaign?.id ?? null,
+      legacy_project_id: projectId,
+      legacy_creator_id: creatorId,
+      brand_email: session.email.toLowerCase(),
+      source: "accepted_creator_list"
+    },
+    learningType: "view_creator",
+    after: {
+      legacy_creator_id: creatorId,
+      viewed_creator_profile: true
+    },
+    confidence: 0.55
+  });
+
+  redirect(withLocale(`/creators/${creatorId}`, locale));
 }

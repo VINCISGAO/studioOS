@@ -242,9 +242,7 @@ export class PaymentService {
     }
 
     const afterPay = await prisma.campaign.findUniqueOrThrow({ where: { id: input.campaignId } });
-    if (afterPay.status === CampaignState.ESCROW_FUNDED && afterPay.creatorId) {
-      await campaignService.transition(input.campaignId, CampaignEvent.START_PRODUCTION, actor);
-    } else if (afterPay.status === CampaignState.ESCROW_FUNDED) {
+    if (afterPay.status === CampaignState.ESCROW_FUNDED) {
       await campaignService.transition(input.campaignId, CampaignEvent.START_MATCHING, actor);
     }
 

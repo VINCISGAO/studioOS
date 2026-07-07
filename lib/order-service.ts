@@ -26,6 +26,8 @@ import {
 } from "@/lib/studioos/project-order-sync";
 import { versionService } from "@/features/delivery/version.service";
 import { campaignRepository } from "@/features/campaign/campaign.repository";
+import { campaignService } from "@/features/campaign/campaign.service";
+import { CampaignEvent, CampaignState } from "@/features/campaign/campaign.state-machine";
 import { orderRepository } from "@/features/order/order.repository";
 import { userRepository } from "@/features/auth/user.repository";
 import { paymentRepository } from "@/features/payment/payment.repository";
@@ -41,6 +43,7 @@ import {
 } from "@/lib/studioos/review-upload-version";
 import { hasReviewVideoFileOnDisk } from "@/lib/studioos/video-upload";
 import type { BrandCampaignMemory } from "@/features/campaign/brand-campaign/brand-campaign.types";
+import { logger } from "@/lib/core/logger";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 
@@ -768,6 +771,13 @@ export async function markLegacyOrderPaidForProject(projectId: string): Promise<
     }
     currentOrder = paidOrder;
   }
+  await syncPrismaCampaignMatchingAfterLegacyPayment(projectId).catch((error) => {
+    logger.warn("Failed to sync campaign matching after legacy payment", {
+      service: "order-service",
+      projectId,
+      error: error instanceof Error ? error.message : String(error)
+    });
+  });
 
   if (currentOrder.creator_id === CAMPAIGN_PENDING_CREATOR_ID) {
     const project = await getProject(projectId);
@@ -784,6 +794,32 @@ export async function markLegacyOrderPaidForProject(projectId: string): Promise<
   }
 
   return currentOrder;
+}
+
+async function syncPrismaCampaignMatchingAfterLegacyPayment(projectId: string) {
+  if (!hasDatabaseUrl()) return;
+
+  const campaign = await campaignRepository.findByLegacyProjectId(projectId);
+  if (!campaign) return;
+
+  const actor = { id: campaign.brandId, role: "BRAND" as const };
+  if (
+    campaign.status === CampaignState.DRAFT ||
+    campaign.status === CampaignState.CREATIVE_READY ||
+    campaign.status === CampaignState.CREATIVE_APPROVED
+  ) {
+    await campaignService.transition(campaign.id, CampaignEvent.PUBLISH, actor);
+  }
+
+  const afterPublish = await campaignRepository.findById(campaign.id);
+  if (afterPublish?.status === CampaignState.ESCROW_PENDING) {
+    await campaignService.transition(campaign.id, CampaignEvent.PAYMENT_SUCCESS, actor);
+  }
+
+  const afterPayment = await campaignRepository.findById(campaign.id);
+  if (afterPayment?.status === CampaignState.ESCROW_FUNDED) {
+    await campaignService.transition(campaign.id, CampaignEvent.START_MATCHING, actor);
+  }
 }
 
 async function isDatabaseEscrowFundedForProject(projectId: string) {

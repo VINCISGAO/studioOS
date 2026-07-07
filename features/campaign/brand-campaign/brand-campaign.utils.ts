@@ -46,7 +46,7 @@ export function prismaStatusToProjectStatus(status: CampaignStatus): CampaignPro
     INVITATION_SENT: "matching",
     CREATOR_ACCEPTED: "studio_selected",
     ESCROW_PENDING: "payment_pending",
-    ESCROW_FUNDED: "production",
+    ESCROW_FUNDED: "matching",
     PRODUCING: "production",
     UNDER_REVIEW: "in_review",
     APPROVED: "in_review",

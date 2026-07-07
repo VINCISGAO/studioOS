@@ -149,7 +149,7 @@ async function onCampaignUpdated(event: DomainEvent) {
     return;
   }
 
-  if (inner === "CREATOR_ACCEPT") return onCreatorAccepted(event);
+  if (inner === "CREATOR_ACCEPT" || inner === "BRAND_SELECT_CREATOR") return onCreatorAccepted(event);
   if (inner === "START_PRODUCTION" && campaign.creatorId) {
     await notificationService.notify({
       userId: campaign.creatorId,

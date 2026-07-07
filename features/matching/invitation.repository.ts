@@ -144,6 +144,17 @@ export class InvitationRepository {
       data: { status: "EXPIRED", respondedAt: new Date() }
     });
   }
+
+  async expireOpenBatch(campaignId: string) {
+    if (!hasDatabaseUrl()) return { count: 0 };
+    return prisma.creatorInvitation.updateMany({
+      where: {
+        campaignId,
+        status: { in: ["SENT", "VIEWED"] }
+      },
+      data: { status: "EXPIRED", respondedAt: new Date() }
+    });
+  }
 }
 
 export const invitationRepository = new InvitationRepository();

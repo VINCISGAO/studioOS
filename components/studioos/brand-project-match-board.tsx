@@ -3,7 +3,10 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { ArrowRight, BadgeCheck, Check, ChevronDown, Clock, ExternalLink } from "lucide-react";
-import { selectCreatorFromInvitationsAction } from "@/app/brand-selection-actions";
+import {
+  selectCreatorFromInvitationsAction,
+  trackBrandCreatorProfileViewAction
+} from "@/app/brand-selection-actions";
 import { Button } from "@/components/ui/button";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
@@ -74,6 +77,30 @@ function SelectCreatorForm({
   );
 }
 
+function ViewCreatorProfileForm({
+  locale,
+  projectId,
+  creatorId,
+  label
+}: {
+  locale: Locale;
+  projectId: string;
+  creatorId: string;
+  label: string;
+}) {
+  return (
+    <form action={trackBrandCreatorProfileViewAction}>
+      <input type="hidden" name="lang" value={locale} />
+      <input type="hidden" name="projectId" value={projectId} />
+      <input type="hidden" name="creatorId" value={creatorId} />
+      <Button type="submit" variant="outline" size="sm" className="h-8 rounded-lg px-3 text-xs">
+        <ExternalLink className="h-3.5 w-3.5" />
+        {label}
+      </Button>
+    </form>
+  );
+}
+
 function CreatorReplyRow({
   locale,
   invitation,
@@ -136,12 +163,12 @@ function CreatorReplyRow({
               creatorId={invitation.creatorId}
               label={t.selectNow}
             />
-            <Button asChild variant="outline" size="sm" className="h-8 rounded-lg px-3 text-xs">
-              <Link href={withLocale(row.profileHref, locale)} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="h-3.5 w-3.5" />
-                {t.viewProfile}
-              </Link>
-            </Button>
+            <ViewCreatorProfileForm
+              locale={locale}
+              projectId={projectId}
+              creatorId={invitation.creatorId}
+              label={t.viewProfile}
+            />
           </div>
         ) : null}
       </div>

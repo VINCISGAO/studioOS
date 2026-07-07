@@ -55,27 +55,51 @@ function parseBudgetRange(raw?: string | null) {
 function frozenBriefForMatching(campaign: Campaign): FrozenMatchingBrief | null {
   const brief = (campaign.productionBrief ?? {}) as BrandProductionBrief;
   const frozen = brief.frozen_production_brief;
-  if (!frozen?.full_text?.trim()) {
-    return null;
+  if (frozen?.full_text?.trim()) {
+    return {
+      budget: parseBudgetRange(frozen.budget_range),
+      platform: frozen.platforms ?? "",
+      text: [
+        frozen.title,
+        frozen.core_idea,
+        frozen.hook,
+        frozen.story,
+        frozen.tone,
+        frozen.visual_style,
+        frozen.shot_list.join(" "),
+        frozen.cta,
+        frozen.recommended_creator_type,
+        frozen.expected_outcome,
+        frozen.full_text
+      ]
+        .filter(Boolean)
+        .join(" ")
+    };
   }
+
+  const fallbackText = [
+    campaign.title,
+    campaign.description,
+    brief.product?.name,
+    brief.product?.category,
+    brief.objective?.type,
+    brief.objective?.notes,
+    brief.audience,
+    brief.goal,
+    brief.notes,
+    JSON.stringify(brief.questionnaire ?? {}),
+    JSON.stringify(brief.confirmed_brief ?? {}),
+    JSON.stringify(brief.style ?? {})
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  if (!fallbackText.trim()) return null;
+
   return {
-    budget: parseBudgetRange(frozen.budget_range),
-    platform: frozen.platforms ?? "",
-    text: [
-      frozen.title,
-      frozen.core_idea,
-      frozen.hook,
-      frozen.story,
-      frozen.tone,
-      frozen.visual_style,
-      frozen.shot_list.join(" "),
-      frozen.cta,
-      frozen.recommended_creator_type,
-      frozen.expected_outcome,
-      frozen.full_text
-    ]
-      .filter(Boolean)
-      .join(" ")
+    budget: parseBudgetRange(brief.budget?.range ?? String(campaign.budget)),
+    platform: campaign.platform ?? "",
+    text: fallbackText
   };
 }
 

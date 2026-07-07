@@ -44,6 +44,14 @@ export function serializeInvitation(
   };
 }
 
+function throwPortalInvitationError(error: string): never {
+  if (error === "not-found") throw appError("NOT_FOUND", "Invitation not found");
+  if (error === "not-pending" || error === "recruitment-closed") {
+    throw appError("CAMPAIGN_LOCKED", "Invitation already responded");
+  }
+  throw appError("VALIDATION_ERROR", error);
+}
+
 export class InvitationService {
   private assertDb() {
     if (!hasDatabaseUrl()) throw appError("SYSTEM_ERROR", "DATABASE_URL not configured");
@@ -186,6 +194,15 @@ export class InvitationService {
       throw appError("CAMPAIGN_LOCKED", "Invitation already responded");
     }
 
+    const legacyCreatorId = await resolveLegacyCreatorIdForProfile(invitation.creator);
+    if (legacyCreatorId) {
+      const result = await invitationPortalService.acceptForCreator(invitationId, legacyCreatorId);
+      if (!result.ok) throwPortalInvitationError(result.error);
+      const updated = await invitationRepository.findById(invitationId);
+      if (!updated) throw appError("NOT_FOUND", "Invitation not found");
+      return serializeInvitation(updated);
+    }
+
     await invitationRepository.updateStatus(invitationId, "ACCEPTED");
     await notificationService.notify({
       userId: invitation.campaign.brandId,
@@ -218,6 +235,15 @@ export class InvitationService {
 
     if (invitation.status !== "SENT" && invitation.status !== "VIEWED") {
       throw appError("CAMPAIGN_LOCKED", "Invitation already responded");
+    }
+
+    const legacyCreatorId = await resolveLegacyCreatorIdForProfile(invitation.creator);
+    if (legacyCreatorId) {
+      const result = await invitationPortalService.declineForCreator(invitationId, legacyCreatorId, "en", feedback);
+      if (!result.ok) throwPortalInvitationError(result.error);
+      const updated = await invitationRepository.findById(invitationId);
+      if (!updated) throw appError("NOT_FOUND", "Invitation not found");
+      return serializeInvitation(updated);
     }
 
     await invitationRepository.declineWithFeedback(invitationId, feedback);

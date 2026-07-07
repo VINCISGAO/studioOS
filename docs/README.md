@@ -8,8 +8,9 @@
 2. Read [State Machines](./architecture/state-machine.md)
 3. Read [AI Preference Engine](./AI_PREFERENCE_ENGINE.md)
 4. Read [AI Learning Foundation](./AI_LEARNING_FOUNDATION.md)
-5. Read [Sprint Plan](./SPRINT_PLAN.md)
-6. Follow [Cursor Rules](./prompts/CURSOR_RULES.md) before any development
+5. Read [AI Creative Collaboration Flow](./AI_CREATIVE_COLLABORATION_FLOW.md)
+6. Read [Sprint Plan](./SPRINT_PLAN.md)
+7. Follow [Cursor Rules](./prompts/CURSOR_RULES.md) before any development
 
 ## Documentation Map
 
@@ -19,6 +20,7 @@ docs/
 ├── STUDIOOS_ROADMAP.md          ← 12-phase product roadmap
 ├── AI_PREFERENCE_ENGINE.md      ← AI learning rules + brand taste engine
 ├── AI_LEARNING_FOUNDATION.md    ← protected AI memory/database inventory
+├── AI_CREATIVE_COLLABORATION_FLOW.md ← post-payment AI creative draft collaboration rules
 ├── SPRINT_PLAN.md               ← Sprint 1–18 breakdown
 ├── architecture/
 │   ├── system-architecture.md
@@ -53,6 +55,7 @@ Only these define business rules:
 | `docs/features/**/*.md` | Feature specs |
 | `docs/AI_PREFERENCE_ENGINE.md` | AI preference learning rules |
 | `docs/AI_LEARNING_FOUNDATION.md` | Protected AI memory and learning database inventory |
+| `docs/AI_CREATIVE_COLLABORATION_FLOW.md` | Post-payment Brand-Creator AI creative collaboration and token-control rules |
 | `docs/design/DESIGN_SYSTEM.md` | UI tokens |
 
 ## Tech Stack

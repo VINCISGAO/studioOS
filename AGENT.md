@@ -63,10 +63,23 @@ Canonical docs:
 
 - `docs/AI_PREFERENCE_ENGINE.md`
 - `docs/AI_LEARNING_FOUNDATION.md`
+- `docs/AI_CREATIVE_COLLABORATION_FLOW.md`
 
 Protected assets include `AiPreference`, `MemoryFact`, `RelationshipDna`, `AIEvent`, `AILearning`, `AiJob`, `features/memory/**`, `features/ai/ai-learning-*`, `features/ai-support/**`, `components/ai-copilot/**`, `features/ai/creator-matching-memory.service.ts`, Creative DNA, matching memory/reporting utilities, language database assets, system reply knowledge, and email/notification template knowledge.
 
 Do not delete these during cleanup, dead-code audits, or refactors. They may only be upgraded, migrated, versioned, or replaced with an explicit historical-data migration plan.
+
+### Protected AI Creative Collaboration
+
+AI creative generation is a post-payment Brand-Creator collaboration draft flow.
+
+Rules:
+
+- The system must not auto-generate AI creative ideas.
+- Brand or Creator must explicitly click `AI 帮我想想`.
+- AI generation must not consume tokens before escrow payment.
+- Generated ideas are reference drafts until Brand and Creator confirm a direction.
+- Final confirmed creative direction is an AI learning and Creative DNA asset.
 
 ---
 

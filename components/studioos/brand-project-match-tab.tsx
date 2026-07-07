@@ -37,8 +37,10 @@ export function BrandProjectMatchTab({
       <div className="space-y-5">
         <BrandInvitationStatusPanel
           locale={locale}
+          projectId={projectId}
           invitations={invitations}
           notificationCount={notificationCount}
+          canReroll={!selectedCreatorId}
         />
         {accepted.length > 0 && !selectedCreatorId ? (
           <BrandMatchRecommendationPanel

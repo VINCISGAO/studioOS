@@ -115,7 +115,7 @@ export default async function BrandCheckoutPage({ params, searchParams }: Props)
     redirect(withLocale(`${brandPortalRoutes.project(id)}?tab=proposal`, locale));
   }
   const projectDetailHref = withLocale(
-    `${brandPortalRoutes.project(id)}?tab=match`,
+    `${brandPortalRoutes.project(id)}?tab=match&matching=1`,
     locale
   );
   if (!orderCancelled && paidReady) {

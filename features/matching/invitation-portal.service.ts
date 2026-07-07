@@ -28,6 +28,7 @@ import type { CreatorPortalInvitationView } from "@/features/creator/creator-por
 import type { InvitationDeclineFeedback } from "@/features/matching/invitation-decline-feedback";
 import type { StoredCreatorInvitation } from "@/lib/studioos/creator-invitation-types";
 import type { BrandCampaignMemory } from "@/features/campaign/brand-campaign/brand-campaign.types";
+import { brandCampaignRepository } from "@/features/campaign/brand-campaign/brand-campaign.repository";
 import { readCampaignMemory } from "@/features/campaign/brand-campaign/brand-campaign.utils";
 import {
   isInvitationRecruitmentClosed,
@@ -227,6 +228,194 @@ export class InvitationPortalService {
     return mapRowsForCampaign(campaign.id);
   }
 
+  async rerollForProject(
+    legacyProjectId: string,
+    locale: Locale = "en"
+  ): Promise<
+    | { ok: true; invitations: StoredCreatorInvitation[]; rerollCount: number }
+    | { ok: false; error: string; refundAvailable?: boolean; rerollCount?: number }
+  > {
+    if (!this.isEnabled()) return { ok: false, error: "not-found" };
+
+    const project = await getProject(legacyProjectId);
+    if (!project) return { ok: false, error: "project-not-found" };
+
+    const campaign = await this.requireCampaignForProject(project);
+    const memory = readCampaignMemory(campaign.campaignMemoryJson) as BrandCampaignMemory & {
+      matching?: { reroll_count?: number };
+    };
+    const rerollCount = memory.matching?.reroll_count ?? 0;
+    if (rerollCount >= 3) {
+      await aiLearningEventRepository.append({
+        eventType: "CreatorRerollLimitReached",
+        entityType: "Campaign",
+        entityId: campaign.id,
+        payload: {
+          campaignId: campaign.id,
+          legacy_project_id: legacyProjectId,
+          reroll_count: rerollCount,
+          refund_available: true
+        },
+        learningType: "matching_reroll",
+        after: { refund_available: true, reroll_count: rerollCount },
+        confidence: 0.9
+      });
+      await aiLearningEventRepository.append({
+        eventType: "BrandRefundOptionShown",
+        entityType: "Campaign",
+        entityId: campaign.id,
+        payload: {
+          campaignId: campaign.id,
+          legacy_project_id: legacyProjectId,
+          reason: "reroll_limit",
+          reroll_count: rerollCount
+        },
+        learningType: "matching_refund_option",
+        after: {
+          refund_available: true,
+          reason: "reroll_limit"
+        },
+        confidence: 0.85
+      });
+      return { ok: false, error: "reroll-limit", refundAvailable: true, rerollCount };
+    }
+
+    const escrowOrder = await getOrderForProject(project.id);
+    if (!escrowOrder || !isOrderPaymentEscrowed(escrowOrder.payment_status)) {
+      return { ok: false, error: "payment-required" };
+    }
+
+    const existingRows = await invitationRepository.listForCampaign(campaign.id);
+    const previouslyInvitedProfileIds = new Set(existingRows.map((row) => row.creatorId));
+    await invitationRepository.expireOpenBatch(campaign.id);
+
+    const enrichedCreators = await listCreatorsForMatching();
+    const allWorks = (
+      await Promise.all(enrichedCreators.map((creator) => getWorksForCreator(creator.id)))
+    ).flat();
+    const creatorLearningMemory = await buildCreatorLearningMemoryMap(enrichedCreators.map((creator) => creator.id));
+    const matches = matchCreatorsForProject(project, enrichedCreators, allWorks, {
+      creatorLearningMemory,
+      includeColdStartRegisteredCreators: true
+    });
+
+    const brandName = project.company_name || project.client_name || "Brand";
+    const projectTitle = project.title || project.product_name || brandName;
+    const requirementsText = getConfirmedBriefText(project, locale);
+    let createdCount = 0;
+
+    for (const match of matches) {
+      if (createdCount >= MAX_CAMPAIGN_INVITATIONS) break;
+      const creatorProfileId = await resolveCreatorProfileIdForLegacyId(match.creator_id);
+      if (!creatorProfileId || previouslyInvitedProfileIds.has(creatorProfileId)) continue;
+
+      const created = await invitationRepository.create({
+        campaignId: campaign.id,
+        creatorProfileId,
+        matchScore: match.score
+      });
+      createdCount += 1;
+
+      await activityService.write(
+        campaign.id,
+        "invitation.rerolled",
+        { userId: campaign.brandId, email: project.client_email, role: "brand" },
+        {
+          legacy_project_id: project.id,
+          reroll_count: rerollCount + 1,
+          creator_profile_id: creatorProfileId,
+          legacy_creator_id: match.creator_id
+        }
+      );
+
+      const copy = invitationMatchCopy(locale, brandName, projectTitle);
+      await notificationService.notify({
+        userId: created.creator.userId,
+        campaignId: campaign.id,
+        title: copy.title,
+        content: copy.body,
+        actionUrl: "/studio/invitations",
+        email: false
+      }).catch(() => undefined);
+
+      const existingCreatorNotification = await findNotificationByProject(
+        match.creator_id,
+        project.id,
+        "invitation_match"
+      );
+      if (!existingCreatorNotification) {
+        await createCreatorNotification({
+          creator_id: match.creator_id,
+          type: "invitation_match",
+          title: copy.title,
+          body: copy.body,
+          project_id: project.id,
+          order_id: null,
+          client_name: brandName,
+          company_name: brandName,
+          requirements_text: requirementsText
+        }).catch(() => undefined);
+      }
+    }
+
+    const nextRerollCount = rerollCount + 1;
+    await brandCampaignRepository.updateCampaign(campaign.id, {
+      campaignMemoryJson: {
+        ...memory,
+        matching: {
+          ...(memory.matching ?? {}),
+          reroll_count: nextRerollCount,
+          last_reroll_at: new Date().toISOString()
+        }
+      } as BrandCampaignMemory
+    });
+    await aiLearningEventRepository.append({
+      eventType: "BrandRequestedCreatorReroll",
+      entityType: "Campaign",
+      entityId: campaign.id,
+      payload: {
+        campaignId: campaign.id,
+        legacy_project_id: legacyProjectId,
+        reroll_count: nextRerollCount,
+        created_count: createdCount
+      },
+      learningType: "matching_reroll",
+      after: {
+        reroll_count: nextRerollCount,
+        created_count: createdCount,
+        refund_available: nextRerollCount >= 3 && createdCount === 0
+      },
+      confidence: 0.85
+    });
+
+    if (createdCount === 0 && nextRerollCount >= 3) {
+      await aiLearningEventRepository.append({
+        eventType: "BrandRefundOptionShown",
+        entityType: "Campaign",
+        entityId: campaign.id,
+        payload: {
+          campaignId: campaign.id,
+          legacy_project_id: legacyProjectId,
+          reason: "no_more_creators",
+          reroll_count: nextRerollCount
+        },
+        learningType: "matching_refund_option",
+        after: {
+          refund_available: true,
+          reason: "no_more_creators"
+        },
+        confidence: 0.85
+      });
+      return { ok: false, error: "no-more-creators", refundAvailable: true, rerollCount: nextRerollCount };
+    }
+
+    return {
+      ok: true,
+      invitations: await mapRowsForCampaign(campaign.id),
+      rerollCount: nextRerollCount
+    };
+  }
+
   async listForProject(legacyProjectId: string): Promise<StoredCreatorInvitation[]> {
     if (!this.isEnabled()) return [];
     const campaign = await campaignRepository.findByLegacyProjectId(legacyProjectId);
@@ -290,6 +479,28 @@ export class InvitationPortalService {
     }
 
     await invitationRepository.updateStatus(invitationId, "ACCEPTED");
+    await aiLearningEventRepository.append({
+      eventType: "CreatorAccepted",
+      entityType: "CreatorInvitation",
+      entityId: invitationId,
+      payload: {
+        legacy_project_id: legacyProjectId,
+        campaignId: row.campaignId,
+        legacy_creator_id: legacyCreatorId,
+        creatorProfileId,
+        creatorUserId: row.creator.userId,
+        matchScore: Number(row.matchScore)
+      },
+      learningType: "Preference",
+      after: {
+        legacy_creator_id: legacyCreatorId,
+        creatorProfileId,
+        campaignId: row.campaignId,
+        accepted: true,
+        project_created: false
+      },
+      confidence: 0.8
+    });
 
     if (row.campaign.status === "MATCHING") {
       await campaignService.transition(row.campaignId, CampaignEvent.SEND_INVITATION, {
