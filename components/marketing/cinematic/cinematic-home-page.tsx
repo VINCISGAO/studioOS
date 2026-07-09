@@ -10,9 +10,8 @@ import { LandingCostComparison } from "@/components/marketing/landing/landing-co
 import { LandingRecentWork } from "@/components/marketing/landing/landing-recent-work";
 import { LandingCta, LandingHowItWorks } from "@/components/marketing/landing/landing-sections";
 import { MarketingFooter } from "@/components/marketing/marketing-footer";
+import type { MarketingShowcaseWorkDto } from "@/features/marketing-showcase/marketing-showcase.types";
 import type { Locale, MarketingLocale } from "@/lib/i18n";
-import type { CreatorWork } from "@/lib/types";
-import type { WorkEngagementSnapshot } from "@/lib/work-engagement-utils";
 
 export function CinematicHomePage({
   locale,
@@ -21,7 +20,6 @@ export function CinematicHomePage({
   portalLabel,
   heroVideoSrc,
   featuredWorks,
-  engagement,
   isLoggedIn = false
 }: {
   locale: Locale;
@@ -29,8 +27,7 @@ export function CinematicHomePage({
   portalHref: string;
   portalLabel: string;
   heroVideoSrc: string;
-  featuredWorks: CreatorWork[];
-  engagement: Record<string, WorkEngagementSnapshot>;
+  featuredWorks: MarketingShowcaseWorkDto[];
   isLoggedIn?: boolean;
 }) {
   return (
@@ -49,7 +46,7 @@ export function CinematicHomePage({
         </HomePageScreen>
 
         <HomePageScreen id="work" className="justify-start bg-[#f6f5f1] py-0">
-          <LandingRecentWork locale={locale} copyLocale={copyLocale} works={featuredWorks} engagement={engagement} isLoggedIn={isLoggedIn} />
+          <LandingRecentWork locale={locale} copyLocale={copyLocale} works={featuredWorks} />
         </HomePageScreen>
 
         <HomePageScreen id="how-it-works" className="py-0">

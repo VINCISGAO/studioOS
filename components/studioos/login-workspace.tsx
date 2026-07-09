@@ -2,7 +2,6 @@
 
 import { Fragment, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { loginEmailContinueAction, loginEmailStartAction } from "@/app/actions";
 import { AlertCircle, ArrowRight, Check, Mail, RefreshCw, Rocket, ShieldCheck, Sparkles, Users } from "lucide-react";
 import { LoginSubmitSpinner } from "@/components/studioos/login-demo-accounts";
 import { useLoginEmailResend } from "@/components/studioos/use-login-email-resend";
@@ -65,6 +64,43 @@ export function LoginWorkspace({
   );
   const iconClass = darkPanel ? "text-zinc-500" : "text-zinc-400";
 
+  async function startEmailVerification(emailValue: string) {
+    const response = await fetch("/api/auth/email/start", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({ email: emailValue, lang: locale })
+    });
+    return response.json().catch(() => null) as Promise<
+      | { ok: true; message?: string }
+      | { ok: false; error?: string }
+      | null
+    >;
+  }
+
+  async function continueEmailVerification(input: {
+    emailValue: string;
+    codeValue: string;
+  }) {
+    const response = await fetch("/api/auth/continue", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({
+        email: input.emailValue,
+        code: input.codeValue,
+        role,
+        lang: locale,
+        next: nextPath || undefined
+      })
+    });
+    return response.json().catch(() => null) as Promise<
+      | { ok: true; redirectTo: string }
+      | { ok: false; error?: string }
+      | null
+    >;
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSubmitting(true);
@@ -73,10 +109,7 @@ export function LoginWorkspace({
 
     try {
       if (step === "email") {
-        const formData = new FormData();
-        formData.set("email", email);
-        formData.set("lang", locale);
-        const data = await loginEmailStartAction(formData);
+        const data = await startEmailVerification(email);
         if (!data?.ok) {
           setSentHint(undefined);
           setFormError(
@@ -95,15 +128,15 @@ export function LoginWorkspace({
       }
 
       if (step === "code") {
-        const formData = new FormData();
-        formData.set("email", email);
-        formData.set("code", code);
-        formData.set("lang", locale);
-        formData.set("role", role);
-        if (nextPath) formData.set("next", nextPath);
-        const data = await loginEmailContinueAction(formData);
+        const data = await continueEmailVerification({ emailValue: email, codeValue: code });
         if (!data?.ok || !("redirectTo" in data) || !data.redirectTo) {
-          setFormError(data?.error ?? (locale === "zh" ? "验证码不正确或已过期。" : "Invalid or expired code."));
+          const failureMessage =
+            data && !data.ok && data.error
+              ? data.error
+              : locale === "zh"
+                ? "验证码不正确或已过期。"
+                : "Invalid or expired code.";
+          setFormError(failureMessage);
           return;
         }
         window.location.assign(data.redirectTo);

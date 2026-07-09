@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { loginEmailStartAction } from "@/app/actions";
 import type { Locale } from "@/lib/i18n";
 
 const RESEND_COOLDOWN_MS = 60_000;
@@ -52,10 +51,16 @@ export function useLoginEmailResend(locale: Locale) {
 
       setResending(true);
       try {
-        const formData = new FormData();
-        formData.set("email", email);
-        formData.set("lang", locale);
-        const data = await loginEmailStartAction(formData);
+        const response = await fetch("/api/auth/email/start", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "same-origin",
+          body: JSON.stringify({ email, lang: locale })
+        });
+        const data = (await response.json().catch(() => null)) as
+          | { ok: true; message?: string }
+          | { ok: false; error?: string }
+          | null;
         if (!data?.ok) {
           return {
             ok: false,

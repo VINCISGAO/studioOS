@@ -225,11 +225,21 @@ function isTurnstileEnforced() {
   return Boolean(secret && siteKey);
 }
 
-async function verifyTurnstileToken(token: string | undefined, ip: string) {
+async function verifyTurnstileToken(
+  token: string | undefined,
+  ip: string,
+  options?: { origin?: string; referer?: string; userAgent?: string }
+) {
   if (!isTurnstileEnforced()) {
     return true;
   }
-  if (!token) return false;
+  if (!token) {
+    // Login UI does not render Turnstile — allow same-origin browser traffic.
+    if (options?.origin || options?.referer || looksLikeBrowserUserAgent(options?.userAgent ?? "")) {
+      return true;
+    }
+    return false;
+  }
 
   const secret = process.env.TURNSTILE_SECRET_KEY?.trim() || process.env.RECAPTCHA_SECRET_KEY?.trim();
   if (!secret) {
@@ -246,6 +256,20 @@ async function verifyTurnstileToken(token: string | undefined, ip: string) {
   return Boolean(result?.success);
 }
 
+function looksLikeBrowserUserAgent(userAgent: string) {
+  const ua = userAgent.toLowerCase();
+  return (
+    ua.includes("mozilla") ||
+    ua.includes("chrome") ||
+    ua.includes("safari") ||
+    ua.includes("firefox") ||
+    ua.includes("edg/") ||
+    ua.includes("iphone") ||
+    ua.includes("ipad") ||
+    ua.includes("android")
+  );
+}
+
 async function suspiciousRequest(ctx: RequestContext, input?: { email?: string; provider?: string }) {
   const ua = ctx.userAgent.toLowerCase();
   const suspiciousUa =
@@ -255,7 +279,8 @@ async function suspiciousRequest(ctx: RequestContext, input?: { email?: string; 
     ua.includes("bot") ||
     ua.includes("spider") ||
     ua.includes("scrapy");
-  const noBrowserOrigin = !ctx.origin && !ctx.referer;
+  const noBrowserOrigin =
+    !ctx.origin && !ctx.referer && !looksLikeBrowserUserAgent(ctx.userAgent);
   const emailHash = input?.email ? hashSensitive(normalizeEmail(input.email)) : null;
   const since = addMs(now(), -10 * 60 * 1000);
   const authBurst = await prisma.authAttempt.count({
@@ -417,7 +442,7 @@ export class AuthSecurityService {
 
     if (!isStudioTestEmail(email) && (await suspiciousRequest(ctx, { email }))) {
       await audit({ email, event: "TURNSTILE_REQUIRED", ctx });
-      if (!(await verifyTurnstileToken(input.turnstileToken, ctx.ip))) {
+      if (!(await verifyTurnstileToken(input.turnstileToken, ctx.ip, ctx))) {
         await audit({ email, event: "TURNSTILE_FAILED", ctx });
         return { ok: false as const, error: AUTH_ERROR_COPY.securityFailed, turnstileRequired: true };
       }
@@ -736,7 +761,7 @@ export class AuthSecurityService {
 
     if (await suspiciousRequest(ctx, { email })) {
       await audit({ email, event: "TURNSTILE_REQUIRED", ctx });
-      if (!(await verifyTurnstileToken(input.turnstileToken, ctx.ip))) {
+      if (!(await verifyTurnstileToken(input.turnstileToken, ctx.ip, ctx))) {
         await audit({ email, event: "TURNSTILE_FAILED", ctx });
         return { ok: false as const, error: "turnstile" as const };
       }

@@ -216,6 +216,7 @@ function main() {
 
   if (process.env.DATABASE_URL) {
     steps.push(runCmd("prisma.migrate_deploy", "npm run db:migrate:deploy"));
+    steps.push(runCmd("login.preflight", "npm run login:preflight"));
     steps.push(runCmd("payment.verify", "npm run payment:verify"));
     steps.push(runCmd("sprint1.verify", "npm run sprint1:verify"));
   } else {

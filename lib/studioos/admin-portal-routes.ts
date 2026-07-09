@@ -30,5 +30,6 @@ export const adminPortalRoutes = {
   monitoring: "/admin/monitoring",
   certification: "/admin/certification",
   partners: "/admin/partners",
-  academy: "/admin/academy"
+  academy: "/admin/academy",
+  showcase: "/admin/showcase"
 } as const;

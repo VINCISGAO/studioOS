@@ -1,7 +1,6 @@
 import { CinematicHomePage } from "@/components/marketing/cinematic/cinematic-home-page";
+import type { MarketingShowcaseWorkDto } from "@/features/marketing-showcase/marketing-showcase.types";
 import type { Locale, MarketingLocale } from "@/lib/i18n";
-import type { CreatorWork } from "@/lib/types";
-import type { WorkEngagementSnapshot } from "@/lib/work-engagement-utils";
 
 /** Cinematic marketing homepage — login lives at /login only. */
 export function HomeLandingPage({
@@ -11,17 +10,15 @@ export function HomeLandingPage({
   portalLabel,
   heroVideoSrc,
   featuredWorks,
-  engagement,
-  isLoggedIn
+  isLoggedIn = false
 }: {
   locale: Locale;
   copyLocale?: Locale | MarketingLocale;
   portalHref: string;
   portalLabel: string;
   heroVideoSrc: string;
-  featuredWorks: CreatorWork[];
-  engagement: Record<string, WorkEngagementSnapshot>;
-  isLoggedIn: boolean;
+  featuredWorks: MarketingShowcaseWorkDto[];
+  isLoggedIn?: boolean;
 }) {
   return (
     <CinematicHomePage
@@ -31,7 +28,6 @@ export function HomeLandingPage({
       portalLabel={portalLabel}
       heroVideoSrc={heroVideoSrc}
       featuredWorks={featuredWorks}
-      engagement={engagement}
       isLoggedIn={isLoggedIn}
     />
   );

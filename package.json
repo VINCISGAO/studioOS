@@ -88,6 +88,7 @@
     "happy-path:verify": "STUDIOOS_SCRIPT_RUNTIME=verify node --require ./scripts/helpers/register-verify-runtime.cjs --import tsx scripts/happy-path-transaction-verify.ts",
     "revision-five-round:verify": "STUDIOOS_SCRIPT_RUNTIME=verify node --require ./scripts/helpers/register-verify-runtime.cjs --import tsx scripts/revision-five-round-verify.ts",
     "alipay:verify": "node --require ./scripts/helpers/register-verify-runtime.cjs --import tsx scripts/alipay-oauth-verify.ts",
+    "login:preflight": "node --require ./scripts/helpers/register-verify-runtime.cjs --import tsx scripts/login-preflight-verify.ts",
     "membership-ui:verify": "node --import tsx scripts/membership-ui-verify.ts",
     "membership:verify": "node --import tsx scripts/membership-verify.ts",
     "membership:expire": "node --import tsx scripts/membership-expiration.ts",

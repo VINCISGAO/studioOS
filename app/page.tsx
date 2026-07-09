@@ -1,5 +1,5 @@
 import { HomeLandingPage } from "@/components/marketing/landing/home-landing-page";
-import { creatorWorks } from "@/lib/data";
+import { loadHomeShowcaseWorks } from "@/lib/marketing/home-showcase-works";
 import { getLanguageCode, getLocale, type SearchParams } from "@/lib/i18n";
 import { resolveHomeHeroVideoPlaybackSrc } from "@/lib/marketing/home-hero-video-sources";
 import {
@@ -7,7 +7,6 @@ import {
   resolveMarketingPortalLabel
 } from "@/lib/marketing/portal-entry";
 import { getCurrentSession } from "@/lib/session-user";
-import { baseViewCount } from "@/lib/work-engagement-utils";
 
 type HomePageProps = {
   searchParams: Promise<SearchParams>;
@@ -22,13 +21,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const portalLabel = resolveMarketingPortalLabel(copyLocale, session);
   const heroVideoSrc = resolveHomeHeroVideoPlaybackSrc(copyLocale);
 
-  const featuredWorks = creatorWorks.filter((work) => !work.hidden).slice(0, 8);
-  const engagement = Object.fromEntries(
-    featuredWorks.map((work) => [
-      work.id,
-      { likeCount: 0, likedByMe: false, views: baseViewCount(work.id) }
-    ])
-  );
+  const featuredWorks = await loadHomeShowcaseWorks();
 
   return (
     <HomeLandingPage
@@ -38,7 +31,6 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       portalLabel={portalLabel}
       heroVideoSrc={heroVideoSrc}
       featuredWorks={featuredWorks}
-      engagement={engagement}
       isLoggedIn={Boolean(session)}
     />
   );

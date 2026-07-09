@@ -18,7 +18,11 @@ const PASSTHROUGH_HEADERS = [
   "last-modified"
 ] as const;
 
-const ALLOWED_PREFIXES = ["/videos/home/hero/", "/videos/home/recent-work/"] as const;
+const ALLOWED_PREFIXES = [
+  "/videos/home/hero/",
+  "/videos/home/recent-work/",
+  "/videos/marketing/showcase/"
+] as const;
 
 const DEFAULT_MARKETING_CDN = "https://pub-f68761fae15346faa85da45b7929e5bb.r2.dev";
 

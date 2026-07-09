@@ -29,20 +29,34 @@ export async function POST(request: Request) {
   const locale = parseLocale(body?.lang);
 
   if (body?.code) {
-    const result = await authSecurityService.loginWithEmailCode({
-      request,
-      email,
-      code: body.code,
-      role: parseRole(body?.role),
-      locale,
-      nextPath: typeof body?.next === "string" ? body.next : "",
-      turnstileToken: body.turnstileToken
-    });
-    const response = NextResponse.json(result, { status: result.ok ? 200 : 400 });
-    if (result.ok && "session" in result && result.session) {
-      attachDemoSessionCookie(response, result.session);
+    try {
+      const result = await authSecurityService.loginWithEmailCode({
+        request,
+        email,
+        code: body.code,
+        role: parseRole(body?.role),
+        locale,
+        nextPath: typeof body?.next === "string" ? body.next : "",
+        turnstileToken: body.turnstileToken
+      });
+      const response = NextResponse.json(result, { status: result.ok ? 200 : 400 });
+      if (result.ok && "session" in result && result.session) {
+        attachDemoSessionCookie(response, result.session);
+      }
+      return response;
+    } catch (error) {
+      const prismaCode =
+        error && typeof error === "object" && "code" in error ? String((error as { code: string }).code) : "";
+      const message =
+        prismaCode === "P2021"
+          ? locale === "zh"
+            ? "认证数据表尚未创建，请在项目目录运行：npm run db:migrate:deploy"
+            : "Auth database tables are missing. Run: npm run db:migrate:deploy"
+          : locale === "zh"
+            ? "认证服务暂不可用，请稍后再试。"
+            : "Authentication service unavailable.";
+      return NextResponse.json({ ok: false, error: message }, { status: 503 });
     }
-    return response;
   }
 
   return NextResponse.json({ ok: false, error: AUTH_ERROR_COPY.securityFailed }, { status: 400 });

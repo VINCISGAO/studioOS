@@ -73,7 +73,8 @@ export type AdminNavKey =
   | "certification"
   | "partners"
   | "academy"
-  | "support";
+  | "support"
+  | "showcase";
 
 export const adminNavLabels: Record<AdminNavKey, Record<Locale, string>> = {
   dashboard: { en: "Overview", zh: "总览" },
@@ -100,7 +101,8 @@ export const adminNavLabels: Record<AdminNavKey, Record<Locale, string>> = {
   certification: { en: "Certification", zh: "认证" },
   partners: { en: "Partners", zh: "合作伙伴" },
   academy: { en: "Academy", zh: "学院" },
-  support: { en: "Support", zh: "支持" }
+  support: { en: "Support", zh: "支持" },
+  showcase: { en: "Showcase", zh: "精选作品" }
 };
 
 export const adminActivityLabels: Record<string, Record<Locale, string>> = {

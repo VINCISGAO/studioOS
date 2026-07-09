@@ -541,6 +541,32 @@ model CreatorPortfolioWork {
   @@map("creator_portfolio_works")
 }
 
+model MarketingShowcaseWork {
+  id                 String    @id @default(uuid())
+  title              String
+  description        String?
+  category           String?
+  platform           String?
+  format             String?
+  thumbnailUrl       String?   @map("thumbnail_url")
+  thumbnailKey       String?   @map("thumbnail_key")
+  videoUrl           String?   @map("video_url")
+  videoKey           String?   @map("video_key")
+  tagsJson           Json?     @map("tags_json")
+  isPublished        Boolean   @default(true) @map("is_published")
+  featuredOnHomepage Boolean   @default(false) @map("featured_on_homepage")
+  homepageSortOrder  Int       @default(0) @map("homepage_sort_order")
+  sortOrder          Int       @default(0) @map("sort_order")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+  deletedAt          DateTime? @map("deleted_at")
+
+  @@index([isPublished, featuredOnHomepage, homepageSortOrder])
+  @@index([category])
+  @@index([deletedAt])
+  @@map("marketing_showcase_works")
+}
+
 model CreatorAiConfig {
   id                 String         @id @default(uuid())
   creatorId          String         @unique @map("creator_id")

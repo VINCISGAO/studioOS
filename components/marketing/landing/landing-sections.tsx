@@ -10,7 +10,6 @@ import {
 import {
   MarketingEyebrowPill,
   LandingGhostButton,
-  LandingHeadline,
   LandingPrimaryButton,
   LandingShell
 } from "@/components/marketing/landing/landing-ui";
@@ -35,9 +34,9 @@ export function LandingHowItWorks({
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <RevealSection className="mx-auto max-w-3xl text-center">
           <MarketingEyebrowPill tone="dark">{t.eyebrow}</MarketingEyebrowPill>
-          <LandingHeadline className="mx-auto mt-4 max-w-4xl text-[1.35rem] leading-[1.08] sm:text-[2.15rem] lg:text-[2.65rem]">
+          <h2 className="mx-auto mt-4 max-w-4xl text-3xl font-semibold tracking-[-0.03em] text-white sm:text-4xl">
             {t.title}
-          </LandingHeadline>
+          </h2>
         </RevealSection>
 
         <RevealSection className="mt-6 grid gap-4 sm:mt-10 sm:grid-cols-2 lg:grid-cols-4">

@@ -193,20 +193,34 @@ export async function loginEmailContinueAction(formData: FormData) {
   const nextPath = String(formData.get("next") ?? "").trim();
   const request = await adminRequestFromHeaders("/login");
 
-  const result = await authSecurityService.loginWithEmailCode({
-    request,
-    email,
-    code,
-    role,
-    locale: lang,
-    nextPath
-  });
+  try {
+    const result = await authSecurityService.loginWithEmailCode({
+      request,
+      email,
+      code,
+      role,
+      locale: lang,
+      nextPath
+    });
 
-  if (result.ok && "session" in result && result.session) {
-    await setDemoSession(result.session);
+    if (result.ok && "session" in result && result.session) {
+      await setDemoSession(result.session);
+    }
+
+    return result;
+  } catch (error) {
+    const prismaCode =
+      error && typeof error === "object" && "code" in error ? String((error as { code: string }).code) : "";
+    const message =
+      prismaCode === "P2021"
+        ? lang === "zh"
+          ? "认证数据表尚未创建，请在项目目录运行：npm run db:migrate:deploy"
+          : "Auth database tables are missing. Run: npm run db:migrate:deploy"
+        : lang === "zh"
+          ? "认证服务暂不可用，请稍后再试。"
+          : "Authentication service unavailable.";
+    return { ok: false as const, error: message };
   }
-
-  return result;
 }
 
 export async function demoSocialSignInAction(formData: FormData) {

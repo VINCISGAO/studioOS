@@ -77,6 +77,7 @@ export function GoogleOneTap({
             const response = await fetch("/api/auth/google-one-tap", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
+              credentials: "same-origin",
               body: JSON.stringify({
                 credential,
                 role,
