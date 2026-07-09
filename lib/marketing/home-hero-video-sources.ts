@@ -25,7 +25,7 @@ export function marketingCdnBaseUrl(): string | null {
 }
 
 /**
- * Same-origin hero video path — production proxies `/videos/home/hero/*` to R2 via `vercel.json`.
+ * Same-origin hero video path — production proxies `/videos/home/*` to R2 via `app/videos/[...path]/route.ts`.
  * Avoid direct r2.dev URLs in `<video src>` (Safari logs `TypeError: Load failed` on cross-origin media).
  */
 export function resolveHomeHeroVideoPlaybackSrc(locale: MarketingLocale): string {

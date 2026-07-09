@@ -40,21 +40,6 @@ const nextConfig: NextConfig = {
       }
     ]
   },
-  async rewrites() {
-    const marketingCdn = (
-      process.env.MARKETING_CDN_UPSTREAM ?? "https://pub-f68761fae15346faa85da45b7929e5bb.r2.dev"
-    ).replace(/\/+$/u, "");
-    return [
-      {
-        source: "/videos/home/hero/:path*",
-        destination: `${marketingCdn}/videos/home/hero/:path*`
-      },
-      {
-        source: "/videos/home/recent-work/:path*",
-        destination: `${marketingCdn}/videos/home/recent-work/:path*`
-      }
-    ];
-  },
   async headers() {
     return [
       {
