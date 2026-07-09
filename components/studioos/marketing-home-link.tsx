@@ -15,7 +15,7 @@ export function MarketingHomeLink({
   children: React.ReactNode;
 }) {
   return (
-    <Link href={withLocale("/", locale)} className={cn(className)}>
+    <Link href={withLocale("/", locale)} prefetch={false} className={cn(className)}>
       {children}
     </Link>
   );

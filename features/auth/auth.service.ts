@@ -1,4 +1,3 @@
-import { DEMO_USERS, findDemoUser, type DemoUser } from "@/lib/demo-auth";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { hashPassword, verifyPassword } from "@/lib/core/password-crypto";
 import { readRequestMeta } from "@/lib/core/request-meta";
@@ -29,12 +28,6 @@ function mapPrismaUser(user: UserWithProfiles): AuthUserDto {
     hasBrandProfile: user.role === "BRAND" || Boolean(user.brandProfile),
     hasCreatorProfile: user.role === "CREATOR" || Boolean(user.creatorProfile)
   };
-}
-
-function demoRoleToPrisma(role: DemoUser["role"]): UserRole {
-  if (role === "admin") return "ADMIN";
-  if (role === "creator") return "CREATOR";
-  return "BRAND";
 }
 
 const weakPasswords = new Set(["12345678", "123456789", "password", "password1", "qwerty123"]);
@@ -129,96 +122,28 @@ export class AuthService {
     const normalized = email.trim().toLowerCase();
     const normalizedPassword = password.trim();
 
-    if (hasDatabaseUrl()) {
-      try {
-        const user = await userRepository.findByEmail(normalized);
-        if (user?.passwordHash && verifyPassword(normalizedPassword, user.passwordHash)) {
-          const meta = await readRequestMeta();
-          await userRepository.touchLogin(user.id, {
-            ip: meta.ip ?? undefined,
-            device: meta.device ?? undefined
-          });
-          return mapPrismaUser(user);
-        }
-      } catch {
-        // Fall through to demo password check when DB is unavailable.
-      }
-    }
+    if (!hasDatabaseUrl()) return null;
 
-    const demo = findDemoUser(normalized, normalizedPassword);
-    if (!demo) return null;
-
-    if (hasDatabaseUrl()) {
-      try {
-        const synced = await userRepository.findByEmail(normalized);
-        if (synced) {
-          const expectedRole = demoRoleToPrisma(demo.role);
-          const hashMatches =
-            Boolean(synced.passwordHash) &&
-            verifyPassword(normalizedPassword, synced.passwordHash);
-          const roleMatches = synced.role === expectedRole;
-
-          if (!hashMatches || !roleMatches) {
-            const refreshed = await userRepository.upsertDemoUser({
-              email: normalized,
-              role: expectedRole,
-              fullName: demo.label,
-              passwordHash: hashPassword(normalizedPassword),
-              companyName: demo.role === "client" ? demo.label : undefined,
-              displayName: demo.role === "creator" ? demo.label : undefined
-            });
-            await userRepository.touchLogin(refreshed.id);
-            return mapPrismaUser(refreshed);
-          }
-
-          await userRepository.touchLogin(synced.id);
-          return mapPrismaUser(synced);
-        }
-
-        const created = await userRepository.upsertDemoUser({
-          email: normalized,
-          role: demoRoleToPrisma(demo.role),
-          fullName: demo.label,
-          passwordHash: hashPassword(normalizedPassword),
-          companyName: demo.role === "client" ? demo.label : undefined,
-          displayName: demo.role === "creator" ? demo.label : undefined
+    try {
+      const user = await userRepository.findByEmail(normalized);
+      if (user?.passwordHash && verifyPassword(normalizedPassword, user.passwordHash)) {
+        const meta = await readRequestMeta();
+        await userRepository.touchLogin(user.id, {
+          ip: meta.ip ?? undefined,
+          device: meta.device ?? undefined
         });
-        await userRepository.touchLogin(created.id);
-        return mapPrismaUser(created);
-      } catch {
-        // Fall through to in-memory demo user when DB is unavailable.
+        return mapPrismaUser(user);
       }
+    } catch {
+      return null;
     }
 
-    return {
-      id: `demo_${normalized.replace(/[^a-z0-9]/gi, "_")}`,
-      email: demo.email,
-      role: demoRoleToPrisma(demo.role),
-      fullName: demo.label,
-      languageCode: "en",
-      companyName: demo.role === "client" ? demo.label : undefined,
-      displayName: demo.role === "creator" ? demo.label : undefined,
-      hasBrandProfile: demo.role === "client",
-      hasCreatorProfile: demo.role === "creator"
-    };
+    return null;
   }
 
   async getUserById(id: string): Promise<AuthUserDto | null> {
     if (id.startsWith("demo_")) {
-      const email = id.replace(/^demo_/, "").replace(/_/g, ".");
-      const demo = DEMO_USERS.find((u) => u.email.includes(email.split(".")[0] ?? ""));
-      if (!demo) return null;
-      return {
-        id,
-        email: demo.email,
-        role: demoRoleToPrisma(demo.role),
-        fullName: demo.label,
-        languageCode: "en",
-        companyName: demo.role === "client" ? demo.label : undefined,
-        displayName: demo.role === "creator" ? demo.label : undefined,
-        hasBrandProfile: demo.role === "client",
-        hasCreatorProfile: demo.role === "creator"
-      };
+      return null;
     }
 
     if (!hasDatabaseUrl()) return null;

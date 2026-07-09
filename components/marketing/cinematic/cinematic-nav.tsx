@@ -30,7 +30,7 @@ export function CinematicNav({
       className="fixed inset-x-0 top-0 z-50 border-b backdrop-blur-xl"
     >
       <div className="relative mx-auto flex min-h-[4.25rem] max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:min-h-16 sm:px-8">
-        <Link href={withLocale("/", copyLocale)} className="flex min-w-0 items-center text-white">
+        <Link href={withLocale("/", copyLocale)} prefetch={false} className="flex min-w-0 items-center text-white">
           <BrandLogoLockup
             contrastOn="dark"
             markClassName="h-6 w-6 rounded-md ring-1 ring-white/15 sm:h-9 sm:w-9 sm:rounded-xl"

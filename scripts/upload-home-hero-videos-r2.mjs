@@ -18,6 +18,20 @@ const heroDir = path.join(root, "public", "videos", "home", "hero");
 const PART_SIZE = 10 * 1024 * 1024;
 const MULTIPART_THRESHOLD = 8 * 1024 * 1024;
 
+const EXPECTED_FILES = [
+  "VINCIS Brand Film (EN).mp4",
+  "VINCIS Brand Film (ZH-CN).mp4",
+  "VINCIS Brand Film (ZH-TW).mp4",
+  "VINCIS Brand Film (JA).mp4",
+  "VINCIS Brand Film (KO).mp4",
+  "VINCIS Brand Film (MS).mp4",
+  "VINCIS Brand Film (KM).mp4",
+  "VINCIS Brand Film (TH).mp4",
+  "VINCIS Brand Film (VI).mp4",
+  "VINCIS Brand Film (FR).mp4",
+  "VINCIS Brand Film (ES).mp4"
+];
+
 function normalizeEndpoint(raw, bucket) {
   const value = raw?.trim();
   if (!value) return null;
@@ -32,6 +46,14 @@ function requireEnv(name) {
     throw new Error(`Missing ${name} — set R2 credentials in .env.local`);
   }
   return value;
+}
+
+function heroObjectKey(fileName) {
+  return `videos/home/hero/${fileName}`;
+}
+
+function heroSitePath(fileName) {
+  return `/videos/home/hero/${encodeURIComponent(fileName)}`;
 }
 
 async function uploadFile(client, bucket, key, filePath) {
@@ -49,7 +71,7 @@ async function uploadFile(client, bucket, key, filePath) {
         CacheControl: "public, max-age=31536000, immutable"
       })
     );
-    console.log(`[upload-hero-videos] put ${fileName} (${stat.size} bytes)`);
+    console.log(`[upload-hero-videos] put ${fileName} -> ${key} (${stat.size} bytes)`);
     return;
   }
 
@@ -86,7 +108,7 @@ async function uploadFile(client, bucket, key, filePath) {
         throw new Error(`Missing ETag for ${fileName} part ${partNumber}`);
       }
       parts.push({ PartNumber: partNumber, ETag: uploaded.ETag });
-      console.log(`[upload-hero-videos] ${fileName} part ${partNumber} (${length} bytes)`);
+      console.log(`[upload-hero-videos] ${fileName} -> ${key} part ${partNumber} (${length} bytes)`);
       partNumber += 1;
     }
   } finally {
@@ -101,7 +123,7 @@ async function uploadFile(client, bucket, key, filePath) {
       MultipartUpload: { Parts: parts }
     })
   );
-  console.log(`[upload-hero-videos] completed multipart ${fileName} (${stat.size} bytes)`);
+  console.log(`[upload-hero-videos] completed multipart ${fileName} -> ${key} (${stat.size} bytes)`);
 }
 
 async function main() {
@@ -125,29 +147,34 @@ async function main() {
   });
 
   const entries = await fs.readdir(heroDir, { withFileTypes: true });
-  const files = entries.filter((entry) => entry.isFile() && entry.name.endsWith(".mp4")).map((entry) => entry.name);
+  const files = entries
+    .filter((entry) => entry.isFile() && entry.name.endsWith(".mp4"))
+    .map((entry) => entry.name)
+    .sort();
   if (!files.length) {
     throw new Error(`No .mp4 files found in ${heroDir}`);
   }
 
   console.log(`[upload-hero-videos] uploading ${files.length} files to bucket ${bucket}`);
-  for (const fileName of files.sort()) {
-    const key = `videos/home/hero/${fileName}`;
+  for (const fileName of files) {
+    const key = heroObjectKey(fileName);
     await uploadFile(client, bucket, key, path.join(heroDir, fileName));
-    const relative = `/videos/home/hero/${fileName}`;
+    const sitePath = heroSitePath(fileName);
+    console.log(`[upload-hero-videos] site https://vincis.app${sitePath}`);
     if (upstream) {
-      console.log(`[upload-hero-videos] r2 ${upstream}${encodeURI(relative)}`);
+      console.log(`[upload-hero-videos] r2 ${upstream}/${key}`);
     }
-    console.log(`[upload-hero-videos] site https://vincis.app${encodeURI(relative)}`);
     if (publicCdn) {
-      console.log(`[upload-hero-videos] cdn ${publicCdn}${encodeURI(relative)}`);
+      console.log(`[upload-hero-videos] cdn ${publicCdn}/${key}`);
     }
   }
 
-  console.log("[upload-hero-videos] done");
-  if (!upstream) {
-    console.log("[upload-hero-videos] set MARKETING_CDN_UPSTREAM to your R2 public URL (r2.dev or custom domain)");
+  const missing = EXPECTED_FILES.filter((name) => !files.includes(name));
+  if (missing.length) {
+    console.warn(`[upload-hero-videos] WARN missing local files: ${missing.join(", ")}`);
   }
+
+  console.log("[upload-hero-videos] done");
 }
 
 main().catch((error) => {

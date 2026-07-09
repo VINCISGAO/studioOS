@@ -9,9 +9,9 @@ import { cn } from "@/lib/utils";
 import { ArrowRight, BookOpen, Box, Globe2, Shield, Sparkles, Users, Zap, type LucideIcon } from "lucide-react";
 
 const footerSocialIcons = [
-  { label: "X", src: "/images/social-sources/x.svg" },
-  { label: "YouTube", src: "/images/social-sources/youtube.svg" },
-  { label: "Instagram", src: "/images/social-sources/instagram.svg" }
+  { label: "X", src: "/images/social-sources/x.svg", href: "/contact" },
+  { label: "YouTube", src: "/images/social-sources/youtube.svg", href: "/contact" },
+  { label: "Instagram", src: "/images/social-sources/instagram.svg", href: "/contact" }
 ] as const;
 
 const navIcons = [Box, Users, BookOpen] as const;
@@ -73,14 +73,14 @@ function FooterBottomBar({
     <div className={cn("flex items-center justify-between gap-4", className)}>
       <div className="flex shrink-0 items-center gap-3">
         {footerSocialIcons.map((item) => (
-          <a
+          <Link
             key={item.label}
-            href="#"
+            href={withLocale(item.href, locale)}
             aria-label={item.label}
             className="flex h-11 w-11 items-center justify-center rounded-full border border-zinc-200 bg-white shadow-sm transition hover:opacity-80"
           >
             <Image src={item.src} alt="" width={24} height={24} className="h-6 w-6" />
-          </a>
+          </Link>
         ))}
         <LanguageSwitcher locale={locale} tone="light" variant="icon" menuPlacement="top" />
       </div>

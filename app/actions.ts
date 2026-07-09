@@ -4,18 +4,12 @@ import { redirect } from "next/navigation";
 import { cookies, headers } from "next/headers";
 import { performSignIn, recordCreatorSignIn } from "@/lib/auth/sign-in-service";
 import { authService } from "@/features/auth/auth.service";
-import { isExplicitDemoLoginEnabled } from "@/lib/runtime-flags";
-import { preferDemoAuth } from "@/lib/can-persist-local-store";
 import { DEMO_SESSION_COOKIE, hasSupabaseConfig } from "@/lib/auth-config";
 import { clearDemoSession, setDemoSession } from "@/lib/demo-auth-server";
 import {
   demoRedirectForRole,
-  demoUserForSocialProvider,
-  isTestSocialProvider,
   parseDemoSession,
-  DEMO_PASSWORD,
-  DEMO_USERS,
-  type DemoSocialProvider
+  DEMO_USERS
 } from "@/lib/demo-auth";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { isAdminRouteRole } from "@/lib/auth/route-access";
@@ -31,6 +25,7 @@ import { loginAdminWithTotp, logoutAdminSession } from "@/features/admin/auth/ad
 import { adminAuthError } from "@/lib/auth/admin-auth-errors";
 import { enforceAdminLoginRateLimit } from "@/lib/auth/admin-login-rate-limit";
 import { adminRequestFromHeaders } from "@/lib/auth/admin-request-from-headers";
+import { authSecurityService } from "@/features/auth/auth-security.service";
 
 type OAuthProvider = "google" | "apple" | "alipay" | "wechat" | "qq";
 function normalizeLang(raw: FormDataEntryValue | null): Locale {
@@ -164,50 +159,60 @@ export async function signInAction(formData: FormData) {
   redirect(result.redirectTo);
 }
 
-export async function demoSocialSignInAction(formData: FormData) {
+export async function loginEmailStartAction(formData: FormData) {
   const lang = normalizeLang(formData.get("lang"));
-  const provider = String(formData.get("provider") ?? "") as DemoSocialProvider;
-  const expectedRole = String(formData.get("expected_role") ?? "brand");
+  const email = String(formData.get("email") ?? "").trim();
+  const request = await adminRequestFromHeaders("/login");
+  try {
+    return await authSecurityService.startEmailVerification({
+      request,
+      email,
+      locale: lang
+    });
+  } catch (error) {
+    const prismaCode =
+      error && typeof error === "object" && "code" in error ? String((error as { code: string }).code) : "";
+    const message =
+      prismaCode === "P2021"
+        ? lang === "zh"
+          ? "认证数据表尚未创建，请在项目目录运行：npm run db:migrate:deploy"
+          : "Auth database tables are missing. Run: npm run db:migrate:deploy"
+        : lang === "zh"
+          ? "认证服务暂不可用，请稍后再试。"
+          : "Authentication service unavailable.";
+    return { ok: false as const, error: message };
+  }
+}
+
+export async function loginEmailContinueAction(formData: FormData) {
+  const lang = normalizeLang(formData.get("lang"));
+  const email = String(formData.get("email") ?? "").trim();
+  const code = String(formData.get("code") ?? "").trim();
+  const roleRaw = String(formData.get("role") ?? "brand");
+  const role = roleRaw === "creator" ? "CREATOR" : "BRAND";
   const nextPath = String(formData.get("next") ?? "").trim();
+  const request = await adminRequestFromHeaders("/login");
 
-  const allowTestProvider =
-    isTestSocialProvider(provider) || preferDemoAuth() || isExplicitDemoLoginEnabled();
-  if (!allowTestProvider) {
-    redirect(`/login?error=unsupported-provider&lang=${lang}&role=${expectedRole}`);
-  }
-
-  if (!["google", "apple", "alipay", "wechat", "qq"].includes(provider)) {
-    redirect(`/login?error=unsupported-provider&lang=${lang}&role=${expectedRole}`);
-  }
-
-  const tabRole = expectedRole === "creator" ? "creator" : "brand";
-  const demoUser = demoUserForSocialProvider(provider, tabRole);
-
-  if (!demoUser) {
-    redirect(
-      `/login?error=${encodeURIComponent(lang === "zh" ? "暂无可用演示账号" : "No demo account available")}&lang=${lang}&role=${expectedRole}`
-    );
-  }
-
-  const result = await performSignIn({
-    email: demoUser.email,
-    password: DEMO_PASSWORD,
-    lang,
-    expectedRole: tabRole,
+  const result = await authSecurityService.loginWithEmailCode({
+    request,
+    email,
+    code,
+    role,
+    locale: lang,
     nextPath
   });
 
-  if (!result.ok) {
-    const errorQuery = result.errorCode ?? encodeURIComponent(result.error);
-    redirect(
-      withLocale(
-        `/login?error=${errorQuery}&role=${expectedRole}${result.email ? `&email=${encodeURIComponent(result.email)}` : ""}`,
-        lang
-      )
-    );
+  if (result.ok && "session" in result && result.session) {
+    await setDemoSession(result.session);
   }
 
-  redirect(result.redirectTo);
+  return result;
+}
+
+export async function demoSocialSignInAction(formData: FormData) {
+  const lang = normalizeLang(formData.get("lang"));
+  const expectedRole = String(formData.get("expected_role") ?? "brand");
+  redirect(withLocale(`/login?error=unsupported-provider&role=${expectedRole}`, lang));
 }
 
 export async function signUpAction(formData: FormData) {

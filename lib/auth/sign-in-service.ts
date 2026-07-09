@@ -132,8 +132,7 @@ export async function performSignIn(input: SignInInput): Promise<SignInResult> {
   const { email, password, lang, expectedRole, nextPath = "" } = input;
   const trimmedEmail = email.trim();
   const trimmedPassword = password.trim();
-  const allowDemoFallback =
-    preferDemoAuth() || trimmedEmail.endsWith("@studioos.test");
+  const allowDemoFallback = preferDemoAuth();
 
   let prismaUser: Awaited<ReturnType<typeof authService.authenticate>> = null;
   try {

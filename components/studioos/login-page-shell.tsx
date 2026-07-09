@@ -73,7 +73,6 @@ type LoginPageShellProps = {
   demoMode: boolean;
   googleOAuthEnabled?: boolean;
   googleOneTapClientId?: string;
-  alipayOAuthEnabled?: boolean;
   t: LoginPageCopy;
 };
 
@@ -261,7 +260,6 @@ export function LoginPageShell({
   demoMode,
   googleOAuthEnabled = false,
   googleOneTapClientId = "",
-  alipayOAuthEnabled = false,
   t
 }: LoginPageShellProps) {
   const isBrand = role === "brand";
@@ -434,9 +432,6 @@ export function LoginPageShell({
                 locale={locale}
                 role={role}
                 nextPath={nextPath}
-                demoMode={demoMode}
-                googleOAuthEnabled={googleOAuthEnabled}
-                alipayOAuthEnabled={alipayOAuthEnabled}
                 visualOverride={formVisual}
               />
             </div>

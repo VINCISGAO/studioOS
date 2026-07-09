@@ -770,17 +770,13 @@
   }
 
   .home-hero-video-controls {
-    opacity: 1;
+    opacity: 0;
     pointer-events: none;
     transition: opacity 180ms ease;
   }
 
   .home-hero-video-controls > * {
     pointer-events: none;
-  }
-
-  .home-hero-video-hit-area {
-    pointer-events: auto;
   }
 
   .home-hero-video-center-btn {
@@ -790,10 +786,6 @@
   }
 
   @media (hover: hover) and (pointer: fine) {
-    .home-hero-video-shell .home-hero-video-controls {
-      opacity: 0;
-    }
-
     .home-hero-video-shell:hover .home-hero-video-controls,
     .home-hero-video-shell:focus-within .home-hero-video-controls {
       opacity: 1;
@@ -809,12 +801,14 @@
     }
   }
 
-  @media (hover: none) {
-    .home-hero-video-shell .home-hero-video-mute-btn,
-    .home-hero-video-shell .home-hero-video-fullscreen-btn,
-    .home-hero-video-shell .home-hero-video-bottom {
-      pointer-events: auto;
-    }
+  .home-hero-video-shell.home-hero-video-controls-visible .home-hero-video-controls {
+    opacity: 1;
+  }
+
+  .home-hero-video-shell.home-hero-video-controls-visible .home-hero-video-mute-btn,
+  .home-hero-video-shell.home-hero-video-controls-visible .home-hero-video-fullscreen-btn,
+  .home-hero-video-shell.home-hero-video-controls-visible .home-hero-video-bottom {
+    pointer-events: auto;
   }
 
   .home-hero-video-mute-btn,

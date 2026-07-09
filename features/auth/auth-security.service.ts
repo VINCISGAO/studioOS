@@ -219,12 +219,22 @@ async function anyRateLimited(rules: Array<{ key: string; scope: string; max: nu
   return false;
 }
 
+function isTurnstileEnforced() {
+  const secret = process.env.TURNSTILE_SECRET_KEY?.trim() || process.env.RECAPTCHA_SECRET_KEY?.trim();
+  const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim();
+  return Boolean(secret && siteKey);
+}
+
 async function verifyTurnstileToken(token: string | undefined, ip: string) {
+  if (!isTurnstileEnforced()) {
+    return true;
+  }
+  if (!token) return false;
+
   const secret = process.env.TURNSTILE_SECRET_KEY?.trim() || process.env.RECAPTCHA_SECRET_KEY?.trim();
   if (!secret) {
     return true;
   }
-  if (!token) return false;
 
   const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
     method: "POST",
@@ -323,7 +333,7 @@ async function sendAuthVerificationCode(
   | { ok: false; reason: string }
 > {
   if (isStudioTestEmail(email)) {
-    return { ok: true as const, debugCode: code };
+    return { ok: false as const, reason: "TEST_ACCOUNT_RETIRED" as const };
   }
 
   if (!process.env.RESEND_API_KEY) {
@@ -379,6 +389,9 @@ export class AuthSecurityService {
     const emailHash = hashSensitive(email);
     if (!email || !email.includes("@")) {
       return { ok: false as const, error: AUTH_ERROR_COPY.securityFailed };
+    }
+    if (isStudioTestEmail(email)) {
+      return { ok: false as const, error: AUTH_ERROR_COPY.testAccountRetired };
     }
     const activeLock = await prisma.authLock.findFirst({
       where: { OR: [{ emailHash }, { ipHash: ctx.ipHash }], lockedUntil: { gt: now() } },
@@ -460,17 +473,13 @@ export class AuthSecurityService {
     await recordAttempt({ email, type: "EMAIL_START", success: true, ctx });
     await audit({ email, event: "EMAIL_CODE_SENT", ctx });
     const testEmailHint =
-      isStudioTestEmail(email) && "debugCode" in sent && sent.debugCode
+      "debugCode" in sent && sent.debugCode
         ? input.locale === "zh"
-          ? "测试账号：请使用页面显示的验证码登录。"
-          : "Test account: use the verification code shown on this page."
-        : "debugCode" in sent && sent.debugCode
-          ? input.locale === "zh"
-            ? "开发模式：未配置邮件服务，请使用下方验证码。"
-            : "Dev mode: email is not configured. Use the code below."
-          : input.locale === "zh"
-            ? "验证码已发送至你的邮箱。"
-            : "Verification code sent to your email.";
+          ? "开发模式：未配置邮件服务，请使用下方验证码。"
+          : "Dev mode: email is not configured. Use the code below."
+        : input.locale === "zh"
+          ? "验证码已发送至你的邮箱。"
+          : "Verification code sent to your email.";
     return {
       ok: true as const,
       message: testEmailHint,
@@ -568,6 +577,11 @@ export class AuthSecurityService {
     nextPath?: string;
     turnstileToken?: string;
   }) {
+    const email = normalizeEmail(input.email);
+    if (isStudioTestEmail(email)) {
+      return { ok: false as const, error: AUTH_ERROR_COPY.testAccountRetired };
+    }
+
     const verified = await this.verifyEmailCode({
       request: input.request,
       email: input.email,
@@ -579,7 +593,6 @@ export class AuthSecurityService {
     }
 
     const ctx = requestContext(input.request);
-    const email = normalizeEmail(input.email);
     let user = await userRepository.findByEmail(email);
     if (!user) {
       user = await userRepository.createPasswordless({
@@ -616,26 +629,26 @@ export class AuthSecurityService {
     }
 
     const demoRole = sessionRoleForUserProfiles(user, input.role);
-    await setDemoSession(
-      buildSessionPayload(
-        {
-          id: user.id,
-          email: user.email,
-          role: user.role,
-          fullName: user.fullName,
-          languageCode: user.languageCode ?? user.language ?? "en",
-          companyName: user.brandProfile?.companyName,
-          displayName: user.creatorProfile?.displayName ?? undefined,
-          hasBrandProfile: user.role === "BRAND" || Boolean(user.brandProfile),
-          hasCreatorProfile: user.role === "CREATOR" || Boolean(user.creatorProfile)
-        },
-        demoRole
-      )
+    const session = buildSessionPayload(
+      {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        fullName: user.fullName,
+        languageCode: user.languageCode ?? user.language ?? "en",
+        companyName: user.brandProfile?.companyName,
+        displayName: user.creatorProfile?.displayName ?? undefined,
+        hasBrandProfile: user.role === "BRAND" || Boolean(user.brandProfile),
+        hasCreatorProfile: user.role === "CREATOR" || Boolean(user.creatorProfile)
+      },
+      demoRole
     );
+    await setDemoSession(session);
 
     return {
       ok: true as const,
-      redirectTo: resolvePostLoginDestination({ role: demoRole }, input.nextPath ?? "", input.locale)
+      redirectTo: resolvePostLoginDestination({ role: demoRole }, input.nextPath ?? "", input.locale),
+      session
     };
   }
 

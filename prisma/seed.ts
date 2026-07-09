@@ -547,11 +547,18 @@ async function seedDemoDispute(campaignId: string, brandEmail: string) {
 
 async function main() {
   await seedAiKnowledgeQa();
-  await seedDemoUsers();
   await seedMembershipConfig();
   await seedCreatorMemberships();
   await seedFeatureFlags();
   await seedPartnerAcademy();
+
+  if (DEMO_USERS.length === 0) {
+    console.log("Test accounts disabled — skipped demo user/campaign seed.");
+    await seedAdminDashboardDemoIfEnabled();
+    return;
+  }
+
+  await seedDemoUsers();
   await enrichCreatorProfiles();
 
   const brand = await prisma.user.findUniqueOrThrow({

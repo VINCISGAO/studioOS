@@ -1,47 +1,59 @@
 import type { MarketingLocale } from "@/lib/i18n";
 
-/** ASCII public URLs — browsers and CDNs handle these reliably. */
-export const homeHeroVideoPublicPaths: Record<MarketingLocale, string> = {
-  en: "/videos/home/hero/vincis-hero-en.mp4",
-  "zh-CN": "/videos/home/hero/vincis-hero-zh-cn.mp4",
-  "zh-TW": "/videos/home/hero/vincis-hero-zh-tw.mp4",
-  ja: "/videos/home/hero/vincis-hero-ja.mp4",
-  ko: "/videos/home/hero/vincis-hero-ko.mp4",
-  ms: "/videos/home/hero/vincis-hero-ms.mp4",
-  km: "/videos/home/hero/vincis-hero-km.mp4",
-  th: "/videos/home/hero/vincis-hero-th.mp4",
-  vi: "/videos/home/hero/vincis-hero-vi.mp4",
-  fr: "/videos/home/hero/vincis-hero-fr.mp4",
-  es: "/videos/home/hero/vincis-hero-es.mp4"
+/** R2 object filenames — language code in parentheses (matches dashboard upload). */
+export const homeHeroVideoFilenames: Record<MarketingLocale, string> = {
+  en: "VINCIS Brand Film (EN).mp4",
+  "zh-CN": "VINCIS Brand Film (ZH-CN).mp4",
+  "zh-TW": "VINCIS Brand Film (ZH-TW).mp4",
+  ja: "VINCIS Brand Film (JA).mp4",
+  ko: "VINCIS Brand Film (KO).mp4",
+  ms: "VINCIS Brand Film (MS).mp4",
+  km: "VINCIS Brand Film (KM).mp4",
+  th: "VINCIS Brand Film (TH).mp4",
+  vi: "VINCIS Brand Film (VI).mp4",
+  fr: "VINCIS Brand Film (FR).mp4",
+  es: "VINCIS Brand Film (ES).mp4"
 };
 
-/** R2 object filenames (uploaded from `public/videos/home/hero/`). */
-export const homeHeroVideoR2Filenames: Record<MarketingLocale, string> = {
-  en: "VINCIS宣传片（英文）.mp4",
-  "zh-CN": "VINCIS宣传片（中文）.mp4",
-  "zh-TW": "VINCIS宣传片（繁体中文）.mp4",
-  ja: "VINCIS宣传片（日文）.mp4",
-  ko: "VINCIS宣传片（韩文）.mp4",
-  ms: "VINCIS宣传片（马来文）.mp4",
-  km: "VINCIS宣传片（柬埔寨文）.mp4",
-  th: "VINCIS宣传片（泰文）.mp4",
-  vi: "VINCIS宣传片（越南文）.mp4",
-  fr: "VINCIS宣传片（法文）.mp4",
-  es: "VINCIS宣传片（西班牙语）.mp4"
-};
+const KNOWN_HERO_FILENAMES = new Set(Object.values(homeHeroVideoFilenames));
 
-const HERO_SLUG_TO_R2_FILENAME = Object.fromEntries(
-  Object.entries(homeHeroVideoPublicPaths).map(([locale, publicPath]) => {
-    const slug = publicPath.split("/").pop() ?? "";
-    const r2Name = homeHeroVideoR2Filenames[locale as MarketingLocale];
-    return [slug, r2Name];
-  })
-) as Record<string, string>;
+/** Bust browser/CDN caches after URL scheme changes. */
+const HERO_VIDEO_CACHE_VERSION = "7";
 
-/** @deprecated Use `homeHeroVideoPublicPaths` — kept for upload scripts referencing legacy paths. */
+export function encodeHeroVideoSegment(filename: string): string {
+  return encodeURIComponent(filename);
+}
+
+export function resolveHomeHeroVideoPublicPath(locale: MarketingLocale): string {
+  const filename = homeHeroVideoFilenames[locale] ?? homeHeroVideoFilenames.en;
+  return `/videos/home/hero/${encodeHeroVideoSegment(filename)}`;
+}
+
+/**
+ * Same-origin hero video URL — `/videos/*` proxies to R2/CDN with Range streaming.
+ * Locale → filename → encoded path. No slug indirection.
+ */
+export function resolveHomeHeroVideoPlaybackSrc(locale: MarketingLocale): string {
+  return `${resolveHomeHeroVideoPublicPath(locale)}?cv=${HERO_VIDEO_CACHE_VERSION}`;
+}
+
+export function resolveHomeHeroVideoSrc(locale: MarketingLocale): string {
+  return resolveHomeHeroVideoPlaybackSrc(locale);
+}
+
+export const homeHeroVideoPublicPaths: Record<MarketingLocale, string> = Object.fromEntries(
+  Object.entries(homeHeroVideoFilenames).map(([locale]) => [
+    locale,
+    resolveHomeHeroVideoPublicPath(locale as MarketingLocale)
+  ])
+) as Record<MarketingLocale, string>;
+
+/** @deprecated Use `homeHeroVideoFilenames`. */
+export const homeHeroVideoR2Filenames = homeHeroVideoFilenames;
+
+/** @deprecated Use `homeHeroVideoPublicPaths`. */
 export const homeHeroVideoRelativePaths = homeHeroVideoPublicPaths;
 
-/** Public CDN/R2 base for upload scripts — not for HTML video `src`. */
 export function marketingCdnBaseUrl(): string | null {
   const upstream = process.env.MARKETING_CDN_UPSTREAM?.trim();
   if (upstream) return upstream.replace(/\/+$/u, "");
@@ -50,31 +62,29 @@ export function marketingCdnBaseUrl(): string | null {
   return base.replace(/\/+$/u, "");
 }
 
-/** Bust browser/CDN caches after proxy URL changes. */
-const HERO_VIDEO_CACHE_VERSION = "4";
-
-/**
- * Same-origin hero video path — production proxies `/videos/home/*` via `app/videos/[...path]/route.ts`.
- * Avoid direct r2.dev URLs in `<video src>` (Safari logs `TypeError: Load failed` on cross-origin media).
- */
-export function resolveHomeHeroVideoPlaybackSrc(locale: MarketingLocale): string {
-  const base = homeHeroVideoPublicPaths[locale] ?? homeHeroVideoPublicPaths.en;
-  return `${base}?cv=${HERO_VIDEO_CACHE_VERSION}`;
+export function resolveHeroPathSegment(pathname: string): string {
+  return decodeURIComponent(pathname.split("/").pop()?.split("?")[0] ?? "");
 }
 
-export function resolveHomeHeroVideoSrc(locale: MarketingLocale): string {
-  return resolveHomeHeroVideoPlaybackSrc(locale);
-}
-
-export function homeHeroVideoObjectKey(relativePath: string): string {
-  return relativePath.replace(/^\/+/u, "");
-}
-
-/** Map ASCII hero slug URL to the Unicode R2 object key, if applicable. */
-export function resolveHeroR2ObjectKey(pathname: string): string | null {
+export function resolveHeroFilenameFromPathname(pathname: string): string | null {
   if (!pathname.startsWith("/videos/home/hero/")) return null;
-  const slug = decodeURIComponent(pathname.split("/").pop() ?? "");
-  const r2Filename = HERO_SLUG_TO_R2_FILENAME[slug];
-  if (!r2Filename) return null;
-  return `videos/home/hero/${r2Filename}`;
+  const segment = resolveHeroPathSegment(pathname);
+  if (!segment || !KNOWN_HERO_FILENAMES.has(segment)) return null;
+  return segment;
+}
+
+/** R2 keys to probe — standard folder first, then flat dashboard upload. */
+export function heroR2ObjectKeyCandidates(pathname: string): string[] {
+  const filename = resolveHeroFilenameFromPathname(pathname);
+  if (!filename) return [];
+  return [`videos/home/hero/${filename}`, filename];
+}
+
+export function resolveHeroR2ObjectKey(pathname: string): string | null {
+  return heroR2ObjectKeyCandidates(pathname)[0] ?? null;
+}
+
+export function resolveHeroLocalRelativePath(pathname: string): string | null {
+  const filename = resolveHeroFilenameFromPathname(pathname);
+  return filename ? `videos/home/hero/${filename}` : null;
 }

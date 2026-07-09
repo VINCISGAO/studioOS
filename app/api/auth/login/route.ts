@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { performSignIn, type SignInInput } from "@/lib/auth/sign-in-service";
+import { attachDemoSessionCookie } from "@/lib/demo-auth-server";
 import type { Locale } from "@/lib/i18n";
 import { enforcePublicApiRateLimit, handleRouteError } from "@/lib/core/api-route";
 import { AUTH_ERROR_COPY } from "@/features/auth/auth-error-copy";
@@ -104,5 +105,7 @@ export async function POST(request: Request) {
     email: input.email,
     success: true
   });
-  return NextResponse.json(result);
+  const response = NextResponse.json(result);
+  attachDemoSessionCookie(response, result.session);
+  return response;
 }

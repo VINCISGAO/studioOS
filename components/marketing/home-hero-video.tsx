@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties, type MouseEvent } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type MouseEvent, type PointerEvent } from "react";
 import { Maximize2, Minimize2, Play, Volume2, VolumeX } from "lucide-react";
 import type { Locale, MarketingLocale } from "@/lib/i18n";
 import { isChineseLanguage } from "@/lib/i18n";
@@ -148,12 +148,15 @@ export function HomeHeroVideo({
 }) {
   const shellRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const hideControlsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastPointerTypeRef = useRef<PointerEvent["pointerType"] | null>(null);
   const [muted, setMuted] = useState(true);
   const [hasVideoError, setHasVideoError] = useState(false);
   const [duration, setDuration] = useState(0);
   const [progress, setProgress] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isPlaying, setIsPlaying] = useState(true);
+  const [touchControlsVisible, setTouchControlsVisible] = useState(false);
   const videoLocale: MarketingLocale = locale === "zh" ? "zh-CN" : (locale as MarketingLocale);
   const labels = videoLabels[videoLocale] ?? videoLabels.en;
   const videoSrc = videoSrcProp ?? resolveHomeHeroVideoSrc(videoLocale);
@@ -175,7 +178,12 @@ export function HomeHeroVideo({
         document.fullscreenElement ??
         (document as Document & { webkitFullscreenElement?: Element | null }).webkitFullscreenElement ??
         null;
-      setIsFullscreen(fullscreenElement === shellRef.current);
+      const nextFullscreen = fullscreenElement === shellRef.current;
+      setIsFullscreen(nextFullscreen);
+      if (!nextFullscreen) {
+        setTouchControlsVisible(false);
+        clearHideControlsTimer();
+      }
     };
 
     syncDuration();
@@ -204,6 +212,35 @@ export function HomeHeroVideo({
   useEffect(() => {
     setHasVideoError(false);
   }, [videoSrc]);
+
+  useEffect(() => {
+    return () => {
+      if (hideControlsTimerRef.current) {
+        clearTimeout(hideControlsTimerRef.current);
+      }
+    };
+  }, []);
+
+  function clearHideControlsTimer() {
+    if (hideControlsTimerRef.current) {
+      clearTimeout(hideControlsTimerRef.current);
+      hideControlsTimerRef.current = null;
+    }
+  }
+
+  function showTouchControls(autoHideMs = 3500) {
+    setTouchControlsVisible(true);
+    clearHideControlsTimer();
+    if (autoHideMs > 0) {
+      hideControlsTimerRef.current = setTimeout(() => {
+        setTouchControlsVisible(false);
+      }, autoHideMs);
+    }
+  }
+
+  function keepTouchControlsVisible() {
+    showTouchControls(3500);
+  }
 
   function toggleSound() {
     const video = videoRef.current;
@@ -260,6 +297,10 @@ export function HomeHeroVideo({
     iosVideo.webkitEnterFullscreen?.();
   }
 
+  function isTouchPointer() {
+    return lastPointerTypeRef.current === "touch";
+  }
+
   function handleShellClick(event: MouseEvent<HTMLDivElement>) {
     if (hasVideoError) return;
     const target = event.target as HTMLElement;
@@ -270,7 +311,27 @@ export function HomeHeroVideo({
     ) {
       return;
     }
+
+    if (isTouchPointer() && !touchControlsVisible) {
+      showTouchControls();
+      lastPointerTypeRef.current = null;
+      return;
+    }
+
     togglePlayback();
+  }
+
+  function handleShellPointerDown(event: PointerEvent<HTMLDivElement>) {
+    lastPointerTypeRef.current = event.pointerType;
+    if (event.pointerType !== "touch") return;
+    const target = event.target as HTMLElement;
+    if (
+      target.closest(
+        ".home-hero-video-mute-btn, .home-hero-video-fullscreen-btn, .home-hero-video-bottom, .home-hero-video-range"
+      )
+    ) {
+      keepTouchControlsVisible();
+    }
   }
 
   const pauseAriaLabel = isChineseLanguage(videoLocale) ? "暂停视频" : "Pause video";
@@ -280,10 +341,12 @@ export function HomeHeroVideo({
       <div
         ref={shellRef}
         onClick={handleShellClick}
+        onPointerDown={handleShellPointerDown}
         aria-label={!hasVideoError && isPlaying ? pauseAriaLabel : undefined}
         className={cn(
-          "home-hero-video-shell group relative w-full cursor-pointer overflow-hidden rounded-none bg-black shadow-none lg:mx-auto lg:max-w-[1216px] lg:shadow-[0_28px_90px_-64px_rgba(0,0,0,0.55)]",
-          isFullscreen && "flex max-w-none items-center justify-center"
+          "home-hero-video-shell group relative w-full cursor-pointer touch-manipulation overflow-hidden rounded-none bg-black shadow-none lg:mx-auto lg:max-w-[1216px] lg:shadow-[0_28px_90px_-64px_rgba(0,0,0,0.55)]",
+          isFullscreen && "flex max-w-none items-center justify-center",
+          touchControlsVisible && "home-hero-video-controls-visible"
         )}
       >
         <video
@@ -319,14 +382,18 @@ export function HomeHeroVideo({
           </div>
         ) : null}
         {!hasVideoError ? (
-          <div className="home-hero-video-controls pointer-events-none absolute inset-0 z-20">
+          <div className="home-hero-video-controls absolute inset-0 z-20">
             <button
               type="button"
               onClick={(event) => {
                 event.stopPropagation();
                 toggleSound();
               }}
-              className="home-hero-video-mute-btn pointer-events-auto absolute left-3 top-3 z-30 inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-md transition hover:bg-black/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 sm:left-4 sm:top-4 sm:h-10 sm:w-10"
+              onPointerDown={(event) => {
+                event.stopPropagation();
+                keepTouchControlsVisible();
+              }}
+              className="home-hero-video-mute-btn absolute left-3 top-3 z-30 inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-md transition hover:bg-black/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 sm:left-4 sm:top-4 sm:h-10 sm:w-10"
               aria-pressed={!muted}
               aria-label={muted ? labels.soundOnAria : labels.muteAria}
             >
@@ -338,12 +405,22 @@ export function HomeHeroVideo({
                 event.stopPropagation();
                 toggleFullscreen();
               }}
-              className="home-hero-video-fullscreen-btn pointer-events-auto absolute right-3 top-3 z-30 inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-md transition hover:bg-black/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 sm:right-4 sm:top-4 sm:h-10 sm:w-10"
+              onPointerDown={(event) => {
+                event.stopPropagation();
+                keepTouchControlsVisible();
+              }}
+              className="home-hero-video-fullscreen-btn absolute right-3 top-3 z-30 inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-md transition hover:bg-black/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 sm:right-4 sm:top-4 sm:h-10 sm:w-10"
               aria-label={isFullscreen ? labels.exitFullscreen : labels.fullscreen}
             >
               {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
             </button>
-            <div className="home-hero-video-bottom pointer-events-auto absolute inset-x-0 bottom-0 z-30 bg-gradient-to-t from-black/75 via-black/30 to-transparent px-3 pb-3 pt-6 sm:px-4 sm:pb-3.5">
+            <div
+              className="home-hero-video-bottom absolute inset-x-0 bottom-0 z-30 bg-gradient-to-t from-black/75 via-black/30 to-transparent px-3 pb-3 pt-6 sm:px-4 sm:pb-3.5"
+              onPointerDown={(event) => {
+                event.stopPropagation();
+                keepTouchControlsVisible();
+              }}
+            >
               <span className="mb-1 block text-[11px] font-medium tabular-nums text-white sm:text-xs">
                 {formatVideoTime(progress)} / {formatVideoTime(duration)}
               </span>
@@ -357,7 +434,10 @@ export function HomeHeroVideo({
                 max={duration || 0}
                 step={0.1}
                 value={Math.min(progress, duration || 0)}
-                onPointerDown={(event) => event.stopPropagation()}
+                onPointerDown={(event) => {
+                  event.stopPropagation();
+                  keepTouchControlsVisible();
+                }}
                 onChange={(event) => {
                   event.stopPropagation();
                   handleSeek(Number(event.target.value));

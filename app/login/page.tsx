@@ -1,13 +1,11 @@
 import { redirect } from "next/navigation";
 import { LoginPageShell, type LoginPageCopy } from "@/components/studioos/login-page-shell";
-import { isDemoLoginUiEnabled, preferDemoAuth } from "@/lib/can-persist-local-store";
+import { isDemoLoginUiEnabled } from "@/lib/can-persist-local-store";
 import {
   isSafeInternalPostLoginPath,
   resolvePostLoginDestination
 } from "@/lib/auth/post-login-redirect";
 import { hasSupabaseConfig } from "@/lib/auth-config";
-import { isAlipayOAuthLive } from "@/lib/alipay/alipay-oauth-config";
-import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { type DemoRole } from "@/lib/demo-auth";
 import { getLocale, type Locale, type SearchParams } from "@/lib/i18n";
 import { getCurrentSession } from "@/lib/session-user";
@@ -98,7 +96,7 @@ const copy: Record<Locale, LoginPageCopy & { configError: string; unsupported: s
     brandHeroLine1: "连接全球创作者",
     brandHeroLine2: "让创意没有边界",
     brandHeroHighlight: "让创意没有边界",
-    brandHeroSubtitle: "AI 智能匹配全球创作者，从想法到交付，一站完成高质量广告制作。",
+    brandHeroSubtitle: "从想法到交付，一站完成高质量广告制作",
     brandFeatures: [
       {
         title: "精准匹配创作者",
@@ -120,7 +118,7 @@ const copy: Record<Locale, LoginPageCopy & { configError: string; unsupported: s
     creatorHeroLine2: "才华值得被成就",
     creatorHeroHighlightLine1: "被看见",
     creatorHeroHighlightLine2: "被成就",
-    creatorHeroSubtitle: "加入全球创作者社区，让优秀作品连接更多可能。",
+    creatorHeroSubtitle: "加入全球创作者社区，让优秀作品连接更多可能",
     creatorFeatures: [
       {
         title: "连接全球项目",
@@ -256,10 +254,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const role = resolveLoginRole(hasExplicitRole ? params.role : undefined);
 
   const demoMode = isDemoLoginUiEnabled();
-  const oauthLive = !preferDemoAuth();
-  const googleOAuthEnabled = hasSupabaseConfig() && oauthLive;
+  const googleOAuthEnabled = hasSupabaseConfig();
   const googleOneTapClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID?.trim() ?? "";
-  const alipayOAuthEnabled = isAlipayOAuthLive() && hasDatabaseUrl();
 
   if (session && sessionMatchesRequestedRole(session, role, hasExplicitRole) && !rawError) {
     redirect(resolvePostLoginDestination(session, nextPath, locale));
@@ -284,7 +280,6 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       demoMode={demoMode}
       googleOAuthEnabled={googleOAuthEnabled}
       googleOneTapClientId={googleOneTapClientId}
-      alipayOAuthEnabled={alipayOAuthEnabled}
       t={t}
     />
   );

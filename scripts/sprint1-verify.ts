@@ -78,11 +78,16 @@ async function main() {
       : "optional demo campaign absent (OK after reset:demo-accounts)"
   });
 
+  const demoAuthRetired = DEMO_USERS.length === 0;
   const auth = await authService.authenticate("client.arc@studioos.test", DEMO_PASSWORD);
   checks.push({
     name: "auth.login",
-    ok: auth?.role === "BRAND" && Boolean(auth.id),
-    detail: auth ? `${auth.email} (${auth.role})` : "authenticate returned null"
+    ok: demoAuthRetired ? auth === null : auth?.role === "BRAND" && Boolean(auth.id),
+    detail: demoAuthRetired
+      ? "@studioos.test login retired (expected null)"
+      : auth
+        ? `${auth.email} (${auth.role})`
+        : "authenticate returned null"
   });
 
   const badAuth = await authService.authenticate("client.arc@studioos.test", "wrong-password");

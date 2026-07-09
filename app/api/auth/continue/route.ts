@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { AUTH_ERROR_COPY } from "@/features/auth/auth-error-copy";
 import { authSecurityService } from "@/features/auth/auth-security.service";
+import { attachDemoSessionCookie } from "@/lib/demo-auth-server";
 import type { Locale } from "@/lib/i18n";
 import type { UserRole } from "@prisma/client";
 
@@ -37,7 +38,11 @@ export async function POST(request: Request) {
       nextPath: typeof body?.next === "string" ? body.next : "",
       turnstileToken: body.turnstileToken
     });
-    return NextResponse.json(result, { status: result.ok ? 200 : 400 });
+    const response = NextResponse.json(result, { status: result.ok ? 200 : 400 });
+    if (result.ok && "session" in result && result.session) {
+      attachDemoSessionCookie(response, result.session);
+    }
+    return response;
   }
 
   return NextResponse.json({ ok: false, error: AUTH_ERROR_COPY.securityFailed }, { status: 400 });

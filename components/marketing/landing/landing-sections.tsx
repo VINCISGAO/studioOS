@@ -31,7 +31,7 @@ export function LandingHowItWorks({
   const t = landingText("steps", copyLocale);
 
   return (
-    <section id="how-it-works" className="bg-[#050505] py-10 text-white sm:py-20">
+    <section className="bg-[#050505] py-10 text-white sm:py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <RevealSection className="mx-auto max-w-3xl text-center">
           <MarketingEyebrowPill tone="dark">{t.eyebrow}</MarketingEyebrowPill>

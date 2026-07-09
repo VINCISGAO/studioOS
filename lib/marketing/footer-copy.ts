@@ -31,7 +31,7 @@ const creatorLinks: FooterNavItem[] = [
 
 const resourceLinks: FooterNavItem[] = [
   { label: "", href: "/case-studies" },
-  { label: "", href: "/contact" },
+  { label: "", href: "/faq" },
   { label: "", href: "/how-it-works" },
   { label: "", href: "/#escrow" }
 ];

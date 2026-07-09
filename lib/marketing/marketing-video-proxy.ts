@@ -2,9 +2,9 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { isObjectStorageConfigured } from "@/lib/core/config/video";
 import {
-  homeHeroVideoObjectKey,
-  homeHeroVideoPublicPaths,
+  heroR2ObjectKeyCandidates,
   marketingCdnBaseUrl,
+  resolveHeroLocalRelativePath,
   resolveHeroR2ObjectKey
 } from "@/lib/marketing/home-hero-video-sources";
 import { getObjectMetadata, getObjectRange } from "@/lib/studioos/object-storage";
@@ -47,35 +47,12 @@ function pathnameToObjectKey(pathname: string): string {
 
 function objectKeyCandidates(pathname: string): string[] {
   const keys = new Set<string>();
+  for (const heroKey of heroR2ObjectKeyCandidates(pathname)) {
+    keys.add(heroKey);
+  }
   const mappedHero = resolveHeroR2ObjectKey(pathname);
   if (mappedHero) keys.add(mappedHero);
-
-  const primary = pathnameToObjectKey(pathname);
-  keys.add(primary);
-  keys.add(primary.normalize("NFC"));
-  keys.add(primary.normalize("NFD"));
-
-  const parts = primary.split("/");
-  const file = parts.pop();
-  if (file) {
-    const dir = parts.join("/");
-    keys.add(`${dir}/${file.toLowerCase()}`);
-    keys.add(`${dir}/${file.toUpperCase()}`);
-    if (/\.mp4$/iu.test(file)) {
-      keys.add(`${dir}/${file.replace(/\.mp4$/iu, ".mp4")}`);
-      keys.add(`${dir}/${file.replace(/\.mp4$/iu, ".MP4")}`);
-    }
-  }
-
-  const filename = pathname.split("/").pop() ?? "";
-  for (const relative of Object.values(homeHeroVideoPublicPaths)) {
-    if (relative === pathname || relative.endsWith(filename)) {
-      keys.add(homeHeroVideoObjectKey(relative));
-      const heroMapped = resolveHeroR2ObjectKey(relative);
-      if (heroMapped) keys.add(heroMapped);
-    }
-  }
-
+  keys.add(pathnameToObjectKey(pathname));
   return [...keys];
 }
 
@@ -97,7 +74,7 @@ function buildUpstreamUrlCandidates(pathname: string): string[] {
   return [...urls];
 }
 
-const PROBE_CHUNK_BYTES = 4 * 1024 * 1024;
+const PROBE_CHUNK_BYTES = 2 * 1024 * 1024;
 
 function defaultProbeRange(total: number): string {
   const end = Math.min(total - 1, PROBE_CHUNK_BYTES - 1);
@@ -185,6 +162,9 @@ async function readLocalPublicVideo(
 ): Promise<Response | null> {
   const localCandidates = [
     path.join(process.cwd(), "public", pathname.replace(/^\/+/u, "")),
+    ...(resolveHeroLocalRelativePath(pathname)
+      ? [path.join(process.cwd(), "public", resolveHeroLocalRelativePath(pathname)!)]
+      : []),
     ...(resolveHeroR2ObjectKey(pathname)
       ? [path.join(process.cwd(), "public", resolveHeroR2ObjectKey(pathname)!)]
       : [])
@@ -322,7 +302,7 @@ async function fetchPublicCdn(
 
   for (const upstreamUrl of candidates) {
     const upstreamHeaders: HeadersInit = {};
-    if (rangeHeader && method !== "HEAD") {
+    if (rangeHeader) {
       upstreamHeaders.Range = rangeHeader;
     }
 
@@ -412,7 +392,7 @@ export async function proxyMarketingHomeVideo(request: Request): Promise<Respons
     const rangeHeader = request.headers.get("range");
     let effectiveRange = rangeHeader;
 
-    // Browsers often omit Range on the first GET — never pull the full 232MB object through serverless.
+    // Browsers often omit Range on the first GET — stream a small initial chunk only.
     if (method === "GET" && !effectiveRange) {
       const total = await resolveContentLength(pathname);
       if (total) {
@@ -423,16 +403,16 @@ export async function proxyMarketingHomeVideo(request: Request): Promise<Respons
     const local = await readLocalPublicVideo(pathname, effectiveRange, method);
     if (local) return local;
 
-    if (method === "GET") {
-      const streamed = await serveFromPublicCdn(pathname, effectiveRange, method);
+    if (method === "GET" || method === "HEAD") {
+      const streamed = await serveFromPublicCdn(pathname, effectiveRange ?? rangeHeader, method);
       if (streamed.status !== 404) return streamed;
     }
 
     const fromR2 = await serveFromR2Storage(pathname, effectiveRange, method);
     if (fromR2) return fromR2;
 
-    if (method !== "GET") {
-      return serveFromPublicCdn(pathname, rangeHeader, method);
+    if (method === "HEAD") {
+      return new Response("Not Found", { status: 404 });
     }
 
     return new Response("Not Found", { status: 404 });

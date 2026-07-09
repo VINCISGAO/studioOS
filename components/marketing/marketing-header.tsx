@@ -42,15 +42,15 @@ export async function MarketingHeader({ locale }: { locale: Locale }) {
           : "sticky top-0 z-50 border-b border-zinc-200/80 bg-white/90 backdrop-blur"
       )}
     >
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex min-h-[4.25rem] max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:min-h-16 sm:px-6 lg:px-8">
         <Link
           href={withLocale("/", locale)}
-          className={cn("flex items-center gap-2 font-semibold", isHome ? "text-white" : "text-zinc-950")}
+          className={cn("flex min-w-0 items-center gap-2 font-semibold", isHome ? "text-white" : "text-zinc-950")}
         >
           <BrandLogoLockup
             contrastOn={isHome ? "dark" : "light"}
-            markClassName="h-8 w-8 rounded-lg"
-            wordmarkClassName="h-[17px] w-[106px]"
+            markClassName="h-6 w-6 rounded-md sm:h-9 sm:w-9 sm:rounded-xl"
+            wordmarkClassName="h-[13px] w-[81px] sm:h-[21px] sm:w-[134px]"
             priority
           />
         </Link>

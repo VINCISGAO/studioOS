@@ -56,13 +56,42 @@ function isAuthMutationPath(pathname: string) {
 function isClearlyMaliciousUserAgent(userAgent: string) {
   const value = userAgent.toLowerCase();
   return (
-    !value ||
     value.includes("sqlmap") ||
     value.includes("nikto") ||
     value.includes("masscan") ||
     value.includes("nmap") ||
     value.includes("acunetix")
   );
+}
+
+function resolveAllowedOrigins(request: NextRequest): Set<string> {
+  const allowed = new Set<string>();
+  allowed.add(request.nextUrl.origin);
+
+  const host = request.headers.get("host")?.split(",")[0]?.trim();
+  if (host) {
+    allowed.add(`https://${host}`);
+    allowed.add(`http://${host}`);
+  }
+
+  const forwardedHost = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim();
+  const forwardedProto = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim() || "https";
+  if (forwardedHost) {
+    allowed.add(`${forwardedProto}://${forwardedHost}`);
+  }
+
+  for (const raw of [
+    process.env.VINCIS_APP_URL,
+    process.env.NEXT_PUBLIC_APP_URL,
+    process.env.NEXT_PUBLIC_SITE_URL,
+    "https://vincis.app"
+  ]) {
+    const value = raw?.trim();
+    if (!value) continue;
+    allowed.add(value.startsWith("http") ? value.replace(/\/+$/u, "") : `https://${value}`);
+  }
+
+  return allowed;
 }
 
 function enforceAuthEdgeRules(request: NextRequest): NextResponse | null {
@@ -80,12 +109,11 @@ function enforceAuthEdgeRules(request: NextRequest): NextResponse | null {
 
   if (request.method === "POST") {
     const origin = request.headers.get("origin");
-    const referer = request.headers.get("referer");
-    const expectedOrigin = request.nextUrl.origin;
-    const validOrigin = !origin || origin === expectedOrigin;
-    const validReferer = !referer || referer.startsWith(expectedOrigin);
-    if (!validOrigin || !validReferer) {
-      return NextResponse.json({ ok: false, error: "安全验证失败，请稍后重试。" }, { status: 403 });
+    if (origin) {
+      const allowedOrigins = resolveAllowedOrigins(request);
+      if (!allowedOrigins.has(origin)) {
+        return NextResponse.json({ ok: false, error: "安全验证失败，请稍后重试。" }, { status: 403 });
+      }
     }
   }
 

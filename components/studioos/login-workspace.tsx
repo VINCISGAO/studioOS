@@ -2,8 +2,10 @@
 
 import { Fragment, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { AlertCircle, ArrowRight, Check, Mail, Rocket, ShieldCheck, Sparkles, Users } from "lucide-react";
+import { loginEmailContinueAction, loginEmailStartAction } from "@/app/actions";
+import { AlertCircle, ArrowRight, Check, Mail, RefreshCw, Rocket, ShieldCheck, Sparkles, Users } from "lucide-react";
 import { LoginSubmitSpinner } from "@/components/studioos/login-demo-accounts";
+import { useLoginEmailResend } from "@/components/studioos/use-login-email-resend";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { Locale } from "@/lib/i18n";
@@ -43,9 +45,9 @@ export function LoginWorkspace({
   const [redirectTo, setRedirectTo] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | undefined>(error);
-  const [devCodeHint, setDevCodeHint] = useState<string | undefined>();
   const [sentHint, setSentHint] = useState<string | undefined>();
   const [clientErrorCode, setClientErrorCode] = useState<string | undefined>();
+  const { resend, resending, secondsLeft, canResend, markSent } = useLoginEmailResend(locale);
   const router = useRouter();
 
   const isWrongRole = errorCode === "wrong-role" || clientErrorCode === "wrong-role";
@@ -71,54 +73,40 @@ export function LoginWorkspace({
 
     try {
       if (step === "email") {
-        const response = await fetch("/api/auth/email/start", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, lang: locale })
-        });
-        const data = (await response.json().catch(() => null)) as {
-          ok?: boolean;
-          error?: string;
-          message?: string;
-          debugCode?: string;
-        } | null;
-        if (!response.ok || !data?.ok) {
+        const formData = new FormData();
+        formData.set("email", email);
+        formData.set("lang", locale);
+        const data = await loginEmailStartAction(formData);
+        if (!data?.ok) {
           setSentHint(undefined);
           setFormError(
             data?.error ??
-              (response.status === 503
-                ? locale === "zh"
-                  ? "认证服务暂不可用，请确认数据库迁移已执行。"
-                  : "Authentication service unavailable. Confirm database migrations are applied."
-                : locale === "zh"
-                  ? "请求过于频繁，请稍后再试。"
-                  : "Too many requests. Try again later.")
+              (locale === "zh"
+                ? "请求过于频繁，请稍后再试。"
+                : "Too many requests. Try again later.")
           );
           return;
         }
         setFormError(undefined);
         setSentHint(data.message);
-        setDevCodeHint(data.debugCode);
+        markSent();
         setStep("code");
         return;
       }
 
       if (step === "code") {
-        const response = await fetch("/api/auth/continue", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, code, lang: locale, role, next: nextPath || undefined })
-        });
-        const data = (await response.json()) as {
-          ok: boolean;
-          error?: string;
-          redirectTo?: string;
-        };
-        if (!response.ok || !data.ok || !data.redirectTo) {
-          setFormError(data.error ?? (locale === "zh" ? "验证码不正确或已过期。" : "Invalid or expired code."));
+        const formData = new FormData();
+        formData.set("email", email);
+        formData.set("code", code);
+        formData.set("lang", locale);
+        formData.set("role", role);
+        if (nextPath) formData.set("next", nextPath);
+        const data = await loginEmailContinueAction(formData);
+        if (!data?.ok || !("redirectTo" in data) || !data.redirectTo) {
+          setFormError(data?.error ?? (locale === "zh" ? "验证码不正确或已过期。" : "Invalid or expired code."));
           return;
         }
-        router.push(data.redirectTo);
+        window.location.assign(data.redirectTo);
         return;
       }
     } catch {
@@ -311,21 +299,12 @@ export function LoginWorkspace({
               <p
                 className={cn(
                   "rounded-xl border px-3 py-2 text-xs leading-5",
-                  devCodeHint
-                    ? darkPanel
-                      ? "border-amber-400/30 bg-amber-500/10 text-amber-100"
-                      : "border-amber-200 bg-amber-50 text-amber-900"
-                    : darkPanel
-                      ? "border-emerald-400/30 bg-emerald-500/10 text-emerald-100"
-                      : "border-emerald-200 bg-emerald-50 text-emerald-900"
+                  darkPanel
+                    ? "border-emerald-400/30 bg-emerald-500/10 text-emerald-100"
+                    : "border-emerald-200 bg-emerald-50 text-emerald-900"
                 )}
               >
                 {sentHint}
-                {devCodeHint
-                  ? locale === "zh"
-                    ? ` 验证码：${devCodeHint}`
-                    : ` Code: ${devCodeHint}`
-                  : null}
               </p>
             ) : null}
             <label htmlFor="code" className={labelClass}>
@@ -346,6 +325,46 @@ export function LoginWorkspace({
                 className={visual.input}
               />
             </div>
+            <div className="flex items-center justify-between gap-3 pt-1">
+              <p className={cn("text-[11px] leading-5 sm:text-xs", mutedClass)}>
+                {locale === "zh" ? "没收到邮件？请检查垃圾邮件文件夹。" : "Didn't get it? Check your spam folder."}
+              </p>
+              <button
+                type="button"
+                disabled={!canResend}
+                className={cn(
+                  "inline-flex shrink-0 items-center gap-1 text-xs font-medium transition",
+                  canResend
+                    ? darkPanel
+                      ? "text-violet-300 hover:text-violet-200"
+                      : "text-violet-600 hover:text-violet-700"
+                    : "cursor-not-allowed opacity-50"
+                )}
+                onClick={async () => {
+                  setFormError(undefined);
+                  const result = await resend(email);
+                  if (!result.ok) {
+                    setFormError(result.error);
+                    return;
+                  }
+                  setSentHint(result.message);
+                  setCode("");
+                }}
+              >
+                {resending ? (
+                  <LoginSubmitSpinner visible />
+                ) : (
+                  <RefreshCw className="h-3.5 w-3.5" />
+                )}
+                {canResend
+                  ? locale === "zh"
+                    ? "再次发送"
+                    : "Resend code"
+                  : locale === "zh"
+                    ? `${secondsLeft} 秒后可重发`
+                    : `Resend in ${secondsLeft}s`}
+              </button>
+            </div>
           </div>
         ) : null}
 
@@ -362,7 +381,6 @@ export function LoginWorkspace({
             onClick={() => {
               setStep("email");
               setCode("");
-              setDevCodeHint(undefined);
               setSentHint(undefined);
               setFormError(undefined);
             }}
