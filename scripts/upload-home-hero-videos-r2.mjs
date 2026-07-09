@@ -110,7 +110,8 @@ async function main() {
   const accessKey = requireEnv("R2_ACCESS_KEY");
   const secretKey = requireEnv("R2_SECRET_KEY");
   const region = process.env.R2_REGION?.trim() || "auto";
-  const cdn = process.env.NEXT_PUBLIC_MARKETING_CDN_URL?.trim().replace(/\/+$/u, "");
+  const upstream = process.env.MARKETING_CDN_UPSTREAM?.trim().replace(/\/+$/u, "");
+  const publicCdn = process.env.NEXT_PUBLIC_MARKETING_CDN_URL?.trim().replace(/\/+$/u, "");
 
   if (!endpoint) {
     throw new Error("Missing R2_ENDPOINT");
@@ -133,14 +134,19 @@ async function main() {
   for (const fileName of files.sort()) {
     const key = `videos/home/hero/${fileName}`;
     await uploadFile(client, bucket, key, path.join(heroDir, fileName));
-    if (cdn) {
-      console.log(`[upload-hero-videos] url ${cdn}${encodeURI(`/videos/home/hero/${fileName}`)}`);
+    const relative = `/videos/home/hero/${fileName}`;
+    if (upstream) {
+      console.log(`[upload-hero-videos] r2 ${upstream}${encodeURI(relative)}`);
+    }
+    console.log(`[upload-hero-videos] site https://vincis.app${encodeURI(relative)}`);
+    if (publicCdn) {
+      console.log(`[upload-hero-videos] cdn ${publicCdn}${encodeURI(relative)}`);
     }
   }
 
   console.log("[upload-hero-videos] done");
-  if (!cdn) {
-    console.log("[upload-hero-videos] set NEXT_PUBLIC_MARKETING_CDN_URL to your public R2/custom domain");
+  if (!upstream) {
+    console.log("[upload-hero-videos] set MARKETING_CDN_UPSTREAM to your R2 public URL (r2.dev or custom domain)");
   }
 }
 

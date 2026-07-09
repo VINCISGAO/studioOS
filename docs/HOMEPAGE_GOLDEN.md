@@ -37,6 +37,8 @@ git checkout homepage-golden -- public/images/social-sources/
 
 Hero videos are on R2/CDN (not git). Re-upload locally with `npm run marketing:upload-hero-videos` when filenames change.
 
+Production serves videos at `https://vincis.app/videos/home/hero/...` via Vercel rewrite → set `MARKETING_CDN_UPSTREAM` to your R2 public base URL (r2.dev or custom domain). Do **not** set `NEXT_PUBLIC_MARKETING_CDN_URL` unless overriding same-origin URLs.
+
 ## Anchor contents (homepage stack)
 
 - `app/page.tsx` → `HomeLandingPage` / `CinematicHomePage`
@@ -46,8 +48,8 @@ Hero videos are on R2/CDN (not git). Re-upload locally with `npm run marketing:u
 - `lib/marketing/**` — cinematic + landing copy
 - `app/api/home-hero-space/route.ts` + `lib/studioos/home-hero-space-asset.ts`
 - `public/images/home-hero-space.png`, login marketing images, `public/images/social-sources/` (footer SVGs)
-- `public/videos/home/hero/*.mp4` — multilingual homepage hero MP4s (**hosted on R2/CDN**, not in git; upload via `npm run marketing:upload-hero-videos`)
-- `NEXT_PUBLIC_MARKETING_CDN_URL` — public CDN base for hero videos in production
+- `public/videos/home/hero/*.mp4` — multilingual homepage hero MP4s (**hosted on R2**, not in git; upload via `npm run marketing:upload-hero-videos`)
+- `MARKETING_CDN_UPSTREAM` — R2 public base URL; Vercel rewrites `/videos/home/hero/*` so users always hit `vincis.app`
 - `lib/studioos/marketing-headline-font.ts` — silver gradient headline
 
 ## Owner override

@@ -42,7 +42,7 @@ This freeze applies to the marketing homepage stack, including (non-exhaustive):
 - `app/page.tsx` and homepage-related app routes that render this UI
 - `app/globals.css` (marketing / landing styles)
 - homepage assets under `public/images/` used by the cinematic landing
-- hero videos under `public/videos/home/hero/` (local dev only; production via R2/CDN + `NEXT_PUBLIC_MARKETING_CDN_URL`)
+- hero videos under `public/videos/home/hero/` (local dev only; production via R2 + `MARKETING_CDN_UPSTREAM` rewrite on `vincis.app`)
 
 It does **not** block changes to admin, brand portal, creator portal, APIs, database, or backend features.
 
