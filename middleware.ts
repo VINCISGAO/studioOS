@@ -102,8 +102,21 @@ function sanitizeBrokenLocaleSearch(request: NextRequest): NextResponse | null {
   return NextResponse.redirect(url);
 }
 
+function rewriteHomeHeroVideoToR2(request: NextRequest): NextResponse | null {
+  const pathname = request.nextUrl.pathname;
+  if (!pathname.startsWith("/videos/home/hero/")) return null;
+
+  const upstream = process.env.MARKETING_CDN_UPSTREAM?.trim().replace(/\/+$/u, "");
+  if (!upstream) return NextResponse.next();
+
+  return NextResponse.rewrite(new URL(`${pathname}${request.nextUrl.search}`, upstream));
+}
+
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+  const heroVideoRewrite = rewriteHomeHeroVideoToR2(request);
+  if (heroVideoRewrite) return heroVideoRewrite;
+
   const isApiRoute = pathname.startsWith("/api/");
 
   const authEdgeResponse = enforceAuthEdgeRules(request);
@@ -371,6 +384,7 @@ function redirectToLogin(request: NextRequest, error?: string) {
 
 export const config = {
   matcher: [
+    "/videos/home/hero/:path*",
     "/api/auth/:path*",
     "/api/admin/:path*",
     "/api/v1/admin/:path*",
