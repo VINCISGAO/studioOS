@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type MouseEvent } from "react";
 import { Maximize2, Minimize2, Play, Volume2, VolumeX } from "lucide-react";
 import type { Locale, MarketingLocale } from "@/lib/i18n";
 import { isChineseLanguage } from "@/lib/i18n";
@@ -201,6 +201,10 @@ export function HomeHeroVideo({
     };
   }, [videoSrc]);
 
+  useEffect(() => {
+    setHasVideoError(false);
+  }, [videoSrc]);
+
   function toggleSound() {
     const video = videoRef.current;
     if (!video) return;
@@ -256,14 +260,29 @@ export function HomeHeroVideo({
     iosVideo.webkitEnterFullscreen?.();
   }
 
-  const playAriaLabel = isChineseLanguage(videoLocale) ? "播放视频" : "Play video";
+  function handleShellClick(event: MouseEvent<HTMLDivElement>) {
+    if (hasVideoError) return;
+    const target = event.target as HTMLElement;
+    if (
+      target.closest(
+        ".home-hero-video-mute-btn, .home-hero-video-fullscreen-btn, .home-hero-video-bottom, .home-hero-video-range"
+      )
+    ) {
+      return;
+    }
+    togglePlayback();
+  }
+
+  const pauseAriaLabel = isChineseLanguage(videoLocale) ? "暂停视频" : "Pause video";
 
   return (
     <section className="bg-black px-0 py-0 lg:px-8 lg:py-0">
       <div
         ref={shellRef}
+        onClick={handleShellClick}
+        aria-label={!hasVideoError && isPlaying ? pauseAriaLabel : undefined}
         className={cn(
-          "home-hero-video-shell group relative w-full overflow-hidden rounded-none bg-black shadow-none lg:mx-auto lg:max-w-[1216px] lg:shadow-[0_28px_90px_-64px_rgba(0,0,0,0.55)]",
+          "home-hero-video-shell group relative w-full cursor-pointer overflow-hidden rounded-none bg-black shadow-none lg:mx-auto lg:max-w-[1216px] lg:shadow-[0_28px_90px_-64px_rgba(0,0,0,0.55)]",
           isFullscreen && "flex max-w-none items-center justify-center"
         )}
       >
@@ -291,20 +310,6 @@ export function HomeHeroVideo({
           onCanPlay={() => setHasVideoError(false)}
           onError={() => setHasVideoError(true)}
         />
-        {!hasVideoError ? (
-          <button
-            type="button"
-            aria-label={
-              isPlaying
-                ? isChineseLanguage(videoLocale)
-                  ? "暂停视频"
-                  : "Pause video"
-                : playAriaLabel
-            }
-            className="home-hero-video-hit-area absolute inset-0 z-[5] cursor-pointer bg-transparent"
-            onClick={togglePlayback}
-          />
-        ) : null}
         {!hasVideoError && !isPlaying ? (
           <div
             className="home-hero-video-center-btn pointer-events-none absolute left-1/2 top-1/2 z-[8] inline-flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-md sm:h-11 sm:w-11"
@@ -321,7 +326,7 @@ export function HomeHeroVideo({
                 event.stopPropagation();
                 toggleSound();
               }}
-              className="home-hero-video-mute-btn absolute left-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-md transition hover:bg-black/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 sm:left-4 sm:top-4 sm:h-10 sm:w-10"
+              className="home-hero-video-mute-btn pointer-events-auto absolute left-3 top-3 z-30 inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-md transition hover:bg-black/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 sm:left-4 sm:top-4 sm:h-10 sm:w-10"
               aria-pressed={!muted}
               aria-label={muted ? labels.soundOnAria : labels.muteAria}
             >
@@ -333,12 +338,12 @@ export function HomeHeroVideo({
                 event.stopPropagation();
                 toggleFullscreen();
               }}
-              className="home-hero-video-fullscreen-btn absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-md transition hover:bg-black/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 sm:right-4 sm:top-4 sm:h-10 sm:w-10"
+              className="home-hero-video-fullscreen-btn pointer-events-auto absolute right-3 top-3 z-30 inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-md transition hover:bg-black/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 sm:right-4 sm:top-4 sm:h-10 sm:w-10"
               aria-label={isFullscreen ? labels.exitFullscreen : labels.fullscreen}
             >
               {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
             </button>
-            <div className="home-hero-video-bottom absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 via-black/30 to-transparent px-3 pb-3 pt-6 sm:px-4 sm:pb-3.5">
+            <div className="home-hero-video-bottom pointer-events-auto absolute inset-x-0 bottom-0 z-30 bg-gradient-to-t from-black/75 via-black/30 to-transparent px-3 pb-3 pt-6 sm:px-4 sm:pb-3.5">
               <span className="mb-1 block text-[11px] font-medium tabular-nums text-white sm:text-xs">
                 {formatVideoTime(progress)} / {formatVideoTime(duration)}
               </span>
@@ -371,6 +376,27 @@ export function HomeHeroVideo({
                 aria-valuenow={progress}
               />
             </div>
+          </div>
+        ) : null}
+        {hasVideoError ? (
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-zinc-950 px-6 text-center">
+            <p className="text-sm text-zinc-300">
+              {isChineseLanguage(videoLocale) ? "视频暂时无法播放" : "Video is temporarily unavailable"}
+            </p>
+            <button
+              type="button"
+              className="rounded-full border border-white/20 px-4 py-1.5 text-xs text-white transition hover:bg-white/10"
+              onClick={(event) => {
+                event.stopPropagation();
+                const video = videoRef.current;
+                if (!video) return;
+                setHasVideoError(false);
+                video.load();
+                void video.play().catch(() => setHasVideoError(true));
+              }}
+            >
+              {isChineseLanguage(videoLocale) ? "重试" : "Retry"}
+            </button>
           </div>
         ) : null}
       </div>
