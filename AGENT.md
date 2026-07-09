@@ -129,7 +129,7 @@ Never ask for confirmation unless the decision changes product behavior, busines
 
 The marketing homepage is a **protected asset**.
 
-Golden baseline: **the current owner-approved homepage in this working tree**. Treat the current homepage as the latest golden standard unless the project owner explicitly re-anchors it.
+Golden baseline: **owner-locked 2026-07-09** · commit **`17a98b7`** · [`docs/HOMEPAGE_GOLDEN.md`](docs/HOMEPAGE_GOLDEN.md) · [`docs/HOMEPAGE_HERO_VIDEO_BASELINE.json`](docs/HOMEPAGE_HERO_VIDEO_BASELINE.json). Treat this as the only golden standard until the owner explicitly re-anchors.
 
 Legacy anchors: **`homepage-golden`** branch · **`homepage-v1`** tag
 

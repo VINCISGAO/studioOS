@@ -1,0 +1,67 @@
+{
+  "anchoredAt": "2026-07-09",
+  "gitCommit": "17a98b7",
+  "cacheVersion": "7",
+  "resolverModule": "lib/marketing/home-hero-video-sources.ts",
+  "urlPattern": "/videos/home/hero/{encodedFilename}?cv={cacheVersion}",
+  "productionOrigin": "https://vincis.app",
+  "r2KeyCandidates": ["videos/home/hero/{filename}", "{filename}"],
+  "languages": {
+    "en": {
+      "filename": "VINCIS Brand Film (EN).mp4",
+      "playbackUrl": "https://vincis.app/videos/home/hero/VINCIS%20Brand%20Film%20(EN).mp4?cv=7",
+      "homepageUrl": "https://vincis.app/?lang=en"
+    },
+    "zh-CN": {
+      "filename": "VINCIS Brand Film (ZH-CN).mp4",
+      "playbackUrl": "https://vincis.app/videos/home/hero/VINCIS%20Brand%20Film%20(ZH-CN).mp4?cv=7",
+      "homepageUrl": "https://vincis.app/?lang=zh-CN",
+      "langAliases": ["zh"]
+    },
+    "zh-TW": {
+      "filename": "VINCIS Brand Film (ZH-TW).mp4",
+      "playbackUrl": "https://vincis.app/videos/home/hero/VINCIS%20Brand%20Film%20(ZH-TW).mp4?cv=7",
+      "homepageUrl": "https://vincis.app/?lang=zh-TW"
+    },
+    "ja": {
+      "filename": "VINCIS Brand Film (JA).mp4",
+      "playbackUrl": "https://vincis.app/videos/home/hero/VINCIS%20Brand%20Film%20(JA).mp4?cv=7",
+      "homepageUrl": "https://vincis.app/?lang=ja"
+    },
+    "ko": {
+      "filename": "VINCIS Brand Film (KO).mp4",
+      "playbackUrl": "https://vincis.app/videos/home/hero/VINCIS%20Brand%20Film%20(KO).mp4?cv=7",
+      "homepageUrl": "https://vincis.app/?lang=ko"
+    },
+    "ms": {
+      "filename": "VINCIS Brand Film (MS).mp4",
+      "playbackUrl": "https://vincis.app/videos/home/hero/VINCIS%20Brand%20Film%20(MS).mp4?cv=7",
+      "homepageUrl": "https://vincis.app/?lang=ms"
+    },
+    "km": {
+      "filename": "VINCIS Brand Film (KM).mp4",
+      "playbackUrl": "https://vincis.app/videos/home/hero/VINCIS%20Brand%20Film%20(KM).mp4?cv=7",
+      "homepageUrl": "https://vincis.app/?lang=km"
+    },
+    "th": {
+      "filename": "VINCIS Brand Film (TH).mp4",
+      "playbackUrl": "https://vincis.app/videos/home/hero/VINCIS%20Brand%20Film%20(TH).mp4?cv=7",
+      "homepageUrl": "https://vincis.app/?lang=th"
+    },
+    "vi": {
+      "filename": "VINCIS Brand Film (VI).mp4",
+      "playbackUrl": "https://vincis.app/videos/home/hero/VINCIS%20Brand%20Film%20(VI).mp4?cv=7",
+      "homepageUrl": "https://vincis.app/?lang=vi"
+    },
+    "fr": {
+      "filename": "VINCIS Brand Film (FR).mp4",
+      "playbackUrl": "https://vincis.app/videos/home/hero/VINCIS%20Brand%20Film%20(FR).mp4?cv=7",
+      "homepageUrl": "https://vincis.app/?lang=fr"
+    },
+    "es": {
+      "filename": "VINCIS Brand Film (ES).mp4",
+      "playbackUrl": "https://vincis.app/videos/home/hero/VINCIS%20Brand%20Film%20(ES).mp4?cv=7",
+      "homepageUrl": "https://vincis.app/?lang=es"
+    }
+  }
+}

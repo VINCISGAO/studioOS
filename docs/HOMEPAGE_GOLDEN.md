@@ -1,67 +1,91 @@
 # Homepage Golden Baseline
 
-**Status:** Canonical anchor for the marketing homepage.
+**Status:** Canonical anchor — **owner-locked 2026-07-09 (post-publish)**  
+**Git commit:** `17a98b7` on `main`  
+**Tag / branch:** `homepage-v1` · `homepage-golden` (re-anchored via `npm run homepage:anchor`)
 
-**Current golden baseline:** owner-approved homepage re-anchored **2026-07-09** — multilingual hero videos, footer redesign, landing section polish, capsule eyebrows.
-
-**Legacy branch:** `homepage-golden`  
-**Legacy tag:** `homepage-v1`
+> **Owner rule (2026-07-09):** No agent and no engineer may change homepage stack files **without the project owner's explicit command in the current conversation.** This includes copy, video URLs, layout, animations, and assets.
 
 ## Policy
 
-The homepage is **frozen**. Do not change copy, layout, spacing, responsiveness, structure, visual hierarchy, interaction design, animations, assets, or logo treatment unless the project owner explicitly commands that exact homepage change in the current conversation.
+The homepage is **frozen**. See [`AGENT.md`](../AGENT.md) · [`components/marketing/README.md`](../components/marketing/README.md).
 
-See:
+Allowed **only** when the owner explicitly requests in the **current** task:
 
-- [`AGENT.md`](../AGENT.md) — Homepage Freeze Policy
-- [`components/marketing/README.md`](../components/marketing/README.md)
+- The exact homepage change they named (nothing extra)
 
-## Allowed without redesign
+Not allowed without owner command:
 
-Bug fixes, accessibility improvements, localization, and content updates — **only when explicitly requested by the owner** and only if they do not exceed the requested scope.
-
-## Restore homepage only
-
-```bash
-git checkout homepage-v1 -- components/marketing/
-git checkout homepage-golden -- app/page.tsx
-git checkout homepage-golden -- components/marketing/
-git checkout homepage-golden -- components/language-switcher.tsx
-git checkout homepage-golden -- lib/marketing/
-git checkout homepage-golden -- app/globals.css
-git checkout homepage-golden -- public/images/home-hero-space.png
-git checkout homepage-golden -- public/images/login-space-bg.png
-git checkout homepage-golden -- public/images/login/
-git checkout homepage-golden -- public/images/social-sources/
-```
-
-Hero videos are on R2/CDN (not git). Re-upload locally with `npm run marketing:upload-hero-videos` when filenames change.
-
-Production serves videos at `https://vincis.app/videos/home/hero/...` via Vercel rewrite → set `MARKETING_CDN_UPSTREAM` to your R2 public base URL (r2.dev or custom domain). Do **not** set `NEXT_PUBLIC_MARKETING_CDN_URL` unless overriding same-origin URLs.
+- Refactors, redesigns, copy tweaks, spacing, responsiveness, animations, assets, logo treatment, video filenames, cache version bumps
 
 ## Anchor contents (homepage stack)
 
-- `app/page.tsx` → `HomeLandingPage` / `CinematicHomePage`
-- `app/globals.css` — landing / marketing utility styles used by homepage
-- `components/marketing/**` — cinematic hero, hero video, sections, footer, landing copy wiring
-- `components/language-switcher.tsx` — footer language control (icon variant)
-- `lib/marketing/**` — cinematic + landing copy
-- `app/api/home-hero-space/route.ts` + `lib/studioos/home-hero-space-asset.ts`
-- `public/images/home-hero-space.png`, login marketing images, `public/images/social-sources/` (footer SVGs)
-- `public/videos/home/hero/*.mp4` — multilingual homepage hero MP4s (**hosted on R2**, not in git; upload via `npm run marketing:upload-hero-videos`)
-- `MARKETING_CDN_UPSTREAM` — R2 public base URL; Vercel rewrites `/videos/home/hero/*` so users always hit `vincis.app`
-- `lib/studioos/marketing-headline-font.ts` — silver gradient headline
+| Area | Path |
+|------|------|
+| Page entry | `app/page.tsx` → `HomeLandingPage` / `CinematicHomePage` |
+| Video resolver | `lib/marketing/home-hero-video-sources.ts` |
+| Copy | `lib/marketing/landing-copy.ts`, `lib/marketing/cinematic-copy.ts`, `lib/marketing/footer-copy.ts` |
+| UI | `components/marketing/**`, `components/language-switcher.tsx` |
+| Styles | `app/globals.css` (marketing utilities) |
+| Proxy | `lib/marketing/marketing-video-proxy.ts`, `app/videos/[...path]/route.ts` |
+| Upload / verify | `scripts/upload-home-hero-videos-r2.mjs`, `scripts/verify-home-hero-r2.mjs` |
 
-## Owner override
+**No** `<link rel="preload" as="video">` on homepage (Safari download bug) — `app/page.tsx` passes `heroVideoSrc` only to `HomeHeroVideo`.
 
-Only replace, redesign, or edit homepage files when the owner **explicitly** commands that exact change in the current task.
+## Hero copy (zh-CN baseline — no trailing periods)
 
-## Publish / re-anchor this baseline
+| Field | Value |
+|-------|-------|
+| eyebrow | `AI 驱动 · 全球协作` |
+| titleLine1 | `连接全球品牌与AI创作者` |
+| subtitle line 1 | `让好的创意不再因成本、时间或资源被埋没` |
+| subtitle line 2 | `世界级广告不再是大公司的专属` |
 
-When the owner approves a new golden snapshot:
+All 11 marketing locales: subtitle **two lines, no sentence-ending punctuation** — see `landingCopy.hero` + `landingCopyTranslations.hero` in `lib/marketing/landing-copy.ts`.
+
+## Hero video — 11 languages (canonical)
+
+**Resolver:** `resolveHomeHeroVideoPlaybackSrc(locale)` in `lib/marketing/home-hero-video-sources.ts`  
+**Cache bust:** `HERO_VIDEO_CACHE_VERSION = "7"` → query `?cv=7`  
+**Public path pattern:** `/videos/home/hero/{encodeURIComponent(filename)}?cv=7`  
+**Production origin:** `https://vincis.app` (same-origin proxy → R2 via `MARKETING_CDN_UPSTREAM`)  
+**R2 key candidates (in order):** `videos/home/hero/{filename}` then flat `{filename}`
+
+| `lang` param | R2 / CDN filename | Full playback URL (production) |
+|--------------|-------------------|--------------------------------|
+| `en` | `VINCIS Brand Film (EN).mp4` | `https://vincis.app/videos/home/hero/VINCIS%20Brand%20Film%20(EN).mp4?cv=7` |
+| `zh-CN` (also `zh`) | `VINCIS Brand Film (ZH-CN).mp4` | `https://vincis.app/videos/home/hero/VINCIS%20Brand%20Film%20(ZH-CN).mp4?cv=7` |
+| `zh-TW` | `VINCIS Brand Film (ZH-TW).mp4` | `https://vincis.app/videos/home/hero/VINCIS%20Brand%20Film%20(ZH-TW).mp4?cv=7` |
+| `ja` | `VINCIS Brand Film (JA).mp4` | `https://vincis.app/videos/home/hero/VINCIS%20Brand%20Film%20(JA).mp4?cv=7` |
+| `ko` | `VINCIS Brand Film (KO).mp4` | `https://vincis.app/videos/home/hero/VINCIS%20Brand%20Film%20(KO).mp4?cv=7` |
+| `ms` | `VINCIS Brand Film (MS).mp4` | `https://vincis.app/videos/home/hero/VINCIS%20Brand%20Film%20(MS).mp4?cv=7` |
+| `km` | `VINCIS Brand Film (KM).mp4` | `https://vincis.app/videos/home/hero/VINCIS%20Brand%20Film%20(KM).mp4?cv=7` |
+| `th` | `VINCIS Brand Film (TH).mp4` | `https://vincis.app/videos/home/hero/VINCIS%20Brand%20Film%20(TH).mp4?cv=7` |
+| `vi` | `VINCIS Brand Film (VI).mp4` | `https://vincis.app/videos/home/hero/VINCIS%20Brand%20Film%20(VI).mp4?cv=7` |
+| `fr` | `VINCIS Brand Film (FR).mp4` | `https://vincis.app/videos/home/hero/VINCIS%20Brand%20Film%20(FR).mp4?cv=7` |
+| `es` | `VINCIS Brand Film (ES).mp4` | `https://vincis.app/videos/home/hero/VINCIS%20Brand%20Film%20(ES).mp4?cv=7` |
+
+**Homepage with locale:** `https://vincis.app/?lang={code}` (e.g. `?lang=ja`).
+
+**Deploy videos to R2:** `npm run marketing:deploy-hero-videos`  
+**Verify R2 objects:** `npm run marketing:verify-hero-videos`
+
+## Re-anchor this baseline
+
+When the owner approves a **new** golden snapshot:
 
 ```bash
 npm run homepage:anchor
 ```
 
-This commits homepage stack files, updates `homepage-v1` tag and `homepage-golden` branch, and pushes to GitHub. Log: `.homepage-golden-anchor.log`
+Updates `homepage-v1` tag + `homepage-golden` branch, pushes to GitHub. Log: `.homepage-golden-anchor.log`
+
+## Restore homepage only (without touching product)
+
+```bash
+git checkout homepage-v1 -- components/marketing/
+# or full stack:
+git checkout homepage-golden -- app/page.tsx components/marketing/ lib/marketing/ app/globals.css
+```
+
+Hero MP4s live on **R2**, not git — re-upload with `npm run marketing:deploy-hero-videos` if filenames change.

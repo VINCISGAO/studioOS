@@ -29,6 +29,7 @@ run("node scripts/copy-marketing-assets.mjs");
 const paths = [
   "AGENT.md",
   "docs/HOMEPAGE_GOLDEN.md",
+  "docs/HOMEPAGE_HERO_VIDEO_BASELINE.json",
   ".cursor/rules/agent.mdc",
   "app/page.tsx",
   "app/globals.css",
@@ -54,7 +55,7 @@ run("git diff --cached --stat");
 
 if (run("git diff --cached --quiet") !== 0) {
   run(
-    'git commit -m "chore(homepage): re-anchor golden baseline (homepage-v1)." -m "2026-07-09: multilingual hero videos, footer redesign, landing section polish, social SVGs, and freeze docs."'
+    'git commit -m "chore(homepage): re-anchor golden baseline (homepage-v1)." -m "2026-07-09 owner lock @ 17a98b7: 11-lang hero videos cv=7, hero copy no periods, Safari preload removed, docs/HOMEPAGE_HERO_VIDEO_BASELINE.json."'
   );
 } else {
   lines.push("(no staged changes — tagging current HEAD)");

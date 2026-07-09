@@ -2,9 +2,11 @@
 
 This folder is the **canonical marketing homepage**.
 
-**Golden baseline:** owner-approved homepage re-anchored **2026-07-09** (multilingual hero videos, footer redesign, landing polish). Legacy anchors: `homepage-golden` branch · `homepage-v1` tag · see [`docs/HOMEPAGE_GOLDEN.md`](../docs/HOMEPAGE_GOLDEN.md)
+**Golden baseline:** owner-locked **2026-07-09** · commit **`17a98b7`** · 11-language hero videos (`cv=7`), footer redesign, hero copy without trailing periods. See [`docs/HOMEPAGE_GOLDEN.md`](../docs/HOMEPAGE_GOLDEN.md) and [`docs/HOMEPAGE_HERO_VIDEO_BASELINE.json`](../docs/HOMEPAGE_HERO_VIDEO_BASELINE.json). Legacy anchors: `homepage-golden` branch · `homepage-v1` tag.
 
 ## Agent policy
+
+**Owner lock (2026-07-09):** Do not change anything in the homepage stack unless the project owner **explicitly commands that exact change in the current conversation.** No copy tweaks, no video URL changes, no layout fixes, no refactors — ask first if unsure.
 
 No AI agent may:
 
