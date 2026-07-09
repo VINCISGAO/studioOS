@@ -9,6 +9,7 @@ export const WORK_CATEGORY_LABELS: Record<string, Bilingual> = {
   Beauty: { en: "Beauty", zh: "美妆护肤" },
   "Consumer packaged goods": { en: "Consumer packaged goods", zh: "快消包装" },
   "Consumer tech": { en: "Consumer tech", zh: "数码科技" },
+  Automotive: { en: "Automotive ads", zh: "汽车广告" },
   Fashion: { en: "Fashion", zh: "时尚服饰" },
   "Food and beverage": { en: "Food and beverage", zh: "食品饮料" },
   Home: { en: "Home", zh: "家居生活" },

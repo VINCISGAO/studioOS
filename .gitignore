@@ -56,6 +56,8 @@ Database_Backup_*.sql
 public/uploads/**/*.mp4
 public/uploads/**/*.mov
 public/videos/home/hero/*.mp4
+public/videos/home/recent-work/*.mp4
+public/videos/home/recent-work/*.MP4
 
 # Test artifacts
 playwright-report/

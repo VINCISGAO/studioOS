@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState, type MouseEvent } from "react";
 import Link from "next/link";
 import { ArrowRight, Play } from "lucide-react";
 import { WorkCoverImage } from "@/components/creator/work-cover-image";
@@ -10,11 +11,58 @@ import { creators } from "@/lib/data";
 import type { Locale, MarketingLocale } from "@/lib/i18n";
 import { isChineseLanguage, withLocale } from "@/lib/i18n";
 import { labelPlatform, labelWorkCategory } from "@/lib/localized-options";
-import { resolveWorkThumbnail } from "@/lib/media-url";
+import { resolveVideoEmbed, resolveWorkThumbnail } from "@/lib/media-url";
 import type { CreatorWork } from "@/lib/types";
 import type { WorkEngagementSnapshot } from "@/lib/work-engagement-utils";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+
+function WorkCardMedia({
+  work,
+  className,
+  featured = false,
+  videoRef,
+  muted,
+  onError
+}: {
+  work: CreatorWork;
+  className: string;
+  featured?: boolean;
+  videoRef: React.RefObject<HTMLVideoElement | null>;
+  muted: boolean;
+  onError: () => void;
+}) {
+  const embed = resolveVideoEmbed(work.video_url);
+  const poster = resolveWorkThumbnail(work.video_url, work.thumbnail_url);
+
+  if (embed.kind === "video") {
+    return (
+      <video
+        ref={videoRef}
+        src={embed.src}
+        poster={poster ?? undefined}
+        className={cn(className, "absolute inset-0")}
+        muted={muted}
+        loop
+        playsInline
+        autoPlay
+        preload={featured ? "auto" : "metadata"}
+        aria-label={work.title}
+        onError={onError}
+      />
+    );
+  }
+
+  if (poster) {
+    return <WorkCoverImage src={poster} alt={work.title} className={className} />;
+  }
+
+  return (
+    <div className="flex h-full w-full items-center justify-center bg-zinc-800 text-xs text-zinc-500">
+      {work.title}
+    </div>
+  );
+}
 
 function WorkCard({
   work,
@@ -27,66 +75,140 @@ function WorkCard({
   copyLocale?: Locale | MarketingLocale;
   featured?: boolean;
 }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [useFallback, setUseFallback] = useState(false);
+  const [muted, setMuted] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(true);
+  const embed = resolveVideoEmbed(work.video_url);
+  const hasInlineVideo = embed.kind === "video" && !useFallback;
+
   const creator = creators.find((item) => item.id === work.creator_id);
   const href = creator
     ? withLocale(`/creators/${creator.id}?work=${work.id}`, copyLocale)
     : withLocale("/case-studies", copyLocale);
-  const poster = resolveWorkThumbnail(work.video_url, work.thumbnail_url);
+  const mediaClassName = "h-full w-full object-cover transition duration-700 group-hover:scale-[1.04]";
   const meta = `${labelWorkCategory(work.category, locale)} · ${labelPlatform(work.platform, locale)}`;
   const featuredLabel = landingText("work", copyLocale).featured;
 
-  return (
-    <Link href={href} className={cn("group block h-full", !featured && "rounded-2xl bg-white shadow-[0_14px_40px_-28px_rgba(0,0,0,0.35)]")}>
-      <div
-        className={cn(
-          "relative overflow-hidden bg-zinc-900 transition duration-500",
-          featured
-            ? "h-[260px] rounded-2xl shadow-[0_18px_60px_-30px_rgba(0,0,0,0.45)] sm:h-[360px]"
-            : "h-[118px] rounded-t-2xl sm:h-[112px]"
-        )}
-      >
-        {poster ? (
-          <WorkCoverImage
-            src={poster}
-            alt={work.title}
-            className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.04]"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center bg-zinc-800 text-xs text-zinc-500">
-            {work.title}
-          </div>
-        )}
-        {featured ? (
-          <>
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent opacity-90 transition group-hover:opacity-100" />
-            <span className="absolute left-5 top-5 inline-flex items-center gap-1.5 rounded-full bg-black/80 px-3 py-1.5 text-[11px] font-medium text-white shadow-sm">
-              <span className="text-violet-300">✦</span>
-              {featuredLabel}
-            </span>
-            <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6">
-              <h3 className="text-lg font-semibold text-white line-clamp-1">{work.title}</h3>
-              <p className="mt-1 text-xs text-zinc-300">{meta}</p>
-              <span className="mt-7 inline-flex items-center gap-2 text-xs font-medium text-white">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-zinc-950">
-                  <Play className="ml-0.5 h-3 w-3 fill-zinc-950" />
-                </span>
-                {isChineseLanguage(copyLocale) ? "观看案例视频" : "Watch case video"}
-              </span>
-            </div>
-          </>
-        ) : null}
-      </div>
-      {!featured ? (
-        <div className="flex items-center justify-between gap-3 p-3">
-          <span className="min-w-0">
-            <h3 className="text-sm font-semibold text-zinc-950 line-clamp-1">{work.title}</h3>
-            <p className="mt-1 text-xs text-zinc-500">{meta}</p>
-          </span>
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-black/10 bg-white text-zinc-950 transition group-hover:border-black/20 group-hover:bg-zinc-950 group-hover:text-white">
-            <ArrowRight className="h-4 w-4" />
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !hasInlineVideo) return;
+    const onPlay = () => setIsPlaying(true);
+    const onPause = () => setIsPlaying(false);
+    video.addEventListener("play", onPlay);
+    video.addEventListener("pause", onPause);
+    setIsPlaying(!video.paused);
+    void video.play().catch(() => setIsPlaying(false));
+    return () => {
+      video.removeEventListener("play", onPlay);
+      video.removeEventListener("pause", onPause);
+    };
+  }, [hasInlineVideo, embed.kind === "video" ? embed.src : ""]);
+
+  function toggleInlineVideo(event: MouseEvent) {
+    if (!hasInlineVideo) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const video = videoRef.current;
+    if (!video) return;
+    if (video.paused) {
+      setMuted(false);
+      video.muted = false;
+      void video.play().catch(() => undefined);
+      return;
+    }
+    video.pause();
+  }
+
+  const shellClassName = cn(
+    "group block h-full",
+    !featured && "rounded-2xl bg-white shadow-[0_14px_40px_-28px_rgba(0,0,0,0.35)]",
+    hasInlineVideo && "cursor-pointer"
+  );
+
+  const mediaBlock = (
+    <div
+      className={cn(
+        "relative overflow-hidden bg-zinc-900 transition duration-500",
+        featured
+          ? "h-[260px] rounded-2xl shadow-[0_18px_60px_-30px_rgba(0,0,0,0.45)] sm:h-[360px]"
+          : "h-[118px] rounded-t-2xl sm:h-[112px]"
+      )}
+      onClick={hasInlineVideo ? toggleInlineVideo : undefined}
+      role={hasInlineVideo ? "button" : undefined}
+      aria-label={
+        hasInlineVideo
+          ? isChineseLanguage(copyLocale)
+            ? `播放或暂停 ${work.title}`
+            : `Play or pause ${work.title}`
+          : undefined
+      }
+    >
+      <WorkCardMedia
+        work={work}
+        className={mediaClassName}
+        featured={featured}
+        videoRef={videoRef}
+        muted={muted}
+        onError={() => setUseFallback(true)}
+      />
+      {hasInlineVideo && !isPlaying ? (
+        <div className="pointer-events-none absolute inset-0 z-[2] flex items-center justify-center">
+          <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-md sm:h-11 sm:w-11">
+            <Play className="ml-0.5 h-4 w-4 fill-current" />
           </span>
         </div>
       ) : null}
+      {featured ? (
+        <>
+          <div className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-black/75 via-black/20 to-black/5" />
+          <span className="pointer-events-none absolute left-5 top-5 z-[2] inline-flex items-center gap-1.5 rounded-full bg-black/80 px-3 py-1.5 text-[11px] font-medium text-white shadow-sm">
+            <span className="text-violet-300">✦</span>
+            {featuredLabel}
+          </span>
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] flex items-end justify-between gap-4 p-5 sm:p-6">
+            <span className="inline-flex shrink-0 items-center gap-2 text-xs font-medium text-white">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-zinc-950">
+                <Play className="ml-0.5 h-3 w-3 fill-zinc-950" />
+              </span>
+              {isChineseLanguage(copyLocale) ? "观看案例视频" : "Watch case video"}
+            </span>
+            <span className="min-w-0 text-right">
+              <p className="text-xs text-zinc-300 sm:text-sm">{meta}</p>
+            </span>
+          </div>
+        </>
+      ) : null}
+    </div>
+  );
+
+  const footer = !featured ? (
+    <div className="flex items-center justify-between gap-3 p-3">
+      <span className="min-w-0">
+        <h3 className="text-sm font-semibold text-zinc-950 line-clamp-1">{work.title}</h3>
+        <p className="mt-1 text-xs text-zinc-500">{meta}</p>
+      </span>
+      {!hasInlineVideo ? (
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-black/10 bg-white text-zinc-950 transition group-hover:border-black/20 group-hover:bg-zinc-950 group-hover:text-white">
+          <ArrowRight className="h-4 w-4" />
+        </span>
+      ) : null}
+    </div>
+  ) : null;
+
+  if (hasInlineVideo) {
+    return (
+      <div className={shellClassName}>
+        {mediaBlock}
+        {footer}
+      </div>
+    );
+  }
+
+  return (
+    <Link href={href} className={shellClassName}>
+      {mediaBlock}
+      {footer}
     </Link>
   );
 }

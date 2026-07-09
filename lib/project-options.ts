@@ -27,6 +27,7 @@ export const workCategories = [
   "Beauty",
   "Consumer packaged goods",
   "Consumer tech",
+  "Automotive",
   "Fashion",
   "Food and beverage",
   "Home",

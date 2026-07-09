@@ -153,7 +153,7 @@ export function HomeHeroVideo({
   const [duration, setDuration] = useState(0);
   const [progress, setProgress] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(true);
   const videoLocale: MarketingLocale = locale === "zh" ? "zh-CN" : (locale as MarketingLocale);
   const labels = videoLabels[videoLocale] ?? videoLabels.en;
   const videoSrc = videoSrcProp ?? resolveHomeHeroVideoSrc(videoLocale);
@@ -180,8 +180,8 @@ export function HomeHeroVideo({
 
     syncDuration();
     syncProgress();
-    video.pause();
-    setIsPlaying(false);
+    setIsPlaying(!video.paused);
+    void video.play().catch(() => setIsPlaying(false));
     video.addEventListener("loadedmetadata", syncDuration);
     video.addEventListener("durationchange", syncDuration);
     video.addEventListener("timeupdate", syncProgress);
@@ -277,14 +277,17 @@ export function HomeHeroVideo({
               ? "h-auto max-h-full w-auto max-w-full shrink-0 object-contain object-center"
               : "aspect-[21/9] object-cover"
           )}
-          autoPlay={false}
+          autoPlay
           muted={muted}
           loop
           playsInline
-          preload="metadata"
+          preload="auto"
           aria-label={labels.video}
           onPlay={() => setIsPlaying(true)}
           onPause={() => setIsPlaying(false)}
+          onLoadedData={() => {
+            void videoRef.current?.play().catch(() => setIsPlaying(false));
+          }}
           onCanPlay={() => setHasVideoError(false)}
           onError={() => setHasVideoError(true)}
         />
