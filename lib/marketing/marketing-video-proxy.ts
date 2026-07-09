@@ -272,13 +272,9 @@ async function serveFromR2Storage(
     });
   }
 
+  // Never buffer entire objects in serverless — only honour explicit byte ranges.
   if (!rangeHeader) {
-    const body = await getObjectRange(key);
-    if (!body) return null;
-    return new Response(toResponseBody(body), {
-      status: 200,
-      headers: { ...baseHeaders, "Content-Length": String(total) }
-    });
+    return null;
   }
 
   const parsed = parseByteRange(rangeHeader, total);
@@ -400,8 +396,18 @@ export async function proxyMarketingHomeVideo(request: Request): Promise<Respons
   const local = await readLocalPublicVideo(pathname, rangeHeader, method);
   if (local) return local;
 
+  // Stream through R2 public CDN first — native Range support, no serverless body limits.
+  if (method === "GET") {
+    const streamed = await serveFromPublicCdn(pathname, rangeHeader, method);
+    if (streamed.status !== 404) return streamed;
+  }
+
   const fromR2 = await serveFromR2Storage(pathname, rangeHeader, method);
   if (fromR2) return fromR2;
 
-  return serveFromPublicCdn(pathname, rangeHeader, method);
+  if (method !== "GET") {
+    return serveFromPublicCdn(pathname, rangeHeader, method);
+  }
+
+  return new Response("Not Found", { status: 404 });
 }

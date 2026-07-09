@@ -50,12 +50,16 @@ export function marketingCdnBaseUrl(): string | null {
   return base.replace(/\/+$/u, "");
 }
 
+/** Bust browser/CDN caches after proxy URL changes. */
+const HERO_VIDEO_CACHE_VERSION = "3";
+
 /**
  * Same-origin hero video path — production proxies `/videos/home/*` via `app/videos/[...path]/route.ts`.
  * Avoid direct r2.dev URLs in `<video src>` (Safari logs `TypeError: Load failed` on cross-origin media).
  */
 export function resolveHomeHeroVideoPlaybackSrc(locale: MarketingLocale): string {
-  return homeHeroVideoPublicPaths[locale] ?? homeHeroVideoPublicPaths.en;
+  const base = homeHeroVideoPublicPaths[locale] ?? homeHeroVideoPublicPaths.en;
+  return `${base}?cv=${HERO_VIDEO_CACHE_VERSION}`;
 }
 
 export function resolveHomeHeroVideoSrc(locale: MarketingLocale): string {
