@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { cookies, headers } from "next/headers";
 import { performSignIn, recordCreatorSignIn } from "@/lib/auth/sign-in-service";
 import { authService } from "@/features/auth/auth.service";
+import { isExplicitDemoLoginEnabled } from "@/lib/runtime-flags";
 import { preferDemoAuth } from "@/lib/can-persist-local-store";
 import { DEMO_SESSION_COOKIE, hasSupabaseConfig } from "@/lib/auth-config";
 import { clearDemoSession, setDemoSession } from "@/lib/demo-auth-server";
@@ -169,8 +170,9 @@ export async function demoSocialSignInAction(formData: FormData) {
   const expectedRole = String(formData.get("expected_role") ?? "brand");
   const nextPath = String(formData.get("next") ?? "").trim();
 
-  const allowTestProvider = isTestSocialProvider(provider);
-  if (!preferDemoAuth() && !allowTestProvider) {
+  const allowTestProvider =
+    isTestSocialProvider(provider) || preferDemoAuth() || isExplicitDemoLoginEnabled();
+  if (!allowTestProvider) {
     redirect(`/login?error=unsupported-provider&lang=${lang}&role=${expectedRole}`);
   }
 

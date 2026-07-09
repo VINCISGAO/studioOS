@@ -3,8 +3,9 @@ import path from "node:path";
 import { isObjectStorageConfigured } from "@/lib/core/config/video";
 import {
   homeHeroVideoObjectKey,
-  homeHeroVideoRelativePaths,
-  marketingCdnBaseUrl
+  homeHeroVideoPublicPaths,
+  marketingCdnBaseUrl,
+  resolveHeroR2ObjectKey
 } from "@/lib/marketing/home-hero-video-sources";
 import { getObjectMetadata, getObjectRange } from "@/lib/studioos/object-storage";
 
@@ -25,8 +26,8 @@ export function isMarketingHomeVideoPath(pathname: string): boolean {
   return ALLOWED_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 }
 
-function encodePathname(pathname: string): string {
-  return pathname
+function encodeObjectKey(objectKey: string): string {
+  return objectKey
     .split("/")
     .map((segment) => (segment ? encodeURIComponent(segment) : ""))
     .join("/");
@@ -40,38 +41,60 @@ function resolveMarketingCdnUpstream(): string {
   return (marketingCdnBaseUrl() ?? DEFAULT_MARKETING_CDN).replace(/\/+$/u, "");
 }
 
-function buildUpstreamUrl(pathname: string): string {
-  return `${resolveMarketingCdnUpstream()}${encodePathname(pathname)}`;
-}
-
-function buildUpstreamUrlCandidates(pathname: string): string[] {
-  const base = resolveMarketingCdnUpstream();
-  const urls = new Set<string>([
-    `${base}${encodePathname(pathname)}`,
-    `${base}${encodeURI(pathname)}`
-  ]);
-  return [...urls];
-}
-
 function pathnameToObjectKey(pathname: string): string {
   return pathname.replace(/^\/+/u, "");
 }
 
 function objectKeyCandidates(pathname: string): string[] {
   const keys = new Set<string>();
+  const mappedHero = resolveHeroR2ObjectKey(pathname);
+  if (mappedHero) keys.add(mappedHero);
+
   const primary = pathnameToObjectKey(pathname);
   keys.add(primary);
   keys.add(primary.normalize("NFC"));
   keys.add(primary.normalize("NFD"));
 
+  const parts = primary.split("/");
+  const file = parts.pop();
+  if (file) {
+    const dir = parts.join("/");
+    keys.add(`${dir}/${file.toLowerCase()}`);
+    keys.add(`${dir}/${file.toUpperCase()}`);
+    if (/\.mp4$/iu.test(file)) {
+      keys.add(`${dir}/${file.replace(/\.mp4$/iu, ".mp4")}`);
+      keys.add(`${dir}/${file.replace(/\.mp4$/iu, ".MP4")}`);
+    }
+  }
+
   const filename = pathname.split("/").pop() ?? "";
-  for (const relative of Object.values(homeHeroVideoRelativePaths)) {
+  for (const relative of Object.values(homeHeroVideoPublicPaths)) {
     if (relative === pathname || relative.endsWith(filename)) {
       keys.add(homeHeroVideoObjectKey(relative));
+      const heroMapped = resolveHeroR2ObjectKey(relative);
+      if (heroMapped) keys.add(heroMapped);
     }
   }
 
   return [...keys];
+}
+
+function buildUpstreamUrl(pathname: string): string {
+  const base = resolveMarketingCdnUpstream();
+  const candidates = objectKeyCandidates(pathname);
+  const heroKey = resolveHeroR2ObjectKey(pathname);
+  const objectKey = heroKey ?? candidates[0] ?? pathnameToObjectKey(pathname);
+  return `${base}/${encodeObjectKey(objectKey)}`;
+}
+
+function buildUpstreamUrlCandidates(pathname: string): string[] {
+  const base = resolveMarketingCdnUpstream();
+  const urls = new Set<string>();
+  for (const key of objectKeyCandidates(pathname)) {
+    urls.add(`${base}/${encodeObjectKey(key)}`);
+  }
+  urls.add(`${base}${encodeObjectKey(pathnameToObjectKey(pathname))}`);
+  return [...urls];
 }
 
 function cacheHeaders(): Record<string, string> {
@@ -143,59 +166,69 @@ async function readLocalPublicVideo(
   rangeHeader: string | null,
   method: string
 ): Promise<Response | null> {
-  const localPath = path.join(process.cwd(), "public", pathname.replace(/^\/+/u, ""));
-  let stat: Awaited<ReturnType<typeof fs.stat>>;
-  try {
-    stat = await fs.stat(localPath);
-    if (!stat.isFile()) return null;
-  } catch {
-    return null;
-  }
+  const localCandidates = [
+    path.join(process.cwd(), "public", pathname.replace(/^\/+/u, "")),
+    ...(resolveHeroR2ObjectKey(pathname)
+      ? [path.join(process.cwd(), "public", resolveHeroR2ObjectKey(pathname)!)]
+      : [])
+  ];
 
-  const total = stat.size;
-  const mime = videoMimeType(pathname);
-  const baseHeaders = { ...cacheHeaders(), "Content-Type": mime };
-
-  if (method === "HEAD") {
-    if (rangeHeader) {
-      return rangedHeadResponse(total, mime, rangeHeader, new Headers());
+  for (const localPath of localCandidates) {
+    let stat: Awaited<ReturnType<typeof fs.stat>>;
+    try {
+      stat = await fs.stat(localPath);
+      if (!stat.isFile()) continue;
+    } catch {
+      continue;
     }
-    return new Response(null, {
-      status: 200,
-      headers: { ...baseHeaders, "Content-Length": String(total) }
-    });
-  }
 
-  if (!rangeHeader) {
-    const body = await fs.readFile(localPath);
-    return new Response(toResponseBody(body), {
-      status: 200,
-      headers: { ...baseHeaders, "Content-Length": String(total) }
-    });
-  }
+    const total = stat.size;
+    const mime = videoMimeType(pathname);
+    const baseHeaders = { ...cacheHeaders(), "Content-Type": mime };
 
-  const parsed = parseByteRange(rangeHeader, total);
-  if (parsed === "invalid" || parsed === "unsatisfiable") {
-    return new Response(null, { status: 416, headers: { "Content-Range": `bytes */${total}` } });
-  }
-
-  const { start, end } = parsed;
-  const length = end - start + 1;
-  const handle = await fs.open(localPath, "r");
-  try {
-    const buffer = Buffer.alloc(length);
-    await handle.read(buffer, 0, length, start);
-    return new Response(toResponseBody(buffer), {
-      status: 206,
-      headers: {
-        ...baseHeaders,
-        "Content-Length": String(length),
-        "Content-Range": `bytes ${start}-${end}/${total}`
+    if (method === "HEAD") {
+      if (rangeHeader) {
+        return rangedHeadResponse(total, mime, rangeHeader, new Headers());
       }
-    });
-  } finally {
-    await handle.close();
+      return new Response(null, {
+        status: 200,
+        headers: { ...baseHeaders, "Content-Length": String(total) }
+      });
+    }
+
+    if (!rangeHeader) {
+      const body = await fs.readFile(localPath);
+      return new Response(toResponseBody(body), {
+        status: 200,
+        headers: { ...baseHeaders, "Content-Length": String(total) }
+      });
+    }
+
+    const parsed = parseByteRange(rangeHeader, total);
+    if (parsed === "invalid" || parsed === "unsatisfiable") {
+      return new Response(null, { status: 416, headers: { "Content-Range": `bytes */${total}` } });
+    }
+
+    const { start, end } = parsed;
+    const length = end - start + 1;
+    const handle = await fs.open(localPath, "r");
+    try {
+      const buffer = Buffer.alloc(length);
+      await handle.read(buffer, 0, length, start);
+      return new Response(toResponseBody(buffer), {
+        status: 206,
+        headers: {
+          ...baseHeaders,
+          "Content-Length": String(length),
+          "Content-Range": `bytes ${start}-${end}/${total}`
+        }
+      });
+    } finally {
+      await handle.close();
+    }
   }
+
+  return null;
 }
 
 async function resolveR2Object(

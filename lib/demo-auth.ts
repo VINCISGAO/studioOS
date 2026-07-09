@@ -77,6 +77,11 @@ export function isTestSocialProvider(provider: string): provider is TestSocialPr
   return (TEST_SOCIAL_PROVIDERS as readonly string[]).includes(provider);
 }
 
+/** Internal QA accounts — never receive real email; login uses on-screen verification code. */
+export function isStudioTestEmail(email: string) {
+  return email.trim().toLowerCase().endsWith("@studioos.test");
+}
+
 /** Social providers map deterministically to demo accounts for each role tab. */
 export function demoUserForSocialProvider(provider: DemoSocialProvider, tabRole: "brand" | "creator") {
   const demoRole = tabRole === "creator" ? "creator" : "client";

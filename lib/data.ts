@@ -96,7 +96,7 @@ export const creatorWorks: CreatorWork[] = [
     platform: "YouTube / Meta",
     format: "16:9 + 9:16",
     thumbnail_url: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=1200&auto=format&fit=crop",
-    video_url: "/videos/home/recent-work/consumer-tech-reveal.MP4",
+    video_url: "/videos/home/recent-work/consumer-tech-reveal.mp4",
     description: "Sharp AI motion shots and editorial pacing for launch campaigns and product explainers.",
     turnaround: "4 days",
     tags: ["Tech", "Launch", "Cinematic", "Explainer"],

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { performSignIn } from "@/lib/auth/sign-in-service";
 import { preferDemoAuth } from "@/lib/can-persist-local-store";
+import { isExplicitDemoLoginEnabled } from "@/lib/runtime-flags";
 import { attachDemoSessionCookie } from "@/lib/demo-auth-server";
 import {
   DEMO_PASSWORD,
@@ -61,7 +62,8 @@ export async function POST(request: Request) {
     return redirectTo(request, loginErrorPath({ lang, role, error: "unsupported-provider" }));
   }
 
-  const allowDemoProvider = preferDemoAuth() || isTestSocialProvider(provider);
+  const allowDemoProvider =
+    preferDemoAuth() || isTestSocialProvider(provider) || isExplicitDemoLoginEnabled();
   if (!allowDemoProvider) {
     return redirectTo(request, loginErrorPath({ lang, role, error: "unsupported-provider" }));
   }

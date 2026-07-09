@@ -32,3 +32,10 @@ export function isDemoLoginUiEnabled() {
     process.env.STUDIOOS_ENABLE_DEMO_LOGIN === "1"
   );
 }
+
+export function isExplicitDemoLoginEnabled() {
+  return (
+    process.env.VINCIS_ENABLE_DEMO_LOGIN === "1" ||
+    process.env.STUDIOOS_ENABLE_DEMO_LOGIN === "1"
+  );
+}

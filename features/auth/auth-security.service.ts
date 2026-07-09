@@ -10,6 +10,7 @@ import { resolvePostLoginDestination } from "@/lib/auth/post-login-redirect";
 import type { Locale } from "@/lib/i18n";
 import type { Prisma, UserRole } from "@prisma/client";
 import { AUTH_ERROR_COPY } from "@/features/auth/auth-error-copy";
+import { isStudioTestEmail } from "@/lib/demo-auth";
 import { sendEnterpriseEmail } from "@/features/email/email-delivery.service";
 import { buildLoginVerificationEmail } from "@/features/email/templates/enterprise-email-templates";
 
@@ -321,6 +322,10 @@ async function sendAuthVerificationCode(
   | { ok: true; debugCode?: string }
   | { ok: false; reason: string }
 > {
+  if (isStudioTestEmail(email)) {
+    return { ok: true as const, debugCode: code };
+  }
+
   if (!process.env.RESEND_API_KEY) {
     if (process.env.NODE_ENV === "production") {
       return { ok: false as const, reason: "RESEND_NOT_CONFIGURED" as const };
@@ -397,7 +402,7 @@ export class AuthSecurityService {
       return { ok: false as const, error: AUTH_ERROR_COPY.rateLimited };
     }
 
-    if (await suspiciousRequest(ctx, { email })) {
+    if (!isStudioTestEmail(email) && (await suspiciousRequest(ctx, { email }))) {
       await audit({ email, event: "TURNSTILE_REQUIRED", ctx });
       if (!(await verifyTurnstileToken(input.turnstileToken, ctx.ip))) {
         await audit({ email, event: "TURNSTILE_FAILED", ctx });
@@ -454,16 +459,21 @@ export class AuthSecurityService {
 
     await recordAttempt({ email, type: "EMAIL_START", success: true, ctx });
     await audit({ email, event: "EMAIL_CODE_SENT", ctx });
-    return {
-      ok: true as const,
-      message:
-        "debugCode" in sent && sent.debugCode
+    const testEmailHint =
+      isStudioTestEmail(email) && "debugCode" in sent && sent.debugCode
+        ? input.locale === "zh"
+          ? "测试账号：请使用页面显示的验证码登录。"
+          : "Test account: use the verification code shown on this page."
+        : "debugCode" in sent && sent.debugCode
           ? input.locale === "zh"
             ? "开发模式：未配置邮件服务，请使用下方验证码。"
             : "Dev mode: email is not configured. Use the code below."
           : input.locale === "zh"
             ? "验证码已发送至你的邮箱。"
-            : "Verification code sent to your email.",
+            : "Verification code sent to your email.";
+    return {
+      ok: true as const,
+      message: testEmailHint,
       debugCode: "debugCode" in sent ? sent.debugCode : undefined
     };
   }

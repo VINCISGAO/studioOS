@@ -86,7 +86,7 @@ export function LoginSocialButtons({
         const oauthEnabled = isProviderOAuthEnabled(id, googleOAuthEnabled, alipayOAuthEnabled);
         const testAccount = demoUserForSocialProvider(id, tabRole);
         const useTestAccount =
-          !oauthEnabled && Boolean(testAccount) && (demoMode || isTestSocialProvider(id));
+          Boolean(testAccount) && (demoMode || isTestSocialProvider(id));
         const comingSoonLabel = locale === "zh" ? `${label}（即将开放）` : `${label} (coming soon)`;
         const testLabel = testAccount ? testAccountLabel(locale, testAccount.label) : comingSoonLabel;
         const buttonClassName = cn(

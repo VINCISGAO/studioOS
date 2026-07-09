@@ -2,15 +2,5 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
   "buildCommand": "npx prisma generate && npm run build",
-  "installCommand": "npm install",
-  "rewrites": [
-    {
-      "source": "/videos/home/hero/:path*",
-      "destination": "https://pub-f68761fae15346faa85da45b7929e5bb.r2.dev/videos/home/hero/:path*"
-    },
-    {
-      "source": "/videos/home/recent-work/:path*",
-      "destination": "https://pub-f68761fae15346faa85da45b7929e5bb.r2.dev/videos/home/recent-work/:path*"
-    }
-  ]
+  "installCommand": "npm install"
 }
