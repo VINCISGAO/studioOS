@@ -1,11 +1,5 @@
 import type { NextConfig } from "next";
 
-function marketingHeroVideoUpstream(): string | null {
-  const raw = process.env.MARKETING_CDN_UPSTREAM?.trim();
-  if (!raw) return null;
-  return raw.replace(/\/+$/u, "");
-}
-
 const nextConfig: NextConfig = {
   // MVP deploy: don't block production on legacy strict-type gaps; run `npm run typecheck` locally to fix.
   typescript: {
@@ -45,16 +39,6 @@ const nextConfig: NextConfig = {
         hostname: "vumbnail.com"
       }
     ]
-  },
-  async rewrites() {
-    const upstream = marketingHeroVideoUpstream();
-    if (!upstream) return [];
-    return [
-      {
-        source: "/videos/home/hero/:path*",
-        destination: `${upstream}/videos/home/hero/:path*`
-      }
-    ];
   },
   async headers() {
     return [
