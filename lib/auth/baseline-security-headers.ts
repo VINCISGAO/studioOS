@@ -12,6 +12,7 @@ export function applyBaselineSecurityHeaders(response: NextResponse) {
       "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https:",
+      "media-src 'self' https: blob:",
       "font-src 'self' data:",
       "connect-src 'self' https:",
       "object-src 'none'",

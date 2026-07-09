@@ -15,22 +15,28 @@ export const homeHeroVideoRelativePaths: Record<MarketingLocale, string> = {
   es: "/videos/home/hero/VINCIS宣传片（西班牙语）.mp4"
 };
 
-/** Optional explicit CDN base. Leave unset in production — use same-origin `/videos/...` + `MARKETING_CDN_UPSTREAM` rewrite. */
+/** Public CDN/R2 base for hero MP4 playback. */
 export function marketingCdnBaseUrl(): string | null {
+  const upstream = process.env.MARKETING_CDN_UPSTREAM?.trim();
+  if (upstream) return upstream.replace(/\/+$/u, "");
   const base = process.env.NEXT_PUBLIC_MARKETING_CDN_URL?.trim();
   if (!base) return null;
   return base.replace(/\/+$/u, "");
 }
 
-export function resolveHomeHeroVideoSrc(locale: MarketingLocale): string {
+/** Resolve hero video URL on the server (runtime env — works without rebuild). */
+export function resolveHomeHeroVideoPlaybackSrc(locale: MarketingLocale): string {
   const relative = homeHeroVideoRelativePaths[locale] ?? homeHeroVideoRelativePaths.en;
+  const encoded = encodeURI(relative);
   const cdn = marketingCdnBaseUrl();
   if (cdn) {
-    return `${cdn}${encodeURI(relative)}`;
+    return `${cdn}${encoded}`;
   }
-  // Production: Vercel rewrites `/videos/home/hero/*` → R2 via MARKETING_CDN_UPSTREAM.
-  // Local dev: serves files from `public/videos/home/hero/` when upstream is unset.
-  return encodeURI(relative);
+  return encoded;
+}
+
+export function resolveHomeHeroVideoSrc(locale: MarketingLocale): string {
+  return resolveHomeHeroVideoPlaybackSrc(locale);
 }
 
 export function homeHeroVideoObjectKey(relativePath: string): string {

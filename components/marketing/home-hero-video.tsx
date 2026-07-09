@@ -25,13 +25,19 @@ const videoLabels: Record<MarketingLocale, { video: string; soundOn: string; mut
   es: { video: "Vídeo promocional de la página de inicio de VINCIS", soundOn: "Activar sonido", mute: "Silenciar", soundOnAria: "Activar el sonido del vídeo", muteAria: "Silenciar el vídeo" }
 };
 
-export function HomeHeroVideo({ locale }: { locale: Locale | MarketingLocale }) {
+export function HomeHeroVideo({
+  locale,
+  videoSrc: videoSrcProp
+}: {
+  locale: Locale | MarketingLocale;
+  videoSrc?: string;
+}) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [muted, setMuted] = useState(true);
   const [hasVideoError, setHasVideoError] = useState(false);
   const videoLocale: MarketingLocale = locale === "zh" ? "zh-CN" : (locale as MarketingLocale);
   const labels = videoLabels[videoLocale] ?? videoLabels.en;
-  const videoSrc = resolveHomeHeroVideoSrc(videoLocale);
+  const videoSrc = videoSrcProp ?? resolveHomeHeroVideoSrc(videoLocale);
 
   function toggleSound() {
     const video = videoRef.current;
@@ -56,18 +62,17 @@ export function HomeHeroVideo({ locale }: { locale: Locale | MarketingLocale }) 
         <video
           key={videoSrc}
           ref={videoRef}
+          src={videoSrc}
           className="aspect-[21/9] w-full object-cover"
           autoPlay
           muted={muted}
           loop
           playsInline
-          preload="none"
+          preload="auto"
           aria-label={labels.video}
           onCanPlay={() => setHasVideoError(false)}
           onError={() => setHasVideoError(true)}
-        >
-          <source src={videoSrc} type="video/mp4" />
-        </video>
+        />
         {!hasVideoError ? (
           <button
             type="button"

@@ -9,6 +9,7 @@ export function HomeLandingPage({
   copyLocale = locale,
   portalHref,
   portalLabel,
+  heroVideoSrc,
   featuredWorks,
   engagement,
   isLoggedIn
@@ -17,6 +18,7 @@ export function HomeLandingPage({
   copyLocale?: Locale | MarketingLocale;
   portalHref: string;
   portalLabel: string;
+  heroVideoSrc: string;
   featuredWorks: CreatorWork[];
   engagement: Record<string, WorkEngagementSnapshot>;
   isLoggedIn: boolean;
@@ -27,6 +29,7 @@ export function HomeLandingPage({
       copyLocale={copyLocale}
       portalHref={portalHref}
       portalLabel={portalLabel}
+      heroVideoSrc={heroVideoSrc}
       featuredWorks={featuredWorks}
       engagement={engagement}
       isLoggedIn={isLoggedIn}

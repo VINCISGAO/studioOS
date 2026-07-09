@@ -19,6 +19,7 @@ export function CinematicHomePage({
   copyLocale = locale,
   portalHref,
   portalLabel,
+  heroVideoSrc,
   featuredWorks,
   engagement,
   isLoggedIn = false
@@ -27,6 +28,7 @@ export function CinematicHomePage({
   copyLocale?: Locale | MarketingLocale;
   portalHref: string;
   portalLabel: string;
+  heroVideoSrc: string;
   featuredWorks: CreatorWork[];
   engagement: Record<string, WorkEngagementSnapshot>;
   isLoggedIn?: boolean;
@@ -39,7 +41,7 @@ export function CinematicHomePage({
         {/* 图一 — 宇宙风 Hero */}
         <CinematicHero locale={locale} copyLocale={copyLocale} portalHref={portalHref} portalLabel={portalLabel} isLoggedIn={isLoggedIn} />
 
-        <HomeHeroVideo locale={copyLocale} />
+        <HomeHeroVideo locale={copyLocale} videoSrc={heroVideoSrc} />
 
         {/* 图二 — 多页式内容区 */}
         <HomePageScreen id="cost" className="bg-[#0a0a0a] py-0">
