@@ -74,11 +74,15 @@ function objectKeyCandidates(pathname: string): string[] {
   return [...keys];
 }
 
-function cacheHeaders(): HeadersInit {
+function cacheHeaders(): Record<string, string> {
   return {
     "Cache-Control": "public, max-age=31536000, immutable",
     "Accept-Ranges": "bytes"
   };
+}
+
+function toResponseBody(data: Buffer): Blob {
+  return new Blob([Uint8Array.from(data)]);
 }
 
 function parseByteRange(
@@ -105,9 +109,8 @@ function rangedHeadResponse(
 ): Response {
   const parsed = parseByteRange(rangeHeader, total);
   const baseHeaders = new Headers({
-    ...Object.fromEntries(cacheHeaders()),
-    "Content-Type": mime,
-    "Accept-Ranges": "bytes"
+    ...cacheHeaders(),
+    "Content-Type": mime
   });
 
   for (const key of PASSTHROUGH_HEADERS) {
@@ -165,7 +168,7 @@ async function readLocalPublicVideo(
 
   if (!rangeHeader) {
     const body = await fs.readFile(localPath);
-    return new Response(body, {
+    return new Response(toResponseBody(body), {
       status: 200,
       headers: { ...baseHeaders, "Content-Length": String(total) }
     });
@@ -182,7 +185,7 @@ async function readLocalPublicVideo(
   try {
     const buffer = Buffer.alloc(length);
     await handle.read(buffer, 0, length, start);
-    return new Response(buffer, {
+    return new Response(toResponseBody(buffer), {
       status: 206,
       headers: {
         ...baseHeaders,
@@ -239,7 +242,7 @@ async function serveFromR2Storage(
   if (!rangeHeader) {
     const body = await getObjectRange(key);
     if (!body) return null;
-    return new Response(body, {
+    return new Response(toResponseBody(body), {
       status: 200,
       headers: { ...baseHeaders, "Content-Length": String(total) }
     });
@@ -254,7 +257,7 @@ async function serveFromR2Storage(
   const body = await getObjectRange(key, parsed);
   if (!body) return null;
 
-  return new Response(body, {
+  return new Response(toResponseBody(body), {
     status: 206,
     headers: {
       ...baseHeaders,
