@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { cookies, headers } from "next/headers";
+import { cookies } from "next/headers";
 import { BrandLogoLockup } from "@/components/brand-logo-mark";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { Button } from "@/components/ui/button";
@@ -39,9 +39,6 @@ async function getNavSession() {
 
 export async function SiteHeader({ locale }: { locale: Locale }) {
   const t = navText[locale];
-  const headerList = await headers();
-  const pathname = headerList.get("x-pathname") ?? "/";
-  const search = headerList.get("x-search") ?? "";
   const { session } = await getNavSession();
 
   const accountLink = !session
@@ -80,7 +77,7 @@ export async function SiteHeader({ locale }: { locale: Locale }) {
         </nav>
 
         <div className="flex items-center gap-2">
-          <LanguageSwitcher locale={locale} pathname={pathname} search={search} />
+          <LanguageSwitcher locale={locale} />
           {session ? (
             <form action="/auth/sign-out" method="post">
               <input type="hidden" name="lang" value={locale} />

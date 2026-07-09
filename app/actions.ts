@@ -14,7 +14,8 @@ import {
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { isAdminRouteRole } from "@/lib/auth/route-access";
 import { AUTH_ERROR_COPY } from "@/features/auth/auth-error-copy";
-import { withLocale, type Locale } from "@/lib/i18n";
+import { withLocale, appPath, type Locale } from "@/lib/i18n";
+import { resolveServerLocale } from "@/lib/app-language";
 import { getOrCreateOpenInquiry } from "@/lib/chat-service";
 import { getOrCreateVisitorId } from "@/lib/client-session";
 import { createProject } from "@/lib/project-service";
@@ -28,8 +29,19 @@ import { adminRequestFromHeaders } from "@/lib/auth/admin-request-from-headers";
 import { authSecurityService } from "@/features/auth/auth-security.service";
 
 type OAuthProvider = "google" | "apple" | "alipay" | "wechat" | "qq";
-function normalizeLang(raw: FormDataEntryValue | null): Locale {
-  return String(raw ?? "en") === "zh" ? "zh" : "en";
+
+async function resolveActionLocale(formData: FormData): Promise<Locale> {
+  const raw = String(formData.get("lang") ?? "").trim();
+  return resolveServerLocale(raw || null);
+}
+
+function loginErrorRedirect(params: Record<string, string | undefined>) {
+  const search = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value) search.set(key, value);
+  }
+  const query = search.toString();
+  return `/login${query ? `?${query}` : ""}`;
 }
 
 async function resolveInquiryClient(lang: Locale) {
@@ -54,7 +66,7 @@ async function resolveInquiryClient(lang: Locale) {
 }
 
 export async function submitInquiryAction(formData: FormData) {
-  const lang = normalizeLang(formData.get("lang"));
+  const lang = await resolveActionLocale(formData);
   const creatorId = String(formData.get("creator_id") ?? "");
   const budget_range = String(formData.get("budget_range") ?? "").trim();
   const message = String(formData.get("message") ?? "").trim();
@@ -79,7 +91,7 @@ export async function submitInquiryAction(formData: FormData) {
 }
 
 export async function submitProjectAction(formData: FormData) {
-  const lang = normalizeLang(formData.get("lang"));
+  const lang = await resolveActionLocale(formData);
   const companyName = String(formData.get("company_name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim();
   const campaignGoal = String(formData.get("campaign_goal") ?? "").trim();
@@ -116,7 +128,7 @@ export async function submitProjectAction(formData: FormData) {
 }
 
 export async function createCheckoutAction(formData: FormData) {
-  const lang = normalizeLang(formData.get("lang"));
+  const lang = await resolveActionLocale(formData);
   const orderId = String(formData.get("order_id") ?? "");
   if (orderId) {
     redirect(withLocale(`/dashboard/orders/${orderId}?pay=1`, lang));
@@ -126,12 +138,11 @@ export async function createCheckoutAction(formData: FormData) {
 
 export async function updateOrderAction(formData: FormData) {
   const orderId = String(formData.get("order_id") ?? "");
-  const lang = normalizeLang(formData.get("lang"));
-  redirect(`/admin/orders/${orderId}?updated=1&lang=${lang}`);
+  redirect(appPath(`/admin/orders/${orderId}?updated=1`));
 }
 
 export async function signInAction(formData: FormData) {
-  const lang = normalizeLang(formData.get("lang"));
+  const lang = await resolveActionLocale(formData);
   const email = String(formData.get("email") ?? "");
   const password = String(formData.get("password") ?? "");
   const expectedRoleRaw = String(formData.get("expected_role") ?? "");
@@ -149,10 +160,14 @@ export async function signInAction(formData: FormData) {
   if (!result.ok) {
     const roleParam = result.role ?? (expectedRole || "brand");
     if (result.errorCode === "wrong-role") {
-      redirect(`/login?error=wrong-role&lang=${lang}&role=${roleParam}`);
+      redirect(loginErrorRedirect({ error: "wrong-role", role: roleParam }));
     }
     redirect(
-      `/login?error=${encodeURIComponent(result.error)}&lang=${lang}&role=${roleParam}&email=${encodeURIComponent(result.email ?? email.trim())}`
+      loginErrorRedirect({
+        error: result.error,
+        role: roleParam,
+        email: result.email ?? email.trim()
+      })
     );
   }
 
@@ -160,7 +175,7 @@ export async function signInAction(formData: FormData) {
 }
 
 export async function loginEmailStartAction(formData: FormData) {
-  const lang = normalizeLang(formData.get("lang"));
+  const lang = await resolveActionLocale(formData);
   const email = String(formData.get("email") ?? "").trim();
   const request = await adminRequestFromHeaders("/login");
   try {
@@ -185,7 +200,7 @@ export async function loginEmailStartAction(formData: FormData) {
 }
 
 export async function loginEmailContinueAction(formData: FormData) {
-  const lang = normalizeLang(formData.get("lang"));
+  const lang = await resolveActionLocale(formData);
   const email = String(formData.get("email") ?? "").trim();
   const code = String(formData.get("code") ?? "").trim();
   const roleRaw = String(formData.get("role") ?? "brand");
@@ -224,13 +239,13 @@ export async function loginEmailContinueAction(formData: FormData) {
 }
 
 export async function demoSocialSignInAction(formData: FormData) {
-  const lang = normalizeLang(formData.get("lang"));
+  const lang = await resolveActionLocale(formData);
   const expectedRole = String(formData.get("expected_role") ?? "brand");
   redirect(withLocale(`/login?error=unsupported-provider&role=${expectedRole}`, lang));
 }
 
 export async function signUpAction(formData: FormData) {
-  const lang = normalizeLang(formData.get("lang"));
+  const lang = await resolveActionLocale(formData);
   const email = String(formData.get("email") ?? "");
   const password = String(formData.get("password") ?? "");
   const role = String(formData.get("role") ?? "brand");
@@ -247,7 +262,7 @@ export async function signUpAction(formData: FormData) {
     });
 
     if (!result.ok) {
-      redirect(`/login?error=${encodeURIComponent(AUTH_ERROR_COPY.credentialsInvalid)}&lang=${lang}`);
+      redirect(loginErrorRedirect({ error: AUTH_ERROR_COPY.credentialsInvalid }));
     }
 
     await setDemoSession({
@@ -255,12 +270,16 @@ export async function signUpAction(formData: FormData) {
       role: isCreator ? "creator" : "client",
       userId: result.user.id
     });
-    redirect(isCreator ? `/studio?lang=${lang}` : `/brand?lang=${lang}`);
+    redirect(appPath(isCreator ? "/studio" : "/brand"));
   }
 
   if (!hasSupabaseConfig()) {
     redirect(
-      `/login?error=${encodeURIComponent(lang === "zh" ? "数据库未配置，无法注册账号。" : "Database is not configured. Cannot create accounts.")}&lang=${lang}&site=global&auth=login`
+      loginErrorRedirect({
+        error: lang === "zh" ? "数据库未配置，无法注册账号。" : "Database is not configured. Cannot create accounts.",
+        site: "global",
+        auth: "login"
+      })
     );
   }
 
@@ -274,14 +293,14 @@ export async function signUpAction(formData: FormData) {
   });
 
   if (error) {
-    redirect(`/login?error=${encodeURIComponent(error.message)}&lang=${lang}`);
+    redirect(loginErrorRedirect({ error: error.message }));
   }
 
-  redirect(`/dashboard?signup=success&lang=${lang}`);
+  redirect(appPath("/dashboard?signup=success"));
 }
 
 export async function oauthSignInAction(formData: FormData) {
-  const lang = normalizeLang(formData.get("lang"));
+  const lang = await resolveActionLocale(formData);
   const provider = String(formData.get("provider") ?? "") as OAuthProvider;
   const expectedRole = String(formData.get("expected_role") ?? "brand");
   const entryRole = expectedRole === "creator" ? "creator" : "brand";
@@ -301,9 +320,7 @@ export async function oauthSignInAction(formData: FormData) {
   });
 }
 
-export async function signOutAction(formData?: FormData) {
-  const lang = String(formData?.get("lang") ?? "en");
-
+export async function signOutAction(_formData?: FormData) {
   if (hasSupabaseConfig()) {
     const supabase = await createClient();
     await supabase.auth.signOut();
@@ -311,12 +328,12 @@ export async function signOutAction(formData?: FormData) {
 
   await clearDemoSession();
 
-  redirect(`/?lang=${lang}`);
+  redirect("/");
 }
 
 /** Admin TOTP login — Server Action sets HttpOnly session cookie then redirects (reliable vs fetch + JSON). */
 export async function adminLoginAction(formData: FormData) {
-  const lang = normalizeLang(formData.get("lang"));
+  const lang = await resolveActionLocale(formData);
   const email = String(formData.get("email") ?? "").trim();
   const code = String(formData.get("code") ?? "").replace(/\s/g, "");
   const nextPath = String(formData.get("next") ?? "").trim();
@@ -347,10 +364,9 @@ export async function adminLoginAction(formData: FormData) {
 }
 
 /** Admin portal sign-out — clears isolated admin session only, returns to /admin/login. */
-export async function adminSignOutAction(formData?: FormData) {
-  const lang = normalizeLang(formData?.get("lang") ?? null);
+export async function adminSignOutAction(_formData?: FormData) {
   const request = await adminRequestFromHeaders("/admin");
 
   await logoutAdminSession({ request });
-  redirect(withLocale("/admin/login?signedOut=1", lang));
+  redirect(appPath("/admin/login?signedOut=1"));
 }

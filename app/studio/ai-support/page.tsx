@@ -1,3 +1,4 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import { redirect } from "next/navigation";
 import { saveCreatorAiSupportConfigAction } from "@/app/studio/ai-support/actions";
 import { Button } from "@/components/ui/button";
@@ -5,14 +6,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { creatorAiSupportConfigService } from "@/features/ai-support/ai-config.service";
 import { resolveAiSupportCreatorId } from "@/features/ai-support/access";
 import { getSessionUser } from "@/features/auth/session.service";
-import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { type SearchParams, withLocale } from "@/lib/i18n";
 
 function jsonText(value: unknown, fallback: unknown) {
   return JSON.stringify(value ?? fallback, null, 2);
 }
 
 export default async function StudioAiSupportPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  const locale = getLocale(await searchParams);
+  const locale = await getAppUiLocale();
   const user = await getSessionUser();
   if (!user) {
     redirect(withLocale("/login?role=creator", locale));

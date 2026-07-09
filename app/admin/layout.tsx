@@ -5,7 +5,8 @@ import { validateAdminSession } from "@/features/admin/auth/admin-auth.service";
 import { adminNotificationService } from "@/features/admin/notification/admin-notification.service";
 import { clearAdminSessionCookie, readAdminSessionToken } from "@/features/admin/auth/admin-session-server";
 import { buildAdminCsrfToken } from "@/lib/auth/admin-csrf";
-import { getLocale, withLocale } from "@/lib/i18n";
+import { getAppUiLocale } from "@/lib/app-language";
+import { toSafeNextPathname } from "@/lib/auth/post-login-redirect";
 
 export const dynamic = "force-dynamic";
 
@@ -13,8 +14,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const headerList = await (await import("next/headers")).headers();
   const pathname = headerList.get("x-pathname") ?? "/admin";
   const search = headerList.get("x-search") ?? "";
-  const locale = getLocale({ lang: new URLSearchParams(search).get("lang") ?? undefined });
-  const returnPath = `${pathname}${search ? `?${search}` : ""}`;
+  const locale = await getAppUiLocale();
+  const returnPath = toSafeNextPathname(pathname) || pathname;
 
   if (pathname === "/admin/login" || pathname === "/admin/setup-totp") {
     return children;
@@ -23,7 +24,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const profile = await validateAdminSession();
   if (!profile) {
     await clearAdminSessionCookie();
-    redirect(withLocale(`/admin/login?next=${encodeURIComponent(returnPath)}`, locale));
+    redirect(`/admin/login?next=${encodeURIComponent(returnPath)}`);
   }
 
   const sessionToken = await readAdminSessionToken();

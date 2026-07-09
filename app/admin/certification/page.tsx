@@ -1,3 +1,4 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import Link from "next/link";
 import { ArrowLeft, FileCheck2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -6,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { adminCertificationService } from "@/features/admin/certification/admin-certification.service";
 import { getAdminSessionUser } from "@/features/admin/auth/admin-auth.service";
-import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { type SearchParams, withLocale } from "@/lib/i18n";
 import { formatDate } from "@/lib/utils";
 
 const copy = {
@@ -35,7 +36,7 @@ export default async function AdminCertificationPage({
 }: {
   searchParams: Promise<SearchParams>;
 }) {
-  const locale = getLocale(await searchParams);
+  const locale = await getAppUiLocale();
   const t = copy[locale];
   const user = await getAdminSessionUser();
   const forms = user ? await adminCertificationService.list(user) : [];

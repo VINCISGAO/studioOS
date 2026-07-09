@@ -1,5 +1,6 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import { AdminOverviewLoader, AdminPageHeader } from "@/components/studioos/admin-overview-loader";
-import { getLocale, type SearchParams } from "@/lib/i18n";
+import { type SearchParams } from "@/lib/i18n";
 
 const copy = {
   en: { title: "Platform overview", analytics: "Analytics dashboard" },
@@ -7,7 +8,7 @@ const copy = {
 };
 
 export default async function AdminPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  const locale = getLocale(await searchParams);
+  const locale = await getAppUiLocale();
   const t = copy[locale];
 
   return (

@@ -1,12 +1,13 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { adminBrandService } from "@/features/admin/brand/admin-brand.service";
 import { getAdminSessionUser } from "@/features/admin/auth/admin-auth.service";
-import { getLocale, type SearchParams } from "@/lib/i18n";
+import { type SearchParams } from "@/lib/i18n";
 import { formatDate } from "@/lib/utils";
 
 export default async function AdminBrandsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  const locale = getLocale(await searchParams);
+  const locale = await getAppUiLocale();
   const user = await getAdminSessionUser();
   const brands = user ? await adminBrandService.list(user) : [];
 

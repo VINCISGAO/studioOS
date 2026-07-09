@@ -18,8 +18,8 @@ export function CinematicHeroFeatures({ locale }: { locale: Locale | MarketingLo
   const [activeIndex, setActiveIndex] = useState(0);
 
   return (
-    <div className="mx-auto mt-8 w-full pt-0 sm:mt-8 sm:pt-2">
-      <div className="grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-4">
+    <div className="mt-8 hidden w-full sm:mt-0 sm:block">
+      <div className="grid w-full grid-cols-4 gap-3 sm:gap-4">
         {features.map((feature, index) => {
           const Icon = featureIcons[feature.icon];
           const isActive = index === activeIndex;
@@ -32,7 +32,7 @@ export function CinematicHeroFeatures({ locale }: { locale: Locale | MarketingLo
               onClick={() => setActiveIndex(index)}
               onMouseEnter={() => setActiveIndex(index)}
               className={cn(
-                "group flex min-h-[126px] flex-col items-center justify-center rounded-xl border p-3 text-center backdrop-blur-[2px] transition duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 sm:min-h-[172px] sm:rounded-lg sm:p-5",
+                "group flex min-h-[172px] w-full flex-col items-center justify-center rounded-lg border p-4 text-center backdrop-blur-[2px] transition duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 sm:p-5",
                 isActive
                   ? "border-white/45 bg-white/[0.075] shadow-[0_20px_60px_-36px_rgba(255,255,255,0.58)]"
                   : "border-white/[0.085] bg-black/24 hover:-translate-y-1 hover:border-white/20 hover:bg-white/[0.045]"
@@ -40,18 +40,16 @@ export function CinematicHeroFeatures({ locale }: { locale: Locale | MarketingLo
             >
               <span
                 className={cn(
-                  "flex h-9 w-9 items-center justify-center rounded-full transition duration-300 sm:h-14 sm:w-14",
+                  "flex h-14 w-14 items-center justify-center rounded-full transition duration-300",
                   isActive
                     ? "bg-white text-zinc-950"
                     : "bg-violet-600/25 text-violet-200 group-hover:bg-white/10 group-hover:text-white"
                 )}
               >
-                <Icon className="h-4 w-4 sm:h-6 sm:w-6" strokeWidth={1.75} />
+                <Icon className="h-6 w-6" strokeWidth={1.75} />
               </span>
-              <span className="mt-2.5 text-[13px] font-semibold leading-5 text-white sm:mt-4 sm:text-base sm:leading-6">{feature.title}</span>
-              <span className="mt-1 max-w-[8.5rem] text-[11px] leading-4 text-zinc-400 sm:mt-1.5 sm:max-w-[13rem] sm:text-[13px] sm:leading-5">
-                {feature.desc}
-              </span>
+              <span className="mt-4 text-base font-semibold leading-6 text-white">{feature.title}</span>
+              <span className="mt-1.5 text-[13px] leading-5 text-zinc-400">{feature.desc}</span>
             </button>
           );
         })}

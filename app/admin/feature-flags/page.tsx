@@ -1,3 +1,4 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import Link from "next/link";
 import { ArrowLeft, Flag } from "lucide-react";
 import { toggleFeatureFlagAction } from "@/app/admin-feature-flag-actions";
@@ -8,7 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { featureFlagService } from "@/features/admin/feature-flag.service";
 import { getAdminSessionUser } from "@/features/admin/auth/admin-auth.service";
-import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { type SearchParams, withLocale } from "@/lib/i18n";
 import { adminPortalRoutes } from "@/lib/studioos/admin-portal-routes";
 import { formatDate } from "@/lib/utils";
 
@@ -40,7 +41,7 @@ export default async function AdminFeatureFlagsPage({
 }: {
   searchParams: Promise<SearchParams>;
 }) {
-  const locale = getLocale(await searchParams);
+  const locale = await getAppUiLocale();
   const t = copy[locale];
   const user = await getAdminSessionUser();
   const flags = user ? await featureFlagService.list(user) : [];

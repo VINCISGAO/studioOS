@@ -1,10 +1,11 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import { CreditCard, FileText, Receipt, Shield, Wallet } from "lucide-react";
 import { BrandSectionHub } from "@/components/studioos/brand-section-hub";
-import { getLocale, type SearchParams } from "@/lib/i18n";
+import { type SearchParams } from "@/lib/i18n";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
 
 export default async function BrandFinancePage({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  const locale = getLocale(await searchParams);
+  const locale = await getAppUiLocale();
 
   return (
     <BrandSectionHub

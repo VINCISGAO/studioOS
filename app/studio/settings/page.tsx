@@ -1,8 +1,9 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { StudioSettingsPage } from "@/components/studioos/studio-settings-page";
 import { getCurrentCreator } from "@/lib/creator-session";
-import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { type SearchParams, withLocale } from "@/lib/i18n";
 import { DEMO_SESSION_COOKIE } from "@/lib/auth-config";
 import { parseDemoSession } from "@/lib/demo-auth";
 import { getCreatorSettingsViewModel } from "@/lib/studioos/creator-settings-service";
@@ -13,7 +14,7 @@ export default async function StudioSettingsRoute({
   searchParams: Promise<SearchParams>;
 }) {
   const params = await searchParams;
-  const locale = getLocale(params);
+  const locale = await getAppUiLocale();
   const creator = await getCurrentCreator();
 
   if (!creator) {

@@ -1,8 +1,9 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import { Lock } from "lucide-react";
-import { getLocale, type SearchParams } from "@/lib/i18n";
+import { type SearchParams } from "@/lib/i18n";
 
 export default async function BrandTeamPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  const locale = getLocale(await searchParams);
+  const locale = await getAppUiLocale();
 
   return (
     <section className="mx-auto flex min-h-[420px] max-w-3xl items-center justify-center">

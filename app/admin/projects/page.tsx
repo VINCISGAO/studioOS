@@ -1,13 +1,14 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import Link from "next/link";
 import { StatusBadge } from "@/components/status-badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { adminCampaignService } from "@/features/admin/campaign/admin-campaign.service";
 import { getAdminSessionUser } from "@/features/admin/auth/admin-auth.service";
-import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { type SearchParams, withLocale } from "@/lib/i18n";
 import { formatDate } from "@/lib/utils";
 
 export default async function AdminProjectsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  const locale = getLocale(await searchParams);
+  const locale = await getAppUiLocale();
   const user = await getAdminSessionUser();
   const result = user ? await adminCampaignService.list(user, {}) : { items: [], total: 0 };
 

@@ -1,15 +1,16 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import Link from "next/link";
 import { CreativeAnalyticsDashboard } from "@/components/studioos/creative-analytics-dashboard";
 import { IntegrationStatus } from "@/components/studioos/integration-status";
 import { Button } from "@/components/ui/button";
 import { getCurrentClientEmail } from "@/lib/client-session";
-import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { type SearchParams, withLocale } from "@/lib/i18n";
 import { getCreativeAnalyticsAsync } from "@/lib/studioos/analytics";
 import { getInsightsForOrg, orgIdFromEmail } from "@/lib/studioos/creative-performance-store";
 import { BarChart3 } from "lucide-react";
 
 export default async function BrandAnalyticsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  const locale = getLocale(await searchParams);
+  const locale = await getAppUiLocale();
   const email = await getCurrentClientEmail();
   const { ads, insights, summary, dataSource, connectedPlatforms } = await getCreativeAnalyticsAsync(
     email ?? undefined

@@ -1,3 +1,4 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import Link from "next/link";
 import { ArrowLeft, Scale } from "lucide-react";
 import { resolveDisputeAction } from "@/app/admin-actions";
@@ -8,7 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { auditService } from "@/features/admin/audit.service";
 import { disputeService } from "@/features/admin/dispute.service";
 import { getAdminSessionUser } from "@/features/admin/auth/admin-auth.service";
-import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { type SearchParams, withLocale } from "@/lib/i18n";
 import { adminPortalRoutes } from "@/lib/studioos/admin-portal-routes";
 import { formatDate } from "@/lib/utils";
 
@@ -51,7 +52,7 @@ export default async function AdminDisputeDetailPage({
   searchParams: Promise<SearchParams>;
 }) {
   const { id } = await params;
-  const locale = getLocale(await searchParams);
+  const locale = await getAppUiLocale();
   const t = copy[locale];
   const user = await getAdminSessionUser();
 

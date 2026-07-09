@@ -1,7 +1,8 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import { AdminWithdrawalQueue } from "@/components/studioos/admin-withdrawal-queue";
 import { adminWithdrawalService } from "@/features/admin/withdrawal/admin-withdrawal.service";
 import { getAdminSessionUser } from "@/features/admin/auth/admin-auth.service";
-import { getLocale, type SearchParams } from "@/lib/i18n";
+import { type SearchParams } from "@/lib/i18n";
 
 const copy = {
   en: {
@@ -15,7 +16,7 @@ const copy = {
 };
 
 export default async function AdminWithdrawalsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  const locale = getLocale(await searchParams);
+  const locale = await getAppUiLocale();
   const t = copy[locale];
   const user = await getAdminSessionUser();
   const items = user ? await adminWithdrawalService.listPending(user) : [];

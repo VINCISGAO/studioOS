@@ -1,10 +1,11 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import { redirect } from "next/navigation";
 import { CreatorProfileStudio } from "@/components/creator/creator-profile-studio";
 import { CertifiedProfileOnboarding } from "@/components/studioos/certified-profile-onboarding";
 import { getCurrentCreator } from "@/lib/creator-session";
 import { getCurrentUserEmail } from "@/lib/session-user";
 import { hasCompletedCreatorProfile, hasPaidCreatorDeposit } from "@/lib/studioos/deposit-guard";
-import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { type SearchParams, withLocale } from "@/lib/i18n";
 import { getWorksEngagement } from "@/lib/work-engagement-service";
 import { getWorksForCreator } from "@/lib/works-catalog";
 
@@ -25,7 +26,7 @@ export default async function StudioWorksPage({
   searchParams: Promise<SearchParams & { publish?: string; onboarding?: string; onboarded?: string; error?: string }>;
 }) {
   const params = await searchParams;
-  const locale = getLocale(params);
+  const locale = await getAppUiLocale();
   const creator = await getCurrentCreator();
 
   if (!creator) {

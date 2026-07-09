@@ -2,7 +2,8 @@ import { redirect } from "next/navigation";
 import { ReviewerTimestampWorkspace } from "@/components/studioos/reviewer-skeleton/reviewer-timestamp-workspace";
 import { getCreatorById } from "@/lib/creator-service";
 import { getCurrentCreatorId } from "@/lib/creator-session";
-import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { getAppUiLocale } from "@/lib/app-language";
+import { type SearchParams, withLocale } from "@/lib/i18n";
 import {
   getDeliverables,
   getOrder,
@@ -39,7 +40,7 @@ export default async function StudioReviewOrderPage({
   searchParams: Promise<SearchParams>;
 }) {
   const [{ orderId }, query] = await Promise.all([params, searchParams]);
-  const locale = getLocale(query);
+  const locale = await getAppUiLocale();
   const creatorId = await getCurrentCreatorId();
   if (!creatorId) {
     redirect(withLocale("/login?role=creator", locale));

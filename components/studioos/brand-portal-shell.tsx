@@ -2,11 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { BrandLogoLockup } from "@/components/brand-logo-mark";
 import { NotificationCenterBell } from "@/components/studioos/notification-center-bell";
 import { PortalMobileNav } from "@/components/studioos/portal-mobile-nav";
-import { LanguageSwitcher, LanguageSwitcherFallback } from "@/components/language-switcher";
 import { MarketingHomeLink } from "@/components/studioos/marketing-home-link";
 import { StudioUserMenu } from "@/components/studioos/studio-user-menu";
 import { PortalSidebarAccountMenu } from "@/components/studioos/portal-sidebar-account-menu";
@@ -337,9 +336,6 @@ function BrandPortalShellInner({
                 )}
                 <div className="hidden lg:block" />
                 <div className="flex items-center gap-2 sm:gap-3">
-                  <Suspense fallback={<LanguageSwitcherFallback locale={locale} />}>
-                    <LanguageSwitcher locale={locale} pathname={pathname} search={search} />
-                  </Suspense>
                   <NotificationCenterBell locale={locale} className={cn(isWizardCreate && "hidden lg:block")} />
                   <StudioUserMenu
                     locale={locale}

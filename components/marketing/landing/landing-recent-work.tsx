@@ -2,20 +2,16 @@
 
 import Link from "next/link";
 import { ArrowRight, Play } from "lucide-react";
-import { MarketingEyebrowPill } from "@/components/marketing/landing/landing-ui";
-import { RevealSection, cinematicEase } from "@/components/marketing/landing/landing-motion";
+import { MarketingEyebrowPill, MarketingSectionTitle } from "@/components/marketing/landing/landing-ui";
 import { landingText } from "@/lib/marketing/landing-copy";
 import type { MarketingShowcaseWorkDto } from "@/features/marketing-showcase/marketing-showcase.types";
-import type { Locale, MarketingLocale } from "@/lib/i18n";
-import { isChineseLanguage, withLocale } from "@/lib/i18n";
+import { marketingHomeHref } from "@/lib/marketing/localized-href";
+import { isChineseLanguage, type Locale, type MarketingLocale } from "@/lib/i18n";
 import { labelPlatform, labelWorkCategory } from "@/lib/localized-options";
 import { ShowcaseCover } from "@/components/marketing/showcase/showcase-cover";
-import { motion } from "framer-motion";
+import { MarketingShowcaseVideoModal } from "@/components/marketing/showcase/marketing-showcase-video-modal";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
-
-function workHref(workId: string, copyLocale: Locale | MarketingLocale) {
-  return withLocale(`/works?play=${encodeURIComponent(workId)}`, copyLocale);
-}
 
 function ShowcasePoster({
   work,
@@ -33,22 +29,24 @@ function WorkCard({
   work,
   locale,
   copyLocale = locale,
-  featured = false
+  featured = false,
+  onOpen
 }: {
   work: MarketingShowcaseWorkDto;
   locale: Locale;
   copyLocale?: Locale | MarketingLocale;
   featured?: boolean;
+  onOpen: () => void;
 }) {
-  const href = workHref(work.id, copyLocale);
   const meta = `${labelWorkCategory(work.category, locale)} · ${labelPlatform(work.platform, locale)}`;
   const featuredLabel = landingText("work", copyLocale).featured;
 
   return (
-    <Link
-      href={href}
+    <button
+      type="button"
+      onClick={onOpen}
       className={cn(
-        "group block h-full",
+        "group block h-full w-full cursor-pointer text-left",
         !featured && "rounded-2xl bg-white shadow-[0_14px_40px_-28px_rgba(0,0,0,0.35)]"
       )}
     >
@@ -101,7 +99,7 @@ function WorkCard({
           </span>
         </div>
       ) : null}
-    </Link>
+    </button>
   );
 }
 
@@ -115,7 +113,9 @@ export function LandingRecentWork({
   works: MarketingShowcaseWorkDto[];
 }) {
   const t = landingText("work", copyLocale);
+  const [activeWork, setActiveWork] = useState<MarketingShowcaseWorkDto | null>(null);
   const [hero, ...rest] = works.slice(0, 5);
+  const modalLocale = isChineseLanguage(copyLocale) ? "zh" : "en";
   const subtitle = isChineseLanguage(copyLocale)
     ? "来自全球品牌的真实项目，创意驱动结果。"
     : "Real projects from global brands, creative built to drive outcomes.";
@@ -123,44 +123,43 @@ export function LandingRecentWork({
   return (
     <section className="bg-[#f7f6f1] pb-11 pt-10 sm:pb-16 sm:pt-16">
       <div className="mx-auto max-w-[1060px] px-4 sm:px-6 lg:px-0">
-        <RevealSection className="mx-auto max-w-3xl text-center">
+        <div className="mx-auto max-w-3xl text-center">
           <MarketingEyebrowPill tone="light">{t.eyebrow}</MarketingEyebrowPill>
-          <h2 className="mt-2 text-[2rem] font-semibold leading-none tracking-[-0.045em] text-zinc-950 sm:text-[2.45rem]">
+          <MarketingSectionTitle tone="light" className="mt-2">
             {t.title}
-          </h2>
+          </MarketingSectionTitle>
           <p className="mt-4 text-sm text-zinc-500">{subtitle}</p>
-        </RevealSection>
+        </div>
 
         {hero ? (
           <>
             <div className="mt-7 grid grid-cols-2 gap-3 sm:mt-9 sm:gap-4 lg:grid-cols-[minmax(0,1.02fr)_minmax(0,1.1fr)]">
-              <motion.div
-                className="col-span-2 lg:col-span-1"
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.8, ease: cinematicEase }}
-              >
-                <WorkCard work={hero} locale={locale} copyLocale={copyLocale} featured />
-              </motion.div>
+              <div className="col-span-2 lg:col-span-1">
+                <WorkCard
+                  work={hero}
+                  locale={locale}
+                  copyLocale={copyLocale}
+                  featured
+                  onOpen={() => setActiveWork(hero)}
+                />
+              </div>
 
               <div className="contents lg:grid lg:grid-cols-2 lg:gap-4">
-                {rest.map((work, index) => (
-                  <motion.div
-                    key={work.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.7, ease: cinematicEase, delay: index * 0.06 }}
-                  >
-                    <WorkCard work={work} locale={locale} copyLocale={copyLocale} />
-                  </motion.div>
+                {rest.map((work) => (
+                  <div key={work.id}>
+                    <WorkCard
+                      work={work}
+                      locale={locale}
+                      copyLocale={copyLocale}
+                      onOpen={() => setActiveWork(work)}
+                    />
+                  </div>
                 ))}
               </div>
             </div>
             <div className="mt-7 flex justify-center sm:mt-8">
               <Link
-                href={withLocale("/works", copyLocale)}
+                href={marketingHomeHref.works(copyLocale)}
                 className="inline-flex min-h-11 max-w-full items-center justify-center gap-2 rounded-full bg-zinc-950 px-6 py-2 text-center text-sm font-semibold leading-snug text-white shadow-[0_18px_40px_-24px_rgba(0,0,0,0.85)] transition hover:bg-zinc-800"
               >
                 {t.viewAll}
@@ -170,6 +169,14 @@ export function LandingRecentWork({
           </>
         ) : null}
       </div>
+
+      {activeWork ? (
+        <MarketingShowcaseVideoModal
+          work={activeWork}
+          locale={modalLocale}
+          onClose={() => setActiveWork(null)}
+        />
+      ) : null}
     </section>
   );
 }

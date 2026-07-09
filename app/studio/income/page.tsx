@@ -1,8 +1,9 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import { redirect } from "next/navigation";
 import { IncomeWithdrawalPanel } from "@/components/studioos/income-withdrawal-panel";
 import { getCurrentCreator } from "@/lib/creator-session";
 import { resolveCreatorCertificationAccessFromOrders } from "@/lib/studioos/creator-certification-access";
-import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { type SearchParams, withLocale } from "@/lib/i18n";
 import { listOrdersForCreator } from "@/lib/order-service";
 import {
   getCreatorIncomeSnapshot,
@@ -12,7 +13,7 @@ import {
 import Link from "next/link";
 
 export default async function StudioIncomePage({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  const locale = getLocale(await searchParams);
+  const locale = await getAppUiLocale();
   const creator = await getCurrentCreator();
   if (!creator) redirect(withLocale("/login?role=creator", locale));
 

@@ -1,6 +1,30 @@
 {
-  "anchoredAt": "2026-07-09",
-  "gitCommit": "17a98b7",
+  "anchoredAt": "2026-07-10",
+  "supersedes": {
+    "anchoredAt": "2026-07-09",
+    "gitCommit": "17a98b7"
+  },
+  "layoutBaseline": {
+    "responsiveBreakpoints": {
+      "mobile": "< sm",
+      "ipad": "md to below lg",
+      "desktop": "lg+"
+    },
+    "frozenComponents": [
+      "components/marketing/home-hero-video.tsx",
+      "components/marketing/cinematic/cinematic-hero.tsx",
+      "components/marketing/cinematic/cinematic-nav.tsx",
+      "components/marketing/landing/landing-cost-comparison.tsx",
+      "components/marketing/landing/home-landing-page.tsx"
+    ],
+    "heroEarthBackground": {
+      "mobile": { "size": "auto 73%", "position": "100% 38%" },
+      "ipad": { "size": "auto 43%", "position": "100% 24%" },
+      "desktop": { "size": "auto 101%", "position": "right 36%" }
+    },
+    "compactHeroLocales": ["vi", "es", "fr", "ms", "ja", "en"],
+    "mobileNavStyle": "card-with-icon-title-description"
+  },
   "cacheVersion": "7",
   "resolverModule": "lib/marketing/home-hero-video-sources.ts",
   "urlPattern": "/videos/home/hero/{encodedFilename}?cv={cacheVersion}",

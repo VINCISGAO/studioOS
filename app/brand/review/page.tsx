@@ -1,8 +1,9 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/studioos/ui/page-header";
 import { ReviewHubList } from "@/components/studioos/review-hub-list";
 import { getCurrentClientEmail } from "@/lib/client-session";
-import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { type SearchParams, withLocale } from "@/lib/i18n";
 import { listBrandReviewHubItems } from "@/lib/studioos/review-hub";
 
 export default async function BrandReviewHubPage({
@@ -10,7 +11,7 @@ export default async function BrandReviewHubPage({
 }: {
   searchParams: Promise<SearchParams>;
 }) {
-  const locale = getLocale(await searchParams);
+  const locale = await getAppUiLocale();
   const clientEmail = await getCurrentClientEmail();
   if (!clientEmail) redirect(withLocale("/login?role=brand", locale));
 

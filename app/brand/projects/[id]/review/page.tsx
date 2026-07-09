@@ -1,9 +1,10 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowLeft, Clock3, Film, MessageSquareText, UploadCloud } from "lucide-react";
 import { ReviewerTimestampWorkspace } from "@/components/studioos/reviewer-skeleton/reviewer-timestamp-workspace";
 import { getCurrentClientEmail } from "@/lib/client-session";
-import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { type SearchParams, withLocale } from "@/lib/i18n";
 import { getDeliverables, getOrder, getOrderForProject } from "@/lib/order-service";
 import { getProject } from "@/lib/project-service";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
@@ -20,7 +21,7 @@ export const dynamic = "force-dynamic";
 
 export default async function BrandProjectReviewPage({ params, searchParams }: Props) {
   const [{ id }, query] = await Promise.all([params, searchParams]);
-  const locale = getLocale(query);
+  const locale = await getAppUiLocale();
   const clientEmail = await getCurrentClientEmail();
 
   if (!clientEmail) {

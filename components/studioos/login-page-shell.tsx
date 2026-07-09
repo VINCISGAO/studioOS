@@ -3,7 +3,6 @@
 import Link from "next/link";
 import {
   Clapperboard,
-  Globe2,
   ShieldCheck,
   Target,
   TrendingUp,
@@ -12,7 +11,6 @@ import {
 } from "lucide-react";
 import { BrandLogoLockup } from "@/components/brand-logo-mark";
 import { GoogleOneTap } from "@/components/studioos/google-one-tap";
-import { LoginLanguageSwitcher } from "@/components/studioos/login-language-switcher";
 import { LoginSocialButtons } from "@/components/studioos/login-social-buttons";
 import { LoginWorkspace } from "@/components/studioos/login-workspace";
 import { MarketingHomeLink } from "@/components/studioos/marketing-home-link";
@@ -76,8 +74,8 @@ type LoginPageShellProps = {
   t: LoginPageCopy;
 };
 
-function roleTabHref(locale: Locale, role: LoginRole, nextPath: string) {
-  const params = new URLSearchParams({ lang: locale, role });
+function roleTabHref(role: LoginRole, nextPath: string) {
+  const params = new URLSearchParams({ role });
   if (nextPath) params.set("next", nextPath);
   return `/login?${params.toString()}`;
 }
@@ -110,18 +108,20 @@ function CreatorHeadlineLine({
   lead,
   tail,
   highlight,
-  stacked = false
+  stacked = false,
+  compactSpacing = false
 }: {
   lead: string;
   tail?: string;
   highlight: string;
   stacked?: boolean;
+  compactSpacing?: boolean;
 }) {
   if (stacked && tail) {
     return (
       <>
         <span className="block">{lead}</span>
-        <span className="mt-1 block">
+        <span className={cn("block", compactSpacing ? "mt-0.5" : "mt-1")}>
           {tail}
           <CreatorHeadlineGradient>{highlight}</CreatorHeadlineGradient>
         </span>
@@ -142,23 +142,28 @@ function LoginMarketingHeadline({
   role,
   locale,
   t,
-  className
+  className,
+  mobileIntro = false
 }: {
   role: LoginRole;
   locale: Locale;
   t: LoginPageCopy;
   className?: string;
+  mobileIntro?: boolean;
 }) {
   const isBrand = role === "brand";
+  const lineLeading = mobileIntro ? "leading-[0.9]" : "leading-[1.12]";
+  const betweenLines = mobileIntro ? "mt-[0.36rem]" : "mt-[0.45rem]";
 
   return (
     <h1
       className={cn(
         "font-semibold",
         locale === "zh"
-          ? "text-pretty leading-[1.12] tracking-[0.04em]"
-          : cn(marketingHeadlineClassName("en"), "text-pretty leading-[1.12] tracking-[-0.02em]"),
+          ? cn("text-pretty tracking-[0.04em]", lineLeading)
+          : cn(marketingHeadlineClassName("en"), "text-pretty tracking-[-0.02em]", lineLeading),
         isBrand ? "text-white" : "text-zinc-950",
+        mobileIntro && "text-center",
         className
       )}
     >
@@ -167,7 +172,7 @@ function LoginMarketingHeadline({
           <span className="block">
             <BrandHeadlineGradient>{formatHeroHeadlineLine1(t.brandHeroLine1)}</BrandHeadlineGradient>
           </span>
-          <span className="mt-3 block">
+          <span className={cn("block", betweenLines)}>
             <BrandHeadlineGradient>{t.brandHeroLine2}</BrandHeadlineGradient>
           </span>
         </>
@@ -179,14 +184,16 @@ function LoginMarketingHeadline({
               tail={t.creatorHeroLine1Tail}
               highlight={t.creatorHeroHighlightLine1}
               stacked={locale === "en" && Boolean(t.creatorHeroLine1Tail)}
+              compactSpacing={mobileIntro}
             />
           </span>
-          <span className={cn("mt-3 block", locale === "en" && "lg:whitespace-nowrap")}>
+          <span className={cn("block", betweenLines, locale === "en" && "lg:whitespace-nowrap")}>
             <CreatorHeadlineLine
               lead={t.creatorHeroLine2}
               tail={t.creatorHeroLine2Tail}
               highlight={t.creatorHeroHighlightLine2}
               stacked={locale === "en" && Boolean(t.creatorHeroLine2Tail)}
+              compactSpacing={mobileIntro}
             />
           </span>
         </>
@@ -195,57 +202,46 @@ function LoginMarketingHeadline({
   );
 }
 
-function LoginTrustLogos({
-  logos,
+function LoginHeroSubtitle({
+  text,
   isBrand,
   className
 }: {
-  logos: string[];
+  text: string;
   isBrand: boolean;
   className?: string;
 }) {
   return (
-    <div className={cn("flex flex-wrap items-center gap-x-8 gap-y-3", className)}>
-      {logos.map((logo) => (
-        <span
-          key={logo}
-          className={cn(
-            "text-sm font-semibold tracking-[0.18em]",
-            isBrand ? "text-white/80" : "text-zinc-950"
-          )}
-        >
-          {logo}
-        </span>
-      ))}
-    </div>
+    <p
+      className={cn(
+        "text-[13px] leading-[1.2rem] sm:text-sm sm:leading-[1.4rem]",
+        isBrand ? "text-white sm:whitespace-nowrap" : "max-w-md text-zinc-600",
+        className
+      )}
+    >
+      {text}
+    </p>
   );
 }
 
 function LoginMobileIntro({
   role,
   locale,
-  t,
-  visual
+  t
 }: {
   role: LoginRole;
   locale: Locale;
   t: LoginPageCopy;
-  visual: ReturnType<typeof getLoginVisual>;
 }) {
-  const isBrand = role === "brand";
-  const heroSubtitle = isBrand ? t.brandHeroSubtitle : t.creatorHeroSubtitle;
-
   return (
-    <div className="mb-6 space-y-3 sm:mb-8 lg:hidden">
-      <LoginMarketingHeadline role={role} locale={locale} t={t} className="text-[2.125rem] sm:text-[2.5rem]" />
-      <p
-        className={cn(
-          "text-[13px] leading-6 sm:text-sm sm:leading-7",
-          isBrand ? cn("text-white sm:whitespace-nowrap") : "max-w-md text-zinc-600"
-        )}
-      >
-        {heroSubtitle}
-      </p>
+    <div className="mb-6 mt-8 text-center sm:mb-8 sm:mt-10 lg:hidden">
+      <LoginMarketingHeadline
+        role={role}
+        locale={locale}
+        t={t}
+        mobileIntro
+        className="text-[2.125rem] sm:text-[2.5rem]"
+      />
     </div>
   );
 }
@@ -266,6 +262,7 @@ export function LoginPageShell({
   const pageVisual = getLoginVisual(role);
   const formVisual = isBrand ? getLoginVisual("brand") : getLoginVisual("creator");
   const desktopCardTitle = locale === "zh" ? "三步完成登录" : "Three quick steps to sign in";
+  const heroSubtitle = isBrand ? t.brandHeroSubtitle : t.creatorHeroSubtitle;
 
   return (
     <main className="relative min-h-[100dvh] overflow-hidden">
@@ -290,19 +287,7 @@ export function LoginPageShell({
             />
           </MarketingHomeLink>
 
-          <div className="flex items-center gap-2">
-            <span
-              className={cn(
-                "hidden h-9 w-9 items-center justify-center rounded-full border shadow-sm backdrop-blur sm:flex",
-                isBrand
-                  ? "border-white/25 bg-white/15 text-white"
-                  : "border-violet-200/80 bg-white/80 text-violet-600"
-              )}
-            >
-              <Globe2 className="h-4.5 w-4.5" />
-            </span>
-            <LoginLanguageSwitcher locale={locale} compact={isBrand} />
-          </div>
+          <div className="hidden w-9 sm:block" aria-hidden />
         </header>
 
         <div className="mx-auto flex w-full max-w-[1320px] flex-1 flex-col gap-6 px-5 pb-8 sm:px-8 max-lg:justify-start lg:gap-10 lg:px-10 lg:pb-12 xl:gap-14 xl:px-12 lg:flex-row lg:items-center lg:justify-between">
@@ -314,17 +299,10 @@ export function LoginPageShell({
                   locale={locale}
                   t={t}
                   className={cn(
-                    "text-[2rem] sm:text-[2.75rem]",
+                    "mt-8 text-[2rem] sm:text-[2.75rem]",
                     locale === "en" ? "lg:text-[2.45rem] xl:text-[3.05rem]" : "lg:text-[3.25rem]"
                   )}
                 />
-                <p
-                  className={cn(
-                    "mt-4 text-[13px] leading-6 text-white lg:whitespace-nowrap xl:text-[15px] xl:leading-7"
-                  )}
-                >
-                  {t.brandHeroSubtitle}
-                </p>
                 <ul className="mt-8 hidden space-y-5 lg:block lg:mt-10">
                   {t.brandFeatures.map((feature, index) => {
                     const Icon = featureIcons[feature.icon];
@@ -341,7 +319,11 @@ export function LoginPageShell({
                     );
                   })}
                 </ul>
-                <LoginTrustLogos logos={t.brandLogos} isBrand={isBrand} className="mt-12 hidden lg:flex" />
+                <LoginHeroSubtitle
+                  text={heroSubtitle}
+                  isBrand={isBrand}
+                  className="mt-12 hidden lg:block xl:text-[15px] xl:leading-7"
+                />
               </>
             ) : (
               <>
@@ -350,11 +332,10 @@ export function LoginPageShell({
                   locale={locale}
                   t={t}
                   className={cn(
-                    "text-[2rem] sm:text-[2.75rem]",
+                    "mt-8 text-[2rem] sm:text-[2.75rem]",
                     locale === "en" ? "lg:text-[2.55rem] xl:text-[3.05rem]" : "lg:text-[3.25rem]"
                   )}
                 />
-                <p className={cn("mt-4 max-w-lg text-[15px] leading-7 sm:text-base", pageVisual.panelMuted)}>{t.creatorHeroSubtitle}</p>
                 <ul className="mt-8 space-y-5 sm:mt-10">
                   {t.creatorFeatures.map((feature, index) => {
                     const Icon = featureIcons[feature.icon];
@@ -371,7 +352,11 @@ export function LoginPageShell({
                     );
                   })}
                 </ul>
-                <LoginTrustLogos logos={t.brandLogos} isBrand={isBrand} className="mt-12 hidden lg:flex" />
+                <LoginHeroSubtitle
+                  text={heroSubtitle}
+                  isBrand={isBrand}
+                  className="mt-12 hidden lg:block sm:text-base"
+                />
               </>
             )}
 
@@ -381,7 +366,7 @@ export function LoginPageShell({
           </section>
 
           <section className="w-full max-w-[460px] lg:w-[460px] lg:shrink-0 xl:w-[480px] max-lg:mx-auto max-lg:mt-10 sm:max-lg:mt-12">
-            <LoginMobileIntro role={role} locale={locale} t={t} visual={pageVisual} />
+            <LoginMobileIntro role={role} locale={locale} t={t} />
 
             <div
               className={cn(
@@ -401,10 +386,10 @@ export function LoginPageShell({
               </h2>
 
               <nav className={cn("mt-5 grid grid-cols-2 gap-1 rounded-xl sm:mt-6", formVisual.tabWrap)} aria-label={locale === "zh" ? "登录身份" : "Sign-in role"}>
-                <RoleTab href={roleTabHref(locale, "brand", nextPath)} active={isBrand} visual={formVisual} icon={UserRound}>
+                <RoleTab href={roleTabHref("brand", nextPath)} active={isBrand} visual={formVisual} icon={UserRound}>
                   {t.brandTab}
                 </RoleTab>
-                <RoleTab href={roleTabHref(locale, "creator", nextPath)} active={!isBrand} visual={formVisual} icon={Clapperboard}>
+                <RoleTab href={roleTabHref("creator", nextPath)} active={!isBrand} visual={formVisual} icon={Clapperboard}>
                   {t.creatorTab}
                 </RoleTab>
               </nav>
@@ -437,10 +422,10 @@ export function LoginPageShell({
             </div>
 
             <div className={cn("mt-8 pb-4 lg:hidden", isBrand ? "text-white" : "text-zinc-950")}>
-              <LoginTrustLogos
-                logos={t.brandLogos}
+              <LoginHeroSubtitle
+                text={heroSubtitle}
                 isBrand={isBrand}
-                className="justify-center gap-x-7 gap-y-3 text-center opacity-55"
+                className={cn("mx-auto text-center", !isBrand && "text-black")}
               />
               <p className={cn("mt-8 text-center text-xs", pageVisual.panelMuted)}>
                 © {new Date().getFullYear()} {studioOS.productName}. {t.rights}

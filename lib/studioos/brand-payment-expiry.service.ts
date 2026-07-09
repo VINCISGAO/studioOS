@@ -103,7 +103,7 @@ async function notifyCreatorOrderCancelledUnpaid(input: {
   if (!email) return;
 
   const creator = getCreatorByIdSync(input.order.creator_id);
-  const actionUrl = `${getAppBaseUrl()}/studio/messages?lang=${input.locale}`;
+  const actionUrl = `${getAppBaseUrl()}/studio/messages`;
   const result = await sendCreatorNotificationEmail({
     to: email,
     creatorName: creator?.name ?? "Creator",

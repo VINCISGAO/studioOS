@@ -1,8 +1,9 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import { redirect } from "next/navigation";
 import { CommunicationChatPanel } from "@/components/studioos/communication/communication-chat-panel";
 import { getSessionUser } from "@/features/auth/session.service";
 import { platformLocalizationService } from "@/features/communication/platform-localization.service";
-import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { type SearchParams, withLocale } from "@/lib/i18n";
 import { getProject } from "@/lib/project-service";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +16,7 @@ export default async function BrandProjectCommunicationPage({
   searchParams: Promise<SearchParams>;
 }) {
   const [{ id }, query] = await Promise.all([params, searchParams]);
-  const locale = getLocale(query);
+  const locale = await getAppUiLocale();
   const sessionUser = await getSessionUser();
   if (!sessionUser) {
     redirect(withLocale("/login?role=brand", locale));

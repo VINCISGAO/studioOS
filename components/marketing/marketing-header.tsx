@@ -21,7 +21,6 @@ export async function MarketingHeader({ locale }: { locale: Locale }) {
 
   const headerList = await headers();
   const pathname = headerList.get("x-pathname") ?? "/";
-  const search = headerList.get("x-search") ?? "";
   const session = await getCurrentSession();
   const isHome = pathname === "/";
   const portalHref = resolveMarketingPortalHref(locale, session);
@@ -69,7 +68,7 @@ export async function MarketingHeader({ locale }: { locale: Locale }) {
           ))}
         </nav>
         <div className="flex items-center gap-2">
-          <LanguageSwitcher locale={locale} pathname={pathname} search={search} />
+          <LanguageSwitcher locale={locale} />
           <Button
             asChild
             size="sm"

@@ -1,10 +1,11 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import { redirect } from "next/navigation";
 import { StudioMessageCenter } from "@/components/studioos/studio-message-center";
 import type { MessageDetailPayload, MessageListItem } from "@/components/studioos/studio-message-center.types";
 import { notificationService } from "@/features/notification/notification.service";
 import { getSessionUser } from "@/features/auth/session.service";
 import { getCurrentCreator } from "@/lib/creator-session";
-import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { type SearchParams, withLocale } from "@/lib/i18n";
 import type { CreatorNotification } from "@/lib/notification-types";
 import { listNotificationsForCreator } from "@/lib/notification-service";
 import { listInvitationsForCreator } from "@/lib/studioos/creator-invitation-store";
@@ -318,7 +319,7 @@ async function buildMessageCenterPayload(
 
 export default async function StudioMessagesPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const query = await searchParams;
-  const locale = getLocale(query);
+  const locale = await getAppUiLocale();
   const creator = await getCurrentCreator();
 
   if (!creator) {

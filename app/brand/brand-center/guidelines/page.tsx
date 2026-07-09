@@ -1,8 +1,9 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import { Card, CardContent } from "@/components/ui/card";
-import { getLocale, type SearchParams } from "@/lib/i18n";
+import { type SearchParams } from "@/lib/i18n";
 
 export default async function BrandGuidelinesPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  const locale = getLocale(await searchParams);
+  const locale = await getAppUiLocale();
 
   return (
     <div>

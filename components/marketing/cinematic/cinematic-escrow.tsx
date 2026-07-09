@@ -1,11 +1,12 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { Lock, ShieldCheck, Unlock } from "lucide-react";
 import { RevealSection, cinematicEase } from "@/components/marketing/cinematic/motion-primitives";
-import { MarketingEyebrowPill } from "@/components/marketing/landing/landing-ui";
+import { MarketingEyebrowPill, marketingSectionTitleClassName } from "@/components/marketing/landing/landing-ui";
 import { cinematicText } from "@/lib/marketing/cinematic-copy";
 import type { Locale, MarketingLocale } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
 
 const icons = [Lock, ShieldCheck, Unlock];
 
@@ -17,6 +18,7 @@ export function CinematicEscrow({
   copyLocale?: Locale | MarketingLocale;
 }) {
   const t = cinematicText("escrow", copyLocale);
+  const reduce = useReducedMotion();
 
   return (
     <section className="bg-[#050505] pb-6 pt-10 sm:pb-8 sm:pt-20">
@@ -24,8 +26,11 @@ export function CinematicEscrow({
         <RevealSection className="text-center">
           <MarketingEyebrowPill tone="dark">{t.chapter}</MarketingEyebrowPill>
           <motion.h2
-            variants={{ hidden: { opacity: 0, y: 28 }, visible: { opacity: 1, y: 0, transition: { duration: 0.85, ease: cinematicEase } } }}
-            className="mx-auto mt-4 max-w-2xl text-3xl font-semibold tracking-tight text-white sm:text-4xl"
+            initial={reduce ? false : { opacity: 0, y: 20 }}
+            whileInView={reduce ? undefined : { opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-8%" }}
+            transition={{ duration: 0.65, ease: cinematicEase }}
+            className={cn("mx-auto mt-4 max-w-2xl text-white", marketingSectionTitleClassName)}
           >
             {t.title}
           </motion.h2>
@@ -37,15 +42,17 @@ export function CinematicEscrow({
             return (
               <motion.article
                 key={item.title}
-                initial={{ opacity: 0, y: 40 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-10%" }}
-                transition={{ duration: 0.85, delay: index * 0.12, ease: cinematicEase }}
-                whileHover={{ y: -8, scale: 1.01 }}
-                whileTap={{ scale: 0.985 }}
+                initial={reduce ? false : { opacity: 0, y: 24 }}
+                whileInView={reduce ? undefined : { opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-8%" }}
+                transition={{ duration: 0.6, delay: index * 0.08, ease: cinematicEase }}
+                whileHover={reduce ? undefined : { y: -4 }}
                 className="group relative flex items-center gap-3 overflow-hidden rounded-lg border border-white/10 bg-[#111315] p-4 transition-colors duration-300 hover:border-[#d8d2c4]/40 hover:bg-[#151515]"
               >
-                <span className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-[#d8d2c4]/0 to-transparent transition duration-500 group-hover:via-[#d8d2c4]/60" />
+                <span
+                  className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-[#d8d2c4]/0 to-transparent transition duration-500 group-hover:via-[#d8d2c4]/60"
+                  aria-hidden
+                />
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-white/[0.055] text-[#d8d2c4] ring-1 ring-white/10 transition duration-300 group-hover:-translate-y-0.5 group-hover:bg-[#d8d2c4]/12 group-hover:text-white group-hover:ring-[#d8d2c4]/35">
                   <Icon className="h-4 w-4" />
                 </span>

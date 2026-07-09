@@ -1,7 +1,5 @@
 import Link from "next/link";
-import { Suspense } from "react";
 import { BrandLogoLockup } from "@/components/brand-logo-mark";
-import { LanguageSwitcher, LanguageSwitcherFallback } from "@/components/language-switcher";
 import { StudioNotificationBell } from "@/components/studioos/studio-notification-bell";
 import { StudioUserMenu } from "@/components/studioos/studio-user-menu";
 import { Button } from "@/components/ui/button";
@@ -125,9 +123,6 @@ export function BrandReviewShell({
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           <header className="sticky top-0 z-40 shrink-0 border-b border-zinc-200/80 bg-white/95 backdrop-blur">
             <div className="flex h-14 items-center justify-end gap-2 px-4 sm:px-6 lg:px-8">
-              <Suspense fallback={<LanguageSwitcherFallback locale={locale} />}>
-                <LanguageSwitcher locale={locale} pathname={pathname} search={search} />
-              </Suspense>
               {notifications.length ? (
                 <StudioNotificationBell locale={locale} notifications={notifications} unreadCount={unreadCount} />
               ) : null}

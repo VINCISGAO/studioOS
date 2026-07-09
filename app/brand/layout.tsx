@@ -1,7 +1,6 @@
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
 import { BrandPortalShell } from "@/components/studioos/brand-portal-shell";
-import { getLocale, encodeBrandLoginNext, withLocale } from "@/lib/i18n";
+import { getAppUiLocale } from "@/lib/app-language";
 import { getCurrentSession } from "@/lib/session-user";
 import { getBrandPortalProfile, getBrandPortalUnreadCount } from "@/lib/studioos/brand-portal-data";
 import { fallbackBrandDisplayName } from "@/lib/studioos/brand-account-display";
@@ -41,21 +40,16 @@ export default async function BrandLayout({ children }: BrandLayoutProps) {
   const headerList = await headers();
   const pathname = headerList.get("x-pathname") ?? "/brand";
   const search = headerList.get("x-search") ?? "";
-  const locale = getLocale({ lang: new URLSearchParams(search).get("lang") ?? undefined });
+  const locale = await getAppUiLocale();
 
   const session = await getCurrentSession();
-  if (!session || session.role !== "client") {
-    const next = encodeBrandLoginNext(pathname, search);
-    redirect(withLocale(`/login?role=brand&next=${next}`, locale));
-  }
-
-  const brandEmail = session.email.toLowerCase();
+  const brandEmail = session!.email.toLowerCase();
   await enforceBrandPaymentDeadlinesForClient(brandEmail);
 
   const unreadMessages = await getBrandPortalUnreadCount(brandEmail);
   const profile = await getBrandPortalProfile(brandEmail);
   const brandName =
-    profile?.display_name.trim() || profile?.company_name.trim() || fallbackBrandDisplayName(session.email);
+    profile?.display_name.trim() || profile?.company_name.trim() || fallbackBrandDisplayName(brandEmail);
   const avatarUrl = await resolveExistingBrandAvatarUrl(profile?.logo_url);
 
   return (

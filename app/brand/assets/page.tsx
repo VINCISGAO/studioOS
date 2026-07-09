@@ -1,6 +1,7 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import { Card, CardContent } from "@/components/ui/card";
 import { getCurrentClientEmail } from "@/lib/client-session";
-import { getLocale, type SearchParams } from "@/lib/i18n";
+import { type SearchParams } from "@/lib/i18n";
 import { listOrdersForClient } from "@/lib/order-service";
 
 const assetTypes = [
@@ -13,7 +14,7 @@ const assetTypes = [
 ];
 
 export default async function BrandAssetsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  const locale = getLocale(await searchParams);
+  const locale = await getAppUiLocale();
   const clientEmail = await getCurrentClientEmail();
   const orders = clientEmail ? await listOrdersForClient(clientEmail) : [];
   const delivered = orders.filter((o) => o.status === "completed").length;

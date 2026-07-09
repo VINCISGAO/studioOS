@@ -6,7 +6,8 @@ import { cache } from "react";
 import { adminProfileRepository } from "@/features/admin/auth/admin-profile.repository";
 
 const getAdminLoginSetupStatus = cache(() => adminProfileRepository.getLoginSetupStatus());
-import { getLocale, type Locale, type SearchParams, withLocale } from "@/lib/i18n";
+import { getAppUiLocale } from "@/lib/app-language";
+import { appPath, type Locale, type SearchParams } from "@/lib/i18n";
 import { isProductionRuntime } from "@/lib/auth/admin-security-config";
 
 type AdminLoginPageProps = {
@@ -69,14 +70,14 @@ function resolveNextPath(raw: SearchParams["next"]) {
 
 export default async function AdminLoginPage({ searchParams }: AdminLoginPageProps) {
   const params = await searchParams;
-  const locale = getLocale(params);
+  const locale = await getAppUiLocale();
   const t = copy[locale];
   const nextPath = resolveNextPath(params.next);
   const hasSessionCookie = Boolean(await readAdminSessionToken());
   if (hasSessionCookie) {
     const profile = await validateAdminSession();
     if (profile) {
-      redirect(withLocale(nextPath, locale));
+      redirect(appPath(nextPath));
     }
   }
 

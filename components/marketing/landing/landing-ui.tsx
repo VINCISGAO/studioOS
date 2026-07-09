@@ -71,6 +71,33 @@ export function MarketingEyebrowPill({
   );
 }
 
+export const marketingSectionTitleClassName =
+  "text-[2rem] font-semibold leading-tight tracking-[-0.045em] sm:text-[2.45rem]";
+
+export function MarketingSectionTitle({
+  children,
+  className,
+  as: Tag = "h2",
+  tone = "dark"
+}: {
+  children: ReactNode;
+  className?: string;
+  as?: "h2" | "h3";
+  tone?: "dark" | "light";
+}) {
+  return (
+    <Tag
+      className={cn(
+        marketingSectionTitleClassName,
+        tone === "dark" ? "text-white" : "text-zinc-950",
+        className
+      )}
+    >
+      {children}
+    </Tag>
+  );
+}
+
 export function LandingHeadline({
   children,
   className,

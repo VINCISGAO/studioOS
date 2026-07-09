@@ -1,3 +1,4 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import Link from "next/link";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -6,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { adminDepositService } from "@/features/admin/deposit/admin-deposit.service";
 import { getAdminSessionUser } from "@/features/admin/auth/admin-auth.service";
-import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { type SearchParams, withLocale } from "@/lib/i18n";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 const copy = {
@@ -33,7 +34,7 @@ type AdminDepositsPageProps = {
 };
 
 export default async function AdminDepositsPage({ searchParams }: AdminDepositsPageProps) {
-  const locale = getLocale(await searchParams);
+  const locale = await getAppUiLocale();
   const t = copy[locale];
   const user = await getAdminSessionUser();
   const deposits = user ? await adminDepositService.list(user) : [];

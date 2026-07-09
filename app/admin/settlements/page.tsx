@@ -1,7 +1,8 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import { AdminSettlementQueue } from "@/components/studioos/admin-settlement-queue";
 import { adminSettlementService } from "@/features/admin/settlement/admin-settlement.service";
 import { getAdminSessionUser } from "@/features/admin/auth/admin-auth.service";
-import { getLocale, type SearchParams } from "@/lib/i18n";
+import { type SearchParams } from "@/lib/i18n";
 
 const copy = {
   en: {
@@ -16,7 +17,7 @@ const copy = {
 
 export default async function AdminSettlementsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const params = await searchParams;
-  const locale = getLocale(params);
+  const locale = await getAppUiLocale();
   const t = copy[locale];
   const user = await getAdminSessionUser();
   const state = typeof params.state === "string" ? params.state : undefined;

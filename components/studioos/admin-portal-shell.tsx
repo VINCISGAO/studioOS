@@ -2,7 +2,6 @@ import Link from "next/link";
 import { BrandLogoLockup } from "@/components/brand-logo-mark";
 import { PortalMobileNav } from "@/components/studioos/portal-mobile-nav";
 import { adminSignOutAction } from "@/app/actions";
-import { LanguageSwitcher } from "@/components/language-switcher";
 import { Button } from "@/components/ui/button";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
@@ -180,7 +179,6 @@ export function AdminPortalShell({
                     </span>
                   ) : null}
                 </Link>
-                <LanguageSwitcher locale={locale} pathname={pathname} search={search} />
                 <div className="hidden items-center gap-2 rounded-lg border border-zinc-200 px-3 py-1.5 sm:flex">
                   <span className="flex h-7 w-7 items-center justify-center rounded-full bg-zinc-900 text-xs font-semibold text-white">
                     A
@@ -191,7 +189,6 @@ export function AdminPortalShell({
                   </div>
                 </div>
                 <form action={adminSignOutAction}>
-                  <input type="hidden" name="lang" value={locale} />
                   <Button type="submit" variant="outline" size="sm" className="h-9 gap-2 px-2.5">
                     <LogOut className="h-4 w-4" />
                     <span className="hidden sm:inline">{locale === "zh" ? "退出" : "Sign out"}</span>

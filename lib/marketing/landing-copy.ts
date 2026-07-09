@@ -67,32 +67,38 @@ export const landingCopy = {
   },
   hero: {
     en: {
-      eyebrow: "Commercial production infrastructure for global brands",
+      eyebrow: "AI-powered · Global collaboration",
       titleLine1: "Connecting global brands",
       titleHighlight: "",
       titleLine2: "with AI creators",
-      subtitle:
-        "Great ideas are no longer limited by cost, time, or resources\nWorld-class advertising is no longer reserved for big brands",
-      primary: "Start as a brand",
-      secondary: "Join as a studio",
+      subtitle: "Every great story begins with a connection",
+      primary: "I'm a brand",
+      secondary: "I'm a creator",
       primaryDescription: "Match with vetted AI studios",
       secondaryDescription: "Join to get global orders",
       trusted: "Built for brand teams shipping paid-social creative at speed",
-      showreel: "View the workflow"
+      showreel: "View the workflow",
+      statBudget: "Starting production budget",
+      statWindow: "First concept window",
+      statDelivery: "Delivery and rights standard",
+      trustMarquee: "TRUSTED BY GLOBAL BRAND TEAMS"
     },
     zh: {
       eyebrow: "AI 驱动 · 全球协作",
-      titleLine1: "连接全球品牌与AI创作者",
+      titleLine1: "连接全球品牌",
       titleHighlight: "",
-      titleLine2: "",
-      subtitle:
-        "让好的创意不再因成本、时间或资源被埋没\n世界级广告不再是大公司的专属",
-      primary: "我是项目方",
+      titleLine2: "与 AI 创作者",
+      subtitle: "每一个伟大的故事，都始于一次连接",
+      primary: "我是品牌方",
       secondary: "我是创作者",
       primaryDescription: "匹配优质 AI 创作者",
       secondaryDescription: "入驻获取全球订单",
       trusted: "为需要高速投放素材的品牌团队而建",
-      showreel: "查看流程"
+      showreel: "查看流程",
+      statBudget: "起步制作预算",
+      statWindow: "首轮方案窗口",
+      statDelivery: "交付与版权标准",
+      trustMarquee: "全球品牌信赖之选"
     }
   },
   heroFeatures: {
@@ -273,120 +279,156 @@ const landingCopyTranslations: Partial<{
   hero: {
     "zh-TW": {
       eyebrow: "AI 驅動 · 全球協作",
-      titleLine1: "連接全球品牌與AI創作者",
+      titleLine1: "連接全球品牌",
       titleHighlight: "",
-      titleLine2: "",
-      subtitle: "讓好的創意不再因成本、時間或資源被埋沒\n世界級廣告不再是大公司的專屬",
+      titleLine2: "與 AI 創作者",
+      subtitle: "每一個偉大的故事，都始於一次連接",
       primary: "我是品牌方",
       secondary: "我是創作者",
       primaryDescription: "匹配嚴選 AI 創作者",
       secondaryDescription: "入駐取得全球訂單",
       trusted: "為需要快速投放素材的品牌團隊而建",
-      showreel: "查看流程"
+      showreel: "查看流程",
+      statBudget: "起步製作預算",
+      statWindow: "首輪方案窗口",
+      statDelivery: "交付與版權標準",
+      trustMarquee: "全球品牌信賴"
     },
     ja: {
-      eyebrow: "グローバルブランドのための商業制作インフラ",
-      titleLine1: "世界のブランドを",
+      eyebrow: "AI駆動 · グローバル協業",
+      titleLine1: "グローバルブランドと",
       titleHighlight: "",
-      titleLine2: "AI クリエイターとつなぐ",
-      subtitle: "優れたアイデアは、もうコストや時間、リソースに縛られません\n世界水準の広告は、大企業だけのものではありません",
+      titleLine2: "AI クリエイターをつなぐ",
+      subtitle: "すべての偉大な物語は、ひとつのつながりから始まる",
       primary: "ブランドとして始める",
       secondary: "スタジオとして参加",
       primaryDescription: "厳選された AI スタジオとマッチング",
       secondaryDescription: "参加して世界の案件を受ける",
       trusted: "有料ソーシャル向け素材を速く届けるブランドチームのために設計",
-      showreel: "ワークフローを見る"
+      showreel: "ワークフローを見る",
+      statBudget: "制作予算の目安",
+      statWindow: "初回コンセプトの提出",
+      statDelivery: "納品・権利の基準",
+      trustMarquee: "世界のブランドに信頼されています"
     },
     ko: {
-      eyebrow: "글로벌 브랜드를 위한 상업 제작 인프라",
+      eyebrow: "AI 기반 · 글로벌 협업",
       titleLine1: "글로벌 브랜드와",
       titleHighlight: "",
-      titleLine2: "AI 크리에이터를 연결합니다",
-      subtitle: "훌륭한 아이디어는 더 이상 비용, 시간, 자원에 묶이지 않습니다\n세계적 수준의 광고는 더 이상 대형 브랜드만의 전유물이 아닙니다",
+      titleLine2: "AI 크리에이터",
+      subtitle: "모든 위대한 이야기는 한 번의 연결에서 시작됩니다",
       primary: "브랜드로 시작하기",
       secondary: "스튜디오로 참여하기",
       primaryDescription: "검증된 AI 스튜디오와 매칭",
       secondaryDescription: "참여하고 글로벌 주문을 받기",
       trusted: "빠르게 유료 소셜 광고 소재를 출시하는 브랜드 팀을 위해 설계",
-      showreel: "워크플로 보기"
+      showreel: "워크플로 보기",
+      statBudget: "시작 제작 예산",
+      statWindow: "첫 컨셉 제출 기간",
+      statDelivery: "납품 및 권리 기준",
+      trustMarquee: "글로벌 브랜드가 신뢰합니다"
     },
     ms: {
-      eyebrow: "Infrastruktur produksi komersial untuk jenama global",
+      eyebrow: "Dikuasakan AI · Kerjasama global",
       titleLine1: "Menghubungkan jenama global",
       titleHighlight: "",
       titleLine2: "dengan pencipta AI",
-      subtitle: "Idea hebat tidak lagi terhad oleh kos, masa atau sumber\nIklan bertaraf dunia tidak lagi hanya untuk jenama besar",
+      subtitle: "Setiap kisah hebat bermula dengan satu sambungan",
       primary: "Mula sebagai jenama",
       secondary: "Sertai sebagai studio",
       primaryDescription: "Padankan dengan studio AI yang disaring",
       secondaryDescription: "Sertai untuk menerima pesanan global",
       trusted: "Dibina untuk pasukan jenama yang menghantar kreatif sosial berbayar dengan pantas",
-      showreel: "Lihat aliran kerja"
+      showreel: "Lihat aliran kerja",
+      statBudget: "Bajet produksi permulaan",
+      statWindow: "Tetingkap konsep pertama",
+      statDelivery: "Standard penghantaran & hak",
+      trustMarquee: "DIPERCAYAI PASUKAN JENAMA GLOBAL"
     },
     km: {
-      eyebrow: "ហេដ្ឋារចនាសម្ព័ន្ធផលិតកម្មពាណិជ្ជកម្មសម្រាប់ម៉ាកសកល",
+      eyebrow: "ដំណើរការដោយ AI · សហការពិភពលោក",
       titleLine1: "ភ្ជាប់ម៉ាកសកល",
       titleHighlight: "",
       titleLine2: "ជាមួយអ្នកបង្កើត AI",
-      subtitle: "គំនិតល្អៗលែងត្រូវបានកំណត់ដោយថវិកា ពេលវេលា ឬធនធានទៀតហើយ\nការផ្សព្វផ្សាយកម្រិតពិភពលោកលែងជារបស់ម៉ាកធំៗតែប៉ុណ្ណោះ",
+      subtitle: "រឿងរសជាតិគ្រប់មួយ ចាប់ផ្តើមពីការភ្ជាប់មួយ",
       primary: "ចាប់ផ្តើមជាម៉ាក",
       secondary: "ចូលរួមជាស្ទូឌីយោ",
       primaryDescription: "ផ្គូផ្គងជាមួយស្ទូឌីយោ AI ដែលបានត្រួតពិនិត្យ",
       secondaryDescription: "ចូលរួមដើម្បីទទួលការងារសកល",
       trusted: "បង្កើតសម្រាប់ក្រុមម៉ាកដែលត្រូវបញ្ចេញ creative លឿនលើ paid social",
-      showreel: "មើលលំហូរការងារ"
+      showreel: "មើលលំហូរការងារ",
+      statBudget: "ថវិកាផលិតកម្មចាប់ផ្តើម",
+      statWindow: "វិន្តមានគំនិតដំបូង",
+      statDelivery: "ស្តង់ដារប្រគល់ និងសិទ្ធិ",
+      trustMarquee: "ទទួលបានទំនុកចិត្តពីម៉ាកសកល"
     },
     th: {
-      eyebrow: "โครงสร้างพื้นฐานงานผลิตเชิงพาณิชย์สำหรับแบรนด์ทั่วโลก",
+      eyebrow: "ขับเคลื่อนด้วย AI · ทำงานร่วมทั่วโลก",
       titleLine1: "เชื่อมแบรนด์ทั่วโลก",
       titleHighlight: "",
       titleLine2: "กับครีเอเตอร์ AI",
-      subtitle: "ไอเดียที่ยอดเยี่ยมไม่ควรถูกจำกัดด้วยต้นทุน เวลา หรือทรัพยากรอีกต่อไป\nโฆษณาระดับโลกไม่ใช่สิทธิ์ของแบรนด์ใหญ่เท่านั้น",
+      subtitle: "เรื่องราวที่ยิ่งใหญ่ทุกเรื่อง เริ่มต้นจากการเชื่อมต่อครั้งหนึ่ง",
       primary: "เริ่มในฐานะแบรนด์",
       secondary: "เข้าร่วมในฐานะสตูดิโอ",
       primaryDescription: "จับคู่กับสตูดิโอ AI ที่ผ่านการคัดเลือก",
       secondaryDescription: "เข้าร่วมเพื่อรับงานระดับโลก",
       trusted: "สร้างมาเพื่อทีมแบรนด์ที่ต้องปล่อยครีเอทีฟ paid social อย่างรวดเร็ว",
-      showreel: "ดูเวิร์กโฟลว์"
+      showreel: "ดูเวิร์กโฟลว์",
+      statBudget: "งบผลิตเริ่มต้น",
+      statWindow: "กรอบเวลาไอเดียแรก",
+      statDelivery: "มาตรฐานส่งมอบและลิขสิทธิ์",
+      trustMarquee: "ได้รับความไว้วางใจจากแบรนด์ทั่วโลก"
     },
     vi: {
-      eyebrow: "Hạ tầng sản xuất thương mại cho thương hiệu toàn cầu",
+      eyebrow: "AI dẫn dắt · Hợp tác toàn cầu",
       titleLine1: "Kết nối thương hiệu toàn cầu",
       titleHighlight: "",
       titleLine2: "với nhà sáng tạo AI",
-      subtitle: "Ý tưởng lớn không còn bị giới hạn bởi chi phí, thời gian hay nguồn lực\nQuảng cáo đẳng cấp thế giới không còn chỉ dành cho các thương hiệu lớn",
+      subtitle: "Mọi câu chuyện vĩ đại đều bắt đầu từ một kết nối",
       primary: "Bắt đầu với vai trò thương hiệu",
       secondary: "Tham gia với vai trò studio",
       primaryDescription: "Ghép với các studio AI đã được tuyển chọn",
       secondaryDescription: "Tham gia để nhận đơn hàng toàn cầu",
       trusted: "Xây dựng cho đội ngũ thương hiệu cần xuất bản creative paid social thật nhanh",
-      showreel: "Xem quy trình"
+      showreel: "Xem quy trình",
+      statBudget: "Ngân sách sản xuất khởi điểm",
+      statWindow: "Khung thời gian concept đầu",
+      statDelivery: "Tiêu chuẩn bàn giao & bản quyền",
+      trustMarquee: "ĐƯỢC TIN DÙNG BỞI CÁC THƯƠNG HIỆU TOÀN CẦU"
     },
     fr: {
-      eyebrow: "Infrastructure de production commerciale pour les marques mondiales",
-      titleLine1: "Connecter les marques mondiales",
+      eyebrow: "Propulsé par l'IA · Collaboration mondiale",
+      titleLine1: "Connecter les marques",
       titleHighlight: "",
-      titleLine2: "aux créateurs IA",
-      subtitle: "Les grandes idées ne sont plus limitées par le coût, le temps ou les ressources\nLa publicité de niveau mondial n'est plus réservée aux grandes marques",
+      titleLine2: "mondiales aux créateurs IA",
+      subtitle: "Chaque grande histoire commence par une connexion",
       primary: "Commencer comme marque",
       secondary: "Rejoindre comme studio",
       primaryDescription: "Être mis en relation avec des studios IA sélectionnés",
       secondaryDescription: "Rejoindre pour recevoir des projets mondiaux",
       trusted: "Conçu pour les équipes de marque qui livrent vite des créations paid social",
-      showreel: "Voir le workflow"
+      showreel: "Voir le workflow",
+      statBudget: "Budget de production de départ",
+      statWindow: "Fenêtre du premier concept",
+      statDelivery: "Standard de livraison et droits",
+      trustMarquee: "APPROUVÉ PAR LES MARQUES MONDIALES"
     },
     es: {
-      eyebrow: "Infraestructura de producción comercial para marcas globales",
+      eyebrow: "Impulsado por IA · Colaboración global",
       titleLine1: "Conectamos marcas globales",
       titleHighlight: "",
       titleLine2: "con creadores de IA",
-      subtitle: "Las grandes ideas ya no están limitadas por coste, tiempo o recursos\nLa publicidad de nivel mundial ya no es exclusiva de las grandes marcas",
+      subtitle: "Cada gran historia comienza con una conexión",
       primary: "Empezar como marca",
       secondary: "Unirse como estudio",
       primaryDescription: "Conecta con estudios de IA seleccionados",
       secondaryDescription: "Únete para recibir proyectos globales",
       trusted: "Diseñado para equipos de marca que lanzan creatividad paid social con rapidez",
-      showreel: "Ver el flujo"
+      showreel: "Ver el flujo",
+      statBudget: "Presupuesto inicial de producción",
+      statWindow: "Ventana del primer concepto",
+      statDelivery: "Estándar de entrega y derechos",
+      trustMarquee: "CONFIANZA DE MARCAS GLOBALES"
     }
   },
   heroFeatures: {
@@ -475,7 +517,7 @@ const landingCopyTranslations: Partial<{
         { label: "平均コスト", trad: "$25,000+", studio: "$5,000" },
         { label: "制作期間", trad: "8〜12週間", studio: "72時間" },
         { label: "クリエイター接点", trad: "複数の中間層経由", studio: "直接ネットワーク" },
-        { label: "修正", trad: "追加費用", studio: "ワークフローに含む" }
+        { label: "修正", trad: "追加費用", studio: "含む" }
       ]
     },
     ko: {
@@ -491,7 +533,7 @@ const landingCopyTranslations: Partial<{
         { label: "평균 비용", trad: "$25,000+", studio: "$5,000" },
         { label: "제작 시간", trad: "8~12주", studio: "72시간" },
         { label: "크리에이터 접근", trad: "여러 단계 경유", studio: "직접 네트워크" },
-        { label: "수정", trad: "추가 비용", studio: "워크플로에 포함" }
+        { label: "수정", trad: "추가 비용", studio: "포함" }
       ]
     },
     ms: {
@@ -507,7 +549,7 @@ const landingCopyTranslations: Partial<{
         { label: "Kos purata", trad: "$25,000+", studio: "$5,000" },
         { label: "Masa produksi", trad: "8–12 minggu", studio: "72 jam" },
         { label: "Akses pencipta", trad: "Melalui banyak lapisan", studio: "Rangkaian langsung" },
-        { label: "Semakan", trad: "Yuran tambahan", studio: "Termasuk dalam aliran kerja" }
+        { label: "Semakan", trad: "Yuran tambahan", studio: "Termasuk" }
       ]
     },
     km: {
@@ -539,7 +581,7 @@ const landingCopyTranslations: Partial<{
         { label: "ต้นทุนเฉลี่ย", trad: "$25,000+", studio: "$5,000" },
         { label: "เวลาผลิต", trad: "8–12 สัปดาห์", studio: "72 ชั่วโมง" },
         { label: "การเข้าถึงครีเอเตอร์", trad: "ผ่านหลายชั้น", studio: "เครือข่ายโดยตรง" },
-        { label: "การแก้ไข", trad: "คิดเพิ่ม", studio: "รวมในเวิร์กโฟลว์" }
+        { label: "การแก้ไข", trad: "คิดเพิ่ม", studio: "รวมแล้ว" }
       ]
     },
     vi: {
@@ -571,7 +613,7 @@ const landingCopyTranslations: Partial<{
         { label: "Coût moyen", trad: "$25,000+", studio: "$5,000" },
         { label: "Temps de production", trad: "8–12 semaines", studio: "72 heures" },
         { label: "Accès créateurs", trad: "Via plusieurs couches", studio: "Réseau direct" },
-        { label: "Révisions", trad: "Frais supplémentaires", studio: "Incluses dans le workflow" }
+        { label: "Révisions", trad: "Frais supplémentaires", studio: "Incluses" }
       ]
     },
     es: {
@@ -587,7 +629,7 @@ const landingCopyTranslations: Partial<{
         { label: "Coste medio", trad: "$25,000+", studio: "$5,000" },
         { label: "Tiempo de producción", trad: "8–12 semanas", studio: "72 horas" },
         { label: "Acceso a creadores", trad: "A través de capas", studio: "Red directa" },
-        { label: "Revisiones", trad: "Costes extra", studio: "Incluidas en el flujo" }
+        { label: "Revisiones", trad: "Costes extra", studio: "Incluidas" }
       ]
     }
   },

@@ -12,6 +12,7 @@ import { hashPassword } from "@/lib/core/password";
 import { authService } from "@/features/auth/auth.service";
 import { buildSessionPayload } from "@/features/auth/session.service";
 import { resolvePostLoginDestination } from "@/lib/auth/post-login-redirect";
+import { appPath } from "@/lib/i18n";
 import { userRepository } from "@/features/auth/user.repository";
 import type { UserRole } from "@prisma/client";
 import { getCreatorIdForDemoEmail } from "@/lib/creator-session";
@@ -303,5 +304,5 @@ export async function performSignIn(input: SignInInput): Promise<SignInResult> {
     return { ok: true, redirectTo, session };
   }
 
-  return { ok: true, redirectTo: `/dashboard?lang=${lang}`, session: { email: trimmedEmail, role: "client" } };
+  return { ok: true, redirectTo: appPath("/dashboard"), session: { email: trimmedEmail, role: "client" } };
 }

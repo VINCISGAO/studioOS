@@ -70,8 +70,8 @@ export function CreatorMembershipUpgradeDialog({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          successUrl: `${origin}/studio?lang=${locale}&upgraded=1`,
-          cancelUrl: `${origin}/studio?lang=${locale}`
+          successUrl: `${origin}/studio?upgraded=1`,
+          cancelUrl: `${origin}/studio`
         })
       });
       const json = (await res.json()) as { success?: boolean; data?: { url?: string } };

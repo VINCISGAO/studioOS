@@ -81,7 +81,7 @@ export const CURATED_HOMEPAGE_SHOWCASE_WORKS: MarketingShowcaseWorkDto[] = [
     platform: "Meta",
     format: "9:16",
     thumbnail_url: "",
-    video_url: recentWorkVideo("Video  demo2.mp4"),
+    video_url: recentWorkVideo("Video demo2.mp4"),
     tags: ["Demo", "Variant", "Meta"],
     featured_on_homepage: true,
     homepage_sort_order: 4,

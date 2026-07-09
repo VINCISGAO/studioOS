@@ -5,15 +5,10 @@ import { redirect } from "next/navigation";
 import { DEMO_SESSION_COOKIE, VISITOR_COOKIE } from "@/lib/auth-config";
 import { resolveBrandBriefStartFromRequestCookies } from "@/lib/brand-brief-session";
 import { getOrCreateEphemeralWizardProject } from "@/lib/brand-start-brief";
-import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
-
-function localeFromForm(formData: FormData) {
-  return getLocale({ lang: String(formData.get("lang") ?? "") } satisfies SearchParams);
-}
+import { appPath } from "@/lib/i18n";
 
 /** Creates a draft campaign and opens the brand wizard. */
-export async function startBrandBriefAction(formData: FormData) {
-  const locale = localeFromForm(formData);
+export async function startBrandBriefAction(_formData: FormData) {
   const cookieStore = await cookies();
   const { email: clientEmail, visitorId } = resolveBrandBriefStartFromRequestCookies(
     cookieStore.get(DEMO_SESSION_COOKIE)?.value,
@@ -33,8 +28,8 @@ export async function startBrandBriefAction(formData: FormData) {
   try {
     project = await getOrCreateEphemeralWizardProject(clientEmail);
   } catch {
-    redirect(withLocale("/brand?error=draft-failed", locale));
+    redirect(appPath("/brand?error=draft-failed"));
   }
 
-  redirect(withLocale(`/brand/projects/new?project=${project.id}&step=1`, locale));
+  redirect(appPath(`/brand/projects/new?project=${project.id}&step=1`));
 }

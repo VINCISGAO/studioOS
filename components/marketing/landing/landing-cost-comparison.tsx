@@ -1,11 +1,11 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { Banknote, Check, Clock3, CreditCard, PencilLine, Sparkles, Users, X } from "lucide-react";
-import { LandingSection, LandingShell, MarketingEyebrowPill } from "@/components/marketing/landing/landing-ui";
+import { LandingSection, LandingShell, MarketingEyebrowPill, MarketingSectionTitle } from "@/components/marketing/landing/landing-ui";
 import { landingText } from "@/lib/marketing/landing-copy";
 import type { Locale, MarketingLocale } from "@/lib/i18n";
-import { withLocale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 function LegacyMark({ className }: { className?: string }) {
@@ -25,10 +25,6 @@ type ComparisonLabels = {
   faster: string;
   cheaper: string;
   smarter: string;
-  creatorCta: string;
-  creatorSub: string;
-  cases: string;
-  start: string;
   whyTitle: string;
   whySubtitle: string;
   payment: string;
@@ -55,12 +51,8 @@ const comparisonLabels: Record<MarketingLocale, ComparisonLabels> = {
     faster: "Faster",
     cheaper: "Cheaper",
     smarter: "Smarter",
-    creatorCta: "Connect global creators, ship better creative",
-    creatorSub: "100+ brands and creators have collaborated through VINCIS",
-    cases: "View cases",
-    start: "Start now",
     whyTitle: "Why choose VINCIS?",
-    whySubtitle: "Redefine commercial production with AI and a global creator network",
+    whySubtitle: "With AI and a global creator network, redefine how advertising gets made",
     payment: "Payment",
     traditionalContract: "Traditional contract",
     platformEscrow: "Platform escrow",
@@ -83,12 +75,8 @@ const comparisonLabels: Record<MarketingLocale, ComparisonLabels> = {
     faster: "更快",
     cheaper: "更便宜",
     smarter: "更智能",
-    creatorCta: "一眼看懂差异",
-    creatorSub: "已经有 100+ 品牌和创作者在 VINCIS 完成合作",
-    cases: "了解更多案例",
-    start: "立即开始",
     whyTitle: "为什么选择 VINCIS?",
-    whySubtitle: "用 AI 和全球创作者网络，重新定义广告制作流程",
+    whySubtitle: "一眼看懂差异，重新定义广告制作流程",
     payment: "支付方式",
     traditionalContract: "传统合同",
     platformEscrow: "平台托管支付",
@@ -111,12 +99,8 @@ const comparisonLabels: Record<MarketingLocale, ComparisonLabels> = {
     faster: "更快",
     cheaper: "更省",
     smarter: "更智能",
-    creatorCta: "一眼看懂差異",
-    creatorSub: "已有 100+ 品牌與創作者透過 VINCIS 合作",
-    cases: "查看更多案例",
-    start: "立即開始",
     whyTitle: "為什麼選擇 VINCIS?",
-    whySubtitle: "以 AI 和全球創作者網絡，重新定義廣告製作流程",
+    whySubtitle: "用 AI 與全球創作者網路，重新定義廣告製作流程",
     payment: "付款方式",
     traditionalContract: "傳統合約",
     platformEscrow: "平台託管付款",
@@ -139,18 +123,14 @@ const comparisonLabels: Record<MarketingLocale, ComparisonLabels> = {
     faster: "より速く",
     cheaper: "より低コスト",
     smarter: "よりスマート",
-    creatorCta: "世界中のクリエイターとつながり、より良い広告を届ける",
-    creatorSub: "100以上のブランドとクリエイターが VINCIS で協業しています",
-    cases: "事例を見る",
-    start: "今すぐ始める",
     whyTitle: "なぜ VINCIS なのか?",
-    whySubtitle: "AI とグローバルなクリエイターネットワークで広告制作を再定義します",
+    whySubtitle: "AI とグローバルクリエイターネットワークで、広告制作の進め方を再定義します",
     payment: "支払い",
     traditionalContract: "従来型の契約",
     platformEscrow: "プラットフォーム預託",
     aiAutomation: "AI と自動化",
     none: "なし",
-    aiWorkflow: "AI 支援ワークフロー",
+    aiWorkflow: "AIワークフロー",
     costSaved: "削減コスト",
     comparedWithAgencies: "代理店と比較",
     deliveryTime: "納品時間",
@@ -167,10 +147,6 @@ const comparisonLabels: Record<MarketingLocale, ComparisonLabels> = {
     faster: "더 빠르게",
     cheaper: "더 낮은 비용",
     smarter: "더 스마트하게",
-    creatorCta: "글로벌 크리에이터와 연결해 더 좋은 광고를 만드세요",
-    creatorSub: "100개 이상의 브랜드와 크리에이터가 VINCIS에서 협업했습니다",
-    cases: "사례 보기",
-    start: "지금 시작하기",
     whyTitle: "왜 VINCIS인가요?",
     whySubtitle: "AI와 글로벌 크리에이터 네트워크로 광고 제작 방식을 재정의합니다",
     payment: "결제",
@@ -178,7 +154,7 @@ const comparisonLabels: Record<MarketingLocale, ComparisonLabels> = {
     platformEscrow: "플랫폼 에스크로",
     aiAutomation: "AI 및 자동화",
     none: "없음",
-    aiWorkflow: "AI 지원 워크플로",
+    aiWorkflow: "AI 지원",
     costSaved: "절감 비용",
     comparedWithAgencies: "대행사 대비",
     deliveryTime: "납품 시간",
@@ -195,18 +171,14 @@ const comparisonLabels: Record<MarketingLocale, ComparisonLabels> = {
     faster: "Lebih pantas",
     cheaper: "Lebih jimat",
     smarter: "Lebih pintar",
-    creatorCta: "Hubungkan pencipta global dan hasilkan kreatif yang lebih baik",
-    creatorSub: "100+ jenama dan pencipta telah bekerjasama melalui VINCIS",
-    cases: "Lihat kes",
-    start: "Mula sekarang",
     whyTitle: "Mengapa pilih VINCIS?",
-    whySubtitle: "Takrif semula produksi iklan dengan AI dan rangkaian pencipta global",
+    whySubtitle: "Fahami perbezaannya sekilas pandang — takrif semula produksi iklan",
     payment: "Pembayaran",
     traditionalContract: "Kontrak tradisional",
     platformEscrow: "Escrow platform",
     aiAutomation: "AI & automasi",
     none: "Tiada",
-    aiWorkflow: "Aliran kerja dibantu AI",
+    aiWorkflow: "Aliran AI",
     costSaved: "Kos dijimatkan",
     comparedWithAgencies: "Berbanding agensi",
     deliveryTime: "Masa penghantaran",
@@ -223,18 +195,14 @@ const comparisonLabels: Record<MarketingLocale, ComparisonLabels> = {
     faster: "លឿនជាង",
     cheaper: "ចំណាយតិចជាង",
     smarter: "ឆ្លាតជាង",
-    creatorCta: "ភ្ជាប់អ្នកបង្កើតសកល និងបញ្ចេញគំនិតផ្សព្វផ្សាយល្អជាង",
-    creatorSub: "ម៉ាក និងអ្នកបង្កើត 100+ បានសហការតាម VINCIS",
-    cases: "មើលករណីសិក្សា",
-    start: "ចាប់ផ្តើមឥឡូវ",
     whyTitle: "ហេតុអ្វីជ្រើស VINCIS?",
-    whySubtitle: "កំណត់និយមន័យថ្មីនៃផលិតកម្មពាណិជ្ជកម្មជាមួយ AI និងបណ្តាញអ្នកបង្កើតសកល",
+    whySubtitle: "មើលឃើញភាពខុសគ្នាភ្លាមៗ — កំណត់និយមន័យថ្មីនៃផលិតកម្មពាណិជ្ជកម្ម",
     payment: "ការទូទាត់",
     traditionalContract: "កិច្ចសន្យាបែបចាស់",
     platformEscrow: "ទូទាត់តាម escrow",
     aiAutomation: "AI និងស្វ័យប្រវត្តិកម្ម",
     none: "គ្មាន",
-    aiWorkflow: "លំហូរការងារជំនួយដោយ AI",
+    aiWorkflow: "លំហូរ AI",
     costSaved: "ចំណាយដែលសន្សំបាន",
     comparedWithAgencies: "ប្រៀបធៀបនឹងភ្នាក់ងារ",
     deliveryTime: "ពេលវេលាប្រគល់",
@@ -251,18 +219,14 @@ const comparisonLabels: Record<MarketingLocale, ComparisonLabels> = {
     faster: "เร็วกว่า",
     cheaper: "คุ้มค่ากว่า",
     smarter: "ฉลาดกว่า",
-    creatorCta: "เชื่อมต่อครีเอเตอร์ทั่วโลกและส่งมอบงานที่ดีกว่า",
-    creatorSub: "แบรนด์และครีเอเตอร์กว่า 100 รายร่วมงานผ่าน VINCIS แล้ว",
-    cases: "ดูเคส",
-    start: "เริ่มตอนนี้",
     whyTitle: "ทำไมต้อง VINCIS?",
-    whySubtitle: "นิยามใหม่ของการผลิตโฆษณาด้วย AI และเครือข่ายครีเอเตอร์ทั่วโลก",
+    whySubtitle: "เห็นความต่างได้ในพริบตา — นิยามใหม่ของการผลิตโฆษณา",
     payment: "การชำระเงิน",
     traditionalContract: "สัญญาแบบเดิม",
     platformEscrow: "เอสโครว์บนแพลตฟอร์ม",
     aiAutomation: "AI และระบบอัตโนมัติ",
     none: "ไม่มี",
-    aiWorkflow: "เวิร์กโฟลว์ที่ช่วยด้วย AI",
+    aiWorkflow: "เวิร์กโฟลว์ AI",
     costSaved: "ประหยัดต้นทุน",
     comparedWithAgencies: "เทียบกับเอเจนซี่",
     deliveryTime: "เวลาในการส่งมอบ",
@@ -279,18 +243,14 @@ const comparisonLabels: Record<MarketingLocale, ComparisonLabels> = {
     faster: "Nhanh hơn",
     cheaper: "Tiết kiệm hơn",
     smarter: "Thông minh hơn",
-    creatorCta: "Kết nối nhà sáng tạo toàn cầu, tạo quảng cáo tốt hơn",
-    creatorSub: "Hơn 100 thương hiệu và nhà sáng tạo đã hợp tác qua VINCIS",
-    cases: "Xem case study",
-    start: "Bắt đầu ngay",
     whyTitle: "Vì sao chọn VINCIS?",
-    whySubtitle: "Định nghĩa lại sản xuất quảng cáo bằng AI và mạng lưới nhà sáng tạo toàn cầu",
+    whySubtitle: "Thấy rõ sự khác biệt ngay lập tức — định nghĩa lại sản xuất quảng cáo",
     payment: "Thanh toán",
     traditionalContract: "Hợp đồng truyền thống",
     platformEscrow: "Ký quỹ trên nền tảng",
     aiAutomation: "AI & tự động hóa",
     none: "Không có",
-    aiWorkflow: "Quy trình được AI hỗ trợ",
+    aiWorkflow: "Quy trình AI",
     costSaved: "Chi phí tiết kiệm",
     comparedWithAgencies: "So với agency",
     deliveryTime: "Thời gian giao",
@@ -307,18 +267,14 @@ const comparisonLabels: Record<MarketingLocale, ComparisonLabels> = {
     faster: "Plus rapide",
     cheaper: "Moins cher",
     smarter: "Plus intelligent",
-    creatorCta: "Connectez des créateurs mondiaux et livrez de meilleures créations",
-    creatorSub: "Plus de 100 marques et créateurs ont collaboré via VINCIS",
-    cases: "Voir les cas",
-    start: "Commencer",
     whyTitle: "Pourquoi choisir VINCIS ?",
-    whySubtitle: "Redéfinir la production publicitaire avec l'IA et un réseau mondial de créateurs",
+    whySubtitle: "Voyez la différence d'un coup d'œil — redéfinissez la production publicitaire",
     payment: "Paiement",
     traditionalContract: "Contrat classique",
     platformEscrow: "Escrow plateforme",
     aiAutomation: "IA et automatisation",
     none: "Aucun",
-    aiWorkflow: "Flux assisté par IA",
+    aiWorkflow: "Flux IA",
     costSaved: "Coûts économisés",
     comparedWithAgencies: "Par rapport aux agences",
     deliveryTime: "Délai de livraison",
@@ -335,18 +291,14 @@ const comparisonLabels: Record<MarketingLocale, ComparisonLabels> = {
     faster: "Más rápido",
     cheaper: "Más económico",
     smarter: "Más inteligente",
-    creatorCta: "Conecta creadores globales y entrega mejores piezas",
-    creatorSub: "Más de 100 marcas y creadores han colaborado en VINCIS",
-    cases: "Ver casos",
-    start: "Empezar ahora",
     whyTitle: "¿Por qué elegir VINCIS?",
-    whySubtitle: "Redefine la producción publicitaria con IA y una red global de creadores",
+    whySubtitle: "Entiende la diferencia de un vistazo — redefine la producción publicitaria",
     payment: "Pago",
     traditionalContract: "Contrato tradicional",
     platformEscrow: "Escrow de plataforma",
     aiAutomation: "IA y automatización",
     none: "Ninguno",
-    aiWorkflow: "Flujo asistido por IA",
+    aiWorkflow: "Flujo con IA",
     costSaved: "Ahorro de costes",
     comparedWithAgencies: "Comparado con agencias",
     deliveryTime: "Tiempo de entrega",
@@ -371,7 +323,7 @@ export function LandingCostComparison({
   const labels = comparisonLabels[comparisonLocale] ?? (locale === "zh" ? comparisonLabels["zh-CN"] : comparisonLabels.en);
 
   return (
-    <LandingSection className="relative overflow-hidden bg-[#000000] !pb-0 !pt-0 sm:!py-16 lg:!py-20">
+    <LandingSection className="relative overflow-hidden bg-[#000000] !pt-0 !pb-14 sm:!py-16 lg:!py-20">
       <div
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_55%_at_50%_-10%,rgba(255,255,255,0.07),transparent_55%)]"
         aria-hidden
@@ -384,8 +336,6 @@ export function LandingCostComparison({
       <LandingShell className="relative pt-8 sm:pt-0">
         <ComparisonBoard
           locale={locale}
-          copyLocale={copyLocale}
-          title={t.compareTitle}
           traditional={t.traditional}
           studio={t.studio}
           labels={labels}
@@ -402,7 +352,6 @@ export function LandingCostComparison({
 
 function ComparisonBoard({
   locale,
-  copyLocale,
   traditional,
   studio,
   labels,
@@ -412,8 +361,6 @@ function ComparisonBoard({
   reduce
 }: {
   locale: Locale;
-  copyLocale?: Locale | MarketingLocale;
-  title: string;
   traditional: string;
   studio: string;
   labels: ComparisonLabels;
@@ -468,9 +415,9 @@ function ComparisonBoard({
             {labels.faster} · {labels.cheaper} · {labels.smarter}
           </MarketingEyebrowPill>
         </div>
-        <h3 className="mt-4 text-center text-[2rem] font-semibold tracking-[-0.055em] text-white sm:mt-5 sm:text-[2.9rem]">
+        <MarketingSectionTitle as="h3" className="mt-4 text-center sm:mt-5">
           {labels.whyTitle}
-        </h3>
+        </MarketingSectionTitle>
         <p className="mx-auto mt-2 max-w-2xl text-center text-sm leading-6 text-zinc-500 sm:mt-3 sm:text-base">
           {labels.whySubtitle}
         </p>
@@ -492,7 +439,7 @@ function ComparisonBoard({
 
         <div className="relative grid items-stretch lg:grid-cols-[minmax(0,1fr)_320px]">
           <div className="min-w-0 lg:flex lg:h-full lg:flex-col">
-            <div className="grid shrink-0 grid-cols-[minmax(0,0.9fr)_minmax(92px,0.75fr)_minmax(112px,0.9fr)] border-b border-white/[0.08] text-[12px] font-semibold tracking-[0.08em] text-zinc-400 sm:grid-cols-[minmax(0,1fr)_minmax(180px,0.9fr)_minmax(220px,1fr)] sm:text-[13px]">
+            <div className="grid shrink-0 grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)_minmax(0,1.1fr)] border-b border-white/[0.08] text-[12px] font-semibold tracking-[0.08em] text-zinc-400 sm:grid-cols-[minmax(0,1fr)_minmax(180px,0.9fr)_minmax(220px,1fr)] sm:text-[13px]">
               <div className="px-4 py-4 text-center sm:px-7">{labels.workflow}</div>
               <div className="border-l border-white/[0.08] px-3 py-4 text-center sm:px-6">{traditional}</div>
               <div className="relative border-l border-[#e8e0d0]/[0.14] bg-white/[0.04] px-3 py-4 text-center text-white sm:px-6">
@@ -529,31 +476,34 @@ function ComparisonBoard({
             })}
           </div>
         </div>
-
-        <div className="relative grid gap-4 border-t border-white/[0.08] px-5 py-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:px-7">
-          <div className="text-center">
-            <p className="text-base font-semibold tracking-[-0.035em] text-white">{labels.creatorCta}</p>
-            <p className="mt-1 text-sm text-zinc-500">{labels.creatorSub}</p>
-          </div>
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <a
-              href="#work"
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-white/[0.12] px-5 text-sm font-medium text-zinc-200 transition hover:border-white/25 hover:bg-white/[0.05]"
-            >
-              {labels.cases}
-              <span aria-hidden>→</span>
-            </a>
-            <a
-              href={withLocale("/login?role=brand", copyLocale ?? locale)}
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-white px-5 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-200"
-            >
-              {labels.start}
-              <span aria-hidden>→</span>
-            </a>
-          </div>
-        </div>
       </motion.div>
     </motion.div>
+  );
+}
+
+function ComparisonValueCell({
+  tone,
+  children
+}: {
+  tone: "legacy" | "studio";
+  children: ReactNode;
+}) {
+  const Mark = tone === "studio" ? StudioMark : LegacyMark;
+
+  return (
+    <div
+      className={cn(
+        "flex flex-col items-center justify-center gap-1 border-l px-2 py-3 text-center sm:flex-row sm:gap-2 sm:px-6 sm:py-3.5",
+        tone === "studio"
+          ? "relative border-[#e8e0d0]/[0.14] bg-white/[0.04] font-semibold text-white"
+          : "border-white/[0.08] font-medium text-zinc-400"
+      )}
+    >
+      <Mark className="h-3.5 w-3.5 shrink-0" />
+      <span className="max-w-[8.75rem] text-pretty text-[11px] leading-[1.3] sm:max-w-none sm:text-sm sm:leading-normal">
+        {children}
+      </span>
+    </div>
   );
 }
 
@@ -565,21 +515,15 @@ function ComparisonTableRow({
   const Icon = row.icon;
 
   return (
-    <div
-      className="grid grid-cols-[minmax(0,0.9fr)_minmax(92px,0.75fr)_minmax(112px,0.9fr)] border-b border-white/[0.07] text-[12px] last:border-b-0 sm:grid-cols-[minmax(0,1fr)_minmax(180px,0.9fr)_minmax(220px,1fr)] sm:text-sm lg:flex-1"
-    >
-      <div className="flex items-center justify-center gap-2 px-4 py-3.5 text-center font-medium text-zinc-300 sm:px-7">
+    <div className="grid grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)_minmax(0,1.1fr)] border-b border-white/[0.07] text-[12px] last:border-b-0 sm:grid-cols-[minmax(0,1fr)_minmax(180px,0.9fr)_minmax(220px,1fr)] sm:text-sm lg:flex-1">
+      <div className="flex flex-col items-center justify-center gap-1 px-3 py-3 text-center font-medium text-zinc-300 sm:flex-row sm:gap-2 sm:px-7 sm:py-3.5">
         <Icon className="h-4 w-4 shrink-0 text-zinc-500" strokeWidth={1.7} />
-        <span>{row.label}</span>
+        <span className="max-w-[8.75rem] text-pretty text-[11px] leading-[1.3] sm:max-w-none sm:text-sm sm:leading-normal">
+          {row.label}
+        </span>
       </div>
-      <div className="flex items-center justify-center gap-2 border-l border-white/[0.08] px-3 py-3.5 font-medium text-zinc-400 sm:px-6">
-        <LegacyMark className="hidden h-3.5 w-3.5 sm:block" />
-        <span>{row.trad}</span>
-      </div>
-      <div className="relative flex items-center justify-center gap-2 border-l border-[#e8e0d0]/[0.14] bg-white/[0.04] px-3 py-3.5 font-semibold text-white sm:px-6">
-        <StudioMark className="h-3.5 w-3.5" />
-        <span>{row.studio}</span>
-      </div>
+      <ComparisonValueCell tone="legacy">{row.trad}</ComparisonValueCell>
+      <ComparisonValueCell tone="studio">{row.studio}</ComparisonValueCell>
     </div>
   );
 }

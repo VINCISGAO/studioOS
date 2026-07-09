@@ -1,3 +1,4 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { CalendarDays, FileText, Inbox, PieChart, WalletCards, Zap } from "lucide-react";
@@ -8,7 +9,7 @@ import {
 import { BrandWalletRechargeForm } from "@/components/studioos/brand-wallet-recharge-form";
 import { getBrandWalletSnapshot } from "@/features/wallet/brand-wallet.service";
 import { getCurrentClientEmail } from "@/lib/client-session";
-import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { type SearchParams, withLocale } from "@/lib/i18n";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
 
 function money(amount: number, currency = "USD", locale: "en" | "zh" = "en") {
@@ -33,7 +34,7 @@ export default async function BrandFinanceAccountPage({
   searchParams: Promise<SearchParams>;
 }) {
   const query = await searchParams;
-  const locale = getLocale(query);
+  const locale = await getAppUiLocale();
   const clientEmail = await getCurrentClientEmail();
   if (!clientEmail) {
     redirect(withLocale("/login?role=brand", locale));

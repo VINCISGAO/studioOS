@@ -1,7 +1,8 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import { redirect } from "next/navigation";
 import { BrandAttributionHub } from "@/components/studioos/brand-attribution-hub";
 import { getCurrentClientEmail } from "@/lib/client-session";
-import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { type SearchParams, withLocale } from "@/lib/i18n";
 import { getBrandAttributionWorkspace } from "@/lib/studioos/attribution-service";
 
 export default async function BrandAttributionPage({
@@ -9,7 +10,7 @@ export default async function BrandAttributionPage({
 }: {
   searchParams: Promise<SearchParams>;
 }) {
-  const locale = getLocale(await searchParams);
+  const locale = await getAppUiLocale();
   const clientEmail = await getCurrentClientEmail();
 
   if (!clientEmail) {

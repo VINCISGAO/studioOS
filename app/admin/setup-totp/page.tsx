@@ -1,5 +1,6 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import { AdminSetupTotpShell } from "@/components/studioos/admin-setup-totp-shell";
-import { getLocale, type SearchParams } from "@/lib/i18n";
+import { type SearchParams } from "@/lib/i18n";
 
 export default async function AdminSetupTotpPage({
   searchParams
@@ -7,7 +8,7 @@ export default async function AdminSetupTotpPage({
   searchParams: Promise<SearchParams & { token?: string }>;
 }) {
   const params = await searchParams;
-  const locale = getLocale(params);
+  const locale = await getAppUiLocale();
   const token = typeof params.token === "string" ? params.token : "";
 
   return <AdminSetupTotpShell locale={locale} token={token} />;

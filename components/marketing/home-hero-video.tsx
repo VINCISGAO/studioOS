@@ -1,28 +1,26 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties, type MouseEvent, type PointerEvent } from "react";
+import { useCallback, useEffect, useId, useRef, useState, type CSSProperties } from "react";
 import { Maximize2, Minimize2, Play, Volume2, VolumeX } from "lucide-react";
-import type { Locale, MarketingLocale } from "@/lib/i18n";
+import type { MarketingLocale } from "@/lib/i18n";
 import { isChineseLanguage } from "@/lib/i18n";
-import { resolveHomeHeroVideoSrc } from "@/lib/marketing/home-hero-video-sources";
 import { cn } from "@/lib/utils";
 
-type HeroVideoLabels = {
-  video: string;
-  soundOn: string;
-  mute: string;
-  soundOnAria: string;
-  muteAria: string;
-  fullscreen: string;
-  exitFullscreen: string;
-  seek: string;
-};
+const HERO_POSTER_FALLBACK = "/images/login-space-bg.png";
 
-const videoLabels: Record<MarketingLocale, HeroVideoLabels> = {
+const videoCopy: Record<
+  MarketingLocale,
+  {
+    video: string;
+    soundOnAria: string;
+    muteAria: string;
+    fullscreen: string;
+    exitFullscreen: string;
+    seek: string;
+  }
+> = {
   en: {
     video: "VINCIS homepage promotional video",
-    soundOn: "Sound on",
-    mute: "Mute",
     soundOnAria: "Turn video sound on",
     muteAria: "Mute video",
     fullscreen: "Full screen",
@@ -31,8 +29,6 @@ const videoLabels: Record<MarketingLocale, HeroVideoLabels> = {
   },
   "zh-CN": {
     video: "VINCIS 首页宣传视频",
-    soundOn: "开启声音",
-    mute: "静音",
     soundOnAria: "开启视频声音",
     muteAria: "静音视频",
     fullscreen: "全屏",
@@ -41,8 +37,6 @@ const videoLabels: Record<MarketingLocale, HeroVideoLabels> = {
   },
   "zh-TW": {
     video: "VINCIS 首頁宣傳影片",
-    soundOn: "開啟聲音",
-    mute: "靜音",
     soundOnAria: "開啟影片聲音",
     muteAria: "將影片靜音",
     fullscreen: "全螢幕",
@@ -51,8 +45,6 @@ const videoLabels: Record<MarketingLocale, HeroVideoLabels> = {
   },
   ja: {
     video: "VINCIS ホームページ紹介動画",
-    soundOn: "音声オン",
-    mute: "ミュート",
     soundOnAria: "動画の音声をオンにする",
     muteAria: "動画をミュート",
     fullscreen: "全画面",
@@ -61,8 +53,6 @@ const videoLabels: Record<MarketingLocale, HeroVideoLabels> = {
   },
   ko: {
     video: "VINCIS 홈페이지 홍보 영상",
-    soundOn: "소리 켜기",
-    mute: "음소거",
     soundOnAria: "영상 소리 켜기",
     muteAria: "영상 음소거",
     fullscreen: "전체 화면",
@@ -71,8 +61,6 @@ const videoLabels: Record<MarketingLocale, HeroVideoLabels> = {
   },
   ms: {
     video: "Video promosi halaman utama VINCIS",
-    soundOn: "Hidupkan bunyi",
-    mute: "Senyap",
     soundOnAria: "Hidupkan bunyi video",
     muteAria: "Senyapkan video",
     fullscreen: "Skrin penuh",
@@ -81,8 +69,6 @@ const videoLabels: Record<MarketingLocale, HeroVideoLabels> = {
   },
   km: {
     video: "វីដេអូផ្សព្វផ្សាយទំព័រដើម VINCIS",
-    soundOn: "បើកសំឡេង",
-    mute: "បិទសំឡេង",
     soundOnAria: "បើកសំឡេងវីដេអូ",
     muteAria: "បិទសំឡេងវីដេអូ",
     fullscreen: "ពេញអេក្រង់",
@@ -91,8 +77,6 @@ const videoLabels: Record<MarketingLocale, HeroVideoLabels> = {
   },
   th: {
     video: "วิดีโอโปรโมตหน้าแรก VINCIS",
-    soundOn: "เปิดเสียง",
-    mute: "ปิดเสียง",
     soundOnAria: "เปิดเสียงวิดีโอ",
     muteAria: "ปิดเสียงวิดีโอ",
     fullscreen: "เต็มจอ",
@@ -101,8 +85,6 @@ const videoLabels: Record<MarketingLocale, HeroVideoLabels> = {
   },
   vi: {
     video: "Video giới thiệu trang chủ VINCIS",
-    soundOn: "Bật âm thanh",
-    mute: "Tắt tiếng",
     soundOnAria: "Bật âm thanh video",
     muteAria: "Tắt tiếng video",
     fullscreen: "Toàn màn hình",
@@ -111,180 +93,118 @@ const videoLabels: Record<MarketingLocale, HeroVideoLabels> = {
   },
   fr: {
     video: "Vidéo promotionnelle de la page d'accueil VINCIS",
-    soundOn: "Activer le son",
-    mute: "Muet",
     soundOnAria: "Activer le son de la vidéo",
     muteAria: "Couper le son de la vidéo",
     fullscreen: "Plein écran",
     exitFullscreen: "Quitter le plein écran",
-    seek: "Position de la vidéo"
+    seek: "Avancer dans la vidéo"
   },
   es: {
     video: "Vídeo promocional de la página de inicio de VINCIS",
-    soundOn: "Activar sonido",
-    mute: "Silenciar",
-    soundOnAria: "Activar el sonido del vídeo",
-    muteAria: "Silenciar el vídeo",
+    soundOnAria: "Activar sonido del vídeo",
+    muteAria: "Silenciar vídeo",
     fullscreen: "Pantalla completa",
     exitFullscreen: "Salir de pantalla completa",
-    seek: "Posición del vídeo"
+    seek: "Buscar en el vídeo"
   }
 };
 
-function formatVideoTime(seconds: number): string {
+function isAllowedVideoSrc(src: string) {
+  return src.startsWith("/videos/") && !src.startsWith("//");
+}
+
+function formatTime(seconds: number) {
   if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
-  const whole = Math.floor(seconds);
-  const mins = Math.floor(whole / 60);
-  const secs = whole % 60;
+  const total = Math.floor(seconds);
+  const mins = Math.floor(total / 60);
+  const secs = total % 60;
   return `${mins}:${secs.toString().padStart(2, "0")}`;
 }
 
-export function HomeHeroVideo({
-  locale,
-  videoSrc: videoSrcProp
-}: {
-  locale: Locale | MarketingLocale;
-  videoSrc?: string;
-}) {
+type HomeHeroVideoProps = {
+  locale: MarketingLocale;
+  videoSrc: string;
+  heroPosterSrc?: string;
+};
+
+export function HomeHeroVideo({ locale, videoSrc, heroPosterSrc = HERO_POSTER_FALLBACK }: HomeHeroVideoProps) {
   const shellRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const hideControlsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastPointerTypeRef = useRef<PointerEvent["pointerType"] | null>(null);
+  const hideControlsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pointerTypeRef = useRef<string | null>(null);
+  const seekId = useId().replace(/:/g, "");
+
   const [muted, setMuted] = useState(true);
-  const [hasVideoError, setHasVideoError] = useState(false);
+  const [failed, setFailed] = useState(false);
   const [duration, setDuration] = useState(0);
-  const [progress, setProgress] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(true);
-  const [touchControlsVisible, setTouchControlsVisible] = useState(false);
-  const videoLocale: MarketingLocale = locale === "zh" ? "zh-CN" : (locale as MarketingLocale);
-  const labels = videoLabels[videoLocale] ?? videoLabels.en;
-  const videoSrc = videoSrcProp ?? resolveHomeHeroVideoSrc(videoLocale);
+  const [playing, setPlaying] = useState(true);
+  const [controlsActive, setControlsActive] = useState(false);
 
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
+  const copyLocale = locale;
+  const labels = videoCopy[copyLocale] ?? videoCopy.en;
+  const safeSrc = isAllowedVideoSrc(videoSrc) ? videoSrc : "";
+  const zh = isChineseLanguage(copyLocale);
+  const progress = duration > 0 ? (Math.min(currentTime, duration) / duration) * 100 : 0;
 
-    const syncDuration = () => {
-      if (Number.isFinite(video.duration)) {
-        setDuration(video.duration);
-      }
-    };
-    const syncProgress = () => setProgress(video.currentTime);
-    const onPlay = () => setIsPlaying(true);
-    const onPause = () => setIsPlaying(false);
-    const onFullscreenChange = () => {
-      const fullscreenElement =
-        document.fullscreenElement ??
-        (document as Document & { webkitFullscreenElement?: Element | null }).webkitFullscreenElement ??
-        null;
-      const nextFullscreen = fullscreenElement === shellRef.current;
-      setIsFullscreen(nextFullscreen);
-      if (!nextFullscreen) {
-        setTouchControlsVisible(false);
-        clearHideControlsTimer();
-      }
-    };
-
-    syncDuration();
-    syncProgress();
-    setIsPlaying(!video.paused);
-    void video.play().catch(() => setIsPlaying(false));
-    video.addEventListener("loadedmetadata", syncDuration);
-    video.addEventListener("durationchange", syncDuration);
-    video.addEventListener("timeupdate", syncProgress);
-    video.addEventListener("play", onPlay);
-    video.addEventListener("pause", onPause);
-    document.addEventListener("fullscreenchange", onFullscreenChange);
-    document.addEventListener("webkitfullscreenchange", onFullscreenChange);
-
-    return () => {
-      video.removeEventListener("loadedmetadata", syncDuration);
-      video.removeEventListener("durationchange", syncDuration);
-      video.removeEventListener("timeupdate", syncProgress);
-      video.removeEventListener("play", onPlay);
-      video.removeEventListener("pause", onPause);
-      document.removeEventListener("fullscreenchange", onFullscreenChange);
-      document.removeEventListener("webkitfullscreenchange", onFullscreenChange);
-    };
-  }, [videoSrc]);
-
-  useEffect(() => {
-    setHasVideoError(false);
-  }, [videoSrc]);
-
-  useEffect(() => {
-    return () => {
-      if (hideControlsTimerRef.current) {
-        clearTimeout(hideControlsTimerRef.current);
-      }
-    };
+  const clearHideControlsTimeout = useCallback(() => {
+    if (!hideControlsTimeoutRef.current) return;
+    clearTimeout(hideControlsTimeoutRef.current);
+    hideControlsTimeoutRef.current = null;
   }, []);
 
-  function clearHideControlsTimer() {
-    if (hideControlsTimerRef.current) {
-      clearTimeout(hideControlsTimerRef.current);
-      hideControlsTimerRef.current = null;
-    }
-  }
-
-  function showTouchControls(autoHideMs = 3500) {
-    setTouchControlsVisible(true);
-    clearHideControlsTimer();
-    if (autoHideMs > 0) {
-      hideControlsTimerRef.current = setTimeout(() => {
-        setTouchControlsVisible(false);
-      }, autoHideMs);
-    }
-  }
-
-  function keepTouchControlsVisible() {
-    showTouchControls(3500);
-  }
-
-  function toggleSound() {
-    const video = videoRef.current;
-    if (!video) return;
-
-    const nextMuted = !muted;
-    video.muted = nextMuted;
-    if (!nextMuted) {
-      video.volume = 1;
-      if (!video.paused) {
-        void video.play().catch(() => undefined);
+  const activateControls = useCallback(
+    (autoHideMs = 3500) => {
+      setControlsActive(true);
+      clearHideControlsTimeout();
+      if (autoHideMs > 0) {
+        hideControlsTimeoutRef.current = setTimeout(() => {
+          setControlsActive(false);
+        }, autoHideMs);
       }
-    }
-    setMuted(nextMuted);
-  }
+    },
+    [clearHideControlsTimeout]
+  );
 
-  function handleSeek(nextTime: number) {
-    const video = videoRef.current;
-    if (!video || !Number.isFinite(nextTime)) return;
-    video.currentTime = nextTime;
-    setProgress(nextTime);
-  }
-
-  function togglePlayback() {
+  const togglePlay = useCallback(() => {
     const video = videoRef.current;
     if (!video) return;
     if (video.paused) {
-      setIsPlaying(true);
-      void video.play().catch(() => {
-        setIsPlaying(false);
-      });
+      setPlaying(true);
+      void video.play().catch(() => setPlaying(false));
       return;
     }
     video.pause();
-    setIsPlaying(false);
-  }
+    setPlaying(false);
+  }, []);
 
-  function toggleFullscreen() {
+  const toggleMute = useCallback(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    const nextMuted = !video.muted;
+    video.muted = nextMuted;
+    if (!nextMuted) {
+      video.volume = 1;
+      if (video.paused) {
+        void video.play().catch(() => {});
+      }
+    }
+    setMuted(nextMuted);
+  }, []);
+
+  const toggleFullscreen = useCallback(() => {
     const shell = shellRef.current;
     const video = videoRef.current;
     if (!shell || !video) return;
 
-    if (document.fullscreenElement === shell) {
-      void document.exitFullscreen();
+    const fsElement =
+      document.fullscreenElement ??
+      (document as Document & { webkitFullscreenElement?: Element | null }).webkitFullscreenElement ??
+      null;
+
+    if (fsElement === shell) {
+      void document.exitFullscreen?.();
       return;
     }
 
@@ -293,66 +213,137 @@ export function HomeHeroVideo({
       return;
     }
 
-    const iosVideo = video as HTMLVideoElement & { webkitEnterFullscreen?: () => void };
-    iosVideo.webkitEnterFullscreen?.();
+    const webkitVideo = video as HTMLVideoElement & { webkitEnterFullscreen?: () => void };
+    webkitVideo.webkitEnterFullscreen?.();
+  }, []);
+
+  useEffect(() => {
+    setFailed(false);
+  }, [safeSrc]);
+
+  useEffect(() => {
+    return () => {
+      if (hideControlsTimeoutRef.current) {
+        clearTimeout(hideControlsTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !safeSrc) return;
+
+    const syncDuration = () => {
+      if (Number.isFinite(video.duration)) {
+        setDuration(video.duration);
+      }
+    };
+    const syncCurrentTime = () => setCurrentTime(video.currentTime);
+    const onPlay = () => setPlaying(true);
+    const onPause = () => setPlaying(false);
+    const onFullscreenChange = () => {
+      const fsElement =
+        document.fullscreenElement ??
+        (document as Document & { webkitFullscreenElement?: Element | null }).webkitFullscreenElement ??
+        null;
+      const nextFullscreen = fsElement === shellRef.current;
+      setIsFullscreen(nextFullscreen);
+      if (!nextFullscreen) {
+        setControlsActive(false);
+        clearHideControlsTimeout();
+      }
+    };
+
+    syncDuration();
+    syncCurrentTime();
+    setPlaying(!video.paused);
+    void video.play().catch(() => setPlaying(false));
+
+    video.addEventListener("loadedmetadata", syncDuration);
+    video.addEventListener("durationchange", syncDuration);
+    video.addEventListener("timeupdate", syncCurrentTime);
+    video.addEventListener("play", onPlay);
+    video.addEventListener("pause", onPause);
+    document.addEventListener("fullscreenchange", onFullscreenChange);
+    document.addEventListener("webkitfullscreenchange", onFullscreenChange);
+
+    return () => {
+      video.removeEventListener("loadedmetadata", syncDuration);
+      video.removeEventListener("durationchange", syncDuration);
+      video.removeEventListener("timeupdate", syncCurrentTime);
+      video.removeEventListener("play", onPlay);
+      video.removeEventListener("pause", onPause);
+      document.removeEventListener("fullscreenchange", onFullscreenChange);
+      document.removeEventListener("webkitfullscreenchange", onFullscreenChange);
+    };
+  }, [clearHideControlsTimeout, safeSrc]);
+
+  if (!safeSrc) {
+    return (
+      <section className="bg-black px-0 py-0 lg:px-8 lg:py-0">
+        <div
+          className="relative mx-auto aspect-[21/9] w-full overflow-hidden rounded-none bg-[#050607] lg:mx-auto lg:max-w-[1216px] lg:rounded-lg lg:shadow-[0_28px_90px_-64px_rgba(0,0,0,0.55)]"
+          style={{
+            backgroundImage: `url(${heroPosterSrc})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center"
+          }}
+        >
+          <p className="absolute inset-x-0 bottom-4 text-center text-xs text-zinc-400">
+            {zh ? "视频暂时无法播放" : "Video is temporarily unavailable"}
+          </p>
+        </div>
+      </section>
+    );
   }
-
-  function isTouchPointer() {
-    return lastPointerTypeRef.current === "touch";
-  }
-
-  function handleShellClick(event: MouseEvent<HTMLDivElement>) {
-    if (hasVideoError) return;
-    const target = event.target as HTMLElement;
-    if (
-      target.closest(
-        ".home-hero-video-mute-btn, .home-hero-video-fullscreen-btn, .home-hero-video-bottom, .home-hero-video-range"
-      )
-    ) {
-      return;
-    }
-
-    if (isTouchPointer() && !touchControlsVisible) {
-      showTouchControls();
-      lastPointerTypeRef.current = null;
-      return;
-    }
-
-    togglePlayback();
-  }
-
-  function handleShellPointerDown(event: PointerEvent<HTMLDivElement>) {
-    lastPointerTypeRef.current = event.pointerType;
-    if (event.pointerType !== "touch") return;
-    const target = event.target as HTMLElement;
-    if (
-      target.closest(
-        ".home-hero-video-mute-btn, .home-hero-video-fullscreen-btn, .home-hero-video-bottom, .home-hero-video-range"
-      )
-    ) {
-      keepTouchControlsVisible();
-    }
-  }
-
-  const pauseAriaLabel = isChineseLanguage(videoLocale) ? "暂停视频" : "Pause video";
 
   return (
     <section className="bg-black px-0 py-0 lg:px-8 lg:py-0">
       <div
         ref={shellRef}
-        onClick={handleShellClick}
-        onPointerDown={handleShellPointerDown}
-        aria-label={!hasVideoError && isPlaying ? pauseAriaLabel : undefined}
         className={cn(
           "home-hero-video-shell group relative w-full cursor-pointer touch-manipulation overflow-hidden rounded-none bg-black shadow-none lg:mx-auto lg:max-w-[1216px] lg:shadow-[0_28px_90px_-64px_rgba(0,0,0,0.55)]",
           isFullscreen && "flex max-w-none items-center justify-center",
-          touchControlsVisible && "home-hero-video-controls-visible"
+          controlsActive && "home-hero-video-controls-visible"
         )}
+        aria-label={!failed && playing ? (zh ? "暂停视频" : "Pause video") : undefined}
+        onClick={(event) => {
+          if (
+            failed ||
+            (event.target instanceof Element &&
+              event.target.closest(
+                ".home-hero-video-mute-btn, .home-hero-video-fullscreen-btn, .home-hero-video-bottom, .home-hero-video-range"
+              ))
+          ) {
+            return;
+          }
+
+          if (pointerTypeRef.current === "touch" && !controlsActive) {
+            activateControls();
+            pointerTypeRef.current = null;
+            return;
+          }
+
+          togglePlay();
+        }}
+        onPointerDown={(event) => {
+          pointerTypeRef.current = event.pointerType;
+          if (
+            event.pointerType === "touch" &&
+            event.target instanceof Element &&
+            event.target.closest(
+              ".home-hero-video-mute-btn, .home-hero-video-fullscreen-btn, .home-hero-video-bottom, .home-hero-video-range"
+            )
+          ) {
+            activateControls();
+          }
+        }}
       >
         <video
-          key={videoSrc}
           ref={videoRef}
-          src={videoSrc}
+          key={safeSrc}
+          src={safeSrc}
+          poster={heroPosterSrc}
           className={cn(
             "home-hero-video-player relative z-0 w-full cursor-pointer",
             isFullscreen
@@ -365,15 +356,18 @@ export function HomeHeroVideo({
           playsInline
           preload="auto"
           aria-label={labels.video}
-          onPlay={() => setIsPlaying(true)}
-          onPause={() => setIsPlaying(false)}
+          onPlay={() => setPlaying(true)}
+          onPause={() => setPlaying(false)}
           onLoadedData={() => {
-            void videoRef.current?.play().catch(() => setIsPlaying(false));
+            const video = videoRef.current;
+            if (!video) return;
+            void video.play().catch(() => setPlaying(false));
           }}
-          onCanPlay={() => setHasVideoError(false)}
-          onError={() => setHasVideoError(true)}
+          onCanPlay={() => setFailed(false)}
+          onError={() => setFailed(true)}
         />
-        {!hasVideoError && !isPlaying ? (
+
+        {!failed && !playing ? (
           <div
             className="home-hero-video-center-btn pointer-events-none absolute left-1/2 top-1/2 z-[8] inline-flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-md sm:h-11 sm:w-11"
             aria-hidden
@@ -381,87 +375,89 @@ export function HomeHeroVideo({
             <Play className="ml-0.5 h-4 w-4 fill-current" />
           </div>
         ) : null}
-        {!hasVideoError ? (
+
+        {!failed ? (
           <div className="home-hero-video-controls absolute inset-0 z-20">
             <button
               type="button"
-              onClick={(event) => {
-                event.stopPropagation();
-                toggleSound();
-              }}
-              onPointerDown={(event) => {
-                event.stopPropagation();
-                keepTouchControlsVisible();
-              }}
               className="home-hero-video-mute-btn absolute left-3 top-3 z-30 inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-md transition hover:bg-black/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 sm:left-4 sm:top-4 sm:h-10 sm:w-10"
               aria-pressed={!muted}
               aria-label={muted ? labels.soundOnAria : labels.muteAria}
+              onPointerDown={(event) => {
+                event.stopPropagation();
+                activateControls();
+              }}
+              onClick={(event) => {
+                event.stopPropagation();
+                toggleMute();
+              }}
             >
               {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
             </button>
+
             <button
               type="button"
+              className="home-hero-video-fullscreen-btn absolute right-3 top-3 z-30 inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-md transition hover:bg-black/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 sm:right-4 sm:top-4 sm:h-10 sm:w-10"
+              aria-label={isFullscreen ? labels.exitFullscreen : labels.fullscreen}
+              onPointerDown={(event) => {
+                event.stopPropagation();
+                activateControls();
+              }}
               onClick={(event) => {
                 event.stopPropagation();
                 toggleFullscreen();
               }}
-              onPointerDown={(event) => {
-                event.stopPropagation();
-                keepTouchControlsVisible();
-              }}
-              className="home-hero-video-fullscreen-btn absolute right-3 top-3 z-30 inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-md transition hover:bg-black/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 sm:right-4 sm:top-4 sm:h-10 sm:w-10"
-              aria-label={isFullscreen ? labels.exitFullscreen : labels.fullscreen}
             >
               {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
             </button>
+
             <div
               className="home-hero-video-bottom absolute inset-x-0 bottom-0 z-30 bg-gradient-to-t from-black/75 via-black/30 to-transparent px-3 pb-3 pt-6 sm:px-4 sm:pb-3.5"
               onPointerDown={(event) => {
                 event.stopPropagation();
-                keepTouchControlsVisible();
+                activateControls();
               }}
             >
               <span className="mb-1 block text-[11px] font-medium tabular-nums text-white sm:text-xs">
-                {formatVideoTime(progress)} / {formatVideoTime(duration)}
+                {formatTime(currentTime)} / {formatTime(duration)}
               </span>
-              <label className="sr-only" htmlFor={`hero-video-seek-${videoLocale}`}>
+              <label className="sr-only" htmlFor={`hero-video-seek-${seekId}`}>
                 {labels.seek}
               </label>
               <input
-                id={`hero-video-seek-${videoLocale}`}
+                id={`hero-video-seek-${seekId}`}
                 type="range"
                 min={0}
                 max={duration || 0}
                 step={0.1}
-                value={Math.min(progress, duration || 0)}
-                onPointerDown={(event) => {
-                  event.stopPropagation();
-                  keepTouchControlsVisible();
-                }}
-                onChange={(event) => {
-                  event.stopPropagation();
-                  handleSeek(Number(event.target.value));
-                }}
-                style={
-                  {
-                    "--hero-video-progress": duration
-                      ? `${(Math.min(progress, duration) / duration) * 100}%`
-                      : "0%"
-                  } as CSSProperties
-                }
-                className="home-hero-video-range h-1 w-full cursor-pointer appearance-none rounded-sm"
+                value={Math.min(currentTime, duration || 0)}
                 aria-label={labels.seek}
                 aria-valuemin={0}
                 aria-valuemax={duration || 0}
-                aria-valuenow={progress}
+                aria-valuenow={currentTime}
+                className="home-hero-video-range h-1 w-full cursor-pointer appearance-none rounded-sm"
+                style={{ "--hero-video-progress": `${progress}%` } as CSSProperties}
+                onPointerDown={(event) => {
+                  event.stopPropagation();
+                  activateControls();
+                }}
+                onChange={(event) => {
+                  event.stopPropagation();
+                  const nextTime = Number(event.currentTarget.value);
+                  const video = videoRef.current;
+                  if (!video || !Number.isFinite(nextTime)) return;
+                  video.currentTime = nextTime;
+                  setCurrentTime(nextTime);
+                }}
               />
             </div>
           </div>
         ) : null}
-        {hasVideoError ? (
+
+        {failed ? (
           <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-zinc-950 px-6 text-center">
             <p className="text-sm text-zinc-300">
-              {isChineseLanguage(videoLocale) ? "视频暂时无法播放" : "Video is temporarily unavailable"}
+              {zh ? "视频暂时无法播放" : "Video is temporarily unavailable"}
             </p>
             <button
               type="button"
@@ -470,12 +466,12 @@ export function HomeHeroVideo({
                 event.stopPropagation();
                 const video = videoRef.current;
                 if (!video) return;
-                setHasVideoError(false);
+                setFailed(false);
                 video.load();
-                void video.play().catch(() => setHasVideoError(true));
+                void video.play().catch(() => setFailed(true));
               }}
             >
-              {isChineseLanguage(videoLocale) ? "重试" : "Retry"}
+              {zh ? "重试" : "Retry"}
             </button>
           </div>
         ) : null}

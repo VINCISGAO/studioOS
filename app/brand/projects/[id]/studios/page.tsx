@@ -1,3 +1,4 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowRight, Star } from "lucide-react";
@@ -10,7 +11,7 @@ import { getCurrentClientEmail } from "@/lib/client-session";
 import { listCreatorsForMatching } from "@/lib/creator-service";
 import { getWorksForCreator } from "@/lib/works-catalog";
 import { clampBrandVisibleStep, migrateLegacyBrandWizardStep } from "@/lib/campaign/wizard-steps";
-import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { type SearchParams, withLocale } from "@/lib/i18n";
 import { getStudioPerformanceLiftForOrg, matchCreatorsForProject } from "@/lib/matching-engine";
 import { resolveWorkThumbnail } from "@/lib/media-url";
 import { getProject } from "@/lib/project-service";
@@ -30,7 +31,7 @@ type Props = {
 
 export default async function BrandStudiosPage({ params, searchParams }: Props) {
   const [{ id }, query] = await Promise.all([params, searchParams]);
-  const locale = getLocale(query);
+  const locale = await getAppUiLocale();
   const clientEmail = await getCurrentClientEmail();
   const project = await getProject(id);
 

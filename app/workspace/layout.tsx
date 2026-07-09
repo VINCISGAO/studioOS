@@ -11,7 +11,8 @@ import {
   hasCompletedCreatorProfile,
   requiresCreatorCertification
 } from "@/lib/studioos/deposit-guard";
-import { getLocale, withLocale } from "@/lib/i18n";
+import { getAppUiLocale } from "@/lib/app-language";
+import { appPath } from "@/lib/i18n";
 import { listOrdersForCreator } from "@/lib/order-service";
 import { countUnreadNotifications, listNotificationsForCreator } from "@/lib/notification-service";
 import {
@@ -25,7 +26,7 @@ export default async function WorkspaceLayout({ children }: { children: React.Re
   const headerList = await headers();
   const pathname = headerList.get("x-pathname") ?? "/workspace";
   const search = headerList.get("x-search") ?? "";
-  const locale = getLocale({ lang: new URLSearchParams(search).get("lang") ?? undefined });
+  const locale = await getAppUiLocale();
 
   let profile = null;
   try {
@@ -50,10 +51,10 @@ export default async function WorkspaceLayout({ children }: { children: React.Re
 
   if (profile?.role === "studio" && creator && isStudioFeaturePath(pathname)) {
     if (requiresCreatorCertification(creator, completedOrders)) {
-      redirect(withLocale(studioCertificationRedirectPath(locale), locale));
+      redirect(appPath(studioCertificationRedirectPath(locale)));
     }
     if (access.isVerified && !profileComplete) {
-      redirect(withLocale(studioProfileOnboardingPath(locale), locale));
+      redirect(appPath(studioProfileOnboardingPath(locale)));
     }
   }
 

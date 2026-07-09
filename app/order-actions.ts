@@ -6,7 +6,8 @@ import { addSystemMessage, consolidateInquiryThreads, getInquiry, resolveCanonic
 import { getCurrentClientEmail } from "@/lib/client-session";
 import { getCurrentCreator, getCurrentCreatorId } from "@/lib/creator-session";
 import { canAcceptCreatorOrders, countCompletedCreatorOrders } from "@/lib/studioos/deposit-guard";
-import { withLocale, type Locale } from "@/lib/i18n";
+import { withLocale, appPath, type Locale } from "@/lib/i18n";
+import { resolveServerLocale } from "@/lib/app-language";
 import {
   acceptQuote,
   addDeliverable,
@@ -30,8 +31,9 @@ import { settlementService } from "@/features/settlement/settlement.service";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { getAppBaseUrl } from "@/lib/app-url";
 
-function normalizeLang(raw: FormDataEntryValue | null): Locale {
-  return String(raw ?? "en") === "zh" ? "zh" : "en";
+async function resolveActionLocale(formData: FormData): Promise<Locale> {
+  const raw = String(formData.get("lang") ?? "").trim();
+  return resolveServerLocale(raw || null);
 }
 
 function allowLegacyDemoPaymentFallback() {
@@ -56,7 +58,7 @@ function brandPaySuccessPath(order: { id: string; project_id?: string | null }, 
 }
 
 export async function submitQuoteAction(formData: FormData) {
-  const lang = normalizeLang(formData.get("lang"));
+  const lang = await resolveActionLocale(formData);
   const inquiryId = String(formData.get("inquiry_id") ?? "");
   const amount = Number(formData.get("amount"));
   const summary = String(formData.get("summary") ?? "").trim();
@@ -99,7 +101,7 @@ export async function submitQuoteAction(formData: FormData) {
 }
 
 export async function acceptQuoteAction(formData: FormData) {
-  const lang = normalizeLang(formData.get("lang"));
+  const lang = await resolveActionLocale(formData);
   const inquiryId = String(formData.get("inquiry_id") ?? "");
   const quoteId = String(formData.get("quote_id") ?? "");
   const inquiry = await getInquiry(inquiryId);
@@ -145,7 +147,7 @@ export async function acceptQuoteAction(formData: FormData) {
 }
 
 export async function payOrderAction(formData: FormData) {
-  const lang = normalizeLang(formData.get("lang"));
+  const lang = await resolveActionLocale(formData);
   const orderId = String(formData.get("order_id") ?? "");
   const order = await getOrder(orderId);
 
@@ -165,11 +167,11 @@ export async function payOrderAction(formData: FormData) {
     const stripe = getStripe();
     const appUrl = getAppBaseUrl();
     const successPath = order.project_id
-      ? `/brand/projects/${order.project_id}?tab=match&matching=1&lang=${lang}`
-      : `/dashboard/orders/${order.id}?paid=1&lang=${lang}`;
+      ? appPath(`/brand/projects/${order.project_id}?tab=match&matching=1`)
+      : appPath(`/dashboard/orders/${order.id}?paid=1`);
     const cancelPath = order.project_id
-      ? `/brand/projects/${order.project_id}/checkout?pay=cancelled&lang=${lang}`
-      : `/dashboard/orders/${order.id}?pay=cancelled&lang=${lang}`;
+      ? appPath(`/brand/projects/${order.project_id}/checkout?pay=cancelled`)
+      : appPath(`/dashboard/orders/${order.id}?pay=cancelled`);
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       line_items: [
@@ -220,7 +222,7 @@ export async function payOrderAction(formData: FormData) {
 }
 
 export async function submitDeliverableAction(formData: FormData) {
-  const lang = normalizeLang(formData.get("lang"));
+  const lang = await resolveActionLocale(formData);
   const orderId = String(formData.get("order_id") ?? "");
   const fileUrl = String(formData.get("file_url") ?? "").trim();
   const thumbnailUrl = String(formData.get("thumbnail_url") ?? "").trim();
@@ -285,7 +287,7 @@ function resolveSubmittedOrderProject(
 }
 
 export async function approveDeliveryAction(formData: FormData) {
-  const lang = normalizeLang(formData.get("lang"));
+  const lang = await resolveActionLocale(formData);
   const orderId = String(formData.get("order_id") ?? "");
   const projectId = String(formData.get("project_id") ?? "").trim();
   const order = await getOrder(orderId);
@@ -377,7 +379,7 @@ export async function approveDeliveryAction(formData: FormData) {
 }
 
 export async function requestRevisionAction(formData: FormData) {
-  const lang = normalizeLang(formData.get("lang"));
+  const lang = await resolveActionLocale(formData);
   const orderId = String(formData.get("order_id") ?? "");
   const projectId = String(formData.get("project_id") ?? "").trim();
   const revisionNotes = String(formData.get("revision_notes") ?? "").trim();
@@ -449,7 +451,7 @@ export async function requestRevisionAction(formData: FormData) {
 }
 
 export async function submitOrderRatingAction(formData: FormData) {
-  const lang = normalizeLang(formData.get("lang"));
+  const lang = await resolveActionLocale(formData);
   const orderId = String(formData.get("order_id") ?? "");
   const rating = Number(formData.get("rating"));
   const comment = String(formData.get("comment") ?? "").trim();

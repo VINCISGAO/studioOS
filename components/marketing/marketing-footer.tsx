@@ -2,8 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { BrandLogoLockup } from "@/components/brand-logo-mark";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { marketingHomeHref, buildLocalizedHref } from "@/lib/marketing/localized-href";
 import type { Locale, MarketingLocale } from "@/lib/i18n";
-import { withLocale } from "@/lib/i18n";
 import { footerProductName, getFooterCopy } from "@/lib/marketing/footer-copy";
 import { cn } from "@/lib/utils";
 import { ArrowRight, BookOpen, Box, Globe2, Shield, Sparkles, Users, Zap, type LucideIcon } from "lucide-react";
@@ -46,7 +46,7 @@ function FooterNavSections({
               <span className="text-zinc-300">|</span>
               {group.items.map((item, index) => (
                 <span key={item.label} className="inline-flex items-center gap-3">
-                  <Link href={withLocale(item.href, locale)} className="text-zinc-500 transition hover:text-zinc-950">
+                  <Link href={buildLocalizedHref(item.href, locale)} className="text-zinc-500 transition hover:text-zinc-950">
                     {item.label}
                   </Link>
                   {index < group.items.length - 1 ? <span className="text-zinc-300">|</span> : null}
@@ -75,7 +75,7 @@ function FooterBottomBar({
         {footerSocialIcons.map((item) => (
           <Link
             key={item.label}
-            href={withLocale(item.href, locale)}
+            href={buildLocalizedHref(item.href, locale)}
             aria-label={item.label}
             className="flex h-11 w-11 items-center justify-center rounded-full border border-zinc-200 bg-white shadow-sm transition hover:opacity-80"
           >
@@ -116,7 +116,7 @@ function FooterCta({
           </div>
         </div>
         <Link
-          href={withLocale("/login?role=brand", locale)}
+          href={marketingHomeHref.brand(locale)}
           className={cn(
             "inline-flex shrink-0 items-center justify-center rounded-xl bg-zinc-950 text-white shadow-sm transition hover:bg-zinc-800",
             compact ? "px-5 py-3 text-sm font-medium" : "mt-5 gap-2 rounded-2xl px-9 py-3 text-lg font-medium sm:mt-0"
@@ -155,7 +155,7 @@ export function MarketingFooter({
     <footer className="bg-[#fbfaf7]">
       <div className="px-7 pb-8 pt-6 text-zinc-950 md:hidden">
         <div className="flex items-center justify-center">
-          <Link href={withLocale("/", locale)} className="inline-flex transition hover:opacity-80">
+          <Link href={marketingHomeHref.home(locale)} className="inline-flex transition hover:opacity-80">
             <BrandLogoLockup contrastOn="light" markClassName="h-6 w-6 rounded-lg" wordmarkClassName="h-[14px] w-[92px]" />
           </Link>
         </div>
@@ -187,7 +187,7 @@ export function MarketingFooter({
 
       <div className="mx-auto hidden max-w-[1240px] px-6 py-10 text-zinc-950 md:block sm:px-10 lg:px-14 lg:py-12">
         <div className="flex items-center justify-between gap-8">
-          <Link href={withLocale("/", locale)} className="inline-flex shrink-0 transition hover:opacity-80">
+          <Link href={marketingHomeHref.home(locale)} className="inline-flex shrink-0 transition hover:opacity-80">
             <BrandLogoLockup contrastOn="light" markClassName="h-10 w-10 rounded-[14px]" wordmarkClassName="h-[22px] w-[138px]" />
           </Link>
           <p className="max-w-none whitespace-nowrap text-right text-[clamp(0.85rem,1.2vw,1.25rem)] font-medium leading-snug tracking-[-0.02em]">

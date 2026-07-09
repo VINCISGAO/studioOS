@@ -9,7 +9,8 @@ import { resolveCreatorCertificationAccessFromOrders } from "@/lib/studioos/crea
 import {
   hasSeenCertificationLevelUp
 } from "@/lib/studioos/creator-settings-service";
-import { getLocale, withLocale } from "@/lib/i18n";
+import { getAppUiLocale } from "@/lib/app-language";
+import { appPath } from "@/lib/i18n";
 import { listOrdersForCreator } from "@/lib/order-service";
 import { listNotificationsForCreator } from "@/lib/notification-service";
 import { countInvitationsByTab, listInvitationsForCreator } from "@/lib/studioos/creator-invitation-store";
@@ -25,7 +26,7 @@ export default async function StudioLayout({ children }: { children: React.React
   const headerList = await headers();
   const pathname = headerList.get("x-pathname") ?? "/studio";
   const search = headerList.get("x-search") ?? "";
-  const locale = getLocale({ lang: new URLSearchParams(search).get("lang") ?? undefined });
+  const locale = await getAppUiLocale();
   const creator = await getCurrentCreator();
   if (creator) {
     await enforceBrandPaymentDeadlinesForCreator(creator.id);
@@ -60,10 +61,10 @@ export default async function StudioLayout({ children }: { children: React.React
 
   if (creator && isStudioFeaturePath(pathname)) {
     if (access?.isLockedAfterFirstOrder) {
-      redirect(withLocale(studioCertificationRedirectPath(locale), locale));
+      redirect(appPath(studioCertificationRedirectPath(locale)));
     }
     if (isVerified && !profileComplete && levelUpSeen) {
-      redirect(withLocale(studioProfileOnboardingPath(locale), locale));
+      redirect(appPath(studioProfileOnboardingPath(locale)));
     }
   }
 

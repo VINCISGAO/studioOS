@@ -1,5 +1,7 @@
-import { existsSync, readFileSync } from "fs";
+import { existsSync, readFileSync, statSync } from "fs";
 import path from "path";
+
+const PUBLIC_HERO_PATH = "/images/login-space-bg.png";
 
 const ASSET_ROOT =
   ".cursor/projects/Users-linkele-Documents-Codex-2026-06-28-build-a-production-ready-mvp-web/assets";
@@ -20,6 +22,7 @@ function candidates() {
   ]);
 
   return [
+    path.join(cwd, "public/images/login-space-bg.png"),
     path.join(cwd, "public/images/home-hero-space.png"),
     path.join(cwd, "assets/marketing/home-hero-space.png"),
     ...chatAssets
@@ -32,6 +35,12 @@ export function readHomeHeroSpaceAsset(): Buffer | null {
   return readFileSync(source);
 }
 
+export function getHomeHeroSpaceBackgroundUrl(): string {
+  const source = candidates().find((candidate) => existsSync(candidate));
+  const version = source ? Math.floor(statSync(source).mtimeMs) : Date.now();
+  return `${PUBLIC_HERO_PATH}?v=${version}`;
+}
+
 export function homeHeroSpaceResponse() {
   const body = readHomeHeroSpaceAsset();
   if (!body) {
@@ -40,7 +49,7 @@ export function homeHeroSpaceResponse() {
   return new Response(new Uint8Array(body), {
     headers: {
       "Content-Type": "image/png",
-      "Cache-Control": "public, max-age=86400, stale-while-revalidate=604800"
+      "Cache-Control": "public, max-age=0, must-revalidate"
     }
   });
 }

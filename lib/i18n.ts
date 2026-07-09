@@ -3,6 +3,7 @@ import {
   normalizeLanguageCode,
   type SupportedLanguageCode
 } from "@/features/i18n/language.constants";
+import { isInternalAppPath, normalizeAppLanguage, toUiLocale } from "@/lib/app-language.shared";
 
 export const locales = ["en", "zh"] as const;
 export const supportedLanguageCodes = SUPPORTED_LANGUAGE_SEEDS.map((item) => item.code);
@@ -14,9 +15,10 @@ export type MarketingLocale = LanguageCode;
 export type SearchParams = Record<string, string | string[] | undefined>;
 
 export function getLocale(searchParams?: SearchParams): Locale {
+  /** Marketing pages only — internal app routes must use `getAppUiLocale()` from `@/lib/app-language`. */
   const raw = searchParams?.lang;
   const lang = Array.isArray(raw) ? raw[0] : raw;
-  return lang === "zh" || lang === "zh-CN" || lang === "zh-TW" ? "zh" : "en";
+  return toUiLocale(normalizeLanguageCode(lang));
 }
 
 export function getLanguageCode(searchParams?: SearchParams): LanguageCode {
@@ -25,30 +27,46 @@ export function getLanguageCode(searchParams?: SearchParams): LanguageCode {
   return normalizeLanguageCode(lang);
 }
 
-export function withLocale(path: string, locale: Locale | LanguageCode) {
+/**
+ * Marketing/public pages append `?lang=`.
+ * Internal app routes never carry `lang` in the URL — use getAppLanguage() server-side.
+ */
+export function withLocale(path: string, locale?: Locale | LanguageCode) {
   const hashIndex = path.indexOf("#");
   const hash = hashIndex >= 0 ? path.slice(hashIndex) : "";
   const pathWithoutHash = hashIndex >= 0 ? path.slice(0, hashIndex) : path;
   const [pathname, queryString = ""] = pathWithoutHash.split("?");
+
+  if (isInternalAppPath(pathname)) {
+    const params = new URLSearchParams(queryString);
+    params.delete("lang");
+    const query = params.toString();
+    return `${pathname}${query ? `?${query}` : ""}${hash}`;
+  }
+
   const params = new URLSearchParams(queryString);
-  params.set("lang", locale);
-  return `${pathname}?${params.toString()}${hash}`;
+  if (locale) {
+    params.set("lang", normalizeAppLanguage(locale === "zh" ? "zh-CN" : locale));
+  }
+  const query = params.toString();
+  return `${pathname}${query ? `?${query}` : ""}${hash}`;
 }
 
-/** Safe login ?next= value — avoid double-encoded lang%3Dzh query strings. */
-export function encodeBrandLoginNext(pathname: string, search: string) {
-  const params = new URLSearchParams(search);
-  const lang = params.get("lang");
-  const next = lang ? `${pathname}?lang=${normalizeLanguageCode(lang)}` : pathname;
-  return encodeURIComponent(next);
+/** Internal navigation — never appends ?lang=. */
+export function appPath(path: string) {
+  return withLocale(path);
+}
+
+/** Safe login ?next= value — pathname only. */
+export function encodeBrandLoginNext(pathname: string, _search = "") {
+  return encodeURIComponent(pathname);
 }
 
 /** Opens the brand campaign wizard at step 1 (skips legacy /brand/start-brief hop). */
-export function brandWizardStep1Href(locale: Locale, projectId?: string) {
-  const path = projectId
+export function brandWizardStep1Href(_locale: Locale, projectId?: string) {
+  return projectId
     ? `/brand/projects/new?project=${encodeURIComponent(projectId)}&step=1`
     : "/brand/projects/new?step=1";
-  return withLocale(path, locale);
 }
 
 /** @deprecated Use brandWizardStep1Href */
@@ -61,5 +79,6 @@ export function isZh(locale: Locale) {
 }
 
 export function isChineseLanguage(locale: Locale | LanguageCode) {
-  return locale === "zh" || locale === "zh-CN" || locale === "zh-TW";
+  const code = normalizeAppLanguage(locale === "zh" ? "zh-CN" : locale);
+  return code.startsWith("zh");
 }

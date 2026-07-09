@@ -129,7 +129,9 @@ Never ask for confirmation unless the decision changes product behavior, busines
 
 The marketing homepage is a **protected asset**.
 
-Golden baseline: **owner-locked 2026-07-09** · commit **`17a98b7`** · [`docs/HOMEPAGE_GOLDEN.md`](docs/HOMEPAGE_GOLDEN.md) · [`docs/HOMEPAGE_HERO_VIDEO_BASELINE.json`](docs/HOMEPAGE_HERO_VIDEO_BASELINE.json). Treat this as the only golden standard until the owner explicitly re-anchors.
+Golden baseline: **owner-locked 2026-07-10** (supersedes 2026-07-09 · `17a98b7`) · [`docs/HOMEPAGE_GOLDEN.md`](docs/HOMEPAGE_GOLDEN.md) · [`docs/HOMEPAGE_HERO_VIDEO_BASELINE.json`](docs/HOMEPAGE_HERO_VIDEO_BASELINE.json). Treat this as the only golden standard until the owner explicitly re-anchors.
+
+**Frozen artifacts include:** full section order in `HomeLandingPage`, `components/marketing/home-hero-video.tsx`, and responsive layout at **mobile / iPad (`md`–below `lg`) / desktop (`lg+`)** breakpoints documented in `docs/HOMEPAGE_GOLDEN.md`.
 
 Legacy anchors: **`homepage-golden`** branch · **`homepage-v1`** tag
 
@@ -142,20 +144,20 @@ Unless the project owner **explicitly commands a homepage change in the current 
 - simplify animations
 - remove sections
 - change visual hierarchy
+- change responsive behavior at any breakpoint
 - optimize by deletion
 - change homepage copy, spacing, responsiveness, assets, or logo treatment
+- modify `HomeHeroVideo` or hero video resolver URLs / cache version
 
 If a requested change **might affect the homepage structure**, **stop and ask for confirmation first**.
 
 Allowed without a redesign request:
 
-- bug fixes
+- bug fixes that **preserve** layout, visual hierarchy, responsive behavior, and interaction design
 - changes the owner explicitly requested in the current task
 - when unsure, **preserve the existing homepage**
 
-Bug fixes, accessibility improvements, localization, and content updates are allowed, provided they do not change the homepage structure, visual hierarchy, or interaction design.
-
-允许进行 Bug 修复、文案更新、多语言、无障碍等修改，但不得改变首页结构、视觉层级、交互设计或动画行为。
+Bug fixes, accessibility improvements, localization, and content updates are **not** allowed if they change homepage structure, visual hierarchy, responsive layout, or interaction design.
 
 ### Restore homepage only
 

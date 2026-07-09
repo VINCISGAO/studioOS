@@ -1,5 +1,6 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import { redirect } from "next/navigation";
-import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { type SearchParams, withLocale } from "@/lib/i18n";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
 
 export default async function BrandProjectsRedirectPage({
@@ -7,6 +8,6 @@ export default async function BrandProjectsRedirectPage({
 }: {
   searchParams: Promise<SearchParams>;
 }) {
-  const locale = getLocale(await searchParams);
+  const locale = await getAppUiLocale();
   redirect(withLocale(brandPortalRoutes.dashboard, locale));
 }

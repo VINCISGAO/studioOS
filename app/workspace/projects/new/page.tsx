@@ -1,5 +1,6 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import { redirect } from "next/navigation";
-import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { type SearchParams, withLocale } from "@/lib/i18n";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
 
 export default async function WorkspaceNewProjectRedirect({
@@ -8,7 +9,7 @@ export default async function WorkspaceNewProjectRedirect({
   searchParams: Promise<SearchParams>;
 }) {
   const query = await searchParams;
-  const locale = getLocale(query);
+  const locale = await getAppUiLocale();
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(query)) {
     if (key === "lang" || value == null) continue;

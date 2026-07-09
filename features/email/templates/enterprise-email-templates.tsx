@@ -1,11 +1,10 @@
 import React, { type ReactElement, type ReactNode } from "react";
+import { AuthVerificationEmail } from "@/features/email/components/auth-verification-email";
 import { EmailLayout } from "@/features/email/components/email-layout";
 import {
   EmailButton,
-  EmailCodeBlock,
   EmailDetailCard,
   EmailParagraph,
-  EmailSecurityNote,
   type EmailDetail
 } from "@/features/email/components/email-primitives";
 import { renderEmail } from "@/features/email/email-renderer";
@@ -80,20 +79,18 @@ function LifecycleEmail({
 
 export function buildLoginVerificationEmail(input: {
   code: string;
+  accountLabel: string;
+  validMinutes?: number;
 }): Promise<RenderedEnterpriseEmail> {
   return renderTemplate(
     "auth.login_verification",
-    "Your VINCIS verification code",
-    <EmailLayout
-      preview="Use this verification code to sign in to VINCIS."
-      title="Verify your email"
-      subtitle="Use the verification code below to sign in to VINCIS."
-    >
-      <EmailCodeBlock code={input.code} expiryLabel="Valid for 5 minutes" />
-      <EmailSecurityNote>
-        For your security, never share this code with anyone.
-      </EmailSecurityNote>
-    </EmailLayout>
+    "Please verify your identity",
+    <AuthVerificationEmail
+      preview={`Your VINCIS verification code is ${input.code}`}
+      accountLabel={input.accountLabel}
+      code={input.code}
+      validMinutes={input.validMinutes ?? 5}
+    />
   );
 }
 

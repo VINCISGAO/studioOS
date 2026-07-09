@@ -1,3 +1,4 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import { retryNotificationAction } from "@/app/admin-actions";
 import { AdminFormCsrf } from "@/components/studioos/admin-form-csrf";
 import { adminNotificationService } from "@/features/admin/notification/admin-notification.service";
@@ -7,12 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { getLocale, type SearchParams } from "@/lib/i18n";
+import { type SearchParams } from "@/lib/i18n";
 import { formatDate } from "@/lib/utils";
 
 export default async function AdminNotificationsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const params = await searchParams;
-  const locale = getLocale(params);
+  const locale = await getAppUiLocale();
   const user = await getAdminSessionUser();
 
   const filters = {

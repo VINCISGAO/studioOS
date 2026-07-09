@@ -1,12 +1,13 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import { Card, CardContent } from "@/components/ui/card";
 import { AdminPaymentsPrismaTable } from "@/components/studioos/admin-payments-prisma-table";
 import { adminPaymentService } from "@/features/admin/payment/admin-payment.service";
 import { getAdminSessionUser } from "@/features/admin/auth/admin-auth.service";
-import { getLocale, type SearchParams } from "@/lib/i18n";
+import { type SearchParams } from "@/lib/i18n";
 import { formatCurrency } from "@/lib/utils";
 
 export default async function AdminPaymentsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  const locale = getLocale(await searchParams);
+  const locale = await getAppUiLocale();
   const user = await getAdminSessionUser();
 
   const records = user ? await adminPaymentService.list(user) : [];

@@ -55,7 +55,7 @@ run("git diff --cached --stat");
 
 if (run("git diff --cached --quiet") !== 0) {
   run(
-    'git commit -m "chore(homepage): re-anchor golden baseline (homepage-v1)." -m "2026-07-09 owner lock @ 17a98b7: 11-lang hero videos cv=7, hero copy no periods, Safari preload removed, docs/HOMEPAGE_HERO_VIDEO_BASELINE.json."'
+    'git commit -m "chore(homepage): re-anchor golden baseline (homepage-v1)." -m "2026-07-10 owner lock: mobile/iPad/desktop responsive layout frozen, HomeHeroVideo player frozen, mobile card nav, hero Earth + CTA breakpoints, cost table mobile. Hero videos cv=7 unchanged. See docs/HOMEPAGE_GOLDEN.md."'
   );
 } else {
   lines.push("(no staged changes — tagging current HEAD)");

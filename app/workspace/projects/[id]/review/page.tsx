@@ -1,7 +1,8 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import { notFound, redirect } from "next/navigation";
 import { ReviewWorkspace } from "@/components/mvp/review-workspace";
 import { getSessionUser } from "@/features/auth/session.service";
-import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { type SearchParams, withLocale } from "@/lib/i18n";
 import {
   ensureMvpReviewProjectForCampaign,
   findCampaignIdForMvpProject,
@@ -70,7 +71,7 @@ export default async function ProjectReviewPage({
   searchParams: Promise<SearchParams & { approved?: string; revision?: string; settled?: string }>;
 }) {
   const [{ id }, query] = await Promise.all([params, searchParams]);
-  const locale = getLocale(query);
+  const locale = await getAppUiLocale();
   const profile = await getMvpProfile();
   if (!profile) redirect(withLocale("/login", locale));
 

@@ -1,8 +1,9 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { getCurrentClientEmail } from "@/lib/client-session";
-import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { type SearchParams, withLocale } from "@/lib/i18n";
 import { dnaProfileToFields } from "@/lib/studioos/creative-dna-service";
 import { getDnaProfile, orgIdFromEmail } from "@/lib/studioos/creative-performance-store";
 import { Dna } from "lucide-react";
@@ -29,7 +30,7 @@ const copy = {
 };
 
 export default async function CreativeDnaPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  const locale = getLocale(await searchParams);
+  const locale = await getAppUiLocale();
   const t = copy[locale];
   const clientEmail = await getCurrentClientEmail();
   const profile = clientEmail ? await getDnaProfile(orgIdFromEmail(clientEmail)) : null;

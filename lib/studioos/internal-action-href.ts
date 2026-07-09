@@ -41,6 +41,9 @@ function normalizeLegacyPath(pathname: string) {
   if (pathname === "/workspace/projects/new") {
     return "/brand/projects/new";
   }
+  if (pathname === "/brand/brief" || pathname === "/brand/publish" || pathname === "/brand/requirements/new") {
+    return "/brand/projects/new?step=1";
+  }
 
   const creatorOrderReview = pathname.match(/^\/creator\/orders\/([^/]+)\/review-upload\/?$/);
   if (creatorOrderReview?.[1]) {
@@ -54,7 +57,7 @@ function normalizeLegacyPath(pathname: string) {
   return pathname;
 }
 
-export function normalizeInternalActionHref(href: string | null | undefined, locale: Locale, fallback = "/") {
+export function normalizeInternalActionHref(href: string | null | undefined, _locale: Locale, fallback = "/") {
   const raw = href?.trim();
   if (!raw) return fallback;
 
@@ -64,7 +67,6 @@ export function normalizeInternalActionHref(href: string | null | undefined, loc
     if (!isKnownAppHost(url.hostname)) return fallback;
     url.pathname = normalizeLegacyPath(url.pathname);
     if (!isInternalAppPath(url.pathname)) return fallback;
-    if (!url.searchParams.has("lang")) url.searchParams.set("lang", locale);
     return `${url.pathname}${url.search}${url.hash}`;
   } catch {
     return fallback;

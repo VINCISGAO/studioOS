@@ -1,3 +1,4 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { adminActivityLogService } from "@/features/admin/admin-activity-log.service";
@@ -7,13 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { type SearchParams, withLocale } from "@/lib/i18n";
 import { adminPortalRoutes } from "@/lib/studioos/admin-portal-routes";
 import { formatDate } from "@/lib/utils";
 
 export default async function AdminActivityLogPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const params = await searchParams;
-  const locale = getLocale(params);
+  const locale = await getAppUiLocale();
   const user = await getAdminSessionUser();
 
   const filters = {

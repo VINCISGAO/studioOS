@@ -8,6 +8,8 @@ import {
   normalizeLanguageCode,
   type SupportedLanguageCode
 } from "@/features/i18n/language.constants";
+import { readStoredAppLanguage, setAppLanguage } from "@/lib/app-language-client";
+import { isHomepageLangPath } from "@/lib/app-language.shared";
 import { cn } from "@/lib/utils";
 import type { LanguageCode, Locale } from "@/lib/i18n";
 
@@ -16,50 +18,49 @@ type LanguageSwitcherProps = {
   tone?: "light" | "dark";
   variant?: "default" | "icon";
   menuPlacement?: "bottom" | "top";
-  /** @deprecated Read from the current URL on the client instead. */
-  pathname?: string;
-  /** @deprecated Read from the current URL on the client instead. */
-  search?: string;
+  navPill?: boolean;
 };
 
 const publicLanguages = SUPPORTED_LANGUAGE_SEEDS.filter((item) => item.isEnabled);
 
 function localeToLanguageCode(locale: Locale | LanguageCode): SupportedLanguageCode {
-  if (locale !== "zh") return normalizeLanguageCode(locale);
-  return locale === "zh" ? "zh-CN" : "en";
-}
-
-function activeLanguageCode(searchParams: URLSearchParams, fallback: Locale | LanguageCode): SupportedLanguageCode {
-  const lang = searchParams.get("lang");
-  return normalizeLanguageCode(lang ?? localeToLanguageCode(fallback));
+  return locale === "zh" ? "zh-CN" : normalizeLanguageCode(locale);
 }
 
 function LanguageSwitcherInner({
   locale,
   tone = "light",
   variant = "default",
-  menuPlacement = "bottom"
-}: {
-  locale: Locale | LanguageCode;
-  tone?: "light" | "dark";
-  variant?: "default" | "icon";
-  menuPlacement?: "bottom" | "top";
-}) {
+  menuPlacement = "bottom",
+  navPill = false
+}: LanguageSwitcherProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const current = activeLanguageCode(searchParams, locale);
+  const urlLang = searchParams.get("lang");
+  const fallbackCode = localeToLanguageCode(locale);
+  const [storedLang, setStoredLang] = useState<SupportedLanguageCode | null>(null);
+
+  useEffect(() => {
+    setStoredLang(readStoredAppLanguage());
+  }, []);
+
+  const current = normalizeLanguageCode(urlLang ?? storedLang ?? fallbackCode);
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const switchTo = useCallback(
     (next: SupportedLanguageCode) => {
       if (next === current) return;
-      const params = new URLSearchParams(searchParams.toString());
-      params.set("lang", next);
-      const query = params.toString();
+      setAppLanguage(next);
       setOpen(false);
-      const target = query ? `${pathname}?${query}` : pathname;
-      window.location.assign(target);
+      if (isHomepageLangPath(pathname)) {
+        const params = new URLSearchParams(searchParams.toString());
+        params.set("lang", next);
+        const query = params.toString();
+        window.location.assign(query ? `${pathname}?${query}` : pathname);
+        return;
+      }
+      window.location.assign(`/?lang=${next}`);
     },
     [current, pathname, searchParams]
   );
@@ -104,7 +105,8 @@ function LanguageSwitcherInner({
                   : "border-zinc-200 bg-white text-zinc-700 hover:text-zinc-950"
               )
             : cn(
-                "inline-flex h-9 items-center gap-1.5 rounded-xl border px-3 text-sm font-semibold shadow-sm sm:h-10 sm:gap-2 sm:px-3.5",
+                "inline-flex h-9 items-center gap-1.5 border px-3 text-sm font-semibold shadow-sm sm:h-10 sm:gap-2 sm:px-3.5",
+                navPill ? "rounded-full" : "rounded-xl",
                 isDark
                   ? "border-white/15 bg-white/10 text-white hover:bg-white/15"
                   : "border-zinc-200 bg-white text-zinc-950 hover:bg-zinc-50"
@@ -161,12 +163,13 @@ export function LanguageSwitcher({
   tone = "light",
   variant = "default",
   menuPlacement = "bottom",
+  navPill = false,
   ...props
 }: LanguageSwitcherProps) {
   return (
     <Suspense
       fallback={
-        <LanguageSwitcherFallback locale={props.locale} tone={tone} variant={variant} />
+        <LanguageSwitcherFallback locale={props.locale} tone={tone} variant={variant} navPill={navPill} />
       }
     >
       <LanguageSwitcherInner
@@ -174,6 +177,7 @@ export function LanguageSwitcher({
         tone={tone}
         variant={variant}
         menuPlacement={menuPlacement}
+        navPill={navPill}
       />
     </Suspense>
   );
@@ -182,11 +186,13 @@ export function LanguageSwitcher({
 export function LanguageSwitcherFallback({
   locale,
   tone = "light",
-  variant = "default"
+  variant = "default",
+  navPill = false
 }: {
   locale: Locale | LanguageCode;
   tone?: "light" | "dark";
   variant?: "default" | "icon";
+  navPill?: boolean;
 }) {
   const isDark = tone === "dark";
   const isIcon = variant === "icon";
@@ -202,7 +208,8 @@ export function LanguageSwitcherFallback({
                 isDark ? "border-white/15 bg-white/10 text-white" : "border-zinc-200 bg-white text-zinc-700"
               )
             : cn(
-                "inline-flex h-9 items-center gap-1.5 rounded-xl border px-3 text-sm font-semibold shadow-sm sm:h-10 sm:gap-2 sm:px-3.5",
+                "inline-flex h-9 items-center gap-1.5 border px-3 text-sm font-semibold shadow-sm sm:h-10 sm:gap-2 sm:px-3.5",
+                navPill ? "rounded-full" : "rounded-xl",
                 isDark ? "border-white/15 bg-white/10 text-white" : "border-zinc-200 bg-white text-zinc-950"
               )
         )}

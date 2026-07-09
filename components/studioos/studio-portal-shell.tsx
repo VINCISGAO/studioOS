@@ -8,7 +8,6 @@ import { PortalMobileNav } from "@/components/studioos/portal-mobile-nav";
 import { StudioUserMenu } from "@/components/studioos/studio-user-menu";
 import { PortalSidebarAccountMenu } from "@/components/studioos/portal-sidebar-account-menu";
 import { MarketingHomeLink } from "@/components/studioos/marketing-home-link";
-import { LanguageSwitcher, LanguageSwitcherFallback } from "@/components/language-switcher";
 import { CertifiedPartnerBadge } from "@/components/studioos/certification/certified-partner-badge";
 import { StudioCertificationOrchestrator } from "@/components/studioos/certification/studio-certification-orchestrator";
 import { StudioPortalSidebarNav } from "@/components/studioos/certification/studio-portal-sidebar-nav";
@@ -229,9 +228,6 @@ function StudioPortalShellInner({
                 <div className="hidden lg:block" />
 
                 <div className="flex items-center gap-2 sm:gap-3">
-                  <Suspense fallback={<LanguageSwitcherFallback locale={locale} />}>
-                    <LanguageSwitcher locale={locale} pathname={pathname} search={search} />
-                  </Suspense>
                   {canUseBusinessFeatures ? <NotificationCenterBell locale={locale} /> : null}
                   <StudioUserMenu
                     locale={locale}

@@ -2,6 +2,7 @@ import "server-only";
 
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { parseDemoSession, type DemoSession } from "@/lib/demo-session";
+import { demoSessionSecret, encodeDemoSessionPayload } from "@/lib/demo-session-cookie";
 
 type SignedDemoSessionCookie = {
   v: 1;
@@ -9,29 +10,8 @@ type SignedDemoSessionCookie = {
   sig: string;
 };
 
-function sessionSecret() {
-  return (
-    process.env.AUTH_SECURITY_SECRET?.trim() ||
-    process.env.NEXTAUTH_SECRET?.trim() ||
-    process.env.AUTH_SECRET?.trim() ||
-    "studioos-dev-demo-session-secret"
-  );
-}
-
-function normalizeSession(session: DemoSession): DemoSession {
-  return {
-    email: session.email.trim().toLowerCase(),
-    role: session.role,
-    userId: session.userId
-  };
-}
-
-function encodePayload(session: DemoSession) {
-  return Buffer.from(JSON.stringify(normalizeSession(session))).toString("base64url");
-}
-
 function signPayload(payload: string) {
-  return createHmac("sha256", sessionSecret()).update(payload).digest("base64url");
+  return createHmac("sha256", demoSessionSecret()).update(payload).digest("base64url");
 }
 
 function safeEqual(left: string, right: string) {
@@ -41,10 +21,14 @@ function safeEqual(left: string, right: string) {
 }
 
 export function serializeDemoSessionCookie(session: DemoSession) {
-  const payload = encodePayload(session);
+  const payload = encodeDemoSessionPayload(session);
   const signed: SignedDemoSessionCookie = {
     v: 1,
-    payload: normalizeSession(session),
+    payload: {
+      email: session.email.trim().toLowerCase(),
+      role: session.role,
+      userId: session.userId
+    },
     sig: signPayload(payload)
   };
   return JSON.stringify(signed);
@@ -58,7 +42,7 @@ export function parseServerDemoSession(raw: string | undefined): DemoSession | n
   try {
     const parsed = JSON.parse(raw) as Partial<SignedDemoSessionCookie>;
     if (parsed.v === 1 && parsed.payload && typeof parsed.sig === "string") {
-      const payload = encodePayload(parsed.payload);
+      const payload = encodeDemoSessionPayload(parsed.payload);
       if (!safeEqual(signPayload(payload), parsed.sig)) {
         return null;
       }

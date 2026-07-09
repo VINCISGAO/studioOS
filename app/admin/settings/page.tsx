@@ -1,10 +1,11 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import { AdminSettingsUsersPanel } from "@/components/studioos/admin-settings-users-panel";
 import { AdminSecurityPanel } from "@/components/studioos/admin-security-panel";
 import { getAdminSessionProfile } from "@/features/admin/auth/admin-auth.service";
-import { getLocale, type SearchParams } from "@/lib/i18n";
+import { type SearchParams } from "@/lib/i18n";
 
 export default async function AdminSettingsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  const locale = getLocale(await searchParams);
+  const locale = await getAppUiLocale();
   const profile = await getAdminSessionProfile();
 
   return (

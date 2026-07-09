@@ -159,22 +159,48 @@ function rangedHeadResponse(
   });
 }
 
+async function resolveLocalPublicVideoPath(pathname: string): Promise<string | null> {
+  const relative = pathname.replace(/^\/+/u, "");
+  const direct = path.join(process.cwd(), "public", relative);
+
+  try {
+    const stat = await fs.stat(direct);
+    if (stat.isFile()) return direct;
+  } catch {
+    // Fall through to case-insensitive basename match.
+  }
+
+  const directory = path.dirname(direct);
+  const baseName = path.basename(direct);
+  try {
+    const entries = await fs.readdir(directory);
+    const match = entries.find((entry) => entry.toLowerCase() === baseName.toLowerCase());
+    if (match) return path.join(directory, match);
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
 async function readLocalPublicVideo(
   pathname: string,
   rangeHeader: string | null,
   method: string
 ): Promise<Response | null> {
-  const localCandidates = [
-    path.join(process.cwd(), "public", pathname.replace(/^\/+/u, "")),
-    ...(resolveHeroLocalRelativePath(pathname)
-      ? [path.join(process.cwd(), "public", resolveHeroLocalRelativePath(pathname)!)]
-      : []),
-    ...(resolveHeroR2ObjectKey(pathname)
-      ? [path.join(process.cwd(), "public", resolveHeroR2ObjectKey(pathname)!)]
-      : [])
+  const relativeCandidates = [
+    pathname.replace(/^\/+/u, ""),
+    ...(resolveHeroLocalRelativePath(pathname) ? [resolveHeroLocalRelativePath(pathname)!] : []),
+    ...(resolveHeroR2ObjectKey(pathname) ? [resolveHeroR2ObjectKey(pathname)!] : [])
   ];
 
-  for (const localPath of localCandidates) {
+  const localPaths = new Set<string>();
+  for (const relative of relativeCandidates) {
+    const resolved = await resolveLocalPublicVideoPath(`/${relative}`);
+    if (resolved) localPaths.add(resolved);
+  }
+
+  for (const localPath of localPaths) {
     let stat: Awaited<ReturnType<typeof fs.stat>>;
     try {
       stat = await fs.stat(localPath);

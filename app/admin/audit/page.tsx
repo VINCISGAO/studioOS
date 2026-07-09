@@ -1,3 +1,4 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import Link from "next/link";
 import { ArrowLeft, ScrollText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -6,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { auditService } from "@/features/admin/audit.service";
 import { getAdminSessionUser } from "@/features/admin/auth/admin-auth.service";
-import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { type SearchParams, withLocale } from "@/lib/i18n";
 import { adminPortalRoutes } from "@/lib/studioos/admin-portal-routes";
 import { formatDate } from "@/lib/utils";
 
@@ -30,7 +31,7 @@ const copy = {
 };
 
 export default async function AdminAuditPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  const locale = getLocale(await searchParams);
+  const locale = await getAppUiLocale();
   const t = copy[locale];
   const user = await getAdminSessionUser();
   const logs = user ? await auditService.list(user, { limit: 100 }) : [];

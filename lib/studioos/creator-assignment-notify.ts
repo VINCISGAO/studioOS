@@ -154,7 +154,7 @@ export async function notifyCreatorAssignment(input: {
   const creator = getCreatorByIdSync(input.creatorId);
   const email = resolveCreatorEmail(input.creatorId);
   if (email) {
-    const actionUrl = `${appBaseUrl()}/studio/review/${input.order.id}?lang=${input.locale}`;
+    const actionUrl = `${appBaseUrl()}/studio/review/${input.order.id}`;
     const result = await sendCreatorNotificationEmail({
       to: email,
       creatorName: creator?.name ?? "Creator",

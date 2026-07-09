@@ -1,12 +1,13 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import { redirect } from "next/navigation";
 import { CreatorProjectsBoard } from "@/components/studioos/creator-projects-board";
 import { getCurrentCreatorId } from "@/lib/creator-session";
-import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { type SearchParams, withLocale } from "@/lib/i18n";
 import { getDeliverables, listOrdersForCreator, repairSelectedCreatorCampaignOrders } from "@/lib/order-service";
 import { latestSubmittedDeliverableVersion } from "@/lib/studioos/review-upload-version";
 
 export default async function StudioProjectsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  const locale = getLocale(await searchParams);
+  const locale = await getAppUiLocale();
   const creatorId = await getCurrentCreatorId();
   if (!creatorId) redirect(withLocale("/login?role=creator", locale));
 

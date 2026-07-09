@@ -1,5 +1,8 @@
 import { demoRedirectForRole, type DemoRole } from "@/lib/demo-auth";
-import { withLocale, type Locale } from "@/lib/i18n";
+import { appPath } from "@/lib/i18n";
+
+const BRAND_WIZARD_ENTRY_PATH = "/brand/projects/new";
+const ALLOWED_WIZARD_NEXT_QUERY_KEYS = new Set(["project", "step"]);
 
 function safeUserRole(role: DemoRole): DemoRole {
   return role === "creator" ? "creator" : "client";
@@ -9,30 +12,82 @@ export function isSafeInternalPostLoginPath(path: string) {
   return path.startsWith("/") && !path.startsWith("//") && !path.includes("\\");
 }
 
+function sanitizePathname(pathname: string) {
+  const trimmed = pathname.trim();
+  if (!trimmed || trimmed.startsWith("/admin") || trimmed === "/login") {
+    return "";
+  }
+  return trimmed;
+}
+
+/** Login ?next= must be a same-origin relative pathname only. */
+export function toSafeNextPathname(path: string) {
+  if (!isSafeInternalPostLoginPath(path)) {
+    return "";
+  }
+
+  const pathname = path.split("?")[0]?.split("#")[0]?.trim() ?? "";
+  return sanitizePathname(pathname);
+}
+
+/** Preserve safe wizard query params for post-login deep links. */
+export function toSafeNextPath(path: string) {
+  if (!isSafeInternalPostLoginPath(path)) {
+    return "";
+  }
+
+  const hashIndex = path.indexOf("#");
+  const hash = hashIndex >= 0 ? path.slice(hashIndex) : "";
+  const withoutHash = hashIndex >= 0 ? path.slice(0, hashIndex) : path;
+  const [pathname, search = ""] = withoutHash.split("?");
+  const safePathname = sanitizePathname(pathname);
+  if (!safePathname) {
+    return "";
+  }
+
+  if (safePathname !== BRAND_WIZARD_ENTRY_PATH) {
+    return `${safePathname}${hash}`;
+  }
+
+  const params = new URLSearchParams(search);
+  const safeParams = new URLSearchParams();
+  for (const key of ALLOWED_WIZARD_NEXT_QUERY_KEYS) {
+    const value = params.get(key)?.trim();
+    if (value) {
+      safeParams.set(key, value);
+    }
+  }
+
+  const query = safeParams.toString();
+  return `${safePathname}${query ? `?${query}` : ""}${hash}`;
+}
+
 export function resolvePostLoginDestination(
   session: { role: DemoRole },
   nextPath: string,
-  locale: Locale
+  _locale?: unknown
 ) {
   const role = safeUserRole(session.role);
+  const safeNext = toSafeNextPath(nextPath) || toSafeNextPathname(nextPath);
+  const safePathname = safeNext.split("?")[0]?.split("#")[0] ?? "";
 
-  if (!isSafeInternalPostLoginPath(nextPath) || nextPath.startsWith("/admin")) {
-    return withLocale(demoRedirectForRole(role), locale);
+  if (!safeNext || !safePathname) {
+    return appPath(demoRedirectForRole(role));
   }
 
-  const isBrandPath = nextPath.startsWith("/brand");
+  const isBrandPath = safePathname.startsWith("/brand");
   const isStudioPath =
-    nextPath.startsWith("/studio") ||
-    nextPath.startsWith("/creator") ||
-    nextPath.startsWith("/workspace/studio");
+    safePathname.startsWith("/studio") ||
+    safePathname.startsWith("/creator") ||
+    safePathname.startsWith("/workspace/studio");
 
   if (isBrandPath && role !== "client") {
-    return withLocale(demoRedirectForRole(role), locale);
+    return appPath(demoRedirectForRole(role));
   }
 
   if (isStudioPath && role === "client") {
-    return withLocale("/brand", locale);
+    return appPath("/brand");
   }
 
-  return withLocale(nextPath, locale);
+  return appPath(safeNext);
 }

@@ -1,12 +1,13 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { aiSupportConversationService } from "@/features/ai-support/conversation.service";
 import { adminSupportService } from "@/features/admin/support/admin-support.service";
 import { getAdminSessionUser } from "@/features/admin/auth/admin-auth.service";
-import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { type SearchParams, withLocale } from "@/lib/i18n";
 
 export default async function AdminSupportPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  const locale = getLocale(await searchParams);
+  const locale = await getAppUiLocale();
   const user = await getAdminSessionUser();
   const overview = user ? await adminSupportService.getOverview(user) : { openItems: 0 };
   const conversations = user

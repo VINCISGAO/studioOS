@@ -5,7 +5,6 @@ import { useFormStatus } from "react-dom";
 import { AlertCircle, Fingerprint, KeyRound, Mail, ShieldCheck } from "lucide-react";
 import { adminLoginAction } from "@/app/actions";
 import { BrandLogoLockup } from "@/components/brand-logo-mark";
-import { LoginLanguageSwitcher } from "@/components/studioos/login-language-switcher";
 import { LoginSubmitSpinner } from "@/components/studioos/login-demo-accounts";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -135,7 +134,6 @@ export function AdminLoginShell({
             <p className="text-sm text-zinc-500 sm:text-[15px]">{t.productLabel}</p>
           </div>
         </div>
-        <LoginLanguageSwitcher locale={locale} />
       </header>
 
       <main className="relative z-10 flex flex-1 flex-col items-center justify-center px-4 pb-10 pt-2 sm:px-6">

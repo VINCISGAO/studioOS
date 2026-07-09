@@ -1,13 +1,14 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { getCurrentClientEmail } from "@/lib/client-session";
-import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { type SearchParams, withLocale } from "@/lib/i18n";
 import { listOrdersForClient } from "@/lib/order-service";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 export default async function BrandInvoicesPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  const locale = getLocale(await searchParams);
+  const locale = await getAppUiLocale();
   const clientEmail = await getCurrentClientEmail();
   const orders = clientEmail ? await listOrdersForClient(clientEmail) : [];
 

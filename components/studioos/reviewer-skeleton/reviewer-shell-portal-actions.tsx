@@ -1,8 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense } from "react";
-import { LanguageSwitcher, LanguageSwitcherFallback } from "@/components/language-switcher";
 import { usePortalShellChrome } from "@/components/studioos/portal-shell-chrome-context";
 import { StudioNotificationBell } from "@/components/studioos/studio-notification-bell";
 import { StudioUserMenu } from "@/components/studioos/studio-user-menu";
@@ -15,21 +13,13 @@ export function ReviewerShellPortalActions({ locale }: { locale: Locale }) {
   const chrome = usePortalShellChrome();
 
   if (!chrome) {
-    return (
-      <Suspense fallback={<LanguageSwitcherFallback locale={locale} />}>
-        <LanguageSwitcher locale={locale} />
-      </Suspense>
-    );
+    return null;
   }
 
   const unread = chrome.unreadMessageCount;
 
   return (
     <div className="flex items-center gap-2 sm:gap-3">
-      <Suspense fallback={<LanguageSwitcherFallback locale={locale} />}>
-        <LanguageSwitcher locale={locale} />
-      </Suspense>
-
       {chrome.showNotificationBell && chrome.notifications ? (
         <StudioNotificationBell
           locale={locale}

@@ -1,3 +1,4 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import Link from "next/link";
 import { Languages } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -13,7 +14,7 @@ import {
 import { AdminFormCsrf } from "@/components/studioos/admin-form-csrf";
 import { languageService } from "@/features/i18n/language.service";
 import { getAdminSessionUser } from "@/features/admin/auth/admin-auth.service";
-import { getLocale, type SearchParams } from "@/lib/i18n";
+import { type SearchParams } from "@/lib/i18n";
 
 const copy = {
   en: {
@@ -55,7 +56,7 @@ export default async function AdminLanguagesPage({
 }: {
   searchParams: Promise<SearchParams>;
 }) {
-  const locale = getLocale(await searchParams);
+  const locale = await getAppUiLocale();
   const t = copy[locale];
   const user = await getAdminSessionUser();
   const enabled = languageService.isEnabled();

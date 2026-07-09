@@ -1,13 +1,16 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
 import { BrandCampaignWizard } from "@/components/studioos/brand-campaign-wizard";
 import { resolveBrandBriefClientEmail } from "@/lib/client-session";
-import { DEMO_SESSION_COOKIE } from "@/lib/auth-config";
-import { parseDemoSession } from "@/lib/demo-auth";
-import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { type SearchParams, withLocale } from "@/lib/i18n";
 import { getOrCreateEphemeralWizardProject } from "@/lib/brand-start-brief";
 import { getProject } from "@/lib/project-service";
 import { normalizeCampaignStatus } from "@/lib/studioos/project-status";
+import {
+  buildBrandWizardLoginRedirect,
+  buildBrandWizardTargetPath,
+  requireBrandWizardSession
+} from "@/lib/studioos/brand-wizard-entry";
 import {
   clampBrandVisibleStep,
   migrateLegacyBrandWizardStep
@@ -26,25 +29,8 @@ export default async function NewProjectPage({
   searchParams: Promise<NewProjectSearchParams>;
 }) {
   const query = await searchParams;
-  const locale = getLocale(query);
-  const cookieStore = await cookies();
-  const session = parseDemoSession(cookieStore.get(DEMO_SESSION_COOKIE)?.value);
-
-  if (!session || session.role !== "client") {
-    const next = encodeURIComponent(
-      withLocale(
-        `/brand/projects/new${query.project ? `?project=${query.project}&step=${query.step ?? 1}` : "?step=1"}`,
-        locale
-      )
-    );
-    redirect(withLocale(`/login?role=brand&next=${next}`, locale));
-  }
-
-  const clientEmail = (await resolveBrandBriefClientEmail()) ?? session.email.toLowerCase();
-
-  if (!clientEmail) {
-    redirect(withLocale("/login?role=brand&next=/brand/projects/new", locale));
-  }
+  const locale = await getAppUiLocale();
+  const session = await requireBrandWizardSession();
 
   const projectId =
     typeof query.project === "string"
@@ -52,6 +38,24 @@ export default async function NewProjectPage({
       : Array.isArray(query.project)
         ? (query.project[0] ?? "")
         : "";
+  const requestedStep = typeof query.step === "string" ? query.step : Array.isArray(query.step) ? (query.step[0] ?? "1") : "1";
+
+  if (!session) {
+    redirect(
+      buildBrandWizardLoginRedirect(
+        buildBrandWizardTargetPath({
+          projectId: projectId || undefined,
+          step: requestedStep
+        })
+      )
+    );
+  }
+
+  const clientEmail = (await resolveBrandBriefClientEmail()) ?? session.email.toLowerCase();
+
+  if (!clientEmail) {
+    redirect(buildBrandWizardLoginRedirect());
+  }
 
   if (!projectId) {
     const project = await getOrCreateEphemeralWizardProject(clientEmail);
@@ -78,9 +82,8 @@ export default async function NewProjectPage({
     redirect(withLocale(`/brand/projects/${projectId}`, locale));
   }
 
-  const requestedStep = Number(query.step) || 1;
   const step = clampBrandVisibleStep(
-    requestedStep || migrateLegacyBrandWizardStep(project.wizard_step || 1)
+    Number(requestedStep) || migrateLegacyBrandWizardStep(project.wizard_step || 1)
   );
 
   return (

@@ -1,3 +1,4 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import Link from "next/link";
 import { ArrowLeft, Crown } from "lucide-react";
 import { updateCommissionRuleAction } from "@/app/membership-admin-actions";
@@ -9,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { membershipAdminService } from "@/features/membership/membership-admin.service";
 import { getAdminSessionUser } from "@/features/admin/auth/admin-auth.service";
-import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { type SearchParams, withLocale } from "@/lib/i18n";
 import { adminPortalRoutes } from "@/lib/studioos/admin-portal-routes";
 import { formatCurrency } from "@/lib/utils";
 
@@ -43,7 +44,7 @@ export default async function AdminMembershipPage({
 }: {
   searchParams: Promise<SearchParams>;
 }) {
-  const locale = getLocale(await searchParams);
+  const locale = await getAppUiLocale();
   const t = copy[locale];
   const user = await getAdminSessionUser();
   const config = user ? await membershipAdminService.getConfiguration(user) : { rule: null, plans: [] };

@@ -1,13 +1,10 @@
 import { redirect } from "next/navigation";
 import { LoginPageShell, type LoginPageCopy } from "@/components/studioos/login-page-shell";
 import { isDemoLoginUiEnabled } from "@/lib/can-persist-local-store";
-import {
-  isSafeInternalPostLoginPath,
-  resolvePostLoginDestination
-} from "@/lib/auth/post-login-redirect";
+import { resolvePostLoginDestination, toSafeNextPath } from "@/lib/auth/post-login-redirect";
 import { hasSupabaseConfig } from "@/lib/auth-config";
-import { type DemoRole } from "@/lib/demo-auth";
-import { getLocale, type Locale, type SearchParams } from "@/lib/i18n";
+import { getAppUiLocale } from "@/lib/app-language";
+import type { Locale, SearchParams } from "@/lib/i18n";
 import { getCurrentSession } from "@/lib/session-user";
 import type { LoginRole } from "@/lib/studioos/login-theme";
 
@@ -158,44 +155,6 @@ function resolveLoginRole(raw?: string): LoginRole {
   return raw === "creator" ? "creator" : "brand";
 }
 
-function sessionMatchesRequestedRole(
-  session: { role: DemoRole } | null,
-  requestedRole: LoginRole,
-  hasExplicitRole: boolean
-) {
-  if (!session || session.role === "admin") {
-    return false;
-  }
-  if (!hasExplicitRole) {
-    return true;
-  }
-  return (
-    (requestedRole === "brand" && session.role === "client") ||
-    (requestedRole === "creator" && session.role === "creator")
-  );
-}
-
-function redirectIfAlreadySignedIn(
-  session: { email: string; role: DemoRole } | null,
-  role: LoginRole,
-  nextPath: string,
-  locale: Locale
-) {
-  if (!session || session.role === "admin") {
-    return;
-  }
-
-  const destination = resolvePostLoginDestination(session, nextPath, locale);
-
-  if (role === "brand" && session.role === "client") {
-    redirect(destination);
-  }
-
-  if (role === "creator" && session.role === "creator") {
-    redirect(destination);
-  }
-}
-
 function resolveLoginErrorMessage(
   rawError: string | undefined,
   t: { configError: string; unsupported: string; wrongRoleHint: string }
@@ -232,39 +191,36 @@ function resolveLoginErrorCode(rawError: string | undefined) {
 }
 
 function resolveNextPath(raw: SearchParams["next"]) {
-  if (typeof raw === "string") {
-    return isSafeInternalPostLoginPath(raw) && !raw.startsWith("/admin") ? raw : "";
+  const value = typeof raw === "string" ? raw : Array.isArray(raw) ? (raw[0] ?? "") : "";
+  if (!value) {
+    return "";
   }
-  if (Array.isArray(raw)) {
-    const value = raw[0] ?? "";
-    return isSafeInternalPostLoginPath(value) && !value.startsWith("/admin") ? value : "";
+
+  try {
+    return toSafeNextPath(decodeURIComponent(value.replace(/\+/g, " ")));
+  } catch {
+    return toSafeNextPath(value);
   }
-  return "";
 }
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams;
-  const locale = getLocale(params);
+  const locale = await getAppUiLocale();
   const nextPath = resolveNextPath(params.next);
 
   const t = copy[locale];
   const rawError = typeof params.error === "string" ? params.error : undefined;
   const session = await getCurrentSession();
-  const hasExplicitRole = typeof params.role === "string";
-  const role = resolveLoginRole(hasExplicitRole ? params.role : undefined);
+  const role = resolveLoginRole(typeof params.role === "string" ? params.role : undefined);
 
   const demoMode = isDemoLoginUiEnabled();
   const googleOAuthEnabled = hasSupabaseConfig();
   const googleOneTapClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID?.trim() ?? "";
 
-  if (session && sessionMatchesRequestedRole(session, role, hasExplicitRole) && !rawError) {
+  if (session && (session.role === "client" || session.role === "creator") && !rawError) {
     redirect(resolvePostLoginDestination(session, nextPath, locale));
   }
 
-  // Only bounce back when middleware sent the user here with ?next= — not when switching brand/creator tabs.
-  if (demoMode && nextPath) {
-    redirectIfAlreadySignedIn(session, role, nextPath, locale);
-  }
   const initialEmail = typeof params.email === "string" ? params.email : "";
   const errorCode = resolveLoginErrorCode(rawError);
   const error = resolveLoginErrorMessage(rawError, t);

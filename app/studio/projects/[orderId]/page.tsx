@@ -1,3 +1,4 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Clapperboard } from "lucide-react";
@@ -6,7 +7,7 @@ import { StudioCreativeWorkspace } from "@/components/studioos/studio-creative-w
 import { getCreativeBrief, listPackItems } from "@/lib/campaign-store";
 import { getCreatorById } from "@/lib/creator-service";
 import { getCurrentCreatorId } from "@/lib/creator-session";
-import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { type SearchParams, withLocale } from "@/lib/i18n";
 import { resolveCreatorCommercialStep } from "@/lib/studioos/commercial-lifecycle";
 import { creatorPortalRoutes } from "@/lib/studioos/creator-portal-routes";
 import {
@@ -26,7 +27,7 @@ export default async function StudioProjectPage({
   searchParams: Promise<SearchParams>;
 }) {
   const [{ orderId }, query] = await Promise.all([params, searchParams]);
-  const locale = getLocale(query);
+  const locale = await getAppUiLocale();
   const creatorId = await getCurrentCreatorId();
 
   if (!creatorId) {

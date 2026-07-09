@@ -1,10 +1,11 @@
 # Homepage Golden Baseline
 
-**Status:** Canonical anchor — **owner-locked 2026-07-09 (post-publish)**  
-**Git commit:** `17a98b7` on `main`  
-**Tag / branch:** `homepage-v1` · `homepage-golden` (re-anchored via `npm run homepage:anchor`)
+**Status:** Canonical anchor — **owner-locked 2026-07-10**  
+**Supersedes:** 2026-07-09 · commit `17a98b7`  
+**Tag / branch:** `homepage-v1` · `homepage-golden` (re-anchor via `npm run homepage:anchor` after owner approval)
 
-> **Owner rule (2026-07-09):** No agent and no engineer may change homepage stack files **without the project owner's explicit command in the current conversation.** This includes copy, video URLs, layout, animations, and assets.
+> **Owner rule (2026-07-10):** 没有项目 owner 在**当前对话**中的明确命令，**绝对不可以**改动首页栈的任何内容——包括文案、视频 URL、**手机 / iPad / 电脑版布局与响应式断点**、间距、动画、资产、导航交互、以及 `HomeHeroVideo` 播放组件。  
+> No agent and no engineer may change homepage stack files **without the project owner's explicit command in the current conversation.**
 
 ## Policy
 
@@ -16,13 +17,14 @@ Allowed **only** when the owner explicitly requests in the **current** task:
 
 Not allowed without owner command:
 
-- Refactors, redesigns, copy tweaks, spacing, responsiveness, animations, assets, logo treatment, video filenames, cache version bumps
+- Refactors, redesigns, copy tweaks, spacing, **responsive layout at any breakpoint**, animations, assets, logo treatment, video filenames, cache version bumps, nav menu structure, hero Earth background sizing, CTA sizing, cost-table mobile layout
 
 ## Anchor contents (homepage stack)
 
 | Area | Path |
 |------|------|
-| Page entry | `app/page.tsx` → `HomeLandingPage` / `CinematicHomePage` |
+| Page entry | `app/page.tsx` → `HomeLandingPage` |
+| Video player (frozen) | `components/marketing/home-hero-video.tsx` |
 | Video resolver | `lib/marketing/home-hero-video-sources.ts` |
 | Copy | `lib/marketing/landing-copy.ts`, `lib/marketing/cinematic-copy.ts`, `lib/marketing/footer-copy.ts` |
 | UI | `components/marketing/**`, `components/language-switcher.tsx` |
@@ -31,6 +33,67 @@ Not allowed without owner command:
 | Upload / verify | `scripts/upload-home-hero-videos-r2.mjs`, `scripts/verify-home-hero-r2.mjs` |
 
 **No** `<link rel="preload" as="video">` on homepage (Safari download bug) — `app/page.tsx` passes `heroVideoSrc` only to `HomeHeroVideo`.
+
+## Section order (frozen)
+
+`HomeLandingPage` in `components/marketing/landing/home-landing-page.tsx`:
+
+1. `CinematicNav`
+2. `CinematicHero`
+3. **`HomeHeroVideo`** ← protected video playback component
+4. `HomeHeroMetrics`
+5. `LandingCostComparison` (`#cost`)
+6. `LandingRecentWork` (`#work`)
+7. `LandingHowItWorks` (`#how-it-works`)
+8. `CinematicNetwork` (`#network`)
+9. `CinematicEscrow` (`#escrow`)
+10. `LandingCta` (`#cta`)
+11. `MarketingFooter`
+
+Do not reorder, remove, or replace sections without owner command.
+
+## Responsive layout baseline (frozen 2026-07-10)
+
+Breakpoints follow Tailwind defaults: **mobile** `< sm`, **iPad** `md`–`lg` (below `lg`), **desktop** `lg+`.
+
+### Hero Earth background (`CinematicHero`)
+
+| Breakpoint | `background-size` | `background-position` |
+|------------|-------------------|-------------------------|
+| Mobile (default) | `auto 73%` | `100% 38%` |
+| iPad (`md`) | `auto 43%` | `100% 24%` |
+| Desktop (`lg`) | `auto 101%` | `right 36%` |
+
+### Hero typography compact locales
+
+Locales with **×0.8 mobile/iPad headline scale** (desktop `lg` unchanged): `vi`, `es`, `fr`, `ms`, `ja`, `en`.
+
+- French (`fr`): two-line title wrap allowed; desktop `lg:text-[3.5rem]` cap.
+- Legacy compact title set (`vi`, `es`, `fr`, `ms`): separate title scale path in `cinematic-hero.tsx`.
+
+### Hero CTA buttons (`HeroCtaButton`)
+
+- Mobile / desktop: full-size (`min-h-[4.5rem]` → `lg:min-h-[6.35rem]`).
+- **iPad only** (`md`, below `lg`): reduced ~⅓ — `md:min-h-[4.25rem]`, smaller text/gap/padding; restores full size at `lg`.
+
+### Mobile navigation (`CinematicNav` · `sm:hidden` only)
+
+Card menu (not plain text list):
+
+- Order: 登录 → 关于我们 → 流程 → 案例 → 价格 → 资源
+- Each row: glass card, left purple icon in dark rounded square, title + description
+- Copy: `cinematicText("mobileNav")` descriptions + `cinematicText("nav")` titles
+- Desktop / iPad top nav: unchanged centered links
+
+### Cost comparison (`LandingCostComparison`)
+
+- Mobile: rebalanced grid; value cells stack icon above text
+- Long-locale labels shortened where needed (e.g. French `aiWorkflow` row)
+
+### Desktop / iPad nav bar
+
+- Center nav visible `lg:flex` only
+- Login pill `sm:inline-flex`; hamburger `sm:hidden`
 
 ## Hero copy (zh-CN baseline — no trailing periods)
 
@@ -43,7 +106,9 @@ Not allowed without owner command:
 
 All 11 marketing locales: subtitle **two lines, no sentence-ending punctuation** — see `landingCopy.hero` + `landingCopyTranslations.hero` in `lib/marketing/landing-copy.ts`.
 
-## Hero video — 11 languages (canonical)
+## Hero video — 11 languages (canonical, unchanged)
+
+**Player:** `components/marketing/home-hero-video.tsx` — controls, poster, locale copy, fullscreen, seek, mute. **Do not replace or remove.**
 
 **Resolver:** `resolveHomeHeroVideoPlaybackSrc(locale)` in `lib/marketing/home-hero-video-sources.ts`  
 **Cache bust:** `HERO_VIDEO_CACHE_VERSION = "7"` → query `?cv=7`  
@@ -72,7 +137,7 @@ All 11 marketing locales: subtitle **two lines, no sentence-ending punctuation**
 
 ## Re-anchor this baseline
 
-When the owner approves a **new** golden snapshot:
+When the owner approves a **new** golden snapshot (after committing desired homepage changes):
 
 ```bash
 npm run homepage:anchor

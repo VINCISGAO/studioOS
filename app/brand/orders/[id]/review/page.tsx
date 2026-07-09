@@ -1,8 +1,9 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ReviewerTimestampWorkspace } from "@/components/studioos/reviewer-skeleton/reviewer-timestamp-workspace";
 import { getCurrentClientEmail } from "@/lib/client-session";
-import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { type SearchParams, withLocale } from "@/lib/i18n";
 import { getDeliverables, getOrder } from "@/lib/order-service";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
 import { listReviewComments } from "@/lib/studioos/review-store";
@@ -17,7 +18,7 @@ export const dynamic = "force-dynamic";
 
 export default async function BrandOrderReviewPage({ params, searchParams }: PageProps) {
   const [{ id: orderId }, query] = await Promise.all([params, searchParams]);
-  const locale = getLocale(query);
+  const locale = await getAppUiLocale();
   const clientEmail = await getCurrentClientEmail();
   const order = await getOrder(orderId);
 

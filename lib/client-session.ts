@@ -28,8 +28,13 @@ export async function getCurrentClientEmail(): Promise<string | null> {
   return null;
 }
 
-/** Brand brief wizard — reuse brand login, guest visitor, or draft when another role is signed in. */
+/** Brand brief wizard — authenticated brand first, then guest visitor / draft fallback. */
 export async function resolveBrandBriefClientEmail(): Promise<string | null> {
+  const session = await getCurrentSession();
+  if (session?.role === "client") {
+    return session.email.toLowerCase();
+  }
+
   const cookieStore = await cookies();
   return resolveBrandBriefEmailFromCookieValues(
     cookieStore.get(DEMO_SESSION_COOKIE)?.value,

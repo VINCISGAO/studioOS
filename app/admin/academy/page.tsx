@@ -1,3 +1,4 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import Link from "next/link";
 import { ArrowLeft, BookOpen, CheckCircle2, Clock, GraduationCap } from "lucide-react";
 import { Badge, type BadgeProps } from "@/components/ui/badge";
@@ -5,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { getAdminSessionUser } from "@/features/admin/auth/admin-auth.service";
 import { partnerAcademyAdminService } from "@/features/partner-academy/partner-academy-admin.service";
-import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { type SearchParams, withLocale } from "@/lib/i18n";
 import { adminPortalRoutes } from "@/lib/studioos/admin-portal-routes";
 
 const copy = {
@@ -56,7 +57,7 @@ export default async function AdminAcademyPage({
 }: {
   searchParams: Promise<SearchParams>;
 }) {
-  const locale = getLocale(await searchParams);
+  const locale = await getAppUiLocale();
   const t = copy[locale];
   const user = await getAdminSessionUser();
   const data = user

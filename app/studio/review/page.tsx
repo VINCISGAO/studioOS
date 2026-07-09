@@ -1,7 +1,8 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import { redirect } from "next/navigation";
 import { StudioReviewHubBoard } from "@/components/studioos/studio-review-hub-board";
 import { getCurrentCreatorId } from "@/lib/creator-session";
-import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { type SearchParams, withLocale } from "@/lib/i18n";
 import { repairSelectedCreatorCampaignOrders } from "@/lib/order-service";
 import { listCreatorReviewHubItems } from "@/lib/studioos/review-hub";
 
@@ -10,7 +11,7 @@ export default async function StudioReviewHubPage({
 }: {
   searchParams: Promise<SearchParams>;
 }) {
-  const locale = getLocale(await searchParams);
+  const locale = await getAppUiLocale();
   const creatorId = await getCurrentCreatorId();
   if (!creatorId) {
     redirect(withLocale("/login?role=creator", locale));

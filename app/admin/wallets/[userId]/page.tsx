@@ -1,3 +1,4 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
@@ -10,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { type SearchParams, withLocale } from "@/lib/i18n";
 import { adminPortalRoutes } from "@/lib/studioos/admin-portal-routes";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
@@ -22,7 +23,7 @@ export default async function AdminWalletDetailPage({
   searchParams: Promise<SearchParams>;
 }) {
   const { userId } = await params;
-  const locale = getLocale(await searchParams);
+  const locale = await getAppUiLocale();
   const user = await getAdminSessionUser();
   if (!user) notFound();
 

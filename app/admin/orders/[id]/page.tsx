@@ -1,3 +1,4 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Upload } from "lucide-react";
@@ -18,7 +19,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { adminOrderService } from "@/features/admin/order/admin-order.service";
 import { getAdminSessionUser } from "@/features/admin/auth/admin-auth.service";
-import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { type SearchParams, withLocale } from "@/lib/i18n";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 const copy = {
@@ -105,7 +106,7 @@ type AdminOrderPageProps = {
 
 export default async function AdminOrderPage({ params, searchParams }: AdminOrderPageProps) {
   const { id } = await params;
-  const locale = getLocale(await searchParams);
+  const locale = await getAppUiLocale();
   const t = copy[locale];
   const user = await getAdminSessionUser();
 

@@ -1,3 +1,4 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import { cookies } from "next/headers";
 import { Suspense } from "react";
 import {
@@ -10,7 +11,7 @@ import type { MessageDetailPayload, MessageListItem } from "@/components/studioo
 import { DEMO_SESSION_COOKIE } from "@/lib/auth-config";
 import { getCurrentClientEmail } from "@/lib/client-session";
 import { DEMO_USERS, parseDemoSession } from "@/lib/demo-auth";
-import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { type SearchParams, withLocale } from "@/lib/i18n";
 import { getOrder } from "@/lib/order-service";
 import { getProject } from "@/lib/project-service";
 import type { BrandNotification } from "@/lib/studioos/brand-notification-types";
@@ -133,7 +134,7 @@ async function buildBrandMessageCenterPayload(
 
 export default async function BrandMessagesPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const query = await searchParams;
-  const locale = getLocale(query);
+  const locale = await getAppUiLocale();
   const clientEmail = await getCurrentClientEmail();
   const cookieStore = await cookies();
   const session = parseDemoSession(cookieStore.get(DEMO_SESSION_COOKIE)?.value);

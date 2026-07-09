@@ -2,11 +2,13 @@
 
 This folder is the **canonical marketing homepage**.
 
-**Golden baseline:** owner-locked **2026-07-09** · commit **`17a98b7`** · 11-language hero videos (`cv=7`), footer redesign, hero copy without trailing periods. See [`docs/HOMEPAGE_GOLDEN.md`](../docs/HOMEPAGE_GOLDEN.md) and [`docs/HOMEPAGE_HERO_VIDEO_BASELINE.json`](../docs/HOMEPAGE_HERO_VIDEO_BASELINE.json). Legacy anchors: `homepage-golden` branch · `homepage-v1` tag.
+**Golden baseline:** owner-locked **2026-07-10** · supersedes **2026-07-09** / `17a98b7` · 11-language hero videos (`cv=7`), **`HomeHeroVideo` player frozen**, mobile card nav, iPad/desktop responsive hero + CTA + cost table. See [`docs/HOMEPAGE_GOLDEN.md`](../docs/HOMEPAGE_GOLDEN.md) and [`docs/HOMEPAGE_HERO_VIDEO_BASELINE.json`](../docs/HOMEPAGE_HERO_VIDEO_BASELINE.json). Legacy anchors: `homepage-golden` branch · `homepage-v1` tag.
 
 ## Agent policy
 
-**Owner lock (2026-07-09):** Do not change anything in the homepage stack unless the project owner **explicitly commands that exact change in the current conversation.** No copy tweaks, no video URL changes, no layout fixes, no refactors — ask first if unsure.
+**Owner lock (2026-07-10):** 没有项目 owner 在**当前对话**中的明确命令，**绝对不可以**改动首页栈。包括文案、视频 URL、**手机 / iPad / 电脑版布局**、间距、响应式断点、动画、资产、导航、以及 `components/marketing/home-hero-video.tsx`。
+
+Do not change anything in the homepage stack unless the project owner **explicitly commands that exact change in the current conversation.** No copy tweaks, no video URL changes, no layout fixes, no refactors — ask first if unsure.
 
 No AI agent may:
 
@@ -16,7 +18,8 @@ No AI agent may:
 - remove animations
 - replace sections
 - change layout hierarchy
-- swap or delete homepage components
+- change responsive behavior at any breakpoint (mobile / iPad / desktop)
+- swap or delete homepage components (including `HomeHeroVideo`)
 - change homepage copy, spacing, responsiveness, assets, or logo treatment
 
 …unless the project owner **explicitly commands that homepage change in the current conversation**.
@@ -25,12 +28,8 @@ No AI agent may:
 
 Allowed without explicit override:
 
-- bug fixes
+- bug fixes **only if they do not change layout, visual hierarchy, responsive behavior, or interaction design**
 - changes the owner explicitly requested in the current task
-
-Bug fixes, accessibility improvements, localization, and content updates are allowed, provided they do not change the homepage structure, visual hierarchy, or interaction design.
-
-允许进行 Bug 修复、文案更新、多语言、无障碍等修改，但不得改变首页结构、视觉层级、交互设计或动画行为。
 
 If unsure, **preserve the existing homepage**.
 
@@ -38,7 +37,7 @@ If unsure, **preserve the existing homepage**.
 
 This freeze applies to the marketing homepage stack, including (non-exhaustive):
 
-- `components/marketing/**`
+- `components/marketing/**` (including `home-hero-video.tsx`)
 - `components/language-switcher.tsx` (footer language control)
 - `lib/marketing/**`
 - `app/page.tsx` and homepage-related app routes that render this UI

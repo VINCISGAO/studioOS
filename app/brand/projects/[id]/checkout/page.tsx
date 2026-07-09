@@ -1,9 +1,10 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { BrandCheckoutPanel } from "@/components/studioos/brand-checkout-panel";
 import { BrandCheckoutSummary } from "@/components/studioos/brand-checkout-summary";
 import { getCreatorById } from "@/lib/creator-service";
-import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { type SearchParams, withLocale } from "@/lib/i18n";
 import { getOrderForProject, markLegacyOrderPaidForProject } from "@/lib/order-service";
 import { isOrderPaymentEscrowed } from "@/lib/order-types";
 import { getProject } from "@/lib/project-service";
@@ -50,7 +51,7 @@ function readCancellationReason(
 
 export default async function BrandCheckoutPage({ params, searchParams }: Props) {
   const [{ id }, query] = await Promise.all([params, searchParams]);
-  const locale = getLocale(query);
+  const locale = await getAppUiLocale();
   const session = await getCurrentSession();
   if (!session || session.role !== "client") {
     redirect(withLocale(`/login?role=brand&next=${encodeURIComponent(`/brand/projects/${id}/checkout?lang=${locale}`)}`, locale));

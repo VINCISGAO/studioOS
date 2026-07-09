@@ -1,3 +1,4 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Receipt, Wallet } from "lucide-react";
@@ -6,7 +7,7 @@ import { PageHeader } from "@/components/studioos/ui/page-header";
 import { brandPortalService } from "@/features/brand/brand-portal.service";
 import { getSessionUser } from "@/features/auth/session.service";
 import { getCurrentClientEmail } from "@/lib/client-session";
-import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { type SearchParams, withLocale } from "@/lib/i18n";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
 import { formatCurrency } from "@/lib/utils";
 
@@ -15,7 +16,7 @@ export default async function BrandSettlementPage({
 }: {
   searchParams: Promise<SearchParams>;
 }) {
-  const locale = getLocale(await searchParams);
+  const locale = await getAppUiLocale();
   const clientEmail = await getCurrentClientEmail();
   if (!clientEmail) redirect(withLocale("/login?role=brand", locale));
 

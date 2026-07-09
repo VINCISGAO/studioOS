@@ -2,7 +2,8 @@ import { redirect } from "next/navigation";
 import { BrandCommercialTimeline } from "@/components/studioos/commercial-lifecycle-timeline";
 import { BrandProjectHub } from "@/components/studioos/brand-project-hub";
 import { getCurrentClientEmail } from "@/lib/client-session";
-import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { getAppUiLocale } from "@/lib/app-language";
+import { type SearchParams, withLocale } from "@/lib/i18n";
 import { getDeliverables, getOrder, getOrderForProject } from "@/lib/order-service";
 import { isOrderPaymentEscrowed } from "@/lib/order-types";
 import { getProject } from "@/lib/project-service";
@@ -107,7 +108,7 @@ export default async function BrandProjectHubPage({
   searchParams: Promise<SearchParams & { matching?: string; tab?: string }>;
 }) {
   const [{ id }, query] = await Promise.all([params, searchParams]);
-  const locale = getLocale(query);
+  const locale = await getAppUiLocale();
   const clientEmail = await getCurrentClientEmail();
   let project = await getProject(id);
 

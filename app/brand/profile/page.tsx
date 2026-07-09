@@ -1,3 +1,4 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import { redirect } from "next/navigation";
 import { BrandProfileEditor } from "@/components/studioos/brand-profile-editor";
 import { getCurrentClientEmail } from "@/lib/client-session";
@@ -6,10 +7,10 @@ import {
   getOrCreateBrandProfile,
   syncBrandShowcaseFromOrders
 } from "@/lib/brand-profile-service";
-import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { type SearchParams, withLocale } from "@/lib/i18n";
 
 export default async function BrandProfilePage({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  const locale = getLocale(await searchParams);
+  const locale = await getAppUiLocale();
   const email = await getCurrentClientEmail();
   if (!email) {
     redirect(withLocale("/login?role=brand", locale));

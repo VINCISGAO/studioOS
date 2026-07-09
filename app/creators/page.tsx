@@ -1,49 +1,40 @@
 import Link from "next/link";
-import { ArrowRight, ShieldCheck, Sparkles } from "lucide-react";
-import { CreatorsWorksShowcase } from "@/components/marketing/creators-works-showcase";
+import { ShieldCheck, Sparkles } from "lucide-react";
+import { CreatorsShowcaseGallery } from "@/components/marketing/creators-showcase-gallery";
 import { MarketingShell } from "@/components/marketing/marketing-shell";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { creators as studioDirectory } from "@/lib/data";
-import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
-import { getCurrentSession } from "@/lib/session-user";
-import { getWorksEngagement } from "@/lib/work-engagement-service";
-import { getAllCreatorWorks } from "@/lib/works-catalog";
+import { marketingShowcaseService } from "@/features/marketing-showcase/marketing-showcase.service";
+import { getLocale, type SearchParams } from "@/lib/i18n";
+import { buildLocalizedHref } from "@/lib/marketing/localized-href";
 
 const copy = {
   en: {
-    eyebrow: "Studio portfolio",
-    title: "Browse studios by real work — then enter Proposal Room.",
-    subtitle:
-      "Studios publish portfolio videos first. Brands compare style, category, platform, and turnaround before matching.",
-    view: "View studio",
+    eyebrow: "Back to home",
+    title: "Works speak for themselves.",
+    subtitle: "Official showcase videos by category — search, play, and fullscreen.",
     trust: ["Portfolio-first studios", "Proposal Room before contract", "Deposit-backed production"]
   },
   zh: {
-    eyebrow: "Studio 作品集",
-    title: "先看真实作品，再进入 Proposal Room。",
-    subtitle:
-      "Studio 先发布作品集视频。Brand 按风格、品类、平台与交付周期筛选，匹配后再在平台内沟通方案。",
-    view: "查看 Studio",
+    eyebrow: "返回首页",
+    title: "作品自己会说话。",
+    subtitle: "官方精选案例视频，按品类浏览，支持搜索、放大播放与暂停。",
     trust: ["Studio 作品集优先", "Proposal Room 再签约", "保证金保障制作"]
   }
 };
 
 type CreatorsPageProps = {
-  searchParams: Promise<SearchParams>;
+  searchParams: Promise<SearchParams & { play?: string }>;
 };
 
 export default async function CreatorsPage({ searchParams }: CreatorsPageProps) {
-  const locale = getLocale(await searchParams);
+  const params = await searchParams;
+  const locale = getLocale(params);
   const t = copy[locale];
-  const session = await getCurrentSession();
-  const activeCreators = studioDirectory.filter((creator) => ["active", "approved"].includes(creator.status));
-  const allWorks = await getAllCreatorWorks();
-  const engagement = await getWorksEngagement(
-    allWorks.map((work) => work.id),
-    session?.email ?? null
-  );
+  const initialPlayId = typeof params.play === "string" ? params.play : undefined;
+  const [works, categories] = await Promise.all([
+    marketingShowcaseService.listPublished(),
+    marketingShowcaseService.listCategories()
+  ]);
 
   return (
     <MarketingShell locale={locale}>
@@ -51,10 +42,13 @@ export default async function CreatorsPage({ searchParams }: CreatorsPageProps) 
         <section className="border-b">
           <div className="mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[0.74fr_0.26fr] lg:px-8">
             <div>
-              <div className="inline-flex items-center gap-2 rounded-md border bg-white px-3 py-1.5 text-sm text-muted-foreground shadow-sm">
+              <Link
+                href={buildLocalizedHref("/", locale)}
+                className="inline-flex items-center gap-2 rounded-md border bg-white px-3 py-1.5 text-sm text-muted-foreground shadow-sm transition hover:border-zinc-300 hover:text-zinc-900"
+              >
                 <Sparkles className="h-4 w-4 text-foreground" />
                 {t.eyebrow}
-              </div>
+              </Link>
               <h1 className="mt-6 max-w-4xl text-balance text-5xl font-semibold leading-tight sm:text-6xl">
                 {t.title}
               </h1>
@@ -76,36 +70,12 @@ export default async function CreatorsPage({ searchParams }: CreatorsPageProps) 
         </section>
 
         <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-          <CreatorsWorksShowcase
+          <CreatorsShowcaseGallery
             locale={locale}
-            works={allWorks}
-            engagement={engagement}
-            isLoggedIn={Boolean(session)}
+            works={works}
+            categories={categories}
+            initialPlayId={initialPlayId}
           />
-
-          <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {activeCreators.map((creator) => (
-              <Card key={creator.id} className="flex h-full flex-col bg-white shadow-none">
-                <CardContent className="flex flex-1 flex-col p-6">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <h2 className="truncate text-xl font-semibold">{creator.name}</h2>
-                      <p className="mt-1 text-sm text-muted-foreground">{creator.country}</p>
-                    </div>
-                    <Badge variant="success" className="shrink-0">
-                      {creator.rating}
-                    </Badge>
-                  </div>
-                  <p className="mt-4 line-clamp-3 flex-1 text-sm leading-6 text-muted-foreground">{creator.headline}</p>
-                  <Button asChild className="mt-5 h-9 w-full shrink-0" variant="outline">
-                    <Link href={withLocale(`/creators/${creator.id}`, locale)}>
-                      {t.view} <ArrowRight className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
         </section>
       </main>
     </MarketingShell>

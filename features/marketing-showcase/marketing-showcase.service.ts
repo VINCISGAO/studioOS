@@ -18,21 +18,35 @@ function appendCuratedPublishedWorks(works: MarketingShowcaseWorkDto[]): Marketi
   return dedupeShowcaseWorks(merged).sort((left, right) => left.sort_order - right.sort_order);
 }
 
-const listPublishedCached = unstable_cache(
-  async (category?: string) => {
+async function listPublishedFromDb(category?: string): Promise<MarketingShowcaseWorkDto[]> {
+  try {
+    if (!marketingShowcaseRepository.isAvailable()) return [];
     const works = await marketingShowcaseRepository.listPublished(category);
     return filterOfficialShowcaseWorks(works);
-  },
-  ["marketing-showcase-published-v3"],
+  } catch {
+    return [];
+  }
+}
+
+async function listHomepageFromDb(limit: number): Promise<MarketingShowcaseWorkDto[]> {
+  try {
+    if (!marketingShowcaseRepository.isAvailable()) return [];
+    const works = await marketingShowcaseRepository.listHomepageFeatured(limit);
+    return filterOfficialShowcaseWorks(works);
+  } catch {
+    return [];
+  }
+}
+
+const listPublishedCached = unstable_cache(
+  async (category?: string) => listPublishedFromDb(category),
+  ["marketing-showcase-published-v4"],
   { revalidate: 60 }
 );
 
 const listHomepageCached = unstable_cache(
-  async (limit: number) => {
-    const works = await marketingShowcaseRepository.listHomepageFeatured(limit);
-    return filterOfficialShowcaseWorks(works);
-  },
-  ["marketing-showcase-homepage-v3"],
+  async (limit: number) => listHomepageFromDb(limit),
+  ["marketing-showcase-homepage-v4"],
   { revalidate: 60 }
 );
 
@@ -58,9 +72,13 @@ export class MarketingShowcaseService {
     const curated = CURATED_SHOWCASE_BY_ID.get(id);
     if (curated) return sanitizeShowcaseWorkForDisplay(curated);
 
-    const work = await marketingShowcaseRepository.findById(id);
-    if (!work || !filterOfficialShowcaseWorks([work]).length) return null;
-    return sanitizeShowcaseWorkForDisplay(work);
+    try {
+      const work = await marketingShowcaseRepository.findById(id);
+      if (!work || !filterOfficialShowcaseWorks([work]).length) return null;
+      return sanitizeShowcaseWorkForDisplay(work);
+    } catch {
+      return null;
+    }
   }
 
   async listAdmin() {

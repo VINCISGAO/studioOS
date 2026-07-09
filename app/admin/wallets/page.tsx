@@ -1,3 +1,4 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import Link from "next/link";
 import { adminWalletService } from "@/features/admin/wallet/admin-wallet.service";
 import { getAdminSessionUser } from "@/features/admin/auth/admin-auth.service";
@@ -6,13 +7,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { type SearchParams, withLocale } from "@/lib/i18n";
 import { adminPortalRoutes } from "@/lib/studioos/admin-portal-routes";
 import { formatCurrency } from "@/lib/utils";
 
 export default async function AdminWalletsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const params = await searchParams;
-  const locale = getLocale(params);
+  const locale = await getAppUiLocale();
   const user = await getAdminSessionUser();
   const search = typeof params.search === "string" ? params.search : undefined;
   const result = user ? await adminWalletService.list(user, search) : { items: [], total: 0 };

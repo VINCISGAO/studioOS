@@ -1,6 +1,6 @@
-import { redirect } from "next/navigation";
+import { getAppUiLocale } from "@/lib/app-language";
 import { BrandWorkspaceOverview } from "@/components/studioos/brand-workspace-overview";
-import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { type SearchParams } from "@/lib/i18n";
 import { getCurrentSession } from "@/lib/session-user";
 import { getBrandPortalDisplayName, getBrandPortalOrders, getBrandPortalProjects } from "@/lib/studioos/brand-portal-data";
 import { toBrandProjectRows } from "@/lib/studioos/brand-dashboard";
@@ -8,14 +8,9 @@ import { pickLatestEphemeralWizardProject } from "@/lib/studioos/brand-wizard-se
 
 export default async function BrandHomePage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const query = await searchParams;
-  const locale = getLocale(query);
+  const locale = await getAppUiLocale();
   const session = await getCurrentSession();
-
-  if (!session || session.role !== "client") {
-    redirect(withLocale("/login?role=brand", locale));
-  }
-
-  const clientEmail = session.email.toLowerCase();
+  const clientEmail = session!.email.toLowerCase();
   const [brandName, orders, projects] = await Promise.all([
     getBrandPortalDisplayName(clientEmail),
     getBrandPortalOrders(clientEmail),

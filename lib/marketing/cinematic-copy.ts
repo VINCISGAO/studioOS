@@ -22,6 +22,28 @@ export const cinematicCopy = {
       start: "开始项目"
     }
   },
+  mobileNav: {
+    en: {
+      descriptions: {
+        login: "Sign in to your account and continue with VINCIS",
+        about: "Learn about VINCIS mission and team",
+        process: "The complete flow from brief to delivery",
+        cases: "Explore our selected work and success stories",
+        pricing: "Transparent, flexible pricing plans",
+        resources: "A resource center to help you create more efficiently"
+      }
+    },
+    zh: {
+      descriptions: {
+        login: "登录您的账户，继续使用 VINCIS",
+        about: "了解 VINCIS 的使命与团队",
+        process: "从需求到交付的完整流程",
+        cases: "探索我们的精选作品与成功故事",
+        pricing: "透明灵活的定价方案",
+        resources: "帮助您提升创作效率的资源中心"
+      }
+    }
+  },
   hero: {
     en: {
       chapter: "01 — Opening",
@@ -198,6 +220,98 @@ const cinematicCopyTranslations: Partial<{
     vi: { cases: "Dự án", process: "Quy trình", pricing: "Giá", resources: "Tài nguyên", about: "Giới thiệu", login: "Đăng nhập", start: "Bắt đầu dự án" },
     fr: { cases: "Réalisations", process: "Processus", pricing: "Tarifs", resources: "Ressources", about: "À propos", login: "Connexion", start: "Lancer un projet" },
     es: { cases: "Trabajos", process: "Proceso", pricing: "Precios", resources: "Recursos", about: "Acerca de", login: "Iniciar sesión", start: "Iniciar proyecto" }
+  },
+  mobileNav: {
+    "zh-TW": {
+      descriptions: {
+        login: "登入您的帳戶，繼續使用 VINCIS",
+        about: "了解 VINCIS 的使命與團隊",
+        process: "從需求到交付的完整流程",
+        cases: "探索我們的精選作品與成功故事",
+        pricing: "透明靈活的定價方案",
+        resources: "幫助您提升創作效率的資源中心"
+      }
+    },
+    ja: {
+      descriptions: {
+        login: "アカウントにログインして VINCIS を続ける",
+        about: "VINCIS のミッションとチームについて",
+        process: "要件から納品までの一気通貫フロー",
+        cases: "厳選作品と成功事例を見る",
+        pricing: "透明で柔軟な料金プラン",
+        resources: "制作効率を高めるリソースセンター"
+      }
+    },
+    ko: {
+      descriptions: {
+        login: "계정에 로그인하고 VINCIS를 계속 이용하세요",
+        about: "VINCIS의 미션과 팀을 알아보세요",
+        process: "요구사항부터 납품까지의 전체 프로세스",
+        cases: "엄선된 작업과 성공 사례를 둘러보세요",
+        pricing: "투명하고 유연한 가격 플랜",
+        resources: "창작 효율을 높이는 리소스 센터"
+      }
+    },
+    ms: {
+      descriptions: {
+        login: "Log masuk ke akaun anda dan teruskan dengan VINCIS",
+        about: "Ketahui misi dan pasukan VINCIS",
+        process: "Aliran lengkap dari brief hingga penghantaran",
+        cases: "Terokai karya terpilih dan kisah kejayaan kami",
+        pricing: "Pelan harga yang telus dan fleksibel",
+        resources: "Pusat sumber untuk meningkatkan kecekapan kreatif anda"
+      }
+    },
+    km: {
+      descriptions: {
+        login: "ចូលគណនីរបស់អ្នក ហើយបន្តប្រើ VINCIS",
+        about: "ស្វែងយល់អំពីបេសកកម្ម និងក្រុម VINCIS",
+        process: "ដំណើរការពេញលេញពីតម្រូវការដល់ការប្រគល់",
+        cases: "រុករកស្នាដៃជ្រើសរើស និងរឿងជោគជ័យរបស់យើង",
+        pricing: "ផែនការតម្លៃថ្លៃ និងបត់បែន",
+        resources: "មជ្ឈមណ្ឌលធនធានដើម្បីបង្កើនប្រសិទ្ធភាពការបង្កើតរបស់អ្នក"
+      }
+    },
+    th: {
+      descriptions: {
+        login: "เข้าสู่ระบบบัญชีของคุณและใช้งาน VINCIS ต่อ",
+        about: "ทำความรู้จักพันธกิจและทีมของ VINCIS",
+        process: "ขั้นตอนครบวงจรตั้งแต่บรีฟถึงส่งมอบ",
+        cases: "สำรวจผลงานคัดสรรและเรื่องราวความสำเร็จของเรา",
+        pricing: "แผนราคาที่โปร่งใสและยืดหยุ่น",
+        resources: "ศูนย์ทรัพยากรเพื่อเพิ่มประสิทธิภาพการสร้างสรรค์ของคุณ"
+      }
+    },
+    vi: {
+      descriptions: {
+        login: "Đăng nhập tài khoản và tiếp tục với VINCIS",
+        about: "Tìm hiểu sứ mệnh và đội ngũ VINCIS",
+        process: "Quy trình trọn vẹn từ brief đến bàn giao",
+        cases: "Khám phá tác phẩm chọn lọc và câu chuyện thành công",
+        pricing: "Gói giá minh bạch và linh hoạt",
+        resources: "Trung tâm tài nguyên giúp bạn sáng tạo hiệu quả hơn"
+      }
+    },
+    fr: {
+      descriptions: {
+        login: "Connectez-vous pour continuer sur VINCIS",
+        about: "Découvrez la mission et l'équipe VINCIS",
+        process: "Le parcours complet du brief à la livraison",
+        cases: "Parcourez nos réalisations et histoires de succès",
+        pricing: "Des offres transparentes et flexibles",
+        resources: "Ressources pour accélérer votre création"
+      }
+    },
+    es: {
+      descriptions: {
+        login: "Inicia sesión y continúa con VINCIS",
+        about: "Conoce la misión y el equipo de VINCIS",
+        process: "El flujo completo del brief a la entrega",
+        cases: "Explora trabajos seleccionados e historias de éxito",
+        pricing: "Planes de precios transparentes y flexibles",
+        resources: "Centro de recursos para crear con más eficiencia"
+      }
+    }
   },
   network: {
     "zh-TW": {

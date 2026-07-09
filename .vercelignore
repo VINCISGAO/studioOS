@@ -3,3 +3,15 @@
 .env*.local
 *.log
 .cursor
+
+# Build artifacts (Vercel rebuilds these)
+.next
+node_modules
+
+# Large media — served from R2/CDN via /videos/* proxy, not from Vercel bundle
+public/videos/**/*.mp4
+public/videos/**/*.MP4
+public/videos/**/*.mov
+public/videos/**/*.webm
+public/demo/*.mp4
+public/uploads/**

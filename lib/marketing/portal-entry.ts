@@ -1,6 +1,7 @@
-import { demoRedirectForRole, type DemoSession } from "@/lib/demo-auth";
+import type { DemoSession } from "@/lib/demo-auth";
 import type { Locale, MarketingLocale } from "@/lib/i18n";
-import { isChineseLanguage, withLocale } from "@/lib/i18n";
+import { isChineseLanguage } from "@/lib/i18n";
+import { buildLocalizedHref, marketingHomeHref } from "@/lib/marketing/localized-href";
 
 /** Admin must never surface on the public marketing homepage. */
 export function isMarketingPublicSession(session: DemoSession | null): session is DemoSession {
@@ -28,9 +29,9 @@ function labelsFor(locale: Locale | MarketingLocale) {
 
 export function resolveMarketingPortalHref(locale: Locale | MarketingLocale, session: DemoSession | null) {
   if (!isMarketingPublicSession(session)) {
-    return withLocale("/login", locale);
+    return marketingHomeHref.login(locale);
   }
-  return withLocale(demoRedirectForRole(session.role), locale);
+  return session.role === "creator" ? marketingHomeHref.studio(locale) : marketingHomeHref.brand(locale);
 }
 
 export function resolveMarketingPortalLabel(locale: Locale | MarketingLocale, session: DemoSession | null) {
@@ -53,7 +54,7 @@ export function resolveMarketingWorkspaceCta(
     return null;
   }
   return {
-    href: withLocale(demoRedirectForRole(session.role), locale),
+    href: session.role === "creator" ? marketingHomeHref.studio(locale) : marketingHomeHref.brand(locale),
     label: resolveMarketingPortalLabel(locale, session)
   };
 }
@@ -64,16 +65,16 @@ export function resolveDevAdminShortcut(locale: Locale): { href: string; label: 
     return null;
   }
   return {
-    href: withLocale("/admin", locale),
+    href: buildLocalizedHref("/admin", locale),
     label: labelsFor(locale).admin
   };
 }
 
-/** Public homepage hero / bottom CTA — always external brand entry. */
+/** Public homepage hero / bottom CTA — brand entry. */
 export function resolveMarketingBrandEntryHref(locale: Locale | MarketingLocale) {
-  return withLocale("/login?role=brand", locale);
+  return marketingHomeHref.brand(locale);
 }
 
 export function resolveMarketingCreatorEntryHref(locale: Locale | MarketingLocale) {
-  return withLocale("/login?role=creator", locale);
+  return marketingHomeHref.studio(locale);
 }

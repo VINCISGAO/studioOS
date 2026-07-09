@@ -1,7 +1,8 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import { AdminCampaignList } from "@/components/studioos/admin-campaign-list";
 import { adminCampaignService } from "@/features/admin/campaign/admin-campaign.service";
 import { getAdminSessionUser } from "@/features/admin/auth/admin-auth.service";
-import { getLocale, type SearchParams } from "@/lib/i18n";
+import { type SearchParams } from "@/lib/i18n";
 
 const copy = {
   en: {
@@ -16,7 +17,7 @@ const copy = {
 
 export default async function AdminCampaignsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const params = await searchParams;
-  const locale = getLocale(params);
+  const locale = await getAppUiLocale();
   const t = copy[locale];
   const user = await getAdminSessionUser();
 

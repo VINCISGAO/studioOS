@@ -369,7 +369,8 @@ async function sendAuthVerificationCode(
   }
 
   const from = process.env.AUTH_EMAIL_FROM || process.env.RESEND_FROM_EMAIL || "VINCIS <hello@vincis.app>";
-  const emailTemplate = await buildLoginVerificationEmail({ code });
+  const accountLabel = email.split("@")[0]?.trim().toUpperCase() || "USER";
+  const emailTemplate = await buildLoginVerificationEmail({ code, accountLabel, validMinutes: 5 });
   const result = await sendEnterpriseEmail({
     from,
     to: email,

@@ -1,3 +1,4 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import { redirect } from "next/navigation";
 import { CertificationWelcomeBanner } from "@/components/studioos/certification/certification-welcome-banner";
 import { CreatorHomeDashboard } from "@/components/studioos/creator-home-dashboard";
@@ -8,7 +9,7 @@ import type {
 } from "@/features/membership/membership.types";
 import { membershipService } from "@/features/membership/membership.service";
 import { getCurrentCreator } from "@/lib/creator-session";
-import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { type SearchParams, withLocale } from "@/lib/i18n";
 import { listNotificationsForCreator } from "@/lib/notification-service";
 import { getCurrentSession } from "@/lib/session-user";
 import { getDeliverables, listOrdersForCreator } from "@/lib/order-service";
@@ -37,7 +38,7 @@ import { getCreatorIncomeSnapshot } from "@/lib/studioos/withdrawal-service";
 import { ensureCreatorAssignmentNotificationsForOrders } from "@/lib/studioos/creator-assignment-notify";
 
 export default async function StudioHomePage({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  const locale = getLocale(await searchParams);
+  const locale = await getAppUiLocale();
   const [creator, session] = await Promise.all([getCurrentCreator(), getCurrentSession()]);
 
   if (!creator) {

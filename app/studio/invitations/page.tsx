@@ -1,10 +1,11 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import { redirect } from "next/navigation";
 import { CreatorInvitationsBoard } from "@/components/studioos/creator-invitations-board";
 import { CreatorInvitationsProgress } from "@/components/studioos/creator-invitations-progress";
 import { getCurrentCreator } from "@/lib/creator-session";
 import { enrichInvitationsForCards } from "@/lib/studioos/creator-invitation-display";
 import { listInvitationsForCreator } from "@/lib/studioos/creator-invitation-store";
-import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { type SearchParams, withLocale } from "@/lib/i18n";
 import { listOrdersForCreator } from "@/lib/order-service";
 import { getProject } from "@/lib/project-service";
 import { resolveCreatorCommercialStep } from "@/lib/studioos/commercial-lifecycle";
@@ -14,7 +15,7 @@ export default async function StudioInvitationsPage({
 }: {
   searchParams: Promise<SearchParams & { tab?: string }>;
 }) {
-  const locale = getLocale(await searchParams);
+  const locale = await getAppUiLocale();
   const query = await searchParams;
   const creator = await getCurrentCreator();
   if (!creator) redirect(withLocale("/login?role=creator", locale));

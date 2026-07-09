@@ -1,12 +1,13 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
-import { getLocale, withLocale } from "@/lib/i18n";
+import { withLocale } from "@/lib/i18n";
 import { getMvpProfile } from "@/lib/mvp/session";
 
 export default async function WorkspaceHomePage() {
   const headerList = await headers();
   const search = headerList.get("x-search") ?? "";
-  const locale = getLocale({ lang: new URLSearchParams(search).get("lang") ?? undefined });
+  const locale = await getAppUiLocale();
   const profile = await getMvpProfile();
   if (!profile) {
     redirect(withLocale("/login", locale));

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { WorkCoverImage } from "@/components/creator/work-cover-image";
-import { MarketingEyebrowPill } from "@/components/marketing/landing/landing-ui";
+import { MarketingEyebrowPill, MarketingSectionTitle } from "@/components/marketing/landing/landing-ui";
 import { cinematicText } from "@/lib/marketing/cinematic-copy";
 import { creators, creatorWorks } from "@/lib/data";
 import type { Locale, MarketingLocale } from "@/lib/i18n";
@@ -148,7 +148,9 @@ export function CinematicNetwork({
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
         <div className="mx-auto max-w-3xl text-center">
           {t.title ? <MarketingEyebrowPill tone="light">{t.title}</MarketingEyebrowPill> : null}
-          <h2 className={cn("text-3xl font-semibold tracking-[-0.03em] text-zinc-950 sm:text-4xl", t.title && "mt-4")}>{t.highlight}</h2>
+          <MarketingSectionTitle tone="light" className={cn(t.title && "mt-4")}>
+            {t.highlight}
+          </MarketingSectionTitle>
           <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-zinc-600">{t.subtitle}</p>
         </div>
 
@@ -168,11 +170,15 @@ export function CinematicNetwork({
             return (
               <li
                 key={card.id}
-                className="overflow-hidden rounded-lg border border-black/10 bg-white shadow-sm"
+                className="group overflow-hidden rounded-lg border border-black/10 bg-white shadow-sm transition duration-300 hover:-translate-y-0.5 hover:border-black/15 hover:shadow-md"
               >
-                <div className="relative h-[112px] bg-zinc-900 sm:h-auto sm:aspect-[16/8]">
+                <div className="relative h-[112px] overflow-hidden bg-zinc-900 sm:h-auto sm:aspect-[16/8]">
                   {thumb ? (
-                    <WorkCoverImage src={thumb} alt="" className="h-full w-full object-cover" />
+                    <WorkCoverImage
+                      src={thumb}
+                      alt=""
+                      className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+                    />
                   ) : (
                     <div className="h-full w-full bg-gradient-to-br from-zinc-800 to-zinc-950" />
                   )}

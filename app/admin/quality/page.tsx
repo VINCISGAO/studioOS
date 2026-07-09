@@ -1,13 +1,14 @@
+import { getAppUiLocale } from "@/lib/app-language";
 import { QualityCenterPanel } from "@/components/studioos/quality-center-panel";
 import { Card, CardContent } from "@/components/ui/card";
 import { getDeliverables } from "@/lib/order-service";
-import { getLocale, type SearchParams } from "@/lib/i18n";
+import { type SearchParams } from "@/lib/i18n";
 import { runQualityChecksAsync } from "@/lib/studioos/quality";
 import { promises as fs } from "fs";
 import path from "path";
 
 export default async function AdminQualityPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  const locale = getLocale(await searchParams);
+  const locale = await getAppUiLocale();
 
   let orderIds: { id: string; title: string }[] = [];
   try {
