@@ -51,7 +51,7 @@ export function marketingCdnBaseUrl(): string | null {
 }
 
 /** Bust browser/CDN caches after proxy URL changes. */
-const HERO_VIDEO_CACHE_VERSION = "3";
+const HERO_VIDEO_CACHE_VERSION = "4";
 
 /**
  * Same-origin hero video path — production proxies `/videos/home/*` via `app/videos/[...path]/route.ts`.

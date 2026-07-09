@@ -93,8 +93,25 @@ function buildUpstreamUrlCandidates(pathname: string): string[] {
   for (const key of objectKeyCandidates(pathname)) {
     urls.add(`${base}/${encodeObjectKey(key)}`);
   }
-  urls.add(`${base}${encodeObjectKey(pathnameToObjectKey(pathname))}`);
+  urls.add(`${base}/${encodeObjectKey(pathnameToObjectKey(pathname))}`);
   return [...urls];
+}
+
+const PROBE_CHUNK_BYTES = 4 * 1024 * 1024;
+
+function defaultProbeRange(total: number): string {
+  const end = Math.min(total - 1, PROBE_CHUNK_BYTES - 1);
+  return `bytes=0-${end}`;
+}
+
+async function resolveContentLength(pathname: string): Promise<number | null> {
+  const fromR2 = await resolveR2Object(pathname);
+  if (fromR2?.contentLength) return fromR2.contentLength;
+
+  const head = await fetchPublicCdn(pathname, "HEAD", null);
+  if (!head) return null;
+  const total = Number(head.headers.get("content-length") ?? 0);
+  return total > 0 ? total : null;
 }
 
 function cacheHeaders(): Record<string, string> {
@@ -383,31 +400,43 @@ async function serveFromPublicCdn(
 }
 
 export async function proxyMarketingHomeVideo(request: Request): Promise<Response> {
-  const url = new URL(request.url);
-  const { pathname } = url;
-  const method = request.method.toUpperCase();
+  try {
+    const url = new URL(request.url);
+    const { pathname } = url;
+    const method = request.method.toUpperCase();
 
-  if (!isMarketingHomeVideoPath(pathname)) {
+    if (!isMarketingHomeVideoPath(pathname)) {
+      return new Response("Not Found", { status: 404 });
+    }
+
+    const rangeHeader = request.headers.get("range");
+    let effectiveRange = rangeHeader;
+
+    // Browsers often omit Range on the first GET — never pull the full 232MB object through serverless.
+    if (method === "GET" && !effectiveRange) {
+      const total = await resolveContentLength(pathname);
+      if (total) {
+        effectiveRange = defaultProbeRange(total);
+      }
+    }
+
+    const local = await readLocalPublicVideo(pathname, effectiveRange, method);
+    if (local) return local;
+
+    if (method === "GET") {
+      const streamed = await serveFromPublicCdn(pathname, effectiveRange, method);
+      if (streamed.status !== 404) return streamed;
+    }
+
+    const fromR2 = await serveFromR2Storage(pathname, effectiveRange, method);
+    if (fromR2) return fromR2;
+
+    if (method !== "GET") {
+      return serveFromPublicCdn(pathname, rangeHeader, method);
+    }
+
     return new Response("Not Found", { status: 404 });
+  } catch {
+    return new Response("Upstream error", { status: 502 });
   }
-
-  const rangeHeader = request.headers.get("range");
-
-  const local = await readLocalPublicVideo(pathname, rangeHeader, method);
-  if (local) return local;
-
-  // Stream through R2 public CDN first — native Range support, no serverless body limits.
-  if (method === "GET") {
-    const streamed = await serveFromPublicCdn(pathname, rangeHeader, method);
-    if (streamed.status !== 404) return streamed;
-  }
-
-  const fromR2 = await serveFromR2Storage(pathname, rangeHeader, method);
-  if (fromR2) return fromR2;
-
-  if (method !== "GET") {
-    return serveFromPublicCdn(pathname, rangeHeader, method);
-  }
-
-  return new Response("Not Found", { status: 404 });
 }
