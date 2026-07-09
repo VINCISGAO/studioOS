@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { Check, ChevronDown, Globe2 } from "lucide-react";
 import {
   SUPPORTED_LANGUAGE_SEEDS,
@@ -47,7 +47,6 @@ function LanguageSwitcherInner({
 }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const router = useRouter();
   const current = activeLanguageCode(searchParams, locale);
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -59,10 +58,10 @@ function LanguageSwitcherInner({
       params.set("lang", next);
       const query = params.toString();
       setOpen(false);
-      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
-      router.refresh();
+      const target = query ? `${pathname}?${query}` : pathname;
+      window.location.assign(target);
     },
-    [current, pathname, router, searchParams]
+    [current, pathname, searchParams]
   );
 
   useEffect(() => {

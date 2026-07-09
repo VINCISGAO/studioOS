@@ -15,7 +15,7 @@ export const homeHeroVideoRelativePaths: Record<MarketingLocale, string> = {
   es: "/videos/home/hero/VINCIS宣传片（西班牙语）.mp4"
 };
 
-/** Public CDN/R2 base for hero MP4 playback. */
+/** Public CDN/R2 base for upload scripts and edge rewrites — not for HTML video `src`. */
 export function marketingCdnBaseUrl(): string | null {
   const upstream = process.env.MARKETING_CDN_UPSTREAM?.trim();
   if (upstream) return upstream.replace(/\/+$/u, "");
@@ -24,15 +24,13 @@ export function marketingCdnBaseUrl(): string | null {
   return base.replace(/\/+$/u, "");
 }
 
-/** Resolve hero video URL on the server (runtime env — works without rebuild). */
+/**
+ * Same-origin hero video path — production proxies `/videos/home/hero/*` to R2 via `vercel.json`.
+ * Avoid direct r2.dev URLs in `<video src>` (Safari logs `TypeError: Load failed` on cross-origin media).
+ */
 export function resolveHomeHeroVideoPlaybackSrc(locale: MarketingLocale): string {
   const relative = homeHeroVideoRelativePaths[locale] ?? homeHeroVideoRelativePaths.en;
-  const encoded = encodeURI(relative);
-  const cdn = marketingCdnBaseUrl();
-  if (cdn) {
-    return `${cdn}${encoded}`;
-  }
-  return encoded;
+  return encodeURI(relative);
 }
 
 export function resolveHomeHeroVideoSrc(locale: MarketingLocale): string {

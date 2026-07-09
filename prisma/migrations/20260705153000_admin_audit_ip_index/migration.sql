@@ -1,2 +1,2 @@
--- Index for cross-instance admin login rate limiting by IP hash.
-CREATE INDEX "admin_auth_audit_logs_ip_hash_created_at_idx" ON "admin_auth_audit_logs"("ip_hash", "created_at");
+-- No-op: admin_auth_audit_logs is created in 20260705163000_admin_auth_isolation.
+-- ip_hash index is created there to avoid P3018 on fresh deploy when this timestamp runs first.

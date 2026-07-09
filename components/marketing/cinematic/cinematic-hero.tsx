@@ -136,6 +136,7 @@ export function CinematicHero({
             <div className="mx-auto mt-5 grid w-[88%] grid-cols-2 gap-2.5 sm:mx-0 sm:mt-8 sm:w-full sm:gap-3">
               <Link
                 href={primaryHref}
+                prefetch={false}
                 className="group flex min-h-[70px] items-center justify-between gap-2.5 rounded-xl border border-white bg-white px-3.5 py-3 text-left text-black shadow-[0_24px_64px_-30px_rgba(255,255,255,0.82)] transition duration-300 hover:-translate-y-0.5 hover:bg-zinc-100 sm:min-h-[78px] sm:gap-4 sm:rounded-lg sm:px-5 sm:py-4"
               >
                 <span className="min-w-0">
@@ -148,6 +149,7 @@ export function CinematicHero({
               </Link>
               <Link
                 href={secondaryHref}
+                prefetch={false}
                 className="group flex min-h-[70px] items-center justify-between gap-2.5 rounded-xl border border-white/32 bg-white/[0.05] px-3.5 py-3 text-left text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-md transition duration-300 hover:-translate-y-0.5 hover:border-white/45 hover:bg-white/[0.075] sm:min-h-[78px] sm:gap-4 sm:rounded-lg sm:px-5 sm:py-4"
               >
                 <span className="min-w-0">

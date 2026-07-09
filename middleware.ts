@@ -4,6 +4,8 @@ import { preferDemoAuth } from "@/lib/runtime-flags";
 import { isAdminRouteRole, normalizeRouteRole } from "@/lib/auth/route-access";
 import { applyAdminSecurityHeaders, generateAdminCspNonce } from "@/lib/auth/admin-security-headers";
 import { applyBaselineSecurityHeaders } from "@/lib/auth/baseline-security-headers";
+import { applyLoginSecurityHeaders } from "@/lib/auth/login-security-headers";
+import { normalizeLanguageCode } from "@/features/i18n/language.constants";
 import { demoRedirectForRole } from "@/lib/demo-auth";
 import { DEMO_SESSION_COOKIE, ADMIN_SESSION_COOKIE, LOCALE_COOKIE } from "@/lib/auth-config";
 import { parseDemoSession } from "@/lib/demo-session";
@@ -90,7 +92,7 @@ function enforceAuthEdgeRules(request: NextRequest): NextResponse | null {
   return null;
 }
 
-/** Rewrite broken links like ?lang%3Dzh=&lang=zh → ?lang=zh */
+/** Rewrite broken links like ?lang%3Dzh=&lang=zh → ?lang=zh (preserve role/next/etc.) */
 function sanitizeBrokenLocaleSearch(request: NextRequest): NextResponse | null {
   const rawSearch = request.nextUrl.search;
   if (!rawSearch.includes("lang%3D") && !rawSearch.includes("lang%253D")) {
@@ -98,7 +100,19 @@ function sanitizeBrokenLocaleSearch(request: NextRequest): NextResponse | null {
   }
 
   const url = request.nextUrl.clone();
-  url.search = rawSearch.includes("zh") ? "?lang=zh" : "?lang=en";
+  const params = new URLSearchParams(url.search);
+  for (const key of [...params.keys()]) {
+    if (key.includes("lang%3D") || key.includes("lang%253D")) {
+      params.delete(key);
+    }
+  }
+
+  const existingLang = params.get("lang");
+  if (!existingLang || existingLang.includes("%")) {
+    params.set("lang", rawSearch.includes("zh") ? "zh" : "en");
+  }
+
+  url.search = params.toString() ? `?${params.toString()}` : "";
   return NextResponse.redirect(url);
 }
 
@@ -133,9 +147,9 @@ export async function middleware(request: NextRequest) {
   const langParam = request.nextUrl.searchParams.get("lang");
   const savedLang = request.cookies.get(LOCALE_COOKIE)?.value;
 
-  if (!isApiRoute && !langParam && !isNextInternalNavigationRequest(request) && (savedLang === "zh" || savedLang === "en")) {
+  if (!isApiRoute && !langParam && !isNextInternalNavigationRequest(request) && savedLang) {
     const url = request.nextUrl.clone();
-    url.searchParams.set("lang", savedLang);
+    url.searchParams.set("lang", normalizeLanguageCode(savedLang));
     return NextResponse.redirect(url);
   }
 
@@ -195,8 +209,8 @@ export async function middleware(request: NextRequest) {
     adminCspNonce ? { "x-admin-csp-nonce": adminCspNonce } : undefined
   );
 
-  if (langParam === "zh" || langParam === "en") {
-    response.cookies.set(LOCALE_COOKIE, langParam, {
+  if (langParam) {
+    response.cookies.set(LOCALE_COOKIE, normalizeLanguageCode(langParam), {
       path: "/",
       maxAge: 60 * 60 * 24 * 365,
       sameSite: "lax"
@@ -245,6 +259,9 @@ export async function middleware(request: NextRequest) {
   }
 
   if (!isProtectedRoute) {
+    if (pathname === "/login" || pathname.startsWith("/auth/")) {
+      return applyLoginSecurityHeaders(response);
+    }
     return applyBaselineSecurityHeaders(response);
   }
 
@@ -276,6 +293,11 @@ export async function middleware(request: NextRequest) {
   }
 
   const demoSession = parseDemoSession(request.cookies.get(DEMO_SESSION_COOKIE)?.value);
+
+  if (demoSession?.email.endsWith("@studioos.test")) {
+    return authorizeDemoSession(request, response);
+  }
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const useDemoSessionAuth = Boolean(demoSession) && (preferDemoAuth() || !supabaseUrl || !supabaseAnonKey);

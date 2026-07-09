@@ -556,7 +556,7 @@ export function AiCopilotDrawer() {
         onPointerCancel={finishLauncherDrag}
         style={launcherStyle}
         className={cn(
-          "fixed z-50 h-12 w-12 touch-none select-none rounded-full p-0 shadow-xl shadow-slate-950/20",
+          "fixed z-[100] h-12 w-12 touch-none select-none rounded-full p-0 shadow-xl shadow-slate-950/20",
           "bg-slate-950 text-white ring-1 ring-white/20 hover:bg-slate-800",
           launcherPreview ? "cursor-grabbing transition-none" : "cursor-grab transition-[top,left,right,box-shadow] duration-200"
         )}
@@ -566,7 +566,7 @@ export function AiCopilotDrawer() {
       </Button>
 
       {open ? (
-        <div className="fixed inset-0 z-50 flex h-[100dvh] max-h-[100dvh] justify-end overflow-hidden bg-slate-950/30 backdrop-blur-[1px]">
+        <div className="fixed inset-0 z-[100] flex h-[100dvh] max-h-[100dvh] justify-end overflow-hidden bg-slate-950/30 backdrop-blur-[1px]">
           <aside className="flex h-[100dvh] max-h-[100dvh] min-h-0 w-full max-w-[460px] flex-col overflow-hidden border-l border-violet-100 bg-[#fbfbff] shadow-2xl">
             <header className="border-b border-violet-100 bg-white p-5">
               <div className="flex items-start justify-between gap-3">

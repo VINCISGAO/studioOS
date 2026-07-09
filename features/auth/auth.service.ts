@@ -130,14 +130,18 @@ export class AuthService {
     const normalizedPassword = password.trim();
 
     if (hasDatabaseUrl()) {
-      const user = await userRepository.findByEmail(normalized);
-      if (user?.passwordHash && verifyPassword(normalizedPassword, user.passwordHash)) {
-        const meta = await readRequestMeta();
-        await userRepository.touchLogin(user.id, {
-          ip: meta.ip ?? undefined,
-          device: meta.device ?? undefined
-        });
-        return mapPrismaUser(user);
+      try {
+        const user = await userRepository.findByEmail(normalized);
+        if (user?.passwordHash && verifyPassword(normalizedPassword, user.passwordHash)) {
+          const meta = await readRequestMeta();
+          await userRepository.touchLogin(user.id, {
+            ip: meta.ip ?? undefined,
+            device: meta.device ?? undefined
+          });
+          return mapPrismaUser(user);
+        }
+      } catch {
+        // Fall through to demo password check when DB is unavailable.
       }
     }
 
@@ -145,41 +149,45 @@ export class AuthService {
     if (!demo) return null;
 
     if (hasDatabaseUrl()) {
-      const synced = await userRepository.findByEmail(normalized);
-      if (synced) {
-        const expectedRole = demoRoleToPrisma(demo.role);
-        const hashMatches =
-          Boolean(synced.passwordHash) &&
-          verifyPassword(normalizedPassword, synced.passwordHash);
-        const roleMatches = synced.role === expectedRole;
+      try {
+        const synced = await userRepository.findByEmail(normalized);
+        if (synced) {
+          const expectedRole = demoRoleToPrisma(demo.role);
+          const hashMatches =
+            Boolean(synced.passwordHash) &&
+            verifyPassword(normalizedPassword, synced.passwordHash);
+          const roleMatches = synced.role === expectedRole;
 
-        if (!hashMatches || !roleMatches) {
-          const refreshed = await userRepository.upsertDemoUser({
-            email: normalized,
-            role: expectedRole,
-            fullName: demo.label,
-            passwordHash: hashPassword(normalizedPassword),
-            companyName: demo.role === "client" ? demo.label : undefined,
-            displayName: demo.role === "creator" ? demo.label : undefined
-          });
-          await userRepository.touchLogin(refreshed.id);
-          return mapPrismaUser(refreshed);
+          if (!hashMatches || !roleMatches) {
+            const refreshed = await userRepository.upsertDemoUser({
+              email: normalized,
+              role: expectedRole,
+              fullName: demo.label,
+              passwordHash: hashPassword(normalizedPassword),
+              companyName: demo.role === "client" ? demo.label : undefined,
+              displayName: demo.role === "creator" ? demo.label : undefined
+            });
+            await userRepository.touchLogin(refreshed.id);
+            return mapPrismaUser(refreshed);
+          }
+
+          await userRepository.touchLogin(synced.id);
+          return mapPrismaUser(synced);
         }
 
-        await userRepository.touchLogin(synced.id);
-        return mapPrismaUser(synced);
+        const created = await userRepository.upsertDemoUser({
+          email: normalized,
+          role: demoRoleToPrisma(demo.role),
+          fullName: demo.label,
+          passwordHash: hashPassword(normalizedPassword),
+          companyName: demo.role === "client" ? demo.label : undefined,
+          displayName: demo.role === "creator" ? demo.label : undefined
+        });
+        await userRepository.touchLogin(created.id);
+        return mapPrismaUser(created);
+      } catch {
+        // Fall through to in-memory demo user when DB is unavailable.
       }
-
-      const created = await userRepository.upsertDemoUser({
-        email: normalized,
-        role: demoRoleToPrisma(demo.role),
-        fullName: demo.label,
-        passwordHash: hashPassword(normalizedPassword),
-        companyName: demo.role === "client" ? demo.label : undefined,
-        displayName: demo.role === "creator" ? demo.label : undefined
-      });
-      await userRepository.touchLogin(created.id);
-      return mapPrismaUser(created);
     }
 
     return {

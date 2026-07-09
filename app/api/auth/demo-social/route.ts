@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { performSignIn } from "@/lib/auth/sign-in-service";
 import { preferDemoAuth } from "@/lib/can-persist-local-store";
+import { attachDemoSessionCookie } from "@/lib/demo-auth-server";
 import {
   DEMO_PASSWORD,
   demoUserForSocialProvider,
@@ -19,7 +20,10 @@ function redirectTo(request: Request, path: string) {
   return NextResponse.redirect(new URL(path, request.url), { status: 303 });
 }
 
-function allowDemoSocialLogin() {
+function allowDemoSocialLogin(provider: DemoSocialProvider) {
+  if (isTestSocialProvider(provider)) {
+    return true;
+  }
   return (
     process.env.VINCIS_ENABLE_DEMO_LOGIN === "1" ||
     process.env.STUDIOOS_ENABLE_DEMO_LOGIN === "1" ||
@@ -49,7 +53,7 @@ export async function POST(request: Request) {
   const role = String(formData.get("expected_role") ?? "") === "creator" ? "creator" : "brand";
   const nextPath = String(formData.get("next") ?? "").trim();
 
-  if (!allowDemoSocialLogin()) {
+  if (!allowDemoSocialLogin(provider)) {
     return redirectTo(request, loginErrorPath({ lang, role, error: "demo-login-disabled" }));
   }
 
@@ -94,5 +98,7 @@ export async function POST(request: Request) {
     );
   }
 
-  return redirectTo(request, result.redirectTo);
+  const response = redirectTo(request, result.redirectTo);
+  attachDemoSessionCookie(response, result.session);
+  return response;
 }

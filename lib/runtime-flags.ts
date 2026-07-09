@@ -26,5 +26,9 @@ export function preferDemoAuth() {
 
 /** Show demo accounts + social shortcuts on the login page. */
 export function isDemoLoginUiEnabled() {
-  return preferDemoAuth();
+  return (
+    preferDemoAuth() ||
+    process.env.VINCIS_ENABLE_DEMO_LOGIN === "1" ||
+    process.env.STUDIOOS_ENABLE_DEMO_LOGIN === "1"
+  );
 }

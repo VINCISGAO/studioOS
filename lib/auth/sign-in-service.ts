@@ -7,6 +7,7 @@ import {
   DEMO_USERS,
   type DemoUser
 } from "@/lib/demo-auth";
+import type { DemoSession } from "@/lib/demo-session";
 import { hashPassword } from "@/lib/core/password";
 import { authService } from "@/features/auth/auth.service";
 import { buildSessionPayload } from "@/features/auth/session.service";
@@ -34,7 +35,7 @@ export type SignInInput = {
   nextPath?: string;
 };
 
-export type SignInSuccess = { ok: true; redirectTo: string };
+export type SignInSuccess = { ok: true; redirectTo: string; session: DemoSession };
 export type SignInFailure = {
   ok: false;
   error: string;
@@ -134,7 +135,13 @@ export async function performSignIn(input: SignInInput): Promise<SignInResult> {
   const allowDemoFallback =
     preferDemoAuth() || trimmedEmail.endsWith("@studioos.test");
 
-  const prismaUser = await authService.authenticate(trimmedEmail, trimmedPassword);
+  let prismaUser: Awaited<ReturnType<typeof authService.authenticate>> = null;
+  try {
+    prismaUser = await authService.authenticate(trimmedEmail, trimmedPassword);
+  } catch {
+    prismaUser = null;
+  }
+
   if (prismaUser) {
     if (isPlatformAdminUserRole(prismaUser.role)) {
       return {
@@ -164,7 +171,8 @@ export async function performSignIn(input: SignInInput): Promise<SignInResult> {
       };
     }
 
-    await setDemoSession(buildSessionPayload(prismaUser, demoRole));
+    const session = buildSessionPayload(prismaUser, demoRole);
+    await setDemoSession(session);
     if (demoRole === "creator") {
       await recordCreatorSignIn(prismaUser.email);
       if (prismaUser.role === "CREATOR" && hasDatabaseUrl()) {
@@ -175,7 +183,7 @@ export async function performSignIn(input: SignInInput): Promise<SignInResult> {
 
     const redirectTo = resolvePostLoginDestination({ role: demoRole }, nextPath, lang);
 
-    return { ok: true, redirectTo };
+    return { ok: true, redirectTo, session };
   }
 
   const demoUser = allowDemoFallback
@@ -213,39 +221,29 @@ export async function performSignIn(input: SignInInput): Promise<SignInResult> {
           .catch(() => null)
       : null;
 
-    if (hasDatabaseUrl() && !synced) {
-      return {
-        ok: false,
-        error: lang === "zh" ? "无法创建数据库用户，请检查数据库连接。" : "Could not create database user. Check the database connection.",
-        errorCode: "invalid-credentials",
-        role: expectedRole || "brand",
-        email: demoUser.email
-      };
-    }
-
-    await setDemoSession(
-      buildSessionPayload(
-        {
-          id: synced?.id ?? `demo_${demoUser.email.replace(/[^a-z0-9]/gi, "_")}`,
-          email: demoUser.email,
-          role: demoRoleToPrisma(demoUser.role),
-          fullName: demoUser.label,
-          languageCode: synced?.languageCode ?? synced?.language ?? "en",
-          companyName: demoUser.role === "client" ? demoUser.label : undefined,
-          displayName: demoUser.role === "creator" ? demoUser.label : undefined,
-          hasBrandProfile: demoUser.role === "client",
-          hasCreatorProfile: demoUser.role === "creator"
-        },
-        demoUser.role
-      )
+    const session = buildSessionPayload(
+      {
+        id: synced?.id ?? `demo_${demoUser.email.replace(/[^a-z0-9]/gi, "_")}`,
+        email: demoUser.email,
+        role: demoRoleToPrisma(demoUser.role),
+        fullName: demoUser.label,
+        languageCode: synced?.languageCode ?? synced?.language ?? "en",
+        companyName: demoUser.role === "client" ? demoUser.label : undefined,
+        displayName: demoUser.role === "creator" ? demoUser.label : undefined,
+        hasBrandProfile: demoUser.role === "client",
+        hasCreatorProfile: demoUser.role === "creator"
+      },
+      demoUser.role
     );
+
+    await setDemoSession(session);
     if (demoUser.role === "creator") {
       await recordCreatorSignIn(demoUser.email);
     }
 
     const redirectTo = resolvePostLoginDestination({ role: demoUser.role }, nextPath, lang);
 
-    return { ok: true, redirectTo };
+    return { ok: true, redirectTo, session };
   }
 
   if (!hasSupabaseConfig()) {
@@ -295,10 +293,16 @@ export async function performSignIn(input: SignInInput): Promise<SignInResult> {
       userId: user.id
     });
 
+    const session: DemoSession = {
+      email: user.email,
+      role: demoRole,
+      userId: user.id
+    };
+
     const redirectTo = resolvePostLoginDestination({ role: demoRole }, nextPath, lang);
 
-    return { ok: true, redirectTo };
+    return { ok: true, redirectTo, session };
   }
 
-  return { ok: true, redirectTo: `/dashboard?lang=${lang}` };
+  return { ok: true, redirectTo: `/dashboard?lang=${lang}`, session: { email: trimmedEmail, role: "client" } };
 }

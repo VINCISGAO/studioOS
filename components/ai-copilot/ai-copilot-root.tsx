@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { AiCopilotDrawer } from "@/components/ai-copilot/ai-copilot-drawer";
 
@@ -70,5 +70,9 @@ export function AiCopilotRoot() {
     return null;
   }
 
-  return <AiCopilotDrawer />;
+  return (
+    <Suspense fallback={null}>
+      <AiCopilotDrawer />
+    </Suspense>
+  );
 }

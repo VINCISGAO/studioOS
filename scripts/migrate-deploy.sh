@@ -58,6 +58,17 @@ while [ "$attempt" -le "$MAX_ATTEMPTS" ]; do
     continue
   fi
 
+  # Known no-op migration that can remain marked failed after a partial apply on older trees.
+  if grep -q 'P3009' "$log" && grep -q '20260705153000_admin_audit_ip_index' "$log"; then
+    echo ">>> Resolving stale failed no-op migration 20260705153000_admin_audit_ip_index…"
+    bash scripts/prisma-with-env.sh migrate resolve --applied 20260705153000_admin_audit_ip_index
+    rm -f "$log"
+    if [ "$attempt" -lt "$MAX_ATTEMPTS" ]; then
+      attempt=$((attempt + 1))
+      continue
+    fi
+  fi
+
   rm -f "$log"
   exit "$status"
 done

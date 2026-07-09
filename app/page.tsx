@@ -1,6 +1,6 @@
 import { HomeLandingPage } from "@/components/marketing/landing/home-landing-page";
 import { creatorWorks } from "@/lib/data";
-import { getLanguageCode, getLocale, type MarketingLocale, type SearchParams } from "@/lib/i18n";
+import { getLanguageCode, getLocale, type SearchParams } from "@/lib/i18n";
 import { resolveHomeHeroVideoPlaybackSrc } from "@/lib/marketing/home-hero-video-sources";
 import {
   resolveMarketingPortalHref,
@@ -13,11 +13,6 @@ type HomePageProps = {
   searchParams: Promise<SearchParams>;
 };
 
-function toHeroVideoLocale(copyLocale: ReturnType<typeof getLanguageCode>): MarketingLocale {
-  if (copyLocale === "zh") return "zh-CN";
-  return copyLocale as MarketingLocale;
-}
-
 export default async function HomePage({ searchParams }: HomePageProps) {
   const resolvedSearchParams = await searchParams;
   const locale = getLocale(resolvedSearchParams);
@@ -25,7 +20,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const session = await getCurrentSession();
   const portalHref = resolveMarketingPortalHref(copyLocale, session);
   const portalLabel = resolveMarketingPortalLabel(copyLocale, session);
-  const heroVideoSrc = resolveHomeHeroVideoPlaybackSrc(toHeroVideoLocale(copyLocale));
+  const heroVideoSrc = resolveHomeHeroVideoPlaybackSrc(copyLocale);
 
   const featuredWorks = creatorWorks.filter((work) => !work.hidden).slice(0, 8);
   const engagement = Object.fromEntries(

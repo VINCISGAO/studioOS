@@ -74,6 +74,9 @@ CREATE INDEX "admin_auth_audit_logs_email_hash_created_at_idx" ON "admin_auth_au
 -- CreateIndex
 CREATE INDEX "admin_auth_audit_logs_event_created_at_idx" ON "admin_auth_audit_logs"("event", "created_at");
 
+-- CreateIndex
+CREATE INDEX "admin_auth_audit_logs_ip_hash_created_at_idx" ON "admin_auth_audit_logs"("ip_hash", "created_at");
+
 -- AddForeignKey
 ALTER TABLE "admin_profiles" ADD CONSTRAINT "admin_profiles_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 

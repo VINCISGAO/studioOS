@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { Maximize2, Minimize2, Play, Volume2, VolumeX } from "lucide-react";
 import type { Locale, MarketingLocale } from "@/lib/i18n";
+import { isChineseLanguage } from "@/lib/i18n";
 import { resolveHomeHeroVideoSrc } from "@/lib/marketing/home-hero-video-sources";
+import { cn } from "@/lib/utils";
 
 type HeroVideoLabels = {
   video: string;
@@ -151,6 +153,7 @@ export function HomeHeroVideo({
   const [duration, setDuration] = useState(0);
   const [progress, setProgress] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
   const videoLocale: MarketingLocale = locale === "zh" ? "zh-CN" : (locale as MarketingLocale);
   const labels = videoLabels[videoLocale] ?? videoLabels.en;
   const videoSrc = videoSrcProp ?? resolveHomeHeroVideoSrc(videoLocale);
@@ -165,22 +168,36 @@ export function HomeHeroVideo({
       }
     };
     const syncProgress = () => setProgress(video.currentTime);
+    const onPlay = () => setIsPlaying(true);
+    const onPause = () => setIsPlaying(false);
     const onFullscreenChange = () => {
-      setIsFullscreen(document.fullscreenElement === shellRef.current);
+      const fullscreenElement =
+        document.fullscreenElement ??
+        (document as Document & { webkitFullscreenElement?: Element | null }).webkitFullscreenElement ??
+        null;
+      setIsFullscreen(fullscreenElement === shellRef.current);
     };
 
     syncDuration();
     syncProgress();
+    video.pause();
+    setIsPlaying(false);
     video.addEventListener("loadedmetadata", syncDuration);
     video.addEventListener("durationchange", syncDuration);
     video.addEventListener("timeupdate", syncProgress);
+    video.addEventListener("play", onPlay);
+    video.addEventListener("pause", onPause);
     document.addEventListener("fullscreenchange", onFullscreenChange);
+    document.addEventListener("webkitfullscreenchange", onFullscreenChange);
 
     return () => {
       video.removeEventListener("loadedmetadata", syncDuration);
       video.removeEventListener("durationchange", syncDuration);
       video.removeEventListener("timeupdate", syncProgress);
+      video.removeEventListener("play", onPlay);
+      video.removeEventListener("pause", onPause);
       document.removeEventListener("fullscreenchange", onFullscreenChange);
+      document.removeEventListener("webkitfullscreenchange", onFullscreenChange);
     };
   }, [videoSrc]);
 
@@ -192,7 +209,9 @@ export function HomeHeroVideo({
     video.muted = nextMuted;
     if (!nextMuted) {
       video.volume = 1;
-      void video.play().catch(() => undefined);
+      if (!video.paused) {
+        void video.play().catch(() => undefined);
+      }
     }
     setMuted(nextMuted);
   }
@@ -202,6 +221,20 @@ export function HomeHeroVideo({
     if (!video || !Number.isFinite(nextTime)) return;
     video.currentTime = nextTime;
     setProgress(nextTime);
+  }
+
+  function togglePlayback() {
+    const video = videoRef.current;
+    if (!video) return;
+    if (video.paused) {
+      setIsPlaying(true);
+      void video.play().catch(() => {
+        setIsPlaying(false);
+      });
+      return;
+    }
+    video.pause();
+    setIsPlaying(false);
   }
 
   function toggleFullscreen() {
@@ -223,29 +256,89 @@ export function HomeHeroVideo({
     iosVideo.webkitEnterFullscreen?.();
   }
 
+  const playAriaLabel = isChineseLanguage(videoLocale) ? "播放视频" : "Play video";
+
   return (
     <section className="bg-black px-0 py-0 lg:px-8 lg:py-0">
       <div
         ref={shellRef}
-        className="relative w-full overflow-hidden rounded-none bg-black shadow-none lg:mx-auto lg:max-w-[1216px] lg:shadow-[0_28px_90px_-64px_rgba(0,0,0,0.55)]"
+        className={cn(
+          "home-hero-video-shell group relative w-full overflow-hidden rounded-none bg-black shadow-none lg:mx-auto lg:max-w-[1216px] lg:shadow-[0_28px_90px_-64px_rgba(0,0,0,0.55)]",
+          isFullscreen && "flex max-w-none items-center justify-center"
+        )}
       >
         <video
           key={videoSrc}
           ref={videoRef}
           src={videoSrc}
-          className="aspect-[21/9] w-full object-cover"
-          autoPlay
+          className={cn(
+            "home-hero-video-player relative z-0 w-full cursor-pointer",
+            isFullscreen
+              ? "h-auto max-h-full w-auto max-w-full shrink-0 object-contain object-center"
+              : "aspect-[21/9] object-cover"
+          )}
+          autoPlay={false}
           muted={muted}
           loop
           playsInline
-          preload="auto"
+          preload="metadata"
           aria-label={labels.video}
+          onPlay={() => setIsPlaying(true)}
+          onPause={() => setIsPlaying(false)}
           onCanPlay={() => setHasVideoError(false)}
           onError={() => setHasVideoError(true)}
         />
         {!hasVideoError ? (
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent px-3 pb-3 pt-10 sm:px-4 sm:pb-4">
-            <div className="pointer-events-auto space-y-2">
+          <button
+            type="button"
+            aria-label={
+              isPlaying
+                ? isChineseLanguage(videoLocale)
+                  ? "暂停视频"
+                  : "Pause video"
+                : playAriaLabel
+            }
+            className="home-hero-video-hit-area absolute inset-0 z-[5] cursor-pointer bg-transparent"
+            onClick={togglePlayback}
+          />
+        ) : null}
+        {!hasVideoError && !isPlaying ? (
+          <div
+            className="home-hero-video-center-btn pointer-events-none absolute left-1/2 top-1/2 z-[8] inline-flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-md sm:h-11 sm:w-11"
+            aria-hidden
+          >
+            <Play className="ml-0.5 h-4 w-4 fill-current" />
+          </div>
+        ) : null}
+        {!hasVideoError ? (
+          <div className="home-hero-video-controls pointer-events-none absolute inset-0 z-20">
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                toggleSound();
+              }}
+              className="home-hero-video-mute-btn absolute left-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-md transition hover:bg-black/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 sm:left-4 sm:top-4 sm:h-10 sm:w-10"
+              aria-pressed={!muted}
+              aria-label={muted ? labels.soundOnAria : labels.muteAria}
+            >
+              {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+            </button>
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                toggleFullscreen();
+              }}
+              className="home-hero-video-fullscreen-btn absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-md transition hover:bg-black/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 sm:right-4 sm:top-4 sm:h-10 sm:w-10"
+              aria-label={isFullscreen ? labels.exitFullscreen : labels.fullscreen}
+            >
+              {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+            </button>
+            <div className="home-hero-video-bottom absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 via-black/30 to-transparent px-3 pb-3 pt-6 sm:px-4 sm:pb-3.5">
+              <span className="mb-1 block text-[11px] font-medium tabular-nums text-white sm:text-xs">
+                {formatVideoTime(progress)} / {formatVideoTime(duration)}
+              </span>
               <label className="sr-only" htmlFor={`hero-video-seek-${videoLocale}`}>
                 {labels.seek}
               </label>
@@ -256,37 +349,24 @@ export function HomeHeroVideo({
                 max={duration || 0}
                 step={0.1}
                 value={Math.min(progress, duration || 0)}
-                onChange={(event) => handleSeek(Number(event.target.value))}
-                className="home-hero-video-range h-1.5 w-full cursor-pointer appearance-none rounded-full bg-white/25 accent-white"
+                onPointerDown={(event) => event.stopPropagation()}
+                onChange={(event) => {
+                  event.stopPropagation();
+                  handleSeek(Number(event.target.value));
+                }}
+                style={
+                  {
+                    "--hero-video-progress": duration
+                      ? `${(Math.min(progress, duration) / duration) * 100}%`
+                      : "0%"
+                  } as CSSProperties
+                }
+                className="home-hero-video-range h-1 w-full cursor-pointer appearance-none rounded-sm"
                 aria-label={labels.seek}
                 aria-valuemin={0}
                 aria-valuemax={duration || 0}
                 aria-valuenow={progress}
               />
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-[11px] font-medium tabular-nums text-white/80 sm:text-xs">
-                  {formatVideoTime(progress)} / {formatVideoTime(duration)}
-                </span>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={toggleSound}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-black/55 text-white backdrop-blur-md transition hover:bg-black/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 sm:h-10 sm:w-10"
-                    aria-pressed={!muted}
-                    aria-label={muted ? labels.soundOnAria : labels.muteAria}
-                  >
-                    {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={toggleFullscreen}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-black/55 text-white backdrop-blur-md transition hover:bg-black/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 sm:h-10 sm:w-10"
-                    aria-label={isFullscreen ? labels.exitFullscreen : labels.fullscreen}
-                  >
-                    {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-                  </button>
-                </div>
-              </div>
             </div>
           </div>
         ) : null}

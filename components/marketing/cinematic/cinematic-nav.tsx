@@ -43,10 +43,10 @@ export function CinematicNav({
           <a href="#how-it-works" className="transition hover:text-white">
             {t.process}
           </a>
-          <Link href={withLocale("/case-studies", copyLocale)} className="transition hover:text-white">
+          <Link href={withLocale("/case-studies", copyLocale)} prefetch={false} className="transition hover:text-white">
             {t.cases}
           </Link>
-          <Link href={withLocale("/pricing", copyLocale)} className="transition hover:text-white">
+          <Link href={withLocale("/pricing", copyLocale)} prefetch={false} className="transition hover:text-white">
             {t.pricing}
           </Link>
           <a href="#network" className="transition hover:text-white">
@@ -61,6 +61,7 @@ export function CinematicNav({
           <LanguageSwitcher locale={copyLocale} tone="dark" />
           <Link
             href={portalHref}
+            prefetch={false}
             className="inline-flex h-9 items-center rounded-md border border-white/25 px-3 text-sm text-white transition hover:bg-white/10 sm:px-4"
           >
             {portalLabel || t.login}

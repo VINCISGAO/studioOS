@@ -13,27 +13,51 @@ export function prismaRoleToMvp(role: UserRole): MvpRole {
   return "brand";
 }
 
+function demoRoleToPrisma(role: DemoSession["role"]): UserRole {
+  if (role === "creator") return "CREATOR";
+  if (role === "admin") return "ADMIN";
+  return "BRAND";
+}
+
+function authUserFromDemoSession(session: DemoSession): AuthUserDto {
+  return {
+    id: session.userId ?? `demo_${session.email.replace(/[^a-z0-9]/gi, "_")}`,
+    email: session.email,
+    role: demoRoleToPrisma(session.role),
+    fullName: session.email,
+    languageCode: "en",
+    hasBrandProfile: session.role === "client",
+    hasCreatorProfile: session.role === "creator"
+  };
+}
+
 export async function getSessionUser(): Promise<AuthUserDto | null> {
   const cookieStore = await cookies();
   const session = parseServerDemoSession(cookieStore.get(DEMO_SESSION_COOKIE)?.value);
-  if (!session) return null;
+  if (!session || session.role === "admin") return null;
 
-  if (session.userId) {
-    const user = await authService.getUserById(session.userId);
-    if (
-      user &&
-      user.email.toLowerCase() === session.email.toLowerCase() &&
-      !isPlatformAdminUserRole(user.role)
-    ) {
-      return user;
+  try {
+    if (session.userId) {
+      const user = await authService.getUserById(session.userId);
+      if (
+        user &&
+        user.email.toLowerCase() === session.email.toLowerCase() &&
+        !isPlatformAdminUserRole(user.role)
+      ) {
+        return user;
+      }
     }
-    return null;
+
+    const byEmail = await authService.getUserByEmail(session.email);
+    if (byEmail && !isPlatformAdminUserRole(byEmail.role)) return byEmail;
+
+    const demoUser = await authService.getUserById(`demo_${session.email.replace(/[^a-z0-9]/gi, "_")}`);
+    if (demoUser && !isPlatformAdminUserRole(demoUser.role)) return demoUser;
+  } catch {
+    // DB unavailable — fall back to cookie session so workspace UI (incl. AI floater) stays usable.
   }
 
-  const byEmail = await authService.getUserByEmail(session.email);
-  if (byEmail && !isPlatformAdminUserRole(byEmail.role)) return byEmail;
-
-  return authService.getUserById(`demo_${session.email.replace(/[^a-z0-9]/gi, "_")}`);
+  return authUserFromDemoSession(session);
 }
 
 export async function getSessionMvpProfile(): Promise<MvpProfile | null> {
