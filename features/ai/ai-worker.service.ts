@@ -6,6 +6,8 @@ import { CampaignEvent, CampaignState } from "@/features/campaign/campaign.state
 import { aiConfig } from "@/lib/core/config/ai";
 import { appError } from "@/lib/core/errors";
 import { logger } from "@/lib/core/logger";
+import { paymentRepository } from "@/features/payment/payment.repository";
+import { EscrowState } from "@/features/shared/state-machines/escrow.state-machine";
 import { AiJobState, MAX_AI_RETRIES } from "@/features/shared/state-machines/ai-job.state-machine";
 import { prisma, hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { normalizeLanguageCode } from "@/features/i18n/language.constants";
@@ -16,6 +18,17 @@ export class AiWorkerService {
     if (!hasDatabaseUrl()) throw appError("SYSTEM_ERROR", "DATABASE_URL not configured");
   }
 
+  private async assertCampaignEscrowFunded(campaignId: string) {
+    const escrow = await paymentRepository.findByCampaignId(campaignId);
+    const funded =
+      escrow?.status === EscrowState.HELD ||
+      escrow?.status === EscrowState.PARTIAL_RELEASE ||
+      escrow?.status === EscrowState.FULL_RELEASE;
+    if (!funded) {
+      throw appError("INVALID_TRANSITION", "AI creative generation is available only after escrow payment");
+    }
+  }
+
   async enqueueCreativeDirection(
     campaignId: string,
     actorUserId: string,
@@ -24,6 +37,7 @@ export class AiWorkerService {
     this.assertDb();
     const campaign = await campaignRepository.findById(campaignId);
     if (!campaign) throw appError("NOT_FOUND", "Campaign not found");
+    await this.assertCampaignEscrowFunded(campaignId);
     const actor = await prisma.user.findUnique({
       where: { id: actorUserId },
       select: { languageCode: true, language: true }
@@ -129,6 +143,7 @@ export class AiWorkerService {
 
     const campaign = await campaignRepository.findById(campaignId);
     if (!campaign) throw new Error("Campaign not found");
+    await this.assertCampaignEscrowFunded(campaignId);
 
     const input = job.inputJson as {
       actorUserId?: string;

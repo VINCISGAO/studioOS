@@ -5,6 +5,7 @@ import {
   type OAuthEntryRole
 } from "@/features/auth/oauth-auth.service";
 import { attachDemoSessionCookie } from "@/lib/demo-auth-server";
+import { isSafeInternalPostLoginPath } from "@/lib/auth/post-login-redirect";
 import { createClient } from "@/lib/supabase/server";
 import type { Locale } from "@/lib/i18n";
 
@@ -19,7 +20,7 @@ function resolveOAuthLocale(raw: unknown): Locale {
 }
 
 function resolveNextPath(raw: unknown) {
-  return typeof raw === "string" && raw.startsWith("/") ? raw : "";
+  return typeof raw === "string" && isSafeInternalPostLoginPath(raw) ? raw : "";
 }
 
 function errorResponse(message: string, entryRole: OAuthEntryRole, lang: Locale) {

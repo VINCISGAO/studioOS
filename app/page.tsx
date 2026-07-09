@@ -1,6 +1,6 @@
 import { HomeLandingPage } from "@/components/marketing/landing/home-landing-page";
 import { creatorWorks } from "@/lib/data";
-import { getLocale, type SearchParams } from "@/lib/i18n";
+import { getLanguageCode, getLocale, type SearchParams } from "@/lib/i18n";
 import {
   resolveMarketingPortalHref,
   resolveMarketingPortalLabel
@@ -13,10 +13,12 @@ type HomePageProps = {
 };
 
 export default async function HomePage({ searchParams }: HomePageProps) {
-  const locale = getLocale(await searchParams);
+  const resolvedSearchParams = await searchParams;
+  const locale = getLocale(resolvedSearchParams);
+  const copyLocale = getLanguageCode(resolvedSearchParams);
   const session = await getCurrentSession();
-  const portalHref = resolveMarketingPortalHref(locale, session);
-  const portalLabel = resolveMarketingPortalLabel(locale, session);
+  const portalHref = resolveMarketingPortalHref(copyLocale, session);
+  const portalLabel = resolveMarketingPortalLabel(copyLocale, session);
 
   const featuredWorks = creatorWorks.filter((work) => !work.hidden).slice(0, 8);
   const engagement = Object.fromEntries(
@@ -29,6 +31,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   return (
     <HomeLandingPage
       locale={locale}
+      copyLocale={copyLocale}
       portalHref={portalHref}
       portalLabel={portalLabel}
       featuredWorks={featuredWorks}

@@ -164,10 +164,15 @@ Does not affect admin, database, or APIs:
 ```bash
 git checkout homepage-golden -- app/page.tsx
 git checkout homepage-golden -- components/marketing/
+git checkout homepage-golden -- components/language-switcher.tsx
+git checkout homepage-golden -- lib/marketing/
+git checkout homepage-golden -- app/globals.css
 git checkout homepage-golden -- public/images/home-hero-space.png
 git checkout homepage-golden -- public/images/home-hero-studio.png
 git checkout homepage-golden -- public/images/login-space-bg.png
 git checkout homepage-golden -- public/images/login/
+git checkout homepage-golden -- public/images/social-sources/
+git checkout homepage-golden -- public/videos/home/hero/
 ```
 
 Or from tag: `git checkout homepage-v1 -- components/marketing/`

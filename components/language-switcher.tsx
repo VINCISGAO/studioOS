@@ -1,118 +1,221 @@
 "use client";
 
-import { Suspense, useCallback } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Globe2 } from "lucide-react";
+import { Check, ChevronDown, Globe2 } from "lucide-react";
+import {
+  SUPPORTED_LANGUAGE_SEEDS,
+  normalizeLanguageCode,
+  type SupportedLanguageCode
+} from "@/features/i18n/language.constants";
 import { cn } from "@/lib/utils";
-import type { Locale } from "@/lib/i18n";
+import type { LanguageCode, Locale } from "@/lib/i18n";
 
 type LanguageSwitcherProps = {
-  locale: Locale;
+  locale: Locale | LanguageCode;
   tone?: "light" | "dark";
+  variant?: "default" | "icon";
+  menuPlacement?: "bottom" | "top";
   /** @deprecated Read from the current URL on the client instead. */
   pathname?: string;
   /** @deprecated Read from the current URL on the client instead. */
   search?: string;
 };
 
-function activeLocale(searchParams: URLSearchParams, fallback: Locale): Locale {
-  const lang = searchParams.get("lang");
-  return lang === "zh" || lang === "en" ? lang : fallback;
+const publicLanguages = SUPPORTED_LANGUAGE_SEEDS.filter((item) => item.isEnabled);
+
+function localeToLanguageCode(locale: Locale | LanguageCode): SupportedLanguageCode {
+  if (locale !== "zh") return normalizeLanguageCode(locale);
+  return locale === "zh" ? "zh-CN" : "en";
 }
 
-function LanguageSwitcherInner({ locale, tone = "light" }: { locale: Locale; tone?: "light" | "dark" }) {
+function activeLanguageCode(searchParams: URLSearchParams, fallback: Locale | LanguageCode): SupportedLanguageCode {
+  const lang = searchParams.get("lang");
+  return normalizeLanguageCode(lang ?? localeToLanguageCode(fallback));
+}
+
+function LanguageSwitcherInner({
+  locale,
+  tone = "light",
+  variant = "default",
+  menuPlacement = "bottom"
+}: {
+  locale: Locale | LanguageCode;
+  tone?: "light" | "dark";
+  variant?: "default" | "icon";
+  menuPlacement?: "bottom" | "top";
+}) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const current = activeLocale(searchParams, locale);
+  const current = activeLanguageCode(searchParams, locale);
+  const [open, setOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const switchTo = useCallback(
-    (next: Locale) => {
+    (next: SupportedLanguageCode) => {
       if (next === current) return;
       const params = new URLSearchParams(searchParams.toString());
       params.set("lang", next);
       const query = params.toString();
+      setOpen(false);
       router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+      router.refresh();
     },
     [current, pathname, router, searchParams]
   );
 
+  useEffect(() => {
+    if (!open) return;
+    function onPointerDown(event: PointerEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, [open]);
+
   const isDark = tone === "dark";
+  const isIcon = variant === "icon";
+  const currentLanguage =
+    publicLanguages.find((item) => item.code === current) ?? publicLanguages[0]!;
 
   return (
     <div
+      ref={menuRef}
       className={cn(
-        "flex h-9 items-center gap-0.5 rounded-md border p-1 text-xs font-medium backdrop-blur sm:gap-1",
-        isDark ? "border-white/15 bg-white/5 shadow-none" : "border bg-white/80 shadow-sm"
+        "relative text-sm font-medium",
+        isDark ? "text-white" : "text-zinc-950"
       )}
     >
-      <Globe2 className={cn("ml-0.5 hidden h-3.5 w-3.5 min-[390px]:block sm:ml-1", isDark ? "text-zinc-400" : "text-muted-foreground")} />
-      {(["en", "zh"] as const).map((item) => (
-        <button
-          key={item}
-          type="button"
-          aria-pressed={current === item}
-          onClick={() => switchTo(item)}
+      <button
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={currentLanguage.nativeName}
+        onClick={() => setOpen((value) => !value)}
+        className={cn(
+          "transition",
+          isIcon
+            ? cn(
+                "flex h-11 w-11 items-center justify-center rounded-full border shadow-sm",
+                isDark
+                  ? "border-white/15 bg-white/10 text-white hover:bg-white/15"
+                  : "border-zinc-200 bg-white text-zinc-700 hover:text-zinc-950"
+              )
+            : cn(
+                "inline-flex h-9 items-center gap-1.5 rounded-xl border px-3 text-sm font-semibold shadow-sm sm:h-10 sm:gap-2 sm:px-3.5",
+                isDark
+                  ? "border-white/15 bg-white/10 text-white hover:bg-white/15"
+                  : "border-zinc-200 bg-white text-zinc-950 hover:bg-zinc-50"
+              )
+        )}
+      >
+        <Globe2 className="h-4 w-4" strokeWidth={1.8} />
+        {isIcon ? null : (
+          <>
+            <span>{currentLanguage.nativeName}</span>
+            <ChevronDown className={cn("h-3.5 w-3.5 transition", open && "rotate-180")} />
+          </>
+        )}
+      </button>
+
+      {open ? (
+        <div
+          role="menu"
           className={cn(
-            "rounded px-2 py-1.5 transition-colors sm:px-2.5",
-            current === item
-              ? isDark
-                ? "bg-white text-zinc-950 shadow-sm"
-                : "bg-primary text-primary-foreground shadow-sm"
-              : isDark
-                ? "text-zinc-400 hover:text-white"
-                : "text-muted-foreground hover:text-foreground"
+            "absolute left-0 z-50 w-[260px] overflow-hidden rounded-2xl border p-2 shadow-xl",
+            menuPlacement === "top" ? "bottom-full mb-3" : "top-full mt-3",
+            isDark ? "border-white/10 bg-zinc-950/95 text-white" : "border-zinc-200 bg-white text-zinc-950"
           )}
         >
-          {item === "en" ? "EN" : "中文"}
-        </button>
-      ))}
+          {publicLanguages.map((item) => (
+            <button
+              key={item.code}
+              type="button"
+              role="menuitemradio"
+              aria-checked={current === item.code}
+              onClick={() => switchTo(item.code)}
+              className={cn(
+                "flex w-full items-center justify-between rounded-xl px-4 py-3 text-left text-[15px] transition",
+                current === item.code
+                  ? isDark
+                    ? "bg-white/10"
+                    : "bg-zinc-100"
+                  : isDark
+                    ? "hover:bg-white/5"
+                    : "hover:bg-zinc-50"
+              )}
+            >
+              <span>{item.nativeName}</span>
+              {current === item.code ? <Check className="h-4 w-4" /> : null}
+            </button>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }
 
-export function LanguageSwitcher({ tone = "light", ...props }: LanguageSwitcherProps) {
+export function LanguageSwitcher({
+  tone = "light",
+  variant = "default",
+  menuPlacement = "bottom",
+  ...props
+}: LanguageSwitcherProps) {
   return (
-    <Suspense fallback={<LanguageSwitcherFallback locale={props.locale} tone={tone} />}>
-      <LanguageSwitcherInner locale={props.locale} tone={tone} />
+    <Suspense
+      fallback={
+        <LanguageSwitcherFallback locale={props.locale} tone={tone} variant={variant} />
+      }
+    >
+      <LanguageSwitcherInner
+        locale={props.locale}
+        tone={tone}
+        variant={variant}
+        menuPlacement={menuPlacement}
+      />
     </Suspense>
   );
 }
 
 export function LanguageSwitcherFallback({
   locale,
-  tone = "light"
+  tone = "light",
+  variant = "default"
 }: {
-  locale: Locale;
+  locale: Locale | LanguageCode;
   tone?: "light" | "dark";
+  variant?: "default" | "icon";
 }) {
   const isDark = tone === "dark";
+  const isIcon = variant === "icon";
+  const current = publicLanguages.find((item) => item.code === localeToLanguageCode(locale)) ?? publicLanguages[0]!;
 
   return (
-    <div
-      className={cn(
-        "flex h-9 items-center gap-0.5 rounded-md border p-1 text-xs font-medium backdrop-blur sm:gap-1",
-        isDark ? "border-white/15 bg-white/5 shadow-none" : "border bg-white/80 shadow-sm"
-      )}
-    >
-      <Globe2 className={cn("ml-0.5 hidden h-3.5 w-3.5 min-[390px]:block sm:ml-1", isDark ? "text-zinc-400" : "text-muted-foreground")} />
-      {(["en", "zh"] as const).map((item) => (
-        <span
-          key={item}
-          className={cn(
-            "rounded px-2 py-1.5 sm:px-2.5",
-            locale === item
-              ? isDark
-                ? "bg-white text-zinc-950 shadow-sm"
-                : "bg-primary text-primary-foreground shadow-sm"
-              : isDark
-                ? "text-zinc-400"
-                : "text-muted-foreground"
-          )}
-        >
-          {item === "en" ? "EN" : "中文"}
-        </span>
-      ))}
+    <div className="relative text-sm font-medium">
+      <span
+        className={cn(
+          isIcon
+            ? cn(
+                "flex h-11 w-11 items-center justify-center rounded-full border shadow-sm",
+                isDark ? "border-white/15 bg-white/10 text-white" : "border-zinc-200 bg-white text-zinc-700"
+              )
+            : cn(
+                "inline-flex h-9 items-center gap-1.5 rounded-xl border px-3 text-sm font-semibold shadow-sm sm:h-10 sm:gap-2 sm:px-3.5",
+                isDark ? "border-white/15 bg-white/10 text-white" : "border-zinc-200 bg-white text-zinc-950"
+              )
+        )}
+      >
+        <Globe2 className="h-4 w-4" strokeWidth={1.8} />
+        {isIcon ? null : (
+          <>
+            {current.nativeName}
+            <ChevronDown className="h-3.5 w-3.5" />
+          </>
+        )}
+      </span>
     </div>
   );
 }

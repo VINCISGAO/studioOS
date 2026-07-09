@@ -31,9 +31,11 @@ const paths = [
   "docs/HOMEPAGE_GOLDEN.md",
   ".cursor/rules/agent.mdc",
   "app/page.tsx",
+  "app/globals.css",
   "app/api/home-hero-space",
   "components/marketing",
-  "lib/marketing/landing-copy.ts",
+  "components/language-switcher.tsx",
+  "lib/marketing",
   "lib/studioos/home-hero-space-asset.ts",
   "lib/studioos/marketing-headline-font.ts",
   "scripts/copy-marketing-assets.mjs",
@@ -41,6 +43,8 @@ const paths = [
   "public/images/home-hero-space.png",
   "public/images/login-space-bg.png",
   "public/images/login",
+  "public/images/social-sources",
+  "scripts/upload-home-hero-videos-r2.mjs",
   "assets/marketing"
 ];
 
@@ -50,7 +54,7 @@ run("git diff --cached --stat");
 
 if (run("git diff --cached --quiet") !== 0) {
   run(
-    'git commit -m "Freeze marketing homepage as golden baseline (homepage-v1)." -m "Anchor current cinematic homepage, assets, freeze policy, and restore docs."'
+    'git commit -m "chore(homepage): re-anchor golden baseline (homepage-v1)." -m "2026-07-09: multilingual hero videos, footer redesign, landing section polish, social SVGs, and freeze docs."'
   );
 } else {
   lines.push("(no staged changes — tagging current HEAD)");

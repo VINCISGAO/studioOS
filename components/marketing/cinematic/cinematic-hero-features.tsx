@@ -1,11 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { motion, useReducedMotion } from "framer-motion";
 import { Clapperboard, ShieldCheck, Users, Zap } from "lucide-react";
-import { cinematicEase } from "@/components/marketing/cinematic/motion-primitives";
 import { landingText } from "@/lib/marketing/landing-copy";
-import type { Locale } from "@/lib/i18n";
+import type { Locale, MarketingLocale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 const featureIcons = {
@@ -15,8 +13,7 @@ const featureIcons = {
   zap: Zap
 } as const;
 
-export function CinematicHeroFeatures({ locale }: { locale: Locale }) {
-  const reduce = useReducedMotion();
+export function CinematicHeroFeatures({ locale }: { locale: Locale | MarketingLocale }) {
   const features = landingText("heroFeatures", locale);
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -28,15 +25,12 @@ export function CinematicHeroFeatures({ locale }: { locale: Locale }) {
           const isActive = index === activeIndex;
 
           return (
-            <motion.button
+            <button
               key={feature.title}
               type="button"
               aria-pressed={isActive}
               onClick={() => setActiveIndex(index)}
               onMouseEnter={() => setActiveIndex(index)}
-              initial={reduce ? false : { opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.75, ease: cinematicEase, delay: 0.55 + index * 0.08 }}
               className={cn(
                 "group flex min-h-[126px] flex-col items-center justify-center rounded-xl border p-3 text-center backdrop-blur-[2px] transition duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 sm:min-h-[172px] sm:rounded-lg sm:p-5",
                 isActive
@@ -58,7 +52,7 @@ export function CinematicHeroFeatures({ locale }: { locale: Locale }) {
               <span className="mt-1 max-w-[8.5rem] text-[11px] leading-4 text-zinc-400 sm:mt-1.5 sm:max-w-[13rem] sm:text-[13px] sm:leading-5">
                 {feature.desc}
               </span>
-            </motion.button>
+            </button>
           );
         })}
       </div>

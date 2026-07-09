@@ -8,32 +8,39 @@ import {
   useReducedMotion
 } from "@/components/marketing/landing/landing-motion";
 import {
-  LandingEyebrow,
+  MarketingEyebrowPill,
   LandingGhostButton,
   LandingHeadline,
   LandingPrimaryButton,
   LandingShell
 } from "@/components/marketing/landing/landing-ui";
 import { landingText } from "@/lib/marketing/landing-copy";
-import type { Locale } from "@/lib/i18n";
-import { withLocale } from "@/lib/i18n";
+import type { Locale, MarketingLocale } from "@/lib/i18n";
+import { isChineseLanguage, withLocale } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
 
 const stepIcons = [Focus, Users, Clapperboard, Play];
 
-export function LandingHowItWorks({ locale }: { locale: Locale }) {
-  const t = landingText("steps", locale);
+export function LandingHowItWorks({
+  locale,
+  copyLocale = locale
+}: {
+  locale: Locale;
+  copyLocale?: Locale | MarketingLocale;
+}) {
+  const t = landingText("steps", copyLocale);
 
   return (
-    <section id="how-it-works" className="bg-[#050505] py-14 text-white sm:py-20">
+    <section id="how-it-works" className="bg-[#050505] py-10 text-white sm:py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <RevealSection className="mx-auto max-w-3xl text-center">
-          <LandingEyebrow>{t.eyebrow}</LandingEyebrow>
-          <LandingHeadline className="mx-auto mt-4 max-w-4xl text-[2.35rem] leading-[1.08] sm:text-[3.25rem] lg:text-[4rem]">
+          <MarketingEyebrowPill tone="dark">{t.eyebrow}</MarketingEyebrowPill>
+          <LandingHeadline className="mx-auto mt-4 max-w-4xl text-[1.35rem] leading-[1.08] sm:text-[2.15rem] lg:text-[2.65rem]">
             {t.title}
           </LandingHeadline>
         </RevealSection>
 
-        <RevealSection className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <RevealSection className="mt-6 grid gap-4 sm:mt-10 sm:grid-cols-2 lg:grid-cols-4">
           {t.items.map((item, index) => {
             const Icon = stepIcons[index] ?? FileText;
             return (
@@ -44,14 +51,16 @@ export function LandingHowItWorks({ locale }: { locale: Locale }) {
                   visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: cinematicEase } }
                 }}
                 whileHover={{ y: -6, transition: { duration: 0.25 } }}
-                className="group relative overflow-hidden rounded-lg border border-white/10 bg-[#111315] p-6 transition hover:border-[#d8d2c4]/35 hover:bg-[#151515]"
+                className="group relative flex items-center gap-3 overflow-hidden rounded-lg border border-white/10 bg-[#111315] p-4 transition hover:border-[#d8d2c4]/35 hover:bg-[#151515]"
               >
-                <div className="relative flex h-11 w-11 items-center justify-center rounded-md bg-white/[0.055] text-[#d8d2c4] ring-1 ring-white/10">
-                  <Icon className="h-5 w-5" />
+                <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-white/[0.055] text-[#d8d2c4] ring-1 ring-white/10">
+                  <Icon className="h-4 w-4" />
                 </div>
-                <p className="relative mt-6 font-mono text-xs text-[#d8d2c4]/80">{item.num}</p>
-                <h3 className="relative mt-1 text-lg font-semibold tracking-tight">{item.title}</h3>
-                <p className="relative mt-2 text-sm leading-6 text-zinc-400">{item.desc}</p>
+                <p className="relative font-mono text-[11px] text-[#d8d2c4]/80">{item.num}</p>
+                <h3 className="relative shrink-0 text-base font-semibold tracking-tight">{item.title}</h3>
+                <p className="relative min-w-0 truncate text-xs leading-5 text-zinc-400">
+                  {item.desc}
+                </p>
               </motion.article>
             );
           })}
@@ -175,39 +184,49 @@ export function LandingFeatures({ locale }: { locale: Locale }) {
 
 export function LandingCta({
   locale,
+  copyLocale = locale,
   portalHref,
   portalLabel
 }: {
   locale: Locale;
+  copyLocale?: Locale | MarketingLocale;
   portalHref: string;
   portalLabel?: string;
 }) {
-  const t = landingText("cta", locale);
+  const t = landingText("cta", copyLocale);
   const primaryLabel = portalLabel ?? t.primary;
+  const compactTitle = isChineseLanguage(copyLocale) || copyLocale === "ja" || copyLocale === "ko";
 
   return (
-    <section className="bg-black px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
-      <motion.div
-        initial={{ opacity: 0, y: 32 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-10%" }}
-        transition={{ duration: 1, ease: cinematicEase }}
-        className="relative mx-auto max-w-6xl overflow-hidden rounded-lg border border-white/12 bg-[#0c0f11] p-8 sm:p-12"
-      >
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-300/50 to-transparent" />
-        <div className="relative grid gap-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
-          <div>
-            <h2 className="max-w-2xl text-3xl font-semibold leading-tight tracking-tight text-white sm:text-4xl">
-              {t.title}
-            </h2>
-            <p className="mt-4 text-base leading-7 text-zinc-400">{t.subtitle}</p>
+    <section className="bg-[#050505] pb-8 pt-3 sm:pb-12 sm:pt-4">
+      <div className="mx-auto max-w-7xl px-5 sm:px-8">
+        <motion.div
+          initial={{ opacity: 0, y: 32 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-10%" }}
+          transition={{ duration: 1, ease: cinematicEase }}
+          className="relative overflow-hidden rounded-lg border border-white/12 bg-[#0c0f11] p-8 sm:p-12"
+        >
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-300/50 to-transparent" />
+          <div className="relative grid gap-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+            <div>
+              <h2
+                className={cn(
+                  "max-w-2xl font-semibold leading-tight tracking-tight text-white lg:text-4xl",
+                  compactTitle ? "text-[1.45rem] sm:text-[2.05rem]" : "text-[1.6rem] sm:text-[2.05rem]"
+                )}
+              >
+                {t.title}
+              </h2>
+              <p className="mt-4 text-base leading-7 text-zinc-400">{t.subtitle}</p>
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row lg:justify-end">
+              <LandingPrimaryButton href={portalHref}>{primaryLabel}</LandingPrimaryButton>
+              <LandingGhostButton href={withLocale("/contact", copyLocale)}>{t.secondary}</LandingGhostButton>
+            </div>
           </div>
-          <div className="flex flex-col gap-3 sm:flex-row lg:justify-end">
-            <LandingPrimaryButton href={portalHref}>{primaryLabel}</LandingPrimaryButton>
-            <LandingGhostButton href={withLocale("/contact", locale)}>{t.secondary}</LandingGhostButton>
-          </div>
-        </div>
-      </motion.div>
+        </motion.div>
+      </div>
     </section>
   );
 }

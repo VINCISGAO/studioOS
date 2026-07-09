@@ -1,14 +1,34 @@
 import { NextResponse } from "next/server";
+import { requireAdminAuthUser } from "@/features/admin/auth/admin-api-guard";
+import { campaignRepository } from "@/features/campaign/campaign.repository";
+import { PermissionService } from "@/features/auth/permission.service";
+import { getSessionUser } from "@/features/auth/session.service";
 import { campaignAssetObjectKey } from "@/lib/studioos/campaign-asset-upload";
 import { getObject } from "@/lib/studioos/object-storage";
 
+async function canReadCampaignAsset(request: Request, campaignId: string) {
+  const campaign = await campaignRepository.findById(campaignId);
+  if (!campaign) return false;
+
+  const [user, adminUser] = await Promise.all([
+    getSessionUser().catch(() => null),
+    requireAdminAuthUser(request).catch(() => null)
+  ]);
+
+  if (adminUser) return true;
+  return Boolean(user && PermissionService.canAccessCampaign(user, campaign));
+}
+
 export async function GET(
-  _request: Request,
+  request: Request,
   context: { params: Promise<{ campaignId: string; filename: string }> }
 ) {
   const { campaignId, filename } = await context.params;
   if (!campaignId || !filename) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  }
+  if (!(await canReadCampaignAsset(request, campaignId))) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const safeName = decodeURIComponent(filename).replace(/[/\\]/g, "");

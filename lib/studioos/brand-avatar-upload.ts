@@ -1,5 +1,9 @@
 import path from "path";
 import { putObject } from "@/lib/studioos/object-storage";
+import {
+  detectImageMimeFromMagicBytes,
+  looksLikeSupportedVideo
+} from "@/lib/studioos/upload-magic-bytes";
 
 const MAX_BYTES = 5 * 1024 * 1024;
 const MAX_PROFILE_VIDEO_BYTES = 300 * 1024 * 1024;
@@ -73,6 +77,10 @@ async function saveBrandImageUpload(
 
   const fileName = `${fileNamePrefix}_${Date.now()}.${extForMime(mime)}`;
   const buffer = Buffer.from(await file.arrayBuffer());
+  const detectedMime = detectImageMimeFromMagicBytes(buffer);
+  if (!detectedMime || detectedMime !== mime) {
+    return { ok: false, error: "File content does not match the selected image type" };
+  }
   const fileKey = brandAvatarObjectKey(brandId, fileName);
 
   let stored: Awaited<ReturnType<typeof putObject>>;
@@ -124,8 +132,12 @@ export async function saveBrandShowcaseVideoUpload(brandId: string, file: File):
     return { ok: false, error: "Only MP4, MOV, and WebM videos are supported" };
   }
 
-  const fileName = `showcase_${Date.now()}.${videoExtForFile(file)}`;
+  const extension = videoExtForFile(file);
+  const fileName = `showcase_${Date.now()}.${extension}`;
   const buffer = Buffer.from(await file.arrayBuffer());
+  if (!looksLikeSupportedVideo(buffer, extension)) {
+    return { ok: false, error: "File content does not match the selected video type" };
+  }
   const fileKey = brandAvatarObjectKey(brandId, fileName);
 
   let stored: Awaited<ReturnType<typeof putObject>>;

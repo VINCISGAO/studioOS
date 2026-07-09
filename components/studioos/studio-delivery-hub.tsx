@@ -214,7 +214,7 @@ export function StudioDeliveryHub({
 
   function handleCampaignChange(orderId: string) {
     setSelectedId(orderId);
-    const url = withLocale(`/studio/delivery?order=${orderId}`, locale);
+    const url = withLocale(`/studio/projects?order=${orderId}`, locale);
     router.replace(url, { scroll: false });
   }
 

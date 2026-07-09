@@ -331,6 +331,30 @@ export async function acceptInvitation(id: string, creatorId: string, locale: "e
 
   item.status = "accepted";
   await writeStore(store);
+  const campaign = hasDatabaseUrl() ? await campaignRepository.findByLegacyProjectId(item.projectId) : null;
+  if (campaign) {
+    await aiLearningEventRepository
+      .append({
+        eventType: "CreatorAccepted",
+        entityType: "CreatorInvitation",
+        entityId: id,
+        payload: {
+          legacy_project_id: item.projectId,
+          campaignId: campaign.id,
+          legacy_creator_id: creatorId,
+          matchScore: item.matchScore ?? null
+        },
+        learningType: "Preference",
+        after: {
+          legacy_creator_id: creatorId,
+          campaignId: campaign.id,
+          accepted: true,
+          project_created: false
+        },
+        confidence: 0.8
+      })
+      .catch(() => undefined);
+  }
   if (project) {
     const creator = await getCreatorById(creatorId);
     await createBrandNotification({
@@ -414,6 +438,9 @@ export async function selectCreatorForProject(input: {
   const store = await readStore();
   const project = await getProject(input.projectId);
   if (!project) return { ok: false as const, error: "project-not-found" };
+  if (project.client_email.toLowerCase() !== input.client.client_email.toLowerCase()) {
+    return { ok: false as const, error: "forbidden" };
+  }
 
   const accepted = store.invitations.filter(
     (item) => item.projectId === input.projectId && item.status === "accepted"

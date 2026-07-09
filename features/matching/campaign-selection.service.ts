@@ -30,7 +30,6 @@ import { setupBrandCheckout } from "@/lib/studioos/brand-checkout-service";
 import { notifyCreatorsInvitationExpired } from "@/lib/studioos/commercial-interaction-notify";
 import type { StoredCreatorInvitation } from "@/lib/studioos/creator-invitation-types";
 import { isInvitationRecruitmentClosed } from "@/lib/studioos/invitation-lifecycle";
-import { logger } from "@/lib/core/logger";
 
 function selectedCreatorCopy(locale: Locale, brandName: string, projectTitle: string) {
   if (locale === "zh") {
@@ -72,6 +71,10 @@ export class CampaignSelectionService {
     const campaign = await campaignRepository.findByLegacyProjectIdWithRelations(input.projectId);
     if (!campaign) {
       return { ok: false, error: "project-not-found" };
+    }
+    const brandUser = await userRepository.findByEmail(input.client.client_email.toLowerCase());
+    if (!brandUser || brandUser.id !== campaign.brandId) {
+      return { ok: false, error: "forbidden" };
     }
 
     const legacyProjectId = input.projectId;
@@ -167,11 +170,10 @@ export class CampaignSelectionService {
       campaign.status === CampaignState.MATCHING ||
       campaign.status === CampaignState.INVITATION_SENT
     ) {
-      const brandUser = await userRepository.findByEmail(input.client.client_email.toLowerCase());
       await campaignService.transition(
         campaign.id,
         CampaignEvent.BRAND_SELECT_CREATOR,
-        brandUser ? { id: brandUser.id, role: brandUser.role } : undefined
+        { id: brandUser.id, role: brandUser.role }
       );
     }
 
@@ -271,11 +273,8 @@ export class CampaignSelectionService {
       })
       .catch(() => undefined);
 
-    await reviewBridgeService.syncLegacyOrderStatusAfterSelection(campaign.id, input.creatorId);
-
     const refreshedCampaign = await campaignRepository.findById(campaign.id);
     const escrow = await paymentRepository.findByCampaignId(campaign.id);
-    const brandUser = await userRepository.findByEmail(input.client.client_email.toLowerCase());
     const actor = brandUser ? { id: brandUser.id, role: brandUser.role } : undefined;
 
     if (
@@ -283,18 +282,10 @@ export class CampaignSelectionService {
       escrow &&
       (escrow.status === EscrowState.HELD || escrow.status === EscrowState.PARTIAL_RELEASE)
     ) {
-      await campaignService
-        .transition(campaign.id, CampaignEvent.START_PRODUCTION, actor)
-        .catch((error) => {
-          logger.warn("Campaign start production after creator selection failed", {
-            service: "CampaignSelectionService",
-            campaignId: campaign.id,
-            legacyProjectId,
-            creatorId: input.creatorId,
-            error: error instanceof Error ? error.message : String(error)
-          });
-        });
+      await campaignService.transition(campaign.id, CampaignEvent.START_PRODUCTION, actor);
     }
+
+    await reviewBridgeService.syncLegacyOrderStatusAfterSelection(campaign.id, input.creatorId);
 
     const invitation = mapInvitationToStored(
       winnerRow,

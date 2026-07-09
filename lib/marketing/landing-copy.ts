@@ -1,4 +1,5 @@
-import type { Locale } from "@/lib/i18n";
+import type { Locale, MarketingLocale } from "@/lib/i18n";
+import { isChineseLanguage } from "@/lib/i18n";
 
 /** VINCIS marketing copy. */
 export const landingCopy = {
@@ -74,6 +75,8 @@ export const landingCopy = {
         "Great ideas are no longer limited by cost, time, or resources.\nWorld-class advertising is no longer reserved for big brands.",
       primary: "Start as a brand",
       secondary: "Join as a studio",
+      primaryDescription: "Match with vetted AI studios",
+      secondaryDescription: "Join to get global orders",
       trusted: "Built for brand teams shipping paid-social creative at speed",
       showreel: "View the workflow"
     },
@@ -86,6 +89,8 @@ export const landingCopy = {
         "让每一个伟大的创意，不再因为成本、时间或资源限制而被埋没。\n让世界级广告，不再是大公司的专属。",
       primary: "我是项目方",
       secondary: "我是创作者",
+      primaryDescription: "匹配优质 AI 创作者",
+      secondaryDescription: "入驻获取全球订单",
       trusted: "为需要高速投放素材的品牌团队而建",
       showreel: "查看流程"
     }
@@ -212,11 +217,13 @@ export const landingCopy = {
     en: {
       eyebrow: "RECENT WORK",
       title: "Work that speaks for itself",
+      featured: "Featured",
       viewAll: "View all case studies"
     },
     zh: {
       eyebrow: "精选作品",
       title: "作品自己会说话",
+      featured: "精选案例",
       viewAll: "查看全部案例"
     }
   },
@@ -250,9 +257,581 @@ export const landingCopy = {
   }
 } as const;
 
+type WidenCopy<T> = T extends string
+  ? string
+  : T extends number
+    ? number
+    : T extends readonly (infer U)[]
+      ? WidenCopy<U>[]
+      : T extends object
+        ? { [K in keyof T]: WidenCopy<T[K]> }
+        : T;
+
+const landingCopyTranslations: Partial<{
+  [K in keyof typeof landingCopy]: Partial<Record<MarketingLocale, WidenCopy<(typeof landingCopy)[K]["en"]>>>;
+}> = {
+  hero: {
+    "zh-TW": {
+      eyebrow: "面向全球品牌的商業製作基礎設施",
+      titleLine1: "連接全球品牌與AI創作者",
+      titleHighlight: "",
+      titleLine2: "",
+      subtitle: "讓每一個偉大的創意，不再受成本、時間或資源限制。\n讓世界級廣告，不再只是大品牌的專屬。",
+      primary: "我是品牌方",
+      secondary: "我是創作者",
+      primaryDescription: "匹配嚴選 AI 創作者",
+      secondaryDescription: "入駐取得全球訂單",
+      trusted: "為需要快速投放素材的品牌團隊而建",
+      showreel: "查看流程"
+    },
+    ja: {
+      eyebrow: "グローバルブランドのための商業制作インフラ",
+      titleLine1: "世界のブランドを",
+      titleHighlight: "",
+      titleLine2: "AI クリエイターとつなぐ",
+      subtitle: "優れたアイデアは、もうコストや時間、リソースに縛られません。\n世界水準の広告は、大企業だけのものではありません。",
+      primary: "ブランドとして始める",
+      secondary: "スタジオとして参加",
+      primaryDescription: "厳選された AI スタジオとマッチング",
+      secondaryDescription: "参加して世界の案件を受ける",
+      trusted: "有料ソーシャル向け素材を速く届けるブランドチームのために設計",
+      showreel: "ワークフローを見る"
+    },
+    ko: {
+      eyebrow: "글로벌 브랜드를 위한 상업 제작 인프라",
+      titleLine1: "글로벌 브랜드와",
+      titleHighlight: "",
+      titleLine2: "AI 크리에이터를 연결합니다",
+      subtitle: "훌륭한 아이디어는 더 이상 비용, 시간, 자원에 묶이지 않습니다.\n세계적 수준의 광고는 더 이상 대형 브랜드만의 전유물이 아닙니다.",
+      primary: "브랜드로 시작하기",
+      secondary: "스튜디오로 참여하기",
+      primaryDescription: "검증된 AI 스튜디오와 매칭",
+      secondaryDescription: "참여하고 글로벌 주문을 받기",
+      trusted: "빠르게 유료 소셜 광고 소재를 출시하는 브랜드 팀을 위해 설계",
+      showreel: "워크플로 보기"
+    },
+    ms: {
+      eyebrow: "Infrastruktur produksi komersial untuk jenama global",
+      titleLine1: "Menghubungkan jenama global",
+      titleHighlight: "",
+      titleLine2: "dengan pencipta AI",
+      subtitle: "Idea hebat tidak lagi terhad oleh kos, masa atau sumber.\nIklan bertaraf dunia tidak lagi hanya untuk jenama besar.",
+      primary: "Mula sebagai jenama",
+      secondary: "Sertai sebagai studio",
+      primaryDescription: "Padankan dengan studio AI yang disaring",
+      secondaryDescription: "Sertai untuk menerima pesanan global",
+      trusted: "Dibina untuk pasukan jenama yang menghantar kreatif sosial berbayar dengan pantas",
+      showreel: "Lihat aliran kerja"
+    },
+    km: {
+      eyebrow: "ហេដ្ឋារចនាសម្ព័ន្ធផលិតកម្មពាណិជ្ជកម្មសម្រាប់ម៉ាកសកល",
+      titleLine1: "ភ្ជាប់ម៉ាកសកល",
+      titleHighlight: "",
+      titleLine2: "ជាមួយអ្នកបង្កើត AI",
+      subtitle: "គំនិតល្អៗលែងត្រូវបានកំណត់ដោយថវិកា ពេលវេលា ឬធនធានទៀតហើយ។\nការផ្សព្វផ្សាយកម្រិតពិភពលោកលែងជារបស់ម៉ាកធំៗតែប៉ុណ្ណោះ។",
+      primary: "ចាប់ផ្តើមជាម៉ាក",
+      secondary: "ចូលរួមជាស្ទូឌីយោ",
+      primaryDescription: "ផ្គូផ្គងជាមួយស្ទូឌីយោ AI ដែលបានត្រួតពិនិត្យ",
+      secondaryDescription: "ចូលរួមដើម្បីទទួលការងារសកល",
+      trusted: "បង្កើតសម្រាប់ក្រុមម៉ាកដែលត្រូវបញ្ចេញ creative លឿនលើ paid social",
+      showreel: "មើលលំហូរការងារ"
+    },
+    th: {
+      eyebrow: "โครงสร้างพื้นฐานงานผลิตเชิงพาณิชย์สำหรับแบรนด์ทั่วโลก",
+      titleLine1: "เชื่อมแบรนด์ทั่วโลก",
+      titleHighlight: "",
+      titleLine2: "กับครีเอเตอร์ AI",
+      subtitle: "ไอเดียที่ยอดเยี่ยมไม่ควรถูกจำกัดด้วยต้นทุน เวลา หรือทรัพยากรอีกต่อไป\nโฆษณาระดับโลกไม่ใช่สิทธิ์ของแบรนด์ใหญ่เท่านั้น",
+      primary: "เริ่มในฐานะแบรนด์",
+      secondary: "เข้าร่วมในฐานะสตูดิโอ",
+      primaryDescription: "จับคู่กับสตูดิโอ AI ที่ผ่านการคัดเลือก",
+      secondaryDescription: "เข้าร่วมเพื่อรับงานระดับโลก",
+      trusted: "สร้างมาเพื่อทีมแบรนด์ที่ต้องปล่อยครีเอทีฟ paid social อย่างรวดเร็ว",
+      showreel: "ดูเวิร์กโฟลว์"
+    },
+    vi: {
+      eyebrow: "Hạ tầng sản xuất thương mại cho thương hiệu toàn cầu",
+      titleLine1: "Kết nối thương hiệu toàn cầu",
+      titleHighlight: "",
+      titleLine2: "với nhà sáng tạo AI",
+      subtitle: "Ý tưởng lớn không còn bị giới hạn bởi chi phí, thời gian hay nguồn lực.\nQuảng cáo đẳng cấp thế giới không còn chỉ dành cho các thương hiệu lớn.",
+      primary: "Bắt đầu với vai trò thương hiệu",
+      secondary: "Tham gia với vai trò studio",
+      primaryDescription: "Ghép với các studio AI đã được tuyển chọn",
+      secondaryDescription: "Tham gia để nhận đơn hàng toàn cầu",
+      trusted: "Xây dựng cho đội ngũ thương hiệu cần xuất bản creative paid social thật nhanh",
+      showreel: "Xem quy trình"
+    },
+    fr: {
+      eyebrow: "Infrastructure de production commerciale pour les marques mondiales",
+      titleLine1: "Connecter les marques mondiales",
+      titleHighlight: "",
+      titleLine2: "aux créateurs IA",
+      subtitle: "Les grandes idées ne sont plus limitées par le coût, le temps ou les ressources.\nLa publicité de niveau mondial n'est plus réservée aux grandes marques.",
+      primary: "Commencer comme marque",
+      secondary: "Rejoindre comme studio",
+      primaryDescription: "Être mis en relation avec des studios IA sélectionnés",
+      secondaryDescription: "Rejoindre pour recevoir des projets mondiaux",
+      trusted: "Conçu pour les équipes de marque qui livrent vite des créations paid social",
+      showreel: "Voir le workflow"
+    },
+    es: {
+      eyebrow: "Infraestructura de producción comercial para marcas globales",
+      titleLine1: "Conectamos marcas globales",
+      titleHighlight: "",
+      titleLine2: "con creadores de IA",
+      subtitle: "Las grandes ideas ya no están limitadas por coste, tiempo o recursos.\nLa publicidad de nivel mundial ya no es exclusiva de las grandes marcas.",
+      primary: "Empezar como marca",
+      secondary: "Unirse como estudio",
+      primaryDescription: "Conecta con estudios de IA seleccionados",
+      secondaryDescription: "Únete para recibir proyectos globales",
+      trusted: "Diseñado para equipos de marca que lanzan creatividad paid social con rapidez",
+      showreel: "Ver el flujo"
+    }
+  },
+  heroFeatures: {
+    "zh-TW": [
+      { title: "製作方匹配", desc: "按作品集適配度排序嚴選團隊", icon: "users" },
+      { title: "審片工作室", desc: "帧級批註與審批管理", icon: "play" },
+      { title: "託管流程", desc: "按里程碑保護付款與交付", icon: "shield" },
+      { title: "創意速度", desc: "更少層級，更高效率", icon: "zap" }
+    ],
+    ja: [
+      { title: "スタジオマッチング", desc: "作品適性で厳選チームをランク付け", icon: "users" },
+      { title: "レビュー室", desc: "フレーム単位の注釈と承認管理", icon: "play" },
+      { title: "エスクロー進行", desc: "マイルストーンごとの支払い保護", icon: "shield" },
+      { title: "制作スピード", desc: "中間工程を減らし効率を高める", icon: "zap" }
+    ],
+    ko: [
+      { title: "스튜디오 매칭", desc: "포트폴리오 적합도로 검증 팀을 추천", icon: "users" },
+      { title: "리뷰룸", desc: "프레임 단위 코멘트와 승인 관리", icon: "play" },
+      { title: "에스크로 워크플로", desc: "마일스톤 기반 결제 보호", icon: "shield" },
+      { title: "크리에이티브 속도", desc: "단계를 줄이고 효율을 높입니다", icon: "zap" }
+    ],
+    ms: [
+      { title: "Padanan studio", desc: "Pasukan disaring mengikut kesesuaian portfolio", icon: "users" },
+      { title: "Bilik semakan", desc: "Nota per bingkai dan pengurusan kelulusan", icon: "play" },
+      { title: "Aliran escrow", desc: "Perlindungan bayaran berasaskan pencapaian", icon: "shield" },
+      { title: "Kelajuan kreatif", desc: "Kurang lapisan, lebih cekap", icon: "zap" }
+    ],
+    km: [
+      { title: "ផ្គូផ្គងស្ទូឌីយោ", desc: "ក្រុមដែលបានត្រួតពិនិត្យតាមភាពសមនឹង portfolio", icon: "users" },
+      { title: "បន្ទប់ពិនិត្យ", desc: "កំណត់ចំណាំតាម frame និងគ្រប់គ្រងការអនុម័ត", icon: "play" },
+      { title: "លំហូរ escrow", desc: "ការពារការទូទាត់តាម milestone", icon: "shield" },
+      { title: "ល្បឿនច្នៃប្រឌិត", desc: "កាត់បន្ថយស្រទាប់ និងបង្កើនប្រសិទ្ធភាព", icon: "zap" }
+    ],
+    th: [
+      { title: "จับคู่สตูดิโอ", desc: "ทีมที่คัดแล้วจัดอันดับตามความเหมาะของผลงาน", icon: "users" },
+      { title: "ห้องรีวิว", desc: "คอมเมนต์ระดับเฟรมและจัดการอนุมัติ", icon: "play" },
+      { title: "เวิร์กโฟลว์เอสโครว์", desc: "คุ้มครองการชำระเงินตาม milestone", icon: "shield" },
+      { title: "ความเร็วงานครีเอทีฟ", desc: "ลดชั้นงาน เพิ่มประสิทธิภาพ", icon: "zap" }
+    ],
+    vi: [
+      { title: "Ghép studio", desc: "Đội ngũ được tuyển chọn theo độ phù hợp portfolio", icon: "users" },
+      { title: "Phòng duyệt", desc: "Ghi chú theo từng khung hình và quản lý phê duyệt", icon: "play" },
+      { title: "Quy trình ký quỹ", desc: "Bảo vệ thanh toán theo từng mốc", icon: "shield" },
+      { title: "Tốc độ sáng tạo", desc: "Ít tầng nấc hơn, hiệu quả cao hơn", icon: "zap" }
+    ],
+    fr: [
+      { title: "Matching studio", desc: "Équipes sélectionnées selon l'adéquation du portfolio", icon: "users" },
+      { title: "Salle de revue", desc: "Notes image par image et gestion des validations", icon: "play" },
+      { title: "Workflow escrow", desc: "Paiement protégé par jalons", icon: "shield" },
+      { title: "Vitesse créative", desc: "Moins d'intermédiaires, plus d'efficacité", icon: "zap" }
+    ],
+    es: [
+      { title: "Matching de estudios", desc: "Equipos seleccionados por ajuste de portfolio", icon: "users" },
+      { title: "Sala de revisión", desc: "Notas por fotograma y gestión de aprobación", icon: "play" },
+      { title: "Flujo con escrow", desc: "Protección de pagos por hitos", icon: "shield" },
+      { title: "Velocidad creativa", desc: "Menos capas, mucha más eficiencia", icon: "zap" }
+    ]
+  },
+  cost: {
+    "zh-TW": {
+      title: "傳統廣告製作模式已經失效",
+      body: "代理層層加價、週期冗長、修改不透明\n品牌卻仍需在 paid social 節奏下拿到電影級成片",
+      pains: ["代理層層加價", "8–12 週製作週期", "創作者觸達受限", "修改陷入循環"],
+      compareTitle: "一眼看懂差異",
+      traditional: "傳統廣告公司",
+      studio: "VINCIS",
+      saveBadge: "節省約 80%",
+      savings: ["預算節省約 80%", "時間節省約 95-96%"],
+      rows: [
+        { label: "平均成本", trad: "$25,000+", studio: "$5,000" },
+        { label: "製作週期", trad: "8–12 週", studio: "72 小時" },
+        { label: "創作者觸達", trad: "多層中介", studio: "直連網絡" },
+        { label: "修改機制", trad: "額外收費", studio: "流程內包含" }
+      ]
+    },
+    ja: {
+      title: "従来の広告制作は壊れています",
+      body: "代理店は中間マージン、長いスケジュール、不透明な修正を重ねます。\n一方でブランドは paid social の速度で映画品質のアウトプットを必要としています。",
+      pains: ["高い代理店マージン", "8〜12週間の制作期間", "クリエイターへのアクセス不足", "終わらない修正ループ"],
+      compareTitle: "違いを見る",
+      traditional: "従来型代理店",
+      studio: "VINCIS",
+      saveBadge: "約 80% 節約",
+      savings: ["予算を約 80% 節約", "時間を約 95-96% 節約"],
+      rows: [
+        { label: "平均コスト", trad: "$25,000+", studio: "$5,000" },
+        { label: "制作期間", trad: "8〜12週間", studio: "72時間" },
+        { label: "クリエイター接点", trad: "複数の中間層経由", studio: "直接ネットワーク" },
+        { label: "修正", trad: "追加費用", studio: "ワークフローに含む" }
+      ]
+    },
+    ko: {
+      title: "기존 광고 제작 방식은 더 이상 맞지 않습니다",
+      body: "대행사는 높은 마진, 느린 일정, 불투명한 수정 과정을 더합니다.\n하지만 브랜드는 paid social 속도에 맞춘 영화급 결과물이 필요합니다.",
+      pains: ["높은 대행사 마진", "8~12주 제작 기간", "제한된 크리에이터 접근", "끝없는 수정 루프"],
+      compareTitle: "차이를 확인하세요",
+      traditional: "전통 대행사",
+      studio: "VINCIS",
+      saveBadge: "약 80% 절감",
+      savings: ["예산 약 80% 절감", "시간 약 95-96% 절감"],
+      rows: [
+        { label: "평균 비용", trad: "$25,000+", studio: "$5,000" },
+        { label: "제작 시간", trad: "8~12주", studio: "72시간" },
+        { label: "크리에이터 접근", trad: "여러 단계 경유", studio: "직접 네트워크" },
+        { label: "수정", trad: "추가 비용", studio: "워크플로에 포함" }
+      ]
+    },
+    ms: {
+      title: "Produksi iklan tradisional sudah rosak",
+      body: "Agensi menambah markup, jadual perlahan dan semakan yang tidak telus.\nJenama masih memerlukan hasil bertaraf sinema mengikut tempo paid social.",
+      pains: ["Markup agensi tinggi", "Garis masa 8–12 minggu", "Akses pencipta terhad", "Kitaran semakan tidak berakhir"],
+      compareTitle: "Lihat bezanya",
+      traditional: "Agensi tradisional",
+      studio: "VINCIS",
+      saveBadge: "Jimat sekitar 80%",
+      savings: ["Belanjawan dijimatkan sekitar 80%", "Masa dijimatkan sekitar 95-96%"],
+      rows: [
+        { label: "Kos purata", trad: "$25,000+", studio: "$5,000" },
+        { label: "Masa produksi", trad: "8–12 minggu", studio: "72 jam" },
+        { label: "Akses pencipta", trad: "Melalui banyak lapisan", studio: "Rangkaian langsung" },
+        { label: "Semakan", trad: "Yuran tambahan", studio: "Termasuk dalam aliran kerja" }
+      ]
+    },
+    km: {
+      title: "ផលិតកម្មផ្សព្វផ្សាយបែបចាស់កំពុងខូច",
+      body: "ភ្នាក់ងារបន្ថែមថ្លៃ កាលវិភាគយឺត និងការកែប្រែមិនច្បាស់។\nប៉ុន្តែម៉ាកនៅត្រូវការលទ្ធផលកម្រិតភាពយន្តតាមល្បឿន paid social។",
+      pains: ["ថ្លៃបន្ថែមខ្ពស់", "ពេលវេលា 8–12 សប្តាហ៍", "ចូលដល់អ្នកបង្កើតបានកំណត់", "ការកែប្រែវិលជុំមិនចប់"],
+      compareTitle: "មើលភាពខុសគ្នា",
+      traditional: "ភ្នាក់ងារបែបចាស់",
+      studio: "VINCIS",
+      saveBadge: "សន្សំប្រហែល 80%",
+      savings: ["សន្សំថវិកាប្រហែល 80%", "សន្សំពេលប្រហែល 95-96%"],
+      rows: [
+        { label: "ចំណាយមធ្យម", trad: "$25,000+", studio: "$5,000" },
+        { label: "ពេលផលិត", trad: "8–12 សប្តាហ៍", studio: "72 ម៉ោង" },
+        { label: "ចូលដល់អ្នកបង្កើត", trad: "តាមស្រទាប់ច្រើន", studio: "បណ្តាញផ្ទាល់" },
+        { label: "ការកែប្រែ", trad: "គិតថ្លៃបន្ថែម", studio: "រួមក្នុងលំហូរ" }
+      ]
+    },
+    th: {
+      title: "การผลิตโฆษณาแบบเดิมไม่ตอบโจทย์แล้ว",
+      body: "เอเจนซี่เพิ่มมาร์กอัป ชั้นงาน และรอบแก้ที่ไม่โปร่งใส\nขณะที่แบรนด์ยังต้องการงานระดับภาพยนตร์ตามความเร็วของ paid social",
+      pains: ["มาร์กอัปเอเจนซี่สูง", "ใช้เวลา 8–12 สัปดาห์", "เข้าถึงครีเอเตอร์จำกัด", "รอบแก้ไม่รู้จบ"],
+      compareTitle: "ดูความแตกต่าง",
+      traditional: "เอเจนซี่แบบเดิม",
+      studio: "VINCIS",
+      saveBadge: "ประหยัดราว 80%",
+      savings: ["ประหยัดงบราว 80%", "ประหยัดเวลาราว 95-96%"],
+      rows: [
+        { label: "ต้นทุนเฉลี่ย", trad: "$25,000+", studio: "$5,000" },
+        { label: "เวลาผลิต", trad: "8–12 สัปดาห์", studio: "72 ชั่วโมง" },
+        { label: "การเข้าถึงครีเอเตอร์", trad: "ผ่านหลายชั้น", studio: "เครือข่ายโดยตรง" },
+        { label: "การแก้ไข", trad: "คิดเพิ่ม", studio: "รวมในเวิร์กโฟลว์" }
+      ]
+    },
+    vi: {
+      title: "Sản xuất quảng cáo truyền thống đã lỗi thời",
+      body: "Agency cộng thêm nhiều tầng chi phí, timeline chậm và vòng sửa thiếu minh bạch.\nTrong khi thương hiệu vẫn cần chất lượng điện ảnh với tốc độ paid social.",
+      pains: ["Markup agency cao", "Timeline 8–12 tuần", "Khó tiếp cận nhà sáng tạo", "Vòng sửa kéo dài"],
+      compareTitle: "Xem sự khác biệt",
+      traditional: "Agency truyền thống",
+      studio: "VINCIS",
+      saveBadge: "Tiết kiệm khoảng 80%",
+      savings: ["Tiết kiệm ngân sách khoảng 80%", "Tiết kiệm thời gian khoảng 95-96%"],
+      rows: [
+        { label: "Chi phí trung bình", trad: "$25,000+", studio: "$5,000" },
+        { label: "Thời gian sản xuất", trad: "8–12 tuần", studio: "72 giờ" },
+        { label: "Tiếp cận creator", trad: "Qua nhiều tầng", studio: "Mạng lưới trực tiếp" },
+        { label: "Chỉnh sửa", trad: "Tính phí thêm", studio: "Có trong quy trình" }
+      ]
+    },
+    fr: {
+      title: "La production publicitaire traditionnelle est cassée",
+      body: "Les agences ajoutent marges, délais lents et révisions opaques.\nLes marques ont pourtant besoin d'un rendu cinéma au rythme du paid social.",
+      pains: ["Marge agence élevée", "Délais de 8 à 12 semaines", "Accès créateur limité", "Boucles de révision sans fin"],
+      compareTitle: "Voyez la différence",
+      traditional: "Agence traditionnelle",
+      studio: "VINCIS",
+      saveBadge: "Économisez environ 80 %",
+      savings: ["Budget économisé environ 80 %", "Temps économisé environ 95-96 %"],
+      rows: [
+        { label: "Coût moyen", trad: "$25,000+", studio: "$5,000" },
+        { label: "Temps de production", trad: "8–12 semaines", studio: "72 heures" },
+        { label: "Accès créateurs", trad: "Via plusieurs couches", studio: "Réseau direct" },
+        { label: "Révisions", trad: "Frais supplémentaires", studio: "Incluses dans le workflow" }
+      ]
+    },
+    es: {
+      title: "La producción publicitaria tradicional está rota",
+      body: "Las agencias añaden márgenes, plazos lentos y revisiones opacas.\nLas marcas aún necesitan calidad cinematográfica al ritmo de paid social.",
+      pains: ["Alto margen de agencia", "Plazos de 8–12 semanas", "Acceso limitado a creadores", "Ciclos de revisión interminables"],
+      compareTitle: "Mira la diferencia",
+      traditional: "Agencia tradicional",
+      studio: "VINCIS",
+      saveBadge: "Ahorra alrededor del 80%",
+      savings: ["Presupuesto ahorrado alrededor del 80%", "Tiempo ahorrado alrededor del 95-96%"],
+      rows: [
+        { label: "Coste medio", trad: "$25,000+", studio: "$5,000" },
+        { label: "Tiempo de producción", trad: "8–12 semanas", studio: "72 horas" },
+        { label: "Acceso a creadores", trad: "A través de capas", studio: "Red directa" },
+        { label: "Revisiones", trad: "Costes extra", studio: "Incluidas en el flujo" }
+      ]
+    }
+  },
+  steps: {
+    "zh-TW": {
+      eyebrow: "如何運作",
+      title: "從需求簡報到成片交付",
+      subtitle: "",
+      items: [
+        { num: "01", title: "提交需求", desc: "上傳目標、參考素材與投放要求" },
+        { num: "02", title: "匹配製作方", desc: "按品類、風格與作品品質推薦團隊" },
+        { num: "03", title: "製作協作", desc: "製作、審片、修改在同一流程推進" },
+        { num: "04", title: "成片交付", desc: "驗收最終版本並釋放交付資產" }
+      ]
+    },
+    ja: {
+      eyebrow: "仕組み",
+      title: "ブリーフから最終カットまで、ひとつの制作フローで",
+      subtitle: "",
+      items: [
+        { num: "01", title: "ビジョンを共有", desc: "ブリーフと参考素材を数分でアップロード" },
+        { num: "02", title: "マッチングと設計", desc: "作品重視で厳選スタジオとマッチング" },
+        { num: "03", title: "制作と協業", desc: "制作、レビュー、修正を一つの流れで進行" },
+        { num: "04", title: "納品と拡張", desc: "最終版を承認し成果の出るクリエイティブを展開" }
+      ]
+    },
+    ko: {
+      eyebrow: "작동 방식",
+      title: "브리프부터 최종본까지 하나의 제작 흐름",
+      subtitle: "",
+      items: [
+        { num: "01", title: "비전 공유", desc: "브리프와 레퍼런스를 몇 분 만에 업로드" },
+        { num: "02", title: "매칭 및 기획", desc: "포트폴리오 우선 방식으로 검증된 스튜디오 매칭" },
+        { num: "03", title: "제작과 협업", desc: "제작, 리뷰, 수정이 한 흐름에서 진행" },
+        { num: "04", title: "납품과 확장", desc: "최종본을 승인하고 우수한 소재를 확장" }
+      ]
+    },
+    ms: {
+      eyebrow: "CARA IA BERFUNGSI",
+      title: "Daripada brief ke final cut, satu aliran produksi",
+      subtitle: "",
+      items: [
+        { num: "01", title: "Kongsi visi anda", desc: "Muat naik brief dan rujukan dalam beberapa minit." },
+        { num: "02", title: "Padan & rancang", desc: "Padanan portfolio dengan studio yang disaring." },
+        { num: "03", title: "Cipta & bekerjasama", desc: "Produksi, semakan dan pembetulan dalam satu aliran." },
+        { num: "04", title: "Hantar & skala", desc: "Luluskan final cut dan kembangkan kreatif terbaik." }
+      ]
+    },
+    km: {
+      eyebrow: "របៀបដំណើរការ",
+      title: "ពី brief ទៅ final cut ក្នុងលំហូរផលិតកម្មតែមួយ",
+      subtitle: "",
+      items: [
+        { num: "01", title: "ចែករំលែកទស្សនៈ", desc: "ផ្ទុក brief និងឯកសារយោងក្នុងប៉ុន្មាននាទី" },
+        { num: "02", title: "ផ្គូផ្គង និងរៀបចំផែនការ", desc: "ផ្គូផ្គងតាម portfolio ជាមួយស្ទូឌីយោដែលបានជ្រើស" },
+        { num: "03", title: "ផលិត និងសហការ", desc: "ផលិត ពិនិត្យ និងកែប្រែក្នុងលំហូរតែមួយ" },
+        { num: "04", title: "ប្រគល់ និងពង្រីក", desc: "អនុម័ត final cut ហើយពង្រីក creative ដែលឈ្នះ" }
+      ]
+    },
+    th: {
+      eyebrow: "วิธีการทำงาน",
+      title: "จากบรีฟถึงไฟนอลคัตในเวิร์กโฟลว์เดียว",
+      subtitle: "",
+      items: [
+        { num: "01", title: "แชร์วิสัยทัศน์", desc: "อัปโหลดบรีฟและเรฟเฟอเรนซ์ภายในไม่กี่นาที" },
+        { num: "02", title: "จับคู่และวางแผน", desc: "จับคู่จากพอร์ตโฟลิโอกับสตูดิโอที่คัดแล้ว" },
+        { num: "03", title: "สร้างและร่วมงาน", desc: "ผลิต รีวิว และแก้ไขในกระบวนการเดียว" },
+        { num: "04", title: "ส่งมอบและขยายผล", desc: "อนุมัติไฟนอลคัตและขยายงานที่ชนะ" }
+      ]
+    },
+    vi: {
+      eyebrow: "CÁCH HOẠT ĐỘNG",
+      title: "Từ brief đến final cut trong một quy trình sản xuất",
+      subtitle: "",
+      items: [
+        { num: "01", title: "Chia sẻ tầm nhìn", desc: "Tải brief và tài liệu tham khảo chỉ trong vài phút." },
+        { num: "02", title: "Ghép & lên kế hoạch", desc: "Ghép studio đã tuyển chọn theo độ phù hợp portfolio." },
+        { num: "03", title: "Sản xuất & cộng tác", desc: "Sản xuất, duyệt và chỉnh sửa trong cùng một luồng." },
+        { num: "04", title: "Giao & mở rộng", desc: "Duyệt final cut và mở rộng creative hiệu quả." }
+      ]
+    },
+    fr: {
+      eyebrow: "FONCTIONNEMENT",
+      title: "Du brief au final cut, un seul flux de production",
+      subtitle: "",
+      items: [
+        { num: "01", title: "Partagez votre vision", desc: "Téléversez votre brief et vos références en quelques minutes." },
+        { num: "02", title: "Matching & plan", desc: "Matching orienté portfolio avec des studios sélectionnés." },
+        { num: "03", title: "Créer & collaborer", desc: "Production, revue et révisions dans un seul flux." },
+        { num: "04", title: "Livrer & scaler", desc: "Validez le final cut et déployez les meilleures créations." }
+      ]
+    },
+    es: {
+      eyebrow: "CÓMO FUNCIONA",
+      title: "Del brief al corte final, un solo flujo de producción",
+      subtitle: "",
+      items: [
+        { num: "01", title: "Comparte tu visión", desc: "Sube el brief y referencias en minutos." },
+        { num: "02", title: "Match y plan", desc: "Matching por portfolio con estudios seleccionados." },
+        { num: "03", title: "Crea y colabora", desc: "Producción, revisión y cambios en un solo flujo." },
+        { num: "04", title: "Entrega y escala", desc: "Aprueba el final cut y escala la creatividad ganadora." }
+      ]
+    }
+  },
+  work: {
+    "zh-TW": { eyebrow: "精選作品", title: "作品自己會說話", featured: "精選案例", viewAll: "查看全部案例" },
+    ja: { eyebrow: "最近の制作実績", title: "作品がすべてを語ります", featured: "注目", viewAll: "すべての事例を見る" },
+    ko: { eyebrow: "최근 작업", title: "작품이 스스로 말합니다", featured: "추천", viewAll: "전체 사례 보기" },
+    ms: { eyebrow: "KERJA TERKINI", title: "Hasil kerja yang bercakap sendiri", featured: "Pilihan", viewAll: "Lihat semua kajian kes" },
+    km: { eyebrow: "ការងារថ្មីៗ", title: "ស្នាដៃនិយាយដោយខ្លួនវា", featured: "ពិសេស", viewAll: "មើលករណីសិក្សាទាំងអស់" },
+    th: { eyebrow: "ผลงานล่าสุด", title: "ผลงานพูดแทนตัวเอง", featured: "แนะนำ", viewAll: "ดูเคสทั้งหมด" },
+    vi: { eyebrow: "DỰ ÁN GẦN ĐÂY", title: "Tác phẩm tự nói lên chất lượng", featured: "Nổi bật", viewAll: "Xem tất cả case study" },
+    fr: { eyebrow: "RÉALISATIONS RÉCENTES", title: "Des travaux qui parlent d'eux-mêmes", featured: "À la une", viewAll: "Voir tous les cas" },
+    es: { eyebrow: "TRABAJOS RECIENTES", title: "Trabajos que hablan por sí solos", featured: "Destacado", viewAll: "Ver todos los casos" }
+  },
+  features: {
+    "zh-TW": {
+      networkTitle: "創作者網絡",
+      networkItems: ["嚴選創作者", "作品認證", "交付評分", "平台託管"],
+      trustTitle: "信任與託管",
+      trustItems: ["付款保護", "審片版水印", "版本記錄", "滿意後結算"]
+    },
+    ja: {
+      networkTitle: "クリエイターネットワーク",
+      networkItems: ["厳選クリエイター", "作品認証", "納品評価", "プラットフォーム預託"],
+      trustTitle: "信頼とエスクロー",
+      trustItems: ["支払い保護", "レビュー用ウォーターマーク", "バージョン履歴", "承認後に支払い"]
+    },
+    ko: {
+      networkTitle: "크리에이터 네트워크",
+      networkItems: ["엄선된 크리에이터", "작품 인증", "납품 평점", "플랫폼 에스크로"],
+      trustTitle: "신뢰와 에스크로",
+      trustItems: ["결제 보호", "리뷰 워터마크", "버전 기록", "만족 시 정산"]
+    },
+    ms: {
+      networkTitle: "Rangkaian pencipta",
+      networkItems: ["Pencipta dipilih", "Pensijilan kerja", "Penilaian penghantaran", "Escrow platform"],
+      trustTitle: "Kepercayaan & escrow",
+      trustItems: ["Perlindungan bayaran", "Watermark semakan", "Sejarah versi", "Bayar apabila puas hati"]
+    },
+    km: {
+      networkTitle: "បណ្តាញអ្នកបង្កើត",
+      networkItems: ["អ្នកបង្កើតដែលបានជ្រើស", "បញ្ជាក់ស្នាដៃ", "វាយតម្លៃការប្រគល់", "escrow វេទិកា"],
+      trustTitle: "ទំនុកចិត្ត និង escrow",
+      trustItems: ["ការពារការទូទាត់", "watermark ពិនិត្យ", "ប្រវត្តិ version", "ទូទាត់ពេលពេញចិត្ត"]
+    },
+    th: {
+      networkTitle: "เครือข่ายครีเอเตอร์",
+      networkItems: ["ครีเอเตอร์ที่คัดแล้ว", "รับรองผลงาน", "คะแนนการส่งมอบ", "เอสโครว์แพลตฟอร์ม"],
+      trustTitle: "ความเชื่อมั่นและเอสโครว์",
+      trustItems: ["คุ้มครองการชำระเงิน", "ลายน้ำสำหรับรีวิว", "ประวัติเวอร์ชัน", "จ่ายเมื่อพอใจ"]
+    },
+    vi: {
+      networkTitle: "Mạng lưới nhà sáng tạo",
+      networkItems: ["Creator được tuyển chọn", "Chứng nhận tác phẩm", "Đánh giá giao hàng", "Ký quỹ nền tảng"],
+      trustTitle: "Niềm tin & ký quỹ",
+      trustItems: ["Bảo vệ thanh toán", "Watermark bản duyệt", "Lịch sử phiên bản", "Thanh toán khi hài lòng"]
+    },
+    fr: {
+      networkTitle: "Réseau de créateurs",
+      networkItems: ["Créateurs sélectionnés", "Certification des travaux", "Notes de livraison", "Escrow plateforme"],
+      trustTitle: "Confiance & escrow",
+      trustItems: ["Protection du paiement", "Watermarks de revue", "Historique des versions", "Paiement après satisfaction"]
+    },
+    es: {
+      networkTitle: "Red de creadores",
+      networkItems: ["Creadores seleccionados", "Certificación de trabajos", "Calificaciones de entrega", "Escrow de plataforma"],
+      trustTitle: "Confianza y escrow",
+      trustItems: ["Protección de pagos", "Marcas de agua de revisión", "Historial de versiones", "Paga cuando estés conforme"]
+    }
+  },
+  cta: {
+    "zh-TW": {
+      title: "把下一次廣告專案放進真正的製作系統",
+      subtitle: "從結構化需求、製作方匹配、里程碑託管，到團隊可用的審片工作室，一次完成",
+      primary: "啟動投放專案",
+      secondary: "聯絡專家"
+    },
+    ja: {
+      title: "次のキャンペーンを本物の制作システムへ",
+      subtitle: "構造化ブリーフ、スタジオマッチング、保護されたマイルストーン、チームが使えるレビュー室から始めましょう。",
+      primary: "プロジェクトを始める",
+      secondary: "専門家に相談"
+    },
+    ko: {
+      title: "다음 캠페인을 진짜 제작 시스템으로 옮기세요",
+      subtitle: "구조화된 브리프, 매칭된 스튜디오, 보호되는 마일스톤, 팀이 실제로 쓰는 리뷰룸에서 시작하세요.",
+      primary: "프로젝트 시작하기",
+      secondary: "전문가와 상담"
+    },
+    ms: {
+      title: "Bawa kempen seterusnya ke dalam sistem produksi sebenar",
+      subtitle: "Mulakan dengan brief berstruktur, studio yang dipadankan, milestone terlindung dan bilik semakan yang benar-benar boleh digunakan.",
+      primary: "Mulakan projek anda",
+      secondary: "Bercakap dengan pakar"
+    },
+    km: {
+      title: "យក campaign បន្ទាប់របស់អ្នកចូលក្នុងប្រព័ន្ធផលិតកម្មពិត",
+      subtitle: "ចាប់ផ្តើមពី brief មានរចនាសម្ព័ន្ធ ស្ទូឌីយោដែលបានផ្គូផ្គង milestone ការពារ និងបន្ទប់ពិនិត្យដែលក្រុមអាចប្រើបានពិត។",
+      primary: "ចាប់ផ្តើមគម្រោង",
+      secondary: "ពិភាក្សាជាមួយអ្នកជំនាញ"
+    },
+    th: {
+      title: "นำแคมเปญถัดไปเข้าสู่ระบบผลิตจริง",
+      subtitle: "เริ่มด้วยบรีฟที่เป็นระบบ สตูดิโอที่จับคู่แล้ว milestone ที่ได้รับการคุ้มครอง และห้องรีวิวที่ทีมใช้งานได้จริง",
+      primary: "เริ่มโปรเจกต์",
+      secondary: "คุยกับผู้เชี่ยวชาญ"
+    },
+    vi: {
+      title: "Đưa chiến dịch tiếp theo vào một hệ thống sản xuất thật sự",
+      subtitle: "Bắt đầu bằng brief có cấu trúc, studio phù hợp, các mốc được bảo vệ và phòng duyệt mà đội ngũ có thể dùng thật.",
+      primary: "Bắt đầu dự án",
+      secondary: "Trao đổi với chuyên gia"
+    },
+    fr: {
+      title: "Faites entrer votre prochaine campagne dans un vrai système de production",
+      subtitle: "Démarrez avec un brief structuré, des studios associés, des jalons protégés et une salle de revue réellement utilisable par votre équipe.",
+      primary: "Lancer votre projet",
+      secondary: "Parler à un expert"
+    },
+    es: {
+      title: "Lleva tu próxima campaña a un sistema real de producción",
+      subtitle: "Empieza con un brief estructurado, estudios seleccionados, hitos protegidos y una sala de revisión que tu equipo sí puede usar.",
+      primary: "Empezar proyecto",
+      secondary: "Hablar con un experto"
+    }
+  }
+};
+
+function resolveMarketingCopyLocale(locale: Locale | MarketingLocale) {
+  if (locale === "zh") return "zh";
+  if (locale === "zh-CN") return "zh";
+  return locale;
+}
+
 export function landingText<K extends keyof typeof landingCopy>(
   section: K,
-  locale: Locale
+  locale: Locale | MarketingLocale
 ): (typeof landingCopy)[K]["en"] {
-  return landingCopy[section][locale] as (typeof landingCopy)[K]["en"];
+  const normalizedLocale = resolveMarketingCopyLocale(locale);
+  const translated = landingCopyTranslations[section]?.[normalizedLocale as MarketingLocale];
+  if (translated) return translated as unknown as (typeof landingCopy)[K]["en"];
+  if (normalizedLocale === "zh" || isChineseLanguage(normalizedLocale)) {
+    return landingCopy[section].zh as unknown as (typeof landingCopy)[K]["en"];
+  }
+  return landingCopy[section].en as (typeof landingCopy)[K]["en"];
 }

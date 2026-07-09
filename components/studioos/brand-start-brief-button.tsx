@@ -1,5 +1,7 @@
+"use client";
+
 import type { ReactNode } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { buttonVariants } from "@/components/ui/button";
 import type { Locale } from "@/lib/i18n";
 import { brandWizardStep1Href } from "@/lib/i18n";
@@ -21,13 +23,16 @@ export function BrandStartBriefButton({
   size?: "default" | "sm" | "lg";
   children?: ReactNode;
 }) {
+  const router = useRouter();
+  const href = brandWizardStep1Href(locale, projectId);
+
   return (
-    <Link
-      href={brandWizardStep1Href(locale, projectId)}
-      prefetch={true}
+    <button
+      type="button"
+      onClick={() => router.push(href)}
       className={cn(buttonVariants({ size }), "cursor-pointer", className)}
     >
       {children ?? label}
-    </Link>
+    </button>
   );
 }

@@ -10,6 +10,7 @@ import { withLocale } from "@/lib/i18n";
 import type { StoredDeliverable, StoredOrder } from "@/lib/order-types";
 import type { ReviewComment } from "@/lib/studioos/review-store";
 import type { ReviewPortalUiState } from "@/features/review/review-portal-ui-state";
+import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
 import { cn } from "@/lib/utils";
 
 const copy = {
@@ -114,6 +115,7 @@ export function BrandReviewWorkflowPanel({
     reviewUi?.canDecide ??
     Boolean(order && (order.status === "review" || order.status === "revision") && hasVersions);
   const isCompleted = reviewUi?.orderApproved ?? order?.status === "completed";
+  const brandReviewHref = brandPortalRoutes.projectReview(projectId ?? order?.project_id ?? order?.id ?? "");
 
   if (!order) {
     return (
@@ -199,7 +201,7 @@ export function BrandReviewWorkflowPanel({
               <p className="text-xs text-zinc-500">{t.studioRoomHint}</p>
             </div>
             <Button asChild size="sm" variant="outline" className="rounded-full">
-              <Link href={withLocale(`/studio/review/${order.id}`, locale)} target="_blank" rel="noreferrer">
+              <Link href={withLocale(brandReviewHref, locale)} target="_blank" rel="noreferrer">
                 {creator?.name ?? "Studio"} · {t.studioRoom}
               </Link>
             </Button>

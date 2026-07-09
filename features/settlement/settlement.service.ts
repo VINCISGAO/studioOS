@@ -201,6 +201,10 @@ export class SettlementService {
 
     const settlementState = this.resolveState(ctx);
     const locale = input.locale ?? "en";
+    const auth = this.assertCanRelease(ctx, input.actor);
+    if (!auth.ok) {
+      return { ok: false, error: auth.error };
+    }
 
     if (settlementState === SettlementState.COMPLETED) {
       const preview = await this.previewForLegacyProject(resolveLegacyProjectId(ctx.campaign));
@@ -244,11 +248,6 @@ export class SettlementService {
 
     if (settlementState !== SettlementState.READY) {
       return { ok: false, error: "not-ready" };
-    }
-
-    const auth = this.assertCanRelease(ctx, input.actor);
-    if (!auth.ok) {
-      return { ok: false, error: auth.error };
     }
 
     const releaseCheck = safeTransition(

@@ -4,6 +4,7 @@ import type { AuthUser } from "@/features/auth/permission.service";
 import { appError } from "@/lib/core/errors";
 import { hasDatabaseUrl, prisma } from "@/lib/core/database/prisma";
 import { getAppBaseUrl } from "@/lib/app-url";
+import { normalizeInternalActionHref } from "@/lib/studioos/internal-action-href";
 import type { NotificationCategory, Prisma } from "@prisma/client";
 
 type NotifyInput = {
@@ -100,6 +101,9 @@ export class NotificationService {
     this.assertDb();
     const type = normalizeNotificationType(input);
     const category = resolveNotificationCategory(input);
+    const actionPath = normalizeInternalActionHref(input.actionUrl, "en", "");
+    const actionUrl = actionPath || undefined;
+    const emailActionUrl = actionUrl ? `${getAppBaseUrl()}${actionUrl}` : undefined;
 
     let inApp = await notificationRepository.create({
       userId: input.userId,
@@ -110,7 +114,7 @@ export class NotificationService {
       metadataJson: input.metadata,
       title: input.title,
       content: input.content,
-      actionUrl: input.actionUrl,
+      actionUrl,
       priority: input.priority
     });
 
@@ -137,7 +141,7 @@ export class NotificationService {
         const email = await buildSimpleNotificationEmail({
           headline: input.title,
           body: input.content,
-          actionUrl: input.actionUrl,
+          actionUrl: emailActionUrl,
           actionLabel: "View in VINCIS",
           template: input.template,
           metadata: input.metadata

@@ -20,6 +20,7 @@
     "github:push-all": "node scripts/git-push-all.mjs",
     "github:homepage": "node scripts/git-push-homepage.mjs",
     "homepage:anchor": "node scripts/anchor-homepage-golden.mjs",
+    "marketing:upload-hero-videos": "node scripts/upload-home-hero-videos-r2.mjs",
     "github:identity": "bash scripts/git-identity.sh && git config user.name && git config user.email",
     "reset:demo-review": "node scripts/reset-mvp-demo.mjs",
     "reset:demo-review-flow": "node --require ./scripts/helpers/load-env.cjs --import tsx scripts/reset-demo-review-flow.ts",

@@ -19,6 +19,14 @@ function redirectTo(request: Request, path: string) {
   return NextResponse.redirect(new URL(path, request.url), { status: 303 });
 }
 
+function allowDemoSocialLogin() {
+  return (
+    process.env.VINCIS_ENABLE_DEMO_LOGIN === "1" ||
+    process.env.STUDIOOS_ENABLE_DEMO_LOGIN === "1" ||
+    process.env.NODE_ENV !== "production"
+  );
+}
+
 function loginErrorPath({
   lang,
   role,
@@ -40,6 +48,10 @@ export async function POST(request: Request) {
   const provider = String(formData.get("provider") ?? "") as DemoSocialProvider;
   const role = String(formData.get("expected_role") ?? "") === "creator" ? "creator" : "brand";
   const nextPath = String(formData.get("next") ?? "").trim();
+
+  if (!allowDemoSocialLogin()) {
+    return redirectTo(request, loginErrorPath({ lang, role, error: "demo-login-disabled" }));
+  }
 
   if (!["google", "apple", "alipay", "wechat", "qq"].includes(provider)) {
     return redirectTo(request, loginErrorPath({ lang, role, error: "unsupported-provider" }));

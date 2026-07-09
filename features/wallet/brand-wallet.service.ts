@@ -11,6 +11,26 @@ function createInvoiceId(prefix: string) {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
+function isProductionRuntime() {
+  return process.env.NODE_ENV === "production" || process.env.VERCEL === "1";
+}
+
+function allowManualWalletRecharge() {
+  return (
+    process.env.VINCIS_ENABLE_MANUAL_WALLET_RECHARGE === "1" ||
+    process.env.STUDIOOS_ENABLE_MANUAL_WALLET_RECHARGE === "1" ||
+    !isProductionRuntime()
+  );
+}
+
+function allowSyntheticInvoicePayment() {
+  return (
+    process.env.VINCIS_ENABLE_DEMO_PAYMENT === "1" ||
+    process.env.STUDIOOS_ENABLE_DEMO_PAYMENT === "1" ||
+    !isProductionRuntime()
+  );
+}
+
 export type BrandWalletChargeResult = {
   paymentSource: "balance" | "invoice";
   invoiceId: string | null;
@@ -45,6 +65,10 @@ export async function rechargeBrandWallet(input: {
   amount: number;
   description?: string;
 }) {
+  if (!allowManualWalletRecharge()) {
+    return { ok: false as const, error: "production-disabled" };
+  }
+
   const snapshot = await getBrandWalletSnapshot(input.brandEmail, 1);
   if (!snapshot.enabled) {
     return { ok: false as const, error: "wallet-unavailable" };
@@ -81,7 +105,7 @@ export async function resetBrandWalletBalanceForTesting(input: {
   brandEmail: string;
   description?: string;
 }) {
-  if (process.env.NODE_ENV === "production") {
+  if (isProductionRuntime()) {
     return { ok: false as const, error: "production-disabled" };
   }
 
@@ -156,6 +180,17 @@ export async function payBrandWalletCharge(input: {
   const shortfallAmount = roundMoney(amount - availableBefore);
   const invoiceId = createInvoiceId(input.invoicePrefix);
   if (input.payInvoice) {
+    if (!allowSyntheticInvoicePayment()) {
+      return {
+        paymentSource: "invoice",
+        invoiceId,
+        availableBefore,
+        shortfallAmount,
+        balanceAfter: availableBefore,
+        paid: false
+      };
+    }
+
     await walletRepository.applyLedgerUpdate({
       walletId: wallet.id,
       campaignId: input.campaignId,

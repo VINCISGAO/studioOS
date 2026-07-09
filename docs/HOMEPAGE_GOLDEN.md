@@ -2,7 +2,7 @@
 
 **Status:** Canonical anchor for the marketing homepage.
 
-**Current golden baseline:** the owner-approved homepage in the current working tree.
+**Current golden baseline:** owner-approved homepage re-anchored **2026-07-09** — multilingual hero videos, footer redesign, landing section polish, capsule eyebrows.
 
 **Legacy branch:** `homepage-golden`  
 **Legacy tag:** `homepage-v1`
@@ -26,19 +26,29 @@ Bug fixes, accessibility improvements, localization, and content updates — **o
 git checkout homepage-v1 -- components/marketing/
 git checkout homepage-golden -- app/page.tsx
 git checkout homepage-golden -- components/marketing/
+git checkout homepage-golden -- components/language-switcher.tsx
+git checkout homepage-golden -- lib/marketing/
+git checkout homepage-golden -- app/globals.css
 git checkout homepage-golden -- public/images/home-hero-space.png
 git checkout homepage-golden -- public/images/login-space-bg.png
 git checkout homepage-golden -- public/images/login/
+git checkout homepage-golden -- public/images/social-sources/
 ```
+
+Hero videos are on R2/CDN (not git). Re-upload locally with `npm run marketing:upload-hero-videos` when filenames change.
 
 ## Anchor contents (homepage stack)
 
 - `app/page.tsx` → `HomeLandingPage` / `CinematicHomePage`
-- `components/marketing/**` — cinematic hero, sections, landing copy wiring
-- `lib/marketing/landing-copy.ts` — hero / cost / why copy
-- `lib/studioos/marketing-headline-font.ts` — silver gradient headline
+- `app/globals.css` — landing / marketing utility styles used by homepage
+- `components/marketing/**` — cinematic hero, hero video, sections, footer, landing copy wiring
+- `components/language-switcher.tsx` — footer language control (icon variant)
+- `lib/marketing/**` — cinematic + landing copy
 - `app/api/home-hero-space/route.ts` + `lib/studioos/home-hero-space-asset.ts`
-- `public/images/home-hero-space.png` and login marketing images
+- `public/images/home-hero-space.png`, login marketing images, `public/images/social-sources/` (footer SVGs)
+- `public/videos/home/hero/*.mp4` — multilingual homepage hero MP4s (**hosted on R2/CDN**, not in git; upload via `npm run marketing:upload-hero-videos`)
+- `NEXT_PUBLIC_MARKETING_CDN_URL` — public CDN base for hero videos in production
+- `lib/studioos/marketing-headline-font.ts` — silver gradient headline
 
 ## Owner override
 

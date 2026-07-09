@@ -7,6 +7,7 @@ import {
 import { isObjectStorageConfigured } from "@/lib/core/config/video";
 import type { Locale } from "@/lib/i18n";
 import { deleteObject, getObjectMetadata, getObjectRange, putObject } from "@/lib/studioos/object-storage";
+import { looksLikeMp4OrMov } from "@/lib/studioos/upload-magic-bytes";
 
 const UPLOAD_DIR = path.join(process.cwd(), ".data", "uploads", "review");
 
@@ -50,6 +51,12 @@ export async function saveReviewVideoUpload(
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
+  if (!looksLikeMp4OrMov(buffer)) {
+    return {
+      ok: false,
+      error: locale === "zh" ? "视频文件内容与 MP4 / MOV 格式不匹配" : "Video content does not match MP4 / MOV format"
+    };
+  }
   const extension = isMov ? "mov" : "mp4";
   if (isObjectStorageConfigured()) {
     try {

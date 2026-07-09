@@ -27,6 +27,13 @@ const PAYABLE_CAMPAIGN_STATES = new Set<string>([
   CampaignState.ESCROW_PENDING,
 ]);
 
+function allowDemoPaymentFallback() {
+  if (process.env.VINCIS_ENABLE_DEMO_PAYMENT === "1" || process.env.STUDIOOS_ENABLE_DEMO_PAYMENT === "1") {
+    return true;
+  }
+  return process.env.NODE_ENV !== "production" && process.env.VERCEL !== "1";
+}
+
 export type BrandCampaignPaymentResult =
   | { ok: true; mode: "demo"; alreadyFunded: boolean }
   | { ok: true; mode: "stripe"; checkoutUrl: string }
@@ -152,6 +159,9 @@ export class PaymentService {
     }
 
     if (!stripeCheckoutService.isConfigured()) {
+      if (!allowDemoPaymentFallback()) {
+        throw appError("SYSTEM_ERROR", "Stripe checkout is not configured");
+      }
       return {
         mode: "demo" as const,
         escrow: serializeEscrow(escrow!),
@@ -265,6 +275,9 @@ export class PaymentService {
   }
 
   async demoPay(campaignId: string, user: AuthUser) {
+    if (!allowDemoPaymentFallback()) {
+      throw appError("FORBIDDEN", "Demo payment is disabled in production");
+    }
     const campaign = await this.getCampaignForPayment(campaignId, user);
     PermissionService.assert(user, "payment.read");
 

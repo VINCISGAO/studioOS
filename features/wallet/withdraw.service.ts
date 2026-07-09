@@ -10,6 +10,13 @@ function roundMoney(value: number) {
   return Math.round(value * 100) / 100;
 }
 
+function allowDemoWithdrawComplete() {
+  if (process.env.VINCIS_ENABLE_DEMO_WITHDRAW_COMPLETE === "1" || process.env.STUDIOOS_ENABLE_DEMO_WITHDRAW_COMPLETE === "1") {
+    return true;
+  }
+  return process.env.NODE_ENV !== "production" && process.env.VERCEL !== "1";
+}
+
 export class WithdrawService {
   private assertDb() {
     if (!hasDatabaseUrl()) throw appError("SYSTEM_ERROR", "DATABASE_URL not configured");
@@ -127,6 +134,9 @@ export class WithdrawService {
 
   /** Demo path — creator confirms payout locally without admin. */
   async demoCompleteOwnWithdraw(withdrawId: string, user: AuthUser) {
+    if (!allowDemoWithdrawComplete()) {
+      throw appError("FORBIDDEN", "Demo withdrawal completion is disabled in production");
+    }
     return this.completeWithdraw(withdrawId, user);
   }
 }

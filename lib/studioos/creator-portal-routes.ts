@@ -20,7 +20,10 @@ export const creatorPortalRoutes = {
   dashboard: "/studio",
   delivery: "/studio/projects",
   deliveryForOrder: (orderId: string) => `/studio/projects/${orderId}`,
-  campaignReview: (campaignId: string) => `/brand/projects/${campaignId}/review`
+  campaignReview: (campaignId: string) => {
+    void campaignId;
+    return "/studio/review";
+  }
 } as const;
 
 export function localizedCreatorRoute(path: string, locale: Locale) {

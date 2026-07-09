@@ -1,11 +1,12 @@
 import { cookies } from "next/headers";
-import { DEMO_SESSION_COOKIE, hasSupabaseConfig } from "@/lib/auth-config";
+import { DEMO_SESSION_COOKIE } from "@/lib/auth-config";
 import { parseServerDemoSession } from "@/lib/demo-session-server";
 import { getCreatorById } from "@/lib/creator-service";
 import {
   isCreatorAccountDeleted,
   resolveCreatorIdByEmail
 } from "@/lib/studioos/creator-settings-service";
+import { getCurrentSession } from "@/lib/session-user";
 import type { Creator } from "@/lib/types";
 
 const DEMO_CREATOR_IDS: Record<string, string> = {
@@ -19,9 +20,6 @@ export function getCreatorIdForDemoEmail(email: string) {
 }
 
 export async function resolveCurrentCreatorIdFromEmail(email: string) {
-  if (hasSupabaseConfig()) {
-    return null;
-  }
   return resolveCreatorIdByEmail(email);
 }
 
@@ -29,11 +27,12 @@ export async function getCurrentCreatorId(): Promise<string | null> {
   const cookieStore = await cookies();
   const session = parseServerDemoSession(cookieStore.get(DEMO_SESSION_COOKIE)?.value);
 
-  if (!session || session.role !== "creator") {
+  const currentSession = session?.role === "creator" ? session : await getCurrentSession();
+  if (!currentSession || currentSession.role !== "creator") {
     return null;
   }
 
-  const creatorId = await resolveCreatorIdByEmail(session.email);
+  const creatorId = await resolveCreatorIdByEmail(currentSession.email);
   if (!creatorId) {
     return null;
   }

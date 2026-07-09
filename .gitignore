@@ -55,6 +55,7 @@ Database_Backup_*.sql
 # Large / generated media (optional local dev artifacts)
 public/uploads/**/*.mp4
 public/uploads/**/*.mov
+public/videos/home/hero/*.mp4
 
 # Test artifacts
 playwright-report/

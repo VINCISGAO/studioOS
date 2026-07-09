@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { MAX_DELIVERABLE_VIDEO_BYTES } from "@/lib/studioos/deliverable-video-policy-shared";
 import { reviewVideoObjectKey, reviewVideoPublicUrl } from "@/lib/studioos/video-upload";
 import { createMultipartObjectUpload } from "@/lib/studioos/object-storage";
+import { assertReviewVideoUploadGate } from "@/lib/studioos/review-video-upload-gate";
 
 export const runtime = "nodejs";
 
@@ -65,6 +66,10 @@ export async function POST(request: Request) {
   const order = await getOrder(orderId);
   if (!order || order.creator_id !== creatorId) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+  }
+  const campaignGate = await assertReviewVideoUploadGate({ order, creatorId });
+  if (!campaignGate.ok) {
+    return NextResponse.json({ ok: false, error: campaignGate.error }, { status: campaignGate.status });
   }
   if (!["paid", "in_production", "revision", "review"].includes(order.status)) {
     return NextResponse.json({ ok: false, error: "Cannot upload in the current order status" }, { status: 400 });

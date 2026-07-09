@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { resolveBrandBriefEmailFromCookieValues } from "@/lib/brand-brief-session";
 import { DEMO_SESSION_COOKIE, VISITOR_COOKIE, hasSupabaseConfig } from "@/lib/auth-config";
 import { parseServerDemoSession } from "@/lib/demo-session-server";
+import { getCurrentSession } from "@/lib/session-user";
 
 export { brandDraftEmailForSession } from "@/lib/brand-brief-session";
 
@@ -10,6 +11,11 @@ export async function getCurrentClientEmail(): Promise<string | null> {
   const session = parseServerDemoSession(cookieStore.get(DEMO_SESSION_COOKIE)?.value);
   if (session?.role === "client") {
     return session.email.toLowerCase();
+  }
+
+  const currentSession = await getCurrentSession();
+  if (currentSession?.role === "client") {
+    return currentSession.email.toLowerCase();
   }
 
   if (!hasSupabaseConfig()) {
@@ -31,13 +37,13 @@ export async function resolveBrandBriefClientEmail(): Promise<string | null> {
   );
 }
 
-/** Brand portal actions — same identity resolution as the campaign wizard page. */
+/** Brand portal actions require an authenticated Brand, not a guest wizard draft. */
 export async function requireBrandPortalClientEmail(): Promise<string> {
-  const email = (await resolveBrandBriefClientEmail()) ?? (await getCurrentClientEmail());
-  if (!email) {
+  const session = await getCurrentSession();
+  if (!session || session.role !== "client") {
     throw new Error("Unauthorized");
   }
-  return email.toLowerCase();
+  return session.email.toLowerCase();
 }
 
 export async function getOrCreateVisitorId(): Promise<string> {

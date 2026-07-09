@@ -152,7 +152,7 @@ export class ReviewBridgeService {
         }
       }
 
-      if (current.payment_status !== "unpaid" && current.status !== "waiting_payment") {
+      if (current.payment_status !== "unpaid") {
         await syncOrderToInProduction(current.id);
       }
       logger.info("Legacy order synced after Prisma creator selection", {

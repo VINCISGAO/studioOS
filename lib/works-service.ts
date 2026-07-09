@@ -102,6 +102,13 @@ async function upsertDatabaseWork(work: CreatorWork): Promise<CreatorWork | null
 
   const creatorProfileId = await resolveCreatorProfileIdForLegacyId(work.creator_id);
   if (!creatorProfileId) return null;
+  const existing = await prisma.creatorPortfolioWork.findUnique({
+    where: { id: work.id },
+    select: { creatorId: true, deletedAt: true }
+  });
+  if (existing && existing.creatorId !== creatorProfileId) {
+    throw new Error("Not allowed to modify another creator's work");
+  }
 
   const saved = await prisma.creatorPortfolioWork.upsert({
     where: { id: work.id },

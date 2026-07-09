@@ -2,7 +2,7 @@
 
 This folder is the **canonical marketing homepage**.
 
-**Golden baseline:** the current owner-approved homepage in this working tree. Treat the current homepage as the latest golden standard unless the owner explicitly re-anchors it. Legacy anchors: `homepage-golden` branch · `homepage-v1` tag · see [`docs/HOMEPAGE_GOLDEN.md`](../docs/HOMEPAGE_GOLDEN.md)
+**Golden baseline:** owner-approved homepage re-anchored **2026-07-09** (multilingual hero videos, footer redesign, landing polish). Legacy anchors: `homepage-golden` branch · `homepage-v1` tag · see [`docs/HOMEPAGE_GOLDEN.md`](../docs/HOMEPAGE_GOLDEN.md)
 
 ## Agent policy
 
@@ -37,8 +37,12 @@ If unsure, **preserve the existing homepage**.
 This freeze applies to the marketing homepage stack, including (non-exhaustive):
 
 - `components/marketing/**`
+- `components/language-switcher.tsx` (footer language control)
+- `lib/marketing/**`
 - `app/page.tsx` and homepage-related app routes that render this UI
+- `app/globals.css` (marketing / landing styles)
 - homepage assets under `public/images/` used by the cinematic landing
+- hero videos under `public/videos/home/hero/` (local dev only; production via R2/CDN + `NEXT_PUBLIC_MARKETING_CDN_URL`)
 
 It does **not** block changes to admin, brand portal, creator portal, APIs, database, or backend features.
 
@@ -49,10 +53,15 @@ If the homepage was changed incorrectly, restore from the golden baseline **with
 ```bash
 git checkout homepage-golden -- app/page.tsx
 git checkout homepage-golden -- components/marketing/
+git checkout homepage-golden -- components/language-switcher.tsx
+git checkout homepage-golden -- lib/marketing/
+git checkout homepage-golden -- app/globals.css
 git checkout homepage-golden -- public/images/home-hero-space.png
 git checkout homepage-golden -- public/images/home-hero-studio.png
 git checkout homepage-golden -- public/images/login-space-bg.png
 git checkout homepage-golden -- public/images/login/
+git checkout homepage-golden -- public/images/social-sources/
+git checkout homepage-golden -- public/videos/home/hero/
 ```
 
 Adjust paths if your golden baseline used different asset names. Prefer the tagged snapshot:

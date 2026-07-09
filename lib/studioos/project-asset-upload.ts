@@ -1,5 +1,6 @@
 import path from "path";
 import { putObject } from "@/lib/studioos/object-storage";
+import { detectImageMimeFromMagicBytes } from "@/lib/studioos/upload-magic-bytes";
 
 const MAX_BYTES = 10 * 1024 * 1024;
 
@@ -77,6 +78,10 @@ export async function saveProjectAssetUpload(
 
   const fileName = `${prefix}_${Date.now()}.${extForMime(mime)}`;
   const buffer = Buffer.from(await file.arrayBuffer());
+  const detectedMime = detectImageMimeFromMagicBytes(buffer);
+  if (!detectedMime || detectedMime !== mime) {
+    return { ok: false, error: "File content does not match the selected image type" };
+  }
   const fileKey = projectAssetObjectKey(projectId, fileName);
   let stored: Awaited<ReturnType<typeof putObject>>;
   try {

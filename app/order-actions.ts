@@ -24,12 +24,21 @@ import { translateForClient } from "@/lib/studioos/translate";
 import { getStripe } from "@/lib/stripe";
 import { syncBrandOrderPaid } from "@/lib/studioos/brand-checkout-service";
 import { campaignRepository } from "@/features/campaign/campaign.repository";
+import { userRepository } from "@/features/auth/user.repository";
 import { reviewPortalService } from "@/features/review/review-portal.service";
+import { settlementService } from "@/features/settlement/settlement.service";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { getAppBaseUrl } from "@/lib/app-url";
 
 function normalizeLang(raw: FormDataEntryValue | null): Locale {
   return String(raw ?? "en") === "zh" ? "zh" : "en";
+}
+
+function allowLegacyDemoPaymentFallback() {
+  if (process.env.VINCIS_ENABLE_DEMO_PAYMENT === "1" || process.env.STUDIOOS_ENABLE_DEMO_PAYMENT === "1") {
+    return true;
+  }
+  return process.env.NODE_ENV !== "production" && process.env.VERCEL !== "1";
 }
 
 function brandPayReturnPath(order: { id: string; project_id?: string | null }, lang: Locale, query: string) {
@@ -108,7 +117,10 @@ export async function acceptQuoteAction(formData: FormData) {
   }
 
   const clientEmail = await getCurrentClientEmail();
-  if (clientEmail && quoteInquiry.client_email.toLowerCase() !== clientEmail.toLowerCase()) {
+  if (!clientEmail) {
+    redirect(withLocale(`/login?role=brand&next=${encodeURIComponent(`/proposal/${inquiryId}`)}`, lang));
+  }
+  if (quoteInquiry.client_email.toLowerCase() !== clientEmail.toLowerCase()) {
     redirect(withLocale(`/proposal/${inquiryId}?error=accept`, lang));
   }
 
@@ -142,7 +154,10 @@ export async function payOrderAction(formData: FormData) {
   }
 
   const clientEmail = await getCurrentClientEmail();
-  if (clientEmail && order.client_email !== clientEmail) {
+  if (!clientEmail) {
+    redirect(withLocale(`/login?role=brand&next=${encodeURIComponent(brandPayReturnPath(order, lang, ""))}`, lang));
+  }
+  if (order.client_email.toLowerCase() !== clientEmail.toLowerCase()) {
     redirect(withLocale("/brand", lang));
   }
 
@@ -180,6 +195,10 @@ export async function payOrderAction(formData: FormData) {
     }
   }
 
+  if (!allowLegacyDemoPaymentFallback()) {
+    redirect(brandPayReturnPath(order, lang, "?error=stripe-not-configured"));
+  }
+
   const paid = await markOrderPaid(orderId);
   if (paid) {
     await syncBrandOrderPaid(paid);
@@ -211,7 +230,7 @@ export async function submitDeliverableAction(formData: FormData) {
   const order = await getOrder(orderId);
 
   if (!creatorId || !order || order.creator_id !== creatorId || !fileUrl) {
-    redirect(withLocale(`/creator/orders/${orderId}?error=deliver`, lang));
+    redirect(withLocale(`/studio/review/${orderId}?error=deliver`, lang));
   }
 
   const clientLocale = getClientPreferredLocale(order.client_email, order.client_locale);
@@ -226,7 +245,7 @@ export async function submitDeliverableAction(formData: FormData) {
   });
 
   if (!deliverable) {
-    redirect(withLocale(`/creator/orders/${orderId}?error=deliver`, lang));
+    redirect(withLocale(`/studio/review/${orderId}?error=deliver`, lang));
   }
 
   await addSystemMessage(
@@ -236,7 +255,7 @@ export async function submitDeliverableAction(formData: FormData) {
       : `Creator submitted deliverable v${deliverable.version}. Waiting for brand review.`
   );
 
-  redirect(withLocale(`/creator/orders/${orderId}?delivered=1`, lang));
+  redirect(withLocale(`/studio/review/${orderId}?delivered=1`, lang));
 }
 
 function brandReviewPath(projectId: string | null | undefined, lang: Locale, query: string) {
@@ -248,9 +267,21 @@ function brandReviewPath(projectId: string | null | undefined, lang: Locale, que
 
 function clientOwnsOrder(clientEmail: string | null, orderEmail: string) {
   if (!clientEmail) {
-    return true;
+    return false;
   }
   return orderEmail.toLowerCase() === clientEmail.toLowerCase();
+}
+
+function resolveSubmittedOrderProject(
+  submittedProjectId: string,
+  orderProjectId: string | null | undefined
+) {
+  const submitted = submittedProjectId.trim() || null;
+  const bound = orderProjectId?.trim() || null;
+  if (submitted && bound && submitted !== bound) {
+    return { ok: false as const, projectId: bound };
+  }
+  return { ok: true as const, projectId: submitted ?? bound };
 }
 
 export async function approveDeliveryAction(formData: FormData) {
@@ -258,11 +289,16 @@ export async function approveDeliveryAction(formData: FormData) {
   const orderId = String(formData.get("order_id") ?? "");
   const projectId = String(formData.get("project_id") ?? "").trim();
   const order = await getOrder(orderId);
-  const targetProjectId = projectId || order?.project_id || null;
 
   if (!order) {
     redirect(withLocale("/dashboard", lang));
   }
+
+  const resolvedProject = resolveSubmittedOrderProject(projectId, order.project_id);
+  if (!resolvedProject.ok) {
+    redirect(withLocale(`/brand?error=project-order-mismatch`, lang));
+  }
+  const targetProjectId = resolvedProject.projectId;
 
   const clientEmail = await getCurrentClientEmail();
   if (!clientOwnsOrder(clientEmail, order.client_email)) {
@@ -280,6 +316,27 @@ export async function approveDeliveryAction(formData: FormData) {
       });
 
       if (result.ok) {
+        const brandUser = await userRepository.ensureBrandPortalUser({
+          email: clientEmail.toLowerCase(),
+          fullName: clientEmail.split("@")[0],
+          companyName: clientEmail.split("@")[0]
+        });
+        if (!brandUser || brandUser.id !== campaign.brandId) {
+          redirect(withLocale("/brand?error=unauthorized", lang));
+        }
+
+        const settlement = await settlementService.releaseForLegacyProject({
+          legacyProjectId: targetProjectId,
+          actor: { id: brandUser.id, role: brandUser.role, email: brandUser.email },
+          locale: lang,
+          orderId
+        });
+        if (!settlement.ok) {
+          const reviewPath = brandReviewPath(targetProjectId, lang, "?error=settlement");
+          redirect(reviewPath ?? withLocale(`/orders/${orderId}?error=settlement`, lang));
+        }
+
+        await approveOrderDelivery(orderId);
         revalidatePath("/studio");
         revalidatePath("/studio/messages");
         revalidatePath(`/brand/projects/${targetProjectId}`);
@@ -325,11 +382,16 @@ export async function requestRevisionAction(formData: FormData) {
   const projectId = String(formData.get("project_id") ?? "").trim();
   const revisionNotes = String(formData.get("revision_notes") ?? "").trim();
   const order = await getOrder(orderId);
-  const targetProjectId = projectId || order?.project_id || null;
 
   if (!order) {
     redirect(withLocale("/dashboard", lang));
   }
+
+  const resolvedProject = resolveSubmittedOrderProject(projectId, order.project_id);
+  if (!resolvedProject.ok) {
+    redirect(withLocale(`/brand?error=project-order-mismatch`, lang));
+  }
+  const targetProjectId = resolvedProject.projectId;
 
   const clientEmail = await getCurrentClientEmail();
   if (!clientOwnsOrder(clientEmail, order.client_email)) {

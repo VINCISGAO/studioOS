@@ -111,6 +111,18 @@ function revalidateReview(orderId: string, projectId?: string | null) {
   }
 }
 
+function resolveOrderProjectId(
+  order: { project_id?: string | null },
+  submittedProjectId: string | null | undefined
+): { ok: true; projectId: string | null } | { ok: false } {
+  const submitted = submittedProjectId?.trim() || null;
+  const orderProjectId = order.project_id?.trim() || null;
+  if (submitted && orderProjectId && submitted !== orderProjectId) {
+    return { ok: false };
+  }
+  return { ok: true, projectId: submitted ?? orderProjectId };
+}
+
 function parseAnnotationsJson(
   raw: FormDataEntryValue | null,
   timestampSec: number,
@@ -832,7 +844,11 @@ export async function requestReviewRevisionAction(formData: FormData) {
     };
   }
 
-  const legacyProjectId = projectId || order.project_id;
+  const resolvedProject = resolveOrderProjectId(order, projectId);
+  if (!resolvedProject.ok) {
+    return { ok: false as const, error: lang === "zh" ? "项目与订单不匹配" : "Project does not match this order" };
+  }
+  const legacyProjectId = resolvedProject.projectId;
   if (hasDatabaseUrl() && legacyProjectId) {
     const campaign = await campaignRepository.findByLegacyProjectId(legacyProjectId);
     if (campaign) {
@@ -949,9 +965,14 @@ export async function unlockPaidRevisionSlotAction(formData: FormData) {
     return { ok: false as const, error: lang === "zh" ? "无权限" : "Unauthorized" };
   }
 
+  const resolvedProject = resolveOrderProjectId(order, projectId);
+  if (!resolvedProject.ok) {
+    return { ok: false as const, error: lang === "zh" ? "项目与订单不匹配" : "Project does not match this order" };
+  }
+
   const result = await paidRevisionService.unlockNextPaidRevisionSlot({
     orderId,
-    projectId: projectId || order.project_id,
+    projectId: resolvedProject.projectId,
     brandEmail: clientEmail,
     locale: lang,
     payInvoice
@@ -1013,7 +1034,11 @@ export async function getReviewSettlementPreviewAction(input: {
     return { ok: false as const, error: input.lang === "zh" ? "无权限" : "Unauthorized" };
   }
 
-  const legacyProjectId = input.projectId?.trim() || order.project_id;
+  const resolvedProject = resolveOrderProjectId(order, input.projectId);
+  if (!resolvedProject.ok) {
+    return { ok: false as const, error: input.lang === "zh" ? "项目与订单不匹配" : "Project does not match this order" };
+  }
+  const legacyProjectId = resolvedProject.projectId;
   const paidRevisionAddOnAmount =
     (order.paid_revision_slots_unlocked ?? 0) >= 1
       ? Math.round(order.amount * PAID_REVISION_SURCHARGE_RATE * 100) / 100
@@ -1123,7 +1148,11 @@ export async function confirmReviewApproveAndSettleAction(formData: FormData) {
     };
   }
 
-  const legacyProjectId = projectId || order.project_id;
+  const resolvedProject = resolveOrderProjectId(order, projectId);
+  if (!resolvedProject.ok) {
+    return { ok: false as const, error: lang === "zh" ? "项目与订单不匹配" : "Project does not match this order" };
+  }
+  const legacyProjectId = resolvedProject.projectId;
   if (!legacyProjectId) {
     return { ok: false as const, error: lang === "zh" ? "找不到项目" : "Project not found" };
   }

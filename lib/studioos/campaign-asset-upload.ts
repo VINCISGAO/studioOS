@@ -1,6 +1,7 @@
 import { promises as fs } from "fs";
 import path from "path";
 import { putObject } from "@/lib/studioos/object-storage";
+import { detectImageMimeFromMagicBytes } from "@/lib/studioos/upload-magic-bytes";
 
 const UPLOAD_DIR = path.join(process.cwd(), ".data", "uploads", "campaigns");
 const MAX_BYTES = 10 * 1024 * 1024;
@@ -66,6 +67,10 @@ export async function saveCampaignAssetUpload(
 
   const storedName = `${prefix}_${Date.now()}.${extForMime(mime)}`;
   const buffer = Buffer.from(await file.arrayBuffer());
+  const detectedMime = detectImageMimeFromMagicBytes(buffer);
+  if (!detectedMime || detectedMime !== mime) {
+    return { ok: false, error: "File content does not match the selected image type" };
+  }
   const fileKey = campaignAssetObjectKey(campaignId, storedName);
   let stored: Awaited<ReturnType<typeof putObject>>;
   try {
@@ -111,6 +116,10 @@ export async function saveCampaignAssetFromPath(input: {
 > {
   const buffer = await fs.readFile(input.sourceFilePath);
   if (buffer.length > MAX_BYTES) return { ok: false, error: "File exceeds 10MB limit" };
+  const detectedMime = detectImageMimeFromMagicBytes(buffer);
+  if (!detectedMime || detectedMime !== input.mimeType) {
+    return { ok: false, error: "File content does not match the selected image type" };
+  }
 
   const storedName = `${input.prefix}_${Date.now()}.${extForMime(input.mimeType)}`;
   const stored = await putObject(campaignAssetObjectKey(input.campaignId, storedName), buffer, input.mimeType);

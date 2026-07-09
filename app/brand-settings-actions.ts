@@ -1,10 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
-import { DEMO_SESSION_COOKIE } from "@/lib/auth-config";
-import { parseDemoSession } from "@/lib/demo-auth";
 import type { Locale } from "@/lib/i18n";
+import { getCurrentSession } from "@/lib/session-user";
 import type { OAuthProvider } from "@/lib/studioos/creator-settings-types";
 import {
   revokeBrandDevice,
@@ -23,8 +21,7 @@ function revalidateBrandSettingsPaths() {
 }
 
 async function requireBrandContext(lang: Locale) {
-  const cookieStore = await cookies();
-  const session = parseDemoSession(cookieStore.get(DEMO_SESSION_COOKIE)?.value);
+  const session = await getCurrentSession();
 
   if (!session || session.role !== "client") {
     return { ok: false as const, error: lang === "zh" ? "请先登录" : "Sign in required" };

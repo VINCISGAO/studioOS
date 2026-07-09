@@ -9,14 +9,23 @@ function normalizeObjectStorageEndpoint(raw: string | undefined, bucket: string)
 
 const r2Bucket = process.env.R2_BUCKET?.trim() || "studioos";
 
+function isProductionRuntime() {
+  return process.env.NODE_ENV === "production" || process.env.VERCEL === "1";
+}
+
+export function resolvePlaybackSigningSecret() {
+  const explicit = process.env.PLAYBACK_SIGNING_SECRET?.trim();
+  if (explicit) return explicit;
+  if (isProductionRuntime()) {
+    throw new Error("PLAYBACK_SIGNING_SECRET is required in production");
+  }
+  return process.env.SESSION_SECRET?.trim() || "studioos-dev-playback-signing-secret";
+}
+
 export const videoConfig = {
   /** simulate = demo/local manifest; ffmpeg = real transcode pipeline */
   workerMode: (process.env.VIDEO_WORKER_MODE ?? "simulate") as "simulate" | "ffmpeg",
   enforceHlsOnly: process.env.VIDEO_ENFORCE_HLS !== "0",
-  signingSecret:
-    process.env.PLAYBACK_SIGNING_SECRET ??
-    process.env.SESSION_SECRET ??
-    "studioos-dev-playback-signing-secret",
   tokenTtlSec: Number(process.env.PLAYBACK_TOKEN_TTL_SEC ?? 3600),
   hlsSegmentSeconds: 6,
   targetHeight: 720,

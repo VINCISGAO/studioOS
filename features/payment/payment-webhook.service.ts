@@ -2,13 +2,18 @@ import type Stripe from "stripe";
 import { escrowService } from "@/features/payment/escrow.service";
 import { escrowRepository } from "@/features/payment/escrow.repository";
 import { paymentCollectionService } from "@/features/payment/payment-collection.service";
-import { markOrderPaid } from "@/lib/order-service";
+import { getOrder, markOrderPaid } from "@/lib/order-service";
 import { logger } from "@/lib/core/logger";
 
 export class PaymentWebhookService {
   async handleStripeEvent(event: Stripe.Event) {
-    const already = await escrowRepository.hasProcessedStripeEvent(event.id);
-    if (already) {
+    const reservation = await escrowRepository.reserveWebhook({
+      provider: "stripe",
+      eventId: event.id,
+      eventType: event.type,
+      payload: event as unknown as Record<string, unknown>
+    });
+    if (reservation.duplicate) {
       return { received: true, duplicate: true };
     }
 
@@ -37,8 +42,7 @@ export class PaymentWebhookService {
           result = { ignored: true, type: event.type };
       }
 
-      await escrowRepository.recordWebhook({
-        provider: "stripe",
+      await escrowRepository.markWebhookProcessed(reservation.id, {
         eventType: event.type,
         payload: event as unknown as Record<string, unknown>,
         processed
@@ -46,8 +50,7 @@ export class PaymentWebhookService {
 
       return { received: true, duplicate: false, ...result };
     } catch (error) {
-      await escrowRepository.recordWebhook({
-        provider: "stripe",
+      await escrowRepository.markWebhookProcessed(reservation.id, {
         eventType: `${event.type}:failed`,
         payload: { ...(event as unknown as Record<string, unknown>), error: String(error) },
         processed: false
@@ -85,8 +88,23 @@ export class PaymentWebhookService {
   private async handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     const campaignId = session.metadata?.campaign_id;
     const orderId = session.metadata?.order_id;
+    if (session.payment_status !== "paid") {
+      throw new Error(`Stripe checkout session is not paid: ${session.payment_status}`);
+    }
 
     if (campaignId) {
+      const escrow = await escrowRepository.findByCampaignId(campaignId);
+      if (!escrow) {
+        throw new Error("Escrow payment not found for Stripe checkout session");
+      }
+      const expectedAmount = Math.round(Number(escrow.amount) * 100);
+      const paidAmount = session.amount_total ?? 0;
+      const expectedCurrency = escrow.currency.toLowerCase();
+      const paidCurrency = (session.currency ?? "").toLowerCase();
+      if (paidAmount !== expectedAmount || paidCurrency !== expectedCurrency) {
+        throw new Error("Stripe checkout amount or currency mismatch");
+      }
+
       const paymentResult = await escrowService.completePayment({
         campaignId,
         stripePaymentId: session.payment_intent?.toString() ?? session.id,
@@ -103,6 +121,17 @@ export class PaymentWebhookService {
     }
 
     if (orderId) {
+      const existingOrder = await getOrder(orderId);
+      if (!existingOrder) {
+        throw new Error("Legacy order not found for Stripe checkout session");
+      }
+      const expectedAmount = Math.round(existingOrder.amount * 100);
+      const paidAmount = session.amount_total ?? 0;
+      const paidCurrency = (session.currency ?? "usd").toLowerCase();
+      if (paidAmount !== expectedAmount || paidCurrency !== "usd") {
+        throw new Error("Stripe checkout amount or currency mismatch");
+      }
+
       const order = await markOrderPaid(orderId);
       if (order) {
         const { syncBrandOrderPaid } = await import("@/lib/studioos/brand-checkout-service");

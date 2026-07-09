@@ -1,10 +1,11 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import { Banknote, Check, Clock3, CreditCard, Globe2, PencilLine, Sparkles, Users, X } from "lucide-react";
-import { LandingSection, LandingShell } from "@/components/marketing/landing/landing-ui";
+import { Banknote, Check, Clock3, CreditCard, PencilLine, Sparkles, Users, X } from "lucide-react";
+import { LandingSection, LandingShell, MarketingEyebrowPill } from "@/components/marketing/landing/landing-ui";
 import { landingText } from "@/lib/marketing/landing-copy";
-import type { Locale } from "@/lib/i18n";
+import type { Locale, MarketingLocale } from "@/lib/i18n";
+import { withLocale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 function LegacyMark({ className }: { className?: string }) {
@@ -15,14 +16,362 @@ function StudioMark({ className }: { className?: string }) {
   return <Check className={cn("h-4 w-4 text-[#e8e0d0]", className)} strokeWidth={2.15} aria-hidden />;
 }
 
-export function LandingCostComparison({ locale }: { locale: Locale }) {
-  const t = landingText("cost", locale);
+type ComparisonLabels = {
+  model: string;
+  legacy: string;
+  studio: string;
+  pain: string;
+  workflow: string;
+  faster: string;
+  cheaper: string;
+  smarter: string;
+  creatorCta: string;
+  creatorSub: string;
+  cases: string;
+  start: string;
+  whyTitle: string;
+  whySubtitle: string;
+  payment: string;
+  traditionalContract: string;
+  platformEscrow: string;
+  aiAutomation: string;
+  none: string;
+  aiWorkflow: string;
+  costSaved: string;
+  comparedWithAgencies: string;
+  deliveryTime: string;
+  fasterDelivery: string;
+  globalReach: string;
+  countriesRegions: string;
+};
+
+const comparisonLabels: Record<MarketingLocale, ComparisonLabels> = {
+  en: {
+    model: "Comparison model",
+    legacy: "Legacy stack",
+    studio: "Operating system",
+    pain: "Why it feels heavy",
+    workflow: "Compare",
+    faster: "Faster",
+    cheaper: "Cheaper",
+    smarter: "Smarter",
+    creatorCta: "Connect global creators, ship better creative",
+    creatorSub: "100+ brands and creators have collaborated through VINCIS",
+    cases: "View cases",
+    start: "Start now",
+    whyTitle: "Why choose VINCIS?",
+    whySubtitle: "Redefine commercial production with AI and a global creator network",
+    payment: "Payment",
+    traditionalContract: "Traditional contract",
+    platformEscrow: "Platform escrow",
+    aiAutomation: "AI & automation",
+    none: "None",
+    aiWorkflow: "AI-assisted workflow",
+    costSaved: "Cost saved",
+    comparedWithAgencies: "Compared with agencies",
+    deliveryTime: "Delivery time",
+    fasterDelivery: "Faster project delivery",
+    globalReach: "Global reach",
+    countriesRegions: "countries and regions"
+  },
+  "zh-CN": {
+    model: "对比模型",
+    legacy: "传统链路",
+    studio: "系统化交付",
+    pain: "传统模式的问题",
+    workflow: "对比项",
+    faster: "更快",
+    cheaper: "更便宜",
+    smarter: "更智能",
+    creatorCta: "一眼看懂差异",
+    creatorSub: "已经有 100+ 品牌和创作者在 VINCIS 完成合作",
+    cases: "了解更多案例",
+    start: "立即开始",
+    whyTitle: "为什么选择 VINCIS?",
+    whySubtitle: "用 AI 和全球创作者网络，重新定义广告制作流程",
+    payment: "支付方式",
+    traditionalContract: "传统合同",
+    platformEscrow: "平台托管支付",
+    aiAutomation: "AI & 智能",
+    none: "无",
+    aiWorkflow: "AI 赋能全流程",
+    costSaved: "节省成本",
+    comparedWithAgencies: "相比传统广告公司",
+    deliveryTime: "交付时间",
+    fasterDelivery: "更快完成项目",
+    globalReach: "覆盖全球",
+    countriesRegions: "国家和地区的创作者"
+  },
+  "zh-TW": {
+    model: "對比模型",
+    legacy: "傳統流程",
+    studio: "系統化交付",
+    pain: "傳統模式的問題",
+    workflow: "對比項",
+    faster: "更快",
+    cheaper: "更省",
+    smarter: "更智能",
+    creatorCta: "一眼看懂差異",
+    creatorSub: "已有 100+ 品牌與創作者透過 VINCIS 合作",
+    cases: "查看更多案例",
+    start: "立即開始",
+    whyTitle: "為什麼選擇 VINCIS?",
+    whySubtitle: "以 AI 和全球創作者網絡，重新定義廣告製作流程",
+    payment: "付款方式",
+    traditionalContract: "傳統合約",
+    platformEscrow: "平台託管付款",
+    aiAutomation: "AI 與自動化",
+    none: "無",
+    aiWorkflow: "AI 輔助工作流",
+    costSaved: "節省成本",
+    comparedWithAgencies: "相較傳統廣告公司",
+    deliveryTime: "交付時間",
+    fasterDelivery: "專案交付更快",
+    globalReach: "全球覆蓋",
+    countriesRegions: "國家和地區"
+  },
+  ja: {
+    model: "比較モデル",
+    legacy: "従来の体制",
+    studio: "制作オペレーティングシステム",
+    pain: "従来型が重い理由",
+    workflow: "比較項目",
+    faster: "より速く",
+    cheaper: "より低コスト",
+    smarter: "よりスマート",
+    creatorCta: "世界中のクリエイターとつながり、より良い広告を届ける",
+    creatorSub: "100以上のブランドとクリエイターが VINCIS で協業しています",
+    cases: "事例を見る",
+    start: "今すぐ始める",
+    whyTitle: "なぜ VINCIS なのか?",
+    whySubtitle: "AI とグローバルなクリエイターネットワークで広告制作を再定義します",
+    payment: "支払い",
+    traditionalContract: "従来型の契約",
+    platformEscrow: "プラットフォーム預託",
+    aiAutomation: "AI と自動化",
+    none: "なし",
+    aiWorkflow: "AI 支援ワークフロー",
+    costSaved: "削減コスト",
+    comparedWithAgencies: "代理店と比較",
+    deliveryTime: "納品時間",
+    fasterDelivery: "より速いプロジェクト納品",
+    globalReach: "グローバル展開",
+    countriesRegions: "か国・地域"
+  },
+  ko: {
+    model: "비교 모델",
+    legacy: "기존 방식",
+    studio: "제작 운영 시스템",
+    pain: "기존 제작이 무거운 이유",
+    workflow: "비교 항목",
+    faster: "더 빠르게",
+    cheaper: "더 낮은 비용",
+    smarter: "더 스마트하게",
+    creatorCta: "글로벌 크리에이터와 연결해 더 좋은 광고를 만드세요",
+    creatorSub: "100개 이상의 브랜드와 크리에이터가 VINCIS에서 협업했습니다",
+    cases: "사례 보기",
+    start: "지금 시작하기",
+    whyTitle: "왜 VINCIS인가요?",
+    whySubtitle: "AI와 글로벌 크리에이터 네트워크로 광고 제작 방식을 재정의합니다",
+    payment: "결제",
+    traditionalContract: "전통 계약",
+    platformEscrow: "플랫폼 에스크로",
+    aiAutomation: "AI 및 자동화",
+    none: "없음",
+    aiWorkflow: "AI 지원 워크플로",
+    costSaved: "절감 비용",
+    comparedWithAgencies: "대행사 대비",
+    deliveryTime: "납품 시간",
+    fasterDelivery: "더 빠른 프로젝트 납품",
+    globalReach: "글로벌 도달",
+    countriesRegions: "국가 및 지역"
+  },
+  ms: {
+    model: "Model perbandingan",
+    legacy: "Aliran lama",
+    studio: "Sistem operasi produksi",
+    pain: "Mengapa aliran lama terasa berat",
+    workflow: "Bandingan",
+    faster: "Lebih pantas",
+    cheaper: "Lebih jimat",
+    smarter: "Lebih pintar",
+    creatorCta: "Hubungkan pencipta global dan hasilkan kreatif yang lebih baik",
+    creatorSub: "100+ jenama dan pencipta telah bekerjasama melalui VINCIS",
+    cases: "Lihat kes",
+    start: "Mula sekarang",
+    whyTitle: "Mengapa pilih VINCIS?",
+    whySubtitle: "Takrif semula produksi iklan dengan AI dan rangkaian pencipta global",
+    payment: "Pembayaran",
+    traditionalContract: "Kontrak tradisional",
+    platformEscrow: "Escrow platform",
+    aiAutomation: "AI & automasi",
+    none: "Tiada",
+    aiWorkflow: "Aliran kerja dibantu AI",
+    costSaved: "Kos dijimatkan",
+    comparedWithAgencies: "Berbanding agensi",
+    deliveryTime: "Masa penghantaran",
+    fasterDelivery: "Penghantaran projek lebih pantas",
+    globalReach: "Capaian global",
+    countriesRegions: "negara dan rantau"
+  },
+  km: {
+    model: "គំរូប្រៀបធៀប",
+    legacy: "ប្រព័ន្ធចាស់",
+    studio: "ប្រព័ន្ធដំណើរការផលិតកម្ម",
+    pain: "មូលហេតុដែលវិធីចាស់យឺត និងធ្ងន់",
+    workflow: "ប្រៀបធៀប",
+    faster: "លឿនជាង",
+    cheaper: "ចំណាយតិចជាង",
+    smarter: "ឆ្លាតជាង",
+    creatorCta: "ភ្ជាប់អ្នកបង្កើតសកល និងបញ្ចេញគំនិតផ្សព្វផ្សាយល្អជាង",
+    creatorSub: "ម៉ាក និងអ្នកបង្កើត 100+ បានសហការតាម VINCIS",
+    cases: "មើលករណីសិក្សា",
+    start: "ចាប់ផ្តើមឥឡូវ",
+    whyTitle: "ហេតុអ្វីជ្រើស VINCIS?",
+    whySubtitle: "កំណត់និយមន័យថ្មីនៃផលិតកម្មពាណិជ្ជកម្មជាមួយ AI និងបណ្តាញអ្នកបង្កើតសកល",
+    payment: "ការទូទាត់",
+    traditionalContract: "កិច្ចសន្យាបែបចាស់",
+    platformEscrow: "ទូទាត់តាម escrow",
+    aiAutomation: "AI និងស្វ័យប្រវត្តិកម្ម",
+    none: "គ្មាន",
+    aiWorkflow: "លំហូរការងារជំនួយដោយ AI",
+    costSaved: "ចំណាយដែលសន្សំបាន",
+    comparedWithAgencies: "ប្រៀបធៀបនឹងភ្នាក់ងារ",
+    deliveryTime: "ពេលវេលាប្រគល់",
+    fasterDelivery: "ប្រគល់គម្រោងបានលឿនជាង",
+    globalReach: "គ្របដណ្តប់សកល",
+    countriesRegions: "ប្រទេស និងតំបន់"
+  },
+  th: {
+    model: "โมเดลเปรียบเทียบ",
+    legacy: "กระบวนการเดิม",
+    studio: "ระบบปฏิบัติการงานผลิต",
+    pain: "เหตุผลที่วิธีเดิมหนักและช้า",
+    workflow: "เปรียบเทียบ",
+    faster: "เร็วกว่า",
+    cheaper: "คุ้มค่ากว่า",
+    smarter: "ฉลาดกว่า",
+    creatorCta: "เชื่อมต่อครีเอเตอร์ทั่วโลกและส่งมอบงานที่ดีกว่า",
+    creatorSub: "แบรนด์และครีเอเตอร์กว่า 100 รายร่วมงานผ่าน VINCIS แล้ว",
+    cases: "ดูเคส",
+    start: "เริ่มตอนนี้",
+    whyTitle: "ทำไมต้อง VINCIS?",
+    whySubtitle: "นิยามใหม่ของการผลิตโฆษณาด้วย AI และเครือข่ายครีเอเตอร์ทั่วโลก",
+    payment: "การชำระเงิน",
+    traditionalContract: "สัญญาแบบเดิม",
+    platformEscrow: "เอสโครว์บนแพลตฟอร์ม",
+    aiAutomation: "AI และระบบอัตโนมัติ",
+    none: "ไม่มี",
+    aiWorkflow: "เวิร์กโฟลว์ที่ช่วยด้วย AI",
+    costSaved: "ประหยัดต้นทุน",
+    comparedWithAgencies: "เทียบกับเอเจนซี่",
+    deliveryTime: "เวลาในการส่งมอบ",
+    fasterDelivery: "ส่งมอบโปรเจกต์เร็วขึ้น",
+    globalReach: "ครอบคลุมทั่วโลก",
+    countriesRegions: "ประเทศและภูมิภาค"
+  },
+  vi: {
+    model: "Mô hình so sánh",
+    legacy: "Quy trình cũ",
+    studio: "Hệ điều hành sản xuất",
+    pain: "Vì sao cách làm cũ quá nặng",
+    workflow: "So sánh",
+    faster: "Nhanh hơn",
+    cheaper: "Tiết kiệm hơn",
+    smarter: "Thông minh hơn",
+    creatorCta: "Kết nối nhà sáng tạo toàn cầu, tạo quảng cáo tốt hơn",
+    creatorSub: "Hơn 100 thương hiệu và nhà sáng tạo đã hợp tác qua VINCIS",
+    cases: "Xem case study",
+    start: "Bắt đầu ngay",
+    whyTitle: "Vì sao chọn VINCIS?",
+    whySubtitle: "Định nghĩa lại sản xuất quảng cáo bằng AI và mạng lưới nhà sáng tạo toàn cầu",
+    payment: "Thanh toán",
+    traditionalContract: "Hợp đồng truyền thống",
+    platformEscrow: "Ký quỹ trên nền tảng",
+    aiAutomation: "AI & tự động hóa",
+    none: "Không có",
+    aiWorkflow: "Quy trình được AI hỗ trợ",
+    costSaved: "Chi phí tiết kiệm",
+    comparedWithAgencies: "So với agency",
+    deliveryTime: "Thời gian giao",
+    fasterDelivery: "Giao dự án nhanh hơn",
+    globalReach: "Phủ sóng toàn cầu",
+    countriesRegions: "quốc gia và khu vực"
+  },
+  fr: {
+    model: "Modèle comparatif",
+    legacy: "Chaîne classique",
+    studio: "Système de production",
+    pain: "Pourquoi l'ancien modèle est lourd",
+    workflow: "Comparer",
+    faster: "Plus rapide",
+    cheaper: "Moins cher",
+    smarter: "Plus intelligent",
+    creatorCta: "Connectez des créateurs mondiaux et livrez de meilleures créations",
+    creatorSub: "Plus de 100 marques et créateurs ont collaboré via VINCIS",
+    cases: "Voir les cas",
+    start: "Commencer",
+    whyTitle: "Pourquoi choisir VINCIS ?",
+    whySubtitle: "Redéfinir la production publicitaire avec l'IA et un réseau mondial de créateurs",
+    payment: "Paiement",
+    traditionalContract: "Contrat classique",
+    platformEscrow: "Escrow plateforme",
+    aiAutomation: "IA et automatisation",
+    none: "Aucun",
+    aiWorkflow: "Flux assisté par IA",
+    costSaved: "Coûts économisés",
+    comparedWithAgencies: "Par rapport aux agences",
+    deliveryTime: "Délai de livraison",
+    fasterDelivery: "Livraison de projet plus rapide",
+    globalReach: "Portée mondiale",
+    countriesRegions: "pays et régions"
+  },
+  es: {
+    model: "Modelo comparativo",
+    legacy: "Flujo tradicional",
+    studio: "Sistema operativo de producción",
+    pain: "Por qué el modelo antiguo pesa tanto",
+    workflow: "Comparar",
+    faster: "Más rápido",
+    cheaper: "Más económico",
+    smarter: "Más inteligente",
+    creatorCta: "Conecta creadores globales y entrega mejores piezas",
+    creatorSub: "Más de 100 marcas y creadores han colaborado en VINCIS",
+    cases: "Ver casos",
+    start: "Empezar ahora",
+    whyTitle: "¿Por qué elegir VINCIS?",
+    whySubtitle: "Redefine la producción publicitaria con IA y una red global de creadores",
+    payment: "Pago",
+    traditionalContract: "Contrato tradicional",
+    platformEscrow: "Escrow de plataforma",
+    aiAutomation: "IA y automatización",
+    none: "Ninguno",
+    aiWorkflow: "Flujo asistido por IA",
+    costSaved: "Ahorro de costes",
+    comparedWithAgencies: "Comparado con agencias",
+    deliveryTime: "Tiempo de entrega",
+    fasterDelivery: "Entrega de proyecto más rápida",
+    globalReach: "Alcance global",
+    countriesRegions: "países y regiones"
+  }
+};
+
+export function LandingCostComparison({
+  locale,
+  copyLocale = locale
+}: {
+  locale: Locale;
+  copyLocale?: Locale | MarketingLocale;
+}) {
+  const t = landingText("cost", copyLocale);
   const reduce = useReducedMotion();
   const costRows = t.rows.slice(0, 2);
   const workflowRows = t.rows.slice(2);
+  const comparisonLocale: MarketingLocale = copyLocale === "zh" ? "zh-CN" : copyLocale;
+  const labels = comparisonLabels[comparisonLocale] ?? (locale === "zh" ? comparisonLabels["zh-CN"] : comparisonLabels.en);
 
   return (
-    <LandingSection className="relative overflow-hidden bg-[#000000] py-5 sm:py-16 lg:py-20">
+    <LandingSection className="relative overflow-hidden bg-[#000000] !pb-0 !pt-0 sm:!py-16 lg:!py-20">
       <div
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_55%_at_50%_-10%,rgba(255,255,255,0.07),transparent_55%)]"
         aria-hidden
@@ -32,43 +381,14 @@ export function LandingCostComparison({ locale }: { locale: Locale }) {
         aria-hidden
       />
 
-      <LandingShell className="relative">
+      <LandingShell className="relative pt-8 sm:pt-0">
         <ComparisonBoard
           locale={locale}
+          copyLocale={copyLocale}
           title={t.compareTitle}
           traditional={t.traditional}
           studio={t.studio}
-          labels={
-            locale === "zh"
-              ? {
-                  model: "对比模型",
-                  legacy: "传统链路",
-                  studio: "系统化交付",
-                  pain: "传统模式的问题",
-                  workflow: "对比项",
-                  faster: "更快",
-                  cheaper: "更便宜",
-                  smarter: "更智能",
-                  creatorCta: "一眼看懂差异",
-                  creatorSub: "已经有 100+ 品牌和创作者在 VINCIS 完成合作",
-                  cases: "了解更多案例",
-                  start: "立即开始"
-                }
-              : {
-                  model: "Comparison model",
-                  legacy: "Legacy stack",
-                  studio: "Operating system",
-                  pain: "Why it feels heavy",
-                  workflow: "Compare",
-                  faster: "Faster",
-                  cheaper: "Cheaper",
-                  smarter: "Smarter",
-                  creatorCta: "Connect global creators, ship better creative",
-                  creatorSub: "100+ brands and creators have collaborated through VINCIS",
-                  cases: "View cases",
-                  start: "Start now"
-                }
-          }
+          labels={labels}
           badges={t.savings}
           painPoints={t.pains}
           costRows={costRows}
@@ -82,6 +402,7 @@ export function LandingCostComparison({ locale }: { locale: Locale }) {
 
 function ComparisonBoard({
   locale,
+  copyLocale,
   traditional,
   studio,
   labels,
@@ -91,23 +412,11 @@ function ComparisonBoard({
   reduce
 }: {
   locale: Locale;
+  copyLocale?: Locale | MarketingLocale;
   title: string;
   traditional: string;
   studio: string;
-  labels: {
-    model: string;
-    legacy: string;
-    studio: string;
-    pain: string;
-    workflow: string;
-    faster: string;
-    cheaper: string;
-    smarter: string;
-    creatorCta: string;
-    creatorSub: string;
-    cases: string;
-    start: string;
-  };
+  labels: ComparisonLabels;
   badges: readonly string[];
   painPoints: readonly string[];
   costRows: Array<{ label: string; trad: string; studio: string }>;
@@ -121,36 +430,30 @@ function ComparisonBoard({
     { icon: PencilLine, label: workflowRows[1]?.label ?? "", trad: workflowRows[1]?.trad ?? "", studio: workflowRows[1]?.studio ?? "" },
     {
       icon: CreditCard,
-      label: locale === "zh" ? "支付方式" : "Payment",
-      trad: locale === "zh" ? "传统合同" : "Traditional contract",
-      studio: locale === "zh" ? "平台托管支付" : "Platform escrow"
+      label: labels.payment,
+      trad: labels.traditionalContract,
+      studio: labels.platformEscrow
     },
     {
       icon: Sparkles,
-      label: locale === "zh" ? "AI & 智能" : "AI & automation",
-      trad: locale === "zh" ? "无" : "None",
-      studio: locale === "zh" ? "AI 赋能全流程" : "AI-assisted workflow"
+      label: labels.aiAutomation,
+      trad: labels.none,
+      studio: labels.aiWorkflow
     }
   ];
 
   const stats = [
     {
       icon: Banknote,
-      label: locale === "zh" ? "节省成本" : "Cost saved",
+      label: labels.costSaved,
       value: "70%+",
-      caption: locale === "zh" ? "相比传统广告公司" : "Compared with agencies"
+      caption: labels.comparedWithAgencies
     },
     {
       icon: Clock3,
-      label: locale === "zh" ? "交付时间" : "Delivery time",
+      label: labels.deliveryTime,
       value: "80%+",
-      caption: locale === "zh" ? "更快完成项目" : "Faster project delivery"
-    },
-    {
-      icon: Globe2,
-      label: locale === "zh" ? "覆盖全球" : "Global reach",
-      value: "20+",
-      caption: locale === "zh" ? "国家和地区的创作者" : "countries and regions"
+      caption: labels.fasterDelivery
     }
   ];
 
@@ -161,17 +464,15 @@ function ComparisonBoard({
       <div className="pointer-events-none absolute inset-x-8 top-8 h-52 rounded-full bg-[#e8e0d0]/[0.055] blur-3xl" />
       <div className="relative">
         <div className="mx-auto flex max-w-3xl justify-center">
-          <span className="rounded-full border border-white/[0.08] bg-white/[0.045] px-4 py-1.5 text-[11px] font-medium tracking-[0.08em] text-zinc-300">
+          <MarketingEyebrowPill tone="dark">
             {labels.faster} · {labels.cheaper} · {labels.smarter}
-          </span>
+          </MarketingEyebrowPill>
         </div>
         <h3 className="mt-4 text-center text-[2rem] font-semibold tracking-[-0.055em] text-white sm:mt-5 sm:text-[2.9rem]">
-          {locale === "zh" ? "为什么选择 VINCIS?" : "Why choose VINCIS?"}
+          {labels.whyTitle}
         </h3>
         <p className="mx-auto mt-2 max-w-2xl text-center text-sm leading-6 text-zinc-500 sm:mt-3 sm:text-base">
-          {locale === "zh"
-            ? "用 AI 和全球创作者网络，重新定义广告制作流程"
-            : "Redefine commercial production with AI and a global creator network"}
+          {labels.whySubtitle}
         </p>
       </div>
 
@@ -184,7 +485,7 @@ function ComparisonBoard({
                 transition: { type: "spring", stiffness: 360, damping: 30 }
               }
         }
-        className="relative mt-7 overflow-hidden rounded-[1.65rem] border border-white/[0.12] bg-[linear-gradient(180deg,rgba(255,255,255,0.07),rgba(255,255,255,0.02))] shadow-[0_48px_150px_-90px_rgba(255,255,255,0.65)] backdrop-blur-2xl"
+        className="relative mt-7 overflow-hidden rounded-[1.65rem] border border-white/[0.12] bg-[linear-gradient(180deg,rgba(255,255,255,0.07),rgba(255,255,255,0.02))] backdrop-blur-2xl"
       >
         <div className="pointer-events-none absolute inset-y-0 right-0 w-[38%] bg-[radial-gradient(ellipse_at_center,rgba(232,224,208,0.13),transparent_65%)]" />
         <div className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-[#e8e0d0]/45 to-transparent" />
@@ -207,7 +508,7 @@ function ComparisonBoard({
             ))}
           </div>
 
-          <div className="grid h-full gap-3 border-t border-white/[0.08] p-4 sm:grid-cols-3 lg:grid-cols-1 lg:border-l lg:border-t-0 lg:p-5">
+          <div className="grid h-full grid-cols-2 gap-3 border-t border-white/[0.08] p-4 lg:grid-cols-1 lg:border-l lg:border-t-0 lg:p-5">
             {stats.map((stat) => {
               const Icon = stat.icon;
               return (
@@ -243,7 +544,7 @@ function ComparisonBoard({
               <span aria-hidden>→</span>
             </a>
             <a
-              href={locale === "zh" ? "/login?role=brand&lang=zh" : "/login?role=brand&lang=en"}
+              href={withLocale("/login?role=brand", copyLocale ?? locale)}
               className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-white px-5 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-200"
             >
               {labels.start}

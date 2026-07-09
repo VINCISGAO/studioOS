@@ -43,6 +43,13 @@ export function resolveBrandNotificationAction(
   locale: Locale
 ): NotificationAction {
   const labels = brandLabels[locale];
+  const projectId = input.project_id?.trim();
+  if (!projectId) {
+    return {
+      href: withLocale(brandPortalRoutes.dashboard, locale),
+      label: labels.openHome
+    };
+  }
 
   if (
     input.type === "deliverable_uploaded" ||
@@ -53,7 +60,7 @@ export function resolveBrandNotificationAction(
     input.type === "order_completed"
   ) {
     return {
-      href: withLocale(brandPortalRoutes.projectReview(input.project_id), locale),
+      href: withLocale(brandPortalRoutes.projectReview(projectId), locale),
       label: labels.openReview
     };
   }
@@ -66,7 +73,7 @@ export function resolveBrandNotificationAction(
   }
 
   return {
-    href: withLocale(`${brandPortalRoutes.project(input.project_id)}?tab=match`, locale),
+    href: withLocale(`${brandPortalRoutes.project(projectId)}?tab=match`, locale),
     label: labels.openMatch
   };
 }
@@ -111,6 +118,7 @@ export function resolveCreatorNotificationAction(
       input.type === "revision_requested" ||
       input.type === "project_funded" ||
       input.type === "creator_selected" ||
+      input.type === "paid_revision_unlocked" ||
       input.type === "delivery_approved" ||
       input.type === "platform_intervention_required")
   ) {

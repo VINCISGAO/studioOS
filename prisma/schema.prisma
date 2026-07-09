@@ -1323,12 +1323,14 @@ model AILearning {
 model WebhookEvent {
   id          String   @id @default(uuid())
   provider    String
+  eventId     String?  @unique @map("event_id")
   eventType   String   @map("event_type")
   payloadJson Json     @map("payload_json")
   processed   Boolean  @default(false)
   createdAt   DateTime @default(now()) @map("created_at")
 
   @@index([provider])
+  @@index([provider, eventId])
   @@index([processed])
   @@map("webhook_events")
 }

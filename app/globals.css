@@ -514,11 +514,11 @@
   }
 
   .landing-btn-primary {
-    @apply inline-flex h-11 items-center justify-center gap-1.5 rounded-full bg-white px-7 text-[13px] font-medium tracking-[-0.01em] text-black transition duration-300 hover:bg-zinc-200;
+    @apply inline-flex min-h-11 items-center justify-center gap-1.5 rounded-full bg-white px-7 py-2 text-center text-[13px] font-medium leading-snug tracking-[-0.01em] text-black transition duration-300 hover:bg-zinc-200;
   }
 
   .landing-btn-ghost {
-    @apply inline-flex h-11 items-center justify-center gap-2 rounded-full border border-white/15 px-7 text-[13px] font-medium tracking-[-0.01em] text-zinc-200 transition duration-300 hover:border-white/30 hover:bg-white/[0.04];
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-white/15 px-7 py-2 text-center text-[13px] font-medium leading-snug tracking-[-0.01em] text-zinc-200 transition duration-300 hover:border-white/30 hover:bg-white/[0.04];
   }
 
   .landing-stat-value {

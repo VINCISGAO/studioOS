@@ -15,7 +15,30 @@ const MAX_CMD_BUFFER = 64 * 1024 * 1024;
 
 type Step = { name: string; ok: boolean; detail?: string };
 
-function runCmd(label: string, cmd: string): Step {
+function runCmd(label: string, cmd: string, options?: { retries?: number }): Step {
+  const maxAttempts = 1 + (options?.retries ?? 0);
+  let lastStep: Step = { name: label, ok: false, detail: "command failed" };
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    if (attempt > 1) {
+      console.log(`\n↻ Retrying ${label} (attempt ${attempt}/${maxAttempts})…`);
+    }
+    lastStep = runCmdOnce(label, cmd);
+    if (lastStep.ok) return lastStep;
+
+    const transientBuildRace =
+      label === "build" &&
+      (lastStep.detail?.includes("PageNotFoundError") ||
+        lastStep.detail?.includes("Cannot find module for page"));
+    if (!transientBuildRace || attempt >= maxAttempts) {
+      return lastStep;
+    }
+  }
+
+  return lastStep;
+}
+
+function runCmdOnce(label: string, cmd: string): Step {
   console.log(`\n▶ Running ${label}…`);
   const started = Date.now();
   const result = spawnSync(cmd, {
@@ -185,7 +208,7 @@ function main() {
   steps.push(runCmd("prisma.generate", "npx prisma generate"));
   steps.push(runCmd("typecheck", "npm run typecheck"));
   steps.push(runCmd("lint", "npm run lint"));
-  steps.push(runCmd("build", "npm run build"));
+  steps.push(runCmd("build", "npm run build", { retries: 1 }));
   steps.push(runCheck("migrations.payment_collection", checkMigrationFiles));
   steps.push(runCheck("prisma.payment_fields", checkPrismaSchema));
   steps.push(runCheck("payment.mvp_files", checkPaymentService));

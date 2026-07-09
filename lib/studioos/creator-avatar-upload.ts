@@ -1,5 +1,9 @@
 import path from "path";
 import { putObject } from "@/lib/studioos/object-storage";
+import {
+  detectImageMimeFromMagicBytes,
+  looksLikeSupportedVideo
+} from "@/lib/studioos/upload-magic-bytes";
 
 const UPLOAD_DIR = path.join(process.cwd(), ".data", "uploads", "creators");
 const MAX_BYTES = 5 * 1024 * 1024;
@@ -73,6 +77,10 @@ async function saveCreatorImageUpload(
 
   const fileName = `${fileNamePrefix}_${Date.now()}.${extForMime(mime)}`;
   const buffer = Buffer.from(await file.arrayBuffer());
+  const detectedMime = detectImageMimeFromMagicBytes(buffer);
+  if (!detectedMime || detectedMime !== mime) {
+    return { ok: false, error: "File content does not match the selected image type" };
+  }
   const fileKey = creatorAvatarObjectKey(creatorId, fileName);
   let stored: Awaited<ReturnType<typeof putObject>>;
   try {
@@ -134,8 +142,12 @@ export async function saveCreatorWorkVideoUpload(creatorId: string, file: File):
     return { ok: false, error: "Only MP4, MOV, and WebM videos are supported" };
   }
 
-  const fileName = `work_${Date.now()}.${videoExtForFile(file)}`;
+  const extension = videoExtForFile(file);
+  const fileName = `work_${Date.now()}.${extension}`;
   const buffer = Buffer.from(await file.arrayBuffer());
+  if (!looksLikeSupportedVideo(buffer, extension)) {
+    return { ok: false, error: "File content does not match the selected video type" };
+  }
   const fileKey = creatorAvatarObjectKey(creatorId, fileName);
 
   let stored: Awaited<ReturnType<typeof putObject>>;

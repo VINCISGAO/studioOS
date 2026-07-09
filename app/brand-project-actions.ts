@@ -1,12 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
-import { DEMO_SESSION_COOKIE } from "@/lib/auth-config";
-import { parseDemoSession } from "@/lib/demo-auth";
 import type { Locale } from "@/lib/i18n";
 import { deleteOrderForClient } from "@/lib/order-service";
 import { deleteProjectForClient, getProject } from "@/lib/project-service";
+import { getCurrentSession } from "@/lib/session-user";
 import {
   ensureCampaignInvitationsForProject,
   listAcceptedInvitationsForProject
@@ -17,8 +15,7 @@ function normalizeLang(raw: FormDataEntryValue | null): Locale {
 }
 
 async function requireBrandEmail(lang: Locale) {
-  const cookieStore = await cookies();
-  const session = parseDemoSession(cookieStore.get(DEMO_SESSION_COOKIE)?.value);
+  const session = await getCurrentSession();
   if (!session || session.role !== "client") {
     return { ok: false as const, error: lang === "zh" ? "请先以 Brand 身份登录" : "Sign in as a brand account" };
   }

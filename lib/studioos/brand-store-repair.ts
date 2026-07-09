@@ -2,6 +2,7 @@ import type { OrderStore, StoredOrder } from "@/lib/order-types";
 import type { ProjectStore, StoredProject } from "@/lib/project-types";
 import { dataStorePath, readDataJson } from "@/lib/serverless-store-core";
 import type { CampaignProjectStatus } from "@/lib/studioos/project-status";
+import { CAMPAIGN_PENDING_CREATOR_ID } from "@/lib/studioos/brand-checkout-utils";
 
 function mapOrderToProjectStatus(order: StoredOrder): CampaignProjectStatus {
   if (order.status === "waiting_payment" || order.payment_status === "unpaid") {
@@ -47,7 +48,10 @@ function projectFromOrder(order: StoredOrder): StoredProject {
     budget_min: null,
     budget_max: null,
     deadline: "",
-    selected_studio_id: order.creator_id ?? null,
+    selected_studio_id:
+      order.creator_id && order.creator_id !== CAMPAIGN_PENDING_CREATOR_ID
+        ? order.creator_id
+        : null,
     published_at: status === "draft" ? null : createdAt,
     email: order.client_email.toLowerCase(),
     target_platform: "",

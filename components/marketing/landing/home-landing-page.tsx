@@ -1,11 +1,12 @@
 import { CinematicHomePage } from "@/components/marketing/cinematic/cinematic-home-page";
-import type { Locale } from "@/lib/i18n";
+import type { Locale, MarketingLocale } from "@/lib/i18n";
 import type { CreatorWork } from "@/lib/types";
 import type { WorkEngagementSnapshot } from "@/lib/work-engagement-utils";
 
 /** Cinematic marketing homepage — login lives at /login only. */
 export function HomeLandingPage({
   locale,
+  copyLocale = locale,
   portalHref,
   portalLabel,
   featuredWorks,
@@ -13,6 +14,7 @@ export function HomeLandingPage({
   isLoggedIn
 }: {
   locale: Locale;
+  copyLocale?: Locale | MarketingLocale;
   portalHref: string;
   portalLabel: string;
   featuredWorks: CreatorWork[];
@@ -22,6 +24,7 @@ export function HomeLandingPage({
   return (
     <CinematicHomePage
       locale={locale}
+      copyLocale={copyLocale}
       portalHref={portalHref}
       portalLabel={portalLabel}
       featuredWorks={featuredWorks}

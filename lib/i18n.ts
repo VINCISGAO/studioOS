@@ -9,6 +9,7 @@ export const supportedLanguageCodes = SUPPORTED_LANGUAGE_SEEDS.map((item) => ite
 
 export type Locale = (typeof locales)[number];
 export type LanguageCode = SupportedLanguageCode;
+export type MarketingLocale = LanguageCode;
 
 export type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -24,7 +25,7 @@ export function getLanguageCode(searchParams?: SearchParams): LanguageCode {
   return normalizeLanguageCode(lang);
 }
 
-export function withLocale(path: string, locale: Locale) {
+export function withLocale(path: string, locale: Locale | LanguageCode) {
   const hashIndex = path.indexOf("#");
   const hash = hashIndex >= 0 ? path.slice(hashIndex) : "";
   const pathWithoutHash = hashIndex >= 0 ? path.slice(0, hashIndex) : path;
@@ -57,4 +58,8 @@ export function brandStartBriefHref(locale: Locale) {
 
 export function isZh(locale: Locale) {
   return locale === "zh";
+}
+
+export function isChineseLanguage(locale: Locale | LanguageCode) {
+  return locale === "zh" || locale === "zh-CN" || locale === "zh-TW";
 }

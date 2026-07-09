@@ -6,8 +6,8 @@ import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion
 import { ArrowRight, ShieldCheck } from "lucide-react";
 import { CinematicHeroFeatures } from "@/components/marketing/cinematic/cinematic-hero-features";
 import { landingText } from "@/lib/marketing/landing-copy";
-import type { Locale } from "@/lib/i18n";
-import { withLocale } from "@/lib/i18n";
+import type { Locale, MarketingLocale } from "@/lib/i18n";
+import { isChineseLanguage, withLocale } from "@/lib/i18n";
 import { marketingHeadlineClassName, marketingSilverGradientClassName } from "@/lib/studioos/marketing-headline-font";
 import { cn } from "@/lib/utils";
 
@@ -26,16 +26,18 @@ const TRUST_BRANDS = [
 
 export function CinematicHero({
   locale,
+  copyLocale = locale,
   portalHref,
   portalLabel,
   isLoggedIn = false
 }: {
   locale: Locale;
+  copyLocale?: Locale | MarketingLocale;
   portalHref: string;
   portalLabel?: string;
   isLoggedIn?: boolean;
 }) {
-  const t = landingText("hero", locale);
+  const t = landingText("hero", copyLocale);
   const sectionRef = useRef<HTMLElement>(null);
   const reduce = useReducedMotion();
   const { scrollYProgress } = useScroll({
@@ -48,12 +50,15 @@ export function CinematicHero({
   const primaryLabel = isLoggedIn
     ? (portalLabel ?? (locale === "zh" ? "品牌方门户" : "Brand portal"))
     : t.primary;
-  const primaryHref = isLoggedIn ? portalHref : withLocale("/login?role=brand", locale);
+  const primaryHref = isLoggedIn ? portalHref : withLocale("/login?role=brand", copyLocale);
   const secondaryLabel = t.secondary;
-  const secondaryHref = withLocale("/login?role=creator", locale);
-  const isEnglish = locale === "en";
-  const primaryDescription = locale === "zh" ? "匹配优质创作者" : "Match with vetted AI Studios";
-  const secondaryDescription = locale === "zh" ? "入驻获取全球订单" : "Join to get global orders";
+  const secondaryHref = withLocale("/login?role=creator", copyLocale);
+  const heroLocale = copyLocale === "zh" ? "zh-CN" : copyLocale;
+  const isEnglish = heroLocale === "en";
+  const isCjkHero = isChineseLanguage(heroLocale) || heroLocale === "ja" || heroLocale === "ko";
+  const isLongHeroLanguage = !isEnglish && !isCjkHero;
+  const primaryDescription = t.primaryDescription;
+  const secondaryDescription = t.secondaryDescription;
 
   return (
     <section
@@ -77,43 +82,45 @@ export function CinematicHero({
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_46%_34%_at_86%_24%,rgba(96,156,220,0.18),transparent_60%)] sm:hidden"
         aria-hidden
       />
-      <div className="absolute inset-x-0 bottom-0 h-px bg-white/10" aria-hidden />
-
       <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col px-4 pb-0 pt-[5.35rem] sm:px-8 sm:pb-8 sm:pt-24 md:pt-28 lg:pb-10 lg:pt-20">
         <motion.div
           style={reduce ? undefined : { opacity: contentOpacity, y: contentY }}
           className="flex flex-none flex-col justify-start pt-12 sm:flex-1 sm:justify-center sm:pt-0"
         >
-          <div className="w-full max-w-3xl sm:max-w-xl">
-            <p className="inline-flex max-w-full items-center gap-2 rounded-md border border-white/18 bg-white/[0.07] px-3 py-1.5 text-[10px] font-medium leading-5 text-zinc-200 shadow-[0_12px_36px_-24px_rgba(255,255,255,0.7)] backdrop-blur-md sm:px-3.5 sm:text-[11px]">
+          <div className="w-full max-w-3xl text-center sm:max-w-xl sm:text-left">
+            <p className="mx-auto inline-flex max-w-full items-center justify-center gap-2 rounded-md border border-white/18 bg-white/[0.07] px-3 py-1.5 text-center text-[10px] font-medium leading-5 text-zinc-200 shadow-[0_12px_36px_-24px_rgba(255,255,255,0.7)] backdrop-blur-md sm:mx-0 sm:justify-start sm:px-3.5 sm:text-left sm:text-[11px]">
               <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-[#c7d1df]" />
               <span className="min-w-0 text-wrap">{t.eyebrow}</span>
             </p>
 
             <h1
               className={cn(
-                "mt-4 font-semibold tracking-[-0.04em] sm:mt-6",
+                "mt-4 max-w-full font-semibold tracking-[-0.04em] sm:mt-6",
                 isEnglish
                   ? "w-full max-w-none text-[clamp(1.7rem,7.2vw,2.9rem)] leading-[1.04] sm:text-[3rem] md:text-[3.15rem] lg:text-[3.15rem] xl:text-[4.3rem]"
+                  : isLongHeroLanguage
+                    ? "w-full text-[clamp(1.75rem,6.2vw,2.65rem)] leading-[1.08] sm:max-w-[60rem] sm:text-[clamp(2.35rem,4.7vw,3.55rem)]"
                   : "w-[min(100vw-2rem,52rem)] max-w-none text-[clamp(1.7rem,7.2vw,2.9rem)] leading-[1.04] sm:text-[clamp(2.5rem,4.35vw,4.1rem)]",
                 isEnglish ? marketingHeadlineClassName("en") : "text-pretty"
               )}
             >
               <span
                 className={cn(
-                  "block w-full whitespace-nowrap",
+                  "block w-full max-w-full break-words",
+                  isLongHeroLanguage ? "whitespace-normal" : "whitespace-nowrap",
                   isEnglish ? "text-white" : marketingSilverGradientClassName()
                 )}
               >
                 {t.titleLine1}
               </span>
               {isEnglish && t.titleHighlight ? (
-                <span className="mt-3 block whitespace-nowrap text-white sm:mt-4">{t.titleHighlight}</span>
+                <span className="mt-3 block max-w-full break-words whitespace-normal text-white sm:mt-4">{t.titleHighlight}</span>
               ) : null}
               {t.titleLine2 ? (
                 <span
                   className={cn(
-                    "mt-3 block whitespace-nowrap sm:mt-4",
+                    "mt-3 block max-w-full break-words sm:mt-4",
+                    isLongHeroLanguage ? "whitespace-normal" : "whitespace-nowrap",
                     isEnglish ? "text-zinc-300" : marketingSilverGradientClassName()
                   )}
                 >
@@ -122,11 +129,11 @@ export function CinematicHero({
               ) : null}
             </h1>
 
-            <p className="mt-4 max-w-2xl whitespace-pre-line text-[13px] leading-6 text-zinc-300 sm:mt-6 sm:text-base md:text-[17px] md:leading-8">
+            <p className="mx-auto mt-4 max-w-2xl whitespace-pre-line text-center text-[13px] leading-6 text-zinc-300 sm:mx-0 sm:mt-6 sm:text-left sm:text-base md:text-[17px] md:leading-8">
               {t.subtitle}
             </p>
 
-            <div className="mt-5 grid w-[88%] grid-cols-2 gap-2.5 sm:mt-8 sm:w-full sm:gap-3">
+            <div className="mx-auto mt-5 grid w-[88%] grid-cols-2 gap-2.5 sm:mx-0 sm:mt-8 sm:w-full sm:gap-3">
               <Link
                 href={primaryHref}
                 className="group flex min-h-[70px] items-center justify-between gap-2.5 rounded-xl border border-white bg-white px-3.5 py-3 text-left text-black shadow-[0_24px_64px_-30px_rgba(255,255,255,0.82)] transition duration-300 hover:-translate-y-0.5 hover:bg-zinc-100 sm:min-h-[78px] sm:gap-4 sm:rounded-lg sm:px-5 sm:py-4"
@@ -177,7 +184,7 @@ export function CinematicHero({
         </motion.div>
 
         <div className="mt-0 sm:mt-auto">
-          <CinematicHeroFeatures locale={locale} />
+            <CinematicHeroFeatures locale={copyLocale} />
 
           <div className="mt-5 overflow-hidden border-y border-white/[0.08] py-4 sm:mt-6 sm:py-6">
             <p className="text-center text-[10px] font-medium tracking-[0.18em] text-zinc-500 sm:text-[11px] sm:tracking-[0.24em]">

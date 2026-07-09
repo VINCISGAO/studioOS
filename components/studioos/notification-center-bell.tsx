@@ -228,11 +228,7 @@ export function NotificationCenterBell({
 
       setOpen(false);
       if (item.actionUrl) {
-        const href = normalizeInternalActionHref(item.actionUrl, locale);
-        if (href.startsWith("http")) {
-          window.location.assign(href);
-          return;
-        }
+        const href = normalizeInternalActionHref(item.actionUrl, locale, "/");
         router.push(href);
         router.refresh();
       }

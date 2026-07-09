@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { getCurrentClientEmail } from "@/lib/client-session";
 import { getCurrentCreator } from "@/lib/creator-session";
 import { withLocale, type Locale } from "@/lib/i18n";
 import { canAcceptCreatorOrders, countCompletedCreatorOrders } from "@/lib/studioos/deposit-guard";
@@ -24,6 +25,13 @@ export async function connectCreatorFromMatchAction(formData: FormData) {
   if (!project) {
     redirect(withLocale("/start?error=missing-project", lang));
   }
+  const clientEmail = await getCurrentClientEmail();
+  if (!clientEmail) {
+    redirect(withLocale(`/login?role=brand&next=${encodeURIComponent(`/brand/projects/${projectId}`)}`, lang));
+  }
+  if (project.client_email.toLowerCase() !== clientEmail.toLowerCase()) {
+    redirect(withLocale("/brand?error=project-not-found", lang));
+  }
 
   const status = normalizeCampaignStatus(project.status);
   if (status === "payment_pending") {
@@ -36,20 +44,21 @@ export async function connectCreatorFromMatchAction(formData: FormData) {
 export async function applyToProjectAction(formData: FormData) {
   const lang = normalizeLang(formData.get("lang"));
   const projectId = String(formData.get("project_id") ?? "");
-  const creatorId = String(formData.get("creator_id") ?? "");
+  const submittedCreatorId = String(formData.get("creator_id") ?? "");
   const proposal = String(formData.get("proposal") ?? "").trim();
   const timeline = String(formData.get("timeline") ?? "").trim();
   const proposedAmount = Number(formData.get("proposed_amount") ?? 0);
 
-  if (!projectId || !creatorId || !proposal || !timeline || !proposedAmount) {
+  if (!projectId || !proposal || !timeline || !proposedAmount) {
     redirect(withLocale(`/projects/${projectId}?error=missing-application`, lang));
   }
 
   const creator = await getCurrentCreator();
-  if (
-    !creator ||
-    !canAcceptCreatorOrders(creator, countCompletedCreatorOrders(await listOrdersForCreator(creatorId)))
-  ) {
+  if (!creator || (submittedCreatorId && submittedCreatorId !== creator.id)) {
+    redirect(withLocale(`/projects/${projectId}?error=unauthorized`, lang));
+  }
+  const creatorId = creator.id;
+  if (!canAcceptCreatorOrders(creator, countCompletedCreatorOrders(await listOrdersForCreator(creatorId)))) {
     redirect(withLocale("/studio/deposit?error=deposit-required", lang));
   }
 

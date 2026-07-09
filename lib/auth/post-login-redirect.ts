@@ -5,6 +5,10 @@ function safeUserRole(role: DemoRole): DemoRole {
   return role === "creator" ? "creator" : "client";
 }
 
+export function isSafeInternalPostLoginPath(path: string) {
+  return path.startsWith("/") && !path.startsWith("//") && !path.includes("\\");
+}
+
 export function resolvePostLoginDestination(
   session: { role: DemoRole },
   nextPath: string,
@@ -12,7 +16,7 @@ export function resolvePostLoginDestination(
 ) {
   const role = safeUserRole(session.role);
 
-  if (!nextPath.startsWith("/") || nextPath.startsWith("/admin")) {
+  if (!isSafeInternalPostLoginPath(nextPath) || nextPath.startsWith("/admin")) {
     return withLocale(demoRedirectForRole(role), locale);
   }
 

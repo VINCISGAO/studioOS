@@ -36,7 +36,7 @@ export default async function StudioProjectPage({
   await repairSelectedCreatorCampaignOrders(creatorId);
   const [creator, order] = await Promise.all([getCreatorById(creatorId), getOrder(orderId)]);
   if (!order || order.creator_id !== creatorId) {
-    redirect(withLocale("/studio", locale));
+    redirect(withLocale(creatorPortalRoutes.projects, locale));
   }
 
   const project = order.project_id ? await getProject(order.project_id) : null;

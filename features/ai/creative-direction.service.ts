@@ -11,6 +11,8 @@ import { PermissionService } from "@/features/auth/permission.service";
 import type { WizardBriefSnapshot } from "@/lib/studioos/brand-wizard-brief-snapshot";
 import { memoryRepository } from "@/features/memory/memory.repository";
 import { notificationService } from "@/features/notification/notification.service";
+import { paymentRepository } from "@/features/payment/payment.repository";
+import { EscrowState } from "@/features/shared/state-machines/escrow.state-machine";
 import { appError } from "@/lib/core/errors";
 import { getAppBaseUrl } from "@/lib/app-url";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
@@ -179,6 +181,17 @@ export class CreativeDirectionService {
     return campaign;
   }
 
+  private async assertEscrowFundedForAi(campaignId: string) {
+    const escrow = await paymentRepository.findByCampaignId(campaignId);
+    const funded =
+      escrow?.status === EscrowState.HELD ||
+      escrow?.status === EscrowState.PARTIAL_RELEASE ||
+      escrow?.status === EscrowState.FULL_RELEASE;
+    if (!funded) {
+      throw appError("INVALID_TRANSITION", "AI creative generation is available only after escrow payment");
+    }
+  }
+
   readDirections(campaign: Campaign): CreativeDirection[] {
     const brief = (campaign.productionBrief ?? {}) as { creative_directions?: unknown[] };
     return Array.isArray(brief.creative_directions)
@@ -195,6 +208,7 @@ export class CreativeDirectionService {
   async generate(campaignId: string, user: AuthUser) {
     const campaign = await this.getCampaignForBrand(campaignId, user);
     PermissionService.assert(user, "campaign.update");
+    await this.assertEscrowFundedForAi(campaignId);
 
     const actor = { id: user.id, role: user.role };
     if (campaign.status === CampaignState.DRAFT) {
@@ -225,15 +239,24 @@ export class CreativeDirectionService {
     const refreshed = await campaignRepository.findById(campaignId);
     if (!refreshed) throw appError("NOT_FOUND", "Campaign not found");
 
-    if (refreshed.status !== CampaignState.AI_PROCESSING && refreshed.status !== CampaignState.CREATIVE_READY) {
-      const existing = this.readDirections(refreshed);
-      if (existing.length >= 3) return existing;
-      throw appError("INVALID_TRANSITION", `Cannot generate creative in status ${refreshed.status}`);
-    }
+    const existing = this.readDirections(refreshed);
+    if (existing.length >= 3) return existing;
 
-    const existingDirections = this.readDirections(refreshed);
-    if (existingDirections.length >= 3 && refreshed.status === CampaignState.CREATIVE_READY) {
-      return existingDirections;
+    const postPaymentAiStatuses = new Set<string>([
+      CampaignState.ESCROW_FUNDED,
+      CampaignState.MATCHING,
+      CampaignState.INVITATION_SENT,
+      CampaignState.CREATOR_ACCEPTED,
+      CampaignState.PRODUCING,
+      CampaignState.UNDER_REVIEW,
+      CampaignState.APPROVED
+    ]);
+    if (
+      refreshed.status !== CampaignState.AI_PROCESSING &&
+      refreshed.status !== CampaignState.CREATIVE_READY &&
+      !postPaymentAiStatuses.has(refreshed.status)
+    ) {
+      throw appError("INVALID_TRANSITION", `Cannot generate creative in status ${refreshed.status}`);
     }
 
     const job = await aiWorkerService.enqueueCreativeDirection(campaignId, user.id);
@@ -280,6 +303,7 @@ export class CreativeDirectionService {
   ) {
     const campaign = await this.getCampaignForBrand(campaignId, user);
     PermissionService.assert(user, "campaign.update");
+    await this.assertEscrowFundedForAi(campaignId);
 
     const actor = { id: user.id, role: user.role };
     if (campaign.status === CampaignState.DRAFT) {

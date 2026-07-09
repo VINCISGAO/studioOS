@@ -1,4 +1,4 @@
-import { videoConfig, hlsStoragePrefix } from "@/lib/core/config/video";
+import { hlsStoragePrefix, resolvePlaybackSigningSecret, videoConfig } from "@/lib/core/config/video";
 import { signPayload, verifySignedPayload } from "@/lib/core/signed-url-core";
 import type { PlaybackTokenPayload } from "@/features/video/playback-token.types";
 
@@ -16,11 +16,11 @@ export function createPlaybackToken(input: {
     c: input.campaignId,
     exp: Math.floor(Date.now() / 1000) + (input.ttlSec ?? videoConfig.tokenTtlSec)
   };
-  return signPayload(payload, videoConfig.signingSecret);
+  return signPayload(payload, resolvePlaybackSigningSecret());
 }
 
 export function verifyPlaybackToken(token: string): PlaybackTokenPayload | null {
-  const payload = verifySignedPayload<PlaybackTokenPayload>(token, videoConfig.signingSecret);
+  const payload = verifySignedPayload<PlaybackTokenPayload>(token, resolvePlaybackSigningSecret());
   if (!payload?.v || !payload.u || !payload.c || !payload.exp) return null;
   if (payload.exp < Math.floor(Date.now() / 1000)) return null;
   return payload;

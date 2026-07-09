@@ -1,7 +1,10 @@
 import { redirect } from "next/navigation";
 import { LoginPageShell, type LoginPageCopy } from "@/components/studioos/login-page-shell";
 import { isDemoLoginUiEnabled, preferDemoAuth } from "@/lib/can-persist-local-store";
-import { resolvePostLoginDestination } from "@/lib/auth/post-login-redirect";
+import {
+  isSafeInternalPostLoginPath,
+  resolvePostLoginDestination
+} from "@/lib/auth/post-login-redirect";
 import { hasSupabaseConfig } from "@/lib/auth-config";
 import { isAlipayOAuthLive } from "@/lib/alipay/alipay-oauth-config";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
@@ -232,11 +235,11 @@ function resolveLoginErrorCode(rawError: string | undefined) {
 
 function resolveNextPath(raw: SearchParams["next"]) {
   if (typeof raw === "string") {
-    return raw.startsWith("/admin") ? "" : raw;
+    return isSafeInternalPostLoginPath(raw) && !raw.startsWith("/admin") ? raw : "";
   }
   if (Array.isArray(raw)) {
     const value = raw[0] ?? "";
-    return value.startsWith("/admin") ? "" : value;
+    return isSafeInternalPostLoginPath(value) && !value.startsWith("/admin") ? value : "";
   }
   return "";
 }

@@ -47,6 +47,30 @@ export function LandingEyebrow({
   );
 }
 
+export function MarketingEyebrowPill({
+  children,
+  tone = "dark",
+  className
+}: {
+  children: ReactNode;
+  tone?: "dark" | "light";
+  className?: string;
+}) {
+  return (
+    <p
+      className={cn(
+        "mx-auto inline-flex min-h-7 max-w-full items-center justify-center rounded-full border px-4 py-1 text-center text-[12px] font-semibold leading-snug tracking-[0.12em] sm:min-h-8 sm:max-w-[min(100%,36rem)] sm:px-5 sm:text-[13px]",
+        tone === "dark"
+          ? "border-white/[0.10] bg-white/[0.045] text-zinc-300"
+          : "border-black/10 bg-white/70 text-zinc-500 shadow-sm",
+        className
+      )}
+    >
+      {children}
+    </p>
+  );
+}
+
 export function LandingHeadline({
   children,
   className,

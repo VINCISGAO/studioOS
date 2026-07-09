@@ -155,7 +155,7 @@ export async function middleware(request: NextRequest) {
 
   if (pathname === "/workspace/studio" || pathname.startsWith("/workspace/studio/")) {
     const url = withLang(request.nextUrl.clone(), request);
-    url.pathname = "/studio/review";
+    url.pathname = "/studio/projects";
     return NextResponse.redirect(url);
   }
 
@@ -215,8 +215,11 @@ export async function middleware(request: NextRequest) {
   const isCreatorWorkspaceRoute =
     pathname === "/creator" ||
     pathname.startsWith("/creator/orders") ||
-    pathname.startsWith("/creator/profile");
-  const isProtectedRoute = isDashboardRoute || isAdminRoute || isCreatorWorkspaceRoute;
+    pathname.startsWith("/creator/profile") ||
+    pathname === "/studio" ||
+    pathname.startsWith("/studio/");
+  const isBrandWorkspaceRoute = pathname === "/brand" || pathname.startsWith("/brand/");
+  const isProtectedRoute = isDashboardRoute || isAdminRoute || isCreatorWorkspaceRoute || isBrandWorkspaceRoute;
 
   function hasAdminSessionCookie(request: NextRequest) {
     const token = request.cookies.get(ADMIN_SESSION_COOKIE)?.value;
@@ -265,6 +268,10 @@ export async function middleware(request: NextRequest) {
       return redirectToRoleHome(request, normalizeRouteRole(demoSession.role));
     }
 
+    if (isBrandWorkspaceRoute && demoSession.role !== "client") {
+      return redirectToRoleHome(request, normalizeRouteRole(demoSession.role));
+    }
+
     return response;
   }
 
@@ -310,7 +317,7 @@ export async function middleware(request: NextRequest) {
     return redirectToLogin(request);
   }
 
-  if ((isAdminRoute || isCreatorWorkspaceRoute) && user) {
+  if ((isAdminRoute || isCreatorWorkspaceRoute || isBrandWorkspaceRoute) && user) {
     const [{ data: legacyProfile }, { data: mvpProfile }] = await Promise.all([
       supabase.from("users").select("role").eq("id", user.id).maybeSingle(),
       supabase.from("profiles").select("role").eq("id", user.id).maybeSingle()
@@ -325,6 +332,10 @@ export async function middleware(request: NextRequest) {
     }
 
     if (isCreatorWorkspaceRoute && routeRole !== "creator" && !isAdminRouteRole(routeRole)) {
+      return redirectToRoleHome(request, routeRole);
+    }
+
+    if (isBrandWorkspaceRoute && routeRole !== "client" && !isAdminRouteRole(routeRole)) {
       return redirectToRoleHome(request, routeRole);
     }
   }

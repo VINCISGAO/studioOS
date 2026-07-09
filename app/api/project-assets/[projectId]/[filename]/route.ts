@@ -1,6 +1,31 @@
 import { NextResponse } from "next/server";
 import { projectAssetObjectKey } from "@/lib/studioos/project-asset-upload";
 import { getObject } from "@/lib/studioos/object-storage";
+import { getCurrentClientEmail } from "@/lib/client-session";
+import { getCurrentCreatorId } from "@/lib/creator-session";
+import { getOrderForProject } from "@/lib/order-service";
+import { getProject } from "@/lib/project-service";
+import { listInvitationsForProject } from "@/lib/studioos/creator-invitation-store";
+
+async function canReadProjectAsset(projectId: string) {
+  const [project, clientEmail, creatorId] = await Promise.all([
+    getProject(projectId),
+    getCurrentClientEmail().catch(() => null),
+    getCurrentCreatorId().catch(() => null)
+  ]);
+  if (!project) return false;
+  if (clientEmail && project.client_email.toLowerCase() === clientEmail.toLowerCase()) {
+    return true;
+  }
+  if (!creatorId) return false;
+
+  const [order, invitations] = await Promise.all([
+    getOrderForProject(projectId).catch(() => null),
+    listInvitationsForProject(projectId).catch(() => [])
+  ]);
+  if (order?.creator_id === creatorId) return true;
+  return invitations.some((item) => item.creatorId === creatorId);
+}
 
 export async function GET(
   _request: Request,
@@ -9,6 +34,9 @@ export async function GET(
   const { projectId, filename } = await context.params;
   if (!projectId || !filename) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  }
+  if (!(await canReadProjectAsset(projectId))) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const safeName = decodeURIComponent(filename).replace(/[/\\]/g, "");

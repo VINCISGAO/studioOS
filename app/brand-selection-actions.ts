@@ -2,11 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
-import { DEMO_SESSION_COOKIE } from "@/lib/auth-config";
-import { parseDemoSession, DEMO_USERS } from "@/lib/demo-auth";
+import { DEMO_USERS } from "@/lib/demo-auth";
 import { withLocale, type Locale } from "@/lib/i18n";
 import { getProject } from "@/lib/project-service";
+import { getCurrentSession } from "@/lib/session-user";
 import { selectCreatorForProject } from "@/lib/studioos/creator-invitation-store";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
 import { creatorPortalRoutes } from "@/lib/studioos/creator-portal-routes";
@@ -28,19 +27,26 @@ function revalidateClosedLoopPaths(projectId: string) {
   revalidatePath(creatorPortalRoutes.projects);
 }
 
+async function requireBrandSelectionSession(locale: Locale) {
+  const session = await getCurrentSession();
+  if (!session || session.role !== "client") {
+    redirect(withLocale("/login?role=brand", locale));
+  }
+  return { ...session, email: session.email.toLowerCase() };
+}
+
 export async function selectCreatorFromInvitationsAction(formData: FormData) {
   const locale = (formData.get("lang") as Locale) || "en";
   const projectId = String(formData.get("projectId") ?? "");
   const creatorId = String(formData.get("creatorId") ?? "");
 
-  const cookieStore = await cookies();
-  const session = parseDemoSession(cookieStore.get(DEMO_SESSION_COOKIE)?.value);
-  if (!session || session.role !== "client") {
-    redirect(withLocale("/login?role=brand", locale));
-  }
+  const session = await requireBrandSelectionSession(locale);
 
   const project = await getProject(projectId);
-  const demoUser = DEMO_USERS.find((user) => user.email === session.email.toLowerCase());
+  if (!project || project.client_email.toLowerCase() !== session.email) {
+    redirect(withLocale(`${brandPortalRoutes.project(projectId)}?tab=match&error=project-not-found`, locale));
+  }
+  const demoUser = DEMO_USERS.find((user) => user.email === session.email);
 
   const result = await selectCreatorForProject({
     projectId,
@@ -48,7 +54,7 @@ export async function selectCreatorFromInvitationsAction(formData: FormData) {
     locale,
     client: {
       client_name: demoUser?.label.replace(/\s*\(brand\)/i, "").trim() ?? session.email.split("@")[0] ?? "Brand",
-      client_email: session.email.toLowerCase(),
+      client_email: session.email,
       company_name: project?.company_name ?? demoUser?.label ?? ""
     }
   });
@@ -66,14 +72,10 @@ export async function rerollCreatorInvitationsAction(formData: FormData) {
   const locale = (formData.get("lang") as Locale) || "en";
   const projectId = String(formData.get("projectId") ?? "");
 
-  const cookieStore = await cookies();
-  const session = parseDemoSession(cookieStore.get(DEMO_SESSION_COOKIE)?.value);
-  if (!session || session.role !== "client") {
-    redirect(withLocale("/login?role=brand", locale));
-  }
+  const session = await requireBrandSelectionSession(locale);
 
   const project = await getProject(projectId);
-  if (!project || project.client_email.toLowerCase() !== session.email.toLowerCase()) {
+  if (!project || project.client_email.toLowerCase() !== session.email) {
     redirect(withLocale(`${brandPortalRoutes.project(projectId)}?tab=match&error=project-not-found`, locale));
   }
 
@@ -93,14 +95,10 @@ export async function trackBrandCreatorProfileViewAction(formData: FormData) {
   const projectId = String(formData.get("projectId") ?? "");
   const creatorId = String(formData.get("creatorId") ?? "");
 
-  const cookieStore = await cookies();
-  const session = parseDemoSession(cookieStore.get(DEMO_SESSION_COOKIE)?.value);
-  if (!session || session.role !== "client") {
-    redirect(withLocale("/login?role=brand", locale));
-  }
+  const session = await requireBrandSelectionSession(locale);
 
   const project = await getProject(projectId);
-  if (!project || project.client_email.toLowerCase() !== session.email.toLowerCase()) {
+  if (!project || project.client_email.toLowerCase() !== session.email) {
     redirect(withLocale(`${brandPortalRoutes.project(projectId)}?tab=match&error=project-not-found`, locale));
   }
 
@@ -113,7 +111,7 @@ export async function trackBrandCreatorProfileViewAction(formData: FormData) {
       campaignId: campaign?.id ?? null,
       legacy_project_id: projectId,
       legacy_creator_id: creatorId,
-      brand_email: session.email.toLowerCase(),
+      brand_email: session.email,
       source: "accepted_creator_list"
     },
     learningType: "view_creator",
