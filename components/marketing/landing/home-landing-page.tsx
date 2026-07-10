@@ -48,7 +48,7 @@ export function HomeLandingPage({
           portalSession={portalSession}
         />
 
-        <HomeHeroVideo locale={copyLocale as MarketingLocale} videoSrc={heroVideoSrc} heroPosterSrc={heroBgSrc} />
+        <HomeHeroVideo locale={copyLocale as MarketingLocale} videoSrc={heroVideoSrc} />
 
         <HomeHeroMetrics copyLocale={copyLocale} />
 

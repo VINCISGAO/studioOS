@@ -46,7 +46,7 @@ function ShowcaseVideoThumb({
       muted
       playsInline
       preload={priority ? "auto" : "metadata"}
-      className={cn("h-full w-full object-cover", className)}
+      className={cn("block h-full w-full object-cover", className)}
     />
   );
 }
@@ -85,7 +85,7 @@ export function ShowcaseCover({
         key={activePoster}
         src={activePoster}
         alt=""
-        className={cn("h-full w-full object-cover", imageClassName, className)}
+        className={cn("block h-full w-full object-cover", imageClassName, className)}
         loading={priority ? "eager" : "lazy"}
         decoding="async"
         fetchPriority={priority ? "high" : "auto"}
