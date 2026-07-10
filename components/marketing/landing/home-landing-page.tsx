@@ -11,7 +11,7 @@ import { LandingCta, LandingHowItWorks } from "@/components/marketing/landing/la
 import { MarketingFooter } from "@/components/marketing/marketing-footer";
 import type { MarketingShowcaseWorkDto } from "@/features/marketing-showcase/marketing-showcase.types";
 import type { Locale, MarketingLocale } from "@/lib/i18n";
-import { getHomeHeroSpaceBackgroundUrl } from "@/lib/studioos/home-hero-space-asset";
+import { getHomeHeroSpaceBackgroundSources } from "@/lib/studioos/home-hero-space-asset";
 
 /**
  * VINCIS marketing homepage — server-rendered shell.
@@ -28,14 +28,14 @@ export function HomeLandingPage({
   heroVideoSrc: string;
   featuredWorks: MarketingShowcaseWorkDto[];
 }) {
-  const heroBgSrc = getHomeHeroSpaceBackgroundUrl();
+  const { src: heroBgSrc, src2x: heroBgSrc2x } = getHomeHeroSpaceBackgroundSources();
 
   return (
     <div className="relative bg-black text-white">
       <CinematicNav locale={locale} copyLocale={copyLocale} />
 
       <main className="scroll-smooth">
-        <CinematicHero locale={locale} copyLocale={copyLocale} heroBgSrc={heroBgSrc} />
+        <CinematicHero locale={locale} copyLocale={copyLocale} heroBgSrc={heroBgSrc} heroBgSrc2x={heroBgSrc2x} />
 
         <HomeHeroVideo locale={copyLocale as MarketingLocale} videoSrc={heroVideoSrc} heroPosterSrc={heroBgSrc} />
 

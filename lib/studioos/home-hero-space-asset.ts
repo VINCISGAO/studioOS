@@ -1,32 +1,36 @@
 import { existsSync, readFileSync, statSync } from "fs";
 import path from "path";
 
-const PUBLIC_HERO_PATH = "/images/login-space-bg.png";
-
-const ASSET_ROOT =
-  ".cursor/projects/Users-linkele-Documents-Codex-2026-06-28-build-a-production-ready-mvp-web/assets";
-
-const CHAT_ASSETS = [
-  "f0820f8a-e12b-4141-929a-d24cf32004c5-22c92bbe-cbe7-4d8f-a163-a0e1c155f0be.png",
-  "d2c4032c-36cb-4431-8587-17fc9309a920-8e852c55-f1ee-4346-a3fb-976c80e1536b.png",
-  "image-69b788da-eb7b-4171-929e-71a681c747b5.png"
-];
+/** Marketing homepage hero — Earth from space (owner asset). */
+const PUBLIC_HERO_PATH = "/images/home-hero-space.png";
+const PUBLIC_HERO_2X_PATH = "/images/home-hero-space@2x.png";
 
 function candidates() {
-  const home = process.env.HOME ?? "";
   const cwd = process.cwd();
-  const chatAssets = CHAT_ASSETS.flatMap((fileName) => [
-    path.join(home, ASSET_ROOT, fileName),
-    path.join(home, ".cursor/projects/Users-linkele-Projects-studioOS/assets", fileName),
-    path.join(cwd, "../../", ASSET_ROOT, fileName)
-  ]);
-
+  const home = process.env.HOME ?? "";
+  const oneX = path.join(cwd, "public/images/home-hero-space.png");
+  const bundled1x = path.join(cwd, "assets/marketing/home-hero-space.png");
+  const twoX = path.join(cwd, "public/images/home-hero-space@2x.png");
+  if (existsSync(oneX)) return [oneX, bundled1x];
+  if (existsSync(twoX)) return [twoX];
   return [
-    path.join(cwd, "public/images/login-space-bg.png"),
-    path.join(cwd, "public/images/home-hero-space.png"),
-    path.join(cwd, "assets/marketing/home-hero-space.png"),
-    ...chatAssets
+    bundled1x,
+    path.join(home, ".cursor/projects/Users-linkele-Projects-studioOS/assets/image-95d81c65-9e03-4130-9eb5-a5eb0a1d0ba1.png")
   ];
+}
+
+function candidates2x() {
+  const cwd = process.cwd();
+  return [
+    path.join(cwd, "public/images/home-hero-space@2x.png"),
+    path.join(cwd, "assets/marketing/home-hero-space@2x.png")
+  ];
+}
+
+function versionQuery(filePath: string | undefined) {
+  if (!filePath) return `?v=${Date.now()}`;
+  const version = Math.floor(statSync(filePath).mtimeMs);
+  return `?v=${version}`;
 }
 
 export function readHomeHeroSpaceAsset(): Buffer | null {
@@ -36,15 +40,32 @@ export function readHomeHeroSpaceAsset(): Buffer | null {
 }
 
 export function getHomeHeroSpaceBackgroundUrl(): string {
-  const source = candidates().find((candidate) => existsSync(candidate));
-  const version = source ? Math.floor(statSync(source).mtimeMs) : Date.now();
-  return `${PUBLIC_HERO_PATH}?v=${version}`;
+  const cwd = process.cwd();
+  const oneX = path.join(cwd, "public/images/home-hero-space.png");
+  const source = existsSync(oneX)
+    ? oneX
+    : candidates().find((candidate) => existsSync(candidate));
+  return `${PUBLIC_HERO_PATH}${versionQuery(source)}`;
+}
+
+export function getHomeHeroSpaceBackgroundUrl2x(): string | undefined {
+  const source = candidates2x().find((candidate) => existsSync(candidate));
+  if (!source) return undefined;
+  return `${PUBLIC_HERO_2X_PATH}${versionQuery(source)}`;
+}
+
+/** 1x + optional 2x for Retina hero backdrop. */
+export function getHomeHeroSpaceBackgroundSources() {
+  return {
+    src: getHomeHeroSpaceBackgroundUrl(),
+    src2x: getHomeHeroSpaceBackgroundUrl2x()
+  };
 }
 
 export function homeHeroSpaceResponse() {
   const body = readHomeHeroSpaceAsset();
   if (!body) {
-    return new Response("Hero space background not found", { status: 404 });
+    return new Response("Home hero space background not found", { status: 404 });
   }
   return new Response(new Uint8Array(body), {
     headers: {

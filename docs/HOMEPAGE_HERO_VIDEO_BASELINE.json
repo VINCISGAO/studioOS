@@ -12,17 +12,26 @@
     },
     "frozenComponents": [
       "components/marketing/home-hero-video.tsx",
+      "components/marketing/cinematic/cinematic-hero-backdrop.tsx",
       "components/marketing/cinematic/cinematic-hero.tsx",
       "components/marketing/cinematic/cinematic-nav.tsx",
       "components/marketing/landing/landing-cost-comparison.tsx",
       "components/marketing/landing/home-landing-page.tsx"
     ],
-    "heroEarthBackground": {
-      "mobile": { "size": "auto 73%", "position": "100% 38%" },
-      "ipad": { "size": "auto 43%", "position": "100% 24%" },
-      "desktop": { "size": "auto 101%", "position": "right 36%" }
+    "heroBackground": {
+      "asset": "/images/home-hero-space.png",
+      "mobile": { "size": "auto 73%", "position": "center 80% 38%" },
+      "ipad": { "size": "auto 118%", "position": "center 77% 48%", "note": "synced with desktop" },
+      "desktop": { "size": "auto 118%", "position": "center 77% 48%" }
     },
     "compactHeroLocales": ["vi", "es", "fr", "ms", "ja", "en"],
+    "latinHeroLocales": ["en", "es", "fr", "ms", "vi"],
+    "latinHeroDesktopTypography": {
+      "titleCap": "lg:text-[3.5rem]",
+      "titleLines": 2,
+      "titleWrap": "nowrap per line (titleLine1 + titleLine2 only)",
+      "subtitle": "text-pretty"
+    },
     "mobileNavStyle": "card-with-icon-title-description"
   },
   "cacheVersion": "7",

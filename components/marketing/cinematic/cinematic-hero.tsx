@@ -8,13 +8,17 @@ import { marketingHomeHref } from "@/lib/marketing/localized-href";
 import type { Locale, MarketingLocale } from "@/lib/i18n";
 import { CinematicHeroFeatures } from "@/components/marketing/cinematic/cinematic-hero-features";
 import { CinematicHeroBrandsDesktop, CinematicHeroBrandsMobile } from "@/components/marketing/cinematic/cinematic-hero-brands";
+import { CinematicHeroBackdrop } from "@/components/marketing/cinematic/cinematic-hero-backdrop";
 import { cn } from "@/lib/utils";
 
-const HERO_BG_FALLBACK = "/images/login-space-bg.png";
+const HERO_BG_FALLBACK = "/images/home-hero-space.png";
 
 const COMPACT_HERO_LOCALES = new Set<Locale | MarketingLocale>(["vi", "es", "fr", "ms", "ja", "en"]);
 
 const LEGACY_COMPACT_TITLE_LOCALES = new Set<Locale | MarketingLocale>(["vi", "es", "fr", "ms"]);
+
+/** Latin-script hero locales — desktop: lg title cap + subtitle pretty; title stays 2 explicit lines. */
+const LATIN_HERO_LOCALES = new Set<Locale | MarketingLocale>(["en", "es", "fr", "ms", "vi"]);
 
 function isCompactHeroLocale(locale: Locale | MarketingLocale) {
   return COMPACT_HERO_LOCALES.has(locale);
@@ -22,6 +26,10 @@ function isCompactHeroLocale(locale: Locale | MarketingLocale) {
 
 function usesLegacyCompactTitle(locale: Locale | MarketingLocale) {
   return LEGACY_COMPACT_TITLE_LOCALES.has(locale);
+}
+
+function isLatinHeroLocale(locale: Locale | MarketingLocale) {
+  return LATIN_HERO_LOCALES.has(locale);
 }
 
 function getHeroTitleLines(titleLine1: string, titleLine2: string) {
@@ -87,7 +95,7 @@ function HeroCtaButton({
       prefetch={false}
       onMouseEnter={onHover}
       className={cn(
-        "group flex min-h-[4.5rem] flex-1 items-center justify-between gap-2 rounded-2xl px-3.5 py-3 transition duration-300 sm:min-h-[6.35rem] sm:gap-4 sm:rounded-[1.25rem] sm:px-5 sm:py-5 md:min-h-[4.25rem] md:gap-2.5 md:rounded-2xl md:px-3.5 md:py-3.5 lg:min-h-[6.35rem] lg:gap-4 lg:rounded-[1.25rem] lg:px-5 lg:py-5",
+        "group flex min-h-[4.5rem] flex-1 items-center justify-between gap-2 rounded-2xl px-3.5 py-3 transition duration-300 sm:min-h-[6.35rem] sm:gap-4 sm:rounded-[1.25rem] sm:px-5 sm:py-5 md:min-h-[6.35rem] md:gap-4 md:rounded-[1.25rem] md:px-5 md:py-5",
         isActive
           ? "border border-transparent bg-white text-black hover:bg-zinc-100"
           : "border border-white/35 bg-black/35 text-white backdrop-blur-sm hover:border-white/35 hover:bg-black/35"
@@ -98,8 +106,8 @@ function HeroCtaButton({
           className={cn(
             "block font-semibold leading-tight",
             compactLocale
-              ? "text-[11.2px] sm:text-[16px] md:text-[10.4px] lg:text-[20px]"
-              : "text-[14px] sm:text-[20px] md:text-[13px] lg:text-[20px]",
+              ? "text-[11.2px] sm:text-[16px] md:text-[20px]"
+              : "text-[14px] sm:text-[20px] md:text-[20px]",
             isActive ? "text-black" : "text-white"
           )}
         >
@@ -109,8 +117,8 @@ function HeroCtaButton({
           className={cn(
             "mt-1 block leading-tight",
             compactLocale
-              ? "text-[8.8px] sm:mt-1.5 sm:text-[12.8px] md:mt-1 md:text-[8.8px] lg:mt-1.5 lg:text-base"
-              : "text-[11px] sm:mt-1.5 sm:text-base md:mt-1 md:text-[11px] lg:mt-1.5 lg:text-base",
+              ? "text-[8.8px] sm:mt-1.5 sm:text-[12.8px] md:mt-1.5 md:text-base"
+              : "text-[11px] sm:mt-1.5 sm:text-base md:mt-1.5 md:text-base",
             isActive ? "text-zinc-500" : "text-white/55"
           )}
         >
@@ -119,7 +127,7 @@ function HeroCtaButton({
       </span>
       <ArrowRight
         className={cn(
-          "h-4 w-4 shrink-0 transition group-hover:translate-x-0.5 sm:h-5 sm:w-5 md:h-3.5 md:w-3.5 lg:h-5 lg:w-5",
+          "h-4 w-4 shrink-0 transition group-hover:translate-x-0.5 sm:h-5 sm:w-5 md:h-5 md:w-5",
           isActive ? "text-black" : "text-white"
         )}
       />
@@ -173,11 +181,13 @@ function HeroCtaGroup({
 export function CinematicHero({
   locale,
   copyLocale = locale,
-  heroBgSrc = HERO_BG_FALLBACK
+  heroBgSrc = HERO_BG_FALLBACK,
+  heroBgSrc2x
 }: {
   locale: Locale;
   copyLocale?: Locale | MarketingLocale;
   heroBgSrc?: string;
+  heroBgSrc2x?: string;
 }) {
   const t = landingText("hero", copyLocale);
   const primaryHref = marketingHomeHref.brand(copyLocale);
@@ -186,25 +196,26 @@ export function CinematicHero({
   const subtitleText = t.subtitle.replace(/\s*\n\s*/g, " ").trim();
   const compactHeroLocale = isCompactHeroLocale(copyLocale);
   const legacyCompactTitle = usesLegacyCompactTitle(copyLocale);
-  const frenchHeroLocale = copyLocale === "fr";
+  const latinHeroLocale = isLatinHeroLocale(copyLocale);
 
   return (
-    <section className="relative flex flex-col overflow-hidden bg-black text-white sm:min-h-[100dvh]">
-      <div
-        className="pointer-events-none absolute inset-0 bg-[length:auto_73%] bg-[position:100%_38%] bg-no-repeat md:bg-[length:auto_43%] md:bg-[position:100%_24%] lg:bg-[length:auto_101%] lg:bg-[right_36%]"
-        style={{ backgroundImage: `url(${heroBgSrc})` }}
-        aria-hidden
-      />
+    <section className="relative isolate flex flex-col overflow-hidden bg-black text-white sm:min-h-[100dvh]">
+      <CinematicHeroBackdrop src={heroBgSrc} src2x={heroBgSrc2x} />
 
       <div className="relative z-10 w-full px-4 pb-8 pt-[5.35rem] sm:mx-auto sm:flex sm:min-h-[100dvh] sm:max-w-7xl sm:flex-col sm:px-8 sm:pb-0 sm:pt-0">
         <div className="sm:pt-40">
-          <div className="w-full max-w-2xl text-left">
+          <div
+            className={cn(
+              "w-full max-w-2xl text-left",
+              latinHeroLocale && "md:max-w-4xl"
+            )}
+          >
             <div className="flex items-center gap-2.5">
               <span className="h-3 w-0.5 shrink-0 rounded-full bg-violet-500/90" aria-hidden />
               <p
                 className={cn(
                   "font-normal text-zinc-400 md:text-lg",
-                  compactHeroLocale ? "text-[11.2px] md:text-[14.4px] lg:text-lg" : "text-sm"
+                  compactHeroLocale ? "text-[11.2px] md:text-lg" : "text-sm md:text-lg"
                 )}
               >
                 {t.eyebrow}
@@ -213,27 +224,27 @@ export function CinematicHero({
 
             <h1
               className={cn(
-                "mt-5 font-bold leading-[1.08] tracking-[-0.03em] text-white md:mt-6 lg:text-[4.667rem]",
+                "mt-5 font-bold leading-[1.08] tracking-[-0.03em] text-white md:mt-6 md:text-[4.667rem]",
                 compactHeroLocale
                   ? legacyCompactTitle
-                    ? "text-[1.8rem] md:text-[3.2rem]"
-                    : "text-[2.12rem] md:text-[3.2rem]"
-                  : "text-[2.65rem] md:text-[4rem]",
-                frenchHeroLocale && "lg:text-[3.5rem]"
+                    ? "text-[1.8rem]"
+                    : "text-[2.12rem]"
+                  : "text-[2.65rem]",
+                latinHeroLocale && "md:text-[3.5rem]"
               )}
             >
-              {titleLines.map((line, index) => renderTitleLine(line, index, frenchHeroLocale))}
+              {titleLines.map((line, index) => renderTitleLine(line, index))}
             </h1>
 
             <p
               className={cn(
-                "mt-4 max-w-xl leading-7 text-zinc-400 md:mt-5 lg:text-2xl",
-                frenchHeroLocale ? "text-pretty" : "whitespace-nowrap",
+                "mt-4 max-w-xl leading-7 text-zinc-400 md:mt-5 md:text-2xl md:leading-8",
+                latinHeroLocale ? "text-pretty" : "whitespace-nowrap",
                 compactHeroLocale
                   ? legacyCompactTitle
-                    ? "text-[10.4px] md:text-[16.8px] md:leading-[1.6rem]"
-                    : "text-[11.2px] md:text-[16.8px] md:leading-[1.6rem]"
-                  : "text-[14px] md:text-[21px] md:leading-8"
+                    ? "text-[10.4px]"
+                    : "text-[11.2px]"
+                  : "text-[14px]"
               )}
             >
               {subtitleText}
@@ -254,7 +265,7 @@ export function CinematicHero({
 
         <div className="hidden sm:mt-auto sm:block sm:w-full sm:pb-10">
           <HeroCtaGroup
-            className="mb-8 flex w-full max-w-xl flex-row gap-2.5 sm:max-w-3xl sm:gap-4 md:max-w-lg md:gap-2.5 lg:max-w-3xl lg:gap-4"
+            className="mb-8 flex w-full max-w-xl flex-row gap-2.5 sm:max-w-3xl sm:gap-4 md:max-w-3xl md:gap-4"
             primaryHref={primaryHref}
             secondaryHref={secondaryHref}
             primary={t.primary}

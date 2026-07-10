@@ -381,9 +381,9 @@ const landingCopyTranslations: Partial<{
     },
     vi: {
       eyebrow: "AI dẫn dắt · Hợp tác toàn cầu",
-      titleLine1: "Kết nối thương hiệu toàn cầu",
+      titleLine1: "Kết nối thương hiệu",
       titleHighlight: "",
-      titleLine2: "với nhà sáng tạo AI",
+      titleLine2: "toàn cầu với nhà sáng tạo AI",
       subtitle: "Mọi câu chuyện vĩ đại đều bắt đầu từ một kết nối",
       primary: "Bắt đầu với vai trò thương hiệu",
       secondary: "Tham gia với vai trò studio",

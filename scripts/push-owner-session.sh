@@ -2,6 +2,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
+export GIT_PAGER=cat
+
 echo "=== git status (before) ==="
 git status -sb
 
@@ -17,8 +19,9 @@ if git diff --cached --quiet; then
   exit 0
 fi
 
-echo "=== staged ==="
-git diff --cached --stat
+echo "=== staged (summary) ==="
+git diff --cached --shortstat
+echo "(full list: git diff --cached --name-only)"
 
 git commit -m "$(cat <<'EOF'
 Lock homepage golden baseline and ship production-ready fixes.

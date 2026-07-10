@@ -6,7 +6,7 @@ import type { MarketingLocale } from "@/lib/i18n";
 import { isChineseLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
-const HERO_POSTER_FALLBACK = "/images/login-space-bg.png";
+const HERO_POSTER_FALLBACK = "/images/home-hero-space.png";
 
 const videoCopy: Record<
   MarketingLocale,

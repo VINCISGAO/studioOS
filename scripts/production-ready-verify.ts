@@ -207,6 +207,7 @@ function main() {
 
   steps.push(runCmd("prisma.generate", "npx prisma generate"));
   steps.push(runCmd("typecheck", "npm run typecheck"));
+  steps.push(runCmd("marketing.verify_links", "npm run marketing:verify-links"));
   steps.push(runCmd("lint", "npm run lint"));
   steps.push(runCmd("build", "npm run build", { retries: 1 }));
   steps.push(runCheck("migrations.payment_collection", checkMigrationFiles));

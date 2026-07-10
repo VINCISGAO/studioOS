@@ -7,7 +7,7 @@ import { LoginSubmitSpinner } from "@/components/studioos/login-demo-accounts";
 import { useLoginEmailResend } from "@/components/studioos/use-login-email-resend";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import type { Locale } from "@/lib/i18n";
+import { appPath } from "@/lib/i18n";
 import { getLoginVisual, type LoginRole, type LoginVisual } from "@/lib/studioos/login-theme";
 import { cn } from "@/lib/utils";
 
@@ -265,7 +265,7 @@ export function LoginWorkspace({
             type="button"
             className={cn("gap-2", visual.btn)}
             onClick={() => {
-              router.push(redirectTo || (role === "creator" ? `/studio?lang=${locale}` : `/brand?lang=${locale}`));
+              router.push(redirectTo || appPath(role === "creator" ? "/studio" : "/brand"));
               router.refresh();
             }}
           >

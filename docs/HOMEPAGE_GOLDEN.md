@@ -56,25 +56,27 @@ Do not reorder, remove, or replace sections without owner command.
 
 Breakpoints follow Tailwind defaults: **mobile** `< sm`, **iPad** `md`–`lg` (below `lg`), **desktop** `lg+`.
 
-### Hero Earth background (`CinematicHero`)
+### Hero background (`CinematicHero`)
+
+**Asset:** `/images/home-hero-space.png` (owner Earth-from-space — **not** `login-space-bg.png` with blue arc).
 
 | Breakpoint | `background-size` | `background-position` |
 |------------|-------------------|-------------------------|
-| Mobile (default) | `auto 73%` | `100% 38%` |
-| iPad (`md`) | `auto 43%` | `100% 24%` |
-| Desktop (`lg`) | `auto 101%` | `right 36%` |
+| Mobile (default) | `auto 73%` | `center 80% 38%` |
+| iPad (`md`, below `lg`) | `auto 118%` (synced with desktop) | `center 77% 48%` |
+| Desktop (`lg`) | `auto 118%` | `center 77% 48%` |
 
 ### Hero typography compact locales
 
-Locales with **×0.8 mobile/iPad headline scale** (desktop `lg` unchanged): `vi`, `es`, `fr`, `ms`, `ja`, `en`.
+Locales with **×0.8 mobile headline scale** only (`< md`): `vi`, `es`, `fr`, `ms`, `ja`, `en`. **iPad (`md+`) matches desktop.**
 
-- French (`fr`): two-line title wrap allowed; desktop `lg:text-[3.5rem]` cap.
+- **Latin desktop hero** (`en`, `es`, `fr`, `ms`, `vi`): from `md` — title cap `3.5rem`, subtitle `text-pretty`, title **exactly 2 lines** from `titleLine1` + `titleLine2`.
 - Legacy compact title set (`vi`, `es`, `fr`, `ms`): separate title scale path in `cinematic-hero.tsx`.
 
 ### Hero CTA buttons (`HeroCtaButton`)
 
-- Mobile / desktop: full-size (`min-h-[4.5rem]` → `lg:min-h-[6.35rem]`).
-- **iPad only** (`md`, below `lg`): reduced ~⅓ — `md:min-h-[4.25rem]`, smaller text/gap/padding; restores full size at `lg`.
+- Mobile (`< md`): compact sizing where applicable.
+- **iPad + desktop (`md+`)**: full-size (`min-h-[6.35rem]`, desktop text/gap/padding).
 
 ### Mobile navigation (`CinematicNav` · `sm:hidden` only)
 
