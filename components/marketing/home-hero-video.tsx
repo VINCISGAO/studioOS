@@ -6,8 +6,6 @@ import type { MarketingLocale } from "@/lib/i18n";
 import { isChineseLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
-const HERO_POSTER_FALLBACK = "/images/home-hero-space.png";
-
 const videoCopy: Record<
   MarketingLocale,
   {
@@ -113,6 +111,10 @@ function isAllowedVideoSrc(src: string) {
   return src.startsWith("/videos/") && !src.startsWith("//");
 }
 
+function isVideoRenderable(video: HTMLVideoElement) {
+  return video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA;
+}
+
 function formatTime(seconds: number) {
   if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
   const total = Math.floor(seconds);
@@ -127,7 +129,7 @@ type HomeHeroVideoProps = {
   heroPosterSrc?: string;
 };
 
-export function HomeHeroVideo({ locale, videoSrc, heroPosterSrc = HERO_POSTER_FALLBACK }: HomeHeroVideoProps) {
+export function HomeHeroVideo({ locale, videoSrc, heroPosterSrc }: HomeHeroVideoProps) {
   const shellRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const hideControlsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -141,6 +143,12 @@ export function HomeHeroVideo({ locale, videoSrc, heroPosterSrc = HERO_POSTER_FA
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [playing, setPlaying] = useState(true);
   const [controlsActive, setControlsActive] = useState(false);
+  const [videoReady, setVideoReady] = useState(false);
+
+  const markVideoReady = useCallback(() => {
+    setFailed(false);
+    setVideoReady(true);
+  }, []);
 
   const copyLocale = locale;
   const labels = videoCopy[copyLocale] ?? videoCopy.en;
@@ -219,6 +227,7 @@ export function HomeHeroVideo({ locale, videoSrc, heroPosterSrc = HERO_POSTER_FA
 
   useEffect(() => {
     setFailed(false);
+    setVideoReady(false);
   }, [safeSrc]);
 
   useEffect(() => {
@@ -238,7 +247,17 @@ export function HomeHeroVideo({ locale, videoSrc, heroPosterSrc = HERO_POSTER_FA
         setDuration(video.duration);
       }
     };
-    const syncCurrentTime = () => setCurrentTime(video.currentTime);
+    const syncCurrentTime = () => {
+      setCurrentTime(video.currentTime);
+      if (video.currentTime > 0 && !video.paused) {
+        markVideoReady();
+      }
+    };
+    const syncReady = () => {
+      if (isVideoRenderable(video)) {
+        markVideoReady();
+      }
+    };
     const onPlay = () => setPlaying(true);
     const onPause = () => setPlaying(false);
     const onFullscreenChange = () => {
@@ -256,9 +275,13 @@ export function HomeHeroVideo({ locale, videoSrc, heroPosterSrc = HERO_POSTER_FA
 
     syncDuration();
     syncCurrentTime();
+    syncReady();
     setPlaying(!video.paused);
     void video.play().catch(() => setPlaying(false));
 
+    video.addEventListener("loadeddata", syncReady);
+    video.addEventListener("canplay", syncReady);
+    video.addEventListener("playing", syncReady);
     video.addEventListener("loadedmetadata", syncDuration);
     video.addEventListener("durationchange", syncDuration);
     video.addEventListener("timeupdate", syncCurrentTime);
@@ -268,6 +291,9 @@ export function HomeHeroVideo({ locale, videoSrc, heroPosterSrc = HERO_POSTER_FA
     document.addEventListener("webkitfullscreenchange", onFullscreenChange);
 
     return () => {
+      video.removeEventListener("loadeddata", syncReady);
+      video.removeEventListener("canplay", syncReady);
+      video.removeEventListener("playing", syncReady);
       video.removeEventListener("loadedmetadata", syncDuration);
       video.removeEventListener("durationchange", syncDuration);
       video.removeEventListener("timeupdate", syncCurrentTime);
@@ -276,18 +302,22 @@ export function HomeHeroVideo({ locale, videoSrc, heroPosterSrc = HERO_POSTER_FA
       document.removeEventListener("fullscreenchange", onFullscreenChange);
       document.removeEventListener("webkitfullscreenchange", onFullscreenChange);
     };
-  }, [clearHideControlsTimeout, safeSrc]);
+  }, [clearHideControlsTimeout, markVideoReady, safeSrc]);
 
   if (!safeSrc) {
     return (
       <section className="bg-black px-0 py-0 lg:px-8 lg:py-0">
         <div
           className="relative mx-auto aspect-[21/9] w-full overflow-hidden rounded-none bg-[#050607] lg:mx-auto lg:max-w-[1216px] lg:rounded-lg lg:shadow-[0_28px_90px_-64px_rgba(0,0,0,0.55)]"
-          style={{
-            backgroundImage: `url(${heroPosterSrc})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center"
-          }}
+          style={
+            heroPosterSrc
+              ? {
+                  backgroundImage: `url(${heroPosterSrc})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center"
+                }
+              : undefined
+          }
         >
           <p className="absolute inset-x-0 bottom-4 text-center text-xs text-zinc-400">
             {zh ? "视频暂时无法播放" : "Video is temporarily unavailable"}
@@ -343,9 +373,10 @@ export function HomeHeroVideo({ locale, videoSrc, heroPosterSrc = HERO_POSTER_FA
           ref={videoRef}
           key={safeSrc}
           src={safeSrc}
-          poster={heroPosterSrc}
+          {...(heroPosterSrc ? { poster: heroPosterSrc } : {})}
           className={cn(
-            "home-hero-video-player relative z-0 w-full cursor-pointer",
+            "home-hero-video-player relative z-0 w-full cursor-pointer transition-opacity duration-300",
+            videoReady ? "opacity-100" : "opacity-0",
             isFullscreen
               ? "h-auto max-h-full w-auto max-w-full shrink-0 object-contain object-center"
               : "aspect-[21/9] object-cover"
@@ -361,9 +392,11 @@ export function HomeHeroVideo({ locale, videoSrc, heroPosterSrc = HERO_POSTER_FA
           onLoadedData={() => {
             const video = videoRef.current;
             if (!video) return;
+            markVideoReady();
             void video.play().catch(() => setPlaying(false));
           }}
-          onCanPlay={() => setFailed(false)}
+          onCanPlay={markVideoReady}
+          onPlaying={markVideoReady}
           onError={() => setFailed(true)}
         />
 

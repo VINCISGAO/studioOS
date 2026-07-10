@@ -13,18 +13,6 @@ import { MarketingShowcaseVideoModal } from "@/components/marketing/showcase/mar
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
-function ShowcasePoster({
-  work,
-  className,
-  priority = false
-}: {
-  work: MarketingShowcaseWorkDto;
-  className?: string;
-  priority?: boolean;
-}) {
-  return <ShowcaseCover work={work} className={className} priority={priority} />;
-}
-
 function WorkCard({
   work,
   locale,
@@ -55,13 +43,13 @@ function WorkCard({
           "relative overflow-hidden bg-zinc-900",
           featured
             ? "h-[260px] rounded-2xl shadow-[0_18px_60px_-30px_rgba(0,0,0,0.45)] sm:h-[360px]"
-            : "h-[118px] rounded-t-2xl sm:h-[112px]"
+            : "h-[142px] rounded-t-2xl sm:h-[148px] lg:h-[112px]"
         )}
       >
-        <ShowcasePoster
+        <ShowcaseCover
           work={work}
           priority={featured}
-          className="transition duration-500 group-hover:scale-[1.03]"
+          className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
         />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/10" />
         <span className="pointer-events-none absolute bottom-3 right-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-md sm:bottom-4 sm:right-4">
