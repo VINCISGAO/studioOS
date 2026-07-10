@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
 
+export const revalidate = 3600;
+
 const steps = {
   en: [
     ["Brief Builder", "Product URL → goal → audience → style → references. AI generates your Creative Brief."],

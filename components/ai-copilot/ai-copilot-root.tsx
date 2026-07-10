@@ -1,8 +1,13 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { Suspense, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { AiCopilotDrawer } from "@/components/ai-copilot/ai-copilot-drawer";
+
+const AiCopilotDrawer = dynamic(
+  () => import("@/components/ai-copilot/ai-copilot-drawer").then((mod) => mod.AiCopilotDrawer),
+  { ssr: false, loading: () => null }
+);
 
 const AI_WORKSPACE_PATHS = new Set([
   "/copilot",

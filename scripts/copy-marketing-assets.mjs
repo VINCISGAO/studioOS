@@ -1,4 +1,4 @@
-import { copyFileSync, existsSync, mkdirSync } from "fs";
+import { copyFileSync, existsSync, mkdirSync, rmSync } from "fs";
 import path from "path";
 import { spawnSync } from "node:child_process";
 
@@ -8,12 +8,6 @@ const assetRoot = path.join(
   home,
   ".cursor/projects/Users-linkele-Documents-Codex-2026-06-28-build-a-production-ready-mvp-web/assets"
 );
-
-const HERO_CHAT_ASSETS = [
-  "d2c4032c-36cb-4431-8587-17fc9309a920-8e852c55-f1ee-4346-a3fb-976c80e1536b.png",
-  "image-69b788da-eb7b-4171-929e-71a681c747b5.png",
-  "home-hero-bg.png"
-];
 
 const HERO_STUDIO_ASSETS = [
   "dba0e50a-14b8-4743-a9e5-eb24fd434ce2-ae1f6ab4-b47b-46c2-b30f-0804bf4b0277.png",
@@ -42,27 +36,6 @@ function copyFirstAvailable({ dest, sources, label }) {
   console.log(`[copy-marketing-assets] ${label} -> ${dest}`);
 }
 
-const heroSources = [
-  path.join(root, "assets/marketing/home-hero-bg.png"),
-  ...HERO_CHAT_ASSETS.map((fileName) => path.join(assetRoot, fileName)),
-  path.join(root, "public/images/home-hero-bg.png")
-];
-
-const heroPublic = path.join(root, "public/images/home-hero-bg.png");
-const heroBundled = path.join(root, "assets/marketing/home-hero-bg.png");
-
-copyFirstAvailable({
-  label: "home hero bg (public)",
-  dest: heroPublic,
-  sources: heroSources
-});
-
-copyFirstAvailable({
-  label: "home hero bg (bundled)",
-  dest: heroBundled,
-  sources: [heroPublic, ...heroSources]
-});
-
 const studioPublic = path.join(root, "public/images/home-hero-studio.png");
 const studioBundled = path.join(root, "assets/marketing/home-hero-studio.png");
 const studioSources = [
@@ -87,6 +60,7 @@ const spacePublic = path.join(root, "public/images/home-hero-space.png");
 const spaceBundled = path.join(root, "assets/marketing/home-hero-space.png");
 const spacePublic2x = path.join(root, "public/images/home-hero-space@2x.png");
 const spaceBundled2x = path.join(root, "assets/marketing/home-hero-space@2x.png");
+const spaceTypo2x = path.join(root, "public/images/home-hero-space@2x.pn.png");
 
 function probeImageWidth(filePath) {
   const widthProbe = spawnSync("sips", ["-g", "pixelWidth", filePath], { encoding: "utf8" });
@@ -119,16 +93,25 @@ function syncHeroSpaceFrom2x() {
   );
 }
 
-if (existsSync(spacePublic2x)) {
+// Owner asset: public/images/home-hero-space.png is source of truth — never overwrite from bundled/chat.
+if (existsSync(spacePublic)) {
+  copyFileSync(spacePublic, spaceBundled);
+  if (!existsSync(spacePublic2x)) {
+    copyFileSync(spacePublic, spacePublic2x);
+  }
+  if (existsSync(spacePublic2x)) {
+    copyFileSync(spacePublic2x, spaceBundled2x);
+  }
+  console.log(`[copy-marketing-assets] home hero space owner public -> bundled (${spacePublic})`);
+} else if (existsSync(spacePublic2x)) {
   syncHeroSpaceFrom2x();
 } else {
   const spaceSources = [
-    path.join(root, "assets/marketing/home-hero-space.png"),
+    spaceBundled,
     ...HERO_SPACE_ASSETS.flatMap((fileName) => [
       path.join(assetRoot, fileName),
       path.join(home, ".cursor/projects/Users-linkele-Projects-studioOS/assets", fileName)
-    ]),
-    path.join(root, "public/images/home-hero-space.png")
+    ])
   ];
 
   copyFirstAvailable({
@@ -148,6 +131,11 @@ if (existsSync(spacePublic2x)) {
     copyFileSync(spacePublic, spaceBundled2x);
     console.log(`[copy-marketing-assets] home hero space @2x mirror from 1x -> ${spacePublic2x}`);
   }
+}
+
+if (existsSync(spaceTypo2x)) {
+  rmSync(spaceTypo2x);
+  console.log("[copy-marketing-assets] removed typo home-hero-space@2x.pn.png");
 }
 
 const LOGIN_SPACE_ASSETS = [

@@ -313,13 +313,8 @@ export async function middleware(request: NextRequest) {
     return applyAdminSecurityHeaders(response, { nonce: adminCspNonce, production: isProduction });
   }
 
-  const demoSession = await parseDemoSessionCookieAsync(
-    request.cookies.get(DEMO_SESSION_COOKIE)?.value
-  );
-
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
   let supabaseClient: ReturnType<typeof createServerClient> | null = null;
 
   async function resolveSupabaseUser() {
@@ -386,6 +381,10 @@ export async function middleware(request: NextRequest) {
   }
 
   if (pathname === "/login") {
+    const demoSession = await parseDemoSessionCookieAsync(
+      request.cookies.get(DEMO_SESSION_COOKIE)?.value
+    );
+
     if (demoSession?.role === "client" || demoSession?.role === "creator") {
       return redirectToRoleDefault(request, demoSession.role);
     }
@@ -404,6 +403,10 @@ export async function middleware(request: NextRequest) {
     }
     return applyBaselineSecurityHeaders(response);
   }
+
+  const demoSession = await parseDemoSessionCookieAsync(
+    request.cookies.get(DEMO_SESSION_COOKIE)?.value
+  );
 
   function redirectToRoleHome(request: NextRequest, role: ReturnType<typeof normalizeRouteRole>) {
     return redirectToPath(request, demoRedirectForRole(role ?? "client"));
@@ -436,6 +439,17 @@ export async function middleware(request: NextRequest) {
   const supabaseUser = await resolveSupabaseUser();
   if (!supabaseUser) {
     return redirectToLogin(request);
+  }
+
+  const metadataRole = normalizeRouteRole(supabaseUser.user_metadata?.role);
+  if (metadataRole && !isAdminRoute && (isCreatorWorkspaceRoute || isBrandWorkspaceRoute)) {
+    if (isCreatorWorkspaceRoute && metadataRole !== "creator") {
+      return redirectToRoleHome(request, metadataRole);
+    }
+    if (isBrandWorkspaceRoute && metadataRole !== "client") {
+      return redirectToRoleHome(request, metadataRole);
+    }
+    return response;
   }
 
   if (isAdminRoute || isCreatorWorkspaceRoute || isBrandWorkspaceRoute) {
@@ -506,6 +520,6 @@ export const config = {
     "/api/continue",
     "/api/user/create",
     "/api/account/:path*",
-    "/((?!_next/static|_next/image|favicon.ico|api/|videos/|images/).*)"
+    "/((?!_next/static|_next/image|favicon.ico|api/|videos/|images/|demo/).*)"
   ]
 };

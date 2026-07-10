@@ -17,10 +17,7 @@ const nextConfig: NextConfig = {
     webpackBuildWorker: false
   },
   images: {
-    localPatterns: [
-      { pathname: "/api/home-hero-studio" },
-      { pathname: "/images/**" }
-    ],
+    localPatterns: [{ pathname: "/images/**" }],
     remotePatterns: [
       {
         protocol: "https",

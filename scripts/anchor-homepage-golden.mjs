@@ -33,7 +33,6 @@ const paths = [
   ".cursor/rules/agent.mdc",
   "app/page.tsx",
   "app/globals.css",
-  "app/api/home-hero-space",
   "components/marketing",
   "components/language-switcher.tsx",
   "lib/marketing",

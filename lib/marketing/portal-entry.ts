@@ -3,6 +3,36 @@ import type { Locale, MarketingLocale } from "@/lib/i18n";
 import { isChineseLanguage } from "@/lib/i18n";
 import { buildLocalizedHref, marketingHomeHref } from "@/lib/marketing/localized-href";
 
+export type MarketingPortalRole = "client" | "creator";
+
+export type MarketingHomePortalSession = {
+  role: MarketingPortalRole;
+};
+
+export type MarketingHeroCtaTarget = {
+  href: string;
+  allowed: boolean;
+  blockedNotice?: string;
+};
+
+const alreadyLoggedInNotices: Record<MarketingLocale, string> = {
+  en: "You are already signed in. Please sign out before switching portals.",
+  "zh-CN": "您已登录，不可重复登录",
+  "zh-TW": "您已登入，不可重複登入",
+  ja: "すでにログインしています。別のポータルに入る前にログアウトしてください。",
+  ko: "이미 로그인되어 있습니다. 다른 포털로 이동하려면 먼저 로그아웃하세요.",
+  ms: "Anda sudah log masuk. Sila log keluar sebelum menukar portal.",
+  km: "អ្នកបានចូលរួចហើយ។ សូមចេញមុនពេលប្តូរផតថល។",
+  th: "คุณเข้าสู่ระบบอยู่แล้ว กรุณาออกจากระบบก่อนเปลี่ยนพอร์ทัล",
+  vi: "Bạn đã đăng nhập. Vui lòng đăng xuất trước khi chuyển cổng.",
+  fr: "Vous êtes déjà connecté. Déconnectez-vous avant de changer de portail.",
+  es: "Ya has iniciado sesión. Cierra sesión antes de cambiar de portal."
+};
+
+function noticeFor(locale: Locale | MarketingLocale) {
+  return alreadyLoggedInNotices[locale as MarketingLocale] ?? (isChineseLanguage(locale) ? alreadyLoggedInNotices["zh-CN"] : alreadyLoggedInNotices.en);
+}
+
 /** Admin must never surface on the public marketing homepage. */
 export function isMarketingPublicSession(session: DemoSession | null): session is DemoSession {
   return Boolean(session && session.role !== "admin");
@@ -77,4 +107,62 @@ export function resolveMarketingBrandEntryHref(locale: Locale | MarketingLocale)
 
 export function resolveMarketingCreatorEntryHref(locale: Locale | MarketingLocale) {
   return marketingHomeHref.studio(locale);
+}
+
+/** Logged-in homepage nav CTA from serialized portal session. */
+export function resolveMarketingHomeWorkspaceCta(
+  locale: Locale | MarketingLocale,
+  session: MarketingHomePortalSession | null
+): { href: string; label: string } | null {
+  if (!session) {
+    return null;
+  }
+
+  const labels = labelsFor(locale);
+  if (session.role === "creator") {
+    return { href: marketingHomeHref.studio(locale), label: labels.studio };
+  }
+
+  return { href: marketingHomeHref.brand(locale), label: labels.brand };
+}
+
+/** Serializable homepage session for client hero CTAs — brand/creator only. */
+export function toMarketingHomePortalSession(session: DemoSession | null): MarketingHomePortalSession | null {
+  if (!isMarketingPublicSession(session)) {
+    return null;
+  }
+  if (session.role === "client" || session.role === "creator") {
+    return { role: session.role };
+  }
+  return null;
+}
+
+/** Hero CTA targets — block cross-role entry while logged in. */
+export function resolveMarketingHeroCtaTargets(
+  locale: Locale | MarketingLocale,
+  session: MarketingHomePortalSession | null
+): { brand: MarketingHeroCtaTarget; creator: MarketingHeroCtaTarget } {
+  const brandHref = marketingHomeHref.brand(locale);
+  const creatorHref = marketingHomeHref.studio(locale);
+
+  if (!session) {
+    return {
+      brand: { href: brandHref, allowed: true },
+      creator: { href: creatorHref, allowed: true }
+    };
+  }
+
+  const blockedNotice = noticeFor(locale);
+
+  if (session.role === "client") {
+    return {
+      brand: { href: brandHref, allowed: true },
+      creator: { href: creatorHref, allowed: false, blockedNotice }
+    };
+  }
+
+  return {
+    brand: { href: brandHref, allowed: false, blockedNotice },
+    creator: { href: creatorHref, allowed: true }
+  };
 }

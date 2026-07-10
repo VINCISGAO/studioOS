@@ -11,6 +11,11 @@ import type { Locale, MarketingLocale } from "@/lib/i18n";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { cn } from "@/lib/utils";
 
+type WorkspaceCta = {
+  href: string;
+  label: string;
+};
+
 type MobileNavItemKey = "login" | "about" | "process" | "cases" | "pricing" | "resources";
 
 const MOBILE_NAV_ICONS: Record<MobileNavItemKey, typeof User> = {
@@ -71,7 +76,8 @@ function MobileNavMenu({
   open,
   onClose,
   copyLocale,
-  labels
+  labels,
+  workspaceCta
 }: {
   open: boolean;
   onClose: () => void;
@@ -84,6 +90,7 @@ function MobileNavMenu({
     about: string;
     login: string;
   };
+  workspaceCta: WorkspaceCta | null;
 }) {
   useEffect(() => {
     if (!open) return;
@@ -108,9 +115,11 @@ function MobileNavMenu({
   }> = [
     {
       key: "login",
-      href: marketingHomeHref.login(copyLocale),
-      title: labels.login,
-      description: mobileNav.descriptions.login,
+      href: workspaceCta?.href ?? marketingHomeHref.login(copyLocale),
+      title: workspaceCta?.label ?? labels.login,
+      description: workspaceCta
+        ? mobileNav.descriptions.workspace
+        : mobileNav.descriptions.login,
       useAnchor: false,
       icon: MOBILE_NAV_ICONS.login
     },
@@ -193,10 +202,12 @@ function MobileNavMenu({
 
 export function CinematicNav({
   locale,
-  copyLocale = locale
+  copyLocale = locale,
+  workspaceCta = null
 }: {
   locale: Locale;
   copyLocale?: Locale | MarketingLocale;
+  workspaceCta?: WorkspaceCta | null;
 }) {
   const t = cinematicText("nav", copyLocale);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -241,11 +252,11 @@ export function CinematicNav({
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             <LanguageSwitcher locale={copyLocale} tone="dark" navPill />
             <Link
-              href={marketingHomeHref.login(copyLocale)}
-              prefetch={false}
+              href={workspaceCta?.href ?? marketingHomeHref.login(copyLocale)}
+              prefetch={workspaceCta ? true : false}
               className="hidden h-9 items-center rounded-full border border-white/25 px-4 text-sm text-white transition hover:bg-white/10 sm:inline-flex sm:px-5"
             >
-              {t.login}
+              {workspaceCta?.label ?? t.login}
             </Link>
             <button
               type="button"
@@ -267,6 +278,7 @@ export function CinematicNav({
         onClose={() => setMenuOpen(false)}
         copyLocale={copyLocale}
         labels={t}
+        workspaceCta={workspaceCta}
       />
     </>
   );

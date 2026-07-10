@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
 
+export const revalidate = 3600;
+
 export default async function ContactPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const locale = getLocale(await searchParams);
 

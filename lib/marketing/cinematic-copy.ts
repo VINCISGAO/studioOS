@@ -26,6 +26,7 @@ export const cinematicCopy = {
     en: {
       descriptions: {
         login: "Sign in to your account and continue with VINCIS",
+        workspace: "Return to your brand or studio workspace",
         about: "Learn about VINCIS mission and team",
         process: "The complete flow from brief to delivery",
         cases: "Explore our selected work and success stories",
@@ -36,6 +37,7 @@ export const cinematicCopy = {
     zh: {
       descriptions: {
         login: "登录您的账户，继续使用 VINCIS",
+        workspace: "返回您的品牌方或创作者工作台",
         about: "了解 VINCIS 的使命与团队",
         process: "从需求到交付的完整流程",
         cases: "探索我们的精选作品与成功故事",

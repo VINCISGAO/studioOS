@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { DEMO_SESSION_COOKIE, hasSupabaseConfig } from "@/lib/auth-config";
 import { type DemoRole, type DemoSession } from "@/lib/demo-session";
@@ -38,7 +39,7 @@ async function getSupabaseSession(): Promise<DemoSession | null> {
   };
 }
 
-export async function getCurrentSession(): Promise<DemoSession | null> {
+export const getCurrentSession = cache(async (): Promise<DemoSession | null> => {
   const cookieStore = await cookies();
   const demoSession = parseServerDemoSession(cookieStore.get(DEMO_SESSION_COOKIE)?.value);
   if (demoSession) {
@@ -46,7 +47,7 @@ export async function getCurrentSession(): Promise<DemoSession | null> {
   }
 
   return getSupabaseSession();
-}
+});
 
 export async function getCurrentUserEmail(): Promise<string | null> {
   const session = await getCurrentSession();

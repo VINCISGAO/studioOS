@@ -11,6 +11,8 @@ import { LandingCta, LandingHowItWorks } from "@/components/marketing/landing/la
 import { MarketingFooter } from "@/components/marketing/marketing-footer";
 import type { MarketingShowcaseWorkDto } from "@/features/marketing-showcase/marketing-showcase.types";
 import type { Locale, MarketingLocale } from "@/lib/i18n";
+import type { MarketingHomePortalSession } from "@/lib/marketing/portal-entry";
+import { resolveMarketingHomeWorkspaceCta } from "@/lib/marketing/portal-entry";
 import { getHomeHeroSpaceBackgroundSources } from "@/lib/studioos/home-hero-space-asset";
 
 /**
@@ -21,21 +23,30 @@ export function HomeLandingPage({
   locale,
   copyLocale = locale,
   heroVideoSrc,
-  featuredWorks
+  featuredWorks,
+  portalSession = null
 }: {
   locale: Locale;
   copyLocale?: Locale | MarketingLocale;
   heroVideoSrc: string;
   featuredWorks: MarketingShowcaseWorkDto[];
+  portalSession?: MarketingHomePortalSession | null;
 }) {
   const { src: heroBgSrc, src2x: heroBgSrc2x } = getHomeHeroSpaceBackgroundSources();
+  const workspaceCta = resolveMarketingHomeWorkspaceCta(copyLocale, portalSession);
 
   return (
     <div className="relative bg-black text-white">
-      <CinematicNav locale={locale} copyLocale={copyLocale} />
+      <CinematicNav locale={locale} copyLocale={copyLocale} workspaceCta={workspaceCta} />
 
       <main className="scroll-smooth">
-        <CinematicHero locale={locale} copyLocale={copyLocale} heroBgSrc={heroBgSrc} heroBgSrc2x={heroBgSrc2x} />
+        <CinematicHero
+          locale={locale}
+          copyLocale={copyLocale}
+          heroBgSrc={heroBgSrc}
+          heroBgSrc2x={heroBgSrc2x}
+          portalSession={portalSession}
+        />
 
         <HomeHeroVideo locale={copyLocale as MarketingLocale} videoSrc={heroVideoSrc} heroPosterSrc={heroBgSrc} />
 

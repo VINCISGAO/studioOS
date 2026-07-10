@@ -58,7 +58,7 @@ Breakpoints follow Tailwind defaults: **mobile** `< sm`, **iPad** `md`–`lg` (b
 
 ### Hero background (`CinematicHero`)
 
-**Asset:** `/images/home-hero-space.png` (owner Earth-from-space — **not** `login-space-bg.png` with blue arc).
+**Asset:** `/images/home-hero-space.png` — owner file in `public/images/` (source of truth; synced to bundled at build).
 
 | Breakpoint | `background-size` | `background-position` |
 |------------|-------------------|-------------------------|

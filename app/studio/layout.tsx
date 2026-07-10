@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import { after } from "next/server";
 import { redirect } from "next/navigation";
 import { StudioPortalShell } from "@/components/studioos/studio-portal-shell";
 import { getCurrentCreator } from "@/lib/creator-session";
@@ -28,36 +29,45 @@ export default async function StudioLayout({ children }: { children: React.React
   const search = headerList.get("x-search") ?? "";
   const locale = await getAppUiLocale();
   const creator = await getCurrentCreator();
+
   if (creator) {
-    await enforceBrandPaymentDeadlinesForCreator(creator.id);
+    after(() => {
+      void enforceBrandPaymentDeadlinesForCreator(creator.id);
+    });
   }
+
   const orders = creator ? await listOrdersForCreator(creator.id) : [];
-  const access = creator
-    ? await resolveCreatorCertificationAccessFromOrders(creator.id, orders)
-    : null;
+  const [access, levelUpSeen] = await Promise.all([
+    creator ? resolveCreatorCertificationAccessFromOrders(creator.id, orders) : Promise.resolve(null),
+    creator ? hasSeenCertificationLevelUp(creator.id) : Promise.resolve(true)
+  ]);
   const profileComplete = hasCompletedCreatorProfile(creator);
   const canUseBusinessFeatures = access?.canUseBusinessFeatures ?? false;
   const isVerified = access?.isVerified ?? false;
-  const invitations =
+
+  const [invitations, notifications] = await Promise.all([
     creator && canUseBusinessFeatures
-      ? await listInvitationsForCreator(creator.id, locale)
-      : [];
+      ? listInvitationsForCreator(creator.id, locale)
+      : Promise.resolve([]),
+    creator && (canUseBusinessFeatures || isVerified)
+      ? listNotificationsForCreator(creator.id, locale)
+      : Promise.resolve([])
+  ]);
+
   if (creator && (canUseBusinessFeatures || isVerified)) {
-    await ensureCreatorAssignmentNotificationsForOrders({
-      creatorId: creator.id,
-      orders,
-      locale
+    after(() => {
+      void ensureCreatorAssignmentNotificationsForOrders({
+        creatorId: creator.id,
+        orders,
+        locale
+      });
     });
   }
-  const notifications =
-    creator && (canUseBusinessFeatures || isVerified)
-      ? await listNotificationsForCreator(creator.id, locale)
-      : [];
+
   const unreadCount = notifications.filter((item) => !item.read_at).length;
   const invitationCounts = creator && canUseBusinessFeatures
     ? countInvitationsByTab(invitations)
     : { pending: 0, accepted: 0, declined: 0, expired: 0 };
-  const levelUpSeen = creator ? await hasSeenCertificationLevelUp(creator.id) : true;
 
   if (creator && isStudioFeaturePath(pathname)) {
     if (access?.isLockedAfterFirstOrder) {

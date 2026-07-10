@@ -19,14 +19,15 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const isDev = process.env.NODE_ENV === "development";
+
   return (
     <html lang="zh-CN" className={landingFontClassName} suppressHydrationWarning>
-      <head>
-        <script
-          // Cursor/browser inspection tools can inject data-cursor-ref before React hydrates.
-          // Remove those external markers so React does not report false hydration mismatches.
-          dangerouslySetInnerHTML={{
-            __html: `
+      {isDev ? (
+        <head>
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `
 (() => {
   const stripCursorRefs = (root) => {
     if (!root || root.nodeType !== 1) return;
@@ -62,9 +63,10 @@ export default function RootLayout({
   });
 })();
 `
-          }}
-        />
-      </head>
+            }}
+          />
+        </head>
+      ) : null}
       <body
         className="min-h-screen bg-background font-sans text-foreground antialiased"
         suppressHydrationWarning

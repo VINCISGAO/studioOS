@@ -1,3 +1,4 @@
+import { cache } from "react";
 import "server-only";
 
 import { cookies } from "next/headers";
@@ -20,14 +21,14 @@ export {
 } from "@/lib/app-language.shared";
 
 /** Saved app language — cookie is the server source of truth. */
-export async function getAppLanguage(): Promise<SupportedLanguageCode> {
+export const getAppLanguage = cache(async (): Promise<SupportedLanguageCode> => {
   const cookieStore = await cookies();
   return normalizeAppLanguage(cookieStore.get(LOCALE_COOKIE)?.value);
-}
+});
 
-export async function getAppUiLocale(): Promise<Locale> {
+export const getAppUiLocale = cache(async (): Promise<Locale> => {
   return toUiLocale(await getAppLanguage());
-}
+});
 
 /** Server actions / APIs — cookie first, optional form hint second. */
 export async function resolveServerLocale(formLang?: string | null): Promise<Locale> {

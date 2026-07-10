@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { DEMO_SESSION_COOKIE } from "@/lib/auth-config";
 import { parseServerDemoSession } from "@/lib/demo-session-server";
@@ -23,7 +24,7 @@ export async function resolveCurrentCreatorIdFromEmail(email: string) {
   return resolveCreatorIdByEmail(email);
 }
 
-export async function getCurrentCreatorId(): Promise<string | null> {
+export const getCurrentCreatorId = cache(async (): Promise<string | null> => {
   const cookieStore = await cookies();
   const session = parseServerDemoSession(cookieStore.get(DEMO_SESSION_COOKIE)?.value);
 
@@ -42,13 +43,13 @@ export async function getCurrentCreatorId(): Promise<string | null> {
   }
 
   return creatorId;
-}
+});
 
-export async function getCurrentCreator(): Promise<Creator | null> {
+export const getCurrentCreator = cache(async (): Promise<Creator | null> => {
   const creatorId = await getCurrentCreatorId();
   if (!creatorId) {
     return null;
   }
 
   return getCreatorById(creatorId);
-}
+});

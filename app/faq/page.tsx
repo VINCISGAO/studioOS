@@ -2,6 +2,8 @@ import { MarketingShell } from "@/components/marketing/marketing-shell";
 import { Card, CardContent } from "@/components/ui/card";
 import { getLocale, type SearchParams } from "@/lib/i18n";
 
+export const revalidate = 3600;
+
 const faqs = {
   en: [
     ["Is VINCIS a freelancer marketplace?", "No. VINCIS is a production workflow OS for brands and studios — brief, pipeline, review, delivery."],
