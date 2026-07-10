@@ -1,6 +1,6 @@
 import type { Locale } from "@/lib/i18n";
 import type { StoredProject } from "@/lib/project-types";
-import { objectiveOptions } from "@/lib/studioos/brand-brief-ai";
+import { objectiveOptions } from "@/lib/studioos/brand-brief-options";
 import { deliveryTimelineLabel } from "@/lib/studioos/brand-campaign-options";
 
 export type ConfirmedBriefField = {

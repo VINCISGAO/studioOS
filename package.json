@@ -25,6 +25,7 @@
     "marketing:deploy-hero-videos": "node scripts/upload-home-hero-videos-r2.mjs && node scripts/verify-home-hero-r2.mjs",
     "marketing:predeploy-check": "node scripts/predeploy-homepage-check.mjs",
     "marketing:verify-links": "node scripts/verify-marketing-links.mjs",
+    "openai:verify": "node scripts/verify-openai.mjs",
     "marketing:upload-recent-work-videos": "node scripts/upload-home-recent-work-videos-r2.mjs",
     "github:identity": "bash scripts/git-identity.sh && git config user.name && git config user.email",
     "reset:demo-review": "node scripts/reset-mvp-demo.mjs",

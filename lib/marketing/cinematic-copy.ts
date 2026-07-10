@@ -227,6 +227,7 @@ const cinematicCopyTranslations: Partial<{
     "zh-TW": {
       descriptions: {
         login: "登入您的帳戶，繼續使用 VINCIS",
+        workspace: "返回您的品牌方或創作者工作台",
         about: "了解 VINCIS 的使命與團隊",
         process: "從需求到交付的完整流程",
         cases: "探索我們的精選作品與成功故事",
@@ -237,6 +238,7 @@ const cinematicCopyTranslations: Partial<{
     ja: {
       descriptions: {
         login: "アカウントにログインして VINCIS を続ける",
+        workspace: "ブランドまたはスタジオのワークスペースに戻る",
         about: "VINCIS のミッションとチームについて",
         process: "要件から納品までの一気通貫フロー",
         cases: "厳選作品と成功事例を見る",
@@ -247,6 +249,7 @@ const cinematicCopyTranslations: Partial<{
     ko: {
       descriptions: {
         login: "계정에 로그인하고 VINCIS를 계속 이용하세요",
+        workspace: "브랜드 또는 스튜디오 워크스페이스로 돌아가기",
         about: "VINCIS의 미션과 팀을 알아보세요",
         process: "요구사항부터 납품까지의 전체 프로세스",
         cases: "엄선된 작업과 성공 사례를 둘러보세요",
@@ -257,6 +260,7 @@ const cinematicCopyTranslations: Partial<{
     ms: {
       descriptions: {
         login: "Log masuk ke akaun anda dan teruskan dengan VINCIS",
+        workspace: "Kembali ke ruang kerja jenama atau studio anda",
         about: "Ketahui misi dan pasukan VINCIS",
         process: "Aliran lengkap dari brief hingga penghantaran",
         cases: "Terokai karya terpilih dan kisah kejayaan kami",
@@ -267,6 +271,7 @@ const cinematicCopyTranslations: Partial<{
     km: {
       descriptions: {
         login: "ចូលគណនីរបស់អ្នក ហើយបន្តប្រើ VINCIS",
+        workspace: "ត្រឡប់ទៅកន្លែងធ្វើការម៉ាក ឬស្ទូឌីយោរបស់អ្នក",
         about: "ស្វែងយល់អំពីបេសកកម្ម និងក្រុម VINCIS",
         process: "ដំណើរការពេញលេញពីតម្រូវការដល់ការប្រគល់",
         cases: "រុករកស្នាដៃជ្រើសរើស និងរឿងជោគជ័យរបស់យើង",
@@ -277,6 +282,7 @@ const cinematicCopyTranslations: Partial<{
     th: {
       descriptions: {
         login: "เข้าสู่ระบบบัญชีของคุณและใช้งาน VINCIS ต่อ",
+        workspace: "กลับไปยังพื้นที่ทำงานแบรนด์หรือสตูดิโอของคุณ",
         about: "ทำความรู้จักพันธกิจและทีมของ VINCIS",
         process: "ขั้นตอนครบวงจรตั้งแต่บรีฟถึงส่งมอบ",
         cases: "สำรวจผลงานคัดสรรและเรื่องราวความสำเร็จของเรา",
@@ -287,6 +293,7 @@ const cinematicCopyTranslations: Partial<{
     vi: {
       descriptions: {
         login: "Đăng nhập tài khoản và tiếp tục với VINCIS",
+        workspace: "Quay lại không gian làm việc thương hiệu hoặc studio của bạn",
         about: "Tìm hiểu sứ mệnh và đội ngũ VINCIS",
         process: "Quy trình trọn vẹn từ brief đến bàn giao",
         cases: "Khám phá tác phẩm chọn lọc và câu chuyện thành công",
@@ -297,6 +304,7 @@ const cinematicCopyTranslations: Partial<{
     fr: {
       descriptions: {
         login: "Connectez-vous pour continuer sur VINCIS",
+        workspace: "Retourner à votre espace marque ou studio",
         about: "Découvrez la mission et l'équipe VINCIS",
         process: "Le parcours complet du brief à la livraison",
         cases: "Parcourez nos réalisations et histoires de succès",
@@ -307,6 +315,7 @@ const cinematicCopyTranslations: Partial<{
     es: {
       descriptions: {
         login: "Inicia sesión y continúa con VINCIS",
+        workspace: "Volver a tu espacio de marca o estudio",
         about: "Conoce la misión y el equipo de VINCIS",
         process: "El flujo completo del brief a la entrega",
         cases: "Explora trabajos seleccionados e historias de éxito",

@@ -1,17 +1,17 @@
 export function hasOpenAI() {
-  return Boolean(process.env.OPENAI_API_KEY?.trim());
+  return Boolean((process.env["OPENAI_API_KEY"] ?? "").trim());
 }
 
 export function openAIModel() {
-  return process.env.OPENAI_MODEL?.trim() || "gpt-4o-mini";
+  return (process.env["OPENAI_MODEL"] ?? "").trim() || "gpt-4o-mini";
 }
 
 export function openAIVisionModel() {
-  return process.env.OPENAI_VISION_MODEL?.trim() || "gpt-4o";
+  return (process.env["OPENAI_VISION_MODEL"] ?? "").trim() || "gpt-4o";
 }
 
 export function openAIImageModel() {
-  return process.env.OPENAI_IMAGE_MODEL?.trim() || "gpt-image-1";
+  return (process.env["OPENAI_IMAGE_MODEL"] ?? "").trim() || "gpt-image-1";
 }
 
 export function hasMetaAds() {

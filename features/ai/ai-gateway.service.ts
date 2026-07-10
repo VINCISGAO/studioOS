@@ -1,4 +1,4 @@
-import { aiConfig, estimateTokenCost, hasOpenAI } from "@/lib/core/config/ai";
+import { aiConfig, estimateTokenCost, hasOpenAI, openAIApiKey, resolveOpenAIModel } from "@/lib/core/config/ai";
 import { logger } from "@/lib/core/logger";
 
 export type ChatCompletionResult = {
@@ -28,7 +28,7 @@ export class AiGatewayService {
     jsonMode?: boolean;
     language?: string;
   }): Promise<ChatCompletionResult> {
-    const model = input.model ?? aiConfig.defaultModel;
+    const model = resolveOpenAIModel(input.model);
     const started = Date.now();
 
     if (!hasOpenAI()) {
@@ -46,7 +46,7 @@ export class AiGatewayService {
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        Authorization: `Bearer ${openAIApiKey()}`,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({

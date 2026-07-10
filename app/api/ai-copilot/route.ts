@@ -2,6 +2,7 @@ import { z } from "zod";
 import { requireAiCopilotUser } from "@/features/ai-copilot/ai-copilot-auth";
 import { aiCopilotService } from "@/features/ai-copilot/ai-copilot.service";
 import { apiSuccess, handleRouteError } from "@/lib/core/api-route";
+import { readOpenAIApiKey } from "@/lib/core/config/openai-key";
 
 const copilotRequestSchema = z.object({
   sessionId: z.string().optional().nullable(),
@@ -37,6 +38,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    readOpenAIApiKey();
     const user = await requireAiCopilotUser(request);
     const body = copilotRequestSchema.parse(await request.json());
     const data = await aiCopilotService.answer(user, body);

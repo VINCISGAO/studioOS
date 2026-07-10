@@ -19,11 +19,12 @@ import {
 } from "@/lib/project-service";
 import type { CommercialObjective } from "@/lib/project-types";
 import {
-  objectiveOptions,
   reorganizeBrandBriefWithAI,
   templateReorganizeBrandBrief,
   type BrandQuestionnaireInput
 } from "@/lib/studioos/brand-brief-ai";
+import { objectiveOptions } from "@/lib/studioos/brand-brief-options";
+import { hasOpenAI } from "@/lib/core/config/ai";
 import {
   deadlineFromTimeline,
   defaultBrandAspectRatio,
@@ -297,8 +298,6 @@ export async function refineBrandBriefAction(formData: FormData) {
   const projectId = String(formData.get("project_id") ?? "");
   const ctx = await resolveBrandCampaignContext(projectId, lang);
   if (!ctx.ok) return ctx;
-  const aiGate = await assertAiTokensAllowedAfterPayment(projectId, lang);
-  if (!aiGate.ok) return aiGate;
 
   const input = readQuestionnaire(formData, lang);
   const hasText =
@@ -314,8 +313,30 @@ export async function refineBrandBriefAction(formData: FormData) {
     };
   }
 
-  const brief = await reorganizeBrandBriefWithAI(input, lang);
-  return { ok: true as const, brief };
+  if (!hasOpenAI()) {
+    return {
+      ok: false as const,
+      error:
+        lang === "zh"
+          ? "未检测到 OPENAI_API_KEY。请在 .env.local 填写密钥后执行 npm run dev（改 env 后必须重启）。"
+          : "OPENAI_API_KEY is missing. Add it to .env.local and restart npm run dev."
+    };
+  }
+
+  // Brief text polish is allowed before escrow — it reorganizes the brand's own words,
+  // not post-payment creative-direction collaboration.
+  try {
+    const brief = await reorganizeBrandBriefWithAI(input, lang);
+    return { ok: true as const, brief };
+  } catch {
+    return {
+      ok: false as const,
+      error:
+        lang === "zh"
+          ? "AI 整理失败。请确认 OPENAI_API_KEY 已配置，重启开发服务器后重试；若仍失败请检查 OpenAI 账户余额。"
+          : "AI polish failed. Confirm OPENAI_API_KEY is set, restart the dev server, and check your OpenAI balance."
+    };
+  }
 }
 
 export async function saveBrandCampaignBriefAction(formData: FormData) {

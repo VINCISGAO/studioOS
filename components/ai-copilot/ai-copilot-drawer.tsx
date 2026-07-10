@@ -124,7 +124,7 @@ function inferPageContext(pathname: string) {
   const parts = pathname.split("/").filter(Boolean);
   const entityId = parts.at(-1);
   const entityType = parts.includes("projects")
-    ? "campaign"
+    ? "project"
     : parts.includes("orders")
       ? "order"
       : parts.includes("review")
@@ -150,7 +150,7 @@ function contextLabel(pathname: string, locale: UiLocale) {
 function pageContextLabel(input: { pathname: string; entityType: string | null; locale: UiLocale }) {
   const { pathname, entityType, locale } = input;
   if (entityType === "review") return locale === "zh" ? "当前：审片中心" : "Current: Review center";
-  if (entityType === "campaign") return locale === "zh" ? "当前：项目页面" : "Current: Project page";
+  if (entityType === "project") return locale === "zh" ? "当前：项目页面" : "Current: Project page";
   if (entityType === "order") return locale === "zh" ? "当前：订单页面" : "Current: Order page";
   if (entityType === "attribution") return locale === "zh" ? "当前：归因分析" : "Current: Attribution";
   if (pathname.startsWith("/studio/messages")) return locale === "zh" ? "当前：消息中心" : "Current: Messages";

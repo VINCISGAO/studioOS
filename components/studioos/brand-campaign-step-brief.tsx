@@ -14,11 +14,8 @@ import type { StoredProjectReference } from "@/lib/campaign-types";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import { labelPlatform } from "@/lib/localized-options";
-import {
-  objectiveOptions,
-  PLATFORM_OPTIONS,
-  type ReorganizedBrandBrief
-} from "@/lib/studioos/brand-brief-ai";
+import { objectiveOptions, PLATFORM_OPTIONS } from "@/lib/studioos/brand-brief-options";
+import type { ReorganizedBrandBrief } from "@/lib/studioos/brand-brief-ai";
 import {
   BRAND_BUDGET_PRESETS,
   BRAND_DELIVERY_TIMELINES,

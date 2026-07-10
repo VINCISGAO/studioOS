@@ -1,6 +1,7 @@
 import type { AuthUserDto } from "@/features/auth/auth.service";
 import { aiGatewayService } from "@/features/ai/ai-gateway.service";
 import { activityService } from "@/features/campaign/activity.service";
+import { campaignRepository } from "@/features/campaign/campaign.repository";
 import { aiCopilotContextBuilder } from "@/features/ai-copilot/ai-copilot-context.builder";
 import { aiCopilotRepository } from "@/features/ai-copilot/ai-copilot.repository";
 import { aiCopilotToolRouter } from "@/features/ai-copilot/ai-copilot-tool.router";
@@ -13,8 +14,10 @@ import type {
 } from "@/features/ai-copilot/ai-copilot.types";
 import { normalizeCopilotRole } from "@/features/ai-copilot/ai-copilot.types";
 import { appError } from "@/lib/core/errors";
+import { logger } from "@/lib/core/logger";
 import { asInputJson } from "@/lib/core/prisma-json";
 import { getStoredCreatorProfile } from "@/lib/creator-profile-service";
+import { hasOpenAI, resolveOpenAIModel } from "@/lib/core/config/ai";
 import { resolveBrandDisplayName } from "@/lib/studioos/brand-account-display";
 import { resolveCreatorIdByEmail } from "@/lib/studioos/creator-settings-service";
 
@@ -76,13 +79,22 @@ function templateAnswer(input: {
 }
 
 function modelUnavailableAnswer(language: string) {
+  const isProd = process.env.NODE_ENV === "production" || process.env.VERCEL === "1";
+  const setupHint = isProd
+    ? language === "zh-CN" || language === "zh-TW" || language === "zh"
+      ? "当前未连接 OpenAI。请在 Vercel 环境变量配置 OPENAI_API_KEY 并重新部署。"
+      : "OpenAI is not connected. Set OPENAI_API_KEY in Vercel and redeploy."
+    : language === "zh-CN" || language === "zh-TW" || language === "zh"
+      ? "当前未连接 OpenAI。请确认 .env.local 已配置 OPENAI_API_KEY，然后执行 npm run dev 重启。"
+      : "OpenAI is not connected. Set OPENAI_API_KEY in .env.local and restart npm run dev.";
+
   if (language === "zh-CN" || language === "zh-TW" || language === "zh") {
     return [
       "我已经准备好协助你分析工作区。",
       "",
       "你可以问我项目进度、预算是否合理、为什么推荐某个 Creator，或者下一步应该怎么推进。",
       "",
-      "如果当前问题需要更多上下文，我会直接告诉你还缺哪些资料。"
+      setupHint
     ].join("\n");
   }
   return [
@@ -90,7 +102,7 @@ function modelUnavailableAnswer(language: string) {
     "",
     "You can ask about project progress, budget health, creator recommendations, or the best next step.",
     "",
-    "If a question needs more context, I will tell you exactly what information is missing."
+    setupHint
   ].join("\n");
 }
 
@@ -444,23 +456,51 @@ export class AiCopilotService {
         })
       )
     );
-    const activityCampaignId = input.entityType === "campaign" ? input.entityId : null;
+    const activityCampaignId =
+      input.entityType === "campaign" && input.entityId?.trim() ? input.entityId.trim() : null;
     if (activityCampaignId) {
-      await Promise.all(
-        toolCalls.map((call) =>
-          activityService.write(
-            activityCampaignId,
-            "AI_COPILOT_TOOL_READ",
-            { userId: user.id, email: user.email, role: activityActorRole(role) },
-            { tool_name: call.toolName, session_id: session.id }
-          ).catch(() => null)
-        )
-      );
+      const campaign = await campaignRepository.findById(activityCampaignId);
+      if (campaign) {
+        await Promise.all(
+          toolCalls.map((call) =>
+            activityService.write(
+              activityCampaignId,
+              "AI_COPILOT_TOOL_READ",
+              { userId: user.id, email: user.email, role: activityActorRole(role) },
+              { tool_name: call.toolName, session_id: session.id }
+            ).catch(() => null)
+          )
+        );
+      }
     }
 
     let answerMode: "model" | "model_unconfigured" | "template" | "knowledge_base" = "model_unconfigured";
-    let answer = answerFromKnowledge(qaKnowledge) ?? modelUnavailableAnswer(contextWithKnowledge.language);
-    if (qaKnowledge.length > 0) {
+    let answer = "";
+    const knowledgeAnswer = answerFromKnowledge(qaKnowledge);
+
+    if (aiGatewayService.isConfigured()) {
+      try {
+        const result = await aiGatewayService.chatCompletion({
+          system: buildSystemPrompt(contextWithKnowledge),
+          user: buildUserPrompt(input.message, toolCalls, contextWithKnowledge),
+          model: resolveOpenAIModel(),
+          temperature: 0.2,
+          language: contextWithKnowledge.language
+        });
+        if (result.content) {
+          answer = result.content;
+          answerMode = "model";
+        }
+      } catch (error) {
+        logger.error("AI Copilot model request failed", {
+          service: "AiCopilotService",
+          error: error instanceof Error ? error.message : String(error)
+        });
+      }
+    }
+
+    if (!answer && knowledgeAnswer) {
+      answer = knowledgeAnswer;
       answerMode = "knowledge_base";
       await Promise.all([
         aiCopilotRepository.markKnowledgeQaUsed(qaKnowledge.map((item) => item.id)),
@@ -482,16 +522,12 @@ export class AiCopilotService {
           confidence: Math.min(1, (qaKnowledge[0]?.score ?? 0) / 120)
         })
       ]);
-    }
-    if (aiGatewayService.isConfigured()) {
-      const result = await aiGatewayService.chatCompletion({
-        system: buildSystemPrompt(contextWithKnowledge),
-        user: buildUserPrompt(input.message, toolCalls, contextWithKnowledge),
-        temperature: 0.2,
-        language: contextWithKnowledge.language
-      });
-      answer = result.content || answerFromKnowledge(qaKnowledge) || templateAnswer({ message: input.message, context: contextWithKnowledge, toolCalls });
-      answerMode = result.content ? "model" : qaKnowledge.length > 0 ? "knowledge_base" : "template";
+    } else if (!answer && aiGatewayService.isConfigured()) {
+      answer = templateAnswer({ message: input.message, context: contextWithKnowledge, toolCalls });
+      answerMode = "template";
+    } else if (!answer) {
+      answer = modelUnavailableAnswer(contextWithKnowledge.language);
+      answerMode = "model_unconfigured";
     }
 
     const assistantMessage = await aiCopilotRepository.createMessage({

@@ -35,8 +35,12 @@ function requireEnv(name) {
   return value;
 }
 
-function isVideoFile(name) {
-  return /\.mp4$/iu.test(name);
+function isRecentWorkAsset(name) {
+  return /\.(mp4|jpe?g)$/iu.test(name);
+}
+
+function assetContentType(fileName) {
+  return /\.jpe?g$/iu.test(fileName) ? "image/jpeg" : "video/mp4";
 }
 
 async function uploadFile(client, bucket, key, filePath) {
@@ -50,7 +54,7 @@ async function uploadFile(client, bucket, key, filePath) {
         Bucket: bucket,
         Key: key,
         Body: body,
-        ContentType: "video/mp4",
+        ContentType: assetContentType(fileName),
         CacheControl: "public, max-age=31536000, immutable"
       })
     );
@@ -62,7 +66,7 @@ async function uploadFile(client, bucket, key, filePath) {
     new CreateMultipartUploadCommand({
       Bucket: bucket,
       Key: key,
-      ContentType: "video/mp4",
+      ContentType: assetContentType(fileName),
       CacheControl: "public, max-age=31536000, immutable"
     })
   );
@@ -129,9 +133,9 @@ async function main() {
   });
 
   const entries = await fs.readdir(recentWorkDir, { withFileTypes: true });
-  const files = entries.filter((entry) => entry.isFile() && isVideoFile(entry.name)).map((entry) => entry.name);
+  const files = entries.filter((entry) => entry.isFile() && isRecentWorkAsset(entry.name)).map((entry) => entry.name);
   if (!files.length) {
-    throw new Error(`No .mp4 files found in ${recentWorkDir}`);
+    throw new Error(`No .mp4/.jpg files found in ${recentWorkDir}`);
   }
 
   console.log(`[upload-recent-work] uploading ${files.length} files to bucket ${bucket}`);

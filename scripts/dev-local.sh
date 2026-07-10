@@ -57,7 +57,7 @@ echo ">>> 复制营销背景图..."
 node scripts/copy-marketing-assets.mjs || true
 echo ""
 
-rm -rf .next
+rm -rf .next node_modules/.cache
 
 echo ">>> 启动预览 → http://localhost:${PORT}"
 echo ">>> 健康检查:  http://localhost:${PORT}/api/v1/health"

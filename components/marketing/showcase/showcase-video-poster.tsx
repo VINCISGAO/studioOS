@@ -1,9 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { showcaseMiddleFrameTime } from "@/lib/marketing/showcase-video-frame";
 import { cn } from "@/lib/utils";
 
+function resolvePosterVideoSrc(src: string): string {
+  return src;
+}
+
+/** Lightweight fallback poster — first frame from CDN video (metadata preload only). */
 export function ShowcaseVideoPoster({
   src,
   className,
@@ -16,6 +20,7 @@ export function ShowcaseVideoPoster({
   const [frameSrc, setFrameSrc] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
   const objectUrlRef = useRef<string | null>(null);
+  const videoSrc = resolvePosterVideoSrc(src);
 
   useEffect(() => {
     setFrameSrc(null);
@@ -29,11 +34,13 @@ export function ShowcaseVideoPoster({
     const video = document.createElement("video");
     video.muted = true;
     video.playsInline = true;
-    video.preload = "auto";
-    video.src = src;
+    video.preload = "metadata";
+    if (!videoSrc.startsWith("/")) {
+      video.crossOrigin = "anonymous";
+    }
+    video.src = videoSrc;
 
     let disposed = false;
-    let seekPending = false;
     let captured = false;
 
     const revokeObjectUrl = () => {
@@ -43,7 +50,7 @@ export function ShowcaseVideoPoster({
       }
     };
 
-    const captureMiddleFrame = () => {
+    const captureFrame = () => {
       if (disposed || captured) return;
 
       const width = video.videoWidth;
@@ -74,30 +81,23 @@ export function ShowcaseVideoPoster({
           setFrameSrc(url);
         },
         "image/jpeg",
-        0.84
+        0.82
       );
     };
 
-    const seekToMiddle = () => {
-      if (disposed || seekPending || captured) return;
+    const seekToFirstFrame = () => {
+      if (disposed || captured) return;
       const duration = video.duration;
-      if (!Number.isFinite(duration) || duration <= 0) return;
-
-      seekPending = true;
+      const target = Number.isFinite(duration) && duration > 0 ? Math.min(0.5, duration / 4) : 0.1;
       video.pause();
-      video.currentTime = showcaseMiddleFrameTime(duration);
+      video.currentTime = target;
     };
 
     const onSeeked = () => {
-      seekPending = false;
-      window.requestAnimationFrame(() => {
-        window.requestAnimationFrame(() => captureMiddleFrame());
-      });
+      window.requestAnimationFrame(() => captureFrame());
     };
 
-    video.addEventListener("loadedmetadata", seekToMiddle);
-    video.addEventListener("durationchange", seekToMiddle);
-    video.addEventListener("loadeddata", seekToMiddle);
+    video.addEventListener("loadeddata", seekToFirstFrame);
     video.addEventListener("seeked", onSeeked);
     video.addEventListener("error", () => {
       if (!disposed) setFailed(true);
@@ -110,7 +110,7 @@ export function ShowcaseVideoPoster({
       video.load();
       revokeObjectUrl();
     };
-  }, [src]);
+  }, [videoSrc]);
 
   if (frameSrc) {
     return (

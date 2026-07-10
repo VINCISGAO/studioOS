@@ -23,7 +23,7 @@ async function loadHomeShowcaseWorksUncached(): Promise<MarketingShowcaseWorkDto
 
 const loadHomeShowcaseWorksCached = unstable_cache(
   loadHomeShowcaseWorksUncached,
-  ["home-showcase-works"],
+  ["home-showcase-works-v3"],
   { revalidate: 300 }
 );
 

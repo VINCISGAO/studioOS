@@ -7,7 +7,14 @@ function recentWorkVideo(fileName: string): string {
   return `/videos/home/recent-work/${encodeURI(fileName)}`;
 }
 
-/** Owner-approved homepage baseline — real R2 recent-work videos (not deleted, only filtered before). */
+function recentWorkPoster(fileName: string): string {
+  return recentWorkVideo(fileName);
+}
+
+/**
+ * Owner R2 `videos/home/recent-work/` inventory (2026-07-10 screenshot).
+ * Posters are same-origin `/videos/home/recent-work/*.jpg` — proxy serves local public or CDN.
+ */
 export const CURATED_HOMEPAGE_SHOWCASE_WORKS: MarketingShowcaseWorkDto[] = [
   {
     id: "curated_luxury_serum",
@@ -16,7 +23,7 @@ export const CURATED_HOMEPAGE_SHOWCASE_WORKS: MarketingShowcaseWorkDto[] = [
     category: "Consumer tech",
     platform: "TikTok / Instagram",
     format: "9:16",
-    thumbnail_url: "",
+    thumbnail_url: recentWorkPoster("luxury-serum-launch.jpg"),
     video_url: recentWorkVideo("luxury-serum-launch.mp4"),
     tags: ["Beauty", "Premium", "Product macro", "Paid social"],
     featured_on_homepage: true,
@@ -32,8 +39,8 @@ export const CURATED_HOMEPAGE_SHOWCASE_WORKS: MarketingShowcaseWorkDto[] = [
     category: "Automotive",
     platform: "YouTube / Meta",
     format: "16:9 + 9:16",
-    thumbnail_url: "",
-    video_url: recentWorkVideo("consumer-tech-reveal.mp4"),
+    thumbnail_url: recentWorkPoster("consumer-tech-reveal.jpg"),
+    video_url: recentWorkVideo("consumer-tech-reveal.MP4"),
     tags: ["Tech", "Launch", "Cinematic", "Explainer"],
     featured_on_homepage: true,
     homepage_sort_order: 1,
@@ -48,7 +55,7 @@ export const CURATED_HOMEPAGE_SHOWCASE_WORKS: MarketingShowcaseWorkDto[] = [
     category: "Beauty",
     platform: "TikTok",
     format: "9:16",
-    thumbnail_url: "",
+    thumbnail_url: recentWorkPoster("Perfume advertisement.jpg"),
     video_url: PERFUME_SHOWCASE_VIDEO_PATH,
     tags: ["Beauty", "Fragrance", "Premium"],
     featured_on_homepage: true,
@@ -64,7 +71,7 @@ export const CURATED_HOMEPAGE_SHOWCASE_WORKS: MarketingShowcaseWorkDto[] = [
     category: "Consumer tech",
     platform: "TikTok",
     format: "9:16",
-    thumbnail_url: "",
+    thumbnail_url: recentWorkPoster("Video demo.jpg"),
     video_url: recentWorkVideo("Video demo.mp4"),
     tags: ["Demo", "Launch", "Paid social"],
     featured_on_homepage: true,
@@ -75,12 +82,12 @@ export const CURATED_HOMEPAGE_SHOWCASE_WORKS: MarketingShowcaseWorkDto[] = [
   },
   {
     id: "curated_video_demo_2",
-    title: "Video demo 2",
+    title: "Video demo2",
     description: "Alternate hero cut and pacing variant for campaign testing.",
     category: "Consumer tech",
     platform: "Meta",
     format: "9:16",
-    thumbnail_url: "",
+    thumbnail_url: recentWorkPoster("Video demo2.jpg"),
     video_url: recentWorkVideo("Video demo2.mp4"),
     tags: ["Demo", "Variant", "Meta"],
     featured_on_homepage: true,

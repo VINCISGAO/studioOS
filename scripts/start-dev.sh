@@ -36,6 +36,8 @@ fi
 bash scripts/free-dev-ports.sh
 node scripts/copy-marketing-assets.mjs || true
 
+rm -rf .next node_modules/.cache
+
 echo ""
 echo ">>> 启动中… 看到 Ready 后打开浏览器"
 echo ">>> http://127.0.0.1:${PORT}/?lang=zh"

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAdminAuthUser } from "@/features/admin/auth/admin-api-guard";
 import { getAlipayOAuthPublicConfig, hasAlipayOAuthConfig } from "@/lib/alipay/alipay-oauth-config";
+import { hasOpenAI, resolveOpenAIModel } from "@/lib/core/config/ai";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { isObjectStorageConfigured } from "@/lib/core/config/video";
 
@@ -8,10 +9,16 @@ function isProductionRuntime() {
   return process.env.NODE_ENV === "production" || process.env.VERCEL === "1";
 }
 
+function openAiHealthCheck(): "ok" | "skipped" | "error" {
+  if (!hasOpenAI()) return "skipped";
+  return resolveOpenAIModel() ? "ok" : "error";
+}
+
 export async function GET(request: Request) {
   const checks: Record<string, "ok" | "skipped" | "error"> = {
     app: "ok",
     database: "skipped",
+    openai: openAiHealthCheck(),
     objectStorage: isObjectStorageConfigured() ? "ok" : "skipped"
   };
 

@@ -7,6 +7,13 @@ import {
   resolveHeroLocalRelativePath,
   resolveHeroR2ObjectKey
 } from "@/lib/marketing/home-hero-video-sources";
+import {
+  isRecentWorkAssetPath,
+  isRecentWorkImagePath,
+  isRecentWorkVideoPath,
+  recentWorkBasenameAliases,
+  recentWorkObjectKeyCandidates
+} from "@/lib/marketing/recent-work-media";
 import { getObjectMetadata, getObjectRange } from "@/lib/studioos/object-storage";
 
 const PASSTHROUGH_HEADERS = [
@@ -37,19 +44,33 @@ function encodeObjectKey(objectKey: string): string {
     .join("/");
 }
 
-function videoMimeType(pathname: string): string {
-  return /\.mp4$/i.test(pathname) ? "video/mp4" : "application/octet-stream";
-}
-
-function resolveMarketingCdnUpstream(): string {
-  return (marketingCdnBaseUrl() ?? DEFAULT_MARKETING_CDN).replace(/\/+$/u, "");
+function assetMimeType(pathname: string): string {
+  if (/\.jpe?g$/iu.test(pathname)) return "image/jpeg";
+  if (/\.webp$/iu.test(pathname)) return "image/webp";
+  if (/\.png$/iu.test(pathname)) return "image/png";
+  if (/\.mp4$/iu.test(pathname)) return "video/mp4";
+  return "application/octet-stream";
 }
 
 function pathnameToObjectKey(pathname: string): string {
-  return pathname.replace(/^\/+/u, "");
+  return pathname
+    .replace(/^\/+/u, "")
+    .split("/")
+    .map((segment) => {
+      try {
+        return decodeURIComponent(segment);
+      } catch {
+        return segment;
+      }
+    })
+    .join("/");
 }
 
 function objectKeyCandidates(pathname: string): string[] {
+  if (isRecentWorkAssetPath(pathname)) {
+    return recentWorkObjectKeyCandidates(pathname);
+  }
+
   const keys = new Set<string>();
   for (const heroKey of heroR2ObjectKeyCandidates(pathname)) {
     keys.add(heroKey);
@@ -58,6 +79,10 @@ function objectKeyCandidates(pathname: string): string[] {
   if (mappedHero) keys.add(mappedHero);
   keys.add(pathnameToObjectKey(pathname));
   return [...keys];
+}
+
+function resolveMarketingCdnUpstream(): string {
+  return (marketingCdnBaseUrl() ?? DEFAULT_MARKETING_CDN).replace(/\/+$/u, "");
 }
 
 function buildUpstreamUrl(pathname: string): string {
@@ -167,15 +192,18 @@ async function resolveLocalPublicVideoPath(pathname: string): Promise<string | n
     const stat = await fs.stat(direct);
     if (stat.isFile()) return direct;
   } catch {
-    // Fall through to case-insensitive basename match.
+    // Fall through to basename alias match.
   }
 
   const directory = path.dirname(direct);
   const baseName = path.basename(direct);
   try {
     const entries = await fs.readdir(directory);
-    const match = entries.find((entry) => entry.toLowerCase() === baseName.toLowerCase());
-    if (match) return path.join(directory, match);
+    const aliasCandidates = [baseName, ...recentWorkBasenameAliases(baseName)];
+    for (const candidate of aliasCandidates) {
+      const match = entries.find((entry) => entry.toLowerCase() === candidate.toLowerCase());
+      if (match) return path.join(directory, match);
+    }
   } catch {
     return null;
   }
@@ -189,7 +217,9 @@ async function readLocalPublicVideo(
   method: string
 ): Promise<Response | null> {
   const relativeCandidates = [
+    pathnameToObjectKey(pathname),
     pathname.replace(/^\/+/u, ""),
+    ...(isRecentWorkAssetPath(pathname) ? recentWorkObjectKeyCandidates(pathname) : []),
     ...(resolveHeroLocalRelativePath(pathname) ? [resolveHeroLocalRelativePath(pathname)!] : []),
     ...(resolveHeroR2ObjectKey(pathname) ? [resolveHeroR2ObjectKey(pathname)!] : [])
   ];
@@ -210,7 +240,7 @@ async function readLocalPublicVideo(
     }
 
     const total = stat.size;
-    const mime = videoMimeType(pathname);
+    const mime = assetMimeType(pathname);
     const baseHeaders = { ...cacheHeaders(), "Content-Type": mime };
 
     if (method === "HEAD") {
@@ -286,7 +316,7 @@ async function serveFromR2Storage(
   if (!resolved) return null;
 
   const { key, contentLength: total, contentType } = resolved;
-  const mime = contentType ?? videoMimeType(pathname);
+  const mime = contentType ?? assetMimeType(pathname);
   const baseHeaders = { ...cacheHeaders(), "Content-Type": mime };
 
   if (method === "HEAD") {
@@ -370,7 +400,7 @@ async function serveFromPublicCdn(
       if (value) headers.set(key, value);
     }
     if (!headers.has("content-type")) {
-      headers.set("content-type", videoMimeType(pathname));
+      headers.set("content-type", assetMimeType(pathname));
     }
     headers.set("Cache-Control", "public, max-age=31536000, immutable");
     if (!headers.has("accept-ranges")) {
@@ -379,7 +409,7 @@ async function serveFromPublicCdn(
 
     const total = Number(headers.get("content-length") ?? 0);
     if (rangeHeader && total > 0) {
-      return rangedHeadResponse(total, videoMimeType(pathname), rangeHeader, headers);
+      return rangedHeadResponse(total, assetMimeType(pathname), rangeHeader, headers);
     }
 
     return new Response(null, { status: upstream.status, headers });
@@ -396,7 +426,7 @@ async function serveFromPublicCdn(
     if (value) headers.set(key, value);
   }
   if (!headers.has("content-type")) {
-    headers.set("content-type", videoMimeType(pathname));
+    headers.set("content-type", assetMimeType(pathname));
   }
   headers.set("Cache-Control", "public, max-age=31536000, immutable");
   if (!headers.has("accept-ranges")) {
@@ -421,6 +451,39 @@ export async function proxyMarketingHomeVideo(request: Request): Promise<Respons
 
     const rangeHeader = request.headers.get("range");
     let effectiveRange = rangeHeader;
+
+    // Recent-work posters: local public → CDN (full image, no byte-range probe).
+    if (isRecentWorkImagePath(pathname)) {
+      const local = await readLocalPublicVideo(pathname, null, method);
+      if (local) return local;
+
+      if (method === "GET" || method === "HEAD") {
+        const streamed = await serveFromPublicCdn(pathname, null, method);
+        if (streamed.status !== 404) return streamed;
+      }
+
+      return new Response("Not Found", { status: 404 });
+    }
+
+    // Recent-work videos: full local file first (poster capture needs moov atom), then ranged CDN.
+    if (isRecentWorkVideoPath(pathname)) {
+      const localFull = await readLocalPublicVideo(pathname, null, method);
+      if (localFull) return localFull;
+
+      if (method === "GET" && !effectiveRange) {
+        effectiveRange = "bytes=0-1048575";
+      }
+
+      const local = await readLocalPublicVideo(pathname, effectiveRange, method);
+      if (local) return local;
+
+      if (method === "GET" || method === "HEAD") {
+        const streamed = await serveFromPublicCdn(pathname, effectiveRange ?? rangeHeader, method);
+        if (streamed.status !== 404) return streamed;
+      }
+
+      return new Response("Not Found", { status: 404 });
+    }
 
     // Browsers often omit Range on the first GET — stream a small initial chunk only.
     if (method === "GET" && !effectiveRange) {

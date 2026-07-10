@@ -1,5 +1,6 @@
 import Image from "next/image";
 import type { ReactNode } from "react";
+import { cn } from "@/lib/utils";
 
 const HERO_BRAND_LOGOS = [
   { label: "Shopify", src: "/images/social-sources/brand/shopify-2.svg", width: 88, height: 24 },
@@ -76,9 +77,15 @@ function HeroBrandPanel({ trustLabel, children }: { trustLabel: string; children
   );
 }
 
-export function CinematicHeroBrandsDesktop({ trustLabel }: { trustLabel: string }) {
+export function CinematicHeroBrandsDesktop({
+  trustLabel,
+  className
+}: {
+  trustLabel: string;
+  className?: string;
+}) {
   return (
-    <div className="hidden sm:block sm:pt-8">
+    <div className={cn("pt-8", className)}>
       <HeroBrandPanel trustLabel={trustLabel}>
         <HeroBrandMarquee />
       </HeroBrandPanel>
@@ -88,7 +95,7 @@ export function CinematicHeroBrandsDesktop({ trustLabel }: { trustLabel: string 
 
 export function CinematicHeroBrandsMobile({ trustLabel }: { trustLabel: string }) {
   return (
-    <div className="mt-10 sm:hidden">
+    <div className="mt-10 md:hidden">
       <HeroBrandPanel trustLabel={trustLabel}>
         <HeroBrandMarquee />
       </HeroBrandPanel>

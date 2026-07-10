@@ -73,6 +73,11 @@ function renderTitleLine(line: string, index: number, allowWrap = false) {
   );
 }
 
+const heroCtaProps = {
+  className:
+    "flex w-full max-w-xl flex-row flex-wrap gap-2.5 md:max-w-3xl md:gap-4"
+} as const;
+
 export function CinematicHero({
   locale,
   copyLocale = locale,
@@ -94,12 +99,22 @@ export function CinematicHero({
   const legacyCompactTitle = usesLegacyCompactTitle(copyLocale);
   const latinHeroLocale = isLatinHeroLocale(copyLocale);
 
+  const ctaShared = {
+    brandCta,
+    creatorCta,
+    primary: t.primary,
+    secondary: t.secondary,
+    primaryDescription: t.primaryDescription,
+    secondaryDescription: t.secondaryDescription,
+    compactLocale: compactHeroLocale
+  } as const;
+
   return (
-    <section className="relative isolate flex flex-col overflow-hidden bg-black text-white sm:min-h-[100dvh]">
+    <section className="relative isolate flex flex-col overflow-hidden bg-black text-white lg:min-h-[100dvh]">
       <CinematicHeroBackdrop src={heroBgSrc} src2x={heroBgSrc2x} />
 
-      <div className="relative z-10 w-full px-4 pb-8 pt-[5.35rem] sm:mx-auto sm:flex sm:min-h-[100dvh] sm:max-w-7xl sm:flex-col sm:px-8 sm:pb-0 sm:pt-0">
-        <div className="sm:pt-40">
+      <div className="relative z-10 w-full px-4 pb-8 pt-[5.35rem] md:px-8 md:pb-12 lg:mx-auto lg:flex lg:min-h-[100dvh] lg:max-w-7xl lg:flex-col lg:px-8 lg:pb-0 lg:pt-0">
+        <div className="md:pt-28 lg:pt-40">
           <div
             className={cn(
               "w-full max-w-2xl text-left",
@@ -147,30 +162,23 @@ export function CinematicHero({
             </p>
 
             <HeroCtaGroup
-              className="mt-6 flex w-full max-w-xl flex-row flex-wrap gap-2.5 sm:hidden"
-              brandCta={brandCta}
-              creatorCta={creatorCta}
-              primary={t.primary}
-              secondary={t.secondary}
-              primaryDescription={t.primaryDescription}
-              secondaryDescription={t.secondaryDescription}
-              compactLocale={compactHeroLocale}
+              className={cn(heroCtaProps.className, "mt-6 md:hidden")}
+              {...ctaShared}
             />
+          </div>
+
+          {/* iPad: mobile-style vertical stack + four golden-rule cards (图二) */}
+          <div className="hidden md:mt-8 md:block lg:hidden">
+            <HeroCtaGroup className={cn(heroCtaProps.className, "mb-8")} {...ctaShared} />
+            <CinematicHeroFeatures locale={copyLocale} className="mt-0" />
+            <CinematicHeroBrandsDesktop trustLabel={t.trustMarquee} />
           </div>
         </div>
 
-        <div className="hidden sm:mt-auto sm:block sm:w-full sm:pb-10">
-          <HeroCtaGroup
-            className="mb-8 flex w-full max-w-xl flex-row flex-wrap gap-2.5 sm:max-w-3xl sm:gap-4 md:max-w-3xl md:gap-4"
-            brandCta={brandCta}
-            creatorCta={creatorCta}
-            primary={t.primary}
-            secondary={t.secondary}
-            primaryDescription={t.primaryDescription}
-            secondaryDescription={t.secondaryDescription}
-            compactLocale={compactHeroLocale}
-          />
-          <CinematicHeroFeatures locale={copyLocale} />
+        {/* Desktop: CTA + golden rules + brands anchored to hero bottom */}
+        <div className="hidden lg:mt-auto lg:block lg:w-full lg:pb-10">
+          <HeroCtaGroup className={cn(heroCtaProps.className, "mb-8")} {...ctaShared} />
+          <CinematicHeroFeatures locale={copyLocale} className="mt-0" />
           <CinematicHeroBrandsDesktop trustLabel={t.trustMarquee} />
         </div>
 

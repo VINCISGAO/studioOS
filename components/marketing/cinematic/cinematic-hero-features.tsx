@@ -13,13 +13,19 @@ const featureIcons = {
   zap: Zap
 } as const;
 
-export function CinematicHeroFeatures({ locale }: { locale: Locale | MarketingLocale }) {
+export function CinematicHeroFeatures({
+  locale,
+  className
+}: {
+  locale: Locale | MarketingLocale;
+  className?: string;
+}) {
   const features = landingText("heroFeatures", locale);
   const [activeIndex, setActiveIndex] = useState(0);
 
   return (
-    <div className="mt-8 hidden w-full sm:mt-0 sm:block">
-      <div className="grid w-full grid-cols-4 gap-3 sm:gap-4">
+    <div className={cn("w-full", className)}>
+      <div className="grid w-full grid-cols-4 gap-3 md:gap-4">
         {features.map((feature, index) => {
           const Icon = featureIcons[feature.icon];
           const isActive = index === activeIndex;

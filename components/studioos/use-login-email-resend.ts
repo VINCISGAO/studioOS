@@ -6,7 +6,7 @@ import type { Locale } from "@/lib/i18n";
 const RESEND_COOLDOWN_MS = 60_000;
 
 type ResendResult =
-  | { ok: true; message: string }
+  | { ok: true; message: string; debugCode?: string }
   | { ok: false; error: string };
 
 export function useLoginEmailResend(locale: Locale) {
@@ -58,7 +58,7 @@ export function useLoginEmailResend(locale: Locale) {
           body: JSON.stringify({ email, lang: locale })
         });
         const data = (await response.json().catch(() => null)) as
-          | { ok: true; message?: string }
+          | { ok: true; message?: string; debugCode?: string }
           | { ok: false; error?: string }
           | null;
         if (!data?.ok) {
@@ -74,7 +74,8 @@ export function useLoginEmailResend(locale: Locale) {
           ok: true,
           message:
             data.message ??
-            (locale === "zh" ? "验证码已重新发送。" : "Verification code resent.")
+            (locale === "zh" ? "验证码已重新发送。" : "Verification code resent."),
+          debugCode: data.debugCode
         };
       } catch {
         return {

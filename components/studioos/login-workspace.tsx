@@ -7,7 +7,7 @@ import { LoginSubmitSpinner } from "@/components/studioos/login-demo-accounts";
 import { useLoginEmailResend } from "@/components/studioos/use-login-email-resend";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { appPath } from "@/lib/i18n";
+import { appPath, type Locale } from "@/lib/i18n";
 import { getLoginVisual, type LoginRole, type LoginVisual } from "@/lib/studioos/login-theme";
 import { cn } from "@/lib/utils";
 
@@ -45,6 +45,7 @@ export function LoginWorkspace({
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | undefined>(error);
   const [sentHint, setSentHint] = useState<string | undefined>();
+  const [devDebugCode, setDevDebugCode] = useState<string | undefined>();
   const [clientErrorCode, setClientErrorCode] = useState<string | undefined>();
   const { resend, resending, secondsLeft, canResend, markSent } = useLoginEmailResend(locale);
   const router = useRouter();
@@ -72,7 +73,7 @@ export function LoginWorkspace({
       body: JSON.stringify({ email: emailValue, lang: locale })
     });
     return response.json().catch(() => null) as Promise<
-      | { ok: true; message?: string }
+      | { ok: true; message?: string; debugCode?: string }
       | { ok: false; error?: string }
       | null
     >;
@@ -112,6 +113,7 @@ export function LoginWorkspace({
         const data = await startEmailVerification(email);
         if (!data?.ok) {
           setSentHint(undefined);
+          setDevDebugCode(undefined);
           setFormError(
             data?.error ??
               (locale === "zh"
@@ -122,6 +124,7 @@ export function LoginWorkspace({
         }
         setFormError(undefined);
         setSentHint(data.message);
+        setDevDebugCode(data.debugCode);
         markSent();
         setStep("code");
         return;
@@ -340,6 +343,28 @@ export function LoginWorkspace({
                 {sentHint}
               </p>
             ) : null}
+            {devDebugCode ? (
+              <div
+                className={cn(
+                  "rounded-xl border px-4 py-3 text-center",
+                  darkPanel
+                    ? "border-violet-400/30 bg-violet-500/10"
+                    : "border-violet-200 bg-violet-50"
+                )}
+              >
+                <p className={cn("text-[11px] font-medium", darkPanel ? "text-violet-200" : "text-violet-700")}>
+                  {locale === "zh" ? "开发模式验证码" : "Dev verification code"}
+                </p>
+                <p
+                  className={cn(
+                    "mt-1 font-mono text-2xl font-semibold tracking-[0.35em]",
+                    darkPanel ? "text-white" : "text-violet-900"
+                  )}
+                >
+                  {devDebugCode}
+                </p>
+              </div>
+            ) : null}
             <label htmlFor="code" className={labelClass}>
               {locale === "zh" ? "验证码" : "Verification code"}
             </label>
@@ -381,6 +406,7 @@ export function LoginWorkspace({
                     return;
                   }
                   setSentHint(result.message);
+                  setDevDebugCode(result.debugCode);
                   setCode("");
                 }}
               >
@@ -415,6 +441,7 @@ export function LoginWorkspace({
               setStep("email");
               setCode("");
               setSentHint(undefined);
+              setDevDebugCode(undefined);
               setFormError(undefined);
             }}
           >

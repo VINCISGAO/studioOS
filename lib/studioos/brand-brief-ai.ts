@@ -1,6 +1,10 @@
+import { aiGatewayService } from "@/features/ai/ai-gateway.service";
+import { logger } from "@/lib/core/logger";
 import type { Locale } from "@/lib/i18n";
+import { isChineseLanguage } from "@/lib/i18n";
 import type { CommercialObjective } from "@/lib/project-types";
-import { hasOpenAI, openAIModel } from "@/lib/studioos/config";
+import { objectiveLabelFor } from "@/lib/studioos/brand-brief-options";
+import { hasOpenAI, resolveOpenAIModel } from "@/lib/core/config/ai";
 
 export type BrandQuestionnaireInput = {
   productName?: string;
@@ -23,46 +27,46 @@ export type ReorganizedBrandBrief = {
   source: "openai" | "template";
 };
 
-const OBJECTIVE_LABELS: Record<CommercialObjective, { en: string; zh: string }> = {
-  launch: { en: "Product launch", zh: "新品上市" },
-  scale: { en: "Scale / conversion", zh: "放量转化" },
-  test: { en: "Creative testing", zh: "创意测试" },
-  seasonal: { en: "Seasonal campaign", zh: "季节营销" },
-  other: { en: "Brand awareness", zh: "品牌曝光" },
-  "": { en: "General campaign", zh: "常规推广" }
-};
-
 function trimLines(parts: string[]) {
   return parts.map((part) => part.trim()).filter(Boolean);
+}
+
+function usesChinese(locale: Locale) {
+  return locale === "zh" || isChineseLanguage(locale);
+}
+
+function parseJsonObject<T extends Record<string, unknown>>(raw: string): T {
+  const trimmed = raw.trim();
+  const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  const body = fenced?.[1]?.trim() ?? trimmed;
+  return JSON.parse(body) as T;
 }
 
 export function templateReorganizeBrandBrief(
   input: BrandQuestionnaireInput,
   locale: Locale
 ): ReorganizedBrandBrief {
+  const zh = usesChinese(locale);
   const productName =
     input.productName?.trim() ||
-    (locale === "zh" ? "我的产品" : "My product");
-  const objective =
-    input.objectiveLabel ||
-    OBJECTIVE_LABELS[input.objective || "other"][locale];
+    (zh ? "我的产品" : "My product");
+  const objective = input.objectiveLabel || objectiveLabelFor(input.objective, locale);
   const platforms = input.platforms.length
-    ? input.platforms.join(locale === "zh" ? "、" : ", ")
-    : locale === "zh"
+    ? input.platforms.join(zh ? "、" : ", ")
+    : zh
       ? "TikTok、Meta"
       : "TikTok, Meta";
   const audience =
     input.audienceDescription.trim() ||
-    (locale === "zh" ? "25–40 岁移动端购物用户" : "Mobile shoppers aged 25–40");
+    (zh ? "25–40 岁移动端购物用户" : "Mobile shoppers aged 25–40");
   const description =
     input.rawSummary.trim() ||
     input.productDescription.trim() ||
-    (locale === "zh" ? "希望用短视频突出产品卖点并带来转化。" : "Short-form video highlighting product proof and driving conversions.");
+    (zh ? "希望用短视频突出产品卖点并带来转化。" : "Short-form video highlighting product proof and driving conversions.");
 
-  const campaign_goal =
-    locale === "zh"
-      ? `为「${productName}」制作 ${platforms} 效果广告，核心目标是${objective}。${description}`
-      : `Produce performance ads for "${productName}" on ${platforms}. Primary goal: ${objective.toLowerCase()}. ${description}`;
+  const campaign_goal = zh
+    ? `为「${productName}」制作 ${platforms} 效果广告，核心目标是${objective}。${description}`
+    : `Produce performance ads for "${productName}" on ${platforms}. Primary goal: ${objective.toLowerCase()}. ${description}`;
 
   const notes = trimLines([
     input.productDescription,
@@ -90,6 +94,7 @@ export async function reorganizeBrandBriefWithAI(
     return fallback;
   }
 
+  const zh = usesChinese(locale);
   const payload = {
     product_name: input.productName ?? "",
     product_url: input.productUrl ?? "",
@@ -102,46 +107,28 @@ export async function reorganizeBrandBriefWithAI(
   };
 
   try {
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        model: openAIModel(),
-        temperature: 0.35,
-        response_format: { type: "json_object" },
-        messages: [
-          {
-            role: "system",
-            content:
-              locale === "zh"
-                ? "你是品牌广告 Brief 助手。用户用口语描述需求，你要整理成专业、简洁、可执行的 Campaign Brief。保留用户原意，不要编造不存在的产品功能。返回 JSON：campaign_goal（2-4句专业描述）、product_name、target_audience（一句话）、title（Campaign 标题）、notes（给 Studio 的补充说明，可含用户原话要点）。"
-                : "You are a brand ad brief assistant. Users write casually; you reorganize into a professional, concise campaign brief. Preserve intent; do not invent product claims. Return JSON: campaign_goal (2-4 sentences), product_name, target_audience (one line), title (campaign title), notes (studio notes, may include user highlights)."
-          },
-          {
-            role: "user",
-            content: JSON.stringify(payload, null, 2)
-          }
-        ]
-      }),
-      signal: AbortSignal.timeout(30_000)
+    const result = await aiGatewayService.chatCompletion({
+      system: zh
+        ? "你是品牌广告 Brief 助手。用户会用口语、随意地描述需求。你必须读懂真实意图（产品是什么、想在哪投放、目标受众、卖点），改写成专业、简洁、可执行的 Campaign Brief。禁止把用户原话原样拼进 campaign_goal；要重写为完整专业句子。不要编造不存在的产品功能。返回 JSON：campaign_goal（2-4句专业描述）、product_name、target_audience（一句话）、title（Campaign 标题）、notes（给 Studio 的补充说明）。"
+        : "You are a brand ad brief assistant. Users write casually. Infer the real intent (product, platforms, audience, selling points) and rewrite into a professional campaign brief. Do not paste the user's raw words into campaign_goal. Do not invent product claims. Return JSON: campaign_goal (2-4 sentences), product_name, target_audience (one line), title, notes.",
+      user: JSON.stringify(payload, null, 2),
+      model: resolveOpenAIModel(),
+      temperature: 0.35,
+      jsonMode: true,
+      language: zh ? "zh-CN" : "en"
     });
 
-    if (!response.ok) {
-      return fallback;
+    if (!result.content) {
+      throw new Error("empty_openai_response");
     }
 
-    const data = (await response.json()) as {
-      choices?: { message?: { content?: string } }[];
-    };
-    const content = data.choices?.[0]?.message?.content;
-    if (!content) {
-      return fallback;
+    let parsed: Partial<ReorganizedBrandBrief>;
+    try {
+      parsed = parseJsonObject<Partial<ReorganizedBrandBrief>>(result.content);
+    } catch {
+      throw new Error("invalid_openai_json");
     }
 
-    const parsed = JSON.parse(content) as Partial<ReorganizedBrandBrief>;
     return {
       campaign_goal: String(parsed.campaign_goal ?? fallback.campaign_goal).trim(),
       product_name: String(parsed.product_name ?? fallback.product_name).trim(),
@@ -150,19 +137,12 @@ export async function reorganizeBrandBriefWithAI(
       notes: String(parsed.notes ?? fallback.notes).trim(),
       source: "openai"
     };
-  } catch {
-    return fallback;
+  } catch (error) {
+    logger.error("Brand brief AI polish failed", {
+      service: "brand-brief-ai",
+      error: error instanceof Error ? error.message : String(error)
+    });
+    throw error;
   }
 }
 
-export function objectiveOptions(locale: Locale): { id: CommercialObjective; label: string }[] {
-  return [
-    { id: "launch", label: OBJECTIVE_LABELS.launch[locale] },
-    { id: "scale", label: OBJECTIVE_LABELS.scale[locale] },
-    { id: "test", label: OBJECTIVE_LABELS.test[locale] },
-    { id: "seasonal", label: OBJECTIVE_LABELS.seasonal[locale] },
-    { id: "other", label: OBJECTIVE_LABELS.other[locale] }
-  ];
-}
-
-export const PLATFORM_OPTIONS = ["TikTok", "Meta", "YouTube", "Instagram", "Amazon"] as const;
