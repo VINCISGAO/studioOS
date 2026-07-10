@@ -2,14 +2,15 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { Locale } from "@/lib/i18n";
+import type { LoginRole } from "@/lib/studioos/login-theme";
 
 const RESEND_COOLDOWN_MS = 60_000;
 
 type ResendResult =
   | { ok: true; message: string; debugCode?: string }
-  | { ok: false; error: string };
+  | { ok: false; error: string; errorCode?: string };
 
-export function useLoginEmailResend(locale: Locale) {
+export function useLoginEmailResend(locale: Locale, role: LoginRole) {
   const [cooldownEndsAt, setCooldownEndsAt] = useState(0);
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [resending, setResending] = useState(false);
@@ -55,18 +56,19 @@ export function useLoginEmailResend(locale: Locale) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "same-origin",
-          body: JSON.stringify({ email, lang: locale })
+          body: JSON.stringify({ email, lang: locale, role })
         });
         const data = (await response.json().catch(() => null)) as
           | { ok: true; message?: string; debugCode?: string }
-          | { ok: false; error?: string }
+          | { ok: false; error?: string; errorCode?: string }
           | null;
         if (!data?.ok) {
           return {
             ok: false,
             error:
               data?.error ??
-              (locale === "zh" ? "请求过于频繁，请稍后再试。" : "Too many requests. Try again later.")
+              (locale === "zh" ? "请求过于频繁，请稍后再试。" : "Too many requests. Try again later."),
+            errorCode: data && !data.ok && "errorCode" in data ? data.errorCode : undefined
           };
         }
         markSent();
@@ -86,7 +88,7 @@ export function useLoginEmailResend(locale: Locale) {
         setResending(false);
       }
     },
-    [locale, markSent, resending, secondsLeft]
+    [locale, markSent, resending, role, secondsLeft]
   );
 
   return {

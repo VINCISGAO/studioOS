@@ -83,7 +83,7 @@ const copy = {
       disputes: "争议",
       failedNotifications: "通知失败"
     },
-    table: ["活动", "广告主", "创作者", "预算", "状态", "更新"],
+    table: ["活动", "品牌方", "创作者", "预算", "状态", "更新"],
     emptyActivity: "暂无最近活动。",
     emptyCampaigns: "暂无活动。",
     openDisputes: "待处理争议预览",

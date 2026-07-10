@@ -135,16 +135,27 @@ export function BrandCampaignStep3Publish({
     formData.set("project_id", projectId);
     formData.set("confirmed", "1");
 
-    const result = await publishBrandCampaignAction(formData);
+    try {
+      const result = await publishBrandCampaignAction(formData);
 
-    if (!result.ok) {
-      setPublishError(result.error);
+      if (!result.ok) {
+        setPublishError(result.error);
+        setIsPublishing(false);
+        return;
+      }
+
+      router.push(result.checkoutPath);
+      router.refresh();
+    } catch (caught) {
+      setPublishError(
+        caught instanceof Error
+          ? caught.message
+          : locale === "zh"
+            ? "发布失败，请重试"
+            : "Publish failed — try again"
+      );
       setIsPublishing(false);
-      return;
     }
-
-    router.push(result.checkoutPath);
-    router.refresh();
   }
 
   return (

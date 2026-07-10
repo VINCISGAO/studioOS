@@ -33,7 +33,7 @@ const copy = {
   zh: {
     title: "消息中心",
     subtitle: "项目动态、平台提醒与创作者私信。",
-    emptyProject: "Creator 接受/拒绝、上传审片、处理批注等互动通知都会显示在这里。",
+    emptyProject: "创作者接受/拒绝、上传审片、处理批注等互动通知都会显示在这里。",
     emptySystem: "账单、安全与平台公告会显示在这里。",
     emptyDirect: "与创作者的私信会话会显示在这里。",
     back: "返回首页",

@@ -156,7 +156,27 @@ export class CampaignSelectionService {
       topRecommended && topRecommended.creatorId !== input.creatorId
     );
 
-    await invitationRepository.expireNonWinners(campaign.id, winnerRow.id);
+    const lock = await campaignRepository.tryAcquireCreatorSelection({
+      campaignId: campaign.id,
+      creatorUserId,
+      winnerInvitationId: winnerRow.id,
+      productionBrief: updatedBrief,
+      campaignMemoryJson: updatedMemory
+    });
+
+    if (!lock.acquired) {
+      if (lock.existingSelection?.legacy_creator_id === input.creatorId) {
+        const invitation = await this.resolveStoredInvitation(
+          campaign.id,
+          input.creatorId,
+          lock.existingSelection
+        );
+        if (invitation) {
+          return { ok: true, invitation };
+        }
+      }
+      return { ok: false, error: "recruitment-closed" };
+    }
 
     if (project && expiredCreatorIds.length) {
       await notifyCreatorsInvitationExpired({
@@ -176,13 +196,6 @@ export class CampaignSelectionService {
         { id: brandUser.id, role: brandUser.role }
       );
     }
-
-    await campaignRepository.selectCreator({
-      campaignId: campaign.id,
-      creatorUserId,
-      productionBrief: updatedBrief,
-      campaignMemoryJson: updatedMemory
-    });
 
     await activityService.write(
       campaign.id,
@@ -228,37 +241,37 @@ export class CampaignSelectionService {
       await aiLearningWorkerService.processEvent(selectionLearningEvent.eventId);
     }
 
+    const legacyProject = await getProject(legacyProjectId);
+    if (!legacyProject) {
+      return { ok: false, error: "project-not-found" };
+    }
+
+    const checkout = await setupBrandCheckout({
+      project: legacyProject,
+      creatorId: input.creatorId,
+      workId: null,
+      client: input.client,
+      locale: input.locale
+    }).catch(() => null);
+
+    if (!checkout?.order.id) {
+      return { ok: false, error: "order-setup-failed" };
+    }
+
+    const checkoutOrder = checkout.order;
+    const studioActionUrl = `/studio/review/${checkout.order.id}`;
     const brandName = input.client.company_name || input.client.client_name || "Brand";
     const projectTitle =
-      project?.title || project?.product_name || campaign.title || brandName;
+      legacyProject.title || legacyProject.product_name || campaign.title || brandName;
     const copy = selectedCreatorCopy(input.locale, brandName, projectTitle);
 
-    const legacyProject = await getProject(legacyProjectId);
-    let studioActionUrl = "/studio/projects";
-    let checkoutOrder: Awaited<ReturnType<typeof setupBrandCheckout>>["order"] | null = null;
-    if (legacyProject) {
-      const checkout = await setupBrandCheckout({
-        project: legacyProject,
-        creatorId: input.creatorId,
-        workId: null,
-        client: input.client,
-        locale: input.locale
-      }).catch(() => null);
-      if (checkout?.order.id) {
-        checkoutOrder = checkout.order;
-        studioActionUrl = `/studio/review/${checkout.order.id}`;
-      }
-    }
-
-    if (legacyProject) {
-      const { notifyCreatorProjectSelected } = await import("@/lib/studioos/creator-assignment-notify");
-      await notifyCreatorProjectSelected({
-        creatorId: input.creatorId,
-        project: legacyProject,
-        order: checkoutOrder,
-        locale: input.locale
-      }).catch(() => undefined);
-    }
+    const { notifyCreatorProjectSelected } = await import("@/lib/studioos/creator-assignment-notify");
+    await notifyCreatorProjectSelected({
+      creatorId: input.creatorId,
+      project: legacyProject,
+      order: checkoutOrder,
+      locale: input.locale
+    }).catch(() => undefined);
 
     await notificationService
       .notify({

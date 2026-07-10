@@ -64,6 +64,8 @@ export type StoredCreatorSettings = {
   account_deleted_at: string | null;
   certification_level_up_seen_at?: string | null;
   certification_welcome_banner_dismissed_at?: string | null;
+  /** Notification ids for which the creator selection celebration was shown. */
+  creator_selection_celebrations_seen?: string[];
   updated_at: string;
 };
 

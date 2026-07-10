@@ -14,10 +14,8 @@ import { normalizeCampaignStatus } from "@/lib/studioos/project-status";
 import { setupBrandCampaignPayment } from "@/lib/studioos/brand-checkout-service";
 import { estimateDeliveryDays } from "@/lib/studioos/brand-campaign-display";
 import { enforceBrandPaymentDeadlineForProject } from "@/lib/studioos/brand-payment-expiry.service";
+import { isBrandProjectFunded } from "@/lib/studioos/brand-payment-funding";
 import { BRAND_PAYMENT_TIMEOUT_CANCEL_REASON } from "@/lib/studioos/brand-payment-deadline";
-import { campaignRepository } from "@/features/campaign/campaign.repository";
-import { paymentRepository } from "@/features/payment/payment.repository";
-import { EscrowState } from "@/features/shared/state-machines/escrow.state-machine";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 
 type Props = {
@@ -93,21 +91,14 @@ export default async function BrandCheckoutPage({ params, searchParams }: Props)
 
   let prismaEscrowFunded = false;
   if (hasDatabaseUrl()) {
-    const campaign = await campaignRepository.findByLegacyProjectId(id);
-    if (campaign) {
-      const escrow = await paymentRepository.findByCampaignId(campaign.id);
-      prismaEscrowFunded =
-        escrow?.status === EscrowState.HELD ||
-        escrow?.status === EscrowState.PARTIAL_RELEASE ||
-        escrow?.status === EscrowState.FULL_RELEASE;
-    }
+    prismaEscrowFunded = await isBrandProjectFunded(id, null);
   }
 
   if (prismaEscrowFunded || isOrderPaymentEscrowed(order.payment_status)) {
     order = (await markLegacyOrderPaidForProject(id)) ?? order;
   }
 
-  const orderFunded = isOrderPaymentEscrowed(order.payment_status) || prismaEscrowFunded;
+  const orderFunded = await isBrandProjectFunded(id, order);
   const paidReady = orderFunded;
   const orderCancelled = order.status === "cancelled" || campaignStatus === "cancelled";
   const cancelReason = readCancellationReason(project, locale, order.cancel_reason);

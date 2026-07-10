@@ -82,8 +82,18 @@ export default async function NewProjectPage({
     redirect(withLocale(`/brand/projects/${projectId}`, locale));
   }
 
+  const hasExplicitStep = query.step !== undefined;
+  const urlStep = Number(requestedStep);
+  const fromServer = migrateLegacyBrandWizardStep(project.wizard_step || 1);
+  const hasConfirmedDirection =
+    typeof project.settings_json?.selected_direction_id === "string" &&
+    project.settings_json.selected_direction_id.trim().length > 0;
   const step = clampBrandVisibleStep(
-    Number(requestedStep) || migrateLegacyBrandWizardStep(project.wizard_step || 1)
+    hasExplicitStep && Number.isFinite(urlStep) && urlStep > 0
+      ? urlStep
+      : !hasConfirmedDirection && fromServer >= 3
+        ? 2
+        : fromServer
   );
 
   return (

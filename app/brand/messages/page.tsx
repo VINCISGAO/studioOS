@@ -31,6 +31,7 @@ import {
   formatMessageDetailTime,
   formatMessageListTime
 } from "@/lib/studioos/brand-messages-ui";
+import { sanitizeUserFacingNotificationText } from "@/lib/studioos/creator-display-name";
 import { resolveBrandNotificationAction } from "@/lib/studioos/commercial-notification-routes";
 import { getConfirmedBriefFields } from "@/lib/studioos/confirmed-brief";
 import { normalizeInternalActionHref } from "@/lib/studioos/internal-action-href";
@@ -70,10 +71,10 @@ async function buildBrandMessageDetail(
     senderName,
     senderInitials: brandSenderInitials(senderName),
     senderAvatarTone: brandSenderAvatarTone(senderName),
-    title: notification.title,
-    detailTitle: notification.title,
+    title: sanitizeUserFacingNotificationText(notification.title, locale),
+    detailTitle: sanitizeUserFacingNotificationText(notification.title, locale),
     salutation: buildBrandMessageSalutation(brandName, locale),
-    body: notification.body,
+    body: sanitizeUserFacingNotificationText(notification.body, locale),
     createdAt: notification.created_at,
     detailTimeLabel: formatMessageDetailTime(notification.created_at, locale),
     readAt: notification.read_at,
@@ -119,8 +120,8 @@ async function buildBrandMessageCenterPayload(
       senderName,
       senderInitials: brandSenderInitials(senderName),
       senderAvatarTone: brandSenderAvatarTone(senderName),
-      title: notification.title,
-      preview: notification.body,
+      title: sanitizeUserFacingNotificationText(notification.title, locale),
+      preview: sanitizeUserFacingNotificationText(notification.body, locale),
       createdAt: notification.created_at,
       timeLabel: formatMessageListTime(notification.created_at, locale),
       readAt: notification.read_at,

@@ -18,6 +18,13 @@ export const StudioOsApiPaths = {
   wallet: "/api/v1/wallet",
   creatorPortal: "/api/v1/me/creator/portal",
   brandPortal: "/api/v1/me/brand/portal",
+  brandProjectDetail: (projectId: string) => `/api/v1/portal/brand/projects/${projectId}`,
+  brandProjectCollaboration: (projectId: string) =>
+    `/api/v1/portal/brand/projects/${projectId}/collaboration`,
+  creatorProjectDetail: (orderId: string) => `/api/v1/portal/creator/projects/${orderId}`,
+  creatorProjectCollaboration: (orderId: string) =>
+    `/api/v1/portal/creator/projects/${orderId}/collaboration`,
+  notifications: "/api/v1/notifications",
   membership: "/api/v1/me/membership",
   adminOverview: "/api/v1/admin/overview",
   adminPayments: "/api/v1/admin/payments",
@@ -69,6 +76,23 @@ export class StudioOsApiClient {
     return this.post<{ alreadyPaid: boolean; record: unknown }>(
       StudioOsApiPaths.adminPayout(campaignId)
     );
+  }
+
+  async getBrandProjectDetail(projectId: string, tab?: string) {
+    const query = tab ? `?tab=${encodeURIComponent(tab)}` : "";
+    return this.get<import("@/features/portal/portal.types").BrandProjectPortalDetailResponse>(
+      `${StudioOsApiPaths.brandProjectDetail(projectId)}${query}`
+    );
+  }
+
+  async getCreatorProjectDetail(orderId: string) {
+    return this.get<import("@/features/portal/portal.types").CreatorProjectPortalDetailResponse>(
+      StudioOsApiPaths.creatorProjectDetail(orderId)
+    );
+  }
+
+  async listNotifications() {
+    return this.get<{ items: unknown[]; unreadCount: number }>(StudioOsApiPaths.notifications);
   }
 
   async get<T>(path: string): Promise<ApiResult<T>> {

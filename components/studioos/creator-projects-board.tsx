@@ -118,11 +118,13 @@ function statCards(stats: CreatorProjectsStats, locale: Locale) {
 export function CreatorProjectsBoard({
   locale,
   orders,
-  deliverableCounts
+  deliverableCounts,
+  lastUploadAtByOrderId = {}
 }: {
   locale: Locale;
   orders: StoredOrder[];
   deliverableCounts: Record<string, number>;
+  lastUploadAtByOrderId?: Record<string, string | null>;
 }) {
   const t = copy[locale];
   const labels = creatorProjectFilterLabels[locale];
@@ -135,13 +137,19 @@ export function CreatorProjectsBoard({
   const counts = useMemo(() => countCreatorOrdersByBucket(orders), [orders]);
   const stats = useMemo(() => buildCreatorProjectsStats(locale, orders), [locale, orders]);
   const rows = useMemo(() => {
-    const built = buildCreatorProjectRows({ locale, orders, deliverableCounts, filter });
+    const built = buildCreatorProjectRows({
+      locale,
+      orders,
+      deliverableCounts,
+      lastUploadAtByOrderId,
+      filter
+    });
     const q = query.trim().toLowerCase();
     if (!q) return built;
     return built.filter(
       (row) => row.title.toLowerCase().includes(q) || row.brand.toLowerCase().includes(q)
     );
-  }, [deliverableCounts, filter, locale, orders, query]);
+  }, [deliverableCounts, filter, lastUploadAtByOrderId, locale, orders, query]);
 
   const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
   const pageRows = rows.slice((page - 1) * pageSize, page * pageSize);
@@ -232,16 +240,16 @@ export function CreatorProjectsBoard({
       <section className="rounded-2xl border border-zinc-200/80 bg-white shadow-sm">
         {pageRows.length ? (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[1200px] table-fixed text-left text-sm">
+            <table className="w-full min-w-[1280px] table-fixed text-left text-sm">
               <colgroup>
-                <col style={{ width: "19%" }} />
-                <col style={{ width: "11%" }} />
+                <col style={{ width: "18%" }} />
+                <col style={{ width: "10%" }} />
                 <col style={{ width: "8%" }} />
-                <col style={{ width: "13%" }} />
+                <col style={{ width: "12%" }} />
                 <col style={{ width: "10%" }} />
                 <col style={{ width: "8%" }} />
                 <col style={{ width: "7%" }} />
-                <col style={{ width: "13%" }} />
+                <col style={{ width: "16%" }} />
                 <col style={{ width: "11%" }} />
               </colgroup>
               <thead className="border-b border-zinc-100 bg-zinc-50/70 text-xs font-medium text-zinc-500">
@@ -284,8 +292,8 @@ export function CreatorProjectsBoard({
                         {row.stageLabel}
                       </span>
                     </td>
-                    <td className="px-5 py-4">
-                      <p className="line-clamp-2 text-zinc-600">{row.currentTask}</p>
+                    <td className="max-w-0 px-5 py-4">
+                      <p className="truncate text-zinc-600">{row.currentTask}</p>
                     </td>
                     <td className="px-5 py-4">
                       <p className="whitespace-nowrap text-zinc-700">{formatDate(row.deadline)}</p>
@@ -302,10 +310,12 @@ export function CreatorProjectsBoard({
                     <td className="px-5 py-4 text-right font-medium tabular-nums text-zinc-800">
                       {formatCurrency(row.amount)}
                     </td>
-                    <td className="px-5 py-4">
-                      <p className="line-clamp-2 text-zinc-500">{row.latestUpdate}</p>
+                    <td className="max-w-0 px-5 py-4">
+                      <p className="truncate text-zinc-500" title={row.latestUpdate}>
+                        {row.latestUpdate}
+                      </p>
                     </td>
-                    <td className="min-w-[132px] px-5 py-4">
+                    <td className="whitespace-nowrap px-5 py-4">
                       <div className="flex items-center justify-end gap-2">
                         <Button
                           asChild

@@ -5,6 +5,7 @@ import { resolvePostLoginDestination, toSafeNextPath } from "@/lib/auth/post-log
 import { hasSupabaseConfig } from "@/lib/auth-config";
 import { getAppUiLocale } from "@/lib/app-language";
 import type { Locale, SearchParams } from "@/lib/i18n";
+import { getCurrentCreatorId } from "@/lib/creator-session";
 import { getCurrentSession } from "@/lib/session-user";
 import type { LoginRole } from "@/lib/studioos/login-theme";
 
@@ -88,7 +89,7 @@ const copy: Record<Locale, LoginPageCopy & { configError: string; unsupported: s
     welcomeSubtitleBrand: "简单三步完成登录",
     creatorWelcome: "欢迎回来",
     creatorWelcomeSubtitle: "简单三步完成登录",
-    brandTab: "广告主",
+    brandTab: "品牌方",
     creatorTab: "创作者",
     brandHeroLine1: "连接全球创作者",
     brandHeroLine2: "让创意没有边界",
@@ -119,7 +120,7 @@ const copy: Record<Locale, LoginPageCopy & { configError: string; unsupported: s
     creatorFeatures: [
       {
         title: "连接全球项目",
-        description: "与世界各地的广告主合作",
+        description: "与世界各地的品牌方合作",
         icon: "users"
       },
       {
@@ -218,7 +219,14 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const googleOneTapClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID?.trim() ?? "";
 
   if (session && (session.role === "client" || session.role === "creator") && !rawError) {
-    redirect(resolvePostLoginDestination(session, nextPath, locale));
+    if (session.role === "creator") {
+      const creatorId = await getCurrentCreatorId();
+      if (creatorId) {
+        redirect(resolvePostLoginDestination(session, nextPath, locale));
+      }
+    } else {
+      redirect(resolvePostLoginDestination(session, nextPath, locale));
+    }
   }
 
   const initialEmail = typeof params.email === "string" ? params.email : "";

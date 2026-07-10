@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { resolveBrandBriefEmailFromCookieValues } from "@/lib/brand-brief-session";
 import { DEMO_SESSION_COOKIE, VISITOR_COOKIE, hasSupabaseConfig } from "@/lib/auth-config";
 import { parseServerDemoSession } from "@/lib/demo-session-server";
-import { getCurrentSession } from "@/lib/session-user";
+import { getCurrentAuthUser, getCurrentSession } from "@/lib/session-user";
 
 export { brandDraftEmailForSession } from "@/lib/brand-brief-session";
 
@@ -10,11 +10,19 @@ export async function getCurrentClientEmail(): Promise<string | null> {
   const cookieStore = await cookies();
   const session = parseServerDemoSession(cookieStore.get(DEMO_SESSION_COOKIE)?.value);
   if (session?.role === "client") {
+    const authUser = await getCurrentAuthUser();
+    if (authUser && authUser.role !== "BRAND") {
+      return null;
+    }
     return session.email.toLowerCase();
   }
 
   const currentSession = await getCurrentSession();
   if (currentSession?.role === "client") {
+    const authUser = await getCurrentAuthUser();
+    if (authUser && authUser.role !== "BRAND") {
+      return null;
+    }
     return currentSession.email.toLowerCase();
   }
 
@@ -46,6 +54,10 @@ export async function resolveBrandBriefClientEmail(): Promise<string | null> {
 export async function requireBrandPortalClientEmail(): Promise<string> {
   const session = await getCurrentSession();
   if (!session || session.role !== "client") {
+    throw new Error("Unauthorized");
+  }
+  const authUser = await getCurrentAuthUser();
+  if (authUser && authUser.role !== "BRAND") {
     throw new Error("Unauthorized");
   }
   return session.email.toLowerCase();

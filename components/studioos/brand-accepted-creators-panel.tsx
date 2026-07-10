@@ -2,6 +2,7 @@ import { Check, Star, Users } from "lucide-react";
 import { selectCreatorFromInvitationsAction } from "@/app/brand-selection-actions";
 import { Button } from "@/components/ui/button";
 import { creators } from "@/lib/data";
+import { sanitizeCreatorDisplayName } from "@/lib/studioos/creator-display-name";
 import type { Locale } from "@/lib/i18n";
 import type { StoredCreatorInvitation } from "@/lib/studioos/creator-invitation-types";
 import { portalChrome } from "@/lib/studioos/product-theme";
@@ -56,7 +57,9 @@ export function BrandAcceptedCreatorsPanel({
               >
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className="font-semibold text-zinc-950">{creator?.name ?? invitation.creatorId}</p>
+                    <p className="font-semibold text-zinc-950">
+                      {sanitizeCreatorDisplayName(invitation.creatorName ?? creator?.name, locale)}
+                    </p>
                     <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800">
                       <Star className="h-3 w-3 fill-current" />
                       {creator?.rating ?? "—"}

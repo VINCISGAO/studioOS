@@ -22,7 +22,7 @@ export const CAMPAIGN_WIZARD_STEP_COUNT = wizard.steps;
 export const BRAND_WIZARD_VISIBLE_STEP_COUNT = 3;
 
 export const BRAND_WIZARD_VISIBLE_STEPS: CampaignWizardStep[] = [
-  { id: 1, key: "brief", label: { en: "Describe", zh: "说需求" } },
+  { id: 1, key: "brief", label: { en: "Describe", zh: "谈需求" } },
   { id: 2, key: "confirm", label: { en: "Review", zh: "看方案" } },
   { id: 3, key: "match", label: { en: "Publish", zh: "发布" } }
 ];
@@ -43,10 +43,10 @@ export function brandWizardStepMeta(locale: Locale, visibleStep: number) {
   const clamped = clampBrandVisibleStep(visibleStep);
   const labels: Record<number, { headline: Record<Locale, string>; subtitle: Record<Locale, string> }> = {
     1: {
-      headline: { en: "Describe your ad", zh: "说说你想要什么广告" },
+      headline: { en: "Describe your ad", zh: "创建您的创意需求" },
       subtitle: {
         en: "The more detail you share, the better we can match you with the right creative team.",
-        zh: "填写越详细，我们越能帮你匹配到合适的创作团队。"
+        zh: "请尽可能详细地描述您的需求，AI 帮助您匹配最合适的创作团队。"
       }
     },
     2: {

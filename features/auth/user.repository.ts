@@ -45,20 +45,19 @@ export class UserRepository {
         data: {
           fullName: input.fullName,
           passwordHash: input.passwordHash,
-          role: input.role,
           lastLoginAt: new Date()
         },
         include: { brandProfile: true, creatorProfile: true }
       });
 
-      if (input.role === "BRAND" && !updated.brandProfile) {
+      if (existing.role === "BRAND" && !updated.brandProfile) {
         updated = await this.ensureBrandProfileForUser({
           userId: updated.id,
           companyName: input.companyName ?? input.fullName
         });
       }
 
-      if (input.role === "CREATOR" && !updated.creatorProfile) {
+      if (existing.role === "CREATOR" && !updated.creatorProfile) {
         updated = await this.ensureCreatorProfileForUser({
           userId: updated.id,
           displayName: input.displayName ?? input.fullName

@@ -3,14 +3,20 @@
 import type { FormEvent, PointerEvent as ReactPointerEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
-import { ExternalLink, Loader2, Send, Sparkles, X } from "lucide-react";
+import { ExternalLink, Loader2, Send, Sparkles, ThumbsDown, ThumbsUp, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { LucienAvatar } from "@/components/ai-copilot/lucien-avatar";
 import { cn } from "@/lib/utils";
 
 type ChatLine = {
   id: string;
   role: "USER" | "ASSISTANT";
   content: string;
+  feedback?: {
+    rating: "HELPFUL" | "NOT_HELPFUL";
+    reason?: string | null;
+    createdAt: string;
+  } | null;
 };
 
 type ApiResponse<T> = {
@@ -30,9 +36,15 @@ type SessionListData = {
 
 type CopilotAnswerData = {
   sessionId: string;
+  messageId: string;
   answer: string;
   suggestedQuestions: string[];
   toolCalls: Array<{ toolName: string; status: string }>;
+};
+
+type FeedbackData = {
+  messageId: string;
+  feedback: NonNullable<ChatLine["feedback"]>;
 };
 
 type UiLocale = "zh" | "en";
@@ -80,7 +92,6 @@ const DRAWER_COPY: Record<UiLocale, {
   launcher: string;
   title: string;
   subtitle: string;
-  rolePrefix: string;
   currentEntity: string;
   openWorkspace: string;
   openWorkspaceAria: string;
@@ -88,34 +99,38 @@ const DRAWER_COPY: Record<UiLocale, {
   inputPlaceholder: string;
   unavailable: string;
   requestFailed: string;
+  feedbackSaved: string;
+  feedbackFailed: string;
   defaultSuggestions: string[];
 }> = {
   zh: {
-    launcher: "AI助手",
-    title: "AI助手",
-    subtitle: "查询、解释、建议、引导",
-    rolePrefix: "角色",
+    launcher: "卢西恩",
+    title: "卢西恩",
+    subtitle: "你的创意协作伙伴",
     currentEntity: "当前",
-    openWorkspace: "打开全屏 AI助手",
-    openWorkspaceAria: "打开 AI助手工作区",
+    openWorkspace: "打开全屏聊天",
+    openWorkspaceAria: "打开全屏聊天",
     loading: "正在读取 VINCIS 数据...",
-    inputPlaceholder: "问 AI助手...",
-    unavailable: "AI助手暂时不可用，请稍后再试。",
-    requestFailed: "AI助手请求失败",
+    inputPlaceholder: "问卢西恩...",
+    unavailable: "卢西恩暂时不可用，请稍后再试。",
+    requestFailed: "卢西恩请求失败",
+    feedbackSaved: "反馈已记录，会用于优化后续回复。",
+    feedbackFailed: "反馈保存失败，请稍后再试",
     defaultSuggestions: ["我的项目现在到哪一步？", "下一步我应该做什么？", "我的预算合理吗？"]
   },
   en: {
-    launcher: "AI Assistant",
-    title: "AI Assistant",
-    subtitle: "Search, explain, suggest, and guide",
-    rolePrefix: "Role",
+    launcher: "Lucien",
+    title: "Lucien",
+    subtitle: "Your creative collaboration partner",
     currentEntity: "current",
-    openWorkspace: "Open full AI Assistant",
-    openWorkspaceAria: "Open AI Assistant workspace",
+    openWorkspace: "Open full-screen chat",
+    openWorkspaceAria: "Open full-screen chat",
     loading: "Reading VINCIS data...",
-    inputPlaceholder: "Ask AI Assistant...",
-    unavailable: "AI Assistant is temporarily unavailable. Please try again later.",
-    requestFailed: "AI Assistant request failed",
+    inputPlaceholder: "Ask Lucien...",
+    unavailable: "Lucien is temporarily unavailable. Please try again later.",
+    requestFailed: "Lucien request failed",
+    feedbackSaved: "Feedback saved and will improve future replies.",
+    feedbackFailed: "Unable to save feedback. Please try again.",
     defaultSuggestions: ["Where is my project now?", "What should I do next?", "Is my budget reasonable?"]
   }
 };
@@ -140,13 +155,6 @@ function inferPageContext(pathname: string) {
   };
 }
 
-function contextLabel(pathname: string, locale: UiLocale) {
-  if (pathname.startsWith("/brand")) return locale === "zh" ? "广告主" : "Brand";
-  if (pathname.startsWith("/studio") || pathname.startsWith("/creator")) return locale === "zh" ? "创作者" : "Creator";
-  if (pathname.startsWith("/admin")) return locale === "zh" ? "管理员" : "Admin";
-  return "VINCIS";
-}
-
 function pageContextLabel(input: { pathname: string; entityType: string | null; locale: UiLocale }) {
   const { pathname, entityType, locale } = input;
   if (entityType === "review") return locale === "zh" ? "当前：审片中心" : "Current: Review center";
@@ -155,7 +163,7 @@ function pageContextLabel(input: { pathname: string; entityType: string | null; 
   if (entityType === "attribution") return locale === "zh" ? "当前：归因分析" : "Current: Attribution";
   if (pathname.startsWith("/studio/messages")) return locale === "zh" ? "当前：消息中心" : "Current: Messages";
   if (pathname.startsWith("/studio/profile")) return locale === "zh" ? "当前：个人资料" : "Current: Profile";
-  if (pathname.startsWith("/brand")) return locale === "zh" ? "当前：广告主工作台" : "Current: Brand workspace";
+  if (pathname.startsWith("/brand")) return locale === "zh" ? "当前：品牌方工作台" : "Current: Brand workspace";
   if (pathname.startsWith("/studio") || pathname.startsWith("/creator")) return locale === "zh" ? "当前：创作者工作台" : "Current: Creator workspace";
   if (pathname.startsWith("/admin")) return locale === "zh" ? "当前：管理后台" : "Current: Admin";
   return locale === "zh" ? "当前：VINCIS" : "Current: VINCIS";
@@ -337,6 +345,7 @@ export function AiCopilotDrawer() {
   const [localHour, setLocalHour] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [savingFeedbackId, setSavingFeedbackId] = useState<string | null>(null);
   const [launcherPosition, setLauncherPosition] = useState<FloatingLauncherPosition>(() => defaultLauncherPosition());
   const [launcherPreview, setLauncherPreview] = useState<FloatingLauncherPreview | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
@@ -353,7 +362,6 @@ export function AiCopilotDrawer() {
     const query = params.toString();
     return query ? `/api/ai-copilot?${query}` : "/api/ai-copilot";
   }, [pageContext.languageCode]);
-  const roleLabel = contextLabel(pathname, locale);
   const roleKind = roleKindFromPath(pathname);
   const displayName = workspace?.displayName?.trim() || fallbackDisplayName(roleKind, locale);
   const introTitle =
@@ -457,7 +465,7 @@ export function AiCopilotDrawer() {
       setSuggestions(data.suggestedQuestions);
       setMessages((current) => [
         ...current,
-        { id: crypto.randomUUID(), role: "ASSISTANT", content: data.answer }
+        { id: data.messageId, role: "ASSISTANT", content: data.answer, feedback: null }
       ]);
     } catch (err) {
       setError(err instanceof Error ? err.message : copy.unavailable);
@@ -469,6 +477,37 @@ export function AiCopilotDrawer() {
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     void sendMessage(input);
+  }
+
+  async function submitFeedback(messageId: string, rating: "HELPFUL" | "NOT_HELPFUL") {
+    if (messages.some((message) => message.id === messageId && message.feedback)) return;
+    setSavingFeedbackId(messageId);
+    setError(null);
+    try {
+      const response = await fetch("/api/ai-copilot", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messageId,
+          rating,
+          languageCode: pageContext.languageCode
+        })
+      });
+      const payload = (await response.json().catch(() => null)) as ApiResponse<FeedbackData> | null;
+      if (!response.ok || !payload?.success || !payload.data) {
+        throw new Error(payload?.error?.message ?? copy.feedbackFailed);
+      }
+      const data = payload.data;
+      setMessages((current) =>
+        current.map((message) =>
+          message.id === messageId ? { ...message, feedback: data.feedback } : message
+        )
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : copy.feedbackFailed);
+    } finally {
+      setSavingFeedbackId(null);
+    }
   }
 
   function startLauncherDrag(event: ReactPointerEvent<HTMLButtonElement>) {
@@ -571,9 +610,7 @@ export function AiCopilotDrawer() {
             <header className="border-b border-violet-100 bg-white p-5">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 text-white shadow-lg shadow-violet-100">
-                    <Sparkles className="h-5 w-5 fill-white" />
-                  </div>
+                  <LucienAvatar size="md" alt={copy.title} />
                   <div>
                     <p className="text-base font-semibold text-slate-950">{copy.title}</p>
                     <p className="text-xs text-slate-500">{copy.subtitle}</p>
@@ -591,9 +628,6 @@ export function AiCopilotDrawer() {
                 </div>
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
-                <span className="rounded-full bg-violet-50 px-2.5 py-1 text-xs font-medium text-violet-700">
-                  {copy.rolePrefix}: {roleLabel}
-                </span>
                 <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
                   {pageContextLabel({
                     pathname,
@@ -632,6 +666,42 @@ export function AiCopilotDrawer() {
                     )}
                   >
                     {message.content}
+                    {message.role === "ASSISTANT" ? (
+                      <div className="mt-3 border-t border-violet-100 pt-2">
+                        <div className="flex items-center gap-2 text-slate-400">
+                          <button
+                            type="button"
+                            disabled={savingFeedbackId === message.id || Boolean(message.feedback)}
+                            onClick={() => void submitFeedback(message.id, "HELPFUL")}
+                            className={cn(
+                              "rounded-full p-1 transition hover:bg-emerald-50 hover:text-emerald-600 disabled:opacity-50",
+                              message.feedback?.rating === "HELPFUL" && "bg-emerald-50 text-emerald-600"
+                            )}
+                            aria-label={locale === "zh" ? "这条回复有帮助" : "This reply was helpful"}
+                          >
+                            <ThumbsUp className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            disabled={savingFeedbackId === message.id || Boolean(message.feedback)}
+                            onClick={() => void submitFeedback(message.id, "NOT_HELPFUL")}
+                            className={cn(
+                              "rounded-full p-1 transition hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50",
+                              message.feedback?.rating === "NOT_HELPFUL" && "bg-rose-50 text-rose-600"
+                            )}
+                            aria-label={locale === "zh" ? "这条回复没有帮助" : "This reply was not helpful"}
+                          >
+                            <ThumbsDown className="h-4 w-4" />
+                          </button>
+                          {savingFeedbackId === message.id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin text-violet-500" />
+                          ) : null}
+                          {message.feedback ? (
+                            <span className="text-xs text-slate-400">{copy.feedbackSaved}</span>
+                          ) : null}
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
                 </div>
               ))}

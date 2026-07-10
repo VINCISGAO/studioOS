@@ -32,6 +32,7 @@ async function writeStore(store: WorksStore) {
 
 type PortfolioWorkWithCreator = Awaited<ReturnType<typeof prisma.creatorPortfolioWork.findFirst>> & {
   creator?: {
+    id: string;
     displayName: string;
     user?: { email?: string | null } | null;
   } | null;
@@ -86,6 +87,7 @@ async function listDatabaseWorks(where: { creatorId?: string; includeHidden?: bo
     include: {
       creator: {
         select: {
+          id: true,
           displayName: true,
           user: { select: { email: true } }
         }
@@ -155,6 +157,7 @@ async function upsertDatabaseWork(work: CreatorWork): Promise<CreatorWork | null
     include: {
       creator: {
         select: {
+          id: true,
           displayName: true,
           user: { select: { email: true } }
         }

@@ -191,14 +191,16 @@ export function BrandCampaignStep2FeaturedScheme({
   metrics,
   productImageUrl,
   previewFrameUrls,
-  showImages
+  showImages,
+  textOnly = false
 }: {
   locale: Locale;
   direction: CreativeDirection;
   metrics: SchemeDisplayMetrics;
   productImageUrl: string | null;
   previewFrameUrls?: string[];
-  showImages: boolean;
+  showImages?: boolean;
+  textOnly?: boolean;
 }) {
   const t = copy[locale];
 
@@ -217,12 +219,14 @@ export function BrandCampaignStep2FeaturedScheme({
         </span>
       </div>
 
-      <FeaturedStoryboardStrip
-        locale={locale}
-        productImageUrl={productImageUrl}
-        frameUrls={previewFrameUrls}
-        showImages={showImages}
-      />
+      {!textOnly ? (
+        <FeaturedStoryboardStrip
+          locale={locale}
+          productImageUrl={productImageUrl}
+          frameUrls={previewFrameUrls}
+          showImages={showImages ?? false}
+        />
+      ) : null}
 
       <div className={cn("mt-5", STEP2_SCHEME_LAYOUT.featuredBodyGrid)}>
         <FeaturedCopyBlock locale={locale} direction={direction} metrics={metrics} />

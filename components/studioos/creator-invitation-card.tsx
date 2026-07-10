@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -11,6 +10,8 @@ import {
 } from "@/app/creator-invitation-actions";
 import { Button } from "@/components/ui/button";
 import { CreatorInvitationDeclineDialog } from "@/components/studioos/creator-invitation-decline-dialog";
+import { CreatorInvitationDetailDialog } from "@/components/studioos/creator-invitation-detail-dialog";
+import { ProjectThumbnailImage } from "@/components/studioos/project-thumbnail-image";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import { invitationStatusLabel } from "@/lib/studioos/campaign-closed-loop";
@@ -232,7 +233,11 @@ export function CreatorInvitationCard({
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
         <div className="flex min-w-0 flex-1 gap-4">
           <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-2xl bg-zinc-100">
-            <Image src={invitation.thumbnailUrl} alt="" fill className="object-cover" sizes="96px" />
+            <ProjectThumbnailImage
+              src={invitation.thumbnailUrl}
+              seed={invitation.campaignId}
+              className="absolute inset-0"
+            />
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-1.5">
@@ -241,7 +246,16 @@ export function CreatorInvitationCard({
               </p>
               <BadgeCheck className="h-4 w-4 text-sky-500" aria-hidden />
             </div>
-            <h2 className="mt-1 text-lg font-semibold text-zinc-950">{invitation.title}</h2>
+            <div className="mt-1 flex flex-wrap items-start justify-between gap-2">
+              <h2 className="min-w-0 flex-1 text-lg font-semibold text-zinc-950">{invitation.title}</h2>
+              <CreatorInvitationDetailDialog
+                locale={locale}
+                invitation={invitation}
+                detail={invitation.detail}
+                thumbnailUrl={invitation.thumbnailUrl}
+                campaignId={invitation.campaignId}
+              />
+            </div>
             <p className="mt-2 inline-flex rounded-full bg-violet-50 px-2.5 py-0.5 text-xs font-medium text-violet-700">
               {invitationStatusLabel(status, locale)}
             </p>

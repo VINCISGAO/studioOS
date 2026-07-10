@@ -4,6 +4,8 @@ import { type SearchParams } from "@/lib/i18n";
 import { getCurrentSession } from "@/lib/session-user";
 import { getBrandPortalDisplayName, getBrandPortalOrders, getBrandPortalProjects } from "@/lib/studioos/brand-portal-data";
 import { toBrandProjectRows } from "@/lib/studioos/brand-dashboard";
+import { fallbackProjectThumbnail } from "@/lib/studioos/project-thumbnail";
+import { resolveThumbnailsByProjectId } from "@/lib/studioos/resolve-project-thumbnails";
 import { pickLatestEphemeralWizardProject } from "@/lib/studioos/brand-wizard-session";
 
 export default async function BrandHomePage({ searchParams }: { searchParams: Promise<SearchParams> }) {
@@ -17,7 +19,23 @@ export default async function BrandHomePage({ searchParams }: { searchParams: Pr
     getBrandPortalProjects(clientEmail)
   ]);
   const wizardProject = pickLatestEphemeralWizardProject(projects);
-  const rows = toBrandProjectRows(orders, projects, locale);
+  const thumbnailsByProjectId = await resolveThumbnailsByProjectId(projects.map((project) => project.id));
+  const rows = toBrandProjectRows(orders, projects, locale).map((row) => {
+    if (row.kind === "campaign") {
+      return {
+        ...row,
+        thumbnailUrl:
+          thumbnailsByProjectId[row.id] ?? fallbackProjectThumbnail(row.id)
+      };
+    }
+    const linkedProjectId = orders.find((order) => order.id === row.id)?.project_id;
+    return {
+      ...row,
+      thumbnailUrl: linkedProjectId
+        ? thumbnailsByProjectId[linkedProjectId] ?? fallbackProjectThumbnail(linkedProjectId)
+        : fallbackProjectThumbnail(row.id)
+    };
+  });
   const orderProjectMap = Object.fromEntries(orders.map((order) => [order.id, order.project_id]));
   const startBriefError =
     query.error === "wizard-access"

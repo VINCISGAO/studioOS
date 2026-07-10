@@ -2,7 +2,7 @@
 
 AI Preference Engine（AI 偏好引擎）是 VINCIS 的核心 AI 护城河之一。
 
-它不是一个“点赞功能”。Creator 收藏只是入口，真正的系统价值是：VINCIS 持续学习广告主的审美、商业偏好、预算偏好、协作偏好和成交行为，并把这些长期记忆转化为可迭代的 Creator Ranking 与 Brand AI Taste。
+它不是一个“点赞功能”。Creator 收藏只是入口，真正的系统价值是：VINCIS 持续学习品牌方的审美、商业偏好、预算偏好、协作偏好和成交行为，并把这些长期记忆转化为可迭代的 Creator Ranking 与 Brand AI Taste。
 
 ## Product Principle
 
@@ -10,8 +10,8 @@ Creator 页面使用 **Save Creator / 收藏创作者**，不使用 Like。
 
 原因：
 
-- 广告主不会“点赞”服务商或创作者。
-- 广告主真实行为是保存、收藏、稍后比较、邀请、合作。
+- 品牌方不会“点赞”服务商或创作者。
+- 品牌方真实行为是保存、收藏、稍后比较、邀请、合作。
 - Behance、Pinterest、Dribbble、Instagram 等创意平台都更接近 Save 行为。
 
 ## AI Learning Rules v1

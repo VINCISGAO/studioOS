@@ -1,7 +1,6 @@
 import "server-only";
 
-import { getCreatorByIdSync } from "@/lib/creator-service";
-import { creators } from "@/lib/data";
+import { resolveCreatorDisplayName } from "@/lib/studioos/creator-display-name.server";
 import type { Locale } from "@/lib/i18n";
 import {
   createCreatorNotification,
@@ -15,10 +14,6 @@ import { createBrandNotification, hasBrandNotification } from "@/lib/studioos/br
 import { getConfirmedBriefText } from "@/lib/studioos/confirmed-brief";
 import type { ReviewComment } from "@/lib/studioos/review-store";
 import { formatTimestamp } from "@/lib/studioos/review-utils";
-
-function resolveCreatorName(creatorId: string): string {
-  return getCreatorByIdSync(creatorId)?.name ?? creators.find((item) => item.id === creatorId)?.name ?? creatorId;
-}
 
 async function resolveProjectTitle(order: StoredOrder): Promise<string> {
   const project = order.project_id ? await getProject(order.project_id) : null;
@@ -228,7 +223,7 @@ export async function notifyBrandCommentResolved(input: {
   if (!brandEmail || !projectId) return null;
 
   const locale = input.locale ?? input.order.client_locale ?? "en";
-  const creatorName = resolveCreatorName(input.order.creator_id);
+  const creatorName = await resolveCreatorDisplayName(input.order.creator_id, { locale });
   const projectTitle = await resolveProjectTitle(input.order);
   const timeLabel = formatTimestamp(input.comment.timestamp_sec);
   const issue = input.comment.issue_type ?? (locale === "zh" ? "批注" : "Note");
@@ -366,7 +361,7 @@ export async function notifyBrandPaymentRequired(input: {
     body: copy.body,
     project_id: projectId,
     creator_id: input.order.creator_id,
-    creator_name: resolveCreatorName(input.order.creator_id),
+    creator_name: await resolveCreatorDisplayName(input.order.creator_id, { locale }),
     order_id: input.order.id
   });
 }
@@ -409,7 +404,7 @@ export async function notifyBrandPaidRevisionUnlocked(input: {
     body: copy.body,
     project_id: projectId,
     creator_id: input.order.creator_id,
-    creator_name: resolveCreatorName(input.order.creator_id),
+    creator_name: await resolveCreatorDisplayName(input.order.creator_id, { locale }),
     order_id: input.order.id
   });
 }
@@ -452,7 +447,7 @@ export async function notifyBrandOrderCompleted(input: {
     body: copy.body,
     project_id: projectId,
     creator_id: input.order.creator_id,
-    creator_name: resolveCreatorName(input.order.creator_id),
+    creator_name: await resolveCreatorDisplayName(input.order.creator_id, { locale }),
     order_id: input.order.id
   });
 }
@@ -495,7 +490,7 @@ export async function notifyBrandFinalDownloadReady(input: {
     body: copy.body,
     project_id: projectId,
     creator_id: input.order.creator_id,
-    creator_name: resolveCreatorName(input.order.creator_id),
+    creator_name: await resolveCreatorDisplayName(input.order.creator_id, { locale }),
     order_id: input.order.id
   });
 }
@@ -509,7 +504,7 @@ export async function notifyPlatformInterventionRequired(input: {
   const projectId = input.order.project_id;
   const projectTitle = await resolveProjectTitle(input.order);
   const versionLabel = input.version ? `V${input.version}` : "V5";
-  const creatorName = resolveCreatorName(input.order.creator_id);
+  const creatorName = await resolveCreatorDisplayName(input.order.creator_id, { locale });
 
   if (projectId) {
     const brandExists = await hasBrandNotification({

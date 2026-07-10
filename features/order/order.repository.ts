@@ -115,7 +115,8 @@ export class OrderRepository {
     return prisma.order.updateMany({
       where: {
         campaignId,
-        status: "PENDING"
+        status: "PENDING",
+        creatorProfileId: null
       },
       data: {
         status: "CONFIRMED"

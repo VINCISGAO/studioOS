@@ -9,11 +9,14 @@ export type BrandCommercialContext = {
 };
 
 export type CreatorCommercialContext = {
-  order?: Pick<Partial<StoredOrder>, "payment_status" | "status"> | null;
+  order?: Pick<Partial<StoredOrder>, "payment_status" | "status" | "creator_id"> | null;
 };
 
 export function isBrandAwaitingPayment(context: BrandCommercialContext): boolean {
   const projectStatus = context.project ? normalizeCampaignStatus(context.project.status) : null;
+  if (projectStatus === "cancelled" || context.order?.status === "cancelled") {
+    return false;
+  }
   if (projectStatus && ["production", "in_review", "delivered", "completed"].includes(projectStatus)) {
     return false;
   }
@@ -300,8 +303,8 @@ export const brandUserPhaseLabels = {
     completed: "Completed"
   },
   zh: {
-    publish_requirement: "发布需求",
-    recruiting: "招募中",
+    publish_requirement: "需求发布",
+    recruiting: "项目邀请",
     in_production: "制作中",
     completed: "已完成"
   }
@@ -331,9 +334,9 @@ export const brandUserPhaseSubtitles = {
   },
   zh: {
     publish_requirement: "项目方发布需求",
-    recruiting: "正在寻找合适的 Creator",
-    in_production: "Creator 创作中",
-    completed: "项目已圆满完成"
+    recruiting: "向创作者发出邀请",
+    in_production: "创作者制作中",
+    completed: "托管款已自动释放"
   }
 } as const;
 
@@ -394,6 +397,9 @@ export function mapCreatorStepToPhase(
   step: CreatorCommercialStep,
   context?: CreatorCommercialContext
 ): UserCommercialPhase {
+  if (step === "selected" && context?.order?.creator_id) {
+    return "in_production";
+  }
   if (step === "selected" && context && isCreatorAwaitingPayment(context)) {
     return "recruiting";
   }
@@ -428,6 +434,9 @@ export function creatorCommercialPhaseLabel(
   locale: "en" | "zh",
   context?: CreatorCommercialContext
 ): string {
+  if (step === "selected" && context?.order?.creator_id) {
+    return locale === "zh" ? "正式项目" : "Active Project";
+  }
   if (step === "selected" && context && isCreatorAwaitingPayment(context)) {
     return locale === "zh" ? "待品牌付款" : "Awaiting brand payment";
   }
@@ -458,28 +467,28 @@ export function resolveBrandNextActorHint(
       return locale === "zh" ? "下一步：完成托管付款" : "Next: complete escrow payment";
     }
     if (step === "select_creator") {
-      return locale === "zh" ? "下一步：请选择 Creator" : "Next: select a creator";
+      return locale === "zh" ? "下一步：请选择创作者" : "Next: select a creator";
     }
     if (step === "collecting_candidates" || step === "invitations_sent") {
-      return locale === "zh" ? "下一步：等待 Creator 响应" : "Next: waiting for creator responses";
+      return locale === "zh" ? "下一步：等待创作者响应" : "Next: waiting for creator responses";
     }
-    return locale === "zh" ? "下一步：向 Creator 发出邀请" : "Next: invite creators";
+    return locale === "zh" ? "下一步：向创作者发出邀请" : "Next: invite creators";
   }
 
   if (phase === "in_production") {
     if (orderStatus === "revision") {
-      return locale === "zh" ? "下一步：Creator 修改中" : "Next: creator is revising";
+      return locale === "zh" ? "下一步：创作者修改中" : "Next: creator is revising";
     }
     if (hasOpenComments) {
-      return locale === "zh" ? "下一步：Creator 处理批注" : "Next: creator resolves notes";
+      return locale === "zh" ? "下一步：创作者处理批注" : "Next: creator resolves notes";
     }
     if (step === "under_review") {
       return locale === "zh" ? "下一步：请您审片验收" : "Next: review and approve delivery";
     }
     if (step === "creator_selected") {
-      return locale === "zh" ? "下一步：Creator 开始制作" : "Next: creator starts production";
+      return locale === "zh" ? "下一步：创作者开始制作" : "Next: creator starts production";
     }
-    return locale === "zh" ? "下一步：Creator 制作中" : "Next: creator is producing";
+    return locale === "zh" ? "下一步：创作者制作中" : "Next: creator is producing";
   }
 
   if (step === "pending_settlement") {
@@ -504,6 +513,11 @@ export function resolveCreatorNextActorHint(
   if (phase === "recruiting") {
     if (step === "intent_declined") {
       return locale === "zh" ? "您已拒绝此邀请" : "You declined this invitation";
+    }
+    if (step === "selected" && commercialContext?.order?.creator_id) {
+      return locale === "zh"
+        ? "下一步：确认创意方向，然后上传 V1"
+        : "Next: confirm creative direction, then upload V1";
     }
     if (step === "selected" && awaitingPayment) {
       return locale === "zh"
@@ -552,7 +566,7 @@ export function creatorInvitationCommercialLabel(status: string, locale: "en" | 
       pending: "等待回复",
       accepted: "已接受邀请 · 等待品牌确认",
       selected: "🎉 已被选中 · 等待付款",
-      not_selected: "已由其他 Creator 接单",
+      not_selected: "已由其他创作者接单",
       declined: "已拒绝",
       expired: "已失效"
     }

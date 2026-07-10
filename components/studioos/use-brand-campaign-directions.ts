@@ -43,10 +43,12 @@ export function useBrandCampaignDirections(
     enabled?: boolean;
     briefSnapshot?: WizardBriefSnapshot | null;
     wizardFastPath?: boolean;
+    textOnly?: boolean;
   }
 ) {
   const enabled = options?.enabled ?? true;
   const wizardFastPath = options?.wizardFastPath ?? true;
+  const textOnly = options?.textOnly ?? wizardFastPath;
 
   const [directions, setDirections] = useState<CreativeDirection[]>([]);
   const [status, setStatus] = useState<DirectionsLoadStatus>("loading");
@@ -158,11 +160,11 @@ export function useBrandCampaignDirections(
   }, [options?.briefSnapshot, enabled, locale, projectId, wizardFastPath]);
 
   useEffect(() => {
-    if (status !== "ready") return;
+    if (textOnly || status !== "ready") return;
     setMediaPhase("text");
     const timer = setTimeout(() => setMediaPhase("images"), IMAGE_PHASE_DELAY_MS);
     return () => clearTimeout(timer);
-  }, [status]);
+  }, [status, textOnly]);
 
   return {
     directions,
@@ -170,6 +172,6 @@ export function useBrandCampaignDirections(
     mediaPhase,
     error,
     isLoading: !enabled || (status === "loading" && directions.length === 0),
-    showImages: status === "ready" && mediaPhase === "images"
+    showImages: !textOnly && status === "ready" && mediaPhase === "images"
   };
 }

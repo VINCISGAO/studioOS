@@ -1,6 +1,7 @@
 import type { Campaign, CampaignAsset, User } from "@prisma/client";
 import type { StoredCreativeBrief, StoredProjectAsset, StoredProjectReference } from "@/lib/campaign-types";
 import type { StoredProject } from "@/lib/project-types";
+import { CREATIVE_COLLABORATION_SETTINGS_KEY } from "@/features/creative-collaboration/creative-collaboration.types";
 import { detectReferenceType } from "@/lib/campaign/reference-type";
 import {
   type BrandCampaignMemory,
@@ -120,6 +121,15 @@ export function mapCampaignToStoredProject(campaign: CampaignWithBrand): StoredP
       selected_direction_id: brief.selected_direction_id,
       wizard_ephemeral: memory.wizard?.ephemeral === true,
       wizard_saved_at: memory.wizard?.saved_at,
+      ...(brief.creative_collaboration
+        ? { [CREATIVE_COLLABORATION_SETTINGS_KEY]: brief.creative_collaboration }
+        : {}),
+      ...(brief.final_creative_direction
+        ? { final_creative_direction: brief.final_creative_direction }
+        : {}),
+      ...(brief.confirmed_creative_direction
+        ? { confirmed_creative_direction: brief.confirmed_creative_direction }
+        : {}),
       ...(memory.cancellation ? { cancellation: memory.cancellation } : {}),
       prisma_campaign_id: campaign.id
     },

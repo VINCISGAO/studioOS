@@ -40,12 +40,17 @@ import {
   resolveAspectRatioFromProject,
   resolveDeliveryTimelineFromProject
 } from "@/lib/studioos/brand-campaign-options";
-import { runInBackground, syncBrandWizardStepUrl } from "@/lib/studioos/instant-nav";
+import { appendCreativeBriefExtendedFields, readCreativeBriefExtendedFields } from "@/lib/studioos/brand-creative-brief-form";
 import {
   isWizardBriefReady,
   snapshotFromBriefForm,
   type WizardBriefSnapshot
 } from "@/lib/studioos/brand-wizard-brief-snapshot";
+import {
+  readBrandWizardStepFromLocation,
+  runInBackground,
+  syncBrandWizardStepUrl
+} from "@/lib/studioos/instant-nav";
 import { cn } from "@/lib/utils";
 import { Sparkles } from "lucide-react";
 
@@ -116,6 +121,7 @@ function readStoredQuestionnaire(project: StoredProject): Partial<BriefFormState
     budgetRange: stored?.budgetRange ?? project.budget_range ?? undefined,
     deliveryTimeline: stored?.deliveryTimeline ?? resolveDeliveryTimelineFromProject(project),
     aspectRatio: stored?.aspectRatio ?? resolveAspectRatioFromProject(project),
+    ...readCreativeBriefExtendedFields(project, stored as Partial<BriefFormState>),
     refined: stored?.refined_brief ?? (project.campaign_goal
       ? {
           campaign_goal: project.campaign_goal,
@@ -131,16 +137,18 @@ function readStoredQuestionnaire(project: StoredProject): Partial<BriefFormState
 
 function appendBriefForm(fd: FormData, state: BriefFormState) {
   fd.set("product_name", state.productName);
-  fd.set("product_url", state.productUrl);
+  fd.set("product_url", state.productUrl || state.brandWebsite);
   fd.set("product_description", state.productDescription);
   fd.set("objective", state.objective);
   fd.set("audience_description", state.audienceDescription);
   fd.set("platforms", state.platforms.join(","));
   fd.set("extra_notes", state.extraNotes);
-  fd.set("raw_summary", state.rawSummary);
+  fd.set("raw_summary", state.rawSummary || state.productDescription || state.adOneLiner);
   fd.set("budget_range", state.budgetRange);
   fd.set("delivery_timeline", state.deliveryTimeline);
   fd.set("aspect_ratio", state.aspectRatio);
+  fd.set("title", state.projectTitle || state.refined?.title || state.productName);
+  appendCreativeBriefExtendedFields(fd, state);
   if (state.refined) {
     fd.set("campaign_goal", state.refined.campaign_goal);
     fd.set("target_audience", state.refined.target_audience);
@@ -204,6 +212,21 @@ export function BrandCampaignWizard({
     };
   }, []);
 
+  useEffect(() => {
+    function syncStepFromUrl() {
+      const urlStep = clampBrandVisibleStep(migrateLegacyBrandWizardStep(readBrandWizardStepFromLocation()));
+      setStep((current) => (current === urlStep ? current : urlStep));
+    }
+
+    syncStepFromUrl();
+    window.addEventListener("popstate", syncStepFromUrl);
+    window.addEventListener("brand-wizard-step", syncStepFromUrl);
+    return () => {
+      window.removeEventListener("popstate", syncStepFromUrl);
+      window.removeEventListener("brand-wizard-step", syncStepFromUrl);
+    };
+  }, [projectId]);
+
   const applyProductImagePreview = useCallback((previewUrl: string) => {
     setWizardData((prev) => ({
       ...prev,
@@ -262,6 +285,7 @@ export function BrandCampaignWizard({
       budgetRange: defaultBrandBudget(),
       deliveryTimeline: defaultBrandTimeline(),
       aspectRatio: defaultBrandAspectRatio(),
+      ...readCreativeBriefExtendedFields(wizardData.project),
       ...readStoredQuestionnaire(wizardData.project)
     }),
     [wizardData.project]
@@ -306,7 +330,9 @@ export function BrandCampaignWizard({
     setBriefSnapshot(snapshot);
     setStep2Mounted(true);
     setCanLoadDirections(true);
-    setSchemeGeneratingUntil(Date.now() + 3000);
+    if (step < 2) {
+      setSchemeGeneratingUntil(Date.now() + 3000);
+    }
     goStep(2);
 
     const fd = new FormData();
@@ -340,12 +366,12 @@ export function BrandCampaignWizard({
     }, "approve-direction");
   }
 
-  const maxWidth = step === 1 ? "max-w-6xl" : step === 2 ? "max-w-none" : "max-w-3xl";
+  const maxWidth = step === 1 ? "max-w-none" : step === 2 ? "max-w-none" : "max-w-3xl";
   const step2FullBleed = step === 2 ? "min-h-[calc(100dvh-3.5rem)] w-full" : "";
 
   return (
     <div className={cn("mx-auto w-full", maxWidth, step2FullBleed)}>
-      {step !== 2 ? (
+      {step !== 2 && step !== 1 ? (
       <div className="mb-8">
         <WizardStepper locale={locale} currentStep={step} variant="brand" />
         <div className="mt-6 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
@@ -356,19 +382,6 @@ export function BrandCampaignWizard({
             </h1>
             <p className="mt-3 text-base leading-relaxed text-zinc-500">{meta.subtitle[locale]}</p>
           </div>
-          {step === 1 ? (
-            <div className="relative hidden h-36 w-44 shrink-0 lg:block" aria-hidden>
-              <div className="absolute inset-0 rounded-[28px] bg-gradient-to-br from-violet-100 via-indigo-50 to-white shadow-[0_20px_60px_rgba(99,102,241,0.18)]" />
-              <div className="absolute left-5 top-6 h-24 w-16 rounded-2xl bg-white shadow-lg ring-1 ring-violet-100" />
-              <div className="absolute left-8 top-9 h-14 w-10 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-500" />
-              <div className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-violet-600 text-white shadow-md">
-                <Sparkles className="h-4 w-4" />
-              </div>
-              <div className="absolute bottom-5 right-6 flex h-8 w-8 items-center justify-center rounded-full bg-indigo-500 text-white shadow-md">
-                <Sparkles className="h-3.5 w-3.5" />
-              </div>
-            </div>
-          ) : null}
         </div>
       </div>
       ) : null}

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { appPath, type Locale } from "@/lib/i18n";
 import { getLoginVisual, type LoginRole, type LoginVisual } from "@/lib/studioos/login-theme";
+import { correctEmailDomain, emailDomainCorrectionHint, emailDomainSuggestion } from "@/lib/auth/email-domain-correction";
 import { cn } from "@/lib/utils";
 
 type LoginCopy = {
@@ -47,7 +48,8 @@ export function LoginWorkspace({
   const [sentHint, setSentHint] = useState<string | undefined>();
   const [devDebugCode, setDevDebugCode] = useState<string | undefined>();
   const [clientErrorCode, setClientErrorCode] = useState<string | undefined>();
-  const { resend, resending, secondsLeft, canResend, markSent } = useLoginEmailResend(locale);
+  const [emailSuggestion, setEmailSuggestion] = useState<string | null>(null);
+  const { resend, resending, secondsLeft, canResend, markSent } = useLoginEmailResend(locale, role);
   const router = useRouter();
 
   const isWrongRole = errorCode === "wrong-role" || clientErrorCode === "wrong-role";
@@ -65,16 +67,30 @@ export function LoginWorkspace({
   );
   const iconClass = darkPanel ? "text-zinc-500" : "text-zinc-400";
 
+  function prepareEmailValue(raw: string) {
+    const correction = correctEmailDomain(raw);
+    if (correction.corrected) {
+      setEmail(correction.email);
+      setEmailSuggestion(null);
+      return {
+        email: correction.email,
+        hint: emailDomainCorrectionHint(correction, locale)
+      };
+    }
+    setEmailSuggestion(null);
+    return { email: correction.email, hint: null as string | null };
+  }
+
   async function startEmailVerification(emailValue: string) {
     const response = await fetch("/api/auth/email/start", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "same-origin",
-      body: JSON.stringify({ email: emailValue, lang: locale })
+      body: JSON.stringify({ email: emailValue, lang: locale, role })
     });
     return response.json().catch(() => null) as Promise<
       | { ok: true; message?: string; debugCode?: string }
-      | { ok: false; error?: string }
+      | { ok: false; error?: string; errorCode?: string }
       | null
     >;
   }
@@ -97,7 +113,7 @@ export function LoginWorkspace({
     });
     return response.json().catch(() => null) as Promise<
       | { ok: true; redirectTo: string }
-      | { ok: false; error?: string }
+      | { ok: false; error?: string; errorCode?: string }
       | null
     >;
   }
@@ -110,7 +126,8 @@ export function LoginWorkspace({
 
     try {
       if (step === "email") {
-        const data = await startEmailVerification(email);
+        const prepared = prepareEmailValue(email);
+        const data = await startEmailVerification(prepared.email);
         if (!data?.ok) {
           setSentHint(undefined);
           setDevDebugCode(undefined);
@@ -120,10 +137,13 @@ export function LoginWorkspace({
                 ? "请求过于频繁，请稍后再试。"
                 : "Too many requests. Try again later.")
           );
+          if (data && !data.ok && data.errorCode === "wrong-role") {
+            setClientErrorCode("wrong-role");
+          }
           return;
         }
         setFormError(undefined);
-        setSentHint(data.message);
+        setSentHint(prepared.hint ?? data.message);
         setDevDebugCode(data.debugCode);
         markSent();
         setStep("code");
@@ -131,7 +151,11 @@ export function LoginWorkspace({
       }
 
       if (step === "code") {
-        const data = await continueEmailVerification({ emailValue: email, codeValue: code });
+        const prepared = prepareEmailValue(email);
+        const data = await continueEmailVerification({
+          emailValue: prepared.email,
+          codeValue: code
+        });
         if (!data?.ok || !("redirectTo" in data) || !data.redirectTo) {
           const failureMessage =
             data && !data.ok && data.error
@@ -140,6 +164,9 @@ export function LoginWorkspace({
                 ? "验证码不正确或已过期。"
                 : "Invalid or expired code.";
           setFormError(failureMessage);
+          if (data && !data.ok && data.errorCode === "wrong-role") {
+            setClientErrorCode("wrong-role");
+          }
           return;
         }
         window.location.assign(data.redirectTo);
@@ -322,11 +349,39 @@ export function LoginWorkspace({
               required
               disabled={step !== "email"}
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setEmailSuggestion(null);
+              }}
+              onBlur={() => {
+                const correction = correctEmailDomain(email);
+                if (correction.corrected) {
+                  setEmailSuggestion(emailDomainSuggestion(correction, locale));
+                } else {
+                  setEmailSuggestion(null);
+                }
+              }}
               placeholder={t.emailPlaceholder}
               className={visual.input}
             />
           </div>
+          {emailSuggestion ? (
+            <button
+              type="button"
+              className={cn(
+                "text-left text-xs leading-5 underline-offset-2 hover:underline",
+                darkPanel ? "text-amber-200" : "text-amber-700"
+              )}
+              onClick={() => {
+                const correction = correctEmailDomain(email);
+                if (!correction.corrected) return;
+                setEmail(correction.email);
+                setEmailSuggestion(null);
+              }}
+            >
+              {emailSuggestion}
+            </button>
+          ) : null}
         </div>
 
         {step === "code" ? (
@@ -400,12 +455,17 @@ export function LoginWorkspace({
                 )}
                 onClick={async () => {
                   setFormError(undefined);
-                  const result = await resend(email);
+                  setClientErrorCode(undefined);
+                  const prepared = prepareEmailValue(email);
+                  const result = await resend(prepared.email);
                   if (!result.ok) {
                     setFormError(result.error);
+                    if (result.errorCode === "wrong-role") {
+                      setClientErrorCode("wrong-role");
+                    }
                     return;
                   }
-                  setSentHint(result.message);
+                  setSentHint(prepared.hint ?? result.message);
                   setDevDebugCode(result.debugCode);
                   setCode("");
                 }}

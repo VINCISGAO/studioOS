@@ -21,6 +21,7 @@ import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import type { StoredDeliverable, StoredOrder } from "@/lib/order-types";
 import { creatorPortalRoutes } from "@/lib/studioos/creator-portal-routes";
+import { isCreatorUploadActionable } from "@/lib/studioos/creator-order-lifecycle";
 import type { QualityReport } from "@/lib/studioos/quality-types";
 import type { ReviewComment } from "@/lib/studioos/review-comment-types";
 import { deliverableNotesForViewer } from "@/lib/studioos/deliverable-notes";
@@ -45,7 +46,7 @@ export type DeliveryOrderRow = {
   projectDeadline: string | null;
 };
 
-const UPLOADABLE_STATUSES = new Set(["in_production", "revision", "review"]);
+const UPLOADABLE_STATUSES = new Set(["waiting_payment", "in_production", "revision", "review", "paid"]);
 
 const copy = {
   en: {
@@ -154,7 +155,9 @@ function reviewStatusLabel(
   if (status === "review") return t.waitingReview;
   if (status === "revision") return t.inRevision;
   if (hasVersions) return t.reviewReady;
-  if (status === "waiting_payment") return t.waitingPayment;
+  if (status === "waiting_payment") {
+    return locale === "zh" ? "正式项目" : "Active Project";
+  }
   return t.noVersion;
 }
 
@@ -199,7 +202,9 @@ export function StudioDeliveryHub({
     () => [...(selected?.deliverables ?? [])].sort((a, b) => b.version - a.version),
     [selected?.deliverables]
   );
-  const canUpload = selected ? UPLOADABLE_STATUSES.has(selected.order.status) : false;
+  const canUpload = selected
+    ? isCreatorUploadActionable(selected.order, selected.deliverables.length)
+    : false;
   const hasVersions = sortedDeliverables.length > 0;
   const latestVersion = sortedDeliverables[0]?.version ?? 0;
   const nextVersion = hasVersions ? latestVersion + 1 : 1;

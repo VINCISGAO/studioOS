@@ -220,7 +220,7 @@ function BrandPortalShellInner({
         <aside
           className={cn(
             "hidden h-[100dvh] max-h-[100dvh] w-[248px] shrink-0 flex-col overflow-hidden border-r border-zinc-200/80 bg-white lg:sticky lg:top-0 lg:flex",
-            isWizardCreate && "max-lg:hidden"
+            isWizardCreate && "lg:hidden"
           )}
         >
           <MarketingHomeLink
@@ -310,7 +310,7 @@ function BrandPortalShellInner({
             isProjectReview && "h-[100dvh] max-h-[100dvh] overflow-hidden"
           )}
         >
-          {!isProjectReview ? (
+          {!isProjectReview && !isWizardCreate ? (
             <header className="sticky top-0 z-40 shrink-0 border-b border-zinc-200/80 bg-white/95 backdrop-blur">
               <div className="flex h-14 items-center justify-between px-4 sm:px-6 lg:px-8">
                 {isWizardCreate ? (
@@ -343,7 +343,7 @@ function BrandPortalShellInner({
                     avatarUrl={avatarUrl}
                     name={brandAccount?.name}
                     profileHref={brandPortalRoutes.brandCenter}
-                    roleLabel={locale === "zh" ? "广告主" : "Brand"}
+                    roleLabel={locale === "zh" ? "品牌方" : "Brand"}
                   />
                 </div>
               </div>
@@ -384,14 +384,16 @@ function BrandPortalShellInner({
                 ? "flex w-full flex-col overflow-hidden p-0"
                 : isWizardStep2
                   ? "mx-auto flex w-full max-w-none flex-col overflow-y-auto p-0"
-                  : cn(
-                      "mx-auto w-full px-4 py-6 sm:px-6 lg:px-8 lg:py-8 lg:overflow-y-auto",
-                      isProfileEditorPage || isWizardCreate
-                        ? "max-w-none"
-                        : focusRoute
-                          ? "max-w-[920px] lg:max-w-[1280px]"
-                          : "max-w-[1280px]"
-                    )
+                  : isWizardCreate && brandWizardStep === 1
+                    ? "mx-auto flex w-full max-w-none flex-col overflow-hidden p-0"
+                    : cn(
+                        "mx-auto w-full px-4 py-6 sm:px-6 lg:px-8 lg:py-8 lg:overflow-y-auto",
+                        isProfileEditorPage || isWizardCreate
+                          ? "max-w-none"
+                          : focusRoute
+                            ? "max-w-[920px] lg:max-w-[1280px]"
+                            : "max-w-[1280px]"
+                      )
             )}
           >
             {children}

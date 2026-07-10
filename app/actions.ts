@@ -160,7 +160,7 @@ export async function signInAction(formData: FormData) {
   if (!result.ok) {
     const roleParam = result.role ?? (expectedRole || "brand");
     if (result.errorCode === "wrong-role") {
-      redirect(loginErrorRedirect({ error: "wrong-role", role: roleParam }));
+      redirect(loginErrorRedirect({ error: result.error, role: roleParam }));
     }
     redirect(
       loginErrorRedirect({
@@ -177,12 +177,15 @@ export async function signInAction(formData: FormData) {
 export async function loginEmailStartAction(formData: FormData) {
   const lang = await resolveActionLocale(formData);
   const email = String(formData.get("email") ?? "").trim();
+  const roleRaw = String(formData.get("expected_role") ?? "brand");
+  const role = roleRaw === "creator" ? "CREATOR" : "BRAND";
   const request = await adminRequestFromHeaders("/login");
   try {
     return await authSecurityService.startEmailVerification({
       request,
       email,
-      locale: lang
+      locale: lang,
+      role
     });
   } catch (error) {
     const prismaCode =

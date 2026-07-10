@@ -42,8 +42,8 @@ export async function deleteBrandProjectAction(formData: FormData) {
       FORBIDDEN: lang === "zh" ? "演示项目不可删除" : "Demo project cannot be deleted",
       LOCKED:
         lang === "zh"
-          ? "仅草稿和已完成项目可删除，制作中项目不可删除"
-          : "Only draft or completed items can be deleted"
+          ? "仅草稿、待付款（未托管）或已完成项目可删除"
+          : "Only draft, unpaid, or completed projects can be deleted"
     };
     return { ok: false as const, error: messages[result.code] };
   }
@@ -81,14 +81,18 @@ export async function deleteBrandProjectsAction(formData: FormData) {
     NOT_FOUND: lang === "zh" ? "项目不存在" : "Project not found",
     FORBIDDEN: lang === "zh" ? "演示项目不可删除" : "Demo project cannot be deleted",
     LOCKED:
-      lang === "zh" ? "仅草稿和已完成项目可删除" : "Only draft or completed projects can be deleted"
+      lang === "zh"
+        ? "仅草稿、待付款（未托管）或已完成项目可删除"
+        : "Only draft, unpaid, or completed projects can be deleted"
   };
 
   const orderMessages = {
     NOT_FOUND: lang === "zh" ? "订单不存在" : "Order not found",
     FORBIDDEN: lang === "zh" ? "演示订单不可删除" : "Demo order cannot be deleted",
     LOCKED:
-      lang === "zh" ? "仅已完成订单可删除，制作中订单不可删除" : "Only completed orders can be deleted"
+      lang === "zh"
+        ? "仅待付款（未托管）或已完成订单可删除"
+        : "Only unpaid or completed orders can be deleted"
   };
 
   for (const projectId of projectIds) {

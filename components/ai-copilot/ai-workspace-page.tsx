@@ -23,6 +23,7 @@ import {
   Wrench
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { LucienAvatar } from "@/components/ai-copilot/lucien-avatar";
 import { cn } from "@/lib/utils";
 
 type WorkspaceMode = "brand" | "creator" | "admin" | "auto";
@@ -158,10 +159,10 @@ const UI_COPY: Record<UiLocale, {
   compactPageTitle: string;
 }> = {
   zh: {
-    title: "AI助手",
-    subtitle: "你的 AI 创作者操作系统",
+    title: "卢西恩",
+    subtitle: "你的创意协作伙伴",
     nav: {
-      copilot: "AI助手",
+      copilot: "卢西恩",
       chats: "聊天",
       insights: "洞察",
       memory: "记忆",
@@ -171,31 +172,31 @@ const UI_COPY: Record<UiLocale, {
     workspaceCard: "当前工作区",
     switchRole: "切换角色",
     proTipTitle: "使用建议",
-    proTipBody: "AI 可以帮你分析表现、寻找创作者，并优化广告项目。",
+    proTipBody: "卢西恩可以帮你分析表现、寻找创作者，并优化广告项目。",
     learnMore: "了解更多 →",
     loadingWorkspaceName: "正在读取数据库",
     loadingGreeting: "正在同步你的真实资料",
     inputPlaceholder: "询问任何关于 VINCIS 的问题...",
-    ready: "AI助手工作区已就绪",
-    loading: "AI 正在为你分析",
-    booting: "正在加载 AI 工作区",
-    unavailable: "AI助手工作区暂时不可用",
+    ready: "卢西恩工作区已就绪",
+    loading: "卢西恩正在为你分析",
+    booting: "正在加载卢西恩工作区",
+    unavailable: "卢西恩工作区暂时不可用",
     loadFailed: "历史记录读取失败",
     sendFailed: "发送失败，请稍后再试",
-    requestFailed: "AI助手请求失败",
+    requestFailed: "卢西恩请求失败",
     feedbackSaved: "反馈已记录，会用于优化后续回复。",
     feedbackFailed: "反馈保存失败，请稍后再试",
     done: "完成",
     untitled: "未命名",
     disclaimer: "AI 生成的内容仅供参考，请结合实际情况判断和使用。",
     toolSteps: ["项目数据", "用户资料", "匹配度", "生成建议"],
-    compactPageTitle: "打开紧凑版 AI助手"
+    compactPageTitle: "打开紧凑版卢西恩"
   },
   en: {
-    title: "AI Assistant",
-    subtitle: "Your AI Creator Operating System",
+    title: "Lucien",
+    subtitle: "Your creative collaboration partner",
     nav: {
-      copilot: "AI Assistant",
+      copilot: "Lucien",
       chats: "Chats",
       insights: "Insights",
       memory: "Memory",
@@ -205,25 +206,25 @@ const UI_COPY: Record<UiLocale, {
     workspaceCard: "Current workspace",
     switchRole: "Switch role",
     proTipTitle: "Pro Tip",
-    proTipBody: "AI Assistant can help you analyze performance, find creators, and optimize campaigns.",
+    proTipBody: "Lucien can help you analyze performance, find creators, and optimize campaigns.",
     learnMore: "Learn more →",
     loadingWorkspaceName: "Reading database",
     loadingGreeting: "Syncing your real profile",
     inputPlaceholder: "Ask anything about VINCIS...",
-    ready: "AI Assistant workspace is ready",
-    loading: "AI is analyzing for you",
-    booting: "Loading AI workspace",
-    unavailable: "AI Assistant workspace is temporarily unavailable",
+    ready: "Lucien workspace is ready",
+    loading: "Lucien is analyzing for you",
+    booting: "Loading Lucien workspace",
+    unavailable: "Lucien workspace is temporarily unavailable",
     loadFailed: "Unable to load conversation",
     sendFailed: "Unable to send. Please try again later.",
-    requestFailed: "AI Assistant request failed",
+    requestFailed: "Lucien request failed",
     feedbackSaved: "Feedback saved and will improve future replies.",
     feedbackFailed: "Unable to save feedback. Please try again.",
     done: "Done",
     untitled: "Untitled",
     disclaimer: "AI-generated content is for reference only. Please use your own judgment.",
     toolSteps: ["Read project data", "Analyze creator data", "Calculate match score", "Generate suggestions"],
-    compactPageTitle: "Open compact AI Assistant"
+    compactPageTitle: "Open compact Lucien"
   }
 };
 
@@ -522,9 +523,7 @@ export function AiWorkspacePage({ mode }: AiWorkspacePageProps) {
         <section className="flex h-full min-h-0 min-w-0 flex-col bg-white">
           <header className="flex shrink-0 items-center justify-between border-b border-slate-100 px-4 py-4 sm:px-6">
             <div className="flex min-w-0 items-center gap-3 sm:gap-4">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-indigo-500 text-white shadow-lg shadow-violet-200 sm:h-14 sm:w-14">
-                <Sparkles className="h-5 w-5 fill-white sm:h-7 sm:w-7" />
-              </div>
+              <LucienAvatar size="lg" alt={ui.title} className="h-11 w-11 sm:h-14 sm:w-14" />
               <div className="min-w-0">
                 <h1 className="truncate text-lg font-semibold sm:text-2xl">{ui.title}</h1>
                 <p className="truncate text-xs text-slate-500 sm:text-sm">{ui.subtitle}</p>
@@ -600,9 +599,7 @@ export function AiWorkspacePage({ mode }: AiWorkspacePageProps) {
                 {messages.map((message) => (
                   <div key={message.id} className={cn("flex", message.role === "USER" ? "justify-end" : "justify-start")}>
                     {message.role !== "USER" ? (
-                      <div className="mr-3 mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-indigo-500 text-white">
-                        <Sparkles className="h-4 w-4 fill-white" />
-                      </div>
+                      <LucienAvatar size="sm" alt={ui.title} className="mr-3 mt-1 shadow-none ring-0" />
                     ) : null}
                     <div
                       className={cn(

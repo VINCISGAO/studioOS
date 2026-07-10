@@ -17,6 +17,7 @@ import { listNotificationsForCreator } from "@/lib/notification-service";
 import { countInvitationsByTab, listInvitationsForCreator } from "@/lib/studioos/creator-invitation-store";
 import { ensureCreatorAssignmentNotificationsForOrders } from "@/lib/studioos/creator-assignment-notify";
 import { enforceBrandPaymentDeadlinesForCreator } from "@/lib/studioos/brand-payment-expiry.service";
+import { resolvePendingSelectionCelebration } from "@/lib/studioos/creator-selection-celebration";
 import {
   isStudioFeaturePath,
   studioCertificationRedirectPath,
@@ -65,6 +66,13 @@ export default async function StudioLayout({ children }: { children: React.React
   }
 
   const unreadCount = notifications.filter((item) => !item.read_at).length;
+  const pendingSelectionCelebration =
+    creator && (canUseBusinessFeatures || isVerified)
+      ? await resolvePendingSelectionCelebration({
+          creatorId: creator.id,
+          notifications
+        })
+      : null;
   const invitationCounts = creator && canUseBusinessFeatures
     ? countInvitationsByTab(invitations)
     : { pending: 0, accepted: 0, declined: 0, expired: 0 };
@@ -93,6 +101,7 @@ export default async function StudioLayout({ children }: { children: React.React
       notifications={notifications}
       unreadCount={unreadCount}
       pendingInvitationCount={invitationCounts.pending}
+      pendingSelectionCelebration={pendingSelectionCelebration}
     >
       {children}
     </StudioPortalShell>

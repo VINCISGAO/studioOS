@@ -1,0 +1,16 @@
+"use client";
+
+import { BrandCreativeBriefPrimarySections } from "@/components/studioos/brand-creative-brief/brand-creative-brief-sections-primary";
+import { BrandCreativeBriefSecondarySections } from "@/components/studioos/brand-creative-brief/brand-creative-brief-sections-secondary";
+import type { BriefSectionsProps } from "@/components/studioos/brand-creative-brief/brand-creative-brief-sections-shared";
+
+export type { BriefSectionsProps } from "@/components/studioos/brand-creative-brief/brand-creative-brief-sections-shared";
+
+export function BrandCreativeBriefSections(props: BriefSectionsProps) {
+  return (
+    <>
+      <BrandCreativeBriefPrimarySections {...props} />
+      <BrandCreativeBriefSecondarySections {...props} />
+    </>
+  );
+}

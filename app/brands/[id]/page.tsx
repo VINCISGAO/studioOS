@@ -21,7 +21,7 @@ const copy = {
     back: "返回",
     backEdit: "返回编辑",
     notFound: "未找到品牌主页",
-    notFoundHint: "该广告主主页不存在，或尚未发布。"
+    notFoundHint: "该品牌方主页不存在，或尚未发布。"
   }
 };
 

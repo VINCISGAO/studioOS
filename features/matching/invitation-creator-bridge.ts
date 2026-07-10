@@ -10,7 +10,7 @@ const LEGACY_CREATOR_DEMO_EMAIL: Record<string, string> = {
 };
 
 /** Minimal fields used to map a Prisma creator profile to legacy creator_0x ids. */
-export type LegacyCreatorProfileLookup = Pick<CreatorProfile, "displayName"> & {
+export type LegacyCreatorProfileLookup = Pick<CreatorProfile, "displayName" | "id"> & {
   legacyCreatorId?: string | null;
   user?: {
     email?: string | null;
@@ -68,5 +68,5 @@ export async function resolveLegacyCreatorIdForProfile(
 
   const displayName = profile.displayName?.toLowerCase();
   const byName = creators.find((item) => item.name.toLowerCase() === displayName);
-  return byName?.id ?? null;
+  return byName?.id ?? profile.id ?? null;
 }

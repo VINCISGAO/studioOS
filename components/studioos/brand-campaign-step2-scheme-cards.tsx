@@ -67,6 +67,7 @@ export function BrandCampaignStep2CompactScheme({
   selected,
   productImageUrl,
   showImages,
+  textOnly = false,
   onSelect
 }: {
   locale: Locale;
@@ -74,7 +75,8 @@ export function BrandCampaignStep2CompactScheme({
   metrics: SchemeDisplayMetrics;
   selected: boolean;
   productImageUrl: string | null;
-  showImages: boolean;
+  showImages?: boolean;
+  textOnly?: boolean;
   onSelect: () => void;
 }) {
   const t = copy[locale];
@@ -106,13 +108,15 @@ export function BrandCampaignStep2CompactScheme({
         )}
       </div>
 
-      <div className={STEP2_SCHEME_LAYOUT.compactBodyGrid}>
-        <CompactSchemeThumb
-          locale={locale}
-          productImageUrl={productImageUrl}
-          title={direction.title}
-          showImages={showImages}
-        />
+      <div className={cn(textOnly ? "space-y-2.5" : STEP2_SCHEME_LAYOUT.compactBodyGrid)}>
+        {!textOnly ? (
+          <CompactSchemeThumb
+            locale={locale}
+            productImageUrl={productImageUrl}
+            title={direction.title}
+            showImages={showImages ?? false}
+          />
+        ) : null}
 
         <div className="min-w-0 space-y-2.5">
           <div>

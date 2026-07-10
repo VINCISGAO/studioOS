@@ -1,6 +1,7 @@
 import type { MessageCategory, MessageDetailPayload } from "@/components/studioos/studio-message-center.types";
 import type { Locale } from "@/lib/i18n";
 import { buildAvatarInitials } from "@/lib/studioos/avatar-initials";
+import { sanitizeCreatorDisplayName } from "@/lib/studioos/creator-display-name";
 import type { BrandNotificationType } from "@/lib/studioos/brand-notification-types";
 import {
   buildMessageProjectStage,
@@ -54,9 +55,9 @@ export function brandMessageCategoryLabel(category: MessageCategory, locale: Loc
 }
 
 export function brandSenderDisplayName(creatorName: string, locale: Locale) {
-  const trimmed = creatorName.trim();
-  if (!trimmed) {
-    return locale === "zh" ? "创作者" : "Creator";
+  const trimmed = sanitizeCreatorDisplayName(creatorName, locale);
+  if (trimmed === (locale === "zh" ? "创作者" : "Creator")) {
+    return trimmed;
   }
   if (trimmed.includes("创作者") || trimmed.toLowerCase().includes("creator")) {
     return trimmed;

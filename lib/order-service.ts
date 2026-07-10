@@ -846,6 +846,10 @@ export async function repairSelectedCreatorCampaignOrders(creatorId: string): Pr
 
         const stored = prismaOrderToStored(detail);
         if (stored.creator_id !== creatorId || !stored.project_id) return;
+
+        const project = await getProject(stored.project_id);
+        if (project?.selected_studio_id !== creatorId) return;
+
         if (!(await isDatabaseEscrowFundedForProject(stored.project_id))) return;
 
         await orderRepository.updateStatus(detail.id, "CONFIRMED");
@@ -1480,7 +1484,10 @@ export async function getDeliverables(orderId: string): Promise<StoredDeliverabl
 
 
 export function canDeleteOrder(order: Pick<StoredOrder, "status" | "payment_status">) {
-  return order.status === "completed";
+  if (order.status === "completed" || order.status === "cancelled") {
+    return true;
+  }
+  return order.status === "waiting_payment" && order.payment_status === "unpaid";
 }
 
 export async function deleteOrdersForProjectId(
@@ -1531,7 +1538,7 @@ export async function deleteOrderForClient(
     return {
       ok: false,
       code: "LOCKED",
-      message: "Only completed orders can be deleted"
+      message: "Only draft, unpaid, or completed orders can be deleted"
     };
   }
 

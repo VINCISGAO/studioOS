@@ -11,10 +11,11 @@ import { WizardStepper } from "@/components/studioos/ui/wizard-stepper";
 import type { StoredProject } from "@/lib/project-types";
 import { buildSchemeDisplayMetrics } from "@/lib/studioos/brand-campaign-scheme-metrics";
 import type { Locale } from "@/lib/i18n";
+import { syncBrandWizardStepUrl } from "@/lib/studioos/instant-nav";
 import type { WizardBriefSnapshot } from "@/lib/studioos/brand-wizard-brief-snapshot";
 import { STEP2_SCHEME_LAYOUT } from "@/lib/studioos/brand-campaign-step2-layout";
 import { localizeCreativeDirection } from "@/lib/studioos/creative-direction-localization";
-import { Brain, Loader2, Sparkles, Target, TrendingUp, Zap } from "lucide-react";
+import { Brain, Sparkles, Target, TrendingUp, Zap } from "lucide-react";
 
 const copy = {
   en: {
@@ -25,7 +26,6 @@ const copy = {
     tagAudience: "Audience psychology",
     tagPlatform: "Platform algorithm fit",
     tagPerformance: "Performance forecast",
-    loadingImages: "Step 2/3 — Loading product visuals…",
     chooseError: "Choose one creative direction"
   },
   zh: {
@@ -35,7 +35,6 @@ const copy = {
     tagAudience: "匹配受众心理",
     tagPlatform: "平台算法偏好",
     tagPerformance: "预测投放效果",
-    loadingImages: "第 2/3 步 — 正在加载产品配图…",
     chooseError: "请先选择一个创意方向"
   }
 } as const;
@@ -81,10 +80,10 @@ export function BrandCampaignStep2Review({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
 
-  const { directions, status, showImages, error: loadError, isLoading } = useBrandCampaignDirections(
+  const { directions, status, error: loadError, isLoading } = useBrandCampaignDirections(
     locale,
     project.id,
-    { enabled: directionsEnabled, briefSnapshot, wizardFastPath: true }
+    { enabled: directionsEnabled, briefSnapshot, wizardFastPath: true, textOnly: true }
   );
 
   const platforms =
@@ -97,9 +96,10 @@ export function BrandCampaignStep2Review({
   const fallbackBudget = parseBudgetFallback(budget);
   const displayError = localError || error || loadError;
   const minGeneratingActive = now < minGeneratingUntil;
-  const showGeneratingOverlay = awaitingBriefSave || isLoading || minGeneratingActive;
-  const showContent = directions.length > 0 && status === "ready";
-  const progressHint = showContent && !showImages ? t.loadingImages : null;
+  const directionsReady = directions.length > 0 && status === "ready";
+  const showGeneratingOverlay =
+    !directionsReady && (awaitingBriefSave || isLoading || minGeneratingActive);
+  const showContent = directionsReady;
   const displayDirections = directions.map((direction) => localizeCreativeDirection(direction, locale));
 
   useEffect(() => {
@@ -116,6 +116,11 @@ export function BrandCampaignStep2Review({
       setSelectedId(directions[0]?.id ?? null);
     }
   }, [directions, selectedId]);
+
+  useEffect(() => {
+    if (status !== "ready") return;
+    syncBrandWizardStepUrl(project.id, 2, locale);
+  }, [status, project.id, locale]);
 
   function handleConfirm() {
     if (!selectedId) {
@@ -197,12 +202,6 @@ export function BrandCampaignStep2Review({
                   </span>
                 ))}
               </div>
-              {progressHint ? (
-                <p className="mt-3 flex items-center gap-2 text-sm text-violet-700">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  {progressHint}
-                </p>
-              ) : null}
             </div>
             <div className="hidden xl:block" aria-hidden />
           </div>
@@ -221,7 +220,7 @@ export function BrandCampaignStep2Review({
                       fallbackBudget
                     )}
                     productImageUrl={productImageUrl ?? null}
-                    showImages={showImages}
+                    textOnly
                   />
 
                   {thumbnailDirections.length > 0 ? (
@@ -239,7 +238,7 @@ export function BrandCampaignStep2Review({
                           )}
                           selected={false}
                           productImageUrl={productImageUrl ?? null}
-                          showImages={showImages}
+                          textOnly
                           onSelect={() => {
                             setSelectedId(direction.id);
                             setLocalError(null);

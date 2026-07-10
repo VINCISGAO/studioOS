@@ -1,10 +1,9 @@
 import "server-only";
 
-import { getCreatorByIdSync } from "@/lib/creator-service";
-import { creators } from "@/lib/data";
 import type { Locale } from "@/lib/i18n";
 import { createBrandNotification, hasBrandNotification } from "@/lib/studioos/brand-notification-service";
 import { getConfirmedBriefText } from "@/lib/studioos/confirmed-brief";
+import { resolveCreatorDisplayName } from "@/lib/studioos/creator-display-name.server";
 import { ensureCampaignInvitationsForProject } from "@/lib/studioos/creator-invitation-store";
 import type { StoredCreatorInvitation } from "@/lib/studioos/creator-invitation-types";
 import {
@@ -12,10 +11,6 @@ import {
   findNotificationByProject
 } from "@/lib/notification-service";
 import type { StoredProject } from "@/lib/project-types";
-
-function resolveCreatorName(creatorId: string): string {
-  return getCreatorByIdSync(creatorId)?.name ?? creators.find((item) => item.id === creatorId)?.name ?? creatorId;
-}
 
 function invitationMatchCopy(locale: Locale, brandName: string, projectTitle: string) {
   if (locale === "zh") {
@@ -124,7 +119,10 @@ export async function notifyBrandInvitationResponse(input: {
   const brandEmail = (input.project?.client_email ?? input.invitation.brandEmail ?? "").trim().toLowerCase();
   if (!brandEmail) return null;
 
-  const creatorName = resolveCreatorName(input.invitation.creatorId);
+  const creatorName = await resolveCreatorDisplayName(input.invitation.creatorId, {
+    hint: input.invitation.creatorName,
+    locale: input.locale
+  });
   const projectTitle =
     input.project?.title ||
     input.project?.product_name ||

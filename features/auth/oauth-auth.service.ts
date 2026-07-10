@@ -1,5 +1,9 @@
 import { headers } from "next/headers";
 import type { UserRole } from "@prisma/client";
+import {
+  assertIdentityRoleOrThrow,
+  portalEntryToUserRole
+} from "@/features/auth/identity-role-policy";
 import { buildSessionPayload } from "@/features/auth/session.service";
 import { userRepository, type UserWithProfiles } from "@/features/auth/user.repository";
 import { userOAuthRepository } from "@/features/auth/user-oauth.repository";
@@ -65,13 +69,11 @@ function resolveOAuthSessionRoleForUser(
   user: UserWithProfiles,
   entryRole: OAuthEntryRole
 ): DemoSession["role"] {
-  if (entryRole === "creator" && (user.role === "CREATOR" || user.creatorProfile)) {
-    return "creator";
+  const expectedRole = portalEntryToUserRole(entryRole);
+  if (user.role !== expectedRole) {
+    return user.role === "CREATOR" ? "creator" : "client";
   }
-  if (entryRole === "brand" && (user.role === "BRAND" || user.brandProfile)) {
-    return "client";
-  }
-  return resolveOAuthSessionRole(prismaRoleToDemoRole(user.role), entryRole);
+  return entryRole === "creator" ? "creator" : "client";
 }
 
 async function ensureEntryRoleProfile(
@@ -79,6 +81,11 @@ async function ensureEntryRoleProfile(
   entryRole: OAuthEntryRole,
   fullName: string
 ): Promise<UserWithProfiles> {
+  const expectedRole = portalEntryToUserRole(entryRole);
+  if (user.role !== expectedRole) {
+    return user;
+  }
+
   if (entryRole === "brand" && !user.brandProfile) {
     return userRepository.ensureBrandProfileForUser({
       userId: user.id,
@@ -157,6 +164,10 @@ export async function completeOAuthSignIn(input: {
       throw new Error("Platform admin accounts must use /admin/login");
     }
 
+    if (existing) {
+      assertIdentityRoleOrThrow(existing, entryRoleToPrisma(input.entryRole), input.lang);
+    }
+
     let user =
       existing ??
       (await userRepository.createFromOAuth({
@@ -183,8 +194,8 @@ export async function completeOAuthSignIn(input: {
       languageCode: user.languageCode ?? user.language ?? "en",
       companyName: user.brandProfile?.companyName,
       displayName: user.creatorProfile?.displayName ?? undefined,
-      hasBrandProfile: user.role === "BRAND" || Boolean(user.brandProfile),
-      hasCreatorProfile: user.role === "CREATOR" || Boolean(user.creatorProfile)
+      hasBrandProfile: user.role === "BRAND",
+      hasCreatorProfile: user.role === "CREATOR"
     };
     const sessionRole = resolveOAuthSessionRoleForUser(user, input.entryRole);
     const demoSession = buildSessionPayload(authUser, sessionRole);
@@ -309,6 +320,10 @@ export async function completeAlipaySignIn(input: {
     linked ??
     (input.email ? await userRepository.findByEmail(input.email) : null);
 
+  if (user) {
+    assertIdentityRoleOrThrow(user, entryRoleToPrisma(input.entryRole), input.lang);
+  }
+
   if (!user) {
     const email = input.email?.toLowerCase() ?? alipaySyntheticEmail(input.providerUserId);
     user = await userOAuthRepository.createUserWithOAuth({
@@ -351,8 +366,8 @@ export async function completeAlipaySignIn(input: {
     languageCode: user.languageCode ?? user.language ?? "en",
     companyName: user.brandProfile?.companyName,
     displayName: user.creatorProfile?.displayName ?? undefined,
-    hasBrandProfile: user.role === "BRAND" || Boolean(user.brandProfile),
-    hasCreatorProfile: user.role === "CREATOR" || Boolean(user.creatorProfile)
+    hasBrandProfile: user.role === "BRAND",
+    hasCreatorProfile: user.role === "CREATOR"
   };
   const sessionRole = resolveOAuthSessionRoleForUser(user, input.entryRole);
   const demoSession = buildSessionPayload(authUser, sessionRole);

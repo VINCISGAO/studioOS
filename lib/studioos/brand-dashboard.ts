@@ -55,6 +55,7 @@ export type BrandProjectRow = {
   canDelete?: boolean;
   paymentExpired?: boolean;
   phase: "draft" | "active" | "done";
+  thumbnailUrl?: string;
 };
 
 function projectPhase(status: string): BrandProjectRow["phase"] {

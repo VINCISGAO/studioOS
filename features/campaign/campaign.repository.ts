@@ -4,8 +4,10 @@ import { userRepository } from "@/features/auth/user.repository";
 import { assetRepository } from "@/features/campaign/asset.repository";
 import type {
   BrandCampaignMemory,
+  BrandCampaignSelection,
   BrandProductionBrief
 } from "@/features/campaign/brand-campaign/brand-campaign.types";
+import { readCampaignMemory } from "@/features/campaign/brand-campaign/brand-campaign.utils";
 import { asInputJson } from "@/lib/core/prisma-json";
 
 export type CampaignWithAssets = Prisma.CampaignGetPayload<{ include: { assets: true } }>;
@@ -345,6 +347,79 @@ export class CampaignRepository {
         brand: { include: { brandProfile: true } },
         assets: { where: { deletedAt: null }, orderBy: { createdAt: "desc" } }
       }
+    });
+  }
+
+  /**
+   * Atomic creator selection lock — only one brand selection can win.
+   * Also expires non-winner invitations inside the same transaction.
+   */
+  async tryAcquireCreatorSelection(input: {
+    campaignId: string;
+    creatorUserId: string;
+    winnerInvitationId: string;
+    productionBrief: BrandProductionBrief;
+    campaignMemoryJson: BrandCampaignMemory;
+  }): Promise<
+    | { acquired: true }
+    | { acquired: false; existingSelection: BrandCampaignSelection | null }
+  > {
+    if (!hasDatabaseUrl()) {
+      return { acquired: false, existingSelection: null };
+    }
+
+    return prisma.$transaction(async (tx) => {
+      const current = await tx.campaign.findFirst({
+        where: { id: input.campaignId, deletedAt: null },
+        select: { campaignMemoryJson: true, creatorId: true }
+      });
+
+      if (!current) {
+        return { acquired: false, existingSelection: null };
+      }
+
+      const memory = readCampaignMemory(current.campaignMemoryJson) as BrandCampaignMemory;
+      const existingSelection = memory.selection ?? null;
+
+      if (existingSelection || current.creatorId) {
+        return { acquired: false, existingSelection };
+      }
+
+      const updated = await tx.campaign.updateMany({
+        where: {
+          id: input.campaignId,
+          deletedAt: null,
+          creatorId: null
+        },
+        data: {
+          creatorId: input.creatorUserId,
+          productionBrief: asInputJson(input.productionBrief),
+          campaignMemoryJson: asInputJson(input.campaignMemoryJson)
+        }
+      });
+
+      if (updated.count !== 1) {
+        const refreshed = await tx.campaign.findFirst({
+          where: { id: input.campaignId, deletedAt: null },
+          select: { campaignMemoryJson: true }
+        });
+        const refreshedMemory = readCampaignMemory(refreshed?.campaignMemoryJson) as BrandCampaignMemory;
+        return {
+          acquired: false,
+          existingSelection: refreshedMemory.selection ?? null
+        };
+      }
+
+      await tx.creatorInvitation.updateMany({
+        where: {
+          campaignId: input.campaignId,
+          id: { not: input.winnerInvitationId },
+          status: { in: ["SENT", "VIEWED", "ACCEPTED"] }
+        },
+        data: { status: "EXPIRED", respondedAt: new Date() }
+      });
+
+      return { acquired: true };
     });
   }
 

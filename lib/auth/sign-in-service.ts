@@ -27,6 +27,8 @@ import type { Locale } from "@/lib/i18n";
 import { createClient } from "@/lib/supabase/server";
 import { isPlatformAdminUserRole } from "@/lib/auth/platform-admin-guard";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
+import { correctEmailDomain } from "@/lib/auth/email-domain-correction";
+import { identityRoleMismatchMessage } from "@/features/auth/identity-role-policy";
 
 export type SignInInput = {
   email: string;
@@ -52,16 +54,16 @@ function demoRoleToPrisma(role: DemoUser["role"]): UserRole {
   return "BRAND";
 }
 
-function hasBrandAccess(user: { role: UserRole; hasBrandProfile?: boolean }) {
-  return user.role === "BRAND" || Boolean(user.hasBrandProfile);
+function hasBrandAccess(user: { role: UserRole }) {
+  return user.role === "BRAND";
 }
 
-function hasCreatorAccess(user: { role: UserRole; hasCreatorProfile?: boolean }) {
-  return user.role === "CREATOR" || Boolean(user.hasCreatorProfile);
+function hasCreatorAccess(user: { role: UserRole }) {
+  return user.role === "CREATOR";
 }
 
 function sessionRoleForUser(
-  user: { role: UserRole; hasBrandProfile?: boolean; hasCreatorProfile?: boolean },
+  user: { role: UserRole },
   expectedRole: SignInInput["expectedRole"]
 ): DemoUser["role"] {
   if (expectedRole === "creator" && hasCreatorAccess(user)) return "creator";
@@ -131,7 +133,7 @@ export async function recordCreatorSignIn(email: string) {
 
 export async function performSignIn(input: SignInInput): Promise<SignInResult> {
   const { email, password, lang, expectedRole, nextPath = "" } = input;
-  const trimmedEmail = email.trim();
+  const trimmedEmail = correctEmailDomain(email).email;
   const trimmedPassword = password.trim();
   const allowDemoFallback = preferDemoAuth();
 
@@ -156,7 +158,7 @@ export async function performSignIn(input: SignInInput): Promise<SignInResult> {
     if (expectedRole === "brand" && !hasBrandAccess(prismaUser)) {
       return {
         ok: false,
-        error: lang === "zh" ? "该账号属于创作者身份，请切换到创作者登录。" : "This account is for creators. Switch to the creator tab.",
+        error: identityRoleMismatchMessage(prismaUser.role, "BRAND", lang),
         errorCode: "wrong-role",
         role: "brand"
       };
@@ -165,7 +167,7 @@ export async function performSignIn(input: SignInInput): Promise<SignInResult> {
     if (expectedRole === "creator" && !hasCreatorAccess(prismaUser)) {
       return {
         ok: false,
-        error: lang === "zh" ? "该账号属于广告主身份，请切换到广告主登录。" : "This account is for brands. Switch to the brand tab.",
+        error: identityRoleMismatchMessage(prismaUser.role, "CREATOR", lang),
         errorCode: "wrong-role",
         role: "creator"
       };
@@ -202,7 +204,7 @@ export async function performSignIn(input: SignInInput): Promise<SignInResult> {
     if (expectedRole === "creator" && demoUser.role !== "creator") {
       return {
         ok: false,
-        error: lang === "zh" ? "该账号属于广告主身份，请切换到广告主登录。" : "This account is for brands. Switch to the brand tab.",
+        error: lang === "zh" ? "该账号属于品牌方身份，请切换到品牌方登录。" : "This account is for brands. Switch to the brand tab.",
         errorCode: "wrong-role",
         role: "creator"
       };

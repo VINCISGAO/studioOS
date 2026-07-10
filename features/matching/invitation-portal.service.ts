@@ -24,6 +24,7 @@ import { getProject } from "@/lib/project-service";
 import { createCreatorNotification, findNotificationByProject } from "@/lib/notification-service";
 import { matchCreatorsForProject } from "@/lib/matching-engine";
 import { getConfirmedBriefText } from "@/lib/studioos/confirmed-brief";
+import { resolveCreatorDisplayName } from "@/lib/studioos/creator-display-name.server";
 import type { CreatorPortalInvitationView } from "@/features/creator/creator-portal.types";
 import type { InvitationDeclineFeedback } from "@/features/matching/invitation-decline-feedback";
 import type { StoredCreatorInvitation } from "@/lib/studioos/creator-invitation-types";
@@ -37,10 +38,6 @@ import {
 import { getWorksForCreator } from "@/lib/works-catalog-core";
 import { getOrderForProject } from "@/lib/order-service";
 import { isOrderPaymentEscrowed } from "@/lib/order-types";
-
-function resolveCreatorName(creatorId: string): string {
-  return creators.find((item) => item.id === creatorId)?.name ?? creatorId;
-}
 
 function invitationMatchCopy(locale: Locale, brandName: string, projectTitle: string) {
   if (locale === "zh") {
@@ -162,6 +159,7 @@ export class InvitationPortalService {
     const brandName = project.company_name || project.client_name || "Brand";
     const projectTitle = project.title || project.product_name || brandName;
     const requirementsText = getConfirmedBriefText(project, locale);
+    let createdCount = 0;
 
     for (const match of matches) {
       const creatorProfileId = await resolveCreatorProfileIdForLegacyId(match.creator_id);
@@ -175,6 +173,7 @@ export class InvitationPortalService {
         creatorProfileId,
         matchScore: match.score
       });
+      createdCount += 1;
 
       await activityService.write(
         campaign.id,
@@ -218,7 +217,7 @@ export class InvitationPortalService {
       }
     }
 
-    if (campaign.status === "MATCHING") {
+    if (createdCount > 0 && campaign.status === "MATCHING") {
       await campaignService.transition(campaign.id, CampaignEvent.SEND_INVITATION, {
         id: campaign.brandId,
         role: "BRAND"
@@ -523,7 +522,10 @@ export class InvitationPortalService {
     const brandEmail = project?.client_email ?? row.campaign.brand?.email ?? "";
     const brandUser = brandEmail ? await userRepository.findByEmail(brandEmail.toLowerCase()) : null;
     if (brandUser) {
-      const creatorName = resolveCreatorName(legacyCreatorId);
+      const creatorName = await resolveCreatorDisplayName(legacyCreatorId, {
+        hint: row.creator.displayName,
+        locale
+      });
       const projectTitle =
         project?.title || project?.product_name || row.campaign.title || row.campaign.brand?.fullName || "";
       const copy = brandResponseCopy(locale, "accepted", creatorName, projectTitle);
@@ -631,7 +633,10 @@ export class InvitationPortalService {
     const brandEmail = project?.client_email ?? row.campaign.brand?.email ?? "";
     const brandUser = brandEmail ? await userRepository.findByEmail(brandEmail.toLowerCase()) : null;
     if (brandUser) {
-      const creatorName = resolveCreatorName(legacyCreatorId);
+      const creatorName = await resolveCreatorDisplayName(legacyCreatorId, {
+        hint: row.creator.displayName,
+        locale
+      });
       const projectTitle =
         project?.title || project?.product_name || row.campaign.title || row.campaign.brand?.fullName || "";
       const copy = brandResponseCopy(locale, "declined", creatorName, projectTitle);

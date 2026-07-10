@@ -16,8 +16,8 @@ import { getStudioPerformanceLiftForOrg, matchCreatorsForProject } from "@/lib/m
 import { resolveWorkThumbnail } from "@/lib/media-url";
 import { getProject } from "@/lib/project-service";
 import { getOrderForProject } from "@/lib/order-service";
-import { isOrderPaymentEscrowed } from "@/lib/order-types";
 import { isBrandAwaitingPayment } from "@/lib/studioos/commercial-lifecycle";
+import { isBrandProjectFunded } from "@/lib/studioos/brand-payment-funding";
 import { normalizeCampaignStatus } from "@/lib/studioos/project-status";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
 import { orgIdFromEmail } from "@/lib/studioos/creative-performance-store";
@@ -46,9 +46,8 @@ export default async function BrandStudiosPage({ params, searchParams }: Props) 
 
   const order = await getOrderForProject(id);
   const status = normalizeCampaignStatus(project.status);
-  const matchingRequiresPayment =
-    status === "matching" && (!order || !isOrderPaymentEscrowed(order.payment_status));
-  if (isBrandAwaitingPayment({ project, order }) || matchingRequiresPayment) {
+  const funded = await isBrandProjectFunded(id, order);
+  if (!funded && isBrandAwaitingPayment({ project, order })) {
     redirect(withLocale(brandPortalRoutes.projectCheckout(id), locale));
   }
 

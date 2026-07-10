@@ -160,7 +160,7 @@ async function notifyBrandAiProgress(campaign: Campaign, input: {
     campaignId: campaign.id,
     title: input.title,
     content: input.content,
-    actionUrl: `${getAppBaseUrl()}/brand/projects/new?project=${encodeURIComponent(projectId)}`,
+    actionUrl: `${getAppBaseUrl()}/brand/projects/new?project=${encodeURIComponent(projectId)}&step=2`,
     template: input.template,
     priority: input.priority ?? "NORMAL"
   });
@@ -303,7 +303,11 @@ export class CreativeDirectionService {
   ) {
     const campaign = await this.getCampaignForBrand(campaignId, user);
     PermissionService.assert(user, "campaign.update");
-    await this.assertEscrowFundedForAi(campaignId);
+    const wizardDraftFastPath =
+      options?.wizardFastPath === true && campaign.status === CampaignState.DRAFT;
+    if (!wizardDraftFastPath) {
+      await this.assertEscrowFundedForAi(campaignId);
+    }
 
     const actor = { id: user.id, role: user.role };
     if (campaign.status === CampaignState.DRAFT) {
@@ -335,7 +339,8 @@ export class CreativeDirectionService {
 
     const job = await aiWorkerService.enqueueCreativeDirection(campaignId, user.id, {
       briefSnapshot: options?.briefSnapshot,
-      language: options?.language
+      language: options?.language,
+      wizardFastPath: wizardDraftFastPath
     });
     aiWorkerService.scheduleProcess(job.id);
 

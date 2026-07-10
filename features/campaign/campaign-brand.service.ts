@@ -1,5 +1,6 @@
 import type { StoredCreativeBrief, StoredProjectAsset, StoredProjectReference } from "@/lib/campaign-types";
 import type { CreateProjectDraftInput, StoredProject, UpdateProjectInput } from "@/lib/project-types";
+import { CREATIVE_COLLABORATION_SETTINGS_KEY } from "@/features/creative-collaboration/creative-collaboration.types";
 import { activityService } from "@/features/campaign/activity.service";
 import {
   listStoredAssets,
@@ -76,7 +77,27 @@ function mergeBrief(existing: unknown, patch: UpdateProjectInput): BrandProducti
       ...(patch.budget_range !== undefined ? { range: patch.budget_range } : {}),
       ...(patch.budget_min !== undefined ? { min: patch.budget_min } : {}),
       ...(patch.budget_max !== undefined ? { max: patch.budget_max } : {})
-    }
+    },
+    ...(settings[CREATIVE_COLLABORATION_SETTINGS_KEY] !== undefined
+      ? { creative_collaboration: asRecord(settings[CREATIVE_COLLABORATION_SETTINGS_KEY]) }
+      : {}),
+    ...(settings.final_creative_direction !== undefined
+      ? {
+          final_creative_direction:
+            typeof settings.final_creative_direction === "string"
+              ? settings.final_creative_direction
+              : null
+        }
+      : {}),
+    ...(settings.confirmed_creative_direction !== undefined
+      ? {
+          confirmed_creative_direction:
+            settings.confirmed_creative_direction &&
+            typeof settings.confirmed_creative_direction === "object"
+              ? asRecord(settings.confirmed_creative_direction)
+              : null
+        }
+      : {})
   };
 }
 
@@ -115,6 +136,28 @@ function isWizardMetadataPatch(patch: UpdateProjectInput): boolean {
 }
 
 const BRAND_WIZARD_EDIT_STATUSES = ["DRAFT", "AI_PROCESSING", "CREATIVE_READY", "CREATIVE_APPROVED"] as const;
+const BRAND_WIZARD_METADATA_STATUSES = [
+  ...BRAND_WIZARD_EDIT_STATUSES,
+  "ESCROW_PENDING"
+] as const;
+
+const BRAND_CREATIVE_COLLABORATION_STATUSES = [
+  "ESCROW_FUNDED",
+  "MATCHING",
+  "INVITATION_SENT",
+  "CREATOR_ACCEPTED",
+  "PRODUCING",
+  "UNDER_REVIEW",
+  "APPROVED",
+  "MASTER_UPLOADED"
+] as const;
+
+function isCreativeCollaborationPatch(patch: UpdateProjectInput): boolean {
+  if (!isWizardMetadataPatch(patch)) return false;
+  const settings = patch.settings_json;
+  if (!settings || typeof settings !== "object" || Array.isArray(settings)) return false;
+  return CREATIVE_COLLABORATION_SETTINGS_KEY in settings;
+}
 
 /** Step 1 setup saves questionnaire + product fields while the user is still in the wizard. */
 function isBrandWizardSetupPatch(patch: UpdateProjectInput): boolean {
@@ -255,10 +298,14 @@ export class CampaignBrandPortalService {
   ): Promise<StoredProject | null> {
     if (!this.isEnabled()) return null;
 
-    const campaign = await this.loadCampaignForStatuses(
-      legacyProjectId,
-      isBrandWizardSetupPatch(patch) ? [...BRAND_WIZARD_EDIT_STATUSES] : ["DRAFT"]
-    );
+    const allowedStatuses = isCreativeCollaborationPatch(patch)
+      ? [...BRAND_WIZARD_METADATA_STATUSES, ...BRAND_CREATIVE_COLLABORATION_STATUSES]
+      : isWizardMetadataPatch(patch)
+        ? [...BRAND_WIZARD_METADATA_STATUSES]
+        : isBrandWizardSetupPatch(patch)
+          ? [...BRAND_WIZARD_EDIT_STATUSES]
+          : ["DRAFT"];
+    const campaign = await this.loadCampaignForStatuses(legacyProjectId, allowedStatuses);
     const productionBrief = mergeBrief(campaign.productionBrief, patch);
     const campaignMemory = mergeMemory(campaign.campaignMemoryJson, patch);
 
@@ -297,12 +344,7 @@ export class CampaignBrandPortalService {
 
   async completeWizardSteps(legacyProjectId: string, steps: number[], actorEmail?: string) {
     if (!this.isEnabled() || steps.length === 0) return null;
-    const campaign = await this.loadCampaignForStatuses(legacyProjectId, [
-      "DRAFT",
-      "AI_PROCESSING",
-      "CREATIVE_READY",
-      "CREATIVE_APPROVED"
-    ]);
+    const campaign = await this.loadCampaignForStatuses(legacyProjectId, [...BRAND_WIZARD_METADATA_STATUSES]);
     const memory = readCampaignMemory(campaign.campaignMemoryJson) as BrandCampaignMemory;
     const completed = new Set(memory.wizard?.completed_steps ?? []);
     for (const step of steps) {

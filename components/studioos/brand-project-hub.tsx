@@ -12,6 +12,8 @@ import {
   Users
 } from "lucide-react";
 import { BrandReviewWorkflowPanel } from "@/components/studioos/brand-review-workflow-panel";
+import { CreativeCollaborationPanel } from "@/components/studioos/creative-collaboration-panel";
+import type { CreativeCollaborationView } from "@/features/creative-collaboration/creative-collaboration.types";
 import { BrandProjectMatchTabShell } from "@/components/studioos/brand-project-match-tab-shell";
 import { BrandPaymentDeadlineNotice } from "@/components/studioos/brand-payment-deadline-notice";
 import { Badge } from "@/components/ui/badge";
@@ -33,6 +35,11 @@ import {
 import type { ReviewComment } from "@/lib/studioos/review-store";
 import type { AiMatchReportStatistics } from "@/lib/studioos/ai-match-report";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
+import {
+  localizeBrandCategoryLabel,
+  localizeBrandProjectTitle
+} from "@/lib/studioos/brand-locale-display";
+import type { BrandRecommendedCreator } from "@/lib/studioos/brand-match-recommendation-types";
 import type { StoredCreatorInvitation } from "@/lib/studioos/creator-invitation-types";
 import type { CampaignProjectStatus } from "@/lib/studioos/project-status";
 import { cn } from "@/lib/utils";
@@ -117,7 +124,7 @@ const copy = {
     goCheckout: "查看付款详情",
     paymentPendingTitle: "完成付款后开始制作",
     paymentPendingBody:
-      "您已选定 Creator。请先完成托管付款，款项确认后项目才会正式开始制作。",
+      "您已选定创作者。请先完成托管付款，款项确认后项目才会正式开始制作。",
     continueWizard: "继续填写需求",
     briefTitle: "需求说明",
     briefEmpty: "暂无需求内容。",
@@ -125,7 +132,7 @@ const copy = {
     matchSelected: "本项目的合作方",
     matchPending: "招募进行中",
     matchBody:
-      "AI 已同时向多位 Creator 发出邀请。接受者进入候选名单 — 请从候选 Creator 中最终选定 1 位，项目才正式开始。",
+      "AI 已同时向多位创作者发出邀请。接受者进入候选名单 — 请从候选创作者中最终选定 1 位，项目才正式开始。",
     proposalTitle: "付款与托管",
     proposalBody: "款项托管在平台，您对成片满意并确认后，才会打给制作团队。",
     reviewTitle: "视频审片",
@@ -161,9 +168,11 @@ function isTabAvailable(
   status: CampaignProjectStatus,
   tab: HubTab,
   deliverableCount = 0,
-  orderStatus?: string | null
+  orderStatus?: string | null,
+  hasSelectedCreator = false
 ): boolean {
   if (status === "draft") return tab === "brief";
+  if (tab === "production" && hasSelectedCreator) return true;
   if (tab === "review") {
     if (deliverableCount > 0) return true;
     if (orderStatus === "review" || orderStatus === "revision") return true;
@@ -258,17 +267,12 @@ function daysUntilDeadline(deadline: string): number | null {
   return Math.max(0, Math.ceil((parsed - Date.now()) / 86400000));
 }
 
-function categorySublabel(category: string, locale: Locale): string | null {
-  const normalized = category.trim().toLowerCase();
-  if (locale === "zh") {
-    if (normalized.includes("cpg") || normalized.includes("快消")) return "快消品";
-    if (normalized.includes("beauty") || normalized.includes("美妆")) return "美妆个护";
-    if (normalized.includes("tech") || normalized.includes("科技")) return "科技数码";
+function formatDeadlineDisplay(deadline: string): string {
+  const iso = deadline.split("T")[0] ?? deadline;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) {
+    return iso;
   }
-  if (normalized.includes("cpg")) return "Consumer goods";
-  if (normalized.includes("beauty")) return "Beauty & personal care";
-  if (normalized.includes("tech")) return "Consumer tech";
-  return null;
+  return deadline;
 }
 
 function ProjectHeaderStat({
@@ -283,15 +287,21 @@ function ProjectHeaderStat({
   sublabel?: string | null;
 }) {
   return (
-    <div className="min-w-[88px] text-right sm:min-w-[100px]">
-      <div className="flex items-center justify-end gap-1.5 text-xs text-zinc-500">
-        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-violet-50 text-violet-600">
+    <div className="min-w-0">
+      <div className="flex items-center gap-1.5 text-xs text-zinc-500">
+        <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-violet-50 text-violet-600">
           <Icon className="h-3.5 w-3.5" />
         </span>
-        {label}
+        <span className="truncate">{label}</span>
       </div>
-      <p className="mt-1.5 text-base font-semibold tabular-nums text-zinc-950">{value}</p>
-      {sublabel ? <p className="mt-0.5 text-xs text-zinc-400">{sublabel}</p> : null}
+      <p className="mt-1.5 truncate text-sm font-semibold tabular-nums text-zinc-950 sm:text-base" title={value}>
+        {value}
+      </p>
+      {sublabel ? (
+        <p className="mt-0.5 truncate text-xs text-zinc-400" title={sublabel}>
+          {sublabel}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -319,7 +329,10 @@ export function BrandProjectHub({
   brandCommercialStep,
   notificationCount = 0,
   aiMatchStatistics,
-  showPaymentSuccessMatching = false
+  showPaymentSuccessMatching = false,
+  recommendedCreators = [],
+  collaborationView = null,
+  aiCollaborationEnabled = false
 }: {
   locale: Locale;
   project: StoredProject;
@@ -334,6 +347,9 @@ export function BrandProjectHub({
   notificationCount?: number;
   aiMatchStatistics?: AiMatchReportStatistics | null;
   showPaymentSuccessMatching?: boolean;
+  recommendedCreators?: BrandRecommendedCreator[];
+  collaborationView?: CreativeCollaborationView | null;
+  aiCollaborationEnabled?: boolean;
 }) {
   const t = copy[locale];
   const status = project.status;
@@ -364,13 +380,16 @@ export function BrandProjectHub({
   const isRecruiting = status === "matching" || status === "studio_selected";
   const showAside = activeTab !== "match" && (latestDeliverable || studio);
   const daysLeft = project.deadline ? daysUntilDeadline(project.deadline) : null;
-  const categorySub = project.category ? categorySublabel(project.category, locale) : null;
+  const categoryDisplay = project.category
+    ? localizeBrandCategoryLabel(project.category, locale)
+    : null;
+  const displayTitle = localizeBrandProjectTitle(project.title, locale);
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <section className="overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-sm">
         <div className="border-b border-zinc-100 bg-white p-6 sm:p-8">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+          <div className="flex flex-col gap-5 sm:gap-6 xl:flex-row xl:items-start xl:justify-between">
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
                 <Badge variant="secondary" className="rounded-full border-0 bg-zinc-100 font-normal text-zinc-600">
@@ -389,39 +408,41 @@ export function BrandProjectHub({
                 </Badge>
               </div>
               <h1 className="mt-3 text-2xl font-semibold tracking-tight text-zinc-900 sm:text-[1.75rem]">
-                {project.title}
+                {displayTitle}
               </h1>
               {project.campaign_goal ? (
                 <p className="mt-2 max-w-3xl text-sm leading-relaxed text-zinc-500">{project.campaign_goal}</p>
               ) : null}
             </div>
 
-            <div className="flex shrink-0 flex-wrap items-start gap-6 lg:gap-8">
-              {project.budget_range ? (
-                <ProjectHeaderStat
-                  icon={CircleDollarSign}
-                  label={t.budget}
-                  value={project.budget_range.replace(/\s*总预算.*$/i, "").trim()}
-                  sublabel={t.totalBudget}
-                />
-              ) : null}
-              {project.deadline ? (
-                <ProjectHeaderStat
-                  icon={Calendar}
-                  label={t.deadline}
-                  value={project.deadline.split("T")[0] ?? project.deadline}
-                  sublabel={daysLeft !== null ? t.daysLeft(daysLeft) : null}
-                />
-              ) : null}
-              {project.category ? (
-                <ProjectHeaderStat
-                  icon={Layers}
-                  label={t.category}
-                  value={project.category.split(/[/·|]/)[0]?.trim() ?? project.category}
-                  sublabel={categorySub}
-                />
-              ) : null}
-            </div>
+            {project.budget_range || project.deadline || categoryDisplay ? (
+              <div className="grid w-full min-w-0 grid-cols-3 gap-3 rounded-2xl border border-zinc-100 bg-zinc-50/40 p-4 sm:gap-4 sm:p-5 xl:w-auto xl:max-w-[22rem] xl:shrink-0 xl:border-0 xl:bg-transparent xl:p-0 2xl:max-w-[24rem]">
+                {project.budget_range ? (
+                  <ProjectHeaderStat
+                    icon={CircleDollarSign}
+                    label={t.budget}
+                    value={project.budget_range.replace(/\s*总预算.*$/i, "").trim()}
+                    sublabel={t.totalBudget}
+                  />
+                ) : null}
+                {project.deadline ? (
+                  <ProjectHeaderStat
+                    icon={Calendar}
+                    label={t.deadline}
+                    value={formatDeadlineDisplay(project.deadline)}
+                    sublabel={daysLeft !== null ? t.daysLeft(daysLeft) : null}
+                  />
+                ) : null}
+                {categoryDisplay ? (
+                  <ProjectHeaderStat
+                    icon={Layers}
+                    label={t.category}
+                    value={categoryDisplay.value}
+                    sublabel={categoryDisplay.sublabel}
+                  />
+                ) : null}
+              </div>
+            ) : null}
           </div>
 
           {action && !(isRecruiting && activeTab === "match") ? (
@@ -438,7 +459,13 @@ export function BrandProjectHub({
 
         <nav className="flex gap-1 overflow-x-auto border-b border-zinc-100 px-4 sm:px-6" aria-label="Campaign steps">
           {tabs.map((tab) => {
-            const available = isTabAvailable(status, tab.id, deliverables.length, linkedOrder?.status);
+            const available = isTabAvailable(
+              status,
+              tab.id,
+              deliverables.length,
+              linkedOrder?.status,
+              Boolean(selectedCreatorId)
+            );
             const active = activeTab === tab.id;
             return available ? (
               <Link
@@ -477,6 +504,7 @@ export function BrandProjectHub({
               projectBudgetRange={project.budget_range}
               aiMatchStatistics={aiMatchStatistics}
               showPaymentSuccessMatching={showPaymentSuccessMatching}
+              recommendedCreators={recommendedCreators}
             />
           </div>
         ) : null}
@@ -552,7 +580,7 @@ export function BrandProjectHub({
           ) : null}
 
           {activeTab === "production" ? (
-            awaitingPayment ? (
+            awaitingPayment && !selectedCreatorId ? (
               <div>
                 <h2 className="flex items-center gap-2 text-lg font-semibold text-zinc-900">
                   <CircleDollarSign className="h-5 w-5 text-zinc-400" />
@@ -582,6 +610,27 @@ export function BrandProjectHub({
               </div>
             ) : (
             <div className="space-y-8">
+              {selectedCreatorId && collaborationView ? (
+                <CreativeCollaborationPanel
+                  locale={locale}
+                  projectId={project.id}
+                  role="brand"
+                  aiEnabled={aiCollaborationEnabled}
+                  initialView={collaborationView}
+                />
+              ) : null}
+              {awaitingPayment && selectedCreatorId ? (
+                <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-5">
+                  <p className="font-medium text-amber-950">{t.paymentPendingTitle}</p>
+                  <p className="mt-1 text-sm text-amber-900">{t.paymentPendingBody}</p>
+                  <Button asChild className="mt-4 rounded-xl">
+                    <Link href={withLocale(brandPortalRoutes.projectCheckout(project.id), locale)}>
+                      {t.goCheckout}
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                </div>
+              ) : null}
               <div>
                 <h2 className="flex items-center gap-2 text-lg font-semibold text-zinc-900">
                   <Clapperboard className="h-5 w-5 text-zinc-400" />

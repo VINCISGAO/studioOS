@@ -759,9 +759,15 @@ export async function listProjectsForClient(clientEmail: string): Promise<Stored
     .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
 }
 
+/** Brand may abandon wizard drafts and unpaid checkout — not active production. */
 export function canDeleteProject(status: string) {
   const normalized = normalizeCampaignStatus(status);
-  return normalized === "draft" || normalized === "completed";
+  return (
+    normalized === "draft" ||
+    normalized === "payment_pending" ||
+    normalized === "completed" ||
+    normalized === "cancelled"
+  );
 }
 
 async function deletePrismaCampaignForClient(
@@ -802,6 +808,23 @@ async function deletePrismaCampaignForClient(
       code: "LOCKED",
       message: "Only draft or completed projects can be deleted"
     };
+  }
+
+  if (status === "payment_pending") {
+    const { paymentRepository } = await import("@/features/payment/payment.repository");
+    const { EscrowState } = await import("@/features/shared/state-machines/escrow.state-machine");
+    const escrow = await paymentRepository.findByCampaignId(campaign.id);
+    const funded =
+      escrow?.status === EscrowState.HELD ||
+      escrow?.status === EscrowState.PARTIAL_RELEASE ||
+      escrow?.status === EscrowState.FULL_RELEASE;
+    if (funded) {
+      return {
+        ok: false,
+        code: "LOCKED",
+        message: "Paid campaigns cannot be deleted"
+      };
+    }
   }
 
   await brandCampaignRepository.softDeleteCampaign(campaign.id);

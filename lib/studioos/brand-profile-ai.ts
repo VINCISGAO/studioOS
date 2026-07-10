@@ -90,7 +90,7 @@ export async function polishBrandProfileWithAI(
             role: "system",
             content:
               locale === "zh"
-                ? "你是品牌主页文案助手。用户用口语描述品牌，你要整理成公开主页可用的文案。headline 是一句话介绍（≤40字，清晰说明品牌做什么），bio 是品牌介绍（2-4句，专业但好读，适合广告主主页）。保留用户原意，不要编造不存在的产品或数据。返回 JSON：headline, bio。"
+                ? "你是品牌主页文案助手。用户用口语描述品牌，你要整理成公开主页可用的文案。headline 是一句话介绍（≤40字，清晰说明品牌做什么），bio 是品牌介绍（2-4句，专业但好读，适合品牌方主页）。保留用户原意，不要编造不存在的产品或数据。返回 JSON：headline, bio。"
                 : "You are a brand homepage copy assistant. Users describe their brand casually; you produce public-facing copy. headline is one line (≤80 chars, what the brand does). bio is 2-4 sentences, professional and readable for an advertiser homepage. Preserve intent; do not invent claims. Return JSON: headline, bio."
           },
           {

@@ -24,7 +24,7 @@ export type LoginVisual = {
 
 export const LOGIN_VISUAL: Record<LoginRole, LoginVisual> = {
   brand: {
-    portalLabel: { en: "Brand workspace", zh: "广告主工作台" },
+    portalLabel: { en: "Brand workspace", zh: "品牌方工作台" },
     bg: "/images/home-hero-studio.png",
     overlay: "linear-gradient(90deg, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.55) 45%, rgba(0,0,0,0.35) 100%)",
     panelText: "text-white",

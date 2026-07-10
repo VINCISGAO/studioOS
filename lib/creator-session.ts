@@ -7,7 +7,7 @@ import {
   isCreatorAccountDeleted,
   resolveCreatorIdByEmail
 } from "@/lib/studioos/creator-settings-service";
-import { getCurrentSession } from "@/lib/session-user";
+import { getCurrentAuthUser, getCurrentSession } from "@/lib/session-user";
 import type { Creator } from "@/lib/types";
 
 const DEMO_CREATOR_IDS: Record<string, string> = {
@@ -30,6 +30,11 @@ export const getCurrentCreatorId = cache(async (): Promise<string | null> => {
 
   const currentSession = session?.role === "creator" ? session : await getCurrentSession();
   if (!currentSession || currentSession.role !== "creator") {
+    return null;
+  }
+
+  const authUser = await getCurrentAuthUser();
+  if (authUser && authUser.role !== "CREATOR") {
     return null;
   }
 

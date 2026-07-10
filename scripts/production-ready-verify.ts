@@ -29,7 +29,8 @@ function runCmd(label: string, cmd: string, options?: { retries?: number }): Ste
     const transientBuildRace =
       label === "build" &&
       (lastStep.detail?.includes("PageNotFoundError") ||
-        lastStep.detail?.includes("Cannot find module for page"));
+        lastStep.detail?.includes("Cannot find module for page") ||
+        lastStep.detail?.includes("pages-manifest.json"));
     if (!transientBuildRace || attempt >= maxAttempts) {
       return lastStep;
     }

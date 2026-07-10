@@ -59,10 +59,22 @@ export function isCreatorOrderPendingReview(status: StoredOrder["status"]): bool
   return status === "review";
 }
 
+/** Creator has been officially selected — active project exists even before escrow settles. */
+export function isActiveCreatorProject(
+  order: Pick<StoredOrder, "creator_id" | "status">
+): boolean {
+  if (!order.creator_id) return false;
+  return order.status !== "completed" && order.status !== "cancelled";
+}
+
 export function isCreatorUploadActionable(
-  order: Pick<StoredOrder, "payment_status" | "status">,
+  order: Pick<StoredOrder, "payment_status" | "status" | "creator_id">,
   deliverableCount: number
 ): boolean {
+  if (!order.creator_id || !isActiveCreatorProject(order)) {
+    return false;
+  }
+
   if (order.payment_status === "unpaid") {
     return false;
   }
@@ -71,7 +83,12 @@ export function isCreatorUploadActionable(
     return true;
   }
 
-  if (order.status === "in_production" || order.status === "review" || order.status === "paid") {
+  if (
+    order.status === "in_production" ||
+    order.status === "review" ||
+    order.status === "paid" ||
+    order.status === "waiting_payment"
+  ) {
     return deliverableCount === 0;
   }
 

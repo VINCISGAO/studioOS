@@ -1,9 +1,9 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ProjectThumbnailImage } from "@/components/studioos/project-thumbnail-image";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import {
@@ -65,8 +65,12 @@ export function BrandCampaignListRow({
   return (
     <div className="flex gap-4 px-4 py-4 sm:px-5">
       {thumbnailSlot ?? (
-        <div className="relative hidden h-20 w-20 shrink-0 overflow-hidden rounded-2xl bg-zinc-100 sm:block">
-          <Image src={brandProjectThumbnail(row.id)} alt="" fill className="object-cover" sizes="80px" />
+        <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl bg-zinc-100">
+          <ProjectThumbnailImage
+            src={row.thumbnailUrl ?? brandProjectThumbnail(row.id)}
+            seed={row.id}
+            className="absolute inset-0"
+          />
         </div>
       )}
 

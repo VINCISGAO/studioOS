@@ -90,7 +90,7 @@ function modelUnavailableAnswer(language: string) {
 
   if (language === "zh-CN" || language === "zh-TW" || language === "zh") {
     return [
-      "我已经准备好协助你分析工作区。",
+      "我是卢西恩，已经准备好协助你分析工作区。",
       "",
       "你可以问我项目进度、预算是否合理、为什么推荐某个 Creator，或者下一步应该怎么推进。",
       "",
@@ -98,7 +98,7 @@ function modelUnavailableAnswer(language: string) {
     ].join("\n");
   }
   return [
-    "I am ready to help you analyze your workspace.",
+    "I'm Lucien, and I'm ready to help you analyze your workspace.",
     "",
     "You can ask about project progress, budget health, creator recommendations, or the best next step.",
     "",
@@ -108,7 +108,7 @@ function modelUnavailableAnswer(language: string) {
 
 function buildSystemPrompt(context: AiCopilotContext) {
   return [
-    "You are VINCIS AI Assistant V1, an embedded SaaS assistant.",
+    "You are Lucien, VINCIS's creative collaboration partner.",
     "You can query, explain, suggest, and guide. You must not execute dangerous write operations.",
     "Forbidden operations: direct payment, fund release, data deletion, delivery confirmation, order status changes, sending invitations, or choosing creators for the user.",
     "Only answer from the provided context and tool outputs. If data is missing, say you do not have enough data.",
@@ -317,7 +317,7 @@ async function buildWorkspaceSnapshot(user: AuthUserDto, role: string, context: 
   const brand = asRecord(summaries.brand);
   const workspaceName = await resolveBrandDisplayName(user.email);
   return {
-    roleLabel: zh ? "广告主" : "Brand",
+    roleLabel: zh ? "品牌方" : "Brand",
     displayName: workspaceName,
     workspaceName,
     greeting: zh ? `早上好，${workspaceName}` : `Good morning, ${workspaceName}`,

@@ -1,7 +1,6 @@
 import "server-only";
 
-import { getCreatorByIdSync } from "@/lib/creator-service";
-import { creators } from "@/lib/data";
+import { resolveCreatorDisplayName } from "@/lib/studioos/creator-display-name.server";
 import type { Locale } from "@/lib/i18n";
 import {
   createBrandNotification,
@@ -9,10 +8,6 @@ import {
 } from "@/lib/studioos/brand-notification-service";
 import type { StoredDeliverable, StoredOrder } from "@/lib/order-types";
 import { getProject } from "@/lib/project-service";
-
-function resolveCreatorName(creatorId: string): string {
-  return getCreatorByIdSync(creatorId)?.name ?? creators.find((item) => item.id === creatorId)?.name ?? creatorId;
-}
 
 function deliverableCopy(locale: Locale, creatorName: string, projectTitle: string, version: number) {
   if (locale === "zh") {
@@ -54,7 +49,7 @@ export async function notifyBrandDeliverableUploaded(input: {
 
   const project = await getProject(projectId);
   const locale = input.locale ?? input.order.client_locale ?? "en";
-  const creatorName = resolveCreatorName(input.order.creator_id);
+  const creatorName = await resolveCreatorDisplayName(input.order.creator_id, { locale });
   const projectTitle =
     project?.title ||
     project?.product_name ||

@@ -29,6 +29,7 @@ import {
   type BrandDeliveryTimelineId,
   type BrandVideoAspectRatio
 } from "@/lib/studioos/brand-campaign-options";
+import { appendCreativeBriefExtendedFields } from "@/lib/studioos/brand-creative-brief-form";
 import { compressImageForUpload } from "@/lib/studioos/image-upload-client";
 import type { CommercialObjective } from "@/lib/project-types";
 import { cn } from "@/lib/utils";
@@ -218,6 +219,30 @@ export type BriefFormState = {
   budgetRange: string;
   deliveryTimeline: BrandDeliveryTimelineId;
   aspectRatio: BrandVideoAspectRatio;
+  projectTitle: string;
+  adOneLiner: string;
+  industry: string;
+  brandName: string;
+  brandWebsite: string;
+  videoDuration: string;
+  videoDurationCustom: string;
+  creativeStyles: string[];
+  creativeStyleCustom: string;
+  creativeTones: string[];
+  creativeToneCustom: string;
+  audienceAge: string;
+  audienceRegion: string;
+  audienceGender: "all" | "male" | "female";
+  resolution: string;
+  frameRate: string;
+  videoQuantity: number;
+  mustInclude: string[];
+  mustIncludeCustom: string;
+  mustAvoid: string[];
+  mustAvoidCustom: string;
+  scheduleStart: string;
+  scheduleDelivery: string;
+  schedulePublish: string;
 };
 
 function OptionChip({
@@ -448,6 +473,7 @@ export function BrandCampaignStepBrief({
     fd.set("budget_range", form.budgetRange);
     fd.set("delivery_timeline", form.deliveryTimeline);
     fd.set("aspect_ratio", form.aspectRatio);
+    appendCreativeBriefExtendedFields(fd, form);
     return fd;
   }
 
@@ -703,11 +729,28 @@ export function BrandCampaignStepBrief({
       ...resolveBriefForContinue(form),
       aspectRatio: resolveBriefForContinue(form).aspectRatio || defaultBrandAspectRatio()
     };
-    const hasVisual = Boolean(form.productUrl.trim()) || productReady;
+    const hasVisual = Boolean(form.productUrl.trim() || form.brandWebsite.trim()) || productReady;
     const hasBrief =
       payloadAll.productDescription.trim() ||
       payloadAll.rawSummary.trim() ||
+      payloadAll.adOneLiner.trim() ||
       payloadAll.productName.trim();
+
+    if (!form.projectTitle.trim()) {
+      setLocalError(locale === "zh" ? "请填写项目名称" : "Enter a project name");
+      return;
+    }
+
+    if (!form.adOneLiner.trim() && !payloadAll.productDescription.trim()) {
+      setLocalError(locale === "zh" ? "请用一句话描述您的广告需求" : "Describe your ad need in one sentence");
+      return;
+    }
+
+    if (!payloadAll.aspectRatio) {
+      setAspectRatioError(t.aspectRatioError);
+      setLocalError(t.aspectRatioError);
+      return;
+    }
 
     if (!hasVisual || !hasBrief) {
       setLocalError(t.needInput);

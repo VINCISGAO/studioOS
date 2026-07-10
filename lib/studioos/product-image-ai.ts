@@ -11,7 +11,7 @@ export type RefineSource = "openai" | "local";
 function buildEditPrompt(prompt: string, locale: "en" | "zh") {
   const base =
     locale === "zh"
-      ? "将这张产品照片精修为高端商业广告主图。保持产品本身、品牌标签和包装细节不变。"
+      ? "将这张产品照片精修为高端商业品牌主图。保持产品本身、品牌标签和包装细节不变。"
       : "Refine this product photo into a premium commercial hero shot. Keep the exact product, brand labels, and packaging details.";
   return `${base} ${prompt}. Professional studio lighting, photorealistic, clean composition, e-commerce quality.`;
 }

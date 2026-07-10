@@ -49,7 +49,7 @@ const copy = {
     industry: "行业",
     company: "公司",
     empty: "还没有公开的广告作品。",
-    brand: "广告主",
+    brand: "品牌方",
     published: "已发布",
     draft: "未发布",
     adsCount: "条广告",

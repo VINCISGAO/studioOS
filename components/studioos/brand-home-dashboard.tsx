@@ -75,7 +75,7 @@ export function BrandHomeDashboard({ locale, name, rows, metrics, notifications 
       <section className={cn(portalChrome.card, "overflow-hidden")}>
         <div className="grid lg:grid-cols-[1fr_auto]">
           <div className="border-b border-zinc-100 p-8 sm:p-10 lg:border-b-0 lg:border-r">
-            <p className={portalChrome.eyebrow}>{locale === "zh" ? "广告主后台" : "Brand workspace"}</p>
+            <p className={portalChrome.eyebrow}>{locale === "zh" ? "品牌方后台" : "Brand workspace"}</p>
             <h1 className="mt-3 text-3xl font-semibold tracking-tight text-zinc-950">{t.greeting(name)}</h1>
             <p className={cn("mt-2 max-w-lg", portalChrome.body)}>{t.sub}</p>
             <BrandStartBriefButton locale={locale} size="lg" className={cn("mt-6", portalChrome.cta, "h-11 px-6")}>

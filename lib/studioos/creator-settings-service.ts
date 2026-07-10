@@ -926,3 +926,28 @@ export async function dismissCertificationWelcomeBanner(creatorId: string, creat
   }));
   return { ok: true as const };
 }
+
+export async function hasSeenCreatorSelectionCelebration(
+  creatorId: string,
+  notificationId: string
+): Promise<boolean> {
+  const settings = await getStoredCreatorSettings(creatorId);
+  const seen = settings?.creator_selection_celebrations_seen ?? [];
+  return seen.includes(notificationId);
+}
+
+export async function markCreatorSelectionCelebrationSeen(
+  creatorId: string,
+  creator: Creator,
+  notificationId: string
+) {
+  await updateSettings(creatorId, creator, (current) => {
+    const seen = new Set(current.creator_selection_celebrations_seen ?? []);
+    seen.add(notificationId);
+    return {
+      ...current,
+      creator_selection_celebrations_seen: [...seen]
+    };
+  });
+  return { ok: true as const };
+}

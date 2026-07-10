@@ -59,7 +59,7 @@ const stubs: Record<string, StubCopy> = {
   },
   academy: {
     title: { en: "Academy", zh: "学院" },
-    subtitle: { en: "Training content for brands and creators.", zh: "面向广告主与创作者的培训内容。" },
+    subtitle: { en: "Training content for brands and creators.", zh: "面向品牌方与创作者的培训内容。" },
     bullets: {
       en: ["Course library", "Onboarding paths", "Certification prep"],
       zh: ["课程库", "入驻路径", "认证备考"]

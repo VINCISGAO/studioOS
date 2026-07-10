@@ -79,7 +79,7 @@ export type AdminNavKey =
 export const adminNavLabels: Record<AdminNavKey, Record<Locale, string>> = {
   dashboard: { en: "Overview", zh: "总览" },
   campaigns: { en: "Campaigns", zh: "活动" },
-  brands: { en: "Advertisers", zh: "广告主" },
+  brands: { en: "Advertisers", zh: "品牌方" },
   studios: { en: "Creators", zh: "创作者" },
   payments: { en: "Payments", zh: "支付" },
   membership: { en: "Membership", zh: "会员" },

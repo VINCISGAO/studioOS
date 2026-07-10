@@ -151,7 +151,8 @@ async function main() {
       const start = await authSecurityService.startEmailVerification({
         request,
         email: probeEmail,
-        locale: "zh"
+        locale: "zh",
+        role: "BRAND"
       });
       const securityOk = start.ok || !("turnstileRequired" in start && start.turnstileRequired);
       checks.push({

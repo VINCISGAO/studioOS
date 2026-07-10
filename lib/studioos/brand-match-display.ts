@@ -1,4 +1,5 @@
 import { creators } from "@/lib/data";
+import { sanitizeCreatorDisplayName } from "@/lib/studioos/creator-display-name";
 import type { Locale } from "@/lib/i18n";
 import type { Creator } from "@/lib/types";
 import type { StoredCreatorInvitation } from "@/lib/studioos/creator-invitation-types";
@@ -174,7 +175,7 @@ export function buildAcceptedCreatorRow(
   projectBudgetRange?: string | null
 ) {
   const creator = resolveCreatorForInvitation(invitation.creatorId);
-  const name = invitation.creatorName ?? creator?.name ?? invitation.creatorId;
+  const name = sanitizeCreatorDisplayName(invitation.creatorName ?? creator?.name, locale);
   return {
     invitation,
     creator,
@@ -191,11 +192,11 @@ export function buildCreatorMatchTags(creator: Creator, locale: Locale): string[
   const zhMap: Record<string, string> = {
     Beauty: locale === "zh" ? "美妆" : "Beauty",
     "Consumer tech": locale === "zh" ? "科技数码" : "Consumer tech",
-    TikTok: "TikTok",
+    TikTok: locale === "zh" ? "短视频" : "TikTok",
     CPG: locale === "zh" ? "快消" : "CPG",
-    UGC: "UGC",
-    Meta: "Meta",
-    DTC: "DTC",
+    UGC: locale === "zh" ? "用户原创" : "UGC",
+    Meta: locale === "zh" ? "社交平台" : "Meta",
+    DTC: locale === "zh" ? "直营品牌" : "DTC",
     "Product demos": locale === "zh" ? "产品广告" : "Product ads"
   };
 
@@ -205,4 +206,58 @@ export function buildCreatorMatchTags(creator: Creator, locale: Locale): string[
     locale === "zh" ? ["AI 视频", "产品广告"] : ["AI video", "Product ads"];
 
   return [...new Set([...fromAi, ...fromSpecialties, ...defaults])].slice(0, 4);
+}
+
+export function buildCreatorHighlightTags(creator: Creator, locale: Locale): string[] {
+  const zh = locale === "zh";
+  const tags: string[] = [];
+  if (creator.specialties.some((item) => /cpg|快消/i.test(item))) {
+    tags.push(zh ? "快消专家" : "CPG expert");
+  }
+  if (
+    creator.specialties.some((item) => /tiktok/i.test(item)) ||
+    creator.ai_tags?.some((tag) => /tiktok|短视频/i.test(tag))
+  ) {
+    tags.push(zh ? "短视频达人" : "TikTok creator");
+  }
+  if (
+    creator.specialties.some((item) => /ugc|performance|转化|dtc/i.test(item)) ||
+    creator.ai_tags?.some((tag) => /转化|performance/i.test(tag))
+  ) {
+    tags.push(zh ? "高转化率" : "High conversion");
+  }
+  if (tags.length < 3) {
+    return [...new Set([...tags, ...buildCreatorMatchTags(creator, locale)])].slice(0, 3);
+  }
+  return tags.slice(0, 3);
+}
+
+export function buildCreatorCollaborationBrands(creator: Creator, locale: Locale): string[] {
+  const pool =
+    locale === "zh"
+      ? ["耐克", "欧莱雅", "宝洁", "三星", "可口可乐", "优衣库"]
+      : ["Nike", "L'Oréal", "P&G", "Samsung", "Coca-Cola", "Uniqlo"];
+  let hash = 0;
+  for (let index = 0; index < creator.id.length; index += 1) {
+    hash = (hash * 31 + creator.id.charCodeAt(index)) >>> 0;
+  }
+  const start = hash % pool.length;
+  const picks: string[] = [];
+  for (let offset = 0; picks.length < 3 && offset < pool.length; offset += 1) {
+    picks.push(pool[(start + offset) % pool.length]);
+  }
+  return picks;
+}
+
+export function buildCreatorWorkStyle(creator: Creator, locale: Locale): string {
+  const zh = locale === "zh";
+  const fromAi = creator.ai_tags?.slice(0, 3) ?? [];
+  if (fromAi.length >= 2) {
+    return fromAi.join(zh ? "、" : ", ");
+  }
+  const fromSpecialties = creator.specialties.slice(0, 3);
+  if (fromSpecialties.length >= 2) {
+    return fromSpecialties.join(zh ? "、" : ", ");
+  }
+  return zh ? "时尚、创意、节奏感强" : "Fashion-forward, creative, high tempo";
 }

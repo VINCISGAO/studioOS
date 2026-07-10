@@ -189,7 +189,7 @@ function campaignWithBriefSnapshot(campaign: Campaign, snapshot?: WizardBriefSna
 
 export async function runCreativeDirectionJob(
   campaign: Campaign,
-  options: { language?: string; briefSnapshot?: WizardBriefSnapshot | null } = {}
+  options: { language?: string; briefSnapshot?: WizardBriefSnapshot | null; wizardFastPath?: boolean } = {}
 ): Promise<{
   directions: CreativeDirection[];
   provider: string;
@@ -200,7 +200,7 @@ export async function runCreativeDirectionJob(
 }> {
   const language = options.language ?? "en";
   const ctx = campaignWithBriefSnapshot(campaign, options.briefSnapshot);
-  if (!aiGatewayService.isConfigured()) {
+  if (options.wizardFastPath || !aiGatewayService.isConfigured()) {
     const directions = buildTemplateDirections(ctx, language);
     return {
       directions,

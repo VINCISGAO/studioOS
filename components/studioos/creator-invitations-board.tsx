@@ -20,7 +20,7 @@ const copy = {
   en: {
     title: "Project invitations",
     subtitle:
-      "Accepting an invitation puts you on the brand shortlist — not a confirmed booking. Production starts only after the brand selects you and completes escrow payment.",
+      "Review project details before you respond. Accepting an invitation puts you on the brand shortlist — not a confirmed booking. Production starts only after the brand selects you and completes escrow payment.",
     empty: "No invitations in this tab.",
     uploadTitle: "Where to upload Version 1",
     uploadHint: "After the brand selects you and pays escrow, open Order management, enter the project, then open the review center to upload Version 1.",
@@ -28,7 +28,7 @@ const copy = {
   },
   zh: {
     title: "项目邀请",
-    subtitle: "接受邀请只表示合作意向，不等于正式中标。品牌选定你并完成托管付款后，项目才会正式开始。",
+    subtitle: "请先点击「项目详情」了解品牌需求，再决定是否接受。接受邀请只表示合作意向，不等于正式中标。品牌选定你并完成托管付款后，项目才会正式开始。",
     empty: "当前分类下没有邀请。",
     uploadTitle: "第一版视频在哪里上传？",
     uploadHint: "品牌选中你并完成托管付款后，到「订单管理」进入对应项目，再打开「审片中心」上传 Version 1。",

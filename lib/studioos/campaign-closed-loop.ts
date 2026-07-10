@@ -65,7 +65,7 @@ export const closedLoopStepLabels = {
     project_completed: "Project complete"
   },
   zh: {
-    ad_published: "广告主发布广告",
+    ad_published: "品牌方发布广告",
     creators_recommended: "系统推荐 Creator",
     invitation_received: "Creator 收到邀请",
     invitation_accepted: "Creator 接受邀请",

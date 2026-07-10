@@ -9,7 +9,8 @@ export const spacing = {
   sm: "8px",
   md: "16px",
   lg: "24px",
-  xl: "32px"
+  xl: "32px",
+  xxl: "48px"
 } as const;
 
 export const radius = {
@@ -18,7 +19,9 @@ export const radius = {
   card: "28px",
   dialog: "28px",
   video: "20px",
-  badge: "10px"
+  badge: "10px",
+  pill: "9999px",
+  xl: "16px"
 } as const;
 
 export const buttonHeight = {
@@ -53,7 +56,37 @@ export const motion = {
 
 export const colors = {
   reviewAnnotation: "#FF4D4F",
-  shellBackground: "#fafaf8"
+  shellBackground: "#fafaf8",
+  brandPrimary: "#7C3AED",
+  brandPrimaryHover: "#6D28D9",
+  brandSurface: "#F5F3FF",
+  success: "#059669",
+  successSurface: "#ECFDF5",
+  warning: "#D97706",
+  warningSurface: "#FFFBEB",
+  danger: "#DC2626",
+  textPrimary: "#09090B",
+  textSecondary: "#71717A",
+  borderSubtle: "#E4E4E7"
+} as const;
+
+/** Mobile / native app compatibility */
+export const mobile = {
+  touchTargetMin: "44px",
+  touchTargetComfortable: "48px",
+  safeAreaBottom: "env(safe-area-inset-bottom)",
+  safeAreaTop: "env(safe-area-inset-top)",
+  bottomNavHeight: "56px",
+  maxContentWidth: "640px"
+} as const;
+
+export const fontSize = {
+  xs: "12px",
+  sm: "14px",
+  base: "16px",
+  lg: "18px",
+  xl: "20px",
+  display: "28px"
 } as const;
 
 /** Tailwind class helpers — use instead of raw zinc/blue in portal UI */

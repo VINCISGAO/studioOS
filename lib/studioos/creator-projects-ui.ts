@@ -1,9 +1,11 @@
 import type { Locale } from "@/lib/i18n";
 import type { StoredOrder } from "@/lib/order-types";
+import { formatMessageTime } from "@/lib/studioos/message-center-data";
 import { creatorPortalRoutes } from "@/lib/studioos/creator-portal-routes";
 import type { CreatorProjectFilter } from "@/lib/studioos/creator-order-lifecycle";
 import {
   creatorUploadActionLabel,
+  isActiveCreatorProject,
   isCreatorOrderInProgress,
   isCreatorOrderPendingReview,
   isCreatorUploadActionable,
@@ -113,37 +115,73 @@ function currentTaskForOrder(
   order: StoredOrder,
   deliverableCount: number
 ) {
+  if (isActiveCreatorProject(order) && order.payment_status === "unpaid" && deliverableCount === 0) {
+    return locale === "zh" ? "确认创意方向并准备上传 V1" : "Confirm creative direction and prepare V1";
+  }
   if (order.payment_status === "unpaid") {
     return locale === "zh" ? "等待品牌付款后开始制作" : "Waiting for brand payment before production";
   }
-  if (deliverableCount === 0 && ["paid", "in_production", "review", "revision"].includes(order.status)) {
+  if (deliverableCount === 0) {
     return locale === "zh" ? "上传第一版视频" : "Upload version 1 video";
   }
   if (order.status === "review") {
     return locale === "zh" ? "等待品牌审核" : "Waiting for brand review";
   }
   if (order.status === "revision") {
-    return locale === "zh" ? "修改第二版" : "Revise version 2";
+    const nextVersion = deliverableCount + 1;
+    return locale === "zh" ? `修改第 ${nextVersion} 版` : `Revise version ${nextVersion}`;
   }
   if (order.status === "completed") {
     return locale === "zh" ? "项目已完成" : "Project completed";
   }
-  if (deliverableCount === 0) {
-    return locale === "zh" ? "上传第一版 0/3 已完成" : "Upload v1 · 0/3 done";
-  }
+  const nextVersion = deliverableCount + 1;
   return locale === "zh"
-    ? `上传第一版 ${Math.min(deliverableCount, 3)}/3 已完成`
-    : `Upload v1 · ${Math.min(deliverableCount, 3)}/3 done`;
+    ? `继续制作第 ${nextVersion} 版`
+    : `Continue version ${nextVersion}`;
 }
 
-function latestUpdateForOrder(locale: Locale, order: StoredOrder) {
-  if (order.status === "review" || order.status === "revision") {
-    return locale === "zh" ? "品牌 2 小时前 回复了评论" : "Brand replied 2h ago";
-  }
+function latestUpdateForOrder(
+  locale: Locale,
+  order: StoredOrder,
+  deliverableCount: number,
+  lastUploadAt: string | null
+) {
   if (order.status === "completed") {
-    return locale === "zh" ? "项目已于昨天完成交付" : "Delivered yesterday";
+    return locale === "zh" ? "项目已完成交付" : "Project delivered";
   }
-  return locale === "zh" ? "你 1 小时前 上传了新版本" : "You uploaded 1h ago";
+  if (isActiveCreatorProject(order) && order.payment_status === "unpaid" && deliverableCount === 0) {
+    return locale === "zh"
+      ? "正式项目已开启，审片中心与交付流程已就绪"
+      : "Active project — review center and delivery are open";
+  }
+  if (order.payment_status === "unpaid") {
+    return locale === "zh" ? "等待品牌完成托管付款" : "Waiting for brand escrow payment";
+  }
+  if (deliverableCount === 0) {
+    return locale === "zh" ? "尚未上传视频，请提交第一版" : "No upload yet — submit version 1";
+  }
+  if (order.status === "review") {
+    const relative = lastUploadAt ? formatMessageTime(lastUploadAt, locale) : null;
+    return locale === "zh"
+      ? relative
+        ? `你 ${relative} 上传了 V${deliverableCount}，等待品牌审核`
+        : `已上传 V${deliverableCount}，等待品牌审核`
+      : relative
+        ? `You uploaded V${deliverableCount} ${relative} — awaiting review`
+        : `V${deliverableCount} uploaded — awaiting review`;
+  }
+  if (order.status === "revision") {
+    return locale === "zh"
+      ? `品牌要求修改，请更新 V${deliverableCount + 1}`
+      : `Revision requested — update to V${deliverableCount + 1}`;
+  }
+  if (lastUploadAt) {
+    const relative = formatMessageTime(lastUploadAt, locale);
+    return locale === "zh"
+      ? `你 ${relative} 上传了 V${deliverableCount}`
+      : `You uploaded V${deliverableCount} ${relative}`;
+  }
+  return locale === "zh" ? "制作进行中" : "Production in progress";
 }
 
 function deadlineHint(locale: Locale, iso: string) {
@@ -158,6 +196,7 @@ export function buildCreatorProjectRows(input: {
   locale: Locale;
   orders: StoredOrder[];
   deliverableCounts: Record<string, number>;
+  lastUploadAtByOrderId?: Record<string, string | null>;
   filter: CreatorProjectFilter;
 }): CreatorProjectTableRow[] {
   const stageLabels =
@@ -191,21 +230,29 @@ export function buildCreatorProjectRows(input: {
     .filter((order) => matchesCreatorProjectFilter(order, input.filter))
     .map((order, index) => {
       const deliverableCount = input.deliverableCounts[order.id] ?? 0;
+      const lastUploadAt = input.lastUploadAtByOrderId?.[order.id] ?? null;
       const deadline = order.completed_at ?? order.paid_at ?? order.created_at;
       const uploadActionable = isCreatorUploadActionable(order, deliverableCount);
+      const activeProject = isActiveCreatorProject(order);
+      const stageLabel =
+        activeProject && order.payment_status === "unpaid"
+          ? input.locale === "zh"
+            ? "正式项目"
+            : "Active Project"
+          : stageLabels[order.status] ?? order.status;
       return {
         id: order.id,
         title: order.title || order.company_name,
         code: projectCode(order, index),
         brand: order.company_name || order.client_name,
         status: order.status,
-        stageLabel: stageLabels[order.status] ?? order.status,
+        stageLabel,
         currentTask: currentTaskForOrder(input.locale, order, deliverableCount),
         deadline,
         deadlineHint: deadlineHint(input.locale, deadline),
         progress: progressForOrder(order, deliverableCount),
         amount: order.creator_payout,
-        latestUpdate: latestUpdateForOrder(input.locale, order),
+        latestUpdate: latestUpdateForOrder(input.locale, order, deliverableCount, lastUploadAt),
         href: creatorPortalRoutes.project(order.id),
         actionHref: uploadActionable
           ? creatorPortalRoutes.review(order.id)

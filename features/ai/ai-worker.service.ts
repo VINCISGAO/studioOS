@@ -32,12 +32,14 @@ export class AiWorkerService {
   async enqueueCreativeDirection(
     campaignId: string,
     actorUserId: string,
-    extras?: { briefSnapshot?: WizardBriefSnapshot; language?: string }
+    extras?: { briefSnapshot?: WizardBriefSnapshot; language?: string; wizardFastPath?: boolean }
   ) {
     this.assertDb();
     const campaign = await campaignRepository.findById(campaignId);
     if (!campaign) throw appError("NOT_FOUND", "Campaign not found");
-    await this.assertCampaignEscrowFunded(campaignId);
+    if (!extras?.wizardFastPath) {
+      await this.assertCampaignEscrowFunded(campaignId);
+    }
     const actor = await prisma.user.findUnique({
       where: { id: actorUserId },
       select: { languageCode: true, language: true }
@@ -57,7 +59,8 @@ export class AiWorkerService {
         aspectRatio: campaign.aspectRatio,
         budget: Number(campaign.budget),
         language,
-        ...(extras?.briefSnapshot ? { briefSnapshot: extras.briefSnapshot } : {})
+        ...(extras?.briefSnapshot ? { briefSnapshot: extras.briefSnapshot } : {}),
+        ...(extras?.wizardFastPath ? { wizardFastPath: true } : {})
       }
     });
   }
@@ -143,13 +146,16 @@ export class AiWorkerService {
 
     const campaign = await campaignRepository.findById(campaignId);
     if (!campaign) throw new Error("Campaign not found");
-    await this.assertCampaignEscrowFunded(campaignId);
 
     const input = job.inputJson as {
       actorUserId?: string;
       language?: string;
       briefSnapshot?: WizardBriefSnapshot;
+      wizardFastPath?: boolean;
     };
+    if (!input.wizardFastPath) {
+      await this.assertCampaignEscrowFunded(campaignId);
+    }
     const actorUserId = String(input.actorUserId ?? campaign.brandId);
     const language = normalizeLanguageCode(input.language);
     const actor = { id: actorUserId, role: "BRAND" as const };
@@ -162,7 +168,8 @@ export class AiWorkerService {
 
     const result = await runCreativeDirectionJob(campaign, {
       language,
-      briefSnapshot: input.briefSnapshot ?? null
+      briefSnapshot: input.briefSnapshot ?? null,
+      wizardFastPath: input.wizardFastPath === true
     });
 
     const brief = {

@@ -1,6 +1,7 @@
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { hashPassword, verifyPassword } from "@/lib/core/password-crypto";
 import { readRequestMeta } from "@/lib/core/request-meta";
+import { correctEmailDomain } from "@/lib/auth/email-domain-correction";
 import { userRepository, type UserWithProfiles } from "@/features/auth/user.repository";
 import type { UserRole } from "@prisma/client";
 
@@ -25,8 +26,8 @@ function mapPrismaUser(user: UserWithProfiles): AuthUserDto {
     languageCode: user.languageCode ?? user.language ?? "en",
     companyName: user.brandProfile?.companyName,
     displayName: user.creatorProfile?.displayName ?? undefined,
-    hasBrandProfile: user.role === "BRAND" || Boolean(user.brandProfile),
-    hasCreatorProfile: user.role === "CREATOR" || Boolean(user.creatorProfile)
+    hasBrandProfile: user.role === "BRAND",
+    hasCreatorProfile: user.role === "CREATOR"
   };
 }
 
@@ -56,7 +57,7 @@ export class AuthService {
       return { ok: false, error: "database-unavailable" };
     }
 
-    const normalized = input.email.trim().toLowerCase();
+    const normalized = correctEmailDomain(input.email).email;
     const fullName = input.fullName.trim() || normalized.split("@")[0] || "VINCIS User";
     if (!normalized.includes("@") || !isStrongPassword(input.password)) {
       return { ok: false, error: "invalid" };
@@ -64,45 +65,6 @@ export class AuthService {
 
     const existing = await userRepository.findByEmail(normalized);
     if (existing) {
-      if (
-        existing.role === "ADMIN" ||
-        existing.role === "SUPPORT" ||
-        existing.role === "SYSTEM" ||
-        !existing.passwordHash ||
-        !verifyPassword(input.password, existing.passwordHash)
-      ) {
-        return { ok: false, error: "email-taken" };
-      }
-
-      if (input.role === "BRAND") {
-        if (existing.brandProfile) {
-          return { ok: false, error: "email-taken" };
-        }
-
-        const user = await userRepository.ensureBrandProfileForUser({
-          userId: existing.id,
-          companyName: input.companyName ?? fullName
-        });
-        return { ok: true, user: mapPrismaUser(user) };
-      }
-
-      if (input.role === "CREATOR") {
-        if (existing.creatorProfile) {
-          return { ok: false, error: "email-taken" };
-        }
-
-        const user = await userRepository.ensureCreatorProfileForUser({
-          userId: existing.id,
-          displayName: input.displayName ?? fullName
-        });
-        const { membershipService } = await import("@/features/membership/membership.service");
-        await membershipService.ensureDefaultMembershipOnCreatorRegister(
-          user.id,
-          user.creatorProfile?.id
-        );
-        return { ok: true, user: mapPrismaUser(user) };
-      }
-
       return { ok: false, error: "email-taken" };
     }
 
@@ -119,7 +81,7 @@ export class AuthService {
   }
 
   async authenticate(email: string, password: string): Promise<AuthUserDto | null> {
-    const normalized = email.trim().toLowerCase();
+    const normalized = correctEmailDomain(email).email;
     const normalizedPassword = password.trim();
 
     if (!hasDatabaseUrl()) return null;
@@ -153,7 +115,7 @@ export class AuthService {
 
   async getUserByEmail(email: string): Promise<AuthUserDto | null> {
     if (!hasDatabaseUrl()) return null;
-    const user = await userRepository.findByEmail(email.trim().toLowerCase());
+    const user = await userRepository.findByEmail(correctEmailDomain(email).email);
     return user ? mapPrismaUser(user) : null;
   }
 

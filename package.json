@@ -36,7 +36,7 @@
     "purge:test-accounts": "node --require ./scripts/helpers/load-env.cjs --import tsx scripts/purge-test-accounts.ts",
     "purge:review-media": "node scripts/purge-review-media.mjs",
     "reset:deploy": "bash scripts/reset-and-deploy.sh",
-    "build": "npm run db:generate && node scripts/copy-marketing-assets.mjs && rm -rf .next node_modules/.cache && next build",
+    "build": "npm run db:generate && node scripts/copy-marketing-assets.mjs && rm -rf .next node_modules/.cache && node scripts/next-build.mjs",
     "build:clean": "rm -rf .next && npm run build",
     "postinstall": "npx prisma generate",
     "start": "next start",

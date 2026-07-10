@@ -51,10 +51,37 @@ export function buildAiMatchReport(input: {
   projectBudgetRange?: string | null;
   locale: Locale;
   statistics?: AiMatchReportStatistics | null;
-}): AiMatchReport | null {
-  if (!input.invitations.length) return null;
-
+}): AiMatchReport {
   const currentBudget = parseBudgetMidpoint(input.projectBudgetRange ?? "");
+  const invitedCount = input.invitations.length;
+
+  if (!input.invitations.length) {
+    const budgetScore = scoreBudget(currentBudget, currentBudget, 0, 0);
+    const projectedAcceptanceRate = Math.min(92, projectedLift(budgetScore, {}));
+    return {
+      invitedCount,
+      respondedCount: 0,
+      acceptedCount: 0,
+      declinedCount: 0,
+      responseRate: 0,
+      acceptanceRate: 0,
+      projectedAcceptanceRate,
+      budgetScore,
+      budgetLevel:
+        budgetScore >= BUDGET_SCORE_POLICY.excellent
+          ? "excellent"
+          : budgetScore >= BUDGET_SCORE_POLICY.normal
+            ? "normal"
+            : "low",
+      marketBelowPercent: Math.max(0, Math.min(95, 100 - budgetScore)),
+      currentBudget,
+      suggestedBudget: currentBudget,
+      reasons: [],
+      recommendations: [defaultSuggestionCopy(input.locale, invitedCount === 0)],
+      expanding: false
+    };
+  }
+
   const responded = input.invitations.filter((item) => ["accepted", "declined"].includes(item.status));
   const accepted = input.invitations.filter((item) => item.status === "accepted");
   const declined = input.invitations.filter((item) => item.status === "declined");
@@ -162,11 +189,23 @@ function buildRecommendations(
 ) {
   const zh = locale === "zh";
   const items: string[] = [];
-  if (reasonCounts.BUDGET_TOO_LOW) items.push(zh ? `提高预算至 $${suggestedBudget}` : `Increase budget to $${suggestedBudget}`);
+  if (reasonCounts.BUDGET_TOO_LOW) items.push(zh ? `提高预算至 ${suggestedBudget} 美元` : `Increase budget to $${suggestedBudget}`);
   if (reasonCounts.BRIEF_INSUFFICIENT) items.push(zh ? "补充产品素材、参考案例与交付标准" : "Add product assets, references, and delivery standards");
   if (reasonCounts.DEADLINE_TOO_TIGHT) items.push(zh ? "放宽交付时间至少 2 天" : "Extend delivery time by at least 2 days");
   if (reasonCounts.SCHEDULE_CONFLICT) items.push(zh ? "扩大匹配范围，邀请更多有档期 Creator" : "Expand matching to creators with better availability");
-  return items.length ? items : [zh ? "继续观察 Creator 回复" : "Keep monitoring creator responses"];
+  return items.length ? items : [defaultSuggestionCopy(locale)];
+}
+
+function defaultSuggestionCopy(locale: Locale, noInvitationsYet = false) {
+  if (noInvitationsYet) {
+    return locale === "zh"
+      ? "尚未发出真实邀请，请点击「换一批创作者」向匹配结果发送邀约"
+      : "No invitations have been sent yet. Use “Show another batch” to invite matched creators.";
+  }
+
+  return locale === "zh"
+    ? "继续观察创作者回复，或提高预算可获得更多优质匹配"
+    : "Keep monitoring creator replies, or raise your budget for stronger matches";
 }
 
 function percent(value: number, total: number) {

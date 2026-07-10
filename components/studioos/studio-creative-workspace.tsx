@@ -21,6 +21,9 @@ import { CertifiedPartnerBadge } from "@/components/studioos/certification/certi
 import { formatTimestamp } from "@/lib/studioos/review-utils";
 import { cn } from "@/lib/utils";
 import { isReviewCommentUnresolved } from "@/lib/studioos/review-comment-status";
+import { CreativeCollaborationPanel } from "@/components/studioos/creative-collaboration-panel";
+import type { CreativeCollaborationView } from "@/features/creative-collaboration/creative-collaboration.types";
+import { isActiveCreatorProject } from "@/lib/studioos/creator-order-lifecycle";
 import { CheckCircle2, Clapperboard, Pause, Play } from "lucide-react";
 
 type TabId = "brief" | "storyboard" | "versions" | "issues";
@@ -33,9 +36,11 @@ const copy = {
     versions: "Work versions",
     issues: "Review history",
     productionBanner:
-      "You have been selected. Upload Version 1 from the review center to start brand review.",
+      "正式项目已开启。请先在项目表单确认创意方向，再前往审片中心上传 V1。",
+    activeProjectBanner:
+      "恭喜！你已被品牌选中，正式项目已生成。审片中心与交付流程现已开启。",
     awaitingPaymentBanner:
-      "You were selected — waiting for the brand to complete escrow payment. Production starts after payment is confirmed.",
+      "品牌托管付款确认中。你仍可查看项目表单、确认创意方向并进入审片中心。",
     reviewCenterFirst: "Upload Version 1 in review center",
     reviewCenterRevision: "Upload new version in review center",
     resolve: "Resolve",
@@ -61,9 +66,11 @@ const copy = {
     storyboard: "素材文件",
     versions: "作品版本",
     issues: "审核记录",
-    productionBanner: "你已被品牌选中，请前往审片中心上传 Version 1。",
+    productionBanner: "正式项目已开启。请先确认创意方向，再前往审片中心上传 V1。",
+    activeProjectBanner:
+      "恭喜！你已被品牌选中，正式项目已生成。审片中心与交付流程现已开启。",
     awaitingPaymentBanner:
-      "你已被品牌选中，请等待品牌完成托管付款。收到付款通知后再开始制作。",
+      "品牌托管付款确认中。你仍可查看项目表单、确认创意方向并进入审片中心。",
     reviewCenterFirst: "前往审片中心上传 Version 1",
     reviewCenterRevision: "前往审片中心上传新版本",
     resolve: "标记已解决",
@@ -114,7 +121,9 @@ export function StudioCreativeWorkspace({
   pack,
   deliverables,
   comments: initialComments,
-  canUpload
+  canUpload,
+  collaborationView,
+  aiEnabled = false
 }: {
   locale: Locale;
   studioName: string;
@@ -126,6 +135,8 @@ export function StudioCreativeWorkspace({
   deliverables: StoredDeliverable[];
   comments: ReviewComment[];
   canUpload: boolean;
+  collaborationView?: CreativeCollaborationView | null;
+  aiEnabled?: boolean;
 }) {
   const t = copy[locale];
   const partnerBadge = tCertificationExperience(locale).partnerBadge;
@@ -200,7 +211,8 @@ export function StudioCreativeWorkspace({
   ];
 
   const reviewHref = withLocale(creatorPortalRoutes.review(order.id), locale);
-  const awaitingPayment = order.status === "waiting_payment" || order.payment_status === "unpaid";
+  const activeProject = isActiveCreatorProject(order);
+  const awaitingPayment = order.payment_status === "unpaid";
 
   return (
     <div className="space-y-6">
@@ -209,11 +221,22 @@ export function StudioCreativeWorkspace({
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <h1 className="text-2xl font-semibold tracking-tight">{studioName}</h1>
           {isVerified ? <CertifiedPartnerBadge label={partnerBadge} /> : null}
+          {activeProject ? (
+            <Badge className="bg-emerald-600 hover:bg-emerald-600">
+              {locale === "zh" ? "正式项目" : "Active Project"}
+            </Badge>
+          ) : null}
         </div>
         <p className="mt-1 text-lg font-medium text-zinc-800">{order.title || project?.title}</p>
       </div>
 
-      {awaitingPayment ? (
+      {activeProject ? (
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 px-5 py-4 text-sm text-emerald-950">
+          <p>{t.activeProjectBanner}</p>
+        </div>
+      ) : null}
+
+      {awaitingPayment && activeProject ? (
         <div className="rounded-2xl border border-amber-200 bg-amber-50/80 px-5 py-4 text-sm text-amber-950">
           <p>{t.awaitingPaymentBanner}</p>
         </div>
@@ -256,6 +279,17 @@ export function StudioCreativeWorkspace({
           tab === "brief" ? "grid-cols-1" : "xl:grid-cols-[240px_minmax(0,1fr)_300px]"
         )}
       >
+        {tab === "brief" && project && collaborationView ? (
+          <CreativeCollaborationPanel
+            locale={locale}
+            projectId={project.id}
+            orderId={order.id}
+            role="creator"
+            aiEnabled={aiEnabled}
+            initialView={collaborationView}
+          />
+        ) : null}
+
         {tab === "brief" && confirmedBriefFields.length ? (
           <ClientBriefFormCard
             locale={locale}

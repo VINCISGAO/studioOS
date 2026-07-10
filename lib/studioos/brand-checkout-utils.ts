@@ -20,6 +20,12 @@ export function deliveryDaysFromDeadline(deadline?: string | null): number {
 /** Placeholder creator on campaign escrow orders — replaced when brand picks a Studio. */
 export const CAMPAIGN_PENDING_CREATOR_ID = "pending_match";
 
+export function isResolvableCampaignCreatorId(
+  creatorId: string | null | undefined
+): creatorId is string {
+  return Boolean(creatorId && creatorId !== CAMPAIGN_PENDING_CREATOR_ID);
+}
+
 export function buildQuoteSummary(input: {
   title: string;
   videoCount?: number | null;

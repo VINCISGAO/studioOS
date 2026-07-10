@@ -5,6 +5,7 @@ import { BrandCreatorGlobeMatchingLoader } from "@/components/studioos/brand-cre
 import { BrandProjectMatchTab } from "@/components/studioos/brand-project-match-tab";
 import type { Locale } from "@/lib/i18n";
 import type { AiMatchReportStatistics } from "@/lib/studioos/ai-match-report";
+import type { BrandRecommendedCreator } from "@/lib/studioos/brand-match-recommendation-types";
 import type { StoredCreatorInvitation } from "@/lib/studioos/creator-invitation-types";
 
 export function BrandProjectMatchTabShell({
@@ -16,7 +17,8 @@ export function BrandProjectMatchTabShell({
   notificationCount = 0,
   projectBudgetRange,
   aiMatchStatistics,
-  showPaymentSuccessMatching = false
+  showPaymentSuccessMatching = false,
+  recommendedCreators
 }: {
   locale: Locale;
   projectId: string;
@@ -28,6 +30,7 @@ export function BrandProjectMatchTabShell({
   projectBudgetRange?: string | null;
   aiMatchStatistics?: AiMatchReportStatistics | null;
   showPaymentSuccessMatching?: boolean;
+  recommendedCreators: BrandRecommendedCreator[];
 }) {
   const [showMatching, setShowMatching] = useState(showPaymentSuccessMatching);
 
@@ -68,6 +71,7 @@ export function BrandProjectMatchTabShell({
         notificationCount={notificationCount}
         projectBudgetRange={projectBudgetRange}
         aiMatchStatistics={aiMatchStatistics}
+        recommendedCreators={recommendedCreators}
       />
     </>
   );

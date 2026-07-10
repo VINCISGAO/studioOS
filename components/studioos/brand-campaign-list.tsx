@@ -74,7 +74,7 @@ const copy = {
     selected: "selected",
     selectAll: "Select all deletable",
     open: "Continue",
-    lockedHint: "Only draft and completed items can be deleted",
+    lockedHint: "Draft, unpaid, and completed items can be deleted",
     kindProject: "Project",
     kindOrder: "Order",
     deleteListTitle: "Items to delete"
@@ -103,7 +103,7 @@ const copy = {
     selected: "项已选",
     selectAll: "全选可删项",
     open: "继续",
-    lockedHint: "仅草稿和已完成项目/订单可删除",
+    lockedHint: "草稿、待付款（未托管）和已完成项目可删除",
     kindProject: "广告项目",
     kindOrder: "订单",
     deleteListTitle: "待删除项目"

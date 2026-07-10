@@ -41,6 +41,9 @@ export type BrandProductionBrief = {
     min?: number | null;
     max?: number | null;
   };
+  creative_collaboration?: Record<string, unknown>;
+  final_creative_direction?: string | null;
+  confirmed_creative_direction?: Record<string, unknown> | null;
 };
 
 export type BrandCampaignSelection = {

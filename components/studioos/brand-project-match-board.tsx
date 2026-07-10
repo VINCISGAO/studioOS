@@ -26,7 +26,7 @@ type MatchTab = "pending" | "accepted" | "declined" | "expired";
 
 const copy = {
   en: {
-    title: "Creator responses",
+    title: "Creator response status",
     allStatus: "All statuses",
     pending: (n: number) => `Awaiting reply (${n})`,
     accepted: (n: number) => `Accepted (${n})`,
@@ -39,7 +39,7 @@ const copy = {
     empty: "No creators in this status yet."
   },
   zh: {
-    title: "Creator 回复",
+    title: "创作者响应状态",
     allStatus: "全部状态",
     pending: (n: number) => `等待回复 (${n})`,
     accepted: (n: number) => `已接受 (${n})`,
@@ -48,8 +48,8 @@ const copy = {
     match: "匹配度",
     selectNow: "立即选择",
     viewProfile: "查看主页",
-    viewAll: "查看全部邀约",
-    empty: "暂无该状态的 Creator。"
+    viewAll: "查看全部邀请",
+    empty: "暂无该状态的创作者。"
   }
 };
 
@@ -180,9 +180,15 @@ function CreatorReplyRow({
             {formatPendingReplyEta(etaHours, locale)}
           </span>
         ) : null}
-        <span className="text-xs font-semibold text-emerald-600">
-          {t.match} {row.matchPercent}%
-        </span>
+        {invitation.status === "accepted" ? (
+          <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
+            {t.match} {row.matchPercent}%
+          </span>
+        ) : (
+          <span className="text-xs font-semibold text-emerald-600">
+            {t.match} {row.matchPercent}%
+          </span>
+        )}
       </div>
     </li>
   );

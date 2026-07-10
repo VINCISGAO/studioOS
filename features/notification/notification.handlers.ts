@@ -118,12 +118,17 @@ async function onCampaignUpdated(event: DomainEvent) {
   const legacyProjectId = resolveLegacyProjectId(campaign);
 
   if (inner === "AI_SUCCESS") {
+    const brief = (campaign.productionBrief ?? {}) as { selected_direction_id?: string };
+    if (!brief.selected_direction_id) {
+      return;
+    }
+
     await notificationService.notify({
       userId: campaign.brandId,
       campaignId: campaign.id,
       title: "AI creative directions are ready",
       content: `VINCIS finished creative direction generation for "${campaign.title}". Review and approve the direction to continue.`,
-      actionUrl: `${getAppBaseUrl()}/brand/projects/new?project=${encodeURIComponent(legacyProjectId)}`,
+      actionUrl: `${getAppBaseUrl()}/brand/projects/new?project=${encodeURIComponent(legacyProjectId)}&step=2`,
       type: "ai.creative_generated",
       category: "AI",
       eventName: event.name,

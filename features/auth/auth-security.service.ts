@@ -10,6 +10,8 @@ import { resolvePostLoginDestination } from "@/lib/auth/post-login-redirect";
 import type { Locale } from "@/lib/i18n";
 import type { Prisma, UserRole } from "@prisma/client";
 import { AUTH_ERROR_COPY } from "@/features/auth/auth-error-copy";
+import { checkIdentityRole } from "@/features/auth/identity-role-policy";
+import { correctEmailDomain } from "@/lib/auth/email-domain-correction";
 import { isStudioTestEmail } from "@/lib/demo-auth";
 import { sendEnterpriseEmail } from "@/features/email/email-delivery.service";
 import { buildLoginVerificationEmail } from "@/features/email/templates/enterprise-email-templates";
@@ -48,7 +50,7 @@ function addMs(date: Date, ms: number) {
 }
 
 function normalizeEmail(email: string) {
-  return email.trim().toLowerCase();
+  return correctEmailDomain(email).email;
 }
 
 function securitySecret() {
@@ -158,21 +160,11 @@ function isWeakPassword(password: string) {
   return WEAK_PASSWORDS.has(normalized);
 }
 
-function sessionRoleForUserProfiles(
-  user: {
-    role: UserRole;
-    brandProfile?: unknown;
-    creatorProfile?: unknown;
-  },
-  requestedRole: UserRole
-) {
-  if (requestedRole === "CREATOR" && (user.role === "CREATOR" || user.creatorProfile)) {
-    return "creator" as const;
+function sessionRoleForUserProfiles(user: { role: UserRole }, requestedRole: UserRole) {
+  if (user.role !== requestedRole) {
+    return user.role === "CREATOR" ? ("creator" as const) : ("client" as const);
   }
-  if (requestedRole === "BRAND" && (user.role === "BRAND" || user.brandProfile)) {
-    return "client" as const;
-  }
-  return user.role === "CREATOR" ? ("creator" as const) : ("client" as const);
+  return requestedRole === "CREATOR" ? ("creator" as const) : ("client" as const);
 }
 
 async function hitRateLimit(input: {
@@ -403,6 +395,7 @@ export class AuthSecurityService {
     request: Request;
     email: string;
     locale: Locale;
+    role: UserRole;
     turnstileToken?: string;
   }) {
     requireAuthSecurityDelegates();
@@ -419,6 +412,17 @@ export class AuthSecurityService {
     if (isStudioTestEmail(email)) {
       return { ok: false as const, error: AUTH_ERROR_COPY.testAccountRetired };
     }
+
+    if (input.role !== "BRAND" && input.role !== "CREATOR") {
+      return { ok: false as const, error: AUTH_ERROR_COPY.securityFailed };
+    }
+
+    const existing = await userRepository.findByEmail(email);
+    const roleCheck = checkIdentityRole(existing, input.role, input.locale);
+    if (!roleCheck.ok) {
+      return roleCheck;
+    }
+
     const activeLock = await prisma.authLock.findFirst({
       where: { OR: [{ emailHash }, { ipHash: ctx.ipHash }], lockedUntil: { gt: now() } },
       orderBy: { lockedUntil: "desc" }
@@ -630,21 +634,28 @@ export class AuthSecurityService {
         emailVerifiedAt: now()
       });
       await audit({ userId: user.id, email, event: "SIGNUP_COMPLETED", ctx });
-    } else if (input.role === "BRAND" && !user.brandProfile) {
-      user = await userRepository.ensureBrandProfileForUser({
-        userId: user.id,
-        companyName: user.fullName
-      });
-    } else if (input.role === "CREATOR" && !user.creatorProfile) {
-      user = await userRepository.ensureCreatorProfileForUser({
-        userId: user.id,
-        displayName: user.fullName
-      });
-      const { membershipService } = await import("@/features/membership/membership.service");
-      await membershipService.ensureDefaultMembershipOnCreatorRegister(
-        user.id,
-        user.creatorProfile?.id
-      );
+    } else {
+      const roleCheck = checkIdentityRole(user, input.role, input.locale);
+      if (!roleCheck.ok) {
+        return roleCheck;
+      }
+
+      if (input.role === "BRAND" && !user.brandProfile) {
+        user = await userRepository.ensureBrandProfileForUser({
+          userId: user.id,
+          companyName: user.fullName
+        });
+      } else if (input.role === "CREATOR" && !user.creatorProfile) {
+        user = await userRepository.ensureCreatorProfileForUser({
+          userId: user.id,
+          displayName: user.fullName
+        });
+        const { membershipService } = await import("@/features/membership/membership.service");
+        await membershipService.ensureDefaultMembershipOnCreatorRegister(
+          user.id,
+          user.creatorProfile?.id
+        );
+      }
     }
 
     await userRepository.touchLogin(user.id, { ip: ctx.ip, device: ctx.userAgent });
@@ -664,8 +675,8 @@ export class AuthSecurityService {
         languageCode: user.languageCode ?? user.language ?? "en",
         companyName: user.brandProfile?.companyName,
         displayName: user.creatorProfile?.displayName ?? undefined,
-        hasBrandProfile: user.role === "BRAND" || Boolean(user.brandProfile),
-        hasCreatorProfile: user.role === "CREATOR" || Boolean(user.creatorProfile)
+        hasBrandProfile: user.role === "BRAND",
+        hasCreatorProfile: user.role === "CREATOR"
       },
       demoRole
     );

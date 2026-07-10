@@ -10,6 +10,10 @@ import { PortalSidebarAccountMenu } from "@/components/studioos/portal-sidebar-a
 import { MarketingHomeLink } from "@/components/studioos/marketing-home-link";
 import { CertifiedPartnerBadge } from "@/components/studioos/certification/certified-partner-badge";
 import { StudioCertificationOrchestrator } from "@/components/studioos/certification/studio-certification-orchestrator";
+import {
+  CreatorSelectionOrchestrator,
+  type PendingSelectionCelebration
+} from "@/components/studioos/creator-selection-orchestrator";
 import { StudioPortalSidebarNav } from "@/components/studioos/certification/studio-portal-sidebar-nav";
 import { studioNav } from "@/lib/studioos/vocabulary";
 import { buildAvatarInitials } from "@/lib/studioos/avatar-initials";
@@ -39,6 +43,7 @@ export function StudioPortalShell({
   notifications = [],
   unreadCount = 0,
   pendingInvitationCount = 0,
+  pendingSelectionCelebration = null,
   children
 }: {
   locale: Locale;
@@ -54,6 +59,7 @@ export function StudioPortalShell({
   notifications?: CreatorNotification[];
   unreadCount?: number;
   pendingInvitationCount?: number;
+  pendingSelectionCelebration?: PendingSelectionCelebration | null;
   children: React.ReactNode;
 }) {
   return (
@@ -71,6 +77,7 @@ export function StudioPortalShell({
         notifications={notifications}
         unreadCount={unreadCount}
         pendingInvitationCount={pendingInvitationCount}
+        pendingSelectionCelebration={pendingSelectionCelebration}
       >
         {children}
       </StudioPortalShellInner>
@@ -90,6 +97,7 @@ function StudioPortalShellInner({
   notifications = [],
   unreadCount = 0,
   pendingInvitationCount = 0,
+  pendingSelectionCelebration = null,
   children
 }: {
   locale: Locale;
@@ -105,6 +113,7 @@ function StudioPortalShellInner({
   notifications?: CreatorNotification[];
   unreadCount?: number;
   pendingInvitationCount?: number;
+  pendingSelectionCelebration?: PendingSelectionCelebration | null;
   children: React.ReactNode;
 }) {
   const pathname = usePathname() ?? pathnameProp ?? "/studio";
@@ -290,7 +299,12 @@ function StudioPortalShellInner({
         isVerified={isVerified}
         levelUpSeen={levelUpSeen}
       >
-        {shellInner}
+        <CreatorSelectionOrchestrator
+          locale={locale}
+          pendingCelebration={pendingSelectionCelebration}
+        >
+          {shellInner}
+        </CreatorSelectionOrchestrator>
       </StudioCertificationOrchestrator>
     </Suspense>
   );

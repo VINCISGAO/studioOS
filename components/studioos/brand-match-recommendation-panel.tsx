@@ -1,107 +1,165 @@
-import { Check, Sparkles } from "lucide-react";
+"use client";
+
+import { useState } from "react";
+import { BadgeCheck, RefreshCw } from "lucide-react";
 import { selectCreatorFromInvitationsAction } from "@/app/brand-selection-actions";
 import { Button } from "@/components/ui/button";
 import type { Locale } from "@/lib/i18n";
-import { buildBrandMatchRecommendation } from "@/lib/studioos/brand-match-display";
 import type { StoredCreatorInvitation } from "@/lib/studioos/creator-invitation-types";
+import { creatorAvatarTone, creatorInitials } from "@/lib/studioos/creator-display";
+import type { BrandRecommendedCreator } from "@/lib/studioos/brand-match-recommendation-types";
 import { cn } from "@/lib/utils";
 
 const copy = {
   en: {
-    eyebrow: "AI recommendation",
-    heading: "Start selecting a creator",
-    pickLine: (name: string, score: number) => `We recommend ${name} (score ${score})`,
+    title: "Recommended creator",
+    refresh: "Refresh",
     match: "Match",
-    collaborate: "Start collaboration",
-    reasonsTitle: "Why this creator"
+    invite: "Invite to collaborate",
+    confirm: "Confirm collaboration",
+    pastWork: "Past collaborations",
+    workStyle: "Work style"
   },
   zh: {
-    eyebrow: "AI 推荐",
-    heading: "开始选择 Creator",
-    pickLine: (name: string, score: number) => `推荐选择 ${name}（综合评分 ${score}）`,
+    title: "为你推荐的创作者",
+    refresh: "换一批",
     match: "匹配度",
-    collaborate: "立即合作",
-    reasonsTitle: "推荐理由"
+    invite: "邀请合作",
+    confirm: "确认合作",
+    pastWork: "过往合作",
+    workStyle: "作品风格"
   }
 };
 
 export function BrandMatchRecommendationPanel({
   locale,
   projectId,
-  accepted,
-  projectBudgetRange
+  recommendedCreators,
+  selectionLocked = false
 }: {
   locale: Locale;
   projectId: string;
-  accepted: StoredCreatorInvitation[];
-  projectBudgetRange?: string | null;
+  recommendedCreators: BrandRecommendedCreator[];
+  selectionLocked?: boolean;
 }) {
-  if (accepted.length === 0) return null;
-
   const t = copy[locale];
-  const recommendation = buildBrandMatchRecommendation(accepted, locale, projectBudgetRange);
-  if (!recommendation) return null;
+  const [index, setIndex] = useState(0);
+
+  if (recommendedCreators.length === 0) return null;
+
+  const activeIndex = index % recommendedCreators.length;
+  const pick = recommendedCreators[activeIndex];
+  const canSelect = pick.invitationStatus === "accepted" && !selectionLocked;
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-violet-200/80 bg-gradient-to-br from-violet-50/80 via-white to-white shadow-sm">
-      <div className="border-b border-violet-100/80 px-5 py-4 sm:px-6">
-        <p className="inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-violet-600">
-          <Sparkles className="h-3.5 w-3.5" />
-          {t.eyebrow}
-        </p>
-        <h2 className="mt-2 text-base font-semibold text-zinc-950 sm:text-lg">{t.heading}</h2>
-        <p className="mt-2 text-sm leading-relaxed text-zinc-600">
-          {t.pickLine(recommendation.creatorName, recommendation.compositeScore)}
-        </p>
+    <div className="overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-sm">
+      <div className="flex items-center justify-between gap-3 border-b border-zinc-100 px-5 py-4 sm:px-6">
+        <h2 className="text-base font-semibold text-zinc-950">{t.title}</h2>
+        <button
+          type="button"
+          onClick={() => setIndex((value) => value + 1)}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-violet-100 bg-violet-50 px-2.5 py-1 text-xs font-medium text-violet-700 transition hover:bg-violet-100"
+        >
+          <RefreshCw className="h-3.5 w-3.5" />
+          {t.refresh}
+        </button>
       </div>
 
       <div className="space-y-4 px-5 py-5 sm:px-6">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm font-semibold text-zinc-950">{recommendation.creatorName}</span>
-          <span className="text-xs text-amber-600">{recommendation.starDisplay}</span>
-          <span className="rounded-full bg-violet-100 px-2.5 py-0.5 text-[11px] font-medium text-violet-700">
-            {t.match} {recommendation.matchPercent}%
+        <div className="flex gap-4">
+          <span
+            className={cn(
+              "flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-sm font-semibold",
+              creatorAvatarTone(pick.creatorId)
+            )}
+          >
+            {creatorInitials(pick.creatorName, pick.creatorId)}
           </span>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <p className="truncate text-base font-semibold text-zinc-950">{pick.creatorName}</p>
+              {pick.verified ? (
+                <BadgeCheck className="h-4 w-4 shrink-0 text-violet-500" aria-label="Verified" />
+              ) : null}
+            </div>
+            {pick.tags.length ? (
+              <div className="mt-2.5 flex flex-wrap gap-1.5">
+                {pick.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="rounded-md border border-zinc-200/80 bg-zinc-50 px-2 py-0.5 text-[11px] font-medium text-zinc-600"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            ) : null}
+          </div>
         </div>
 
-        {recommendation.headline ? (
-          <p className="text-sm leading-relaxed text-zinc-500">{recommendation.headline}</p>
+        {pick.pastBrands.length ? (
+          <p className="text-sm text-zinc-500">
+            <span className="text-zinc-400">{t.pastWork}：</span>
+            {pick.pastBrands.join("、")}
+          </p>
         ) : null}
 
-        <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-zinc-400">{t.reasonsTitle}</p>
-          <ul className="mt-3 space-y-2">
-            {recommendation.reasons.map((reason) => (
-              <li
-                key={reason.key}
-                className={cn(
-                  "flex items-center gap-2 text-sm",
-                  reason.matched ? "text-zinc-800" : "text-zinc-400"
-                )}
-              >
-                <span
-                  className={cn(
-                    "inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px]",
-                    reason.matched ? "bg-emerald-100 text-emerald-700" : "bg-zinc-100 text-zinc-400"
-                  )}
-                >
-                  {reason.matched ? "✓" : "·"}
-                </span>
-                {reason.label}
-              </li>
-            ))}
-          </ul>
-        </div>
+        {pick.workStyle ? (
+          <p className="text-sm text-zinc-500">
+            <span className="text-zinc-400">{t.workStyle}：</span>
+            {pick.workStyle}
+          </p>
+        ) : null}
 
-        <form action={selectCreatorFromInvitationsAction}>
-          <input type="hidden" name="lang" value={locale} />
-          <input type="hidden" name="projectId" value={projectId} />
-          <input type="hidden" name="creatorId" value={recommendation.invitation.creatorId} />
-          <Button type="submit" className="h-11 w-full rounded-xl bg-zinc-900 sm:w-auto sm:min-w-[180px]">
-            <Check className="h-4 w-4" />
-            {t.collaborate}
-          </Button>
-        </form>
+        <div className="flex items-end gap-4 pt-1">
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-emerald-600">
+              {t.match} {pick.matchPercent}%
+            </p>
+            <div className="mt-2 h-2 overflow-hidden rounded-full bg-zinc-100">
+              <div
+                className="h-full rounded-full bg-emerald-500 transition-all duration-500"
+                style={{ width: `${Math.min(100, pick.matchPercent)}%` }}
+              />
+            </div>
+          </div>
+
+          {canSelect ? (
+            <form action={selectCreatorFromInvitationsAction} className="shrink-0">
+              <input type="hidden" name="lang" value={locale} />
+              <input type="hidden" name="projectId" value={projectId} />
+              <input type="hidden" name="creatorId" value={pick.creatorId} />
+              <Button
+                type="submit"
+                className="h-10 rounded-xl bg-violet-600 px-5 text-sm font-semibold hover:bg-violet-700"
+              >
+                {t.confirm}
+              </Button>
+            </form>
+          ) : (
+            <Button
+              type="button"
+              className="h-10 shrink-0 rounded-xl bg-violet-600 px-5 text-sm font-semibold hover:bg-violet-700"
+            >
+              {t.invite}
+            </Button>
+          )}
+        </div>
+      </div>
+
+      <div className="flex items-center justify-center gap-1.5 border-t border-zinc-100 px-5 py-3">
+        {recommendedCreators.map((item, dotIndex) => (
+          <button
+            key={item.creatorId}
+            type="button"
+            aria-label={locale === "zh" ? `创作者 ${dotIndex + 1}` : `Creator ${dotIndex + 1}`}
+            onClick={() => setIndex(dotIndex)}
+            className={cn(
+              "h-1.5 rounded-full transition-all",
+              dotIndex === activeIndex ? "w-4 bg-violet-600" : "w-1.5 bg-zinc-300"
+            )}
+          />
+        ))}
       </div>
     </div>
   );

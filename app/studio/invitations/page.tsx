@@ -5,6 +5,7 @@ import { CreatorInvitationsProgress } from "@/components/studioos/creator-invita
 import { getCurrentCreator } from "@/lib/creator-session";
 import { enrichInvitationsForCards } from "@/lib/studioos/creator-invitation-display";
 import { listInvitationsForCreator } from "@/lib/studioos/creator-invitation-store";
+import { resolveThumbnailsByProjectId } from "@/lib/studioos/resolve-project-thumbnails";
 import { type SearchParams, withLocale } from "@/lib/i18n";
 import { listOrdersForCreator } from "@/lib/order-service";
 import { getProject } from "@/lib/project-service";
@@ -28,9 +29,17 @@ export default async function StudioInvitationsPage({
   );
 
   const projectIds = [...new Set(displayInvitations.map((item) => item.campaignId))];
-  const projects = await Promise.all(projectIds.map((id) => getProject(id)));
+  const [projects, thumbnailByProjectId] = await Promise.all([
+    Promise.all(projectIds.map((id) => getProject(id))),
+    resolveThumbnailsByProjectId(projectIds)
+  ]);
   const projectsById = Object.fromEntries(projectIds.map((id, index) => [id, projects[index] ?? null]));
-  const cardInvitations = enrichInvitationsForCards(displayInvitations, projectsById, locale);
+  const cardInvitations = enrichInvitationsForCards(
+    displayInvitations,
+    projectsById,
+    locale,
+    thumbnailByProjectId
+  );
 
   const focusInvitation =
     invitations.find((item) => item.status === "selected") ??
