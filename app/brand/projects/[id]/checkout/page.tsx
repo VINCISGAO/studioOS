@@ -3,6 +3,8 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { BrandCheckoutPanel } from "@/components/studioos/brand-checkout-panel";
 import { BrandCheckoutSummary } from "@/components/studioos/brand-checkout-summary";
+import { BrandPaymentDeadlineNotice } from "@/components/studioos/brand-payment-deadline-notice";
+import { WizardStepper } from "@/components/studioos/ui/wizard-stepper";
 import { getCreatorById } from "@/lib/creator-service";
 import { type SearchParams, withLocale } from "@/lib/i18n";
 import { getOrderForProject, markLegacyOrderPaidForProject } from "@/lib/order-service";
@@ -115,51 +117,68 @@ export default async function BrandCheckoutPage({ params, searchParams }: Props)
   }
 
   return (
-    <div className="mx-auto max-w-[1040px] space-y-6 pb-10">
-      <div>
-        <Link href={withLocale("/brand", locale)} className="text-sm text-zinc-500 hover:text-zinc-900">
-          ← {locale === "zh" ? "返回首页" : "Back home"}
-        </Link>
-        <h1 className="mt-4 text-3xl font-semibold tracking-tight text-zinc-950">
-          {locale === "zh" ? "确认订单并付款" : "Confirm & pay"}
-        </h1>
-        <p className="mt-2 text-sm text-zinc-500">
+    <div className="min-h-[calc(100dvh-7rem)] rounded-[2rem] bg-[#f8f9fb] px-3 pb-8 pt-4 sm:px-4 sm:pt-5 lg:px-5 lg:pt-6">
+      <div className="mx-auto w-full max-w-6xl space-y-6">
+        <WizardStepper locale={locale} currentStep={3} variant="brand" />
+
+        <div className="rounded-2xl border border-violet-100 bg-white/80 px-5 py-3 text-sm leading-6 text-violet-700 shadow-sm">
           {locale === "zh"
-            ? "托管付款完成后，系统才会开始匹配 Studio。下单后 30 分钟内未付款，订单将自动取消。"
-            : "Creator matching starts only after escrow payment. Unpaid orders cancel automatically after 30 minutes."}
-        </p>
-      </div>
-
-      {orderCancelled ? (
-        <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-800">
-          {cancelReason ? (
-            <div className="space-y-1">
-              <p>{locale === "zh" ? "该项目已取消。" : "This project has been cancelled."}</p>
-              <p>
-                {locale === "zh" ? "取消原因：" : "Reason: "}
-                {cancelReason}
-              </p>
-            </div>
-          ) : locale === "zh" ? (
-            "该订单已因超时未付款自动取消。如需继续合作，请重新发布 Campaign 或联系平台客服。"
-          ) : (
-            "This order was automatically cancelled because payment was not completed within 30 minutes."
-          )}
+            ? "资金进入平台托管后才会启动 AI 匹配、邀请与 Creator 响应流程。"
+            : "Escrow funding unlocks AI matching, invitations, and creator responses."}
         </div>
-      ) : null}
 
-      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,620px)_352px]">
-        <BrandCheckoutSummary locale={locale} project={project} order={order} deliveryLabel={deliveryLabel} />
-        <div className="mt-0 self-start space-y-5 lg:-mt-5">
-          {!orderCancelled ? (
-            <BrandCheckoutPanel
-              locale={locale}
-              order={order}
-              projectId={id}
-              studioName={studio?.name ?? "Studio"}
-              escrowFunded={prismaEscrowFunded}
-            />
-          ) : null}
+        <header className="pt-1">
+          <Link href={withLocale("/brand", locale)} className="text-sm font-medium text-zinc-500 hover:text-zinc-900">
+            ← {locale === "zh" ? "返回首页" : "Back home"}
+          </Link>
+          <h1 className="mt-4 text-3xl font-semibold tracking-tight text-zinc-950 sm:text-4xl">
+            {locale === "zh" ? "确认订单并付款" : "Confirm & pay"}
+          </h1>
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-zinc-500 sm:text-base sm:leading-7">
+            {locale === "zh"
+              ? "托管付款完成后，系统才会开始匹配 Creator。下单后 30 分钟内未付款，订单将自动取消。"
+              : "Creator matching starts only after escrow payment. Unpaid orders cancel automatically after 30 minutes."}
+          </p>
+        </header>
+
+        {orderCancelled ? (
+          <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-800">
+            {cancelReason ? (
+              <div className="space-y-1">
+                <p>{locale === "zh" ? "该项目已取消。" : "This project has been cancelled."}</p>
+                <p>
+                  {locale === "zh" ? "取消原因：" : "Reason: "}
+                  {cancelReason}
+                </p>
+              </div>
+            ) : locale === "zh" ? (
+              "该订单已因超时未付款自动取消。如需继续合作，请重新发布 Campaign 或联系平台客服。"
+            ) : (
+              "This order was automatically cancelled because payment was not completed within 30 minutes."
+            )}
+          </div>
+        ) : null}
+
+        <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
+          <BrandCheckoutSummary locale={locale} project={project} order={order} deliveryLabel={deliveryLabel} />
+          <div className="self-start space-y-5 xl:sticky xl:top-6">
+            {!orderCancelled ? (
+              <>
+                <BrandPaymentDeadlineNotice
+                  locale={locale}
+                  order={order}
+                  className="border-amber-300 bg-amber-50 shadow-[0_18px_45px_rgba(245,158,11,0.16)]"
+                />
+                <BrandCheckoutPanel
+                  locale={locale}
+                  order={order}
+                  projectId={id}
+                  studioName={studio?.name ?? "Studio"}
+                  escrowFunded={prismaEscrowFunded}
+                />
+              </>
+            ) : null}
+          </div>
         </div>
       </div>
     </div>

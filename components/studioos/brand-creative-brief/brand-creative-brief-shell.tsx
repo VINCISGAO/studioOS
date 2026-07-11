@@ -22,7 +22,8 @@ import {
   Lightbulb,
   Loader2,
   ShieldCheck,
-  Sparkles
+  Sparkles,
+  X
 } from "lucide-react";
 
 const copy = {
@@ -77,6 +78,44 @@ const sectionIcons = {
   budget: CircleDollarSign
 };
 
+function BriefInlineNotice({
+  message,
+  locale,
+  onDismiss
+}: {
+  message: string;
+  locale: Locale;
+  onDismiss: () => void;
+}) {
+  return (
+    <div className="fixed left-1/2 top-1/2 z-[60] w-[calc(100vw-2rem)] max-w-[28rem] -translate-x-1/2 -translate-y-1/2">
+      <div className="overflow-hidden rounded-2xl border border-emerald-100 bg-white/95 shadow-[0_14px_44px_rgba(15,23,42,0.12)] backdrop-blur-xl">
+        <div className="flex items-start gap-3 bg-gradient-to-br from-emerald-50/90 via-white to-violet-50/80 px-3.5 py-3">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-md shadow-emerald-600/15">
+            <Sparkles className="h-4 w-4" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start justify-between gap-3">
+              <p className="text-sm font-semibold leading-5 text-zinc-950">
+                {locale === "zh" ? "需要补充信息" : "More information needed"}
+              </p>
+              <button
+                type="button"
+                onClick={onDismiss}
+                className="-mr-1 -mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-zinc-400 transition hover:bg-white hover:text-zinc-700"
+                aria-label={locale === "zh" ? "关闭提示" : "Dismiss notice"}
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+            <p className="mt-0.5 text-sm leading-5 text-zinc-600">{message}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function BrandCreativeBriefShell({
   locale,
   children,
@@ -98,6 +137,14 @@ export function BrandCreativeBriefShell({
 }) {
   const t = copy[locale];
   const [activeSection, setActiveSection] = useState("overview");
+  const [dismissedNotice, setDismissedNotice] = useState<string | null>(null);
+  const showNotice = Boolean(displayError && displayError !== dismissedNotice);
+
+  useEffect(() => {
+    if (!displayError) {
+      setDismissedNotice(null);
+    }
+  }, [displayError]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "instant" });
@@ -130,12 +177,15 @@ export function BrandCreativeBriefShell({
   }
 
   return (
-    <div className="flex min-h-[100dvh] flex-col">
-      <div className="flex min-h-0 flex-1">
-        <aside className="hidden w-[220px] shrink-0 flex-col border-r border-zinc-200/80 bg-white xl:flex">
+    <div className="flex h-[100dvh] min-h-0 flex-col lg:h-full">
+      {displayError && showNotice ? (
+        <BriefInlineNotice message={displayError} locale={locale} onDismiss={() => setDismissedNotice(displayError)} />
+      ) : null}
+      <div className="flex min-h-0 flex-1 overflow-hidden">
+        <aside className="hidden w-[220px] shrink-0 flex-col border-r border-zinc-200/80 bg-white lg:flex">
           <Link
             href={withLocale(brandPortalRoutes.dashboard, locale)}
-            className="flex items-center gap-2.5 px-5 py-5 transition hover:opacity-80"
+            className="flex items-center gap-2.5 px-5 py-5 transition hover:opacity-80 lg:hidden"
           >
             <BrandLogoLockup
               contrastOn="light"
@@ -144,7 +194,7 @@ export function BrandCreativeBriefShell({
             />
           </Link>
 
-          <nav className="min-h-0 flex-1 space-y-0.5 overflow-y-auto px-3 pb-4">
+          <nav className="min-h-0 flex-1 space-y-0.5 overflow-y-auto px-3 pb-4 pt-5 lg:pt-8">
             <p className="px-3 pb-2 text-xs font-semibold uppercase tracking-wide text-violet-600">{t.create}</p>
             {CREATIVE_BRIEF_SECTIONS.map((section) => {
               const Icon = sectionIcons[section.id];
@@ -204,17 +254,17 @@ export function BrandCreativeBriefShell({
           </div>
         </aside>
 
-        <div className="flex min-w-0 flex-1 flex-col">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           <header className="sticky top-0 z-20 border-b border-zinc-200/80 bg-white/95 backdrop-blur">
             <div className="flex items-center justify-between gap-2 px-4 py-3 sm:px-6">
-              <Link href={withLocale(brandPortalRoutes.dashboard, locale)} className="xl:hidden">
+              <Link href={withLocale(brandPortalRoutes.dashboard, locale)} className="lg:hidden">
                 <BrandLogoLockup
                   contrastOn="light"
                   markClassName="h-8 w-8 rounded-lg shadow-sm ring-1 ring-violet-100"
                   wordmarkClassName="h-[17px] w-[106px]"
                 />
               </Link>
-              <div className="flex items-center justify-end gap-2 xl:ml-auto">
+              <div className="flex items-center justify-end gap-2 lg:ml-auto">
               <LanguageSwitcher locale={locale} />
               {onSaveDraft ? (
                 <Button type="button" variant="outline" className="hidden h-10 rounded-xl sm:inline-flex" onClick={onSaveDraft}>
@@ -240,10 +290,41 @@ export function BrandCreativeBriefShell({
           </header>
 
           <div id="brand-wizard-scroll-panel" className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
-            <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-8">
+            <div className="w-full px-4 py-6 sm:px-6 sm:py-8 lg:px-8 xl:px-10">
               <div className="mb-8">
                 <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 sm:text-[28px]">{t.title}</h1>
                 <p className="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-500 sm:text-base">{t.subtitle}</p>
+                <div className="mt-5 overflow-hidden rounded-3xl border border-violet-100 bg-white shadow-[0_18px_60px_rgba(88,28,135,0.08)]">
+                  <div className="bg-[radial-gradient(circle_at_6%_20%,rgba(124,58,237,0.16),transparent_28%),linear-gradient(135deg,#faf5ff_0%,#ffffff_56%,#ecfdf5_100%)] px-5 py-5">
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                      <div className="flex items-start gap-3">
+                        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-violet-600 text-white shadow-lg shadow-violet-600/25">
+                          <Sparkles className="h-5 w-5" />
+                        </span>
+                        <div>
+                          <p className="text-base font-semibold tracking-tight text-zinc-950">
+                            {locale === "zh" ? "VINCIS 智能制作估价引擎" : "VINCIS Production Pricing Engine"}
+                          </p>
+                          <p className="mt-1 max-w-3xl text-sm leading-6 text-zinc-600">
+                            {locale === "zh"
+                              ? "不是按模型调用次数粗算价格，而是先估算可用镜头、生成倍率、创作者工时、修改和风险，再生成可成交的预算方案。"
+                              : "Not a raw generation-cost calculator. It estimates usable shots, generation ratio, creator hours, revision cost, and risk before pricing."}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="grid gap-2 text-xs sm:grid-cols-3 lg:min-w-[26rem]">
+                        {(locale === "zh"
+                          ? ["保障创作者利润", "品牌可自主加价", "平台覆盖交易风险"]
+                          : ["Protect creator profit", "Brand-controlled upgrades", "Platform risk covered"]
+                        ).map((item) => (
+                          <div key={item} className="rounded-2xl bg-white/85 px-3 py-2 font-semibold text-zinc-700 shadow-sm ring-1 ring-violet-100">
+                            {item}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
               <div className="space-y-5 pb-32">{children}</div>
             </div>
@@ -251,17 +332,13 @@ export function BrandCreativeBriefShell({
         </div>
       </div>
 
-      <footer className="fixed inset-x-0 bottom-0 z-30 border-t border-zinc-200/80 bg-white/95 backdrop-blur xl:left-[220px]">
-        <div className="mx-auto flex max-w-4xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+      <footer className="fixed inset-x-0 bottom-0 z-30 border-t border-zinc-200/80 bg-white/95 backdrop-blur lg:left-[468px]">
+        <div className="flex w-full flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8 xl:px-10">
           <div className="min-h-[20px] flex-1">
-            {displayError ? (
-              <p className="text-sm text-red-600">{displayError}</p>
-            ) : (
-              <p className="flex items-center gap-2 text-sm text-zinc-500">
-                <ShieldCheck className="h-4 w-4 text-emerald-600" />
-                {t.draftSaved}
-              </p>
-            )}
+            <p className="flex items-center gap-2 text-sm text-zinc-500">
+              <ShieldCheck className="h-4 w-4 text-emerald-600" />
+              {t.draftSaved}
+            </p>
           </div>
           <div className="flex gap-2">
             {onSaveDraft ? (

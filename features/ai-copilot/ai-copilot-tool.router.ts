@@ -113,23 +113,23 @@ function outputForTool(toolName: ToolName, context: AiCopilotContext): Record<st
     case "get_current_user":
       return { user: context.user, language: context.language, country: context.country, timezone: context.timezone };
     case "get_brand_summary":
-      return { brand: summaries.brand ?? null, campaigns: summaries.campaigns ?? [] };
+      return { currentPage: summaries.currentPage ?? null, brand: summaries.brand ?? null, campaigns: summaries.campaigns ?? [] };
     case "get_creator_summary":
       return { creator: summaries.creator ?? null, invitations: summaries.invitations ?? [] };
     case "get_campaign_status":
-      return { campaigns: summaries.campaigns ?? [], platform: summaries.platform ?? null };
+      return { currentPage: summaries.currentPage ?? null, campaigns: summaries.campaigns ?? [], platform: summaries.platform ?? null };
     case "get_order_status":
-      return { orders: summaries.orders ?? [], platform: summaries.platform ?? null };
+      return { currentPage: summaries.currentPage ?? null, orders: summaries.orders ?? [], platform: summaries.platform ?? null };
     case "get_payment_status":
-      return { orders: summaries.orders ?? [], wallet: summaries.wallet ?? null, platform: summaries.platform ?? null };
+      return { currentPage: summaries.currentPage ?? null, orders: summaries.orders ?? [], wallet: summaries.wallet ?? null, platform: summaries.platform ?? null };
     case "get_wallet_summary":
       return { wallet: summaries.wallet ?? null, platform: summaries.platform ?? null };
     case "get_review_status":
-      return { campaigns: summaries.campaigns ?? [], orders: summaries.orders ?? [] };
+      return { currentPage: summaries.currentPage ?? null, campaigns: summaries.campaigns ?? [], orders: summaries.orders ?? [] };
     case "get_matching_explanation":
       return { campaigns: summaries.campaigns ?? [], invitations: summaries.invitations ?? [] };
     case "get_budget_score":
-      return { campaigns: summaries.campaigns ?? [], creator: summaries.creator ?? null };
+      return { currentPage: summaries.currentPage ?? null, campaigns: summaries.campaigns ?? [], creator: summaries.creator ?? null };
     case "get_attribution_summary":
       return { campaigns: summaries.campaigns ?? [] };
     case "get_ai_memory_summary":

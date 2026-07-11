@@ -9,33 +9,46 @@ import { BrandCreatorGlobeMatchingLoader } from "@/components/studioos/brand-cre
 import { useBrandCampaignDirections } from "@/components/studioos/use-brand-campaign-directions";
 import { WizardStepper } from "@/components/studioos/ui/wizard-stepper";
 import type { StoredProject } from "@/lib/project-types";
+import type { StoredProjectReference } from "@/lib/campaign-types";
 import { buildSchemeDisplayMetrics } from "@/lib/studioos/brand-campaign-scheme-metrics";
 import type { Locale } from "@/lib/i18n";
 import { syncBrandWizardStepUrl } from "@/lib/studioos/instant-nav";
 import type { WizardBriefSnapshot } from "@/lib/studioos/brand-wizard-brief-snapshot";
 import { STEP2_SCHEME_LAYOUT } from "@/lib/studioos/brand-campaign-step2-layout";
 import { localizeCreativeDirection } from "@/lib/studioos/creative-direction-localization";
+import { CREATOR_SUBMITTED_CREATIVE_DIRECTION_ID } from "@/lib/studioos/creative-direction-selection";
 import { Brain, Sparkles, Target, TrendingUp, Zap } from "lucide-react";
 
 const copy = {
   en: {
-    headline: "AI generated 3 high-conversion creative schemes for you",
+    headline: "AI generated 3 Creative Strategy routes for you",
     subtitle:
-      "Each scheme is tailored to your brief, product strengths, and audience — pick one to freeze into your Production Brief.",
+      "Each route is structured like an agency pitch deck: insight, big idea, hook, execution language, and production fit.",
     tagInsight: "Deep product insight",
     tagAudience: "Audience psychology",
     tagPlatform: "Platform algorithm fit",
     tagPerformance: "Performance forecast",
-    chooseError: "Choose one creative direction"
+    chooseError: "Choose one creative direction or let creators submit ideas",
+    creatorOptionTitle: "Do not choose these schemes",
+    creatorOptionBody: "Let matched creators submit their own creative ideas after the campaign is published.",
+    creatorOptionBadge: "Creator-led creative",
+    creatorConfirm: "Let creators submit ideas",
+    referenceNotice:
+      "The following creative strategies are for reference only. Final creative direction will be confirmed jointly by the brand and Creator."
   },
   zh: {
-    headline: "智能系统已为你生成 3 套高转化创意方案",
-    subtitle: "每套方案均基于你的需求、产品卖点与目标受众定制，选择一套后将冻结为正式制作简报。",
+    headline: "智能系统已为你生成 3 套 Creative Strategy",
+    subtitle: "每套策略都像广告公司 Pitch Deck：包含消费者洞察、Big Idea、前三秒 Hook、执行语法与制作适配。",
     tagInsight: "深度洞察产品卖点",
     tagAudience: "匹配受众心理",
     tagPlatform: "平台算法偏好",
     tagPerformance: "预测投放效果",
-    chooseError: "请先选择一个创意方向"
+    chooseError: "请先选择一个创意方向，或选择交给创作者提交创意",
+    creatorOptionTitle: "以上方案都不选",
+    creatorOptionBody: "交给后续匹配到的创作者提交创意方向，品牌再从创作者方案中确认最终制作方向。",
+    creatorOptionBadge: "创作者提交创意",
+    creatorConfirm: "交给创作者提交创意",
+    referenceNotice: "以下创意仅供参考，最终创作方向由品牌方与 Creator 共同确认。"
   }
 } as const;
 
@@ -50,6 +63,7 @@ const MAIN_SIDEBAR_GRID =
 export function BrandCampaignStep2Review({
   locale,
   project,
+  references = [],
   budget,
   productImageUrl,
   error,
@@ -64,6 +78,7 @@ export function BrandCampaignStep2Review({
 }: {
   locale: Locale;
   project: StoredProject;
+  references?: StoredProjectReference[];
   budget: string;
   productImageUrl?: string | null;
   delivery: string;
@@ -81,6 +96,7 @@ export function BrandCampaignStep2Review({
   const t = copy[locale];
   const [localError, setLocalError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [previewId, setPreviewId] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
 
   const { directions, status, error: loadError, isLoading } = useBrandCampaignDirections(
@@ -118,7 +134,10 @@ export function BrandCampaignStep2Review({
     if (directions.length && !selectedId) {
       setSelectedId(directions[0]?.id ?? null);
     }
-  }, [directions, selectedId]);
+    if (directions.length && !previewId) {
+      setPreviewId(directions[0]?.id ?? null);
+    }
+  }, [directions, previewId, selectedId]);
 
   useEffect(() => {
     if (!isActive || status !== "ready") return;
@@ -143,8 +162,12 @@ export function BrandCampaignStep2Review({
 
   /** 上方预览 = 当前选中方案；下方两枚 = 其余方案缩略图，点击切换预览 */
   const selectedDirection =
-    displayDirections.find((item) => item.id === selectedId) ?? displayDirections[0] ?? null;
+    displayDirections.find((item) => item.id === previewId) ??
+    displayDirections.find((item) => item.id === selectedId) ??
+    displayDirections[0] ??
+    null;
   const thumbnailDirections = displayDirections.filter((item) => item.id !== selectedDirection?.id);
+  const creatorSubmissionSelected = selectedId === CREATOR_SUBMITTED_CREATIVE_DIRECTION_ID;
 
   function directionIndex(direction: (typeof directions)[number]) {
     return Math.max(
@@ -181,7 +204,7 @@ export function BrandCampaignStep2Review({
             : "flex min-h-full flex-1 flex-col"
         }
       >
-        <div className="flex-1 space-y-6 bg-[#f8f9fb] px-3 pb-[calc(6.5rem+env(safe-area-inset-bottom))] pt-4 sm:px-4 sm:pt-5 lg:px-5 lg:pt-6 xl:pb-6">
+        <div className="flex-1 space-y-6 bg-[#f8f9fb] px-3 pb-[calc(6.5rem+env(safe-area-inset-bottom))] pt-4 sm:px-4 sm:pt-5 lg:px-5 lg:pt-6">
           <div className={MAIN_SIDEBAR_GRID}>
             <WizardStepper locale={locale} currentStep={2} variant="brand" />
             <div className="hidden xl:block" aria-hidden />
@@ -213,6 +236,36 @@ export function BrandCampaignStep2Review({
             <div className={STEP2_SCHEME_LAYOUT.schemesStack}>
               {showContent && selectedDirection ? (
                 <>
+                  <div className="flex w-full justify-center lg:justify-start">
+                    <div className="inline-flex rounded-[1.6rem] border border-violet-200 bg-white p-1.5 shadow-[0_16px_45px_rgba(124,58,237,0.18)] ring-1 ring-violet-100">
+                      {displayDirections.map((direction) => {
+                        const label = String.fromCharCode(65 + directionIndex(direction));
+                        const active = selectedDirection.id === direction.id;
+                        return (
+                          <button
+                            key={direction.id}
+                            type="button"
+                            onClick={() => {
+                              setSelectedId(direction.id);
+                              setPreviewId(direction.id);
+                              setLocalError(null);
+                            }}
+                            className={
+                              active
+                                ? "min-w-32 rounded-[1.25rem] bg-gradient-to-r from-violet-600 to-fuchsia-600 px-7 py-3 text-base font-bold text-white shadow-[0_10px_28px_rgba(124,58,237,0.35)]"
+                                : "min-w-32 rounded-[1.25rem] px-7 py-3 text-base font-bold text-zinc-500 transition hover:bg-violet-50 hover:text-violet-700"
+                            }
+                          >
+                            {locale === "zh" ? `方案 ${label}` : `Strategy ${label}`}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <p className="rounded-2xl border border-violet-100 bg-violet-50/70 px-4 py-3 text-center text-xs font-medium leading-5 text-violet-700 lg:text-left">
+                    {t.referenceNotice}
+                  </p>
+
                   <BrandCampaignStep2FeaturedScheme
                     locale={locale}
                     direction={selectedDirection}
@@ -244,12 +297,14 @@ export function BrandCampaignStep2Review({
                           textOnly
                           onSelect={() => {
                             setSelectedId(direction.id);
+                            setPreviewId(direction.id);
                             setLocalError(null);
                           }}
                         />
                       ))}
                     </div>
                   ) : null}
+
                 </>
               ) : null}
             </div>
@@ -257,10 +312,23 @@ export function BrandCampaignStep2Review({
             {showContent ? (
               <BrandCampaignStep2SchemeSidebar
                 locale={locale}
+                project={project}
+                references={references}
                 directions={displayDirections}
                 selectedId={selectedId}
                 platforms={platforms}
                 fallbackBudget={fallbackBudget}
+                budget={budget}
+                creatorOption={{
+                  selected: creatorSubmissionSelected,
+                  badge: t.creatorOptionBadge,
+                  title: t.creatorOptionTitle,
+                  body: t.creatorOptionBody,
+                  onSelect: () => {
+                    setSelectedId(CREATOR_SUBMITTED_CREATIVE_DIRECTION_ID);
+                    setLocalError(null);
+                  }
+                }}
               />
             ) : null}
           </div>
@@ -272,6 +340,7 @@ export function BrandCampaignStep2Review({
           locale={locale}
           directionsReady={showContent}
           selectedId={selectedId}
+          confirmLabel={creatorSubmissionSelected ? t.creatorConfirm : undefined}
           onBack={onBack}
           onSaveDraft={onSaveDraft}
           onConfirm={handleConfirm}

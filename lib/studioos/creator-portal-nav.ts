@@ -10,8 +10,7 @@ import {
   Palette,
   Receipt,
   Settings,
-  Shield,
-  Sparkles
+  Shield
 } from "lucide-react";
 
 export type CreatorPortalNavKey = keyof typeof studioNav.en;
@@ -78,13 +77,6 @@ export const creatorPortalNavItems: CreatorPortalNavItem[] = [
     mobileIconKey: "messages",
     requiresBusinessAccess: true,
     showUnreadDot: true
-  },
-  {
-    href: creatorPortalRoutes.aiAssistant,
-    labelKey: "aiAssistant",
-    icon: Sparkles,
-    mobileIconKey: "aiAssistant",
-    requiresBusinessAccess: true
   },
   {
     href: creatorPortalRoutes.deposit,

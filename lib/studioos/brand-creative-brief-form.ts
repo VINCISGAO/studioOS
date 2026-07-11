@@ -5,6 +5,11 @@ type StoredQuestionnaire = Partial<BriefFormState> & {
   refined_brief?: BriefFormState["refined"];
 };
 
+function normalizeVideoDuration(value: unknown, fallback: string) {
+  const raw = String(value ?? fallback);
+  return raw === "6s" || raw === "10s" ? "15s" : raw;
+}
+
 export function defaultCreativeBriefExtendedFields(): Pick<
   BriefFormState,
   | "projectTitle"
@@ -81,7 +86,7 @@ export function readCreativeBriefExtendedFields(
     industry: String(source.industry ?? ""),
     brandName: String(source.brandName ?? project.company_name ?? project.client_name ?? ""),
     brandWebsite: String(source.brandWebsite ?? source.productUrl ?? project.product_url ?? ""),
-    videoDuration: String(source.videoDuration ?? defaults.videoDuration),
+    videoDuration: normalizeVideoDuration(source.videoDuration, defaults.videoDuration),
     videoDurationCustom: String(source.videoDurationCustom ?? ""),
     creativeStyles: Array.isArray(source.creativeStyles) ? source.creativeStyles.map(String) : defaults.creativeStyles,
     creativeStyleCustom: String(source.creativeStyleCustom ?? ""),
@@ -124,7 +129,7 @@ export function readCreativeBriefExtendedFieldsFromFormData(
     industry: String(formData.get("industry") ?? "").trim(),
     brandName: String(formData.get("brandName") ?? "").trim(),
     brandWebsite: String(formData.get("brandWebsite") ?? "").trim(),
-    videoDuration: String(formData.get("videoDuration") ?? defaults.videoDuration),
+    videoDuration: normalizeVideoDuration(formData.get("videoDuration"), defaults.videoDuration),
     videoDurationCustom: String(formData.get("videoDurationCustom") ?? "").trim(),
     creativeStyles: parseCommaList(formData.get("creativeStyles")),
     creativeStyleCustom: String(formData.get("creativeStyleCustom") ?? "").trim(),

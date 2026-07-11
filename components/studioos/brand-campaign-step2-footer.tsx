@@ -21,6 +21,7 @@ export function BrandCampaignStep2Footer({
   locale,
   directionsReady,
   selectedId,
+  confirmLabel,
   onBack,
   onSaveDraft,
   onConfirm
@@ -28,6 +29,7 @@ export function BrandCampaignStep2Footer({
   locale: Locale;
   directionsReady: boolean;
   selectedId: string | null;
+  confirmLabel?: string;
   onBack: () => void;
   onSaveDraft?: () => void;
   onConfirm: () => void;
@@ -37,7 +39,7 @@ export function BrandCampaignStep2Footer({
   return (
     <div
       className={cn(
-        "fixed inset-x-0 bottom-0 z-40 shrink-0 border-t border-zinc-200 bg-white/95 backdrop-blur lg:left-[248px] xl:sticky xl:left-auto",
+        "fixed inset-x-0 bottom-0 z-40 shrink-0 border-t border-zinc-200 bg-white/95 backdrop-blur lg:left-[248px]",
         "supports-[backdrop-filter]:bg-white/90"
       )}
     >
@@ -74,7 +76,7 @@ export function BrandCampaignStep2Footer({
             onClick={onConfirm}
             className="inline-flex h-9 max-w-[min(100vw-7rem,280px)] items-center justify-center gap-2 truncate rounded-lg bg-violet-600 px-3 text-sm font-semibold text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50 sm:h-10 sm:max-w-none sm:px-5"
           >
-            <span className="truncate">{t.confirm}</span>
+            <span className="truncate">{confirmLabel ?? t.confirm}</span>
             <ArrowRight className="h-4 w-4 shrink-0" />
           </button>
         </div>

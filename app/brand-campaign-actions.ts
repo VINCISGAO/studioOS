@@ -47,13 +47,17 @@ import type { BrandProductionBrief } from "@/features/campaign/brand-campaign/br
 import { campaignService } from "@/features/campaign/campaign.service";
 import { CampaignEvent, CampaignState } from "@/features/campaign/campaign.state-machine";
 import { campaignBridgeService } from "@/features/campaign/campaign-bridge.service";
+import { aiWorkerService } from "@/features/ai/ai-worker.service";
 import { aiUsageQuotaService } from "@/features/abuse/ai-usage-quota.service";
 import { emitWizardProgress } from "@/lib/campaign/wizard-progress.service";
 import { runBrandWizardDemoPrepareInstant, runBrandWizardDemoPublish } from "@/lib/campaign/brand-wizard-demo-prepare";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
-import { normalizeCampaignStatus } from "@/lib/studioos/project-status";
 import { preparePublishedCampaignCheckout } from "@/lib/studioos/brand-checkout-service";
 import { parseBudgetMidpoint } from "@/lib/studioos/brand-checkout-utils";
+import {
+  CREATOR_SUBMITTED_CREATIVE_DIRECTION_ID,
+  isCreatorSubmittedCreativeDirection
+} from "@/lib/studioos/creative-direction-selection";
 import {
   WIZARD_EPHEMERAL_KEY,
   WIZARD_SAVED_AT_KEY
@@ -189,10 +193,9 @@ async function assertAiTokensAllowedAfterPayment(
   options?: { wizardFastPath?: boolean }
 ) {
   if (options?.wizardFastPath) {
-    const project = await getProject(projectId);
-    if (project && normalizeCampaignStatus(project.status) === "draft") {
-      return { ok: true as const };
-    }
+    // Brand wizard step 2 generates text-only preview directions before escrow.
+    // Post-payment AI creative collaboration and matching still use the escrow gate below.
+    return { ok: true as const };
   }
 
   const order = await getOrderForProject(projectId);
@@ -206,6 +209,19 @@ async function assertAiTokensAllowedAfterPayment(
     };
   }
   return { ok: true as const };
+}
+
+function readAiJobJson(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+}
+
+function isWizardPreviewAiJob(value: unknown): boolean {
+  return readAiJobJson(value).wizardFastPath === true;
+}
+
+function aiJobOutputError(value: unknown): string {
+  const output = readAiJobJson(value);
+  return typeof output.error === "string" ? output.error : "";
 }
 
 async function requireBrandCampaignUser(email: string) {
@@ -990,19 +1006,28 @@ export async function startBrandCreativeDirectionsAction(formData: FormData) {
   try {
     const user = await requireBrandCampaignUser(ctx.client.client_email);
     const existing = await creativeDirectionService.listDirections(campaignId, user);
-    if (existing.length >= 3) {
+    if (!briefSnapshot && existing.length >= 3) {
       const directions = await finalizeBrandCreativeDirections(projectId, lang, existing, { wizardFastPath });
       return { ok: true as const, status: "ready" as const, directions };
     }
 
     const activeJob = await aiJobRepository.findActiveForCampaign(campaignId, "CREATIVE_DIRECTION");
-    if (activeJob) {
+    const activeJobMatchesCurrentMode = activeJob
+      ? wizardFastPath
+        ? isWizardPreviewAiJob(activeJob.inputJson)
+        : !isWizardPreviewAiJob(activeJob.inputJson)
+      : false;
+    if (activeJob && activeJobMatchesCurrentMode) {
       if (briefSnapshot && activeJob.status === "QUEUED") {
-        const input = (activeJob.inputJson ?? {}) as Record<string, unknown>;
+        const input = readAiJobJson(activeJob.inputJson);
         await aiJobRepository.updateInputJson(activeJob.id, {
           ...input,
-          briefSnapshot
+          briefSnapshot,
+          ...(wizardFastPath ? { wizardFastPath: true } : {})
         });
+      }
+      if (activeJob.status === "QUEUED" || activeJob.status === "RETRYING") {
+        aiWorkerService.scheduleProcess(activeJob.id);
       }
       return { ok: true as const, status: "pending" as const, jobId: activeJob.id };
     }
@@ -1049,6 +1074,7 @@ export async function pollBrandCreativeDirectionsAction(formData: FormData) {
   const projectId = String(formData.get("project_id") ?? "");
   const jobId = String(formData.get("job_id") ?? "").trim();
   const wizardFastPath = formData.get("wizard_fast_path") === "1";
+  const briefSnapshot = parseWizardBriefSnapshot(String(formData.get("brief_snapshot") ?? ""));
   const ctx = await resolveBrandCampaignContext(projectId, lang);
   if (!ctx.ok) return ctx;
   const aiGate = await assertAiTokensAllowedAfterPayment(projectId, lang, { wizardFastPath });
@@ -1066,20 +1092,38 @@ export async function pollBrandCreativeDirectionsAction(formData: FormData) {
 
   try {
     const user = await requireBrandCampaignUser(ctx.client.client_email);
-    const directions = await creativeDirectionService.listDirections(campaignId, user);
-    if (directions.length >= 3) {
-      const ready = await finalizeBrandCreativeDirections(projectId, lang, directions, { wizardFastPath });
-      return { ok: true as const, status: "ready" as const, directions: ready };
-    }
-
     if (jobId) {
       const job = await aiJobRepository.findById(jobId);
       if (job?.status === "FAILED" || job?.status === "DEAD") {
+        const staleEscrowBlockedPreviewJob =
+          wizardFastPath &&
+          job.campaignId === campaignId &&
+          !isWizardPreviewAiJob(job.inputJson) &&
+          aiJobOutputError(job.outputJson).includes("escrow payment");
+
+        if (staleEscrowBlockedPreviewJob) {
+          const restarted = await creativeDirectionService.generateAsync(campaignId, user, {
+            wizardFastPath: true,
+            briefSnapshot: briefSnapshot ?? undefined,
+            language: lang
+          });
+          return { ok: true as const, status: "pending" as const, jobId: restarted.jobId };
+        }
+
         return {
           ok: false as const,
           error: lang === "zh" ? "AI 创意生成失败，请返回上一步重试" : "AI creative generation failed — go back and try again"
         };
       }
+      if (job && job.status !== "SUCCESS") {
+        return { ok: true as const, status: "pending" as const, directions: [] as CreativeDirection[] };
+      }
+    }
+
+    const directions = await creativeDirectionService.listDirections(campaignId, user);
+    if (directions.length >= 3) {
+      const ready = await finalizeBrandCreativeDirections(projectId, lang, directions, { wizardFastPath });
+      return { ok: true as const, status: "ready" as const, directions: ready };
     }
 
     return { ok: true as const, status: "pending" as const, directions: [] as CreativeDirection[] };
@@ -1164,6 +1208,68 @@ export async function approveBrandCreativeDirectionAction(formData: FormData) {
 
   try {
     const user = await requireBrandCampaignUser(ctx.client.client_email);
+    if (isCreatorSubmittedCreativeDirection(directionId)) {
+      const baseSnapshot = buildConfirmedBriefSnapshot(ctx.project, lang);
+      const creativeField = {
+        section: lang === "zh" ? "创意" : "Creative",
+        label: lang === "zh" ? "创意方案来源" : "Creative source",
+        value:
+          lang === "zh"
+            ? "以上 AI 方案暂不选择，交给创作者提交创意方向。"
+            : "AI schemes were not selected. Matched creators will submit creative ideas."
+      };
+      const frozen = {
+        ...baseSnapshot,
+        fields: [...baseSnapshot.fields, creativeField],
+        full_text: [baseSnapshot.full_text, `${creativeField.label}: ${creativeField.value}`]
+          .filter((item) => item.trim())
+          .join("\n")
+      };
+
+      await updateProject(projectId, {
+        settings_json: {
+          ...ctx.project.settings_json,
+          frozen_production_brief: frozen,
+          selected_direction_id: CREATOR_SUBMITTED_CREATIVE_DIRECTION_ID,
+          selected_direction_mode: "creator_submission",
+          confirmed_brief: frozen
+        }
+      });
+
+      const linkedOrders = await listOrdersForProject(projectId);
+      await Promise.all(linkedOrders.map((order) => updateOrderRequirements(order.id, frozen.full_text)));
+
+      await aiLearningEventRepository.append({
+        eventType: "CreatorSubmittedCreativeStrategySelected",
+        entityType: "Campaign",
+        entityId: campaignId,
+        payload: {
+          campaignId,
+          projectId,
+          userId: user.id,
+          selection_mode: "creator_submission",
+          selected_direction_id: CREATOR_SUBMITTED_CREATIVE_DIRECTION_ID,
+          reason: "Brand skipped AI Creative Strategy routes and delegated creative ideation to matched creators."
+        },
+        learningType: "creative_strategy_selection_preference",
+        after: {
+          selected_direction_mode: "creator_submission",
+          prefers_creator_submitted_creative: true
+        },
+        confidence: 0.9
+      });
+
+      await completeWizardSteps(projectId, [2, 3, 4, 5, 6]);
+      await emitWizardProgress(projectId, {
+        step: 6,
+        phase: "idle",
+        progressMessage: lang === "zh" ? "已选择由创作者提交创意" : "Creator-submitted creative selected"
+      });
+
+      revalidateBrandCampaign(projectId);
+      return { ok: true as const, selected: null, frozen };
+    }
+
     const selected = await creativeDirectionService.approve(campaignId, user, directionId, { language: lang });
     const campaign = await brandCampaignRepository.findByLegacyProjectId(projectId);
     const brief = (campaign?.productionBrief ?? {}) as BrandProductionBrief;

@@ -54,6 +54,7 @@
     "db:recover": "bash scripts/db-recover.sh",
     "db:push": "bash scripts/prisma-with-env.sh db push",
     "db:seed": "node --require ./scripts/helpers/load-env.cjs --import tsx prisma/seed.ts",
+    "marketing:sync-faq-knowledge": "npm run db:generate && node --require ./scripts/helpers/load-env.cjs --import tsx scripts/sync-marketing-faq-knowledge.ts",
     "db:studio": "bash scripts/prisma-with-env.sh studio",
     "bootstrap:admin": "node -r ./scripts/helpers/load-env.cjs scripts/bootstrap-admin-profile.mjs",
     "sprint1:verify": "node --import tsx scripts/sprint1-verify.ts",

@@ -1,5 +1,5 @@
-import { AiWorkspacePage } from "@/components/ai-copilot/ai-workspace-page";
+import { redirect } from "next/navigation";
 
 export default function AdminCopilotPage() {
-  return <AiWorkspacePage mode="admin" />;
+  redirect("/admin");
 }

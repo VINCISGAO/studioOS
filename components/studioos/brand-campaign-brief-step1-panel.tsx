@@ -25,6 +25,7 @@ export type BrandCampaignBriefStep1PanelProps = {
   isSavingDraft: boolean;
   isUploading: boolean;
   isRefPending: boolean;
+  isReferenceVideoUploading: boolean;
   continueDisabled: boolean;
   productReady: boolean;
   previewUrl: string | null;
@@ -37,6 +38,9 @@ export type BrandCampaignBriefStep1PanelProps = {
   onApplyRefined: () => void;
   onUploadClick: () => void;
   onUploadFile: (file: File) => void;
+  referenceVideoInputRef: React.RefObject<HTMLInputElement | null>;
+  onReferenceVideoUploadClick: () => void;
+  onUploadReferenceVideo: (file: File) => void;
   onAddRef: () => void;
   onRemoveRef: (id: string) => void;
   onSelectPresetBudget: (value: string) => void;
@@ -49,12 +53,10 @@ export type BrandCampaignBriefStep1PanelProps = {
 };
 
 export function BrandCampaignBriefStep1Panel(props: BrandCampaignBriefStep1PanelProps) {
-  void props.onPolish;
   void props.onApplyRefined;
   void props.updateRefined;
   void props.refinedApplied;
   void props.applyNotice;
-  void props.isPolishing;
   void props.aspectRatioError;
   void props.budgetCustomError;
 
@@ -83,7 +85,10 @@ export function BrandCampaignBriefStep1Panel(props: BrandCampaignBriefStep1Panel
         setRefUrl={props.setRefUrl}
         onAddRef={props.onAddRef}
         onRemoveRef={props.onRemoveRef}
+        onPolish={props.onPolish}
+        isPolishing={props.isPolishing}
         isRefPending={props.isRefPending}
+        isReferenceVideoUploading={props.isReferenceVideoUploading}
         isPending={props.isPending}
         isUploading={props.isUploading}
         productReady={props.productReady}
@@ -91,6 +96,9 @@ export function BrandCampaignBriefStep1Panel(props: BrandCampaignBriefStep1Panel
         onUploadClick={props.onUploadClick}
         fileInputRef={props.fileInputRef}
         onUploadFile={props.onUploadFile}
+        referenceVideoInputRef={props.referenceVideoInputRef}
+        onReferenceVideoUploadClick={props.onReferenceVideoUploadClick}
+        onUploadReferenceVideo={props.onUploadReferenceVideo}
         uploadError={props.uploadError}
         copy={props.copy}
       />

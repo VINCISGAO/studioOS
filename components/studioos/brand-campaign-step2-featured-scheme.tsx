@@ -7,32 +7,58 @@ import { STEP2_SCHEME_LAYOUT } from "@/lib/studioos/brand-campaign-step2-layout"
 import type { SchemeDisplayMetrics } from "@/lib/studioos/brand-campaign-scheme-metrics";
 import type { Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
-import { Check, Crown } from "lucide-react";
+import { Check } from "lucide-react";
 
 const PREVIEW_FRAME_COUNT = 3;
 
 const copy = {
   en: {
     recommended: "Recommended",
-    scheme: "Scheme",
-    coreCreative: "Core creative",
-    highlights: "Creative highlights",
-    aiScore: "AI score",
-    ctr: "Est. CTR lift",
-    conversion: "Est. conversion lift",
-    roi: "ROI forecast",
+    scheme: "Creative Strategy",
+    coreInsight: "Core Insight",
+    bigIdea: "Big Idea",
+    openingHook: "Opening Hook",
+    storyStructure: "Story Structure",
+    visualStyle: "Visual Style",
+    cameraLanguage: "Camera Language",
+    colorPalette: "Color Palette",
+    musicDirection: "Music Direction",
+    creatorRequirements: "Creator Requirements",
+    whyRecommended: "Why AI Recommends This",
+    audienceMatch: "Audience Match",
+    emotionalResonance: "Emotional Resonance",
+    productIntegration: "Product Integration",
+    estimatedCtr: "Estimated CTR",
+    duration: "Recommended Duration",
+    difficulty: "AI Production Difficulty",
+    industries: "Suitable Industries",
+    aiScore: "AI Score",
+    excellent: "Excellent",
     mediaComingSoon: "Coming soon",
     frame: "Frame"
   },
   zh: {
     recommended: "推荐",
-    scheme: "方案",
-    coreCreative: "核心创意",
-    highlights: "创意亮点",
-    aiScore: "智能评分",
-    ctr: "预计点击率提升",
-    conversion: "预计转化提升",
-    roi: "回报率预测",
+    scheme: "Creative Strategy",
+    coreInsight: "Core Insight 消费者洞察",
+    bigIdea: "Big Idea 创意核心",
+    openingHook: "Opening Hook 前 3 秒",
+    storyStructure: "Story Structure 故事结构",
+    visualStyle: "Visual Style 画面风格",
+    cameraLanguage: "Camera Language 镜头语言",
+    colorPalette: "Color Palette 色彩",
+    musicDirection: "Music Direction 音乐",
+    creatorRequirements: "Creator Requirements 创作者要求",
+    whyRecommended: "Why AI Recommends This",
+    audienceMatch: "Audience Match",
+    emotionalResonance: "Emotional Resonance",
+    productIntegration: "Product Integration",
+    estimatedCtr: "Estimated CTR",
+    duration: "Recommended Duration",
+    difficulty: "AI Production Difficulty",
+    industries: "Suitable Industries",
+    aiScore: "AI 评分",
+    excellent: "Excellent",
     mediaComingSoon: "即将开放",
     frame: "分镜"
   }
@@ -94,39 +120,45 @@ function FeaturedStoryboardStrip({
 function FeaturedMetricsPanel({ locale, metrics }: { locale: Locale; metrics: SchemeDisplayMetrics }) {
   const t = copy[locale];
   const items = [
-    { label: t.aiScore, value: `${metrics.aiScore}`, suffix: "/100", seed: metrics.aiScore, accent: true },
-    { label: t.ctr, value: `+${metrics.ctrLift}%`, suffix: "", seed: metrics.ctrLift + 10, accent: false },
-    { label: t.conversion, value: `+${metrics.conversionLift}%`, suffix: "", seed: metrics.conversionLift + 20, accent: false },
-    { label: t.roi, value: `${metrics.roi}x`, suffix: "", seed: Math.round(metrics.roi * 10), accent: false }
+    { label: t.audienceMatch, value: `${metrics.audienceMatch}%`, seed: metrics.audienceMatch, accent: true },
+    { label: t.emotionalResonance, value: `${metrics.emotionalResonance}%`, seed: metrics.emotionalResonance, accent: false },
+    { label: t.productIntegration, value: `${metrics.productIntegration}%`, seed: metrics.productIntegration, accent: false },
+    { label: t.estimatedCtr, value: metrics.estimatedCtr, seed: metrics.audienceMatch + 7, accent: false },
+    { label: t.duration, value: metrics.recommendedDuration, seed: 42, accent: false },
+    { label: t.difficulty, value: metrics.aiProductionDifficulty, seed: 58, accent: false },
+    {
+      label: t.industries,
+      value: metrics.suitableIndustries.length
+        ? metrics.suitableIndustries.slice(0, 2).join(", ")
+        : locale === "zh"
+          ? "待 AI 判断"
+          : "AI pending",
+      seed: 76,
+      accent: false
+    }
   ];
 
   return (
-    <div className={cn("flex flex-col gap-3", STEP2_SCHEME_LAYOUT.featuredMetricsCol)}>
-      <div className="grid grid-cols-2 gap-2">
-        {items.map((item) => (
-          <div
-            key={item.label}
-            className={cn(
-              "rounded-lg border px-3 py-2.5",
-              item.accent ? "border-violet-100 bg-violet-50/60" : "border-zinc-100 bg-zinc-50/80"
-            )}
-          >
-            <p className="text-[10px] leading-4 text-zinc-500">{item.label}</p>
-            <div className="mt-1.5 flex items-end justify-between gap-1">
-              <p className="tabular-nums leading-none">
-                <span className={cn("text-base font-semibold", item.accent ? "text-violet-700" : "text-zinc-900")}>
-                  {item.value}
-                </span>
-                {item.suffix ? <span className="text-xs font-medium text-zinc-400">{item.suffix}</span> : null}
-              </p>
-              <SchemeMetricSparkline seed={item.seed} className="opacity-80" />
-            </div>
+    <div className={cn("grid gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7", STEP2_SCHEME_LAYOUT.featuredMetricsCol)}>
+      {items.map((item) => (
+        <div
+          key={item.label}
+          className={cn(
+            "min-w-0 rounded-xl border px-3 py-2.5",
+            item.accent ? "border-violet-100 bg-violet-50/70" : "border-zinc-100 bg-zinc-50/80"
+          )}
+        >
+          <p className="truncate text-[10px] leading-4 text-zinc-500">{item.label}</p>
+          <div className="mt-1.5 flex items-end justify-between gap-1">
+            <p className="min-w-0 truncate tabular-nums leading-none">
+              <span className={cn("text-sm font-semibold", item.accent ? "text-violet-700" : "text-zinc-900")}>
+                {item.value}
+              </span>
+            </p>
+            <SchemeMetricSparkline seed={item.seed} className="shrink-0 opacity-70" />
           </div>
-        ))}
-      </div>
-      <div className="rounded-lg border border-zinc-100 bg-zinc-50/50 p-3">
-        <SchemeRadarChart locale={locale} scores={metrics.radar} size={96} compactLabels />
-      </div>
+        </div>
+      ))}
     </div>
   );
 }
@@ -141,44 +173,59 @@ function FeaturedCopyBlock({
   metrics: SchemeDisplayMetrics;
 }) {
   const t = copy[locale];
+  const storyScenes = (direction.storyStructure?.length
+    ? direction.storyStructure
+    : metrics.highlights.map((item, index) => ({
+        label: `Scene 0${index + 1}`,
+        title: item,
+        purpose: item
+      }))).slice(0, 5);
+  const storyGridClass =
+    storyScenes.length <= 3
+      ? "md:grid-cols-3"
+      : storyScenes.length === 4
+        ? "md:grid-cols-4"
+        : "md:grid-cols-5";
 
   return (
     <div className="flex min-w-0 flex-col gap-5">
-      <div className="space-y-2">
-        <h3 className="flex items-center gap-2 text-lg font-semibold tracking-tight text-zinc-950">
-          {direction.title}
-          <Crown className="h-4 w-4 shrink-0 text-violet-600" aria-hidden />
-        </h3>
-        <p className="max-w-prose text-sm leading-relaxed text-zinc-600">{direction.coreIdea}</p>
-        <p className="max-w-prose text-sm leading-relaxed text-zinc-500">{direction.hook}</p>
-      </div>
-
-      <div className="grid gap-6 border-t border-zinc-100 pt-5 sm:grid-cols-2">
-        <div className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">{t.coreCreative}</p>
-          <p className="mt-2 text-sm leading-relaxed text-zinc-700">{direction.story}</p>
+      <div className="grid gap-4 border-t border-zinc-100 pt-5 lg:grid-cols-2">
+        <div className="min-w-0 rounded-xl bg-violet-50/60 p-4">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-violet-400">{t.bigIdea}</p>
+          <p className="mt-2 text-sm leading-relaxed text-zinc-800">{direction.bigIdea || direction.coreIdea}</p>
         </div>
-        <div className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">{t.highlights}</p>
-          <ul className="mt-2 space-y-2">
-            {metrics.highlights.map((item) => (
-              <li key={item} className="flex gap-2 text-sm leading-relaxed text-zinc-700">
-                <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-violet-500" strokeWidth={2.5} />
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
+        <div className="min-w-0 rounded-xl bg-zinc-50/80 p-4">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">{t.openingHook}</p>
+          <p className="mt-2 text-sm leading-relaxed text-zinc-700">{direction.openingHook || direction.hook}</p>
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        {metrics.psychologyTags.map((tag) => (
-          <span
-            key={tag}
-            className="rounded-full border border-violet-200/80 bg-violet-50 px-2.5 py-0.5 text-[11px] font-medium text-violet-700"
-          >
-            {tag}
-          </span>
+      <div className="border-t border-zinc-100 pt-5">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">{t.storyStructure}</p>
+        <div className={cn("mt-3 grid gap-3 sm:grid-cols-2", storyGridClass)}>
+          {storyScenes.map((scene) => (
+            <div key={`${scene.label}-${scene.title}`} className="min-h-[132px] rounded-xl border border-zinc-100 bg-white p-4">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-violet-500">{scene.label}</p>
+              <p className="mt-2 text-sm font-semibold leading-5 text-zinc-900">{scene.title}</p>
+              <p className="mt-2 text-sm leading-6 text-zinc-500">{scene.purpose}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid gap-3 border-t border-zinc-100 pt-5 md:grid-cols-2 xl:grid-cols-3">
+        {[
+          [t.visualStyle, direction.visualStyle],
+          [t.cameraLanguage, direction.cameraLanguage],
+          [t.colorPalette, direction.colorPalette],
+          [t.musicDirection, direction.musicDirection],
+          [t.creatorRequirements, direction.creatorRequirements || direction.recommendedCreatorType],
+          [t.whyRecommended, direction.whyAiRecommendsThis || direction.rationale]
+        ].filter(([, value]) => Boolean(value)).map(([label, value]) => (
+          <div key={label} className="min-w-0 rounded-xl bg-zinc-50/80 p-3.5">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">{label}</p>
+            <p className="mt-2 text-sm leading-6 text-zinc-700">{value}</p>
+          </div>
         ))}
       </div>
     </div>
@@ -228,9 +275,36 @@ export function BrandCampaignStep2FeaturedScheme({
         />
       ) : null}
 
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_300px]">
+        <div className="rounded-2xl bg-gradient-to-br from-white via-white to-violet-50/50 p-5 ring-1 ring-zinc-100">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-500">{t.coreInsight}</p>
+          <h2 className="mt-3 max-w-2xl text-2xl font-semibold leading-tight tracking-tight text-zinc-950 sm:text-3xl">
+            {direction.creativeStrategy || direction.title}
+          </h2>
+          <p className="mt-4 max-w-3xl text-sm leading-7 text-zinc-600">{direction.coreInsight || direction.coreIdea}</p>
+        </div>
+
+        <div className="rounded-2xl border border-zinc-100 bg-white p-5 shadow-sm">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-400">{t.aiScore}</p>
+          <div className="mt-3 grid items-center gap-4 sm:grid-cols-[88px_minmax(0,1fr)] xl:grid-cols-1 2xl:grid-cols-[88px_minmax(0,1fr)]">
+            <div className="min-w-0">
+              <p className="text-4xl font-semibold tracking-tight text-zinc-950">{metrics.audienceMatch}</p>
+              <p className="text-xs font-medium text-violet-600">/100</p>
+              <p className="mt-2 text-sm font-semibold text-violet-700">{t.excellent}</p>
+            </div>
+            <div className="flex min-w-0 justify-center overflow-hidden">
+              <SchemeRadarChart locale={locale} scores={metrics.radar} size={118} />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-4">
+        <FeaturedMetricsPanel locale={locale} metrics={metrics} />
+      </div>
+
       <div className={cn("mt-5", STEP2_SCHEME_LAYOUT.featuredBodyGrid)}>
         <FeaturedCopyBlock locale={locale} direction={direction} metrics={metrics} />
-        <FeaturedMetricsPanel locale={locale} metrics={metrics} />
       </div>
     </article>
   );

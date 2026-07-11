@@ -161,7 +161,26 @@ function parseDirectionsFromJson(raw: string, campaign: Campaign, language: stri
       recommendedCreatorType: d.recommendedCreatorType || fallback[index]?.recommendedCreatorType || "",
       recommendedBudget: d.recommendedBudget || fallback[index]?.recommendedBudget || "",
       expectedOutcome: d.expectedOutcome || fallback[index]?.expectedOutcome || "",
-      rationale: d.rationale || `Tailored for ${campaign.platform ?? "TikTok"}.`
+      rationale: d.rationale || d.whyAiRecommendsThis || `Tailored for ${campaign.platform ?? "TikTok"}.`,
+      creativeStrategy: d.creativeStrategy || d.title || fallback[index]?.title || "",
+      coreInsight: d.coreInsight || d.coreIdea || fallback[index]?.coreIdea || "",
+      bigIdea: d.bigIdea || d.coreIdea || fallback[index]?.coreIdea || "",
+      openingHook: d.openingHook || d.hook || fallback[index]?.hook || "",
+      storyStructure: Array.isArray(d.storyStructure) ? d.storyStructure : [],
+      cameraLanguage: d.cameraLanguage || "",
+      colorPalette: d.colorPalette || "",
+      musicDirection: d.musicDirection || "",
+      creatorRequirements: d.creatorRequirements || d.recommendedCreatorType || "",
+      aiProductionDifficulty: d.aiProductionDifficulty || "",
+      estimatedPerformance: d.estimatedPerformance || d.expectedOutcome || "",
+      whyAiRecommendsThis: d.whyAiRecommendsThis || d.rationale || "",
+      audienceMatch: typeof d.audienceMatch === "number" ? d.audienceMatch : undefined,
+      emotionalResonance: typeof d.emotionalResonance === "number" ? d.emotionalResonance : undefined,
+      productIntegration: typeof d.productIntegration === "number" ? d.productIntegration : undefined,
+      estimatedCtr: d.estimatedCtr || "",
+      recommendedDuration: d.recommendedDuration || "",
+      suitableIndustries: Array.isArray(d.suitableIndustries) ? d.suitableIndustries.map(String) : [],
+      suitablePlatforms: Array.isArray(d.suitablePlatforms) ? d.suitablePlatforms.map(String) : []
     }));
   } catch {
     return null;
@@ -187,6 +206,48 @@ function campaignWithBriefSnapshot(campaign: Campaign, snapshot?: WizardBriefSna
   };
 }
 
+function buildCreativeStrategyInput(campaign: Campaign, snapshot?: WizardBriefSnapshot | null) {
+  return {
+    product: {
+      projectTitle: snapshot?.projectTitle || campaign.title,
+      brandName: snapshot?.brandName,
+      productName: snapshot?.productName || campaign.title,
+      industry: snapshot?.industry,
+      brandWebsite: snapshot?.brandWebsite,
+      productUrl: snapshot?.productUrl,
+      oneLiner: snapshot?.adOneLiner,
+      description: snapshot?.productDescription || campaign.description,
+      rawBrief: snapshot?.rawSummary,
+      campaignGoal: snapshot?.campaignGoal
+    },
+    audience: {
+      targetAudience: snapshot?.targetAudience || snapshot?.audienceDescription,
+      objective: snapshot?.objective
+    },
+    production: {
+      platforms: snapshot?.platforms?.length ? snapshot.platforms : [campaign.platform].filter(Boolean),
+      aspectRatio: snapshot?.aspectRatio || campaign.aspectRatio,
+      videoDuration: snapshot?.videoDurationCustom || snapshot?.videoDuration,
+      creativeStyles: snapshot?.creativeStyles,
+      creativeStyleCustom: snapshot?.creativeStyleCustom,
+      resolution: snapshot?.resolution,
+      frameRate: snapshot?.frameRate,
+      videoQuantity: snapshot?.videoQuantity,
+      mustInclude: snapshot?.mustInclude,
+      mustIncludeCustom: snapshot?.mustIncludeCustom,
+      mustAvoid: snapshot?.mustAvoid,
+      mustAvoidCustom: snapshot?.mustAvoidCustom,
+      deliveryTimeline: snapshot?.deliveryTimeline,
+      scheduleStart: snapshot?.scheduleStart,
+      scheduleDelivery: snapshot?.scheduleDelivery
+    },
+    commercial: {
+      budget: Number(campaign.budget),
+      budgetRange: snapshot?.budgetRange
+    }
+  };
+}
+
 export async function runCreativeDirectionJob(
   campaign: Campaign,
   options: { language?: string; briefSnapshot?: WizardBriefSnapshot | null; wizardFastPath?: boolean } = {}
@@ -200,45 +261,62 @@ export async function runCreativeDirectionJob(
 }> {
   const language = options.language ?? "en";
   const ctx = campaignWithBriefSnapshot(campaign, options.briefSnapshot);
-  if (options.wizardFastPath || !aiGatewayService.isConfigured()) {
-    const directions = buildTemplateDirections(ctx, language);
-    return {
-      directions,
-      provider: "template",
-      tokenInput: 0,
-      tokenOutput: 0,
-      cost: 0,
-      latencyMs: 0
-    };
+  if (!aiGatewayService.isConfigured()) {
+    throw new Error("OPENAI_API_KEY is required to generate creative directions");
   }
 
   const result = await aiGatewayService.chatCompletion({
     system:
-      `You are VINCIS Creative Director. Generate exactly 3 distinct creative directions for a paid social video campaign. Return JSON only: { directions: [{ title, coreIdea, hook, story, visualStyle, tone, shotList, cta, recommendedCreatorType, recommendedBudget, expectedOutcome, rationale }] }. shotList must be an array of 4 concise shots. Keep hooks under 25 words. No markdown. All user-facing copy must be written in ${language === "zh" ? "Simplified Chinese only. Do not mix English words except unavoidable brand or platform names." : "English only."}`,
+      [
+        "You are the VINCIS Executive Creative Director. Your output is a premium agency Creative Strategy pitch deck, not copywriting, not a student essay, and not a story draft.",
+        "Think like Nike, Apple, Meta, Google Creative Lab, Ogilvy, TBWA, and Wieden+Kennedy preparing three strategic routes for a client.",
+        "Generate exactly 3 distinct Creative Strategy routes for a paid social video campaign based ONLY on the provided brand brief.",
+        "The routes must be strategically different: A may be emotional life moment, B may be product proof/demonstration, C may be cultural tension or platform-native behavior. Do not create three versions of the same story.",
+        "Order the three routes by AI recommendation strength: direction A should be the strongest recommendation for the current brief.",
+        "Do not open with generic demographic prose such as 'in modern life' or '25-40 year-old consumers'. Start from a sharp consumer insight, tension, or category truth.",
+        "Do not write generic filler such as convenient, efficient, enhance experience, premium lifestyle, build trust, or drive conversion unless you immediately explain the specific product truth, audience tension, scene, and proof mechanism.",
+        "For each direction, explicitly reference the actual product, category, target user, usage context, platform behavior, budget/timeline constraints, must-include elements, and avoid-list when provided.",
+        "Return JSON only with this exact structure: { directions: [{ title, creativeStrategy, coreInsight, bigIdea, openingHook, storyStructure, visualStyle, cameraLanguage, colorPalette, musicDirection, creatorRequirements, aiProductionDifficulty, recommendedBudget, expectedPerformance, whyAiRecommendsThis, audienceMatch, emotionalResonance, productIntegration, estimatedCtr, recommendedDuration, suitableIndustries, suitablePlatforms, coreIdea, hook, story, tone, shotList, cta, recommendedCreatorType, expectedOutcome, rationale }] }.",
+        "Field requirements:",
+        "- title / creativeStrategy: short agency route name, e.g. 'Everyday Moments', not a generic format label.",
+        "- coreInsight: a sharp consumer or category insight. It should sound like a pitch deck page, not an essay.",
+        "- bigIdea: the single strategic idea that turns the product into a reason to care.",
+        "- openingHook: the first 3 seconds. Give a concrete visual or spoken setup plus the line if relevant.",
+        "- storyStructure: exactly 5 stages as objects: { label, title, purpose }. Use labels such as Scene 01, Scene 02. Titles can be Problem, Discovery, Transformation, Proof, CTA or better route-specific labels.",
+        "- visualStyle: art direction: composition, environment, lighting, editing rhythm, typography, texture.",
+        "- cameraLanguage: lens/framing/movement rules for creators.",
+        "- colorPalette: specific color mood and why it fits the strategy.",
+        "- musicDirection: music/sound design direction and pacing.",
+        "- creatorRequirements: what kind of creator can execute this route, including performance style and production capability.",
+        "- aiProductionDifficulty: Low, Medium, or High with a short reason.",
+        "- estimatedPerformance: qualitative expectation, not fake percentage math.",
+        "- whyAiRecommendsThis: 3-5 bullet-like reasons in one string explaining strategic fit.",
+        "- audienceMatch, emotionalResonance, productIntegration: integer 0-100 based on the brief logic. These are strategy-fit scores, not fabricated performance claims.",
+        "- estimatedCtr: Low, Medium, or High.",
+        "- recommendedDuration: e.g. 15-30s.",
+        "- suitableIndustries and suitablePlatforms: arrays.",
+        "- legacy fields coreIdea, hook, story, tone, shotList, cta, recommendedCreatorType, expectedOutcome, rationale must mirror the strategy so existing UI and PDF remain compatible.",
+        language === "zh"
+          ? "All user-facing copy must be Simplified Chinese only, except route labels like Creative Strategy / Core Insight if they are used as UI concepts. Write like a senior Chinese advertising strategist presenting to a brand founder. Avoid childish phrases, essay tone, and empty slogans."
+          : "All user-facing copy must be English only. Use concise but senior-level advertising language."
+      ].join("\n"),
     user: JSON.stringify({
-      title: ctx.title,
-      platform: ctx.platform,
-      aspectRatio: ctx.aspectRatio,
-      budget: Number(ctx.budget),
-      description: ctx.description,
-      productName: options.briefSnapshot?.productName,
-      audience: options.briefSnapshot?.targetAudience,
-      objective: options.briefSnapshot?.objective,
-      notes: options.briefSnapshot?.notes,
+      creativeStrategyInput: buildCreativeStrategyInput(ctx, options.briefSnapshot),
       language
     }),
     language,
     jsonMode: true,
-    temperature: 0.5
+    temperature: 0.65
   });
 
   const parsed = parseDirectionsFromJson(result.content, ctx, language);
-  const directions = parsed ?? buildTemplateDirections(ctx, language);
-  const provider = parsed ? result.provider : "template-fallback";
+  if (!parsed) {
+    throw new Error("AI returned invalid creative directions JSON");
+  }
 
   return {
-    directions,
-    provider,
+    directions: parsed,
+    provider: result.provider,
     tokenInput: result.tokenInput,
     tokenOutput: result.tokenOutput,
     cost: result.cost,

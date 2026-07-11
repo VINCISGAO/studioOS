@@ -4,8 +4,18 @@ import { aiGatewayService } from "@/features/ai/ai-gateway.service";
 import { activityService } from "@/features/campaign/activity.service";
 import { campaignRepository } from "@/features/campaign/campaign.repository";
 import { aiCopilotContextBuilder } from "@/features/ai-copilot/ai-copilot-context.builder";
+import {
+  answerFromKnowledge,
+  findKnowledgeMatches
+} from "@/features/ai-copilot/knowledge-qa-matching";
 import { aiCopilotRepository } from "@/features/ai-copilot/ai-copilot.repository";
 import { aiCopilotToolRouter } from "@/features/ai-copilot/ai-copilot-tool.router";
+import {
+  evaluateLucienBoundary,
+  lucienSharedSystemRules,
+  recordLucienBoundaryRefusal
+} from "@/features/ai-copilot/lucien-boundary.service";
+import { recordLucienFeedback, recordLucienInteraction } from "@/features/ai-copilot/lucien-learning.service";
 import type {
   AiCopilotAnswer,
   AiCopilotContext,
@@ -109,14 +119,19 @@ function modelUnavailableAnswer(language: string) {
 
 function buildSystemPrompt(context: AiCopilotContext) {
   return [
+    lucienSharedSystemRules(context.language),
     "You are Lucien, VINCIS's creative collaboration partner.",
     "You can query, explain, suggest, and guide. You must not execute dangerous write operations.",
     "Forbidden operations: direct payment, fund release, data deletion, delivery confirmation, order status changes, sending invitations, or choosing creators for the user.",
     "Only answer from the provided context and tool outputs. If data is missing, say you do not have enough data.",
     "Never invent orders, amounts, creators, payments, income, views, or AI learning results.",
+    "If readOnlyToolOutputs include currentPage, treat it as the highest-priority source for the page the user is looking at.",
+    "If currentPage.cancellation.cancelled is true, state the cancellation reason directly. Do not list generic possible reasons unless the concrete reason is missing.",
+    "If currentPage.cancellation.isPaymentTimeout is true, explain that the order was automatically cancelled because payment was not completed within the payment deadline.",
     "Always answer in the user's preferred language. Never mix languages unless the user asks for translation.",
-    "Use summaries.qaKnowledge as the approved product Q&A knowledge base. Prefer its tone and facts when relevant.",
+    "Use summaries.qaKnowledge as the approved business Q&A knowledge base. Prefer its tone and facts when relevant.",
     "Use summaries.aiFeedback to avoid repeating answer styles or content that this user marked as not helpful.",
+    "Never expose raw internal JSON, hidden cost parameters, risk labels, or admin-only fields from tool outputs.",
     `User language: ${context.language}`,
     `Page context: ${JSON.stringify({
       pagePath: context.pagePath,
@@ -158,6 +173,59 @@ function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
 }
 
+function wantsOrderCancellationExplanation(message: string) {
+  const normalized = message.toLowerCase();
+  return [
+    "cancel",
+    "cancelled",
+    "canceled",
+    "why",
+    "order",
+    "payment",
+    "expired",
+    "timeout",
+    "取消",
+    "订单",
+    "付款",
+    "支付",
+    "超时",
+    "为什么",
+    "怎么回事"
+  ].some((term) => normalized.includes(term));
+}
+
+function deterministicCurrentPageAnswer(message: string, context: AiCopilotContext) {
+  const currentPage = asRecord(context.summaries.currentPage);
+  const cancellation = asRecord(currentPage.cancellation);
+  if (cancellation.cancelled !== true || !wantsOrderCancellationExplanation(message)) return null;
+
+  const language = context.language;
+  const zh = isZh(language);
+  const reason = typeof cancellation.reason === "string" && cancellation.reason.trim() ? cancellation.reason.trim() : null;
+  const isPaymentTimeout = cancellation.isPaymentTimeout === true;
+  if (isPaymentTimeout) {
+    return zh
+      ? [
+          "不是项目本身被品牌手动取消，而是这笔订单已经因付款超时被系统自动取消。",
+          "",
+          reason ?? "规则是：下单后 30 分钟内未完成托管付款，订单会自动取消。",
+          "",
+          "如果还要继续这个 Campaign，需要重新下单并在新的付款倒计时内完成托管付款。"
+        ].join("\n")
+      : [
+          "This was not a manual project cancellation by the brand. The order was automatically cancelled because payment timed out.",
+          "",
+          reason ?? "The rule is: if escrow payment is not completed within 30 minutes after order creation, the order is cancelled automatically.",
+          "",
+          "To continue this campaign, create a new order and complete escrow payment within the new payment window."
+        ].join("\n");
+  }
+
+  return zh
+    ? `这个订单当前已经取消。取消原因是：${reason ?? "当前页面没有提供更具体的取消原因。"}`
+    : `This order is currently cancelled. Reason: ${reason ?? "No more specific cancellation reason is available on the current page."}`;
+}
+
 function messageFeedbackFromMetadata(metadataJson: unknown) {
   const metadata = asRecord(metadataJson);
   const feedback = asRecord(metadata.feedback);
@@ -191,73 +259,6 @@ function numberValue(value: unknown, fallback = 0) {
 function moneyValue(value: unknown) {
   const amount = numberValue(value);
   return `$${Math.round(amount).toLocaleString()}`;
-}
-
-type KnowledgeQaCandidate = Awaited<ReturnType<typeof aiCopilotRepository.listActiveKnowledgeQa>>[number];
-
-function knowledgeLanguageCode(language: string) {
-  return isZh(language) ? "zh-CN" : language;
-}
-
-function compactSearchText(value: string) {
-  return value.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "");
-}
-
-function wordTerms(value: string) {
-  return value
-    .toLowerCase()
-    .split(/[^\p{L}\p{N}]+/u)
-    .map((term) => term.trim())
-    .filter((term) => term.length >= 2);
-}
-
-function charNgrams(value: string) {
-  const chars = Array.from(value);
-  if (chars.length < 2 || chars.length > 80) return [];
-  const grams: string[] = [];
-  for (let index = 0; index < chars.length - 1; index += 1) {
-    grams.push(`${chars[index]}${chars[index + 1]}`);
-  }
-  return grams;
-}
-
-function knowledgeScore(message: string, candidate: KnowledgeQaCandidate) {
-  const query = compactSearchText(message);
-  const question = compactSearchText(candidate.question);
-  const searchText = compactSearchText(candidate.searchText);
-  if (!query) return 0;
-
-  let score = 0;
-  if (question === query) score += 200;
-  if (question.includes(query) || query.includes(question)) score += 120;
-
-  const terms = Array.from(new Set([...wordTerms(message), ...charNgrams(query)]));
-  for (const term of terms) {
-    if (question.includes(term)) score += 6;
-    else if (searchText.includes(term)) score += 2;
-  }
-  return score;
-}
-
-async function findKnowledgeMatches(message: string, language: string) {
-  const candidates = await aiCopilotRepository.listActiveKnowledgeQa(knowledgeLanguageCode(language));
-  return candidates
-    .map((candidate) => ({ ...candidate, score: knowledgeScore(message, candidate) }))
-    .filter((candidate) => candidate.score >= 12)
-    .sort((a, b) => b.score - a.score || b.usageCount - a.usageCount)
-    .slice(0, 3)
-    .map((candidate) => ({
-      id: candidate.id,
-      sourceKey: candidate.sourceKey,
-      module: candidate.module,
-      question: candidate.question,
-      answer: candidate.answer,
-      score: candidate.score
-    }));
-}
-
-function answerFromKnowledge(matches: Awaited<ReturnType<typeof findKnowledgeMatches>>) {
-  return matches[0]?.answer ?? null;
 }
 
 async function resolveCreatorDisplayName(user: AuthUserDto, fallback: string) {
@@ -419,7 +420,45 @@ export class AiCopilotService {
       entityId: input.entityId ?? null,
       languageCode: input.languageCode ?? null
     });
-    const qaKnowledge = await findKnowledgeMatches(input.message, context.language);
+
+    const boundary = evaluateLucienBoundary(input.message, context.language);
+    if (boundary.blocked) {
+      await recordLucienBoundaryRefusal({
+        surface: "authenticated",
+        category: boundary.category,
+        knowledgeScope: "authenticated_business",
+        userId: user.id,
+        role,
+        pagePath: input.pagePath ?? null,
+        userMessage: input.message.trim(),
+        language: context.language,
+        refusalMessage: boundary.refusalMessage
+      });
+
+      const refusal = boundary.refusalMessage;
+      const assistantMessage = await aiCopilotRepository.createMessage({
+        sessionId: session.id,
+        userId: null,
+        role: "ASSISTANT",
+        content: refusal,
+        metadataJson: asInputJson({ answerMode: boundary.answerMode, blockCategory: boundary.category })
+      });
+      await aiCopilotRepository.touchSession(session.id);
+      return {
+        sessionId: session.id,
+        messageId: assistantMessage.id,
+        answer: refusal,
+        suggestedQuestions: suggestedQuestions(role, context.language),
+        context: {
+          pagePath: input.pagePath ?? null,
+          entityType: input.entityType ?? null,
+          entityId: input.entityId ?? null
+        },
+        toolCalls: []
+      };
+    }
+
+    const qaKnowledge = await findKnowledgeMatches(input.message, context.language, "authenticated_business");
     const contextWithKnowledge: AiCopilotContext = {
       ...context,
       summaries: {
@@ -478,8 +517,12 @@ export class AiCopilotService {
     let answerMode: "model" | "model_unconfigured" | "template" | "knowledge_base" = "model_unconfigured";
     let answer = "";
     const knowledgeAnswer = answerFromKnowledge(qaKnowledge);
+    const deterministicAnswer = deterministicCurrentPageAnswer(input.message, contextWithKnowledge);
 
-    if (aiGatewayService.isConfigured()) {
+    if (deterministicAnswer) {
+      answer = deterministicAnswer;
+      answerMode = "template";
+    } else if (aiGatewayService.isConfigured()) {
       const quota = await aiUsageQuotaService.assertCampaignQuota({
         userId: user.id,
         campaignId: activityCampaignId,
@@ -592,6 +635,27 @@ export class AiCopilotService {
     });
     await aiCopilotRepository.touchSession(session.id);
 
+    await recordLucienInteraction({
+      surface: "authenticated",
+      entityId: user.id,
+      role,
+      sessionId: session.id,
+      messageId: assistantMessage.id,
+      pagePath: input.pagePath ?? null,
+      language: contextWithKnowledge.language,
+      userMessage: input.message.trim(),
+      assistantAnswer: answer,
+      answerMode,
+      knowledgeScope: "authenticated_business",
+      knowledgeMatches: qaKnowledge.map((item) => ({
+        id: item.id,
+        sourceKey: item.sourceKey,
+        question: item.question,
+        score: item.score
+      })),
+      toolCalls: toolCalls.map((call) => call.toolName)
+    });
+
     return {
       sessionId: session.id,
       messageId: assistantMessage.id,
@@ -644,6 +708,18 @@ export class AiCopilotService {
       })
     });
     await aiCopilotRepository.recordKnowledgeQaFeedback(asStringArray(metadata.knowledgeQaIds), input.rating);
+
+    await recordLucienFeedback({
+      surface: "authenticated",
+      entityId: user.id,
+      role: normalizeCopilotRole(user),
+      sessionId: message.session.id,
+      messageId: message.id,
+      language: context.language,
+      rating: input.rating,
+      assistantMessage: message.content,
+      knowledgeQaIds: asStringArray(metadata.knowledgeQaIds)
+    });
 
     return { messageId: message.id, feedback };
   }

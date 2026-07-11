@@ -1,6 +1,10 @@
 import type { Prisma } from "@prisma/client";
 import { hasDatabaseUrl, prisma } from "@/lib/core/database/prisma";
 import { asInputJson } from "@/lib/core/prisma-json";
+import {
+  LUCIEN_KNOWLEDGE_SCOPE_FILTERS,
+  type LucienKnowledgeRetrievalScope
+} from "@/features/ai-copilot/lucien-knowledge-scope";
 
 export class AiCopilotRepository {
   isEnabled() {
@@ -157,11 +161,15 @@ export class AiCopilotRepository {
     });
   }
 
-  listActiveKnowledgeQa(languageCode: string, limit = 300) {
+  listActiveKnowledgeQa(languageCode: string, scope: LucienKnowledgeRetrievalScope, limit = 300) {
+    const filter = LUCIEN_KNOWLEDGE_SCOPE_FILTERS[scope];
     return prisma.aiKnowledgeQa.findMany({
       where: {
         languageCode,
-        status: "ACTIVE"
+        status: "ACTIVE",
+        knowledgeType: { in: filter.knowledgeTypes },
+        visibility: { in: [...filter.visibilities] },
+        sourceType: { in: [...filter.allowedSourceTypes] }
       },
       orderBy: [{ usageCount: "desc" }, { updatedAt: "desc" }],
       take: limit,
@@ -173,7 +181,10 @@ export class AiCopilotRepository {
         question: true,
         answer: true,
         searchText: true,
-        usageCount: true
+        usageCount: true,
+        knowledgeType: true,
+        visibility: true,
+        sourceType: true
       }
     });
   }

@@ -7,14 +7,12 @@ import {
   BriefSectionCard
 } from "@/components/studioos/brand-creative-brief/brand-creative-brief-ui";
 import {
-  AspectIcon,
   styleIconMap,
   toggleList,
   type BriefSectionsProps
 } from "@/components/studioos/brand-creative-brief/brand-creative-brief-sections-shared";
-import type { BriefFormState } from "@/components/studioos/brand-campaign-step-brief";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -24,24 +22,37 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import {
-  AUDIENCE_AGE_OPTIONS,
-  AUDIENCE_REGION_OPTIONS,
-  FPS_OPTIONS,
+  BRAND_ASSET_SLOTS,
   INDUSTRY_OPTIONS,
-  RESOLUTION_OPTIONS,
   STYLE_OPTIONS,
-  TONE_OPTIONS,
-  VIDEO_DURATION_OPTIONS,
   labelForOption
 } from "@/lib/studioos/brand-creative-brief-options";
-import { BRAND_VIDEO_ASPECT_RATIOS } from "@/lib/studioos/brand-campaign-options";
-import { objectiveOptions } from "@/lib/studioos/brand-brief-options";
 import { cn } from "@/lib/utils";
+import { ImageIcon, Loader2, Sparkles } from "lucide-react";
 
 export function BrandCreativeBriefPrimarySections(props: BriefSectionsProps) {
-  const { locale, form, patch, onAspectRatioSelect, isPending } = props;
-  const objectives = objectiveOptions(locale);
-  const aspectRatioOptions = BRAND_VIDEO_ASPECT_RATIOS[locale];
+  const {
+    locale,
+    form,
+    patch,
+    onPolish,
+    isPending,
+    isPolishing,
+    copy,
+    previewUrl,
+    uploadError,
+    onUploadClick,
+    fileInputRef,
+    onUploadFile,
+    referenceVideoInputRef,
+    onReferenceVideoUploadClick,
+    onUploadReferenceVideo,
+    isReferenceVideoUploading
+  } = props;
+  const descriptionPromptTags =
+    locale === "zh"
+      ? ["创意想法", "受众群体", "风格偏好", "所含元素", "基调氛围", "主要目标"]
+      : ["Creative idea", "Target audience", "Style preference", "Must-have elements", "Tone", "Primary goal"];
 
   return (
     <>
@@ -52,55 +63,93 @@ export function BrandCreativeBriefPrimarySections(props: BriefSectionsProps) {
         title={locale === "zh" ? "项目概览" : "Project overview"}
         subtitle={locale === "zh" ? "告诉我们你的项目和品牌基本信息" : "Tell us about your project and brand"}
       >
-        <div className="grid gap-5 lg:grid-cols-2">
+        <div className="space-y-2">
+          <BriefFieldLabel label={locale === "zh" ? "品牌素材" : "Brand assets"} />
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            {BRAND_ASSET_SLOTS.map((slot) => {
+              const isReferenceVideo = slot.id === "reference_videos";
+              return (
+                <button
+                  key={slot.id}
+                  type="button"
+                  disabled={isPending || (isReferenceVideo && isReferenceVideoUploading)}
+                  onClick={isReferenceVideo ? onReferenceVideoUploadClick : onUploadClick}
+                  className="flex min-h-[108px] flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-200 bg-zinc-50/50 px-3 py-4 text-center transition hover:border-violet-300 hover:bg-violet-50/30 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isReferenceVideo && isReferenceVideoUploading ? (
+                    <Loader2 className="mb-2 h-5 w-5 animate-spin text-violet-500" />
+                  ) : (
+                    <ImageIcon className="mb-2 h-5 w-5 text-zinc-400" />
+                  )}
+                  <span className="text-xs font-medium text-zinc-700">{labelForOption(slot, locale)}</span>
+                  {isReferenceVideo ? (
+                    <span className="mt-1 text-[11px] text-zinc-400">MP4 / MOV / WebM · ≤200MB</span>
+                  ) : null}
+                </button>
+              );
+            })}
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) onUploadFile(file);
+              e.target.value = "";
+            }}
+          />
+          <input
+            ref={referenceVideoInputRef}
+            type="file"
+            accept="video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) onUploadReferenceVideo(file);
+              e.target.value = "";
+            }}
+          />
+          {previewUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={previewUrl} alt="" className="h-20 w-20 rounded-xl object-cover" />
+          ) : null}
+          {uploadError ? <p className="text-xs text-red-600">{uploadError}</p> : null}
+        </div>
+        <div className="grid gap-8 lg:grid-cols-[1fr_1fr]">
           <div className="space-y-4">
             <div className="space-y-2">
-              <BriefFieldLabel label={locale === "zh" ? "项目名称" : "Project name"} required />
-              <Input
-                value={form.projectTitle}
-                onChange={(e) => patch("projectTitle", e.target.value.slice(0, 60))}
-                placeholder={locale === "zh" ? "例如：Summer Campaign 2026" : "e.g. Summer Campaign 2026"}
-                className="h-11 rounded-xl"
-              />
-              <BriefCharCount current={form.projectTitle.length} max={60} />
+              <BriefFieldLabel label={locale === "zh" ? "项目（品牌）名称" : "Project / brand name"} required />
+              <div className="relative">
+                <Input
+                  value={form.projectTitle}
+                  onChange={(e) => {
+                    const value = e.target.value.slice(0, 60);
+                    patch("projectTitle", value);
+                    patch("brandName", value);
+                  }}
+                  placeholder={locale === "zh" ? "例如：VINCIS 夏季 Campaign" : "e.g. VINCIS Summer Campaign"}
+                  className="h-11 rounded-xl pr-16"
+                />
+                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-400">
+                  {form.projectTitle.length} / 60
+                </span>
+              </div>
             </div>
             <div className="space-y-2">
               <BriefFieldLabel label={locale === "zh" ? "您需要什么广告？" : "What kind of ad do you need?"} required />
-              <Input
-                value={form.adOneLiner}
-                onChange={(e) => patch("adOneLiner", e.target.value.slice(0, 100))}
-                placeholder={locale === "zh" ? "用一句话描述您的需求" : "Describe your need in one sentence"}
-                className="h-11 rounded-xl"
-              />
-              <BriefCharCount current={form.adOneLiner.length} max={100} />
-            </div>
-            <div className="space-y-2">
-              <BriefFieldLabel
-                label={locale === "zh" ? "详细描述您的需求" : "Detailed description"}
-                required
-                hint={locale === "zh" ? "描述创意想法、目标受众、风格偏好等" : "Creative ideas, audience, style preferences…"}
-              />
-              <Textarea
-                value={form.productDescription || form.rawSummary}
-                onChange={(e) => {
-                  patch("productDescription", e.target.value.slice(0, 1500));
-                  patch("rawSummary", e.target.value.slice(0, 1500));
-                }}
-                rows={6}
-                className="min-h-[140px] resize-y rounded-xl"
-                placeholder={
-                  locale === "zh"
-                    ? "请描述您的创意想法、目标受众、风格偏好、必须包含的元素等…"
-                    : "Describe creative ideas, audience, style, must-haves…"
-                }
-              />
-              <BriefCharCount current={(form.productDescription || form.rawSummary).length} max={1500} />
-            </div>
-          </div>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <BriefFieldLabel label={locale === "zh" ? "产品 / 服务名称" : "Product / service name"} />
-              <Input value={form.productName} onChange={(e) => patch("productName", e.target.value)} className="h-11 rounded-xl" />
+              <div className="relative">
+                <Input
+                  value={form.adOneLiner}
+                  onChange={(e) => patch("adOneLiner", e.target.value.slice(0, 100))}
+                  placeholder={locale === "zh" ? "用一句话描述您的需求" : "Describe your need in one sentence"}
+                  className="h-11 rounded-xl pr-[4.5rem]"
+                />
+                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-400">
+                  {form.adOneLiner.length} / 100
+                </span>
+              </div>
             </div>
             <div className="space-y-2">
               <BriefFieldLabel label={locale === "zh" ? "所属行业" : "Industry"} />
@@ -118,10 +167,6 @@ export function BrandCreativeBriefPrimarySections(props: BriefSectionsProps) {
               </Select>
             </div>
             <div className="space-y-2">
-              <BriefFieldLabel label={locale === "zh" ? "品牌名称" : "Brand name"} />
-              <Input value={form.brandName} onChange={(e) => patch("brandName", e.target.value)} className="h-11 rounded-xl" />
-            </div>
-            <div className="space-y-2">
               <BriefFieldLabel label={locale === "zh" ? "品牌官网" : "Brand website"} />
               <Input
                 value={form.brandWebsite || form.productUrl}
@@ -134,25 +179,56 @@ export function BrandCreativeBriefPrimarySections(props: BriefSectionsProps) {
               />
             </div>
           </div>
+          <div className="space-y-2">
+            <BriefFieldLabel
+              label={locale === "zh" ? "详细描述您的需求" : "Detailed description"}
+              required
+              hint={locale === "zh" ? "描述创意想法、目标受众、风格偏好等" : "Creative ideas, audience, style preferences…"}
+            />
+            <div className="relative">
+              <div className="pointer-events-none absolute left-4 right-4 top-4 z-10 flex flex-wrap gap-2">
+                {descriptionPromptTags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="rounded-full border border-violet-100 bg-violet-50/95 px-3 py-1 text-xs font-semibold text-violet-700 shadow-sm"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+              <Textarea
+                value={form.productDescription || form.rawSummary}
+                onChange={(e) => {
+                  patch("productDescription", e.target.value.slice(0, 1500));
+                  patch("rawSummary", e.target.value.slice(0, 1500));
+                }}
+                rows={12}
+                className="min-h-[22rem] resize-y rounded-xl pt-24 sm:pt-16"
+                placeholder={
+                  locale === "zh"
+                    ? "请在下方详细描述您的需求..."
+                    : "Describe your requirements below..."
+                }
+              />
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <Button
+                type="button"
+                variant="outline"
+                className="h-10 w-full gap-2 rounded-xl border-violet-200 bg-violet-50 px-5 text-sm font-semibold text-violet-700 shadow-sm hover:border-violet-300 hover:bg-violet-100 hover:text-violet-800 sm:w-auto"
+                disabled={isPending || isPolishing}
+                onClick={onPolish}
+              >
+                {isPolishing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                {isPolishing ? copy.aiPolishing : locale === "zh" ? "AI 一键整理需求" : "Polish with AI"}
+              </Button>
+              <BriefCharCount current={(form.productDescription || form.rawSummary).length} max={1500} />
+            </div>
+          </div>
         </div>
       </BriefSectionCard>
 
       <BriefSectionCard id="brief-section-creative" number={2} locale={locale} title={locale === "zh" ? "创意方向" : "Creative direction"}>
-        <div className="space-y-2">
-          <BriefFieldLabel label={locale === "zh" ? "视频时长" : "Video duration"} required />
-          <div className="flex flex-wrap gap-2">
-            {VIDEO_DURATION_OPTIONS.map((item) => (
-              <BriefPurpleChip
-                key={item}
-                active={form.videoDuration === item}
-                disabled={isPending}
-                onClick={() => patch("videoDuration", item)}
-              >
-                {item === "custom" ? (locale === "zh" ? "自定义" : "Custom") : item}
-              </BriefPurpleChip>
-            ))}
-          </div>
-        </div>
         <div className="space-y-2">
           <BriefFieldLabel label={locale === "zh" ? "风格（可多选）" : "Style (multi-select)"} />
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
@@ -183,186 +259,6 @@ export function BrandCreativeBriefPrimarySections(props: BriefSectionsProps) {
             placeholder={locale === "zh" ? "自定义风格" : "Custom style"}
             className="mt-2 h-10 rounded-xl"
           />
-        </div>
-        <div className="space-y-2">
-          <BriefFieldLabel label={locale === "zh" ? "基调 / 氛围" : "Tone / atmosphere"} />
-          <div className="flex flex-wrap gap-2">
-            {TONE_OPTIONS.map((item) => (
-              <BriefPurpleChip
-                key={item.id}
-                active={form.creativeTones.includes(item.id)}
-                onClick={() => patch("creativeTones", toggleList(form.creativeTones, item.id))}
-              >
-                {labelForOption(item, locale)}
-              </BriefPurpleChip>
-            ))}
-          </div>
-          <Input
-            value={form.creativeToneCustom}
-            onChange={(e) => patch("creativeToneCustom", e.target.value)}
-            placeholder={locale === "zh" ? "自定义基调" : "Custom tone"}
-            className="h-10 rounded-xl"
-          />
-        </div>
-        <div className="grid gap-4 lg:grid-cols-2">
-          <div className="space-y-2">
-            <BriefFieldLabel label={locale === "zh" ? "目标受众" : "Target audience"} required />
-            <div className="grid gap-2 sm:grid-cols-2">
-              <Select value={form.audienceAge} onValueChange={(value) => patch("audienceAge", value)}>
-                <SelectTrigger className="h-11 rounded-xl">
-                  <SelectValue placeholder={locale === "zh" ? "年龄段" : "Age range"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {AUDIENCE_AGE_OPTIONS.map((item) => (
-                    <SelectItem key={item.value} value={item.value}>
-                      {item.label[locale]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={form.audienceRegion} onValueChange={(value) => patch("audienceRegion", value)}>
-                <SelectTrigger className="h-11 rounded-xl">
-                  <SelectValue placeholder={locale === "zh" ? "地区" : "Region"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {AUDIENCE_REGION_OPTIONS.map((item) => (
-                    <SelectItem key={item.value} value={item.value}>
-                      {item.label[locale]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex rounded-xl border border-zinc-200 p-1">
-              {(["all", "male", "female"] as const).map((gender) => (
-                <button
-                  key={gender}
-                  type="button"
-                  onClick={() => patch("audienceGender", gender)}
-                  className={cn(
-                    "flex-1 rounded-lg px-3 py-2 text-sm font-medium transition",
-                    form.audienceGender === gender ? "bg-violet-600 text-white" : "text-zinc-600"
-                  )}
-                >
-                  {gender === "all"
-                    ? locale === "zh"
-                      ? "全部"
-                      : "All"
-                    : gender === "male"
-                      ? locale === "zh"
-                        ? "男性"
-                        : "Male"
-                      : locale === "zh"
-                        ? "女性"
-                        : "Female"}
-                </button>
-              ))}
-            </div>
-            <Textarea
-              value={form.audienceDescription}
-              onChange={(e) => patch("audienceDescription", e.target.value)}
-              rows={2}
-              className="rounded-xl"
-              placeholder={locale === "zh" ? "补充受众描述" : "Additional audience notes"}
-            />
-          </div>
-          <div className="space-y-2">
-            <BriefFieldLabel label={locale === "zh" ? "主要目标" : "Primary goal"} required />
-            <Select value={form.objective} onValueChange={(value) => patch("objective", value as BriefFormState["objective"])}>
-              <SelectTrigger className="h-11 rounded-xl">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {objectives.map((item) => (
-                  <SelectItem key={item.id} value={item.id}>
-                    {item.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </BriefSectionCard>
-
-      <BriefSectionCard id="brief-section-production" number={3} locale={locale} title={locale === "zh" ? "制作要求" : "Production requirements"}>
-        <div className="space-y-2">
-          <BriefFieldLabel label={locale === "zh" ? "视频比例" : "Aspect ratio"} required />
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {aspectRatioOptions.map((option) => {
-              const active = form.aspectRatio === option.id;
-              return (
-                <button
-                  key={option.id}
-                  type="button"
-                  disabled={isPending}
-                  onClick={() => onAspectRatioSelect(option.id)}
-                  className={cn(
-                    "rounded-2xl border px-3 py-4 text-left transition",
-                    active
-                      ? "border-violet-600 bg-violet-50 text-violet-700"
-                      : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300"
-                  )}
-                >
-                  <div className={cn("mb-2", active ? "text-violet-600" : "text-zinc-400")}>
-                    <AspectIcon ratio={option.id} />
-                  </div>
-                  <p className="text-sm font-semibold">{option.label}</p>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-3">
-          <div className="space-y-2">
-            <Label>{locale === "zh" ? "分辨率" : "Resolution"}</Label>
-            <Select value={form.resolution} onValueChange={(value) => patch("resolution", value)}>
-              <SelectTrigger className="h-11 rounded-xl">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {RESOLUTION_OPTIONS.map((item) => (
-                  <SelectItem key={item} value={item}>
-                    {item}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>{locale === "zh" ? "帧率" : "Frame rate"}</Label>
-            <Select value={form.frameRate} onValueChange={(value) => patch("frameRate", value)}>
-              <SelectTrigger className="h-11 rounded-xl">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {FPS_OPTIONS.map((item) => (
-                  <SelectItem key={item} value={item}>
-                    {item}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>{locale === "zh" ? "视频数量" : "Quantity"}</Label>
-            <div className="flex h-11 items-center rounded-xl border border-zinc-200">
-              <button
-                type="button"
-                className="px-4 text-lg text-zinc-500"
-                onClick={() => patch("videoQuantity", Math.max(1, form.videoQuantity - 1))}
-              >
-                −
-              </button>
-              <span className="flex-1 text-center text-sm font-semibold">{form.videoQuantity}</span>
-              <button
-                type="button"
-                className="px-4 text-lg text-zinc-500"
-                onClick={() => patch("videoQuantity", Math.min(10, form.videoQuantity + 1))}
-              >
-                +
-              </button>
-            </div>
-          </div>
         </div>
       </BriefSectionCard>
     </>

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { BrandStartBriefButton } from "@/components/studioos/brand-start-brief-button";
 import type { Locale } from "@/lib/i18n";
 import type { BrandNewCampaignGate } from "@/lib/studioos/brand-active-campaign-limit";
-import { CheckCircle2, ClipboardList, LayoutGrid, Pencil, Plus, Sparkles } from "lucide-react";
+import { CheckCircle2, ClipboardList, LayoutGrid, Pencil, Plus } from "lucide-react";
 
 type DayPart = "morning" | "afternoon" | "evening";
 
@@ -129,14 +129,6 @@ export function BrandWorkspaceHero({
             <Plus className="h-5 w-5" />
             {t.publish}
           </BrandStartBriefButton>
-          <a
-            href="/brand/ai"
-            className="inline-flex h-12 items-center gap-3 rounded-2xl border border-zinc-200 bg-white px-6 text-sm font-semibold text-zinc-700 shadow-sm transition hover:border-violet-200 hover:bg-violet-50"
-          >
-            <Sparkles className="h-5 w-5 text-violet-600" />
-            {t.aiCreate}
-            <span className="ml-1 rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-bold text-violet-600">Beta</span>
-          </a>
         </div>
       </div>
 

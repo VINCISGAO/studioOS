@@ -31,8 +31,9 @@ export const marketingHomeHref = {
   studio: (_locale?: Locale | LanguageCode | MarketingLocale) => appPath("/studio"),
   login: (_locale?: Locale | LanguageCode | MarketingLocale) => appPath("/login"),
   works: (locale: Locale | LanguageCode | MarketingLocale, playId?: string) => {
-    const base = playId ? `/creators?play=${encodeURIComponent(playId)}` : "/creators";
+    const base = playId ? `/cases?play=${encodeURIComponent(playId)}` : "/cases";
     return buildLocalizedHref(base, locale);
   },
-  contact: (locale: Locale | LanguageCode | MarketingLocale) => buildLocalizedHref("/contact", locale)
+  contact: (locale: Locale | LanguageCode | MarketingLocale) => buildLocalizedHref("/contact", locale),
+  about: (locale: Locale | LanguageCode | MarketingLocale) => buildLocalizedHref("/about", locale)
 };

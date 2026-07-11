@@ -2,12 +2,21 @@ import { normalizeLanguageCode } from "@/features/i18n/language.constants";
 import type { AuthUserDto } from "@/features/auth/auth.service";
 import { PermissionService } from "@/features/auth/permission.service";
 import { brandCampaignQueryService } from "@/features/campaign/brand-campaign/brand-campaign-query.service";
-import { listOrdersForClient } from "@/lib/order-service";
+import { getOrderForProject, listOrdersForClient } from "@/lib/order-service";
 import { toBrandProjectRows } from "@/lib/studioos/brand-dashboard";
 import { hasDatabaseUrl, prisma } from "@/lib/core/database/prisma";
 import { appError } from "@/lib/core/errors";
 import type { AiCopilotContext, AiCopilotPageContext } from "@/features/ai-copilot/ai-copilot.types";
 import { normalizeCopilotRole } from "@/features/ai-copilot/ai-copilot.types";
+import { getProject } from "@/lib/project-service";
+import { normalizeCampaignStatus } from "@/lib/studioos/project-status";
+import {
+  BRAND_PAYMENT_DEADLINE_MINUTES,
+  BRAND_PAYMENT_TIMEOUT_CANCEL_REASON,
+  formatBrandPaymentDeadlineRemaining,
+  isBrandPaymentTimeoutCancellation,
+  resolveBrandPaymentDeadlineAt
+} from "@/lib/studioos/brand-payment-deadline";
 
 function roundMoney(value: number) {
   return Math.round(value * 100) / 100;
@@ -37,7 +46,7 @@ export class AiCopilotContextBuilder {
         ? await this.adminSummary()
         : role === "CREATOR"
           ? await this.creatorSummary(user.id)
-          : await this.brandSummary(user.id, user.email, language);
+          : await this.brandSummary(user.id, user.email, language, page);
     const aiFeedback = await this.aiFeedbackSummary(user.id, role);
 
     return {
@@ -84,7 +93,7 @@ export class AiCopilotContextBuilder {
     }));
   }
 
-  private async brandSummary(userId: string, userEmail: string, language: string) {
+  private async brandSummary(userId: string, userEmail: string, language: string, page: AiCopilotPageContext) {
     const locale = language === "en" ? "en" : "zh";
     const [portalProjects, portalOrders, notifications] = await Promise.all([
       brandCampaignQueryService.listForClientEmail(userEmail),
@@ -102,7 +111,92 @@ export class AiCopilotContextBuilder {
     const activeRows = visibleRows.filter((row) => row.phase === "active");
     const doneRows = visibleRows.filter((row) => row.phase === "done");
 
+    const pageProject =
+      page.entityType === "project" && page.entityId
+        ? await getProject(page.entityId).catch(() => null)
+        : null;
+    const currentProject =
+      pageProject?.client_email.toLowerCase() === userEmail.toLowerCase() ? pageProject : null;
+    const currentOrder =
+      currentProject ? await getOrderForProject(currentProject.id).catch(() => null) : null;
+    const currentCampaignRow = currentProject
+      ? visibleRows.find((item) => item.id === currentProject.id) ?? null
+      : null;
+    const currentCampaignStatus = currentProject ? normalizeCampaignStatus(currentProject.status) : null;
+    const currentOrderCancelled =
+      currentOrder?.status === "cancelled" || currentCampaignStatus === "cancelled";
+    const paymentTimeoutCancelled = currentOrder ? isBrandPaymentTimeoutCancellation(currentOrder) : false;
+    const rawCancellationReason =
+      currentOrder?.cancel_reason ??
+      (typeof currentProject?.settings_json?.cancellation === "object" &&
+      currentProject.settings_json.cancellation !== null &&
+      !Array.isArray(currentProject.settings_json.cancellation)
+        ? (currentProject.settings_json.cancellation as { reason?: unknown }).reason
+        : null);
+    const cancellationReason =
+      rawCancellationReason === BRAND_PAYMENT_TIMEOUT_CANCEL_REASON
+        ? locale === "zh"
+          ? "订单因下单后 30 分钟内未完成付款而自动取消。"
+          : "The order was automatically cancelled because payment was not completed within 30 minutes."
+        : typeof rawCancellationReason === "string"
+          ? rawCancellationReason
+          : null;
+    const paymentDeadlineRemaining = currentOrder ? formatBrandPaymentDeadlineRemaining(currentOrder, locale) : null;
+
     return {
+      currentPage:
+        currentProject || currentOrder
+          ? {
+              pagePath: page.pagePath ?? null,
+              entityType: page.entityType ?? null,
+              entityId: page.entityId ?? null,
+              project: currentProject
+                ? {
+                    id: currentProject.id,
+                    title: currentProject.title,
+                    rawStatus: currentProject.status,
+                    normalizedStatus: currentCampaignStatus,
+                    wizardStep: currentProject.wizard_step,
+                    selectedStudioId: currentProject.selected_studio_id,
+                    budgetRange: currentProject.budget_range,
+                    deadline: currentProject.deadline,
+                    rowStatus: currentCampaignRow?.status ?? null,
+                    rowPhase: currentCampaignRow?.phase ?? null
+                  }
+                : null,
+              order: currentOrder
+                ? {
+                    id: currentOrder.id,
+                    projectId: currentOrder.project_id,
+                    title: currentOrder.title,
+                    status: currentOrder.status,
+                    paymentStatus: currentOrder.payment_status,
+                    amount: Number(currentOrder.amount),
+                    currency: "USD",
+                    createdAt: currentOrder.created_at,
+                    paidAt: currentOrder.paid_at,
+                    cancelledAt: currentOrder.cancelled_at ?? null,
+                    cancelledBy: currentOrder.cancelled_by ?? null,
+                    cancelReason: currentOrder.cancel_reason ?? null
+                  }
+                : null,
+              paymentDeadline: currentOrder
+                ? {
+                    policyMinutes: BRAND_PAYMENT_DEADLINE_MINUTES,
+                    deadlineAt: resolveBrandPaymentDeadlineAt(currentOrder).toISOString(),
+                    remaining: paymentDeadlineRemaining,
+                    expired: paymentDeadlineRemaining === (locale === "zh" ? "已超时" : "Expired")
+                  }
+                : null,
+              cancellation: currentOrderCancelled
+                ? {
+                    cancelled: true,
+                    reason: cancellationReason,
+                    isPaymentTimeout: paymentTimeoutCancelled || rawCancellationReason === BRAND_PAYMENT_TIMEOUT_CANCEL_REASON
+                  }
+                : { cancelled: false }
+            }
+          : null,
       brand: {
         campaignCount: visibleRows.length,
         draftCampaigns: draftRows.length,
@@ -133,8 +227,14 @@ export class AiCopilotContextBuilder {
         campaignId: item.project_id,
         serviceProject: item.title,
         status: item.status,
+        paymentStatus: item.payment_status,
         amount: Number(item.amount),
-        currency: "USD"
+        currency: "USD",
+        createdAt: item.created_at,
+        paidAt: item.paid_at,
+        cancelledAt: item.cancelled_at ?? null,
+        cancelledBy: item.cancelled_by ?? null,
+        cancelReason: item.cancel_reason ?? null
       })),
       notifications: notifications.map((item) => ({
         id: item.id,

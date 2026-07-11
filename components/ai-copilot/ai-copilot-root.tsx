@@ -9,17 +9,6 @@ const AiCopilotDrawer = dynamic(
   { ssr: false, loading: () => null }
 );
 
-const AI_WORKSPACE_PATHS = new Set([
-  "/copilot",
-  "/brand/ai",
-  "/brand/copilot",
-  "/studio/ai",
-  "/studio/copilot",
-  "/admin/ai",
-  "/admin/copilot",
-  "/creator/ai"
-]);
-
 function isPublicShellRoute(pathname: string) {
   if (pathname === "/" || pathname === "/signup" || pathname === "/admin/login") {
     return true;
@@ -28,15 +17,11 @@ function isPublicShellRoute(pathname: string) {
   return pathname === "/login" || pathname.startsWith("/login/");
 }
 
-function isAiWorkspaceRoute(pathname: string | null | undefined) {
-  return pathname ? AI_WORKSPACE_PATHS.has(pathname) : false;
-}
-
 export function AiCopilotRoot() {
   const [mounted, setMounted] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
   const pathname = usePathname();
-  const hideCopilotRoot = !pathname || isPublicShellRoute(pathname) || isAiWorkspaceRoute(pathname);
+  const hideCopilotRoot = !pathname || isPublicShellRoute(pathname);
 
   useEffect(() => {
     setMounted(true);

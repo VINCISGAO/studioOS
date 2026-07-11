@@ -2,12 +2,17 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Box, FileText, Flower2, Info, Menu, Tag, User, X } from "lucide-react";
+import { Box, CircleHelp, FileText, Flower2, Info, Menu, Tag, User, X } from "lucide-react";
 import { BrandLogoLockup } from "@/components/brand-logo-mark";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { useMarketingHomePortalSession } from "@/components/marketing/use-marketing-home-portal-session";
 import { cinematicText } from "@/lib/marketing/cinematic-copy";
 import { marketingHomeHref, buildLocalizedHref } from "@/lib/marketing/localized-href";
+import {
+  marketingSiteNavItems,
+  MARKETING_SITE_NAV_PATHS,
+  type MarketingSiteNavKey
+} from "@/lib/marketing/marketing-site-nav";
 import type { Locale, MarketingLocale } from "@/lib/i18n";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -17,15 +22,20 @@ type WorkspaceCta = {
   label: string;
 };
 
-type MobileNavItemKey = "login" | "about" | "process" | "cases" | "pricing" | "resources";
+type MobileNavItemKey = "login" | MarketingSiteNavKey;
 
-const MOBILE_NAV_ICONS: Record<MobileNavItemKey, typeof User> = {
-  login: User,
+const SITE_NAV_ICONS: Record<MarketingSiteNavKey, typeof User> = {
   about: Info,
   process: Flower2,
   cases: FileText,
   pricing: Tag,
-  resources: Box
+  resources: Box,
+  faq: CircleHelp
+};
+
+const MOBILE_NAV_ICONS: Record<MobileNavItemKey, typeof User> = {
+  login: User,
+  ...SITE_NAV_ICONS
 };
 
 function MobileNavCard({
@@ -73,24 +83,20 @@ function MobileNavCard({
   );
 }
 
+function marketingSiteNavHref(key: MarketingSiteNavKey, copyLocale: Locale | MarketingLocale) {
+  if (key === "about") return marketingHomeHref.about(copyLocale);
+  return buildLocalizedHref(MARKETING_SITE_NAV_PATHS[key], copyLocale);
+}
+
 function MobileNavMenu({
   open,
   onClose,
   copyLocale,
-  labels,
   workspaceCta
 }: {
   open: boolean;
   onClose: () => void;
   copyLocale: Locale | MarketingLocale;
-  labels: {
-    process: string;
-    cases: string;
-    pricing: string;
-    resources: string;
-    about: string;
-    login: string;
-  };
   workspaceCta: WorkspaceCta | null;
 }) {
   useEffect(() => {
@@ -105,6 +111,8 @@ function MobileNavMenu({
   if (!open) return null;
 
   const mobileNav = cinematicText("mobileNav", copyLocale);
+  const navLabels = cinematicText("nav", copyLocale);
+  const siteItems = marketingSiteNavItems(copyLocale);
 
   const items: Array<{
     key: MobileNavItemKey;
@@ -117,53 +125,21 @@ function MobileNavMenu({
     {
       key: "login",
       href: workspaceCta?.href ?? marketingHomeHref.login(copyLocale),
-      title: workspaceCta?.label ?? labels.login,
+      title: workspaceCta?.label ?? navLabels.login,
       description: workspaceCta
         ? mobileNav.descriptions.workspace
         : mobileNav.descriptions.login,
       useAnchor: false,
       icon: MOBILE_NAV_ICONS.login
     },
-    {
-      key: "about",
-      href: marketingHomeHref.contact(copyLocale),
-      title: labels.about,
-      description: mobileNav.descriptions.about,
+    ...siteItems.map((item) => ({
+      key: item.key,
+      href: marketingSiteNavHref(item.key, copyLocale),
+      title: item.label,
+      description: item.description,
       useAnchor: false,
-      icon: MOBILE_NAV_ICONS.about
-    },
-    {
-      key: "process",
-      href: "#how-it-works",
-      title: labels.process,
-      description: mobileNav.descriptions.process,
-      useAnchor: true,
-      icon: MOBILE_NAV_ICONS.process
-    },
-    {
-      key: "cases",
-      href: buildLocalizedHref("/case-studies", copyLocale),
-      title: labels.cases,
-      description: mobileNav.descriptions.cases,
-      useAnchor: false,
-      icon: MOBILE_NAV_ICONS.cases
-    },
-    {
-      key: "pricing",
-      href: buildLocalizedHref("/pricing", copyLocale),
-      title: labels.pricing,
-      description: mobileNav.descriptions.pricing,
-      useAnchor: false,
-      icon: MOBILE_NAV_ICONS.pricing
-    },
-    {
-      key: "resources",
-      href: "#network",
-      title: labels.resources,
-      description: mobileNav.descriptions.resources,
-      useAnchor: true,
-      icon: MOBILE_NAV_ICONS.resources
-    }
+      icon: SITE_NAV_ICONS[item.key]
+    }))
   ];
 
   return (
@@ -218,7 +194,7 @@ export function CinematicNav({
     hydratePortalSession
   );
   const workspaceCta = hydratePortalSession ? hydratedWorkspaceCta : serverWorkspaceCta;
-  const t = cinematicText("nav", copyLocale);
+  const siteNavItems = marketingSiteNavItems(copyLocale);
   const [menuOpen, setMenuOpen] = useState(false);
   const { scrollY } = useScroll();
   const bg = useTransform(scrollY, [0, 120], ["rgba(0,0,0,0)", "rgba(0,0,0,0.82)"]);
@@ -241,21 +217,16 @@ export function CinematicNav({
           </Link>
 
           <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-7 text-sm text-zinc-400 lg:flex">
-            <a href="#how-it-works" className="transition hover:text-white">
-              {t.process}
-            </a>
-            <Link href={buildLocalizedHref("/case-studies", copyLocale)} prefetch={false} className="transition hover:text-white">
-              {t.cases}
-            </Link>
-            <Link href={buildLocalizedHref("/pricing", copyLocale)} prefetch={false} className="transition hover:text-white">
-              {t.pricing}
-            </Link>
-            <a href="#network" className="transition hover:text-white">
-              {t.resources}
-            </a>
-            <Link href={marketingHomeHref.contact(copyLocale)} className="transition hover:text-white">
-              {t.about}
-            </Link>
+            {siteNavItems.map((item) => (
+              <Link
+                key={item.key}
+                href={marketingSiteNavHref(item.key, copyLocale)}
+                prefetch={false}
+                className="transition hover:text-white"
+              >
+                {item.label}
+              </Link>
+            ))}
           </nav>
 
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
@@ -265,7 +236,7 @@ export function CinematicNav({
               prefetch={workspaceCta ? true : false}
               className="hidden h-9 items-center rounded-full border border-white/25 px-4 text-sm text-white transition hover:bg-white/10 sm:inline-flex sm:px-5"
             >
-              {workspaceCta?.label ?? t.login}
+              {workspaceCta?.label ?? cinematicText("nav", copyLocale).login}
             </Link>
             <button
               type="button"
@@ -286,7 +257,6 @@ export function CinematicNav({
         open={menuOpen}
         onClose={() => setMenuOpen(false)}
         copyLocale={copyLocale}
-        labels={t}
         workspaceCta={workspaceCta}
       />
     </>

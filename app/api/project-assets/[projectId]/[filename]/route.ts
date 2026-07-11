@@ -55,7 +55,13 @@ export async function GET(
           ? "image/webp"
           : ext === "gif"
             ? "image/gif"
-            : "image/jpeg";
+            : ext === "mp4"
+              ? "video/mp4"
+              : ext === "mov"
+                ? "video/quicktime"
+                : ext === "webm"
+                  ? "video/webm"
+                  : "image/jpeg";
 
     return new NextResponse(new Uint8Array(data), {
       headers: {

@@ -4,7 +4,13 @@ import type {
   ProductionPricingProfileConfig
 } from "@/features/pricing/production-pricing.types";
 
-/** Global V1 profile — aligned with owner PDF + first two verified samples. */
+const CREATOR_BENCHMARK_CNY_PER_USD = 7.2;
+
+function cnyToUsd(value: number) {
+  return Math.round((value / CREATOR_BENCHMARK_CNY_PER_USD) * 10000) / 10000;
+}
+
+/** Global V1 profile — aligned with owner PDF + verified / creator-provided benchmark samples. */
 export const PRODUCTION_PRICING_PROFILE_V1: ProductionPricingProfileConfig = {
   version: "v1",
   defaultGenerationMultiplier: 2.5,
@@ -78,7 +84,7 @@ export const PRODUCTION_PRICING_PROFILE_V1: ProductionPricingProfileConfig = {
   ]
 };
 
-/** Verified owner production samples — platform reference data, not campaign-linked. */
+/** Production benchmark samples — platform reference data, not campaign-linked. */
 export const VERIFIED_BENCHMARK_SAMPLES: BenchmarkSampleInput[] = [
   {
     sampleCode: "SAMPLE_001",
@@ -162,6 +168,94 @@ export const VERIFIED_BENCHMARK_SAMPLES: BenchmarkSampleInput[] = [
       comparedToStandardMultiplier: 1.65
     },
     recordedAt: new Date("2026-07-11T00:00:00.000Z")
+  },
+  {
+    sampleCode: "SAMPLE_003",
+    projectName: "创作者生产基准 — 专业级广告",
+    projectType: "BRAND_AD",
+    difficultyTier: "COMMERCIAL",
+    finalDurationSeconds: 60,
+    productionUnitSeconds: 15,
+    effectiveUnitCount: 5,
+    totalShotCount: 14,
+    aiToolSpendUsd: cnyToUsd(191),
+    aiCostPer15sUsd: cnyToUsd(38.2),
+    aiCostPerSecondUsd: cnyToUsd(3.18),
+    totalGenerations: 8,
+    usedGenerations: 5,
+    generationMultiplier: 1.54,
+    usableRate: 0.65,
+    complexityCoefficient: 1.0,
+    dataSource: "Creator-provided production cost table — professional commercial benchmark",
+    sourceType: "DERIVED",
+    assumptionText: `Original costs are in CNY. USD fields normalize with ${CREATOR_BENCHMARK_CNY_PER_USD} CNY/USD for pricing-engine comparability.`,
+    confidenceLevel: "creator_provided_cost_table_unverified",
+    notes:
+      "Professional commercial benchmark for brand information-feed ads, e-commerce hero videos, and corporate promos. Captures AI hard cost only, not creator labor, platform fee, revision reserve, or profit.",
+    metadataJson: {
+      originalCurrency: "CNY",
+      cnyPerUsd: CREATOR_BENCHMARK_CNY_PER_USD,
+      applicableScenarios: ["品牌信息流", "电商主图视频", "企业宣传"],
+      bareGenerationCostPer15sCny: 20.41,
+      bareGenerationCostPerSecondCny: 1.36,
+      discardedRatePer15sSegment: 0.35,
+      qualifiedSegmentDraws: 1.54,
+      qualified15sSegmentsForOneMinute: 5,
+      total15sGenerationAttemptsForOneMinute: 8,
+      totalImageCount: 14,
+      imageGenerationCostCny: 28,
+      videoGenerationCostCny: 163,
+      totalHardCostCny: 191,
+      hardCostPerSecondCny: 3.18,
+      hardCostPerQualified15sCny: 38.2,
+      includes: ["image_generation", "video_generation"],
+      excludes: ["creator_labor", "editing_labor", "revision_reserve", "platform_fee", "creator_profit"]
+    },
+    recordedAt: new Date("2026-07-12T00:00:00.000Z")
+  },
+  {
+    sampleCode: "SAMPLE_004",
+    projectName: "创作者生产基准 — 影视级广告",
+    projectType: "BRAND_FILM",
+    difficultyTier: "CINEMATIC",
+    finalDurationSeconds: 60,
+    productionUnitSeconds: 15,
+    effectiveUnitCount: 7,
+    totalShotCount: 27,
+    aiToolSpendUsd: cnyToUsd(421),
+    aiCostPer15sUsd: cnyToUsd(60.1),
+    aiCostPerSecondUsd: cnyToUsd(7.02),
+    totalGenerations: 18,
+    usedGenerations: 7,
+    generationMultiplier: 2.5,
+    usableRate: 0.4,
+    complexityCoefficient: 1.62,
+    dataSource: "Creator-provided production cost table — cinematic commercial benchmark",
+    sourceType: "DERIVED",
+    assumptionText: `Original costs are in CNY. USD fields normalize with ${CREATOR_BENCHMARK_CNY_PER_USD} CNY/USD for pricing-engine comparability.`,
+    confidenceLevel: "creator_provided_cost_table_unverified",
+    notes:
+      "Cinematic commercial benchmark for brand TVC, premium promos, and cinema-style short ads. Captures AI hard cost only, not creator labor, platform fee, revision reserve, or profit.",
+    metadataJson: {
+      originalCurrency: "CNY",
+      cnyPerUsd: CREATOR_BENCHMARK_CNY_PER_USD,
+      applicableScenarios: ["品牌TVC", "高端宣传片", "院线贴片"],
+      bareGenerationCostPer15sCny: 20.41,
+      bareGenerationCostPerSecondCny: 1.36,
+      discardedRatePer15sSegment: 0.6,
+      qualifiedSegmentDraws: 2.5,
+      qualified15sSegmentsForOneMinute: 7,
+      total15sGenerationAttemptsForOneMinute: 18,
+      totalImageCount: 27,
+      imageGenerationCostCny: 54,
+      videoGenerationCostCny: 367,
+      totalHardCostCny: 421,
+      hardCostPerSecondCny: 7.02,
+      hardCostPerQualified15sCny: 60.1,
+      includes: ["image_generation", "video_generation"],
+      excludes: ["creator_labor", "editing_labor", "revision_reserve", "platform_fee", "creator_profit"]
+    },
+    recordedAt: new Date("2026-07-12T00:00:00.000Z")
   }
 ];
 
@@ -177,5 +271,6 @@ export function tierConfigFor(
 }
 
 export function benchmarkForTier(tier: ProductionDifficultyTier): BenchmarkSampleInput | null {
-  return VERIFIED_BENCHMARK_SAMPLES.find((sample) => sample.difficultyTier === tier) ?? null;
+  const candidates = VERIFIED_BENCHMARK_SAMPLES.filter((sample) => sample.difficultyTier === tier);
+  return candidates.find((sample) => sample.aiCostPer15sUsd != null) ?? candidates[0] ?? null;
 }

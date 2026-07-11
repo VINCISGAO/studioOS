@@ -369,11 +369,13 @@ export function BrandCampaignStepBrief({
   const t = copy[locale];
   const objectives = objectiveOptions(locale);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const referenceVideoInputRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState(initial);
   const [productReady, setProductReady] = useState(Boolean(initialProductImageUrl));
   const [previewUrl, setPreviewUrl] = useState<string | null>(initialProductImageUrl ?? null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [isUploading, startUpload] = useTransition();
+  const [isReferenceVideoUploading, startReferenceVideoUpload] = useTransition();
   const [refinedApplied, setRefinedApplied] = useState(
     Boolean(
       initial.refined &&
@@ -497,8 +499,19 @@ export function BrandCampaignStepBrief({
         setLocalError(result.error);
         return;
       }
-      setForm((prev) => ({ ...prev, refined: result.brief }));
-      setRefinedApplied(false);
+      const polishedDescription = result.brief.campaign_goal.slice(0, 1500);
+      setForm((prev) => ({
+        ...prev,
+        projectTitle: prev.projectTitle.trim() || result.brief.title,
+        productName: prev.productName.trim() || result.brief.product_name,
+        productDescription: polishedDescription,
+        rawSummary: polishedDescription,
+        audienceDescription: result.brief.target_audience,
+        extraNotes: result.brief.notes,
+        refined: result.brief
+      }));
+      setRefinedApplied(true);
+      setApplyNotice(t.appliedSuccess);
     });
   }
 
@@ -621,6 +634,64 @@ export function BrandCampaignStepBrief({
         );
         setProductReady(false);
         setPreviewUrl(initialProductImageUrl ?? null);
+      }
+    });
+  }
+
+  function handleUploadReferenceVideo(file: File) {
+    setLocalError(null);
+
+    startReferenceVideoUpload(async () => {
+      const MAX_REFERENCE_VIDEO_BYTES = 200 * 1024 * 1024;
+      if (file.size > MAX_REFERENCE_VIDEO_BYTES) {
+        setLocalError(locale === "zh" ? "参考视频建议控制在 200MB 以内" : "Keep reference videos under 200MB");
+        return;
+      }
+
+      try {
+        const fd = new FormData();
+        fd.set("video_file", file);
+
+        const res = await fetch(
+          `/api/brand/projects/${encodeURIComponent(projectId)}/reference-video?lang=${locale}`,
+          {
+            method: "POST",
+            body: fd
+          }
+        );
+
+        const raw = await res.text();
+        type UploadReferenceVideoResponse = {
+          ok: boolean;
+          error?: string;
+          reference?: StoredProjectReference;
+        };
+        let result: UploadReferenceVideoResponse;
+        try {
+          result = JSON.parse(raw) as UploadReferenceVideoResponse;
+        } catch {
+          result = {
+            ok: false,
+            error:
+              locale === "zh"
+                ? res.status === 413
+                  ? "参考视频建议控制在 200MB 以内"
+                  : `参考视频上传失败（HTTP ${res.status}）`
+                : res.status === 413
+                  ? "Keep reference videos under 200MB"
+                  : `Reference video upload failed (HTTP ${res.status})`
+          };
+        }
+
+        if (!res.ok || !result.ok || !result.reference) {
+          setLocalError(result.error ?? (locale === "zh" ? "参考视频上传失败" : "Reference video upload failed"));
+          return;
+        }
+
+        setReferences((prev) => [result.reference!, ...prev.filter((item) => item.id !== result.reference!.id)]);
+        onReferencesUpdated?.();
+      } catch (error) {
+        setLocalError(error instanceof Error ? error.message : locale === "zh" ? "参考视频上传失败" : "Reference video upload failed");
       }
     });
   }
@@ -786,6 +857,7 @@ export function BrandCampaignStepBrief({
     isSavingDraft ||
     (isUploading && !productReady) ||
     isRefPending ||
+    isReferenceVideoUploading ||
     (stepMode === "product" && isUploading && !productReady) ||
     (stepMode === "references" && isRefPending);
 
@@ -814,6 +886,7 @@ export function BrandCampaignStepBrief({
         isSavingDraft={isSavingDraft}
         isUploading={isUploading}
         isRefPending={isRefPending}
+        isReferenceVideoUploading={isReferenceVideoUploading}
         continueDisabled={continueDisabled}
         productReady={productReady}
         previewUrl={previewUrl}
@@ -826,6 +899,9 @@ export function BrandCampaignStepBrief({
         onApplyRefined={handleApplyRefined}
         onUploadClick={() => fileInputRef.current?.click()}
         onUploadFile={handleUploadFile}
+        referenceVideoInputRef={referenceVideoInputRef}
+        onReferenceVideoUploadClick={() => referenceVideoInputRef.current?.click()}
+        onUploadReferenceVideo={handleUploadReferenceVideo}
         onAddRef={handleAddRef}
         onRemoveRef={handleRemoveRef}
         onSelectPresetBudget={selectPresetBudget}

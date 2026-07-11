@@ -3,7 +3,20 @@
 import type { FormEvent, PointerEvent as ReactPointerEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
-import { ExternalLink, Loader2, Send, Sparkles, ThumbsDown, ThumbsUp, X } from "lucide-react";
+import {
+  Check,
+  Database,
+  Loader2,
+  Maximize2,
+  Minimize2,
+  Send,
+  Sparkles,
+  Target,
+  ThumbsDown,
+  ThumbsUp,
+  UserRound,
+  X
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LucienAvatar } from "@/components/ai-copilot/lucien-avatar";
 import { cn } from "@/lib/utils";
@@ -70,17 +83,6 @@ type FloatingLauncherDrag = {
   moved: boolean;
 };
 
-const AI_WORKSPACE_PATHS = new Set([
-  "/copilot",
-  "/brand/ai",
-  "/brand/copilot",
-  "/studio/ai",
-  "/studio/copilot",
-  "/admin/ai",
-  "/admin/copilot",
-  "/creator/ai"
-]);
-
 const FLOATING_LAUNCHER_STORAGE_KEY = "vincis-ai-copilot-launcher-position";
 const FLOATING_LAUNCHER_SIZE = 48;
 const FLOATING_LAUNCHER_EDGE_OFFSET = 20;
@@ -93,14 +95,16 @@ const DRAWER_COPY: Record<UiLocale, {
   title: string;
   subtitle: string;
   currentEntity: string;
-  openWorkspace: string;
-  openWorkspaceAria: string;
+  expand: string;
+  collapse: string;
   loading: string;
   inputPlaceholder: string;
   unavailable: string;
   requestFailed: string;
   feedbackSaved: string;
   feedbackFailed: string;
+  workspaceReady: string;
+  readinessItems: string[];
   defaultSuggestions: string[];
 }> = {
   zh: {
@@ -108,14 +112,16 @@ const DRAWER_COPY: Record<UiLocale, {
     title: "卢西恩",
     subtitle: "你的创意协作伙伴",
     currentEntity: "当前",
-    openWorkspace: "打开全屏聊天",
-    openWorkspaceAria: "打开全屏聊天",
+    expand: "放大聊天窗口",
+    collapse: "缩回聊天窗口",
     loading: "正在读取 VINCIS 数据...",
     inputPlaceholder: "问卢西恩...",
     unavailable: "卢西恩暂时不可用，请稍后再试。",
     requestFailed: "卢西恩请求失败",
     feedbackSaved: "反馈已记录，会用于优化后续回复。",
     feedbackFailed: "反馈保存失败，请稍后再试",
+    workspaceReady: "卢西恩工作区已就绪",
+    readinessItems: ["项目数据", "用户资料", "匹配度", "生成建议"],
     defaultSuggestions: ["我的项目现在到哪一步？", "下一步我应该做什么？", "我的预算合理吗？"]
   },
   en: {
@@ -123,35 +129,83 @@ const DRAWER_COPY: Record<UiLocale, {
     title: "Lucien",
     subtitle: "Your creative collaboration partner",
     currentEntity: "current",
-    openWorkspace: "Open full-screen chat",
-    openWorkspaceAria: "Open full-screen chat",
+    expand: "Expand chat window",
+    collapse: "Collapse chat window",
     loading: "Reading VINCIS data...",
     inputPlaceholder: "Ask Lucien...",
     unavailable: "Lucien is temporarily unavailable. Please try again later.",
     requestFailed: "Lucien request failed",
     feedbackSaved: "Feedback saved and will improve future replies.",
     feedbackFailed: "Unable to save feedback. Please try again.",
+    workspaceReady: "Lucien workspace is ready",
+    readinessItems: ["Project data", "User profile", "Match fit", "Suggestions"],
     defaultSuggestions: ["Where is my project now?", "What should I do next?", "Is my budget reasonable?"]
   }
 };
 
+const READINESS_ICONS = [Database, UserRound, Target, Sparkles] as const;
+
+function WorkspaceReadinessStrip({ copy, locale }: { copy: (typeof DRAWER_COPY)[UiLocale]; locale: UiLocale }) {
+  return (
+    <div className="mb-3 rounded-2xl border border-violet-100 bg-white/90 px-3 py-2.5 shadow-sm">
+      <div className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold text-violet-700">
+        <Sparkles className="h-3.5 w-3.5" />
+        <span>{copy.workspaceReady}</span>
+      </div>
+      <div className="flex gap-2 overflow-x-auto pb-0.5">
+        {copy.readinessItems.map((item, index) => {
+          const Icon = READINESS_ICONS[index] ?? Sparkles;
+          return (
+            <div
+              key={item}
+              className="flex min-w-[132px] flex-1 items-center justify-between gap-2 rounded-xl border border-violet-100 bg-gradient-to-r from-white to-violet-50/60 px-3 py-2 text-xs text-slate-700"
+            >
+              <span className="flex min-w-0 items-center gap-1.5">
+                <Icon className="h-3.5 w-3.5 shrink-0 text-violet-500" />
+                <span className="truncate">{item}</span>
+              </span>
+              <span className="inline-flex shrink-0 items-center gap-1 text-[10px] font-semibold text-emerald-600">
+                <Check className="h-3 w-3" />
+                {locale === "zh" ? "完成" : "Done"}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function inferPageContext(pathname: string) {
   const parts = pathname.split("/").filter(Boolean);
-  const entityId = parts.at(-1);
-  const entityType = parts.includes("projects")
+  const projectIndex = parts.indexOf("projects");
+  const orderIndex = parts.indexOf("orders");
+  const reviewIndex = parts.indexOf("review");
+  const attributionIndex = parts.indexOf("attribution");
+  const entityType = projectIndex >= 0
     ? "project"
-    : parts.includes("orders")
+    : orderIndex >= 0
       ? "order"
-      : parts.includes("review")
+      : reviewIndex >= 0
         ? "review"
-        : parts.includes("attribution")
+        : attributionIndex >= 0
           ? "attribution"
           : null;
+  const entityId =
+    projectIndex >= 0
+      ? parts[projectIndex + 1]
+      : orderIndex >= 0
+        ? parts[orderIndex + 1]
+        : reviewIndex >= 0
+          ? parts[reviewIndex + 1]
+          : attributionIndex >= 0
+            ? parts[attributionIndex + 1]
+            : null;
 
   return {
     pagePath: pathname,
     entityType,
-    entityId: entityType && entityId && !["projects", "orders", "review", "attribution"].includes(entityId) ? entityId : null
+    entityId: entityType && entityId ? entityId : null
   };
 }
 
@@ -241,18 +295,6 @@ function welcomeBody(input: { pathname: string; role: ReturnType<typeof roleKind
   return "你可以告诉我今天想处理什么，我会帮你把重点和下一步整理出来。";
 }
 
-function workspaceHref(pathname: string, searchParams: { get(name: string): string | null }) {
-  const base = pathname.startsWith("/admin")
-    ? "/admin/ai"
-    : pathname.startsWith("/studio") || pathname.startsWith("/creator")
-      ? "/studio/ai"
-      : pathname.startsWith("/brand")
-        ? "/brand/ai"
-        : "/copilot";
-  const lang = searchParams.get("lang");
-  return lang ? `${base}?lang=${encodeURIComponent(lang)}` : base;
-}
-
 function languageFromSearch(searchParams: { get(name: string): string | null }) {
   const lang = searchParams.get("lang");
   if (lang === "zh") return "zh-CN";
@@ -262,10 +304,6 @@ function languageFromSearch(searchParams: { get(name: string): string | null }) 
 
 function localeFromSearch(searchParams: { get(name: string): string | null }): UiLocale {
   return searchParams.get("lang") === "en" ? "en" : "zh";
-}
-
-function isAiWorkspacePath(pathname: string) {
-  return AI_WORKSPACE_PATHS.has(pathname);
 }
 
 function clampLauncherY(y: number) {
@@ -287,9 +325,14 @@ function clampLauncherX(x: number) {
 }
 
 function defaultLauncherPosition(): FloatingLauncherPosition {
+  const defaultY =
+    typeof window === "undefined"
+      ? 520
+      : window.innerHeight - FLOATING_LAUNCHER_BOTTOM_SAFE - FLOATING_LAUNCHER_SIZE;
+
   return {
     side: "right",
-    y: 360
+    y: clampLauncherY(defaultY)
   };
 }
 
@@ -337,6 +380,7 @@ export function AiCopilotDrawer() {
   const locale = localeFromSearch(searchParams);
   const copy = DRAWER_COPY[locale];
   const [open, setOpen] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<ChatLine[]>([]);
@@ -346,7 +390,7 @@ export function AiCopilotDrawer() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savingFeedbackId, setSavingFeedbackId] = useState<string | null>(null);
-  const [launcherPosition, setLauncherPosition] = useState<FloatingLauncherPosition>(() => defaultLauncherPosition());
+  const [launcherPosition, setLauncherPosition] = useState<FloatingLauncherPosition>(() => readStoredLauncherPosition());
   const [launcherPreview, setLauncherPreview] = useState<FloatingLauncherPreview | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const launcherDragRef = useRef<FloatingLauncherDrag | null>(null);
@@ -371,8 +415,6 @@ export function AiCopilotDrawer() {
         : `Hi, ${displayName} 😊`
       : `${localGreetingPrefix(locale, localHour)}${locale === "zh" ? "，" : ", "}${displayName} 😊`;
   const introBody = welcomeBody({ pathname, role: roleKind, locale });
-  const workspaceUrl = workspaceHref(pathname, searchParams);
-  const hideFloatingLauncher = isAiWorkspacePath(pathname);
 
   useEffect(() => {
     setLauncherPosition(readStoredLauncherPosition());
@@ -390,10 +432,6 @@ export function AiCopilotDrawer() {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
-
-  useEffect(() => {
-    if (hideFloatingLauncher) setOpen(false);
-  }, [hideFloatingLauncher]);
 
   useEffect(() => {
     const syncLocalHour = () => setLocalHour(new Date().getHours());
@@ -572,8 +610,9 @@ export function AiCopilotDrawer() {
     setOpen(true);
   }
 
-  if (hideFloatingLauncher) {
-    return null;
+  function closeDrawer() {
+    setOpen(false);
+    setExpanded(false);
   }
 
   const launcherStyle = launcherPreview
@@ -597,7 +636,7 @@ export function AiCopilotDrawer() {
         className={cn(
           "fixed z-[100] h-12 w-12 touch-none select-none rounded-full p-0 shadow-xl shadow-slate-950/20",
           "bg-slate-950 text-white ring-1 ring-white/20 hover:bg-slate-800",
-          launcherPreview ? "cursor-grabbing transition-none" : "cursor-grab transition-[top,left,right,box-shadow] duration-200"
+          launcherPreview ? "cursor-grabbing transition-none" : "cursor-grab transition-[box-shadow,background-color] duration-200"
         )}
       >
         <Sparkles className="h-5 w-5 fill-white" />
@@ -606,7 +645,12 @@ export function AiCopilotDrawer() {
 
       {open ? (
         <div className="fixed inset-0 z-[100] flex h-[100dvh] max-h-[100dvh] justify-end overflow-hidden bg-slate-950/30 backdrop-blur-[1px]">
-          <aside className="flex h-[100dvh] max-h-[100dvh] min-h-0 w-full max-w-[460px] flex-col overflow-hidden border-l border-violet-100 bg-[#fbfbff] shadow-2xl">
+          <aside
+            className={cn(
+              "flex h-[100dvh] max-h-[100dvh] min-h-0 w-full flex-col overflow-hidden border-l border-violet-100 bg-[#fbfbff] shadow-2xl transition-all duration-300",
+              expanded ? "max-w-none" : "max-w-[460px]"
+            )}
+          >
             <header className="border-b border-violet-100 bg-white p-5">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
@@ -617,12 +661,18 @@ export function AiCopilotDrawer() {
                   </div>
                 </div>
                 <div className="flex items-center gap-1">
-                  <Button type="button" variant="ghost" size="icon-sm" asChild>
-                    <a href={workspaceUrl} aria-label={copy.openWorkspaceAria}>
-                      <ExternalLink className="h-4 w-4" />
-                    </a>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() => setExpanded((value) => !value)}
+                    aria-label={expanded ? copy.collapse : copy.expand}
+                    title={expanded ? copy.collapse : copy.expand}
+                    aria-pressed={expanded}
+                  >
+                    {expanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
                   </Button>
-                  <Button type="button" variant="ghost" size="icon-sm" onClick={() => setOpen(false)}>
+                  <Button type="button" variant="ghost" size="icon-sm" onClick={closeDrawer}>
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
@@ -635,12 +685,6 @@ export function AiCopilotDrawer() {
                     locale
                   })}
                 </span>
-                <a
-                  href={workspaceUrl}
-                  className="rounded-full bg-slate-950 px-3 py-1 text-xs font-semibold text-white"
-                >
-                  {copy.openWorkspace}
-                </a>
               </div>
             </header>
 
@@ -722,6 +766,7 @@ export function AiCopilotDrawer() {
             </div>
 
             <div className="shrink-0 border-t border-violet-100 bg-white px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-4">
+              <WorkspaceReadinessStrip copy={copy} locale={locale} />
               <div className="mb-3 flex gap-2 overflow-x-auto pb-1">
                 {suggestions.map((question) => (
                   <button

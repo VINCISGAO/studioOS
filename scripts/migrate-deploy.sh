@@ -46,6 +46,8 @@ while [ "$attempt" -le "$MAX_ATTEMPTS" ]; do
 
   if [ "$status" -eq 0 ]; then
     rm -f "$log"
+    echo ">>> prisma generate (post-migrate)"
+    bash scripts/prisma-with-env.sh generate
     exit 0
   fi
 

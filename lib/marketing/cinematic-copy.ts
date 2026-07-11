@@ -7,7 +7,7 @@ export const cinematicCopy = {
       cases: "Work",
       process: "Process",
       pricing: "Pricing",
-      resources: "Resources",
+      resources: "Partners",
       about: "About",
       login: "Log in",
       start: "Start project"
@@ -16,7 +16,7 @@ export const cinematicCopy = {
       cases: "案例",
       process: "流程",
       pricing: "价格",
-      resources: "资源",
+      resources: "合作伙伴",
       about: "关于我们",
       login: "登录",
       start: "开始项目"
@@ -31,7 +31,7 @@ export const cinematicCopy = {
         process: "The complete flow from brief to delivery",
         cases: "Explore our selected work and success stories",
         pricing: "Transparent, flexible pricing plans",
-        resources: "A resource center to help you create more efficiently"
+        resources: "Earn long-term referral commissions by recommending brands and creators"
       }
     },
     zh: {
@@ -42,7 +42,7 @@ export const cinematicCopy = {
         process: "从需求到交付的完整流程",
         cases: "探索我们的精选作品与成功故事",
         pricing: "透明灵活的定价方案",
-        resources: "帮助您提升创作效率的资源中心"
+        resources: "推荐品牌与创作者，获得长期分销佣金"
       }
     }
   },
@@ -213,7 +213,7 @@ const cinematicCopyTranslations: Partial<{
   [K in keyof typeof cinematicCopy]: Partial<Record<MarketingLocale, WidenCopy<(typeof cinematicCopy)[K]["en"]>>>;
 }> = {
   nav: {
-    "zh-TW": { cases: "作品", process: "流程", pricing: "價格", resources: "資源", about: "關於我們", login: "登入", start: "開始專案" },
+    "zh-TW": { cases: "作品", process: "流程", pricing: "價格", resources: "合作夥伴", about: "關於我們", login: "登入", start: "開始專案" },
     ja: { cases: "実績", process: "プロセス", pricing: "料金", resources: "リソース", about: "概要", login: "ログイン", start: "プロジェクト開始" },
     ko: { cases: "작업", process: "프로세스", pricing: "가격", resources: "리소스", about: "소개", login: "로그인", start: "프로젝트 시작" },
     ms: { cases: "Kerja", process: "Proses", pricing: "Harga", resources: "Sumber", about: "Tentang", login: "Log masuk", start: "Mulakan projek" },
@@ -232,7 +232,7 @@ const cinematicCopyTranslations: Partial<{
         process: "從需求到交付的完整流程",
         cases: "探索我們的精選作品與成功故事",
         pricing: "透明靈活的定價方案",
-        resources: "幫助您提升創作效率的資源中心"
+        resources: "了解 VINCIS 的合作夥伴生態與協作網絡"
       }
     },
     ja: {

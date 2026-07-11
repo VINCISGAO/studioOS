@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   pollBrandCreativeDirectionsAction,
   startBrandCreativeDirectionsAction
@@ -56,6 +56,10 @@ export function useBrandCampaignDirections(
   const [status, setStatus] = useState<DirectionsLoadStatus>("loading");
   const [mediaPhase, setMediaPhase] = useState<SchemeMediaPhase>("text");
   const [error, setError] = useState<string | null>(null);
+  const snapshotKey = useMemo(
+    () => JSON.stringify(options?.briefSnapshot ?? null),
+    [options?.briefSnapshot]
+  );
 
   const loadCompletedRef = useRef(false);
   const startedRef = useRef(false);
@@ -64,7 +68,13 @@ export function useBrandCampaignDirections(
 
   useEffect(() => {
     snapshotRef.current = options?.briefSnapshot ?? null;
-  }, [options?.briefSnapshot]);
+    loadCompletedRef.current = false;
+    startedRef.current = false;
+    jobIdRef.current = null;
+    setDirections([]);
+    setStatus("loading");
+    setError(null);
+  }, [snapshotKey]);
 
   useEffect(() => {
     if (!enabled || loadCompletedRef.current) return;
@@ -101,6 +111,9 @@ export function useBrandCampaignDirections(
       if (wizardFastPath) {
         fd.set("wizard_fast_path", "1");
       }
+      if (snapshotRef.current) {
+        appendWizardBriefSnapshot(fd, snapshotRef.current);
+      }
 
       const result = await pollBrandCreativeDirectionsAction(fd);
       if (cancelled) return;
@@ -117,8 +130,10 @@ export function useBrandCampaignDirections(
         return;
       }
 
+      const nextJobId = "jobId" in result && typeof result.jobId === "string" ? result.jobId : jobId;
+      jobIdRef.current = nextJobId;
       pollTimer = setTimeout(() => {
-        void poll(jobId);
+        void poll(nextJobId);
       }, POLL_MS);
     }
 
@@ -166,7 +181,7 @@ export function useBrandCampaignDirections(
       cancelled = true;
       if (pollTimer) clearTimeout(pollTimer);
     };
-  }, [enabled, locale, projectId, wizardFastPath]);
+  }, [enabled, locale, projectId, wizardFastPath, snapshotKey]);
 
   useEffect(() => {
     if (!enabled || loadCompletedRef.current || !startedRef.current) return;

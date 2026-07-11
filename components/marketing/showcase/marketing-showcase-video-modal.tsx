@@ -19,6 +19,7 @@ export function MarketingShowcaseVideoModal({
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(true);
   const [videoReady, setVideoReady] = useState(false);
+  const [videoFailed, setVideoFailed] = useState(false);
   const embed = resolveVideoEmbed(work.video_url);
   const directVideoSrc = showcaseVideoSrc(work);
   const isZh = locale === "zh";
@@ -86,7 +87,7 @@ export function MarketingShowcaseVideoModal({
         </div>
 
         <div className="relative aspect-video w-full bg-black">
-          {embed.kind === "video" && directVideoSrc ? (
+          {embed.kind === "video" && directVideoSrc && !videoFailed ? (
             <video
               ref={videoRef}
               src={directVideoSrc}
@@ -99,6 +100,7 @@ export function MarketingShowcaseVideoModal({
               onPlay={() => setIsPlaying(true)}
               onPause={() => setIsPlaying(false)}
               onPlaying={() => setVideoReady(true)}
+              onError={() => setVideoFailed(true)}
               onClick={togglePlay}
             />
           ) : embed.kind === "iframe" ? (
@@ -114,7 +116,13 @@ export function MarketingShowcaseVideoModal({
             <div className="flex h-full items-center justify-center text-sm text-zinc-500">{work.title}</div>
           )}
 
-          {embed.kind === "video" && directVideoSrc ? (
+          {videoFailed ? (
+            <div className="absolute inset-0 flex items-center justify-center px-6 text-center text-sm text-zinc-400">
+              {isZh ? "视频暂时无法加载，请稍后再试。" : "This video cannot be loaded right now. Please try again later."}
+            </div>
+          ) : null}
+
+          {embed.kind === "video" && directVideoSrc && !videoFailed ? (
             <div className="absolute bottom-4 right-4 flex items-center gap-2">
               <button
                 type="button"

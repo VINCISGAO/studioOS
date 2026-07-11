@@ -56,7 +56,7 @@ export const productionPricingRepository = {
         riskBufferStandard: decimal(config.riskBufferStandard),
         tokensPer15s4kGeneration: config.tokensPer15s4kGeneration,
         isActive: true,
-        notes: "V1 — owner-verified samples SAMPLE_001 + SAMPLE_002"
+        notes: "V1 — owner-verified samples SAMPLE_001 + SAMPLE_002 plus creator-provided benchmarks SAMPLE_003 + SAMPLE_004"
       },
       create: {
         version: config.version,
@@ -73,7 +73,7 @@ export const productionPricingRepository = {
         riskBufferStandard: decimal(config.riskBufferStandard),
         tokensPer15s4kGeneration: config.tokensPer15s4kGeneration,
         isActive: true,
-        notes: "V1 — owner-verified samples SAMPLE_001 + SAMPLE_002"
+        notes: "V1 — owner-verified samples SAMPLE_001 + SAMPLE_002 plus creator-provided benchmarks SAMPLE_003 + SAMPLE_004"
       }
     });
 

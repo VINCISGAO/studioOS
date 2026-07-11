@@ -49,7 +49,26 @@ function normalizeCreativeDirection(raw: unknown, index: number): CreativeDirect
     recommendedCreatorType,
     recommendedBudget,
     expectedOutcome,
-    rationale
+    rationale,
+    creativeStrategy: typeof value.creativeStrategy === "string" ? value.creativeStrategy : undefined,
+    coreInsight: typeof value.coreInsight === "string" ? value.coreInsight : undefined,
+    bigIdea: typeof value.bigIdea === "string" ? value.bigIdea : undefined,
+    openingHook: typeof value.openingHook === "string" ? value.openingHook : undefined,
+    storyStructure: Array.isArray(value.storyStructure) ? value.storyStructure : undefined,
+    cameraLanguage: typeof value.cameraLanguage === "string" ? value.cameraLanguage : undefined,
+    colorPalette: typeof value.colorPalette === "string" ? value.colorPalette : undefined,
+    musicDirection: typeof value.musicDirection === "string" ? value.musicDirection : undefined,
+    creatorRequirements: typeof value.creatorRequirements === "string" ? value.creatorRequirements : undefined,
+    aiProductionDifficulty: typeof value.aiProductionDifficulty === "string" ? value.aiProductionDifficulty : undefined,
+    estimatedPerformance: typeof value.estimatedPerformance === "string" ? value.estimatedPerformance : undefined,
+    whyAiRecommendsThis: typeof value.whyAiRecommendsThis === "string" ? value.whyAiRecommendsThis : undefined,
+    audienceMatch: typeof value.audienceMatch === "number" ? value.audienceMatch : undefined,
+    emotionalResonance: typeof value.emotionalResonance === "number" ? value.emotionalResonance : undefined,
+    productIntegration: typeof value.productIntegration === "number" ? value.productIntegration : undefined,
+    estimatedCtr: typeof value.estimatedCtr === "string" ? value.estimatedCtr : undefined,
+    recommendedDuration: typeof value.recommendedDuration === "string" ? value.recommendedDuration : undefined,
+    suitableIndustries: Array.isArray(value.suitableIndustries) ? value.suitableIndustries.map(String) : undefined,
+    suitablePlatforms: Array.isArray(value.suitablePlatforms) ? value.suitablePlatforms.map(String) : undefined
   };
 }
 
@@ -64,30 +83,36 @@ function buildFrozenProductionBrief(campaign: Campaign, direction: CreativeDirec
   const fullText =
     language === "zh"
       ? [
-          `标题：${direction.title}`,
-          `核心创意：${direction.coreIdea}`,
-          `开场钩子：${direction.hook}`,
-          `故事结构：${direction.story}`,
-          `语气：${direction.tone}`,
-          `视觉风格：${direction.visualStyle}`,
-          `分镜清单：\n${shotList.map((shot, index) => `${index + 1}. ${shot}`).join("\n")}`,
-          `行动引导：${direction.cta}`,
-          `推荐创作者类型：${direction.recommendedCreatorType}`,
-          `建议预算：${direction.recommendedBudget}`,
-          `预期效果：${direction.expectedOutcome}`
+          `Creative Strategy：${direction.creativeStrategy || direction.title}`,
+          `Core Insight：${direction.coreInsight || direction.coreIdea}`,
+          `Big Idea：${direction.bigIdea || direction.coreIdea}`,
+          `Opening Hook：${direction.openingHook || direction.hook}`,
+          `Story Structure：\n${(direction.storyStructure?.length ? direction.storyStructure.map((scene) => `${scene.label} ${scene.title}：${scene.purpose}`) : shotList).map((shot, index) => `${index + 1}. ${shot}`).join("\n")}`,
+          `Visual Style：${direction.visualStyle}`,
+          `Camera Language：${direction.cameraLanguage ?? ""}`,
+          `Color Palette：${direction.colorPalette ?? ""}`,
+          `Music Direction：${direction.musicDirection ?? ""}`,
+          `Creator Requirements：${direction.creatorRequirements || direction.recommendedCreatorType}`,
+          `AI Production Difficulty：${direction.aiProductionDifficulty ?? ""}`,
+          `Estimated Budget：${direction.recommendedBudget}`,
+          `Expected Performance：${direction.estimatedPerformance || direction.expectedOutcome}`,
+          `Why AI Recommends This：${direction.whyAiRecommendsThis || direction.rationale}`
         ].join("\n\n")
       : [
-          `Title: ${direction.title}`,
-          `Core idea: ${direction.coreIdea}`,
-          `Hook: ${direction.hook}`,
-          `Story: ${direction.story}`,
-          `Tone: ${direction.tone}`,
-          `Visual style: ${direction.visualStyle}`,
-          `Shot list:\n${shotList.map((shot, index) => `${index + 1}. ${shot}`).join("\n")}`,
-          `CTA: ${direction.cta}`,
-          `Recommended creator type: ${direction.recommendedCreatorType}`,
-          `Recommended budget: ${direction.recommendedBudget}`,
-          `Expected outcome: ${direction.expectedOutcome}`
+          `Creative Strategy: ${direction.creativeStrategy || direction.title}`,
+          `Core Insight: ${direction.coreInsight || direction.coreIdea}`,
+          `Big Idea: ${direction.bigIdea || direction.coreIdea}`,
+          `Opening Hook: ${direction.openingHook || direction.hook}`,
+          `Story Structure:\n${(direction.storyStructure?.length ? direction.storyStructure.map((scene) => `${scene.label} ${scene.title}: ${scene.purpose}`) : shotList).map((shot, index) => `${index + 1}. ${shot}`).join("\n")}`,
+          `Visual Style: ${direction.visualStyle}`,
+          `Camera Language: ${direction.cameraLanguage ?? ""}`,
+          `Color Palette: ${direction.colorPalette ?? ""}`,
+          `Music Direction: ${direction.musicDirection ?? ""}`,
+          `Creator Requirements: ${direction.creatorRequirements || direction.recommendedCreatorType}`,
+          `AI Production Difficulty: ${direction.aiProductionDifficulty ?? ""}`,
+          `Estimated Budget: ${direction.recommendedBudget}`,
+          `Expected Performance: ${direction.estimatedPerformance || direction.expectedOutcome}`,
+          `Why AI Recommends This: ${direction.whyAiRecommendsThis || direction.rationale}`
         ].join("\n\n");
 
   return {
@@ -298,9 +323,8 @@ export class CreativeDirectionService {
   ) {
     const campaign = await this.getCampaignForBrand(campaignId, user);
     PermissionService.assert(user, "campaign.update");
-    const wizardDraftFastPath =
-      options?.wizardFastPath === true && campaign.status === CampaignState.DRAFT;
-    if (!wizardDraftFastPath) {
+    const wizardPreviewFastPath = options?.wizardFastPath === true;
+    if (!wizardPreviewFastPath) {
       await this.assertEscrowFundedForAi(campaignId);
     }
 
@@ -335,7 +359,7 @@ export class CreativeDirectionService {
     const job = await aiWorkerService.enqueueCreativeDirection(campaignId, user.id, {
       briefSnapshot: options?.briefSnapshot,
       language: options?.language,
-      wizardFastPath: wizardDraftFastPath
+      wizardFastPath: wizardPreviewFastPath
     });
     aiWorkerService.scheduleProcess(job.id);
 
@@ -387,27 +411,40 @@ export class CreativeDirectionService {
         campaignId,
         directionId,
         title: selected.title,
+        creative_strategy: selected.creativeStrategy,
+        core_insight: selected.coreInsight,
+        big_idea: selected.bigIdea,
+        opening_hook: selected.openingHook,
+        audience_match: selected.audienceMatch,
+        emotional_resonance: selected.emotionalResonance,
+        product_integration: selected.productIntegration,
+        estimated_ctr: selected.estimatedCtr,
+        recommended_duration: selected.recommendedDuration,
+        suitable_industries: selected.suitableIndustries,
+        suitable_platforms: selected.suitablePlatforms,
+        ai_production_difficulty: selected.aiProductionDifficulty,
         rejected_direction_ids: rejectedDirections.map((direction) => direction.id),
-        rejected_direction_titles: rejectedDirections.map((direction) => direction.title)
+        rejected_direction_titles: rejectedDirections.map((direction) => direction.title),
+        rejected_creative_strategies: rejectedDirections.map((direction) => direction.creativeStrategy || direction.title)
       },
       after: {
         selected_direction_id: directionId,
+        selected_creative_strategy: selected.creativeStrategy || selected.title,
+        selected_strategy_attributes: {
+          coreInsight: selected.coreInsight,
+          bigIdea: selected.bigIdea,
+          estimatedCtr: selected.estimatedCtr,
+          recommendedDuration: selected.recommendedDuration,
+          suitableIndustries: selected.suitableIndustries,
+          suitablePlatforms: selected.suitablePlatforms,
+          aiProductionDifficulty: selected.aiProductionDifficulty
+        },
         rejected_direction_ids: rejectedDirections.map((direction) => direction.id),
         frozen_production_brief: true
       },
       memoryKey: "selected_direction",
       memoryValue: selected.title
     });
-    await notifyBrandAiProgress(campaign, {
-      title: options?.language === "zh" ? "创意方案已选择" : "Creative direction selected",
-      content:
-        options?.language === "zh"
-          ? `「${selected.title}」已冻结为正式制作简报，将用于匹配和制作。`
-          : `"${selected.title}" is now frozen as the Production Brief for matching and production.`,
-      template: "ai.direction_selected",
-      priority: "HIGH"
-    });
-
     if (campaign.creatorId) {
       const script = [selected.title, selected.hook, selected.visualStyle, selected.tone, selected.cta]
         .filter(Boolean)

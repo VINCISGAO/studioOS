@@ -11,72 +11,47 @@ export type SchemeRadarScores = {
 export type SchemeDisplayMetrics = {
   label: string;
   recommended: boolean;
-  aiScore: number;
-  ctrLift: number;
-  conversionLift: number;
-  roi: number;
-  difficultyStars: number;
+  audienceMatch: number;
+  emotionalResonance: number;
+  productIntegration: number;
+  estimatedCtr: string;
+  recommendedDuration: string;
+  aiProductionDifficulty: string;
+  suitableIndustries: string[];
+  suitablePlatforms: string[];
   psychologyTags: string[];
   radar: SchemeRadarScores;
   highlights: string[];
-  avgWatchSec: number;
-  engagementRate: number;
-  cpmForecast: number;
   budgetTotal: number;
   budgetSlices: Array<{ key: string; amount: number; color: string }>;
 };
 
-const METRIC_PRESETS = [
-  {
-    aiScore: 94,
-    ctrLift: 18,
-    conversionLift: 21,
-    roi: 4.2,
-    difficultyStars: 3,
-    psychologyTags: {
-      zh: ["身份认同", "社会认同", "稀缺感", "品质追求"],
-      en: ["Identity", "Social proof", "Scarcity", "Quality"]
-    },
-    radar: { appeal: 92, resonance: 88, memorability: 90, conversion: 94, difficulty: 62 },
-    avgWatchSec: 18,
-    engagementRate: 8.7,
-    cpmForecast: 3.2
-  },
-  {
-    aiScore: 88,
-    ctrLift: 14,
-    conversionLift: 16,
-    roi: 3.6,
-    difficultyStars: 2,
-    psychologyTags: {
-      zh: ["信任感", "真实体验", "口碑传播"],
-      en: ["Trust", "Authentic use", "Word of mouth"]
-    },
-    radar: { appeal: 86, resonance: 92, memorability: 84, conversion: 88, difficulty: 48 },
-    avgWatchSec: 16,
-    engagementRate: 7.9,
-    cpmForecast: 3.5
-  },
-  {
-    aiScore: 86,
-    ctrLift: 12,
-    conversionLift: 14,
-    roi: 3.4,
-    difficultyStars: 4,
-    psychologyTags: {
-      zh: ["好奇驱动", "惊喜感", "快速决策"],
-      en: ["Curiosity", "Surprise", "Fast decision"]
-    },
-    radar: { appeal: 94, resonance: 80, memorability: 91, conversion: 86, difficulty: 72 },
-    avgWatchSec: 14,
-    engagementRate: 9.1,
-    cpmForecast: 3.8
-  }
-] as const;
-
 function parseBudgetAmount(raw: string | undefined, fallback: number) {
   const match = raw?.replace(/,/g, "").match(/\d+/);
   return match ? Number(match[0]) : fallback;
+}
+
+function clampScore(value: number | undefined) {
+  if (typeof value !== "number" || Number.isNaN(value)) return 0;
+  return Math.max(0, Math.min(100, Math.round(value)));
+}
+
+function productionDifficultyScore(raw: string | undefined) {
+  const normalized = raw?.toLowerCase() ?? "";
+  if (normalized.includes("low") || normalized.includes("低")) return 35;
+  if (normalized.includes("high") || normalized.includes("高")) return 78;
+  if (normalized.includes("medium") || normalized.includes("中")) return 55;
+  return 50;
+}
+
+function strategyTags(direction: CreativeDirection, locale: "en" | "zh") {
+  const fromApi = [
+    ...(direction.suitableIndustries ?? []),
+    direction.estimatedCtr,
+    direction.aiProductionDifficulty
+  ].filter((item): item is string => Boolean(item?.trim()));
+  if (fromApi.length) return fromApi.slice(0, 4);
+  return locale === "zh" ? ["AI 策略分析"] : ["AI strategy analysis"];
 }
 
 export function buildSchemeDisplayMetrics(
@@ -85,7 +60,6 @@ export function buildSchemeDisplayMetrics(
   locale: "en" | "zh",
   fallbackBudget = 300
 ): SchemeDisplayMetrics {
-  const preset = METRIC_PRESETS[index] ?? METRIC_PRESETS[0];
   const budgetTotal = parseBudgetAmount(direction.recommendedBudget, fallbackBudget);
   const creatorFee = Math.round(budgetTotal * 0.45);
   const production = Math.round(budgetTotal * 0.22);
@@ -106,17 +80,23 @@ export function buildSchemeDisplayMetrics(
   return {
     label: String.fromCharCode(65 + index),
     recommended: index === 0,
-    aiScore: preset.aiScore,
-    ctrLift: preset.ctrLift,
-    conversionLift: preset.conversionLift,
-    roi: preset.roi,
-    difficultyStars: preset.difficultyStars,
-    psychologyTags: [...preset.psychologyTags[locale]],
-    radar: { ...preset.radar },
+    audienceMatch: clampScore(direction.audienceMatch),
+    emotionalResonance: clampScore(direction.emotionalResonance),
+    productIntegration: clampScore(direction.productIntegration),
+    estimatedCtr: direction.estimatedCtr || (locale === "zh" ? "待 AI 判断" : "AI pending"),
+    recommendedDuration: direction.recommendedDuration || (locale === "zh" ? "待 AI 判断" : "AI pending"),
+    aiProductionDifficulty: direction.aiProductionDifficulty || (locale === "zh" ? "待 AI 判断" : "AI pending"),
+    suitableIndustries: direction.suitableIndustries?.length ? direction.suitableIndustries : [],
+    suitablePlatforms: direction.suitablePlatforms?.length ? direction.suitablePlatforms : [],
+    psychologyTags: strategyTags(direction, locale),
+    radar: {
+      appeal: clampScore(direction.audienceMatch),
+      resonance: clampScore(direction.emotionalResonance),
+      memorability: Math.round((clampScore(direction.emotionalResonance) + clampScore(direction.productIntegration)) / 2),
+      conversion: clampScore(direction.productIntegration),
+      difficulty: productionDifficultyScore(direction.aiProductionDifficulty)
+    },
     highlights,
-    avgWatchSec: preset.avgWatchSec,
-    engagementRate: preset.engagementRate,
-    cpmForecast: preset.cpmForecast,
     budgetTotal,
     budgetSlices: [
       { key: locale === "zh" ? "创作者费用" : "Creator fee", amount: creatorFee, color: "#7c3aed" },

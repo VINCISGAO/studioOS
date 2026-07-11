@@ -363,12 +363,12 @@ export function BrandCampaignWizard({
     }, "approve-direction");
   }
 
-  const maxWidth = step === 1 ? "max-w-none" : step === 2 ? "max-w-none" : "max-w-3xl";
+  const maxWidth = step === 1 || step === 2 || step === 3 ? "max-w-none" : "max-w-3xl";
   const step2FullBleed = step === 2 ? "min-h-[calc(100dvh-3.5rem)] w-full" : "";
 
   return (
-    <div className={cn("mx-auto w-full", maxWidth, step2FullBleed)}>
-      {step !== 2 && step !== 1 ? (
+    <div className={cn("mx-auto w-full", maxWidth, step2FullBleed, step === 1 && "h-full min-h-0")}>
+      {step !== 2 && step !== 1 && step !== 3 ? (
       <div className="mb-8">
         <WizardStepper locale={locale} currentStep={step} variant="brand" />
         <div className="mt-6 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
@@ -411,6 +411,7 @@ export function BrandCampaignWizard({
           <BrandCampaignStep2Review
             locale={locale}
             project={wizardData.project}
+            references={wizardData.references}
             budget={budget}
             delivery={delivery}
             productImageUrl={productImageUrl}

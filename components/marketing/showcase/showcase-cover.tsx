@@ -68,28 +68,41 @@ function ShowcaseVideoThumb({
   enabled: boolean;
 }) {
   const ref = useRef<HTMLVideoElement>(null);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     if (!enabled) return;
     const video = ref.current;
     if (!video) return;
+    setFailed(false);
 
     const showFirstFrame = () => {
-      video.pause();
-      const duration = video.duration;
-      video.currentTime =
-        Number.isFinite(duration) && duration > 0 ? Math.min(0.25, duration / 4) : 0.1;
+      try {
+        video.pause();
+        const duration = video.duration;
+        video.currentTime =
+          Number.isFinite(duration) && duration > 0 ? Math.min(0.25, duration / 4) : 0.1;
+      } catch {
+        setFailed(true);
+      }
     };
+    const markFailed = () => setFailed(true);
 
     video.addEventListener("loadeddata", showFirstFrame);
-    video.load();
+    video.addEventListener("error", markFailed);
+    try {
+      video.load();
+    } catch {
+      setFailed(true);
+    }
 
     return () => {
       video.removeEventListener("loadeddata", showFirstFrame);
+      video.removeEventListener("error", markFailed);
     };
   }, [src, enabled]);
 
-  if (!enabled) {
+  if (!enabled || failed) {
     return <CoverPlaceholder className={cn("absolute inset-0", className)} />;
   }
 
@@ -106,7 +119,7 @@ function ShowcaseVideoThumb({
   );
 }
 
-/** Poster image first; video frame fallback only when near viewport (never eager MP4 on grid). */
+/** Poster image first; grid cards never auto-load MP4, so broken media cannot surface as page errors. */
 export function ShowcaseCover({
   work,
   className,
@@ -131,7 +144,7 @@ export function ShowcaseCover({
   const [useVideoThumb, setUseVideoThumb] = useState(false);
   const videoSrc = showcaseCoverVideoFallbackSrc(work.video_url);
   const activePoster = posterSources[posterIndex];
-  const { ref, inView } = useInView(priority);
+  const { ref } = useInView(priority);
 
   useEffect(() => {
     setPosterIndex(0);
@@ -139,7 +152,7 @@ export function ShowcaseCover({
   }, [work.video_url, work.thumbnail_url, posterSources]);
 
   const wantsVideoThumb = useVideoThumb || cover.kind === "video";
-  const canLoadVideoThumb = inView && wantsVideoThumb;
+  const canLoadVideoThumb = false;
 
   let body: ReactNode;
 

@@ -117,6 +117,7 @@ The AI Engineering Bible defines the long-term target as a unified AI Platform, 
 | `features/ai/ai-gateway.service.ts` | Gateway | Central AI provider boundary |
 | `features/ai/ai-job.repository.ts` / `features/ai/ai-worker.service.ts` | Worker | AI job execution and retry lifecycle |
 | `features/ai-copilot/**` | Copilot engine | QA retrieval, tool calls, user feedback, and Copilot learning |
+| `features/ai-copilot/lucien-learning.service.ts` | Lucien learning | Every public + workspace Lucien turn writes `lucien_assistant_interaction`; feedback writes `lucien_assistant_feedback` |
 
 ### AI Copilot / StudioOS Brain Assets
 
@@ -190,6 +191,9 @@ Language resources are also AI foundation assets because AI output, email templa
 | Communication style / language | `features/memory/ai-preference.service.ts` | User AI preference |
 | Connected channel enabled | `features/channels/connected-channel.service.ts` | Future creator data learning input |
 | AI support conversation | `features/ai-support/**` | Future AI support memory and product friction learning |
+| Lucien assistant interaction (public + workspace) | `features/ai-copilot/lucien-learning.service.ts` | `AIEvent` + `AILearning` (`lucien_assistant_interaction`) |
+| Lucien assistant feedback (workspace thumbs) | `features/ai-copilot/lucien-learning.service.ts` | `AILearning` (`lucien_assistant_feedback`) + `MemoryFact` |
+| Lucien boundary refusal | `features/ai-copilot/lucien-boundary.service.ts` | `AILearning` (`lucien_knowledge_boundary_audit`, `lucien_assistant_interaction`) |
 | Translation / localization failure | `features/communication/**` | Future language quality learning |
 
 ## Future Learning Sources

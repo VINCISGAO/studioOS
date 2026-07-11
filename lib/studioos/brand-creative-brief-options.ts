@@ -3,13 +3,12 @@ import type { Locale } from "@/lib/i18n";
 export const CREATIVE_BRIEF_SECTIONS = [
   { id: "overview", number: 1, label: { zh: "项目概览", en: "Project overview" } },
   { id: "creative", number: 2, label: { zh: "创意方向", en: "Creative direction" } },
-  { id: "production", number: 3, label: { zh: "制作要求", en: "Production" } },
-  { id: "assets", number: 4, label: { zh: "素材与参考", en: "Assets & refs" } },
-  { id: "details", number: 5, label: { zh: "更多细节", en: "More details" }, optional: true },
-  { id: "budget", number: 6, label: { zh: "预算与时间", en: "Budget & time" } }
+  { id: "details", number: 3, label: { zh: "更多细节", en: "More details" }, optional: true },
+  { id: "production", number: 4, label: { zh: "制作要求", en: "Production" } },
+  { id: "budget", number: 5, label: { zh: "预算与时间", en: "Budget & time" } }
 ] as const;
 
-export const VIDEO_DURATION_OPTIONS = ["6s", "10s", "15s", "30s", "45s", "60s", "90s", "custom"] as const;
+export const VIDEO_DURATION_OPTIONS = ["15s", "30s", "45s", "60s", "90s", "custom"] as const;
 
 export const STYLE_OPTIONS = [
   { id: "cinematic", icon: "film", label: { zh: "电影感", en: "Cinematic" } },
@@ -56,13 +55,8 @@ export const FPS_OPTIONS = ["24 fps", "30 fps", "60 fps"] as const;
 
 export const BRAND_ASSET_SLOTS = [
   { id: "logo", label: { zh: "Logo", en: "Logo" } },
-  { id: "brand_guide", label: { zh: "品牌指南", en: "Brand guide" } },
   { id: "product_photos", label: { zh: "产品照片", en: "Product photos" } },
-  { id: "existing_videos", label: { zh: "现有视频", en: "Existing videos" } },
-  { id: "script", label: { zh: "脚本", en: "Script" } },
-  { id: "voiceover", label: { zh: "配音", en: "Voiceover" } },
-  { id: "bgm", label: { zh: "背景音乐", en: "BGM" } },
-  { id: "fonts", label: { zh: "字体", en: "Fonts" } }
+  { id: "reference_videos", label: { zh: "参考视频", en: "Reference videos" } }
 ] as const;
 
 export const MUST_INCLUDE_OPTIONS = [

@@ -12,6 +12,29 @@ export type CreativeDirection = {
   recommendedBudget: string;
   expectedOutcome: string;
   rationale: string;
+  creativeStrategy?: string;
+  coreInsight?: string;
+  bigIdea?: string;
+  openingHook?: string;
+  storyStructure?: Array<{
+    label: string;
+    title: string;
+    purpose: string;
+  }>;
+  cameraLanguage?: string;
+  colorPalette?: string;
+  musicDirection?: string;
+  creatorRequirements?: string;
+  aiProductionDifficulty?: "Low" | "Medium" | "High" | string;
+  estimatedPerformance?: string;
+  whyAiRecommendsThis?: string;
+  audienceMatch?: number;
+  emotionalResonance?: number;
+  productIntegration?: number;
+  estimatedCtr?: "Low" | "Medium" | "High" | string;
+  recommendedDuration?: string;
+  suitableIndustries?: string[];
+  suitablePlatforms?: string[];
 };
 
 export type FrozenProductionBrief = {

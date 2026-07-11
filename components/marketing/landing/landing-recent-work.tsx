@@ -29,70 +29,66 @@ function WorkCard({
   const meta = `${labelWorkCategory(work.category, locale)} · ${labelPlatform(work.platform, locale)}`;
   const featuredLabel = landingText("work", copyLocale).featured;
 
-  const imageFrameClass = featured
-    ? "h-[260px] sm:h-[360px]"
-    : "aspect-[16/9]";
-
   return (
     <button
       type="button"
       onClick={onOpen}
       className={cn(
-        "group flex h-full w-full cursor-pointer flex-col text-left",
-        !featured && "rounded-2xl bg-white shadow-[0_14px_40px_-28px_rgba(0,0,0,0.35)]"
+        "group flex h-full w-full cursor-pointer flex-col rounded-2xl bg-white text-left shadow-[0_14px_40px_-28px_rgba(0,0,0,0.35)]",
+        featured && "lg:min-h-0"
       )}
     >
       <div
         className={cn(
-          "relative w-full shrink-0 overflow-hidden bg-zinc-900",
-          imageFrameClass,
+          "relative w-full overflow-hidden rounded-t-2xl bg-zinc-900",
           featured
-            ? "rounded-2xl shadow-[0_18px_60px_-30px_rgba(0,0,0,0.45)]"
-            : "rounded-t-2xl"
+            ? "aspect-video shrink-0 sm:aspect-[16/10] lg:aspect-auto lg:min-h-[360px] lg:flex-1"
+            : "aspect-video shrink-0"
         )}
       >
         <ShowcaseCover
           work={work}
           priority={featured}
           className="absolute inset-0"
-          imageClassName="transition duration-500 group-hover:scale-[1.03]"
+          imageClassName={cn(
+            "h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]",
+            featured && "object-center"
+          )}
         />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/10" />
-        <span className="pointer-events-none absolute bottom-3 right-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-md sm:bottom-4 sm:right-4">
-          <Play className="ml-0.5 h-4 w-4 fill-current" />
-        </span>
         {featured ? (
           <>
             <span className="pointer-events-none absolute left-5 top-5 z-[1] inline-flex items-center gap-1.5 rounded-full bg-black/80 px-3 py-1.5 text-[11px] font-medium text-white shadow-sm">
               <span className="text-violet-300">✦</span>
               {featuredLabel}
             </span>
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] flex items-end justify-between gap-4 p-5 sm:p-6">
-              <span className="inline-flex shrink-0 items-center gap-2 text-xs font-medium text-white">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-zinc-950">
-                  <Play className="ml-0.5 h-3 w-3 fill-zinc-950" />
-                </span>
-                {isChineseLanguage(copyLocale) ? "观看案例视频" : "Watch case video"}
+            <span className="pointer-events-none absolute bottom-4 left-5 z-[1] inline-flex items-center gap-2 text-xs font-medium text-white">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-zinc-950">
+                <Play className="ml-0.5 h-3 w-3 fill-zinc-950" />
               </span>
-              <span className="min-w-0 text-right">
-                <p className="text-xs text-zinc-300 sm:text-sm">{meta}</p>
-              </span>
-            </div>
+              {isChineseLanguage(copyLocale) ? "观看案例视频" : "Watch case video"}
+            </span>
           </>
-        ) : null}
+        ) : (
+          <span className="pointer-events-none absolute bottom-3 right-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-md sm:bottom-4 sm:right-4">
+            <Play className="ml-0.5 h-4 w-4 fill-current" />
+          </span>
+        )}
       </div>
 
-      {!featured ? (
-        <div className="flex min-h-[4.5rem] flex-1 items-center justify-between gap-3 p-3">
-          <span className="min-w-0">
-            <h3 className="line-clamp-1 text-sm font-semibold text-zinc-950">{work.title}</h3>
-            <p className="mt-1 text-xs text-zinc-500">{meta}</p>
-          </span>
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-black/10 bg-white text-zinc-950 transition group-hover:border-black/20 group-hover:bg-zinc-950 group-hover:text-white">
-            <ArrowRight className="h-4 w-4" />
-          </span>
-        </div>
-      ) : null}
+      <div
+        className={cn(
+          "flex min-h-[4.5rem] shrink-0 items-center justify-between gap-3 rounded-b-2xl border-t border-zinc-100 bg-white p-3 sm:p-4"
+        )}
+      >
+        <span className="min-w-0">
+          <h3 className="line-clamp-1 text-sm font-semibold text-zinc-950">{work.title}</h3>
+          <p className="mt-1 text-xs text-zinc-500">{meta}</p>
+        </span>
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-black/10 bg-white text-zinc-950 transition group-hover:border-black/20 group-hover:bg-zinc-950 group-hover:text-white">
+          <ArrowRight className="h-4 w-4" />
+        </span>
+      </div>
     </button>
   );
 }
@@ -127,8 +123,8 @@ export function LandingRecentWork({
 
         {hero ? (
           <>
-            <div className="mt-7 grid grid-cols-2 gap-3 sm:mt-9 sm:gap-4 lg:grid-cols-[minmax(0,1.02fr)_minmax(0,1.1fr)]">
-              <div className="col-span-2 lg:col-span-1">
+            <div className="mt-7 grid grid-cols-2 gap-3 sm:mt-9 sm:gap-4 lg:grid-cols-[minmax(0,1.12fr)_minmax(0,0.98fr)] lg:items-stretch">
+              <div className="col-span-2 flex min-h-0 lg:col-span-1">
                 <WorkCard
                   work={hero}
                   locale={locale}

@@ -152,6 +152,7 @@ function BrandPortalShellInner({
     }
     if (item.labelKey === "adRequirements") {
       return (
+        isWizardCreate ||
         pathname === brandPortalRoutes.campaigns ||
         pathname.startsWith("/brand/campaigns/") ||
         (pathname === brandPortalRoutes.dashboard && locationHash === "#my-ads")
@@ -169,9 +170,6 @@ function BrandPortalShellInner({
     if (item.labelKey === "messages") {
       return pathname === brandPortalRoutes.messages || pathname.startsWith("/brand/messages");
     }
-    if (item.labelKey === "aiAssistant") {
-      return pathname === brandPortalRoutes.aiAssistant || pathname.startsWith("/brand/ai") || pathname.startsWith("/brand/copilot");
-    }
     if (item.labelKey === "settings") {
       return pathname === brandPortalRoutes.settings || pathname.startsWith("/brand/settings");
     }
@@ -180,6 +178,7 @@ function BrandPortalShellInner({
     }
     if (item.labelKey === "home") {
       return (
+        !isWizardCreate &&
         (pathname === brandPortalRoutes.dashboard ||
           pathname.startsWith("/brand/projects") ||
           pathname.startsWith("/brand/campaigns")) &&
@@ -226,10 +225,7 @@ function BrandPortalShellInner({
       <div className="min-h-screen bg-[#f8f9fc] lg:h-[100dvh] lg:max-h-[100dvh] lg:overflow-hidden">
       <div className="flex min-h-screen lg:h-[100dvh] lg:min-h-0 lg:max-h-[100dvh] lg:overflow-hidden">
         <aside
-          className={cn(
-            "hidden h-[100dvh] max-h-[100dvh] w-[248px] shrink-0 flex-col overflow-hidden border-r border-zinc-200/80 bg-white lg:sticky lg:top-0 lg:flex",
-            isWizardCreate && "lg:hidden"
-          )}
+          className="hidden h-[100dvh] max-h-[100dvh] w-[248px] shrink-0 flex-col overflow-hidden border-r border-zinc-200/80 bg-white lg:sticky lg:top-0 lg:flex"
         >
           <MarketingHomeLink
             locale={locale}

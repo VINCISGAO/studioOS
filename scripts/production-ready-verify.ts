@@ -6,6 +6,10 @@ import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync, appendFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  buildMarketingFaqKnowledgeRows,
+  MARKETING_FAQ_KNOWLEDGE_PER_LOCALE
+} from "../features/ai-copilot/marketing-faq-knowledge.mapper";
 
 const ROOT = join(fileURLToPath(new URL(".", import.meta.url)), "..");
 const FAILURE_LOG = join(ROOT, "verify-failure.log");
@@ -197,6 +201,33 @@ function checkAdminSecrets(): Step {
   };
 }
 
+function checkMarketingFaqKnowledge(): Step {
+  const rows = buildMarketingFaqKnowledgeRows();
+  const zhCount = rows.filter((row) => row.languageCode === "zh-CN").length;
+  const enCount = rows.filter((row) => row.languageCode === "en").length;
+  const boundaryOk = rows.every(
+    (row) =>
+      row.knowledgeType === "FAQ" &&
+      row.visibility === "public" &&
+      row.sourceType === "marketing_faq"
+  );
+  const ok =
+    rows.length === MARKETING_FAQ_KNOWLEDGE_PER_LOCALE * 2 &&
+    zhCount === MARKETING_FAQ_KNOWLEDGE_PER_LOCALE &&
+    enCount === MARKETING_FAQ_KNOWLEDGE_PER_LOCALE &&
+    boundaryOk;
+
+  return {
+    name: "ai_copilot.marketing_faq_knowledge",
+    ok,
+    detail: ok
+      ? `${rows.length} public marketing FAQ rows ready for Lucien`
+      : boundaryOk
+        ? `Expected ${MARKETING_FAQ_KNOWLEDGE_PER_LOCALE * 2} rows, got ${rows.length}`
+        : "Marketing FAQ rows missing Lucien public boundary tags"
+  };
+}
+
 function main() {
   console.log("\nProduction readiness verification");
   console.log("(build alone can take 1–3 minutes — progress prints below)\n");
@@ -214,6 +245,7 @@ function main() {
   steps.push(runCheck("migrations.payment_collection", checkMigrationFiles));
   steps.push(runCheck("prisma.payment_fields", checkPrismaSchema));
   steps.push(runCheck("payment.mvp_files", checkPaymentService));
+  steps.push(runCheck("ai_copilot.marketing_faq_knowledge", checkMarketingFaqKnowledge));
   steps.push(runCheck("admin.secrets_config", checkAdminSecrets));
 
   if (process.env.DATABASE_URL) {

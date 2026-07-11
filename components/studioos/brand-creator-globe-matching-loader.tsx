@@ -94,6 +94,32 @@ const MATCH_STATUS = {
   }
 } as const;
 
+function interpolate(start: number, end: number, ratio: number) {
+  const bounded = Math.max(0, Math.min(1, ratio));
+  return start + (end - start) * bounded;
+}
+
+function stagedProgress(elapsedMs: number) {
+  const seconds = elapsedMs / 1000;
+
+  if (seconds < 4) return interpolate(6, 20, seconds / 4);
+  if (seconds < 12) return interpolate(20, 45, (seconds - 4) / 8);
+  if (seconds < 30) return interpolate(45, 70, (seconds - 12) / 18);
+  if (seconds < 60) return interpolate(70, 86, (seconds - 30) / 30);
+  if (seconds < 90) return interpolate(86, 94, (seconds - 60) / 30);
+
+  // Keep a tiny heartbeat for unusually slow AI responses without pretending the job is done.
+  return Math.min(97, 94 + Math.log10(1 + seconds - 90) * 1.8);
+}
+
+function statusIndexForProgress(progress: number, statusCount: number) {
+  if (statusCount <= 1) return 0;
+  if (progress < 28) return 0;
+  if (progress < 56) return Math.min(1, statusCount - 1);
+  if (progress < 82) return Math.min(2, statusCount - 1);
+  return statusCount - 1;
+}
+
 export function BrandCreatorGlobeMatchingLoader({
   locale,
   className,
@@ -109,7 +135,7 @@ export function BrandCreatorGlobeMatchingLoader({
 }) {
   const t = copy[variant][locale];
   const statusLines = MATCH_STATUS[variant][locale];
-  const [progress, setProgress] = useState(12);
+  const [progress, setProgress] = useState(6);
   const [statusIndex, setStatusIndex] = useState(0);
 
   useEffect(() => {
@@ -118,24 +144,20 @@ export function BrandCreatorGlobeMatchingLoader({
       return;
     }
 
-    setProgress(12);
+    setProgress(6);
     setStatusIndex(0);
     const started = Date.now();
     const progressTimer = window.setInterval(() => {
       const elapsed = Date.now() - started;
-      const target = Math.min(96, 12 + Math.floor(elapsed / 38));
+      const target = Math.floor(stagedProgress(elapsed));
       setProgress((value) => (target > value ? target : value));
-    }, 100);
-
-    const statusTimer = window.setInterval(() => {
-      setStatusIndex((value) => (value + 1) % statusLines.length);
-    }, 720);
+      setStatusIndex(statusIndexForProgress(target, statusLines.length));
+    }, 280);
 
     return () => {
       window.clearInterval(progressTimer);
-      window.clearInterval(statusTimer);
     };
-  }, [complete, locale, statusLines.length]);
+  }, [complete, locale, statusLines.length, variant]);
 
   return (
     <div

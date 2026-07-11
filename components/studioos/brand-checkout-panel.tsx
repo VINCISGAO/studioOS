@@ -32,7 +32,8 @@ const copy = {
     amount: "Order total",
     fee: "Platform fee",
     payout: "Studio payout",
-    method: "Payment method",
+    total: "Total",
+    method: "Choose payment method",
     accountTitle: "Receiving account",
     reference: "Transfer reference (optional)",
     referencePlaceholder: "e.g. Campaign transfer ID",
@@ -48,7 +49,8 @@ const copy = {
     amount: "订单总额",
     fee: "平台服务费",
     payout: "Studio 收入",
-    method: "支付方式",
+    total: "合计",
+    method: "选择支付方式",
     accountTitle: "收款账户信息",
     reference: "转账备注（选填）",
     referencePlaceholder: "例如：Campaign 转账单号",
@@ -75,7 +77,7 @@ function PaySubmitButton({ label }: { label: string }) {
     <Button
       type="submit"
       size="lg"
-      className="h-12 w-full rounded-[10px] bg-indigo-600 text-sm font-semibold shadow-[0_14px_26px_rgba(79,70,229,0.25)] hover:bg-indigo-700"
+      className="h-12 w-full rounded-xl bg-violet-600 text-sm font-semibold shadow-[0_14px_26px_rgba(124,58,237,0.25)] hover:bg-violet-700"
       disabled={pending}
     >
       {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Lock className="mr-2 h-4 w-4" />}
@@ -115,7 +117,7 @@ export function BrandCheckoutPanel({
 
   if (order.payment_status !== "unpaid" || escrowFunded) {
     return (
-      <div className="rounded-[14px] border border-emerald-200 bg-emerald-50/80 p-6">
+      <div className="rounded-[1.75rem] border border-emerald-200 bg-emerald-50/80 p-6">
         <div className="flex items-start gap-4">
           <BadgeCheck className="mt-0.5 h-8 w-8 shrink-0 text-emerald-700" />
           <div>
@@ -138,14 +140,17 @@ export function BrandCheckoutPanel({
       <input type="hidden" name="payment_method" value={method} />
       <input type="hidden" name="payment_reference" value={reference} />
 
-      <div className="rounded-[14px] border border-zinc-200/80 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
+      <div className="rounded-[1.5rem] border border-zinc-200/80 bg-white p-5 shadow-sm">
         <div className="mb-5 flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-50 text-violet-600">
             <Landmark className="h-4 w-4" />
           </div>
           <p className="text-sm font-semibold text-zinc-900">{t.amountDue}</p>
         </div>
-        <p className="text-4xl font-semibold tracking-tight text-indigo-600">{formatCurrency(order.amount)}</p>
+        <p className="text-4xl font-semibold tracking-tight text-violet-600">
+          {formatCurrency(order.amount)}
+          <span className="ml-2 align-middle text-sm font-semibold text-zinc-400">USD</span>
+        </p>
         <div className="mt-5 space-y-3 border-t border-zinc-100 pt-4 text-sm">
           <div className="flex items-center justify-between">
             <span className="text-zinc-500">{t.amount}</span>
@@ -165,12 +170,16 @@ export function BrandCheckoutPanel({
             </span>
             <span className="font-semibold text-zinc-950">{formatCurrency(order.creator_payout)}</span>
           </div>
+          <div className="flex items-center justify-between border-t border-zinc-100 pt-3">
+            <span className="font-semibold text-zinc-900">{t.total}</span>
+            <span className="font-semibold text-violet-600">{formatCurrency(order.amount)}</span>
+          </div>
         </div>
       </div>
 
-      <div className="rounded-[14px] border border-zinc-200/80 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
+      <div className="rounded-[1.5rem] border border-zinc-200/80 bg-white p-5 shadow-sm">
         <div className="mb-4 flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-50 text-violet-600">
             <CreditCard className="h-4 w-4" />
           </div>
           <p className="text-sm font-semibold text-zinc-900">{t.method}</p>
@@ -187,7 +196,7 @@ export function BrandCheckoutPanel({
                 className={cn(
                   "flex h-10 w-full items-center justify-between rounded-[10px] border px-3 text-sm font-medium transition",
                   active
-                    ? "border-indigo-500 bg-indigo-50/60 text-zinc-950 shadow-[inset_0_0_0_1px_rgba(79,70,229,0.16)]"
+                    ? "border-violet-500 bg-violet-50/60 text-zinc-950 shadow-[inset_0_0_0_1px_rgba(124,58,237,0.16)]"
                     : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300"
                 )}
               >
@@ -209,7 +218,7 @@ export function BrandCheckoutPanel({
                 <span
                   className={cn(
                     "flex h-4 w-4 items-center justify-center rounded-full border",
-                    active ? "border-indigo-600 bg-indigo-600 text-white" : "border-zinc-200 bg-white"
+                    active ? "border-violet-600 bg-violet-600 text-white" : "border-zinc-200 bg-white"
                   )}
                 >
                   {active ? <Check className="h-3 w-3" /> : null}
@@ -220,9 +229,9 @@ export function BrandCheckoutPanel({
         </div>
       </div>
 
-      <div className="rounded-[14px] border border-zinc-200/80 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
+      <div className="rounded-[1.5rem] border border-zinc-200/80 bg-white p-5 shadow-sm">
         <div className="mb-4 flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-50 text-violet-600">
             <Shield className="h-4 w-4" />
           </div>
           <p className="text-sm font-semibold text-zinc-900">{t.accountTitle}</p>
@@ -246,7 +255,7 @@ export function BrandCheckoutPanel({
         </dl>
       </div>
 
-      <div className="rounded-[14px] border border-zinc-200/80 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
+      <div className="rounded-[1.5rem] border border-zinc-200/80 bg-white p-5 shadow-sm">
         <label htmlFor="payment-reference" className="text-sm font-semibold text-zinc-900">
           {t.reference}
         </label>

@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 
 export const LUCIEN_AVATAR_SRC = "/images/ai-copilot/lucien-avatar.png";
+export const LUCIEN_BIG_SRC = "/images/ai-copilot/LUCIEN_big.png";
 
 type LucienAvatarProps = {
   size?: "sm" | "md" | "lg";

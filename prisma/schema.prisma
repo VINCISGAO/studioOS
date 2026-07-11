@@ -398,6 +398,11 @@ model AiKnowledgeQa {
   question        String
   answer          String
   searchText      String    @map("search_text")
+  knowledgeType   String    @default("FAQ") @map("knowledge_type")
+  visibility      String    @default("authenticated") @map("visibility")
+  sourceType      String    @default("unknown") @map("source_type")
+  version         String?   @map("version")
+  verifiedAt      DateTime? @map("verified_at")
   status          String    @default("ACTIVE")
   usageCount      Int       @default(0) @map("usage_count")
   helpfulCount    Int       @default(0) @map("helpful_count")
@@ -411,6 +416,7 @@ model AiKnowledgeQa {
   @@index([languageCode])
   @@index([status])
   @@index([usageCount])
+  @@index([languageCode, status, knowledgeType, visibility, sourceType])
   @@map("ai_knowledge_qas")
 }
 

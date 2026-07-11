@@ -61,7 +61,10 @@ export type BriefSectionsProps = {
   setRefUrl: (value: string) => void;
   onAddRef: () => void;
   onRemoveRef: (id: string) => void;
+  onPolish: () => void;
+  isPolishing: boolean;
   isRefPending: boolean;
+  isReferenceVideoUploading: boolean;
   isPending: boolean;
   isUploading: boolean;
   productReady: boolean;
@@ -69,6 +72,9 @@ export type BriefSectionsProps = {
   onUploadClick: () => void;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   onUploadFile: (file: File) => void;
+  referenceVideoInputRef: React.RefObject<HTMLInputElement | null>;
+  onReferenceVideoUploadClick: () => void;
+  onUploadReferenceVideo: (file: File) => void;
   uploadError: string | null;
   copy: Record<string, string>;
 };

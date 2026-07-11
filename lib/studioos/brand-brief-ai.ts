@@ -42,6 +42,18 @@ function parseJsonObject<T extends Record<string, unknown>>(raw: string): T {
   return JSON.parse(body) as T;
 }
 
+function normalizeCampaignGoalCopy(goal: string, locale: Locale) {
+  const trimmed = goal.trim();
+  if (!usesChinese(locale)) return trimmed;
+
+  const normalized = trimmed
+    .replace(/^本次活动旨在/, "广告创意主旨为")
+    .replace(/^本次广告旨在/, "广告创意主旨为")
+    .replace(/^本次\s*Campaign\s*旨在/i, "广告创意主旨为");
+  if (/^广告创意主旨为/.test(normalized)) return normalized;
+  return `广告创意主旨为${normalized}`;
+}
+
 export function templateReorganizeBrandBrief(
   input: BrandQuestionnaireInput,
   locale: Locale
@@ -65,7 +77,7 @@ export function templateReorganizeBrandBrief(
     (zh ? "希望用短视频突出产品卖点并带来转化。" : "Short-form video highlighting product proof and driving conversions.");
 
   const campaign_goal = zh
-    ? `为「${productName}」制作 ${platforms} 效果广告，核心目标是${objective}。${description}`
+    ? `广告创意主旨为「${productName}」制作 ${platforms} 效果广告，核心目标是${objective}。${description}`
     : `Produce performance ads for "${productName}" on ${platforms}. Primary goal: ${objective.toLowerCase()}. ${description}`;
 
   const notes = trimLines([
@@ -125,7 +137,7 @@ export async function reorganizeBrandBriefWithAI(
   try {
     const result = await aiGatewayService.chatCompletion({
       system: zh
-        ? "你是品牌广告 Brief 助手。用户会用口语、随意地描述需求。你必须读懂真实意图（产品是什么、想在哪投放、目标受众、卖点），改写成专业、简洁、可执行的 Campaign Brief。禁止把用户原话原样拼进 campaign_goal；要重写为完整专业句子。不要编造不存在的产品功能。返回 JSON：campaign_goal（2-4句专业描述）、product_name、target_audience（一句话）、title（Campaign 标题）、notes（给 Studio 的补充说明）。"
+        ? "你是品牌广告 Brief 助手。用户会用口语、随意地描述需求。你必须读懂真实意图（产品是什么、想在哪投放、目标受众、卖点），改写成专业、简洁、可执行的 Campaign Brief。campaign_goal 必须以「广告创意主旨为」开头，禁止使用「本次活动旨在」「本次广告旨在」这类活动总结口吻。禁止把用户原话原样拼进 campaign_goal；要重写为完整专业句子。不要编造不存在的产品功能。返回 JSON：campaign_goal（2-4句专业描述）、product_name、target_audience（一句话）、title（Campaign 标题）、notes（给 Studio 的补充说明）。"
         : "You are a brand ad brief assistant. Users write casually. Infer the real intent (product, platforms, audience, selling points) and rewrite into a professional campaign brief. Do not paste the user's raw words into campaign_goal. Do not invent product claims. Return JSON: campaign_goal (2-4 sentences), product_name, target_audience (one line), title, notes.",
       user: JSON.stringify(payload, null, 2),
       model: resolveOpenAIModel(),
@@ -147,7 +159,7 @@ export async function reorganizeBrandBriefWithAI(
 
     return {
       brief: {
-        campaign_goal: String(parsed.campaign_goal ?? fallback.campaign_goal).trim(),
+        campaign_goal: normalizeCampaignGoalCopy(String(parsed.campaign_goal ?? fallback.campaign_goal), locale),
         product_name: String(parsed.product_name ?? fallback.product_name).trim(),
         target_audience: String(parsed.target_audience ?? fallback.target_audience).trim(),
         title: String(parsed.title ?? fallback.title).trim(),

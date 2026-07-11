@@ -489,6 +489,11 @@ function parseAiKnowledgeQaSeed(markdown: string): ParsedKnowledgeQa[] {
 }
 
 async function seedAiKnowledgeQa() {
+  if (process.env.NODE_ENV === "production") {
+    console.log("Skipping dev AI knowledge seed in production");
+    return;
+  }
+
   const markdown = await readFile(AI_QA_SEED_PATH, "utf8");
   const entries = parseAiKnowledgeQaSeed(markdown);
   if (entries.length !== 200) {
@@ -504,11 +509,16 @@ async function seedAiKnowledgeQa() {
         question: entry.question,
         answer: entry.answer,
         searchText: entry.searchText,
+        knowledgeType: "FAQ",
+        visibility: "internal",
+        sourceType: "dev_seed",
+        version: "dev_seed_v1",
         status: "ACTIVE",
         metadataJson: {
           source: "docs/AI_COPILOT_QA_SEED_ZH.md",
           sourceVersion: "first_reviewed_pdf",
-          tone: "warm_human"
+          tone: "warm_human",
+          lucienBoundary: "internal_dev_only"
         }
       },
       create: {
@@ -518,17 +528,32 @@ async function seedAiKnowledgeQa() {
         question: entry.question,
         answer: entry.answer,
         searchText: entry.searchText,
+        knowledgeType: "FAQ",
+        visibility: "internal",
+        sourceType: "dev_seed",
+        version: "dev_seed_v1",
         status: "ACTIVE",
         metadataJson: {
           source: "docs/AI_COPILOT_QA_SEED_ZH.md",
           sourceVersion: "first_reviewed_pdf",
-          tone: "warm_human"
+          tone: "warm_human",
+          lucienBoundary: "internal_dev_only"
         }
       }
     });
   }
 
-  console.log(`Seeded AI Copilot QA knowledge: ${entries.length} entries`);
+  console.log(`Seeded AI Copilot QA knowledge (internal dev only): ${entries.length} entries`);
+}
+
+async function seedMarketingFaqKnowledge() {
+  const { marketingFaqKnowledgeService } = await import(
+    "../features/ai-copilot/marketing-faq-knowledge.service"
+  );
+  const result = await marketingFaqKnowledgeService.syncMarketingFaqToKnowledgeBase();
+  console.log(
+    `Seeded marketing FAQ knowledge for Lucien: ${result.count} entries (zh=${result.zhCount}, en=${result.enCount})`
+  );
 }
 
 async function seedDemoDispute(campaignId: string, brandEmail: string) {
@@ -547,6 +572,7 @@ async function seedDemoDispute(campaignId: string, brandEmail: string) {
 
 async function main() {
   await seedAiKnowledgeQa();
+  await seedMarketingFaqKnowledge();
   await seedMembershipConfig();
   await seedCreatorMemberships();
   await seedFeatureFlags();

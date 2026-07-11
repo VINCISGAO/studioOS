@@ -10,15 +10,17 @@ import { Check, Play } from "lucide-react";
 
 const copy = {
   en: {
-    scheme: "Scheme",
-    aiScore: "AI score",
-    ctr: "CTR",
+    scheme: "Strategy",
+    audience: "Audience",
+    emotion: "Emotion",
+    integration: "Integration",
     mediaComingSoon: "Coming soon"
   },
   zh: {
-    scheme: "方案",
-    aiScore: "智能评分",
-    ctr: "点击率",
+    scheme: "Strategy",
+    audience: "受众",
+    emotion: "情绪",
+    integration: "植入",
     mediaComingSoon: "即将开放"
   }
 } as const;
@@ -120,22 +122,26 @@ export function BrandCampaignStep2CompactScheme({
 
         <div className="min-w-0 space-y-2.5">
           <div>
-            <h4 className="text-sm font-semibold leading-snug text-zinc-900">{direction.title}</h4>
-            <p className="mt-1 line-clamp-2 text-xs leading-5 text-zinc-500">{direction.hook}</p>
+            <h4 className="text-sm font-semibold leading-snug text-zinc-900">
+              {direction.creativeStrategy || direction.title}
+            </h4>
+            <p className="mt-1 line-clamp-2 text-xs leading-5 text-zinc-500">
+              {direction.coreInsight || direction.bigIdea || direction.hook}
+            </p>
           </div>
 
           <div className="grid grid-cols-3 gap-1.5 text-center">
             <div className="rounded-lg border border-zinc-100 bg-zinc-50/80 py-1.5">
-              <p className="text-[10px] text-zinc-500">{t.aiScore}</p>
-              <p className="text-sm font-semibold text-violet-700">{metrics.aiScore}</p>
+              <p className="text-[10px] text-zinc-500">{t.audience}</p>
+              <p className="text-sm font-semibold text-violet-700">{metrics.audienceMatch}%</p>
             </div>
             <div className="rounded-lg border border-zinc-100 bg-zinc-50/80 py-1.5">
-              <p className="text-[10px] text-zinc-500">{t.ctr}</p>
-              <p className="text-sm font-semibold text-emerald-600">+{metrics.ctrLift}%</p>
+              <p className="text-[10px] text-zinc-500">{t.emotion}</p>
+              <p className="text-sm font-semibold text-violet-700">{metrics.emotionalResonance}%</p>
             </div>
             <div className="rounded-lg border border-zinc-100 bg-zinc-50/80 py-1.5">
-              <p className="text-[10px] text-zinc-500">{locale === "zh" ? "转化" : "Conv."}</p>
-              <p className="text-sm font-semibold text-emerald-600">+{metrics.conversionLift}%</p>
+              <p className="text-[10px] text-zinc-500">{t.integration}</p>
+              <p className="text-sm font-semibold text-violet-700">{metrics.productIntegration}%</p>
             </div>
           </div>
 

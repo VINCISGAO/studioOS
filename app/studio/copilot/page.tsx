@@ -1,5 +1,5 @@
-import { AiWorkspacePage } from "@/components/ai-copilot/ai-workspace-page";
+import { redirect } from "next/navigation";
 
 export default function StudioCopilotPage() {
-  return <AiWorkspacePage mode="creator" />;
+  redirect("/studio");
 }

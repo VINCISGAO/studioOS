@@ -95,15 +95,15 @@ export function CreatorsShowcaseGallery({
       : t.noCategory;
 
   return (
-    <div className="space-y-6">
-      <div className="relative max-w-2xl">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+    <div className="space-y-5">
+      <div className="relative">
+        <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-400" />
         <Input
           type="search"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder={t.search}
-          className="h-12 rounded-lg border bg-white pl-10 shadow-sm"
+          className="h-12 rounded-full border-zinc-200 bg-zinc-50/80 pl-11 pr-4 text-sm shadow-none focus-visible:border-violet-300 focus-visible:ring-violet-100"
           aria-label={t.search}
         />
       </div>
@@ -125,7 +125,7 @@ export function CreatorsShowcaseGallery({
           {emptyMessage}
         </div>
       ) : (
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {filtered.map((work) => (
             <ShowcaseCard key={work.id} work={work} locale={locale} playLabel={t.play} onOpen={() => setActiveWorkId(work.id)} />
           ))}
@@ -154,7 +154,9 @@ function CategoryPill({
       onClick={onClick}
       className={cn(
         "rounded-full px-4 py-2 text-sm font-medium transition",
-        active ? "bg-zinc-950 text-white" : "bg-white text-zinc-600 ring-1 ring-zinc-200 hover:bg-zinc-50"
+        active
+          ? "bg-zinc-950 text-white shadow-sm"
+          : "bg-white text-zinc-600 ring-1 ring-zinc-200 hover:bg-zinc-50 hover:text-zinc-900"
       )}
     >
       {label}
@@ -179,9 +181,9 @@ function ShowcaseCard({
     <button
       type="button"
       onClick={onOpen}
-      className="group overflow-hidden rounded-[24px] bg-white text-left shadow-none ring-1 ring-zinc-200/80 transition hover:-translate-y-0.5 hover:shadow-sm"
+      className="group overflow-hidden rounded-2xl bg-white text-left ring-1 ring-zinc-200/80 transition hover:-translate-y-0.5 hover:shadow-[0_14px_40px_-32px_rgba(0,0,0,0.18)]"
     >
-      <div className="relative aspect-[9/16] w-full overflow-hidden bg-zinc-900">
+      <div className="relative aspect-video w-full overflow-hidden bg-zinc-900">
         <ShowcaseCover work={work} className="h-full w-full transition duration-500 group-hover:scale-[1.03]" />
         <span className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent" />
         <span className="pointer-events-none absolute bottom-3 left-3 inline-flex items-center gap-2 rounded-full bg-black/55 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-md">
@@ -191,7 +193,7 @@ function ShowcaseCard({
       </div>
       <div className="p-4 text-left">
         <h3 className="line-clamp-1 text-sm font-semibold text-zinc-950">{work.title}</h3>
-        <p className="mt-1 text-xs text-zinc-500">{meta}</p>
+        <p className="mt-1.5 text-xs text-zinc-500">{meta}</p>
       </div>
     </button>
   );
