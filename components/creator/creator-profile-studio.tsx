@@ -889,30 +889,35 @@ function PublishWorkDialog({
     }
 
     setSubmitting(true);
-    const ok = await onPublish({
-      id: createWorkId(),
-      creator_id: creatorId,
-      title,
-      category: String(formData.get("category") ?? ""),
-      platform: String(formData.get("platform") ?? ""),
-      format: String(formData.get("format") ?? "9:16"),
-      thumbnail_url: thumbnailInput,
-      video_url: videoUrl,
-      description: String(formData.get("description") ?? ""),
-      turnaround: String(formData.get("turnaround") ?? defaultTurnaroundValue),
-      tags: String(formData.get("tags") ?? "")
-        .split(",")
-        .map((item) => item.trim())
-        .filter(Boolean),
-      created_at: new Date().toISOString()
-    });
-    setSubmitting(false);
+    try {
+      const ok = await onPublish({
+        id: createWorkId(),
+        creator_id: creatorId,
+        title,
+        category: String(formData.get("category") ?? ""),
+        platform: String(formData.get("platform") ?? ""),
+        format: String(formData.get("format") ?? "9:16"),
+        thumbnail_url: thumbnailInput,
+        video_url: videoUrl,
+        description: String(formData.get("description") ?? ""),
+        turnaround: String(formData.get("turnaround") ?? defaultTurnaroundValue),
+        tags: String(formData.get("tags") ?? "")
+          .split(",")
+          .map((item) => item.trim())
+          .filter(Boolean),
+        created_at: new Date().toISOString()
+      });
 
-    if (!ok) {
-      return;
+      if (!ok) {
+        return;
+      }
+
+      onOpenChange(false);
+    } catch {
+      setError(t.publishFailed);
+    } finally {
+      setSubmitting(false);
     }
-
-    onOpenChange(false);
   }
 
   return (

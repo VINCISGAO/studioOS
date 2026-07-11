@@ -1,19 +1,43 @@
-import { CinematicEscrow } from "@/components/marketing/cinematic/cinematic-escrow";
+import dynamic from "next/dynamic";
 import { CinematicHero } from "@/components/marketing/cinematic/cinematic-hero";
 import { CinematicNav } from "@/components/marketing/cinematic/cinematic-nav";
-import { CinematicNetwork } from "@/components/marketing/cinematic/cinematic-network";
 import { HomePageScreen } from "@/components/marketing/cinematic/home-page-screen";
 import { HomeHeroVideo } from "@/components/marketing/home-hero-video";
 import { HomeHeroMetrics } from "@/components/marketing/home-hero-metrics";
-import { LandingCostComparison } from "@/components/marketing/landing/landing-cost-comparison";
-import { LandingRecentWork } from "@/components/marketing/landing/landing-recent-work";
-import { LandingCta, LandingHowItWorks } from "@/components/marketing/landing/landing-sections";
-import { MarketingFooter } from "@/components/marketing/marketing-footer";
 import type { MarketingShowcaseWorkDto } from "@/features/marketing-showcase/marketing-showcase.types";
 import type { Locale, MarketingLocale } from "@/lib/i18n";
 import type { MarketingHomePortalSession } from "@/lib/marketing/portal-entry";
 import { resolveMarketingHomeWorkspaceCta } from "@/lib/marketing/portal-entry";
 import { getHomeHeroSpaceBackgroundSources } from "@/lib/studioos/home-hero-space-asset";
+
+const LandingCostComparison = dynamic(
+  () => import("@/components/marketing/landing/landing-cost-comparison").then((mod) => mod.LandingCostComparison),
+  { loading: () => null }
+);
+const LandingRecentWork = dynamic(
+  () => import("@/components/marketing/landing/landing-recent-work").then((mod) => mod.LandingRecentWork),
+  { loading: () => null }
+);
+const LandingHowItWorks = dynamic(
+  () => import("@/components/marketing/landing/landing-sections").then((mod) => mod.LandingHowItWorks),
+  { loading: () => null }
+);
+const LandingCta = dynamic(
+  () => import("@/components/marketing/landing/landing-sections").then((mod) => mod.LandingCta),
+  { loading: () => null }
+);
+const CinematicNetwork = dynamic(
+  () => import("@/components/marketing/cinematic/cinematic-network").then((mod) => mod.CinematicNetwork),
+  { loading: () => null }
+);
+const CinematicEscrow = dynamic(
+  () => import("@/components/marketing/cinematic/cinematic-escrow").then((mod) => mod.CinematicEscrow),
+  { loading: () => null }
+);
+const MarketingFooter = dynamic(
+  () => import("@/components/marketing/marketing-footer").then((mod) => mod.MarketingFooter),
+  { loading: () => null }
+);
 
 /**
  * VINCIS marketing homepage — server-rendered shell.
@@ -24,20 +48,29 @@ export function HomeLandingPage({
   copyLocale = locale,
   heroVideoSrc,
   featuredWorks,
-  portalSession = null
+  portalSession = null,
+  hydratePortalSession = false
 }: {
   locale: Locale;
   copyLocale?: Locale | MarketingLocale;
   heroVideoSrc: string;
   featuredWorks: MarketingShowcaseWorkDto[];
   portalSession?: MarketingHomePortalSession | null;
+  hydratePortalSession?: boolean;
 }) {
   const { src: heroBgSrc, src2x: heroBgSrc2x } = getHomeHeroSpaceBackgroundSources();
-  const workspaceCta = resolveMarketingHomeWorkspaceCta(copyLocale, portalSession);
+  const workspaceCta = hydratePortalSession
+    ? null
+    : resolveMarketingHomeWorkspaceCta(copyLocale, portalSession);
 
   return (
     <div className="relative bg-black text-white">
-      <CinematicNav locale={locale} copyLocale={copyLocale} workspaceCta={workspaceCta} />
+      <CinematicNav
+        locale={locale}
+        copyLocale={copyLocale}
+        workspaceCta={workspaceCta}
+        hydratePortalSession={hydratePortalSession}
+      />
 
       <main className="scroll-smooth">
         <CinematicHero
@@ -46,6 +79,7 @@ export function HomeLandingPage({
           heroBgSrc={heroBgSrc}
           heroBgSrc2x={heroBgSrc2x}
           portalSession={portalSession}
+          hydratePortalSession={hydratePortalSession}
         />
 
         <HomeHeroVideo locale={copyLocale as MarketingLocale} videoSrc={heroVideoSrc} />

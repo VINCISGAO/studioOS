@@ -69,6 +69,34 @@ while [ "$attempt" -le "$MAX_ATTEMPTS" ]; do
     fi
   fi
 
+  # Production pricing engine — often fails without pgcrypto; recover and retry deploy.
+  if grep -q 'P3009' "$log" && grep -q '20260709120000_production_pricing_engine' "$log"; then
+    echo ">>> Recovering failed migration 20260709120000_production_pricing_engine…"
+    if bash scripts/prisma-with-env.sh db execute --stdin <<'SQL' 2>/dev/null | grep -q '1'; then
+SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'production_pricing_profiles' LIMIT 1;
+SQL
+      bash scripts/prisma-with-env.sh migrate resolve --applied 20260709120000_production_pricing_engine
+    else
+      bash scripts/prisma-with-env.sh migrate resolve --rolled-back 20260709120000_production_pricing_engine
+    fi
+    rm -f "$log"
+    if [ "$attempt" -lt "$MAX_ATTEMPTS" ]; then
+      attempt=$((attempt + 1))
+      continue
+    fi
+  fi
+
+  # Production pricing engine — failed mid-apply (e.g. uuid/text FK mismatch); mark rolled back and retry.
+  if grep -q 'P3018' "$log" && grep -q '20260709120000_production_pricing_engine' "$log"; then
+    echo ">>> Recovering P3018 for 20260709120000_production_pricing_engine…"
+    bash scripts/prisma-with-env.sh migrate resolve --rolled-back 20260709120000_production_pricing_engine
+    rm -f "$log"
+    if [ "$attempt" -lt "$MAX_ATTEMPTS" ]; then
+      attempt=$((attempt + 1))
+      continue
+    fi
+  fi
+
   rm -f "$log"
   exit "$status"
 done

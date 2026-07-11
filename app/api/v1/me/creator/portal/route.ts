@@ -1,6 +1,6 @@
 import { creatorPortalService } from "@/features/creator/creator-portal.service";
 import { apiSuccess, handleRouteError, requireApiUser } from "@/lib/core/api-route";
-import { getCurrentCreatorId } from "@/lib/creator-session";
+import { getCurrentCreatorId } from "@/features/auth/session-context";
 import { listOrdersForCreator } from "@/lib/order-service";
 
 export async function GET() {

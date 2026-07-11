@@ -9,7 +9,7 @@ import {
 import { StudioMessageCenter } from "@/components/studioos/studio-message-center";
 import type { MessageDetailPayload, MessageListItem } from "@/components/studioos/studio-message-center.types";
 import { DEMO_SESSION_COOKIE } from "@/lib/auth-config";
-import { getCurrentClientEmail } from "@/lib/client-session";
+import { getCurrentClientEmail } from "@/features/auth/session-context";
 import { DEMO_USERS, parseDemoSession } from "@/lib/demo-auth";
 import { type SearchParams, withLocale } from "@/lib/i18n";
 import { getOrder } from "@/lib/order-service";

@@ -13,7 +13,7 @@ import type { Locale } from "@/lib/i18n";
 export async function loadBrandProjectPortalDetail(input: {
   projectId: string;
   locale: Locale;
-  clientEmail?: string | null;
+  clientEmail: string;
   tab?: string | null;
 }): Promise<BrandProjectPortalDetail> {
   return brandProjectPortalService.getDetail(input);

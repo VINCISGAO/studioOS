@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { BrandStartBriefButton } from "@/components/studioos/brand-start-brief-button";
 import type { Locale } from "@/lib/i18n";
+import type { BrandNewCampaignGate } from "@/lib/studioos/brand-active-campaign-limit";
 import { CheckCircle2, ClipboardList, LayoutGrid, Pencil, Plus, Sparkles } from "lucide-react";
 
 type DayPart = "morning" | "afternoon" | "evening";
@@ -65,7 +66,10 @@ export function BrandWorkspaceHero({
   total,
   drafts,
   active,
-  wizardProjectId
+  wizardProjectId,
+  activeCampaignCount = 0,
+  creationGate,
+  rateLimitCode = null
 }: {
   locale: Locale;
   name: string;
@@ -73,6 +77,9 @@ export function BrandWorkspaceHero({
   drafts: number;
   active: number;
   wizardProjectId?: string;
+  activeCampaignCount?: number;
+  creationGate?: BrandNewCampaignGate;
+  rateLimitCode?: "rate_limit_10m" | "rate_limit_24h" | null;
 }) {
   const t = copy[locale];
   const dayPart = useLocalDayPart();
@@ -113,6 +120,9 @@ export function BrandWorkspaceHero({
           <BrandStartBriefButton
             locale={locale}
             projectId={wizardProjectId}
+            activeCampaignCount={activeCampaignCount}
+            creationGate={creationGate}
+            rateLimitCode={rateLimitCode}
             size="lg"
             className="inline-flex h-12 items-center gap-3 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 px-6 text-sm font-semibold text-white shadow-[0_14px_28px_rgba(109,40,217,0.22)] hover:from-violet-700 hover:to-indigo-700"
           >

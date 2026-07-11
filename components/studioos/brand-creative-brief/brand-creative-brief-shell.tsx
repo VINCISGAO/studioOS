@@ -100,6 +100,11 @@ export function BrandCreativeBriefShell({
   const [activeSection, setActiveSection] = useState("overview");
 
   useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    document.getElementById("brand-wizard-scroll-panel")?.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, []);
+
+  useEffect(() => {
     const sections = CREATIVE_BRIEF_SECTIONS.map((item) => item.id);
     const observer = new IntersectionObserver(
       (entries) => {
@@ -234,7 +239,7 @@ export function BrandCreativeBriefShell({
             </div>
           </header>
 
-          <div className="min-h-0 flex-1 overflow-y-auto">
+          <div id="brand-wizard-scroll-panel" className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
             <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-8">
               <div className="mb-8">
                 <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 sm:text-[28px]">{t.title}</h1>

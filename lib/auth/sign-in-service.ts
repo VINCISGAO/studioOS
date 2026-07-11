@@ -15,7 +15,7 @@ import { resolvePostLoginDestination } from "@/lib/auth/post-login-redirect";
 import { appPath } from "@/lib/i18n";
 import { userRepository } from "@/features/auth/user.repository";
 import type { UserRole } from "@prisma/client";
-import { getCreatorIdForDemoEmail } from "@/lib/creator-session";
+import { getCreatorIdForDemoEmail } from "@/features/auth/session-context";
 import {
   authenticateDemoCreatorEmail,
   getStoredCreatorSettings,

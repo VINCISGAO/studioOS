@@ -17,7 +17,7 @@ import {
   removeProjectReference,
   updatePackItemContent
 } from "@/lib/campaign-store";
-import { getCurrentClientEmail } from "@/lib/client-session";
+import { getCurrentClientEmail } from "@/features/auth/session-context";
 import { DEMO_USERS } from "@/lib/demo-auth";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";

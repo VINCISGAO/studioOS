@@ -385,7 +385,7 @@ export function HomeHeroVideo({ locale, videoSrc, heroPosterSrc }: HomeHeroVideo
           muted={muted}
           loop
           playsInline
-          preload="auto"
+          preload="metadata"
           aria-label={labels.video}
           onPlay={() => setPlaying(true)}
           onPause={() => setPlaying(false)}

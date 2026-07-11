@@ -1,6 +1,6 @@
 import type { CreatorProfile } from "@prisma/client";
 import { creators } from "@/lib/data";
-import { getCreatorIdForDemoEmail } from "@/lib/creator-session";
+import { getCreatorIdForDemoEmail } from "@/features/auth/session-context";
 import { prisma, hasDatabaseUrl } from "@/lib/core/database/prisma";
 
 const LEGACY_CREATOR_DEMO_EMAIL: Record<string, string> = {

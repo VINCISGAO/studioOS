@@ -1,3 +1,4 @@
+import { aiUsageQuotaService } from "@/features/abuse/ai-usage-quota.service";
 import type { AuthUserDto } from "@/features/auth/auth.service";
 import { aiGatewayService } from "@/features/ai/ai-gateway.service";
 import { activityService } from "@/features/campaign/activity.service";
@@ -479,6 +480,44 @@ export class AiCopilotService {
     const knowledgeAnswer = answerFromKnowledge(qaKnowledge);
 
     if (aiGatewayService.isConfigured()) {
+      const quota = await aiUsageQuotaService.assertCampaignQuota({
+        userId: user.id,
+        campaignId: activityCampaignId,
+        category: "copilot_qa"
+      });
+      if (!quota.ok) {
+        const language = contextWithKnowledge.language;
+        const quotaMessage =
+          quota.code === "user_daily_quota"
+            ? language === "zh-CN" || language === "zh-TW" || language === "zh"
+              ? "已达到今日 AI 助手使用建议上限，请明天再试或联系平台支持。"
+              : "You have reached today's recommended AI assistant limit. Try again tomorrow or contact support."
+            : language === "zh-CN" || language === "zh-TW" || language === "zh"
+              ? "已达到本项目 AI 使用额度。如需继续，请完成当前项目或联系平台支持。"
+              : "This project has reached its AI usage allowance. Finish the current workflow or contact support to continue.";
+
+        const assistantMessage = await aiCopilotRepository.createMessage({
+          sessionId: session.id,
+          userId: null,
+          role: "ASSISTANT",
+          content: quotaMessage,
+          metadataJson: asInputJson({ answerMode: "quota_exceeded", quotaCode: quota.code })
+        });
+        await aiCopilotRepository.touchSession(session.id);
+        return {
+          sessionId: session.id,
+          messageId: assistantMessage.id,
+          answer: quotaMessage,
+          suggestedQuestions: suggestedQuestions(role, context.language),
+          context: {
+            pagePath: input.pagePath ?? null,
+            entityType: input.entityType ?? null,
+            entityId: input.entityId ?? null
+          },
+          toolCalls
+        };
+      }
+
       try {
         const result = await aiGatewayService.chatCompletion({
           system: buildSystemPrompt(contextWithKnowledge),
@@ -490,6 +529,16 @@ export class AiCopilotService {
         if (result.content) {
           answer = result.content;
           answerMode = "model";
+          await aiUsageQuotaService.recordOpenAiUsage({
+            userId: user.id,
+            campaignId: activityCampaignId,
+            category: "copilot_qa",
+            provider: result.provider,
+            tokenInput: result.tokenInput,
+            tokenOutput: result.tokenOutput,
+            cost: result.cost,
+            metadata: { sessionId: session.id, pagePath: input.pagePath ?? null }
+          });
         }
       } catch (error) {
         logger.error("AI Copilot model request failed", {

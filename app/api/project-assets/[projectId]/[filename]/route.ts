@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { projectAssetObjectKey } from "@/lib/studioos/project-asset-upload";
 import { getObject } from "@/lib/studioos/object-storage";
-import { getCurrentClientEmail } from "@/lib/client-session";
-import { getCurrentCreatorId } from "@/lib/creator-session";
+import { getCurrentClientEmail } from "@/features/auth/session-context";
+import { getCurrentCreatorId } from "@/features/auth/session-context";
 import { getOrderForProject } from "@/lib/order-service";
 import { getProject } from "@/lib/project-service";
 import { listInvitationsForProject } from "@/lib/studioos/creator-invitation-store";

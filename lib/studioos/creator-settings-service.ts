@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { DEMO_PASSWORD, DEMO_USERS } from "@/lib/demo-auth";
-import { getCreatorIdForDemoEmail } from "@/lib/creator-session";
+import { getCreatorIdForDemoEmail } from "@/features/auth/session-context";
 import { resolveCreatorProfileIdForLegacyId } from "@/features/matching/invitation-creator-bridge";
 import { hasDatabaseUrl, prisma } from "@/lib/core/database/prisma";
 import { hashPassword, verifyPassword } from "@/lib/core/password-crypto";

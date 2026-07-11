@@ -8,18 +8,17 @@ import type {
   MembershipPlanView
 } from "@/features/membership/membership.types";
 import { membershipService } from "@/features/membership/membership.service";
-import { getCurrentCreator } from "@/lib/creator-session";
+import { getCurrentCreator } from "@/features/auth/session-context";
 import { type SearchParams, withLocale } from "@/lib/i18n";
 import { listNotificationsForCreator } from "@/lib/notification-service";
 import { getCurrentSession } from "@/lib/session-user";
-import { getDeliverables, listOrdersForCreator } from "@/lib/order-service";
+import { getLatestSubmittedDeliverableVersionsForOrders, listOrdersForCreator } from "@/lib/order-service";
 import {
   buildCreatorHomeProjects,
   buildCreatorHomeStats,
   buildCreatorPendingTaskCards,
   buildCreatorPhaseCounts
 } from "@/lib/studioos/creator-home-ui";
-import { latestSubmittedDeliverableVersion } from "@/lib/studioos/review-upload-version";
 import { buildCreatorAiMatchHealth } from "@/lib/studioos/creator-ai-match-health";
 import {
   countAwaitingBrandSelection,
@@ -81,11 +80,8 @@ export default async function StudioHomePage({ searchParams }: { searchParams: P
     isCreatorVerified(creator) && levelUpSeen && !welcomeDismissed;
 
   const invitationCounts = countInvitationsByTab(invitations);
-  const deliverableCounts: Record<string, number> = {};
-  await Promise.all(
-    orders.map(async (order) => {
-      deliverableCounts[order.id] = latestSubmittedDeliverableVersion(await getDeliverables(order.id));
-    })
+  const deliverableCounts = await getLatestSubmittedDeliverableVersionsForOrders(
+    orders.map((order) => order.id)
   );
 
   const tasks = deriveCreatorTodayTasks({

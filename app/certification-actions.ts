@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getCurrentCreator } from "@/lib/creator-session";
+import { getCurrentCreator } from "@/features/auth/session-context";
 import {
   dismissCertificationWelcomeBanner,
   markCertificationLevelUpSeen

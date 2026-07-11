@@ -8,7 +8,7 @@ import type {
 } from "@/lib/order-types";
 import { createSerializedStoreReader, writeJsonFileAtomic } from "@/lib/json-file-store-core";
 import { canPersistLocalDataStore } from "@/lib/can-persist-local-store";
-import { getCreatorIdForDemoEmail } from "@/lib/creator-session";
+import { getCreatorIdForDemoEmail } from "@/features/auth/session-context";
 import { getProject, updateProject } from "@/lib/project-service";
 import type { StoredProject } from "@/lib/project-types";
 import { readDataJson, dataStorePath } from "@/lib/serverless-store-core";
@@ -29,15 +29,16 @@ import { campaignRepository } from "@/features/campaign/campaign.repository";
 import { campaignService } from "@/features/campaign/campaign.service";
 import { CampaignEvent, CampaignState } from "@/features/campaign/campaign.state-machine";
 import { orderRepository } from "@/features/order/order.repository";
+import type { OrderListRow } from "@/features/order/order.repository";
 import { userRepository } from "@/features/auth/user.repository";
-import { paymentRepository } from "@/features/payment/payment.repository";
-import { EscrowState } from "@/features/shared/state-machines/escrow.state-machine";
+import { isPrismaEscrowFundedForProject } from "@/lib/studioos/brand-payment-funding";
 import { resolveCreatorProfileIdForLegacyId } from "@/features/matching/invitation-creator-bridge";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { DEMO_REVIEW_VIDEO_URL } from "@/lib/studioos/review-video-url";
 import {
   filterPlayableDeliverables,
   isUnsubmittedDeliverable,
+  latestSubmittedDeliverableVersion,
   normalizeReviewDeliverableCatalog,
   prunePhantomReviewDeliverables
 } from "@/lib/studioos/review-upload-version";
@@ -58,12 +59,6 @@ const DEMO_ORDER_IDS = new Set([
   "ord_demo_nova_completed",
   "ord_demo_nova_active",
   "ord_demo_nova_first"
-]);
-
-const FUNDED_ESCROW_STATES = new Set<string>([
-  EscrowState.HELD,
-  EscrowState.PARTIAL_RELEASE,
-  EscrowState.FULL_RELEASE
 ]);
 
 function isDemoOrderDismissed(store: OrderStore, id: string) {
@@ -344,7 +339,7 @@ function isOrderCancellationActor(value: unknown): value is OrderCancellationAct
 
 type PrismaOrderLike = NonNullable<Awaited<ReturnType<typeof orderRepository.findById>>>;
 
-function prismaOrderToStored(order: PrismaOrderLike): StoredOrder {
+function prismaOrderToStored(order: PrismaOrderLike | OrderListRow): StoredOrder {
   const metadata =
     typeof order.metadataJson === "object" && order.metadataJson !== null && !Array.isArray(order.metadataJson)
       ? (order.metadataJson as Record<string, unknown>)
@@ -597,12 +592,9 @@ export async function listOrdersForProject(projectId: string): Promise<StoredOrd
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
   if (hasDatabaseUrl()) {
-    const rows = await orderRepository.listAll();
-    const details = await Promise.all(rows.map((item) => orderRepository.findById(item.id)));
-    const prismaOrders = details
-      .filter((item): item is PrismaOrderLike => Boolean(item))
-      .map(prismaOrderToStored)
-      .filter((item) => item.project_id === projectId)
+    const rows = await orderRepository.listForLegacyProjectId(projectId);
+    const prismaOrders = rows
+      .map((item) => prismaOrderToStored(item))
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     if (prismaOrders.length > 0) {
       return prismaOrders;
@@ -676,14 +668,8 @@ export async function reassignQuotesToInquiry(
 
 export async function listOrdersForClient(clientEmail: string): Promise<StoredOrder[]> {
   if (hasDatabaseUrl()) {
-    const rows = await orderRepository.listAll();
-    const details = await Promise.all(rows.map((item) => orderRepository.findById(item.id)));
-    const normalized = clientEmail.toLowerCase();
-    return details
-      .filter((item): item is PrismaOrderLike => Boolean(item))
-      .map(prismaOrderToStored)
-      .filter((item) => item.client_email.toLowerCase() === normalized)
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    const rows = await orderRepository.listForClientEmail(clientEmail);
+    return rows.map((item) => prismaOrderToStored(item));
   }
 
   const store = await readStore();
@@ -698,12 +684,9 @@ export async function listOrdersForCreator(creatorId: string): Promise<StoredOrd
   const jsonOrders = store.orders.filter((item) => item.creator_id === creatorId);
 
   if (hasDatabaseUrl()) {
-    const rows = await orderRepository.listAll();
-    const details = await Promise.all(rows.map((item) => orderRepository.findById(item.id)));
-    const prismaOrders = details
-      .filter((item): item is PrismaOrderLike => Boolean(item))
-      .map(prismaOrderToStored)
-      .filter((item) => item.creator_id === creatorId)
+    const rows = await orderRepository.listForLegacyCreatorId(creatorId);
+    const prismaOrders = rows
+      .map((item) => prismaOrderToStored(item))
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
     const seenIds = new Set(prismaOrders.map((item) => item.id));
@@ -822,37 +805,22 @@ async function syncPrismaCampaignMatchingAfterLegacyPayment(projectId: string) {
   }
 }
 
-async function isDatabaseEscrowFundedForProject(projectId: string) {
-  if (!hasDatabaseUrl()) {
-    return false;
-  }
-
-  const campaign = await campaignRepository.findByLegacyProjectId(projectId);
-  if (!campaign) {
-    return false;
-  }
-
-  const escrow = await paymentRepository.findByCampaignId(campaign.id);
-  return escrow ? FUNDED_ESCROW_STATES.has(escrow.status) : false;
-}
-
 export async function repairSelectedCreatorCampaignOrders(creatorId: string): Promise<void> {
   if (hasDatabaseUrl()) {
-    const rows = await orderRepository.listAll();
+    const rows = await orderRepository.listForLegacyCreatorId(creatorId);
     await Promise.all(
       rows.map(async (row) => {
-        const detail = await orderRepository.findById(row.id);
-        if (!detail || detail.status !== "PENDING") return;
+        if (row.status !== "PENDING") return;
 
-        const stored = prismaOrderToStored(detail);
+        const stored = prismaOrderToStored(row);
         if (stored.creator_id !== creatorId || !stored.project_id) return;
 
         const project = await getProject(stored.project_id);
         if (project?.selected_studio_id !== creatorId) return;
 
-        if (!(await isDatabaseEscrowFundedForProject(stored.project_id))) return;
+        if (!(await isPrismaEscrowFundedForProject(stored.project_id))) return;
 
-        await orderRepository.updateStatus(detail.id, "CONFIRMED");
+        await orderRepository.updateStatus(row.id, "CONFIRMED");
       })
     );
   }
@@ -874,7 +842,7 @@ export async function repairSelectedCreatorCampaignOrders(creatorId: string): Pr
 
     if (
       order.payment_status === "unpaid" &&
-      (await isDatabaseEscrowFundedForProject(order.project_id))
+      (await isPrismaEscrowFundedForProject(order.project_id))
     ) {
       order.payment_status = "escrowed";
       order.paid_at = order.paid_at ?? new Date().toISOString();
@@ -1480,6 +1448,35 @@ export async function getDeliverables(orderId: string): Promise<StoredDeliverabl
   const playable = await filterPlayableDeliverables(orderId, normalized);
 
   return playable.sort((a, b) => b.version - a.version);
+}
+
+/** Dashboard helper — single store read, avoids per-order repair/normalize on home page. */
+export async function getLatestSubmittedDeliverableVersionsForOrders(
+  orderIds: string[]
+): Promise<Record<string, number>> {
+  if (!orderIds.length) return {};
+
+  const store = await readStore();
+  const counts: Record<string, number> = {};
+
+  for (const orderId of orderIds) {
+    const items = store.deliverables
+      .filter((item) => item.order_id === orderId)
+      .sort((a, b) => b.version - a.version);
+    counts[orderId] = latestSubmittedDeliverableVersion(items);
+  }
+
+  const missing = orderIds.filter((id) => (counts[id] ?? 0) === 0);
+  if (missing.length > 0) {
+    await Promise.all(
+      missing.map(async (orderId) => {
+        const full = await getDeliverables(orderId);
+        counts[orderId] = latestSubmittedDeliverableVersion(full);
+      })
+    );
+  }
+
+  return counts;
 }
 
 

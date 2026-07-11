@@ -1,5 +1,5 @@
 import { executeCreativeCollaborationRequest } from "@/features/creative-collaboration/creative-collaboration.api";
-import { getCurrentCreatorId } from "@/lib/creator-session";
+import { getCurrentCreatorId } from "@/features/auth/session-context";
 import { getOrder } from "@/lib/order-service";
 import { apiSuccess, handleRouteError, requireApiUser } from "@/lib/core/api-route";
 import { appError } from "@/lib/core/errors";

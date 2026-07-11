@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { getCurrentCreatorId } from "@/lib/creator-session";
+import { getCurrentCreatorId } from "@/features/auth/session-context";
 import { getCreatorDepositSnapshot, submitDepositPayment } from "@/lib/studioos/deposit-service";
 import { DEPOSIT_PAYMENT_METHODS } from "@/lib/studioos/deposit-utils";
 import type { PayoutMethodType } from "@/lib/studioos/withdrawal-types";

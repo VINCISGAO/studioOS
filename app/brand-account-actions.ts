@@ -6,7 +6,7 @@ import {
   rechargeBrandWallet,
   resetBrandWalletBalanceForTesting
 } from "@/features/wallet/brand-wallet.service";
-import { getCurrentClientEmail } from "@/lib/client-session";
+import { getCurrentClientEmail } from "@/features/auth/session-context";
 import { type Locale, withLocale } from "@/lib/i18n";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
 

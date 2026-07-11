@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import { requireAdminAuthUser } from "@/features/admin/auth/admin-api-guard";
-import { getCurrentCreatorId } from "@/lib/creator-session";
+import { getCurrentCreatorId } from "@/features/auth/session-context";
 import { payoutQrFilePath } from "@/lib/studioos/payout-qr-upload";
 
 async function canReadPayoutQr(request: Request, creatorId: string) {

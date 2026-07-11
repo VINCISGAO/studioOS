@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import { BrandProjectOverview } from "@/components/studioos/brand-project-overview";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import {
   loadBrandProjectPortalDetail,
   resolveBrandProjectRouteId
 } from "@/lib/api-client/server-portal-gateway";
-import { getCurrentClientEmail } from "@/lib/client-session";
+import { requireBrandPortalClientEmail } from "@/features/auth/session-context";
 import { getAppUiLocale } from "@/lib/app-language";
 import { isAppError } from "@/lib/core/errors";
 import { type SearchParams, withLocale } from "@/lib/i18n";
@@ -22,7 +22,12 @@ export default async function BrandProjectHubPage({
 }) {
   const [{ id }, query] = await Promise.all([params, searchParams]);
   const locale = await getAppUiLocale();
-  const clientEmail = await getCurrentClientEmail();
+  let clientEmail: string;
+  try {
+    clientEmail = await requireBrandPortalClientEmail();
+  } catch {
+    redirect(withLocale("/login?role=brand", locale));
+  }
 
   const resolved = await resolveBrandProjectRouteId(id);
   if (resolved.kind === "redirect_project") {
@@ -32,7 +37,7 @@ export default async function BrandProjectHubPage({
     redirect(withLocale(brandPortalRoutes.projectReview(resolved.orderId), locale));
   }
   if (resolved.kind === "not_found") {
-    redirect(withLocale(brandPortalRoutes.dashboard, locale));
+    notFound();
   }
 
   if (query.tab === "review") {
@@ -48,6 +53,9 @@ export default async function BrandProjectHubPage({
       tab: query.tab
     });
   } catch (error) {
+    if (isAppError(error) && error.status === 404) {
+      notFound();
+    }
     if (isAppError(error) && error.status === 403) {
       redirect(withLocale("/brand", locale));
     }

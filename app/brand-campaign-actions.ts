@@ -6,7 +6,7 @@ import {
   hasProductVisual,
   listReferencesForProject
 } from "@/lib/campaign-store";
-import { requireBrandPortalClientEmail } from "@/lib/client-session";
+import { requireBrandPortalClientEmail } from "@/features/auth/session-context";
 import { DEMO_USERS } from "@/lib/demo-auth";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
@@ -47,6 +47,7 @@ import type { BrandProductionBrief } from "@/features/campaign/brand-campaign/br
 import { campaignService } from "@/features/campaign/campaign.service";
 import { CampaignEvent, CampaignState } from "@/features/campaign/campaign.state-machine";
 import { campaignBridgeService } from "@/features/campaign/campaign-bridge.service";
+import { aiUsageQuotaService } from "@/features/abuse/ai-usage-quota.service";
 import { emitWizardProgress } from "@/lib/campaign/wizard-progress.service";
 import { runBrandWizardDemoPrepareInstant, runBrandWizardDemoPublish } from "@/lib/campaign/brand-wizard-demo-prepare";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
@@ -341,8 +342,40 @@ export async function refineBrandBriefAction(formData: FormData) {
   // Brief text polish is allowed before escrow — it reorganizes the brand's own words,
   // not post-payment creative-direction collaboration.
   try {
-    const brief = await reorganizeBrandBriefWithAI(input, lang);
-    return { ok: true as const, brief };
+    const campaignId =
+      (await campaignBridgeService.ensurePrismaCampaignOnDraft(projectId)) ??
+      (await campaignBridgeService.resolvePrismaCampaignId(projectId));
+    const user = await requireBrandCampaignUser(ctx.client.client_email);
+
+    if (campaignId) {
+      const quota = await aiUsageQuotaService.assertCampaignQuota({
+        userId: user.id,
+        campaignId,
+        category: "brief_rewrite"
+      });
+      if (!quota.ok) {
+        return {
+          ok: false as const,
+          error: aiUsageQuotaService.quotaErrorMessage(lang, quota)
+        };
+      }
+    }
+
+    const result = await reorganizeBrandBriefWithAI(input, lang);
+
+    if (campaignId && result.usage.charged) {
+      await aiUsageQuotaService.recordOpenAiUsage({
+        userId: user.id,
+        campaignId,
+        category: "brief_rewrite",
+        provider: result.usage.provider,
+        tokenInput: result.usage.tokenInput,
+        tokenOutput: result.usage.tokenOutput,
+        cost: result.usage.cost
+      });
+    }
+
+    return { ok: true as const, brief: result.brief };
   } catch {
     return {
       ok: false as const,
@@ -983,6 +1016,19 @@ export async function startBrandCreativeDirectionsAction(formData: FormData) {
         source: "brand_manual_click"
       });
     }
+
+    const quota = await aiUsageQuotaService.assertCampaignQuota({
+      userId: user.id,
+      campaignId,
+      category: "creative_direction"
+    });
+    if (!quota.ok) {
+      return {
+        ok: false as const,
+        error: aiUsageQuotaService.quotaErrorMessage(lang, quota)
+      };
+    }
+
     const started = await creativeDirectionService.generateAsync(campaignId, user, {
       wizardFastPath,
       briefSnapshot: briefSnapshot ?? undefined,
@@ -1073,6 +1119,17 @@ export async function generateBrandCreativeDirectionsAction(formData: FormData) 
       language: lang,
       source: "brand_manual_click_sync"
     });
+    const quota = await aiUsageQuotaService.assertCampaignQuota({
+      userId: user.id,
+      campaignId,
+      category: "creative_direction"
+    });
+    if (!quota.ok) {
+      return {
+        ok: false as const,
+        error: aiUsageQuotaService.quotaErrorMessage(lang, quota)
+      };
+    }
     const directions = await creativeDirectionService.generate(campaignId, user);
     await finalizeBrandCreativeDirections(projectId, lang, directions);
     return { ok: true as const, directions };

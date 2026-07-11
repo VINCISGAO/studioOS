@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getCurrentClientEmail } from "@/lib/client-session";
+import { getCurrentClientEmail } from "@/features/auth/session-context";
 import type { Locale } from "@/lib/i18n";
 import { getOrder } from "@/lib/order-service";
 import {

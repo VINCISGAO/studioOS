@@ -11,7 +11,7 @@ export async function POST(request: Request) {
     { purgeExpiredDeliverableVideos },
     { saveReviewVideoUpload }
   ] = await Promise.all([
-    import("@/lib/creator-session"),
+    import("@/features/auth/session-context"),
     import("@/lib/order-service"),
     import("@/lib/studioos/deliverable-video-policy"),
     import("@/lib/studioos/video-upload")

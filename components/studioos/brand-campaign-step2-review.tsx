@@ -57,6 +57,7 @@ export function BrandCampaignStep2Review({
   briefSnapshot = null,
   awaitingBriefSave = false,
   minGeneratingUntil = 0,
+  isActive = true,
   onBack,
   onSaveDraft,
   onConfirmed
@@ -71,6 +72,8 @@ export function BrandCampaignStep2Review({
   briefSnapshot?: WizardBriefSnapshot | null;
   awaitingBriefSave?: boolean;
   minGeneratingUntil?: number;
+  /** Only sync wizard URL while this step is visible — avoids jumping from step 1 during background prefetch. */
+  isActive?: boolean;
   onBack: () => void;
   onSaveDraft?: () => void;
   onConfirmed: (directionId: string) => void;
@@ -98,7 +101,7 @@ export function BrandCampaignStep2Review({
   const minGeneratingActive = now < minGeneratingUntil;
   const directionsReady = directions.length > 0 && status === "ready";
   const showGeneratingOverlay =
-    !directionsReady && (awaitingBriefSave || isLoading || minGeneratingActive);
+    isActive && !directionsReady && (awaitingBriefSave || isLoading || minGeneratingActive);
   const showContent = directionsReady;
   const displayDirections = directions.map((direction) => localizeCreativeDirection(direction, locale));
 
@@ -118,9 +121,9 @@ export function BrandCampaignStep2Review({
   }, [directions, selectedId]);
 
   useEffect(() => {
-    if (status !== "ready") return;
+    if (!isActive || status !== "ready") return;
     syncBrandWizardStepUrl(project.id, 2, locale);
-  }, [status, project.id, locale]);
+  }, [isActive, status, project.id, locale]);
 
   function handleConfirm() {
     if (!selectedId) {

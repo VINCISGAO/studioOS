@@ -5,6 +5,6 @@ alwaysApply: true
 
 Read [AGENT.md](../../AGENT.md) before making any changes.
 
-**Marketing homepage is frozen.** Golden baseline owner-locked **2026-07-10** (mobile / iPad / desktop layout + `HomeHeroVideo`). Read [components/marketing/README.md](../../components/marketing/README.md) and [docs/HOMEPAGE_GOLDEN.md](../../docs/HOMEPAGE_GOLDEN.md). **Do not change** homepage copy, spacing, responsiveness, assets, logo treatment, layout, animations, video URLs, nav, or sections unless the owner **explicitly commands that exact homepage change in the current conversation.**
+**Marketing homepage is frozen.** Golden baseline owner-locked **2026-07-11** (hero subtitle「顶级广告不再是大公司专属」, mobile / iPad / desktop layout + `HomeHeroVideo`). Read [components/marketing/README.md](../../components/marketing/README.md) and [docs/HOMEPAGE_GOLDEN.md](../../docs/HOMEPAGE_GOLDEN.md). **Do not change** homepage copy, spacing, responsiveness, assets, logo treatment, layout, animations, video URLs, nav, or sections unless the owner **explicitly commands that exact homepage change in the current conversation.**
 
 Follow the completion requirements there: typecheck, build, and `npm run production:verify` must all pass before a task is done.

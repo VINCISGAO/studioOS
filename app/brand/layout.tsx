@@ -1,8 +1,11 @@
 import { headers } from "next/headers";
 import { after } from "next/server";
+import { redirect } from "next/navigation";
+import { AiCopilotRoot } from "@/components/ai-copilot/ai-copilot-root";
 import { BrandPortalShell } from "@/components/studioos/brand-portal-shell";
 import { getAppUiLocale } from "@/lib/app-language";
-import { getCurrentSession } from "@/lib/session-user";
+import { requireBrandPortalClientEmail } from "@/features/auth/session-context";
+import { withLocale } from "@/lib/i18n";
 import { getBrandPortalProfile, getBrandPortalUnreadCount } from "@/lib/studioos/brand-portal-data";
 import { fallbackBrandDisplayName } from "@/lib/studioos/brand-account-display";
 import { brandAvatarObjectKey } from "@/lib/studioos/brand-avatar-upload";
@@ -43,8 +46,12 @@ export default async function BrandLayout({ children }: BrandLayoutProps) {
   const search = headerList.get("x-search") ?? "";
   const locale = await getAppUiLocale();
 
-  const session = await getCurrentSession();
-  const brandEmail = session!.email.toLowerCase();
+  let brandEmail: string;
+  try {
+    brandEmail = await requireBrandPortalClientEmail();
+  } catch {
+    redirect(withLocale("/login?role=brand", locale));
+  }
 
   after(() => {
     void enforceBrandPaymentDeadlinesForClient(brandEmail);
@@ -69,6 +76,7 @@ export default async function BrandLayout({ children }: BrandLayoutProps) {
       brandAccount={{ name: brandName, email: brandEmail, avatarUrl }}
     >
       {children}
+      <AiCopilotRoot />
     </BrandPortalShell>
   );
 }

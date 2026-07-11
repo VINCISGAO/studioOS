@@ -1,7 +1,7 @@
 import { getAppUiLocale } from "@/lib/app-language";
 import { redirect } from "next/navigation";
 import { StudioReviewHubBoard } from "@/components/studioos/studio-review-hub-board";
-import { getCurrentCreatorId } from "@/lib/creator-session";
+import { getCurrentCreatorId } from "@/features/auth/session-context";
 import { type SearchParams, withLocale } from "@/lib/i18n";
 import { repairSelectedCreatorCampaignOrders } from "@/lib/order-service";
 import { listCreatorReviewHubItems } from "@/lib/studioos/review-hub";

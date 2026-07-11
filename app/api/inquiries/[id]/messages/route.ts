@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { getCurrentClientEmail } from "@/lib/client-session";
-import { getCurrentCreatorId } from "@/lib/creator-session";
+import { getCurrentClientEmail } from "@/features/auth/session-context";
+import { getCurrentCreatorId } from "@/features/auth/session-context";
 import { addMessage, getInquiry, getMessagesForPair, resolveCanonicalInquiry } from "@/lib/chat-service";
 import type { ChatSender } from "@/lib/chat-types";
 import { getOrderForPair } from "@/lib/order-service";

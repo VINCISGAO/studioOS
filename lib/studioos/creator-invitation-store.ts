@@ -196,10 +196,20 @@ export async function enrichStoredCreatorInvitations(
   });
 }
 
+export async function syncCreatorInvitationNotifications(
+  creatorId: string,
+  invitations: CreatorPortalInvitationView[],
+  locale: "zh" | "en" = "zh"
+): Promise<void> {
+  await ensureCreatorInvitationNotifications(creatorId, invitations, locale);
+}
+
 export async function listInvitationsForCreator(
   creatorId: string,
-  locale: "zh" | "en" = "zh"
+  locale: "zh" | "en" = "zh",
+  options?: { syncNotifications?: boolean }
 ): Promise<CreatorPortalInvitationView[]> {
+  const syncNotifications = options?.syncNotifications !== false;
   if (!isLegacyJsonInvitationMode()) {
     const profileId = await resolveCreatorProfileIdForLegacyId(creatorId);
     if (!profileId) {
@@ -207,7 +217,9 @@ export async function listInvitationsForCreator(
     }
     try {
       const invitations = await invitationService.listForLegacyCreator(creatorId);
-      await ensureCreatorInvitationNotifications(creatorId, invitations, locale);
+      if (syncNotifications) {
+        await ensureCreatorInvitationNotifications(creatorId, invitations, locale);
+      }
       return invitations;
     } catch (error) {
       if (!canUseLegacyJsonFallback(error)) {
@@ -243,7 +255,9 @@ export async function listInvitationsForCreator(
       createdAt: item.createdAt,
       ...(item.declineFeedback ? { declineFeedback: item.declineFeedback } : {})
     }));
-  await ensureCreatorInvitationNotifications(creatorId, invitations, locale);
+  if (syncNotifications) {
+    await ensureCreatorInvitationNotifications(creatorId, invitations, locale);
+  }
   return invitations;
 }
 

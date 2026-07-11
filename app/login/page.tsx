@@ -5,7 +5,8 @@ import { resolvePostLoginDestination, toSafeNextPath } from "@/lib/auth/post-log
 import { hasSupabaseConfig } from "@/lib/auth-config";
 import { getAppUiLocale } from "@/lib/app-language";
 import type { Locale, SearchParams } from "@/lib/i18n";
-import { getCurrentCreatorId } from "@/lib/creator-session";
+import { withLocale } from "@/lib/i18n";
+import { getCurrentCreatorId } from "@/features/auth/session-context";
 import { getCurrentSession } from "@/lib/session-user";
 import type { LoginRole } from "@/lib/studioos/login-theme";
 
@@ -221,12 +222,12 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   if (session && (session.role === "client" || session.role === "creator") && !rawError) {
     if (session.role === "creator") {
       const creatorId = await getCurrentCreatorId();
-      if (creatorId) {
-        redirect(resolvePostLoginDestination(session, nextPath, locale));
+      if (!creatorId) {
+        redirect(withLocale("/creator/onboarding", locale));
       }
-    } else {
       redirect(resolvePostLoginDestination(session, nextPath, locale));
     }
+    redirect(resolvePostLoginDestination(session, nextPath, locale));
   }
 
   const initialEmail = typeof params.email === "string" ? params.email : "";

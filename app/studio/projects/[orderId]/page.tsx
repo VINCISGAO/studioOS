@@ -1,10 +1,10 @@
 import { getAppUiLocale } from "@/lib/app-language";
-import { redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { CreatorProjectOverview } from "@/components/studioos/creator-project-overview";
 import { loadCreatorProjectPortalDetail } from "@/lib/api-client/server-portal-gateway";
-import { getCurrentCreatorId } from "@/lib/creator-session";
-import { type SearchParams, withLocale } from "@/lib/i18n";
-import { creatorPortalRoutes } from "@/lib/studioos/creator-portal-routes";
+import { getCurrentCreatorId } from "@/features/auth/session-context";
+import { isAppError } from "@/lib/core/errors";
+import { type SearchParams } from "@/lib/i18n";
 
 export default async function StudioProjectPage({
   params,
@@ -17,9 +17,8 @@ export default async function StudioProjectPage({
   void query;
   const locale = await getAppUiLocale();
   const creatorId = await getCurrentCreatorId();
-
   if (!creatorId) {
-    redirect(withLocale("/login?role=creator", locale));
+    notFound();
   }
 
   let detail;
@@ -29,8 +28,11 @@ export default async function StudioProjectPage({
       locale,
       creatorId
     });
-  } catch {
-    redirect(withLocale(creatorPortalRoutes.projects, locale));
+  } catch (error) {
+    if (isAppError(error) && (error.status === 404 || error.status === 403)) {
+      notFound();
+    }
+    notFound();
   }
 
   return (

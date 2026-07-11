@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { CircleDollarSign } from "lucide-react";
 import { updatePricingPreferenceAction } from "@/app/studio-settings-actions";
+import { InlineFlash } from "@/components/ui/inline-flash";
 import { Button } from "@/components/ui/button";
+import { useAsyncAction } from "@/hooks/use-async-action";
 import type { Locale } from "@/lib/i18n";
 import type { CreatorSettingsViewModel } from "@/lib/studioos/creator-settings-types";
+import { CircleDollarSign } from "lucide-react";
 
 const copy = {
   en: {
@@ -38,19 +40,19 @@ export function CreatorPricingPreferenceCard({
   const t = copy[locale];
   const [minBudget, setMinBudget] = useState(settings.pricing.min_accept_budget_usd?.toString() ?? "");
   const [idealBudget, setIdealBudget] = useState(settings.pricing.ideal_budget_usd?.toString() ?? "");
-  const [pending, setPending] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const { pending, feedback, run } = useAsyncAction({
+    okMessage: t.saved,
+    errorMessage: t.error
+  });
 
   async function save() {
-    setPending(true);
-    setMessage(null);
-    const result = await updatePricingPreferenceAction({
-      lang: locale,
-      minAcceptBudgetUsd: parseBudgetInput(minBudget),
-      idealBudgetUsd: parseBudgetInput(idealBudget)
-    });
-    setPending(false);
-    setMessage(result.ok ? t.saved : result.error ?? t.error);
+    await run(() =>
+      updatePricingPreferenceAction({
+        lang: locale,
+        minAcceptBudgetUsd: parseBudgetInput(minBudget),
+        idealBudgetUsd: parseBudgetInput(idealBudget)
+      })
+    );
   }
 
   return (
@@ -92,7 +94,7 @@ export function CreatorPricingPreferenceCard({
         <Button type="button" disabled={pending} onClick={save} className="rounded-xl bg-violet-600 hover:bg-violet-700">
           {t.save}
         </Button>
-        {message ? <p className="text-sm text-zinc-500">{message}</p> : null}
+        <InlineFlash feedback={feedback} />
       </div>
     </section>
   );

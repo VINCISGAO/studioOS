@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState, useTransition } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useAsyncAction } from "@/hooks/use-async-action";
 import {
   revokeBrandDeviceAction,
   toggleBrandOAuthAction,
@@ -101,9 +102,11 @@ export function BrandSettingsHub({
 }) {
   const t = copy[locale];
   const router = useRouter();
-  const [pending, startTransition] = useTransition();
   const [settings, setSettings] = useState(initialSettings);
-  const [flash, setFlash] = useState<{ tone: "ok" | "error"; message: string } | null>(null);
+  const { pending, feedback, run: runAction } = useAsyncAction({
+    okMessage: t.saved,
+    errorMessage: t.errorGeneric
+  });
   const [emailDialog, setEmailDialog] = useState(false);
   const [passwordDialog, setPasswordDialog] = useState(false);
   const [phoneDialog, setPhoneDialog] = useState(false);
@@ -122,42 +125,31 @@ export function BrandSettingsHub({
     setRecoveryInput(initialSettings.security.recovery_email ?? "");
   }, [initialSettings]);
 
-  const notify = useCallback((tone: "ok" | "error", message: string) => {
-    setFlash({ tone, message });
-    window.setTimeout(() => setFlash(null), 3200);
-  }, []);
-
   const run = useCallback(
-    (task: () => Promise<{ ok: boolean; error?: string } | void>) => {
-      startTransition(async () => {
-        try {
-          const result = await task();
-          if (result && "ok" in result && !result.ok) {
-            notify("error", result.error ?? t.errorGeneric);
-            return;
-          }
-          notify("ok", t.saved);
+    (task: () => Promise<{ ok: boolean; error?: string } | void>) =>
+      runAction(async () => {
+        const result = await task();
+        if (!result || ("ok" in result && result.ok)) {
           router.refresh();
-        } catch {
-          notify("error", t.errorGeneric);
         }
-      });
-    },
-    [notify, router, t.errorGeneric, t.saved]
+        return result;
+      }),
+    [runAction, router]
   );
 
   const deviceCount = settings.devices.length || settings.loginHistory.length;
 
   return (
     <div className="space-y-6">
-      {flash ? (
+      {feedback ? (
         <div
           className={cn(
             "fixed right-4 top-20 z-50 rounded-xl px-4 py-2 text-sm shadow-lg",
-            flash.tone === "ok" ? "bg-emerald-600 text-white" : "bg-red-600 text-white"
+            feedback.tone === "ok" ? "bg-emerald-600 text-white" : "bg-red-600 text-white"
           )}
+          role="status"
         >
-          {flash.message}
+          {feedback.message}
         </div>
       ) : null}
 

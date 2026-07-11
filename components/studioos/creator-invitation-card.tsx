@@ -99,19 +99,25 @@ function CardActions({
     }
 
     startTransition(async () => {
-      const result =
-        action === "accept"
-          ? await acceptDemoInvitationAction(formData)
-          : await declineDemoInvitationAction(formData);
+      try {
+        const result =
+          action === "accept"
+            ? await acceptDemoInvitationAction(formData)
+            : await declineDemoInvitationAction(formData);
 
-      if (result.ok) {
-        setDeclineOpen(false);
-        onRespond(result.nextTab);
-        router.refresh();
-        return;
+        if (result.ok) {
+          setDeclineOpen(false);
+          onRespond(result.nextTab);
+          router.refresh();
+          return;
+        }
+
+        onActing(null);
+        onActionError(result.error);
+      } catch {
+        onActing(null);
+        onActionError("unknown");
       }
-
-      onActionError(result.error);
     });
   }
 

@@ -17,6 +17,8 @@ export type SchemeMediaPhase = "text" | "images";
 export type DirectionsLoadStatus = "loading" | "ready" | "error";
 
 const POLL_MS = 600;
+const MAX_POLL_ATTEMPTS = 150;
+const POLL_TIMEOUT_MS = 90_000;
 const IMAGE_PHASE_DELAY_MS = 450;
 
 function buildStartFormData(
@@ -69,8 +71,29 @@ export function useBrandCampaignDirections(
 
     let cancelled = false;
     let pollTimer: ReturnType<typeof setTimeout> | undefined;
+    let pollAttempts = 0;
+    const pollStartedAt = Date.now();
+
+    function failPoll(message: string) {
+      setError(message);
+      setStatus("error");
+      startedRef.current = false;
+      jobIdRef.current = null;
+    }
 
     async function poll(jobId: string) {
+      if (cancelled) return;
+
+      pollAttempts += 1;
+      const elapsedMs = Date.now() - pollStartedAt;
+      if (pollAttempts > MAX_POLL_ATTEMPTS || elapsedMs >= POLL_TIMEOUT_MS) {
+        failPoll(
+          locale === "zh"
+            ? "AI 方案生成超时，请稍后重试。"
+            : "AI direction generation timed out. Please try again."
+        );
+        return;
+      }
       const fd = new FormData();
       fd.set("lang", locale);
       fd.set("project_id", projectId);
@@ -83,8 +106,7 @@ export function useBrandCampaignDirections(
       if (cancelled) return;
 
       if (!result.ok) {
-        setError(result.error);
-        setStatus("error");
+        failPoll(result.error);
         return;
       }
 

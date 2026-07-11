@@ -65,6 +65,7 @@ model User {
   walletAccount         WalletAccount?
   wallet                Wallet?
   oauthAccounts         UserOAuthAccount[]
+  campaignAiUsageLogs   CampaignAiUsageLog[]
 
   @@index([role])
   @@index([status])
@@ -661,8 +662,12 @@ model Campaign {
   referralCommissions       ReferralCommission[]
   reviewAnnotations         ReviewAnnotation[]
   comments                  ReviewComment[]
+  aiUsageLogs               CampaignAiUsageLog[]
+  costEstimates             ProjectCostEstimate[]
+  actualProductionRecord    ActualProductionRecord?
 
   @@index([brandId])
+  @@index([brandId, status, deletedAt])
   @@index([creatorId])
   @@index([status])
   @@index([deadline])
@@ -968,6 +973,7 @@ model CreatorInvitation {
   creator             CreatorProfile                  @relation(fields: [creatorId], references: [id])
   studio              StudioProfile?                  @relation(fields: [studioId], references: [id])
 
+  @@unique([campaignId, creatorId])
   @@index([campaignId])
   @@index([creatorId])
   @@index([studioId])
@@ -1311,6 +1317,172 @@ model AiJob {
   @@index([status])
   @@index([type])
   @@map("ai_jobs")
+}
+
+model CampaignAiUsageLog {
+  id           String    @id @default(uuid())
+  campaignId   String?   @map("campaign_id")
+  userId       String    @map("user_id")
+  category     String
+  provider     String?
+  tokenInput   Int       @default(0) @map("token_input")
+  tokenOutput  Int       @default(0) @map("token_output")
+  cost         Decimal   @default(0) @db.Decimal(18, 6)
+  metadataJson Json?     @map("metadata_json")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  campaign     Campaign? @relation(fields: [campaignId], references: [id])
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId, category, createdAt])
+  @@index([userId, createdAt])
+  @@map("campaign_ai_usage_logs")
+}
+
+// ---------------------------------------------------------------------------
+// VINCIS Production Pricing Engine — platform benchmarks & campaign estimates
+// ---------------------------------------------------------------------------
+
+model ProductionPricingProfile {
+  id                          String                  @id @default(uuid())
+  version                     String                  @unique
+  defaultGenerationMultiplier Decimal                 @map("default_generation_multiplier") @db.Decimal(6, 3)
+  defaultUsableRate           Decimal                 @map("default_usable_rate") @db.Decimal(6, 4)
+  productionUnitSeconds       Int                     @default(15) @map("production_unit_seconds")
+  defaultHourlyRateUsd        Decimal                 @map("default_hourly_rate_usd") @db.Decimal(10, 2)
+  minCreatorProfitMargin      Decimal                 @map("min_creator_profit_margin") @db.Decimal(6, 4)
+  targetCreatorProfitMargin   Decimal                 @map("target_creator_profit_margin") @db.Decimal(6, 4)
+  platformCommissionRate      Decimal                 @map("platform_commission_rate") @db.Decimal(6, 4)
+  paymentCostRate             Decimal                 @map("payment_cost_rate") @db.Decimal(6, 4)
+  riskReserveRate             Decimal                 @map("risk_reserve_rate") @db.Decimal(6, 4)
+  revisionReserveStandard     Decimal                 @map("revision_reserve_standard") @db.Decimal(6, 4)
+  riskBufferStandard          Decimal                 @map("risk_buffer_standard") @db.Decimal(6, 4)
+  tokensPer15s4kGeneration    Int                     @default(1500) @map("tokens_per_15s_4k_generation")
+  isActive                    Boolean                 @default(true) @map("is_active")
+  notes                       String?
+  createdAt                   DateTime                @default(now()) @map("created_at")
+  updatedAt                   DateTime                @updatedAt @map("updated_at")
+  complexityTiers             ProjectComplexityTier[]
+
+  @@map("production_pricing_profiles")
+}
+
+model ProjectComplexityTier {
+  id                    String                   @id @default(uuid())
+  profileId             String                   @map("profile_id")
+  tier                  ProductionDifficultyTier
+  labelEn               String                   @map("label_en")
+  labelZh               String                   @map("label_zh")
+  generationMultiplier  Decimal                  @map("generation_multiplier") @db.Decimal(6, 3)
+  tokensPer15sUnit      Decimal?                 @map("tokens_per_15s_unit") @db.Decimal(12, 2)
+  usableRate            Decimal?                 @map("usable_rate") @db.Decimal(6, 4)
+  complexityCoefficient Decimal?                 @map("complexity_coefficient") @db.Decimal(6, 3)
+  avgShotLengthSeconds  Decimal?                 @map("avg_shot_length_seconds") @db.Decimal(6, 2)
+  riskCoefficient       Decimal                  @default(1.0) @map("risk_coefficient") @db.Decimal(6, 3)
+  sortOrder             Int                      @default(0) @map("sort_order")
+  profile               ProductionPricingProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, tier])
+  @@index([profileId])
+  @@map("project_complexity_tiers")
+}
+
+model ProductionBenchmarkSample {
+  id                      String                    @id @default(uuid())
+  sampleCode              String                    @unique @map("sample_code")
+  projectName             String                    @map("project_name")
+  projectType             ProductionProjectType     @map("project_type")
+  difficultyTier          ProductionDifficultyTier  @map("difficulty_tier")
+  status                  ProductionBenchmarkStatus @default(VERIFIED)
+  finalDurationSeconds    Int                       @map("final_duration_seconds")
+  productionUnitSeconds   Int                       @default(15) @map("production_unit_seconds")
+  effectiveUnitCount      Decimal                   @map("effective_unit_count") @db.Decimal(10, 4)
+  totalShotCount          Int?                      @map("total_shot_count")
+  aiToolSpendUsd          Decimal?                  @map("ai_tool_spend_usd") @db.Decimal(12, 2)
+  aiCostPer15sUsd         Decimal?                  @map("ai_cost_per_15s_usd") @db.Decimal(12, 4)
+  aiCostPerSecondUsd      Decimal?                  @map("ai_cost_per_second_usd") @db.Decimal(12, 4)
+  totalTokensConsumed     Int?                      @map("total_tokens_consumed")
+  tokensPer15sUnit        Decimal?                  @map("tokens_per_15s_unit") @db.Decimal(12, 2)
+  tokensPerSecond         Decimal?                  @map("tokens_per_second") @db.Decimal(12, 2)
+  tokensPerSingle15s4kGen Int?                      @map("tokens_per_single_15s_4k_gen")
+  totalGenerations        Int?                      @map("total_generations")
+  usedGenerations         Int?                      @map("used_generations")
+  generationMultiplier    Decimal                   @map("generation_multiplier") @db.Decimal(6, 3)
+  usableRate              Decimal                   @map("usable_rate") @db.Decimal(6, 4)
+  complexityCoefficient   Decimal?                  @map("complexity_coefficient") @db.Decimal(6, 3)
+  productionDays          Int?                      @map("production_days")
+  hoursPerDay             Decimal?                  @map("hours_per_day") @db.Decimal(4, 1)
+  totalLaborHours         Decimal?                  @map("total_labor_hours") @db.Decimal(8, 1)
+  revisionRounds          Int?                      @map("revision_rounds")
+  editingHours            Decimal?                  @map("editing_hours") @db.Decimal(8, 1)
+  finalQualityScore       Decimal?                     @map("final_quality_score") @db.Decimal(4, 2)
+  sourceType              ProductionBenchmarkSourceType @default(VERIFIED) @map("source_type")
+  assumptionText          String?                      @map("assumption_text")
+  confidenceLevel         String?                      @map("confidence_level")
+  dataSource              String                       @map("data_source")
+  notes                   String?
+  metadataJson            Json?                     @map("metadata_json")
+  recordedAt              DateTime                  @map("recorded_at")
+  createdAt               DateTime                  @default(now()) @map("created_at")
+  updatedAt               DateTime                  @updatedAt @map("updated_at")
+
+  @@index([projectType])
+  @@index([difficultyTier])
+  @@index([status])
+  @@map("production_benchmark_samples")
+}
+
+model ProjectCostEstimate {
+  id                       String                   @id @default(uuid())
+  campaignId               String                   @map("campaign_id")
+  profileVersion           String                   @map("profile_version")
+  difficultyTier           ProductionDifficultyTier @map("difficulty_tier")
+  estimatedShotCount       Int                      @map("estimated_shot_count")
+  estimatedGenerations     Int                      @map("estimated_generations")
+  estimatedLaborHours      Decimal                  @map("estimated_labor_hours") @db.Decimal(8, 1)
+  toolCostUsd              Decimal                  @map("tool_cost_usd") @db.Decimal(12, 2)
+  laborCostUsd             Decimal                  @map("labor_cost_usd") @db.Decimal(12, 2)
+  revisionReserveUsd       Decimal                  @map("revision_reserve_usd") @db.Decimal(12, 2)
+  riskBufferUsd            Decimal                  @map("risk_buffer_usd") @db.Decimal(12, 2)
+  creatorMinIncomeUsd      Decimal                  @map("creator_min_income_usd") @db.Decimal(12, 2)
+  brandFloorPriceUsd       Decimal                  @map("brand_floor_price_usd") @db.Decimal(12, 2)
+  brandSuggestedPriceUsd   Decimal                  @map("brand_suggested_price_usd") @db.Decimal(12, 2)
+  brandPriorityPriceUsd    Decimal?                 @map("brand_priority_price_usd") @db.Decimal(12, 2)
+  brandPremiumPriceUsd     Decimal?                 @map("brand_premium_price_usd") @db.Decimal(12, 2)
+  estimateVersion          Int                      @default(1) @map("estimate_version")
+  modelVersion             String                   @default("v1") @map("model_version")
+  isAdopted                Boolean                  @default(false) @map("is_adopted")
+  adoptedAt                DateTime?                @map("adopted_at")
+  inputSnapshotJson        Json?                    @map("input_snapshot_json")
+  estimateJson             Json?                    @map("estimate_json")
+  createdAt                DateTime                 @default(now()) @map("created_at")
+  campaign                 Campaign                 @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId])
+  @@index([createdAt])
+  @@map("project_cost_estimates")
+}
+
+model ActualProductionRecord {
+  id                      String    @id @default(uuid())
+  campaignId              String    @unique @map("campaign_id")
+  actualShotCount         Int?      @map("actual_shot_count")
+  actualGenerations       Int?      @map("actual_generations")
+  actualToolCostUsd       Decimal?  @map("actual_tool_cost_usd") @db.Decimal(12, 2)
+  actualLaborHours        Decimal?  @map("actual_labor_hours") @db.Decimal(8, 1)
+  actualRevisionRounds    Int?      @map("actual_revision_rounds")
+  actualCreatorIncomeUsd  Decimal?  @map("actual_creator_income_usd") @db.Decimal(12, 2)
+  actualDeliveryDays      Int?      @map("actual_delivery_days")
+  brandSatisfactionScore  Decimal?  @map("brand_satisfaction_score") @db.Decimal(4, 2)
+  finalProfitUsd          Decimal?  @map("final_profit_usd") @db.Decimal(12, 2)
+  actualMultiplier        Decimal?  @map("actual_multiplier") @db.Decimal(6, 3)
+  actualTokens            Int?      @map("actual_tokens")
+  recordJson              Json?     @map("record_json")
+  completedAt             DateTime? @map("completed_at")
+  createdAt               DateTime  @default(now()) @map("created_at")
+  updatedAt               DateTime  @updatedAt @map("updated_at")
+  campaign                Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@map("actual_production_records")
 }
 
 model AIEvent {
@@ -2230,4 +2402,34 @@ enum MemoryOwnerType {
   CREATOR
   CAMPAIGN
   RELATIONSHIP
+}
+
+enum ProductionBenchmarkStatus {
+  DRAFT
+  VERIFIED
+  ARCHIVED
+}
+
+enum ProductionBenchmarkSourceType {
+  VERIFIED
+  DERIVED
+}
+
+enum ProductionProjectType {
+  SIMPLE_PRODUCT
+  SOCIAL_SHORT
+  BRAND_AD
+  BRAND_FILM
+  AI_DRAMA_SHORT
+  CINEMATIC_BRAND_PROMO
+  COMPLEX_NARRATIVE
+  OTHER
+}
+
+enum ProductionDifficultyTier {
+  SIMPLE
+  STANDARD
+  COMMERCIAL
+  CINEMATIC
+  COMPLEX
 }

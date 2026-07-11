@@ -2,7 +2,7 @@ import { getAppUiLocale } from "@/lib/app-language";
 import { redirect } from "next/navigation";
 import { CreatorProfileStudio } from "@/components/creator/creator-profile-studio";
 import { CertifiedProfileOnboarding } from "@/components/studioos/certified-profile-onboarding";
-import { getCurrentCreator } from "@/lib/creator-session";
+import { getCurrentCreator } from "@/features/auth/session-context";
 import { getCurrentUserEmail } from "@/lib/session-user";
 import { hasCompletedCreatorProfile, hasPaidCreatorDeposit } from "@/lib/studioos/deposit-guard";
 import { type SearchParams, withLocale } from "@/lib/i18n";

@@ -114,16 +114,16 @@ export class RelationshipDnaService {
 
   async getMatchingBoost(brandId: string, creatorUserId: string) {
     const rel = await memoryRepository.getRelationship(brandId, creatorUserId);
-    if (!rel) return { boost: 0, reasons: [] as string[] };
-    const reasons: string[] = [];
-    if (rel.collaborationCount >= 2) {
-      reasons.push(`Relationship: ${rel.collaborationCount} past projects`);
+    return matchingBoostFromRelationship(rel);
+  }
+
+  async getMatchingBoostsForCreators(brandId: string, creatorUserIds: string[]) {
+    const rows = await memoryRepository.listRelationshipsForBrandCreators(brandId, creatorUserIds);
+    const map = new Map<string, { boost: number; reasons: string[] }>();
+    for (const rel of rows) {
+      map.set(rel.creatorId, matchingBoostFromRelationship(rel));
     }
-    if (rel.avgSatisfaction != null && Number(rel.avgSatisfaction) >= 4) {
-      reasons.push(`High satisfaction (${Number(rel.avgSatisfaction).toFixed(1)})`);
-    }
-    const boost = Math.min(rel.priorityScore, memoryConfig.relationshipBoostMax);
-    return { boost, reasons };
+    return map;
   }
 
   formatForPrompt(snapshot: RelationshipDnaSnapshot | null) {
@@ -151,6 +151,21 @@ export class RelationshipDnaService {
       dnaJson: { trustLevel: "strategic", note: "Preferred creator partnership" }
     });
   }
+}
+
+function matchingBoostFromRelationship(
+  rel: Awaited<ReturnType<typeof memoryRepository.getRelationship>>
+): { boost: number; reasons: string[] } {
+  if (!rel) return { boost: 0, reasons: [] };
+  const reasons: string[] = [];
+  if (rel.collaborationCount >= 2) {
+    reasons.push(`Relationship: ${rel.collaborationCount} past projects`);
+  }
+  if (rel.avgSatisfaction != null && Number(rel.avgSatisfaction) >= 4) {
+    reasons.push(`High satisfaction (${Number(rel.avgSatisfaction).toFixed(1)})`);
+  }
+  const boost = Math.min(rel.priorityScore, memoryConfig.relationshipBoostMax);
+  return { boost, reasons };
 }
 
 export const relationshipDnaService = new RelationshipDnaService();

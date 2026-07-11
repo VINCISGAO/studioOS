@@ -2,7 +2,7 @@ import { getAppUiLocale } from "@/lib/app-language";
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/studioos/ui/page-header";
 import { ReviewHubList } from "@/components/studioos/review-hub-list";
-import { getCurrentClientEmail } from "@/lib/client-session";
+import { getCurrentClientEmail } from "@/features/auth/session-context";
 import { type SearchParams, withLocale } from "@/lib/i18n";
 import { listBrandReviewHubItems } from "@/lib/studioos/review-hub";
 

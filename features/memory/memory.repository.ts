@@ -133,6 +133,25 @@ export class MemoryRepository {
     });
   }
 
+  async listCreatorMatchingFacts(creatorUserIds: string[]) {
+    if (!hasDatabaseUrl() || creatorUserIds.length === 0) return [];
+    return prisma.memoryFact.findMany({
+      where: {
+        ownerType: "CREATOR",
+        creatorId: { in: creatorUserIds },
+        category: { in: ["matching_preference", "matching_statistics"] }
+      },
+      orderBy: { updatedAt: "desc" }
+    });
+  }
+
+  async listRelationshipsForBrandCreators(brandId: string, creatorUserIds: string[]) {
+    if (!hasDatabaseUrl() || creatorUserIds.length === 0) return [];
+    return prisma.relationshipDna.findMany({
+      where: { brandId, creatorId: { in: creatorUserIds } }
+    });
+  }
+
   factsToRecord(facts: MemoryFact[]) {
     const record: Record<string, Record<string, string>> = {};
     for (const f of facts) {

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { BrandLogoLockup } from "@/components/brand-logo-mark";
 import { NotificationCenterBell } from "@/components/studioos/notification-center-bell";
@@ -12,6 +12,7 @@ import { PortalSidebarAccountMenu } from "@/components/studioos/portal-sidebar-a
 import { brandNav } from "@/lib/studioos/vocabulary";
 import { brandPortalNavItems, type BrandPortalNavItem } from "@/lib/studioos/brand-portal-nav";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
+import { scrollToBrandMyAds } from "@/lib/studioos/brand-my-ads-scroll";
 import { buildAvatarInitials } from "@/lib/studioos/avatar-initials";
 import { readBrandWizardStepFromLocation } from "@/lib/studioos/instant-nav";
 import {
@@ -77,6 +78,7 @@ function BrandPortalShellInner({
   children: React.ReactNode;
 }) {
   const pathname = usePathname() ?? pathnameProp ?? "/brand";
+  const router = useRouter();
   const [locationHash, setLocationHash] = useState("");
   const { isFocusMode: isReviewFocusMode } = usePortalReviewFocus();
   const nav = brandNav[locale];
@@ -123,12 +125,18 @@ function BrandPortalShellInner({
     };
   }, [isWizardCreate, pathname]);
 
-  const scrollToMyAds = useCallback(() => {
-    document.getElementById("my-ads")?.scrollIntoView({ behavior: "smooth", block: "start" });
-    const url = withLocale(`${brandPortalRoutes.dashboard}#my-ads`, locale);
-    window.history.replaceState(window.history.state, "", url);
-    setLocationHash("#my-ads");
-  }, [locale]);
+  const navigateToMyAds = useCallback(() => {
+    const hashUrl = `${withLocale(brandPortalRoutes.dashboard, locale)}#my-ads`;
+
+    if (pathname === brandPortalRoutes.dashboard) {
+      scrollToBrandMyAds({ behavior: "smooth" });
+      window.history.replaceState(window.history.state, "", hashUrl);
+      setLocationHash("#my-ads");
+      return;
+    }
+
+    router.push(hashUrl, { scroll: false });
+  }, [locale, pathname, router]);
 
   if (isProjectReview && isReviewFocusMode) {
     return (
@@ -255,12 +263,12 @@ function BrandPortalShellInner({
                   </div>
                 );
               }
-              if (item.labelKey === "adRequirements" && pathname === brandPortalRoutes.dashboard) {
+              if (item.labelKey === "adRequirements") {
                 return (
                   <button
                     key={item.href + item.labelKey}
                     type="button"
-                    onClick={scrollToMyAds}
+                    onClick={navigateToMyAds}
                     className={sidebarLinkClass(active, false)}
                   >
                     <Icon className="h-[18px] w-[18px] shrink-0" />
@@ -360,10 +368,7 @@ function BrandPortalShellInner({
                       href,
                       label: nav[labelKey],
                       iconKey: mobileIconKey,
-                      onClick:
-                        labelKey === "adRequirements" && pathname === brandPortalRoutes.dashboard
-                          ? scrollToMyAds
-                          : undefined,
+                      onClick: labelKey === "adRequirements" ? navigateToMyAds : undefined,
                       active:
                         labelKey === "workspace"
                           ? pathname === brandPortalRoutes.dashboard && locationHash !== "#my-ads"

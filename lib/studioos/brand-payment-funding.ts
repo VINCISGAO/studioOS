@@ -1,16 +1,10 @@
 import { campaignRepository } from "@/features/campaign/campaign.repository";
 import { paymentRepository } from "@/features/payment/payment.repository";
-import { EscrowState } from "@/features/shared/state-machines/escrow.state-machine";
+import { CAMPAIGN_ESCROW_FUNDED_STATES } from "@/features/payment/escrow-guards";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { isOrderPaymentEscrowed, type StoredOrder } from "@/lib/order-types";
 import { normalizeCampaignStatus } from "@/lib/studioos/project-status";
 import type { StoredProject } from "@/lib/project-types";
-
-const FUNDED_ESCROW_STATES = new Set<string>([
-  EscrowState.HELD,
-  EscrowState.PARTIAL_RELEASE,
-  EscrowState.FULL_RELEASE
-]);
 
 export async function isPrismaEscrowFundedForProject(projectId: string): Promise<boolean> {
   if (!hasDatabaseUrl()) return false;
@@ -19,7 +13,7 @@ export async function isPrismaEscrowFundedForProject(projectId: string): Promise
   if (!campaign) return false;
 
   const escrow = await paymentRepository.findByCampaignId(campaign.id);
-  return escrow ? FUNDED_ESCROW_STATES.has(escrow.status) : false;
+  return escrow ? CAMPAIGN_ESCROW_FUNDED_STATES.has(escrow.status) : false;
 }
 
 export function isLegacyOrderFunded(order: StoredOrder | null | undefined): boolean {

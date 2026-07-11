@@ -1,7 +1,7 @@
 import { getAppUiLocale } from "@/lib/app-language";
 import { redirect } from "next/navigation";
 import { CreatorCertificationHub } from "@/components/studioos/creator-certification-hub";
-import { getCurrentCreator } from "@/lib/creator-session";
+import { getCurrentCreator } from "@/features/auth/session-context";
 import { resolveCreatorCertificationAccessFromOrders } from "@/lib/studioos/creator-certification-access";
 import { depositRequiredMessage } from "@/lib/studioos/deposit-copy";
 import { hasCompletedCreatorProfile } from "@/lib/studioos/deposit-guard";

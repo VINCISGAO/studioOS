@@ -21,7 +21,7 @@ function parseReviewVideoKey(key: string) {
 
 export async function PUT(request: Request) {
   const [{ getCurrentCreatorId }, { getOrder }] = await Promise.all([
-    import("@/lib/creator-session"),
+    import("@/features/auth/session-context"),
     import("@/lib/order-service")
   ]);
   const creatorId = await getCurrentCreatorId();

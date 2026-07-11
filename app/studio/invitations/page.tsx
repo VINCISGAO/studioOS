@@ -2,7 +2,7 @@ import { getAppUiLocale } from "@/lib/app-language";
 import { redirect } from "next/navigation";
 import { CreatorInvitationsBoard } from "@/components/studioos/creator-invitations-board";
 import { CreatorInvitationsProgress } from "@/components/studioos/creator-invitations-progress";
-import { getCurrentCreator } from "@/lib/creator-session";
+import { getCurrentCreator } from "@/features/auth/session-context";
 import { enrichInvitationsForCards } from "@/lib/studioos/creator-invitation-display";
 import { listInvitationsForCreator } from "@/lib/studioos/creator-invitation-store";
 import { resolveThumbnailsByProjectId } from "@/lib/studioos/resolve-project-thumbnails";

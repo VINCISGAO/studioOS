@@ -71,15 +71,39 @@ async function writeStore(store: CampaignStore) {
 export { detectReferenceType } from "@/lib/campaign/reference-type";
 
 export async function listAssetsForProject(projectId: string): Promise<StoredProjectAsset[]> {
+  const map = await listAssetsForProjects([projectId]);
+  return map[projectId] ?? [];
+}
+
+export async function listAssetsForProjects(
+  projectIds: string[]
+): Promise<Record<string, StoredProjectAsset[]>> {
+  const unique = [...new Set(projectIds.filter(Boolean))];
+  if (unique.length === 0) {
+    return {};
+  }
+
   if (hasDatabaseUrl()) {
-    const prismaId = await campaignService.resolveLegacyCampaignId(projectId);
-    if (prismaId) {
-      return campaignService.listBrandAssets(projectId);
-    }
+    const entries = await Promise.all(
+      unique.map(async (projectId) => {
+        const prismaId = await campaignService.resolveLegacyCampaignId(projectId);
+        if (!prismaId) {
+          return [projectId, []] as const;
+        }
+        const assets = await campaignService.listBrandAssets(projectId);
+        return [projectId, assets] as const;
+      })
+    );
+    return Object.fromEntries(entries);
   }
 
   const store = await readStore();
-  return store.assets.filter((item) => item.project_id === projectId);
+  return Object.fromEntries(
+    unique.map((projectId) => [
+      projectId,
+      store.assets.filter((item) => item.project_id === projectId)
+    ])
+  );
 }
 
 export async function listReferencesForProject(projectId: string): Promise<StoredProjectReference[]> {

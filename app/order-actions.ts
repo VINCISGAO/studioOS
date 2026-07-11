@@ -3,8 +3,8 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { addSystemMessage, consolidateInquiryThreads, getInquiry, resolveCanonicalInquiry, updateInquiryStatus } from "@/lib/chat-service";
-import { getCurrentClientEmail } from "@/lib/client-session";
-import { getCurrentCreator, getCurrentCreatorId } from "@/lib/creator-session";
+import { getCurrentClientEmail } from "@/features/auth/session-context";
+import { getCurrentCreator, getCurrentCreatorId } from "@/features/auth/session-context";
 import { canAcceptCreatorOrders, countCompletedCreatorOrders } from "@/lib/studioos/deposit-guard";
 import { withLocale, appPath, type Locale } from "@/lib/i18n";
 import { resolveServerLocale } from "@/lib/app-language";

@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { ReviewerTimestampWorkspace } from "@/components/studioos/reviewer-skeleton/reviewer-timestamp-workspace";
 import { getCreatorById } from "@/lib/creator-service";
-import { getCurrentCreatorId } from "@/lib/creator-session";
+import { getCurrentCreatorId } from "@/features/auth/session-context";
 import { getAppUiLocale } from "@/lib/app-language";
 import { type SearchParams, withLocale } from "@/lib/i18n";
 import {

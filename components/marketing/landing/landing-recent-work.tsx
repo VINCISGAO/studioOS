@@ -29,27 +29,33 @@ function WorkCard({
   const meta = `${labelWorkCategory(work.category, locale)} · ${labelPlatform(work.platform, locale)}`;
   const featuredLabel = landingText("work", copyLocale).featured;
 
+  const imageFrameClass = featured
+    ? "h-[260px] sm:h-[360px]"
+    : "aspect-[16/9]";
+
   return (
     <button
       type="button"
       onClick={onOpen}
       className={cn(
-        "group block h-full w-full cursor-pointer text-left",
+        "group flex h-full w-full cursor-pointer flex-col text-left",
         !featured && "rounded-2xl bg-white shadow-[0_14px_40px_-28px_rgba(0,0,0,0.35)]"
       )}
     >
       <div
         className={cn(
-          "relative overflow-hidden bg-zinc-900",
+          "relative w-full shrink-0 overflow-hidden bg-zinc-900",
+          imageFrameClass,
           featured
-            ? "h-[260px] rounded-2xl shadow-[0_18px_60px_-30px_rgba(0,0,0,0.45)] sm:h-[360px]"
-            : "h-[142px] rounded-t-2xl sm:h-[148px] lg:h-[112px]"
+            ? "rounded-2xl shadow-[0_18px_60px_-30px_rgba(0,0,0,0.45)]"
+            : "rounded-t-2xl"
         )}
       >
         <ShowcaseCover
           work={work}
           priority={featured}
-          className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+          className="absolute inset-0"
+          imageClassName="transition duration-500 group-hover:scale-[1.03]"
         />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/10" />
         <span className="pointer-events-none absolute bottom-3 right-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-md sm:bottom-4 sm:right-4">
@@ -77,7 +83,7 @@ function WorkCard({
       </div>
 
       {!featured ? (
-        <div className="flex items-center justify-between gap-3 p-3">
+        <div className="flex min-h-[4.5rem] flex-1 items-center justify-between gap-3 p-3">
           <span className="min-w-0">
             <h3 className="line-clamp-1 text-sm font-semibold text-zinc-950">{work.title}</h3>
             <p className="mt-1 text-xs text-zinc-500">{meta}</p>
@@ -132,9 +138,9 @@ export function LandingRecentWork({
                 />
               </div>
 
-              <div className="contents lg:grid lg:grid-cols-2 lg:gap-4">
+              <div className="contents lg:grid lg:grid-cols-2 lg:grid-rows-2 lg:gap-4 lg:items-stretch">
                 {rest.map((work) => (
-                  <div key={work.id}>
+                  <div key={work.id} className="h-full min-h-0">
                     <WorkCard
                       work={work}
                       locale={locale}

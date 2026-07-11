@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { addPitchMessage, getInquiry } from "@/lib/chat-service";
-import { getCurrentCreatorId } from "@/lib/creator-session";
+import { getCurrentCreatorId } from "@/features/auth/session-context";
 import { withLocale, type Locale } from "@/lib/i18n";
 
 function normalizeLang(raw: FormDataEntryValue | null): Locale {

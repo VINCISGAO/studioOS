@@ -87,7 +87,7 @@ export const CURATED_HOMEPAGE_SHOWCASE_WORKS: MarketingShowcaseWorkDto[] = [
     category: "Consumer tech",
     platform: "Meta",
     format: "9:16",
-    thumbnail_url: recentWorkPoster("Video demo2.jpg"),
+    thumbnail_url: recentWorkVideo("video-demo-2.jpg"),
     video_url: recentWorkVideo("Video demo2.mp4"),
     tags: ["Demo", "Variant", "Meta"],
     featured_on_homepage: true,

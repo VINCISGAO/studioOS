@@ -8,7 +8,7 @@ import {
 } from "@/app/brand-account-actions";
 import { BrandWalletRechargeForm } from "@/components/studioos/brand-wallet-recharge-form";
 import { getBrandWalletSnapshot } from "@/features/wallet/brand-wallet.service";
-import { getCurrentClientEmail } from "@/lib/client-session";
+import { getCurrentClientEmail } from "@/features/auth/session-context";
 import { type SearchParams, withLocale } from "@/lib/i18n";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
 

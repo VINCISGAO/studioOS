@@ -1,9 +1,12 @@
 import { getAppUiLocale } from "@/lib/app-language";
 import { redirect } from "next/navigation";
 import { BrandCampaignWizard } from "@/components/studioos/brand-campaign-wizard";
-import { resolveBrandBriefClientEmail } from "@/lib/client-session";
+import { resolveBrandBriefClientEmail } from "@/features/auth/session-context";
 import { type SearchParams, withLocale } from "@/lib/i18n";
 import { getOrCreateEphemeralWizardProject } from "@/lib/brand-start-brief";
+import {
+  assertBrandCampaignCreationAllowed
+} from "@/lib/studioos/brand-active-campaign.server";
 import { getProject } from "@/lib/project-service";
 import { normalizeCampaignStatus } from "@/lib/studioos/project-status";
 import {
@@ -55,6 +58,15 @@ export default async function NewProjectPage({
 
   if (!clientEmail) {
     redirect(buildBrandWizardLoginRedirect());
+  }
+
+  const creationGate = await assertBrandCampaignCreationAllowed(clientEmail, locale);
+  if (!creationGate.ok) {
+    if (creationGate.gate === "rate_limit") {
+      const code = creationGate.rateLimitCode === "rate_limit_10m" ? "10m" : "24h";
+      redirect(withLocale(`/brand?error=campaign-rate-limit&code=${code}`, locale));
+    }
+    redirect(withLocale(`/brand?error=campaign-limit`, locale));
   }
 
   if (!projectId) {

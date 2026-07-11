@@ -17,6 +17,7 @@ import {
   resolveLegacyProjectId
 } from "@/features/matching/invitation.mapper";
 import { invitationRepository } from "@/features/matching/invitation.repository";
+import { orderRepository } from "@/features/order/order.repository";
 import { notificationService } from "@/features/notification/notification.service";
 import { userRepository } from "@/features/auth/user.repository";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
@@ -24,7 +25,7 @@ import { reviewBridgeService } from "@/features/review/review-bridge.service";
 import { paymentRepository } from "@/features/payment/payment.repository";
 import { aiLearningEventRepository } from "@/features/ai/ai-learning-event.repository";
 import { aiLearningWorkerService } from "@/features/ai/ai-learning-worker.service";
-import { EscrowState } from "@/features/shared/state-machines/escrow.state-machine";
+import { isCampaignEscrowStatusActive } from "@/features/payment/escrow-guards";
 import { getProject } from "@/lib/project-service";
 import { setupBrandCheckout } from "@/lib/studioos/brand-checkout-service";
 import { notifyCreatorsInvitationExpired } from "@/lib/studioos/commercial-interaction-notify";
@@ -246,6 +247,20 @@ export class CampaignSelectionService {
       return { ok: false, error: "project-not-found" };
     }
 
+    const existingPrismaOrder = await orderRepository.findActiveForCampaignAndCreator(
+      campaign.id,
+      creatorProfileId
+    );
+    if (existingPrismaOrder) {
+      const invitation = mapInvitationToStored(
+        winnerRow,
+        legacyProjectId,
+        input.creatorId,
+        updatedMemory.selection
+      );
+      return { ok: true, invitation };
+    }
+
     const checkout = await setupBrandCheckout({
       project: legacyProject,
       creatorId: input.creatorId,
@@ -293,7 +308,7 @@ export class CampaignSelectionService {
     if (
       refreshedCampaign?.status === CampaignState.CREATOR_ACCEPTED &&
       escrow &&
-      (escrow.status === EscrowState.HELD || escrow.status === EscrowState.PARTIAL_RELEASE)
+      isCampaignEscrowStatusActive(escrow.status)
     ) {
       await campaignService.transition(campaign.id, CampaignEvent.START_PRODUCTION, actor);
     }

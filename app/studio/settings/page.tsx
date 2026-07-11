@@ -2,7 +2,7 @@ import { getAppUiLocale } from "@/lib/app-language";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { StudioSettingsPage } from "@/components/studioos/studio-settings-page";
-import { getCurrentCreator } from "@/lib/creator-session";
+import { getCurrentCreator } from "@/features/auth/session-context";
 import { type SearchParams, withLocale } from "@/lib/i18n";
 import { DEMO_SESSION_COOKIE } from "@/lib/auth-config";
 import { parseDemoSession } from "@/lib/demo-auth";

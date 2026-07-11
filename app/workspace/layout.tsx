@@ -1,10 +1,11 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { AiCopilotRoot } from "@/components/ai-copilot/ai-copilot-root";
 import { BrandReviewShell } from "@/components/mvp/brand-review-shell";
 import { AdminPortalShell } from "@/components/studioos/admin-portal-shell";
 import { BrandPortalShell } from "@/components/studioos/brand-portal-shell";
 import { StudioPortalShell } from "@/components/studioos/studio-portal-shell";
-import { getCurrentCreator } from "@/lib/creator-session";
+import { getCurrentCreator } from "@/features/auth/session-context";
 import {
   countCompletedCreatorOrders,
   getCreatorAccessState,
@@ -61,14 +62,42 @@ export default async function WorkspaceLayout({ children }: { children: React.Re
   if (profile && isReviewRoom) {
     if (profile.role === "brand") {
       return (
-        <BrandReviewShell locale={locale} pathname={pathname} search={search} profile={profile} reviewMode>
-          {children}
-        </BrandReviewShell>
+        <>
+          <BrandReviewShell locale={locale} pathname={pathname} search={search} profile={profile} reviewMode>
+            {children}
+          </BrandReviewShell>
+          <AiCopilotRoot />
+        </>
       );
     }
 
     if (profile.role === "studio") {
       return (
+        <>
+          <StudioPortalShell
+            locale={locale}
+            pathname={pathname}
+            search={search}
+            creator={creator}
+            certificationPaid={access.isVerified}
+            profileComplete={profileComplete}
+            canUseBusinessFeatures={canUseBusinessFeatures}
+            notifications={notifications}
+            unreadCount={unreadCount}
+          >
+            {children}
+          </StudioPortalShell>
+          <AiCopilotRoot />
+        </>
+      );
+    }
+
+    return <div className="flex h-screen flex-col overflow-hidden bg-white text-zinc-900">{children}</div>;
+  }
+
+  if (profile?.role === "studio") {
+    return (
+      <>
         <StudioPortalShell
           locale={locale}
           pathname={pathname}
@@ -82,35 +111,19 @@ export default async function WorkspaceLayout({ children }: { children: React.Re
         >
           {children}
         </StudioPortalShell>
-      );
-    }
-
-    return <div className="flex h-screen flex-col overflow-hidden bg-white text-zinc-900">{children}</div>;
-  }
-
-  if (profile?.role === "studio") {
-    return (
-      <StudioPortalShell
-        locale={locale}
-        pathname={pathname}
-        search={search}
-        creator={creator}
-        certificationPaid={access.isVerified}
-        profileComplete={profileComplete}
-        canUseBusinessFeatures={canUseBusinessFeatures}
-        notifications={notifications}
-        unreadCount={unreadCount}
-      >
-        {children}
-      </StudioPortalShell>
+        <AiCopilotRoot />
+      </>
     );
   }
 
   if (profile?.role === "brand") {
     return (
-      <BrandPortalShell locale={locale} pathname={pathname} search={search}>
-        {children}
-      </BrandPortalShell>
+      <>
+        <BrandPortalShell locale={locale} pathname={pathname} search={search}>
+          {children}
+        </BrandPortalShell>
+        <AiCopilotRoot />
+      </>
     );
   }
 

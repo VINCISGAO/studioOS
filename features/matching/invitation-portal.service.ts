@@ -14,6 +14,7 @@ import {
   prismaInvitationStatusToPortal,
   resolveLegacyProjectId
 } from "@/features/matching/invitation.mapper";
+import { InvitationEvent } from "@/features/shared/state-machines/invitation.state-machine";
 import { invitationRepository } from "@/features/matching/invitation.repository";
 import { notificationService } from "@/features/notification/notification.service";
 import { userRepository } from "@/features/auth/user.repository";
@@ -465,6 +466,14 @@ export class InvitationPortalService {
       return { ok: false, error: "not-found" };
     }
 
+    if (row.status === "ACCEPTED") {
+      const existing = await this.getById(invitationId);
+      if (existing) {
+        return { ok: true, invitation: existing };
+      }
+      return { ok: false, error: "not-found" };
+    }
+
     const portalStatus = prismaInvitationStatusToPortal(row.status);
     if (portalStatus !== "pending") {
       return { ok: false, error: "not-pending" };
@@ -477,7 +486,7 @@ export class InvitationPortalService {
       return { ok: false, error: "recruitment-closed" };
     }
 
-    await invitationRepository.updateStatus(invitationId, "ACCEPTED");
+    await invitationRepository.transitionInvitation(invitationId, InvitationEvent.ACCEPT);
     await aiLearningEventRepository.append({
       eventType: "CreatorAccepted",
       entityType: "CreatorInvitation",
@@ -500,13 +509,6 @@ export class InvitationPortalService {
       },
       confidence: 0.8
     });
-
-    if (row.campaign.status === "MATCHING") {
-      await campaignService.transition(row.campaignId, CampaignEvent.SEND_INVITATION, {
-        id: row.campaign.brandId,
-        role: "BRAND"
-      });
-    }
 
     await activityService.write(
       row.campaignId,

@@ -4,10 +4,8 @@ import { toUiLocale } from "@/lib/app-language.shared";
 import { loadHomeShowcaseWorks } from "@/lib/marketing/home-showcase-works";
 import { getLanguageCode, type SearchParams } from "@/lib/i18n";
 import { resolveHomeHeroVideoPlaybackSrc } from "@/lib/marketing/home-hero-video-sources";
-import { toMarketingHomePortalSession } from "@/lib/marketing/portal-entry";
-import { getCurrentSession } from "@/lib/session-user";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 type HomePageProps = {
   searchParams: Promise<SearchParams>;
@@ -17,15 +15,13 @@ type HomePageProps = {
 export default async function HomePage({ searchParams }: HomePageProps) {
   const resolvedSearchParams = await searchParams;
 
-  const [copyLocale, featuredWorks, session] = await Promise.all([
+  const [copyLocale, featuredWorks] = await Promise.all([
     resolvedSearchParams.lang ? getLanguageCode(resolvedSearchParams) : getAppLanguage(),
-    loadHomeShowcaseWorks(),
-    getCurrentSession()
+    loadHomeShowcaseWorks()
   ]);
 
   const locale = toUiLocale(copyLocale);
   const heroVideoSrc = resolveHomeHeroVideoPlaybackSrc(copyLocale);
-  const portalSession = toMarketingHomePortalSession(session);
 
   return (
     <HomeLandingPage
@@ -33,7 +29,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       copyLocale={copyLocale}
       heroVideoSrc={heroVideoSrc}
       featuredWorks={featuredWorks}
-      portalSession={portalSession}
+      hydratePortalSession
     />
   );
 }

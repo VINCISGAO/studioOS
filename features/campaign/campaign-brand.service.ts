@@ -22,6 +22,7 @@ import {
 import { campaignRepository } from "@/features/campaign/campaign.repository";
 import { CampaignEvent, campaignStateMachine } from "@/features/campaign/campaign.state-machine";
 import { userRepository } from "@/features/auth/user.repository";
+import { assertBrandCampaignCreationAllowed } from "@/lib/studioos/brand-active-campaign.server";
 import { CampaignEvents } from "@/features/shared/types/events";
 import { hasDatabaseUrl, prisma } from "@/lib/core/database/prisma";
 import { logger } from "@/lib/core/logger";
@@ -193,6 +194,11 @@ export class CampaignBrandPortalService {
 
   async createDraft(input: CreateProjectDraftInput): Promise<StoredProject | null> {
     if (!this.isEnabled()) return null;
+
+    const creationGate = await assertBrandCampaignCreationAllowed(input.client_email, "en");
+    if (!creationGate.ok) {
+      throw new Error(creationGate.error);
+    }
 
     const user = await userRepository.ensureBrandPortalUser({
       email: input.client_email,

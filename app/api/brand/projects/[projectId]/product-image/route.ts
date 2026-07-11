@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getCurrentClientEmail } from "@/lib/client-session";
+import { getCurrentClientEmail } from "@/features/auth/session-context";
 import { logger } from "@/lib/core/logger";
 import { uploadBrandProductImage } from "@/lib/studioos/brand-product-image-service";
 

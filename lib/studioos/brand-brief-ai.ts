@@ -84,14 +84,30 @@ export function templateReorganizeBrandBrief(
   };
 }
 
+export type BrandBriefAiUsage = {
+  charged: boolean;
+  provider: string;
+  tokenInput: number;
+  tokenOutput: number;
+  cost: number;
+};
+
+export type BrandBriefAiResult = {
+  brief: ReorganizedBrandBrief;
+  usage: BrandBriefAiUsage;
+};
+
 export async function reorganizeBrandBriefWithAI(
   input: BrandQuestionnaireInput,
   locale: Locale
-): Promise<ReorganizedBrandBrief> {
+): Promise<BrandBriefAiResult> {
   const fallback = templateReorganizeBrandBrief(input, locale);
 
   if (!hasOpenAI()) {
-    return fallback;
+    return {
+      brief: fallback,
+      usage: { charged: false, provider: "template", tokenInput: 0, tokenOutput: 0, cost: 0 }
+    };
   }
 
   const zh = usesChinese(locale);
@@ -130,12 +146,21 @@ export async function reorganizeBrandBriefWithAI(
     }
 
     return {
-      campaign_goal: String(parsed.campaign_goal ?? fallback.campaign_goal).trim(),
-      product_name: String(parsed.product_name ?? fallback.product_name).trim(),
-      target_audience: String(parsed.target_audience ?? fallback.target_audience).trim(),
-      title: String(parsed.title ?? fallback.title).trim(),
-      notes: String(parsed.notes ?? fallback.notes).trim(),
-      source: "openai"
+      brief: {
+        campaign_goal: String(parsed.campaign_goal ?? fallback.campaign_goal).trim(),
+        product_name: String(parsed.product_name ?? fallback.product_name).trim(),
+        target_audience: String(parsed.target_audience ?? fallback.target_audience).trim(),
+        title: String(parsed.title ?? fallback.title).trim(),
+        notes: String(parsed.notes ?? fallback.notes).trim(),
+        source: "openai"
+      },
+      usage: {
+        charged: true,
+        provider: result.provider,
+        tokenInput: result.tokenInput,
+        tokenOutput: result.tokenOutput,
+        cost: result.cost
+      }
     };
   } catch (error) {
     logger.error("Brand brief AI polish failed", {

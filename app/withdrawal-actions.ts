@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getCurrentCreatorId } from "@/lib/creator-session";
+import { getCurrentCreatorId } from "@/features/auth/session-context";
 import type { Locale } from "@/lib/i18n";
 import type { CryptoAsset, CryptoNetwork, PayoutMethod, PayoutMethodType } from "@/lib/studioos/withdrawal-types";
 import {

@@ -17,7 +17,7 @@ import { AUTH_ERROR_COPY } from "@/features/auth/auth-error-copy";
 import { withLocale, appPath, type Locale } from "@/lib/i18n";
 import { resolveServerLocale } from "@/lib/app-language";
 import { getOrCreateOpenInquiry } from "@/lib/chat-service";
-import { getOrCreateVisitorId } from "@/lib/client-session";
+import { getOrCreateVisitorId } from "@/features/auth/session-context";
 import { createProject } from "@/lib/project-service";
 import { createClient } from "@/lib/supabase/server";
 import { getAppBaseUrl } from "@/lib/app-url";

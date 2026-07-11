@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getCurrentCreatorId } from "@/lib/creator-session";
+import { getCurrentCreatorId } from "@/features/auth/session-context";
 import { deleteCreatorWork, publishWork, setCreatorWorkHidden } from "@/lib/works-service";
 import type { CreatorWork } from "@/lib/types";
 

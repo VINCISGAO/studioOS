@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import type { Locale } from "@/lib/i18n";
+import type { BrandNewCampaignGate } from "@/lib/studioos/brand-active-campaign-limit";
 import {
   brandCampaignHref,
   brandCampaignStatusLabel
@@ -213,12 +214,18 @@ export function BrandCampaignList({
   locale,
   rows,
   orderProjectMap,
-  wizardProjectId
+  wizardProjectId,
+  activeCampaignCount = 0,
+  creationGate,
+  rateLimitCode = null
 }: {
   locale: Locale;
   rows: BrandProjectRow[];
   orderProjectMap: Record<string, string | null | undefined>;
   wizardProjectId?: string;
+  activeCampaignCount?: number;
+  creationGate?: BrandNewCampaignGate;
+  rateLimitCode?: "rate_limit_10m" | "rate_limit_24h" | null;
 }) {
   const router = useRouter();
   const t = copy[locale];
@@ -477,6 +484,9 @@ export function BrandCampaignList({
               <BrandStartBriefButton
                 locale={locale}
                 projectId={wizardProjectId}
+                activeCampaignCount={activeCampaignCount}
+                creationGate={creationGate}
+                rateLimitCode={rateLimitCode}
                 className="inline-flex h-10 items-center gap-2 rounded-full bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800"
               >
                 <Plus className="h-4 w-4" />

@@ -11,8 +11,7 @@ import { PermissionService } from "@/features/auth/permission.service";
 import type { WizardBriefSnapshot } from "@/lib/studioos/brand-wizard-brief-snapshot";
 import { memoryRepository } from "@/features/memory/memory.repository";
 import { notificationService } from "@/features/notification/notification.service";
-import { paymentRepository } from "@/features/payment/payment.repository";
-import { EscrowState } from "@/features/shared/state-machines/escrow.state-machine";
+import { assertCampaignEscrowFunded } from "@/features/payment/escrow-guards";
 import { appError } from "@/lib/core/errors";
 import { getAppBaseUrl } from "@/lib/app-url";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
@@ -182,14 +181,10 @@ export class CreativeDirectionService {
   }
 
   private async assertEscrowFundedForAi(campaignId: string) {
-    const escrow = await paymentRepository.findByCampaignId(campaignId);
-    const funded =
-      escrow?.status === EscrowState.HELD ||
-      escrow?.status === EscrowState.PARTIAL_RELEASE ||
-      escrow?.status === EscrowState.FULL_RELEASE;
-    if (!funded) {
-      throw appError("INVALID_TRANSITION", "AI creative generation is available only after escrow payment");
-    }
+    await assertCampaignEscrowFunded(
+      campaignId,
+      "AI creative generation is available only after escrow payment"
+    );
   }
 
   readDirections(campaign: Campaign): CreativeDirection[] {

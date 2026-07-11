@@ -1,6 +1,6 @@
 import { getAppUiLocale } from "@/lib/app-language";
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { BrandCheckoutPanel } from "@/components/studioos/brand-checkout-panel";
 import { BrandCheckoutSummary } from "@/components/studioos/brand-checkout-summary";
 import { getCreatorById } from "@/lib/creator-service";
@@ -57,9 +57,9 @@ export default async function BrandCheckoutPage({ params, searchParams }: Props)
   const clientEmail = session.email.toLowerCase();
   let project = await getProject(id);
 
-  if (!project) redirect(withLocale(brandPortalRoutes.dashboard, locale));
+  if (!project) notFound();
   if (project.client_email !== clientEmail) {
-    redirect(withLocale("/brand", locale));
+    notFound();
   }
 
   await enforceBrandPaymentDeadlineForProject(id);

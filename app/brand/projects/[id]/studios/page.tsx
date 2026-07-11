@@ -1,13 +1,13 @@
 import { getAppUiLocale } from "@/lib/app-language";
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ArrowRight, Star } from "lucide-react";
 import { WorkCoverImage } from "@/components/creator/work-cover-image";
 import { CertifiedPartnerBadge } from "@/components/studioos/certification/certified-partner-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { getCurrentClientEmail } from "@/lib/client-session";
+import { getCurrentClientEmail } from "@/features/auth/session-context";
 import { listCreatorsForMatching } from "@/lib/creator-service";
 import { getWorksForCreator } from "@/lib/works-catalog";
 import { clampBrandVisibleStep, migrateLegacyBrandWizardStep } from "@/lib/campaign/wizard-steps";
@@ -35,9 +35,9 @@ export default async function BrandStudiosPage({ params, searchParams }: Props) 
   const clientEmail = await getCurrentClientEmail();
   const project = await getProject(id);
 
-  if (!project) redirect(withLocale(brandPortalRoutes.dashboard, locale));
+  if (!project) notFound();
   if (clientEmail && project.client_email !== clientEmail.toLowerCase()) {
-    redirect(withLocale("/brand", locale));
+    notFound();
   }
   if (project.status === "draft") {
     const resumeStep = clampBrandVisibleStep(migrateLegacyBrandWizardStep(project.wizard_step || 1));

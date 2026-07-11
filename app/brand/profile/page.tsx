@@ -1,7 +1,7 @@
 import { getAppUiLocale } from "@/lib/app-language";
 import { redirect } from "next/navigation";
 import { BrandProfileEditor } from "@/components/studioos/brand-profile-editor";
-import { getCurrentClientEmail } from "@/lib/client-session";
+import { getCurrentClientEmail } from "@/features/auth/session-context";
 import { DEMO_USERS } from "@/lib/demo-auth";
 import {
   getOrCreateBrandProfile,

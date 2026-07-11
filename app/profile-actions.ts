@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { getCurrentCreatorId } from "@/lib/creator-session";
+import { getCurrentCreatorId } from "@/features/auth/session-context";
 import { completeCreatorProfile, saveCreatorProfileDraft } from "@/lib/creator-profile-service";
 import { getWorksForCreator } from "@/lib/works-catalog";
 import { withLocale, type Locale } from "@/lib/i18n";

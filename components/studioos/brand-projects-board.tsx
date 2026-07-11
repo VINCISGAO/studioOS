@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { deleteBrandProjectsAction } from "@/app/brand-project-actions";
 import { BrandStartBriefButton } from "@/components/studioos/brand-start-brief-button";
+import { countActiveCampaignRows } from "@/lib/studioos/brand-active-campaign-limit";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -191,6 +192,7 @@ export function BrandProjectsBoard({ locale, rows }: Props) {
     }),
     [items]
   );
+  const activeCampaignCount = useMemo(() => countActiveCampaignRows(items), [items]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -335,7 +337,11 @@ export function BrandProjectsBoard({ locale, rows }: Props) {
           <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 sm:text-3xl">{t.title}</h1>
           <p className="mt-1.5 text-sm text-zinc-500">{t.subtitle}</p>
         </div>
-        <BrandStartBriefButton locale={locale} className="h-10 shrink-0 rounded-lg px-4 shadow-sm">
+        <BrandStartBriefButton
+          locale={locale}
+          activeCampaignCount={activeCampaignCount}
+          className="h-10 shrink-0 rounded-lg px-4 shadow-sm"
+        >
           <Plus className="h-4 w-4" />
           {t.new}
         </BrandStartBriefButton>

@@ -552,6 +552,16 @@ async function main() {
   await seedFeatureFlags();
   await seedPartnerAcademy();
 
+  try {
+    const { productionPricingRepository } = await import(
+      "../features/pricing/production-pricing.repository"
+    );
+    await productionPricingRepository.seedVerifiedBenchmarks();
+    console.log("Seeded production pricing benchmarks (SAMPLE_001 + SAMPLE_002).");
+  } catch (error) {
+    console.warn("Skipped production pricing seed:", error);
+  }
+
   if (DEMO_USERS.length === 0) {
     console.log("Test accounts disabled — skipped demo user/campaign seed.");
     await seedAdminDashboardDemoIfEnabled();

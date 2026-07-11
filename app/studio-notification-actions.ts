@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { notificationService } from "@/features/notification/notification.service";
 import { getSessionUser } from "@/features/auth/session.service";
-import { getCurrentCreatorId } from "@/lib/creator-session";
+import { getCurrentCreatorId } from "@/features/auth/session-context";
 import type { Locale } from "@/lib/i18n";
 import {
   deleteAllNotificationsForCreator,

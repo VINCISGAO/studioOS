@@ -1,7 +1,7 @@
 import { promises as fs } from "fs";
 import { NextResponse } from "next/server";
-import { getCurrentClientEmail } from "@/lib/client-session";
-import { getCurrentCreatorId } from "@/lib/creator-session";
+import { getCurrentClientEmail } from "@/features/auth/session-context";
+import { getCurrentCreatorId } from "@/features/auth/session-context";
 import { getDeliverables, getOrder } from "@/lib/order-service";
 import { campaignRepository } from "@/features/campaign/campaign.repository";
 import { userRepository } from "@/features/auth/user.repository";

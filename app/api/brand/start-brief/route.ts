@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { DEMO_SESSION_COOKIE, VISITOR_COOKIE } from "@/lib/auth-config";
 import { resolveBrandBriefStartFromRequestCookies } from "@/lib/brand-brief-session";
 import { getOrCreateEphemeralWizardProject } from "@/lib/brand-start-brief";
+import { assertBrandCampaignCreationAllowed } from "@/lib/studioos/brand-active-campaign.server";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +16,22 @@ export async function GET(request: NextRequest) {
   );
 
   try {
+    const creationGate = await assertBrandCampaignCreationAllowed(clientEmail, lang);
+    if (!creationGate.ok) {
+      const fallback = new URL("/brand", request.url);
+      fallback.searchParams.set("lang", lang);
+      if (creationGate.gate === "rate_limit") {
+        fallback.searchParams.set("error", "campaign-rate-limit");
+        fallback.searchParams.set(
+          "code",
+          creationGate.rateLimitCode === "rate_limit_10m" ? "10m" : "24h"
+        );
+      } else {
+        fallback.searchParams.set("error", "campaign-limit");
+      }
+      return NextResponse.redirect(fallback);
+    }
+
     const project = await getOrCreateEphemeralWizardProject(clientEmail);
     const destination = new URL("/brand/projects/new", request.url);
     destination.searchParams.set("project", project.id);

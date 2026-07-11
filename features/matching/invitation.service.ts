@@ -1,6 +1,7 @@
 import { invitationPortalService } from "@/features/matching/invitation-portal.service";
 import { campaignSelectionService } from "@/features/matching/campaign-selection.service";
 import { invitationRepository } from "@/features/matching/invitation.repository";
+import { InvitationEvent } from "@/features/shared/state-machines/invitation.state-machine";
 import { matchingService } from "@/features/matching/matching.service";
 import { activityService } from "@/features/campaign/activity.service";
 import { campaignRepository } from "@/features/campaign/campaign.repository";
@@ -16,8 +17,7 @@ import type { Locale } from "@/lib/i18n";
 import type { StoredProject } from "@/lib/project-types";
 import { hasDatabaseUrl, prisma } from "@/lib/core/database/prisma";
 import { notificationService } from "@/features/notification/notification.service";
-import { paymentRepository } from "@/features/payment/payment.repository";
-import { EscrowState } from "@/features/shared/state-machines/escrow.state-machine";
+import { isCampaignEscrowFunded } from "@/features/payment/escrow-guards";
 import { getAppBaseUrl } from "@/lib/app-url";
 import { resolveLegacyProjectId } from "@/features/matching/invitation.mapper";
 import {
@@ -93,12 +93,7 @@ export class InvitationService {
     if (!invitationAllowedStatuses.has(campaign.status)) {
       throw appError("INVALID_TRANSITION", "Invitations can only be sent after escrow-funded matching starts");
     }
-    const escrow = await paymentRepository.findByCampaignId(campaignId);
-    const escrowFunded =
-      escrow?.status === EscrowState.HELD ||
-      escrow?.status === EscrowState.PARTIAL_RELEASE ||
-      escrow?.status === EscrowState.FULL_RELEASE;
-    if (!escrowFunded) {
+    if (!(await isCampaignEscrowFunded(campaignId))) {
       throw appError("INVALID_TRANSITION", "Escrow must be funded before sending invitations");
     }
 
@@ -190,6 +185,9 @@ export class InvitationService {
     if (invitation.creator.userId !== user.id && user.role.toUpperCase() !== "ADMIN") {
       throw appError("FORBIDDEN", "Not your invitation");
     }
+    if (invitation.status === "ACCEPTED") {
+      return serializeInvitation(invitation);
+    }
     if (invitation.status !== "SENT" && invitation.status !== "VIEWED") {
       throw appError("CAMPAIGN_LOCKED", "Invitation already responded");
     }
@@ -203,7 +201,7 @@ export class InvitationService {
       return serializeInvitation(updated);
     }
 
-    await invitationRepository.updateStatus(invitationId, "ACCEPTED");
+    await invitationRepository.transitionInvitation(invitationId, InvitationEvent.ACCEPT);
     await notificationService.notify({
       userId: invitation.campaign.brandId,
       campaignId: invitation.campaignId,

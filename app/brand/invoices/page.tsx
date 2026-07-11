@@ -2,7 +2,7 @@ import { getAppUiLocale } from "@/lib/app-language";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { getCurrentClientEmail } from "@/lib/client-session";
+import { getCurrentClientEmail } from "@/features/auth/session-context";
 import { type SearchParams, withLocale } from "@/lib/i18n";
 import { listOrdersForClient } from "@/lib/order-service";
 import { formatCurrency, formatDate } from "@/lib/utils";

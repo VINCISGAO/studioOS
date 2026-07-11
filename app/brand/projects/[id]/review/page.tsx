@@ -1,9 +1,9 @@
 import { getAppUiLocale } from "@/lib/app-language";
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, Clock3, Film, MessageSquareText, UploadCloud } from "lucide-react";
 import { ReviewerTimestampWorkspace } from "@/components/studioos/reviewer-skeleton/reviewer-timestamp-workspace";
-import { getCurrentClientEmail } from "@/lib/client-session";
+import { getCurrentClientEmail } from "@/features/auth/session-context";
 import { type SearchParams, withLocale } from "@/lib/i18n";
 import { getDeliverables, getOrder, getOrderForProject } from "@/lib/order-service";
 import { getProject } from "@/lib/project-service";
@@ -34,15 +34,15 @@ export default async function BrandProjectReviewPage({ params, searchParams }: P
   const resolvedProjectId = project?.id ?? linkedOrder?.project_id ?? id;
 
   if (!project && !linkedOrder) {
-    redirect(withLocale(brandPortalRoutes.dashboard, locale));
+    notFound();
   }
 
   if (project && project.client_email.toLowerCase() !== clientEmail.toLowerCase()) {
-    redirect(withLocale("/brand", locale));
+    notFound();
   }
 
   if (!project && linkedOrder && linkedOrder.client_email.toLowerCase() !== clientEmail.toLowerCase()) {
-    redirect(withLocale("/brand", locale));
+    notFound();
   }
 
   const orderForReview = linkedOrder ?? (resolvedProjectId ? await getOrderForProject(resolvedProjectId) : null);

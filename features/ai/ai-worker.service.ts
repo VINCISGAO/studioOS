@@ -1,4 +1,6 @@
+import { aiUsageQuotaService } from "@/features/abuse/ai-usage-quota.service";
 import { aiJobRepository } from "@/features/ai/ai-job.repository";
+import { assertCampaignEscrowFunded } from "@/features/payment/escrow-guards";
 import { runCreativeDirectionJob } from "@/features/ai/creative-direction.runner";
 import { campaignRepository } from "@/features/campaign/campaign.repository";
 import { campaignService } from "@/features/campaign/campaign.service";
@@ -6,8 +8,6 @@ import { CampaignEvent, CampaignState } from "@/features/campaign/campaign.state
 import { aiConfig } from "@/lib/core/config/ai";
 import { appError } from "@/lib/core/errors";
 import { logger } from "@/lib/core/logger";
-import { paymentRepository } from "@/features/payment/payment.repository";
-import { EscrowState } from "@/features/shared/state-machines/escrow.state-machine";
 import { AiJobState, MAX_AI_RETRIES } from "@/features/shared/state-machines/ai-job.state-machine";
 import { prisma, hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { normalizeLanguageCode } from "@/features/i18n/language.constants";
@@ -16,17 +16,6 @@ import type { WizardBriefSnapshot } from "@/lib/studioos/brand-wizard-brief-snap
 export class AiWorkerService {
   private assertDb() {
     if (!hasDatabaseUrl()) throw appError("SYSTEM_ERROR", "DATABASE_URL not configured");
-  }
-
-  private async assertCampaignEscrowFunded(campaignId: string) {
-    const escrow = await paymentRepository.findByCampaignId(campaignId);
-    const funded =
-      escrow?.status === EscrowState.HELD ||
-      escrow?.status === EscrowState.PARTIAL_RELEASE ||
-      escrow?.status === EscrowState.FULL_RELEASE;
-    if (!funded) {
-      throw appError("INVALID_TRANSITION", "AI creative generation is available only after escrow payment");
-    }
   }
 
   async enqueueCreativeDirection(
@@ -38,7 +27,10 @@ export class AiWorkerService {
     const campaign = await campaignRepository.findById(campaignId);
     if (!campaign) throw appError("NOT_FOUND", "Campaign not found");
     if (!extras?.wizardFastPath) {
-      await this.assertCampaignEscrowFunded(campaignId);
+      await assertCampaignEscrowFunded(
+        campaignId,
+        "AI creative generation is available only after escrow payment"
+      );
     }
     const actor = await prisma.user.findUnique({
       where: { id: actorUserId },
@@ -103,6 +95,23 @@ export class AiWorkerService {
         provider: output.provider,
         completedAt: new Date()
       });
+
+      if (job.campaignId && output.provider === "openai") {
+        const actorUserId = String((job.inputJson as { actorUserId?: string }).actorUserId ?? "");
+        if (actorUserId) {
+          await aiUsageQuotaService.recordOpenAiUsage({
+            userId: actorUserId,
+            campaignId: job.campaignId,
+            category: "creative_direction",
+            provider: output.provider,
+            tokenInput: output.tokenInput ?? 0,
+            tokenOutput: output.tokenOutput ?? 0,
+            cost: output.cost ?? 0,
+            metadata: { jobId, jobType: job.type }
+          });
+        }
+      }
+
       return { ok: true as const, jobId, status: "SUCCESS" as const };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -154,7 +163,10 @@ export class AiWorkerService {
       wizardFastPath?: boolean;
     };
     if (!input.wizardFastPath) {
-      await this.assertCampaignEscrowFunded(campaignId);
+      await assertCampaignEscrowFunded(
+        campaignId,
+        "AI creative generation is available only after escrow payment"
+      );
     }
     const actorUserId = String(input.actorUserId ?? campaign.brandId);
     const language = normalizeLanguageCode(input.language);

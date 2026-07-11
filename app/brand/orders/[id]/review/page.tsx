@@ -2,7 +2,7 @@ import { getAppUiLocale } from "@/lib/app-language";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ReviewerTimestampWorkspace } from "@/components/studioos/reviewer-skeleton/reviewer-timestamp-workspace";
-import { getCurrentClientEmail } from "@/lib/client-session";
+import { getCurrentClientEmail } from "@/features/auth/session-context";
 import { type SearchParams, withLocale } from "@/lib/i18n";
 import { getDeliverables, getOrder } from "@/lib/order-service";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";

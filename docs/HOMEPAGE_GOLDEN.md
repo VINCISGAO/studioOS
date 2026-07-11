@@ -1,10 +1,10 @@
 # Homepage Golden Baseline
 
-**Status:** Canonical anchor — **owner-locked 2026-07-10**  
-**Supersedes:** 2026-07-09 · commit `17a98b7`  
+**Status:** Canonical anchor — **owner-locked 2026-07-11**  
+**Supersedes:** 2026-07-10 · commit `17a98b7`  
 **Tag / branch:** `homepage-v1` · `homepage-golden` (re-anchor via `npm run homepage:anchor` after owner approval)
 
-> **Owner rule (2026-07-10):** 没有项目 owner 在**当前对话**中的明确命令，**绝对不可以**改动首页栈的任何内容——包括文案、视频 URL、**手机 / iPad / 电脑版布局与响应式断点**、间距、动画、资产、导航交互、以及 `HomeHeroVideo` 播放组件。  
+> **Owner rule (2026-07-11):** 没有项目 owner 在**当前对话**中的明确命令，**绝对不可以**改动首页栈的任何内容——包括文案、视频 URL、**手机 / iPad / 电脑版布局与响应式断点**、间距、动画、资产、导航交互、以及 `HomeHeroVideo` 播放组件。  
 > No agent and no engineer may change homepage stack files **without the project owner's explicit command in the current conversation.**
 
 ## Policy
@@ -102,11 +102,11 @@ Card menu (not plain text list):
 | Field | Value |
 |-------|-------|
 | eyebrow | `AI 驱动 · 全球协作` |
-| titleLine1 | `连接全球品牌与AI创作者` |
-| subtitle line 1 | `让好的创意不再因成本、时间或资源被埋没` |
-| subtitle line 2 | `世界级广告不再是大公司的专属` |
+| titleLine1 | `连接全球品牌` |
+| titleLine2 | `与 AI 创作者` |
+| subtitle | `顶级广告不再是大公司专属` |
 
-All 11 marketing locales: subtitle **two lines, no sentence-ending punctuation** — see `landingCopy.hero` + `landingCopyTranslations.hero` in `lib/marketing/landing-copy.ts`.
+All 11 marketing locales: single-line `hero.subtitle` — see `landingCopy.hero` + `landingCopyTranslations.hero` in `lib/marketing/landing-copy.ts`.
 
 ## Hero video — 11 languages (canonical, unchanged)
 

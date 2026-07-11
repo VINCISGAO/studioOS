@@ -2,7 +2,7 @@ import { getAppUiLocale } from "@/lib/app-language";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { getCurrentClientEmail } from "@/lib/client-session";
+import { getCurrentClientEmail } from "@/features/auth/session-context";
 import { type SearchParams, withLocale } from "@/lib/i18n";
 import { dnaProfileToFields } from "@/lib/studioos/creative-dna-service";
 import { getDnaProfile, orgIdFromEmail } from "@/lib/studioos/creative-performance-store";

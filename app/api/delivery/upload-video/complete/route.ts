@@ -19,7 +19,7 @@ export async function POST(request: Request) {
     { assertReviewVersionUploadAllowed },
     { MAX_CAMPAIGN_VERSIONS }
   ] = await Promise.all([
-    import("@/lib/creator-session"),
+    import("@/features/auth/session-context"),
     import("@/lib/order-service"),
     import("@/features/review/paid-revision.service"),
     import("@/lib/studioos/review-upload-version"),

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getCurrentCreatorId } from "@/lib/creator-session";
+import { getCurrentCreatorId } from "@/features/auth/session-context";
 import { getOrder } from "@/lib/order-service";
 import { getReviewSession, uploadReviewVideoFile } from "@/lib/review-engine/review-engine-service";
 

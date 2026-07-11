@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAppBaseUrl } from "@/lib/app-url";
-import { getCurrentClientEmail } from "@/lib/client-session";
+import { getCurrentClientEmail } from "@/features/auth/session-context";
 import { getInquiry } from "@/lib/chat-service";
 import { getQuote } from "@/lib/order-service";
 import { getStripe } from "@/lib/stripe";

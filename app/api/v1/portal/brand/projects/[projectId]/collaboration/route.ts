@@ -1,5 +1,5 @@
 import { executeCreativeCollaborationRequest } from "@/features/creative-collaboration/creative-collaboration.api";
-import { getCurrentClientEmail } from "@/lib/client-session";
+import { getCurrentClientEmail } from "@/features/auth/session-context";
 import { apiSuccess, handleRouteError, requireApiUser } from "@/lib/core/api-route";
 import { appError } from "@/lib/core/errors";
 

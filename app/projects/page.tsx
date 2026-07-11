@@ -5,7 +5,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { getCurrentCreator } from "@/lib/creator-session";
+import { getCurrentCreator } from "@/features/auth/session-context";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
 import { creatorWorks } from "@/lib/data";
 import { matchProjectsForCreator } from "@/lib/matching-engine";

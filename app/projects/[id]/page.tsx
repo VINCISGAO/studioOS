@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { creatorWorks } from "@/lib/data";
 import { DepositRequiredCallout } from "@/components/studioos/deposit-required-callout";
-import { getCurrentCreator, getCurrentCreatorId } from "@/lib/creator-session";
+import { getCurrentCreator, getCurrentCreatorId } from "@/features/auth/session-context";
 import { canAcceptCreatorOrders, countCompletedCreatorOrders } from "@/lib/studioos/deposit-guard";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
 import { matchProjectsForCreator } from "@/lib/matching-engine";

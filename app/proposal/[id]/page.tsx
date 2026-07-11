@@ -9,7 +9,7 @@ import { PageShell } from "@/components/page-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getInquiry, getMessagesForPair, consolidateInquiryThreads } from "@/lib/chat-service";
-import { getCurrentCreator, getCurrentCreatorId } from "@/lib/creator-session";
+import { getCurrentCreator, getCurrentCreatorId } from "@/features/auth/session-context";
 import { getCreatorById } from "@/lib/creator-service";
 import { canAcceptCreatorOrders, countCompletedCreatorOrders } from "@/lib/studioos/deposit-guard";
 import { creatorWorks } from "@/lib/data";

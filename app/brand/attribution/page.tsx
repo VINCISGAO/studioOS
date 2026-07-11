@@ -1,7 +1,7 @@
 import { getAppUiLocale } from "@/lib/app-language";
 import { redirect } from "next/navigation";
 import { BrandAttributionHub } from "@/components/studioos/brand-attribution-hub";
-import { getCurrentClientEmail } from "@/lib/client-session";
+import { getCurrentClientEmail } from "@/features/auth/session-context";
 import { type SearchParams, withLocale } from "@/lib/i18n";
 import { getBrandAttributionWorkspace } from "@/lib/studioos/attribution-service";
 

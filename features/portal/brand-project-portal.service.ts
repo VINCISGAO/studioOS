@@ -37,7 +37,7 @@ export const brandProjectPortalService = {
   async getDetail(input: {
     projectId: string;
     locale: Locale;
-    clientEmail?: string | null;
+    clientEmail: string;
     tab?: string | null;
   }): Promise<BrandProjectPortalDetail> {
     const { projectId, locale, clientEmail, tab } = input;
@@ -47,7 +47,12 @@ export const brandProjectPortalService = {
       throw appError("NOT_FOUND", "Project not found", 404);
     }
 
-    if (clientEmail && project.client_email !== clientEmail.toLowerCase()) {
+    const normalizedEmail = clientEmail.trim().toLowerCase();
+    if (!normalizedEmail) {
+      throw appError("FORBIDDEN", "Access denied", 403);
+    }
+
+    if (project.client_email !== normalizedEmail) {
       throw appError("FORBIDDEN", "Access denied", 403);
     }
 

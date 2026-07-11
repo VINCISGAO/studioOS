@@ -1,8 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getCurrentClientEmail } from "@/lib/client-session";
-import { getCurrentCreatorId } from "@/lib/creator-session";
+import { getCurrentClientEmail } from "@/features/auth/session-context";
+import { getCurrentCreatorId } from "@/features/auth/session-context";
 import { isFrameIoDemoMode } from "@/lib/frameio-config";
 import type { Locale } from "@/lib/i18n";
 import { approveOrderDelivery, getOrder, requestOrderRevision } from "@/lib/order-service";

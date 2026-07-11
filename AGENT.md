@@ -129,7 +129,7 @@ Never ask for confirmation unless the decision changes product behavior, busines
 
 The marketing homepage is a **protected asset**.
 
-Golden baseline: **owner-locked 2026-07-10** (supersedes 2026-07-09 · `17a98b7`) · [`docs/HOMEPAGE_GOLDEN.md`](docs/HOMEPAGE_GOLDEN.md) · [`docs/HOMEPAGE_HERO_VIDEO_BASELINE.json`](docs/HOMEPAGE_HERO_VIDEO_BASELINE.json). Treat this as the only golden standard until the owner explicitly re-anchors.
+Golden baseline: **owner-locked 2026-07-11** (supersedes 2026-07-10 · `17a98b7`) · [`docs/HOMEPAGE_GOLDEN.md`](docs/HOMEPAGE_GOLDEN.md) · [`docs/HOMEPAGE_HERO_VIDEO_BASELINE.json`](docs/HOMEPAGE_HERO_VIDEO_BASELINE.json). Treat this as the only golden standard until the owner explicitly re-anchors.
 
 **Frozen artifacts include:** full section order in `HomeLandingPage`, `components/marketing/home-hero-video.tsx`, and responsive layout at **mobile / iPad (`md`–below `lg`) / desktop (`lg+`)** breakpoints documented in `docs/HOMEPAGE_GOLDEN.md`.
 

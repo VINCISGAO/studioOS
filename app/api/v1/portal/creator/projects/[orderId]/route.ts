@@ -1,5 +1,5 @@
 import { creatorProjectPortalService } from "@/features/portal/creator-project-portal.service";
-import { getCurrentCreatorId } from "@/lib/creator-session";
+import { getCurrentCreatorId } from "@/features/auth/session-context";
 import { getAppUiLocale } from "@/lib/app-language";
 import { apiSuccess, handleRouteError, requireApiUser } from "@/lib/core/api-route";
 import { appError } from "@/lib/core/errors";

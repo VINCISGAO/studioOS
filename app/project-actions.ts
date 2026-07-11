@@ -1,8 +1,8 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { getCurrentClientEmail } from "@/lib/client-session";
-import { getCurrentCreator } from "@/lib/creator-session";
+import { getCurrentClientEmail } from "@/features/auth/session-context";
+import { getCurrentCreator } from "@/features/auth/session-context";
 import { withLocale, type Locale } from "@/lib/i18n";
 import { canAcceptCreatorOrders, countCompletedCreatorOrders } from "@/lib/studioos/deposit-guard";
 import { createProjectApplication, getProject } from "@/lib/project-service";

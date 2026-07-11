@@ -5,7 +5,7 @@ import { cookies } from "next/headers";
 import { DEMO_SESSION_COOKIE } from "@/lib/auth-config";
 import { setDemoSession } from "@/lib/demo-auth-server";
 import { parseDemoSession } from "@/lib/demo-auth";
-import { getCurrentCreatorId } from "@/lib/creator-session";
+import { getCurrentCreatorId } from "@/features/auth/session-context";
 import { getCreatorById } from "@/lib/creator-service";
 import type { Locale } from "@/lib/i18n";
 import type { OAuthProvider } from "@/lib/studioos/creator-settings-types";

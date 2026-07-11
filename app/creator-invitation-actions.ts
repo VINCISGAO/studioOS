@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { getCurrentCreatorId } from "@/lib/creator-session";
+import { getCurrentCreatorId } from "@/features/auth/session-context";
 import { withLocale, type Locale } from "@/lib/i18n";
 import { getProject } from "@/lib/project-service";
 import { notifyBrandInvitationResponse } from "@/lib/studioos/campaign-invitation-notify";

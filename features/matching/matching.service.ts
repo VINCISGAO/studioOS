@@ -4,8 +4,7 @@ import { activityService } from "@/features/campaign/activity.service";
 import { memoryRepository } from "@/features/memory/memory.repository";
 import { relationshipDnaService } from "@/features/memory/relationship-dna.service";
 import { campaignRepository } from "@/features/campaign/campaign.repository";
-import { paymentRepository } from "@/features/payment/payment.repository";
-import { EscrowState } from "@/features/shared/state-machines/escrow.state-machine";
+import { isCampaignEscrowFunded } from "@/features/payment/escrow-guards";
 import type { BrandProductionBrief } from "@/features/campaign/brand-campaign/brand-campaign.types";
 import type { AuthUser } from "@/features/auth/permission.service";
 import { PermissionService } from "@/features/auth/permission.service";
@@ -191,12 +190,7 @@ export class MatchingService {
     if (!allowedStatuses.has(campaign.status)) {
       throw appError("INVALID_TRANSITION", "Matching is available only after escrow payment is funded");
     }
-    const escrow = await paymentRepository.findByCampaignId(campaignId);
-    const escrowFunded =
-      escrow?.status === EscrowState.HELD ||
-      escrow?.status === EscrowState.PARTIAL_RELEASE ||
-      escrow?.status === EscrowState.FULL_RELEASE;
-    if (!escrowFunded) {
+    if (!(await isCampaignEscrowFunded(campaignId))) {
       throw appError("INVALID_TRANSITION", "Escrow must be funded before matching creators");
     }
     const matchingBrief = frozenBriefForMatching(campaign);
@@ -212,13 +206,20 @@ export class MatchingService {
       include: { user: true }
     });
 
+    const creatorUserIds = profiles.map((profile) => profile.userId);
+    const [matchingFacts, relationshipBoosts] = await Promise.all([
+      memoryRepository.listCreatorMatchingFacts(creatorUserIds),
+      relationshipDnaService.getMatchingBoostsForCreators(campaign.brandId, creatorUserIds)
+    ]);
+    const memoryByCreator = groupCreatorMatchingFacts(matchingFacts);
+
     const scored: CreatorMatchResult[] = [];
     for (const profile of profiles) {
-      const memory = await loadCreatorMatchingMemory(profile.userId);
+      const memory = memoryByCreator.get(profile.userId) ?? emptyCreatorMatchingMemory();
       const base = baseScore(matchingBrief, profile, memory);
       if (!base) continue;
 
-      const rel = await relationshipDnaService.getMatchingBoost(campaign.brandId, profile.userId);
+      const rel = relationshipBoosts.get(profile.userId) ?? { boost: 0, reasons: [] };
       const total = Math.min(AI_MATCHING_WEIGHTS.scoreCap, base.score + rel.boost);
 
       scored.push({
@@ -287,17 +288,30 @@ export class MatchingService {
 
 export const matchingService = new MatchingService();
 
-async function loadCreatorMatchingMemory(creatorUserId: string): Promise<CreatorMatchingMemory> {
-  const facts = await memoryRepository.listFacts({
-    ownerType: "CREATOR",
-    creatorId: creatorUserId,
-    limit: 200
-  });
-  return {
-    minAcceptBudgetUsd: numberFact(facts, "matching_preference", "min_accept_budget_usd"),
-    budgetDeclines: numberFact(facts, "matching_statistics", "budget_declines") ?? 0,
-    declineTotal: numberFact(facts, "matching_statistics", "decline_total") ?? 0
-  };
+function emptyCreatorMatchingMemory(): CreatorMatchingMemory {
+  return { minAcceptBudgetUsd: null, budgetDeclines: 0, declineTotal: 0 };
+}
+
+function groupCreatorMatchingFacts(
+  facts: Awaited<ReturnType<typeof memoryRepository.listCreatorMatchingFacts>>
+) {
+  const grouped = new Map<string, Array<{ category: string; factKey: string; factValue: string }>>();
+  for (const fact of facts) {
+    if (!fact.creatorId) continue;
+    const bucket = grouped.get(fact.creatorId) ?? [];
+    bucket.push({ category: fact.category, factKey: fact.factKey, factValue: fact.factValue });
+    grouped.set(fact.creatorId, bucket);
+  }
+
+  const memoryByCreator = new Map<string, CreatorMatchingMemory>();
+  for (const [creatorId, creatorFacts] of grouped) {
+    memoryByCreator.set(creatorId, {
+      minAcceptBudgetUsd: numberFact(creatorFacts, "matching_preference", "min_accept_budget_usd"),
+      budgetDeclines: numberFact(creatorFacts, "matching_statistics", "budget_declines") ?? 0,
+      declineTotal: numberFact(creatorFacts, "matching_statistics", "decline_total") ?? 0
+    });
+  }
+  return memoryByCreator;
 }
 
 function numberFact(

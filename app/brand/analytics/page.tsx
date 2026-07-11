@@ -3,7 +3,7 @@ import Link from "next/link";
 import { CreativeAnalyticsDashboard } from "@/components/studioos/creative-analytics-dashboard";
 import { IntegrationStatus } from "@/components/studioos/integration-status";
 import { Button } from "@/components/ui/button";
-import { getCurrentClientEmail } from "@/lib/client-session";
+import { getCurrentClientEmail } from "@/features/auth/session-context";
 import { type SearchParams, withLocale } from "@/lib/i18n";
 import { getCreativeAnalyticsAsync } from "@/lib/studioos/analytics";
 import { getInsightsForOrg, orgIdFromEmail } from "@/lib/studioos/creative-performance-store";

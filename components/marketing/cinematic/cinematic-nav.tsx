@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Box, FileText, Flower2, Info, Menu, Tag, User, X } from "lucide-react";
 import { BrandLogoLockup } from "@/components/brand-logo-mark";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { useMarketingHomePortalSession } from "@/components/marketing/use-marketing-home-portal-session";
 import { cinematicText } from "@/lib/marketing/cinematic-copy";
 import { marketingHomeHref, buildLocalizedHref } from "@/lib/marketing/localized-href";
 import type { Locale, MarketingLocale } from "@/lib/i18n";
@@ -203,12 +204,20 @@ function MobileNavMenu({
 export function CinematicNav({
   locale,
   copyLocale = locale,
-  workspaceCta = null
+  workspaceCta: serverWorkspaceCta = null,
+  hydratePortalSession = false
 }: {
   locale: Locale;
   copyLocale?: Locale | MarketingLocale;
   workspaceCta?: WorkspaceCta | null;
+  hydratePortalSession?: boolean;
 }) {
+  const { workspaceCta: hydratedWorkspaceCta } = useMarketingHomePortalSession(
+    copyLocale,
+    null,
+    hydratePortalSession
+  );
+  const workspaceCta = hydratePortalSession ? hydratedWorkspaceCta : serverWorkspaceCta;
   const t = cinematicText("nav", copyLocale);
   const [menuOpen, setMenuOpen] = useState(false);
   const { scrollY } = useScroll();

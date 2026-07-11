@@ -197,9 +197,21 @@ async function resolveLocalPublicVideoPath(pathname: string): Promise<string | n
 
   const directory = path.dirname(direct);
   const baseName = path.basename(direct);
+  let decodedBaseName = baseName;
+  try {
+    decodedBaseName = decodeURIComponent(baseName);
+  } catch {
+    decodedBaseName = baseName;
+  }
+
   try {
     const entries = await fs.readdir(directory);
-    const aliasCandidates = [baseName, ...recentWorkBasenameAliases(baseName)];
+    const aliasCandidates = [
+      baseName,
+      decodedBaseName,
+      ...recentWorkBasenameAliases(baseName),
+      ...recentWorkBasenameAliases(decodedBaseName)
+    ];
     for (const candidate of aliasCandidates) {
       const match = entries.find((entry) => entry.toLowerCase() === candidate.toLowerCase());
       if (match) return path.join(directory, match);

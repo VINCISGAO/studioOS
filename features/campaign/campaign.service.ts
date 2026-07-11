@@ -3,7 +3,7 @@ import { campaignRepository } from "@/features/campaign/campaign.repository";
 import { campaignBrandPortalService } from "@/features/campaign/campaign-brand.service";
 import type { CreateCampaignBody, UpdateCampaignBody } from "@/features/campaign/campaign.schemas";
 import type { CampaignStateValue, CampaignEventValue } from "@/features/campaign/campaign.state-machine";
-import { campaignStateMachine } from "@/features/campaign/campaign.state-machine";
+import { campaignStateMachine, CampaignEvent } from "@/features/campaign/campaign.state-machine";
 import { PermissionService, type AuthUser } from "@/features/auth/permission.service";
 import { runTransition } from "@/lib/core/transition-runner";
 import { appError } from "@/lib/core/errors";
@@ -186,7 +186,7 @@ export class CampaignService {
 
     const current = toMachineState(campaign.status);
 
-    return runTransition({
+    const next = await runTransition({
       machine: campaignStateMachine,
       current,
       event,
@@ -196,10 +196,10 @@ export class CampaignService {
         campaignId,
         actor
       },
-      persist: async (next) => {
+      persist: async (nextStatus) => {
         await prisma.campaign.update({
           where: { id: campaignId },
-          data: { status: next as CampaignStatus }
+          data: { status: nextStatus as CampaignStatus }
         });
       },
       domainEvent: {
@@ -209,6 +209,17 @@ export class CampaignService {
         payload: { event, from: current }
       }
     });
+
+    if (event === CampaignEvent.COMPLETE) {
+      const { actualProductionRecordRepository } = await import(
+        "@/features/pricing/actual-production-record.repository"
+      );
+      await actualProductionRecordRepository
+        .upsertOnCompletion({ campaignId })
+        .catch(() => undefined);
+    }
+
+    return next;
   }
 
   // Brand wizard portal (legacy proj_* URLs)

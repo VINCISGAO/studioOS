@@ -4,7 +4,7 @@ import { StudioMessageCenter } from "@/components/studioos/studio-message-center
 import type { MessageDetailPayload, MessageListItem } from "@/components/studioos/studio-message-center.types";
 import { notificationService } from "@/features/notification/notification.service";
 import { getSessionUser } from "@/features/auth/session.service";
-import { getCurrentCreator } from "@/lib/creator-session";
+import { getCurrentCreator } from "@/features/auth/session-context";
 import { type SearchParams, withLocale } from "@/lib/i18n";
 import type { CreatorNotification } from "@/lib/notification-types";
 import { listNotificationsForCreator } from "@/lib/notification-service";

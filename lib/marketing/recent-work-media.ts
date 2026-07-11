@@ -81,10 +81,15 @@ export function recentWorkBasenameAliases(fileName: string): string[] {
     aliases.add("Video demo2.jpg");
     aliases.add("Video  demo2.jpg");
     aliases.add("Video demo 2.jpg");
+    aliases.add("video-demo-2.jpg");
   }
   if (lower === "video demo2.mp4" || lower === "video demo 2.mp4") {
     aliases.add("Video demo2.mp4");
     aliases.add("Video demo 2.mp4");
+  }
+  if (lower === "video-demo-2.jpg") {
+    aliases.add("Video demo2.jpg");
+    aliases.add("video-demo-2.jpg");
   }
 
   return [...aliases];

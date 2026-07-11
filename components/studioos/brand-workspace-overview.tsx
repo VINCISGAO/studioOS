@@ -1,9 +1,12 @@
 "use client";
 
 import { BrandCampaignList } from "@/components/studioos/brand-campaign-list";
+import { BrandActiveCampaignCapacity } from "@/components/studioos/brand-active-campaign-capacity";
 import { BrandWorkspaceHero } from "@/components/studioos/brand-workspace-hero";
 import type { Locale } from "@/lib/i18n";
 import type { BrandProjectRow } from "@/lib/studioos/brand-dashboard";
+import type { BrandNewCampaignGate } from "@/lib/studioos/brand-active-campaign-limit";
+import { scrollToBrandMyAds } from "@/lib/studioos/brand-my-ads-scroll";
 import { useEffect } from "react";
 
 const copy = {
@@ -28,13 +31,19 @@ export function BrandWorkspaceOverview({
   name,
   rows,
   orderProjectMap,
-  wizardProjectId
+  wizardProjectId,
+  activeCampaignCount,
+  creationGate,
+  rateLimitCode = null
 }: {
   locale: Locale;
   name: string;
   rows: BrandProjectRow[];
   orderProjectMap: Record<string, string | null | undefined>;
   wizardProjectId?: string;
+  activeCampaignCount: number;
+  creationGate?: BrandNewCampaignGate;
+  rateLimitCode?: "rate_limit_10m" | "rate_limit_24h" | null;
 }) {
   const t = copy[locale];
   const total = rows.length;
@@ -43,7 +52,10 @@ export function BrandWorkspaceOverview({
 
   useEffect(() => {
     if (window.location.hash !== "#my-ads") return;
-    document.getElementById("my-ads")?.scrollIntoView({ block: "start" });
+    const frame = window.requestAnimationFrame(() => {
+      scrollToBrandMyAds({ behavior: "auto", force: true });
+    });
+    return () => window.cancelAnimationFrame(frame);
   }, []);
 
   return (
@@ -55,8 +67,12 @@ export function BrandWorkspaceOverview({
         drafts={drafts}
         active={active}
         wizardProjectId={wizardProjectId}
+        activeCampaignCount={activeCampaignCount}
+        creationGate={creationGate}
+        rateLimitCode={rateLimitCode}
       />
-      <section id="my-ads" className="space-y-4 scroll-mt-6">
+      <BrandActiveCampaignCapacity locale={locale} activeCount={activeCampaignCount} />
+      <section id="my-ads" className="space-y-4 scroll-mt-28">
         <div>
           <h2 className="text-xl font-semibold tracking-tight text-zinc-950">{t.projectsTitle}</h2>
           <p className="mt-1 text-sm text-zinc-500">{t.projectsHint}</p>
@@ -66,6 +82,9 @@ export function BrandWorkspaceOverview({
           rows={rows}
           orderProjectMap={orderProjectMap}
           wizardProjectId={wizardProjectId}
+          activeCampaignCount={activeCampaignCount}
+          creationGate={creationGate}
+          rateLimitCode={rateLimitCode}
         />
       </section>
     </div>

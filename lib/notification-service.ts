@@ -1,6 +1,6 @@
 import type { CreatorNotification, CreatorNotificationType, NotificationStore } from "@/lib/notification-types";
 import { createSerializedStoreReader } from "@/lib/json-file-store";
-import { getCreatorIdForDemoEmail } from "@/lib/creator-session";
+import { getCreatorIdForDemoEmail } from "@/features/auth/session-context";
 import { creators } from "@/lib/data";
 import { dataStorePath, invalidateDataJson, readDataJson, writeDataJson } from "@/lib/serverless-store";
 import { getProject } from "@/lib/project-service";
@@ -271,13 +271,16 @@ function dismissDemoNotificationIds(store: NotificationStore, ids: Iterable<stri
 
 async function enrichNotificationRequirements(
   notification: CreatorNotification,
-  locale: Locale = "zh"
+  locale: Locale = "zh",
+  projectCache?: Map<string, Awaited<ReturnType<typeof getProject>> | null>
 ): Promise<CreatorNotification> {
   if (notification.requirements_text?.trim() || !notification.project_id) {
     return notification;
   }
 
-  const project = await getProject(notification.project_id);
+  const project =
+    projectCache?.get(notification.project_id) ??
+    (await getProject(notification.project_id));
   if (!project) {
     return notification;
   }
@@ -305,7 +308,17 @@ export async function listNotificationsForCreator(
     .filter((item) => ownerIds.has(item.creator_id))
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-  return Promise.all(items.map((item) => enrichNotificationRequirements(item, locale)));
+  const projectIds = [
+    ...new Set(
+      items
+        .filter((item) => item.project_id && !item.requirements_text?.trim())
+        .map((item) => item.project_id as string)
+    )
+  ];
+  const projectEntries = await Promise.all(projectIds.map(async (id) => [id, await getProject(id)] as const));
+  const projectCache = new Map(projectEntries);
+
+  return Promise.all(items.map((item) => enrichNotificationRequirements(item, locale, projectCache)));
 }
 
 export async function countUnreadNotifications(creatorId: string): Promise<number> {

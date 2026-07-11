@@ -9,6 +9,7 @@ import type {
 } from "@/features/campaign/brand-campaign/brand-campaign.types";
 import { readCampaignMemory } from "@/features/campaign/brand-campaign/brand-campaign.utils";
 import { asInputJson } from "@/lib/core/prisma-json";
+import { ACTIVE_CAMPAIGN_PRISMA_STATUSES } from "@/features/campaign/campaign-lifecycle.guards";
 
 export type CampaignWithAssets = Prisma.CampaignGetPayload<{ include: { assets: true } }>;
 
@@ -461,6 +462,17 @@ export class CampaignRepository {
 
   async listAssets(campaignId: string): Promise<CampaignAsset[]> {
     return assetRepository.listByCampaign(campaignId);
+  }
+
+  async countActiveForBrand(brandId: string): Promise<number> {
+    if (!hasDatabaseUrl()) return 0;
+    return prisma.campaign.count({
+      where: {
+        brandId,
+        deletedAt: null,
+        status: { in: ACTIVE_CAMPAIGN_PRISMA_STATUSES }
+      }
+    });
   }
 }
 

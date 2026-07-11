@@ -2,6 +2,15 @@ import type { OrderStatus, Prisma } from "@prisma/client";
 import { hasDatabaseUrl, prisma } from "@/lib/core/database/prisma";
 import { asInputJson } from "@/lib/core/prisma-json";
 
+const ORDER_LIST_INCLUDE = {
+  campaign: { select: { id: true, title: true, status: true } },
+  client: { select: { id: true, fullName: true, email: true, avatarUrl: true, language: true } },
+  creator: { select: { id: true, fullName: true, email: true, avatarUrl: true } },
+  creatorProfile: true
+} as const;
+
+export type OrderListRow = Prisma.OrderGetPayload<{ include: typeof ORDER_LIST_INCLUDE }>;
+
 export type CreateOrderInput = {
   campaignId?: string | null;
   clientId: string;
@@ -53,11 +62,69 @@ export class OrderRepository {
             }
           : {})
       },
-      include: {
-        campaign: { select: { id: true, title: true, status: true } },
-        client: { select: { id: true, fullName: true, email: true, language: true } },
-        creator: { select: { id: true, fullName: true, email: true } }
+      include: ORDER_LIST_INCLUDE,
+      orderBy: { createdAt: "desc" }
+    });
+  }
+
+  listForClientEmail(clientEmail: string): Promise<OrderListRow[]> {
+    const normalized = clientEmail.trim().toLowerCase();
+    return prisma.order.findMany({
+      where: {
+        client: { email: { equals: normalized, mode: "insensitive" } }
       },
+      include: ORDER_LIST_INCLUDE,
+      orderBy: { createdAt: "desc" }
+    });
+  }
+
+  listForLegacyCreatorId(legacyCreatorId: string): Promise<OrderListRow[]> {
+    return prisma.order.findMany({
+      where: {
+        OR: [
+          { creatorProfile: { legacyCreatorId } },
+          { creatorProfileId: legacyCreatorId }
+        ]
+      },
+      include: ORDER_LIST_INCLUDE,
+      orderBy: { createdAt: "desc" }
+    });
+  }
+
+  listForLegacyProjectId(projectId: string): Promise<OrderListRow[]> {
+    return prisma.order.findMany({
+      where: {
+        OR: [
+          {
+            campaign: {
+              productionBrief: {
+                path: ["legacy_project_id"],
+                equals: projectId
+              }
+            }
+          },
+          {
+            metadataJson: {
+              path: ["project_id"],
+              equals: projectId
+            }
+          }
+        ]
+      },
+      include: ORDER_LIST_INCLUDE,
+      orderBy: { createdAt: "desc" }
+    });
+  }
+
+  /** Idempotency guard — reuse active order for same campaign + creator. */
+  findActiveForCampaignAndCreator(campaignId: string, creatorProfileId: string) {
+    return prisma.order.findFirst({
+      where: {
+        campaignId,
+        creatorProfileId,
+        status: { notIn: ["CANCELLED", "REFUNDED"] }
+      },
+      include: ORDER_LIST_INCLUDE,
       orderBy: { createdAt: "desc" }
     });
   }

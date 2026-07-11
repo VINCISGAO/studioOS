@@ -5,8 +5,8 @@ import {
   runCreativeCollaborationAction,
   type CreativeCollaborationActionName
 } from "@/features/creative-collaboration/creative-collaboration.actions";
-import { getCurrentClientEmail } from "@/lib/client-session";
-import { getCurrentCreatorId } from "@/lib/creator-session";
+import { getCurrentClientEmail } from "@/features/auth/session-context";
+import { getCurrentCreatorId } from "@/features/auth/session-context";
 import type { Locale } from "@/lib/i18n";
 import { appError } from "@/lib/core/errors";
 

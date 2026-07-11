@@ -12,13 +12,10 @@ import type {
   CreativeCollaborationView,
   FinalCreativeDirection
 } from "@/features/creative-collaboration/creative-collaboration.types";
-import { paymentRepository } from "@/features/payment/payment.repository";
-import { EscrowState } from "@/features/shared/state-machines/escrow.state-machine";
 import { appError } from "@/lib/core/errors";
-import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import type { Locale } from "@/lib/i18n";
 import { getOrderForProject } from "@/lib/order-service";
-import { isOrderPaymentEscrowed, type OrderPaymentStatus } from "@/lib/order-types";
+import { assertProjectFundedForAi } from "@/features/payment/escrow-guards";
 import { getProject, updateProject } from "@/lib/project-service";
 import type { StoredProject } from "@/lib/project-types";
 
@@ -45,29 +42,9 @@ function ideaFullText(idea: CollaborationIdea): string {
 
 async function assertEscrowFundedForProject(
   projectId: string,
-  orderPaymentStatus?: OrderPaymentStatus
+  orderPaymentStatus?: import("@/lib/order-types").OrderPaymentStatus
 ) {
-  if (orderPaymentStatus && isOrderPaymentEscrowed(orderPaymentStatus)) {
-    return;
-  }
-
-  if (!hasDatabaseUrl()) {
-    throw appError("INVALID_TRANSITION", "AI creative generation is available only after escrow payment");
-  }
-
-  const campaign = await campaignRepository.findByLegacyProjectId(projectId);
-  if (!campaign) {
-    throw appError("INVALID_TRANSITION", "AI creative generation is available only after escrow payment");
-  }
-
-  const escrow = await paymentRepository.findByCampaignId(campaign.id);
-  const funded =
-    escrow?.status === EscrowState.HELD ||
-    escrow?.status === EscrowState.PARTIAL_RELEASE ||
-    escrow?.status === EscrowState.FULL_RELEASE;
-  if (!funded) {
-    throw appError("INVALID_TRANSITION", "AI creative generation is available only after escrow payment");
-  }
+  await assertProjectFundedForAi(projectId, orderPaymentStatus);
 }
 
 async function recordLearningEvent(input: {

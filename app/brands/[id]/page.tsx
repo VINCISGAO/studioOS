@@ -5,7 +5,7 @@ import { BrandPublicProfile } from "@/components/studioos/brand-public-profile";
 import { brandTheme } from "@/lib/studioos/brand-theme";
 import { PageShell } from "@/components/page-shell";
 import { Button } from "@/components/ui/button";
-import { getCurrentClientEmail } from "@/lib/client-session";
+import { getCurrentClientEmail } from "@/features/auth/session-context";
 import { getBrandProfileById } from "@/lib/brand-profile-service";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";

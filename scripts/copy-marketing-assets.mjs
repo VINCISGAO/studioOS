@@ -180,3 +180,27 @@ spawnSync(process.execPath, [path.join(root, "scripts/ensure-demo-review-video.m
   stdio: "inherit",
   cwd: root
 });
+
+const recentWorkDir = path.join(root, "public/videos/home/recent-work");
+mkdirSync(recentWorkDir, { recursive: true });
+mkdirSync(path.join(root, "assets/marketing/recent-work"), { recursive: true });
+
+copyFirstAvailable({
+  label: "recent-work video-demo-2 poster (public)",
+  dest: path.join(recentWorkDir, "video-demo-2.jpg"),
+  sources: [
+    path.join(root, "assets/marketing/recent-work/video-demo-2.jpg"),
+    path.join(recentWorkDir, "video-demo-2.jpg"),
+    path.join(recentWorkDir, "Video demo2.jpg")
+  ]
+});
+
+copyFirstAvailable({
+  label: "recent-work video-demo-2 poster (bundled)",
+  dest: path.join(root, "assets/marketing/recent-work/video-demo-2.jpg"),
+  sources: [
+    path.join(recentWorkDir, "video-demo-2.jpg"),
+    path.join(recentWorkDir, "Video demo2.jpg"),
+    path.join(root, "assets/marketing/recent-work/video-demo-2.jpg")
+  ]
+});

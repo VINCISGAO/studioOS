@@ -1,5 +1,5 @@
 import { brandProjectPortalService } from "@/features/portal/brand-project-portal.service";
-import { getCurrentClientEmail } from "@/lib/client-session";
+import { requireBrandPortalClientEmail } from "@/features/auth/session-context";
 import { getAppUiLocale } from "@/lib/app-language";
 import { apiSuccess, handleRouteError, requireApiUser } from "@/lib/core/api-route";
 import type { BrandProjectPortalDetailResponse } from "@/features/portal/portal.types";
@@ -11,7 +11,7 @@ export async function GET(
   try {
     await requireApiUser(request);
     const { projectId } = await params;
-    const clientEmail = await getCurrentClientEmail();
+    const clientEmail = await requireBrandPortalClientEmail();
     const tab = new URL(request.url).searchParams.get("tab");
     const locale = await getAppUiLocale();
 

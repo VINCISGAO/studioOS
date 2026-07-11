@@ -1,5 +1,5 @@
 import { readWizardProgress } from "@/lib/campaign/wizard-progress.service";
-import { getCurrentClientEmail } from "@/lib/client-session";
+import { getCurrentClientEmail } from "@/features/auth/session-context";
 import { getProject } from "@/lib/project-service";
 
 type Params = { params: Promise<{ projectId: string }> };

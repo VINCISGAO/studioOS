@@ -4,6 +4,13 @@ import type {
   CreatorInvitationDeclineReason,
   InvitationDeclineFeedback
 } from "@/features/matching/invitation-decline-feedback";
+import {
+  InvitationEvent,
+  invitationStateMachine,
+  type InvitationEventValue,
+  type InvitationStateValue
+} from "@/features/shared/state-machines/invitation.state-machine";
+import { appError } from "@/lib/core/errors";
 
 export class InvitationRepository {
   async listForCampaign(campaignId: string) {
@@ -91,7 +98,37 @@ export class InvitationRepository {
     });
   }
 
+  async transitionInvitation(id: string, event: InvitationEventValue, respondedAt = new Date()) {
+    const current = await prisma.creatorInvitation.findUnique({
+      where: { id },
+      select: { status: true }
+    });
+    if (!current) {
+      throw appError("NOT_FOUND", "Invitation not found");
+    }
+
+    const next = invitationStateMachine.transition(current.status as InvitationStateValue, event);
+    return prisma.creatorInvitation.update({
+      where: { id },
+      data: {
+        status: next as InvitationStatus,
+        ...(event === InvitationEvent.VIEW
+          ? {}
+          : { respondedAt })
+      }
+    });
+  }
+
   async declineWithFeedback(id: string, feedback: InvitationDeclineFeedback, respondedAt = new Date()) {
+    const current = await prisma.creatorInvitation.findUnique({
+      where: { id },
+      select: { status: true }
+    });
+    if (!current) {
+      throw appError("NOT_FOUND", "Invitation not found");
+    }
+    invitationStateMachine.transition(current.status as InvitationStateValue, InvitationEvent.DECLINE);
+
     await prisma.$executeRaw`
       UPDATE "creator_invitations"
       SET
@@ -102,13 +139,6 @@ export class InvitationRepository {
         "updated_at" = ${respondedAt}
       WHERE "id" = ${id}
     `;
-  }
-
-  async declineOthers(campaignId: string, exceptId: string) {
-    await prisma.creatorInvitation.updateMany({
-      where: { campaignId, id: { not: exceptId }, status: { in: ["SENT", "VIEWED"] } },
-      data: { status: "DECLINED", respondedAt: new Date() }
-    });
   }
 
   async countAcceptedForCampaign(campaignId: string) {

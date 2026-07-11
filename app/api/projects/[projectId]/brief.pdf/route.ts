@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getCurrentCreatorId } from "@/lib/creator-session";
+import { getCurrentCreatorId } from "@/features/auth/session-context";
 import { getLocale, type SearchParams } from "@/lib/i18n";
 import { listNotificationsForCreator } from "@/lib/notification-service";
 import { getOrderForProject } from "@/lib/order-service";

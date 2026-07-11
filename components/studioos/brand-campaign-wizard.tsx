@@ -179,9 +179,9 @@ export function BrandCampaignWizard({
       questionnaire.productDescription?.trim() ||
       wizardData.project.campaign_goal?.trim()
   );
-  const [step2Mounted, setStep2Mounted] = useState(initialStep >= 2 || hasSavedBrief);
+  const [step2Mounted, setStep2Mounted] = useState(initialStep >= 2);
   const [step3Mounted, setStep3Mounted] = useState(initialStep >= 3);
-  const [canLoadDirections, setCanLoadDirections] = useState(initialStep >= 2 || hasSavedBrief);
+  const [canLoadDirections, setCanLoadDirections] = useState(initialStep >= 2);
   const [schemeGeneratingUntil, setSchemeGeneratingUntil] = useState(0);
   const directionsEnabled = step2Mounted && canLoadDirections;
   const [briefSnapshot, setBriefSnapshot] = useState<WizardBriefSnapshot | null>(() => {
@@ -201,8 +201,7 @@ export function BrandCampaignWizard({
     if (prefetchTimerRef.current) clearTimeout(prefetchTimerRef.current);
     prefetchTimerRef.current = setTimeout(() => {
       if (!isWizardBriefReady(snapshot, productReady)) return;
-      setStep2Mounted(true);
-      setCanLoadDirections(true);
+      setBriefSnapshot(snapshot);
     }, 600);
   }, []);
 
@@ -330,9 +329,7 @@ export function BrandCampaignWizard({
     setBriefSnapshot(snapshot);
     setStep2Mounted(true);
     setCanLoadDirections(true);
-    if (step < 2) {
-      setSchemeGeneratingUntil(Date.now() + 3000);
-    }
+    setSchemeGeneratingUntil(Date.now() + 3000);
     goStep(2);
 
     const fd = new FormData();
@@ -408,7 +405,7 @@ export function BrandCampaignWizard({
         />
       ) : null}
 
-      {/* Mount early when draft exists so AI can load while user edits step 1 */}
+      {/* Step 2 mounts only after user continues — AI loads on explicit navigation, not on draft prefetch */}
       {step2Mounted ? (
         <div className={cn(step !== 2 && "hidden")} aria-hidden={step !== 2}>
           <BrandCampaignStep2Review
@@ -422,6 +419,7 @@ export function BrandCampaignWizard({
             briefSnapshot={briefSnapshot}
             awaitingBriefSave={false}
             minGeneratingUntil={schemeGeneratingUntil}
+            isActive={step === 2}
             onBack={() => goStep(1)}
             onSaveDraft={() => saveDraft(briefInitial)}
             onConfirmed={confirmDirection}

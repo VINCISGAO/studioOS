@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { getCurrentClientEmail } from "@/lib/client-session";
+import { getCurrentClientEmail } from "@/features/auth/session-context";
 import { getOrder, getOrderForProject } from "@/lib/order-service";
 import { campaignRepository } from "@/features/campaign/campaign.repository";
 import { settlementService } from "@/features/settlement/settlement.service";

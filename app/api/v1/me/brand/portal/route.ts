@@ -1,5 +1,5 @@
 import { brandPortalService } from "@/features/brand/brand-portal.service";
-import { getCurrentClientEmail } from "@/lib/client-session";
+import { getCurrentClientEmail } from "@/features/auth/session-context";
 import { apiSuccess, handleRouteError, requireApiUser } from "@/lib/core/api-route";
 import { listOrdersForClient } from "@/lib/order-service";
 import { listProjectsForClient } from "@/lib/project-service";

@@ -1,7 +1,7 @@
 import { getAppUiLocale } from "@/lib/app-language";
 import { redirect } from "next/navigation";
 import { IncomeWithdrawalPanel } from "@/components/studioos/income-withdrawal-panel";
-import { getCurrentCreator } from "@/lib/creator-session";
+import { getCurrentCreator } from "@/features/auth/session-context";
 import { resolveCreatorCertificationAccessFromOrders } from "@/lib/studioos/creator-certification-access";
 import { type SearchParams, withLocale } from "@/lib/i18n";
 import { listOrdersForCreator } from "@/lib/order-service";

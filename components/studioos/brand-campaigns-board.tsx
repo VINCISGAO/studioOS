@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import type { BrandProjectRow } from "@/lib/studioos/brand-dashboard";
+import { countActiveCampaignRows } from "@/lib/studioos/brand-active-campaign-limit";
 import {
   brandAdLifecycleBucket,
   brandAdLifecycleFilters,
@@ -57,6 +58,7 @@ export function BrandCampaignsBoard({ locale, rows }: Props) {
   const [filter, setFilter] = useState<BrandAdLifecycleFilter>("all");
   const [query, setQuery] = useState("");
   const counts = useMemo(() => countBrandRowsByLifecycle(rows), [rows]);
+  const activeCampaignCount = useMemo(() => countActiveCampaignRows(rows), [rows]);
 
   const filtered = useMemo(() => {
     const byLifecycle = filterBrandRowsByLifecycle(rows, filter);
@@ -74,6 +76,7 @@ export function BrandCampaignsBoard({ locale, rows }: Props) {
         </div>
         <BrandStartBriefButton
           locale={locale}
+          activeCampaignCount={activeCampaignCount}
           className="inline-flex h-10 shrink-0 items-center gap-2 rounded-full bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800"
         >
           <Plus className="h-4 w-4" />

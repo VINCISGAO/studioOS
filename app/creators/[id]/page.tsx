@@ -5,7 +5,7 @@ import { PageShell } from "@/components/page-shell";
 import { Button } from "@/components/ui/button";
 import { getCreatorById } from "@/lib/creator-service";
 import { getWorksForCreator } from "@/lib/works-catalog";
-import { getCurrentCreatorId } from "@/lib/creator-session";
+import { getCurrentCreatorId } from "@/features/auth/session-context";
 import { getCurrentUserEmail } from "@/lib/session-user";
 import { getWorksEngagement } from "@/lib/work-engagement-service";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";

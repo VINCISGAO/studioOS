@@ -5,10 +5,6 @@ export type {
 } from "./studioos-api";
 export { StudioOsApiClient, StudioOsApiPaths, studioOsApi } from "./studioos-api";
 export {
-  fetchBrandProjectPortalDetail,
-  fetchCreatorProjectPortalDetail
-} from "./portal-client";
-export {
   loadBrandProjectPortalDetail,
   loadCreatorProjectPortalDetail,
   resolveBrandProjectRouteId

@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { AiCopilotRoot } from "@/components/ai-copilot/ai-copilot-root";
 import { landingFontClassName } from "@/lib/studioos/landing-fonts";
 import { studioOS } from "@/lib/studioos/vocabulary";
 import "./globals.css";
@@ -72,7 +71,6 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         {children}
-        <AiCopilotRoot />
       </body>
     </html>
   );

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { getCurrentClientEmail } from "@/lib/client-session";
-import { getCurrentCreatorId } from "@/lib/creator-session";
+import { getCurrentClientEmail } from "@/features/auth/session-context";
+import { getCurrentCreatorId } from "@/features/auth/session-context";
 import { getOrder } from "@/lib/order-service";
 import { getReviewSessionPayload } from "@/lib/review-engine/review-engine-service";
 import { getReviewSession } from "@/lib/review-engine/review-session-store";
