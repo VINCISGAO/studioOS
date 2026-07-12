@@ -247,7 +247,7 @@ export function BrandCampaignStep3Publish({
         </div>
       ) : null}
 
-      <div className="min-h-[calc(100dvh-3.5rem)] bg-[#f8f9fb] px-3 pb-8 pt-4 sm:px-4 sm:pt-5 lg:px-5 lg:pt-6">
+      <div className="h-full min-h-0 bg-[#f8f9fb] px-3 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-4 sm:px-4 sm:pt-5 lg:px-5 lg:pt-6">
         <div className="mx-auto w-full max-w-6xl space-y-6">
           <WizardStepper locale={locale} currentStep={3} variant="brand" />
 

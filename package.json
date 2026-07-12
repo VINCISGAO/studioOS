@@ -50,6 +50,7 @@
     "db:validate": "bash scripts/prisma-with-env.sh validate",
     "db:migrate": "bash scripts/prisma-with-env.sh migrate dev",
     "db:migrate:deploy": "bash scripts/migrate-deploy.sh",
+    "db:migrate:deploy:production": "bash scripts/migrate-deploy-production.sh",
     "db:init": "bash scripts/db-init.sh",
     "db:recover": "bash scripts/db-recover.sh",
     "db:push": "bash scripts/prisma-with-env.sh db push",

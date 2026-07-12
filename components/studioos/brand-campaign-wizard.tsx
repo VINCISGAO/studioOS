@@ -364,7 +364,7 @@ export function BrandCampaignWizard({
   }
 
   const maxWidth = step === 1 || step === 2 || step === 3 ? "max-w-none" : "max-w-3xl";
-  const step2FullBleed = step === 2 ? "min-h-[calc(100dvh-3.5rem)] w-full" : "";
+  const step2FullBleed = step === 2 ? "h-full min-h-0 w-full" : "";
 
   return (
     <div className={cn("mx-auto w-full", maxWidth, step2FullBleed, step === 1 && "h-full min-h-0")}>

@@ -44,12 +44,31 @@ append_query_param() {
 
 from_local="$(read_env_var .env.local DATABASE_URL || true)"
 from_env="$(read_env_var .env DATABASE_URL || true)"
+from_local_non_pooling="$(read_env_var .env.local POSTGRES_URL_NON_POOLING || true)"
+from_env_non_pooling="$(read_env_var .env POSTGRES_URL_NON_POOLING || true)"
+from_local_prisma="$(read_env_var .env.local POSTGRES_PRISMA_URL || true)"
+from_env_prisma="$(read_env_var .env POSTGRES_PRISMA_URL || true)"
 
-if [ -n "$from_local" ]; then
+# Shell exports win (production migrate). Then env files, then local default.
+if [ -n "${DATABASE_URL:-}" ]; then
+  :
+elif [ -n "${POSTGRES_URL_NON_POOLING:-}" ]; then
+  export DATABASE_URL="$POSTGRES_URL_NON_POOLING"
+elif [ -n "${POSTGRES_PRISMA_URL:-}" ]; then
+  export DATABASE_URL="$POSTGRES_PRISMA_URL"
+elif [ -n "$from_local" ]; then
   export DATABASE_URL="$from_local"
 elif [ -n "$from_env" ]; then
   export DATABASE_URL="$from_env"
-elif [ -z "${DATABASE_URL:-}" ]; then
+elif [ -n "$from_local_non_pooling" ]; then
+  export DATABASE_URL="$from_local_non_pooling"
+elif [ -n "$from_env_non_pooling" ]; then
+  export DATABASE_URL="$from_env_non_pooling"
+elif [ -n "$from_local_prisma" ]; then
+  export DATABASE_URL="$from_local_prisma"
+elif [ -n "$from_env_prisma" ]; then
+  export DATABASE_URL="$from_env_prisma"
+else
   export DATABASE_URL="$DEFAULT_DATABASE_URL"
 fi
 

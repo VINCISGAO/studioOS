@@ -125,6 +125,20 @@ function BrandPortalShellInner({
     };
   }, [isWizardCreate, pathname]);
 
+  useEffect(() => {
+    const prevBodyOverflow = document.body.style.overflow;
+    const prevBodyOverscroll = document.body.style.overscrollBehavior;
+    const prevHtmlOverflow = document.documentElement.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.body.style.overscrollBehavior = "none";
+    document.documentElement.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prevBodyOverflow;
+      document.body.style.overscrollBehavior = prevBodyOverscroll;
+      document.documentElement.style.overflow = prevHtmlOverflow;
+    };
+  }, []);
+
   const navigateToMyAds = useCallback(() => {
     const hashUrl = `${withLocale(brandPortalRoutes.dashboard, locale)}#my-ads`;
 
@@ -146,7 +160,7 @@ function BrandPortalShellInner({
   if (isProjectReview && isReviewFocusMode) {
     return (
       <PortalShellChromeProvider value={portalChrome}>
-        <div className="h-[100dvh] max-h-[100dvh] w-full overflow-hidden bg-[#f8f9fb]">{children}</div>
+        <div className="fixed inset-0 z-0 overflow-hidden bg-[#f8f9fb]">{children}</div>
       </PortalShellChromeProvider>
     );
   }
@@ -227,11 +241,12 @@ function BrandPortalShellInner({
 
   return (
     <PortalShellChromeProvider value={portalChrome}>
-      <div className="min-h-screen bg-[#f8f9fc] lg:h-[100dvh] lg:max-h-[100dvh] lg:overflow-hidden">
-      <div className="flex min-h-screen lg:h-[100dvh] lg:min-h-0 lg:max-h-[100dvh] lg:overflow-hidden">
-        <aside
-          className="hidden h-[100dvh] max-h-[100dvh] w-[248px] shrink-0 flex-col overflow-hidden border-r border-zinc-200/80 bg-white lg:sticky lg:top-0 lg:flex"
-        >
+      <div
+        data-brand-portal-root
+        className="fixed inset-0 z-0 flex min-h-0 flex-col overflow-hidden bg-[#f8f9fc]"
+      >
+      <div className="flex h-full min-h-0 flex-1 overflow-hidden">
+        <aside className="hidden h-full min-h-0 w-[248px] shrink-0 grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden border-r border-zinc-200/80 bg-white lg:grid">
           <MarketingHomeLink
             locale={locale}
             className="flex shrink-0 items-center gap-2.5 px-5 py-5 transition hover:opacity-80"
@@ -302,7 +317,7 @@ function BrandPortalShellInner({
             })}
           </nav>
 
-          <div className="mt-auto shrink-0 border-t border-zinc-100 p-4">
+          <div className="shrink-0 border-t border-zinc-100 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
             {brandAccount ? (
               <PortalSidebarAccountMenu
                 locale={locale}
@@ -318,8 +333,8 @@ function BrandPortalShellInner({
 
         <div
           className={cn(
-            "flex min-w-0 flex-1 flex-col lg:h-[100dvh] lg:max-h-[100dvh] lg:overflow-hidden",
-            isProjectReview && "h-[100dvh] max-h-[100dvh] overflow-hidden"
+            "flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden",
+            isProjectReview && "max-h-full"
           )}
         >
           {!isProjectReview && !isWizardCreate ? (
@@ -396,11 +411,13 @@ function BrandPortalShellInner({
               isProjectReview
                 ? "flex w-full flex-col overflow-hidden p-0"
                 : isWizardStep2
-                  ? "mx-auto flex w-full max-w-none flex-col overflow-y-auto p-0"
+                  ? "mx-auto flex h-full w-full max-w-none flex-col overflow-y-auto overscroll-y-contain p-0"
                   : isWizardCreate && brandWizardStep === 1
-                    ? "mx-auto flex w-full max-w-none flex-col overflow-hidden p-0"
-                    : cn(
-                        "mx-auto w-full px-4 py-6 sm:px-6 lg:px-8 lg:py-8 lg:overflow-y-auto",
+                    ? "mx-auto flex h-full w-full max-w-none flex-col overflow-hidden p-0"
+                    : isWizardCreate
+                      ? "mx-auto flex h-full w-full max-w-none flex-col overflow-y-auto overscroll-y-contain p-0"
+                      : cn(
+                        "mx-auto w-full overflow-y-auto overscroll-y-contain px-4 py-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-8 lg:py-8",
                         isProfileEditorPage || isWizardCreate
                           ? "max-w-none"
                           : focusRoute

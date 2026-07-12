@@ -3,20 +3,14 @@
 import { useEffect, useState } from "react";
 import { BrandLogoLockup } from "@/components/brand-logo-mark";
 import { MarketingHomeLink } from "@/components/studioos/marketing-home-link";
+import { BrandCreativeBriefSectionNavSidebar, BrandCreativeBriefSectionNavTop } from "@/components/studioos/brand-creative-brief/brand-creative-brief-section-nav";
 import { WizardStepper } from "@/components/studioos/ui/wizard-stepper";
 import { Button } from "@/components/ui/button";
 import { CREATIVE_BRIEF_SECTIONS } from "@/lib/studioos/brand-creative-brief-options";
 import type { Locale } from "@/lib/i18n";
-import { cn } from "@/lib/utils";
 import {
   ArrowRight,
   Bot,
-  CircleDollarSign,
-  Clapperboard,
-  FileText,
-  FolderOpen,
-  Layers3,
-  Lightbulb,
   Loader2,
   ShieldCheck,
   Sparkles
@@ -65,15 +59,6 @@ const copy = {
   }
 };
 
-const sectionIcons = {
-  overview: FileText,
-  creative: Lightbulb,
-  production: Clapperboard,
-  assets: FolderOpen,
-  details: Layers3,
-  budget: CircleDollarSign
-};
-
 function BriefInlineNotice({
   message,
   locale,
@@ -86,7 +71,8 @@ function BriefInlineNotice({
   const dismissLabel = locale === "zh" ? "知道了" : "Got it";
 
   return (
-    <div className="fixed left-1/2 top-1/2 z-[60] w-[calc(100vw-2rem)] max-w-[28rem] -translate-x-1/2 -translate-y-1/2">
+    <div className="pointer-events-none fixed inset-x-0 top-0 z-[60] flex justify-center px-4 pt-[max(0.75rem,env(safe-area-inset-top))]">
+      <div className="pointer-events-auto w-full max-w-[28rem]">
       <div className="overflow-hidden rounded-2xl border border-emerald-100 bg-white/95 shadow-[0_14px_44px_rgba(15,23,42,0.12)] backdrop-blur-xl">
         <div className="flex items-center gap-3 bg-gradient-to-br from-emerald-50/90 via-white to-violet-50/80 px-3.5 py-3.5">
           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-md shadow-emerald-600/15">
@@ -106,6 +92,7 @@ function BriefInlineNotice({
             {dismissLabel}
           </button>
         </div>
+      </div>
       </div>
     </div>
   );
@@ -148,6 +135,7 @@ export function BrandCreativeBriefShell({
 
   useEffect(() => {
     const sections = CREATIVE_BRIEF_SECTIONS.map((item) => item.id);
+    const scrollRoot = document.getElementById("brand-wizard-scroll-panel");
     const observer = new IntersectionObserver(
       (entries) => {
         const visible = entries
@@ -157,7 +145,11 @@ export function BrandCreativeBriefShell({
           setActiveSection(visible.target.id.replace("brief-section-", ""));
         }
       },
-      { rootMargin: "-20% 0px -55% 0px", threshold: [0.1, 0.35, 0.6] }
+      {
+        root: scrollRoot,
+        rootMargin: "-12% 0px -55% 0px",
+        threshold: [0.1, 0.35, 0.6]
+      }
     );
 
     for (const id of sections) {
@@ -172,56 +164,20 @@ export function BrandCreativeBriefShell({
   }
 
   return (
-    <div className="flex h-[100dvh] min-h-0 flex-col lg:h-full">
+    <div className="flex h-full min-h-0 flex-col">
       {displayError && showNotice ? (
         <BriefInlineNotice message={displayError} locale={locale} onDismiss={() => setDismissedNotice(displayError)} />
       ) : null}
-      <div className="flex min-h-0 flex-1 overflow-hidden">
-        <aside className="hidden w-[220px] shrink-0 flex-col border-r border-zinc-200/80 bg-white lg:flex">
-          <MarketingHomeLink
+      <div className="flex h-full min-h-0 flex-1 overflow-hidden">
+        <aside className="hidden h-full min-h-0 w-[220px] shrink-0 grid-rows-[minmax(0,1fr)_auto] overflow-hidden border-r border-zinc-200/80 bg-white xl:grid">
+          <BrandCreativeBriefSectionNavSidebar
             locale={locale}
-            className="flex items-center gap-2.5 px-5 py-5 transition hover:opacity-80 lg:hidden"
-          >
-            <BrandLogoLockup
-              contrastOn="light"
-              markClassName="h-8 w-8 rounded-lg shadow-sm ring-1 ring-violet-100"
-              wordmarkClassName="h-[17px] w-[106px]"
-            />
-          </MarketingHomeLink>
+            activeSection={activeSection}
+            createLabel={t.create}
+            onSelect={scrollToSection}
+          />
 
-          <nav className="min-h-0 flex-1 space-y-0.5 overflow-y-auto px-3 pb-4 pt-5 lg:pt-8">
-            <p className="px-3 pb-2 text-xs font-semibold uppercase tracking-wide text-violet-600">{t.create}</p>
-            {CREATIVE_BRIEF_SECTIONS.map((section) => {
-              const Icon = sectionIcons[section.id];
-              const active = activeSection === section.id;
-              return (
-                <button
-                  key={section.id}
-                  type="button"
-                  onClick={() => scrollToSection(section.id)}
-                  className={cn(
-                    "flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition",
-                    active
-                      ? "bg-violet-50 text-violet-700 shadow-[inset_0_0_0_1px_rgba(139,92,246,0.12)]"
-                      : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900"
-                  )}
-                >
-                  <Icon className="h-4 w-4 shrink-0" />
-                  <span className="min-w-0 flex-1 truncate">{section.label[locale]}</span>
-                  <span
-                    className={cn(
-                      "flex h-5 min-w-5 items-center justify-center rounded-md px-1 text-[10px] font-semibold",
-                      active ? "bg-violet-600 text-white" : "bg-zinc-100 text-zinc-500"
-                    )}
-                  >
-                    {section.number}
-                  </span>
-                </button>
-              );
-            })}
-          </nav>
-
-          <div className="space-y-3 px-3 pb-5">
+          <div className="space-y-3 px-3 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
             <div className="rounded-2xl border border-violet-100 bg-gradient-to-br from-violet-50 to-white p-4">
               <div className="flex items-center gap-2">
                 <Bot className="h-4 w-4 text-violet-600" />
@@ -251,7 +207,7 @@ export function BrandCreativeBriefShell({
 
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           <header className="sticky top-0 z-20 border-b border-zinc-200/80 bg-white/95 backdrop-blur">
-            <div className="px-4 py-3 lg:hidden sm:px-6">
+            <div className="px-4 py-3 sm:px-6 xl:hidden">
               <MarketingHomeLink locale={locale} className="inline-flex transition hover:opacity-80">
                 <BrandLogoLockup
                   contrastOn="light"
@@ -260,9 +216,15 @@ export function BrandCreativeBriefShell({
                 />
               </MarketingHomeLink>
             </div>
-            <div className="border-t border-zinc-100 px-4 pb-4 pt-3 sm:px-6 lg:border-t-0 lg:pt-4">
+            <div className="px-4 pb-4 pt-3 sm:px-6 xl:pt-4">
               <WizardStepper locale={locale} currentStep={1} variant="brand" />
             </div>
+            <BrandCreativeBriefSectionNavTop
+              locale={locale}
+              activeSection={activeSection}
+              createLabel={t.create}
+              onSelect={scrollToSection}
+            />
           </header>
 
           <div id="brand-wizard-scroll-panel" className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
@@ -270,6 +232,21 @@ export function BrandCreativeBriefShell({
               <div className="mb-8">
                 <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 sm:text-[28px]">{t.title}</h1>
                 <p className="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-500 sm:text-base">{t.subtitle}</p>
+                <div className="mt-5 xl:hidden">
+                  <div className="rounded-2xl border border-violet-100 bg-gradient-to-br from-violet-50 to-white p-4">
+                    <div className="flex items-center gap-2">
+                      <Bot className="h-4 w-4 text-violet-600" />
+                      <p className="text-sm font-semibold text-zinc-900">{t.aiBeta}</p>
+                      <span className="rounded-full bg-violet-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                        Beta
+                      </span>
+                    </div>
+                    <p className="mt-2 text-xs leading-relaxed text-zinc-600">{t.aiBody}</p>
+                    <Button type="button" variant="outline" size="sm" className="mt-3 h-8 w-full rounded-lg border-violet-200">
+                      {t.aiCta}
+                    </Button>
+                  </div>
+                </div>
                 <div className="mt-5 overflow-hidden rounded-3xl border border-violet-100 bg-white shadow-[0_18px_60px_rgba(88,28,135,0.08)]">
                   <div className="bg-[radial-gradient(circle_at_6%_20%,rgba(124,58,237,0.16),transparent_28%),linear-gradient(135deg,#faf5ff_0%,#ffffff_56%,#ecfdf5_100%)] px-5 py-5">
                     <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -302,14 +279,14 @@ export function BrandCreativeBriefShell({
                   </div>
                 </div>
               </div>
-              <div className="space-y-5 pb-32">{children}</div>
+              <div className="space-y-5 pb-[calc(7.5rem+env(safe-area-inset-bottom))]">{children}</div>
             </div>
           </div>
         </div>
       </div>
 
-      <footer className="fixed inset-x-0 bottom-0 z-30 border-t border-zinc-200/80 bg-white/95 backdrop-blur lg:left-[468px]">
-        <div className="flex w-full flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8 xl:px-10">
+      <footer className="fixed inset-x-0 bottom-0 z-30 border-t border-zinc-200/80 bg-white/95 backdrop-blur lg:left-[248px] xl:left-[468px]">
+        <div className="flex w-full flex-col gap-3 px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8 xl:px-10">
           <div className="min-h-[20px] flex-1">
             <p className="flex items-center gap-2 text-sm text-zinc-500">
               <ShieldCheck className="h-4 w-4 text-emerald-600" />

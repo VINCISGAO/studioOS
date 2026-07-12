@@ -186,12 +186,15 @@ export function BrandCreativeBriefPrimarySections(props: BriefSectionsProps) {
               required
               hint={locale === "zh" ? "描述创意想法、目标受众、风格偏好等" : "Creative ideas, audience, style preferences…"}
             />
-            <div className="relative">
-              <div className="pointer-events-none absolute left-4 right-4 top-4 z-10 flex flex-wrap gap-2">
+            <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm">
+              <div className="flex flex-wrap gap-2 border-b border-zinc-100 bg-zinc-50/90 px-3 py-3">
+                <p className="w-full text-xs font-medium text-zinc-500">
+                  {locale === "zh" ? "可从这些角度展开：" : "Cover these angles:"}
+                </p>
                 {descriptionPromptTags.map((tag) => (
                   <span
                     key={tag}
-                    className="rounded-full border border-violet-100 bg-violet-50/95 px-3 py-1 text-xs font-semibold text-violet-700 shadow-sm"
+                    className="rounded-full border border-violet-100 bg-white px-3 py-1 text-xs font-semibold text-violet-700"
                   >
                     {tag}
                   </span>
@@ -204,11 +207,11 @@ export function BrandCreativeBriefPrimarySections(props: BriefSectionsProps) {
                   patch("rawSummary", e.target.value.slice(0, 1500));
                 }}
                 rows={12}
-                className="min-h-[22rem] resize-y rounded-xl pt-24 sm:pt-16"
+                className="min-h-[18rem] resize-y rounded-none border-0 bg-transparent px-3 py-3 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
                 placeholder={
                   locale === "zh"
-                    ? "请在下方详细描述您的需求..."
-                    : "Describe your requirements below..."
+                    ? "请详细描述您的创意想法、目标受众、风格偏好等…"
+                    : "Describe your creative idea, audience, style preferences, and goals…"
                 }
               />
             </div>

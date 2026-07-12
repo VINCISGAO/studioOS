@@ -170,7 +170,7 @@ export function BrandCampaignStep2Review({
   }
 
   return (
-    <div className="flex min-h-full flex-1 flex-col">
+    <div className="flex h-full min-h-0 flex-1 flex-col">
       {showGeneratingOverlay ? (
         <div
           className="fixed inset-0 z-[120] flex items-center justify-center overflow-y-auto bg-white/96 p-4 backdrop-blur-md sm:p-8"
