@@ -1,39 +1,48 @@
 import { getAppUiLocale } from "@/lib/app-language";
-import Link from "next/link";
 import { AdminAnalyticsDashboard } from "@/components/studioos/admin-analytics-dashboard";
+import { AdminPageActionLink, AdminPageShell } from "@/components/studioos/admin-page-shell";
 import { adminDashboardService } from "@/features/admin/dashboard/admin-dashboard.service";
 import { getAdminSessionUser } from "@/features/admin/auth/admin-auth.service";
-import { Button } from "@/components/ui/button";
 import { type SearchParams, withLocale } from "@/lib/i18n";
 import { adminPortalRoutes } from "@/lib/studioos/admin-portal-routes";
 
+const copy = {
+  en: {
+    title: "Analytics dashboard",
+    subtitle: "Database-backed platform metrics with review and settlement timing.",
+    back: "Back to overview",
+    signInRequired: "Sign in as admin to view metrics."
+  },
+  zh: {
+    title: "分析仪表盘",
+    subtitle: "数据库驱动的平台指标，含审片与结算时长。",
+    back: "返回总览",
+    signInRequired: "请先登录管理员账号查看指标。"
+  }
+} as const;
+
 export default async function AdminAnalyticsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const locale = await getAppUiLocale();
+  const t = copy[locale];
   const user = await getAdminSessionUser();
   const metrics = user ? await adminDashboardService.getMetrics(user) : null;
 
   return (
-    <div>
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-semibold tracking-tight">{locale === "zh" ? "分析仪表盘" : "Analytics dashboard"}</h1>
-          <p className="mt-2 text-sm text-zinc-500">
-            {locale === "zh" ? "Prisma 驱动的平台指标。" : "Prisma-backed platform metrics."}
-          </p>
-        </div>
-        <Button asChild variant="outline" size="sm">
-          <Link href={withLocale(adminPortalRoutes.dashboard, locale)}>
-            {locale === "zh" ? "返回总览" : "Back to overview"}
-          </Link>
-        </Button>
-      </div>
-      <div className="mt-8">
-        {metrics ? (
-          <AdminAnalyticsDashboard locale={locale} metrics={metrics} />
-        ) : (
-          <p className="text-sm text-zinc-500">Sign in as admin to view metrics.</p>
-        )}
-      </div>
-    </div>
+    <AdminPageShell
+      locale={locale}
+      title={t.title}
+      subtitle={t.subtitle}
+      actions={
+        <AdminPageActionLink href={withLocale(adminPortalRoutes.dashboard, locale)}>
+          ← {t.back}
+        </AdminPageActionLink>
+      }
+    >
+      {metrics ? (
+        <AdminAnalyticsDashboard locale={locale} metrics={metrics} />
+      ) : (
+        <p className="text-sm text-zinc-500">{t.signInRequired}</p>
+      )}
+    </AdminPageShell>
   );
 }

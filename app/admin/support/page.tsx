@@ -6,8 +6,34 @@ import { adminSupportService } from "@/features/admin/support/admin-support.serv
 import { getAdminSessionUser } from "@/features/admin/auth/admin-auth.service";
 import { type SearchParams, withLocale } from "@/lib/i18n";
 
+const copy = {
+  en: {
+    title: "Support",
+    subtitle: "Disputes, refunds, and brand or creator support tickets.",
+    openItems: "Open items",
+    disputes: "Disputes & refunds",
+    aiConversations: "AI support conversations",
+    aiSubtitle: "Database-backed conversations ready for human handoff.",
+    noMessages: "No messages yet",
+    unassigned: "Unassigned",
+    empty: "No AI support conversations yet."
+  },
+  zh: {
+    title: "支持",
+    subtitle: "争议、退款与品牌方或创作者支持工单。",
+    openItems: "待处理事项",
+    disputes: "争议与退款",
+    aiConversations: "智能客服会话",
+    aiSubtitle: "真实数据库会话，支持人工接管查看。",
+    noMessages: "暂无消息",
+    unassigned: "未分配",
+    empty: "暂无智能客服会话。"
+  }
+} as const;
+
 export default async function AdminSupportPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const locale = await getAppUiLocale();
+  const t = copy[locale];
   const user = await getAdminSessionUser();
   const overview = user ? await adminSupportService.getOverview(user) : { openItems: 0 };
   const conversations = user
@@ -18,20 +44,18 @@ export default async function AdminSupportPage({ searchParams }: { searchParams:
 
   return (
     <div>
-      <h1 className="text-3xl font-semibold tracking-tight">Support</h1>
-      <p className="mt-2 text-sm text-zinc-500">
-        {locale === "zh" ? "争议、退款与 Brand / Studio 支持工单。" : "Disputes, refunds, and brand/studio support."}
-      </p>
+      <h1 className="text-3xl font-semibold tracking-tight">{t.title}</h1>
+      <p className="mt-2 text-sm text-zinc-500">{t.subtitle}</p>
       <Card className="mt-8 border-zinc-200/80 shadow-none">
         <CardContent className="p-6">
-          <p className="text-sm text-zinc-500">{locale === "zh" ? "待处理事项" : "Open items"}</p>
+          <p className="text-sm text-zinc-500">{t.openItems}</p>
           <p className="mt-2 text-4xl font-semibold">{overview.openItems}</p>
           <div className="mt-6 flex gap-3">
             <Link
               href={withLocale("/admin/disputes", locale)}
               className="text-sm font-medium text-zinc-900 hover:underline"
             >
-              {locale === "zh" ? "争议与退款" : "Disputes & refunds"} →
+              {t.disputes} →
             </Link>
           </div>
         </CardContent>
@@ -40,12 +64,8 @@ export default async function AdminSupportPage({ searchParams }: { searchParams:
         <CardContent className="p-6">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-sm font-semibold text-zinc-950">
-                {locale === "zh" ? "AI 客服会话" : "AI support conversations"}
-              </p>
-              <p className="mt-1 text-sm text-zinc-500">
-                {locale === "zh" ? "真实数据库会话，支持人工接管查看。" : "Database-backed conversations ready for human handoff."}
-              </p>
+              <p className="text-sm font-semibold text-zinc-950">{t.aiConversations}</p>
+              <p className="mt-1 text-sm text-zinc-500">{t.aiSubtitle}</p>
             </div>
             <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-600">
               {conversations.length}
@@ -68,19 +88,17 @@ export default async function AdminSupportPage({ searchParams }: { searchParams:
                         </span>
                       </div>
                       <p className="mt-1 line-clamp-1 text-sm text-zinc-500">
-                        {latest?.content ?? (locale === "zh" ? "暂无消息" : "No messages yet")}
+                        {latest?.content ?? t.noMessages}
                       </p>
                     </div>
                     <div className="text-xs text-zinc-500">
-                      {conversation.assignedAgent?.fullName ?? (locale === "zh" ? "未分配" : "Unassigned")}
+                      {conversation.assignedAgent?.fullName ?? t.unassigned}
                     </div>
                   </div>
                 );
               })
             ) : (
-              <p className="py-8 text-sm text-zinc-500">
-                {locale === "zh" ? "暂无 AI 客服会话。" : "No AI support conversations yet."}
-              </p>
+              <p className="py-8 text-sm text-zinc-500">{t.empty}</p>
             )}
           </div>
         </CardContent>

@@ -59,6 +59,8 @@ export type AdminOverviewGmvTrendSeries = {
   month: AdminOverviewGmvTrendPoint[];
 };
 
+import type { AdminBindingStats } from "@/lib/studioos/admin-metrics";
+
 export type AdminOverviewPageData = {
   kpis: AdminOverviewKpis;
   todos: AdminOverviewTodos;
@@ -66,4 +68,5 @@ export type AdminOverviewPageData = {
   latestCampaigns: AdminOverviewCampaignRow[];
   statusDistribution: AdminOverviewStatusBucket[];
   gmvTrend: AdminOverviewGmvTrendSeries;
+  bindingStats: AdminBindingStats;
 };

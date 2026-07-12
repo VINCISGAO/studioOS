@@ -2,7 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 
 export function AdminOverviewSkeleton() {
   return (
-    <div className="mt-8 animate-pulse space-y-8">
+    <div className="animate-pulse space-y-8">
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {Array.from({ length: 8 }).map((_, index) => (
           <Card key={index} className="border-zinc-200/80 shadow-none">

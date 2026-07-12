@@ -112,11 +112,11 @@ export const adminActivityLabels: Record<string, Record<Locale, string>> = {
   "campaign.PRODUCING": { en: "Production started", zh: "开始制作" },
   "campaign.UNDER_REVIEW": { en: "Submitted for review", zh: "提交审片" },
   "campaign.COMPLETED": { en: "Campaign completed", zh: "活动已完成" },
-  "brand_campaign.step_completed": { en: "Brief step completed", zh: "Brief 步骤完成" },
+  "brand_campaign.step_completed": { en: "Brief step completed", zh: "简报步骤完成" },
   "escrow.FUNDED": { en: "Escrow funded", zh: "托管已入账" },
   "escrow.paid": { en: "Escrow payment received", zh: "托管付款成功" },
   "payment.success": { en: "Payment successful", zh: "支付成功" },
-  "payment.CREATOR_PAYOUT_MARKED_PAID": { en: "Creator payout marked paid", zh: "创作者 payout 已标记付款" },
+  "payment.CREATOR_PAYOUT_MARKED_PAID": { en: "Creator payout marked paid", zh: "创作者付款已标记完成" },
   "invitation.sent": { en: "Invitation sent", zh: "邀请已发送" },
   "invitation.accepted": { en: "Studio accepted invitation", zh: "创作者已接受邀请" },
   "creator.accepted": { en: "Creator accepted", zh: "创作者已接受" },
@@ -139,6 +139,10 @@ export const adminActivityLabels: Record<string, Record<Locale, string>> = {
 export function adminActivityLabel(action: string, locale: Locale): string {
   const known = adminActivityLabels[action];
   if (known) return known[locale];
+
+  if (locale === "zh") {
+    return "系统操作";
+  }
 
   const readable = action
     .split(/[._]/)

@@ -1,5 +1,6 @@
 import { getAppUiLocale } from "@/lib/app-language";
 import { AdminSettlementQueue } from "@/components/studioos/admin-settlement-queue";
+import { AdminPageShell } from "@/components/studioos/admin-page-shell";
 import { adminSettlementService } from "@/features/admin/settlement/admin-settlement.service";
 import { getAdminSessionUser } from "@/features/admin/auth/admin-auth.service";
 import { type SearchParams } from "@/lib/i18n";
@@ -24,12 +25,8 @@ export default async function AdminSettlementsPage({ searchParams }: { searchPar
   const items = user ? await adminSettlementService.listQueue(user, { state }) : [];
 
   return (
-    <div>
-      <h1 className="text-3xl font-semibold tracking-tight">{t.title}</h1>
-      <p className="mt-2 text-sm text-zinc-500">{t.subtitle}</p>
-      <div className="mt-8">
-        <AdminSettlementQueue locale={locale} items={items} />
-      </div>
-    </div>
+    <AdminPageShell locale={locale} title={t.title} subtitle={t.subtitle}>
+      <AdminSettlementQueue locale={locale} items={items} />
+    </AdminPageShell>
   );
 }

@@ -47,7 +47,7 @@ const copy = {
   zh: {
     title: "绑定 Google 验证器",
     body: "在 Google Authenticator 中手动输入下方链接或密钥，然后输入 6 位验证码完成绑定。",
-    uri: "Authenticator 链接",
+    uri: "验证器链接",
     code: "6 位验证码",
     submit: "完成绑定",
     submitting: "保存中…",

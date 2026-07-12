@@ -9,6 +9,7 @@ import { LoginSubmitSpinner } from "@/components/studioos/login-demo-accounts";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { Locale } from "@/lib/i18n";
+import { adminFields } from "@/lib/studioos/admin-copy";
 import { studioOS } from "@/lib/studioos/vocabulary";
 import { loginWithAdminPasskey } from "@/lib/studioos/admin-passkey-client";
 import { cn } from "@/lib/utils";
@@ -17,9 +18,7 @@ export type AdminLoginCopy = {
   consoleTitle: string;
   email: string;
   emailPlaceholder: string;
-  authenticatorCode: string;
   authenticatorPlaceholder: string;
-  authenticatorHint: string;
   signIn: string;
   copyright: string;
   environment: string;
@@ -90,6 +89,7 @@ export function AdminLoginShell({
 
   const displayError = formError ?? error;
   const loginReady = !loginUnavailable && schemaReady && totpConfigured;
+  const fields = adminFields(locale);
 
   async function handlePasskeyLogin() {
     if (loginUnavailable || !email.trim()) {
@@ -139,7 +139,6 @@ export function AdminLoginShell({
               <ShieldCheck className="h-5 w-5 text-violet-600" strokeWidth={2} />
             </div>
             <h1 className="text-xl font-semibold tracking-tight text-zinc-900">{t.consoleTitle}</h1>
-            <p className="mt-2 text-sm text-zinc-500">{t.authenticatorHint}</p>
           </div>
 
           {loginUnavailable ? (
@@ -188,14 +187,12 @@ export function AdminLoginShell({
             </div>
 
             <div className="space-y-1.5">
-              <label htmlFor="admin-totp" className="text-xs font-medium text-zinc-700 sm:text-sm">
-                {t.authenticatorCode}
-              </label>
               <div className="relative">
                 <KeyRound className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
                 <Input
                   id="admin-totp"
                   name="code"
+                  aria-label={t.authenticatorPlaceholder}
                   type="text"
                   inputMode="numeric"
                   autoComplete="one-time-code"
@@ -220,7 +217,7 @@ export function AdminLoginShell({
                 className="h-11 w-full gap-2 rounded-xl border-zinc-200 text-sm font-semibold"
               >
                 <Fingerprint className="h-4 w-4" />
-                {locale === "zh" ? "使用 Passkey 登录" : "Sign in with passkey"}
+                {fields.passkeySignIn}
                 <LoginSubmitSpinner visible={passkeySubmitting} />
               </Button>
             </div>
@@ -229,7 +226,7 @@ export function AdminLoginShell({
           <p className="mt-6 text-center text-xs text-zinc-400">
             © {studioOS.productName}
             <br />
-            Version 1.0.0
+            {fields.versionLabel} 1.0.0
           </p>
         </div>
       </main>
@@ -238,7 +235,7 @@ export function AdminLoginShell({
         <div className="mx-auto flex max-w-3xl flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[11px] text-zinc-400 sm:text-xs">
           <span>
             {t.environment}
-            <span className="ml-1.5 font-medium text-zinc-600">Production</span>
+            <span className="ml-1.5 font-medium text-zinc-600">{fields.production}</span>
           </span>
           <span>
             {t.version}
@@ -246,7 +243,7 @@ export function AdminLoginShell({
           </span>
           <span>
             {t.region}
-            <span className="ml-1.5 font-medium text-zinc-600">Singapore</span>
+            <span className="ml-1.5 font-medium text-zinc-600">{fields.singapore}</span>
           </span>
           <span>
             {t.status}

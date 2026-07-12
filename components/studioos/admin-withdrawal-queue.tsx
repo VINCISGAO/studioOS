@@ -15,13 +15,17 @@ const copy = {
     empty: "No pending withdrawal requests.",
     table: ["User", "Amount", "Methods", "Requested", "Actions"],
     approve: "Approve & mark paid",
-    reject: "Reject"
+    reject: "Reject",
+    reasonPlaceholder: "Reason",
+    default: "Default"
   },
   zh: {
     empty: "暂无待审核提现。",
     table: ["用户", "金额", "收款方式", "申请时间", "操作"],
     approve: "通过并标记已付",
-    reject: "拒绝"
+    reject: "拒绝",
+    reasonPlaceholder: "原因",
+    default: "默认"
   }
 };
 
@@ -65,7 +69,7 @@ export function AdminWithdrawalQueue({
                     {row.paymentMethods.length
                       ? row.paymentMethods.map((pm) => (
                           <div key={pm.id}>
-                            {pm.isDefault && <Badge variant="outline" className="mr-1">default</Badge>}
+                            {pm.isDefault && <Badge variant="outline" className="mr-1">{t.default}</Badge>}
                             {formatMethod(pm)}
                           </div>
                         ))
@@ -84,7 +88,7 @@ export function AdminWithdrawalQueue({
                         <AdminFormCsrf />
                         <input type="hidden" name="lang" value={locale} />
                         <input type="hidden" name="withdraw_id" value={row.withdrawId} />
-                        <input name="reason" required placeholder="reason" className="w-24 rounded border px-1 text-xs" />
+                        <input name="reason" required placeholder={t.reasonPlaceholder} className="w-24 rounded border px-1 text-xs" />
                         <Button type="submit" size="sm" variant="outline">{t.reject}</Button>
                       </form>
                     </div>

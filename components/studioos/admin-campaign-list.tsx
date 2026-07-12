@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { StatusBadge } from "@/components/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,6 +11,8 @@ import type { AdminCampaignListItem } from "@/features/admin/campaign/admin-camp
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import { adminPortalRoutes } from "@/lib/studioos/admin-portal-routes";
+import { adminCountLabel } from "@/lib/studioos/admin-copy";
+import { adminSettlementStateLabel } from "@/lib/studioos/admin-enum-labels";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 const copy = {
@@ -27,17 +30,17 @@ const copy = {
     table: ["Campaign", "Brand", "Creator", "Status", "Escrow", "Delivery", "Settlement", "Round", "Budget", "Updated"]
   },
   zh: {
-    search: "搜索标题或 ID",
+    search: "搜索标题或编号",
     status: "状态",
-    brand: "Brand 搜索",
-    creator: "Creator 搜索",
+    brand: "品牌方搜索",
+    creator: "创作者搜索",
     escrow: "托管状态",
     delivery: "交付状态",
     settlement: "结算",
     reviewRound: "审片轮次",
     filter: "筛选",
-    empty: "没有符合条件的 Campaign。",
-    table: ["Campaign", "Brand", "Creator", "状态", "托管", "交付", "结算", "轮次", "预算", "更新"]
+    empty: "没有符合条件的活动。",
+    table: ["活动", "品牌方", "创作者", "状态", "托管", "交付", "结算", "轮次", "预算", "更新"]
   }
 };
 
@@ -78,7 +81,7 @@ export function AdminCampaignList({
         </Button>
       </form>
 
-      <p className="mt-4 text-sm text-zinc-500">{total} campaigns</p>
+      <p className="mt-4 text-sm text-zinc-500">{adminCountLabel(locale, total, "campaigns", "个活动")}</p>
 
       <Card className="mt-4 border-zinc-200/80 shadow-none">
         <CardContent className="p-0">
@@ -109,12 +112,14 @@ export function AdminCampaignList({
                     </TableCell>
                     <TableCell>{row.creatorName ?? "—"}</TableCell>
                     <TableCell>
-                      <Badge variant="outline">{row.status}</Badge>
+                      <StatusBadge status={row.status} locale={locale} />
                     </TableCell>
                     <TableCell>{row.escrowStatus ?? "—"}</TableCell>
                     <TableCell>{row.deliveryStatus ?? "—"}</TableCell>
                     <TableCell>
-                      <Badge variant={settlementVariant(row.settlementState)}>{row.settlementState}</Badge>
+                      <Badge variant={settlementVariant(row.settlementState)}>
+                        {adminSettlementStateLabel(row.settlementState, locale)}
+                      </Badge>
                     </TableCell>
                     <TableCell>{row.reviewRound}</TableCell>
                     <TableCell>{formatCurrency(row.budget, locale)}</TableCell>

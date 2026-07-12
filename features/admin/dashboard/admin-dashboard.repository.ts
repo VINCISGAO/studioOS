@@ -12,6 +12,17 @@ const ACTIVE_CAMPAIGN_WHERE = {
   status: { notIn: [CampaignStatus.COMPLETED, CampaignStatus.CANCELLED] }
 };
 
+const SETTLEMENT_QUEUE_WHERE = {
+  deletedAt: null,
+  deliveries: { is: { status: "LOCKED" as const } },
+  escrow: { status: "HELD" as const }
+};
+
+const ACTIVE_LINKED_CAMPAIGN_WHERE = {
+  deletedAt: null,
+  creatorId: { not: null }
+};
+
 function startOfDay(date: Date) {
   const d = new Date(date);
   d.setHours(0, 0, 0, 0);
@@ -155,7 +166,13 @@ export class AdminDashboardRepository {
       latestCampaigns,
       statusDistribution,
       trendEscrows,
-      trendCommissions
+      trendCommissions,
+      settlementQueueEscrows,
+      brandCount,
+      creatorCount,
+      campaignCount,
+      linkedCampaigns,
+      escrowFundedCampaigns
     ] = await Promise.all([
       prisma.escrowPayment.aggregate({
         where: { status: { in: ["HELD", "PARTIAL_RELEASE", "FULL_RELEASE", "CLOSED"] } },
@@ -177,11 +194,7 @@ export class AdminDashboardRepository {
       prisma.campaign.count({ where: ACTIVE_CAMPAIGN_WHERE }),
       prisma.campaign.count({ where: { deletedAt: null, status: "UNDER_REVIEW" } }),
       prisma.campaign.count({
-        where: {
-          deletedAt: null,
-          deliveries: { is: { status: "LOCKED" } },
-          escrow: { status: "HELD" }
-        }
+        where: SETTLEMENT_QUEUE_WHERE
       }),
       prisma.notification.count({ where: { isSent: false } }),
       prisma.activityLog.findMany({
@@ -220,6 +233,20 @@ export class AdminDashboardRepository {
       prisma.orderCommission.findMany({
         where: { settledAt: { gte: trendSince } },
         select: { platformTotalRevenue: true, settledAt: true }
+      }),
+      prisma.campaign.findMany({
+        where: SETTLEMENT_QUEUE_WHERE,
+        select: { escrow: { select: { remainingAmount: true } } }
+      }),
+      prisma.user.count({ where: { role: "BRAND", deletedAt: null } }),
+      prisma.user.count({ where: { role: "CREATOR", deletedAt: null } }),
+      prisma.campaign.count({ where: { deletedAt: null } }),
+      prisma.campaign.count({ where: ACTIVE_LINKED_CAMPAIGN_WHERE }),
+      prisma.campaign.count({
+        where: {
+          deletedAt: null,
+          escrow: { status: { in: ["HELD", "PARTIAL_RELEASE", "FULL_RELEASE", "CLOSED"] } }
+        }
       })
     ]);
 
@@ -229,7 +256,10 @@ export class AdminDashboardRepository {
     }
 
     const escrowHeld = Number(heldEscrowAgg._sum.remainingAmount ?? 0);
-    const settlementPending = escrowHeld;
+    const settlementPending = settlementQueueEscrows.reduce(
+      (sum, row) => sum + Number(row.escrow?.remainingAmount ?? 0),
+      0
+    );
 
     return {
       kpis: {
@@ -273,7 +303,15 @@ export class AdminDashboardRepository {
         status: row.status,
         count: row._count.id
       })),
-      gmvTrend: buildGmvTrendSeries(trendEscrows, trendCommissions)
+      gmvTrend: buildGmvTrendSeries(trendEscrows, trendCommissions),
+      bindingStats: {
+        brandCount,
+        creatorCount,
+        campaignCount,
+        linkedCampaigns,
+        escrowFundedCampaigns,
+        openDisputes: disputesOpen
+      }
     };
   }
 
@@ -303,7 +341,7 @@ export class AdminDashboardRepository {
       prisma.wallet.aggregate({
         _sum: { availableBalance: true, pendingBalance: true, totalEarned: true }
       }),
-      prisma.transaction.count({ where: { type: "WITHDRAW_REQUEST" } }),
+      adminWithdrawalRepository.countPendingRequests(),
       prisma.campaign.findMany({
         where: { deletedAt: null, status: { in: ["UNDER_REVIEW", "APPROVED", "COMPLETED"] } },
         select: { createdAt: true, updatedAt: true },

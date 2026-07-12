@@ -51,7 +51,7 @@ export function verifyAdminTotpCode(secret: string, token: string, windowSteps =
 }
 
 /** Returns the matched TOTP counter step, or null if invalid. */
-export function findAdminTotpTimeStep(secret: string, token: string, windowSteps = 2): number | null {
+export function findAdminTotpTimeStep(secret: string, token: string, windowSteps = 3): number | null {
   const normalizedToken = token.replace(/\s/g, "");
   if (!/^\d{6}$/.test(normalizedToken)) {
     return null;

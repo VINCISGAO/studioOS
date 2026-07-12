@@ -7,17 +7,29 @@ import { getAdminSessionUser } from "@/features/admin/auth/admin-auth.service";
 import { type SearchParams, withLocale } from "@/lib/i18n";
 import { formatDate } from "@/lib/utils";
 
+const copy = {
+  en: {
+    title: "Projects",
+    subtitle: "All platform campaigns and briefs.",
+    back: "Back to overview"
+  },
+  zh: {
+    title: "项目",
+    subtitle: "全平台活动与简报。",
+    back: "返回总览"
+  }
+} as const;
+
 export default async function AdminProjectsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const locale = await getAppUiLocale();
+  const t = copy[locale];
   const user = await getAdminSessionUser();
   const result = user ? await adminCampaignService.list(user, {}) : { items: [], total: 0 };
 
   return (
     <div>
-      <h1 className="text-3xl font-semibold tracking-tight">Projects</h1>
-      <p className="mt-2 text-sm text-zinc-500">
-        {locale === "zh" ? "全平台 Campaign 与 Brief。" : "All platform campaigns and briefs."}
-      </p>
+      <h1 className="text-3xl font-semibold tracking-tight">{t.title}</h1>
+      <p className="mt-2 text-sm text-zinc-500">{t.subtitle}</p>
       <Card className="mt-8 border-zinc-200/80 shadow-none">
         <CardContent className="p-0">
           <ul className="divide-y">
@@ -36,7 +48,7 @@ export default async function AdminProjectsPage({ searchParams }: { searchParams
       </Card>
       <p className="mt-4 text-sm text-zinc-500">
         <Link href={withLocale("/admin", locale)} className="hover:underline">
-          ← {locale === "zh" ? "返回总览" : "Back to overview"}
+          ← {t.back}
         </Link>
       </p>
     </div>

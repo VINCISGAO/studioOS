@@ -34,7 +34,7 @@ function publicLoginFailure(
   locale: Locale,
   detail?: "securityMisconfigured" | "totpDecryptFailed"
 ) {
-  if (!isProductionRuntime() && detail) {
+  if (detail === "totpDecryptFailed" || detail === "securityMisconfigured") {
     return adminAuthError(locale, detail);
   }
   return adminAuthError(locale, "loginFailed");

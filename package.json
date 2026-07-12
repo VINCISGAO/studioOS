@@ -58,6 +58,7 @@
     "marketing:sync-faq-knowledge": "npm run db:generate && node --require ./scripts/helpers/load-env.cjs --import tsx scripts/sync-marketing-faq-knowledge.ts",
     "db:studio": "bash scripts/prisma-with-env.sh studio",
     "bootstrap:admin": "node -r ./scripts/helpers/load-env.cjs scripts/bootstrap-admin-profile.mjs",
+    "verify:admin-totp": "node -r ./scripts/helpers/load-env.cjs scripts/verify-admin-totp.mjs",
     "sprint1:verify": "node --import tsx scripts/sprint1-verify.ts",
     "sprint2:verify": "node --import tsx scripts/sprint2-verify.ts",
     "sprint3:verify": "node --import tsx scripts/sprint3-verify.ts",

@@ -1,5 +1,6 @@
 import { getAppUiLocale } from "@/lib/app-language";
 import { AdminCampaignList } from "@/components/studioos/admin-campaign-list";
+import { AdminPageShell } from "@/components/studioos/admin-page-shell";
 import { adminCampaignService } from "@/features/admin/campaign/admin-campaign.service";
 import { getAdminSessionUser } from "@/features/admin/auth/admin-auth.service";
 import { type SearchParams } from "@/lib/i18n";
@@ -7,11 +8,11 @@ import { type SearchParams } from "@/lib/i18n";
 const copy = {
   en: {
     title: "Campaign management",
-    subtitle: "Search and inspect all Prisma-backed campaigns with escrow and settlement state."
+    subtitle: "Search and inspect all campaigns with escrow, delivery, and settlement state."
   },
   zh: {
-    title: "Campaign 管理",
-    subtitle: "搜索并查看所有 Prisma Campaign，含托管与结算状态。"
+    title: "活动管理",
+    subtitle: "搜索并查看所有活动，含托管、交付与结算状态。"
   }
 };
 
@@ -46,12 +47,8 @@ export default async function AdminCampaignsPage({ searchParams }: { searchParam
     : { items: [], total: 0 };
 
   return (
-    <div>
-      <h1 className="text-3xl font-semibold tracking-tight">{t.title}</h1>
-      <p className="mt-2 text-sm text-zinc-500">{t.subtitle}</p>
-      <div className="mt-8">
-        <AdminCampaignList locale={locale} items={result.items} total={result.total} filters={filters} />
-      </div>
-    </div>
+    <AdminPageShell locale={locale} title={t.title} subtitle={t.subtitle}>
+      <AdminCampaignList locale={locale} items={result.items} total={result.total} filters={filters} />
+    </AdminPageShell>
   );
 }

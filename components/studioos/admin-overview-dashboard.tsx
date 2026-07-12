@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import {
   ArrowDownToLine,
@@ -9,6 +11,8 @@ import {
   Upload,
   Wallet
 } from "lucide-react";
+import { AdminBindingSummary } from "@/components/studioos/admin-binding-summary";
+import { AdminKpiCard } from "@/components/studioos/admin-kpi-card";
 import { AdminOverviewGmvChart } from "@/components/studioos/admin-overview-gmv-chart";
 import { AdminStatusDonut } from "@/components/studioos/admin-status-donut";
 import { StatusBadge } from "@/components/status-badge";
@@ -19,25 +23,12 @@ import type { AdminOverviewPageData } from "@/features/admin/dashboard/admin-das
 import type { AdminDisputeView } from "@/features/admin/admin.types";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
+import { adminMetrics } from "@/lib/studioos/admin-metrics";
 import { adminPortalRoutes } from "@/lib/studioos/admin-portal-routes";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 const copy = {
   en: {
-    welcome: "Welcome back, Admin",
-    dateRange: "Last 14 days",
-    growth: "vs prior 14 days",
-    kpis: {
-      gmv: "GMV",
-      revenue: "Platform revenue",
-      fees: "Platform fees",
-      escrowHeld: "Escrow held",
-      settlementPending: "Settlement pending",
-      withdrawals: "Pending withdrawals",
-      disputes: "Open disputes",
-      active: "Active campaigns"
-    },
-    gmvTrend: "GMV trend",
     recentActivity: "Recent activity",
     todos: "Operations queue",
     latestCampaigns: "Latest campaigns",
@@ -57,20 +48,6 @@ const copy = {
     viewAll: "View all"
   },
   zh: {
-    welcome: "欢迎回来，Admin 👋",
-    dateRange: "近 14 日",
-    growth: "对比前 14 日",
-    kpis: {
-      gmv: "GMV",
-      revenue: "平台收入",
-      fees: "平台手续费",
-      escrowHeld: "托管冻结",
-      settlementPending: "待结算金额",
-      withdrawals: "待处理提现",
-      disputes: "待处理争议",
-      active: "活跃活动"
-    },
-    gmvTrend: "GMV 趋势",
     recentActivity: "最近活动",
     todos: "运营待办",
     latestCampaigns: "最新活动",
@@ -115,7 +92,7 @@ function TodoRow({ label, count, href, locale }: { label: string; count: number;
   return (
     <Link
       href={withLocale(href, locale)}
-      className="flex items-center justify-between rounded-lg border px-3 py-2.5 text-sm transition hover:bg-zinc-50"
+      className="flex items-center justify-between rounded-xl border border-zinc-200/80 px-3 py-2.5 text-sm transition hover:border-violet-200 hover:bg-violet-50/40"
     >
       <span>{label}</span>
       <Badge variant={count > 0 ? "warning" : "outline"}>{count}</Badge>
@@ -133,16 +110,17 @@ export function AdminOverviewDashboard({
   disputes: AdminDisputeView[];
 }) {
   const t = copy[locale];
+  const metrics = adminMetrics(locale);
 
-  const kpiCards = [
-    { label: t.kpis.gmv, value: formatCurrency(overview.kpis.gmv, locale) },
-    { label: t.kpis.revenue, value: formatCurrency(overview.kpis.platformRevenue, locale) },
-    { label: t.kpis.fees, value: formatCurrency(overview.kpis.platformFees, locale) },
-    { label: t.kpis.escrowHeld, value: formatCurrency(overview.kpis.escrowHeld, locale) },
-    { label: t.kpis.settlementPending, value: formatCurrency(overview.kpis.settlementPending, locale) },
-    { label: t.kpis.withdrawals, value: String(overview.kpis.pendingWithdrawals) },
-    { label: t.kpis.disputes, value: String(overview.kpis.disputesOpen) },
-    { label: t.kpis.active, value: String(overview.kpis.activeCampaigns) }
+  const kpiCards: Array<{ key: keyof typeof metrics; value: string; accent?: boolean }> = [
+    { key: "gmv", value: formatCurrency(overview.kpis.gmv, locale), accent: true },
+    { key: "platformRevenue", value: formatCurrency(overview.kpis.platformRevenue, locale) },
+    { key: "platformFees", value: formatCurrency(overview.kpis.platformFees, locale) },
+    { key: "escrowHeld", value: formatCurrency(overview.kpis.escrowHeld, locale) },
+    { key: "settlementPending", value: formatCurrency(overview.kpis.settlementPending, locale) },
+    { key: "pendingWithdrawals", value: String(overview.kpis.pendingWithdrawals) },
+    { key: "disputesOpen", value: String(overview.kpis.disputesOpen) },
+    { key: "activeCampaigns", value: String(overview.kpis.activeCampaigns) }
   ];
 
   const todoItems = [
@@ -154,30 +132,36 @@ export function AdminOverviewDashboard({
   ] as const;
 
   return (
-    <div>
-      <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {kpiCards.map(({ label, value }) => (
-          <Card key={label} className="border-zinc-200/80 shadow-none">
-            <CardContent className="p-5">
-              <p className="text-sm text-zinc-500">{label}</p>
-              <p className="mt-2 text-2xl font-semibold tabular-nums">{value}</p>
-            </CardContent>
-          </Card>
-        ))}
+    <div className="space-y-8">
+      <AdminBindingSummary locale={locale} stats={overview.bindingStats} />
+
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {kpiCards.map(({ key, value, accent }) => {
+          const metric = metrics[key];
+          return (
+            <AdminKpiCard
+              key={key}
+              label={metric.label}
+              value={value}
+              hint={metric.hint}
+              accent={accent}
+            />
+          );
+        })}
       </div>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+      <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
         <Card className="border-zinc-200/80 shadow-none">
           <CardContent className="p-6">
-            <h2 className="font-semibold">{t.gmvTrend}</h2>
+            <h2 className="font-semibold text-zinc-950">{metrics.gmv.label} {locale === "zh" ? "趋势" : "trend"}</h2>
             <AdminOverviewGmvChart locale={locale} trend={overview.gmvTrend} />
           </CardContent>
         </Card>
         <Card className="border-zinc-200/80 shadow-none">
           <CardContent className="p-6">
             <div className="flex items-center justify-between gap-3">
-              <h2 className="font-semibold">{t.recentActivity}</h2>
-              <Link href={withLocale(adminPortalRoutes.activityLog, locale)} className="text-sm text-zinc-500 hover:underline">
+              <h2 className="font-semibold text-zinc-950">{t.recentActivity}</h2>
+              <Link href={withLocale(adminPortalRoutes.activityLog, locale)} className="text-sm text-violet-600 hover:underline">
                 {t.viewAll}
               </Link>
             </div>
@@ -186,8 +170,8 @@ export function AdminOverviewDashboard({
                 overview.recentActivity.map((item) => {
                   const Icon = activityIcon(item.action);
                   return (
-                    <li key={item.id} className="flex gap-3 rounded-lg border p-3 text-sm">
-                      <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-zinc-700">
+                    <li key={item.id} className="flex gap-3 rounded-xl border border-zinc-200/80 p-3 text-sm">
+                      <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-50 text-violet-700">
                         <Icon className="h-4 w-4" />
                       </span>
                       <div className="min-w-0 flex-1">
@@ -208,22 +192,22 @@ export function AdminOverviewDashboard({
         </Card>
       </div>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-[0.34fr_1fr_0.34fr]">
+      <div className="grid gap-6 lg:grid-cols-[0.34fr_1fr_0.34fr]">
         <Card className="border-zinc-200/80 shadow-none">
           <CardContent className="p-6">
-            <h2 className="font-semibold">{t.todos}</h2>
+            <h2 className="font-semibold text-zinc-950">{t.todos}</h2>
             <div className="mt-4 space-y-2">
               {todoItems.map(({ key, href, count }) => (
                 <TodoRow key={key} label={t.todoLabels[key]} count={count} href={href} locale={locale} />
               ))}
             </div>
-            <h3 className="mt-6 text-sm font-semibold">{t.quickActions}</h3>
+            <h3 className="mt-6 text-sm font-semibold text-zinc-950">{t.quickActions}</h3>
             <div className="mt-3 flex flex-wrap gap-2">
               {quickLinks.map((link) => (
                 <Link
                   key={link.href}
                   href={withLocale(link.href, locale)}
-                  className="rounded-full border px-3 py-1 text-xs font-medium text-zinc-600 hover:bg-zinc-50"
+                  className="rounded-full border border-zinc-200 px-3 py-1 text-xs font-medium text-zinc-600 transition hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700"
                 >
                   {locale === "zh" ? link.zh : link.en}
                 </Link>
@@ -234,8 +218,8 @@ export function AdminOverviewDashboard({
 
         <Card className="border-zinc-200/80 shadow-none lg:col-span-1">
           <CardContent className="p-0">
-            <div className="border-b p-6">
-              <h2 className="font-semibold">{t.latestCampaigns}</h2>
+            <div className="border-b border-zinc-100 p-6">
+              <h2 className="font-semibold text-zinc-950">{t.latestCampaigns}</h2>
             </div>
             {overview.latestCampaigns.length ? (
               <Table>
@@ -250,7 +234,7 @@ export function AdminOverviewDashboard({
                   {overview.latestCampaigns.map((row) => (
                     <TableRow key={row.id}>
                       <TableCell className="font-medium">
-                        <Link href={withLocale(adminPortalRoutes.campaignDetail(row.id), locale)} className="hover:underline">
+                        <Link href={withLocale(adminPortalRoutes.campaignDetail(row.id), locale)} className="text-violet-700 hover:underline">
                           {row.title}
                         </Link>
                       </TableCell>
@@ -273,19 +257,19 @@ export function AdminOverviewDashboard({
 
         <Card className="border-zinc-200/80 shadow-none">
           <CardContent className="p-6">
-            <h2 className="font-semibold">{t.statusDistribution}</h2>
+            <h2 className="font-semibold text-zinc-950">{t.statusDistribution}</h2>
             <div className="mt-4">
               <AdminStatusDonut locale={locale} buckets={overview.statusDistribution} />
             </div>
             {disputes.length ? (
-              <div className="mt-6 border-t pt-4">
-                <h3 className="text-sm font-semibold">{t.openDisputes}</h3>
+              <div className="mt-6 border-t border-zinc-100 pt-4">
+                <h3 className="text-sm font-semibold text-zinc-950">{t.openDisputes}</h3>
                 <ul className="mt-3 space-y-2 text-sm">
                   {disputes.slice(0, 3).map((dispute) => (
                     <li key={dispute.id}>
                       <Link
                         href={withLocale(adminPortalRoutes.disputeDetail(dispute.id), locale)}
-                        className="text-zinc-700 hover:underline"
+                        className="text-violet-700 hover:underline"
                       >
                         {dispute.campaignTitle}
                       </Link>

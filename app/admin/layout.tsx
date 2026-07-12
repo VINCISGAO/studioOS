@@ -6,6 +6,7 @@ import { adminNotificationService } from "@/features/admin/notification/admin-no
 import { clearAdminSessionCookie, readAdminSessionToken } from "@/features/admin/auth/admin-session-server";
 import { buildAdminCsrfToken } from "@/lib/auth/admin-csrf";
 import { getAppUiLocale } from "@/lib/app-language";
+import { buildAvatarInitials } from "@/lib/studioos/avatar-initials";
 import { toSafeNextPathname } from "@/lib/auth/post-login-redirect";
 
 export const dynamic = "force-dynamic";
@@ -38,6 +39,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         pathname={pathname}
         search={search}
         failedNotificationCount={failedNotificationCount}
+        adminAccount={{
+          name: profile.fullName,
+          email: profile.email,
+          initials: buildAvatarInitials(profile.fullName || profile.email)
+        }}
       >
         {children}
       </AdminPortalShell>

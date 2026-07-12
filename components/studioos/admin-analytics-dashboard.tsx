@@ -1,4 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
+import { AdminKpiCard } from "@/components/studioos/admin-kpi-card";
 import type { AdminDashboardMetrics } from "@/features/admin/dashboard/admin-dashboard.service";
 import type { Locale } from "@/lib/i18n";
 import { formatCurrency } from "@/lib/utils";
@@ -17,16 +18,16 @@ const copy = {
     topCreators: "Top studios"
   },
   zh: {
-    gmv: "GMV",
+    gmv: "成交总额",
     revenue: "平台收入",
     platformFees: "平台手续费",
-    completed: "已完成 Campaign",
+    completed: "已完成活动",
     avgReview: "平均审片时长（小时）",
     avgSettlement: "平均结算时长（小时）",
     walletTotal: "钱包可用总额",
     pendingWithdrawals: "待处理提现",
-    topBrands: "Top Brand",
-    topCreators: "Top Studio"
+    topBrands: "头部品牌方",
+    topCreators: "头部创作者"
   }
 };
 
@@ -52,13 +53,8 @@ export function AdminAnalyticsDashboard({
   return (
     <div>
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {cards.map(({ label, value }) => (
-          <Card key={label} className="border-zinc-200/80 shadow-none">
-            <CardContent className="p-5">
-              <p className="text-sm text-zinc-500">{label}</p>
-              <p className="mt-2 text-2xl font-semibold">{value}</p>
-            </CardContent>
-          </Card>
+        {cards.map(({ label, value }, index) => (
+          <AdminKpiCard key={label} label={label} value={value} accent={index === 0} />
         ))}
       </div>
       <div className="mt-8 grid gap-6 lg:grid-cols-2">

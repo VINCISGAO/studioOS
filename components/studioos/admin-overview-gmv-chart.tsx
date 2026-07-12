@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { AdminOverviewGmvTrendSeries, GmvTrendPeriod } from "@/features/admin/dashboard/admin-dashboard.types";
 import type { Locale } from "@/lib/i18n";
+import { adminFields } from "@/lib/studioos/admin-copy";
 import { cn, formatCurrency } from "@/lib/utils";
 
 const copy = {
@@ -19,7 +20,7 @@ const copy = {
     day: "日",
     week: "周",
     month: "月",
-    gmv: "GMV",
+    gmv: "成交总额",
     escrow: "托管",
     revenue: "收入",
     subtitle: "近 14 日 · 托管入账与平台收入"
@@ -59,6 +60,7 @@ export function AdminOverviewGmvChart({
   trend: AdminOverviewGmvTrendSeries;
 }) {
   const t = copy[locale];
+  const fields = adminFields(locale);
   const [period, setPeriod] = useState<GmvTrendPeriod>("day");
   const points = trend[period];
 
@@ -181,7 +183,7 @@ export function AdminOverviewGmvChart({
       <p className="mt-2 text-xs text-zinc-500">{t.subtitle}</p>
       {points.length > 0 ? (
         <p className="mt-1 text-xs text-zinc-400">
-          {locale === "zh" ? "最新" : "Latest"}: {formatCurrency(points[points.length - 1]?.gmv ?? 0, locale)} GMV
+          {fields.latest}: {formatCurrency(points[points.length - 1]?.gmv ?? 0, locale)} {fields.gmv}
         </p>
       ) : null}
     </div>

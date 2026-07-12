@@ -26,7 +26,8 @@ const copy = {
     disputeTable: ["Campaign", "Brand", "Opened by", "Status", "Reason", "Created", "Resolve"],
     refundTable: ["Order", "Amount", "Status", "Reason", "Created"],
     resolve: "Resolve",
-    resultPlaceholder: "Resolution summary"
+    resultPlaceholder: "Resolution summary",
+    emptyDisputes: "No disputes in database."
   },
   zh: {
     back: "返回管理后台",
@@ -35,10 +36,11 @@ const copy = {
     subtitle: "审核争议原因与处理方案，再决定释放托管款或退还资金。",
     disputes: "争议",
     refunds: "退款申请",
-    disputeTable: ["Campaign", "Brand", "发起方", "状态", "原因", "创建时间", "处理"],
+    disputeTable: ["活动", "品牌方", "发起方", "状态", "原因", "创建时间", "处理"],
     refundTable: ["订单", "金额", "状态", "原因", "创建时间"],
     resolve: "结案",
-    resultPlaceholder: "处理说明"
+    resultPlaceholder: "处理说明",
+    emptyDisputes: "数据库中暂无争议记录。"
   }
 };
 
@@ -122,7 +124,7 @@ export default async function AdminDisputesPage({ searchParams }: { searchParams
               </TableBody>
             </Table>
           ) : (
-            <p className="p-6 text-sm text-muted-foreground">No disputes in database.</p>
+            <p className="p-6 text-sm text-muted-foreground">{t.emptyDisputes}</p>
           )}
         </CardContent>
       </Card>

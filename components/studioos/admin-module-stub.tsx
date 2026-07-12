@@ -38,7 +38,7 @@ const stubs: Record<string, StubCopy> = {
     subtitle: { en: "Live platform observability.", zh: "平台实时可观测性。" },
     bullets: {
       en: ["API latency & error rates", "Payment webhook health", "Review pipeline throughput"],
-      zh: ["API 延迟与错误率", "支付 Webhook 健康", "审片流水线吞吐"]
+      zh: ["接口延迟与错误率", "支付回调健康", "审片流水线吞吐"]
     }
   },
   certification: {

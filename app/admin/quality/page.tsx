@@ -35,11 +35,13 @@ export default async function AdminQualityPage({ searchParams }: { searchParams:
 
   return (
     <div>
-      <h1 className="text-3xl font-semibold tracking-tight">Quality Center</h1>
+      <h1 className="text-3xl font-semibold tracking-tight">
+        {locale === "zh" ? "质检中心" : "Quality Center"}
+      </h1>
       <p className="mt-2 text-sm text-zinc-500">
         {locale === "zh"
-          ? "全平台 AI 质检 — ffprobe 读取真实交付视频元数据。"
-          : "Platform-wide AI quality — ffprobe reads real deliverable metadata when available."}
+          ? "全平台智能质检，读取真实交付视频元数据。"
+          : "Platform-wide AI quality — reads real deliverable metadata when available."}
       </p>
       <div className="mt-8 space-y-6">
         {sampleReports.length ? (

@@ -1,0 +1,159 @@
+import type { Locale } from "@/lib/i18n";
+
+/** Shared admin chrome — zh is pure Chinese, en is pure English. */
+export const adminChromeCopy = {
+  en: {
+    roleAdmin: "Admin",
+    roleSuperAdmin: "Super Admin",
+    controlCenter: "Control center",
+    eyebrow: "VINCIS Admin",
+    database: "Database",
+    languages: "Languages",
+    sidebarCollapse: "Sidebar collapse coming soon",
+    signOut: "Sign out",
+    notifications: "Notifications",
+    searchPlaceholder: "Search campaigns, users, transactions…"
+  },
+  zh: {
+    roleAdmin: "管理员",
+    roleSuperAdmin: "超级管理员",
+    controlCenter: "管理后台",
+    eyebrow: "VINCIS 管理后台",
+    database: "数据库",
+    languages: "语言",
+    sidebarCollapse: "点击侧边栏可折叠（即将推出）",
+    signOut: "退出",
+    notifications: "通知",
+    searchPlaceholder: "搜索活动、用户、交易…"
+  }
+} as const;
+
+/** Reused field labels across admin detail tables and forms. */
+export const adminFieldCopy = {
+  en: {
+    brand: "Brand",
+    creator: "Creator",
+    campaign: "Campaign",
+    campaigns: "Campaigns",
+    budget: "Budget",
+    status: "Status",
+    amount: "Amount",
+    remaining: "Remaining",
+    order: "Order",
+    creatorPayout: "Creator payout",
+    commission: "Commission",
+    platformRevenue: "Platform revenue",
+    delivered: "Delivered",
+    available: "Available",
+    pending: "Pending",
+    reviewRound: "Review round",
+    type: "Type",
+    direction: "Direction",
+    description: "Description",
+    time: "Time",
+    user: "User",
+    action: "Action",
+    file: "File",
+    created: "Created",
+    review: "Review",
+    escrow: "Escrow",
+    payment: "Payment",
+    payout: "Payout",
+    release: "Release",
+    dispute: "Dispute",
+    platformFee: "Platform fee",
+    unsent: "Unsent",
+    reason: "Reason",
+    note: "Note",
+    default: "Default",
+    industry: "Industry",
+    deposit: "Deposit",
+    paid: "Paid",
+    saving: "Saving…",
+    markPayoutPaid: "Mark payout paid",
+    clientFee: "Client fee",
+    creatorComm: "Creator commission",
+    creatorPayable: "Creator payable",
+    feesCommission: "Fees / commission",
+    open: "Open",
+    production: "Production",
+    singapore: "Singapore",
+    versionLabel: "Version",
+    passkeySignIn: "Sign in with passkey",
+    passkeys: "Passkeys",
+    addPasskey: "Add passkey",
+    gmv: "GMV",
+    latest: "Latest",
+    rows: "rows",
+    entries: "entries"
+  },
+  zh: {
+    brand: "品牌方",
+    creator: "创作者",
+    campaign: "活动",
+    campaigns: "活动",
+    budget: "预算",
+    status: "状态",
+    amount: "金额",
+    remaining: "剩余",
+    order: "订单",
+    creatorPayout: "创作者应付",
+    commission: "佣金",
+    platformRevenue: "平台收入",
+    delivered: "已交付",
+    available: "可用",
+    pending: "待入账",
+    reviewRound: "审片轮次",
+    type: "类型",
+    direction: "方向",
+    description: "说明",
+    time: "时间",
+    user: "用户",
+    action: "操作",
+    file: "文件",
+    created: "创建时间",
+    review: "审片",
+    escrow: "托管",
+    payment: "支付",
+    payout: "付款",
+    release: "释放",
+    dispute: "争议",
+    platformFee: "平台手续费",
+    unsent: "未发送",
+    reason: "原因",
+    note: "备注",
+    default: "默认",
+    industry: "行业",
+    deposit: "保证金",
+    paid: "已付款",
+    saving: "保存中…",
+    markPayoutPaid: "标记已付款",
+    clientFee: "客户手续费",
+    creatorComm: "创作者佣金",
+    creatorPayable: "创作者应付",
+    feesCommission: "手续费 / 佣金",
+    open: "未结",
+    production: "生产环境",
+    singapore: "新加坡",
+    versionLabel: "版本",
+    passkeySignIn: "使用通行密钥登录",
+    passkeys: "通行密钥",
+    addPasskey: "添加通行密钥",
+    gmv: "成交总额",
+    latest: "最新",
+    rows: "条",
+    entries: "条记录"
+  }
+} as const;
+
+export function adminChrome(locale: Locale) {
+  return adminChromeCopy[locale];
+}
+
+export function adminFields(locale: Locale) {
+  return adminFieldCopy[locale];
+}
+
+export function adminCountLabel(locale: Locale, count: number, singularEn: string, singularZh: string) {
+  return locale === "zh" ? `共 ${count} ${singularZh}` : `${count} ${singularEn}`;
+}

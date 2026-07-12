@@ -19,9 +19,7 @@ const copy: Record<Locale, AdminLoginCopy> = {
     consoleTitle: "Admin Dashboard",
     email: "Email",
     emailPlaceholder: "admin@example.com",
-    authenticatorCode: "Authenticator Code",
     authenticatorPlaceholder: "6-digit code",
-    authenticatorHint: "Google Authenticator only. No password or social login.",
     signIn: "Login",
     copyright: "© VINCIS. All rights reserved.",
     environment: "Environment",
@@ -41,9 +39,7 @@ const copy: Record<Locale, AdminLoginCopy> = {
     consoleTitle: "管理后台",
     email: "邮箱",
     emailPlaceholder: "admin@example.com",
-    authenticatorCode: "验证器代码",
     authenticatorPlaceholder: "6 位数字",
-    authenticatorHint: "仅支持 Google 验证器，不可用密码或社交登录。",
     signIn: "登录",
     copyright: "© VINCIS 保留所有权利。",
     environment: "环境",
@@ -55,7 +51,7 @@ const copy: Record<Locale, AdminLoginCopy> = {
     notConfigured: "后台登录暂不可用，请联系平台运维。",
     schemaNotReady: "后台登录暂不可用，请联系平台运维。",
     unavailableOps:
-      "Admin 认证表尚未创建。请先运行 npm run db:migrate:deploy，再执行 npm run bootstrap:admin -- admin@example.com 初始化管理员。",
+      "管理员认证表尚未创建。请先运行数据库迁移，再执行管理员初始化命令完成配置。",
     networkError: "登录失败，请检查验证码。"
   }
 };

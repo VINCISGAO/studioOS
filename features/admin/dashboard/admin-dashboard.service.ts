@@ -54,7 +54,15 @@ function emptyOverviewPage(): AdminOverviewPageData {
     recentActivity: [],
     latestCampaigns: [],
     statusDistribution: [],
-    gmvTrend: { day: [], week: [], month: [] }
+    gmvTrend: { day: [], week: [], month: [] },
+    bindingStats: {
+      brandCount: 0,
+      creatorCount: 0,
+      campaignCount: 0,
+      linkedCampaigns: 0,
+      escrowFundedCampaigns: 0,
+      openDisputes: 0
+    }
   };
 }
 

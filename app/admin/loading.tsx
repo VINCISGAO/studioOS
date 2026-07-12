@@ -1,16 +1,20 @@
-import { AdminOverviewLoader, AdminPageHeader } from "@/components/studioos/admin-overview-loader";
+import { AdminOverviewLoader } from "@/components/studioos/admin-overview-loader";
 import { AdminOverviewSkeleton } from "@/components/studioos/admin-overview-skeleton";
+import { AdminPageShell } from "@/components/studioos/admin-page-shell";
+import { getAppUiLocale } from "@/lib/app-language";
 
 const copy = {
-  en: { title: "Platform overview", analytics: "Analytics dashboard" },
-  zh: { title: "平台总览", analytics: "分析仪表盘" }
+  en: { title: "Platform overview", subtitle: "Loading operations snapshot…" },
+  zh: { title: "平台总览", subtitle: "正在加载运营快照…" }
 };
 
-export default function AdminLoading() {
+export default async function AdminLoading() {
+  const locale = await getAppUiLocale();
+  const t = copy[locale];
+
   return (
-    <div>
-      <AdminPageHeader locale="zh" title={copy.zh.title} analyticsLabel={copy.zh.analytics} />
+    <AdminPageShell locale={locale} title={t.title} subtitle={t.subtitle}>
       <AdminOverviewSkeleton />
-    </div>
+    </AdminPageShell>
   );
 }

@@ -13,6 +13,7 @@ import {
 import type { AdminSettlementQueueItem } from "@/features/admin/settlement/admin-settlement.service";
 import { AdminFormCsrf } from "@/components/studioos/admin-form-csrf";
 import type { Locale } from "@/lib/i18n";
+import { adminSettlementStateLabel } from "@/lib/studioos/admin-enum-labels";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 const copy = {
@@ -22,15 +23,21 @@ const copy = {
     release: "Release",
     freeze: "Freeze",
     cancel: "Cancel",
-    retry: "Retry"
+    retry: "Retry",
+    reasonPlaceholder: "Reason",
+    notePlaceholder: "Note",
+    rowSummary: "rows"
   },
   zh: {
     empty: "结算队列为空。",
-    table: ["Campaign", "Brand", "Creator", "状态", "托管", "交付", "账本", "操作"],
+    table: ["活动", "品牌方", "创作者", "状态", "托管", "交付", "账本", "操作"],
     release: "释放",
     freeze: "冻结",
     cancel: "取消",
-    retry: "重试"
+    retry: "重试",
+    reasonPlaceholder: "原因",
+    notePlaceholder: "备注",
+    rowSummary: "条"
   }
 };
 
@@ -68,7 +75,9 @@ export function AdminSettlementQueue({
                   <TableCell>{row.brandName ?? "—"}</TableCell>
                   <TableCell>{row.creatorName ?? "—"}</TableCell>
                   <TableCell>
-                    <Badge variant={stateVariant(row.queueState)}>{row.queueState}</Badge>
+                    <Badge variant={stateVariant(row.queueState)}>
+                      {adminSettlementStateLabel(row.queueState, locale)}
+                    </Badge>
                   </TableCell>
                   <TableCell>
                     {row.escrowStatus ?? "—"}
@@ -100,14 +109,14 @@ export function AdminSettlementQueue({
                         <AdminFormCsrf />
                         <input type="hidden" name="lang" value={locale} />
                         <input type="hidden" name="campaign_id" value={row.campaignId} />
-                        <input name="reason" placeholder="reason" className="w-20 rounded border px-1 text-xs" />
+                        <input name="reason" placeholder={t.reasonPlaceholder} className="w-20 rounded border px-1 text-xs" />
                         <Button type="submit" size="sm" variant="outline">{t.freeze}</Button>
                       </form>
                       <form action={cancelSettlementAction} className="flex gap-1">
                         <AdminFormCsrf />
                         <input type="hidden" name="lang" value={locale} />
                         <input type="hidden" name="campaign_id" value={row.campaignId} />
-                        <input name="note" placeholder="note" className="w-20 rounded border px-1 text-xs" />
+                        <input name="note" placeholder={t.notePlaceholder} className="w-20 rounded border px-1 text-xs" />
                         <Button type="submit" size="sm" variant="ghost">{t.cancel}</Button>
                       </form>
                     </div>
@@ -119,7 +128,9 @@ export function AdminSettlementQueue({
         ) : (
           <p className="p-6 text-sm text-zinc-500">{t.empty}</p>
         )}
-        <p className="border-t p-4 text-xs text-zinc-400">{items.length} rows · {formatDate(new Date().toISOString())}</p>
+        <p className="border-t p-4 text-xs text-zinc-400">
+          {items.length} {t.rowSummary} · {formatDate(new Date().toISOString())}
+        </p>
       </CardContent>
     </Card>
   );

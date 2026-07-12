@@ -47,24 +47,24 @@ const copy = {
   },
   zh: {
     title: "安全",
-    subtitle: "Passkey、活跃会话与设备管理。",
-    passkeys: "Passkey",
-    addPasskey: "添加 Passkey",
+    subtitle: "通行密钥、活跃会话与设备管理。",
+    passkeys: "通行密钥",
+    addPasskey: "添加通行密钥",
     adding: "添加中…",
-    passkeyHint: "使用 Touch ID / Face ID / Windows Hello 进行防钓鱼登录。",
+    passkeyHint: "使用触控 ID、面容 ID 或 Windows Hello 进行防钓鱼登录。",
     sessions: "活跃会话",
     revokeOthers: "退出其他设备",
     revoke: "撤销",
     current: "当前",
-    emptyPasskeys: "尚未添加 Passkey — 建议添加以提升登录安全性。",
+    emptyPasskeys: "尚未添加通行密钥，建议添加以提升登录安全性。",
     loadError: "无法加载安全设置。",
-    unlockPasskeys: "解锁 Passkey 管理",
-    unlockHint: "输入 Google 验证器代码以添加或删除 Passkey（10 分钟有效）。",
+    unlockPasskeys: "解锁通行密钥管理",
+    unlockHint: "输入谷歌验证器代码以添加或删除通行密钥（10 分钟有效）。",
     unlockCode: "6 位验证码",
     unlocking: "解锁中…",
-    unlocked: "Passkey 管理已解锁。",
+    unlocked: "通行密钥管理已解锁。",
     invalidTotp: "验证码错误。",
-    stepUpRequired: "请先输入验证器代码解锁 Passkey 管理。"
+    stepUpRequired: "请先输入验证器代码解锁通行密钥管理。"
   }
 } as const;
 
