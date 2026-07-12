@@ -35,6 +35,11 @@ function creatorAssignmentNotificationType(
 }
 
 async function advanceProjectToPaymentPending(projectId: string) {
+  if (hasDatabaseUrl()) {
+    const current = await getProject(projectId);
+    if (!current || current.status === "payment_pending") return;
+  }
+
   const chain: Array<Parameters<typeof transitionProject>[1]> = [
     "project.studio_selected",
     "project.proposal_opened",

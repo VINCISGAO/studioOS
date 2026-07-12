@@ -44,18 +44,24 @@ import type { CreativeDirection } from "@/features/ai/creative-direction.types";
 import { brandCampaignRepository } from "@/features/campaign/brand-campaign/brand-campaign.repository";
 import { mapCampaignToStoredProject } from "@/features/campaign/brand-campaign/brand-campaign.mapper";
 import type { BrandProductionBrief } from "@/features/campaign/brand-campaign/brand-campaign.types";
+import { readProductionBrief } from "@/features/campaign/brand-campaign/brand-campaign.utils";
 import { campaignService } from "@/features/campaign/campaign.service";
 import { CampaignEvent, CampaignState } from "@/features/campaign/campaign.state-machine";
 import { campaignBridgeService } from "@/features/campaign/campaign-bridge.service";
+import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { aiWorkerService } from "@/features/ai/ai-worker.service";
 import { aiUsageQuotaService } from "@/features/abuse/ai-usage-quota.service";
 import { emitWizardProgress } from "@/lib/campaign/wizard-progress.service";
-import { runBrandWizardDemoPrepareInstant, runBrandWizardDemoPublish } from "@/lib/campaign/brand-wizard-demo-prepare";
+import { runBrandWizardDemoPrepareInstant } from "@/lib/campaign/brand-wizard-demo-prepare";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
-import { preparePublishedCampaignCheckout } from "@/lib/studioos/brand-checkout-service";
+import {
+  ensureCampaignPublishReady,
+  localizePublishError
+} from "@/lib/studioos/ensure-brand-campaign-publish-ready";
 import { parseBudgetMidpoint } from "@/lib/studioos/brand-checkout-utils";
 import {
   CREATOR_SUBMITTED_CREATIVE_DIRECTION_ID,
+  buildCreatorSubmittedFrozenBrief,
   isCreatorSubmittedCreativeDirection
 } from "@/lib/studioos/creative-direction-selection";
 import {
@@ -341,7 +347,7 @@ export async function refineBrandBriefAction(formData: FormData) {
   if (!hasText) {
     return {
       ok: false as const,
-      error: lang === "zh" ? "先写几句你的想法，AI 才能帮你整理" : "Write a few lines first so AI can polish them"
+      error: lang === "zh" ? "先写几句你的想法，AI 才能帮你优化 Brief" : "Write a few lines first so AI can optimize your brief"
     };
   }
 
@@ -397,8 +403,8 @@ export async function refineBrandBriefAction(formData: FormData) {
       ok: false as const,
       error:
         lang === "zh"
-          ? "AI 整理失败。请确认 OPENAI_API_KEY 已配置，重启开发服务器后重试；若仍失败请检查 OpenAI 账户余额。"
-          : "AI polish failed. Confirm OPENAI_API_KEY is set, restart the dev server, and check your OpenAI balance."
+          ? "AI Brief 优化失败。请确认 OPENAI_API_KEY 已配置，重启开发服务器后重试；若仍失败请检查 OpenAI 账户余额。"
+          : "AI brief optimization failed. Confirm OPENAI_API_KEY is set, restart the dev server, and check your OpenAI balance."
     };
   }
 }
@@ -1239,12 +1245,11 @@ export async function approveBrandCreativeDirectionAction(formData: FormData) {
             ? "以上 AI 方案暂不选择，交给创作者提交创意方向。"
             : "AI schemes were not selected. Matched creators will submit creative ideas."
       };
-      const frozen = {
+      const frozen = buildCreatorSubmittedFrozenBrief(baseSnapshot, creativeField);
+      const confirmedSnapshot = {
         ...baseSnapshot,
         fields: [...baseSnapshot.fields, creativeField],
-        full_text: [baseSnapshot.full_text, `${creativeField.label}: ${creativeField.value}`]
-          .filter((item) => item.trim())
-          .join("\n")
+        full_text: frozen.full_text
       };
 
       await updateProject(projectId, {
@@ -1253,7 +1258,7 @@ export async function approveBrandCreativeDirectionAction(formData: FormData) {
           frozen_production_brief: frozen,
           selected_direction_id: CREATOR_SUBMITTED_CREATIVE_DIRECTION_ID,
           selected_direction_mode: "creator_submission",
-          confirmed_brief: frozen
+          confirmed_brief: confirmedSnapshot
         }
       });
 
@@ -1279,6 +1284,26 @@ export async function approveBrandCreativeDirectionAction(formData: FormData) {
         },
         confidence: 0.9
       });
+
+      const campaign = await brandCampaignRepository.findByLegacyProjectId(projectId);
+      if (campaign) {
+        const existingBrief = readProductionBrief(campaign.productionBrief) as BrandProductionBrief;
+        await brandCampaignRepository.updateCampaign(campaign.id, {
+          productionBrief: {
+            ...existingBrief,
+            frozen_production_brief: frozen,
+            selected_direction_id: CREATOR_SUBMITTED_CREATIVE_DIRECTION_ID,
+            approved_at: new Date().toISOString()
+          }
+        });
+
+        if (
+          campaign.status === CampaignState.CREATIVE_READY ||
+          campaign.status === CampaignState.DRAFT
+        ) {
+          await campaignService.transition(campaign.id, CampaignEvent.APPROVE_CREATIVE, user);
+        }
+      }
 
       await completeWizardSteps(projectId, [2, 3, 4, 5, 6]);
       await emitWizardProgress(projectId, {
@@ -1399,13 +1424,15 @@ export async function publishBrandCampaignAction(formData: FormData) {
 
   const confirmedBrief = buildConfirmedBriefSnapshot(project, lang);
   const priorSettings = project.settings_json ?? {};
-  await updateProject(projectId, {
-    settings_json: {
-      ...priorSettings,
-      confirmed_brief: priorSettings.confirmed_brief ?? confirmedBrief,
-      [WIZARD_EPHEMERAL_KEY]: false
-    }
-  });
+  if (!priorSettings.confirmed_brief) {
+    await updateProject(projectId, {
+      settings_json: {
+        ...priorSettings,
+        confirmed_brief: confirmedBrief,
+        [WIZARD_EPHEMERAL_KEY]: false
+      }
+    });
+  }
 
   const existingCampaign = await brandCampaignRepository.findByLegacyProjectId(projectId).catch(() => null);
   if (existingCampaign?.status === CampaignState.ESCROW_PENDING) {
@@ -1417,21 +1444,37 @@ export async function publishBrandCampaignAction(formData: FormData) {
   }
 
   try {
-    await runBrandWizardDemoPublish(projectId, lang, client.client_email, async () => {
-      await completeWizardSteps(projectId, [1, 2, 3, 4, 5, 6]);
-      await completeWizardStep(projectId, 7);
-
-      const result = await transitionProject(projectId, "project.publish", {
-        actor_role: "brand",
-        actor_id: client.client_email
-      });
-
-      if (!result.ok) {
-        throw new Error(result.message);
-      }
+    const user = await requireBrandCampaignUser(client.client_email);
+    const ready = await ensureCampaignPublishReady({
+      projectId,
+      locale: lang,
+      actor: { email: client.client_email, userId: user.id, role: user.role }
     });
+    if (!ready.ok) {
+      return { ok: false as const, error: ready.error };
+    }
+
+    const usesPrisma = hasDatabaseUrl();
+    if (!usesPrisma) {
+      await completeWizardSteps(projectId, [1, 2, 3, 4, 5, 6, 7], client.client_email, {
+        skipActivity: true
+      });
+    }
+
+    const result = await transitionProject(projectId, "project.publish", {
+      actor_role: "brand",
+      actor_id: client.client_email,
+      skipPreconditions: usesPrisma
+    });
+
+    if (!result.ok) {
+      throw new Error(localizePublishError(result.message, lang));
+    }
   } catch (error) {
-    const message = error instanceof Error ? error.message : lang === "zh" ? "发布失败" : "Publish failed";
+    const message = localizePublishError(
+      error instanceof Error ? error.message : lang === "zh" ? "发布失败" : "Publish failed",
+      lang
+    );
     try {
       await emitWizardProgress(projectId, { phase: "idle", progressMessage: message });
     } catch {
@@ -1441,17 +1484,6 @@ export async function publishBrandCampaignAction(formData: FormData) {
   }
 
   revalidateBrandCampaign(projectId);
-  const published = (await getProject(projectId)) ?? project;
-
-  await preparePublishedCampaignCheckout({
-    project: published,
-    client: {
-      client_name: client.client_name,
-      client_email: client.client_email,
-      company_name: client.company_name
-    },
-    locale: lang
-  });
 
   return {
     ok: true as const,

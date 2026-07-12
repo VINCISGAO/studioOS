@@ -1,5 +1,7 @@
 "use client";
 
+import { coerceErrorMessage } from "@/lib/studioos/format-client-error";
+
 export default function GlobalError({
   error,
   reset
@@ -21,7 +23,7 @@ export default function GlobalError({
         <main className="flex min-h-screen flex-col items-center justify-center gap-4 px-6 text-center">
           <h1 className="text-xl font-semibold">服务器错误</h1>
           <p className="max-w-md text-sm text-zinc-400">
-            {error.message || "Internal Server Error"}
+            {coerceErrorMessage(error?.message, "Internal Server Error")}
           </p>
           {error.digest ? (
             <p className="font-mono text-xs text-zinc-600">digest: {error.digest}</p>

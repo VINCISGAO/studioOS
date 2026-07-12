@@ -18,6 +18,7 @@ export function estimateFromBrief(input: ProjectEstimateBriefInput): ProjectEsti
     difficultyTier,
     projectType: input.projectType as ProjectEstimateInput["projectType"],
     avgShotLengthSeconds: input.avgShotLengthSeconds,
+    estimatedShotCount: input.estimatedShotCount,
     hourlyRateUsd: input.hourlyRateUsd,
     revisionRounds: input.revisionRounds,
     rushDelivery: input.rushDelivery

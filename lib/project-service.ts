@@ -579,7 +579,7 @@ export async function getProject(id: string): Promise<StoredProject | null> {
 export async function updateProject(
   id: string,
   patch: UpdateProjectInput,
-  options?: { action?: string; actorEmail?: string }
+  options?: { action?: string; actorEmail?: string; skipActivity?: boolean }
 ): Promise<StoredProject | null> {
   if (hasDatabaseUrl()) {
     return campaignService.updateBrandProject(id, patch, options);
@@ -607,14 +607,15 @@ export async function completeWizardStep(
 export async function completeWizardSteps(
   projectId: string,
   steps: number[],
-  actorEmail?: string
+  actorEmail?: string,
+  options?: { skipActivity?: boolean }
 ): Promise<StoredProject | null> {
   if (steps.length === 0) {
     return getProject(projectId);
   }
 
   if (hasDatabaseUrl()) {
-    return campaignService.completeBrandWizardSteps(projectId, steps, actorEmail);
+    return campaignService.completeBrandWizardSteps(projectId, steps, actorEmail, options);
   }
 
   const project = await getProject(projectId);
@@ -678,7 +679,7 @@ export async function transitionProject(
         userId: null
       });
       if (published) {
-        await appendProjectEvent({
+        void appendProjectEvent({
           project_id: projectId,
           event_name: event,
           from_state: { status: fromStatus },
@@ -686,7 +687,7 @@ export async function transitionProject(
           actor_id: options?.actor_id ?? null,
           actor_role: options?.actor_role ?? "system",
           metadata: options?.metadata ?? {}
-        });
+        }).catch(() => undefined);
         return { ok: true, project: published };
       }
     } catch (error) {

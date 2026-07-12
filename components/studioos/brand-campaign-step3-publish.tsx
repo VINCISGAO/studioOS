@@ -1,8 +1,8 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { publishBrandCampaignAction } from "@/app/brand-campaign-actions";
+import { formatClientError, coerceErrorMessage } from "@/lib/studioos/format-client-error";
 import { WizardStepper } from "@/components/studioos/ui/wizard-stepper";
 import { Button } from "@/components/ui/button";
 import type { Locale } from "@/lib/i18n";
@@ -136,8 +136,9 @@ export function BrandCampaignStep3Publish({
   onBack: () => void;
 }) {
   const t = copy[locale];
-  const router = useRouter();
-  const [publishError, setPublishError] = useState<string | null>(error ?? null);
+  const [publishError, setPublishError] = useState<string | null>(
+    error ? coerceErrorMessage(error) : null
+  );
   const [isPublishing, setIsPublishing] = useState(false);
 
   async function handlePublish() {
@@ -154,21 +155,24 @@ export function BrandCampaignStep3Publish({
     try {
       const result = await publishBrandCampaignAction(formData);
 
-      if (!result.ok) {
-        setPublishError(result.error);
+      if (!result || !("ok" in result) || !result.ok) {
+        setPublishError(
+          coerceErrorMessage(
+            result && "error" in result ? result.error : null,
+            locale === "zh" ? "发布失败，请重试" : "Publish failed — try again"
+          )
+        );
         setIsPublishing(false);
         return;
       }
 
-      router.push(result.checkoutPath);
-      router.refresh();
+      window.location.assign(result.checkoutPath);
     } catch (caught) {
       setPublishError(
-        caught instanceof Error
-          ? caught.message
-          : locale === "zh"
-            ? "发布失败，请重试"
-            : "Publish failed — try again"
+        formatClientError(
+          caught,
+          locale === "zh" ? "发布失败，请重试" : "Publish failed — try again"
+        )
       );
       setIsPublishing(false);
     }

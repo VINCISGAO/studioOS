@@ -8,6 +8,9 @@ import type { Locale } from "@/lib/i18n";
 import type { ReorganizedBrandBrief } from "@/lib/studioos/brand-brief-ai";
 import type { BrandDeliveryTimelineId, BrandVideoAspectRatio } from "@/lib/studioos/brand-campaign-options";
 
+import type { BrandAssetSlotId } from "@/lib/studioos/brand-creative-brief-options";
+import type { BrandBriefAssetPreviews } from "@/components/studioos/brand-creative-brief/use-brand-brief-asset-uploads";
+
 export type BrandCampaignBriefStep1PanelProps = {
   locale: Locale;
   copy: Record<string, string>;
@@ -28,6 +31,15 @@ export type BrandCampaignBriefStep1PanelProps = {
   isReferenceVideoUploading: boolean;
   continueDisabled: boolean;
   productReady: boolean;
+  assetPreviews: BrandBriefAssetPreviews;
+  assetUploadErrors: Partial<Record<BrandAssetSlotId, string>>;
+  uploadingAssetSlot: BrandAssetSlotId | null;
+  referenceVideoUploadProgress: number | null;
+  imageInputRef: React.RefObject<HTMLInputElement | null>;
+  onAssetSlotClick: (slot: BrandAssetSlotId) => void;
+  onImageFileSelected: (file: File) => void;
+  referenceVideoInputRef: React.RefObject<HTMLInputElement | null>;
+  onReferenceVideoFileSelected: (file: File) => void;
   previewUrl: string | null;
   uploadError: string | null;
   references: StoredProjectReference[];
@@ -38,7 +50,6 @@ export type BrandCampaignBriefStep1PanelProps = {
   onApplyRefined: () => void;
   onUploadClick: () => void;
   onUploadFile: (file: File) => void;
-  referenceVideoInputRef: React.RefObject<HTMLInputElement | null>;
   onReferenceVideoUploadClick: () => void;
   onUploadReferenceVideo: (file: File) => void;
   onAddRef: () => void;
@@ -92,11 +103,19 @@ export function BrandCampaignBriefStep1Panel(props: BrandCampaignBriefStep1Panel
         isPending={props.isPending}
         isUploading={props.isUploading}
         productReady={props.productReady}
+        assetPreviews={props.assetPreviews}
+        assetUploadErrors={props.assetUploadErrors}
+        uploadingAssetSlot={props.uploadingAssetSlot}
+        referenceVideoUploadProgress={props.referenceVideoUploadProgress}
+        imageInputRef={props.imageInputRef}
+        onAssetSlotClick={props.onAssetSlotClick}
+        onImageFileSelected={props.onImageFileSelected}
+        referenceVideoInputRef={props.referenceVideoInputRef}
+        onReferenceVideoFileSelected={props.onReferenceVideoFileSelected}
         previewUrl={props.previewUrl}
         onUploadClick={props.onUploadClick}
         fileInputRef={props.fileInputRef}
         onUploadFile={props.onUploadFile}
-        referenceVideoInputRef={props.referenceVideoInputRef}
         onReferenceVideoUploadClick={props.onReferenceVideoUploadClick}
         onUploadReferenceVideo={props.onUploadReferenceVideo}
         uploadError={props.uploadError}

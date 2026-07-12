@@ -25,6 +25,7 @@ import { userRepository } from "@/features/auth/user.repository";
 import { assertBrandCampaignCreationAllowed } from "@/lib/studioos/brand-active-campaign.server";
 import { CampaignEvents } from "@/features/shared/types/events";
 import { hasDatabaseUrl, prisma } from "@/lib/core/database/prisma";
+import { asInputJson } from "@/lib/core/prisma-json";
 import { logger } from "@/lib/core/logger";
 import { runTransition } from "@/lib/core/transition-runner";
 
@@ -300,7 +301,7 @@ export class CampaignBrandPortalService {
   async updateProject(
     legacyProjectId: string,
     patch: UpdateProjectInput,
-    options?: { action?: string; actorEmail?: string }
+    options?: { action?: string; actorEmail?: string; skipActivity?: boolean }
   ): Promise<StoredProject | null> {
     if (!this.isEnabled()) return null;
 
@@ -332,7 +333,7 @@ export class CampaignBrandPortalService {
       campaignMemoryJson: campaignMemory
     });
 
-    if (options?.action) {
+    if (options?.action && !options.skipActivity) {
       await activityService.write(
         campaign.id,
         options.action,
@@ -344,11 +345,21 @@ export class CampaignBrandPortalService {
     return mapCampaignToStoredProject(updated);
   }
 
-  async completeWizardStep(legacyProjectId: string, step: number, actorEmail?: string) {
-    return this.completeWizardSteps(legacyProjectId, [step], actorEmail);
+  async completeWizardStep(
+    legacyProjectId: string,
+    step: number,
+    actorEmail?: string,
+    options?: { skipActivity?: boolean }
+  ) {
+    return this.completeWizardSteps(legacyProjectId, [step], actorEmail, options);
   }
 
-  async completeWizardSteps(legacyProjectId: string, steps: number[], actorEmail?: string) {
+  async completeWizardSteps(
+    legacyProjectId: string,
+    steps: number[],
+    actorEmail?: string,
+    options?: { skipActivity?: boolean }
+  ) {
     if (!this.isEnabled() || steps.length === 0) return null;
     const campaign = await this.loadCampaignForStatuses(legacyProjectId, [...BRAND_WIZARD_METADATA_STATUSES]);
     const memory = readCampaignMemory(campaign.campaignMemoryJson) as BrandCampaignMemory;
@@ -365,7 +376,11 @@ export class CampaignBrandPortalService {
         wizard_step: wizardStep,
         wizard_completed_steps: [...completed].sort((a, b) => a - b)
       },
-      { action: "brand_campaign.step_completed", actorEmail }
+      {
+        action: options?.skipActivity ? undefined : "brand_campaign.step_completed",
+        actorEmail,
+        skipActivity: options?.skipActivity
+      }
     );
   }
 
@@ -410,17 +425,17 @@ export class CampaignBrandPortalService {
 
     const memory = readCampaignMemory(campaign.campaignMemoryJson) as BrandCampaignMemory;
     const publishedAt = new Date().toISOString();
-
-    await campaignRepository.updateBrandCampaign(campaign.id, {
-      campaignMemoryJson: {
-        ...memory,
-        wizard: {
-          ...memory.wizard,
-          ephemeral: false
-        },
-        published_at: publishedAt
-      }
-    });
+    const completedSteps = new Set([1, 2, 3, 4, 5, 6, 7, ...(memory.wizard?.completed_steps ?? [])]);
+    const publishedMemory = {
+      ...memory,
+      wizard: {
+        ...memory.wizard,
+        step: 7,
+        completed_steps: [...completedSteps].sort((a, b) => a - b),
+        ephemeral: false
+      },
+      published_at: publishedAt
+    };
 
     await runTransition({
       machine: campaignStateMachine,
@@ -435,7 +450,10 @@ export class CampaignBrandPortalService {
       persist: async (next) => {
         await prisma.campaign.update({
           where: { id: campaign.id },
-          data: { status: next }
+          data: {
+            status: next,
+            campaignMemoryJson: asInputJson(publishedMemory)
+          }
         });
       },
       domainEvent: {
@@ -446,52 +464,35 @@ export class CampaignBrandPortalService {
       }
     });
 
-    await activityService.write(
-      campaign.id,
-      "brand_campaign.published",
-      { userId: actor.userId ?? campaign.brandId, email: actor.email, role: "brand" },
-      {
-        legacy_project_id: legacyProjectId,
-        from_status: "CREATIVE_APPROVED",
-        to_status: "ESCROW_PENDING"
-      }
-    );
+    void activityService
+      .write(
+        campaign.id,
+        "brand_campaign.published",
+        { userId: actor.userId ?? campaign.brandId, email: actor.email, role: "brand" },
+        {
+          legacy_project_id: legacyProjectId,
+          from_status: "CREATIVE_APPROVED",
+          to_status: "ESCROW_PENDING"
+        }
+      )
+      .catch(() => undefined);
 
-    const { notifyBrandRequirementPublished } = await import(
-      "@/lib/studioos/commercial-interaction-notify"
-    );
-    await notifyBrandRequirementPublished({
-      brandEmail: actor.email,
-      projectId: legacyProjectId,
-      projectTitle: campaign.title || "Project",
-      locale: "zh"
-    }).catch(() => undefined);
+    void import("@/lib/studioos/commercial-interaction-notify")
+      .then(({ notifyBrandRequirementPublished }) =>
+        notifyBrandRequirementPublished({
+          brandEmail: actor.email,
+          projectId: legacyProjectId,
+          projectTitle: campaign.title || "Project",
+          locale: "zh"
+        })
+      )
+      .catch(() => undefined);
 
-    const updated = await campaignRepository.findByLegacyProjectIdWithRelations(legacyProjectId);
-    const mapped = updated ? mapCampaignToStoredProject(updated) : null;
-    if (mapped) {
-      const { preparePublishedCampaignCheckout } = await import("@/lib/studioos/brand-checkout-service");
-      await preparePublishedCampaignCheckout({
-        project: mapped,
-        client: {
-          client_email: actor.email,
-          client_name: memory.client?.name ?? campaign.brand?.fullName ?? actor.email.split("@")[0],
-          company_name:
-            memory.client?.company_name ??
-            campaign.brand?.brandProfile?.companyName ??
-            memory.client?.name ??
-            "Brand"
-        },
-        locale: "zh"
-      }).catch((error) => {
-        logger.warn("Legacy checkout setup after publish failed", {
-          service: "campaign-brand",
-          legacyProjectId,
-          error: error instanceof Error ? error.message : String(error)
-        });
-      });
-    }
-    return mapped;
+    return mapCampaignToStoredProject({
+      ...campaign,
+      status: "ESCROW_PENDING",
+      campaignMemoryJson: asInputJson(publishedMemory) as typeof campaign.campaignMemoryJson
+    });
   }
 }
 

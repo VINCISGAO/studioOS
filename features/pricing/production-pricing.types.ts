@@ -22,6 +22,7 @@ export type ProjectEstimateBriefInput = {
   projectType?: string;
   difficultyTier?: ProductionDifficultyTier;
   avgShotLengthSeconds?: number;
+  estimatedShotCount?: number;
   hourlyRateUsd?: number;
   revisionRounds?: number;
   rushDelivery?: boolean;
@@ -98,6 +99,7 @@ export type ProjectEstimateInput = {
   difficultyTier: ProductionDifficultyTier;
   projectType?: ProductionProjectType;
   avgShotLengthSeconds?: number;
+  estimatedShotCount?: number;
   hourlyRateUsd?: number;
   revisionRounds?: number;
   rushDelivery?: boolean;

@@ -3,18 +3,20 @@
 import type { Locale } from "@/lib/i18n";
 import { PortalFixedFooter } from "@/components/studioos/portal/portal-fixed-footer";
 import { cn } from "@/lib/utils";
-import { ArrowLeft, ArrowRight, Save } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, Save } from "lucide-react";
 
 const copy = {
   en: {
     back: "Back to previous step",
     saveDraft: "Save draft",
-    confirm: "Choose and freeze Production Brief"
+    confirm: "Choose and freeze Production Brief",
+    confirming: "Freezing brief…"
   },
   zh: {
     back: "返回上一步",
     saveDraft: "保存草稿",
-    confirm: "选择并冻结正式制作简报"
+    confirm: "选择并冻结正式制作简报",
+    confirming: "正在冻结制作需求…"
   }
 } as const;
 
@@ -22,6 +24,7 @@ export function BrandCampaignStep2Footer({
   locale,
   directionsReady,
   selectedId,
+  isConfirming = false,
   confirmLabel,
   onBack,
   onSaveDraft,
@@ -30,6 +33,7 @@ export function BrandCampaignStep2Footer({
   locale: Locale;
   directionsReady: boolean;
   selectedId: string | null;
+  isConfirming?: boolean;
   confirmLabel?: string;
   onBack: () => void;
   onSaveDraft?: () => void;
@@ -68,12 +72,13 @@ export function BrandCampaignStep2Footer({
           ) : null}
           <button
             type="button"
-            disabled={!directionsReady || !selectedId}
+            disabled={!directionsReady || !selectedId || isConfirming}
             onClick={onConfirm}
             className="inline-flex h-9 max-w-[min(100vw-7rem,280px)] items-center justify-center gap-2 truncate rounded-lg bg-violet-600 px-3 text-sm font-semibold text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50 sm:h-10 sm:max-w-none sm:px-5"
           >
-            <span className="truncate">{confirmLabel ?? t.confirm}</span>
-            <ArrowRight className="h-4 w-4 shrink-0" />
+            {isConfirming ? <Loader2 className="h-4 w-4 shrink-0 animate-spin" /> : null}
+            <span className="truncate">{isConfirming ? t.confirming : confirmLabel ?? t.confirm}</span>
+            {!isConfirming ? <ArrowRight className="h-4 w-4 shrink-0" /> : null}
           </button>
         </div>
     </PortalFixedFooter>

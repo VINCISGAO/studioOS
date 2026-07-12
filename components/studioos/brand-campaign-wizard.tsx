@@ -51,6 +51,7 @@ import {
   runInBackground,
   syncBrandWizardStepUrl
 } from "@/lib/studioos/instant-nav";
+import { coerceErrorMessage, formatClientError } from "@/lib/studioos/format-client-error";
 import { cn } from "@/lib/utils";
 import { Sparkles } from "lucide-react";
 
@@ -298,6 +299,11 @@ export function BrandCampaignWizard({
     return asset?.file_url ?? null;
   }, [wizardData.assets]);
 
+  const logoImageUrl = useMemo(() => {
+    const asset = wizardData.assets.find((item) => item.type === "logo");
+    return asset?.file_url ?? null;
+  }, [wizardData.assets]);
+
   function goStep(next: number) {
     const clamped = clampBrandVisibleStep(next);
     setStep(clamped);
@@ -317,7 +323,12 @@ export function BrandCampaignWizard({
     runInBackground(async () => {
       const result = await saveBrandCampaignDraftAction(fd);
       if (!result.ok) {
-        setError(result.error);
+        setError(
+          coerceErrorMessage(
+            result.error,
+            locale === "zh" ? "草稿保存失败" : "Failed to save draft"
+          )
+        );
       }
     }, "save-draft");
   }
@@ -340,27 +351,51 @@ export function BrandCampaignWizard({
     runInBackground(async () => {
       const result = await saveBrandCampaignSetupAction(fd);
       if (!result.ok) {
-        setError(result.error);
+        setError(
+          coerceErrorMessage(
+            result.error,
+            locale === "zh" ? "保存失败，请重试" : "Save failed — try again"
+          )
+        );
       }
     }, "save-setup");
   }
 
-  function confirmDirection(directionId: string) {
+  const [isApprovingDirection, setIsApprovingDirection] = useState(false);
+
+  async function confirmDirection(directionId: string) {
+    if (isApprovingDirection) return;
     setError(null);
-    setStep3Mounted(true);
-    goStep(3);
+    setIsApprovingDirection(true);
 
     const fd = new FormData();
     fd.set("lang", locale);
     fd.set("project_id", projectId);
     fd.set("direction_id", directionId);
 
-    runInBackground(async () => {
+    try {
       const result = await approveBrandCreativeDirectionAction(fd);
       if (!result.ok) {
-        setError(result.error);
+        setError(
+          coerceErrorMessage(
+            result.error,
+            locale === "zh" ? "创意确认失败，请重试" : "Creative approval failed — try again"
+          )
+        );
+        return;
       }
-    }, "approve-direction");
+      setStep3Mounted(true);
+      goStep(3);
+    } catch (caught) {
+      setError(
+        formatClientError(
+          caught,
+          locale === "zh" ? "创意确认失败，请重试" : "Creative approval failed — try again"
+        )
+      );
+    } finally {
+      setIsApprovingDirection(false);
+    }
   }
 
   const maxWidth = step === 1 || step === 2 || step === 3 ? "max-w-none" : "max-w-3xl";
@@ -389,6 +424,7 @@ export function BrandCampaignWizard({
           projectId={projectId}
           initial={briefInitial}
           initialProductImageUrl={productImageUrl}
+          initialLogoImageUrl={logoImageUrl}
           initialReferences={wizardData.references}
           stepMode="all"
           hideTopBar
@@ -397,6 +433,7 @@ export function BrandCampaignWizard({
           onProductUploaded={(previewUrl) => {
             applyProductImagePreview(previewUrl);
           }}
+          onMediaUpdated={refreshWizardMedia}
           onBriefChange={scheduleBriefPrefetch}
           onReferencesUpdated={refreshWizardMedia}
           onContinue={saveSetup}
@@ -421,6 +458,7 @@ export function BrandCampaignWizard({
             awaitingBriefSave={false}
             minGeneratingUntil={schemeGeneratingUntil}
             isActive={step === 2}
+            isConfirming={isApprovingDirection}
             onBack={() => goStep(1)}
             onSaveDraft={() => saveDraft(briefInitial)}
             onConfirmed={confirmDirection}

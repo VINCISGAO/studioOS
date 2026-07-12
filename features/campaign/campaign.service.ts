@@ -255,8 +255,13 @@ export class CampaignService {
     return campaignBrandPortalService.completeWizardStep(legacyProjectId, step, actorEmail);
   }
 
-  completeBrandWizardSteps(legacyProjectId: string, steps: number[], actorEmail?: string) {
-    return campaignBrandPortalService.completeWizardSteps(legacyProjectId, steps, actorEmail);
+  completeBrandWizardSteps(
+    legacyProjectId: string,
+    steps: number[],
+    actorEmail?: string,
+    options?: Parameters<CampaignBrandPortalService["completeWizardSteps"]>[3]
+  ) {
+    return campaignBrandPortalService.completeWizardSteps(legacyProjectId, steps, actorEmail, options);
   }
 
   saveBrandCreativeBrief(

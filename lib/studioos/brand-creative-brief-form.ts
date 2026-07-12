@@ -1,6 +1,7 @@
 import type { BriefFormState } from "@/components/studioos/brand-campaign-step-brief";
 import type { Locale } from "@/lib/i18n";
 import type { StoredProject } from "@/lib/project-types";
+import { RESOLUTION_OPTIONS } from "@/lib/studioos/brand-creative-brief-options";
 
 type StoredQuestionnaire = Partial<BriefFormState> & {
   refined_brief?: BriefFormState["refined"];
@@ -9,6 +10,12 @@ type StoredQuestionnaire = Partial<BriefFormState> & {
 function normalizeVideoDuration(value: unknown, fallback: string) {
   const raw = String(value ?? fallback);
   return raw === "6s" || raw === "10s" ? "15s" : raw;
+}
+
+export function normalizeBriefResolution(value: unknown, fallback = "4K") {
+  const raw = String(value ?? fallback);
+  if (raw === "720p") return "1080p";
+  return RESOLUTION_OPTIONS.includes(raw as (typeof RESOLUTION_OPTIONS)[number]) ? raw : fallback;
 }
 
 export function defaultCreativeBriefExtendedFields(): Pick<
@@ -20,6 +27,7 @@ export function defaultCreativeBriefExtendedFields(): Pick<
   | "brandWebsite"
   | "videoDuration"
   | "videoDurationCustom"
+  | "estimatedShotCount"
   | "creativeStyles"
   | "creativeStyleCustom"
   | "creativeTones"
@@ -46,6 +54,7 @@ export function defaultCreativeBriefExtendedFields(): Pick<
     brandWebsite: "",
     videoDuration: "30s",
     videoDurationCustom: "",
+    estimatedShotCount: 0,
     creativeStyles: ["cinematic"],
     creativeStyleCustom: "",
     creativeTones: ["inspiring"],
@@ -89,6 +98,7 @@ export function readCreativeBriefExtendedFields(
     brandWebsite: String(source.brandWebsite ?? source.productUrl ?? project.product_url ?? ""),
     videoDuration: normalizeVideoDuration(source.videoDuration, defaults.videoDuration),
     videoDurationCustom: String(source.videoDurationCustom ?? ""),
+    estimatedShotCount: Math.max(0, Number(source.estimatedShotCount ?? defaults.estimatedShotCount) || 0),
     creativeStyles: Array.isArray(source.creativeStyles) ? source.creativeStyles.map(String) : defaults.creativeStyles,
     creativeStyleCustom: String(source.creativeStyleCustom ?? ""),
     creativeTones: Array.isArray(source.creativeTones) ? source.creativeTones.map(String) : defaults.creativeTones,
@@ -99,7 +109,7 @@ export function readCreativeBriefExtendedFields(
       source.audienceGender === "male" || source.audienceGender === "female"
         ? source.audienceGender
         : defaults.audienceGender,
-    resolution: String(source.resolution ?? defaults.resolution),
+    resolution: normalizeBriefResolution(source.resolution, defaults.resolution),
     frameRate: String(source.frameRate ?? defaults.frameRate),
     videoQuantity: Number(source.videoQuantity ?? defaults.videoQuantity) || 1,
     mustInclude: Array.isArray(source.mustInclude) ? source.mustInclude.map(String) : [],
@@ -132,6 +142,7 @@ export function readCreativeBriefExtendedFieldsFromFormData(
     brandWebsite: String(formData.get("brandWebsite") ?? "").trim(),
     videoDuration: normalizeVideoDuration(formData.get("videoDuration"), defaults.videoDuration),
     videoDurationCustom: String(formData.get("videoDurationCustom") ?? "").trim(),
+    estimatedShotCount: Math.max(0, Number(formData.get("estimatedShotCount") ?? defaults.estimatedShotCount) || 0),
     creativeStyles: parseCommaList(formData.get("creativeStyles")),
     creativeStyleCustom: String(formData.get("creativeStyleCustom") ?? "").trim(),
     creativeTones: parseCommaList(formData.get("creativeTones")),
@@ -140,7 +151,7 @@ export function readCreativeBriefExtendedFieldsFromFormData(
     audienceRegion: String(formData.get("audienceRegion") ?? defaults.audienceRegion),
     audienceGender:
       genderRaw === "male" || genderRaw === "female" ? genderRaw : defaults.audienceGender,
-    resolution: String(formData.get("resolution") ?? defaults.resolution),
+    resolution: normalizeBriefResolution(formData.get("resolution"), defaults.resolution),
     frameRate: String(formData.get("frameRate") ?? defaults.frameRate),
     videoQuantity: Number(formData.get("videoQuantity") ?? defaults.videoQuantity) || 1,
     mustInclude: parseCommaList(formData.get("mustInclude")),

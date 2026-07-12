@@ -133,33 +133,25 @@ export async function runBrandWizardDemoPrepare(projectId: string, lang: Locale)
   };
 }
 
-/** Fast mock publish — skip Prisma sync when unavailable. */
+/** Publish — run immediately without artificial progress delays. */
 export async function runBrandWizardDemoPublish(
   projectId: string,
   lang: Locale,
-  actorId: string,
+  _actorId: string,
   publish: () => Promise<void>
 ) {
-  const steps =
-    lang === "zh"
-      ? ["提交广告…", "创建托管订单…", "等待付款…"]
-      : ["Submitting ad…", "Creating escrow order…", "Awaiting payment…"];
-
-  for (let i = 0; i < steps.length; i++) {
-    await emitWizardProgress(projectId, {
-      step: 7,
-      phase: "publishing",
-      progressMessage: steps[i],
-      progressPercent: 90 + i * 3
-    });
-    await delay(350);
-  }
+  await emitWizardProgress(projectId, {
+    step: 7,
+    phase: "publishing",
+    progressMessage: lang === "zh" ? "正在创建托管账单…" : "Creating escrow invoice…",
+    progressPercent: 94
+  });
 
   await publish();
 
   await emitWizardProgress(projectId, {
     phase: "idle",
-    progressMessage: lang === "zh" ? "发布成功，请完成付款" : "Published — complete payment",
+    progressMessage: lang === "zh" ? "账单已创建，请完成付款" : "Invoice ready — complete payment",
     progressPercent: 100
   });
 }

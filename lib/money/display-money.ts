@@ -127,6 +127,22 @@ export function formatMoneyRangeFromUsd(
   return `${formatMoneyFromUsd(minUsd, locale)} – ${formatMoneyFromUsd(maxUsd, locale)}`;
 }
 
+/** Parses stored budget strings like "$800", "$800–$1,200", "$2,000+". Amounts are display USD. */
+export function parseStoredMoneyRange(value: string): { min: number; max: number | null } | null {
+  const numbers = value.match(/\d[\d,]*/g)?.map((item) => Number(item.replace(/,/g, ""))) ?? [];
+  if (!numbers.length) return null;
+  if (value.includes("+")) {
+    return { min: numbers[0] ?? 0, max: null };
+  }
+  if (numbers.length === 1) {
+    const amount = numbers[0] ?? 0;
+    return { min: amount, max: amount };
+  }
+  const first = numbers[0] ?? 0;
+  const second = numbers[1] ?? first;
+  return { min: Math.min(first, second), max: Math.max(first, second) };
+}
+
 export function formatStoredBudgetRange(
   stored: string,
   locale?: Locale | SupportedLanguageCode | null

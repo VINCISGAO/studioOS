@@ -50,14 +50,27 @@ export const AUDIENCE_REGION_OPTIONS = [
   { value: "cn", label: { zh: "中国大陆", en: "Mainland China" } }
 ] as const;
 
-export const RESOLUTION_OPTIONS = ["4K", "1080p", "720p"] as const;
+export const RESOLUTION_OPTIONS = ["4K", "1080p"] as const;
 export const FPS_OPTIONS = ["24 fps", "30 fps", "60 fps"] as const;
+
+export function safeBriefResolutionValue(value: string | undefined | null) {
+  const normalized = value === "720p" ? "1080p" : value;
+  return RESOLUTION_OPTIONS.includes(normalized as (typeof RESOLUTION_OPTIONS)[number])
+    ? normalized!
+    : RESOLUTION_OPTIONS[1];
+}
+
+export function safeBriefFrameRateValue(value: string | undefined | null) {
+  return FPS_OPTIONS.includes(value as (typeof FPS_OPTIONS)[number]) ? value! : FPS_OPTIONS[1];
+}
 
 export const BRAND_ASSET_SLOTS = [
   { id: "logo", label: { zh: "Logo", en: "Logo" } },
   { id: "product_photos", label: { zh: "产品照片", en: "Product photos" } },
   { id: "reference_videos", label: { zh: "参考视频", en: "Reference videos" } }
 ] as const;
+
+export type BrandAssetSlotId = (typeof BRAND_ASSET_SLOTS)[number]["id"];
 
 export const MUST_INCLUDE_OPTIONS = [
   { id: "logo", label: { zh: "Logo", en: "Logo" } },

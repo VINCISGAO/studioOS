@@ -5,6 +5,11 @@ import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { refineBrandBriefAction } from "@/app/brand-campaign-actions";
 import { addReferenceAction, removeReferenceAction } from "@/app/project-wizard-actions";
 import { BrandCampaignBriefStep1Panel } from "@/components/studioos/brand-campaign-brief-step1-panel";
+import { BrandBriefOptimizerPanel } from "@/components/studioos/brand-brief-optimizer-panel";
+import {
+  resolveInitialBrandAssetPreviews,
+  useBrandBriefAssetUploads
+} from "@/components/studioos/brand-creative-brief/use-brand-brief-asset-uploads";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,10 +39,16 @@ import {
   formatMoneyFromUsd,
   getCurrencySymbol
 } from "@/lib/money/display-money";
-import { appendCreativeBriefExtendedFields } from "@/lib/studioos/brand-creative-brief-form";
+import {
+  appendCreativeBriefExtendedFields,
+  normalizeBriefResolution
+} from "@/lib/studioos/brand-creative-brief-form";
+import { applyOptimizerPatches } from "@/lib/studioos/brand-brief-optimizer-apply";
+import { applyPolishedBriefToForm, primaryBriefSourceText } from "@/lib/studioos/brand-brief-polish-merge";
+import { safeBriefFrameRateValue } from "@/lib/studioos/brand-creative-brief-options";
 import { getBriefContinueBlocker } from "@/lib/studioos/brand-creative-brief-continue-validation";
 import { BRIEF_FIELD_TARGETS, scrollToBriefField } from "@/lib/studioos/brand-creative-brief-scroll";
-import { compressImageForUpload } from "@/lib/studioos/image-upload-client";
+import { formatClientError, coerceErrorMessage } from "@/lib/studioos/format-client-error";
 import type { CommercialObjective } from "@/lib/project-types";
 import { cn } from "@/lib/utils";
 import {
@@ -88,12 +99,14 @@ const copy = {
     q4: "Platforms",
     q5: "Anything else?",
     q5Hint: "Deadline, tone, things to avoid…",
-    aiPanelTitle: "AI brief polish",
-    aiPanelHint: "Write casually below, then polish into a studio-ready brief.",
+    aiPanelTitle: "AI Professional Brief",
+    aiPanelHint: "Share a casual idea — AI upgrades it into a studio-ready campaign brief.",
     rawSummary: "Your words",
-    rawSummaryHint: "Not sure how to describe it? Just cover the key points — AI will organize it for you.",
-    aiPolish: "Polish with AI",
-    aiPolishing: "Polishing…",
+    rawSummaryHint: "Cover the basics — AI will infer strategy, audience, platforms, and execution.",
+    aiPolish: "AI Professional Brief",
+    aiPolishSubtitle:
+      "Auto-fills strategy, audience, creative direction, platforms, creator types, execution priorities, and missing fields.",
+    aiPolishing: "Building your brief…",
     budgetLabel: "Budget (USD)",
     budgetHint: "All amounts in USD · minimum $200 · helps us match the right studio.",
     budgetCustomPlaceholder: "Custom amount, e.g. 800 or 800-1500",
@@ -101,9 +114,9 @@ const copy = {
     budgetCustomLabel: "Custom",
     timelineLabel: "Timeline",
     timelineHint: "When do you need the final video?",
-    aiReady: "Polished result",
+    aiReady: "Professional brief",
     aiTemplate: "Smart template",
-    aiOpenai: "AI polished",
+    aiOpenai: "AI Creative Director",
     editHint: "Review and edit, then apply to your campaign.",
     campaignGoal: "Campaign goal",
     audience: "Target audience",
@@ -115,7 +128,7 @@ const copy = {
     saveDraft: "Save draft",
     savingDraft: "Saving…",
     needInput: "Upload a product photo and describe your campaign.",
-    needPolish: "Write your idea first, then tap AI polish.",
+    needPolish: "Write your idea first, then run AI Professional Brief.",
     needApply: "Apply the AI result before continuing, or fill in the questionnaire manually.",
     refsTitle: "Style references (optional)",
     refsHint: "Reference videos help us quickly understand your preferences.",
@@ -138,7 +151,7 @@ const copy = {
     stepLabel: "第 1 步 / 共 4 步",
     steps: ["需求", "准备", "确认", "Studio"],
     title: "告诉我们你想做什么广告",
-    subtitle: "先用口语描述想法 — AI 几秒内整理成 Studio 能用的专业 Brief。",
+    subtitle: "先用口语描述想法 — AI 几秒内整理成 Studio 能用的专业广告需求。",
     aiHeroTitle: "用 AI 描述你的广告想法",
     aiHeroHint: "不会写没关系，把重点说完即可，AI 帮你整理成专业需求。",
     aiPlaceholder:
@@ -166,12 +179,14 @@ const copy = {
     q4: "投放平台",
     q5: "补充说明",
     q5Hint: "时间、语气、不要出现的内容…",
-    aiPanelTitle: "AI 整理",
-    aiPanelHint: "先用口语描述，再一键整理成 Studio 能用的 Brief。",
+    aiPanelTitle: "AI 完善创意需求",
+    aiPanelHint: "口语描述即可 — AI 将想法升级为可直接执行的专业广告需求。",
     rawSummary: "口语描述",
-    rawSummaryHint: "不会描述没关系，把重点说完即可，AI 为您整理。",
-    aiPolish: "AI 帮我整理",
-    aiPolishing: "整理中…",
+    rawSummaryHint: "把重点说完即可 — AI 会推断策略、受众、平台与执行重点。",
+    aiPolish: "AI 完善创意需求",
+    aiPolishSubtitle:
+      "自动补全广告策略、目标受众、创意方向、平台建议、创作者类型、执行重点与缺失信息，让普通需求升级为专业广告需求。",
+    aiPolishing: "正在生成专业需求…",
     budgetLabel: "预算（美金）",
     budgetHint: "均以美金计价 · 最低 $200 · 帮助我们匹配合适档位的 Studio。",
     budgetCustomPlaceholder: "自定义金额，如 800 或 800-1500",
@@ -179,21 +194,21 @@ const copy = {
     budgetCustomLabel: "自定义",
     timelineLabel: "预计工期",
     timelineHint: "您希望什么时候拿到成片？",
-    aiReady: "整理结果",
+    aiReady: "专业需求",
     aiTemplate: "智能模板",
-    aiOpenai: "AI 已整理",
+    aiOpenai: "AI 创意总监",
     editHint: "确认内容后，点击「应用到 Campaign」。",
     campaignGoal: "Campaign 目标",
     audience: "目标受众",
     apply: "应用到 Campaign",
     applied: "已应用",
-    appliedSuccess: "Brief 已应用，可以继续下一步。",
-    appliedBanner: "已应用的 Brief",
+    appliedSuccess: "需求已应用，可以继续下一步。",
+    appliedBanner: "已应用的需求",
     continue: "继续",
     saveDraft: "保存草稿",
     savingDraft: "保存中…",
     needInput: "请上传产品图并描述广告需求。",
-    needPolish: "先写下你的想法，再点 AI 整理。",
+    needPolish: "先写下你的想法，再点 AI 完善创意需求。",
     needApply: "请先点击「应用到 Campaign」，或手动填写问卷。",
     refsTitle: "风格参考（选填）",
     refsHint: "有参考视频，帮助我们快速锁定您的喜好。",
@@ -233,6 +248,8 @@ export type BriefFormState = {
   brandWebsite: string;
   videoDuration: string;
   videoDurationCustom: string;
+  /** 0 = infer from duration; otherwise explicit shot count for pricing. */
+  estimatedShotCount: number;
   creativeStyles: string[];
   creativeStyleCustom: string;
   creativeTones: string[];
@@ -345,12 +362,14 @@ export function BrandCampaignStepBrief({
   projectId,
   initial,
   initialProductImageUrl,
+  initialLogoImageUrl,
   initialReferences = [],
   stepMode = "all",
   hideTopBar = false,
   isPending,
   error,
   onProductUploaded,
+  onMediaUpdated,
   onBriefChange,
   onReferencesUpdated,
   onContinue,
@@ -361,12 +380,14 @@ export function BrandCampaignStepBrief({
   projectId: string;
   initial: BriefFormState;
   initialProductImageUrl?: string | null;
+  initialLogoImageUrl?: string | null;
   initialReferences?: StoredProjectReference[];
   stepMode?: "brief" | "product" | "references" | "all";
   hideTopBar?: boolean;
   isPending: boolean;
   error: string | null;
   onProductUploaded?: (previewUrl: string) => void;
+  onMediaUpdated?: () => void;
   onBriefChange?: (state: BriefFormState, productReady: boolean) => void;
   onReferencesUpdated?: () => void;
   onContinue: (state: BriefFormState) => void;
@@ -377,6 +398,26 @@ export function BrandCampaignStepBrief({
   const objectives = objectiveOptions(locale);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const referenceVideoInputRef = useRef<HTMLInputElement>(null);
+  const initialAssetPreviews = useMemo(
+    () =>
+      resolveInitialBrandAssetPreviews({
+        productImageUrl: initialProductImageUrl,
+        logoImageUrl: initialLogoImageUrl,
+        references: initialReferences
+      }),
+    [initialProductImageUrl, initialLogoImageUrl, initialReferences]
+  );
+  const creativeBriefAssets = useBrandBriefAssetUploads({
+    locale,
+    projectId,
+    initialPreviews: initialAssetPreviews,
+    onProductUploaded,
+    onReferenceUploaded: (reference) => {
+      setReferences((prev) => [reference, ...prev.filter((item) => item.id !== reference.id)]);
+      onReferencesUpdated?.();
+    },
+    onMediaUpdated
+  });
   const [form, setForm] = useState(initial);
   const [productReady, setProductReady] = useState(Boolean(initialProductImageUrl));
   const [previewUrl, setPreviewUrl] = useState<string | null>(initialProductImageUrl ?? null);
@@ -404,8 +445,19 @@ export function BrandCampaignStepBrief({
   }, [initialReferences]);
 
   useEffect(() => {
-    onBriefChange?.(form, productReady);
-  }, [form, productReady, onBriefChange]);
+    const nextResolution = normalizeBriefResolution(form.resolution, "1080p");
+    const nextFrameRate = safeBriefFrameRateValue(form.frameRate);
+    if (nextResolution !== form.resolution) {
+      setForm((prev) => ({ ...prev, resolution: nextResolution }));
+    }
+    if (nextFrameRate !== form.frameRate) {
+      setForm((prev) => ({ ...prev, frameRate: nextFrameRate }));
+    }
+  }, [form.frameRate, form.resolution]);
+
+  useEffect(() => {
+    onBriefChange?.(form, hideTopBar ? creativeBriefAssets.productReady : productReady);
+  }, [form, productReady, creativeBriefAssets.productReady, hideTopBar, onBriefChange]);
 
   function togglePlatform(platform: string) {
     setForm((prev) => ({
@@ -503,38 +555,80 @@ export function BrandCampaignStepBrief({
 
     setLocalError(null);
     setApplyNotice(null);
-    startPolish(async () => {
-      const result = await refineBrandBriefAction(buildFormData());
-      if (!result.ok) {
-        setLocalError(result.error);
-        return;
-      }
-      const polishedDescription = result.brief.campaign_goal.slice(0, 1500);
-      setForm((prev) => ({
-        ...prev,
-        projectTitle: prev.projectTitle.trim() || result.brief.title,
-        productName: prev.productName.trim() || result.brief.product_name,
-        productDescription: polishedDescription,
-        rawSummary: polishedDescription,
-        audienceDescription: result.brief.target_audience,
-        extraNotes: result.brief.notes,
-        refined: result.brief
-      }));
-      setRefinedApplied(true);
-      setApplyNotice(t.appliedSuccess);
+    startPolish(() => {
+      void (async () => {
+        try {
+          const result = await refineBrandBriefAction(buildFormData());
+          if (!result.ok) {
+            setLocalError(
+              coerceErrorMessage(
+                result.error,
+                locale === "zh" ? "AI 优化失败，请重试" : "AI polish failed — try again"
+              )
+            );
+            return;
+          }
+          const userSource = primaryBriefSourceText({
+            productDescription: form.productDescription,
+            rawSummary: form.rawSummary,
+            adOneLiner: form.adOneLiner
+          });
+
+          if (result.brief.optimizer) {
+            const patches = applyOptimizerPatches(form, result.brief.optimizer, locale);
+            setForm((prev) => ({
+              ...prev,
+              ...patches,
+              productDescription: userSource,
+              rawSummary: userSource,
+              refined: result.brief
+            }));
+          } else {
+            const applied = applyPolishedBriefToForm({
+              original: userSource,
+              brief: result.brief,
+              locale
+            });
+            setForm((prev) => ({
+              ...prev,
+              projectTitle: prev.projectTitle.trim() || result.brief.title,
+              productName: prev.productName.trim() || result.brief.product_name,
+              productDescription: applied.productDescription,
+              rawSummary: applied.rawSummary,
+              audienceDescription: applied.audienceDescription || prev.audienceDescription,
+              extraNotes: applied.extraNotes || prev.extraNotes,
+              refined: result.brief
+            }));
+          }
+          setRefinedApplied(true);
+          setApplyNotice(t.appliedSuccess);
+        } catch (caught) {
+          setLocalError(
+            formatClientError(
+              caught,
+              locale === "zh" ? "AI 优化失败，请重试" : "AI polish failed — try again"
+            )
+          );
+        }
+      })();
     });
   }
 
   function handleApplyRefined() {
     if (!form.refined) return;
 
-    setForm((prev) => ({
-      ...prev,
-      productName: prev.productName.trim() || prev.refined!.product_name,
-      productDescription: prev.refined!.campaign_goal,
-      audienceDescription: prev.refined!.target_audience,
-      extraNotes: prev.extraNotes.trim() || prev.refined!.notes
-    }));
+    if (form.refined.optimizer) {
+      const patches = applyOptimizerPatches(form, form.refined.optimizer, locale);
+      setForm((prev) => ({ ...prev, ...patches }));
+    } else {
+      setForm((prev) => ({
+        ...prev,
+        productName: prev.productName.trim() || prev.refined!.product_name,
+        productDescription: prev.refined!.campaign_goal,
+        audienceDescription: prev.refined!.target_audience,
+        extraNotes: prev.extraNotes.trim() || prev.refined!.notes
+      }));
+    }
     setRefinedApplied(true);
     setApplyNotice(t.appliedSuccess);
     setLocalError(null);
@@ -823,7 +917,7 @@ export function BrandCampaignStepBrief({
     const blocker = getBriefContinueBlocker({
       locale,
       form,
-      productReady,
+      productReady: hideTopBar ? creativeBriefAssets.productReady : productReady,
       budgetCustom,
       copy: {
         needInput: t.needInput,
@@ -858,10 +952,12 @@ export function BrandCampaignStepBrief({
   const continueDisabled =
     isPending ||
     isSavingDraft ||
-    (isUploading && !productReady) ||
+    (hideTopBar
+      ? creativeBriefAssets.isImageUploading && !creativeBriefAssets.productReady
+      : isUploading && !productReady) ||
     isRefPending ||
-    isReferenceVideoUploading ||
-    (stepMode === "product" && isUploading && !productReady) ||
+    (hideTopBar ? creativeBriefAssets.isReferenceVideoUploading : isReferenceVideoUploading) ||
+    (stepMode === "product" && (hideTopBar ? creativeBriefAssets.isImageUploading && !creativeBriefAssets.productReady : isUploading && !productReady)) ||
     (stepMode === "references" && isRefPending);
 
   const showBrief = stepMode === "brief" || stepMode === "all";
@@ -887,11 +983,22 @@ export function BrandCampaignStepBrief({
         isPolishing={isPolishing}
         isPending={isPending}
         isSavingDraft={isSavingDraft}
-        isUploading={isUploading}
+        isUploading={hideTopBar ? creativeBriefAssets.isImageUploading : isUploading}
         isRefPending={isRefPending}
-        isReferenceVideoUploading={isReferenceVideoUploading}
+        isReferenceVideoUploading={
+          hideTopBar ? creativeBriefAssets.isReferenceVideoUploading : isReferenceVideoUploading
+        }
         continueDisabled={continueDisabled}
-        productReady={productReady}
+        productReady={hideTopBar ? creativeBriefAssets.productReady : productReady}
+        assetPreviews={creativeBriefAssets.assetPreviews}
+        assetUploadErrors={creativeBriefAssets.assetUploadErrors}
+        uploadingAssetSlot={creativeBriefAssets.uploadingSlot}
+        referenceVideoUploadProgress={creativeBriefAssets.referenceVideoUploadProgress}
+        imageInputRef={creativeBriefAssets.imageInputRef}
+        onAssetSlotClick={creativeBriefAssets.onAssetSlotClick}
+        onImageFileSelected={creativeBriefAssets.handleImageFile}
+        referenceVideoInputRef={creativeBriefAssets.referenceVideoInputRef}
+        onReferenceVideoFileSelected={creativeBriefAssets.handleReferenceVideoFile}
         previewUrl={previewUrl}
         uploadError={uploadError}
         references={references}
@@ -902,7 +1009,6 @@ export function BrandCampaignStepBrief({
         onApplyRefined={handleApplyRefined}
         onUploadClick={() => fileInputRef.current?.click()}
         onUploadFile={handleUploadFile}
-        referenceVideoInputRef={referenceVideoInputRef}
         onReferenceVideoUploadClick={() => referenceVideoInputRef.current?.click()}
         onUploadReferenceVideo={handleUploadReferenceVideo}
         onAddRef={handleAddRef}
@@ -1097,17 +1203,25 @@ export function BrandCampaignStepBrief({
               <Button
                 type="button"
                 size="lg"
-                className="h-12 w-full gap-2 rounded-xl bg-violet-600 text-base font-medium shadow-sm hover:bg-violet-700 sm:w-auto sm:px-8"
+                className="h-12 shrink-0 gap-2 whitespace-nowrap rounded-xl bg-violet-600 text-base font-medium shadow-sm hover:bg-violet-700 sm:w-auto sm:px-8"
                 disabled={isPolishing || isPending}
                 onClick={handlePolish}
               >
-                {isPolishing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                {isPolishing ? t.aiPolishing : t.aiPolish}
+                {isPolishing ? <Loader2 className="h-4 w-4 shrink-0 animate-spin" /> : <Sparkles className="h-4 w-4 shrink-0" />}
+                <span>{isPolishing ? t.aiPolishing : t.aiPolish}</span>
               </Button>
+              <p className="text-xs leading-relaxed text-zinc-500">{t.aiPolishSubtitle}</p>
             </div>
 
             {/* AI Result */}
             {form.refined ? (
+              form.refined.optimizer ? (
+                <BrandBriefOptimizerPanel
+                  locale={locale}
+                  optimizer={form.refined.optimizer}
+                  source={form.refined.source}
+                />
+              ) : (
               <div className="space-y-4 rounded-2xl border border-violet-100 bg-violet-50/30 p-5">
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="text-sm font-semibold text-zinc-900">{t.aiReady}</p>
@@ -1166,6 +1280,7 @@ export function BrandCampaignStepBrief({
                   )}
                 </Button>
               </div>
+              )
             ) : null}
           </div>
 

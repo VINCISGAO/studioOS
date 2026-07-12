@@ -26,6 +26,8 @@ import {
   MUST_AVOID_OPTIONS,
   MUST_INCLUDE_OPTIONS,
   RESOLUTION_OPTIONS,
+  safeBriefFrameRateValue,
+  safeBriefResolutionValue,
   VIDEO_DURATION_OPTIONS,
   labelForOption
 } from "@/lib/studioos/brand-creative-brief-options";
@@ -41,10 +43,14 @@ import {
 } from "@/lib/studioos/brand-creative-brief-form";
 import { BRIEF_FIELD_TARGETS } from "@/lib/studioos/brand-creative-brief-scroll";
 import {
+  durationSeconds,
+  marketQuoteForBrief
+} from "@/lib/studioos/brand-market-quote";
+import {
   budgetRangeLabel,
   convertUsdToDisplayAmount,
   formatMoneyFromUsd,
-  formatMoneyRangeFromUsd,
+  parseStoredMoneyRange,
   settlementUsdNote
 } from "@/lib/money/display-money";
 import { cn } from "@/lib/utils";
@@ -212,212 +218,6 @@ function LargeDateField({
   );
 }
 
-function parseMoneyRange(value: string) {
-  const numbers = value.match(/\d[\d,]*/g)?.map((item) => Number(item.replace(/,/g, ""))) ?? [];
-  if (!numbers.length) return null;
-  if (value.includes("+")) {
-    return { min: numbers[0] ?? 0, max: null };
-  }
-  if (numbers.length === 1) {
-    const amount = numbers[0] ?? 0;
-    return { min: amount, max: amount };
-  }
-  const first = numbers[0] ?? 0;
-  const second = numbers[1] ?? first;
-  return { min: Math.min(first, second), max: Math.max(first, second) };
-}
-
-function roundToMarketStep(amount: number) {
-  if (amount < 1000) return Math.round(amount / 25) * 25;
-  return Math.round(amount / 50) * 50;
-}
-
-function durationBasePrice(duration: string, customDuration = "") {
-  if (duration === "custom") {
-    const seconds = durationSeconds(duration, customDuration);
-    if (seconds <= 15) return 380;
-    if (seconds <= 30) return 650;
-    if (seconds <= 45) return 900;
-    if (seconds <= 60) return 1200;
-    if (seconds <= 90) return 1800;
-    return Math.max(1800, Math.round(seconds * 20));
-  }
-  if (duration === "6s") return 220;
-  if (duration === "10s") return 280;
-  if (duration === "15s") return 380;
-  if (duration === "30s") return 650;
-  if (duration === "45s") return 900;
-  if (duration === "60s") return 1200;
-  if (duration === "90s") return 1800;
-  return 1200;
-}
-
-function durationSeconds(duration: string, customDuration = "") {
-  if (duration === "custom") {
-    const raw = customDuration.trim().toLowerCase();
-    const secMatch = raw.match(/(\d+)\s*s/);
-    if (secMatch) return Number(secMatch[1]);
-    const minMatch = raw.match(/(\d+)\s*m/);
-    if (minMatch) return Number(minMatch[1]) * 60;
-    const numeric = Number(raw.replace(/[^\d]/g, ""));
-    if (Number.isFinite(numeric) && numeric > 0) return numeric;
-    return 60;
-  }
-  const seconds = Number(duration.replace(/[^0-9]/g, ""));
-  return Number.isFinite(seconds) && seconds > 0 ? seconds : 60;
-}
-
-function marketQuoteForBrief(form: BriefSectionsProps["form"], locale: BriefSectionsProps["locale"]) {
-  let multiplier = 1;
-
-  if (form.deliveryTimeline === "3-5") multiplier += 0.25;
-  if (form.deliveryTimeline === "5-7") multiplier += 0.12;
-  if (form.deliveryTimeline === "14plus") multiplier -= 0.08;
-
-  if (form.aspectRatio === "16:9") multiplier += 0.1;
-  if (form.aspectRatio === "4:5") multiplier += 0.05;
-  if (form.aspectRatio === "1:1") multiplier -= 0.05;
-
-  if (form.resolution === "4K") multiplier += 0.2;
-  if (form.resolution === "720p") multiplier -= 0.12;
-  if (form.frameRate === "60 fps") multiplier += 0.1;
-  if (form.frameRate === "24 fps") multiplier += 0.04;
-
-  const premiumStyles = new Set(["cinematic", "luxury", "premium", "fashion", "animation", "cartoon", "ai", "viral"]);
-  const premiumStyleCount = form.creativeStyles.filter((style) => premiumStyles.has(style)).length;
-  multiplier += Math.min(0.3, premiumStyleCount * 0.06);
-
-  const quantity = Math.max(1, form.videoQuantity || 1);
-  const quantityDiscount = quantity >= 4 ? 0.82 : quantity >= 2 ? 0.9 : 1;
-  const base = durationBasePrice(form.videoDuration, form.videoDurationCustom) * multiplier * quantity * quantityDiscount;
-  const seconds = durationSeconds(form.videoDuration, form.videoDurationCustom);
-  const averageShotSeconds = premiumStyleCount >= 3 ? 3 : premiumStyleCount >= 1 ? 4 : 5;
-  const estimatedShots = Math.max(3, Math.ceil((seconds / averageShotSeconds) * quantity));
-  const generationMultiplier =
-    premiumStyleCount >= 4 ? 4.5 : premiumStyleCount >= 2 ? 3.5 : premiumStyleCount >= 1 ? 2.8 : 2.5;
-  const estimatedGenerations = Math.ceil(estimatedShots * generationMultiplier);
-  const estimatedHours = Math.ceil(
-    estimatedShots * 0.65 +
-      seconds / 18 +
-      quantity * 1.4 +
-      premiumStyleCount * 1.2 +
-      (form.deliveryTimeline === "3-5" ? 3 : 0)
-  );
-  const toolCost = Math.max(45, estimatedGenerations * 6);
-  const laborCost = estimatedHours * 40;
-  const revisionReserve = (toolCost + laborCost) * (premiumStyleCount >= 3 ? 0.22 : 0.15);
-  const riskBufferRate =
-    form.deliveryTimeline === "3-5" || premiumStyleCount >= 4 ? 0.25 : premiumStyleCount >= 2 ? 0.18 : 0.1;
-  const creatorProductionCost = toolCost + laborCost + revisionReserve + (toolCost + laborCost) * riskBufferRate;
-  const creatorIncome = roundToMarketStep(Math.max(base * 0.78, creatorProductionCost * 1.35));
-  const platformDeductionRate = 0.17;
-  const brandMinimum = roundToMarketStep(creatorIncome / (1 - platformDeductionRate));
-  const recommended = roundToMarketStep(brandMinimum * 1.16);
-  const priority = roundToMarketStep(brandMinimum * 1.38);
-  const topCreator = roundToMarketStep(brandMinimum * 1.75);
-  const low = Math.max(200, roundToMarketStep(Math.max(base * 0.88, brandMinimum)));
-  const high = Math.max(low + 100, roundToMarketStep(Math.max(base * 1.2, recommended)));
-  const userBudget = parseMoneyRange(form.budgetRange);
-  const riskLevel =
-    userBudget?.max !== null && userBudget?.max !== undefined && userBudget.max < brandMinimum
-      ? locale === "zh"
-        ? "预算不足"
-        : "Under budget"
-      : userBudget?.min !== undefined && userBudget.min > recommended
-        ? locale === "zh"
-          ? "低风险"
-          : "Low risk"
-        : riskBufferRate >= 0.25
-          ? locale === "zh"
-            ? "较高"
-            : "Elevated"
-          : locale === "zh"
-            ? "标准"
-            : "Standard";
-  const riskTone =
-    riskLevel === "预算不足" || riskLevel === "Under budget"
-      ? "danger"
-      : riskLevel === "低风险" || riskLevel === "Low risk"
-        ? "low"
-        : riskLevel === "较高" || riskLevel === "Elevated"
-          ? "elevated"
-          : "standard";
-  const complexity =
-    generationMultiplier >= 4
-      ? locale === "zh"
-        ? "高难"
-        : "Advanced"
-      : generationMultiplier >= 3
-        ? locale === "zh"
-          ? "较难"
-          : "Complex"
-        : locale === "zh"
-          ? "标准"
-          : "Standard";
-  const status =
-    userBudget?.max !== null && userBudget?.max !== undefined && userBudget.max < brandMinimum
-      ? locale === "zh"
-        ? "当前预算低于最低可执行价，建议提高预算或降低制作要求"
-        : "Current budget is below the reference quote; reduce scope or increase budget"
-      : userBudget?.min !== undefined && userBudget.min > recommended
-        ? locale === "zh"
-          ? "当前预算充足，可匹配更高质量创作者"
-          : "Budget is strong enough for higher-tier creators"
-        : locale === "zh"
-          ? "当前预算与参考报价基本匹配"
-          : "Current budget broadly matches the reference quote";
-
-  return {
-    range: formatMoneyRangeFromUsd(low, high, locale),
-    status,
-    minimum: brandMinimum,
-    recommended,
-    priority,
-    topCreator,
-    creatorIncome,
-    estimatedHours,
-    estimatedShots,
-    estimatedGenerations,
-    riskLevel,
-    riskTone,
-    complexity,
-    tiers: [
-      {
-        key: "base",
-        label: locale === "zh" ? "基础匹配" : "Base match",
-        price: brandMinimum,
-        probability: "60%",
-        time: locale === "zh" ? "24–48 小时" : "24–48h",
-        description: locale === "zh" ? "覆盖基本制作标准" : "Covers basic production standards"
-      },
-      {
-        key: "recommended",
-        label: locale === "zh" ? "推荐匹配" : "Recommended",
-        price: recommended,
-        probability: "82%",
-        time: locale === "zh" ? "6–18 小时" : "6–18h",
-        description: locale === "zh" ? "更多专业创作者可见" : "Visible to more qualified creators"
-      },
-      {
-        key: "priority",
-        label: locale === "zh" ? "优先匹配" : "Priority",
-        price: priority,
-        probability: "94%",
-        time: locale === "zh" ? "1–6 小时" : "1–6h",
-        description: locale === "zh" ? "优先推荐给高评分创作者" : "Prioritized for high-rated creators"
-      },
-      {
-        key: "top",
-        label: locale === "zh" ? "顶级创作者" : "Top creators",
-        price: topCreator,
-        probability: "98%",
-        time: locale === "zh" ? "最快响应" : "Fastest",
-        description: locale === "zh" ? "匹配优秀 Studio 和强创意能力" : "Best studios and creative capability"
-      }
-    ]
-  };
-}
-
 function riskBadgeClass(tone: string) {
   if (tone === "low") return "bg-emerald-50 text-emerald-700 ring-emerald-200";
   if (tone === "elevated") return "bg-orange-50 text-orange-700 ring-orange-200";
@@ -451,6 +251,16 @@ export function BrandCreativeBriefSecondarySections(props: BriefSectionsProps) {
   const aspectRatioOptions = BRAND_VIDEO_ASPECT_RATIOS[locale];
   const budgetPresets = useMemo(() => getBrandBudgetPresets(locale), [locale]);
   const marketQuote = marketQuoteForBrief(form, locale);
+  const resolutionValue = safeBriefResolutionValue(form.resolution);
+  const frameRateValue = safeBriefFrameRateValue(form.frameRate);
+  const videoLengthLabel = useMemo(() => {
+    const seconds = durationSeconds(form.videoDuration, form.videoDurationCustom);
+    if (seconds >= 60 && seconds % 60 === 0) {
+      const minutes = seconds / 60;
+      return locale === "zh" ? `${minutes} 分钟` : `${minutes} min`;
+    }
+    return locale === "zh" ? `${seconds} 秒` : `${seconds}s`;
+  }, [form.videoDuration, form.videoDurationCustom, locale]);
   const fmt = (amount: number) => formatMoneyFromUsd(amount, locale);
   const settlementNote = settlementUsdNote(locale);
   const startDate = parseBriefScheduleDate(form.scheduleStart);
@@ -586,7 +396,10 @@ export function BrandCreativeBriefSecondarySections(props: BriefSectionsProps) {
         <div className="grid gap-3 sm:grid-cols-3">
           <div className="space-y-2">
             <Label>{locale === "zh" ? "分辨率" : "Resolution"}</Label>
-            <Select value={form.resolution} onValueChange={(value) => patch("resolution", value)}>
+            <Select
+              value={resolutionValue}
+              onValueChange={(value) => patch("resolution", value)}
+            >
               <SelectTrigger className="h-11 rounded-xl">
                 <SelectValue />
               </SelectTrigger>
@@ -601,7 +414,7 @@ export function BrandCreativeBriefSecondarySections(props: BriefSectionsProps) {
           </div>
           <div className="space-y-2">
             <Label>{locale === "zh" ? "帧率" : "Frame rate"}</Label>
-            <Select value={form.frameRate} onValueChange={(value) => patch("frameRate", value)}>
+            <Select value={frameRateValue} onValueChange={(value) => patch("frameRate", value)}>
               <SelectTrigger className="h-11 rounded-xl">
                 <SelectValue />
               </SelectTrigger>
@@ -691,8 +504,8 @@ export function BrandCreativeBriefSecondarySections(props: BriefSectionsProps) {
                   </p>
                   <p className="mt-1 max-w-3xl text-sm leading-6 text-zinc-600">
                     {locale === "zh"
-                      ? "系统先估算可用镜头、生成次数、创作者工时、修改和风险成本，再反推出能让创作者有利润、品牌能成功匹配的平台价格。"
-                      : "The engine estimates usable shots, generations, creator hours, revisions, and risk before calculating a viable marketplace price."}
+                      ? "根据您选择的视频时长、制作规格与交付周期，估算合理预算区间。"
+                      : "Estimates a fair budget from your video length, production specs, and timeline."}
                   </p>
                 </div>
               </div>
@@ -711,13 +524,11 @@ export function BrandCreativeBriefSecondarySections(props: BriefSectionsProps) {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-px border-y border-zinc-100 bg-zinc-100 sm:grid-cols-3 xl:grid-cols-6">
+          <div className="grid grid-cols-2 gap-px border-y border-zinc-100 bg-zinc-100 sm:grid-cols-4">
             {[
+              [locale === "zh" ? "视频时长" : "Video length", videoLengthLabel],
               [locale === "zh" ? "最低可执行" : "Minimum", fmt(marketQuote.minimum)],
-              [locale === "zh" ? "创作者收益" : "Creator income", fmt(marketQuote.creatorIncome)],
-              [locale === "zh" ? "预计工时" : "Hours", `${marketQuote.estimatedHours}h`],
-              [locale === "zh" ? "可用镜头" : "Shots", `${marketQuote.estimatedShots}`],
-              [locale === "zh" ? "生成次数" : "Generations", `${marketQuote.estimatedGenerations}`]
+              [locale === "zh" ? "预算区间" : "Budget range", marketQuote.range]
             ].map(([label, value]) => (
               <div key={label} className="bg-white px-4 py-3">
                 <p className="text-xs text-zinc-500">{label}</p>
@@ -735,7 +546,7 @@ export function BrandCreativeBriefSecondarySections(props: BriefSectionsProps) {
 
           <div className="grid grid-cols-2 gap-3 p-4 md:grid-cols-2 xl:grid-cols-4">
             {marketQuote.tiers.map((tier) => {
-              const selectedBudget = parseMoneyRange(form.budgetRange);
+              const selectedBudget = parseStoredMoneyRange(form.budgetRange);
               const isSelected = selectedBudget?.min === tier.price && selectedBudget.max === tier.price;
 
               return (

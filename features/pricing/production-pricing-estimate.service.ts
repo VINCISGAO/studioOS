@@ -1,6 +1,10 @@
 import type { ProductionDifficultyTier } from "@/features/pricing/production-pricing.types";
 import { roundMoney } from "@/features/membership/commission-calculation.service";
 import {
+  DURATION_QUOTE_WEIGHT,
+  durationPriceCoefficient
+} from "@/lib/studioos/brand-duration-pricing";
+import {
   PRODUCTION_PRICING_PROFILE_V1,
   benchmarkForTier,
   tierConfigFor
@@ -49,7 +53,11 @@ export function estimateProjectCost(
   const productionUnitSeconds = profile.productionUnitSeconds;
   const unitCount = effectiveUnits(input.durationSeconds, productionUnitSeconds);
   const avgShotLength = input.avgShotLengthSeconds ?? tier.avgShotLengthSeconds ?? 4;
-  const estimatedShotCount = Math.max(1, Math.ceil(input.durationSeconds / avgShotLength));
+  const explicitShots = Math.round(input.estimatedShotCount ?? 0);
+  const estimatedShotCount =
+    explicitShots > 0
+      ? Math.min(200, Math.max(1, explicitShots))
+      : Math.max(1, Math.ceil(input.durationSeconds / avgShotLength));
 
   const generationMultiplier = tier.generationMultiplier;
   const usableRate = tier.usableRate ?? profile.defaultUsableRate;
@@ -96,11 +104,12 @@ export function estimateProjectCost(
   const creatorProductionCost = roundMoney(
     productionCostUsd + revisionReserveUsd + riskBufferUsd
   );
+  const durationUplift = 1 + (durationPriceCoefficient(input.durationSeconds) - 1) * DURATION_QUOTE_WEIGHT;
   const creatorMinIncomeUsd = roundMoney(
-    creatorProductionCost * (1 + profile.minCreatorProfitMargin)
+    creatorProductionCost * (1 + profile.minCreatorProfitMargin) * durationUplift
   );
   const creatorTargetIncomeUsd = roundMoney(
-    creatorProductionCost * (1 + profile.targetCreatorProfitMargin)
+    creatorProductionCost * (1 + profile.targetCreatorProfitMargin) * durationUplift
   );
 
   const brandFloorPriceUsd = brandPriceFromCreatorIncome(creatorMinIncomeUsd, profile);

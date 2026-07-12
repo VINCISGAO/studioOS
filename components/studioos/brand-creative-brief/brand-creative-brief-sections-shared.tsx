@@ -3,6 +3,8 @@
 import type { StoredProjectReference } from "@/lib/campaign-types";
 import type { BriefFormState } from "@/components/studioos/brand-campaign-step-brief";
 import type { Locale } from "@/lib/i18n";
+import type { BrandAssetSlotId } from "@/lib/studioos/brand-creative-brief-options";
+import type { BrandBriefAssetPreviews } from "@/components/studioos/brand-creative-brief/use-brand-brief-asset-uploads";
 import {
   Bot,
   Camera,
@@ -68,11 +70,19 @@ export type BriefSectionsProps = {
   isPending: boolean;
   isUploading: boolean;
   productReady: boolean;
+  assetPreviews: BrandBriefAssetPreviews;
+  assetUploadErrors: Partial<Record<BrandAssetSlotId, string>>;
+  uploadingAssetSlot: BrandAssetSlotId | null;
+  referenceVideoUploadProgress: number | null;
+  imageInputRef: React.RefObject<HTMLInputElement | null>;
+  onAssetSlotClick: (slot: BrandAssetSlotId) => void;
+  onImageFileSelected: (file: File) => void;
+  referenceVideoInputRef: React.RefObject<HTMLInputElement | null>;
+  onReferenceVideoFileSelected: (file: File) => void;
   previewUrl: string | null;
   onUploadClick: () => void;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   onUploadFile: (file: File) => void;
-  referenceVideoInputRef: React.RefObject<HTMLInputElement | null>;
   onReferenceVideoUploadClick: () => void;
   onUploadReferenceVideo: (file: File) => void;
   uploadError: string | null;

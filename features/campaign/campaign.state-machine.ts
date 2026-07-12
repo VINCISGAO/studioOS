@@ -52,7 +52,7 @@ export const campaignStateMachine = createStateMachine<CampaignStateValue, Campa
   START_AI: { from: [CampaignState.DRAFT], to: CampaignState.AI_PROCESSING },
   AI_SUCCESS: { from: [CampaignState.AI_PROCESSING], to: CampaignState.CREATIVE_READY },
   AI_FAILED: { from: [CampaignState.AI_PROCESSING], to: CampaignState.DRAFT },
-  APPROVE_CREATIVE: { from: [CampaignState.CREATIVE_READY], to: CampaignState.CREATIVE_APPROVED },
+  APPROVE_CREATIVE: { from: [CampaignState.DRAFT, CampaignState.CREATIVE_READY], to: CampaignState.CREATIVE_APPROVED },
   PUBLISH: { from: [CampaignState.DRAFT, CampaignState.CREATIVE_READY, CampaignState.CREATIVE_APPROVED], to: CampaignState.ESCROW_PENDING },
   START_MATCHING: { from: [CampaignState.ESCROW_FUNDED], to: CampaignState.MATCHING },
   SEND_INVITATION: { from: [CampaignState.MATCHING], to: CampaignState.INVITATION_SENT },

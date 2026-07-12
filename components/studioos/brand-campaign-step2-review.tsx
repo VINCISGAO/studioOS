@@ -41,6 +41,7 @@ export function BrandCampaignStep2Review({
   awaitingBriefSave = false,
   minGeneratingUntil = 0,
   isActive = true,
+  isConfirming = false,
   onBack,
   onSaveDraft,
   onConfirmed
@@ -58,6 +59,7 @@ export function BrandCampaignStep2Review({
   minGeneratingUntil?: number;
   /** Only sync wizard URL while this step is visible — avoids jumping from step 1 during background prefetch. */
   isActive?: boolean;
+  isConfirming?: boolean;
   onBack: () => void;
   onSaveDraft?: () => void;
   onConfirmed: (directionId: string) => void;
@@ -352,6 +354,7 @@ export function BrandCampaignStep2Review({
           locale={locale}
           directionsReady={showContent}
           selectedId={selectedId}
+          isConfirming={isConfirming}
           confirmLabel={creatorSubmissionSelected ? t.creatorConfirm : undefined}
           onBack={onBack}
           onSaveDraft={onSaveDraft}

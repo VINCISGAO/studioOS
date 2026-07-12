@@ -1,3 +1,5 @@
+import { normalizeBriefResolution } from "@/lib/studioos/brand-creative-brief-form";
+
 /** Client/server-safe brief payload for wizard AI prefetch (no DB round-trip). */
 export type WizardBriefSnapshot = {
   projectTitle: string;
@@ -17,6 +19,7 @@ export type WizardBriefSnapshot = {
   aspectRatio: string;
   videoDuration: string;
   videoDurationCustom: string;
+  estimatedShotCount: number;
   creativeStyles: string[];
   creativeStyleCustom: string;
   resolution: string;
@@ -53,6 +56,7 @@ export type BriefFormSnapshotInput = {
   aspectRatio?: string;
   videoDuration?: string;
   videoDurationCustom?: string;
+  estimatedShotCount?: number;
   creativeStyles?: string[];
   creativeStyleCustom?: string;
   resolution?: string;
@@ -114,9 +118,10 @@ export function snapshotFromBriefForm(form: BriefFormSnapshotInput): WizardBrief
     aspectRatio: form.aspectRatio ?? "",
     videoDuration: form.videoDuration ?? "",
     videoDurationCustom: (form.videoDurationCustom ?? "").trim(),
+    estimatedShotCount: Math.max(0, Number(form.estimatedShotCount ?? 0) || 0),
     creativeStyles: form.creativeStyles ?? [],
     creativeStyleCustom: (form.creativeStyleCustom ?? "").trim(),
-    resolution: form.resolution ?? "",
+    resolution: normalizeBriefResolution(form.resolution),
     frameRate: form.frameRate ?? "",
     videoQuantity: form.videoQuantity ?? 1,
     mustInclude: form.mustInclude ?? [],
@@ -166,9 +171,10 @@ export function parseWizardBriefSnapshot(raw: string | null | undefined): Wizard
       aspectRatio: String(parsed.aspectRatio ?? ""),
       videoDuration: String(parsed.videoDuration ?? ""),
       videoDurationCustom: String(parsed.videoDurationCustom ?? ""),
+      estimatedShotCount: Math.max(0, Number(parsed.estimatedShotCount ?? 0) || 0),
       creativeStyles: Array.isArray(parsed.creativeStyles) ? parsed.creativeStyles.map(String) : [],
       creativeStyleCustom: String(parsed.creativeStyleCustom ?? ""),
-      resolution: String(parsed.resolution ?? ""),
+      resolution: normalizeBriefResolution(parsed.resolution),
       frameRate: String(parsed.frameRate ?? ""),
       videoQuantity: Number(parsed.videoQuantity ?? 1) || 1,
       mustInclude: Array.isArray(parsed.mustInclude) ? parsed.mustInclude.map(String) : [],
