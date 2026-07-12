@@ -8,7 +8,6 @@ import {
   CircleDollarSign,
   Clapperboard,
   FileText,
-  FolderOpen,
   Layers3,
   Lightbulb
 } from "lucide-react";
@@ -17,7 +16,6 @@ const sectionIcons: Record<(typeof CREATIVE_BRIEF_SECTIONS)[number]["id"], Lucid
   overview: FileText,
   creative: Lightbulb,
   production: Clapperboard,
-  assets: FolderOpen,
   details: Layers3,
   budget: CircleDollarSign
 };
