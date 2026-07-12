@@ -1,13 +1,13 @@
 import { getAppUiLocale } from "@/lib/app-language";
-import Link from "next/link";
-import { ArrowLeft, FileCheck2 } from "lucide-react";
+import { FileCheck2 } from "lucide-react";
+import { AdminPageShell } from "@/components/studioos/admin-page-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { adminCertificationService } from "@/features/admin/certification/admin-certification.service";
 import { getAdminSessionUser } from "@/features/admin/auth/admin-auth.service";
-import { type SearchParams, withLocale } from "@/lib/i18n";
+import { type SearchParams } from "@/lib/i18n";
 import { formatDate } from "@/lib/utils";
 
 const copy = {
@@ -25,7 +25,7 @@ const copy = {
     eyebrow: "认证记录",
     title: "认证服务商入驻表单",
     subtitle: "保证金确认后自动生成，并同步发送至创作者消息中心。",
-    table: ["Studio", "表单编号", "状态", "生成时间", "主页提交", "字段数"],
+    table: ["创作者", "表单编号", "状态", "生成时间", "主页提交", "字段数"],
     issued: "已生成",
     completed: "主页已完善"
   }
@@ -42,18 +42,8 @@ export default async function AdminCertificationPage({
   const forms = user ? await adminCertificationService.list(user) : [];
 
   return (
-    <div>
-      <Button asChild variant="outline" size="sm">
-        <Link href={withLocale("/admin", locale)}>
-          <ArrowLeft className="h-4 w-4" /> {t.back}
-        </Link>
-      </Button>
-      <div className="mt-8">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">{t.eyebrow}</p>
-        <h1 className="mt-3 text-4xl font-semibold tracking-tight">{t.title}</h1>
-        <p className="mt-3 max-w-3xl text-sm leading-6 text-muted-foreground">{t.subtitle}</p>
-      </div>
-      <Card className="mt-8 shadow-none">
+    <AdminPageShell locale={locale} title={t.title} subtitle={t.subtitle}>
+      <Card className="border-zinc-200/80 shadow-none">
         <CardContent className="p-0">
           <Table>
             <TableHeader>
@@ -77,8 +67,8 @@ export default async function AdminCertificationPage({
                         {form.status === "profile_completed" ? t.completed : t.issued}
                       </Badge>
                     </TableCell>
-                    <TableCell>{formatDate(form.issuedAt)}</TableCell>
-                    <TableCell>{form.submittedAt ? formatDate(form.submittedAt) : "—"}</TableCell>
+                    <TableCell>{formatDate(form.issuedAt, locale)}</TableCell>
+                    <TableCell>{form.submittedAt ? formatDate(form.submittedAt, locale) : "—"}</TableCell>
                     <TableCell>{form.fieldCount}</TableCell>
                   </TableRow>
                 ))
@@ -97,6 +87,6 @@ export default async function AdminCertificationPage({
         <FileCheck2 className="h-4 w-4" />
         {locale === "zh" ? `共 ${forms.length} 条记录` : `${forms.length} records`}
       </div>
-    </div>
+    </AdminPageShell>
   );
 }

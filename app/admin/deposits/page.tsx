@@ -1,13 +1,14 @@
 import { getAppUiLocale } from "@/lib/app-language";
-import Link from "next/link";
-import { ArrowLeft, ShieldCheck } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
+import { AdminPageShell } from "@/components/studioos/admin-page-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { adminDepositService } from "@/features/admin/deposit/admin-deposit.service";
 import { getAdminSessionUser } from "@/features/admin/auth/admin-auth.service";
-import { type SearchParams, withLocale } from "@/lib/i18n";
+import { type SearchParams } from "@/lib/i18n";
+import { adminDepositStatusLabel } from "@/lib/studioos/admin-enum-labels";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 const copy = {
@@ -22,9 +23,9 @@ const copy = {
   zh: {
     back: "返回管理后台",
     eyebrow: "保证金管理",
-    title: "Studio 保证金",
-    subtitle: "审核 Studio 保证金状态，确保制作任务履约可控。",
-    table: ["Studio", "金额", "状态", "可退还时间", "原因", "操作"],
+    title: "创作者保证金",
+    subtitle: "审核创作者保证金状态，确保制作任务履约可控。",
+    table: ["创作者", "金额", "状态", "可退还时间", "原因", "操作"],
     review: "审核"
   }
 };
@@ -41,23 +42,13 @@ export default async function AdminDepositsPage({ searchParams }: AdminDepositsP
   const summary = user ? await adminDepositService.getSummary(user) : { totalAmount: 0, refundRequestedCount: 0, studioCount: 0 };
 
   return (
-    <div>
-      <Button asChild variant="outline" size="sm">
-        <Link href={withLocale("/admin", locale)}>
-          <ArrowLeft className="h-4 w-4" /> {t.back}
-        </Link>
-      </Button>
-      <div className="mt-8">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">{t.eyebrow}</p>
-        <h1 className="mt-3 text-4xl font-semibold tracking-tight">{t.title}</h1>
-        <p className="mt-3 max-w-3xl text-sm leading-6 text-muted-foreground">{t.subtitle}</p>
-      </div>
-      <div className="mt-8 grid gap-4 md:grid-cols-3">
+    <AdminPageShell locale={locale} title={t.title} subtitle={t.subtitle}>
+      <div className="grid gap-4 md:grid-cols-3">
         <Metric label={locale === "zh" ? "保证金总额" : "Total deposits"} value={formatCurrency(summary.totalAmount, locale)} />
         <Metric label={locale === "zh" ? "退还申请" : "Refund requests"} value={String(summary.refundRequestedCount)} />
-        <Metric label={locale === "zh" ? "Studio 数量" : "Studios"} value={String(summary.studioCount)} />
+        <Metric label={locale === "zh" ? "创作者数量" : "Studios"} value={String(summary.studioCount)} />
       </div>
-      <Card className="mt-8 shadow-none">
+      <Card className="mt-8 border-zinc-200/80 shadow-none">
         <CardContent className="p-0">
           <Table>
             <TableHeader>
@@ -76,9 +67,11 @@ export default async function AdminDepositsPage({ searchParams }: AdminDepositsP
                   </TableCell>
                   <TableCell>{formatCurrency(deposit.amount, locale)}</TableCell>
                   <TableCell>
-                    <Badge variant={deposit.status === "paid" ? "success" : "warning"}>{deposit.status}</Badge>
+                    <Badge variant={deposit.status === "paid" ? "success" : "warning"}>
+                      {adminDepositStatusLabel(deposit.status, locale)}
+                    </Badge>
                   </TableCell>
-                  <TableCell>{deposit.refundableAfter ? formatDate(deposit.refundableAfter) : "-"}</TableCell>
+                  <TableCell>{deposit.refundableAfter ? formatDate(deposit.refundableAfter, locale) : "—"}</TableCell>
                   <TableCell>{deposit.reason}</TableCell>
                   <TableCell>
                     <Button size="sm" variant="outline">
@@ -91,7 +84,7 @@ export default async function AdminDepositsPage({ searchParams }: AdminDepositsP
           </Table>
         </CardContent>
       </Card>
-    </div>
+    </AdminPageShell>
   );
 }
 

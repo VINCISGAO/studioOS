@@ -1,5 +1,6 @@
 import { getAppUiLocale } from "@/lib/app-language";
 import Link from "next/link";
+import { AdminPageShell } from "@/components/studioos/admin-page-shell";
 import { adminWalletService } from "@/features/admin/wallet/admin-wallet.service";
 import { getAdminSessionUser } from "@/features/admin/auth/admin-auth.service";
 import { Badge } from "@/components/ui/badge";
@@ -9,32 +10,50 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { type SearchParams, withLocale } from "@/lib/i18n";
 import { adminPortalRoutes } from "@/lib/studioos/admin-portal-routes";
+import { adminFields } from "@/lib/studioos/admin-copy";
+import { adminUserRoleLabel } from "@/lib/studioos/admin-enum-labels";
 import { formatCurrency } from "@/lib/utils";
+
+const copy = {
+  en: {
+    title: "Wallet admin",
+    subtitle: "Search users and inspect legacy wallets and asset balances.",
+    search: "Search user",
+    submit: "Search"
+  },
+  zh: {
+    title: "钱包管理",
+    subtitle: "搜索用户并查看旧版钱包与资产余额。",
+    search: "搜索用户",
+    submit: "搜索"
+  }
+} as const;
 
 export default async function AdminWalletsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const params = await searchParams;
   const locale = await getAppUiLocale();
+  const t = copy[locale];
+  const f = adminFields(locale);
   const user = await getAdminSessionUser();
   const search = typeof params.search === "string" ? params.search : undefined;
   const result = user ? await adminWalletService.list(user, search) : { items: [], total: 0 };
 
   return (
-    <div>
-      <h1 className="text-3xl font-semibold tracking-tight">{locale === "zh" ? "钱包管理" : "Wallet admin"}</h1>
-      <form method="get" className="mt-6 flex gap-2">
+    <AdminPageShell locale={locale} title={t.title} subtitle={t.subtitle}>
+      <form method="get" className="mb-6 flex gap-2">
         <input type="hidden" name="lang" value={locale} />
-        <Input name="search" defaultValue={search} placeholder={locale === "zh" ? "搜索用户" : "Search user"} />
-        <Button type="submit">{locale === "zh" ? "搜索" : "Search"}</Button>
+        <Input name="search" defaultValue={search} placeholder={t.search} />
+        <Button type="submit">{t.submit}</Button>
       </form>
-      <Card className="mt-6 border-zinc-200/80 shadow-none">
+      <Card className="border-zinc-200/80 shadow-none">
         <CardContent className="p-0">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>User</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Legacy wallet</TableHead>
-                <TableHead>Assets</TableHead>
+                <TableHead>{f.user}</TableHead>
+                <TableHead>{f.type}</TableHead>
+                <TableHead>{f.legacyWallet}</TableHead>
+                <TableHead>{f.assets}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -45,7 +64,7 @@ export default async function AdminWalletsPage({ searchParams }: { searchParams:
                       {row.name ?? row.email ?? row.userId}
                     </Link>
                   </TableCell>
-                  <TableCell><Badge variant="outline">{row.role}</Badge></TableCell>
+                  <TableCell><Badge variant="outline">{adminUserRoleLabel(row.role, locale)}</Badge></TableCell>
                   <TableCell>{formatCurrency(row.legacyAvailable, locale)}</TableCell>
                   <TableCell className="text-xs">
                     {row.assets.map((a) => `${a.assetCode}: ${a.available}`).join(" · ") || "—"}
@@ -56,6 +75,6 @@ export default async function AdminWalletsPage({ searchParams }: { searchParams:
           </Table>
         </CardContent>
       </Card>
-    </div>
+    </AdminPageShell>
   );
 }

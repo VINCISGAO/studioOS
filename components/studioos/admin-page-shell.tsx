@@ -10,6 +10,7 @@ export function AdminPageShell({
   subtitle,
   actions,
   className,
+  narrow = false,
   children
 }: {
   locale: Locale;
@@ -17,12 +18,20 @@ export function AdminPageShell({
   subtitle?: string;
   actions?: React.ReactNode;
   className?: string;
+  narrow?: boolean;
   children: React.ReactNode;
 }) {
   const chrome = adminChrome(locale);
 
   return (
-    <div className={cn(PORTAL_CONTENT_MAX.default, "mx-auto w-full", className)}>
+    <div
+      className={cn(
+        PORTAL_CONTENT_MAX.default,
+        "mx-auto w-full",
+        narrow && "max-w-3xl",
+        className
+      )}
+    >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-violet-600">{chrome.eyebrow}</p>

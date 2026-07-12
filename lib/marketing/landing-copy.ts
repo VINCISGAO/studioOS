@@ -227,8 +227,8 @@ export const landingCopy = {
       viewAll: "View all case studies"
     },
     zh: {
-      eyebrow: "精选作品",
-      title: "作品自己会说话",
+      eyebrow: "精选项目",
+      title: "精选项目",
       featured: "精选案例",
       viewAll: "查看全部案例"
     }

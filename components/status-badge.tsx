@@ -91,8 +91,8 @@ const campaignLabels: Record<Locale, Record<CampaignProjectStatus, string>> = {
   zh: {
     draft: "草稿",
     matching: "匹配中",
-    studio_selected: "已选 Studio",
-    proposal: "Proposal Room",
+    studio_selected: "已选创作者",
+    proposal: "方案室",
     contract_pending: "待签约",
     payment_pending: "待付款",
     production: "制作中",

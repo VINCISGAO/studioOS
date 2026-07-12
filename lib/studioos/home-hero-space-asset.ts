@@ -1,14 +1,14 @@
 import { existsSync } from "fs";
 import path from "path";
 
-const PUBLIC_HERO_PATH = "/images/home-hero-space.png";
-const PUBLIC_HERO_2X_PATH = "/images/home-hero-space@2x.png";
+const PUBLIC_HERO_PATH = "/images/background.png";
+const PUBLIC_HERO_2X_PATH = "/images/background@2x.png";
 
 /** Bumped when owner replaces hero PNG; avoids per-request statSync on homepage SSR. */
 const HERO_ASSET_VERSION =
   process.env.NEXT_PUBLIC_HERO_ASSET_VERSION?.trim() ||
   process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 8) ||
-  "1";
+  "4";
 
 let hero2xAvailable: boolean | null = null;
 
@@ -18,7 +18,7 @@ function versionQuery() {
 
 function isHero2xAvailable() {
   if (hero2xAvailable === null) {
-    hero2xAvailable = existsSync(path.join(process.cwd(), "public/images/home-hero-space@2x.png"));
+    hero2xAvailable = existsSync(path.join(process.cwd(), "public/images/background@2x.png"));
   }
   return hero2xAvailable;
 }

@@ -85,7 +85,23 @@ export const adminFieldCopy = {
     gmv: "GMV",
     latest: "Latest",
     rows: "rows",
-    entries: "entries"
+    entries: "entries",
+    legacyWallet: "Legacy wallet",
+    assets: "Assets",
+    metadata: "Metadata",
+    category: "Category",
+    title: "Title",
+    methods: "Methods",
+    requested: "Requested",
+    sent: "Sent",
+    read: "Read",
+    unsentBadge: "Unsent",
+    readBadge: "Read",
+    users: "Users",
+    orders: "Orders",
+    conversations: "Conversations",
+    on: "ON",
+    off: "OFF"
   },
   zh: {
     brand: "品牌方",
@@ -142,7 +158,23 @@ export const adminFieldCopy = {
     gmv: "成交总额",
     latest: "最新",
     rows: "条",
-    entries: "条记录"
+    entries: "条记录",
+    legacyWallet: "旧版钱包",
+    assets: "资产",
+    metadata: "元数据",
+    category: "分类",
+    title: "标题",
+    methods: "收款方式",
+    requested: "申请时间",
+    sent: "已发送",
+    read: "已读",
+    unsentBadge: "未发送",
+    readBadge: "已读",
+    users: "用户",
+    orders: "订单",
+    conversations: "会话",
+    on: "开",
+    off: "关"
   }
 } as const;
 

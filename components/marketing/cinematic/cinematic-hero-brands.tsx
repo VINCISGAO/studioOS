@@ -38,10 +38,14 @@ function HeroBrandLogo({
   );
 }
 
-const logoToneClass =
+const logoToneClassDark =
   "h-5 w-auto max-w-[6.75rem] object-contain object-left brightness-0 invert opacity-45 sm:h-[1.375rem] sm:max-w-[7.5rem] sm:opacity-50";
 
-function HeroBrandMarquee() {
+const logoToneClassLight =
+  "h-5 w-auto max-w-[6.75rem] object-contain object-left brightness-0 opacity-35 sm:h-[1.375rem] sm:max-w-[7.5rem] sm:opacity-40";
+
+function HeroBrandMarquee({ lightHero = false }: { lightHero?: boolean }) {
+  const logoToneClass = lightHero ? logoToneClassLight : logoToneClassDark;
   return (
     <div className="overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)]">
       <div className="animate-hero-brand-marquee flex w-max">
@@ -68,10 +72,32 @@ function HeroBrandMarquee() {
   );
 }
 
-function HeroBrandPanel({ trustLabel, children }: { trustLabel: string; children: ReactNode }) {
+function HeroBrandPanel({
+  trustLabel,
+  children,
+  lightHero = false
+}: {
+  trustLabel: string;
+  children: ReactNode;
+  lightHero?: boolean;
+}) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.035] px-5 py-5 backdrop-blur-md sm:px-6 sm:py-6">
-      <p className="text-center text-sm font-medium tracking-wide text-zinc-400">{trustLabel}</p>
+    <div
+      className={cn(
+        "rounded-2xl px-5 py-5 sm:px-6 sm:py-6",
+        lightHero
+          ? "border border-zinc-200/80 bg-zinc-50/60"
+          : "border border-white/10 bg-white/[0.035] backdrop-blur-md"
+      )}
+    >
+      <p
+        className={cn(
+          "text-center text-sm font-medium tracking-wide",
+          lightHero ? "text-zinc-500" : "text-zinc-400"
+        )}
+      >
+        {trustLabel}
+      </p>
       <div className="mt-5 sm:mt-6">{children}</div>
     </div>
   );
@@ -79,25 +105,33 @@ function HeroBrandPanel({ trustLabel, children }: { trustLabel: string; children
 
 export function CinematicHeroBrandsDesktop({
   trustLabel,
-  className
+  className,
+  lightHero = false
 }: {
   trustLabel: string;
   className?: string;
+  lightHero?: boolean;
 }) {
   return (
     <div className={cn("pt-8", className)}>
-      <HeroBrandPanel trustLabel={trustLabel}>
-        <HeroBrandMarquee />
+      <HeroBrandPanel trustLabel={trustLabel} lightHero={lightHero}>
+        <HeroBrandMarquee lightHero={lightHero} />
       </HeroBrandPanel>
     </div>
   );
 }
 
-export function CinematicHeroBrandsMobile({ trustLabel }: { trustLabel: string }) {
+export function CinematicHeroBrandsMobile({
+  trustLabel,
+  lightHero = false
+}: {
+  trustLabel: string;
+  lightHero?: boolean;
+}) {
   return (
     <div className="mt-10 md:hidden">
-      <HeroBrandPanel trustLabel={trustLabel}>
-        <HeroBrandMarquee />
+      <HeroBrandPanel trustLabel={trustLabel} lightHero={lightHero}>
+        <HeroBrandMarquee lightHero={lightHero} />
       </HeroBrandPanel>
     </div>
   );

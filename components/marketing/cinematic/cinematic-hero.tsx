@@ -11,7 +11,7 @@ import { CinematicHeroBackdrop } from "@/components/marketing/cinematic/cinemati
 import { HeroCtaGroup } from "@/components/marketing/cinematic/cinematic-hero-cta";
 import { cn } from "@/lib/utils";
 
-const HERO_BG_FALLBACK = "/images/home-hero-space.png";
+const HERO_BG_FALLBACK = "/images/background.png";
 
 const COMPACT_HERO_LOCALES = new Set<Locale | MarketingLocale>(["vi", "es", "fr", "ms", "ja", "en"]);
 
@@ -42,7 +42,7 @@ function getHeroTitleLines(titleLine1: string, titleLine2: string) {
 }
 
 const HERO_AI_TOKEN_CLASS =
-  "inline-block bg-gradient-to-br from-violet-100 from-[8%] via-fuchsia-300 via-[32%] via-violet-500 via-[52%] to-purple-900 to-[92%] bg-clip-text font-semibold text-transparent drop-shadow-[0_1px_3px_rgba(126,34,206,0.55)]";
+  "inline-block bg-gradient-to-br from-violet-100 from-[8%] via-fuchsia-300 via-[32%] via-violet-500 via-[52%] to-purple-900 to-[92%] bg-clip-text font-semibold text-transparent";
 
 const HERO_AI_TOKEN_PATTERN = /(AI|IA)/;
 
@@ -115,11 +115,12 @@ export function CinematicHero({
     secondary: t.secondary,
     primaryDescription: t.primaryDescription,
     secondaryDescription: t.secondaryDescription,
-    compactLocale: compactHeroLocale
+    compactLocale: compactHeroLocale,
+    lightHero: true
   } as const;
 
   return (
-    <section className="relative isolate flex flex-col overflow-hidden bg-black text-white lg:min-h-[100dvh]">
+    <section className="relative isolate flex flex-col overflow-hidden bg-white text-zinc-950 lg:min-h-[100dvh]">
       <CinematicHeroBackdrop src={heroBgSrc} src2x={heroBgSrc2x} />
 
       <div className="relative z-10 w-full px-4 pb-8 pt-[5.35rem] md:px-8 md:pb-12 lg:mx-auto lg:flex lg:min-h-[100dvh] lg:max-w-7xl lg:flex-col lg:px-8 lg:pb-0 lg:pt-0">
@@ -134,7 +135,7 @@ export function CinematicHero({
               <span className="h-3 w-0.5 shrink-0 rounded-full bg-violet-500/90" aria-hidden />
               <p
                 className={cn(
-                  "font-normal text-zinc-400 md:text-lg",
+                  "font-normal text-zinc-500 md:text-lg",
                   compactHeroLocale ? "text-[11.2px] md:text-lg" : "text-sm md:text-lg"
                 )}
               >
@@ -144,7 +145,7 @@ export function CinematicHero({
 
             <h1
               className={cn(
-                "mt-5 font-bold leading-[1.08] tracking-[-0.03em] text-white md:mt-6 md:text-[4.667rem]",
+                "mt-5 font-bold leading-[1.08] tracking-[-0.03em] text-zinc-950 md:mt-6 md:text-[4.667rem]",
                 compactHeroLocale
                   ? legacyCompactTitle
                     ? "text-[1.8rem]"
@@ -158,7 +159,7 @@ export function CinematicHero({
 
             <p
               className={cn(
-                "mt-4 max-w-xl leading-7 text-zinc-400 md:mt-5 md:text-2xl md:leading-8",
+                "mt-4 max-w-xl leading-7 text-zinc-500 md:mt-5 md:text-2xl md:leading-8",
                 latinHeroLocale ? "text-pretty" : "whitespace-nowrap",
                 compactHeroLocale
                   ? legacyCompactTitle
@@ -179,19 +180,19 @@ export function CinematicHero({
           {/* iPad: mobile-style vertical stack + four golden-rule cards (图二) */}
           <div className="hidden md:mt-8 md:block lg:hidden">
             <HeroCtaGroup className={cn(heroCtaProps.className, "mb-8")} {...ctaShared} />
-            <CinematicHeroFeatures locale={copyLocale} className="mt-0" />
-            <CinematicHeroBrandsDesktop trustLabel={t.trustMarquee} />
+            <CinematicHeroFeatures locale={copyLocale} className="mt-0" lightHero />
+            <CinematicHeroBrandsDesktop trustLabel={t.trustMarquee} lightHero />
           </div>
         </div>
 
         {/* Desktop: CTA + golden rules + brands anchored to hero bottom */}
         <div className="hidden lg:mt-auto lg:block lg:w-full lg:pb-10">
           <HeroCtaGroup className={cn(heroCtaProps.className, "mb-8")} {...ctaShared} />
-          <CinematicHeroFeatures locale={copyLocale} className="mt-0" />
-          <CinematicHeroBrandsDesktop trustLabel={t.trustMarquee} />
+          <CinematicHeroFeatures locale={copyLocale} className="mt-0" lightHero />
+          <CinematicHeroBrandsDesktop trustLabel={t.trustMarquee} lightHero />
         </div>
 
-        <CinematicHeroBrandsMobile trustLabel={t.trustMarquee} />
+        <CinematicHeroBrandsMobile trustLabel={t.trustMarquee} lightHero />
       </div>
     </section>
   );

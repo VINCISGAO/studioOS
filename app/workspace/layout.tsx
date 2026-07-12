@@ -13,6 +13,7 @@ import {
   requiresCreatorCertification
 } from "@/lib/studioos/deposit-guard";
 import { getAppUiLocale } from "@/lib/app-language";
+import { buildAvatarInitials } from "@/lib/studioos/avatar-initials";
 import { appPath } from "@/lib/i18n";
 import { listOrdersForCreator } from "@/lib/order-service";
 import { countUnreadNotifications, listNotificationsForCreator } from "@/lib/notification-service";
@@ -129,7 +130,16 @@ export default async function WorkspaceLayout({ children }: { children: React.Re
 
   if (profile?.role === "admin") {
     return (
-      <AdminPortalShell locale={locale} pathname={pathname} search={search}>
+      <AdminPortalShell
+        locale={locale}
+        pathname={pathname}
+        search={search}
+        adminAccount={{
+          name: profile.name || profile.email,
+          email: profile.email,
+          initials: buildAvatarInitials(profile.name || profile.email)
+        }}
+      >
         {children}
       </AdminPortalShell>
     );

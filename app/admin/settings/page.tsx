@@ -1,25 +1,32 @@
 import { getAppUiLocale } from "@/lib/app-language";
 import { AdminSettingsUsersPanel } from "@/components/studioos/admin-settings-users-panel";
 import { AdminSecurityPanel } from "@/components/studioos/admin-security-panel";
+import { AdminPageShell } from "@/components/studioos/admin-page-shell";
 import { getAdminSessionProfile } from "@/features/admin/auth/admin-auth.service";
 import { type SearchParams } from "@/lib/i18n";
 
+const copy = {
+  en: {
+    title: "Settings",
+    subtitle: "Platform configuration and admin accounts."
+  },
+  zh: {
+    title: "系统设置",
+    subtitle: "平台配置与管理员账号。"
+  }
+} as const;
+
 export default async function AdminSettingsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const locale = await getAppUiLocale();
+  const t = copy[locale];
   const profile = await getAdminSessionProfile();
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8 px-4 py-8 sm:px-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-zinc-900">{locale === "zh" ? "系统设置" : "Settings"}</h1>
-        <p className="mt-1 text-sm text-zinc-500">
-          {locale === "zh" ? "平台配置与管理员账号。" : "Platform configuration and admin accounts."}
-        </p>
+    <AdminPageShell locale={locale} title={t.title} subtitle={t.subtitle} narrow>
+      <div className="space-y-8">
+        <AdminSecurityPanel locale={locale} />
+        <AdminSettingsUsersPanel locale={locale} isMaster={profile?.isMaster === true} />
       </div>
-
-      <AdminSecurityPanel locale={locale} />
-
-      <AdminSettingsUsersPanel locale={locale} isMaster={profile?.isMaster === true} />
-    </div>
+    </AdminPageShell>
   );
 }

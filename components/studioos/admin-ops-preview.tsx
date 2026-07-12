@@ -5,6 +5,8 @@ import type { AdminAuditLogView, AdminDisputeView } from "@/features/admin/admin
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import { adminPortalRoutes } from "@/lib/studioos/admin-portal-routes";
+import { adminDisputeStatusLabel } from "@/lib/studioos/admin-enum-labels";
+import { adminActivityLabel } from "@/lib/studioos/admin-i18n";
 import { formatDate } from "@/lib/utils";
 
 const copy = {
@@ -56,7 +58,7 @@ export function AdminOpsPreview({
                     >
                       {dispute.campaignTitle}
                     </Link>
-                    <Badge variant="warning">{dispute.status}</Badge>
+                    <Badge variant="warning">{adminDisputeStatusLabel(dispute.status, locale)}</Badge>
                   </div>
                   <p className="mt-1 line-clamp-2 text-xs text-zinc-500">{dispute.reason}</p>
                 </li>
@@ -81,8 +83,8 @@ export function AdminOpsPreview({
               auditLogs.map((log) => (
                 <li key={log.id} className="rounded-lg border p-3 text-sm">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <Badge variant="outline">{log.action}</Badge>
-                    <span className="text-xs text-zinc-500">{formatDate(log.createdAt)}</span>
+                    <Badge variant="outline">{adminActivityLabel(log.action, locale)}</Badge>
+                    <span className="text-xs text-zinc-500">{formatDate(log.createdAt, locale)}</span>
                   </div>
                   <p className="mt-1 text-xs text-zinc-500">{log.campaignTitle ?? log.campaignId}</p>
                 </li>

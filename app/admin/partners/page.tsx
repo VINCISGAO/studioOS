@@ -1,13 +1,12 @@
 import { getAppUiLocale } from "@/lib/app-language";
-import Link from "next/link";
-import { ArrowLeft, Handshake, TrendingUp, Users } from "lucide-react";
+import { Handshake, TrendingUp, Users } from "lucide-react";
 import { Badge, type BadgeProps } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { AdminPageShell } from "@/components/studioos/admin-page-shell";
 import { getAdminSessionUser } from "@/features/admin/auth/admin-auth.service";
 import { partnerAcademyAdminService } from "@/features/partner-academy/partner-academy-admin.service";
-import { type SearchParams, withLocale } from "@/lib/i18n";
-import { adminPortalRoutes } from "@/lib/studioos/admin-portal-routes";
+import { type SearchParams } from "@/lib/i18n";
+import { adminPartnerStatusLabel } from "@/lib/studioos/admin-enum-labels";
 import { formatCurrency } from "@/lib/utils";
 
 const copy = {
@@ -27,7 +26,8 @@ const copy = {
     referralCode: "Referral code",
     region: "Region",
     commission: "Commission",
-    paid: "Paid"
+    paid: "Paid",
+    global: "Global"
   },
   zh: {
     back: "返回管理后台",
@@ -45,7 +45,8 @@ const copy = {
     referralCode: "推荐码",
     region: "区域",
     commission: "佣金",
-    paid: "已支付"
+    paid: "已支付",
+    global: "全球"
   }
 };
 
@@ -69,27 +70,15 @@ export default async function AdminPartnersPage({
   const activeCount = data.byStatus.find((item) => item.status === "ACTIVE")?.count ?? 0;
 
   return (
-    <div>
-      <Button asChild variant="outline" size="sm">
-        <Link href={withLocale(adminPortalRoutes.dashboard, locale)}>
-          <ArrowLeft className="h-4 w-4" /> {t.back}
-        </Link>
-      </Button>
-
-      <div className="mt-8">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">{t.kicker}</p>
-        <h1 className="mt-3 text-4xl font-semibold tracking-tight">{t.title}</h1>
-        <p className="mt-3 max-w-3xl text-sm leading-6 text-muted-foreground">{t.subtitle}</p>
-      </div>
-
-      <div className="mt-8 grid gap-4 md:grid-cols-4">
+    <AdminPageShell locale={locale} title={t.title} subtitle={t.subtitle}>
+      <div className="grid gap-4 md:grid-cols-4">
         {[
           { label: t.activePartners, value: String(activeCount), icon: Handshake },
           { label: t.attributedRevenue, value: formatCurrency(data.totals.revenue, locale), icon: TrendingUp },
           { label: t.pendingCommission, value: formatCurrency(data.totals.pending, locale), icon: TrendingUp },
           { label: t.referredAccounts, value: String(data.totals.brands + data.totals.creators), icon: Users }
         ].map((item) => (
-          <Card key={item.label} className="shadow-none">
+          <Card key={item.label} className="border-zinc-200/80 shadow-none">
             <CardContent className="flex items-center justify-between gap-4 p-5">
               <div>
                 <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">{item.label}</p>
@@ -102,7 +91,7 @@ export default async function AdminPartnersPage({
       </div>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[1.6fr_1fr]">
-        <Card className="shadow-none">
+        <Card className="border-zinc-200/80 shadow-none">
           <CardContent className="p-6">
             <h2 className="text-lg font-semibold">{t.roster}</h2>
             {data.partners.length === 0 ? (
@@ -119,12 +108,12 @@ export default async function AdminPartnersPage({
                         </p>
                       </div>
                       <div className="flex gap-2">
-                        <Badge variant={statusBadge(partner.status)}>{partner.status}</Badge>
+                        <Badge variant={statusBadge(partner.status)}>{adminPartnerStatusLabel(partner.status, locale)}</Badge>
                         <Badge variant="outline">{partner.tier}</Badge>
                       </div>
                     </div>
                     <div className="mt-4 grid gap-3 text-sm text-muted-foreground sm:grid-cols-4">
-                      <p>{t.region}: {partner.region ?? "Global"}</p>
+                      <p>{t.region}: {partner.region ?? (locale === "zh" ? t.global : "Global")}</p>
                       <p>{t.commission}: {Number(partner.commissionRate)}%</p>
                       <p>{t.attributedRevenue}: {formatCurrency(Number(partner.attributedRevenue), locale)}</p>
                       <p>{t.paid}: {formatCurrency(Number(partner.paidCommission), locale)}</p>
@@ -137,20 +126,20 @@ export default async function AdminPartnersPage({
         </Card>
 
         <div className="space-y-6">
-          <Card className="shadow-none">
+          <Card className="border-zinc-200/80 shadow-none">
             <CardContent className="p-6">
               <h2 className="text-lg font-semibold">{t.status}</h2>
               <div className="mt-4 space-y-3">
                 {data.byStatus.map((item) => (
                   <div key={item.status} className="flex items-center justify-between text-sm">
-                    <span>{item.status}</span>
+                    <span>{adminPartnerStatusLabel(item.status, locale)}</span>
                     <span className="font-semibold">{item.count}</span>
                   </div>
                 ))}
               </div>
             </CardContent>
           </Card>
-          <Card className="shadow-none">
+          <Card className="border-zinc-200/80 shadow-none">
             <CardContent className="p-6">
               <h2 className="text-lg font-semibold">{t.tier}</h2>
               <div className="mt-4 space-y-3">
@@ -165,6 +154,6 @@ export default async function AdminPartnersPage({
           </Card>
         </div>
       </div>
-    </div>
+    </AdminPageShell>
   );
 }

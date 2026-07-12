@@ -70,6 +70,7 @@ export function HomeLandingPage({
         copyLocale={copyLocale}
         workspaceCta={workspaceCta}
         hydratePortalSession={hydratePortalSession}
+        heroTone="light"
       />
 
       <main className="scroll-smooth">
@@ -90,7 +91,7 @@ export function HomeLandingPage({
           <LandingCostComparison locale={locale} copyLocale={copyLocale} />
         </HomePageScreen>
 
-        <HomePageScreen id="work" className="justify-start bg-[#f6f5f1] py-0">
+        <HomePageScreen id="work" className="justify-start bg-[#FFFFFF] py-0">
           <LandingRecentWork locale={locale} copyLocale={copyLocale} works={featuredWorks} />
         </HomePageScreen>
 

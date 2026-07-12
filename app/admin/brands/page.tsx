@@ -6,6 +6,8 @@ import { adminBrandService } from "@/features/admin/brand/admin-brand.service";
 import { getAdminSessionUser } from "@/features/admin/auth/admin-auth.service";
 import { type SearchParams } from "@/lib/i18n";
 import { adminFields } from "@/lib/studioos/admin-copy";
+import { adminAccountStatusLabel, adminIndustryLabel } from "@/lib/studioos/admin-enum-labels";
+import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/utils";
 
 const copy = {
@@ -54,10 +56,12 @@ export default async function AdminBrandsPage({ searchParams }: { searchParams: 
                       <div className="font-medium">{brand.companyName}</div>
                       <div className="text-xs text-zinc-500">{brand.email}</div>
                     </TableCell>
-                    <TableCell>{brand.industry ?? "—"}</TableCell>
+                    <TableCell>{adminIndustryLabel(brand.industry, locale)}</TableCell>
                     <TableCell>{brand.campaignCount}</TableCell>
-                    <TableCell>{brand.status}</TableCell>
-                    <TableCell>{formatDate(brand.createdAt)}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{adminAccountStatusLabel(brand.status, locale)}</Badge>
+                    </TableCell>
+                    <TableCell>{formatDate(brand.createdAt, locale)}</TableCell>
                   </TableRow>
                 ))
               ) : (

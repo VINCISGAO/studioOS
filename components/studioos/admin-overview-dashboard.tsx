@@ -177,7 +177,7 @@ export function AdminOverviewDashboard({
                       <div className="min-w-0 flex-1">
                         <div className="flex items-start justify-between gap-2">
                           <span className="font-medium">{locale === "zh" ? item.labelZh : item.labelEn}</span>
-                          <span className="shrink-0 text-xs text-zinc-500">{formatDate(item.createdAt)}</span>
+                          <span className="shrink-0 text-xs text-zinc-500">{formatDate(item.createdAt, locale)}</span>
                         </div>
                         <p className="mt-1 truncate text-xs text-zinc-500">{item.campaignTitle ?? item.campaignId}</p>
                       </div>
@@ -244,7 +244,7 @@ export function AdminOverviewDashboard({
                       <TableCell>
                         <StatusBadge status={row.status} locale={locale} />
                       </TableCell>
-                      <TableCell className="text-zinc-500">{formatDate(row.updatedAt)}</TableCell>
+                      <TableCell className="text-zinc-500">{formatDate(row.updatedAt, locale)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

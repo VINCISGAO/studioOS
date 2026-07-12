@@ -5,6 +5,7 @@ import { adminStudioService } from "@/features/admin/studio/admin-studio.service
 import { getAdminSessionUser } from "@/features/admin/auth/admin-auth.service";
 import { type SearchParams } from "@/lib/i18n";
 import { adminFields } from "@/lib/studioos/admin-copy";
+import { adminDepositStatusLabel } from "@/lib/studioos/admin-enum-labels";
 import { formatCurrency } from "@/lib/utils";
 
 const copy = {
@@ -36,7 +37,7 @@ export default async function AdminStudiosPage({ searchParams }: { searchParams:
                 {studio.country ?? "—"} · {studio.specialties.join(", ") || "—"}
               </p>
               <p className="mt-3 text-xs text-zinc-500">
-                {f.deposit}: {formatCurrency(studio.depositAmount, locale)} ({studio.depositStatus})
+                {f.deposit}: {formatCurrency(studio.depositAmount, locale)} ({adminDepositStatusLabel(studio.depositStatus, locale)})
               </p>
             </CardContent>
           </Card>

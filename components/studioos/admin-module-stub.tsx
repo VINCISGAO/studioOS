@@ -1,6 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import type { Locale } from "@/lib/i18n";
 import { getLocale, type SearchParams } from "@/lib/i18n";
+import { AdminPageShell } from "@/components/studioos/admin-page-shell";
 
 type StubCopy = {
   title: Record<Locale, string>;
@@ -80,10 +81,8 @@ export function createAdminStubPage(slug: keyof typeof stubs) {
     };
 
     return (
-      <div>
-        <h1 className="text-3xl font-semibold tracking-tight">{t.title}</h1>
-        <p className="mt-2 text-sm text-zinc-500">{t.subtitle}</p>
-        <Card className="mt-8 border-zinc-200/80 shadow-none">
+      <AdminPageShell locale={locale} title={t.title} subtitle={t.subtitle}>
+        <Card className="border-zinc-200/80 shadow-none">
           <CardContent className="p-6">
             <p className="text-sm font-medium text-zinc-900">{t.comingSoon}</p>
             <ul className="mt-4 list-disc space-y-2 pl-5 text-sm text-zinc-600">
@@ -93,7 +92,7 @@ export function createAdminStubPage(slug: keyof typeof stubs) {
             </ul>
           </CardContent>
         </Card>
-      </div>
+      </AdminPageShell>
     );
   };
 }

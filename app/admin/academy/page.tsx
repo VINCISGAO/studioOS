@@ -1,13 +1,11 @@
 import { getAppUiLocale } from "@/lib/app-language";
-import Link from "next/link";
-import { ArrowLeft, BookOpen, CheckCircle2, Clock, GraduationCap } from "lucide-react";
+import { BookOpen, CheckCircle2, Clock, GraduationCap } from "lucide-react";
+import { AdminPageShell } from "@/components/studioos/admin-page-shell";
 import { Badge, type BadgeProps } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { getAdminSessionUser } from "@/features/admin/auth/admin-auth.service";
 import { partnerAcademyAdminService } from "@/features/partner-academy/partner-academy-admin.service";
-import { type SearchParams, withLocale } from "@/lib/i18n";
-import { adminPortalRoutes } from "@/lib/studioos/admin-portal-routes";
+import { type SearchParams } from "@/lib/i18n";
 
 const copy = {
   en: {
@@ -37,7 +35,7 @@ const copy = {
     minutes: "培训分钟",
     completions: "完成人次",
     courses: "课程库",
-    empty: "还没有 Academy 课程。运行 seed 或创建课程记录后即可启用学院。",
+    empty: "还没有学院课程。运行 seed 或创建课程记录后即可启用学院。",
     audience: "受众",
     status: "状态",
     level: "等级",
@@ -65,27 +63,15 @@ export default async function AdminAcademyPage({
     : { totals: { lessons: 0, minutes: 0, completions: 0, published: 0 }, byAudience: [], byStatus: [], courses: [] };
 
   return (
-    <div>
-      <Button asChild variant="outline" size="sm">
-        <Link href={withLocale(adminPortalRoutes.dashboard, locale)}>
-          <ArrowLeft className="h-4 w-4" /> {t.back}
-        </Link>
-      </Button>
-
-      <div className="mt-8">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">{t.kicker}</p>
-        <h1 className="mt-3 text-4xl font-semibold tracking-tight">{t.title}</h1>
-        <p className="mt-3 max-w-3xl text-sm leading-6 text-muted-foreground">{t.subtitle}</p>
-      </div>
-
-      <div className="mt-8 grid gap-4 md:grid-cols-4">
+    <AdminPageShell locale={locale} title={t.title} subtitle={t.subtitle}>
+      <div className="grid gap-4 md:grid-cols-4">
         {[
           { label: t.published, value: String(data.totals.published), icon: CheckCircle2 },
           { label: t.lessons, value: String(data.totals.lessons), icon: BookOpen },
           { label: t.minutes, value: String(data.totals.minutes), icon: Clock },
           { label: t.completions, value: String(data.totals.completions), icon: GraduationCap }
         ].map((item) => (
-          <Card key={item.label} className="shadow-none">
+          <Card key={item.label} className="border-zinc-200/80 shadow-none">
             <CardContent className="flex items-center justify-between gap-4 p-5">
               <div>
                 <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">{item.label}</p>
@@ -98,7 +84,7 @@ export default async function AdminAcademyPage({
       </div>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[1.6fr_1fr]">
-        <Card className="shadow-none">
+        <Card className="border-zinc-200/80 shadow-none">
           <CardContent className="p-6">
             <h2 className="text-lg font-semibold">{t.courses}</h2>
             {data.courses.length === 0 ? (
@@ -131,7 +117,7 @@ export default async function AdminAcademyPage({
         </Card>
 
         <div className="space-y-6">
-          <Card className="shadow-none">
+          <Card className="border-zinc-200/80 shadow-none">
             <CardContent className="p-6">
               <h2 className="text-lg font-semibold">{t.audience}</h2>
               <div className="mt-4 space-y-3">
@@ -144,7 +130,7 @@ export default async function AdminAcademyPage({
               </div>
             </CardContent>
           </Card>
-          <Card className="shadow-none">
+          <Card className="border-zinc-200/80 shadow-none">
             <CardContent className="p-6">
               <h2 className="text-lg font-semibold">{t.status}</h2>
               <div className="mt-4 space-y-3">
@@ -159,6 +145,6 @@ export default async function AdminAcademyPage({
           </Card>
         </div>
       </div>
-    </div>
+    </AdminPageShell>
   );
 }

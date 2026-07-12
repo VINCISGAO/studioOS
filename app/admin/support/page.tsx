@@ -4,7 +4,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { aiSupportConversationService } from "@/features/ai-support/conversation.service";
 import { adminSupportService } from "@/features/admin/support/admin-support.service";
 import { getAdminSessionUser } from "@/features/admin/auth/admin-auth.service";
+import { AdminPageShell } from "@/components/studioos/admin-page-shell";
 import { type SearchParams, withLocale } from "@/lib/i18n";
+import { adminConversationStatusLabel } from "@/lib/studioos/admin-enum-labels";
 
 const copy = {
   en: {
@@ -43,10 +45,8 @@ export default async function AdminSupportPage({ searchParams }: { searchParams:
     : [];
 
   return (
-    <div>
-      <h1 className="text-3xl font-semibold tracking-tight">{t.title}</h1>
-      <p className="mt-2 text-sm text-zinc-500">{t.subtitle}</p>
-      <Card className="mt-8 border-zinc-200/80 shadow-none">
+    <AdminPageShell locale={locale} title={t.title} subtitle={t.subtitle}>
+      <Card className="border-zinc-200/80 shadow-none">
         <CardContent className="p-6">
           <p className="text-sm text-zinc-500">{t.openItems}</p>
           <p className="mt-2 text-4xl font-semibold">{overview.openItems}</p>
@@ -81,7 +81,7 @@ export default async function AdminSupportPage({ searchParams }: { searchParams:
                       <div className="flex flex-wrap items-center gap-2">
                         <p className="text-sm font-medium text-zinc-950">{conversation.creator.displayName}</p>
                         <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-600">
-                          {conversation.status}
+                          {adminConversationStatusLabel(conversation.status, locale)}
                         </span>
                         <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-medium text-blue-700">
                           {conversation.channel}
@@ -103,6 +103,6 @@ export default async function AdminSupportPage({ searchParams }: { searchParams:
           </div>
         </CardContent>
       </Card>
-    </div>
+    </AdminPageShell>
   );
 }

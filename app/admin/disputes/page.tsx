@@ -1,8 +1,9 @@
 import { getAppUiLocale } from "@/lib/app-language";
 import Link from "next/link";
-import { ArrowLeft, Scale } from "lucide-react";
+import { Scale } from "lucide-react";
 import { resolveDisputeAction } from "@/app/admin-actions";
 import { AdminFormCsrf } from "@/components/studioos/admin-form-csrf";
+import { AdminPageShell } from "@/components/studioos/admin-page-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,6 +13,7 @@ import { adminRefundService } from "@/features/admin/refund/admin-refund.service
 import { getAdminSessionUser } from "@/features/admin/auth/admin-auth.service";
 import { type SearchParams, withLocale } from "@/lib/i18n";
 import { adminPortalRoutes } from "@/lib/studioos/admin-portal-routes";
+import { adminDisputeStatusLabel, adminRefundStatusLabel } from "@/lib/studioos/admin-enum-labels";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 const copy = {
@@ -52,19 +54,8 @@ export default async function AdminDisputesPage({ searchParams }: { searchParams
   const refundRequests = user ? await adminRefundService.list(user) : [];
 
   return (
-    <div>
-      <Button asChild variant="outline" size="sm">
-        <Link href={withLocale(adminPortalRoutes.dashboard, locale)}>
-          <ArrowLeft className="h-4 w-4" /> {t.back}
-        </Link>
-      </Button>
-      <div className="mt-8">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">{t.eyebrow}</p>
-        <h1 className="mt-3 text-4xl font-semibold tracking-tight">{t.title}</h1>
-        <p className="mt-3 max-w-3xl text-sm leading-6 text-muted-foreground">{t.subtitle}</p>
-      </div>
-
-      <Card className="mt-8 shadow-none">
+    <AdminPageShell locale={locale} title={t.title} subtitle={t.subtitle}>
+      <Card className="border-zinc-200/80 shadow-none">
         <CardContent className="p-0">
           <div className="border-b p-6">
             <h2 className="text-lg font-semibold">{t.disputes}</h2>
@@ -93,11 +84,11 @@ export default async function AdminDisputesPage({ searchParams }: { searchParams
                     <TableCell>{dispute.openedBy}</TableCell>
                     <TableCell>
                       <Badge variant={dispute.status === "OPEN" ? "warning" : "outline"}>
-                        {dispute.status}
+                        {adminDisputeStatusLabel(dispute.status, locale)}
                       </Badge>
                     </TableCell>
                     <TableCell className="max-w-xs truncate">{dispute.reason}</TableCell>
-                    <TableCell>{formatDate(dispute.createdAt)}</TableCell>
+                    <TableCell>{formatDate(dispute.createdAt, locale)}</TableCell>
                     <TableCell>
                       {dispute.status === "OPEN" || dispute.status === "PROCESSING" ? (
                         <form action={resolveDisputeAction} className="flex flex-col gap-2">
@@ -129,7 +120,7 @@ export default async function AdminDisputesPage({ searchParams }: { searchParams
         </CardContent>
       </Card>
 
-      <Card className="mt-8 shadow-none">
+      <Card className="mt-8 border-zinc-200/80 shadow-none">
         <CardContent className="p-0">
           <div className="border-b p-6">
             <h2 className="text-lg font-semibold">{t.refunds}</h2>
@@ -148,16 +139,16 @@ export default async function AdminDisputesPage({ searchParams }: { searchParams
                   <TableCell className="font-medium">{refund.orderId}</TableCell>
                   <TableCell>{formatCurrency(refund.amount, locale)}</TableCell>
                   <TableCell>
-                    <Badge variant="warning">{refund.status}</Badge>
+                    <Badge variant="warning">{adminRefundStatusLabel(refund.status, locale)}</Badge>
                   </TableCell>
                   <TableCell>{refund.reason}</TableCell>
-                  <TableCell>{formatDate(refund.createdAt)}</TableCell>
+                  <TableCell>{formatDate(refund.createdAt, locale)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
-    </div>
+    </AdminPageShell>
   );
 }

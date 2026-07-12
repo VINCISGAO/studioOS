@@ -16,8 +16,9 @@ export function formatCurrency(
   return formatMoneyFromUsd(amount, locale ?? "en");
 }
 
-export function formatDate(date: string) {
-  return new Intl.DateTimeFormat("en-US", {
+export function formatDate(date: string, locale?: Locale) {
+  const intlLocale = locale === "zh" ? "zh-CN" : "en-US";
+  return new Intl.DateTimeFormat(intlLocale, {
     month: "short",
     day: "numeric",
     year: "numeric"

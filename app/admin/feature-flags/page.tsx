@@ -1,16 +1,16 @@
 import { getAppUiLocale } from "@/lib/app-language";
-import Link from "next/link";
-import { ArrowLeft, Flag } from "lucide-react";
+import { Flag } from "lucide-react";
 import { toggleFeatureFlagAction } from "@/app/admin-feature-flag-actions";
 import { AdminFormCsrf } from "@/components/studioos/admin-form-csrf";
+import { AdminPageShell } from "@/components/studioos/admin-page-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { featureFlagService } from "@/features/admin/feature-flag.service";
 import { getAdminSessionUser } from "@/features/admin/auth/admin-auth.service";
-import { type SearchParams, withLocale } from "@/lib/i18n";
-import { adminPortalRoutes } from "@/lib/studioos/admin-portal-routes";
+import { type SearchParams } from "@/lib/i18n";
+import { adminToggleLabel } from "@/lib/studioos/admin-enum-labels";
 import { formatDate } from "@/lib/utils";
 
 const copy = {
@@ -47,19 +47,8 @@ export default async function AdminFeatureFlagsPage({
   const flags = user ? await featureFlagService.list(user) : [];
 
   return (
-    <div>
-      <Button asChild variant="outline" size="sm">
-        <Link href={withLocale(adminPortalRoutes.dashboard, locale)}>
-          <ArrowLeft className="h-4 w-4" /> {t.back}
-        </Link>
-      </Button>
-      <div className="mt-8">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">{t.eyebrow}</p>
-        <h1 className="mt-3 text-4xl font-semibold tracking-tight">{t.title}</h1>
-        <p className="mt-3 max-w-3xl text-sm leading-6 text-muted-foreground">{t.subtitle}</p>
-      </div>
-
-      <Card className="mt-8 shadow-none">
+    <AdminPageShell locale={locale} title={t.title} subtitle={t.subtitle}>
+      <Card className="border-zinc-200/80 shadow-none">
         <CardContent className="p-0">
           <div className="border-b p-6">
             <h2 className="flex items-center gap-2 text-lg font-semibold">
@@ -82,13 +71,13 @@ export default async function AdminFeatureFlagsPage({
                     <TableCell className="font-mono text-sm">{flag.key}</TableCell>
                     <TableCell>
                       <Badge variant={flag.enabled ? "success" : "outline"}>
-                        {flag.enabled ? "ON" : "OFF"}
+                        {adminToggleLabel(flag.enabled, locale)}
                       </Badge>
                     </TableCell>
                     <TableCell className="max-w-md truncate text-xs text-muted-foreground">
                       {flag.metadata ? JSON.stringify(flag.metadata) : "—"}
                     </TableCell>
-                    <TableCell className="whitespace-nowrap text-sm">{formatDate(flag.updatedAt)}</TableCell>
+                    <TableCell className="whitespace-nowrap text-sm">{formatDate(flag.updatedAt, locale)}</TableCell>
                     <TableCell>
                       <form action={toggleFeatureFlagAction}>
                         <AdminFormCsrf />
@@ -109,6 +98,6 @@ export default async function AdminFeatureFlagsPage({
           )}
         </CardContent>
       </Card>
-    </div>
+    </AdminPageShell>
   );
 }

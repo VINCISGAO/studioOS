@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { AdminPaymentRecord } from "@/features/admin/payment/admin-payment.service";
 import type { Locale } from "@/lib/i18n";
+import { adminEscrowStatusLabel, adminPaymentStatusLabel } from "@/lib/studioos/admin-enum-labels";
 import { adminFields } from "@/lib/studioos/admin-copy";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
@@ -51,14 +52,14 @@ export function AdminPaymentsPrismaTable({
               </div>
             </TableCell>
             <TableCell>
-              <Badge variant="outline">{row.escrowStatus}</Badge>
+              <Badge variant="outline">{adminEscrowStatusLabel(row.escrowStatus, locale)}</Badge>
             </TableCell>
-            <TableCell>{row.paymentStatus}</TableCell>
+            <TableCell>{adminPaymentStatusLabel(row.paymentStatus, locale)}</TableCell>
             <TableCell>{formatCurrency(row.amount, locale)}</TableCell>
             <TableCell>{formatCurrency(row.platformFee, locale)}</TableCell>
             <TableCell>{formatCurrency(row.commission, locale)}</TableCell>
             <TableCell>{formatCurrency(row.creatorPayout, locale)}</TableCell>
-            <TableCell className="text-xs">{row.payoutPaidAt ? formatDate(row.payoutPaidAt) : "—"}</TableCell>
+            <TableCell className="text-xs">{row.payoutPaidAt ? formatDate(row.payoutPaidAt, locale) : "—"}</TableCell>
             <TableCell>
               {row.hasOpenDispute ? <Badge variant="destructive">{f.open}</Badge> : "—"}
             </TableCell>

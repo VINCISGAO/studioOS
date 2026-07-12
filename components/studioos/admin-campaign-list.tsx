@@ -12,7 +12,7 @@ import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import { adminPortalRoutes } from "@/lib/studioos/admin-portal-routes";
 import { adminCountLabel } from "@/lib/studioos/admin-copy";
-import { adminSettlementStateLabel } from "@/lib/studioos/admin-enum-labels";
+import { adminSettlementStateLabel, adminEscrowStatusLabel, adminDeliveryStatusLabel } from "@/lib/studioos/admin-enum-labels";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 const copy = {
@@ -114,8 +114,8 @@ export function AdminCampaignList({
                     <TableCell>
                       <StatusBadge status={row.status} locale={locale} />
                     </TableCell>
-                    <TableCell>{row.escrowStatus ?? "—"}</TableCell>
-                    <TableCell>{row.deliveryStatus ?? "—"}</TableCell>
+                    <TableCell>{row.escrowStatus ? adminEscrowStatusLabel(row.escrowStatus, locale) : "—"}</TableCell>
+                    <TableCell>{row.deliveryStatus ? adminDeliveryStatusLabel(row.deliveryStatus, locale) : "—"}</TableCell>
                     <TableCell>
                       <Badge variant={settlementVariant(row.settlementState)}>
                         {adminSettlementStateLabel(row.settlementState, locale)}
@@ -123,7 +123,7 @@ export function AdminCampaignList({
                     </TableCell>
                     <TableCell>{row.reviewRound}</TableCell>
                     <TableCell>{formatCurrency(row.budget, locale)}</TableCell>
-                    <TableCell className="whitespace-nowrap text-sm">{formatDate(row.updatedAt)}</TableCell>
+                    <TableCell className="whitespace-nowrap text-sm">{formatDate(row.updatedAt, locale)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

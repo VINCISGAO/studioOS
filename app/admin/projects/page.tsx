@@ -2,9 +2,11 @@ import { getAppUiLocale } from "@/lib/app-language";
 import Link from "next/link";
 import { StatusBadge } from "@/components/status-badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { AdminPageActionLink, AdminPageShell } from "@/components/studioos/admin-page-shell";
 import { adminCampaignService } from "@/features/admin/campaign/admin-campaign.service";
 import { getAdminSessionUser } from "@/features/admin/auth/admin-auth.service";
 import { type SearchParams, withLocale } from "@/lib/i18n";
+import { adminPortalRoutes } from "@/lib/studioos/admin-portal-routes";
 import { formatDate } from "@/lib/utils";
 
 const copy = {
@@ -27,30 +29,35 @@ export default async function AdminProjectsPage({ searchParams }: { searchParams
   const result = user ? await adminCampaignService.list(user, {}) : { items: [], total: 0 };
 
   return (
-    <div>
-      <h1 className="text-3xl font-semibold tracking-tight">{t.title}</h1>
-      <p className="mt-2 text-sm text-zinc-500">{t.subtitle}</p>
-      <Card className="mt-8 border-zinc-200/80 shadow-none">
+    <AdminPageShell
+      locale={locale}
+      title={t.title}
+      subtitle={t.subtitle}
+      actions={
+        <AdminPageActionLink href={withLocale(adminPortalRoutes.dashboard, locale)}>← {t.back}</AdminPageActionLink>
+      }
+    >
+      <Card className="border-zinc-200/80 shadow-none">
         <CardContent className="p-0">
-          <ul className="divide-y">
+          <ul className="divide-y divide-zinc-100">
             {result.items.map((project) => (
               <li key={project.id} className="flex items-center justify-between gap-4 px-6 py-4">
                 <div>
-                  <p className="font-medium">{project.brandName ?? project.title}</p>
+                  <Link
+                    href={withLocale(adminPortalRoutes.campaignDetail(project.id), locale)}
+                    className="font-medium hover:underline"
+                  >
+                    {project.brandName ?? project.title}
+                  </Link>
                   <p className="text-sm text-zinc-500">{project.title}</p>
-                  <p className="text-xs text-zinc-400">{formatDate(project.updatedAt)}</p>
+                  <p className="text-xs text-zinc-400">{formatDate(project.updatedAt, locale)}</p>
                 </div>
-                <StatusBadge status={project.status.toLowerCase()} locale={locale} />
+                <StatusBadge status={project.status} locale={locale} />
               </li>
             ))}
           </ul>
         </CardContent>
       </Card>
-      <p className="mt-4 text-sm text-zinc-500">
-        <Link href={withLocale("/admin", locale)} className="hover:underline">
-          ← {t.back}
-        </Link>
-      </p>
-    </div>
+    </AdminPageShell>
   );
 }

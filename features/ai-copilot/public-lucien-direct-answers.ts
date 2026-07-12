@@ -61,8 +61,16 @@ export function publicLucienModelUnavailableAnswer(language: string, suggestedEx
     : `This needs the language model, but the server did not read OPENAI_API_KEY. Try an FAQ question first, such as: ${exampleText}.`;
 }
 
-export function publicLucienModelFailureAnswer(language: string, reason: "invalid_key" | "request_failed") {
+export function publicLucienModelFailureAnswer(
+  language: string,
+  reason: "invalid_key" | "request_failed" | "not_configured"
+) {
   const zh = isZh(language);
+  if (reason === "not_configured") {
+    return zh
+      ? "语言模型尚未配置，服务器未读取到 OPENAI_API_KEY。"
+      : "The language model is not configured — OPENAI_API_KEY was not found on the server.";
+  }
   if (reason === "invalid_key") {
     return zh
       ? "密钥已配置，但 OpenAI 拒绝了请求。请检查：API Key 是否有效、是否复制完整、账户是否有余额。"

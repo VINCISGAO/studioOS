@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import type { PaymentRecordView } from "@/features/payment/payment-collection.service";
 import type { Locale } from "@/lib/i18n";
 import { adminFields } from "@/lib/studioos/admin-copy";
+import { adminPaymentStatusLabel, adminPayoutStatusLabel } from "@/lib/studioos/admin-enum-labels";
 
 const copy = {
   en: {
@@ -91,7 +92,7 @@ export function AdminPaymentsTable({
               </td>
               <td className="px-4 py-4">
                 <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium">
-                  {row.paymentStatus}
+                  {adminPaymentStatusLabel(row.paymentStatus, locale)}
                 </span>
               </td>
               <td className="px-4 py-4 text-xs text-zinc-600">
@@ -113,7 +114,7 @@ export function AdminPaymentsTable({
                   ? `${row.currency} ${row.creatorPayableAmount.toFixed(2)}`
                   : "—"}
               </td>
-              <td className="px-4 py-4">{row.creatorPayoutStatus ?? "—"}</td>
+              <td className="px-4 py-4">{row.creatorPayoutStatus ? adminPayoutStatusLabel(row.creatorPayoutStatus, locale) : "—"}</td>
               <td className="px-4 py-4">
                 {row.paymentStatus === "PAID" && row.creatorPayoutStatus === "MANUAL_PAYOUT_PENDING" ? (
                   <AdminMarkPayoutButton locale={locale} campaignId={row.campaignId} />

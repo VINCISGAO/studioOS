@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Upload } from "lucide-react";
 import { updateOrderAction } from "@/app/actions";
-import { PageShell } from "@/components/page-shell";
+import { AdminPageActionLink, AdminPageShell } from "@/components/studioos/admin-page-shell";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -127,15 +127,18 @@ export default async function AdminOrderPage({ params, searchParams }: AdminOrde
   const assignedCreator = creators.find((item) => item.legacyCreatorId === order.creator_id);
 
   return (
-    <PageShell locale={locale}>
-      <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <Link href={withLocale("/admin", locale)} className="text-sm text-muted-foreground hover:text-foreground">
-          {t.back}
-        </Link>
-        <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <AdminPageShell
+      locale={locale}
+      title={order.id}
+      subtitle={project?.company_name ?? order.client_email ?? undefined}
+      actions={
+        <AdminPageActionLink href={withLocale("/admin", locale)}>← {t.back}</AdminPageActionLink>
+      }
+    >
+      <main>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-4xl font-semibold tracking-tight">{order.id}</h1>
-            <p className="mt-2 text-muted-foreground">
+            <p className="text-sm text-zinc-500">
               {project?.company_name} · {formatCurrency(order.amount, locale)} · {order.payment_status}
             </p>
           </div>
@@ -144,7 +147,7 @@ export default async function AdminOrderPage({ params, searchParams }: AdminOrde
 
         <div className="mt-8 grid gap-5 lg:grid-cols-[0.62fr_0.38fr]">
           <section className="space-y-5">
-            <Card className="shadow-none">
+            <Card className="border-zinc-200/80 shadow-none">
               <CardContent className="p-6">
                 <h2 className="text-lg font-semibold">{t.details}</h2>
                 <div className="mt-5 grid gap-4 sm:grid-cols-2">
@@ -179,7 +182,7 @@ export default async function AdminOrderPage({ params, searchParams }: AdminOrde
               </CardContent>
             </Card>
 
-            <Card className="shadow-none">
+            <Card className="border-zinc-200/80 shadow-none">
               <CardContent className="p-6">
                 <h2 className="text-lg font-semibold">{t.payments}</h2>
                 <div className="mt-5 grid gap-4 sm:grid-cols-3">
@@ -192,7 +195,7 @@ export default async function AdminOrderPage({ params, searchParams }: AdminOrde
           </section>
 
           <aside className="space-y-5">
-            <Card className="shadow-none">
+            <Card className="border-zinc-200/80 shadow-none">
               <CardContent className="p-6">
                 <h2 className="text-lg font-semibold">{t.controls}</h2>
                 <form action={updateOrderAction} className="mt-5 grid gap-4">
@@ -233,7 +236,7 @@ export default async function AdminOrderPage({ params, searchParams }: AdminOrde
               </CardContent>
             </Card>
 
-            <Card className="shadow-none">
+            <Card className="border-zinc-200/80 shadow-none">
               <CardContent className="p-6">
                 <h2 className="text-lg font-semibold">{t.upload}</h2>
                 <form action={updateOrderAction} className="mt-5 grid gap-4">
@@ -258,7 +261,7 @@ export default async function AdminOrderPage({ params, searchParams }: AdminOrde
               </CardContent>
             </Card>
 
-            <Card className="shadow-none">
+            <Card className="border-zinc-200/80 shadow-none">
               <CardContent className="p-6">
                 <h2 className="text-lg font-semibold">{t.history}</h2>
                 <div className="mt-4 space-y-3">
@@ -281,7 +284,7 @@ export default async function AdminOrderPage({ params, searchParams }: AdminOrde
           </aside>
         </div>
       </main>
-    </PageShell>
+    </AdminPageShell>
   );
 }
 

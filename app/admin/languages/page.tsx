@@ -1,6 +1,6 @@
 import { getAppUiLocale } from "@/lib/app-language";
-import Link from "next/link";
 import { Languages } from "lucide-react";
+import { AdminPageShell } from "@/components/studioos/admin-page-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,6 +20,7 @@ const copy = {
   en: {
     eyebrow: "Language Management",
     title: "Internationalization database",
+    subtitle: "Manage supported languages and translation keys.",
     back: "Back to admin",
     languages: "Supported languages",
     translations: "Translation keys",
@@ -36,6 +37,7 @@ const copy = {
   zh: {
     eyebrow: "语言管理",
     title: "国际化语言数据库",
+    subtitle: "管理支持语言与翻译键。",
     back: "返回后台",
     languages: "支持语言",
     translations: "翻译 Key",
@@ -70,19 +72,9 @@ export default async function AdminLanguagesPage({
   const editableLanguages = languages.filter((item) => item.isEnabled);
 
   return (
-    <div>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">{t.eyebrow}</p>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight">{t.title}</h1>
-        </div>
-        <Link href="/admin" className="text-sm font-medium text-zinc-500 hover:text-zinc-900">
-          {t.back}
-        </Link>
-      </div>
-
+    <AdminPageShell locale={locale} title={t.title} subtitle={t.subtitle}>
       {!enabled ? (
-        <Card className="mt-8 border-zinc-200/80 shadow-none">
+        <Card className="border-zinc-200/80 shadow-none">
           <CardContent className="p-6 text-sm text-zinc-500">{t.disabled}</CardContent>
         </Card>
       ) : (
@@ -195,6 +187,6 @@ export default async function AdminLanguagesPage({
           </div>
         </div>
       )}
-    </div>
+    </AdminPageShell>
   );
 }

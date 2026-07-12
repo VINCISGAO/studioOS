@@ -12,8 +12,50 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { type SearchParams, withLocale } from "@/lib/i18n";
+import { AdminPageActionLink, AdminPageShell } from "@/components/studioos/admin-page-shell";
 import { adminPortalRoutes } from "@/lib/studioos/admin-portal-routes";
+import { adminFields } from "@/lib/studioos/admin-copy";
+import { adminLedgerEntryTypeLabel } from "@/lib/studioos/admin-enum-labels";
 import { formatCurrency, formatDate } from "@/lib/utils";
+
+const copy = {
+  en: {
+    back: "Back",
+    legacyWallet: "Legacy wallet",
+    walletAssets: "Wallet assets",
+    manualAdjustment: "Manual adjustment",
+    recentLedger: "Recent ledger entries",
+    apply: "Apply adjustment",
+    placeholders: {
+      assetCode: "Asset code",
+      amount: "Amount",
+      description: "Description"
+    },
+    directions: {
+      credit: "Credit",
+      debit: "Debit"
+    },
+    assetColumns: ["Asset", "Available", "Pending", "Frozen"]
+  },
+  zh: {
+    back: "返回",
+    legacyWallet: "旧版钱包",
+    walletAssets: "钱包资产",
+    manualAdjustment: "手动调整",
+    recentLedger: "最近账本记录",
+    apply: "提交调整",
+    placeholders: {
+      assetCode: "资产代码",
+      amount: "金额",
+      description: "说明"
+    },
+    directions: {
+      credit: "入账",
+      debit: "出账"
+    },
+    assetColumns: ["资产", "可用", "待入账", "冻结"]
+  }
+} as const;
 
 export default async function AdminWalletDetailPage({
   params,
@@ -24,6 +66,8 @@ export default async function AdminWalletDetailPage({
 }) {
   const { userId } = await params;
   const locale = await getAppUiLocale();
+  const t = copy[locale];
+  const f = adminFields(locale);
   const user = await getAdminSessionUser();
   if (!user) notFound();
 
@@ -35,24 +79,23 @@ export default async function AdminWalletDetailPage({
   }
 
   return (
-    <div className="space-y-6">
-      <Button asChild variant="outline" size="sm">
-        <Link href={withLocale(adminPortalRoutes.wallets, locale)}>
-          <ArrowLeft className="h-4 w-4" /> {locale === "zh" ? "返回" : "Back"}
-        </Link>
-      </Button>
-      <div>
-        <h1 className="text-3xl font-semibold">{detail.name ?? detail.email}</h1>
-        <p className="text-sm text-zinc-500">{detail.email}</p>
-      </div>
-
+    <AdminPageShell
+      locale={locale}
+      title={detail.name ?? detail.email ?? userId}
+      subtitle={detail.email}
+      narrow
+      actions={
+        <AdminPageActionLink href={withLocale(adminPortalRoutes.wallets, locale)}>← {t.back}</AdminPageActionLink>
+      }
+    >
+      <div className="space-y-6">
       {detail.wallet && (
         <Card className="border-zinc-200/80 shadow-none">
           <CardContent className="p-6">
-            <h2 className="font-semibold">Legacy wallet</h2>
+            <h2 className="font-semibold">{t.legacyWallet}</h2>
             <dl className="mt-4 grid gap-3 sm:grid-cols-2">
-              <div><dt className="text-xs text-zinc-500">Available</dt><dd>{formatCurrency(detail.wallet.availableBalance, locale)}</dd></div>
-              <div><dt className="text-xs text-zinc-500">Pending</dt><dd>{formatCurrency(detail.wallet.pendingBalance, locale)}</dd></div>
+              <div><dt className="text-xs text-zinc-500">{f.available}</dt><dd>{formatCurrency(detail.wallet.availableBalance, locale)}</dd></div>
+              <div><dt className="text-xs text-zinc-500">{f.pending}</dt><dd>{formatCurrency(detail.wallet.pendingBalance, locale)}</dd></div>
             </dl>
           </CardContent>
         </Card>
@@ -61,8 +104,15 @@ export default async function AdminWalletDetailPage({
       {detail.walletAccount && (
         <Card className="border-zinc-200/80 shadow-none">
           <CardContent className="p-0">
-            <div className="border-b p-4 font-semibold">WalletAccount assets</div>
+            <div className="border-b p-4 font-semibold">{t.walletAssets}</div>
             <Table>
+              <TableHeader>
+                <TableRow>
+                  {t.assetColumns.map((heading) => (
+                    <TableHead key={heading}>{heading}</TableHead>
+                  ))}
+                </TableRow>
+              </TableHeader>
               <TableBody>
                 {detail.walletAccount.assets.map((a) => (
                   <TableRow key={a.assetCode}>
@@ -80,19 +130,19 @@ export default async function AdminWalletDetailPage({
 
       <Card className="border-zinc-200/80 shadow-none">
         <CardContent className="p-6">
-          <h2 className="font-semibold">{locale === "zh" ? "手动调整" : "Manual adjustment"}</h2>
+          <h2 className="font-semibold">{t.manualAdjustment}</h2>
           <form action={adjustWalletAction} className="mt-4 grid gap-3 sm:grid-cols-2">
             <AdminFormCsrf />
             <input type="hidden" name="lang" value={locale} />
             <input type="hidden" name="user_id" value={userId} />
-            <Input name="asset_code" defaultValue="USD" placeholder="Asset code" />
-            <Input name="amount" type="number" step="0.01" required placeholder="Amount" />
+            <Input name="asset_code" defaultValue="USD" placeholder={t.placeholders.assetCode} />
+            <Input name="amount" type="number" step="0.01" required placeholder={t.placeholders.amount} />
             <select name="direction" className="rounded-md border px-3 py-2 text-sm">
-              <option value="CREDIT">CREDIT</option>
-              <option value="DEBIT">DEBIT</option>
+              <option value="CREDIT">{t.directions.credit}</option>
+              <option value="DEBIT">{t.directions.debit}</option>
             </select>
-            <Input name="description" required placeholder="Description" />
-            <Button type="submit" className="sm:col-span-2">{locale === "zh" ? "提交调整" : "Apply adjustment"}</Button>
+            <Input name="description" required placeholder={t.placeholders.description} />
+            <Button type="submit" className="sm:col-span-2">{t.apply}</Button>
           </form>
         </CardContent>
       </Card>
@@ -100,23 +150,23 @@ export default async function AdminWalletDetailPage({
       {detail.walletAccount?.entries.length ? (
         <Card className="border-zinc-200/80 shadow-none">
           <CardContent className="p-0">
-            <div className="border-b p-4 font-semibold">Recent ledger entries</div>
+            <div className="border-b p-4 font-semibold">{t.recentLedger}</div>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Time</TableHead>
+                  <TableHead>{f.type}</TableHead>
+                  <TableHead>{f.amount}</TableHead>
+                  <TableHead>{f.description}</TableHead>
+                  <TableHead>{f.time}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {detail.walletAccount.entries.map((e) => (
                   <TableRow key={e.id}>
-                    <TableCell><Badge variant="outline">{e.entryType}</Badge></TableCell>
+                    <TableCell><Badge variant="outline">{adminLedgerEntryTypeLabel(e.entryType, locale)}</Badge></TableCell>
                     <TableCell>{e.amount} {e.assetCode}</TableCell>
                     <TableCell>{e.description ?? "—"}</TableCell>
-                    <TableCell>{formatDate(e.createdAt)}</TableCell>
+                    <TableCell>{formatDate(e.createdAt, locale)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -124,6 +174,7 @@ export default async function AdminWalletDetailPage({
           </CardContent>
         </Card>
       ) : null}
-    </div>
+      </div>
+    </AdminPageShell>
   );
 }

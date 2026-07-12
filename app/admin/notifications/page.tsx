@@ -9,11 +9,45 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { type SearchParams } from "@/lib/i18n";
+import { AdminPageShell } from "@/components/studioos/admin-page-shell";
+import { adminFields } from "@/lib/studioos/admin-copy";
+import {
+  adminNotificationCategoryLabel,
+  adminNotificationReadLabel,
+  adminNotificationSentLabel
+} from "@/lib/studioos/admin-enum-labels";
 import { formatDate } from "@/lib/utils";
+
+const copy = {
+  en: {
+    title: "Notification center",
+    subtitle: "Inspect delivery status and retry failed notifications.",
+    failedOnly: "Failed only",
+    filter: "Filter",
+    retry: "Retry",
+    placeholders: {
+      userId: "User ID",
+      campaignId: "Campaign ID"
+    }
+  },
+  zh: {
+    title: "通知中心",
+    subtitle: "查看发送状态并重试失败通知。",
+    failedOnly: "仅失败",
+    filter: "筛选",
+    retry: "重试",
+    placeholders: {
+      userId: "用户编号",
+      campaignId: "活动编号"
+    }
+  }
+} as const;
 
 export default async function AdminNotificationsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const params = await searchParams;
   const locale = await getAppUiLocale();
+  const t = copy[locale];
+  const f = adminFields(locale);
   const user = await getAdminSessionUser();
 
   const filters = {
@@ -27,48 +61,47 @@ export default async function AdminNotificationsPage({ searchParams }: { searchP
   const items = user ? await adminNotificationService.list(user, filters) : [];
 
   return (
-    <div>
-      <h1 className="text-3xl font-semibold tracking-tight">{locale === "zh" ? "通知中心" : "Notification center"}</h1>
-      <form method="get" className="mt-6 grid gap-3 sm:grid-cols-4">
+    <AdminPageShell locale={locale} title={t.title} subtitle={t.subtitle}>
+      <form method="get" className="mb-6 grid gap-3 sm:grid-cols-4">
         <input type="hidden" name="lang" value={locale} />
-        <Input name="userId" defaultValue={filters.userId} placeholder="userId" />
-        <Input name="campaignId" defaultValue={filters.campaignId} placeholder="campaignId" />
+        <Input name="userId" defaultValue={filters.userId} placeholder={t.placeholders.userId} />
+        <Input name="campaignId" defaultValue={filters.campaignId} placeholder={t.placeholders.campaignId} />
         <Input name="from" type="date" defaultValue={filters.from} />
         <Input name="to" type="date" defaultValue={filters.to} />
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" name="failed" value="1" defaultChecked={filters.failed} />
-          {locale === "zh" ? "仅失败" : "Failed only"}
+          {t.failedOnly}
         </label>
-        <Button type="submit">{locale === "zh" ? "筛选" : "Filter"}</Button>
+        <Button type="submit">{t.filter}</Button>
       </form>
-      <Card className="mt-6 border-zinc-200/80 shadow-none">
+      <Card className="border-zinc-200/80 shadow-none">
         <CardContent className="p-0">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Time</TableHead>
-                <TableHead>User</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Title</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Action</TableHead>
+                <TableHead>{f.time}</TableHead>
+                <TableHead>{f.user}</TableHead>
+                <TableHead>{f.category}</TableHead>
+                <TableHead>{f.title}</TableHead>
+                <TableHead>{f.status}</TableHead>
+                <TableHead>{f.action}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {items.map((row) => (
                 <TableRow key={row.id}>
-                  <TableCell>{formatDate(row.createdAt)}</TableCell>
+                  <TableCell>{formatDate(row.createdAt, locale)}</TableCell>
                   <TableCell className="text-xs">{row.userEmail ?? row.userId}</TableCell>
                   <TableCell>
                     <div className="space-y-1">
-                      <Badge variant="outline">{row.category}</Badge>
+                      <Badge variant="outline">{adminNotificationCategoryLabel(row.category, locale)}</Badge>
                       <p className="text-[11px] text-zinc-400">{row.type}</p>
                     </div>
                   </TableCell>
                   <TableCell className="max-w-xs truncate">{row.title}</TableCell>
                   <TableCell>
-                    {!row.isSent && <Badge variant="warning">unsent</Badge>}
-                    {row.isRead && <Badge variant="outline">read</Badge>}
+                    {!row.isSent && <Badge variant="warning">{adminNotificationSentLabel(false, locale)}</Badge>}
+                    {row.isRead && <Badge variant="outline">{adminNotificationReadLabel(true, locale)}</Badge>}
                   </TableCell>
                   <TableCell>
                     {!row.isSent && (
@@ -76,7 +109,7 @@ export default async function AdminNotificationsPage({ searchParams }: { searchP
                         <AdminFormCsrf />
                         <input type="hidden" name="lang" value={locale} />
                         <input type="hidden" name="notification_id" value={row.id} />
-                        <Button type="submit" size="sm" variant="outline">{locale === "zh" ? "重试" : "Retry"}</Button>
+                        <Button type="submit" size="sm" variant="outline">{t.retry}</Button>
                       </form>
                     )}
                   </TableCell>
@@ -86,6 +119,6 @@ export default async function AdminNotificationsPage({ searchParams }: { searchP
           </Table>
         </CardContent>
       </Card>
-    </div>
+    </AdminPageShell>
   );
 }

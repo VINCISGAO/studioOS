@@ -125,7 +125,7 @@ export function CreatorsShowcaseGallery({
           {emptyMessage}
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
           {filtered.map((work) => (
             <ShowcaseCard key={work.id} work={work} locale={locale} playLabel={t.play} onOpen={() => setActiveWorkId(work.id)} />
           ))}
@@ -181,19 +181,23 @@ function ShowcaseCard({
     <button
       type="button"
       onClick={onOpen}
-      className="group overflow-hidden rounded-2xl bg-white text-left ring-1 ring-zinc-200/80 transition hover:-translate-y-0.5 hover:shadow-[0_14px_40px_-32px_rgba(0,0,0,0.18)]"
+      className="group w-full min-w-0 overflow-hidden rounded-2xl bg-white text-left ring-1 ring-zinc-200/80 transition hover:-translate-y-0.5 hover:shadow-[0_14px_40px_-32px_rgba(0,0,0,0.18)]"
     >
       <div className="relative aspect-video w-full overflow-hidden bg-zinc-900">
-        <ShowcaseCover work={work} className="h-full w-full transition duration-500 group-hover:scale-[1.03]" />
+        <ShowcaseCover
+          work={work}
+          className="h-full w-full transition duration-500 group-hover:scale-[1.03]"
+          imageClassName="h-full w-full object-cover"
+        />
         <span className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent" />
-        <span className="pointer-events-none absolute bottom-3 left-3 inline-flex items-center gap-2 rounded-full bg-black/55 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-md">
-          <Play className="h-3.5 w-3.5 fill-current" />
+        <span className="pointer-events-none absolute bottom-3 left-3 inline-flex items-center gap-1.5 rounded-full bg-black/55 px-2.5 py-1.5 text-[11px] font-medium text-white backdrop-blur-md sm:gap-2 sm:px-3 sm:text-xs">
+          <Play className="h-3 w-3 fill-current sm:h-3.5 sm:w-3.5" />
           {playLabel}
         </span>
       </div>
-      <div className="p-4 text-left">
-        <h3 className="line-clamp-1 text-sm font-semibold text-zinc-950">{work.title}</h3>
-        <p className="mt-1.5 text-xs text-zinc-500">{meta}</p>
+      <div className="p-3 text-left sm:p-4">
+        <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-zinc-950 sm:line-clamp-1">{work.title}</h3>
+        <p className="mt-1.5 line-clamp-2 text-xs leading-5 text-zinc-500 sm:line-clamp-1">{meta}</p>
       </div>
     </button>
   );

@@ -75,7 +75,7 @@ export function AdminWithdrawalQueue({
                         ))
                       : "—"}
                   </TableCell>
-                  <TableCell>{formatDate(row.createdAt)}</TableCell>
+                  <TableCell>{formatDate(row.createdAt, locale)}</TableCell>
                   <TableCell>
                     <div className="flex flex-col gap-1">
                       <form action={approveWithdrawalAction}>

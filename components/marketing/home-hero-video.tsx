@@ -352,9 +352,9 @@ export function HomeHeroVideo({ locale, videoSrc, heroPosterSrc }: HomeHeroVideo
 
   if (!safeSrc) {
     return (
-      <section className="bg-black px-0 py-0 lg:px-8 lg:py-0">
+      <section className="bg-white px-0 pb-0 pt-0 lg:px-8 lg:pt-6">
         <div
-          className="relative mx-auto aspect-[21/9] w-full overflow-hidden rounded-none bg-[#050607] lg:mx-auto lg:max-w-[1216px] lg:rounded-lg lg:shadow-[0_28px_90px_-64px_rgba(0,0,0,0.55)]"
+          className="relative mx-auto aspect-[21/9] w-full overflow-hidden rounded-none bg-white lg:mx-auto lg:max-w-[1216px] lg:rounded-lg lg:shadow-[0_28px_90px_-64px_rgba(0,0,0,0.12)]"
           style={
             heroPosterSrc
               ? {
@@ -374,11 +374,11 @@ export function HomeHeroVideo({ locale, videoSrc, heroPosterSrc }: HomeHeroVideo
   }
 
   return (
-    <section className="bg-black px-0 py-0 lg:px-8 lg:py-0">
+    <section className="bg-white px-0 pb-0 pt-0 lg:px-8 lg:pt-6">
       <div
         ref={shellRef}
         className={cn(
-          "home-hero-video-shell group relative w-full cursor-pointer touch-manipulation overflow-hidden rounded-none bg-black shadow-none lg:mx-auto lg:max-w-[1216px] lg:shadow-[0_28px_90px_-64px_rgba(0,0,0,0.55)]",
+          "home-hero-video-shell group relative w-full cursor-pointer touch-manipulation overflow-hidden rounded-none bg-white shadow-none lg:mx-auto lg:max-w-[1216px] lg:shadow-[0_28px_90px_-64px_rgba(0,0,0,0.12)]",
           isFullscreen && "flex max-w-none items-center justify-center",
           controlsActive && "home-hero-video-controls-visible"
         )}

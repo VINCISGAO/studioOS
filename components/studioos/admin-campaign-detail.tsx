@@ -11,7 +11,8 @@ import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import { adminPortalRoutes } from "@/lib/studioos/admin-portal-routes";
 import { adminFields } from "@/lib/studioos/admin-copy";
-import { adminSettlementStateLabel } from "@/lib/studioos/admin-enum-labels";
+import { adminSettlementStateLabel, adminEscrowStatusLabel, adminDeliveryStatusLabel, adminLedgerEntryTypeLabel, adminLedgerDirectionLabel, adminReviewStatusLabel, adminVersionStatusLabel } from "@/lib/studioos/admin-enum-labels";
+import { adminActivityLabel } from "@/lib/studioos/admin-i18n";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 const copy = {
@@ -80,34 +81,47 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 export function AdminCampaignDetailView({
   locale,
-  detail
+  detail,
+  embedded = false
 }: {
   locale: Locale;
   detail: AdminCampaignDetail;
+  embedded?: boolean;
 }) {
   const t = copy[locale];
   const f = adminFields(locale);
 
   return (
     <div className="space-y-6">
-      <Button asChild variant="outline" size="sm">
-        <Link href={withLocale(adminPortalRoutes.campaigns, locale)}>
-          <ArrowLeft className="h-4 w-4" /> {t.back}
-        </Link>
-      </Button>
+      {!embedded ? (
+        <Button asChild variant="outline" size="sm">
+          <Link href={withLocale(adminPortalRoutes.campaigns, locale)}>
+            <ArrowLeft className="h-4 w-4" /> {t.back}
+          </Link>
+        </Button>
+      ) : null}
 
       <AdminCampaignRelationshipStrip locale={locale} detail={detail} />
 
-      <div>
+      {!embedded ? (
+        <div>
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-3xl font-semibold tracking-tight">{detail.title}</h1>
+            <StatusBadge status={detail.status} locale={locale} />
+            <Badge variant={detail.settlementState === "DISPUTE" ? "destructive" : "outline"}>
+              {adminSettlementStateLabel(detail.settlementState, locale)}
+            </Badge>
+          </div>
+          <p className="mt-2 text-sm text-zinc-500">{detail.id}</p>
+        </div>
+      ) : (
         <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-3xl font-semibold tracking-tight">{detail.title}</h1>
           <StatusBadge status={detail.status} locale={locale} />
           <Badge variant={detail.settlementState === "DISPUTE" ? "destructive" : "outline"}>
             {adminSettlementStateLabel(detail.settlementState, locale)}
           </Badge>
         </div>
-        <p className="mt-2 text-sm text-zinc-500">{detail.id}</p>
-      </div>
+      )}
 
       <Section title={t.info}>
         <dl className="grid gap-3 sm:grid-cols-2">
@@ -141,7 +155,7 @@ export function AdminCampaignDetailView({
       <Section title={t.escrow}>
         {detail.escrow ? (
           <dl className="grid gap-3 sm:grid-cols-3">
-            <div><dt className="text-xs text-zinc-500">{f.status}</dt><dd>{detail.escrow.status}</dd></div>
+            <div><dt className="text-xs text-zinc-500">{f.status}</dt><dd>{adminEscrowStatusLabel(detail.escrow.status, locale)}</dd></div>
             <div><dt className="text-xs text-zinc-500">{f.amount}</dt><dd>{formatCurrency(detail.escrow.amount, locale)}</dd></div>
             <div><dt className="text-xs text-zinc-500">{f.remaining}</dt><dd>{formatCurrency(detail.escrow.remainingAmount, locale)}</dd></div>
           </dl>
@@ -166,8 +180,8 @@ export function AdminCampaignDetailView({
       <Section title={t.delivery}>
         {detail.delivery ? (
           <dl className="grid gap-3 sm:grid-cols-2">
-            <div><dt className="text-xs text-zinc-500">{f.status}</dt><dd>{detail.delivery.status}</dd></div>
-            <div><dt className="text-xs text-zinc-500">{f.delivered}</dt><dd>{formatDate(detail.delivery.deliveredAt)}</dd></div>
+            <div><dt className="text-xs text-zinc-500">{f.status}</dt><dd>{adminDeliveryStatusLabel(detail.delivery.status, locale)}</dd></div>
+            <div><dt className="text-xs text-zinc-500">{f.delivered}</dt><dd>{formatDate(detail.delivery.deliveredAt, locale)}</dd></div>
           </dl>
         ) : (
           <p className="text-sm text-zinc-500">{t.noDelivery}</p>
@@ -201,10 +215,10 @@ export function AdminCampaignDetailView({
               {detail.versions.map((v) => (
                 <TableRow key={v.id}>
                   <TableCell>{v.versionNumber}</TableCell>
-                  <TableCell>{v.status}</TableCell>
-                  <TableCell>{v.reviewStatus}</TableCell>
+                  <TableCell>{adminVersionStatusLabel(v.status, locale)}</TableCell>
+                  <TableCell>{adminReviewStatusLabel(v.reviewStatus, locale)}</TableCell>
                   <TableCell className="max-w-xs truncate">{v.fileName ?? "—"}</TableCell>
-                  <TableCell>{formatDate(v.createdAt)}</TableCell>
+                  <TableCell>{formatDate(v.createdAt, locale)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -221,7 +235,7 @@ export function AdminCampaignDetailView({
               <div key={c.id} className="rounded-lg border p-3 text-sm">
                 <div className="flex justify-between text-xs text-zinc-500">
                   <span>v{c.versionNumber} · {c.userEmail ?? "—"}</span>
-                  <span>{formatDate(c.createdAt)}</span>
+                  <span>{formatDate(c.createdAt, locale)}</span>
                 </div>
                 <p className="mt-2">{c.comment}</p>
               </div>
@@ -247,11 +261,11 @@ export function AdminCampaignDetailView({
             <TableBody>
               {detail.ledgerEntries.map((e) => (
                 <TableRow key={e.id}>
-                  <TableCell>{e.entryType}</TableCell>
-                  <TableCell>{e.direction}</TableCell>
+                  <TableCell>{adminLedgerEntryTypeLabel(e.entryType, locale)}</TableCell>
+                  <TableCell>{adminLedgerDirectionLabel(e.direction, locale)}</TableCell>
                   <TableCell>{e.amount} {e.assetCode}</TableCell>
                   <TableCell className="max-w-xs truncate">{e.description ?? "—"}</TableCell>
-                  <TableCell>{formatDate(e.createdAt)}</TableCell>
+                  <TableCell>{formatDate(e.createdAt, locale)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -274,9 +288,9 @@ export function AdminCampaignDetailView({
             <TableBody>
               {detail.activityLogs.map((a) => (
                 <TableRow key={a.id}>
-                  <TableCell>{formatDate(a.createdAt)}</TableCell>
+                  <TableCell>{formatDate(a.createdAt, locale)}</TableCell>
                   <TableCell>{a.userEmail ?? "—"}</TableCell>
-                  <TableCell><Badge variant="outline">{a.action}</Badge></TableCell>
+                  <TableCell><Badge variant="outline">{adminActivityLabel(a.action, locale)}</Badge></TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -296,7 +310,7 @@ export function AdminCampaignDetailView({
                   {!n.isSent && <Badge variant="warning">{f.unsent}</Badge>}
                 </div>
                 <p className="mt-1 text-zinc-600">{n.content}</p>
-                <p className="mt-2 text-xs text-zinc-500">{formatDate(n.createdAt)}</p>
+                <p className="mt-2 text-xs text-zinc-500">{formatDate(n.createdAt, locale)}</p>
               </div>
             ))}
           </div>

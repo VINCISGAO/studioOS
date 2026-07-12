@@ -1,5 +1,6 @@
 import { getAppUiLocale } from "@/lib/app-language";
 import { QualityCenterPanel } from "@/components/studioos/quality-center-panel";
+import { AdminPageShell } from "@/components/studioos/admin-page-shell";
 import { Card, CardContent } from "@/components/ui/card";
 import { getDeliverables } from "@/lib/order-service";
 import { type SearchParams } from "@/lib/i18n";
@@ -7,8 +8,22 @@ import { runQualityChecksAsync } from "@/lib/studioos/quality";
 import { promises as fs } from "fs";
 import path from "path";
 
+const copy = {
+  en: {
+    title: "Quality Center",
+    subtitle: "Platform-wide AI quality — reads real deliverable metadata when available.",
+    empty: "No real orders available for quality checks yet."
+  },
+  zh: {
+    title: "质检中心",
+    subtitle: "全平台智能质检，读取真实交付视频元数据。",
+    empty: "暂无真实订单可质检。"
+  }
+} as const;
+
 export default async function AdminQualityPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const locale = await getAppUiLocale();
+  const t = copy[locale];
 
   let orderIds: { id: string; title: string }[] = [];
   try {
@@ -34,16 +49,8 @@ export default async function AdminQualityPage({ searchParams }: { searchParams:
   );
 
   return (
-    <div>
-      <h1 className="text-3xl font-semibold tracking-tight">
-        {locale === "zh" ? "质检中心" : "Quality Center"}
-      </h1>
-      <p className="mt-2 text-sm text-zinc-500">
-        {locale === "zh"
-          ? "全平台智能质检，读取真实交付视频元数据。"
-          : "Platform-wide AI quality — reads real deliverable metadata when available."}
-      </p>
-      <div className="mt-8 space-y-6">
+    <AdminPageShell locale={locale} title={t.title} subtitle={t.subtitle}>
+      <div className="space-y-6">
         {sampleReports.length ? (
           sampleReports.map(({ order, report }) => (
             <Card key={order.id} className="border-zinc-200/80 shadow-none">
@@ -57,12 +64,10 @@ export default async function AdminQualityPage({ searchParams }: { searchParams:
           ))
         ) : (
           <Card className="border-zinc-200/80 shadow-none">
-            <CardContent className="p-6 text-sm text-zinc-500">
-              {locale === "zh" ? "暂无真实订单可质检。" : "No real orders available for quality checks yet."}
-            </CardContent>
+            <CardContent className="p-6 text-sm text-zinc-500">{t.empty}</CardContent>
           </Card>
         )}
       </div>
-    </div>
+    </AdminPageShell>
   );
 }

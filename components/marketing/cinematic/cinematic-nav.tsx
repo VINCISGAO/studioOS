@@ -15,7 +15,7 @@ import {
 } from "@/lib/marketing/marketing-site-nav";
 import { MARKETING_SITE_NAV_ICONS } from "@/lib/marketing/marketing-site-nav-icons";
 import type { Locale, MarketingLocale } from "@/lib/i18n";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion, useMotionValueEvent, useScroll, useTransform } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 type WorkspaceCta = {
@@ -46,16 +46,16 @@ function MobileNavCard({
   onClose: () => void;
 }) {
   const className =
-    "flex items-center gap-4 rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 py-4 backdrop-blur-md transition hover:border-white/[0.14] hover:bg-white/[0.07]";
+    "flex items-center gap-4 rounded-2xl border border-zinc-200/80 bg-white px-4 py-4 shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50";
 
   const content = (
     <>
-      <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-zinc-900/90 to-black ring-1 ring-white/10">
-        <Icon className="h-5 w-5 text-violet-300" strokeWidth={1.75} aria-hidden />
+      <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-zinc-100 ring-1 ring-zinc-200/80">
+        <Icon className="h-5 w-5 text-zinc-900" strokeWidth={1.75} aria-hidden />
       </span>
       <span className="min-w-0 flex-1 text-left">
-        <span className="block text-base font-semibold leading-snug text-white">{title}</span>
-        <span className="mt-1 block text-sm leading-5 text-zinc-400 text-pretty">{description}</span>
+        <span className="block text-base font-semibold leading-snug text-zinc-950">{title}</span>
+        <span className="mt-1 block text-sm leading-5 text-zinc-500 text-pretty">{description}</span>
       </span>
     </>
   );
@@ -135,17 +135,13 @@ function MobileNavMenu({
   ];
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col bg-black sm:hidden">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,rgba(88,28,135,0.28),transparent_58%)]"
-      />
+    <div className="fixed inset-0 z-[60] flex flex-col bg-white sm:hidden">
       <div className="relative flex items-center justify-end px-4 pb-2 pt-3">
         <button
           type="button"
           aria-label="Close menu"
           onClick={onClose}
-          className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/15 text-white transition hover:bg-white/10"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-950 shadow-sm transition hover:bg-zinc-50"
         >
           <X className="h-5 w-5" />
         </button>
@@ -173,12 +169,14 @@ export function CinematicNav({
   locale,
   copyLocale = locale,
   workspaceCta: serverWorkspaceCta = null,
-  hydratePortalSession = false
+  hydratePortalSession = false,
+  heroTone = "dark"
 }: {
   locale: Locale;
   copyLocale?: Locale | MarketingLocale;
   workspaceCta?: WorkspaceCta | null;
   hydratePortalSession?: boolean;
+  heroTone?: "dark" | "light";
 }) {
   const { workspaceCta: hydratedWorkspaceCta } = useMarketingHomePortalSession(
     copyLocale,
@@ -188,9 +186,28 @@ export function CinematicNav({
   const workspaceCta = hydratePortalSession ? hydratedWorkspaceCta : serverWorkspaceCta;
   const siteNavItems = marketingSiteNavItems(copyLocale);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const { scrollY } = useScroll();
-  const bg = useTransform(scrollY, [0, 120], ["rgba(0,0,0,0)", "rgba(0,0,0,0.82)"]);
-  const border = useTransform(scrollY, [0, 120], ["rgba(255,255,255,0)", "rgba(255,255,255,0.06)"]);
+  const bg = useTransform(
+    scrollY,
+    [0, 120],
+    heroTone === "light"
+      ? ["rgba(255,255,255,0)", "rgba(0,0,0,0.82)"]
+      : ["rgba(0,0,0,0)", "rgba(0,0,0,0.82)"]
+  );
+  const border = useTransform(
+    scrollY,
+    [0, 120],
+    heroTone === "light"
+      ? ["rgba(0,0,0,0)", "rgba(255,255,255,0.06)"]
+      : ["rgba(255,255,255,0)", "rgba(255,255,255,0.06)"]
+  );
+
+  useMotionValueEvent(scrollY, "change", (latest) => {
+    setScrolled(latest > 72);
+  });
+
+  const useLightNav = heroTone === "light" && !scrolled;
 
   return (
     <>
@@ -199,22 +216,34 @@ export function CinematicNav({
         className="fixed inset-x-0 top-0 z-50 border-b backdrop-blur-xl"
       >
         <div className="relative mx-auto flex min-h-[4.25rem] max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:min-h-16 sm:px-8">
-          <Link href={marketingHomeHref.home(copyLocale)} prefetch={false} className="flex min-w-0 items-center text-white">
+          <Link
+            href={marketingHomeHref.home(copyLocale)}
+            prefetch={false}
+            className={cn("flex min-w-0 items-center", useLightNav ? "text-zinc-950" : "text-white")}
+          >
             <BrandLogoLockup
-              contrastOn="dark"
-              markClassName="h-6 w-6 rounded-md ring-1 ring-white/15 sm:h-9 sm:w-9 sm:rounded-xl"
+              contrastOn={useLightNav ? "light" : "dark"}
+              markClassName={cn(
+                "h-6 w-6 rounded-md sm:h-9 sm:w-9 sm:rounded-xl",
+                useLightNav ? "ring-1 ring-zinc-200" : "ring-1 ring-white/15"
+              )}
               wordmarkClassName="h-[13px] w-[81px] sm:h-[21px] sm:w-[134px]"
               priority
             />
           </Link>
 
-          <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-7 text-sm text-zinc-400 lg:flex">
+          <nav
+            className={cn(
+              "absolute left-1/2 hidden -translate-x-1/2 items-center gap-7 text-sm lg:flex",
+              useLightNav ? "text-zinc-600" : "text-zinc-400"
+            )}
+          >
             {siteNavItems.map((item) => (
               <Link
                 key={item.key}
                 href={marketingSiteNavHref(item.key, copyLocale)}
                 prefetch={false}
-                className="transition hover:text-white"
+                className={cn("transition", useLightNav ? "hover:text-zinc-950" : "hover:text-white")}
               >
                 {item.label}
               </Link>
@@ -222,11 +251,16 @@ export function CinematicNav({
           </nav>
 
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-            <LanguageSwitcher locale={copyLocale} tone="dark" navPill />
+            <LanguageSwitcher locale={copyLocale} tone={useLightNav ? "light" : "dark"} navPill />
             <Link
               href={workspaceCta?.href ?? marketingHomeHref.login(copyLocale)}
               prefetch={workspaceCta ? true : false}
-              className="hidden h-9 items-center rounded-full border border-white/25 px-4 text-sm text-white transition hover:bg-white/10 sm:inline-flex sm:px-5"
+              className={cn(
+                "hidden h-9 items-center rounded-full border px-4 text-sm font-semibold transition sm:inline-flex sm:h-10 sm:px-5",
+                useLightNav
+                  ? "border-zinc-200 bg-white text-zinc-950 shadow-sm hover:bg-zinc-50"
+                  : "border-white/25 text-white hover:bg-white/10"
+              )}
             >
               {workspaceCta?.label ?? cinematicText("nav", copyLocale).login}
             </Link>
@@ -236,7 +270,10 @@ export function CinematicNav({
               aria-expanded={menuOpen}
               onClick={() => setMenuOpen(true)}
               className={cn(
-                "inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/20 text-white transition hover:bg-white/10 sm:hidden"
+                "inline-flex h-9 w-9 items-center justify-center rounded-full border transition sm:hidden",
+                useLightNav
+                  ? "border-zinc-200 bg-white text-zinc-950 shadow-sm hover:bg-zinc-50"
+                  : "border-white/20 text-white hover:bg-white/10"
               )}
             >
               <Menu className="h-5 w-5" />

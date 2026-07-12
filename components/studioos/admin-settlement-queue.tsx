@@ -13,7 +13,7 @@ import {
 import type { AdminSettlementQueueItem } from "@/features/admin/settlement/admin-settlement.service";
 import { AdminFormCsrf } from "@/components/studioos/admin-form-csrf";
 import type { Locale } from "@/lib/i18n";
-import { adminSettlementStateLabel } from "@/lib/studioos/admin-enum-labels";
+import { adminSettlementStateLabel, adminEscrowStatusLabel, adminDeliveryStatusLabel, adminLedgerEntryTypeLabel } from "@/lib/studioos/admin-enum-labels";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 const copy = {
@@ -80,12 +80,12 @@ export function AdminSettlementQueue({
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    {row.escrowStatus ?? "—"}
+                    {row.escrowStatus ? adminEscrowStatusLabel(row.escrowStatus, locale) : "—"}
                     <div className="text-xs text-zinc-500">{formatCurrency(row.escrowRemaining, locale)}</div>
                   </TableCell>
-                  <TableCell>{row.deliveryStatus ?? "—"}</TableCell>
+                  <TableCell>{row.deliveryStatus ? adminDeliveryStatusLabel(row.deliveryStatus, locale) : "—"}</TableCell>
                   <TableCell className="max-w-xs text-xs text-zinc-500">
-                    {row.ledgerPreview.map((e) => `${e.entryType}: ${e.amount}`).join(" · ") || "—"}
+                    {row.ledgerPreview.map((e) => `${adminLedgerEntryTypeLabel(e.entryType, locale)}: ${e.amount}`).join(" · ") || "—"}
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col gap-1">
@@ -129,7 +129,7 @@ export function AdminSettlementQueue({
           <p className="p-6 text-sm text-zinc-500">{t.empty}</p>
         )}
         <p className="border-t p-4 text-xs text-zinc-400">
-          {items.length} {t.rowSummary} · {formatDate(new Date().toISOString())}
+          {items.length} {t.rowSummary} · {formatDate(new Date().toISOString(), locale)}
         </p>
       </CardContent>
     </Card>
