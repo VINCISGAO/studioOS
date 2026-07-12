@@ -93,20 +93,19 @@ type FeedbackData = {
 type UiLocale = "zh" | "en";
 
 type FloatingLauncherPosition = {
-  side: "left" | "right";
+  x: number;
   y: number;
 };
 
 type FloatingLauncherDrag = {
   pointerId: number;
+  offsetX: number;
+  offsetY: number;
   startX: number;
   startY: number;
-  originX: number;
-  originY: number;
-  currentX: number;
-  currentY: number;
+  lastX: number;
+  lastY: number;
   moved: boolean;
-  rafId: number;
 };
 
 const FLOATING_LAUNCHER_STORAGE_KEY = "vincis-ai-copilot-launcher-position";
@@ -114,7 +113,7 @@ const FLOATING_LAUNCHER_SIZE = 48;
 const FLOATING_LAUNCHER_EDGE_OFFSET = 20;
 const FLOATING_LAUNCHER_TOP_SAFE = 96;
 const FLOATING_LAUNCHER_BOTTOM_SAFE = 128;
-const FLOATING_LAUNCHER_CLICK_THRESHOLD = 5;
+const FLOATING_LAUNCHER_CLICK_THRESHOLD = 10;
 
 const DRAWER_COPY: Record<UiLocale, {
   launcher: string;
@@ -395,20 +394,19 @@ function clampLauncherX(x: number) {
 }
 
 function defaultLauncherPosition(): FloatingLauncherPosition {
-  const defaultY =
-    typeof window === "undefined"
-      ? 520
-      : window.innerHeight - FLOATING_LAUNCHER_BOTTOM_SAFE - FLOATING_LAUNCHER_SIZE;
+  if (typeof window === "undefined") {
+    return { x: 320, y: 520 };
+  }
 
-  return {
-    side: "right",
-    y: clampLauncherY(defaultY)
-  };
+  return normalizeLauncherPosition({
+    x: window.innerWidth - FLOATING_LAUNCHER_EDGE_OFFSET - FLOATING_LAUNCHER_SIZE,
+    y: window.innerHeight - FLOATING_LAUNCHER_BOTTOM_SAFE - FLOATING_LAUNCHER_SIZE
+  });
 }
 
 function normalizeLauncherPosition(position: FloatingLauncherPosition): FloatingLauncherPosition {
   return {
-    side: position.side === "left" ? "left" : "right",
+    x: clampLauncherX(position.x),
     y: clampLauncherY(position.y)
   };
 }
@@ -419,9 +417,19 @@ function readStoredLauncherPosition(): FloatingLauncherPosition {
   try {
     const stored = window.localStorage.getItem(FLOATING_LAUNCHER_STORAGE_KEY);
     if (!stored) return defaultLauncherPosition();
-    const parsed = JSON.parse(stored) as Partial<FloatingLauncherPosition>;
+    const parsed = JSON.parse(stored) as Partial<FloatingLauncherPosition> & {
+      side?: "left" | "right";
+      y?: number;
+    };
+    if (typeof parsed.x === "number" && typeof parsed.y === "number") {
+      return normalizeLauncherPosition({ x: parsed.x, y: parsed.y });
+    }
     if ((parsed.side === "left" || parsed.side === "right") && typeof parsed.y === "number") {
-      return normalizeLauncherPosition({ side: parsed.side, y: parsed.y });
+      const x =
+        parsed.side === "left"
+          ? FLOATING_LAUNCHER_EDGE_OFFSET
+          : window.innerWidth - FLOATING_LAUNCHER_EDGE_OFFSET - FLOATING_LAUNCHER_SIZE;
+      return normalizeLauncherPosition({ x, y: parsed.y });
     }
   } catch {
     return defaultLauncherPosition();
@@ -442,26 +450,6 @@ function storeLauncherPosition(position: FloatingLauncherPosition) {
 
 function isAbortError(error: unknown) {
   return error instanceof DOMException && error.name === "AbortError";
-}
-
-function clearLauncherInlinePosition(button: HTMLButtonElement) {
-  button.style.left = "";
-  button.style.top = "";
-  button.style.right = "";
-  button.style.transform = "";
-  button.style.willChange = "";
-}
-
-function pinLauncherForDrag(button: HTMLButtonElement, x: number, y: number) {
-  button.style.right = "";
-  button.style.left = `${x}px`;
-  button.style.top = `${y}px`;
-  button.style.transform = "translate3d(0, 0, 0)";
-  button.style.willChange = "transform";
-}
-
-function applyLauncherDragTransform(button: HTMLButtonElement, originX: number, originY: number, x: number, y: number) {
-  button.style.transform = `translate3d(${x - originX}px, ${y - originY}px, 0)`;
 }
 
 export function AiCopilotDrawer() {
@@ -579,9 +567,6 @@ export function AiCopilotDrawer() {
         storeLauncherPosition(next);
         return next;
       });
-      if (launcherButtonRef.current) {
-        clearLauncherInlinePosition(launcherButtonRef.current);
-      }
       setIsLauncherDragging(false);
       launcherDragRef.current = null;
     };
@@ -764,22 +749,20 @@ export function AiCopilotDrawer() {
 
     const button = event.currentTarget;
     const rect = button.getBoundingClientRect();
-    const originX = rect.left;
-    const originY = rect.top;
+    const offsetX = event.clientX - rect.left;
+    const offsetY = event.clientY - rect.top;
 
-    pinLauncherForDrag(button, originX, originY);
     button.setPointerCapture(event.pointerId);
 
     const drag: FloatingLauncherDrag = {
       pointerId: event.pointerId,
+      offsetX,
+      offsetY,
       startX: event.clientX,
       startY: event.clientY,
-      originX,
-      originY,
-      currentX: originX,
-      currentY: originY,
-      moved: false,
-      rafId: 0
+      lastX: rect.left,
+      lastY: rect.top,
+      moved: false
     };
     launcherDragRef.current = drag;
     setIsLauncherDragging(true);
@@ -788,46 +771,22 @@ export function AiCopilotDrawer() {
       const current = launcherDragRef.current;
       if (!current || moveEvent.pointerId !== current.pointerId) return;
 
-      if (current.rafId) return;
-
-      const scheduledRafId = window.requestAnimationFrame(() => {
-        const live = launcherDragRef.current;
-        const node = launcherButtonRef.current;
-        if (!live || !node || live.pointerId !== moveEvent.pointerId) {
-          if (live) {
-            launcherDragRef.current = { ...live, rafId: 0 };
-          }
-          return;
-        }
-
-        const deltaX = moveEvent.clientX - live.startX;
-        const deltaY = moveEvent.clientY - live.startY;
-        const nextX = clampLauncherX(live.originX + deltaX);
-        const nextY = clampLauncherY(live.originY + deltaY);
-        const moved =
-          live.moved || Math.hypot(deltaX, deltaY) > FLOATING_LAUNCHER_CLICK_THRESHOLD;
-
-        applyLauncherDragTransform(node, live.originX, live.originY, nextX, nextY);
-
-        launcherDragRef.current = {
-          ...live,
-          currentX: nextX,
-          currentY: nextY,
-          moved,
-          rafId: 0
-        };
+      const next = normalizeLauncherPosition({
+        x: moveEvent.clientX - current.offsetX,
+        y: moveEvent.clientY - current.offsetY
       });
+      const moved =
+        current.moved ||
+        Math.hypot(moveEvent.clientX - current.startX, moveEvent.clientY - current.startY) >
+          FLOATING_LAUNCHER_CLICK_THRESHOLD;
 
-      launcherDragRef.current = { ...current, rafId: scheduledRafId };
+      launcherDragRef.current = { ...current, lastX: next.x, lastY: next.y, moved };
+      setLauncherPosition(next);
     };
 
     const finishDrag = (endEvent: PointerEvent) => {
       const current = launcherDragRef.current;
       if (!current || endEvent.pointerId !== current.pointerId) return;
-
-      if (current.rafId) {
-        window.cancelAnimationFrame(current.rafId);
-      }
 
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("pointerup", finishDrag);
@@ -838,22 +797,15 @@ export function AiCopilotDrawer() {
         buttonNode.releasePointerCapture(endEvent.pointerId);
       }
 
-      const side =
-        current.currentX + FLOATING_LAUNCHER_SIZE / 2 < window.innerWidth / 2 ? "left" : "right";
-      const nextPosition = normalizeLauncherPosition({ side, y: current.currentY });
-
-      if (buttonNode) {
-        clearLauncherInlinePosition(buttonNode);
-      }
-
-      setLauncherPosition(nextPosition);
-      storeLauncherPosition(nextPosition);
+      const next = normalizeLauncherPosition({ x: current.lastX, y: current.lastY });
+      setLauncherPosition(next);
+      storeLauncherPosition(next);
       setIsLauncherDragging(false);
       suppressLauncherClickRef.current = current.moved;
       launcherDragRef.current = null;
     };
 
-    window.addEventListener("pointermove", handlePointerMove, { passive: true });
+    window.addEventListener("pointermove", handlePointerMove);
     window.addEventListener("pointerup", finishDrag);
     window.addEventListener("pointercancel", finishDrag);
   }
@@ -871,9 +823,10 @@ export function AiCopilotDrawer() {
     setExpanded(false);
   }
 
-  const launcherStyle = launcherPosition.side === "left"
-    ? { left: `${FLOATING_LAUNCHER_EDGE_OFFSET}px`, top: `${launcherPosition.y}px` }
-    : { right: `${FLOATING_LAUNCHER_EDGE_OFFSET}px`, top: `${launcherPosition.y}px` };
+  const launcherStyle = {
+    left: `${launcherPosition.x}px`,
+    top: `${launcherPosition.y}px`
+  };
 
   const drawerUi = (
     <>
@@ -884,7 +837,7 @@ export function AiCopilotDrawer() {
         title={copy.launcher}
         onClick={openLauncher}
         onPointerDown={startLauncherDrag}
-        style={isLauncherDragging ? undefined : launcherStyle}
+        style={launcherStyle}
         className={cn(
           "fixed z-[200] h-12 w-12 touch-none select-none rounded-full border-0 bg-white p-0 shadow-[0_12px_28px_rgba(15,23,42,0.18)] ring-1 ring-violet-100/90",
           isLauncherDragging ? "cursor-grabbing transition-none" : "cursor-grab"
