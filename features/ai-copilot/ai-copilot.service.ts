@@ -32,6 +32,11 @@ import { hasOpenAI, resolveOpenAIModel } from "@/lib/core/config/ai";
 import { resolveBrandDisplayName } from "@/lib/studioos/brand-account-display";
 import { resolveCreatorIdByEmail } from "@/lib/studioos/creator-settings-service";
 import { normalizeLanguageCode } from "@/features/i18n/language.constants";
+import {
+  isGenericLucienBoilerplate,
+  matchesSpecificLucienIntent,
+  synthesizeLucienToolAnswer
+} from "@/features/ai-copilot/lucien-tool-answer.synthesizer";
 import { formatMoneyFromUsd } from "@/lib/money/display-money";
 
 function isZh(language: string) {
@@ -72,23 +77,9 @@ function templateAnswer(input: {
   context: AiCopilotContext;
   toolCalls: AiCopilotToolResult[];
 }) {
-  const language = input.context.language;
-  if (!hasUsefulToolData(input.toolCalls)) return insufficientDataMessage(language);
-
-  const headline =
-    language === "zh-CN" || language === "zh-TW"
-      ? "我已经读取了你当前账号有权限访问的真实 VINCIS 数据。"
-      : "I checked the real VINCIS data available to your current account.";
-  const evidence =
-    language === "zh-CN" || language === "zh-TW"
-      ? `我参考了你的项目、通知和业务摘要，整理出当前最相关的信息。`
-      : "I reviewed your projects, notifications, and workspace summary to focus on the most relevant signals.";
-  const nextStep =
-    language === "zh-CN" || language === "zh-TW"
-      ? "你可以继续问我项目进度、预算健康度、创作者推荐原因，或下一步应该怎么推进。"
-      : "You can ask me about project progress, budget health, creator recommendations, or the best next step.";
-
-  return `${headline}\n\n${evidence}\n\n${nextStep}`;
+  const synthesized = synthesizeLucienToolAnswer(input);
+  if (synthesized) return synthesized;
+  return insufficientDataMessage(input.context.language);
 }
 
 function modelUnavailableAnswer(language: string) {
@@ -263,6 +254,13 @@ function moneyValue(value: unknown, language: string) {
   return formatMoneyFromUsd(amount, normalizeLanguageCode(language));
 }
 
+function lucienModelStatus() {
+  return {
+    configured: aiGatewayService.isConfigured(),
+    model: resolveOpenAIModel()
+  };
+}
+
 async function resolveCreatorDisplayName(user: AuthUserDto, fallback: string) {
   const creatorId = await resolveCreatorIdByEmail(user.email);
   if (!creatorId) {
@@ -296,7 +294,8 @@ async function buildWorkspaceSnapshot(user: AuthUserDto, role: string, context: 
         { label: zh ? "作品资产" : "Portfolio works", value: String(numberValue(creator.portfolioCount)), detail: zh ? "可用于智能学习" : "Available for AI learning", icon: "brain" },
         { label: zh ? "可提现余额" : "Available balance", value: moneyValue(wallet.available, language), detail: zh ? "以数据库为准" : "Database-backed", icon: "wallet" },
         { label: zh ? "成长建议" : "Growth signals", value: String(Math.max(1, invitations.length + numberValue(creator.portfolioCount))), detail: zh ? "基于当前资料" : "Based on current profile", icon: "compass" }
-      ]
+      ],
+      model: lucienModelStatus()
     };
   }
 
@@ -314,7 +313,8 @@ async function buildWorkspaceSnapshot(user: AuthUserDto, role: string, context: 
         { label: zh ? "待处理提现" : "Pending withdrawals", value: String(numberValue(platform.pendingWithdrawals)), detail: zh ? "来自数据库" : "From database", icon: "wallet" },
         { label: zh ? "开放争议" : "Open disputes", value: String(numberValue(platform.openDisputes)), detail: zh ? "需要关注" : "Needs attention", icon: "brain" },
         { label: zh ? "异常事件" : "Failed events", value: String(numberValue(platform.failedEvents)), detail: zh ? "系统监控" : "System monitor", icon: "compass" }
-      ]
+      ],
+      model: lucienModelStatus()
     };
   }
 
@@ -333,7 +333,8 @@ async function buildWorkspaceSnapshot(user: AuthUserDto, role: string, context: 
       { label: zh ? "草稿" : "Drafts", value: String(numberValue(brand.draftCampaigns)), detail: zh ? "来自数据库" : "From database", icon: "brain" },
       { label: zh ? "进行中" : "In progress", value: String(numberValue(brand.activeCampaigns)), detail: zh ? "来自数据库" : "From database", icon: "wallet" },
       { label: zh ? "已完成" : "Completed", value: String(numberValue(brand.completedCampaigns)), detail: zh ? "来自数据库" : "From database", icon: "compass" }
-    ]
+    ],
+    model: lucienModelStatus()
   };
 }
 
@@ -456,7 +457,9 @@ export class AiCopilotService {
           entityType: input.entityType ?? null,
           entityId: input.entityId ?? null
         },
-        toolCalls: []
+        toolCalls: [],
+        answerMode: "boundary_refusal",
+        modelConfigured: hasOpenAI()
       };
     }
 
@@ -520,9 +523,17 @@ export class AiCopilotService {
     let answer = "";
     const knowledgeAnswer = answerFromKnowledge(qaKnowledge);
     const deterministicAnswer = deterministicCurrentPageAnswer(input.message, contextWithKnowledge);
+    const synthesizedToolAnswer = synthesizeLucienToolAnswer({
+      message: input.message,
+      context: contextWithKnowledge,
+      toolCalls
+    });
 
     if (deterministicAnswer) {
       answer = deterministicAnswer;
+      answerMode = "template";
+    } else if (synthesizedToolAnswer && matchesSpecificLucienIntent(input.message)) {
+      answer = synthesizedToolAnswer;
       answerMode = "template";
     } else if (aiGatewayService.isConfigured()) {
       const quota = await aiUsageQuotaService.assertCampaignQuota({
@@ -559,7 +570,9 @@ export class AiCopilotService {
             entityType: input.entityType ?? null,
             entityId: input.entityId ?? null
           },
-          toolCalls
+          toolCalls,
+          answerMode: "quota_exceeded",
+          modelConfigured: hasOpenAI()
         };
       }
 
@@ -572,8 +585,13 @@ export class AiCopilotService {
           language: contextWithKnowledge.language
         });
         if (result.content) {
-          answer = result.content;
-          answerMode = "model";
+          if (isGenericLucienBoilerplate(result.content) && synthesizedToolAnswer) {
+            answer = synthesizedToolAnswer;
+            answerMode = "template";
+          } else {
+            answer = result.content;
+            answerMode = "model";
+          }
           await aiUsageQuotaService.recordOpenAiUsage({
             userId: user.id,
             campaignId: activityCampaignId,
@@ -668,7 +686,9 @@ export class AiCopilotService {
         entityType: input.entityType ?? null,
         entityId: input.entityId ?? null
       },
-      toolCalls
+      toolCalls,
+      answerMode,
+      modelConfigured: hasOpenAI()
     };
   }
 

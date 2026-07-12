@@ -51,6 +51,8 @@ export type AiCopilotAnswer = {
   suggestedQuestions: string[];
   context: AiCopilotPageContext;
   toolCalls: AiCopilotToolResult[];
+  answerMode: "model" | "model_unconfigured" | "template" | "knowledge_base" | "quota_exceeded" | "boundary_refusal";
+  modelConfigured: boolean;
 };
 
 export function normalizeCopilotRole(user: AuthUserDto): AiCopilotRole {

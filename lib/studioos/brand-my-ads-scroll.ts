@@ -5,6 +5,11 @@ export const BRAND_PORTAL_HEADER_SELECTOR = "[data-brand-portal-header]";
 /** Fallback when sticky header cannot be measured. */
 export const BRAND_MY_ADS_SCROLL_OFFSET_PX = 112;
 
+const MY_ADS_SCROLL_DEDUPE_MS = 480;
+
+let lastMyAdsScrollAt = 0;
+let myAdsScrollFrame = 0;
+
 export function isBrandDashboardPath(pathname: string) {
   return pathname === "/brand" || pathname.endsWith("/brand");
 }
@@ -35,15 +40,7 @@ type ScrollRoot = HTMLElement | Window;
 function resolveBrandScrollRoot(element: HTMLElement): ScrollRoot {
   const main = document.querySelector(BRAND_PORTAL_MAIN_SELECTOR);
   if (main instanceof HTMLElement) {
-    const style = window.getComputedStyle(main);
-    const scrollableMain =
-      (style.overflowY === "auto" ||
-        style.overflowY === "scroll" ||
-        style.overflowY === "overlay") &&
-      main.scrollHeight > main.clientHeight + 1;
-    if (scrollableMain) {
-      return main;
-    }
+    return main;
   }
 
   let parent = element.parentElement;
@@ -99,16 +96,45 @@ export function scrollToBrandMyAds(options?: {
     return false;
   }
 
-  const behavior = options?.behavior ?? (prefersInstantBrandMyAdsScroll() ? "auto" : "smooth");
+  const behavior = options?.behavior ?? "auto";
   const offsetPx = options?.offsetPx ?? measureBrandPortalScrollOffset();
+  const now = Date.now();
+  const recentlyScrolled = now - lastMyAdsScrollAt < MY_ADS_SCROLL_DEDUPE_MS;
+  const comfortablyVisible = isMyAdsComfortablyVisible(element, offsetPx);
 
-  if (!options?.force && isMyAdsComfortablyVisible(element, offsetPx)) {
+  if (comfortablyVisible) {
+    return false;
+  }
+
+  if (!options?.force && recentlyScrolled) {
     return false;
   }
 
   const scrollRoot = resolveBrandScrollRoot(element);
   scrollRootToElement(scrollRoot, element, offsetPx, behavior);
+  lastMyAdsScrollAt = now;
   return true;
+}
+
+/** Coalesce duplicate my-ads scroll requests into one layout-stable pass. */
+export function scheduleBrandMyAdsScroll(options?: {
+  behavior?: ScrollBehavior;
+  force?: boolean;
+  offsetPx?: number;
+}) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const frame = ++myAdsScrollFrame;
+  const behavior = options?.behavior ?? "auto";
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      if (frame !== myAdsScrollFrame) return;
+      scrollToBrandMyAds({ ...options, behavior, force: options?.force ?? true });
+    });
+  });
 }
 
 export function syncBrandMyAdsHashScroll() {
@@ -116,7 +142,5 @@ export function syncBrandMyAdsHashScroll() {
     return;
   }
 
-  window.requestAnimationFrame(() => {
-    scrollToBrandMyAds({ behavior: "auto", force: true });
-  });
+  scheduleBrandMyAdsScroll({ behavior: "auto", force: true });
 }

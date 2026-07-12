@@ -51,6 +51,10 @@ type SessionListData = {
     roleLabel: string;
     displayName: string;
     workspaceName: string;
+    model?: {
+      configured: boolean;
+      model: string;
+    };
   };
 };
 
@@ -77,6 +81,8 @@ type CopilotAnswerData = {
   answer: string;
   suggestedQuestions: string[];
   toolCalls: Array<{ toolName: string; status: string }>;
+  answerMode?: string;
+  modelConfigured?: boolean;
 };
 
 type FeedbackData = {
@@ -125,6 +131,9 @@ const DRAWER_COPY: Record<UiLocale, {
   feedbackFailed: string;
   workspaceReady: string;
   readinessItems: string[];
+  modelReady: string;
+  modelMissing: string;
+  modelMissingHint: string;
   defaultSuggestions: string[];
 }> = {
   zh: {
@@ -141,7 +150,10 @@ const DRAWER_COPY: Record<UiLocale, {
     feedbackSaved: "反馈已记录，会用于优化后续回复。",
     feedbackFailed: "反馈保存失败，请稍后再试",
     workspaceReady: "卢西恩工作区已就绪",
-    readinessItems: ["项目数据", "用户资料", "匹配度", "生成建议"],
+    readinessItems: ["项目数据", "用户资料", "匹配度", "语言模型"],
+    modelReady: "已连接",
+    modelMissing: "未连接",
+    modelMissingHint: "语言模型未配置。卢西恩会读取数据库作答，但无法进行开放式推理。请在 Vercel 配置 OPENAI_API_KEY 并重新部署。",
     defaultSuggestions: ["我的项目现在到哪一步？", "下一步我应该做什么？", "我的预算合理吗？"]
   },
   en: {
@@ -158,14 +170,28 @@ const DRAWER_COPY: Record<UiLocale, {
     feedbackSaved: "Feedback saved and will improve future replies.",
     feedbackFailed: "Unable to save feedback. Please try again.",
     workspaceReady: "Lucien workspace is ready",
-    readinessItems: ["Project data", "User profile", "Match fit", "Suggestions"],
+    readinessItems: ["Project data", "User profile", "Match fit", "Language model"],
+    modelReady: "Connected",
+    modelMissing: "Missing",
+    modelMissingHint: "OpenAI is not configured. Lucien can read your database, but cannot run open-ended reasoning. Set OPENAI_API_KEY in Vercel and redeploy.",
     defaultSuggestions: ["Where is my project now?", "What should I do next?", "Is my budget reasonable?"]
   }
 };
 
 const READINESS_ICONS = [Database, UserRound, Target, Sparkles] as const;
 
-function WorkspaceReadinessStrip({ copy, locale }: { copy: (typeof DRAWER_COPY)[UiLocale]; locale: UiLocale }) {
+function WorkspaceReadinessStrip({
+  copy,
+  locale,
+  modelConfigured
+}: {
+  copy: (typeof DRAWER_COPY)[UiLocale];
+  locale: UiLocale;
+  modelConfigured: boolean | null;
+}) {
+  const modelReady = modelConfigured === true;
+  const modelUnknown = modelConfigured === null;
+
   return (
     <div className="mb-3 rounded-2xl border border-violet-100 bg-white/90 px-3 py-2.5 shadow-sm">
       <div className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold text-violet-700">
@@ -175,6 +201,20 @@ function WorkspaceReadinessStrip({ copy, locale }: { copy: (typeof DRAWER_COPY)[
       <div className="flex gap-2 overflow-x-auto pb-0.5">
         {copy.readinessItems.map((item, index) => {
           const Icon = READINESS_ICONS[index] ?? Sparkles;
+          const isModelItem = index === copy.readinessItems.length - 1;
+          const ready = isModelItem ? modelReady : true;
+          const statusLabel = isModelItem
+            ? modelUnknown
+              ? locale === "zh"
+                ? "检测中"
+                : "Checking"
+              : ready
+                ? copy.modelReady
+                : copy.modelMissing
+            : locale === "zh"
+              ? "完成"
+              : "Done";
+
           return (
             <div
               key={item}
@@ -184,14 +224,24 @@ function WorkspaceReadinessStrip({ copy, locale }: { copy: (typeof DRAWER_COPY)[
                 <Icon className="h-3.5 w-3.5 shrink-0 text-violet-500" />
                 <span className="truncate">{item}</span>
               </span>
-              <span className="inline-flex shrink-0 items-center gap-1 text-[10px] font-semibold text-emerald-600">
-                <Check className="h-3 w-3" />
-                {locale === "zh" ? "完成" : "Done"}
+              <span
+                className={cn(
+                  "inline-flex shrink-0 items-center gap-1 text-[10px] font-semibold",
+                  ready ? "text-emerald-600" : isModelItem && !modelUnknown ? "text-amber-600" : "text-slate-500"
+                )}
+              >
+                {ready ? <Check className="h-3 w-3" /> : null}
+                <span>{statusLabel}</span>
               </span>
             </div>
           );
         })}
       </div>
+      {modelConfigured === false ? (
+        <p className="mt-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] leading-relaxed text-amber-900">
+          {copy.modelMissingHint}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -459,6 +509,7 @@ export function AiCopilotDrawer() {
   }, [pageContext.languageCode, sessionId]);
   const roleKind = roleKindFromPath(pathname);
   const displayName = workspace?.displayName?.trim() || fallbackDisplayName(roleKind, locale);
+  const modelConfigured = workspace?.model?.configured ?? null;
   const introTitle =
     localHour == null
       ? locale === "zh"
@@ -649,6 +700,18 @@ export function AiCopilotDrawer() {
       const data = payload.data;
       setSessionId(data.sessionId);
       setSuggestions(data.suggestedQuestions);
+      const modelConfigured = data.modelConfigured;
+      if (modelConfigured === true || modelConfigured === false) {
+        setWorkspace((current) => ({
+          displayName: current?.displayName ?? displayName,
+          workspaceName: current?.workspaceName ?? displayName,
+          roleLabel: current?.roleLabel ?? "",
+          model: {
+            configured: modelConfigured,
+            model: current?.model?.model ?? "gpt-4o-mini"
+          }
+        }));
+      }
       setMessages((current) => [
         ...current,
         { id: data.messageId, role: "ASSISTANT", content: data.answer, feedback: null }
@@ -958,7 +1021,7 @@ export function AiCopilotDrawer() {
             </div>
 
             <div className="shrink-0 border-t border-violet-100 bg-white px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-4">
-              <WorkspaceReadinessStrip copy={copy} locale={locale} />
+              <WorkspaceReadinessStrip copy={copy} locale={locale} modelConfigured={modelConfigured} />
               <div className="mb-3 flex gap-2 overflow-x-auto pb-1">
                 {suggestions.map((question) => (
                   <button

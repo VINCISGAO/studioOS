@@ -6,7 +6,7 @@ import { BrandPortalHeader } from "@/components/studioos/brand-portal-header";
 import { BrandPortalSidebar } from "@/components/studioos/brand-portal-sidebar";
 import { PortalContentColumn } from "@/components/studioos/portal/portal-content-column";
 import { PortalViewportShell } from "@/components/studioos/portal/portal-viewport-shell";
-import { scrollToBrandMyAds, isBrandDashboardPath, prefersInstantBrandMyAdsScroll } from "@/lib/studioos/brand-my-ads-scroll";
+import { scrollToBrandMyAds, isBrandDashboardPath } from "@/lib/studioos/brand-my-ads-scroll";
 import { buildAvatarInitials } from "@/lib/studioos/avatar-initials";
 import { readBrandWizardStepFromLocation } from "@/lib/studioos/instant-nav";
 import {
@@ -124,14 +124,9 @@ function BrandPortalShellInner({
   const navigateToMyAds = useCallback(() => {
     const hashUrl = `${withLocale(brandPortalRoutes.dashboard, locale)}#my-ads`;
     if (isBrandDashboardPath(pathname)) {
-      window.requestAnimationFrame(() => {
-        scrollToBrandMyAds({
-          behavior: prefersInstantBrandMyAdsScroll() ? "auto" : "smooth",
-          force: true
-        });
-        window.history.replaceState(window.history.state, "", hashUrl);
-        setLocationHash("#my-ads");
-      });
+      window.history.replaceState(window.history.state, "", hashUrl);
+      setLocationHash("#my-ads");
+      scrollToBrandMyAds({ behavior: "auto", force: true });
       return;
     }
     router.push(hashUrl, { scroll: false });

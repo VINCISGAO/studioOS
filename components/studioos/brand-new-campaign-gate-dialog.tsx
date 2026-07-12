@@ -15,7 +15,7 @@ import {
   type BrandNewCampaignGate
 } from "@/lib/studioos/brand-active-campaign-limit";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
-import { scrollToBrandMyAds, isBrandDashboardPath, prefersInstantBrandMyAdsScroll } from "@/lib/studioos/brand-my-ads-scroll";
+import { scrollToBrandMyAds, isBrandDashboardPath } from "@/lib/studioos/brand-my-ads-scroll";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -98,10 +98,8 @@ export function BrandNewCampaignGateDialog({
   function handleViewProjects() {
     onOpenChange(false);
     if (onDashboard) {
-      scrollToBrandMyAds({
-        behavior: prefersInstantBrandMyAdsScroll() ? "auto" : "smooth",
-        force: true
-      });
+      window.history.replaceState(window.history.state, "", `${window.location.pathname}${window.location.search}#my-ads`);
+      scrollToBrandMyAds({ behavior: "auto", force: true });
     }
   }
 
