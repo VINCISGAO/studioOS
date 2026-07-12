@@ -1,7 +1,7 @@
 "use client";
 
 import type { FormEvent } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Loader2, Send, Sparkles, X } from "lucide-react";
 import { LucienAvatar } from "@/components/ai-copilot/lucien-avatar";
@@ -10,14 +10,19 @@ import { publicLucienIdentityLabel } from "@/lib/marketing/public-lucien-identit
 import type { LucienViewerSnapshot } from "@/components/marketing/faq/lucien-viewer-identity.client";
 import type { PublicLucienPagePath } from "@/lib/marketing/public-lucien-paths";
 import { buildLocalizedHref } from "@/lib/marketing/localized-href";
+import {
+  installAuthLucienChatIdleGuard,
+  readAuthLucienChat,
+  readGuestLucienChat,
+  syncLucienChatAuthUser,
+  writeAuthLucienChat,
+  writeGuestLucienChat,
+  type LucienStoredMessage
+} from "@/lib/lucien/lucien-chat-storage";
 import { cn } from "@/lib/utils";
 import type { Locale } from "@/lib/i18n";
 
-type ChatLine = {
-  id: string;
-  role: "USER" | "ASSISTANT";
-  content: string;
-};
+type ChatLine = LucienStoredMessage;
 
 type ApiResponse<T> = {
   success: boolean;
@@ -58,12 +63,20 @@ export function PublicLucienDrawer({
   viewer
 }: PublicLucienDrawerProps) {
   const t = publicLucienCopy(locale);
-  const { viewerIdentity, welcomeMessage } = viewer;
+  const { viewerIdentity, welcomeMessage, authUser } = viewer;
+  const userId = authUser?.id ?? null;
+  const isGuest = viewerIdentity === "guest";
   const [messages, setMessages] = useState<ChatLine[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [suggestions, setSuggestions] = useState(t.suggestions);
   const listRef = useRef<HTMLDivElement>(null);
+  const storageScopeRef = useRef<string | null>(null);
+
+  const resetToWelcome = useCallback(() => {
+    setMessages([{ id: "welcome", role: "ASSISTANT", content: welcomeMessage }]);
+    setSuggestions(t.suggestions);
+  }, [t.suggestions, welcomeMessage]);
 
   useEffect(() => {
     if (!open) return;
@@ -75,6 +88,64 @@ export function PublicLucienDrawer({
   }, [open]);
 
   useEffect(() => {
+    if (!open) {
+      storageScopeRef.current = null;
+      return;
+    }
+
+    const scope = isGuest ? "guest" : userId ?? "anonymous";
+    if (storageScopeRef.current === scope) return;
+    storageScopeRef.current = scope;
+
+    syncLucienChatAuthUser(isGuest ? null : userId);
+
+    const stored = isGuest
+      ? readGuestLucienChat("public")
+      : userId
+        ? readAuthLucienChat(userId, "public")
+        : null;
+
+    if (stored?.messages.length) {
+      setMessages(
+        stored.messages.map((line) =>
+          line.id === "welcome" ? { ...line, content: welcomeMessage } : line
+        )
+      );
+      if (stored.suggestions.length > 0) {
+        setSuggestions(stored.suggestions);
+      } else {
+        setSuggestions(t.suggestions);
+      }
+      return;
+    }
+
+    resetToWelcome();
+  }, [isGuest, open, resetToWelcome, t.suggestions, userId, welcomeMessage]);
+
+  useEffect(() => {
+    if (!open || !userId || isGuest) return;
+    return installAuthLucienChatIdleGuard(userId, "public", resetToWelcome);
+  }, [isGuest, open, resetToWelcome, userId]);
+
+  useEffect(() => {
+    if (!open || messages.length === 0) return;
+
+    const record = {
+      messages,
+      suggestions,
+      lastActivityAt: Date.now()
+    };
+
+    if (isGuest) {
+      writeGuestLucienChat("public", record);
+      return;
+    }
+    if (userId) {
+      writeAuthLucienChat(userId, "public", record);
+    }
+  }, [isGuest, messages, open, suggestions, userId]);
+
+  useEffect(() => {
     if (!open) return;
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") onClose();
@@ -82,26 +153,6 @@ export function PublicLucienDrawer({
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [onClose, open]);
-
-  useEffect(() => {
-    if (!open) {
-      setMessages([]);
-      setInput("");
-      setSuggestions(t.suggestions);
-      return;
-    }
-
-    setMessages((prev) => {
-      const hasUserMessages = prev.some((line) => line.role === "USER");
-      if (hasUserMessages) {
-        return prev.map((line) =>
-          line.id === "welcome" ? { ...line, content: welcomeMessage } : line
-        );
-      }
-      return [{ id: "welcome", role: "ASSISTANT", content: welcomeMessage }];
-    });
-    setSuggestions(t.suggestions);
-  }, [open, t.suggestions, welcomeMessage]);
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });

@@ -131,7 +131,7 @@ export function DepositPanel({
               <p className="mt-3 max-w-xl text-sm leading-7 text-zinc-600">{t.certifiedBody}</p>
               <div className="mt-5 inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1.5 text-xs text-zinc-600 ring-1 ring-zinc-200/80">
                 <Shield className="h-3.5 w-3.5 text-teal-600" />
-                {formatCurrency(snapshot.amount_usd)} {t.paymentLabel} · {t.certifiedSince}{" "}
+                {formatCurrency(snapshot.amount_usd, locale)} {t.paymentLabel} · {t.certifiedSince}{" "}
                 {snapshot.paid_at
                   ? new Date(snapshot.paid_at).toLocaleDateString(locale === "zh" ? "zh-CN" : "en-US")
                   : "—"}
@@ -176,7 +176,7 @@ export function DepositPanel({
             <p className="mt-3 max-w-xl text-sm leading-7 text-zinc-600">{t.subtitle}</p>
             <p className="mt-5 text-sm font-medium text-teal-700">{t.paymentLabel}</p>
             <p className="mt-1 text-5xl font-semibold tracking-tight text-zinc-950 sm:text-6xl">
-              {formatCurrency(snapshot.amount_usd)}
+              {formatCurrency(snapshot.amount_usd, locale)}
             </p>
             <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1.5 text-xs text-zinc-600 ring-1 ring-zinc-200/80">
               <Shield className="h-3.5 w-3.5 text-teal-600" />
@@ -264,7 +264,7 @@ export function DepositPanel({
                       <p className="text-[10px] font-medium uppercase tracking-wide text-zinc-400">
                         {t.paymentLabel}
                       </p>
-                      <p className="text-lg font-semibold text-white">{formatCurrency(snapshot.amount_usd)}</p>
+                      <p className="text-lg font-semibold text-white">{formatCurrency(snapshot.amount_usd, locale)}</p>
                     </div>
                   </div>
 
@@ -445,7 +445,7 @@ function PendingPaymentCard({
           {snapshot.pending_payment ? (
             <p className="mt-3 inline-flex rounded-full bg-white px-3 py-1 text-sm font-medium text-zinc-800 ring-1 ring-amber-200/80">
               {paymentMethodLabel(snapshot.pending_payment.payment_method, locale)} ·{" "}
-              {formatCurrency(snapshot.pending_payment.amount_usd)} {t.paymentLabel}
+              {formatCurrency(snapshot.pending_payment.amount_usd, locale)} {t.paymentLabel}
             </p>
           ) : submitted ? (
             <p className="mt-3 text-sm text-zinc-500">
@@ -566,7 +566,7 @@ function DepositHistory({
             >
               <div>
                 <p className="text-sm font-medium text-zinc-950">
-                  {paymentMethodLabel(payment.payment_method, locale)} · {formatCurrency(payment.amount_usd)}{" "}
+                  {paymentMethodLabel(payment.payment_method, locale)} · {formatCurrency(payment.amount_usd, locale)}{" "}
                   {t.paymentLabel}
                 </p>
                 <p className="mt-1 text-xs text-zinc-500">

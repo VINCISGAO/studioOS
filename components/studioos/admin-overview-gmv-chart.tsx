@@ -181,7 +181,7 @@ export function AdminOverviewGmvChart({
       <p className="mt-2 text-xs text-zinc-500">{t.subtitle}</p>
       {points.length > 0 ? (
         <p className="mt-1 text-xs text-zinc-400">
-          {locale === "zh" ? "最新" : "Latest"}: {formatCurrency(points[points.length - 1]?.gmv ?? 0)} GMV
+          {locale === "zh" ? "最新" : "Latest"}: {formatCurrency(points[points.length - 1]?.gmv ?? 0, locale)} GMV
         </p>
       ) : null}
     </div>

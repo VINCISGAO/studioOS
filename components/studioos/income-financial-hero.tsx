@@ -95,7 +95,7 @@ export function IncomeFinancialHero({
             <CircleHelp className="h-4 w-4 text-zinc-400" />
           </div>
           <p className="mt-2 text-5xl font-semibold tracking-tight text-zinc-950 sm:text-[3.25rem]">
-            {formatCurrency(snapshot.available_usd)}{" "}
+            {formatCurrency(snapshot.available_usd, locale)}{" "}
             <span className="text-3xl font-semibold text-zinc-500 sm:text-4xl">USD</span>
           </p>
           <p className="mt-3 max-w-xl text-sm leading-6 text-zinc-500">{t.escrowNote}</p>
@@ -129,21 +129,21 @@ export function IncomeFinancialHero({
         <MetricTile
           label={t.held}
           hint={t.heldHint}
-          value={formatCurrency(snapshot.held_usd)}
+          value={formatCurrency(snapshot.held_usd, locale)}
           icon={Clock3}
           tone="amber"
         />
         <MetricTile
           label={t.pending}
           hint={t.pendingHint}
-          value={formatCurrency(snapshot.pending_withdrawal_usd)}
+          value={formatCurrency(snapshot.pending_withdrawal_usd, locale)}
           icon={TrendingUp}
           tone="zinc"
         />
         <MetricTile
           label={t.lifetime}
           hint={t.lifetimeHint}
-          value={formatCurrency(snapshot.lifetime_withdrawn_usd)}
+          value={formatCurrency(snapshot.lifetime_withdrawn_usd, locale)}
           icon={Sparkles}
           tone="emerald"
         />

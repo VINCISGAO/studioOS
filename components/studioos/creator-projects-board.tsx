@@ -110,7 +110,7 @@ function statCards(stats: CreatorProjectsStats, locale: Locale) {
     { label: t.inProgress, value: String(stats.inProgress), trend: stats.inProgressTrend, up: true, icon: FolderKanban, tone: "text-violet-600 bg-violet-50" },
     { label: t.pendingReview, value: String(stats.pendingReview), trend: stats.pendingTrend, up: false, icon: Clock3, tone: "text-blue-600 bg-blue-50" },
     { label: t.completedMonth, value: String(stats.completedThisMonth), trend: stats.completedTrend, up: true, icon: CheckSquare, tone: "text-amber-600 bg-amber-50" },
-    { label: t.monthlyIncome, value: formatCurrency(stats.monthlyIncome), trend: stats.incomeTrend, up: true, icon: DollarSign, tone: "text-emerald-600 bg-emerald-50" },
+    { label: t.monthlyIncome, value: formatCurrency(stats.monthlyIncome, locale), trend: stats.incomeTrend, up: true, icon: DollarSign, tone: "text-emerald-600 bg-emerald-50" },
     { label: t.avgDelivery, value: locale === "zh" ? `${stats.avgDeliveryDays} 天` : `${stats.avgDeliveryDays}d`, trend: stats.deliveryTrend, up: false, icon: TrendingUp, tone: "text-violet-600 bg-violet-50" }
   ];
 }
@@ -308,7 +308,7 @@ export function CreatorProjectsBoard({
                       </div>
                     </td>
                     <td className="px-5 py-4 text-right font-medium tabular-nums text-zinc-800">
-                      {formatCurrency(row.amount)}
+                      {formatCurrency(row.amount, locale)}
                     </td>
                     <td className="max-w-0 px-5 py-4">
                       <p className="truncate text-zinc-500" title={row.latestUpdate}>

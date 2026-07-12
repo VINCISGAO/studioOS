@@ -77,7 +77,7 @@ export function CreatorMembershipPanel({
                 <TrendingUp className="h-3.5 w-3.5" /> {t.revenue}
               </p>
               <p className="mt-2 text-lg font-semibold tabular-nums">
-                {formatCurrency(status.earnings.totalSettledRevenue)}
+                {formatCurrency(status.earnings.totalSettledRevenue, locale)}
               </p>
             </div>
             <div className="rounded-xl border p-4 sm:col-span-2">
@@ -85,7 +85,7 @@ export function CreatorMembershipPanel({
                 <Crown className="h-3.5 w-3.5" /> {t.threshold}
               </p>
               <p className="mt-2 text-lg font-semibold tabular-nums">
-                {formatCurrency(status.earnings.upgradeThreshold)}
+                {formatCurrency(status.earnings.upgradeThreshold, locale)}
               </p>
               {!status.isVerified ? (
                 <div className="mt-3">

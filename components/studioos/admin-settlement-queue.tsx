@@ -72,7 +72,7 @@ export function AdminSettlementQueue({
                   </TableCell>
                   <TableCell>
                     {row.escrowStatus ?? "—"}
-                    <div className="text-xs text-zinc-500">{formatCurrency(row.escrowRemaining)}</div>
+                    <div className="text-xs text-zinc-500">{formatCurrency(row.escrowRemaining, locale)}</div>
                   </TableCell>
                   <TableCell>{row.deliveryStatus ?? "—"}</TableCell>
                   <TableCell className="max-w-xs text-xs text-zinc-500">

@@ -60,7 +60,7 @@ export function AdminWithdrawalQueue({
                     <div className="font-medium">{row.userName ?? row.userEmail ?? row.userId}</div>
                     <div className="text-xs text-zinc-500">{row.userEmail}</div>
                   </TableCell>
-                  <TableCell>{formatCurrency(row.amount)}</TableCell>
+                  <TableCell>{formatCurrency(row.amount, locale)}</TableCell>
                   <TableCell className="max-w-xs text-xs">
                     {row.paymentMethods.length
                       ? row.paymentMethods.map((pm) => (

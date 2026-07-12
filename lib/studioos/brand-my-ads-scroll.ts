@@ -1,9 +1,51 @@
 export const BRAND_MY_ADS_SECTION_ID = "my-ads";
+export const BRAND_PORTAL_MAIN_SELECTOR = "[data-brand-portal-main]";
+export const BRAND_PORTAL_HEADER_SELECTOR = "[data-brand-portal-header]";
 
-/** Brand sticky header + tablet/mobile nav — keep section title below chrome. */
+/** Fallback when sticky header cannot be measured. */
 export const BRAND_MY_ADS_SCROLL_OFFSET_PX = 112;
 
-function getScrollParent(element: HTMLElement): HTMLElement | null {
+export function isBrandDashboardPath(pathname: string) {
+  return pathname === "/brand" || pathname.endsWith("/brand");
+}
+
+export function prefersInstantBrandMyAdsScroll() {
+  if (typeof window === "undefined") return false;
+  return (
+    window.matchMedia("(pointer: coarse)").matches ||
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
+}
+
+export function measureBrandPortalScrollOffset() {
+  if (typeof window === "undefined") {
+    return BRAND_MY_ADS_SCROLL_OFFSET_PX;
+  }
+
+  const header = document.querySelector(BRAND_PORTAL_HEADER_SELECTOR);
+  if (header instanceof HTMLElement) {
+    return Math.ceil(header.getBoundingClientRect().height) + 8;
+  }
+
+  return BRAND_MY_ADS_SCROLL_OFFSET_PX;
+}
+
+type ScrollRoot = HTMLElement | Window;
+
+function resolveBrandScrollRoot(element: HTMLElement): ScrollRoot {
+  const main = document.querySelector(BRAND_PORTAL_MAIN_SELECTOR);
+  if (main instanceof HTMLElement) {
+    const style = window.getComputedStyle(main);
+    const scrollableMain =
+      (style.overflowY === "auto" ||
+        style.overflowY === "scroll" ||
+        style.overflowY === "overlay") &&
+      main.scrollHeight > main.clientHeight + 1;
+    if (scrollableMain) {
+      return main;
+    }
+  }
+
   let parent = element.parentElement;
   while (parent) {
     const style = window.getComputedStyle(parent);
@@ -16,12 +58,31 @@ function getScrollParent(element: HTMLElement): HTMLElement | null {
     }
     parent = parent.parentElement;
   }
-  return null;
+
+  return window;
 }
 
 function isMyAdsComfortablyVisible(element: HTMLElement, offsetPx: number) {
   const rect = element.getBoundingClientRect();
   return rect.top >= offsetPx - 12 && rect.top <= offsetPx + 56;
+}
+
+function scrollRootToElement(
+  scrollRoot: ScrollRoot,
+  element: HTMLElement,
+  offsetPx: number,
+  behavior: ScrollBehavior
+) {
+  if (scrollRoot instanceof Window) {
+    const targetTop = window.scrollY + element.getBoundingClientRect().top - offsetPx;
+    window.scrollTo({ top: Math.max(0, targetTop), behavior });
+    return;
+  }
+
+  const parentRect = scrollRoot.getBoundingClientRect();
+  const elementRect = element.getBoundingClientRect();
+  const targetTop = scrollRoot.scrollTop + (elementRect.top - parentRect.top) - offsetPx;
+  scrollRoot.scrollTo({ top: Math.max(0, targetTop), behavior });
 }
 
 export function scrollToBrandMyAds(options?: {
@@ -38,23 +99,24 @@ export function scrollToBrandMyAds(options?: {
     return false;
   }
 
-  const behavior = options?.behavior ?? "smooth";
-  const offsetPx = options?.offsetPx ?? BRAND_MY_ADS_SCROLL_OFFSET_PX;
+  const behavior = options?.behavior ?? (prefersInstantBrandMyAdsScroll() ? "auto" : "smooth");
+  const offsetPx = options?.offsetPx ?? measureBrandPortalScrollOffset();
 
   if (!options?.force && isMyAdsComfortablyVisible(element, offsetPx)) {
     return false;
   }
 
-  const scrollParent = getScrollParent(element);
-  if (scrollParent) {
-    const parentRect = scrollParent.getBoundingClientRect();
-    const elementRect = element.getBoundingClientRect();
-    const targetTop = scrollParent.scrollTop + (elementRect.top - parentRect.top) - offsetPx;
-    scrollParent.scrollTo({ top: Math.max(0, targetTop), behavior });
-    return true;
+  const scrollRoot = resolveBrandScrollRoot(element);
+  scrollRootToElement(scrollRoot, element, offsetPx, behavior);
+  return true;
+}
+
+export function syncBrandMyAdsHashScroll() {
+  if (typeof window === "undefined" || window.location.hash !== "#my-ads") {
+    return;
   }
 
-  const targetTop = window.scrollY + element.getBoundingClientRect().top - offsetPx;
-  window.scrollTo({ top: Math.max(0, targetTop), behavior });
-  return true;
+  window.requestAnimationFrame(() => {
+    scrollToBrandMyAds({ behavior: "auto", force: true });
+  });
 }

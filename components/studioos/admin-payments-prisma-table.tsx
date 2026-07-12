@@ -3,9 +3,16 @@
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { AdminPaymentRecord } from "@/features/admin/payment/admin-payment.service";
+import type { Locale } from "@/lib/i18n";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
-export function AdminPaymentsPrismaTable({ records }: { records: AdminPaymentRecord[] }) {
+export function AdminPaymentsPrismaTable({
+  locale,
+  records
+}: {
+  locale: Locale;
+  records: AdminPaymentRecord[];
+}) {
   if (!records.length) {
     return <p className="p-6 text-sm text-zinc-500">No escrow payments in database.</p>;
   }
@@ -34,10 +41,10 @@ export function AdminPaymentsPrismaTable({ records }: { records: AdminPaymentRec
             </TableCell>
             <TableCell><Badge variant="outline">{row.escrowStatus}</Badge></TableCell>
             <TableCell>{row.paymentStatus}</TableCell>
-            <TableCell>{formatCurrency(row.amount)}</TableCell>
-            <TableCell>{formatCurrency(row.platformFee)}</TableCell>
-            <TableCell>{formatCurrency(row.commission)}</TableCell>
-            <TableCell>{formatCurrency(row.creatorPayout)}</TableCell>
+            <TableCell>{formatCurrency(row.amount, locale)}</TableCell>
+            <TableCell>{formatCurrency(row.platformFee, locale)}</TableCell>
+            <TableCell>{formatCurrency(row.commission, locale)}</TableCell>
+            <TableCell>{formatCurrency(row.creatorPayout, locale)}</TableCell>
             <TableCell className="text-xs">{row.payoutPaidAt ? formatDate(row.payoutPaidAt) : "—"}</TableCell>
             <TableCell>{row.hasOpenDispute ? <Badge variant="destructive">open</Badge> : "—"}</TableCell>
           </TableRow>

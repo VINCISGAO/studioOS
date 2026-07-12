@@ -1,6 +1,8 @@
 import type { StoredMessage } from "@/lib/chat-types";
 import type { StoredOrder, StoredQuote } from "@/lib/order-types";
 import type { StoredInquiry } from "@/lib/chat-types";
+import type { Locale } from "@/lib/i18n";
+import { formatMoneyFromUsd } from "@/lib/money/display-money";
 
 export type ProjectContract = {
   budget: number;
@@ -16,7 +18,8 @@ export type ProjectContract = {
 export function buildProjectContract(
   inquiry: StoredInquiry,
   quote: StoredQuote,
-  messages: StoredMessage[]
+  messages: StoredMessage[],
+  locale?: Locale
 ): ProjectContract {
   const commercial = messages
     .filter((m) => m.sender !== "system" && m.kind !== "pitch")
@@ -29,7 +32,7 @@ export function buildProjectContract(
 
   return {
     budget: quote.amount,
-    budgetLabel: `$${quote.amount.toFixed(2)} USD`,
+    budgetLabel: formatMoneyFromUsd(quote.amount, locale),
     deliverables: quote.summary || inquiry.message.slice(0, 200),
     style: styleMatch ?? inquiry.budget_range ?? "As discussed in Proposal Room",
     revisions: "2 rounds included",

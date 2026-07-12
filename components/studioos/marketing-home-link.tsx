@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { Locale } from "@/lib/i18n";
-import { withLocale } from "@/lib/i18n";
+import { marketingHomeHref } from "@/lib/marketing/localized-href";
 import { cn } from "@/lib/utils";
 
 export function MarketingHomeLink({
@@ -15,7 +15,7 @@ export function MarketingHomeLink({
   children: React.ReactNode;
 }) {
   return (
-    <Link href={withLocale("/", locale)} prefetch={false} className={cn(className)}>
+    <Link href={marketingHomeHref.home(locale)} prefetch={false} className={cn(className)}>
       {children}
     </Link>
   );

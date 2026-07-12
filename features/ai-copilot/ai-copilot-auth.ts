@@ -35,14 +35,14 @@ function mapUser(user: UserWithProfiles): AuthUserDto {
 
 function aiDatabaseUnavailableMessage() {
   return process.env.NODE_ENV === "production"
-    ? "AI 数据库未连接。请在 Vercel 环境变量中配置 DATABASE_URL（或 POSTGRES_PRISMA_URL / POSTGRES_URL），重新部署后再使用 VINCIS AI。"
-    : "AI 数据库连接失败。请确认本地 PostgreSQL 已启动，并重启 npm run dev:fix。";
+    ? "智能助手数据库未连接，请完成服务配置并重新部署后再使用。"
+    : "智能助手数据库连接失败，请确认本地数据库已启动后重启开发服务。";
 }
 
 function aiDatabaseConnectionFailedMessage() {
   return process.env.NODE_ENV === "production"
-    ? "AI 数据库连接失败。请检查 Vercel 的 DATABASE_URL、数据库 SSL/权限与迁移状态，然后重新部署。"
-    : "AI 数据库连接失败。请确认本地 PostgreSQL 已启动，并重启 npm run dev:fix。";
+    ? "智能助手数据库连接失败，请检查服务配置与迁移状态后重新部署。"
+    : "智能助手数据库连接失败，请确认本地数据库已启动后重启开发服务。";
 }
 
 export async function requireAiCopilotUser(request?: Request): Promise<AuthUserDto> {
@@ -73,7 +73,7 @@ export async function requireAiCopilotUser(request?: Request): Promise<AuthUserD
 
     const demo = DEMO_USERS.find((item) => item.email === user.email || item.email === demoEmailFromId(user.id));
     if (!demo) {
-      throw appError("UNAUTHORIZED", "请使用数据库账号登录后再使用 VINCIS AI。");
+      throw appError("UNAUTHORIZED", "请使用数据库账号登录后再使用智能助手。");
     }
 
     const created = await userRepository.upsertDemoUser({

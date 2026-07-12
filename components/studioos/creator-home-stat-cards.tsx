@@ -1,6 +1,7 @@
 "use client";
 
 import { BadgeCheck, Clock3, DollarSign, FolderKanban } from "lucide-react";
+import type { Locale } from "@/lib/i18n";
 import type { CreatorHomeStats } from "@/lib/studioos/creator-home-ui";
 import { trendToneClass } from "@/lib/studioos/creator-home-ui";
 import { cn, formatCurrency } from "@/lib/utils";
@@ -13,9 +14,11 @@ const iconStyles = [
 ] as const;
 
 export function CreatorHomeStatCards({
+  locale,
   labels,
   stats
 }: {
+  locale: Locale;
   labels: {
     totalEarnings: string;
     activeProjects: string;
@@ -28,7 +31,7 @@ export function CreatorHomeStatCards({
   const cards = [
     {
       label: labels.totalEarnings,
-      value: formatCurrency(stats.totalEarnings),
+      value: formatCurrency(stats.totalEarnings, locale),
       trend: stats.earningsTrend,
       sub: null
     },

@@ -39,13 +39,13 @@ export function AdminAnalyticsDashboard({
 }) {
   const t = copy[locale];
   const cards = [
-    { label: t.gmv, value: formatCurrency(metrics.gmv) },
-    { label: t.revenue, value: formatCurrency(metrics.revenue) },
-    { label: t.platformFees, value: formatCurrency(metrics.platformFees) },
+    { label: t.gmv, value: formatCurrency(metrics.gmv, locale) },
+    { label: t.revenue, value: formatCurrency(metrics.revenue, locale) },
+    { label: t.platformFees, value: formatCurrency(metrics.platformFees, locale) },
     { label: t.completed, value: String(metrics.completedCampaigns) },
     { label: t.avgReview, value: metrics.avgReviewHours.toFixed(1) },
     { label: t.avgSettlement, value: metrics.avgSettlementHours.toFixed(1) },
-    { label: t.walletTotal, value: formatCurrency(metrics.walletAvailable) },
+    { label: t.walletTotal, value: formatCurrency(metrics.walletAvailable, locale) },
     { label: t.pendingWithdrawals, value: String(metrics.pendingWithdrawals) }
   ];
 

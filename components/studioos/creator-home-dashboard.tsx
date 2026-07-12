@@ -129,6 +129,7 @@ export function CreatorHomeDashboard({
       </section>
 
       <CreatorHomeStatCards
+        locale={locale}
         labels={{
           totalEarnings: t.totalEarnings,
           activeProjects: t.activeProjects,

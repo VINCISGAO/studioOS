@@ -1,6 +1,6 @@
 "use client";
 
-import { useMarketingDocsLucien } from "@/components/marketing/docs/marketing-docs-lucien-host";
+import { useMarketingDocsLucien } from "@/components/marketing/docs/marketing-docs-lucien-context";
 import { cn } from "@/lib/utils";
 
 type OpenMarketingLucienButtonProps = {

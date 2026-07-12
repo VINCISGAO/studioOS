@@ -136,7 +136,7 @@ export default async function AdminOrderPage({ params, searchParams }: AdminOrde
           <div>
             <h1 className="text-4xl font-semibold tracking-tight">{order.id}</h1>
             <p className="mt-2 text-muted-foreground">
-              {project?.company_name} · {formatCurrency(order.amount)} · {order.payment_status}
+              {project?.company_name} · {formatCurrency(order.amount, locale)} · {order.payment_status}
             </p>
           </div>
           <StatusBadge status={order.status} locale={locale} />
@@ -184,7 +184,7 @@ export default async function AdminOrderPage({ params, searchParams }: AdminOrde
                 <h2 className="text-lg font-semibold">{t.payments}</h2>
                 <div className="mt-5 grid gap-4 sm:grid-cols-3">
                   <Metric label={t.plan} value={order.title || order.quote_id} />
-                  <Metric label={t.amount} value={formatCurrency(order.amount)} />
+                  <Metric label={t.amount} value={formatCurrency(order.amount, locale)} />
                   <Metric label={t.stripeSession} value={order.payment_status} />
                 </div>
               </CardContent>

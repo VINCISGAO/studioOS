@@ -15,7 +15,7 @@ import {
   type BrandNewCampaignGate
 } from "@/lib/studioos/brand-active-campaign-limit";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
-import { scrollToBrandMyAds } from "@/lib/studioos/brand-my-ads-scroll";
+import { scrollToBrandMyAds, isBrandDashboardPath, prefersInstantBrandMyAdsScroll } from "@/lib/studioos/brand-my-ads-scroll";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -91,14 +91,17 @@ export function BrandNewCampaignGateDialog({
 }: Props) {
   const t = copy[locale];
   const pathname = usePathname() ?? "";
-  const onDashboard = pathname === brandPortalRoutes.dashboard || pathname.endsWith("/brand");
+  const onDashboard = isBrandDashboardPath(pathname);
   const isWarn = gate === "warn";
   const isRateLimit = gate === "rate_limit";
 
   function handleViewProjects() {
     onOpenChange(false);
     if (onDashboard) {
-      scrollToBrandMyAds({ behavior: "smooth", force: true });
+      scrollToBrandMyAds({
+        behavior: prefersInstantBrandMyAdsScroll() ? "auto" : "smooth",
+        force: true
+      });
     }
   }
 

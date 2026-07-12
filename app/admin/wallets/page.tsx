@@ -46,7 +46,7 @@ export default async function AdminWalletsPage({ searchParams }: { searchParams:
                     </Link>
                   </TableCell>
                   <TableCell><Badge variant="outline">{row.role}</Badge></TableCell>
-                  <TableCell>{formatCurrency(row.legacyAvailable)}</TableCell>
+                  <TableCell>{formatCurrency(row.legacyAvailable, locale)}</TableCell>
                   <TableCell className="text-xs">
                     {row.assets.map((a) => `${a.assetCode}: ${a.available}`).join(" · ") || "—"}
                   </TableCell>

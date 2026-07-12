@@ -211,7 +211,7 @@ export function CreatorDepositPaymentSection({
                 {t.paymentLabel}
               </span>
               <span className="text-2xl font-semibold tracking-tight text-zinc-950">
-                {formatCurrency(snapshot.amount_usd)}
+                {formatCurrency(snapshot.amount_usd, locale)}
               </span>
             </div>
           </div>
@@ -302,7 +302,7 @@ export function CreatorDepositPaymentSection({
                 <div className="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-4">
                   <p className="text-xs font-medium uppercase tracking-wide text-emerald-700">{extra.amountDue}</p>
                   <p className="mt-1 text-3xl font-semibold tracking-tight text-zinc-950">
-                    {formatCurrency(snapshot.amount_usd)}
+                    {formatCurrency(snapshot.amount_usd, locale)}
                   </p>
                 </div>
 

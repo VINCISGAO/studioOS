@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BrandLogoLockup } from "@/components/brand-logo-mark";
+import { MarketingHomeLink } from "@/components/studioos/marketing-home-link";
 import { PortalMobileNav } from "@/components/studioos/portal-mobile-nav";
 import { adminSignOutAction } from "@/app/actions";
 import { Button } from "@/components/ui/button";
@@ -98,7 +99,7 @@ export function AdminPortalShell({
       <div className="flex min-h-screen">
         <aside className="hidden w-64 shrink-0 border-r border-zinc-200 bg-white lg:flex lg:flex-col">
           <div className="border-b border-zinc-100 px-5 py-5">
-            <Link href={withLocale(adminPortalRoutes.dashboard, locale)} className="flex items-center gap-2.5">
+            <MarketingHomeLink locale={locale} className="flex items-center gap-2.5 transition hover:opacity-80">
               <BrandLogoLockup
                 contrastOn="light"
                 markClassName="h-8 w-8 rounded-lg shadow-sm"
@@ -108,7 +109,7 @@ export function AdminPortalShell({
               <div>
                 <p className="text-xs text-zinc-500">{locale === "zh" ? "管理后台" : "Control center"}</p>
               </div>
-            </Link>
+            </MarketingHomeLink>
           </div>
           <nav className="flex-1 overflow-y-auto px-3 py-4">
             <div className="space-y-1">

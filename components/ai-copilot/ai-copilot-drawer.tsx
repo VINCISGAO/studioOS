@@ -2,6 +2,7 @@
 
 import type { FormEvent, PointerEvent as ReactPointerEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { usePathname, useSearchParams } from "next/navigation";
 import {
   Check,
@@ -19,6 +20,12 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LucienAvatar } from "@/components/ai-copilot/lucien-avatar";
+import {
+  installAuthLucienChatIdleGuard,
+  readAuthLucienChat,
+  syncLucienChatAuthUser,
+  writeAuthLucienChat
+} from "@/lib/lucien/lucien-chat-storage";
 import { cn } from "@/lib/utils";
 
 type ChatLine = {
@@ -47,6 +54,23 @@ type SessionListData = {
   };
 };
 
+type SessionDetailData = {
+  session: {
+    id: string;
+    messages: Array<{
+      id: string;
+      role: "USER" | "ASSISTANT";
+      content: string;
+      feedback?: ChatLine["feedback"];
+    }>;
+  };
+  suggestedQuestions: string[];
+};
+
+type AuthMeData = {
+  id: string;
+};
+
 type CopilotAnswerData = {
   sessionId: string;
   messageId: string;
@@ -67,11 +91,6 @@ type FloatingLauncherPosition = {
   y: number;
 };
 
-type FloatingLauncherPreview = {
-  x: number;
-  y: number;
-};
-
 type FloatingLauncherDrag = {
   pointerId: number;
   startX: number;
@@ -81,6 +100,7 @@ type FloatingLauncherDrag = {
   currentX: number;
   currentY: number;
   moved: boolean;
+  rafId: number;
 };
 
 const FLOATING_LAUNCHER_STORAGE_KEY = "vincis-ai-copilot-launcher-position";
@@ -278,16 +298,16 @@ function welcomeBody(input: { pathname: string; role: ReturnType<typeof roleKind
   }
 
   if (pathname.startsWith("/brand/attribution")) {
-    return "我可以帮你分析当前 Campaign 的归因数据，看看哪些渠道、Creator 或内容带来了更好的效果。";
+    return "我可以帮你分析当前项目的归因数据，看看哪些渠道、创作者或内容带来了更好的效果。";
   }
   if (pathname.startsWith("/studio/ai") || pathname.startsWith("/studio/copilot")) {
-    return "这里是你的 AI 工作台。我可以帮你查看最近的邀请、订单、收益和主页优化建议。";
+    return "这里是你的智能工作台。我可以帮你查看最近的邀请、订单、收益和主页优化建议。";
   }
   if (role === "creator") {
     return "我可以帮你查看邀请、订单、收益、作品表现，也可以帮你分析主页哪里还能优化。";
   }
   if (role === "brand") {
-    return "我可以帮你查看 Campaign、推荐 Creator、分析广告表现，也可以协助你整理下一步计划。";
+    return "我可以帮你查看项目、推荐创作者、分析广告表现，也可以协助你整理下一步计划。";
   }
   if (role === "admin") {
     return "我可以帮你查看平台状态、订单异常、提现申请、用户数据和需要处理的运营事项。";
@@ -374,6 +394,26 @@ function isAbortError(error: unknown) {
   return error instanceof DOMException && error.name === "AbortError";
 }
 
+function clearLauncherInlinePosition(button: HTMLButtonElement) {
+  button.style.left = "";
+  button.style.top = "";
+  button.style.right = "";
+  button.style.transform = "";
+  button.style.willChange = "";
+}
+
+function pinLauncherForDrag(button: HTMLButtonElement, x: number, y: number) {
+  button.style.right = "";
+  button.style.left = `${x}px`;
+  button.style.top = `${y}px`;
+  button.style.transform = "translate3d(0, 0, 0)";
+  button.style.willChange = "transform";
+}
+
+function applyLauncherDragTransform(button: HTMLButtonElement, originX: number, originY: number, x: number, y: number) {
+  button.style.transform = `translate3d(${x - originX}px, ${y - originY}px, 0)`;
+}
+
 export function AiCopilotDrawer() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -382,6 +422,7 @@ export function AiCopilotDrawer() {
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<ChatLine[]>([]);
   const [suggestions, setSuggestions] = useState<string[]>(copy.defaultSuggestions);
@@ -391,10 +432,13 @@ export function AiCopilotDrawer() {
   const [error, setError] = useState<string | null>(null);
   const [savingFeedbackId, setSavingFeedbackId] = useState<string | null>(null);
   const [launcherPosition, setLauncherPosition] = useState<FloatingLauncherPosition>(() => readStoredLauncherPosition());
-  const [launcherPreview, setLauncherPreview] = useState<FloatingLauncherPreview | null>(null);
+  const [isLauncherDragging, setIsLauncherDragging] = useState(false);
+  const [portalReady, setPortalReady] = useState(false);
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  const launcherButtonRef = useRef<HTMLButtonElement | null>(null);
   const launcherDragRef = useRef<FloatingLauncherDrag | null>(null);
   const suppressLauncherClickRef = useRef(false);
+  const sessionRestoreOnOpenRef = useRef(false);
 
   const pageContext = useMemo(
     () => ({ ...inferPageContext(pathname), languageCode: languageFromSearch(searchParams) }),
@@ -406,6 +450,13 @@ export function AiCopilotDrawer() {
     const query = params.toString();
     return query ? `/api/ai-copilot?${query}` : "/api/ai-copilot";
   }, [pageContext.languageCode]);
+  const sessionDetailUrl = useMemo(() => {
+    if (!sessionId) return null;
+    const params = new URLSearchParams();
+    params.set("sessionId", sessionId);
+    if (pageContext.languageCode) params.set("languageCode", pageContext.languageCode);
+    return `/api/ai-copilot?${params.toString()}`;
+  }, [pageContext.languageCode, sessionId]);
   const roleKind = roleKindFromPath(pathname);
   const displayName = workspace?.displayName?.trim() || fallbackDisplayName(roleKind, locale);
   const introTitle =
@@ -417,6 +468,58 @@ export function AiCopilotDrawer() {
   const introBody = welcomeBody({ pathname, role: roleKind, locale });
 
   useEffect(() => {
+    let cancelled = false;
+    fetch("/api/v1/auth/me", { credentials: "same-origin", cache: "no-store" })
+      .then(async (response) => {
+        const payload = (await response.json().catch(() => null)) as ApiResponse<AuthMeData> | null;
+        if (!response.ok || !payload?.success || !payload.data?.id) {
+          syncLucienChatAuthUser(null);
+          return null;
+        }
+        return payload.data.id;
+      })
+      .then((resolvedUserId) => {
+        if (cancelled || !resolvedUserId) return;
+        syncLucienChatAuthUser(resolvedUserId);
+        setUserId(resolvedUserId);
+        const stored = readAuthLucienChat(resolvedUserId, "workspace");
+        if (!stored) return;
+        setSessionId(stored.sessionId ?? null);
+        if (stored.messages.length > 0) setMessages(stored.messages);
+        if (stored.suggestions.length > 0) setSuggestions(stored.suggestions);
+      })
+      .catch(() => {
+        if (!cancelled) syncLucienChatAuthUser(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!userId) return;
+    return installAuthLucienChatIdleGuard(userId, "workspace", () => {
+      setSessionId(null);
+      setMessages([]);
+      setSuggestions(copy.defaultSuggestions);
+    });
+  }, [copy.defaultSuggestions, userId]);
+
+  useEffect(() => {
+    if (!userId || messages.length === 0) return;
+    writeAuthLucienChat(userId, "workspace", {
+      messages,
+      suggestions,
+      sessionId,
+      lastActivityAt: Date.now()
+    });
+  }, [messages, sessionId, suggestions, userId]);
+
+  useEffect(() => {
+    setPortalReady(true);
+  }, []);
+
+  useEffect(() => {
     setLauncherPosition(readStoredLauncherPosition());
 
     const handleResize = () => {
@@ -425,7 +528,10 @@ export function AiCopilotDrawer() {
         storeLauncherPosition(next);
         return next;
       });
-      setLauncherPreview(null);
+      if (launcherButtonRef.current) {
+        clearLauncherInlinePosition(launcherButtonRef.current);
+      }
+      setIsLauncherDragging(false);
       launcherDragRef.current = null;
     };
 
@@ -470,6 +576,48 @@ export function AiCopilotDrawer() {
       controller.abort();
     };
   }, [copy.unavailable, open, sessionsUrl]);
+
+  useEffect(() => {
+    if (!open) {
+      sessionRestoreOnOpenRef.current = false;
+      return;
+    }
+    if (sessionRestoreOnOpenRef.current || !sessionDetailUrl) return;
+    sessionRestoreOnOpenRef.current = true;
+
+    let cancelled = false;
+    const controller = new AbortController();
+    fetch(sessionDetailUrl, { signal: controller.signal })
+      .then(async (response) => {
+        const payload = (await response.json().catch(() => null)) as ApiResponse<SessionDetailData> | null;
+        if (!response.ok || !payload?.success || !payload.data?.session) {
+          throw new Error(payload?.error?.message ?? copy.unavailable);
+        }
+        return payload.data;
+      })
+      .then((data) => {
+        if (cancelled) return;
+        setSessionId(data.session.id);
+        setMessages(
+          data.session.messages.map((message) => ({
+            id: message.id,
+            role: message.role,
+            content: message.content,
+            feedback: message.feedback ?? null
+          }))
+        );
+        if (data.suggestedQuestions.length > 0) {
+          setSuggestions(data.suggestedQuestions);
+        }
+      })
+      .catch((err) => {
+        if (cancelled || isAbortError(err)) return;
+      });
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [copy.unavailable, open, sessionDetailUrl]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -551,55 +699,100 @@ export function AiCopilotDrawer() {
   function startLauncherDrag(event: ReactPointerEvent<HTMLButtonElement>) {
     if (event.pointerType === "mouse" && event.button !== 0) return;
 
-    const rect = event.currentTarget.getBoundingClientRect();
-    launcherDragRef.current = {
+    const button = event.currentTarget;
+    const rect = button.getBoundingClientRect();
+    const originX = rect.left;
+    const originY = rect.top;
+
+    pinLauncherForDrag(button, originX, originY);
+    button.setPointerCapture(event.pointerId);
+
+    const drag: FloatingLauncherDrag = {
       pointerId: event.pointerId,
       startX: event.clientX,
       startY: event.clientY,
-      originX: rect.left,
-      originY: rect.top,
-      currentX: rect.left,
-      currentY: rect.top,
-      moved: false
+      originX,
+      originY,
+      currentX: originX,
+      currentY: originY,
+      moved: false,
+      rafId: 0
     };
-    setLauncherPreview({ x: rect.left, y: rect.top });
-    event.currentTarget.setPointerCapture(event.pointerId);
-  }
+    launcherDragRef.current = drag;
+    setIsLauncherDragging(true);
 
-  function moveLauncherDrag(event: ReactPointerEvent<HTMLButtonElement>) {
-    const drag = launcherDragRef.current;
-    if (!drag || drag.pointerId !== event.pointerId) return;
+    const handlePointerMove = (moveEvent: PointerEvent) => {
+      const current = launcherDragRef.current;
+      if (!current || moveEvent.pointerId !== current.pointerId) return;
 
-    const deltaX = event.clientX - drag.startX;
-    const deltaY = event.clientY - drag.startY;
-    const nextX = clampLauncherX(drag.originX + deltaX);
-    const nextY = clampLauncherY(drag.originY + deltaY);
-    const moved = Math.hypot(deltaX, deltaY) > FLOATING_LAUNCHER_CLICK_THRESHOLD;
+      if (current.rafId) return;
 
-    launcherDragRef.current = {
-      ...drag,
-      currentX: nextX,
-      currentY: nextY,
-      moved: drag.moved || moved
+      const scheduledRafId = window.requestAnimationFrame(() => {
+        const live = launcherDragRef.current;
+        const node = launcherButtonRef.current;
+        if (!live || !node || live.pointerId !== moveEvent.pointerId) {
+          if (live) {
+            launcherDragRef.current = { ...live, rafId: 0 };
+          }
+          return;
+        }
+
+        const deltaX = moveEvent.clientX - live.startX;
+        const deltaY = moveEvent.clientY - live.startY;
+        const nextX = clampLauncherX(live.originX + deltaX);
+        const nextY = clampLauncherY(live.originY + deltaY);
+        const moved =
+          live.moved || Math.hypot(deltaX, deltaY) > FLOATING_LAUNCHER_CLICK_THRESHOLD;
+
+        applyLauncherDragTransform(node, live.originX, live.originY, nextX, nextY);
+
+        launcherDragRef.current = {
+          ...live,
+          currentX: nextX,
+          currentY: nextY,
+          moved,
+          rafId: 0
+        };
+      });
+
+      launcherDragRef.current = { ...current, rafId: scheduledRafId };
     };
-    setLauncherPreview({ x: nextX, y: nextY });
-  }
 
-  function finishLauncherDrag(event: ReactPointerEvent<HTMLButtonElement>) {
-    const drag = launcherDragRef.current;
-    if (!drag || drag.pointerId !== event.pointerId) return;
+    const finishDrag = (endEvent: PointerEvent) => {
+      const current = launcherDragRef.current;
+      if (!current || endEvent.pointerId !== current.pointerId) return;
 
-    const side = drag.currentX + FLOATING_LAUNCHER_SIZE / 2 < window.innerWidth / 2 ? "left" : "right";
-    const nextPosition = normalizeLauncherPosition({ side, y: drag.currentY });
-    setLauncherPosition(nextPosition);
-    storeLauncherPosition(nextPosition);
-    setLauncherPreview(null);
-    suppressLauncherClickRef.current = drag.moved;
-    launcherDragRef.current = null;
+      if (current.rafId) {
+        window.cancelAnimationFrame(current.rafId);
+      }
 
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", finishDrag);
+      window.removeEventListener("pointercancel", finishDrag);
+
+      const buttonNode = launcherButtonRef.current;
+      if (buttonNode?.hasPointerCapture(endEvent.pointerId)) {
+        buttonNode.releasePointerCapture(endEvent.pointerId);
+      }
+
+      const side =
+        current.currentX + FLOATING_LAUNCHER_SIZE / 2 < window.innerWidth / 2 ? "left" : "right";
+      const nextPosition = normalizeLauncherPosition({ side, y: current.currentY });
+
+      if (buttonNode) {
+        clearLauncherInlinePosition(buttonNode);
+      }
+
+      setLauncherPosition(nextPosition);
+      storeLauncherPosition(nextPosition);
+      setIsLauncherDragging(false);
+      suppressLauncherClickRef.current = current.moved;
+      launcherDragRef.current = null;
+    };
+
+    window.addEventListener("pointermove", handlePointerMove, { passive: true });
+    window.addEventListener("pointerup", finishDrag);
+    window.addEventListener("pointercancel", finishDrag);
   }
 
   function openLauncher() {
@@ -615,36 +808,35 @@ export function AiCopilotDrawer() {
     setExpanded(false);
   }
 
-  const launcherStyle = launcherPreview
-    ? { left: `${launcherPreview.x}px`, top: `${launcherPreview.y}px` }
-    : launcherPosition.side === "left"
-      ? { left: `${FLOATING_LAUNCHER_EDGE_OFFSET}px`, top: `${launcherPosition.y}px` }
-      : { right: `${FLOATING_LAUNCHER_EDGE_OFFSET}px`, top: `${launcherPosition.y}px` };
+  const launcherStyle = launcherPosition.side === "left"
+    ? { left: `${FLOATING_LAUNCHER_EDGE_OFFSET}px`, top: `${launcherPosition.y}px` }
+    : { right: `${FLOATING_LAUNCHER_EDGE_OFFSET}px`, top: `${launcherPosition.y}px` };
 
-  return (
+  const drawerUi = (
     <>
       <Button
+        ref={launcherButtonRef}
         type="button"
         aria-label={copy.launcher}
         title={copy.launcher}
         onClick={openLauncher}
         onPointerDown={startLauncherDrag}
-        onPointerMove={moveLauncherDrag}
-        onPointerUp={finishLauncherDrag}
-        onPointerCancel={finishLauncherDrag}
-        style={launcherStyle}
+        style={isLauncherDragging ? undefined : launcherStyle}
         className={cn(
-          "fixed z-[100] h-12 w-12 touch-none select-none rounded-full p-0 shadow-xl shadow-slate-950/20",
-          "bg-slate-950 text-white ring-1 ring-white/20 hover:bg-slate-800",
-          launcherPreview ? "cursor-grabbing transition-none" : "cursor-grab transition-[box-shadow,background-color] duration-200"
+          "fixed z-[200] h-12 w-12 touch-none select-none rounded-full border-0 bg-white p-0 shadow-[0_12px_28px_rgba(15,23,42,0.18)] ring-1 ring-violet-100/90",
+          isLauncherDragging ? "cursor-grabbing transition-none" : "cursor-grab"
         )}
       >
-        <Sparkles className="h-5 w-5 fill-white" />
+        <LucienAvatar
+          size="md"
+          alt={copy.launcher}
+          className="shadow-none ring-0"
+        />
         <span className="sr-only">{copy.launcher}</span>
       </Button>
 
       {open ? (
-        <div className="fixed inset-0 z-[100] flex h-[100dvh] max-h-[100dvh] justify-end overflow-hidden bg-slate-950/30 backdrop-blur-[1px]">
+        <div className="fixed inset-0 z-[200] flex h-[100dvh] max-h-[100dvh] justify-end overflow-hidden bg-slate-950/30 backdrop-blur-[1px]">
           <aside
             className={cn(
               "flex h-[100dvh] max-h-[100dvh] min-h-0 w-full flex-col overflow-hidden border-l border-violet-100 bg-[#fbfbff] shadow-2xl transition-all duration-300",
@@ -796,4 +988,7 @@ export function AiCopilotDrawer() {
       ) : null}
     </>
   );
+
+  if (!portalReady) return null;
+  return createPortal(drawerUi, document.body);
 }

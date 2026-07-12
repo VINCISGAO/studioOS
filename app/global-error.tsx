@@ -5,8 +5,16 @@ export default function GlobalError({
   reset
 }: {
   error: Error & { digest?: string };
-  reset: () => void;
+  reset?: () => void;
 }) {
+  function handleRetry() {
+    if (typeof reset === "function") {
+      reset();
+      return;
+    }
+    window.location.reload();
+  }
+
   return (
     <html lang="zh">
       <body className="min-h-screen bg-zinc-950 text-white antialiased">
@@ -20,7 +28,7 @@ export default function GlobalError({
           ) : null}
           <button
             type="button"
-            onClick={() => reset()}
+            onClick={handleRetry}
             className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-black"
           >
             重试

@@ -32,7 +32,7 @@ import {
   defaultBrandTimeline,
   isValidBrandAspectRatio
 } from "@/lib/studioos/brand-campaign-options";
-import { readCreativeBriefExtendedFieldsFromFormData } from "@/lib/studioos/brand-creative-brief-form";
+import { readCreativeBriefExtendedFieldsFromFormData, validateBriefScheduleDates, validateBriefVideoDuration } from "@/lib/studioos/brand-creative-brief-form";
 import { upsertBrandProfileFromBrief } from "@/lib/brand-profile-service";
 import { getOrderForProject, listOrdersForProject, updateOrderRequirements } from "@/lib/order-service";
 import { isOrderPaymentEscrowed } from "@/lib/order-types";
@@ -451,6 +451,16 @@ export async function saveBrandCampaignBriefAction(formData: FormData) {
       ok: false as const,
       error: lang === "zh" ? "请选择视频比例" : "Select a video aspect ratio"
     };
+  }
+
+  const scheduleValidation = validateBriefScheduleDates(input.scheduleStart, input.scheduleDelivery, lang);
+  if (!scheduleValidation.ok) {
+    return { ok: false as const, error: scheduleValidation.error };
+  }
+
+  const durationValidation = validateBriefVideoDuration(input.videoDuration, input.videoDurationCustom, lang);
+  if (!durationValidation.ok) {
+    return { ok: false as const, error: durationValidation.error };
   }
 
   const deadline = deadlineFromTimeline(delivery_timeline);

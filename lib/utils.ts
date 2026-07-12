@@ -1,16 +1,19 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
+import type { Locale } from "@/lib/i18n";
+import type { SupportedLanguageCode } from "@/features/i18n/language.constants";
+import { formatMoneyFromUsd } from "@/lib/money/display-money";
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatCurrency(amount: number) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0
-  }).format(amount);
+export function formatCurrency(
+  amount: number,
+  locale?: Locale | SupportedLanguageCode
+) {
+  return formatMoneyFromUsd(amount, locale ?? "en");
 }
 
 export function formatDate(date: string) {

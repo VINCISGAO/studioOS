@@ -13,7 +13,7 @@ import {
   Sparkles,
   UserRound
 } from "lucide-react";
-import { useMarketingDocsLucien } from "@/components/marketing/docs/marketing-docs-lucien-host";
+import { useMarketingDocsLucien } from "@/components/marketing/docs/marketing-docs-lucien-context";
 import { faqText, formatFaqCount, type FaqCategoryId } from "@/lib/marketing/faq-copy";
 import { FaqLucienCtaGraphic } from "@/components/marketing/faq/faq-cta-graphic";
 import { cn } from "@/lib/utils";
@@ -69,14 +69,6 @@ export function FaqPageView({ locale }: { locale: Locale }) {
 
   return (
     <>
-      <section className="overflow-hidden rounded-[1.75rem] border border-violet-100/70 bg-gradient-to-br from-violet-50/30 via-white to-sky-50/20 p-6 shadow-[0_18px_60px_-48px_rgba(76,29,149,0.35)] sm:p-8 lg:p-10">
-        <p className="text-sm font-semibold text-violet-700">{t.hero.eyebrow}</p>
-        <h1 className="mt-4 max-w-4xl text-3xl font-semibold tracking-[-0.035em] text-zinc-950 sm:text-4xl lg:text-[2.65rem] lg:leading-[1.08]">
-          {t.hero.title}
-        </h1>
-        <p className="mt-5 max-w-4xl text-sm leading-7 text-zinc-600">{t.hero.subtitle}</p>
-      </section>
-
       <section className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-6">
         {t.categories.map((category) => {
           const Icon = CATEGORY_ICONS[category.id];

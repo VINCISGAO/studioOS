@@ -29,18 +29,29 @@ import {
   VIDEO_DURATION_OPTIONS,
   labelForOption
 } from "@/lib/studioos/brand-creative-brief-options";
-import { BRAND_BUDGET_PRESETS, BRAND_DELIVERY_TIMELINES, BRAND_VIDEO_ASPECT_RATIOS } from "@/lib/studioos/brand-campaign-options";
+import { getBrandBudgetPresets, BRAND_DELIVERY_TIMELINES, BRAND_VIDEO_ASPECT_RATIOS } from "@/lib/studioos/brand-campaign-options";
+import {
+  briefScheduleRangeError,
+  getBriefMaxStartDate,
+  getBriefMinDeliveryDate,
+  hasBriefScheduleMinGap,
+  isBriefScheduleDayAfter,
+  isBriefScheduleDayBefore,
+  parseBriefScheduleDate
+} from "@/lib/studioos/brand-creative-brief-form";
+import { BRIEF_FIELD_TARGETS } from "@/lib/studioos/brand-creative-brief-scroll";
+import {
+  budgetRangeLabel,
+  convertUsdToDisplayAmount,
+  formatMoneyFromUsd,
+  formatMoneyRangeFromUsd,
+  settlementUsdNote
+} from "@/lib/money/display-money";
 import { cn } from "@/lib/utils";
 import { Bot, CalendarDays, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 
 function parseDateValue(value: string) {
-  const match = /^(\d{4})[-/](\d{2})[-/](\d{2})$/.exec(value);
-  if (!match) return null;
-  const year = Number(match[1]);
-  const month = Number(match[2]) - 1;
-  const day = Number(match[3]);
-  const date = new Date(year, month, day);
-  return Number.isNaN(date.getTime()) ? null : date;
+  return parseBriefScheduleDate(value);
 }
 
 function formatDateValue(date: Date) {
@@ -62,12 +73,22 @@ function LargeDateField({
   locale,
   label,
   value,
-  onChange
+  onChange,
+  required = false,
+  fieldId,
+  minDate = null,
+  maxDate = null,
+  error = null
 }: {
   locale: "zh" | "en";
   label: string;
   value: string;
   onChange: (value: string) => void;
+  required?: boolean;
+  fieldId?: string;
+  minDate?: Date | null;
+  maxDate?: Date | null;
+  error?: string | null;
 }) {
   const selected = parseDateValue(value);
   const [open, setOpen] = useState(false);
@@ -105,13 +126,24 @@ function LargeDateField({
     setOpen((current) => !current);
   }
 
+  function isDayDisabled(day: Date) {
+    if (minDate && isBriefScheduleDayBefore(day, minDate)) return true;
+    if (maxDate && isBriefScheduleDayAfter(day, maxDate)) return true;
+    return false;
+  }
+
   return (
-    <div className="relative space-y-2">
-      <p className="text-sm font-semibold text-zinc-800">{label}</p>
+    <div id={fieldId} className="scroll-mt-32 relative space-y-2 rounded-xl">
+      <BriefFieldLabel label={label} required={required} />
       <button
         type="button"
         onClick={openCalendar}
-        className="flex h-[3.25rem] w-full items-center justify-between rounded-xl border border-zinc-200 bg-white px-4 text-left text-base text-zinc-700 shadow-sm transition hover:border-violet-200 hover:bg-violet-50/20"
+        className={cn(
+          "flex h-[3.25rem] w-full items-center justify-between rounded-xl border bg-white px-4 text-left text-base shadow-sm transition hover:bg-violet-50/20",
+          error
+            ? "border-red-300 text-red-700 hover:border-red-400"
+            : "border-zinc-200 text-zinc-700 hover:border-violet-200"
+        )}
       >
         <span>{displayDateValue(value, locale)}</span>
         <CalendarDays className="h-5 w-5 text-zinc-400" />
@@ -149,18 +181,23 @@ function LargeDateField({
               }
               const key = formatDateValue(day);
               const isSelected = key === selectedKey;
+              const disabled = isDayDisabled(day);
               return (
                 <button
                   key={key}
                   type="button"
+                  disabled={disabled}
                   onClick={() => {
+                    if (disabled) return;
                     onChange(key);
                     setOpen(false);
                   }}
                   className={
-                    isSelected
-                      ? "flex h-10 items-center justify-center rounded-xl bg-violet-600 text-base font-semibold text-white shadow-lg shadow-violet-600/25"
-                      : "flex h-10 items-center justify-center rounded-xl text-base font-medium text-zinc-700 hover:bg-violet-50 hover:text-violet-700"
+                    disabled
+                      ? "flex h-10 cursor-not-allowed items-center justify-center rounded-xl text-base font-medium text-zinc-300"
+                      : isSelected
+                        ? "flex h-10 items-center justify-center rounded-xl bg-violet-600 text-base font-semibold text-white shadow-lg shadow-violet-600/25"
+                        : "flex h-10 items-center justify-center rounded-xl text-base font-medium text-zinc-700 hover:bg-violet-50 hover:text-violet-700"
                   }
                 >
                   {day.getDate()}
@@ -170,6 +207,7 @@ function LargeDateField({
           </div>
         </div>
       ) : null}
+      {error ? <p className="text-xs text-red-600">{error}</p> : null}
     </div>
   );
 }
@@ -189,16 +227,21 @@ function parseMoneyRange(value: string) {
   return { min: Math.min(first, second), max: Math.max(first, second) };
 }
 
-function formatUsd(amount: number) {
-  return `$${Math.round(amount).toLocaleString("en-US")}`;
-}
-
 function roundToMarketStep(amount: number) {
   if (amount < 1000) return Math.round(amount / 25) * 25;
   return Math.round(amount / 50) * 50;
 }
 
-function durationBasePrice(duration: string) {
+function durationBasePrice(duration: string, customDuration = "") {
+  if (duration === "custom") {
+    const seconds = durationSeconds(duration, customDuration);
+    if (seconds <= 15) return 380;
+    if (seconds <= 30) return 650;
+    if (seconds <= 45) return 900;
+    if (seconds <= 60) return 1200;
+    if (seconds <= 90) return 1800;
+    return Math.max(1800, Math.round(seconds * 20));
+  }
   if (duration === "6s") return 220;
   if (duration === "10s") return 280;
   if (duration === "15s") return 380;
@@ -209,7 +252,17 @@ function durationBasePrice(duration: string) {
   return 1200;
 }
 
-function durationSeconds(duration: string) {
+function durationSeconds(duration: string, customDuration = "") {
+  if (duration === "custom") {
+    const raw = customDuration.trim().toLowerCase();
+    const secMatch = raw.match(/(\d+)\s*s/);
+    if (secMatch) return Number(secMatch[1]);
+    const minMatch = raw.match(/(\d+)\s*m/);
+    if (minMatch) return Number(minMatch[1]) * 60;
+    const numeric = Number(raw.replace(/[^\d]/g, ""));
+    if (Number.isFinite(numeric) && numeric > 0) return numeric;
+    return 60;
+  }
   const seconds = Number(duration.replace(/[^0-9]/g, ""));
   return Number.isFinite(seconds) && seconds > 0 ? seconds : 60;
 }
@@ -236,8 +289,8 @@ function marketQuoteForBrief(form: BriefSectionsProps["form"], locale: BriefSect
 
   const quantity = Math.max(1, form.videoQuantity || 1);
   const quantityDiscount = quantity >= 4 ? 0.82 : quantity >= 2 ? 0.9 : 1;
-  const base = durationBasePrice(form.videoDuration) * multiplier * quantity * quantityDiscount;
-  const seconds = durationSeconds(form.videoDuration);
+  const base = durationBasePrice(form.videoDuration, form.videoDurationCustom) * multiplier * quantity * quantityDiscount;
+  const seconds = durationSeconds(form.videoDuration, form.videoDurationCustom);
   const averageShotSeconds = premiumStyleCount >= 3 ? 3 : premiumStyleCount >= 1 ? 4 : 5;
   const estimatedShots = Math.max(3, Math.ceil((seconds / averageShotSeconds) * quantity));
   const generationMultiplier =
@@ -315,7 +368,7 @@ function marketQuoteForBrief(form: BriefSectionsProps["form"], locale: BriefSect
           : "Current budget broadly matches the reference quote";
 
   return {
-    range: `${formatUsd(low)} – ${formatUsd(high)}`,
+    range: formatMoneyRangeFromUsd(low, high, locale),
     status,
     minimum: brandMinimum,
     recommended,
@@ -335,7 +388,7 @@ function marketQuoteForBrief(form: BriefSectionsProps["form"], locale: BriefSect
         price: brandMinimum,
         probability: "60%",
         time: locale === "zh" ? "24–48 小时" : "24–48h",
-        description: locale === "zh" ? "覆盖最低制作标准" : "Covers minimum production quality"
+        description: locale === "zh" ? "覆盖基本制作标准" : "Covers basic production standards"
       },
       {
         key: "recommended",
@@ -396,7 +449,36 @@ export function BrandCreativeBriefSecondarySections(props: BriefSectionsProps) {
 
   const timelineOptions = BRAND_DELIVERY_TIMELINES[locale];
   const aspectRatioOptions = BRAND_VIDEO_ASPECT_RATIOS[locale];
+  const budgetPresets = useMemo(() => getBrandBudgetPresets(locale), [locale]);
   const marketQuote = marketQuoteForBrief(form, locale);
+  const fmt = (amount: number) => formatMoneyFromUsd(amount, locale);
+  const settlementNote = settlementUsdNote(locale);
+  const startDate = parseBriefScheduleDate(form.scheduleStart);
+  const deliveryDate = parseBriefScheduleDate(form.scheduleDelivery);
+  const minDeliveryDate = startDate ? getBriefMinDeliveryDate(startDate) : null;
+  const maxStartDate = deliveryDate ? getBriefMaxStartDate(deliveryDate) : null;
+  const scheduleRangeErrorMessage = briefScheduleRangeError(
+    form.scheduleStart,
+    form.scheduleDelivery,
+    locale
+  );
+
+  function handleScheduleStartChange(value: string) {
+    patch("scheduleStart", value);
+    const nextStart = parseBriefScheduleDate(value);
+    const currentDelivery = parseBriefScheduleDate(form.scheduleDelivery);
+    if (nextStart && currentDelivery && !hasBriefScheduleMinGap(nextStart, currentDelivery)) {
+      patch("scheduleDelivery", "");
+    }
+  }
+
+  function handleScheduleDeliveryChange(value: string) {
+    const nextDelivery = parseBriefScheduleDate(value);
+    if (startDate && nextDelivery && !hasBriefScheduleMinGap(startDate, nextDelivery)) {
+      return;
+    }
+    patch("scheduleDelivery", value);
+  }
 
   return (
     <>
@@ -450,9 +532,9 @@ export function BrandCreativeBriefSecondarySections(props: BriefSectionsProps) {
       </BriefSectionCard>
 
       <BriefSectionCard id="brief-section-production" number={4} locale={locale} title={locale === "zh" ? "制作要求" : "Production requirements"}>
-        <div className="space-y-2">
+        <div id={BRIEF_FIELD_TARGETS.videoDuration} className="scroll-mt-32 space-y-2 rounded-xl">
           <BriefFieldLabel label={locale === "zh" ? "视频时长" : "Video duration"} required />
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {VIDEO_DURATION_OPTIONS.map((item) => (
               <BriefPurpleChip
                 key={item}
@@ -463,9 +545,18 @@ export function BrandCreativeBriefSecondarySections(props: BriefSectionsProps) {
                 {item === "custom" ? (locale === "zh" ? "自定义" : "Custom") : item}
               </BriefPurpleChip>
             ))}
+            {form.videoDuration === "custom" ? (
+              <Input
+                value={form.videoDurationCustom}
+                onChange={(e) => patch("videoDurationCustom", e.target.value)}
+                placeholder={locale === "zh" ? "例如 120s 或 2min" : "e.g. 120s or 2min"}
+                className="h-10 min-w-[10rem] flex-1 rounded-xl sm:max-w-[14rem]"
+                disabled={isPending}
+              />
+            ) : null}
           </div>
         </div>
-        <div className="space-y-2">
+        <div id={BRIEF_FIELD_TARGETS.aspectRatio} className="scroll-mt-32 space-y-2 rounded-xl">
           <BriefFieldLabel label={locale === "zh" ? "视频比例" : "Aspect ratio"} required />
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {aspectRatioOptions.map((option) => {
@@ -548,10 +639,10 @@ export function BrandCreativeBriefSecondarySections(props: BriefSectionsProps) {
 
       <BriefSectionCard id="brief-section-budget" number={5} locale={locale} title={locale === "zh" ? "预算与时间" : "Budget & schedule"}>
         <div className="grid gap-5 lg:grid-cols-2">
-          <div className="space-y-2">
-            <BriefFieldLabel label={locale === "zh" ? "预算范围（USD）" : "Budget range (USD)"} required />
+          <div id={BRIEF_FIELD_TARGETS.budget} className="scroll-mt-32 space-y-2 rounded-xl">
+            <BriefFieldLabel label={budgetRangeLabel(locale)} required />
             <div className="grid grid-cols-2 gap-2">
-              {BRAND_BUDGET_PRESETS.map((option) => (
+              {budgetPresets.map((option) => (
                 <BriefPurpleChip
                   key={option.value}
                   active={!budgetIsCustom && form.budgetRange === option.value}
@@ -588,12 +679,12 @@ export function BrandCreativeBriefSecondarySections(props: BriefSectionsProps) {
         </div>
         <div className="overflow-hidden rounded-3xl border border-violet-100 bg-white shadow-[0_18px_60px_rgba(88,28,135,0.08)]">
           <div className="bg-[radial-gradient(circle_at_8%_20%,rgba(124,58,237,0.16),transparent_28%),linear-gradient(135deg,#faf5ff_0%,#ffffff_52%,#ecfdf5_100%)] px-5 py-5">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-              <div className="flex items-start gap-3">
+            <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between xl:gap-6">
+              <div className="flex min-w-0 items-start gap-3">
                 <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-violet-600 text-white shadow-lg shadow-violet-600/25">
                   <Bot className="h-5 w-5" />
                 </span>
-                <div>
+                <div className="min-w-0">
                   <p className="flex items-center gap-1.5 text-base font-semibold tracking-tight text-zinc-950">
                     <Sparkles className="h-4 w-4 text-violet-600" />
                     {locale === "zh" ? "VINCIS 智能制作估价引擎" : "VINCIS Production Pricing Engine"}
@@ -605,22 +696,25 @@ export function BrandCreativeBriefSecondarySections(props: BriefSectionsProps) {
                   </p>
                 </div>
               </div>
-              <div className="rounded-2xl bg-white/90 px-4 py-3 shadow-sm ring-1 ring-violet-100 sm:px-5 sm:py-4 lg:min-w-[15rem]">
+              <div className="w-full shrink-0 rounded-2xl bg-white/90 px-4 py-3 shadow-sm ring-1 ring-violet-100 sm:px-5 sm:py-4 xl:w-auto xl:min-w-[15rem]">
                 <p className="text-xs font-semibold uppercase tracking-wide text-violet-600">
                   {locale === "zh" ? "建议预算" : "Recommended budget"}
                 </p>
                 <p className="mt-1 text-2xl font-semibold tracking-tight text-zinc-950 sm:text-3xl">
-                  {formatUsd(marketQuote.recommended)}
+                  {fmt(marketQuote.recommended)}
                 </p>
+                {settlementNote ? (
+                  <p className="mt-1 text-[10px] leading-4 text-zinc-400">{settlementNote}</p>
+                ) : null}
                 <p className="mt-1 text-xs leading-5 text-zinc-500">{marketQuote.status}</p>
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-px border-y border-zinc-100 bg-zinc-100 sm:grid-cols-3 lg:grid-cols-6">
+          <div className="grid grid-cols-2 gap-px border-y border-zinc-100 bg-zinc-100 sm:grid-cols-3 xl:grid-cols-6">
             {[
-              [locale === "zh" ? "最低可执行" : "Minimum", formatUsd(marketQuote.minimum)],
-              [locale === "zh" ? "创作者收益" : "Creator income", formatUsd(marketQuote.creatorIncome)],
+              [locale === "zh" ? "最低可执行" : "Minimum", fmt(marketQuote.minimum)],
+              [locale === "zh" ? "创作者收益" : "Creator income", fmt(marketQuote.creatorIncome)],
               [locale === "zh" ? "预计工时" : "Hours", `${marketQuote.estimatedHours}h`],
               [locale === "zh" ? "可用镜头" : "Shots", `${marketQuote.estimatedShots}`],
               [locale === "zh" ? "生成次数" : "Generations", `${marketQuote.estimatedGenerations}`]
@@ -639,7 +733,7 @@ export function BrandCreativeBriefSecondarySections(props: BriefSectionsProps) {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 p-4 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 p-4 md:grid-cols-2 xl:grid-cols-4">
             {marketQuote.tiers.map((tier) => {
               const selectedBudget = parseMoneyRange(form.budgetRange);
               const isSelected = selectedBudget?.min === tier.price && selectedBudget.max === tier.price;
@@ -649,7 +743,7 @@ export function BrandCreativeBriefSecondarySections(props: BriefSectionsProps) {
                   key={tier.key}
                   type="button"
                   disabled={isPending}
-                  onClick={() => onBudgetCustomChange(`${tier.price}`)}
+                  onClick={() => onBudgetCustomChange(String(convertUsdToDisplayAmount(tier.price, locale)))}
                   className={
                     isSelected
                       ? "rounded-2xl border border-violet-500 bg-violet-50 p-3 text-left shadow-[0_12px_30px_rgba(124,58,237,0.16)] ring-2 ring-violet-200 sm:p-4"
@@ -667,7 +761,7 @@ export function BrandCreativeBriefSecondarySections(props: BriefSectionsProps) {
                       </span>
                     ) : null}
                   </div>
-                  <p className="mt-3 text-xl font-semibold tracking-tight text-zinc-950 sm:mt-4 sm:text-2xl">{formatUsd(tier.price)}</p>
+                  <p className="mt-3 text-xl font-semibold tracking-tight text-zinc-950 sm:mt-4 sm:text-2xl">{fmt(tier.price)}</p>
                   <div className="mt-2 grid gap-2 text-xs sm:mt-3 sm:grid-cols-2">
                     <div className="rounded-xl bg-white px-2.5 py-2 text-zinc-600 ring-1 ring-zinc-100">
                       <span className="block text-zinc-400">{locale === "zh" ? "接单概率" : "Chance"}</span>
@@ -683,18 +777,18 @@ export function BrandCreativeBriefSecondarySections(props: BriefSectionsProps) {
             })}
           </div>
           <div className="border-t border-zinc-100 bg-zinc-50/60 px-5 py-5">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-              <div>
+            <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:gap-8">
+              <div className="min-w-0 xl:max-w-sm">
                 <p className="text-sm font-semibold text-zinc-950">
                   {locale === "zh" ? "AI 为什么推荐这个预算？" : "Why does AI recommend this budget?"}
                 </p>
-                <p className="mt-1 max-w-2xl text-xs leading-5 text-zinc-500">
+                <p className="mt-1 text-xs leading-5 text-zinc-500">
                   {locale === "zh"
                     ? "本次估价不是按单次生成成本粗算，而是根据真实制作投入、创作者利润和市场匹配效率综合计算。"
                     : "This quote is based on real production effort, creator margin, and marketplace matching efficiency, not raw generation cost."}
                 </p>
               </div>
-              <div className="grid gap-2 text-xs sm:grid-cols-2 lg:min-w-[34rem] lg:grid-cols-4">
+              <div className="grid min-w-0 flex-1 gap-2 text-xs sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
                 {(locale === "zh"
                   ? ["视频时长", "项目复杂度", "AI 生成成本", "创作者制作工时", "修改轮次", "交付周期", "历史成交数据", "当前市场供需"]
                   : ["Video duration", "Project complexity", "AI generation cost", "Creator hours", "Revision reserve", "Timeline", "Historical deals", "Market supply"]
@@ -715,13 +809,20 @@ export function BrandCreativeBriefSecondarySections(props: BriefSectionsProps) {
             locale={locale}
             label={locale === "zh" ? "开始时间" : "Start date"}
             value={form.scheduleStart}
-            onChange={(value) => patch("scheduleStart", value)}
+            onChange={handleScheduleStartChange}
+            required
+            fieldId={BRIEF_FIELD_TARGETS.scheduleStart}
+            maxDate={maxStartDate}
           />
           <LargeDateField
             locale={locale}
             label={locale === "zh" ? "交付时间" : "Delivery date"}
             value={form.scheduleDelivery}
-            onChange={(value) => patch("scheduleDelivery", value)}
+            onChange={handleScheduleDeliveryChange}
+            required
+            fieldId={BRIEF_FIELD_TARGETS.scheduleDelivery}
+            minDate={minDeliveryDate}
+            error={scheduleRangeErrorMessage}
           />
         </div>
       </BriefSectionCard>

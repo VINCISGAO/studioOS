@@ -70,7 +70,7 @@ export function BrandAcceptedCreatorsPanel({
                   </div>
                   <p className="mt-1 text-sm text-zinc-600">{creator?.headline}</p>
                   <p className="mt-2 text-xs text-zinc-500">
-                    {formatCurrency(invitation.budget)} · {t.acceptedAt}{" "}
+                    {formatCurrency(invitation.budget, locale)} · {t.acceptedAt}{" "}
                     {new Date(invitation.createdAt).toLocaleDateString(locale === "zh" ? "zh-CN" : "en-US")}
                   </p>
                 </div>

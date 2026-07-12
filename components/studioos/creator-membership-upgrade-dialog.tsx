@@ -103,7 +103,7 @@ export function CreatorMembershipUpgradeDialog({
 
         <div className="rounded-xl border bg-indigo-50/50 p-4">
           <p className="text-sm text-zinc-600">{t.fee}</p>
-          <p className="mt-1 text-2xl font-semibold">{formatCurrency(verifiedPlan.annualFee)}</p>
+          <p className="mt-1 text-2xl font-semibold">{formatCurrency(verifiedPlan.annualFee, locale)}</p>
           <p className="mt-2 text-sm text-zinc-500">
             {verifiedPlan.creatorCommissionPercentage}% platform commission
           </p>

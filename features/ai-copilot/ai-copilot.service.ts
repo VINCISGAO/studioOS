@@ -31,6 +31,8 @@ import { getStoredCreatorProfile } from "@/lib/creator-profile-service";
 import { hasOpenAI, resolveOpenAIModel } from "@/lib/core/config/ai";
 import { resolveBrandDisplayName } from "@/lib/studioos/brand-account-display";
 import { resolveCreatorIdByEmail } from "@/lib/studioos/creator-settings-service";
+import { normalizeLanguageCode } from "@/features/i18n/language.constants";
+import { formatMoneyFromUsd } from "@/lib/money/display-money";
 
 function isZh(language: string) {
   return language === "zh-CN" || language === "zh-TW" || language === "zh";
@@ -45,11 +47,11 @@ function suggestedQuestions(role: string, language: string) {
   }
   if (role === "ADMIN" || role === "SUPPORT") {
     return zh
-      ? ["今天平台有什么异常？", "哪些订单卡住了？", "哪些提现需要处理？", "哪些 AI 决策置信度低？"]
+      ? ["今天平台有什么异常？", "哪些订单卡住了？", "哪些提现需要处理？", "哪些智能决策置信度低？"]
       : ["What platform issues need attention today?", "Which orders are stuck?", "Which withdrawals need handling?", "Which AI decisions have low confidence?"];
   }
   return zh
-    ? ["我的项目现在到哪一步？", "为什么推荐这个 Creator？", "我的预算合理吗？", "下一步我应该做什么？"]
+    ? ["我的项目现在到哪一步？", "为什么推荐这位创作者？", "我的预算合理吗？", "下一步我应该做什么？"]
     : ["Where is my project now?", "Why was this creator recommended?", "Is my budget reasonable?", "What should I do next?"];
 }
 
@@ -93,17 +95,17 @@ function modelUnavailableAnswer(language: string) {
   const isProd = process.env.NODE_ENV === "production" || process.env.VERCEL === "1";
   const setupHint = isProd
     ? language === "zh-CN" || language === "zh-TW" || language === "zh"
-      ? "当前未连接 OpenAI。请在 Vercel 环境变量配置 OPENAI_API_KEY 并重新部署。"
+      ? "当前未连接语言模型服务，请联系管理员完成配置并重新部署。"
       : "OpenAI is not connected. Set OPENAI_API_KEY in Vercel and redeploy."
     : language === "zh-CN" || language === "zh-TW" || language === "zh"
-      ? "当前未连接 OpenAI。请确认 .env.local 已配置 OPENAI_API_KEY，然后执行 npm run dev 重启。"
+      ? "当前未连接语言模型服务，请确认本地环境已配置密钥后重启开发服务。"
       : "OpenAI is not connected. Set OPENAI_API_KEY in .env.local and restart npm run dev.";
 
   if (language === "zh-CN" || language === "zh-TW" || language === "zh") {
     return [
       "我是卢西恩，已经准备好协助你分析工作区。",
       "",
-      "你可以问我项目进度、预算是否合理、为什么推荐某个 Creator，或者下一步应该怎么推进。",
+      "你可以问我项目进度、预算是否合理、为什么推荐某位创作者，或者下一步应该怎么推进。",
       "",
       setupHint
     ].join("\n");
@@ -210,7 +212,7 @@ function deterministicCurrentPageAnswer(message: string, context: AiCopilotConte
           "",
           reason ?? "规则是：下单后 30 分钟内未完成托管付款，订单会自动取消。",
           "",
-          "如果还要继续这个 Campaign，需要重新下单并在新的付款倒计时内完成托管付款。"
+          "如果还要继续这个项目，需要重新下单并在新的付款倒计时内完成托管付款。"
         ].join("\n")
       : [
           "This was not a manual project cancellation by the brand. The order was automatically cancelled because payment timed out.",
@@ -256,9 +258,9 @@ function numberValue(value: unknown, fallback = 0) {
   return typeof value === "number" && Number.isFinite(value) ? value : fallback;
 }
 
-function moneyValue(value: unknown) {
+function moneyValue(value: unknown, language: string) {
   const amount = numberValue(value);
-  return `$${Math.round(amount).toLocaleString()}`;
+  return formatMoneyFromUsd(amount, normalizeLanguageCode(language));
 }
 
 async function resolveCreatorDisplayName(user: AuthUserDto, fallback: string) {
@@ -287,12 +289,12 @@ async function buildWorkspaceSnapshot(user: AuthUserDto, role: string, context: 
       workspaceName,
       greeting: zh ? `早上好，${workspaceName}` : `Good morning, ${workspaceName}`,
       subtitle: zh
-        ? "我会根据你的真实收入、接单率、Portfolio、Review、Invitation 和 Wallet 给出建议。"
+        ? "我会根据你的真实收入、接单率、作品集、审片、邀约和钱包数据给出建议。"
         : "I analyze your real income, acceptance rate, portfolio, reviews, invitations, and wallet.",
       stats: [
         { label: zh ? "待回复邀请" : "Pending invitations", value: String(invitations.length), detail: zh ? "来自数据库" : "From database", icon: "box" },
-        { label: zh ? "作品资产" : "Portfolio works", value: String(numberValue(creator.portfolioCount)), detail: zh ? "可用于 AI 学习" : "Available for AI learning", icon: "brain" },
-        { label: zh ? "可提现余额" : "Available balance", value: moneyValue(wallet.available), detail: zh ? "以数据库为准" : "Database-backed", icon: "wallet" },
+        { label: zh ? "作品资产" : "Portfolio works", value: String(numberValue(creator.portfolioCount)), detail: zh ? "可用于智能学习" : "Available for AI learning", icon: "brain" },
+        { label: zh ? "可提现余额" : "Available balance", value: moneyValue(wallet.available, language), detail: zh ? "以数据库为准" : "Database-backed", icon: "wallet" },
         { label: zh ? "成长建议" : "Growth signals", value: String(Math.max(1, invitations.length + numberValue(creator.portfolioCount))), detail: zh ? "基于当前资料" : "Based on current profile", icon: "compass" }
       ]
     };
@@ -324,7 +326,7 @@ async function buildWorkspaceSnapshot(user: AuthUserDto, role: string, context: 
     workspaceName,
     greeting: zh ? `早上好，${workspaceName}` : `Good morning, ${workspaceName}`,
     subtitle: zh
-      ? "我会根据你的真实 Campaign、订单、付款、归因和通知数据提供建议。"
+      ? "我会根据你的真实项目、订单、付款、归因和通知数据提供建议。"
       : "I use your real campaigns, orders, payments, attribution, and notifications to suggest next steps.",
     stats: [
       { label: zh ? "全部广告" : "All ads", value: String(numberValue(brand.campaignCount)), detail: zh ? "与品牌首页一致" : "Same as brand dashboard", icon: "box" },
@@ -533,10 +535,10 @@ export class AiCopilotService {
         const quotaMessage =
           quota.code === "user_daily_quota"
             ? language === "zh-CN" || language === "zh-TW" || language === "zh"
-              ? "已达到今日 AI 助手使用建议上限，请明天再试或联系平台支持。"
+              ? "已达到今日智能助手使用建议上限，请明天再试或联系平台支持。"
               : "You have reached today's recommended AI assistant limit. Try again tomorrow or contact support."
             : language === "zh-CN" || language === "zh-TW" || language === "zh"
-              ? "已达到本项目 AI 使用额度。如需继续，请完成当前项目或联系平台支持。"
+              ? "已达到本项目智能助手使用额度。如需继续，请完成当前项目或联系平台支持。"
               : "This project has reached its AI usage allowance. Finish the current workflow or contact support to continue.";
 
         const assistantMessage = await aiCopilotRepository.createMessage({

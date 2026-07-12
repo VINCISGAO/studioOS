@@ -35,7 +35,7 @@ export default async function BrandInvoicesPage({ searchParams }: { searchParams
                     <Badge variant={order.payment_status === "unpaid" ? "secondary" : "success"}>
                       {order.payment_status}
                     </Badge>
-                    <span className="font-medium">{formatCurrency(order.amount)}</span>
+                    <span className="font-medium">{formatCurrency(order.amount, locale)}</span>
                   </div>
                 </li>
               ))}

@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { Home } from "lucide-react";
 import { BrandLogoLockup } from "@/components/brand-logo-mark";
@@ -20,7 +22,7 @@ export function MarketingDocsShell({
   const nav = marketingDocsNavText(locale);
 
   return (
-    <MarketingDocsLucienHost locale={locale}>
+    <MarketingDocsLucienHost key={locale} locale={locale}>
       <div className="min-h-screen bg-[#f6f6f3]">
         <div className="flex w-full">
           <MarketingDocsSidebar locale={locale} active={active} />

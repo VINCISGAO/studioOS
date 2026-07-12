@@ -1,4 +1,5 @@
 import type { BriefFormState } from "@/components/studioos/brand-campaign-step-brief";
+import type { Locale } from "@/lib/i18n";
 import type { StoredProject } from "@/lib/project-types";
 
 type StoredQuestionnaire = Partial<BriefFormState> & {
@@ -162,4 +163,95 @@ export function appendCreativeBriefExtendedFields(fd: FormData, state: BriefForm
       fd.set(key, String(value));
     }
   }
+}
+
+export function parseBriefScheduleDate(value: string): Date | null {
+  const match = /^(\d{4})[-/](\d{2})[-/](\d{2})$/.exec(value.trim());
+  if (!match) return null;
+  const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+export function briefScheduleDayKey(date: Date): number {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+}
+
+export function isBriefScheduleDayBefore(day: Date, boundary: Date): boolean {
+  return briefScheduleDayKey(day) < briefScheduleDayKey(boundary);
+}
+
+export function isBriefScheduleDayAfter(day: Date, boundary: Date): boolean {
+  return briefScheduleDayKey(day) > briefScheduleDayKey(boundary);
+}
+
+/** Minimum gap between start and delivery — 24 hours (next calendar day). */
+export const BRIEF_SCHEDULE_MIN_GAP_DAYS = 1;
+
+export function addBriefScheduleDays(date: Date, days: number): Date {
+  const next = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
+export function getBriefMinDeliveryDate(start: Date): Date {
+  return addBriefScheduleDays(start, BRIEF_SCHEDULE_MIN_GAP_DAYS);
+}
+
+export function getBriefMaxStartDate(delivery: Date): Date {
+  return addBriefScheduleDays(delivery, -BRIEF_SCHEDULE_MIN_GAP_DAYS);
+}
+
+export function hasBriefScheduleMinGap(start: Date, delivery: Date): boolean {
+  return !isBriefScheduleDayBefore(delivery, getBriefMinDeliveryDate(start));
+}
+
+export function validateBriefScheduleDates(
+  scheduleStart: string,
+  scheduleDelivery: string,
+  locale: Locale
+): { ok: true } | { ok: false; error: string } {
+  if (!scheduleStart.trim()) {
+    return { ok: false, error: locale === "zh" ? "请选择开始时间" : "Select a start date" };
+  }
+  if (!scheduleDelivery.trim()) {
+    return { ok: false, error: locale === "zh" ? "请选择交付时间" : "Select a delivery date" };
+  }
+
+  const start = parseBriefScheduleDate(scheduleStart);
+  const delivery = parseBriefScheduleDate(scheduleDelivery);
+  if (!start || !delivery) {
+    return { ok: false, error: locale === "zh" ? "日期格式无效" : "Invalid date format" };
+  }
+  if (!hasBriefScheduleMinGap(start, delivery)) {
+    return {
+      ok: false,
+      error:
+        locale === "zh"
+          ? "交付时间须至少晚于开始时间 24 小时"
+          : "Delivery must be at least 24 hours after the start date"
+    };
+  }
+  return { ok: true };
+}
+
+export function briefScheduleRangeError(
+  scheduleStart: string,
+  scheduleDelivery: string,
+  locale: Locale
+): string | null {
+  if (!scheduleStart.trim() || !scheduleDelivery.trim()) return null;
+  const result = validateBriefScheduleDates(scheduleStart, scheduleDelivery, locale);
+  return result.ok ? null : result.error;
+}
+
+export function validateBriefVideoDuration(
+  videoDuration: string,
+  videoDurationCustom: string,
+  locale: Locale
+): { ok: true } | { ok: false; error: string } {
+  if (videoDuration !== "custom") return { ok: true };
+  if (!videoDurationCustom.trim()) {
+    return { ok: false, error: locale === "zh" ? "请填写自定义视频时长" : "Enter a custom video duration" };
+  }
+  return { ok: true };
 }

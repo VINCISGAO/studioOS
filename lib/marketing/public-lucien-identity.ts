@@ -20,6 +20,7 @@ export function publicLucienIdentityLabel(
 }
 
 export type PublicLucienAuthUser = {
+  id: string;
   role: string;
   displayName?: string | null;
   fullName?: string | null;

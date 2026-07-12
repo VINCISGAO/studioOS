@@ -56,7 +56,15 @@ export function PortalMobileNav({
 
         if (onClick) {
           return (
-            <button key={id} type="button" onClick={onClick} className={className}>
+            <button
+              key={id}
+              type="button"
+              onClick={(event) => {
+                event.preventDefault();
+                onClick();
+              }}
+              className={className}
+            >
               <Icon className="h-3.5 w-3.5 shrink-0" />
               <span className="whitespace-nowrap">{label}</span>
             </button>

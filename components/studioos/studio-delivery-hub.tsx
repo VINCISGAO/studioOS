@@ -291,10 +291,10 @@ export function StudioDeliveryHub({
                   {t.brand}: {selected.order.company_name || selected.order.client_name}
                 </span>
                 <span>
-                  {t.budget}: {formatCurrency(selected.order.amount)}
+                  {t.budget}: {formatCurrency(selected.order.amount, locale)}
                 </span>
                 <span>
-                  {t.escrow}: {formatCurrency(selected.order.amount)}
+                  {t.escrow}: {formatCurrency(selected.order.amount, locale)}
                 </span>
               </p>
             </div>

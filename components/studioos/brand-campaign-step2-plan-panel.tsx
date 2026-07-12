@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import type { Locale } from "@/lib/i18n";
+import { formatStoredBudgetRange } from "@/lib/money/display-money";
 import {
   ArrowLeft,
   CalendarDays,
@@ -90,6 +91,7 @@ export function BrandCampaignStep2PlanPanel({
 }) {
   const t = copy[locale];
   const checklist = [t.analyzedProduct, t.analyzedRef, t.planReady];
+  const budgetLabel = formatStoredBudgetRange(budget, locale);
 
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_272px]">
@@ -123,7 +125,7 @@ export function BrandCampaignStep2PlanPanel({
               <Wallet className="h-5 w-5" />
             </div>
             <p className="mt-4 text-sm text-zinc-500">{t.budget}</p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-zinc-950">{budget}</p>
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-zinc-950">{budgetLabel}</p>
             <div className="pointer-events-none absolute -right-1 bottom-2 hidden h-20 w-24 sm:block" aria-hidden>
               <div className="absolute right-2 top-3 h-9 w-9 rounded-full bg-gradient-to-br from-zinc-200 to-zinc-300 shadow-inner" />
               <div className="absolute right-10 top-8 h-7 w-7 rounded-full bg-gradient-to-br from-violet-400 to-indigo-500 opacity-90" />
@@ -158,7 +160,7 @@ export function BrandCampaignStep2PlanPanel({
         </div>
         <div className="divide-y divide-violet-100/80">
           <SummaryRow icon={Monitor} label={t.formId} value={formatFormId(projectId)} />
-          <SummaryRow icon={Lock} label={t.budgetRange} value={budget} />
+          <SummaryRow icon={Lock} label={t.budgetRange} value={budgetLabel} />
           <SummaryRow icon={CalendarDays} label={t.delivery} value={deliveryLabel} />
           <SummaryRow icon={Ratio} label={t.videoRatio} value={aspectRatio} />
           <SummaryRow icon={Target} label={t.platforms} value={platforms} />

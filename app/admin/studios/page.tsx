@@ -25,7 +25,7 @@ export default async function AdminStudiosPage({ searchParams }: { searchParams:
                 {studio.country ?? "—"} · {studio.specialties.join(", ") || "—"}
               </p>
               <p className="mt-3 text-xs text-zinc-500">
-                {locale === "zh" ? "保证金" : "Deposit"}: {formatCurrency(studio.depositAmount)} ({studio.depositStatus})
+                {locale === "zh" ? "保证金" : "Deposit"}: {formatCurrency(studio.depositAmount, locale)} ({studio.depositStatus})
               </p>
             </CardContent>
           </Card>

@@ -1,10 +1,7 @@
-import Link from "next/link";
 import {
-  ArrowRight,
   BadgeCheck,
   BarChart3,
   BookOpen,
-  Diamond,
   Globe2,
   Lightbulb,
   Mail,
@@ -30,18 +27,8 @@ const PLATFORM_ICONS = [
   Target
 ] as const;
 
-const VALUE_ICONS = [Lightbulb, BadgeCheck, Globe2, Diamond] as const;
 const HERO_POINT_ICONS = [Target, Globe2, Sparkles, BarChart3] as const;
 const STORY_POINT_ICONS = [Play, MessageSquare, ShieldCheck] as const;
-
-function SectionLink({ href, label }: { href: string; label: string }) {
-  return (
-    <Link href={href} className="inline-flex items-center gap-1 text-sm font-medium text-violet-700 hover:text-violet-900">
-      {label}
-      <ArrowRight className="h-4 w-4" />
-    </Link>
-  );
-}
 
 export function AboutHeroSection({ locale }: { locale: Locale }) {
   const t = aboutText(locale);
@@ -119,84 +106,6 @@ export function AboutStorySection({ locale }: { locale: Locale }) {
           );
         })}
       </div>
-    </section>
-  );
-}
-
-export function AboutPillarsSection({ locale }: { locale: Locale }) {
-  const t = aboutText(locale);
-
-  return (
-    <section className="grid gap-px overflow-hidden rounded-[1.75rem] border border-zinc-200/80 bg-zinc-200/80 lg:grid-cols-3">
-      <article id="mission" className="scroll-mt-24 bg-white p-6 sm:p-8">
-        <div className="flex items-center gap-2 text-violet-700">
-          <Target className="h-4 w-4" />
-          <h2 className="text-lg font-bold text-zinc-950">{t.mission.title}</h2>
-        </div>
-        <p className="mt-4 text-sm leading-7 text-zinc-600">{t.mission.body}</p>
-        <ul className="mt-4 space-y-2">
-          {t.mission.bullets.map((item) => (
-            <li key={item} className="flex items-start gap-2 text-sm text-zinc-600">
-              <BadgeCheck className="mt-0.5 h-4 w-4 shrink-0 text-violet-600" />
-              {item}
-            </li>
-          ))}
-        </ul>
-        <div className="mt-5">
-          <SectionLink href="#values" label={t.mission.moreLink} />
-        </div>
-      </article>
-
-      <article id="why" className="scroll-mt-24 bg-white p-6 sm:p-8">
-        <div className="flex items-center gap-2 text-violet-700">
-          <Sparkles className="h-4 w-4" />
-          <h2 className="text-lg font-bold text-zinc-950">{t.why.title}</h2>
-        </div>
-        <div className="mt-4 space-y-3 text-sm leading-7 text-zinc-600">
-          {t.why.paragraphs.map((paragraph) => (
-            <p key={paragraph.slice(0, 24)}>{paragraph}</p>
-          ))}
-        </div>
-        <ul className="mt-4 space-y-2">
-          {t.why.bullets.map((item) => (
-            <li key={item} className="flex items-start gap-2 text-sm text-zinc-600">
-              <BadgeCheck className="mt-0.5 h-4 w-4 shrink-0 text-violet-600" />
-              {item}
-            </li>
-          ))}
-        </ul>
-        <div className="mt-5">
-          <SectionLink href="#platform" label={t.why.moreLink} />
-        </div>
-      </article>
-
-      <article id="values" className="scroll-mt-24 bg-white p-6 sm:p-8">
-        <div className="flex items-center gap-2 text-violet-700">
-          <Diamond className="h-4 w-4" />
-          <h2 className="text-lg font-bold text-zinc-950">{t.values.title}</h2>
-        </div>
-        <ul className="mt-4 space-y-4">
-          {t.values.items.map((item, index) => {
-            const Icon = VALUE_ICONS[index] ?? Lightbulb;
-            return (
-              <li key={item.title}>
-                <div className="flex items-start gap-3">
-                  <span className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-violet-700">
-                    <Icon className="h-4 w-4" />
-                  </span>
-                  <div>
-                    <h3 className="text-sm font-semibold text-zinc-950">{item.title}</h3>
-                    <p className="mt-1 text-sm leading-6 text-zinc-600">{item.body}</p>
-                  </div>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-        <div className="mt-5">
-          <SectionLink href="#contact" label={t.values.moreLink} />
-        </div>
-      </article>
     </section>
   );
 }

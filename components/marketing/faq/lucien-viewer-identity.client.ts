@@ -1,5 +1,6 @@
 "use client";
 
+import { syncLucienChatAuthUser } from "@/lib/lucien/lucien-chat-storage";
 import {
   publicLucienWelcomeMessage,
   resolvePublicLucienViewerIdentity,
@@ -31,7 +32,7 @@ const viewerCache: ViewerCache = {
   inflight: null
 };
 
-export function buildGuestLucienViewerSnapshot(locale: Locale): LucienViewerSnapshot {
+function buildGuestLucienViewerSnapshot(locale: Locale): LucienViewerSnapshot {
   return {
     viewerIdentity: "guest",
     authUser: null,
@@ -59,11 +60,13 @@ async function requestLucienViewerSnapshot(locale: Locale): Promise<LucienViewer
     });
     const payload = (await response.json().catch(() => null)) as ApiResponse<PublicLucienAuthUser> | null;
     if (response.ok && payload?.success && payload.data) {
+      syncLucienChatAuthUser(payload.data.id);
       return buildLucienViewerSnapshot(locale, payload.data);
     }
   } catch {
     // Fall through to guest — server remains source of truth on chat API.
   }
+  syncLucienChatAuthUser(null);
   return buildGuestLucienViewerSnapshot(locale);
 }
 
@@ -93,10 +96,4 @@ export function prefetchLucienViewerSnapshot(locale: Locale): Promise<LucienView
     });
 
   return viewerCache.inflight;
-}
-
-export function invalidateLucienViewerSnapshot() {
-  viewerCache.locale = null;
-  viewerCache.snapshot = null;
-  viewerCache.inflight = null;
 }

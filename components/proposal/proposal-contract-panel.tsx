@@ -76,7 +76,7 @@ export function ProposalContractPanel({
   depositPaid?: boolean;
 }) {
   const t = copy[locale];
-  const contract = quote ? buildProjectContract(inquiry, quote, messages) : null;
+  const contract = quote ? buildProjectContract(inquiry, quote, messages, locale) : null;
 
   if (proposalLocked && order) {
     const reviewProjectId = order.project_id ?? order.id;

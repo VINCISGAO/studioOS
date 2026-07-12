@@ -1,5 +1,5 @@
 import { Globe2, Lock, Sparkles, Users } from "lucide-react";
-import { ProcessStepIcon } from "@/components/marketing/process/process-step-previews";
+import { ProcessStepIcon } from "@/components/marketing/process/process-step-icon";
 import { processText } from "@/lib/marketing/process-copy";
 import type { Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";

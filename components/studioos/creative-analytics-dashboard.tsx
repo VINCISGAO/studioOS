@@ -104,7 +104,7 @@ export function CreativeAnalyticsDashboard({
           </div>
           <p className="mt-1 text-sm text-zinc-500">
             {summary.totalAds} {locale === "zh" ? "条广告" : "ads"} ·{" "}
-            {locale === "zh" ? "本月支出" : "month spend"} {formatCurrency(summary.monthSpend)}
+            {locale === "zh" ? "本月支出" : "month spend"} {formatCurrency(summary.monthSpend, locale)}
           </p>
         </CardContent>
         <CardContent className="p-0">

@@ -1,4 +1,12 @@
 import type { Locale } from "@/lib/i18n";
+import {
+  convertUsdToDisplayAmount,
+  formatMoneyFromUsd,
+  formatMoneyRangeFromUsd,
+  formatStoredBudgetRange,
+  getDisplayCurrency,
+  USD_REFERENCE_RATES
+} from "@/lib/money/display-money";
 
 export type BrandDeliveryTimelineId = "3-5" | "5-7" | "7-14" | "14plus";
 
@@ -7,13 +15,19 @@ export type BrandTimelineOption = { id: BrandDeliveryTimelineId; label: string; 
 
 export const BRAND_BUDGET_MIN_USD = 200;
 
-/** All budget amounts in USD. */
-export const BRAND_BUDGET_PRESETS: BrandBudgetOption[] = [
-  { value: "$200 – $500", label: "$200 – $500" },
-  { value: "$500 – $1,000", label: "$500 – $1,000" },
-  { value: "$1,000 – $2,500", label: "$1,000 – $2,500" },
-  { value: "$2,500+", label: "$2,500+" }
-];
+/** Canonical USD values — labels are localized at render time. */
+export const BRAND_BUDGET_PRESET_USD = [
+  { value: "$200 – $500", min: 200, max: 500 },
+  { value: "$500 – $1,000", min: 500, max: 1000 },
+  { value: "$1,000 – $2,500", min: 1000, max: 2500 },
+  { value: "$2,500+", min: 2500, max: null as number | null }
+] as const;
+
+/** All budget amounts in USD (canonical storage). */
+export const BRAND_BUDGET_PRESETS: BrandBudgetOption[] = BRAND_BUDGET_PRESET_USD.map((item) => ({
+  value: item.value,
+  label: item.value
+}));
 
 /** @deprecated Use BRAND_BUDGET_PRESETS — kept for imports that expect locale map */
 export const BRAND_BUDGET_OPTIONS: Record<Locale, BrandBudgetOption[]> = {
@@ -36,16 +50,47 @@ export const BRAND_DELIVERY_TIMELINES: Record<Locale, BrandTimelineOption[]> = {
   ]
 };
 
-function formatUsd(amount: number): string {
+export function getBrandBudgetPresets(locale: Locale): BrandBudgetOption[] {
+  return BRAND_BUDGET_PRESET_USD.map((item) => ({
+    value: item.value,
+    label:
+      item.max === null
+        ? formatMoneyRangeFromUsd(item.min, null, locale)
+        : formatMoneyRangeFromUsd(item.min, item.max, locale)
+  }));
+}
+
+function formatUsdCanonical(amount: number): string {
   return amount.toLocaleString("en-US", { maximumFractionDigits: 0 });
+}
+
+function displayAmountToUsd(amount: number, locale: Locale): number {
+  const currency = getDisplayCurrency(locale);
+  const rate = USD_REFERENCE_RATES[currency];
+  if (rate <= 0 || currency === "USD") return amount;
+  return Math.max(0, Math.round(amount / rate));
+}
+
+function usdAmountToDisplayInput(amountUsd: number, locale: Locale): string {
+  const currency = getDisplayCurrency(locale);
+  if (currency === "USD") return formatUsdCanonical(amountUsd);
+  return String(convertUsdToDisplayAmount(amountUsd, locale));
 }
 
 export function isPresetBudget(value: string): boolean {
   return BRAND_BUDGET_PRESETS.some((item) => item.value === value);
 }
 
-export function customBudgetInputFromStored(value: string): string {
+export function customBudgetInputFromStored(value: string, locale: Locale = "en"): string {
   if (!value || isPresetBudget(value)) return "";
+  const numbers =
+    value.match(/\d[\d,]*/g)?.map((item) => Number(item.replace(/,/g, ""))) ?? [];
+  if (numbers.length === 1) {
+    return usdAmountToDisplayInput(numbers[0], locale);
+  }
+  if (numbers.length >= 2) {
+    return `${usdAmountToDisplayInput(numbers[0], locale)}-${usdAmountToDisplayInput(numbers[1], locale)}`;
+  }
   return value
     .replace(/\$/g, "")
     .replace(/,/g, "")
@@ -67,8 +112,10 @@ export function normalizeCustomBudgetInput(
 
   const rangeMatch = trimmed.match(/^(\d+(?:\.\d+)?)\s*[-–~到]\s*(\d+(?:\.\d+)?)$/);
   if (rangeMatch) {
-    const min = Number(rangeMatch[1]);
-    const max = Number(rangeMatch[2]);
+    const minDisplay = Number(rangeMatch[1]);
+    const maxDisplay = Number(rangeMatch[2]);
+    const min = displayAmountToUsd(minDisplay, locale);
+    const max = displayAmountToUsd(maxDisplay, locale);
     if (!Number.isFinite(min) || !Number.isFinite(max) || max < min) {
       return {
         ok: false,
@@ -80,15 +127,16 @@ export function normalizeCustomBudgetInput(
         ok: false,
         message:
           locale === "zh"
-            ? `预算不能低于 $${formatUsd(BRAND_BUDGET_MIN_USD)}`
-            : `Minimum budget is $${formatUsd(BRAND_BUDGET_MIN_USD)}`
+            ? `预算不能低于 ${formatMoneyFromUsd(BRAND_BUDGET_MIN_USD, locale)}`
+            : `Minimum budget is ${formatMoneyFromUsd(BRAND_BUDGET_MIN_USD, locale)}`
       };
     }
-    return { ok: true, value: `$${formatUsd(min)} – $${formatUsd(max)}` };
+    return { ok: true, value: `$${formatUsdCanonical(min)} – $${formatUsdCanonical(max)}` };
   }
 
   const digits = trimmed.replace(/[^0-9.]/g, "");
-  const amount = Number(digits);
+  const displayAmount = Number(digits);
+  const amount = displayAmountToUsd(displayAmount, locale);
   if (!Number.isFinite(amount) || amount <= 0) {
     return {
       ok: false,
@@ -100,11 +148,11 @@ export function normalizeCustomBudgetInput(
       ok: false,
       message:
         locale === "zh"
-          ? `预算不能低于 $${formatUsd(BRAND_BUDGET_MIN_USD)}`
-          : `Minimum budget is $${formatUsd(BRAND_BUDGET_MIN_USD)}`
+          ? `预算不能低于 ${formatMoneyFromUsd(BRAND_BUDGET_MIN_USD, locale)}`
+          : `Minimum budget is ${formatMoneyFromUsd(BRAND_BUDGET_MIN_USD, locale)}`
     };
   }
-  return { ok: true, value: `$${formatUsd(amount)}` };
+  return { ok: true, value: `$${formatUsdCanonical(amount)}` };
 }
 
 export function defaultBrandBudget(): string {

@@ -27,6 +27,7 @@ import {
   STYLE_OPTIONS,
   labelForOption
 } from "@/lib/studioos/brand-creative-brief-options";
+import { BRIEF_FIELD_TARGETS } from "@/lib/studioos/brand-creative-brief-scroll";
 import { cn } from "@/lib/utils";
 import { ImageIcon, Loader2, Sparkles } from "lucide-react";
 
@@ -63,7 +64,7 @@ export function BrandCreativeBriefPrimarySections(props: BriefSectionsProps) {
         title={locale === "zh" ? "项目概览" : "Project overview"}
         subtitle={locale === "zh" ? "告诉我们你的项目和品牌基本信息" : "Tell us about your project and brand"}
       >
-        <div className="space-y-2">
+        <div id={BRIEF_FIELD_TARGETS.productImage} className="scroll-mt-32 space-y-2 rounded-xl">
           <BriefFieldLabel label={locale === "zh" ? "品牌素材" : "Brand assets"} />
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             {BRAND_ASSET_SLOTS.map((slot) => {
@@ -119,7 +120,7 @@ export function BrandCreativeBriefPrimarySections(props: BriefSectionsProps) {
         </div>
         <div className="grid gap-8 lg:grid-cols-[1fr_1fr]">
           <div className="space-y-4">
-            <div className="space-y-2">
+            <div id={BRIEF_FIELD_TARGETS.projectTitle} className="scroll-mt-32 space-y-2 rounded-xl">
               <BriefFieldLabel label={locale === "zh" ? "项目（品牌）名称" : "Project / brand name"} required />
               <div className="relative">
                 <Input
@@ -137,7 +138,7 @@ export function BrandCreativeBriefPrimarySections(props: BriefSectionsProps) {
                 </span>
               </div>
             </div>
-            <div className="space-y-2">
+            <div id={BRIEF_FIELD_TARGETS.adOneLiner} className="scroll-mt-32 space-y-2 rounded-xl">
               <BriefFieldLabel label={locale === "zh" ? "您需要什么广告？" : "What kind of ad do you need?"} required />
               <div className="relative">
                 <Input
@@ -179,7 +180,7 @@ export function BrandCreativeBriefPrimarySections(props: BriefSectionsProps) {
               />
             </div>
           </div>
-          <div className="space-y-2">
+          <div id={BRIEF_FIELD_TARGETS.productDescription} className="scroll-mt-32 space-y-2 rounded-xl">
             <BriefFieldLabel
               label={locale === "zh" ? "详细描述您的需求" : "Detailed description"}
               required

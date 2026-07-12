@@ -1,4 +1,5 @@
 import type { CreativeDirection } from "@/features/ai/creative-direction.types";
+import type { Locale } from "@/lib/i18n";
 
 export type SchemeRadarScores = {
   appeal: number;
@@ -44,13 +45,37 @@ function productionDifficultyScore(raw: string | undefined) {
   return 50;
 }
 
+export function localizeSchemeDisplayText(value: string, locale: Locale): string {
+  if (locale !== "zh") return value;
+  const trimmed = value.trim();
+  if (!trimmed) return value;
+
+  const exact: Record<string, string> = {
+    low: "低",
+    medium: "中",
+    high: "高",
+    excellent: "优秀",
+    "ai pending": "待 AI 判断",
+    "ai strategy analysis": "AI 策略分析"
+  };
+  const key = trimmed.toLowerCase();
+  if (exact[key]) return exact[key];
+
+  if (/^low\b/i.test(trimmed)) return trimmed.replace(/^low\b/i, "低");
+  if (/^medium\b/i.test(trimmed)) return trimmed.replace(/^medium\b/i, "中");
+  if (/^high\b/i.test(trimmed)) return trimmed.replace(/^high\b/i, "高");
+  return value;
+}
+
 function strategyTags(direction: CreativeDirection, locale: "en" | "zh") {
   const fromApi = [
     ...(direction.suitableIndustries ?? []),
     direction.estimatedCtr,
     direction.aiProductionDifficulty
   ].filter((item): item is string => Boolean(item?.trim()));
-  if (fromApi.length) return fromApi.slice(0, 4);
+  if (fromApi.length) {
+    return fromApi.slice(0, 4).map((item) => localizeSchemeDisplayText(item, locale));
+  }
   return locale === "zh" ? ["AI 策略分析"] : ["AI strategy analysis"];
 }
 
@@ -83,9 +108,18 @@ export function buildSchemeDisplayMetrics(
     audienceMatch: clampScore(direction.audienceMatch),
     emotionalResonance: clampScore(direction.emotionalResonance),
     productIntegration: clampScore(direction.productIntegration),
-    estimatedCtr: direction.estimatedCtr || (locale === "zh" ? "待 AI 判断" : "AI pending"),
-    recommendedDuration: direction.recommendedDuration || (locale === "zh" ? "待 AI 判断" : "AI pending"),
-    aiProductionDifficulty: direction.aiProductionDifficulty || (locale === "zh" ? "待 AI 判断" : "AI pending"),
+    estimatedCtr: localizeSchemeDisplayText(
+      direction.estimatedCtr || (locale === "zh" ? "待 AI 判断" : "AI pending"),
+      locale
+    ),
+    recommendedDuration: localizeSchemeDisplayText(
+      direction.recommendedDuration || (locale === "zh" ? "待 AI 判断" : "AI pending"),
+      locale
+    ),
+    aiProductionDifficulty: localizeSchemeDisplayText(
+      direction.aiProductionDifficulty || (locale === "zh" ? "待 AI 判断" : "AI pending"),
+      locale
+    ),
     suitableIndustries: direction.suitableIndustries?.length ? direction.suitableIndustries : [],
     suitablePlatforms: direction.suitablePlatforms?.length ? direction.suitablePlatforms : [],
     psychologyTags: strategyTags(direction, locale),

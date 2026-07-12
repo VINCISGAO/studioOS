@@ -12,7 +12,7 @@ import { PortalSidebarAccountMenu } from "@/components/studioos/portal-sidebar-a
 import { brandNav } from "@/lib/studioos/vocabulary";
 import { brandPortalNavItems, type BrandPortalNavItem } from "@/lib/studioos/brand-portal-nav";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
-import { scrollToBrandMyAds } from "@/lib/studioos/brand-my-ads-scroll";
+import { scrollToBrandMyAds, isBrandDashboardPath, prefersInstantBrandMyAdsScroll } from "@/lib/studioos/brand-my-ads-scroll";
 import { buildAvatarInitials } from "@/lib/studioos/avatar-initials";
 import { readBrandWizardStepFromLocation } from "@/lib/studioos/instant-nav";
 import {
@@ -128,10 +128,15 @@ function BrandPortalShellInner({
   const navigateToMyAds = useCallback(() => {
     const hashUrl = `${withLocale(brandPortalRoutes.dashboard, locale)}#my-ads`;
 
-    if (pathname === brandPortalRoutes.dashboard) {
-      scrollToBrandMyAds({ behavior: "smooth" });
-      window.history.replaceState(window.history.state, "", hashUrl);
-      setLocationHash("#my-ads");
+    if (isBrandDashboardPath(pathname)) {
+      window.requestAnimationFrame(() => {
+        scrollToBrandMyAds({
+          behavior: prefersInstantBrandMyAdsScroll() ? "auto" : "smooth",
+          force: true
+        });
+        window.history.replaceState(window.history.state, "", hashUrl);
+        setLocationHash("#my-ads");
+      });
       return;
     }
 
@@ -264,7 +269,10 @@ function BrandPortalShellInner({
                   <button
                     key={item.href + item.labelKey}
                     type="button"
-                    onClick={navigateToMyAds}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      navigateToMyAds();
+                    }}
                     className={sidebarLinkClass(active, false)}
                   >
                     <Icon className="h-[18px] w-[18px] shrink-0" />
@@ -315,7 +323,10 @@ function BrandPortalShellInner({
           )}
         >
           {!isProjectReview && !isWizardCreate ? (
-            <header className="sticky top-0 z-40 shrink-0 border-b border-zinc-200/80 bg-white/95 backdrop-blur">
+            <header
+              data-brand-portal-header
+              className="sticky top-0 z-40 shrink-0 border-b border-zinc-200/80 bg-white/95 backdrop-blur"
+            >
               <div className="flex h-14 items-center justify-between px-4 sm:px-6 lg:px-8">
                 {isWizardCreate ? (
                   <Link
@@ -379,6 +390,7 @@ function BrandPortalShellInner({
           ) : null}
 
           <main
+            data-brand-portal-main
             className={cn(
               "min-h-0 min-w-0 flex-1",
               isProjectReview

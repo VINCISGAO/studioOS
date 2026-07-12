@@ -96,11 +96,11 @@ export function IncomeWithdrawalHistorySection({
             <li key={item.id} className="px-5 py-4 sm:px-6">
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
-                  <p className="text-lg font-semibold tabular-nums text-zinc-950">{formatCurrency(item.amount_usd)}</p>
+                  <p className="text-lg font-semibold tabular-nums text-zinc-950">{formatCurrency(item.amount_usd, locale)}</p>
                   <p className="mt-1 text-sm text-zinc-500">
                     {item.crypto_asset
                       ? `${item.crypto_amount} ${item.crypto_asset} · ${maskWalletAddress(item.wallet_address ?? "")}`
-                      : formatCurrency(item.net_usd)}
+                      : formatCurrency(item.net_usd, locale)}
                   </p>
                   <p className="mt-2 text-xs text-zinc-400">
                     {new Date(item.created_at).toLocaleString(locale === "zh" ? "zh-CN" : "en-US")}

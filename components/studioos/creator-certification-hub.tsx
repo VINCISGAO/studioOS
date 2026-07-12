@@ -66,7 +66,7 @@ export function CreatorCertificationHub({
               </div>
               <p className="mt-3 max-w-2xl text-sm leading-7 text-zinc-600">{t.certifiedBody}</p>
               <p className="mt-3 text-sm text-zinc-500">
-                {formatCurrency(snapshot.amount_usd)} · {t.certifiedSince}{" "}
+                {formatCurrency(snapshot.amount_usd, locale)} · {t.certifiedSince}{" "}
                 {snapshot.paid_at
                   ? new Date(snapshot.paid_at).toLocaleDateString(locale === "zh" ? "zh-CN" : "en-US")
                   : "—"}

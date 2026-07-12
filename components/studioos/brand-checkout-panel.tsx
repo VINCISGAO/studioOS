@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { Locale } from "@/lib/i18n";
 import type { StoredOrder } from "@/lib/order-types";
+import { budgetCurrencyHint, settlementUsdNote } from "@/lib/money/display-money";
 import { getPlatformCorporateAccount, paymentMethodLabel } from "@/lib/studioos/deposit-utils";
 import type { PayoutMethodType } from "@/lib/studioos/withdrawal-types";
 import { cn, formatCurrency } from "@/lib/utils";
@@ -100,6 +101,8 @@ export function BrandCheckoutPanel({
   escrowFunded?: boolean;
 }) {
   const t = copy[locale];
+  const settlementNote = settlementUsdNote(locale);
+  const currencyHint = budgetCurrencyHint(locale);
   const [method, setMethod] = useState<PayoutMethodType>("alipay");
   const [reference, setReference] = useState("");
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
@@ -124,7 +127,7 @@ export function BrandCheckoutPanel({
             <h2 className="text-xl font-semibold text-emerald-950">{t.paidTitle}</h2>
             <p className="mt-2 text-sm leading-6 text-emerald-900/90">{t.paidBody}</p>
             <p className="mt-3 text-sm font-medium text-emerald-950">
-              {formatCurrency(order.amount)} · {studioName}
+              {formatCurrency(order.amount, locale)} · {studioName}
             </p>
           </div>
         </div>
@@ -148,31 +151,38 @@ export function BrandCheckoutPanel({
           <p className="text-sm font-semibold text-zinc-900">{t.amountDue}</p>
         </div>
         <p className="text-4xl font-semibold tracking-tight text-violet-600">
-          {formatCurrency(order.amount)}
-          <span className="ml-2 align-middle text-sm font-semibold text-zinc-400">USD</span>
+          {formatCurrency(order.amount, locale)}
+          {currencyHint !== "USD" ? (
+            <span className="ml-2 align-middle text-sm font-semibold text-zinc-400">{currencyHint}</span>
+          ) : (
+            <span className="ml-2 align-middle text-sm font-semibold text-zinc-400">USD</span>
+          )}
         </p>
+        {settlementNote ? (
+          <p className="mt-2 text-xs leading-5 text-zinc-500">{settlementNote}</p>
+        ) : null}
         <div className="mt-5 space-y-3 border-t border-zinc-100 pt-4 text-sm">
           <div className="flex items-center justify-between">
             <span className="text-zinc-500">{t.amount}</span>
-            <span className="font-semibold text-zinc-950">{formatCurrency(order.amount)}</span>
+            <span className="font-semibold text-zinc-950">{formatCurrency(order.amount, locale)}</span>
           </div>
           <div className="flex items-center justify-between">
             <span className="flex items-center gap-1 text-zinc-500">
               {t.fee}
               <Info className="h-3.5 w-3.5 text-zinc-400" />
             </span>
-            <span className="font-semibold text-zinc-950">{formatCurrency(order.platform_fee)}</span>
+            <span className="font-semibold text-zinc-950">{formatCurrency(order.platform_fee, locale)}</span>
           </div>
           <div className="flex items-center justify-between">
             <span className="flex items-center gap-1 text-zinc-500">
               {t.payout}
               <Info className="h-3.5 w-3.5 text-zinc-400" />
             </span>
-            <span className="font-semibold text-zinc-950">{formatCurrency(order.creator_payout)}</span>
+            <span className="font-semibold text-zinc-950">{formatCurrency(order.creator_payout, locale)}</span>
           </div>
           <div className="flex items-center justify-between border-t border-zinc-100 pt-3">
             <span className="font-semibold text-zinc-900">{t.total}</span>
-            <span className="font-semibold text-violet-600">{formatCurrency(order.amount)}</span>
+            <span className="font-semibold text-violet-600">{formatCurrency(order.amount, locale)}</span>
           </div>
         </div>
       </div>

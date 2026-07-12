@@ -96,7 +96,7 @@ export function AdminCampaignDetailView({
           </div>
           <div>
             <dt className="text-xs text-zinc-500">Budget</dt>
-            <dd>{formatCurrency(detail.budget)}</dd>
+            <dd>{formatCurrency(detail.budget, locale)}</dd>
           </div>
           <div>
             <dt className="text-xs text-zinc-500">{t.legacyId}</dt>
@@ -117,8 +117,8 @@ export function AdminCampaignDetailView({
         {detail.escrow ? (
           <dl className="grid gap-3 sm:grid-cols-3">
             <div><dt className="text-xs text-zinc-500">Status</dt><dd>{detail.escrow.status}</dd></div>
-            <div><dt className="text-xs text-zinc-500">Amount</dt><dd>{formatCurrency(detail.escrow.amount)}</dd></div>
-            <div><dt className="text-xs text-zinc-500">Remaining</dt><dd>{formatCurrency(detail.escrow.remainingAmount)}</dd></div>
+            <div><dt className="text-xs text-zinc-500">Amount</dt><dd>{formatCurrency(detail.escrow.amount, locale)}</dd></div>
+            <div><dt className="text-xs text-zinc-500">Remaining</dt><dd>{formatCurrency(detail.escrow.remainingAmount, locale)}</dd></div>
           </dl>
         ) : (
           <p className="text-sm text-zinc-500">No escrow record.</p>
@@ -128,10 +128,10 @@ export function AdminCampaignDetailView({
       <Section title={t.settlement}>
         {detail.settlementPreview ? (
           <dl className="grid gap-3 sm:grid-cols-2">
-            <div><dt className="text-xs text-zinc-500">Order</dt><dd>{formatCurrency(detail.settlementPreview.orderAmount)}</dd></div>
-            <div><dt className="text-xs text-zinc-500">Creator payout</dt><dd>{formatCurrency(detail.settlementPreview.creatorPayoutAmount)}</dd></div>
-            <div><dt className="text-xs text-zinc-500">Commission</dt><dd>{formatCurrency(detail.settlementPreview.creatorCommissionAmount)}</dd></div>
-            <div><dt className="text-xs text-zinc-500">Platform revenue</dt><dd>{formatCurrency(detail.settlementPreview.platformTotalRevenue)}</dd></div>
+            <div><dt className="text-xs text-zinc-500">Order</dt><dd>{formatCurrency(detail.settlementPreview.orderAmount, locale)}</dd></div>
+            <div><dt className="text-xs text-zinc-500">Creator payout</dt><dd>{formatCurrency(detail.settlementPreview.creatorPayoutAmount, locale)}</dd></div>
+            <div><dt className="text-xs text-zinc-500">Commission</dt><dd>{formatCurrency(detail.settlementPreview.creatorCommissionAmount, locale)}</dd></div>
+            <div><dt className="text-xs text-zinc-500">Platform revenue</dt><dd>{formatCurrency(detail.settlementPreview.platformTotalRevenue, locale)}</dd></div>
           </dl>
         ) : (
           <p className="text-sm text-zinc-500">No settlement preview available.</p>
@@ -152,8 +152,8 @@ export function AdminCampaignDetailView({
       <Section title={t.wallet}>
         {detail.wallet ? (
           <dl className="grid gap-3 sm:grid-cols-2">
-            <div><dt className="text-xs text-zinc-500">Available</dt><dd>{formatCurrency(detail.wallet.availableBalance)}</dd></div>
-            <div><dt className="text-xs text-zinc-500">Pending</dt><dd>{formatCurrency(detail.wallet.pendingBalance)}</dd></div>
+            <div><dt className="text-xs text-zinc-500">Available</dt><dd>{formatCurrency(detail.wallet.availableBalance, locale)}</dd></div>
+            <div><dt className="text-xs text-zinc-500">Pending</dt><dd>{formatCurrency(detail.wallet.pendingBalance, locale)}</dd></div>
           </dl>
         ) : (
           <p className="text-sm text-zinc-500">No wallet for creator.</p>

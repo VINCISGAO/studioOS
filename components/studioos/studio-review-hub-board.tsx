@@ -19,6 +19,7 @@ import {
 import { Button } from "@/components/ui/button";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
+import { formatMoneyFromUsd } from "@/lib/money/display-money";
 import type { ReviewHubItem } from "@/lib/studioos/review-hub";
 import { cn } from "@/lib/utils";
 
@@ -191,8 +192,8 @@ const copy = {
   }
 } as const;
 
-function formatMoney(amount: number) {
-  return `$${amount.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+function formatMoney(amount: number, locale: Locale) {
+  return formatMoneyFromUsd(amount, locale);
 }
 
 function shortDate(iso: string | null) {
@@ -412,7 +413,7 @@ export function StudioReviewHubBoard({ locale, items }: { locale: Locale; items:
                     </div>
                     <div>
                       <p className="text-xs text-zinc-400">{t.orderAmount}</p>
-                      <p className="mt-1 font-semibold text-zinc-900">{formatMoney(item.amount)}</p>
+                      <p className="mt-1 font-semibold text-zinc-900">{formatMoney(item.amount, locale)}</p>
                     </div>
                     <div>
                       <p className="text-xs text-zinc-400">{t.paymentStatus}</p>

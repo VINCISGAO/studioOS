@@ -54,12 +54,12 @@ export default async function BrandSettlementPage({
                   <div>
                     <p className="font-medium text-zinc-900">{item.campaignTitle}</p>
                     <p className="mt-1 text-sm text-zinc-500">
-                      {item.status} · {formatCurrency(item.amount)} {item.currency}
+                      {item.status} · {formatCurrency(item.amount, locale)} {item.currency}
                     </p>
                     <p className="mt-1 text-xs text-zinc-400">
                       {locale === "zh" ? "剩余托管" : "Remaining"}:{" "}
-                      {formatCurrency(item.remainingAmount)} · {locale === "zh" ? "已释放" : "Released"}:{" "}
-                      {formatCurrency(item.releasedAmount)}
+                      {formatCurrency(item.remainingAmount, locale)} · {locale === "zh" ? "已释放" : "Released"}:{" "}
+                      {formatCurrency(item.releasedAmount, locale)}
                     </p>
                   </div>
                 </div>

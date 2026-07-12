@@ -15,42 +15,11 @@ import type { Locale } from "@/lib/i18n";
 import { syncBrandWizardStepUrl } from "@/lib/studioos/instant-nav";
 import type { WizardBriefSnapshot } from "@/lib/studioos/brand-wizard-brief-snapshot";
 import { STEP2_SCHEME_LAYOUT } from "@/lib/studioos/brand-campaign-step2-layout";
+import { BRAND_CAMPAIGN_STEP2_REVIEW_COPY } from "@/lib/studioos/brand-campaign-step2-copy";
 import { localizeCreativeDirection } from "@/lib/studioos/creative-direction-localization";
 import { CREATOR_SUBMITTED_CREATIVE_DIRECTION_ID } from "@/lib/studioos/creative-direction-selection";
-import { Brain, Sparkles, Target, TrendingUp, Zap } from "lucide-react";
-
-const copy = {
-  en: {
-    headline: "AI generated 3 Creative Strategy routes for you",
-    subtitle:
-      "Each route is structured like an agency pitch deck: insight, big idea, hook, execution language, and production fit.",
-    tagInsight: "Deep product insight",
-    tagAudience: "Audience psychology",
-    tagPlatform: "Platform algorithm fit",
-    tagPerformance: "Performance forecast",
-    chooseError: "Choose one creative direction or let creators submit ideas",
-    creatorOptionTitle: "Do not choose these schemes",
-    creatorOptionBody: "Let matched creators submit their own creative ideas after the campaign is published.",
-    creatorOptionBadge: "Creator-led creative",
-    creatorConfirm: "Let creators submit ideas",
-    referenceNotice:
-      "The following creative strategies are for reference only. Final creative direction will be confirmed jointly by the brand and Creator."
-  },
-  zh: {
-    headline: "智能系统已为你生成 3 套 Creative Strategy",
-    subtitle: "每套策略都像广告公司 Pitch Deck：包含消费者洞察、Big Idea、前三秒 Hook、执行语法与制作适配。",
-    tagInsight: "深度洞察产品卖点",
-    tagAudience: "匹配受众心理",
-    tagPlatform: "平台算法偏好",
-    tagPerformance: "预测投放效果",
-    chooseError: "请先选择一个创意方向，或选择交给创作者提交创意",
-    creatorOptionTitle: "以上方案都不选",
-    creatorOptionBody: "交给后续匹配到的创作者提交创意方向，品牌再从创作者方案中确认最终制作方向。",
-    creatorOptionBadge: "创作者提交创意",
-    creatorConfirm: "交给创作者提交创意",
-    referenceNotice: "以下创意仅供参考，最终创作方向由品牌方与 Creator 共同确认。"
-  }
-} as const;
+import { cn } from "@/lib/utils";
+import { Brain, Info, Target, TrendingUp, Zap } from "lucide-react";
 
 function parseBudgetFallback(budget: string) {
   const match = budget.replace(/,/g, "").match(/\d+/);
@@ -93,7 +62,7 @@ export function BrandCampaignStep2Review({
   onSaveDraft?: () => void;
   onConfirmed: (directionId: string) => void;
 }) {
-  const t = copy[locale];
+  const t = BRAND_CAMPAIGN_STEP2_REVIEW_COPY[locale];
   const [localError, setLocalError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [previewId, setPreviewId] = useState<string | null>(null);
@@ -154,10 +123,34 @@ export function BrandCampaignStep2Review({
   }
 
   const featureTags = [
-    { icon: Brain, label: t.tagInsight },
-    { icon: Target, label: t.tagAudience },
-    { icon: Zap, label: t.tagPlatform },
-    { icon: TrendingUp, label: t.tagPerformance }
+    {
+      icon: Brain,
+      label: t.tagInsight,
+      chipClass:
+        "border border-violet-200/70 bg-gradient-to-r from-violet-50 via-violet-50/90 to-fuchsia-50 text-violet-800 shadow-sm shadow-violet-100/70",
+      iconClass: "text-violet-600"
+    },
+    {
+      icon: Target,
+      label: t.tagAudience,
+      chipClass:
+        "border border-sky-200/70 bg-gradient-to-r from-sky-50 via-sky-50/90 to-cyan-50 text-sky-800 shadow-sm shadow-sky-100/70",
+      iconClass: "text-sky-600"
+    },
+    {
+      icon: Zap,
+      label: t.tagPlatform,
+      chipClass:
+        "border border-amber-200/70 bg-gradient-to-r from-amber-50 via-orange-50/90 to-yellow-50 text-amber-900 shadow-sm shadow-amber-100/70",
+      iconClass: "text-amber-600"
+    },
+    {
+      icon: TrendingUp,
+      label: t.tagPerformance,
+      chipClass:
+        "border border-emerald-200/70 bg-gradient-to-r from-emerald-50 via-green-50/90 to-teal-50 text-emerald-800 shadow-sm shadow-emerald-100/70",
+      iconClass: "text-emerald-600"
+    }
   ];
 
   /** 上方预览 = 当前选中方案；下方两枚 = 其余方案缩略图，点击切换预览 */
@@ -184,7 +177,7 @@ export function BrandCampaignStep2Review({
           role="dialog"
           aria-modal="true"
           aria-busy="true"
-          aria-label={locale === "zh" ? "正在生成创意方案" : "Generating creative schemes"}
+          aria-label={t.generatingOverlay}
         >
           <div className="w-full max-w-4xl animate-in fade-in zoom-in-95 duration-300">
             <BrandCreatorGlobeMatchingLoader
@@ -212,18 +205,20 @@ export function BrandCampaignStep2Review({
 
           <div className={MAIN_SIDEBAR_GRID}>
             <div>
-              <h1 className="flex items-start gap-2 text-2xl font-semibold tracking-tight text-zinc-950 sm:text-[26px]">
-                <Sparkles className="mt-1 h-6 w-6 shrink-0 text-violet-600" />
+              <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 sm:text-[26px]">
                 {t.headline}
               </h1>
               <p className="mt-2 text-sm leading-6 text-zinc-500">{t.subtitle}</p>
               <div className="mt-3 flex flex-wrap gap-2">
-                {featureTags.map(({ icon: Icon, label }) => (
+                {featureTags.map(({ icon: Icon, label, chipClass, iconClass }) => (
                   <span
                     key={label}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-violet-100 bg-violet-50/80 px-3 py-1.5 text-xs font-medium text-violet-700"
+                    className={cn(
+                      "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium",
+                      chipClass
+                    )}
                   >
-                    <Icon className="h-3.5 w-3.5" />
+                    <Icon className={cn("h-3.5 w-3.5 shrink-0", iconClass)} strokeWidth={2.25} />
                     {label}
                   </span>
                 ))}
@@ -237,7 +232,11 @@ export function BrandCampaignStep2Review({
               {showContent && selectedDirection ? (
                 <>
                   <div className="flex w-full justify-center lg:justify-start">
-                    <div className="inline-flex rounded-[1.6rem] border border-violet-200 bg-white p-1.5 shadow-[0_16px_45px_rgba(124,58,237,0.18)] ring-1 ring-violet-100">
+                    <div
+                      className="inline-flex w-full max-w-lg rounded-xl border border-zinc-200 bg-zinc-50/80 p-1 sm:w-auto"
+                      role="tablist"
+                      aria-label={locale === "zh" ? "创意方案" : "Creative strategies"}
+                    >
                       {displayDirections.map((direction) => {
                         const label = String.fromCharCode(65 + directionIndex(direction));
                         const active = selectedDirection.id === direction.id;
@@ -245,6 +244,8 @@ export function BrandCampaignStep2Review({
                           <button
                             key={direction.id}
                             type="button"
+                            role="tab"
+                            aria-selected={active}
                             onClick={() => {
                               setSelectedId(direction.id);
                               setPreviewId(direction.id);
@@ -252,19 +253,30 @@ export function BrandCampaignStep2Review({
                             }}
                             className={
                               active
-                                ? "min-w-32 rounded-[1.25rem] bg-gradient-to-r from-violet-600 to-fuchsia-600 px-7 py-3 text-base font-bold text-white shadow-[0_10px_28px_rgba(124,58,237,0.35)]"
-                                : "min-w-32 rounded-[1.25rem] px-7 py-3 text-base font-bold text-zinc-500 transition hover:bg-violet-50 hover:text-violet-700"
+                                ? "min-w-0 flex-1 rounded-lg bg-white px-4 py-2.5 text-sm font-medium text-zinc-950 shadow-sm ring-1 ring-zinc-200/80 sm:min-w-[5.5rem] sm:flex-none"
+                                : "min-w-0 flex-1 rounded-lg px-4 py-2.5 text-sm font-medium text-zinc-500 transition hover:text-zinc-800 sm:min-w-[5.5rem] sm:flex-none"
                             }
                           >
-                            {locale === "zh" ? `方案 ${label}` : `Strategy ${label}`}
+                            {`${t.schemeTab} ${label}`}
                           </button>
                         );
                       })}
                     </div>
                   </div>
-                  <p className="rounded-2xl border border-violet-100 bg-violet-50/70 px-4 py-3 text-center text-xs font-medium leading-5 text-violet-700 lg:text-left">
-                    {t.referenceNotice}
-                  </p>
+                  <div className="relative overflow-hidden rounded-xl border border-violet-100/90 bg-gradient-to-br from-violet-50/80 via-white to-white px-4 py-3.5 sm:px-5">
+                    <span
+                      className="absolute inset-y-3 left-0 w-1 rounded-r-full bg-violet-500"
+                      aria-hidden
+                    />
+                    <div className="flex items-start gap-3 pl-2 sm:items-center">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-100 text-violet-700">
+                        <Info className="h-4 w-4" strokeWidth={2.25} />
+                      </span>
+                      <p className="text-sm font-medium leading-6 tracking-[-0.01em] text-zinc-800 sm:text-[0.9375rem]">
+                        {t.referenceNotice}
+                      </p>
+                    </div>
+                  </div>
 
                   <BrandCampaignStep2FeaturedScheme
                     locale={locale}

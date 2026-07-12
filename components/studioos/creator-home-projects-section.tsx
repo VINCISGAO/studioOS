@@ -105,7 +105,7 @@ export function CreatorHomeProjectsSection({
                 </div>
               </div>
               <div className="flex flex-wrap items-center gap-3 sm:justify-end">
-                <span className="text-sm font-semibold text-zinc-900">{formatCurrency(project.budget)}</span>
+                <span className="text-sm font-semibold text-zinc-900">{formatCurrency(project.budget, locale)}</span>
                 <span
                   className={cn(
                     "rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset",

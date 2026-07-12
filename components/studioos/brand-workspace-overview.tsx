@@ -6,7 +6,7 @@ import { BrandWorkspaceHero } from "@/components/studioos/brand-workspace-hero";
 import type { Locale } from "@/lib/i18n";
 import type { BrandProjectRow } from "@/lib/studioos/brand-dashboard";
 import type { BrandNewCampaignGate } from "@/lib/studioos/brand-active-campaign-limit";
-import { scrollToBrandMyAds } from "@/lib/studioos/brand-my-ads-scroll";
+import { syncBrandMyAdsHashScroll } from "@/lib/studioos/brand-my-ads-scroll";
 import { useEffect } from "react";
 
 const copy = {
@@ -51,11 +51,10 @@ export function BrandWorkspaceOverview({
   const active = rows.filter((row) => row.phase === "active").length;
 
   useEffect(() => {
-    if (window.location.hash !== "#my-ads") return;
-    const frame = window.requestAnimationFrame(() => {
-      scrollToBrandMyAds({ behavior: "auto", force: true });
-    });
-    return () => window.cancelAnimationFrame(frame);
+    syncBrandMyAdsHashScroll();
+    const onHashChange = () => syncBrandMyAdsHashScroll();
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
   }, []);
 
   return (

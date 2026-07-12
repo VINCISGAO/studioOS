@@ -13,19 +13,15 @@ type MarketingDocsMobileNavProps = {
   active: MarketingDocsNavKey;
 };
 
-function buildNavItems(locale: Locale) {
-  return marketingSiteNavItems(locale);
-}
-
-function cnNav(active: boolean) {
-  return active
-    ? "block rounded-lg px-3 py-2 text-sm font-medium text-violet-700"
-    : "block rounded-lg px-3 py-2 text-sm text-zinc-600";
-}
-
 export function MarketingDocsMobileNav({ locale, active }: MarketingDocsMobileNavProps) {
-  const navItems = buildNavItems(locale);
+  const navItems = marketingSiteNavItems(locale);
   const [open, setOpen] = useState(false);
+
+  function linkClassName(isActive: boolean) {
+    return isActive
+      ? "block rounded-lg px-3 py-2 text-sm font-medium text-violet-700"
+      : "block rounded-lg px-3 py-2 text-sm text-zinc-600";
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -61,7 +57,7 @@ export function MarketingDocsMobileNav({ locale, active }: MarketingDocsMobileNa
               <Link
                 key={item.key}
                 href={buildLocalizedHref(item.path, locale)}
-                className={cnNav(active === item.key)}
+                className={linkClassName(active === item.key)}
                 onClick={() => setOpen(false)}
               >
                 {item.label}

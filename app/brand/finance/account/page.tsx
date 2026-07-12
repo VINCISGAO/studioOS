@@ -9,14 +9,13 @@ import {
 import { BrandWalletRechargeForm } from "@/components/studioos/brand-wallet-recharge-form";
 import { getBrandWalletSnapshot } from "@/features/wallet/brand-wallet.service";
 import { getCurrentClientEmail } from "@/features/auth/session-context";
-import { type SearchParams, withLocale } from "@/lib/i18n";
+import { type Locale, type SearchParams, withLocale } from "@/lib/i18n";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
 
-function money(amount: number, currency = "USD", locale: "en" | "zh" = "en") {
-  return new Intl.NumberFormat(locale === "zh" ? "zh-CN" : "en-US", {
-    style: "currency",
-    currency
-  }).format(amount);
+import { formatMoneyFromUsd } from "@/lib/money/display-money";
+
+function money(amount: number, locale: Locale = "en") {
+  return formatMoneyFromUsd(amount, locale);
 }
 
 function transactionLabel(type: string, locale: "en" | "zh") {
@@ -139,8 +138,8 @@ export default async function BrandFinanceAccountPage({
               </p>
               <p className="mt-1 text-xs leading-5 text-violet-700">
                 {locale === "zh"
-                  ? `账单 ${invoiceId} 需要支付 ${money(invoiceAmount, "USD", locale)}。完成付款后会回到审片页，你可以继续确认加购并解锁第 4 轮。`
-                  : `Invoice ${invoiceId} requires ${money(invoiceAmount, "USD", locale)}. After payment you will return to review and can confirm the add-on again to unlock round 4.`}
+                  ? `账单 ${invoiceId} 需要支付 ${money(invoiceAmount, locale)}。完成付款后会回到审片页，你可以继续确认加购并解锁第 4 轮。`
+                  : `Invoice ${invoiceId} requires ${money(invoiceAmount, locale)}. After payment you will return to review and can confirm the add-on again to unlock round 4.`}
               </p>
             </div>
           ) : null}
@@ -172,7 +171,7 @@ export default async function BrandFinanceAccountPage({
                   {locale === "zh" ? "可用余额" : "Available balance"}
                 </p>
                 <p className="mt-5 text-5xl font-semibold tracking-tight text-zinc-950">
-                  {money(snapshot.wallet.availableBalance, snapshot.wallet.currency, locale)}
+                  {money(snapshot.wallet.availableBalance, locale)}
                 </p>
                 {process.env.NODE_ENV !== "production" ? (
                   <form action={resetBrandWalletBalanceForTestingAction} className="mt-4">
@@ -202,7 +201,7 @@ export default async function BrandFinanceAccountPage({
                       </p>
                     </div>
                     <p className="mt-2 text-base font-semibold text-zinc-950">
-                      {money(totalDeposited, snapshot.wallet.currency, locale)}
+                      {money(totalDeposited, locale)}
                     </p>
                   </div>
                   <div className="rounded-xl border border-zinc-100 bg-white/85 p-4 shadow-sm">
@@ -215,7 +214,7 @@ export default async function BrandFinanceAccountPage({
                       </p>
                     </div>
                     <p className="mt-2 text-base font-semibold text-zinc-950">
-                      {money(totalSpent, snapshot.wallet.currency, locale)}
+                      {money(totalSpent, locale)}
                     </p>
                   </div>
                 </div>
@@ -276,7 +275,7 @@ export default async function BrandFinanceAccountPage({
                     </div>
                     <div className="shrink-0 text-right">
                       <p className="text-sm font-semibold text-zinc-950">
-                        {money(item.amount, snapshot.wallet.currency, locale)}
+                        {money(item.amount, locale)}
                       </p>
                       <p className="mt-1 text-xs text-zinc-400">
                         {new Intl.DateTimeFormat(locale === "zh" ? "zh-CN" : "en-US", {

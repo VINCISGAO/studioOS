@@ -2,6 +2,7 @@
 
 import type { SchemeRadarScores } from "@/lib/studioos/brand-campaign-scheme-metrics";
 import type { Locale } from "@/lib/i18n";
+import { formatMoneyFromUsd } from "@/lib/money/display-money";
 import { cn } from "@/lib/utils";
 
 const RADAR_LABELS = {
@@ -141,6 +142,7 @@ export function SchemeBudgetDonut({
   const radius = (size - stroke) / 2;
   const circumference = 2 * Math.PI * radius;
   let offset = 0;
+  const fmt = (amount: number) => formatMoneyFromUsd(amount, locale);
 
   return (
     <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
@@ -169,7 +171,7 @@ export function SchemeBudgetDonut({
           })}
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-          <p className="text-lg font-semibold text-zinc-950">${total}</p>
+          <p className="text-lg font-semibold text-zinc-950">{fmt(total)}</p>
           <p className="text-[10px] text-zinc-500">{locale === "zh" ? "总预算" : "Total budget"}</p>
         </div>
       </div>
@@ -184,7 +186,7 @@ export function SchemeBudgetDonut({
               </span>
               <span className="shrink-0 font-medium tabular-nums text-zinc-900">
                 {pct}%
-                <span className="ml-1.5 text-zinc-600">${slice.amount}</span>
+                <span className="ml-1.5 text-zinc-600">{fmt(slice.amount)}</span>
               </span>
             </li>
           );

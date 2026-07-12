@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Box, CircleHelp, FileText, Flower2, Info, Menu, Tag, User, X } from "lucide-react";
+import { Menu, User, X } from "lucide-react";
 import { BrandLogoLockup } from "@/components/brand-logo-mark";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { useMarketingHomePortalSession } from "@/components/marketing/use-marketing-home-portal-session";
@@ -13,6 +13,7 @@ import {
   MARKETING_SITE_NAV_PATHS,
   type MarketingSiteNavKey
 } from "@/lib/marketing/marketing-site-nav";
+import { MARKETING_SITE_NAV_ICONS } from "@/lib/marketing/marketing-site-nav-icons";
 import type { Locale, MarketingLocale } from "@/lib/i18n";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -24,18 +25,9 @@ type WorkspaceCta = {
 
 type MobileNavItemKey = "login" | MarketingSiteNavKey;
 
-const SITE_NAV_ICONS: Record<MarketingSiteNavKey, typeof User> = {
-  about: Info,
-  process: Flower2,
-  cases: FileText,
-  pricing: Tag,
-  resources: Box,
-  faq: CircleHelp
-};
-
 const MOBILE_NAV_ICONS: Record<MobileNavItemKey, typeof User> = {
   login: User,
-  ...SITE_NAV_ICONS
+  ...MARKETING_SITE_NAV_ICONS
 };
 
 function MobileNavCard({
@@ -138,7 +130,7 @@ function MobileNavMenu({
       title: item.label,
       description: item.description,
       useAnchor: false,
-      icon: SITE_NAV_ICONS[item.key]
+      icon: MARKETING_SITE_NAV_ICONS[item.key]
     }))
   ];
 

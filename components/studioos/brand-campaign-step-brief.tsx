@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { refineBrandBriefAction } from "@/app/brand-campaign-actions";
 import { addReferenceAction, removeReferenceAction } from "@/app/project-wizard-actions";
 import { BrandCampaignBriefStep1Panel } from "@/components/studioos/brand-campaign-brief-step1-panel";
@@ -17,7 +17,7 @@ import { labelPlatform } from "@/lib/localized-options";
 import { objectiveOptions, PLATFORM_OPTIONS } from "@/lib/studioos/brand-brief-options";
 import type { ReorganizedBrandBrief } from "@/lib/studioos/brand-brief-ai";
 import {
-  BRAND_BUDGET_PRESETS,
+  getBrandBudgetPresets,
   BRAND_DELIVERY_TIMELINES,
   BRAND_BUDGET_MIN_USD,
   BRAND_VIDEO_ASPECT_RATIOS,
@@ -29,7 +29,14 @@ import {
   type BrandDeliveryTimelineId,
   type BrandVideoAspectRatio
 } from "@/lib/studioos/brand-campaign-options";
+import {
+  budgetRangeLabel,
+  formatMoneyFromUsd,
+  getCurrencySymbol
+} from "@/lib/money/display-money";
 import { appendCreativeBriefExtendedFields } from "@/lib/studioos/brand-creative-brief-form";
+import { getBriefContinueBlocker } from "@/lib/studioos/brand-creative-brief-continue-validation";
+import { BRIEF_FIELD_TARGETS, scrollToBriefField } from "@/lib/studioos/brand-creative-brief-scroll";
 import { compressImageForUpload } from "@/lib/studioos/image-upload-client";
 import type { CommercialObjective } from "@/lib/project-types";
 import { cn } from "@/lib/utils";
@@ -107,7 +114,7 @@ const copy = {
     continue: "Continue",
     saveDraft: "Save draft",
     savingDraft: "Saving…",
-    needInput: "Upload a product photo or add a link (optional), and describe your campaign.",
+    needInput: "Upload a product photo and describe your campaign.",
     needPolish: "Write your idea first, then tap AI polish.",
     needApply: "Apply the AI result before continuing, or fill in the questionnaire manually.",
     refsTitle: "Style references (optional)",
@@ -185,7 +192,7 @@ const copy = {
     continue: "继续",
     saveDraft: "保存草稿",
     savingDraft: "保存中…",
-    needInput: "请上传产品图或填写产品链接（选填），并描述广告需求。",
+    needInput: "请上传产品图并描述广告需求。",
     needPolish: "先写下你的想法，再点 AI 整理。",
     needApply: "请先点击「应用到 Campaign」，或手动填写问卷。",
     refsTitle: "风格参考（选填）",
@@ -388,7 +395,7 @@ export function BrandCampaignStepBrief({
   const [refUrl, setRefUrl] = useState("");
   const [references, setReferences] = useState(initialReferences);
   const [isRefPending, startRefAction] = useTransition();
-  const [budgetCustom, setBudgetCustom] = useState(() => customBudgetInputFromStored(initial.budgetRange));
+  const [budgetCustom, setBudgetCustom] = useState(() => customBudgetInputFromStored(initial.budgetRange, locale));
   const [budgetCustomError, setBudgetCustomError] = useState<string | null>(null);
   const [aspectRatioError, setAspectRatioError] = useState<string | null>(null);
 
@@ -413,6 +420,9 @@ export function BrandCampaignStepBrief({
 
   function patch<K extends keyof BriefFormState>(key: K, value: BriefFormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
+    if (key === "scheduleStart" || key === "scheduleDelivery" || key === "videoDurationCustom") {
+      setLocalError(null);
+    }
     if (key !== "refined") {
       setRefinedApplied(false);
       setApplyNotice(null);
@@ -752,25 +762,34 @@ export function BrandCampaignStepBrief({
     return state;
   }
 
+  function applyBriefContinueBlocker(error: string, targetId: string) {
+    setLocalError(error);
+    if (targetId === BRIEF_FIELD_TARGETS.aspectRatio) {
+      setAspectRatioError(error);
+    }
+    if (targetId === BRIEF_FIELD_TARGETS.budget) {
+      setBudgetCustomError(error);
+    }
+    scrollToBriefField(targetId);
+  }
+
   function handleContinue() {
     const payload = resolveBriefForContinue(form);
 
     if (stepMode === "brief") {
       const hasBrief = payload.productDescription.trim() || payload.rawSummary.trim();
       if (!hasBrief) {
-        setLocalError(t.needPolish);
+        applyBriefContinueBlocker(t.needPolish, BRIEF_FIELD_TARGETS.productDescription);
         return;
       }
       if (!payload.aspectRatio) {
-        setAspectRatioError(t.aspectRatioError);
-        setLocalError(t.aspectRatioError);
+        applyBriefContinueBlocker(t.aspectRatioError, BRIEF_FIELD_TARGETS.aspectRatio);
         return;
       }
       if (budgetCustom.trim()) {
         const budgetResult = normalizeCustomBudgetInput(budgetCustom, locale);
         if (!budgetResult.ok) {
-          setBudgetCustomError(budgetResult.message);
-          setLocalError(budgetResult.message);
+          applyBriefContinueBlocker(budgetResult.message, BRIEF_FIELD_TARGETS.budget);
           return;
         }
       }
@@ -782,7 +801,7 @@ export function BrandCampaignStepBrief({
     if (stepMode === "product") {
       const hasVisual = Boolean(form.productUrl.trim()) || productReady;
       if (!hasVisual) {
-        setLocalError(t.needInput);
+        applyBriefContinueBlocker(t.needInput, BRIEF_FIELD_TARGETS.productImage);
         return;
       }
       setLocalError(null);
@@ -800,44 +819,25 @@ export function BrandCampaignStepBrief({
       ...resolveBriefForContinue(form),
       aspectRatio: resolveBriefForContinue(form).aspectRatio || defaultBrandAspectRatio()
     };
-    const hasVisual = Boolean(form.productUrl.trim() || form.brandWebsite.trim()) || productReady;
-    const hasBrief =
-      payloadAll.productDescription.trim() ||
-      payloadAll.rawSummary.trim() ||
-      payloadAll.adOneLiner.trim() ||
-      payloadAll.productName.trim();
 
-    if (!form.projectTitle.trim()) {
-      setLocalError(locale === "zh" ? "请填写项目名称" : "Enter a project name");
-      return;
-    }
-
-    if (!form.adOneLiner.trim() && !payloadAll.productDescription.trim()) {
-      setLocalError(locale === "zh" ? "请用一句话描述您的广告需求" : "Describe your ad need in one sentence");
-      return;
-    }
-
-    if (!payloadAll.aspectRatio) {
-      setAspectRatioError(t.aspectRatioError);
-      setLocalError(t.aspectRatioError);
-      return;
-    }
-
-    if (!hasVisual || !hasBrief) {
-      setLocalError(t.needInput);
-      return;
-    }
-
-    if (budgetCustom.trim()) {
-      const budgetResult = normalizeCustomBudgetInput(budgetCustom, locale);
-      if (!budgetResult.ok) {
-        setBudgetCustomError(budgetResult.message);
-        setLocalError(budgetResult.message);
-        return;
+    const blocker = getBriefContinueBlocker({
+      locale,
+      form,
+      productReady,
+      budgetCustom,
+      copy: {
+        needInput: t.needInput,
+        aspectRatioError: t.aspectRatioError
       }
+    });
+    if (blocker) {
+      applyBriefContinueBlocker(blocker.error, blocker.targetId);
+      return;
     }
 
     setLocalError(null);
+    setAspectRatioError(null);
+    setBudgetCustomError(null);
     onContinue(payloadAll);
   }
 
@@ -851,6 +851,9 @@ export function BrandCampaignStepBrief({
   const displayError = localError || error;
   const timelineOptions = BRAND_DELIVERY_TIMELINES[locale];
   const aspectRatioOptions = BRAND_VIDEO_ASPECT_RATIOS[locale];
+  const budgetPresets = useMemo(() => getBrandBudgetPresets(locale), [locale]);
+  const minBudgetLabel = formatMoneyFromUsd(BRAND_BUDGET_MIN_USD, locale);
+  const currencySymbol = getCurrencySymbol(locale);
   const budgetIsCustom = Boolean(budgetCustom.trim()) || !isPresetBudget(form.budgetRange);
   const continueDisabled =
     isPending ||
@@ -989,8 +992,16 @@ export function BrandCampaignStepBrief({
               />
 
               <div className="grid gap-4 sm:grid-cols-2">
-                <PlanningField icon={Wallet} title={t.budgetLabel} hint={t.budgetHint}>
-                  {BRAND_BUDGET_PRESETS.map((option) => (
+                <PlanningField
+                  icon={Wallet}
+                  title={budgetRangeLabel(locale)}
+                  hint={
+                    locale === "zh"
+                      ? `最低 ${minBudgetLabel} · 支持单个金额或区间`
+                      : `Minimum ${minBudgetLabel} · single amount or range`
+                  }
+                >
+                  {budgetPresets.map((option) => (
                     <OptionChip
                       key={option.value}
                       active={!budgetIsCustom && form.budgetRange === option.value}
@@ -1009,7 +1020,7 @@ export function BrandCampaignStepBrief({
                           : "border-zinc-200 hover:border-zinc-300"
                       )}
                     >
-                      <span className="shrink-0 text-sm font-semibold text-zinc-500">$</span>
+                      <span className="shrink-0 text-sm font-semibold text-zinc-500">{currencySymbol}</span>
                       <Input
                         value={budgetCustom}
                         onChange={(e) => handleBudgetCustomChange(e.target.value)}
@@ -1024,8 +1035,8 @@ export function BrandCampaignStepBrief({
                     ) : (
                       <p className="mt-1.5 text-xs text-zinc-400">
                         {locale === "zh"
-                          ? `最低 $${BRAND_BUDGET_MIN_USD} 美金 · 支持单个金额或区间`
-                          : `Minimum $${BRAND_BUDGET_MIN_USD} USD · single amount or range`}
+                          ? `最低 ${minBudgetLabel} · 支持单个金额或区间`
+                          : `Minimum ${minBudgetLabel} · single amount or range`}
                       </p>
                     )}
                   </div>

@@ -103,7 +103,7 @@ export function InquiryQuotePanel({
             <div>
               <p className="text-lg font-semibold">{order.title}</p>
               <div className="mt-2 flex flex-wrap gap-2">
-                <Badge variant="secondary">{formatCurrency(order.amount)}</Badge>
+                <Badge variant="secondary">{formatCurrency(order.amount, locale)}</Badge>
                 <Badge variant="outline">{order.status}</Badge>
                 <Badge variant="outline">{order.payment_status}</Badge>
               </div>
@@ -138,7 +138,7 @@ export function InquiryQuotePanel({
               <div className="flex flex-wrap gap-2">
                 <Badge variant="secondary">
                   <Banknote className="mr-1 h-3.5 w-3.5" />
-                  {formatCurrency(quote.amount)}
+                  {formatCurrency(quote.amount, locale)}
                 </Badge>
                 <Badge variant="outline">
                   <Clock3 className="mr-1 h-3.5 w-3.5" />
@@ -192,7 +192,7 @@ export function InquiryQuotePanel({
           </p>
           <div className="mt-4 rounded-xl border bg-zinc-50 p-4">
             <div className="flex flex-wrap gap-2">
-              <Badge variant="secondary">{formatCurrency(quote.amount)}</Badge>
+              <Badge variant="secondary">{formatCurrency(quote.amount, locale)}</Badge>
               <Badge variant="outline">
                 {quote.delivery_days} {locale === "zh" ? "天交付" : "days"}
               </Badge>

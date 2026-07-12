@@ -53,7 +53,7 @@ export default async function AdminDepositsPage({ searchParams }: AdminDepositsP
         <p className="mt-3 max-w-3xl text-sm leading-6 text-muted-foreground">{t.subtitle}</p>
       </div>
       <div className="mt-8 grid gap-4 md:grid-cols-3">
-        <Metric label={locale === "zh" ? "保证金总额" : "Total deposits"} value={formatCurrency(summary.totalAmount)} />
+        <Metric label={locale === "zh" ? "保证金总额" : "Total deposits"} value={formatCurrency(summary.totalAmount, locale)} />
         <Metric label={locale === "zh" ? "退还申请" : "Refund requests"} value={String(summary.refundRequestedCount)} />
         <Metric label={locale === "zh" ? "Studio 数量" : "Studios"} value={String(summary.studioCount)} />
       </div>
@@ -74,7 +74,7 @@ export default async function AdminDepositsPage({ searchParams }: AdminDepositsP
                     <div className="font-medium">{deposit.creatorName}</div>
                     <div className="text-xs text-muted-foreground">{deposit.creatorEmail}</div>
                   </TableCell>
-                  <TableCell>{formatCurrency(deposit.amount)}</TableCell>
+                  <TableCell>{formatCurrency(deposit.amount, locale)}</TableCell>
                   <TableCell>
                     <Badge variant={deposit.status === "paid" ? "success" : "warning"}>{deposit.status}</Badge>
                   </TableCell>

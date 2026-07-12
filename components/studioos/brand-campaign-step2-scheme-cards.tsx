@@ -3,27 +3,11 @@
 import Image from "next/image";
 import type { CreativeDirection } from "@/features/ai/creative-direction.types";
 import { STEP2_SCHEME_LAYOUT } from "@/lib/studioos/brand-campaign-step2-layout";
+import { BRAND_CAMPAIGN_STEP2_SCHEME_COPY } from "@/lib/studioos/brand-campaign-step2-copy";
 import type { SchemeDisplayMetrics } from "@/lib/studioos/brand-campaign-scheme-metrics";
 import type { Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { Check, Play } from "lucide-react";
-
-const copy = {
-  en: {
-    scheme: "Strategy",
-    audience: "Audience",
-    emotion: "Emotion",
-    integration: "Integration",
-    mediaComingSoon: "Coming soon"
-  },
-  zh: {
-    scheme: "Strategy",
-    audience: "受众",
-    emotion: "情绪",
-    integration: "植入",
-    mediaComingSoon: "即将开放"
-  }
-} as const;
 
 function CompactSchemeThumb({
   locale,
@@ -41,7 +25,7 @@ function CompactSchemeThumb({
   if (!showImages) {
     return (
       <div className="flex h-[96px] w-[96px] items-center justify-center rounded-lg border border-dashed border-zinc-200 bg-zinc-50">
-        <p className="px-1 text-center text-[10px] text-zinc-400">{copy[locale].mediaComingSoon}</p>
+        <p className="px-1 text-center text-[10px] text-zinc-400">{BRAND_CAMPAIGN_STEP2_SCHEME_COPY[locale].mediaComingSoon}</p>
       </div>
     );
   }
@@ -81,7 +65,7 @@ export function BrandCampaignStep2CompactScheme({
   textOnly?: boolean;
   onSelect: () => void;
 }) {
-  const t = copy[locale];
+  const t = BRAND_CAMPAIGN_STEP2_SCHEME_COPY[locale];
 
   return (
     <button
@@ -90,19 +74,19 @@ export function BrandCampaignStep2CompactScheme({
       className={cn(
         "group w-full min-w-0 rounded-xl border bg-white p-4 text-left shadow-sm transition-shadow",
         selected
-          ? "border-violet-300 ring-2 ring-violet-100"
-          : "border-zinc-200 hover:border-zinc-300 hover:shadow-md"
+          ? "border-zinc-900 ring-1 ring-zinc-200"
+          : "border-zinc-200 hover:border-zinc-300"
       )}
     >
       <div className="mb-3 flex items-center justify-between gap-2">
-        <span className="flex min-w-0 items-center gap-1.5 text-xs font-semibold text-violet-700">
-          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-violet-600 text-[10px] font-bold text-white">
+        <span className="flex min-w-0 items-center gap-1.5 text-xs font-medium text-zinc-700">
+          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-zinc-100 text-[10px] font-semibold text-zinc-700">
             {metrics.label}
           </span>
-          {t.scheme} {metrics.label}
+          {t.schemeCompact} {metrics.label}
         </span>
         {selected ? (
-          <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-violet-600 text-white">
+          <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-white">
             <Check className="h-2.5 w-2.5" strokeWidth={3} />
           </span>
         ) : (

@@ -547,8 +547,8 @@ export function IncomeWithdrawalPanel({
                   placeholder={`${snapshot.min_withdrawal_usd} - ${snapshot.available_usd}`}
                 />
                 <p className="text-xs text-zinc-500">
-                  {t.minHint} {formatCurrency(snapshot.min_withdrawal_usd)} · {t.maxHint}{" "}
-                  {formatCurrency(snapshot.available_usd)}
+                  {t.minHint} {formatCurrency(snapshot.min_withdrawal_usd, locale)} · {t.maxHint}{" "}
+                  {formatCurrency(snapshot.available_usd, locale)}
                 </p>
               </div>
               <div className="grid gap-2">
@@ -578,10 +578,10 @@ export function IncomeWithdrawalPanel({
 
           {step === "review" && selectedMethod ? (
             <div className="space-y-4">
-              <ReviewRow label={t.amountLabel} value={formatCurrency(parsedAmount)} />
+              <ReviewRow label={t.amountLabel} value={formatCurrency(parsedAmount, locale)} />
               <ReviewRow label={t.methodLabel} value={payoutMethodSummary(selectedMethod, locale)} />
-              <ReviewRow label={t.fee} value={formatCurrency(fee)} />
-              <ReviewRow label={t.net} value={formatCurrency(net)} highlight />
+              <ReviewRow label={t.fee} value={formatCurrency(fee, locale)} />
+              <ReviewRow label={t.net} value={formatCurrency(net, locale)} highlight />
               {cryptoPreview ? (
                 <ReviewRow
                   label={t.cryptoReceive}

@@ -1,5 +1,6 @@
 import type { CreatorPortalInvitationView } from "@/features/creator/creator-portal.types";
 import type { Locale } from "@/lib/i18n";
+import { formatMoneyFromUsd, formatStoredBudgetRange } from "@/lib/money/display-money";
 import type { StoredProject } from "@/lib/project-types";
 import { formatCurrency } from "@/lib/utils";
 
@@ -10,10 +11,16 @@ const categoryLabels: Record<string, Record<Locale, string>> = {
   fashion: { en: "Beauty & fashion", zh: "时尚美妆" }
 };
 
-const demoBudgetLabels: Record<string, Record<Locale, string>> = {
-  inv_demo_pending_01: { en: "$1,800 USD", zh: "$1,800 USD" },
-  inv_demo_pending_03: { en: "$300 USD", zh: "$300 USD" }
+const demoBudgetAmounts: Record<string, number> = {
+  inv_demo_pending_01: 1800,
+  inv_demo_pending_03: 300
 };
+
+function demoBudgetLabel(id: string, locale: Locale): string | undefined {
+  const amount = demoBudgetAmounts[id];
+  if (amount === undefined) return undefined;
+  return formatMoneyFromUsd(amount, locale);
+}
 
 export function localizeInvitationCategory(category: string | null | undefined, locale: Locale) {
   const key = category?.trim().toLowerCase() ?? "";
@@ -36,10 +43,10 @@ export function buildInvitationBudgetLabel(
   invitation: CreatorPortalInvitationView,
   locale: Locale = "en"
 ) {
-  const demoBudget = demoBudgetLabels[invitation.id]?.[locale];
+  const demoBudget = demoBudgetLabel(invitation.id, locale);
   if (demoBudget) return demoBudget;
   if (project?.budget_range?.trim()) {
-    return project.budget_range;
+    return formatStoredBudgetRange(project.budget_range, locale);
   }
-  return `${formatCurrency(invitation.budget)} ${invitation.currency}`;
+  return formatCurrency(invitation.budget, locale);
 }

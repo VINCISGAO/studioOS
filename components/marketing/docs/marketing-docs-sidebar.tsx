@@ -1,34 +1,18 @@
+"use client";
+
 import Link from "next/link";
-import {
-  BookOpen,
-  CircleHelp,
-  FileText,
-  Flower2,
-  Home,
-  Info,
-  Sparkles,
-  Tag,
-  Box
-} from "lucide-react";
+import { Home } from "lucide-react";
 import { BrandLogoLockup } from "@/components/brand-logo-mark";
 import { OpenMarketingLucienButton } from "@/components/marketing/docs/open-marketing-lucien-button";
 import {
   marketingDocsNavText,
   type MarketingDocsNavKey
 } from "@/lib/marketing/marketing-docs-nav";
+import { MARKETING_SITE_NAV_ICONS } from "@/lib/marketing/marketing-site-nav-icons";
 import { marketingSiteNavItems } from "@/lib/marketing/marketing-site-nav";
 import { buildLocalizedHref, marketingHomeHref } from "@/lib/marketing/localized-href";
 import { cn } from "@/lib/utils";
 import type { Locale } from "@/lib/i18n";
-
-const NAV_ICONS = {
-  process: Flower2,
-  about: Info,
-  cases: FileText,
-  pricing: Tag,
-  resources: Box,
-  faq: CircleHelp
-} as const;
 
 type MarketingDocsSidebarProps = {
   locale: Locale;
@@ -39,7 +23,7 @@ export function MarketingDocsSidebar({ locale, active }: MarketingDocsSidebarPro
   const t = marketingDocsNavText(locale);
   const links = marketingSiteNavItems(locale).map((item) => ({
     ...item,
-    icon: NAV_ICONS[item.key]
+    icon: MARKETING_SITE_NAV_ICONS[item.key]
   }));
 
   return (
@@ -77,7 +61,7 @@ export function MarketingDocsSidebar({ locale, active }: MarketingDocsSidebarPro
         })}
       </nav>
 
-      <div className="mt-8 rounded-2xl border border-violet-100/80 bg-violet-50/60 p-4">
+      <div className="mt-auto rounded-2xl border border-violet-100/80 bg-violet-50/60 p-4">
         <p className="text-sm font-semibold text-zinc-950">{t.aiHelpTitle}</p>
         <p className="mt-1 text-xs leading-5 text-zinc-600">{t.aiHelpBody}</p>
         <OpenMarketingLucienButton className="mt-3 inline-flex h-9 w-full items-center justify-center rounded-full border border-violet-200 bg-white text-sm font-medium text-violet-700 transition hover:border-violet-300 hover:bg-violet-50">
@@ -85,23 +69,7 @@ export function MarketingDocsSidebar({ locale, active }: MarketingDocsSidebarPro
         </OpenMarketingLucienButton>
       </div>
 
-      <div className="mt-auto rounded-2xl border border-violet-100 bg-violet-50/80 p-4">
-        <div className="flex items-start gap-2">
-          <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-violet-600" />
-          <div>
-            <p className="text-sm font-semibold text-zinc-950">{t.ctaTitle}</p>
-            <p className="mt-1 text-xs leading-5 text-zinc-600">{t.ctaBody}</p>
-          </div>
-        </div>
-        <Link
-          href={marketingHomeHref.brand(locale)}
-          className="mt-4 inline-flex h-9 w-full items-center justify-center rounded-full bg-zinc-950 text-sm font-semibold text-white transition hover:bg-zinc-800"
-        >
-          {t.ctaButton}
-        </Link>
-      </div>
-
-      <div className="mt-8 space-y-2 border-t border-zinc-100 pt-6">
+      <div className="mt-8 border-t border-zinc-100 pt-6">
         <Link
           href={marketingHomeHref.home(locale)}
           className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-zinc-600 transition hover:bg-zinc-50 hover:text-zinc-950"
@@ -109,14 +77,6 @@ export function MarketingDocsSidebar({ locale, active }: MarketingDocsSidebarPro
           <Home className="h-4 w-4" />
           {t.backHome}
         </Link>
-        <button
-          type="button"
-          className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-zinc-500"
-          aria-disabled
-        >
-          <BookOpen className="h-4 w-4" />
-          {t.darkMode}
-        </button>
       </div>
     </aside>
   );

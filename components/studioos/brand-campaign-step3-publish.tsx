@@ -55,7 +55,7 @@ const copy = {
   },
   zh: {
     title: "发布广告",
-    subtitle: "发布后系统将向匹配的 Creator 发出合作邀请，对方接受或拒绝后，你再从名单中选择合作对象。",
+    subtitle: "发布后系统将向匹配的创作者发出合作邀请，对方接受或拒绝后，你再从名单中选择合作对象。",
     readyBadge: "准备就绪",
     readyTitle: "需求已准备发布",
     readyBody: "确认无误后发布并进入托管付款，付款完成后，系统将向匹配的创作者发出合作邀请。",
@@ -71,13 +71,13 @@ const copy = {
     billingBody: "系统会先带你完成付款，付款确认后才会开始匹配创作者。",
     nextTitle: "接下来会发生什么？",
     next1Title: "发出合作邀请",
-    next1Body: "系统将向匹配的 Creator 发出合作邀请",
+    next1Body: "系统将向匹配的创作者发出合作邀请",
     next2Title: "创作者回应",
-    next2Body: "Creator 接受或拒绝邀请，你将收到通知",
+    next2Body: "创作者接受或拒绝邀请后，你将收到通知",
     next3Title: "选择合作方",
-    next3Body: "从回应的 Creator 中选择最合适的合作对象",
+    next3Body: "从回应的创作者中选择最合适的合作对象",
     tipTitle: "小贴士",
-    tipBody: "发出后 Creator 通常在 24–72 小时内回应，及时查看通知可加快项目启动速度。",
+    tipBody: "发出后创作者通常在 24–72 小时内回应，及时查看通知可加快项目启动速度。",
     back: "返回上一步"
   }
 } as const;

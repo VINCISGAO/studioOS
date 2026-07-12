@@ -85,8 +85,8 @@ export default async function AdminPartnersPage({
       <div className="mt-8 grid gap-4 md:grid-cols-4">
         {[
           { label: t.activePartners, value: String(activeCount), icon: Handshake },
-          { label: t.attributedRevenue, value: formatCurrency(data.totals.revenue), icon: TrendingUp },
-          { label: t.pendingCommission, value: formatCurrency(data.totals.pending), icon: TrendingUp },
+          { label: t.attributedRevenue, value: formatCurrency(data.totals.revenue, locale), icon: TrendingUp },
+          { label: t.pendingCommission, value: formatCurrency(data.totals.pending, locale), icon: TrendingUp },
           { label: t.referredAccounts, value: String(data.totals.brands + data.totals.creators), icon: Users }
         ].map((item) => (
           <Card key={item.label} className="shadow-none">
@@ -126,8 +126,8 @@ export default async function AdminPartnersPage({
                     <div className="mt-4 grid gap-3 text-sm text-muted-foreground sm:grid-cols-4">
                       <p>{t.region}: {partner.region ?? "Global"}</p>
                       <p>{t.commission}: {Number(partner.commissionRate)}%</p>
-                      <p>{t.attributedRevenue}: {formatCurrency(Number(partner.attributedRevenue))}</p>
-                      <p>{t.paid}: {formatCurrency(Number(partner.paidCommission))}</p>
+                      <p>{t.attributedRevenue}: {formatCurrency(Number(partner.attributedRevenue), locale)}</p>
+                      <p>{t.paid}: {formatCurrency(Number(partner.paidCommission), locale)}</p>
                     </div>
                   </div>
                 ))}

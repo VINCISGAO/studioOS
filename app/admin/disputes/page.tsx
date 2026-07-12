@@ -144,7 +144,7 @@ export default async function AdminDisputesPage({ searchParams }: { searchParams
               {refundRequests.map((refund) => (
                 <TableRow key={refund.id}>
                   <TableCell className="font-medium">{refund.orderId}</TableCell>
-                  <TableCell>{formatCurrency(refund.amount)}</TableCell>
+                  <TableCell>{formatCurrency(refund.amount, locale)}</TableCell>
                   <TableCell>
                     <Badge variant="warning">{refund.status}</Badge>
                   </TableCell>

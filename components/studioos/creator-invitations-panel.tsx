@@ -77,7 +77,7 @@ export function CreatorInvitationsPanel({
                 <h3 className="mt-1 truncate text-base font-semibold text-zinc-950">{invitation.title}</h3>
                 <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-zinc-500">
                   <span>
-                    {t.budget}: {formatCurrency(invitation.budget)} {invitation.currency}
+                    {t.budget}: {formatCurrency(invitation.budget, locale)} {invitation.currency}
                   </span>
                   <span>
                     {t.deadline}: {formatDate(invitation.deadline, locale)}

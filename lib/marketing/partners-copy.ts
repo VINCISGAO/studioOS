@@ -1,4 +1,5 @@
 import type { Locale } from "@/lib/i18n";
+import { formatMoneyFromUsd } from "@/lib/money/display-money";
 
 export type PartnersCopy = {
   nav: {
@@ -206,7 +207,7 @@ export function formatPartnerStatValue(
 ) {
   if (index === 0) return `${stats.activePartners.toLocaleString(locale === "zh" ? "zh-CN" : "en-US")}+`;
   if (index === 1) {
-    return `$${Math.round(stats.totalPaidCommission).toLocaleString(locale === "zh" ? "zh-CN" : "en-US")}+`;
+    return `${formatMoneyFromUsd(stats.totalPaidCommission, locale)}+`;
   }
   if (index === 2) return `${stats.referredCustomers.toLocaleString(locale === "zh" ? "zh-CN" : "en-US")}+`;
   return `${stats.satisfactionRate.toFixed(1)}%`;

@@ -5,48 +5,20 @@ import {
   buildSchemeDisplayMetrics,
   type SchemeDisplayMetrics
 } from "@/lib/studioos/brand-campaign-scheme-metrics";
+import {
+  BRAND_CAMPAIGN_STEP2_PDF_DIRECTION_COPY,
+  BRAND_CAMPAIGN_STEP2_PDF_DOC_COPY,
+  BRAND_CAMPAIGN_STEP2_SCHEME_COPY,
+  BRAND_CAMPAIGN_STEP2_SIDEBAR_COPY
+} from "@/lib/studioos/brand-campaign-step2-copy";
 import type { Locale } from "@/lib/i18n";
 import type { StoredProjectReference } from "@/lib/campaign-types";
 import type { StoredProject } from "@/lib/project-types";
+import { formatMoneyFromUsd, formatStoredBudgetRange, proUpgradeLabel } from "@/lib/money/display-money";
 import { cn } from "@/lib/utils";
 import { Camera, Check, Crown, Download, FileText, Lock, Palette, UsersRound, Wand2 } from "lucide-react";
 
-const copy = {
-  en: {
-    compare: "Creative Strategy comparison",
-    customCompare: "Custom comparison",
-    scheme: "Strategy",
-    audienceMatch: "Audience Match",
-    emotionalResonance: "Emotional Resonance",
-    productIntegration: "Product Integration",
-    difficulty: "AI Production Difficulty",
-    platforms: "Suitable Platforms",
-    recommended: "Recommended",
-    expected: "Strategy Signals",
-    estimatedCtr: "Estimated CTR",
-    duration: "Recommended Duration",
-    industries: "Suitable Industries",
-    budget: "Estimated Budget",
-    export: "Export all schemes (PDF)"
-  },
-  zh: {
-    compare: "Creative Strategy 对比",
-    customCompare: "自定义对比",
-    scheme: "Strategy",
-    audienceMatch: "Audience Match",
-    emotionalResonance: "Emotional Resonance",
-    productIntegration: "Product Integration",
-    difficulty: "AI Production Difficulty",
-    platforms: "Suitable Platforms",
-    recommended: "推荐",
-    expected: "策略判断",
-    estimatedCtr: "Estimated CTR",
-    duration: "Recommended Duration",
-    industries: "Suitable Industries",
-    budget: "Estimated Budget",
-    export: "导出全部方案"
-  }
-} as const;
+const PRO_TOOL_ICONS = [Wand2, Palette, Camera, FileText] as const;
 
 const DEFAULT_PLATFORMS = ["TikTok", "Meta"];
 
@@ -112,44 +84,7 @@ function renderDirection(
   locale: Locale,
   index: number
 ) {
-  const labels =
-    locale === "zh"
-      ? {
-          scheme: "Creative Strategy",
-          coreIdea: "Core Insight",
-          hook: "Opening Hook",
-          story: "Story Structure",
-          visual: "视觉风格",
-          tone: "镜头 / 音乐 / 色彩",
-          shots: "镜头建议",
-          cta: "行动号召",
-          creator: "推荐创作者类型",
-          outcome: "Expected Performance",
-          rationale: "Why AI Recommends This",
-          audienceMatch: "Audience Match",
-          emotionalResonance: "Emotional Resonance",
-          productIntegration: "Product Integration",
-          estimatedCtr: "Estimated CTR",
-          duration: "Recommended Duration"
-        }
-      : {
-          scheme: "Creative Strategy",
-          coreIdea: "Core Insight",
-          hook: "Opening Hook",
-          story: "Story Structure",
-          visual: "Visual style",
-          tone: "Camera / Music / Color",
-          shots: "Shot list",
-          cta: "CTA",
-          creator: "Recommended creator type",
-          outcome: "Expected Performance",
-          rationale: "Why AI Recommends This",
-          audienceMatch: "Audience Match",
-          emotionalResonance: "Emotional Resonance",
-          productIntegration: "Product Integration",
-          estimatedCtr: "Estimated CTR",
-          duration: "Recommended Duration"
-        };
+  const labels = BRAND_CAMPAIGN_STEP2_PDF_DIRECTION_COPY[locale];
 
   const shotList = Array.isArray(direction.shotList) ? direction.shotList : [];
   return `
@@ -163,7 +98,7 @@ function renderDirection(
         ${renderField(labels.duration, metrics.recommendedDuration)}
       </div>
       ${renderMultiline(labels.coreIdea, direction.coreInsight || direction.coreIdea)}
-      ${renderMultiline("Big Idea", direction.bigIdea || direction.coreIdea)}
+      ${renderMultiline(labels.bigIdea, direction.bigIdea || direction.coreIdea)}
       ${renderMultiline(labels.hook, direction.openingHook || direction.hook)}
       ${renderMultiline(labels.story, direction.storyStructure?.length ? direction.storyStructure.map((scene) => `${scene.label} ${scene.title}: ${scene.purpose}`).join("\n") : direction.story)}
       <dl class="grid">
@@ -205,65 +140,9 @@ function exportSchemesPdf(input: {
   ].filter((item, index, list) => item && list.indexOf(item) === index);
   const selectedIndex = Math.max(0, directions.findIndex((direction) => direction.id === selectedId));
   const selectedLabel = directions[selectedIndex] ? String.fromCharCode(65 + selectedIndex) : "";
-  const labels = zh
-    ? {
-        docTitle: "VINCIS Creative Strategy 导出",
-        overview: "一、已填写需求",
-        production: "二、制作与交付设置",
-        references: "三、素材与参考",
-        schemes: "四、全部 Creative Strategy",
-        selected: "当前选择方案",
-        generated: "导出时间",
-        projectName: "项目名称",
-        oneLiner: "广告一句话",
-        industry: "所属行业",
-        brand: "品牌名称",
-        website: "品牌官网",
-        brief: "详细需求",
-        style: "风格偏好",
-        include: "必须包含",
-        avoid: "需要避免",
-        duration: "视频时长",
-        aspect: "视频比例",
-        resolution: "分辨率",
-        fps: "帧率",
-        quantity: "视频数量",
-        budget: "已选预算",
-        timeline: "预计周期",
-        dates: "时间安排",
-        platforms: "投放平台",
-        refs: "参考链接 / 参考视频"
-      }
-    : {
-        docTitle: "VINCIS Creative Strategy Export",
-        overview: "1. Filled Brief",
-        production: "2. Production & Delivery Settings",
-        references: "3. Assets & References",
-        schemes: "4. All Creative Strategy Routes",
-        selected: "Selected scheme",
-        generated: "Exported at",
-        projectName: "Project name",
-        oneLiner: "Ad one-liner",
-        industry: "Industry",
-        brand: "Brand name",
-        website: "Brand website",
-        brief: "Detailed brief",
-        style: "Style preference",
-        include: "Must include",
-        avoid: "Must avoid",
-        duration: "Video duration",
-        aspect: "Aspect ratio",
-        resolution: "Resolution",
-        fps: "Frame rate",
-        quantity: "Video quantity",
-        budget: "Selected budget",
-        timeline: "Timeline",
-        dates: "Schedule",
-        platforms: "Platforms",
-        refs: "Reference links / videos"
-      };
-  const closeLabel = zh ? "关闭预览" : "Close preview";
-  const closeFallback = zh ? "如果窗口没有关闭，请直接关闭当前标签页。" : "If the window does not close, close this tab directly.";
+  const labels = BRAND_CAMPAIGN_STEP2_PDF_DOC_COPY[locale];
+  const closeLabel = labels.closePreview;
+  const closeFallback = labels.closeFallback;
 
   const html = `<!doctype html>
 <html lang="${zh ? "zh-CN" : "en"}">
@@ -382,7 +261,8 @@ export function BrandCampaignStep2SchemeSidebar({
     onSelect: () => void;
   };
 }) {
-  const t = copy[locale];
+  const t = BRAND_CAMPAIGN_STEP2_SIDEBAR_COPY[locale];
+  const schemeCopy = BRAND_CAMPAIGN_STEP2_SCHEME_COPY[locale];
   const metricsList = directions.map((direction, index) =>
     buildSchemeDisplayMetrics(direction, index, locale, fallbackBudget)
   );
@@ -479,11 +359,9 @@ export function BrandCampaignStep2SchemeSidebar({
               label: t.industries,
               value: selectedMetrics.suitableIndustries.length
                 ? selectedMetrics.suitableIndustries.slice(0, 3).join(", ")
-                : locale === "zh"
-                  ? "待 AI 判断"
-                  : "AI pending"
+                : schemeCopy.aiPending
             },
-            { label: t.budget, value: `$${selectedMetrics.budgetTotal}` }
+            { label: t.budget, value: formatMoneyFromUsd(selectedMetrics.budgetTotal, locale) }
           ].map((item) => (
             <div key={item.label} className="rounded-xl border border-zinc-100 bg-zinc-50/70 px-3 py-2.5">
               <p className="text-[10px] text-zinc-500">{item.label}</p>
@@ -514,39 +392,33 @@ export function BrandCampaignStep2SchemeSidebar({
       </button>
 
       <section className="rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-sm">
-        <h3 className="text-sm font-semibold text-zinc-950">
-          {locale === "zh" ? "专业版解锁更多创意工具" : "Unlock More Creative Tools"}
-        </h3>
-        <p className="mt-1 text-xs leading-5 text-zinc-500">
-          {locale === "zh" ? "仅展示创意策略预览，专业工具发布后开放。" : "Strategy preview now. Professional tools unlock after publish."}
-        </p>
+        <h3 className="text-sm font-semibold text-zinc-950">{t.proTitle}</h3>
+        <p className="mt-1 text-xs leading-5 text-zinc-500">{t.proBody}</p>
         <div className="mt-3 space-y-2">
-          {[
-            { icon: Wand2, label: "AI Moodboard", hint: locale === "zh" ? "参考画面与情绪板" : "Visual references" },
-            { icon: Palette, label: "Color Palette", hint: locale === "zh" ? "色彩方案" : "Color system" },
-            { icon: Camera, label: "Camera Style", hint: locale === "zh" ? "镜头风格" : "Camera language" },
-            { icon: FileText, label: "Shot List", hint: locale === "zh" ? "镜头清单" : "Shot breakdown" }
-          ].map(({ icon: Icon, label, hint }) => (
-            <div key={label} className="flex items-center justify-between gap-3 rounded-xl border border-zinc-100 bg-zinc-50/70 px-3 py-2.5">
+          {t.proTools.map((tool, index) => {
+            const Icon = PRO_TOOL_ICONS[index] ?? Wand2;
+            return (
+            <div key={tool.label} className="flex items-center justify-between gap-3 rounded-xl border border-zinc-100 bg-zinc-50/70 px-3 py-2.5">
               <span className="flex min-w-0 items-center gap-2">
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-violet-100 text-violet-700">
                   <Icon className="h-3.5 w-3.5" />
                 </span>
                 <span className="min-w-0">
-                  <span className="block truncate text-xs font-semibold text-zinc-900">{label}</span>
-                  <span className="block truncate text-[10px] text-zinc-500">{hint}</span>
+                  <span className="block truncate text-xs font-semibold text-zinc-900">{tool.label}</span>
+                  <span className="block truncate text-[10px] text-zinc-500">{tool.hint}</span>
                 </span>
               </span>
               <Lock className="h-3.5 w-3.5 shrink-0 text-zinc-400" />
             </div>
-          ))}
+            );
+          })}
         </div>
         <button
           type="button"
           className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800"
         >
           <Crown className="h-4 w-4" />
-          {locale === "zh" ? "升级到 Professional" : "Upgrade to Professional"}
+          {proUpgradeLabel(locale)}
         </button>
       </section>
 

@@ -135,11 +135,11 @@ export function AdminOverviewDashboard({
   const t = copy[locale];
 
   const kpiCards = [
-    { label: t.kpis.gmv, value: formatCurrency(overview.kpis.gmv) },
-    { label: t.kpis.revenue, value: formatCurrency(overview.kpis.platformRevenue) },
-    { label: t.kpis.fees, value: formatCurrency(overview.kpis.platformFees) },
-    { label: t.kpis.escrowHeld, value: formatCurrency(overview.kpis.escrowHeld) },
-    { label: t.kpis.settlementPending, value: formatCurrency(overview.kpis.settlementPending) },
+    { label: t.kpis.gmv, value: formatCurrency(overview.kpis.gmv, locale) },
+    { label: t.kpis.revenue, value: formatCurrency(overview.kpis.platformRevenue, locale) },
+    { label: t.kpis.fees, value: formatCurrency(overview.kpis.platformFees, locale) },
+    { label: t.kpis.escrowHeld, value: formatCurrency(overview.kpis.escrowHeld, locale) },
+    { label: t.kpis.settlementPending, value: formatCurrency(overview.kpis.settlementPending, locale) },
     { label: t.kpis.withdrawals, value: String(overview.kpis.pendingWithdrawals) },
     { label: t.kpis.disputes, value: String(overview.kpis.disputesOpen) },
     { label: t.kpis.active, value: String(overview.kpis.activeCampaigns) }
@@ -256,7 +256,7 @@ export function AdminOverviewDashboard({
                       </TableCell>
                       <TableCell>{row.brandName ?? "—"}</TableCell>
                       <TableCell>{row.creatorName ?? "—"}</TableCell>
-                      <TableCell>{formatCurrency(row.budget)}</TableCell>
+                      <TableCell>{formatCurrency(row.budget, locale)}</TableCell>
                       <TableCell>
                         <StatusBadge status={row.status} locale={locale} />
                       </TableCell>

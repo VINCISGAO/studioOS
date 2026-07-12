@@ -16,6 +16,7 @@ import {
 } from "@/lib/studioos/brand-lifecycle";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
 import { portalChrome } from "@/lib/studioos/product-theme";
+import { formatMoneyFromUsd } from "@/lib/money/display-money";
 import { cn, formatDate } from "@/lib/utils";
 
 type Props = {
@@ -89,7 +90,7 @@ export function BrandHomeDashboard({ locale, name, rows, metrics, notifications 
               { label: t.statDraft, value: lifecycleCounts.draft },
               { label: t.statActive, value: lifecycleCounts.recruiting + lifecycleCounts.in_production + lifecycleCounts.pending_review },
               { label: t.statDelivered, value: lifecycleCounts.completed },
-              { label: t.statSpend, value: `$${Math.round(metrics.monthSpend).toLocaleString()}` }
+              { label: t.statSpend, value: formatMoneyFromUsd(Math.round(metrics.monthSpend), locale) }
             ].map((stat) => (
               <div key={stat.label} className="flex flex-col justify-center px-6 py-5 lg:px-8">
                 <p className="text-2xl font-semibold tabular-nums tracking-tight text-zinc-950">{stat.value}</p>

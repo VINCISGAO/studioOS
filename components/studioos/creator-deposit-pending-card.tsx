@@ -110,7 +110,7 @@ export function CreatorDepositPendingCard({
           {snapshot.pending_payment ? (
             <p className="mt-3 inline-flex rounded-full bg-white px-3 py-1 text-sm font-medium text-zinc-800 ring-1 ring-amber-200/80">
               {paymentMethodLabel(snapshot.pending_payment.payment_method, locale)} ·{" "}
-              {formatCurrency(snapshot.pending_payment.amount_usd)} {t.paymentLabel}
+              {formatCurrency(snapshot.pending_payment.amount_usd, locale)} {t.paymentLabel}
             </p>
           ) : submitted ? (
             <p className="mt-3 text-sm text-zinc-500">

@@ -3,6 +3,7 @@ import { aiLearningEventRepository } from "@/features/ai/ai-learning-event.repos
 import { aiCopilotRepository } from "@/features/ai-copilot/ai-copilot.repository";
 import type { LucienQueryBlockCategory } from "@/features/ai-copilot/lucien-knowledge-boundary.constants";
 import type { LucienKnowledgeRetrievalScope } from "@/features/ai-copilot/lucien-knowledge-scope";
+import { asInputJson } from "@/lib/core/prisma-json";
 import { logger } from "@/lib/core/logger";
 
 export type LucienLearningSurface = "public" | "authenticated";
@@ -106,7 +107,7 @@ async function persistLearning(input: {
       entityType: input.entityType,
       entityId: input.entityId,
       learningType: input.learningType,
-      after: input.payload,
+      after: asInputJson(input.payload) ?? {},
       confidence: input.confidence
     });
   } catch (error) {

@@ -1,37 +1,23 @@
 "use client";
 
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-  type ReactNode
-} from "react";
+import dynamic from "next/dynamic";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
-import { PublicLucienDrawer } from "@/components/marketing/faq/public-lucien-drawer";
+import { MarketingDocsLucienContext } from "@/components/marketing/docs/marketing-docs-lucien-context";
 import {
   getLucienViewerSnapshot,
-  prefetchLucienViewerSnapshot,
-  type LucienViewerSnapshot
+  prefetchLucienViewerSnapshot
 } from "@/components/marketing/faq/lucien-viewer-identity.client";
 import { normalizePublicLucienPagePath } from "@/lib/marketing/public-lucien-paths";
 import type { Locale } from "@/lib/i18n";
 
-type MarketingDocsLucienContextValue = {
-  openLucien: () => void;
-  viewer: LucienViewerSnapshot;
-};
-
-const MarketingDocsLucienContext = createContext<MarketingDocsLucienContextValue | null>(null);
-
-export function useMarketingDocsLucien() {
-  const context = useContext(MarketingDocsLucienContext);
-  if (!context) {
-    throw new Error("useMarketingDocsLucien must be used within MarketingDocsLucienHost");
-  }
-  return context;
-}
+const PublicLucienDrawer = dynamic(
+  () =>
+    import("@/components/marketing/faq/public-lucien-drawer").then((module) => ({
+      default: module.PublicLucienDrawer
+    })),
+  { ssr: false }
+);
 
 export function MarketingDocsLucienHost({
   locale,
@@ -47,35 +33,33 @@ export function MarketingDocsLucienHost({
 
   useEffect(() => {
     setViewer(getLucienViewerSnapshot(locale));
-    let cancelled = false;
+  }, [locale]);
 
-    void prefetchLucienViewerSnapshot(locale).then((snapshot) => {
-      if (!cancelled) setViewer(snapshot);
-    });
-
-    return () => {
-      cancelled = true;
-    };
+  const openLucien = useCallback(() => {
+    setOpen(true);
+    void prefetchLucienViewerSnapshot(locale).then(setViewer);
   }, [locale]);
 
   const value = useMemo(
     () => ({
-      openLucien: () => setOpen(true),
+      openLucien,
       viewer
     }),
-    [viewer]
+    [openLucien, viewer]
   );
 
   return (
     <MarketingDocsLucienContext.Provider value={value}>
       {children}
-      <PublicLucienDrawer
-        locale={locale}
-        open={open}
-        pagePath={pagePath}
-        viewer={viewer}
-        onClose={() => setOpen(false)}
-      />
+      {open ? (
+        <PublicLucienDrawer
+          locale={locale}
+          open={open}
+          pagePath={pagePath}
+          viewer={viewer}
+          onClose={() => setOpen(false)}
+        />
+      ) : null}
     </MarketingDocsLucienContext.Provider>
   );
 }

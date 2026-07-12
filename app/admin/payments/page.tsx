@@ -30,7 +30,7 @@ export default async function AdminPaymentsPage({ searchParams }: { searchParams
         <Card className="border-zinc-200/80 shadow-none">
           <CardContent className="p-6">
             <p className="text-sm text-zinc-500">{locale === "zh" ? "已收款项" : "Collected volume"}</p>
-            <p className="mt-2 text-4xl font-semibold">{formatCurrency(paidTotal)}</p>
+            <p className="mt-2 text-4xl font-semibold">{formatCurrency(paidTotal, locale)}</p>
           </CardContent>
         </Card>
         <Card className="border-zinc-200/80 shadow-none">
@@ -42,7 +42,7 @@ export default async function AdminPaymentsPage({ searchParams }: { searchParams
       </div>
       <Card className="mt-4 border-zinc-200/80 shadow-none">
         <CardContent className="p-0">
-          <AdminPaymentsPrismaTable records={records} />
+          <AdminPaymentsPrismaTable locale={locale} records={records} />
         </CardContent>
       </Card>
       {webhooks.length > 0 && (

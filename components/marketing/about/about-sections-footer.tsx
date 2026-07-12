@@ -1,53 +1,8 @@
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, Download } from "lucide-react";
+import { Download } from "lucide-react";
 import { aboutText } from "@/lib/marketing/about-copy";
 import type { Locale } from "@/lib/i18n";
-import { cn } from "@/lib/utils";
-
-function SectionLink({ href, label }: { href: string; label: string }) {
-  return (
-    <Link href={href} className="inline-flex items-center gap-1 text-sm font-medium text-violet-700 hover:text-violet-900">
-      {label}
-      <ArrowRight className="h-4 w-4" />
-    </Link>
-  );
-}
-
-export function AboutTeamSection({ locale }: { locale: Locale }) {
-  const t = aboutText(locale);
-
-  return (
-    <section id="team" className="scroll-mt-24 mt-16 grid gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-center">
-      <div>
-        <h2 className="text-2xl font-bold text-zinc-950">{t.team.title}</h2>
-        <p className="mt-4 text-sm leading-7 text-zinc-600">{t.team.body}</p>
-        <div className="mt-5">
-          <SectionLink href="#contact" label={t.team.moreLink} />
-        </div>
-      </div>
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4">
-        {t.team.members.map((member, index) => (
-          <div key={member.name} className="overflow-hidden rounded-2xl border border-zinc-200/80 bg-white">
-            <div
-              className={cn(
-                "aspect-[3/4] bg-gradient-to-br",
-                index % 4 === 0 && "from-zinc-700 to-zinc-900",
-                index % 4 === 1 && "from-violet-700 to-indigo-900",
-                index % 4 === 2 && "from-rose-700 to-orange-900",
-                index % 4 === 3 && "from-emerald-700 to-teal-900"
-              )}
-            />
-            <div className="p-3">
-              <p className="text-sm font-semibold text-zinc-950">{member.name}</p>
-              <p className="mt-0.5 text-xs text-zinc-500">{member.role}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
 
 export function AboutContactPressSection({ locale }: { locale: Locale }) {
   const t = aboutText(locale);

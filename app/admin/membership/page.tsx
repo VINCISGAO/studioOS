@@ -144,7 +144,7 @@ export default async function AdminMembershipPage({
                   <Badge variant={plan.planType === "VERIFIED" ? "success" : "outline"}>{plan.planType}</Badge>
                 </div>
                 <p className="mt-2 text-sm text-zinc-500">
-                  {t.fee}: {formatCurrency(Number(plan.annualFee))}
+                  {t.fee}: {formatCurrency(Number(plan.annualFee), locale)}
                 </p>
                 <p className="text-sm text-zinc-500">
                   {t.commission}: {Number(plan.creatorCommissionPercentage)}%

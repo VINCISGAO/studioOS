@@ -16,11 +16,10 @@ type BrandWalletRechargeFormProps = {
 
 const PRESET_AMOUNTS = [200, 500, 1000] as const;
 
-function money(amount: number, currency = "USD", locale: Locale = "en") {
-  return new Intl.NumberFormat(locale === "zh" ? "zh-CN" : "en-US", {
-    style: "currency",
-    currency
-  }).format(amount);
+import { formatMoneyFromUsd } from "@/lib/money/display-money";
+
+function money(amount: number, locale: Locale = "en") {
+  return formatMoneyFromUsd(amount, locale);
 }
 
 function normalizeAmount(value: string) {
@@ -114,7 +113,7 @@ export function BrandWalletRechargeForm({
                     : "rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-xs font-semibold text-zinc-700 transition hover:bg-zinc-50 focus:border-violet-300 focus:text-violet-700 focus:outline-none"
                 }
               >
-                {money(preset, currency, locale)}
+                {money(preset, locale)}
               </button>
             );
           })}
@@ -157,8 +156,8 @@ export function BrandWalletRechargeForm({
             </h2>
             <p className="mt-2 text-sm leading-6 text-zinc-500">
               {locale === "zh"
-                ? `确认后将拉起付款，金额为 ${money(amountNumber, currency, locale)}。`
-                : `After confirmation, payment will open for ${money(amountNumber, currency, locale)}.`}
+                ? `确认后将拉起付款，金额为 ${money(amountNumber, locale)}。`
+                : `After confirmation, payment will open for ${money(amountNumber, locale)}.`}
             </p>
             <div className="mt-5 grid grid-cols-2 gap-2">
               <button

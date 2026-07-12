@@ -46,7 +46,7 @@ export function OrderPaymentPanel({
           <ShieldCheck className="h-5 w-5 text-emerald-700" />
           <div>
             <p className="font-semibold text-emerald-950">{t.paid}</p>
-            <p className="text-sm text-emerald-900">{formatCurrency(order.amount)}</p>
+            <p className="text-sm text-emerald-900">{formatCurrency(order.amount, locale)}</p>
           </div>
         </CardContent>
       </Card>
@@ -59,9 +59,9 @@ export function OrderPaymentPanel({
         <h2 className="text-lg font-semibold">{t.title}</h2>
         <p className="mt-2 text-sm leading-6 text-muted-foreground">{t.body}</p>
         <div className="mt-4 flex flex-wrap gap-2">
-          <Badge variant="secondary">{t.amount}: {formatCurrency(order.amount)}</Badge>
-          <Badge variant="outline">{t.fee}: {formatCurrency(order.platform_fee)}</Badge>
-          <Badge variant="outline">{t.payout}: {formatCurrency(order.creator_payout)}</Badge>
+          <Badge variant="secondary">{t.amount}: {formatCurrency(order.amount, locale)}</Badge>
+          <Badge variant="outline">{t.fee}: {formatCurrency(order.platform_fee, locale)}</Badge>
+          <Badge variant="outline">{t.payout}: {formatCurrency(order.creator_payout, locale)}</Badge>
         </div>
         <form action={payOrderAction} className="mt-5">
           <input type="hidden" name="lang" value={locale} />

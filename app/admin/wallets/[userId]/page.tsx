@@ -51,8 +51,8 @@ export default async function AdminWalletDetailPage({
           <CardContent className="p-6">
             <h2 className="font-semibold">Legacy wallet</h2>
             <dl className="mt-4 grid gap-3 sm:grid-cols-2">
-              <div><dt className="text-xs text-zinc-500">Available</dt><dd>{formatCurrency(detail.wallet.availableBalance)}</dd></div>
-              <div><dt className="text-xs text-zinc-500">Pending</dt><dd>{formatCurrency(detail.wallet.pendingBalance)}</dd></div>
+              <div><dt className="text-xs text-zinc-500">Available</dt><dd>{formatCurrency(detail.wallet.availableBalance, locale)}</dd></div>
+              <div><dt className="text-xs text-zinc-500">Pending</dt><dd>{formatCurrency(detail.wallet.pendingBalance, locale)}</dd></div>
             </dl>
           </CardContent>
         </Card>

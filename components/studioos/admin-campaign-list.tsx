@@ -117,7 +117,7 @@ export function AdminCampaignList({
                       <Badge variant={settlementVariant(row.settlementState)}>{row.settlementState}</Badge>
                     </TableCell>
                     <TableCell>{row.reviewRound}</TableCell>
-                    <TableCell>{formatCurrency(row.budget)}</TableCell>
+                    <TableCell>{formatCurrency(row.budget, locale)}</TableCell>
                     <TableCell className="whitespace-nowrap text-sm">{formatDate(row.updatedAt)}</TableCell>
                   </TableRow>
                 ))}

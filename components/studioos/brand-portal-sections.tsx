@@ -107,7 +107,7 @@ export function BrandPortalSections({
                   <div>
                     <p className="font-medium text-zinc-900">{item.campaignTitle}</p>
                     <p className="mt-1 text-sm text-zinc-500">
-                      {t.held}: {formatCurrency(item.remainingAmount)} {item.currency} · {item.status}
+                      {t.held}: {formatCurrency(item.remainingAmount, locale)} {item.currency} · {item.status}
                     </p>
                   </div>
                 </div>

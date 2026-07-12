@@ -209,7 +209,7 @@ export function StudioWorkspaceDashboard({
     {
       label: t.revenue,
       sub: t.revenueSub,
-      value: formatCurrency(stats.revenue),
+      value: formatCurrency(stats.revenue, locale),
       icon: CircleDollarSign,
       iconClass: "text-sky-600 bg-sky-50"
     }
@@ -330,7 +330,7 @@ export function StudioWorkspaceDashboard({
                             {t.brand}: {order.company_name || order.client_name}
                           </span>
                           <span>
-                            {t.payout}: {formatCurrency(order.creator_payout)}
+                            {t.payout}: {formatCurrency(order.creator_payout, locale)}
                           </span>
                           <span>
                             {t.assignedDate}: {formatAssignedDate(order.created_at, locale)}

@@ -13,7 +13,6 @@ import {
   DialogFooter,
   DialogTitle
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import type { Locale } from "@/lib/i18n";
 import type { BrandNewCampaignGate } from "@/lib/studioos/brand-active-campaign-limit";
 import {
@@ -40,7 +39,6 @@ import {
   Minus,
   Plus,
   Receipt,
-  Search,
   Trash2,
   X
 } from "lucide-react";
@@ -51,7 +49,6 @@ type Filter = BrandAdLifecycleFilter;
 
 const copy = {
   en: {
-    search: "Search projects…",
     empty: "No projects yet",
     emptyBody: "Create your first ad project — AI helps you write the brief in minutes.",
     publish: "Publish ad brief",
@@ -81,7 +78,6 @@ const copy = {
     deleteListTitle: "Items to delete"
   },
   zh: {
-    search: "搜索项目…",
     empty: "还没有广告项目",
     emptyBody: "发布第一个广告需求，AI 帮你在几分钟内整理好说明。",
     publish: "发布广告需求",
@@ -233,7 +229,6 @@ export function BrandCampaignList({
 
   const [items, setItems] = useState(rows);
   const [filter, setFilter] = useState<Filter>("all");
-  const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -255,21 +250,11 @@ export function BrandCampaignList({
 
   const lifecycleCounts = useMemo(() => countBrandRowsByLifecycle(items), [items]);
 
-  const filtered = useMemo(() => {
-    const byLifecycle = filterBrandRowsByLifecycle(items, filter);
-    const q = query.trim().toLowerCase();
-    if (!q) return byLifecycle;
-    return byLifecycle.filter(
-      (row) =>
-        row.name.toLowerCase().includes(q) ||
-        row.category?.toLowerCase().includes(q) ||
-        row.status.toLowerCase().includes(q)
-    );
-  }, [filter, items, query]);
+  const filtered = useMemo(() => filterBrandRowsByLifecycle(items, filter), [filter, items]);
 
   useEffect(() => {
     setPage(1);
-  }, [filter, query]);
+  }, [filter]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
@@ -432,29 +417,20 @@ export function BrandCampaignList({
             </Button>
           </div>
         ) : (
-          <div className="flex flex-col gap-3 border-b border-zinc-100 px-4 py-4 lg:flex-row lg:items-center lg:justify-between sm:px-5">
-            <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:gap-4 lg:max-w-xl lg:flex-1">
-              {selectableInView.length > 0 ? (
-                <label className="flex shrink-0 cursor-pointer items-center gap-2 text-sm text-zinc-600">
-                  <SelectCheckbox
-                    checked={allSelectableChecked}
-                    indeterminate={someSelectableChecked && !allSelectableChecked}
-                    onChange={toggleSelectAll}
-                  />
-                  <span className="hidden sm:inline">{t.selectAll}</span>
-                </label>
-              ) : null}
-              <div className="relative w-full flex-1">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
-                <Input
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder={t.search}
-                  className="h-9 rounded-lg border-zinc-200 bg-zinc-50/80 pl-9 text-sm focus-visible:bg-white"
+          <div className="flex flex-col gap-3 border-b border-zinc-100 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+            {selectableInView.length > 0 ? (
+              <label className="flex shrink-0 cursor-pointer items-center gap-2 text-sm text-zinc-600">
+                <SelectCheckbox
+                  checked={allSelectableChecked}
+                  indeterminate={someSelectableChecked && !allSelectableChecked}
+                  onChange={toggleSelectAll}
                 />
-              </div>
-            </div>
-            <div className="flex max-w-full flex-wrap gap-2 lg:justify-end">
+                <span className="hidden sm:inline">{t.selectAll}</span>
+              </label>
+            ) : (
+              <div className="hidden sm:block" />
+            )}
+            <div className="flex max-w-full flex-wrap gap-2 sm:justify-end">
               {filters.map((item) => (
                 <button
                   key={item.id}

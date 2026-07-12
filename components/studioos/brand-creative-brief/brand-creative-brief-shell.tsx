@@ -1,15 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { BrandLogoLockup } from "@/components/brand-logo-mark";
-import { LanguageSwitcher } from "@/components/language-switcher";
+import { MarketingHomeLink } from "@/components/studioos/marketing-home-link";
 import { WizardStepper } from "@/components/studioos/ui/wizard-stepper";
 import { Button } from "@/components/ui/button";
 import { CREATIVE_BRIEF_SECTIONS } from "@/lib/studioos/brand-creative-brief-options";
 import type { Locale } from "@/lib/i18n";
-import { withLocale } from "@/lib/i18n";
-import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
 import { cn } from "@/lib/utils";
 import {
   ArrowRight,
@@ -22,8 +19,7 @@ import {
   Lightbulb,
   Loader2,
   ShieldCheck,
-  Sparkles,
-  X
+  Sparkles
 } from "lucide-react";
 
 const copy = {
@@ -87,29 +83,28 @@ function BriefInlineNotice({
   locale: Locale;
   onDismiss: () => void;
 }) {
+  const dismissLabel = locale === "zh" ? "知道了" : "Got it";
+
   return (
     <div className="fixed left-1/2 top-1/2 z-[60] w-[calc(100vw-2rem)] max-w-[28rem] -translate-x-1/2 -translate-y-1/2">
       <div className="overflow-hidden rounded-2xl border border-emerald-100 bg-white/95 shadow-[0_14px_44px_rgba(15,23,42,0.12)] backdrop-blur-xl">
-        <div className="flex items-start gap-3 bg-gradient-to-br from-emerald-50/90 via-white to-violet-50/80 px-3.5 py-3">
+        <div className="flex items-center gap-3 bg-gradient-to-br from-emerald-50/90 via-white to-violet-50/80 px-3.5 py-3.5">
           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-md shadow-emerald-600/15">
             <Sparkles className="h-4 w-4" />
           </span>
           <div className="min-w-0 flex-1">
-            <div className="flex items-start justify-between gap-3">
-              <p className="text-sm font-semibold leading-5 text-zinc-950">
-                {locale === "zh" ? "需要补充信息" : "More information needed"}
-              </p>
-              <button
-                type="button"
-                onClick={onDismiss}
-                className="-mr-1 -mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-zinc-400 transition hover:bg-white hover:text-zinc-700"
-                aria-label={locale === "zh" ? "关闭提示" : "Dismiss notice"}
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            </div>
+            <p className="text-sm font-semibold leading-5 text-zinc-950">
+              {locale === "zh" ? "需要补充信息" : "More information needed"}
+            </p>
             <p className="mt-0.5 text-sm leading-5 text-zinc-600">{message}</p>
           </div>
+          <button
+            type="button"
+            onClick={onDismiss}
+            className="shrink-0 rounded-lg px-3 py-1.5 text-sm font-semibold text-violet-700 transition hover:bg-violet-50 hover:text-violet-800"
+          >
+            {dismissLabel}
+          </button>
         </div>
       </div>
     </div>
@@ -183,8 +178,8 @@ export function BrandCreativeBriefShell({
       ) : null}
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <aside className="hidden w-[220px] shrink-0 flex-col border-r border-zinc-200/80 bg-white lg:flex">
-          <Link
-            href={withLocale(brandPortalRoutes.dashboard, locale)}
+          <MarketingHomeLink
+            locale={locale}
             className="flex items-center gap-2.5 px-5 py-5 transition hover:opacity-80 lg:hidden"
           >
             <BrandLogoLockup
@@ -192,7 +187,7 @@ export function BrandCreativeBriefShell({
               markClassName="h-8 w-8 rounded-lg shadow-sm ring-1 ring-violet-100"
               wordmarkClassName="h-[17px] w-[106px]"
             />
-          </Link>
+          </MarketingHomeLink>
 
           <nav className="min-h-0 flex-1 space-y-0.5 overflow-y-auto px-3 pb-4 pt-5 lg:pt-8">
             <p className="px-3 pb-2 text-xs font-semibold uppercase tracking-wide text-violet-600">{t.create}</p>
@@ -256,35 +251,16 @@ export function BrandCreativeBriefShell({
 
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           <header className="sticky top-0 z-20 border-b border-zinc-200/80 bg-white/95 backdrop-blur">
-            <div className="flex items-center justify-between gap-2 px-4 py-3 sm:px-6">
-              <Link href={withLocale(brandPortalRoutes.dashboard, locale)} className="lg:hidden">
+            <div className="px-4 py-3 lg:hidden sm:px-6">
+              <MarketingHomeLink locale={locale} className="inline-flex transition hover:opacity-80">
                 <BrandLogoLockup
                   contrastOn="light"
                   markClassName="h-8 w-8 rounded-lg shadow-sm ring-1 ring-violet-100"
                   wordmarkClassName="h-[17px] w-[106px]"
                 />
-              </Link>
-              <div className="flex items-center justify-end gap-2 lg:ml-auto">
-              <LanguageSwitcher locale={locale} />
-              {onSaveDraft ? (
-                <Button type="button" variant="outline" className="hidden h-10 rounded-xl sm:inline-flex" onClick={onSaveDraft}>
-                  {isSavingDraft ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                  {isSavingDraft ? t.savingDraft : t.saveDraft}
-                </Button>
-              ) : null}
-              <Button
-                type="button"
-                className="h-10 rounded-xl bg-violet-600 px-5 hover:bg-violet-700"
-                disabled={continueDisabled}
-                onClick={onContinue}
-              >
-                {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                {isPending ? t.continuePending : t.continue}
-                {!isPending ? <ArrowRight className="ml-2 h-4 w-4" /> : null}
-              </Button>
-              </div>
+              </MarketingHomeLink>
             </div>
-            <div className="border-t border-zinc-100 px-4 pb-4 sm:px-6">
+            <div className="border-t border-zinc-100 px-4 pb-4 pt-3 sm:px-6 lg:border-t-0 lg:pt-4">
               <WizardStepper locale={locale} currentStep={1} variant="brand" />
             </div>
           </header>
