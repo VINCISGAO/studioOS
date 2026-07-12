@@ -17,7 +17,6 @@ type AdminLoginPageProps = {
 const copy: Record<Locale, AdminLoginCopy> = {
   en: {
     consoleTitle: "Admin Dashboard",
-    productLabel: "VINCIS Admin",
     email: "Email",
     emailPlaceholder: "admin@example.com",
     authenticatorCode: "Authenticator Code",
@@ -40,7 +39,6 @@ const copy: Record<Locale, AdminLoginCopy> = {
   },
   zh: {
     consoleTitle: "管理后台",
-    productLabel: "VINCIS Admin",
     email: "邮箱",
     emailPlaceholder: "admin@example.com",
     authenticatorCode: "验证器代码",

@@ -15,7 +15,6 @@ import { cn } from "@/lib/utils";
 
 export type AdminLoginCopy = {
   consoleTitle: string;
-  productLabel: string;
   email: string;
   emailPlaceholder: string;
   authenticatorCode: string;
@@ -130,9 +129,6 @@ export function AdminLoginShell({
             wordmarkClassName="h-[18px] w-[112px] sm:h-[21px] sm:w-[134px]"
             priority
           />
-          <div>
-            <p className="text-sm text-zinc-500 sm:text-[15px]">{t.productLabel}</p>
-          </div>
         </div>
       </header>
 
