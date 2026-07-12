@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import type { Locale } from "@/lib/i18n";
-import { getCurrentSession } from "@/lib/session-user";
+import { requireBrandPortalClientEmail } from "@/features/auth/session-context";
 import type { OAuthProvider } from "@/lib/studioos/creator-settings-types";
 import {
   revokeBrandDevice,
@@ -21,13 +21,12 @@ function revalidateBrandSettingsPaths() {
 }
 
 async function requireBrandContext(lang: Locale) {
-  const session = await getCurrentSession();
-
-  if (!session || session.role !== "client") {
+  try {
+    const email = await requireBrandPortalClientEmail();
+    return { ok: true as const, email };
+  } catch {
     return { ok: false as const, error: lang === "zh" ? "请先登录" : "Sign in required" };
   }
-
-  return { ok: true as const, email: session.email.toLowerCase() };
 }
 
 export async function updateBrandContactEmailAction(input: { lang: Locale; email: string }) {

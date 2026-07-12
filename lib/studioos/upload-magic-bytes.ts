@@ -30,6 +30,35 @@ export function detectImageMimeFromMagicBytes(buffer: Buffer): string | null {
   return null;
 }
 
+const ALLOWED_IMAGE_MIME = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+
+export function normalizeDeclaredImageMime(mime: string) {
+  const trimmed = mime.trim().toLowerCase();
+  if (trimmed === "image/jpg" || trimmed === "image/pjpeg") return "image/jpeg";
+  return trimmed;
+}
+
+function imageMimeFromFileName(fileName: string) {
+  const name = fileName.toLowerCase();
+  if (name.endsWith(".png")) return "image/png";
+  if (name.endsWith(".webp")) return "image/webp";
+  if (name.endsWith(".gif")) return "image/gif";
+  if (name.endsWith(".jpg") || name.endsWith(".jpeg")) return "image/jpeg";
+  if (name.endsWith(".heic") || name.endsWith(".heif")) return null;
+  return null;
+}
+
+/** Trust magic bytes first; fall back to declared type / extension when browsers mislabel files. */
+export function resolveTrustedImageMime(file: File, buffer: Buffer): string | null {
+  const detected = detectImageMimeFromMagicBytes(buffer);
+  if (detected && ALLOWED_IMAGE_MIME.has(detected)) return detected;
+
+  const declared = normalizeDeclaredImageMime(file.type || "");
+  if (declared && ALLOWED_IMAGE_MIME.has(declared)) return declared;
+
+  return imageMimeFromFileName(file.name);
+}
+
 export function looksLikeMp4OrMov(buffer: Buffer) {
   if (buffer.length < 12) return false;
   return ascii(buffer, 4, 8) === FTYP;

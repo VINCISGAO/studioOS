@@ -95,6 +95,16 @@ const GUARD_RULES: GuardRule[] = [
     ]
   },
   {
+    category: "off_topic",
+    patterns: [
+      /肚子痛|肚子疼|我病了|身体不适|私人医生|当我的医生|帮我看病|帮我开药/,
+      /stomach\s*(hurts?|ache|pain)/i,
+      /\bbe\s*my\s*(private\s*)?doctor\b/i,
+      /\bmedical\s*advice\b/i,
+      /\b(prescribe|diagnos)(e|is|ing)\b/i
+    ]
+  },
+  {
     category: "cross_user_privacy",
     patterns: [
       /查.{0,12}别人/,

@@ -54,7 +54,8 @@ export type LucienQueryBlockCategory =
   | "context_dump"
   | "role_impersonation"
   | "security_bypass"
-  | "cross_user_privacy";
+  | "cross_user_privacy"
+  | "off_topic";
 
 export const LUCIEN_REFUSAL_MESSAGE = {
   zh: "我可以帮助你了解 VINCIS 的业务流程、报价规则和产品使用方法，但无法提供源代码、系统配置、安全实现或其他内部技术资料。",
@@ -64,6 +65,11 @@ export const LUCIEN_REFUSAL_MESSAGE = {
 export const LUCIEN_PRIVACY_REFUSAL_MESSAGE = {
   zh: "抱歉，我无法提供关于其他用户订单、项目、付款或账户的具体信息。如果你有关于自己账号的问题，请告诉我，我会尽力帮助你。",
   en: "Sorry, I cannot provide specific information about other users' orders, projects, payments, or accounts. If you have questions about your own account, I'm happy to help."
+} as const;
+
+export const LUCIEN_OFF_TOPIC_REFUSAL_MESSAGE = {
+  zh: "我是 VINCIS 业务助手卢西恩，只能解答平台使用、报价和项目流程等问题。医疗、私人生活类问题我无法帮助，请咨询专业人士。",
+  en: "I'm Lucien, VINCIS's business assistant. I can only help with platform usage, pricing, and project workflows—not medical or personal-life questions. Please consult a qualified professional for those."
 } as const;
 
 export const LUCIEN_BOUNDARY_SYSTEM_RULES = {
@@ -102,6 +108,9 @@ export function lucienPrivacyRefusalMessage(language: string): string {
 export function lucienRefusalMessageForCategory(category: LucienQueryBlockCategory, language: string): string {
   if (category === "cross_user_privacy") {
     return lucienPrivacyRefusalMessage(language);
+  }
+  if (category === "off_topic") {
+    return isZhLanguage(language) ? LUCIEN_OFF_TOPIC_REFUSAL_MESSAGE.zh : LUCIEN_OFF_TOPIC_REFUSAL_MESSAGE.en;
   }
   return lucienRefusalMessage(language);
 }

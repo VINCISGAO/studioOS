@@ -33,6 +33,7 @@ type ApiResponse<T> = {
 type AnswerData = {
   answer: string;
   suggestedQuestions: string[];
+  modelConfigured?: boolean;
 };
 
 const GUEST_SESSION_KEY = "vincis-public-lucien-session";
@@ -69,6 +70,7 @@ export function PublicLucienDrawer({
   const [messages, setMessages] = useState<ChatLine[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [modelConfigured, setModelConfigured] = useState<boolean | null>(null);
   const [suggestions, setSuggestions] = useState(t.suggestions);
   const listRef = useRef<HTMLDivElement>(null);
   const storageScopeRef = useRef<string | null>(null);
@@ -85,6 +87,20 @@ export function PublicLucienDrawer({
     return () => {
       document.body.style.overflow = previousOverflow;
     };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    void fetch("/api/public-lucien/status")
+      .then((response) => response.json() as Promise<ApiResponse<{ modelConfigured: boolean }>>)
+      .then((payload) => {
+        if (payload.success && payload.data) {
+          setModelConfigured(payload.data.modelConfigured);
+        }
+      })
+      .catch(() => {
+        setModelConfigured(null);
+      });
   }, [open]);
 
   useEffect(() => {
@@ -191,6 +207,9 @@ export function PublicLucienDrawer({
       if (payload.data.suggestedQuestions.length > 0) {
         setSuggestions(payload.data.suggestedQuestions);
       }
+      if (typeof payload.data.modelConfigured === "boolean") {
+        setModelConfigured(payload.data.modelConfigured);
+      }
     } catch {
       setMessages((prev) => [
         ...prev,
@@ -241,6 +260,14 @@ export function PublicLucienDrawer({
             <X className="h-4 w-4" strokeWidth={2} />
           </button>
         </header>
+
+        {modelConfigured === false ? (
+          <p className="border-b border-amber-100 bg-amber-50 px-5 py-2 text-xs leading-5 text-amber-900">
+            {locale === "zh"
+              ? "语言模型未连接 · 可回答 FAQ 常见问题"
+              : "Language model offline · FAQ answers still work"}
+          </p>
+        ) : null}
 
         <div ref={listRef} className="flex-1 space-y-4 overflow-y-auto px-5 py-5">
           {messages.map((line) => (

@@ -1,23 +1,28 @@
 import { getAppUiLocale } from "@/lib/app-language";
 import { Suspense } from "react";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { BrandSettingsHub } from "@/components/studioos/brand-settings-hub";
-import { DEMO_SESSION_COOKIE } from "@/lib/auth-config";
-import { parseDemoSession } from "@/lib/demo-auth";
+import { requireBrandPortalClientEmail } from "@/features/auth/session-context";
+import { getOrCreateBrandProfile } from "@/lib/brand-profile-service";
+import { DEMO_USERS } from "@/lib/demo-auth";
 import { type SearchParams, withLocale } from "@/lib/i18n";
 import { getBrandSettingsViewModel } from "@/lib/studioos/brand-settings-service";
 
 export default async function BrandSettingsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const locale = await getAppUiLocale();
-  const cookieStore = await cookies();
-  const session = parseDemoSession(cookieStore.get(DEMO_SESSION_COOKIE)?.value);
+  void searchParams;
 
-  if (!session || session.role !== "client") {
+  let email: string;
+  try {
+    email = await requireBrandPortalClientEmail();
+  } catch {
     redirect(withLocale("/login?role=brand", locale));
   }
 
-  const email = session.email.toLowerCase();
+  const demo = DEMO_USERS.find((user) => user.email === email);
+  const companyName = demo?.label.replace(/\s*\(brand\)/i, "").trim() ?? email.split("@")[0] ?? "Brand";
+  await getOrCreateBrandProfile({ client_email: email, company_name: companyName });
+
   const settings = await getBrandSettingsViewModel(email, email);
 
   return (

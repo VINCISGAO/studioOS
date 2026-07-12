@@ -73,8 +73,7 @@ function BriefInlineNotice({
   const dismissLabel = locale === "zh" ? "知道了" : "Got it";
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-0 z-[60] flex justify-center px-4 pt-[max(0.75rem,env(safe-area-inset-top))]">
-      <div className="pointer-events-auto w-full max-w-[28rem]">
+    <div className="w-full max-w-lg">
       <div className="overflow-hidden rounded-2xl border border-emerald-100 bg-white/95 shadow-[0_14px_44px_rgba(15,23,42,0.12)] backdrop-blur-xl">
         <div className="flex items-center gap-3 bg-gradient-to-br from-emerald-50/90 via-white to-violet-50/80 px-3.5 py-3.5">
           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-md shadow-emerald-600/15">
@@ -94,7 +93,6 @@ function BriefInlineNotice({
             {dismissLabel}
           </button>
         </div>
-      </div>
       </div>
     </div>
   );
@@ -176,9 +174,6 @@ export function BrandCreativeBriefShell({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      {displayError && showNotice ? (
-        <BriefInlineNotice message={displayError} locale={locale} onDismiss={() => setDismissedNotice(displayError)} />
-      ) : null}
       <div className="flex h-full min-h-0 flex-1 overflow-hidden">
         <aside
           className="hidden h-full min-h-0 shrink-0 grid-rows-[minmax(0,1fr)_auto] overflow-hidden border-r border-zinc-200/80 bg-white xl:grid"
@@ -221,6 +216,15 @@ export function BrandCreativeBriefShell({
             <div className="px-4 pb-4 pt-3 sm:px-6 xl:pt-4">
               <WizardStepper locale={locale} currentStep={1} variant="brand" />
             </div>
+            {displayError && showNotice ? (
+              <div className="flex justify-center px-4 pb-4 sm:px-6">
+                <BriefInlineNotice
+                  message={displayError}
+                  locale={locale}
+                  onDismiss={() => setDismissedNotice(displayError)}
+                />
+              </div>
+            ) : null}
             <BrandCreativeBriefSectionNavTop
               locale={locale}
               activeSection={activeSection}

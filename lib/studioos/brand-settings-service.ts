@@ -1,4 +1,5 @@
 import { DEMO_PASSWORD } from "@/lib/demo-auth";
+import { getOrCreateBrandProfile } from "@/lib/brand-profile-service";
 import { hasDatabaseUrl, prisma } from "@/lib/core/database/prisma";
 import { hashPassword, verifyPassword } from "@/lib/core/password-crypto";
 import { asInputJson } from "@/lib/core/prisma-json";
@@ -159,7 +160,20 @@ async function updateDatabaseBrandSettings(
     where: { email: normalizeEmail(email) },
     include: { brandProfile: true }
   });
-  if (!user?.brandProfile) return null;
+  if (!user) return null;
+
+  if (!user.brandProfile) {
+    await getOrCreateBrandProfile({
+      client_email: user.email,
+      company_name: user.fullName?.trim() || user.email.split("@")[0] || "Brand"
+    });
+    const refreshed = await prisma.user.findUnique({
+      where: { email: normalizeEmail(email) },
+      include: { brandProfile: true }
+    });
+    if (!refreshed?.brandProfile) return null;
+    user.brandProfile = refreshed.brandProfile;
+  }
 
   const current = await getDatabaseBrandSettings(email);
   if (!current) return null;

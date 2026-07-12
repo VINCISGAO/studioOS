@@ -1,3 +1,9 @@
+function isRasterImageFile(file: File) {
+  if (file.type === "image/svg+xml") return false;
+  if (file.type.startsWith("image/")) return true;
+  return /\.(jpe?g|png|webp|gif)$/i.test(file.name);
+}
+
 export async function compressImageForUpload(
   file: File,
   options: {
@@ -7,7 +13,7 @@ export async function compressImageForUpload(
     fileNamePrefix?: string;
   }
 ) {
-  if (!file.type.startsWith("image/") || file.type === "image/svg+xml") {
+  if (!isRasterImageFile(file)) {
     return file;
   }
 

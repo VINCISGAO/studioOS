@@ -13,6 +13,19 @@ function normalizeLang(raw: FormDataEntryValue | null): Locale {
   return String(raw ?? "en") === "zh" ? "zh" : "en";
 }
 
+function localizeUploadError(error: string, lang: Locale) {
+  if (
+    error.includes("Durable object storage") ||
+    error.includes("R2 upload failed") ||
+    error.includes("Configure R2")
+  ) {
+    return lang === "zh"
+      ? "图片存储服务未配置或连接失败，请检查 R2 环境变量（R2_ENDPOINT、R2_ACCESS_KEY、R2_SECRET_KEY、R2_BUCKET）。"
+      : "Image storage is not configured or R2 upload failed. Check R2_ENDPOINT, R2_ACCESS_KEY, R2_SECRET_KEY, and R2_BUCKET.";
+  }
+  return error;
+}
+
 function parseList(raw: FormDataEntryValue | null) {
   return String(raw ?? "")
     .split(",")
@@ -167,7 +180,7 @@ export async function uploadCreatorAvatarAction(formData: FormData) {
   const { saveCreatorAvatarUpload } = await import("@/lib/studioos/creator-avatar-upload");
   const saved = await saveCreatorAvatarUpload(creatorId, file);
   if (!saved.ok) {
-    return { ok: false as const, error: saved.error };
+    return { ok: false as const, error: localizeUploadError(saved.error, lang) };
   }
 
   const { getCreatorById } = await import("@/lib/creator-service");
@@ -180,14 +193,18 @@ export async function uploadCreatorAvatarAction(formData: FormData) {
   const works = await getWorksForCreator(creatorId, { ownerView: true });
   await updateCreatorAvatarUrl(creatorId, saved.url, creator, works);
   const { storageFileService } = await import("@/features/storage/storage-file.service");
-  await storageFileService.recordCreatorAvatar(creatorId, {
-    fileName: saved.file_name,
-    fileKey: saved.file_key,
-    publicUrl: saved.url,
-    mimeType: saved.mime_type,
-    fileSize: saved.size_bytes,
-    provider: saved.storage_provider
-  });
+  try {
+    await storageFileService.recordCreatorAvatar(creatorId, {
+      fileName: saved.file_name,
+      fileKey: saved.file_key,
+      publicUrl: saved.url,
+      mimeType: saved.mime_type,
+      fileSize: saved.size_bytes,
+      provider: saved.storage_provider
+    });
+  } catch {
+    // Non-blocking audit trail — upload already succeeded.
+  }
 
   revalidateCreatorProfilePaths(creatorId);
   return { ok: true as const, avatar_url: saved.url };
@@ -208,7 +225,7 @@ export async function uploadCreatorCoverAction(formData: FormData) {
   const { saveCreatorCoverUpload } = await import("@/lib/studioos/creator-avatar-upload");
   const saved = await saveCreatorCoverUpload(creatorId, file);
   if (!saved.ok) {
-    return { ok: false as const, error: saved.error };
+    return { ok: false as const, error: localizeUploadError(saved.error, lang) };
   }
 
   const { getCreatorById } = await import("@/lib/creator-service");
@@ -221,14 +238,18 @@ export async function uploadCreatorCoverAction(formData: FormData) {
   const works = await getWorksForCreator(creatorId, { ownerView: true });
   await updateCreatorCoverUrl(creatorId, saved.url, creator, works);
   const { storageFileService } = await import("@/features/storage/storage-file.service");
-  await storageFileService.recordCreatorCover(creatorId, {
-    fileName: saved.file_name,
-    fileKey: saved.file_key,
-    publicUrl: saved.url,
-    mimeType: saved.mime_type,
-    fileSize: saved.size_bytes,
-    provider: saved.storage_provider
-  });
+  try {
+    await storageFileService.recordCreatorCover(creatorId, {
+      fileName: saved.file_name,
+      fileKey: saved.file_key,
+      publicUrl: saved.url,
+      mimeType: saved.mime_type,
+      fileSize: saved.size_bytes,
+      provider: saved.storage_provider
+    });
+  } catch {
+    // Non-blocking audit trail — upload already succeeded.
+  }
 
   revalidateCreatorProfilePaths(creatorId);
   return { ok: true as const, cover_url: saved.url };

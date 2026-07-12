@@ -1,15 +1,11 @@
 import path from "path";
 import { putObject } from "@/lib/studioos/object-storage";
-import {
-  detectImageMimeFromMagicBytes,
-  looksLikeSupportedVideo
-} from "@/lib/studioos/upload-magic-bytes";
+import { resolveTrustedImageMime, looksLikeSupportedVideo } from "@/lib/studioos/upload-magic-bytes";
 
 const UPLOAD_DIR = path.join(process.cwd(), ".data", "uploads", "creators");
 const MAX_BYTES = 5 * 1024 * 1024;
 const MAX_PROFILE_VIDEO_BYTES = 300 * 1024 * 1024;
 
-const ALLOWED_MIME = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
 const ALLOWED_VIDEO_MIME = new Set(["video/mp4", "video/quicktime", "video/webm"]);
 
 function extForMime(mime: string) {
@@ -70,17 +66,17 @@ async function saveCreatorImageUpload(
     return { ok: false, error: "File exceeds 5MB limit" };
   }
 
-  const mime = file.type || "application/octet-stream";
-  if (!ALLOWED_MIME.has(mime)) {
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const mime = resolveTrustedImageMime(file, buffer);
+  if (!mime) {
+    const name = file.name.toLowerCase();
+    if (name.endsWith(".heic") || name.endsWith(".heif")) {
+      return { ok: false, error: "HEIC/HEIF is not supported — export as JPG or PNG first" };
+    }
     return { ok: false, error: "Only JPEG, PNG, WebP, and GIF images are supported" };
   }
 
   const fileName = `${fileNamePrefix}_${Date.now()}.${extForMime(mime)}`;
-  const buffer = Buffer.from(await file.arrayBuffer());
-  const detectedMime = detectImageMimeFromMagicBytes(buffer);
-  if (!detectedMime || detectedMime !== mime) {
-    return { ok: false, error: "File content does not match the selected image type" };
-  }
   const fileKey = creatorAvatarObjectKey(creatorId, fileName);
   let stored: Awaited<ReturnType<typeof putObject>>;
   try {

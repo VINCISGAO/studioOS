@@ -4,6 +4,11 @@ import { useCallback, useEffect, useId, useRef, useState, type CSSProperties } f
 import { Maximize2, Minimize2, Play, Volume2, VolumeX } from "lucide-react";
 import type { MarketingLocale } from "@/lib/i18n";
 import { isChineseLanguage } from "@/lib/i18n";
+import {
+  acquireHomeHeroVideo,
+  isHomeHeroVideoBuffered,
+  releaseHomeHeroVideo
+} from "@/lib/marketing/home-hero-video-pool";
 import { cn } from "@/lib/utils";
 
 const videoCopy: Record<
@@ -131,7 +136,8 @@ type HomeHeroVideoProps = {
 
 export function HomeHeroVideo({ locale, videoSrc, heroPosterSrc }: HomeHeroVideoProps) {
   const shellRef = useRef<HTMLDivElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const videoMountRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
   const hideControlsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pointerTypeRef = useRef<string | null>(null);
   const seekId = useId().replace(/:/g, "");
@@ -227,7 +233,7 @@ export function HomeHeroVideo({ locale, videoSrc, heroPosterSrc }: HomeHeroVideo
 
   useEffect(() => {
     setFailed(false);
-    setVideoReady(false);
+    setVideoReady(isHomeHeroVideoBuffered(safeSrc));
   }, [safeSrc]);
 
   useEffect(() => {
@@ -239,8 +245,22 @@ export function HomeHeroVideo({ locale, videoSrc, heroPosterSrc }: HomeHeroVideo
   }, []);
 
   useEffect(() => {
-    const video = videoRef.current;
-    if (!video || !safeSrc) return;
+    const mount = videoMountRef.current;
+    if (!mount || !safeSrc) return;
+
+    const video = acquireHomeHeroVideo(safeSrc);
+    videoRef.current = video;
+    if (heroPosterSrc) {
+      video.poster = heroPosterSrc;
+    } else {
+      video.removeAttribute("poster");
+    }
+    video.setAttribute("aria-label", labels.video);
+    video.muted = muted;
+    if (!muted) {
+      video.volume = 1;
+    }
+    mount.appendChild(video);
 
     const syncDuration = () => {
       if (Number.isFinite(video.duration)) {
@@ -260,6 +280,7 @@ export function HomeHeroVideo({ locale, videoSrc, heroPosterSrc }: HomeHeroVideo
     };
     const onPlay = () => setPlaying(true);
     const onPause = () => setPlaying(false);
+    const onError = () => setFailed(true);
     const onFullscreenChange = () => {
       const fsElement =
         document.fullscreenElement ??
@@ -287,6 +308,7 @@ export function HomeHeroVideo({ locale, videoSrc, heroPosterSrc }: HomeHeroVideo
     video.addEventListener("timeupdate", syncCurrentTime);
     video.addEventListener("play", onPlay);
     video.addEventListener("pause", onPause);
+    video.addEventListener("error", onError);
     document.addEventListener("fullscreenchange", onFullscreenChange);
     document.addEventListener("webkitfullscreenchange", onFullscreenChange);
 
@@ -299,10 +321,34 @@ export function HomeHeroVideo({ locale, videoSrc, heroPosterSrc }: HomeHeroVideo
       video.removeEventListener("timeupdate", syncCurrentTime);
       video.removeEventListener("play", onPlay);
       video.removeEventListener("pause", onPause);
+      video.removeEventListener("error", onError);
       document.removeEventListener("fullscreenchange", onFullscreenChange);
       document.removeEventListener("webkitfullscreenchange", onFullscreenChange);
+      releaseHomeHeroVideo(video);
+      videoRef.current = null;
     };
-  }, [clearHideControlsTimeout, markVideoReady, safeSrc]);
+  }, [clearHideControlsTimeout, heroPosterSrc, labels.video, markVideoReady, muted, safeSrc]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = muted;
+    if (!muted) {
+      video.volume = 1;
+    }
+  }, [muted]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.className = cn(
+      "home-hero-video-player relative z-0 w-full cursor-pointer transition-opacity duration-300",
+      videoReady ? "opacity-100" : "opacity-0",
+      isFullscreen
+        ? "h-auto max-h-full w-auto max-w-full shrink-0 object-contain object-center"
+        : "aspect-[21/9] object-cover"
+    );
+  }, [isFullscreen, videoReady]);
 
   if (!safeSrc) {
     return (
@@ -369,35 +415,12 @@ export function HomeHeroVideo({ locale, videoSrc, heroPosterSrc }: HomeHeroVideo
           }
         }}
       >
-        <video
-          ref={videoRef}
-          key={safeSrc}
-          src={safeSrc}
-          {...(heroPosterSrc ? { poster: heroPosterSrc } : {})}
+        <div
+          ref={videoMountRef}
           className={cn(
-            "home-hero-video-player relative z-0 w-full cursor-pointer transition-opacity duration-300",
-            videoReady ? "opacity-100" : "opacity-0",
-            isFullscreen
-              ? "h-auto max-h-full w-auto max-w-full shrink-0 object-contain object-center"
-              : "aspect-[21/9] object-cover"
+            "home-hero-video-player relative z-0 w-full",
+            isFullscreen ? "flex max-h-full max-w-full shrink-0 items-center justify-center" : "aspect-[21/9]"
           )}
-          autoPlay
-          muted={muted}
-          loop
-          playsInline
-          preload="metadata"
-          aria-label={labels.video}
-          onPlay={() => setPlaying(true)}
-          onPause={() => setPlaying(false)}
-          onLoadedData={() => {
-            const video = videoRef.current;
-            if (!video) return;
-            markVideoReady();
-            void video.play().catch(() => setPlaying(false));
-          }}
-          onCanPlay={markVideoReady}
-          onPlaying={markVideoReady}
-          onError={() => setFailed(true)}
         />
 
         {!failed && !playing ? (

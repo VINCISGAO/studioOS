@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-import { getCurrentClientEmail, getCurrentSession } from "@/features/auth/session-context";
+import { getBrandProfileById } from "@/lib/brand-profile-service";
 import { brandAvatarObjectKey } from "@/lib/studioos/brand-avatar-upload";
-import { orgIdFromEmail } from "@/lib/studioos/creative-performance-store";
 import { getObject, getObjectMetadata, getObjectRange } from "@/lib/studioos/object-storage";
 
 const ASSET_CACHE_CONTROL = "public, max-age=31536000, immutable";
@@ -41,12 +40,9 @@ export async function GET(
   const safeName = decodeURIComponent(fileName).replace(/[/\\]/g, "");
   const safeBrandId = decodeURIComponent(brandId).replace(/[/\\]/g, "");
 
-  const [clientEmail, session] = await Promise.all([getCurrentClientEmail(), getCurrentSession()]);
-  const isAdmin = session?.role === "admin";
-  const ownsAsset =
-    clientEmail != null && orgIdFromEmail(clientEmail) === safeBrandId;
-  if (!isAdmin && !ownsAsset) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const profile = await getBrandProfileById(safeBrandId);
+  if (!profile) {
+    return NextResponse.json({ error: "Brand not found" }, { status: 404 });
   }
 
   const fileKey = brandAvatarObjectKey(safeBrandId, safeName);

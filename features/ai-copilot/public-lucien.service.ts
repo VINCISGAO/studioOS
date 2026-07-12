@@ -14,7 +14,13 @@ import {
   recordLucienBoundaryRefusal
 } from "@/features/ai-copilot/lucien-boundary.service";
 import { recordLucienInteraction } from "@/features/ai-copilot/lucien-learning.service";
+import {
+  publicLucienModelFailureAnswer,
+  publicLucienModelUnavailableAnswer,
+  resolvePublicLucienDirectAnswer
+} from "@/features/ai-copilot/public-lucien-direct-answers";
 import { publicLucienSuggestions } from "@/lib/marketing/faq-copy";
+import { classifyOpenAIModelError, getOpenAIWiringStatus } from "@/lib/core/config/openai-status";
 import { isPublicLucienPagePath, normalizePublicLucienPagePath } from "@/lib/marketing/public-lucien-paths";
 import { appError } from "@/lib/core/errors";
 import { logger } from "@/lib/core/logger";
@@ -34,7 +40,15 @@ export type PublicLucienRequest = {
 export type PublicLucienAnswer = {
   answer: string;
   suggestedQuestions: string[];
-  answerMode: "knowledge_base" | "model" | "fallback" | "boundary_refusal";
+  answerMode: "knowledge_base" | "model" | "fallback" | "boundary_refusal" | "direct";
+  modelConfigured: boolean;
+  modelError?: "invalid_key" | "request_failed" | "not_configured";
+};
+
+export type PublicLucienStatus = {
+  modelConfigured: boolean;
+  model: string;
+  keyLength: number;
 };
 
 function resolveLanguage(languageCode?: string | null): string {
@@ -58,7 +72,10 @@ function buildKnowledgeContext(matches: KnowledgeQaMatch[]) {
     .join("\n\n");
 }
 
-function fallbackAnswer(language: string) {
+function fallbackAnswer(language: string, modelConfigured: boolean, suggestedExamples: string[]) {
+  if (!modelConfigured) {
+    return publicLucienModelUnavailableAnswer(language, suggestedExamples);
+  }
   const zh = language === "zh-CN" || language === "zh-TW" || language === "zh";
   return zh
     ? "我还不能确定这个问题的准确答案。你可以浏览上方 FAQ，或登录后使用完整版卢西恩助手获取更具体的帮助。"
@@ -173,6 +190,10 @@ async function safeRecordPublicInteraction(input: {
 }
 
 export class PublicLucienService {
+  status(): PublicLucienStatus {
+    return getOpenAIWiringStatus();
+  }
+
   async answer(input: PublicLucienRequest): Promise<PublicLucienAnswer> {
     const pagePath = normalizePublicLucienPagePath(input.pagePath);
     if (!isPublicLucienPagePath(pagePath)) {
@@ -184,6 +205,8 @@ export class PublicLucienService {
     const locale = resolveLocale(language);
     const guestSessionId = coerceGuestSessionId(input.guestSessionId);
     const suggestedQuestions = publicLucienSuggestions(locale);
+    const modelConfigured = aiGatewayService.isConfigured();
+    let modelError: PublicLucienAnswer["modelError"];
 
     const boundary = evaluateLucienBoundary(message, language);
     if (boundary.blocked) {
@@ -200,7 +223,36 @@ export class PublicLucienService {
       return {
         answer: boundary.refusalMessage,
         suggestedQuestions,
-        answerMode: boundary.answerMode
+        answerMode: boundary.answerMode,
+        modelConfigured
+      };
+    }
+
+    const directAnswer = resolvePublicLucienDirectAnswer(message, language);
+    if (directAnswer) {
+      await safeAudit({
+        surface: "public",
+        guestSessionId,
+        pagePath,
+        queryCategory: "business",
+        authorizationResult: "allowed",
+        knowledgeScope: PUBLIC_KNOWLEDGE_SCOPE,
+        dataCategories: ["product_help"],
+        answerMode: "direct"
+      });
+      await safeRecordPublicInteraction({
+        guestSessionId,
+        pagePath,
+        language,
+        userMessage: message,
+        assistantAnswer: directAnswer.answer,
+        answerMode: "direct"
+      });
+      return {
+        answer: directAnswer.answer,
+        suggestedQuestions,
+        answerMode: "direct",
+        modelConfigured
       };
     }
 
@@ -232,11 +284,12 @@ export class PublicLucienService {
       return {
         answer: knowledgeAnswer,
         suggestedQuestions,
-        answerMode: "knowledge_base"
+        answerMode: "knowledge_base",
+        modelConfigured
       };
     }
 
-    if (aiGatewayService.isConfigured()) {
+    if (modelConfigured) {
       try {
         const result = await aiGatewayService.chatCompletion({
           system: buildPublicSystemPrompt(language),
@@ -271,15 +324,38 @@ export class PublicLucienService {
           return {
             answer: result.content,
             suggestedQuestions,
-            answerMode: "model"
+            answerMode: "model",
+            modelConfigured
           };
         }
       } catch (error) {
+        modelError = classifyOpenAIModelError(error);
         logger.error("Public Lucien model request failed", {
           service: "PublicLucienService",
+          modelError,
           error: error instanceof Error ? error.message : String(error)
         });
       }
+    }
+
+    if (modelError) {
+      const failureAnswer = publicLucienModelFailureAnswer(language, modelError);
+      await safeRecordPublicInteraction({
+        guestSessionId,
+        pagePath,
+        language,
+        userMessage: message,
+        assistantAnswer: failureAnswer,
+        answerMode: "fallback",
+        matches
+      });
+      return {
+        answer: failureAnswer,
+        suggestedQuestions,
+        answerMode: "fallback",
+        modelConfigured: true,
+        modelError
+      };
     }
 
     if (knowledgeAnswer) {
@@ -306,7 +382,8 @@ export class PublicLucienService {
       return {
         answer: knowledgeAnswer,
         suggestedQuestions,
-        answerMode: "knowledge_base"
+        answerMode: "knowledge_base",
+        modelConfigured
       };
     }
 
@@ -320,7 +397,7 @@ export class PublicLucienService {
       answerMode: "fallback"
     });
 
-    const fallback = fallbackAnswer(language);
+    const fallback = fallbackAnswer(language, modelConfigured, suggestedQuestions);
     await safeRecordPublicInteraction({
       guestSessionId,
       pagePath,
@@ -334,7 +411,9 @@ export class PublicLucienService {
     return {
       answer: fallback,
       suggestedQuestions,
-      answerMode: "fallback"
+      answerMode: "fallback",
+      modelConfigured,
+      modelError: modelConfigured ? undefined : "not_configured"
     };
   }
 }

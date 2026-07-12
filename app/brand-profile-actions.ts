@@ -28,6 +28,19 @@ function defaultCompanyName(email: string) {
   return demo?.label.replace(/\s*\(brand\)/i, "").trim() ?? email.split("@")[0] ?? "Brand";
 }
 
+function localizeUploadError(error: string, lang: Locale) {
+  if (
+    error.includes("Durable object storage") ||
+    error.includes("R2 upload failed") ||
+    error.includes("Configure R2")
+  ) {
+    return lang === "zh"
+      ? "图片存储服务未配置或连接失败，请检查 R2 环境变量（R2_ENDPOINT、R2_ACCESS_KEY、R2_SECRET_KEY、R2_BUCKET）。"
+      : "Image storage is not configured or R2 upload failed. Check R2_ENDPOINT, R2_ACCESS_KEY, R2_SECRET_KEY, and R2_BUCKET.";
+  }
+  return error;
+}
+
 export async function saveBrandProfileAction(formData: FormData) {
   const lang = normalizeLang(formData.get("lang"));
   const email = await requireBrandEmail();
@@ -209,7 +222,7 @@ export async function uploadBrandAvatarAction(formData: FormData) {
 
   const saved = await saveBrandAvatarUpload(profile.id, file);
   if (!saved.ok) {
-    return { ok: false as const, error: saved.error };
+    return { ok: false as const, error: localizeUploadError(saved.error, lang) };
   }
 
   const updated = await updateBrandLogoUrl(email, saved.url, {
@@ -223,14 +236,18 @@ export async function uploadBrandAvatarAction(formData: FormData) {
     return { ok: false as const, error: lang === "zh" ? "保存头像失败" : "Failed to save avatar" };
   }
   const { storageFileService } = await import("@/features/storage/storage-file.service");
-  await storageFileService.recordBrandAvatar(profile.id, {
-    fileName: saved.file_name,
-    fileKey: saved.file_key,
-    publicUrl: saved.url,
-    mimeType: saved.mime_type,
-    fileSize: saved.size_bytes,
-    provider: saved.storage_provider
-  });
+  try {
+    await storageFileService.recordBrandAvatar(profile.id, {
+      fileName: saved.file_name,
+      fileKey: saved.file_key,
+      publicUrl: saved.url,
+      mimeType: saved.mime_type,
+      fileSize: saved.size_bytes,
+      provider: saved.storage_provider
+    });
+  } catch {
+    // Non-blocking audit trail — upload already succeeded.
+  }
 
   revalidatePath("/brand/profile");
   revalidatePath("/brand/brand-center");
@@ -260,7 +277,7 @@ export async function uploadBrandCoverAction(formData: FormData) {
 
   const saved = await saveBrandCoverUpload(profile.id, file);
   if (!saved.ok) {
-    return { ok: false as const, error: saved.error };
+    return { ok: false as const, error: localizeUploadError(saved.error, lang) };
   }
 
   const updated = await updateBrandCoverUrl(email, saved.url, {
@@ -274,14 +291,18 @@ export async function uploadBrandCoverAction(formData: FormData) {
     return { ok: false as const, error: lang === "zh" ? "保存封面失败" : "Failed to save cover" };
   }
   const { storageFileService } = await import("@/features/storage/storage-file.service");
-  await storageFileService.recordBrandCover(profile.id, {
-    fileName: saved.file_name,
-    fileKey: saved.file_key,
-    publicUrl: saved.url,
-    mimeType: saved.mime_type,
-    fileSize: saved.size_bytes,
-    provider: saved.storage_provider
-  });
+  try {
+    await storageFileService.recordBrandCover(profile.id, {
+      fileName: saved.file_name,
+      fileKey: saved.file_key,
+      publicUrl: saved.url,
+      mimeType: saved.mime_type,
+      fileSize: saved.size_bytes,
+      provider: saved.storage_provider
+    });
+  } catch {
+    // Non-blocking audit trail — upload already succeeded.
+  }
 
   revalidatePath("/brand/profile");
   revalidatePath("/brand/brand-center");
