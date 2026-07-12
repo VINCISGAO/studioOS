@@ -3,14 +3,16 @@
 import { useEffect, useState } from "react";
 import { BrandLogoLockup } from "@/components/brand-logo-mark";
 import { MarketingHomeLink } from "@/components/studioos/marketing-home-link";
+import { BriefAiPromoCard } from "@/components/studioos/brand-creative-brief/brief-ai-promo-card";
 import { BrandCreativeBriefSectionNavSidebar, BrandCreativeBriefSectionNavTop } from "@/components/studioos/brand-creative-brief/brand-creative-brief-section-nav";
+import { PortalFixedFooter } from "@/components/studioos/portal/portal-fixed-footer";
+import { BRIEF_SIDEBAR_WIDTH_PX } from "@/lib/studioos/portal-layout-tokens";
 import { WizardStepper } from "@/components/studioos/ui/wizard-stepper";
 import { Button } from "@/components/ui/button";
 import { CREATIVE_BRIEF_SECTIONS } from "@/lib/studioos/brand-creative-brief-options";
 import type { Locale } from "@/lib/i18n";
 import {
   ArrowRight,
-  Bot,
   Loader2,
   ShieldCheck,
   Sparkles
@@ -136,6 +138,8 @@ export function BrandCreativeBriefShell({
   useEffect(() => {
     const sections = CREATIVE_BRIEF_SECTIONS.map((item) => item.id);
     const scrollRoot = document.getElementById("brand-wizard-scroll-panel");
+    if (!scrollRoot) return;
+
     const observer = new IntersectionObserver(
       (entries) => {
         const visible = entries
@@ -152,12 +156,19 @@ export function BrandCreativeBriefShell({
       }
     );
 
-    for (const id of sections) {
-      const node = document.getElementById(`brief-section-${id}`);
-      if (node) observer.observe(node);
-    }
-    return () => observer.disconnect();
-  }, []);
+    const bind = () => {
+      for (const id of sections) {
+        const node = document.getElementById(`brief-section-${id}`);
+        if (node) observer.observe(node);
+      }
+    };
+
+    const timer = window.setTimeout(bind, 0);
+    return () => {
+      window.clearTimeout(timer);
+      observer.disconnect();
+    };
+  }, [children]);
 
   function scrollToSection(id: string) {
     document.getElementById(`brief-section-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -169,7 +180,10 @@ export function BrandCreativeBriefShell({
         <BriefInlineNotice message={displayError} locale={locale} onDismiss={() => setDismissedNotice(displayError)} />
       ) : null}
       <div className="flex h-full min-h-0 flex-1 overflow-hidden">
-        <aside className="hidden h-full min-h-0 w-[220px] shrink-0 grid-rows-[minmax(0,1fr)_auto] overflow-hidden border-r border-zinc-200/80 bg-white xl:grid">
+        <aside
+          className="hidden h-full min-h-0 shrink-0 grid-rows-[minmax(0,1fr)_auto] overflow-hidden border-r border-zinc-200/80 bg-white xl:grid"
+          style={{ width: BRIEF_SIDEBAR_WIDTH_PX }}
+        >
           <BrandCreativeBriefSectionNavSidebar
             locale={locale}
             activeSection={activeSection}
@@ -178,19 +192,7 @@ export function BrandCreativeBriefShell({
           />
 
           <div className="space-y-3 px-3 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
-            <div className="rounded-2xl border border-violet-100 bg-gradient-to-br from-violet-50 to-white p-4">
-              <div className="flex items-center gap-2">
-                <Bot className="h-4 w-4 text-violet-600" />
-                <p className="text-sm font-semibold text-zinc-900">{t.aiBeta}</p>
-                <span className="rounded-full bg-violet-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">
-                  Beta
-                </span>
-              </div>
-              <p className="mt-2 text-xs leading-relaxed text-zinc-600">{t.aiBody}</p>
-              <Button type="button" variant="outline" size="sm" className="mt-3 h-8 w-full rounded-lg border-violet-200">
-                {t.aiCta}
-              </Button>
-            </div>
+            <BriefAiPromoCard locale={locale} title={t.aiBeta} body={t.aiBody} cta={t.aiCta} />
             <div className="rounded-2xl border border-zinc-100 bg-zinc-50/80 p-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">{t.tips}</p>
               <ul className="mt-2 space-y-1.5 text-xs leading-relaxed text-zinc-600">
@@ -233,19 +235,7 @@ export function BrandCreativeBriefShell({
                 <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 sm:text-[28px]">{t.title}</h1>
                 <p className="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-500 sm:text-base">{t.subtitle}</p>
                 <div className="mt-5 xl:hidden">
-                  <div className="rounded-2xl border border-violet-100 bg-gradient-to-br from-violet-50 to-white p-4">
-                    <div className="flex items-center gap-2">
-                      <Bot className="h-4 w-4 text-violet-600" />
-                      <p className="text-sm font-semibold text-zinc-900">{t.aiBeta}</p>
-                      <span className="rounded-full bg-violet-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">
-                        Beta
-                      </span>
-                    </div>
-                    <p className="mt-2 text-xs leading-relaxed text-zinc-600">{t.aiBody}</p>
-                    <Button type="button" variant="outline" size="sm" className="mt-3 h-8 w-full rounded-lg border-violet-200">
-                      {t.aiCta}
-                    </Button>
-                  </div>
+                  <BriefAiPromoCard locale={locale} title={t.aiBeta} body={t.aiBody} cta={t.aiCta} />
                 </div>
                 <div className="mt-5 overflow-hidden rounded-3xl border border-violet-100 bg-white shadow-[0_18px_60px_rgba(88,28,135,0.08)]">
                   <div className="bg-[radial-gradient(circle_at_6%_20%,rgba(124,58,237,0.16),transparent_28%),linear-gradient(135deg,#faf5ff_0%,#ffffff_56%,#ecfdf5_100%)] px-5 py-5">
@@ -285,8 +275,10 @@ export function BrandCreativeBriefShell({
         </div>
       </div>
 
-      <footer className="fixed inset-x-0 bottom-0 z-30 border-t border-zinc-200/80 bg-white/95 backdrop-blur lg:left-[248px] xl:left-[468px]">
-        <div className="flex w-full flex-col gap-3 px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8 xl:px-10">
+      <PortalFixedFooter
+        briefSidebar
+        innerClassName="flex w-full flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8 xl:px-10"
+      >
           <div className="min-h-[20px] flex-1">
             <p className="flex items-center gap-2 text-sm text-zinc-500">
               <ShieldCheck className="h-4 w-4 text-emerald-600" />
@@ -306,8 +298,7 @@ export function BrandCreativeBriefShell({
               {!isPending ? <ArrowRight className="ml-2 h-4 w-4" /> : null}
             </Button>
           </div>
-        </div>
-      </footer>
+      </PortalFixedFooter>
     </div>
   );
 }

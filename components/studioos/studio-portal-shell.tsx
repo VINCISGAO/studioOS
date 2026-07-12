@@ -20,7 +20,11 @@ import { buildAvatarInitials } from "@/lib/studioos/avatar-initials";
 import { creatorPortalNavItems } from "@/lib/studioos/creator-portal-nav";
 import { creatorPortalRoutes } from "@/lib/studioos/creator-portal-routes";
 import { isCreatorPortalReviewRoute } from "@/lib/studioos/portal-focus-mode";
+import { PortalContentColumn } from "@/components/studioos/portal/portal-content-column";
+import { PortalSidebarFrame } from "@/components/studioos/portal/portal-sidebar-frame";
+import { PortalViewportShell } from "@/components/studioos/portal/portal-viewport-shell";
 import { PortalShellChromeProvider } from "@/components/studioos/portal-shell-chrome-context";
+import { PORTAL_CONTENT_MAX, PORTAL_MAIN_SAFE_BOTTOM } from "@/lib/studioos/portal-layout-tokens";
 import {
   ReviewFocusModeProvider,
   usePortalReviewFocus
@@ -65,7 +69,6 @@ export function StudioPortalShell({
   return (
     <ReviewFocusModeProvider searchFallback={search}>
       <StudioPortalShellInner
-        key={`${pathnameProp ?? "studio"}?${search}`}
         locale={locale}
         pathname={pathnameProp}
         search={search}
@@ -143,7 +146,9 @@ function StudioPortalShellInner({
           notifications
         }}
       >
-        <div className="h-[100dvh] max-h-[100dvh] w-full overflow-hidden bg-[#f8f9fb]">{children}</div>
+        <PortalViewportShell mode="review-dvh" scrollLock>
+          {children}
+        </PortalViewportShell>
       </PortalShellChromeProvider>
     );
   }
@@ -161,60 +166,57 @@ function StudioPortalShellInner({
 
   const shellInner = (
     <PortalShellChromeProvider value={portalChrome}>
-    <div className="min-h-screen bg-[#f8f9fb] lg:h-screen lg:overflow-hidden">
-      <div className={cn("flex min-h-screen lg:h-screen lg:min-h-0 lg:overflow-hidden")}>
-        <aside className="hidden h-screen w-[248px] shrink-0 flex-col overflow-hidden border-r border-zinc-200/80 bg-white lg:flex">
-          <MarketingHomeLink
-            locale={locale}
-            className="flex shrink-0 items-center gap-2.5 px-5 py-5 transition hover:opacity-80"
-          >
-            <BrandLogoLockup
-              contrastOn="light"
-              markClassName="h-8 w-8 rounded-lg shadow-sm ring-1 ring-violet-100"
-              wordmarkClassName="h-[17px] w-[106px]"
-              priority
-            />
-            <div className="min-w-0">
-              {isVerified ? (
-                <CertifiedPartnerBadge
-                  label={partnerBadgeSidebar}
-                  compact
-                  className="mt-1.5 bg-violet-50 text-violet-700 ring-violet-200/60"
+      <PortalViewportShell mode="fixed" scrollLock>
+        <div className="flex h-full min-h-0 flex-1 overflow-hidden">
+          <PortalSidebarFrame
+            logo={
+              <MarketingHomeLink
+                locale={locale}
+                className="flex items-center gap-2.5 px-5 py-5 transition hover:opacity-80"
+              >
+                <BrandLogoLockup
+                  contrastOn="light"
+                  markClassName="h-8 w-8 rounded-lg shadow-sm ring-1 ring-violet-100"
+                  wordmarkClassName="h-[17px] w-[106px]"
+                  priority
                 />
-              ) : null}
-            </div>
-          </MarketingHomeLink>
-
-          <StudioPortalSidebarNav
-            locale={locale}
-            pathname={pathname}
-            canUseBusinessFeatures={canUseBusinessFeatures}
-            isVerified={isVerified}
-            unreadCount={visibleUnreadCount}
-            pendingInvitationCount={pendingInvitationCount}
+                <div className="min-w-0">
+                  {isVerified ? (
+                    <CertifiedPartnerBadge
+                      label={partnerBadgeSidebar}
+                      compact
+                      className="mt-1.5 bg-violet-50 text-violet-700 ring-violet-200/60"
+                    />
+                  ) : null}
+                </div>
+              </MarketingHomeLink>
+            }
+            nav={
+              <StudioPortalSidebarNav
+                locale={locale}
+                pathname={pathname}
+                canUseBusinessFeatures={canUseBusinessFeatures}
+                isVerified={isVerified}
+                unreadCount={visibleUnreadCount}
+                pendingInvitationCount={pendingInvitationCount}
+              />
+            }
+            footer={
+              creator ? (
+                <PortalSidebarAccountMenu
+                  locale={locale}
+                  initials={initials}
+                  avatarUrl={avatarUrl}
+                  name={creator.name}
+                  roleLabel={locale === "zh" ? "创作者" : "Creator"}
+                  profileHref={creatorPortalRoutes.profile}
+                  accent={isVerified ? "violet" : "zinc"}
+                />
+              ) : null
+            }
           />
 
-          <div className="mt-auto shrink-0 border-t border-zinc-100 p-4">
-            {creator ? (
-              <PortalSidebarAccountMenu
-                locale={locale}
-                initials={initials}
-                avatarUrl={avatarUrl}
-                name={creator.name}
-                roleLabel={locale === "zh" ? "创作者" : "Creator"}
-                profileHref={creatorPortalRoutes.profile}
-                accent={isVerified ? "violet" : "zinc"}
-              />
-            ) : null}
-          </div>
-        </aside>
-
-        <div
-          className={cn(
-            "flex min-h-0 min-w-0 flex-1 flex-col lg:h-screen lg:overflow-hidden",
-            isReviewPage && "h-[100dvh] max-h-[100dvh] overflow-hidden"
-          )}
-        >
+          <PortalContentColumn>
           {!hidePortalHeader ? (
             <header className="sticky top-0 z-40 shrink-0 border-b border-zinc-200/80 bg-white/95 backdrop-blur">
               <div className="flex h-14 items-center justify-between px-4 sm:px-6 lg:px-8">
@@ -268,22 +270,23 @@ function StudioPortalShellInner({
             </header>
           ) : null}
 
-          <main
-            className={cn(
-              "min-h-0 min-w-0 flex-1",
-              isReviewPage
-                ? "flex w-full flex-col overflow-hidden p-0"
-                : cn(
-                    "mx-auto w-full px-4 py-6 sm:px-6 lg:px-8 lg:py-8 lg:overflow-y-auto",
-                    isProfileEditorPage ? "max-w-none" : "max-w-[1280px]"
-                  )
-            )}
-          >
-            {children}
-          </main>
+            <main
+              className={cn(
+                "min-h-0 min-w-0 flex-1",
+                isReviewPage
+                  ? "flex w-full flex-col overflow-hidden p-0"
+                  : cn(
+                      "mx-auto w-full overflow-y-auto overscroll-y-contain px-4 py-6 sm:px-6 lg:px-8 lg:py-8",
+                      PORTAL_MAIN_SAFE_BOTTOM,
+                      isProfileEditorPage ? "max-w-none" : PORTAL_CONTENT_MAX.default
+                    )
+              )}
+            >
+              {children}
+            </main>
+          </PortalContentColumn>
         </div>
-      </div>
-    </div>
+      </PortalViewportShell>
     </PortalShellChromeProvider>
   );
 

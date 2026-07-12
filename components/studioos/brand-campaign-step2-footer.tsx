@@ -1,6 +1,7 @@
 "use client";
 
 import type { Locale } from "@/lib/i18n";
+import { PortalFixedFooter } from "@/components/studioos/portal/portal-fixed-footer";
 import { cn } from "@/lib/utils";
 import { ArrowLeft, ArrowRight, Save } from "lucide-react";
 
@@ -37,19 +38,14 @@ export function BrandCampaignStep2Footer({
   const t = copy[locale];
 
   return (
-    <div
-      className={cn(
-        "fixed inset-x-0 bottom-0 z-40 shrink-0 border-t border-zinc-200 bg-white/95 backdrop-blur lg:left-[248px]",
-        "supports-[backdrop-filter]:bg-white/90"
+    <PortalFixedFooter
+      zIndex="z-40"
+      innerClassName={cn(
+        "flex min-h-14 flex-wrap items-center justify-between gap-3 py-2",
+        "px-3 sm:px-4 lg:px-5",
+        "pr-3 sm:pr-4 lg:pr-5"
       )}
     >
-      <div
-        className={cn(
-          "flex min-h-14 flex-wrap items-center justify-between gap-3 py-2",
-          "px-3 pb-[calc(0.5rem+env(safe-area-inset-bottom))] sm:px-4 lg:px-5 xl:pb-2",
-          "pr-3 sm:pr-4 lg:pr-5"
-        )}
-      >
         <button
           type="button"
           onClick={onBack}
@@ -80,7 +76,6 @@ export function BrandCampaignStep2Footer({
             <ArrowRight className="h-4 w-4 shrink-0" />
           </button>
         </div>
-      </div>
-    </div>
+    </PortalFixedFooter>
   );
 }

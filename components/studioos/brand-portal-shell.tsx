@@ -1,17 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { BrandLogoLockup } from "@/components/brand-logo-mark";
-import { NotificationCenterBell } from "@/components/studioos/notification-center-bell";
-import { PortalMobileNav } from "@/components/studioos/portal-mobile-nav";
-import { MarketingHomeLink } from "@/components/studioos/marketing-home-link";
-import { StudioUserMenu } from "@/components/studioos/studio-user-menu";
-import { PortalSidebarAccountMenu } from "@/components/studioos/portal-sidebar-account-menu";
-import { brandNav } from "@/lib/studioos/vocabulary";
-import { brandPortalNavItems, type BrandPortalNavItem } from "@/lib/studioos/brand-portal-nav";
-import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
+import { BrandPortalHeader } from "@/components/studioos/brand-portal-header";
+import { BrandPortalSidebar } from "@/components/studioos/brand-portal-sidebar";
+import { PortalContentColumn } from "@/components/studioos/portal/portal-content-column";
+import { PortalViewportShell } from "@/components/studioos/portal/portal-viewport-shell";
 import { scrollToBrandMyAds, isBrandDashboardPath, prefersInstantBrandMyAdsScroll } from "@/lib/studioos/brand-my-ads-scroll";
 import { buildAvatarInitials } from "@/lib/studioos/avatar-initials";
 import { readBrandWizardStepFromLocation } from "@/lib/studioos/instant-nav";
@@ -21,15 +15,18 @@ import {
   isBrandPortalWizardCreateRoute,
   parseReviewSearchParams
 } from "@/lib/studioos/portal-focus-mode";
+import { PORTAL_CONTENT_MAX, PORTAL_MAIN_SAFE_BOTTOM } from "@/lib/studioos/portal-layout-tokens";
+import { brandPortalNavItems, type BrandPortalNavItem } from "@/lib/studioos/brand-portal-nav";
+import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
 import { PortalShellChromeProvider } from "@/components/studioos/portal-shell-chrome-context";
 import {
   ReviewFocusModeProvider,
   usePortalReviewFocus
 } from "@/components/studioos/reviewer-skeleton/use-review-focus-mode";
+import { brandNav } from "@/lib/studioos/vocabulary";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
-import { Home, LayoutDashboard } from "lucide-react";
 
 export function BrandPortalShell({
   locale,
@@ -49,7 +46,6 @@ export function BrandPortalShell({
   return (
     <ReviewFocusModeProvider searchFallback={search}>
       <BrandPortalShellInner
-        key={`${pathnameProp ?? "brand"}?${search}`}
         locale={locale}
         pathname={pathnameProp}
         search={search}
@@ -125,23 +121,8 @@ function BrandPortalShellInner({
     };
   }, [isWizardCreate, pathname]);
 
-  useEffect(() => {
-    const prevBodyOverflow = document.body.style.overflow;
-    const prevBodyOverscroll = document.body.style.overscrollBehavior;
-    const prevHtmlOverflow = document.documentElement.style.overflow;
-    document.body.style.overflow = "hidden";
-    document.body.style.overscrollBehavior = "none";
-    document.documentElement.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prevBodyOverflow;
-      document.body.style.overscrollBehavior = prevBodyOverscroll;
-      document.documentElement.style.overflow = prevHtmlOverflow;
-    };
-  }, []);
-
   const navigateToMyAds = useCallback(() => {
     const hashUrl = `${withLocale(brandPortalRoutes.dashboard, locale)}#my-ads`;
-
     if (isBrandDashboardPath(pathname)) {
       window.requestAnimationFrame(() => {
         scrollToBrandMyAds({
@@ -153,17 +134,8 @@ function BrandPortalShellInner({
       });
       return;
     }
-
     router.push(hashUrl, { scroll: false });
   }, [locale, pathname, router]);
-
-  if (isProjectReview && isReviewFocusMode) {
-    return (
-      <PortalShellChromeProvider value={portalChrome}>
-        <div className="fixed inset-0 z-0 overflow-hidden bg-[#f8f9fb]">{children}</div>
-      </PortalShellChromeProvider>
-    );
-  }
 
   function isActive(item: BrandPortalNavItem) {
     if (item.labelKey === "workspace") {
@@ -221,216 +193,71 @@ function BrandPortalShellInner({
     return pathname === item.href || pathname.startsWith(`${item.href}/`);
   }
 
-  function sidebarLinkClass(active: boolean, workspaceActive = false) {
-    return cn(
-      "relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition",
-      workspaceActive
-        ? "bg-violet-50 text-violet-700 shadow-[inset_0_0_0_1px_rgba(139,92,246,0.1)]"
-        : active
-          ? "bg-zinc-100/80 text-zinc-900"
-          : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900"
+  if (isProjectReview && isReviewFocusMode) {
+    return (
+      <PortalShellChromeProvider value={portalChrome}>
+        <PortalViewportShell mode="review-dvh" scrollLock>
+          {children}
+        </PortalViewportShell>
+      </PortalShellChromeProvider>
     );
   }
 
-  function sidebarDisabledClass() {
-    return cn(
-      "relative flex cursor-not-allowed items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium",
-      "text-zinc-400 opacity-65"
-    );
-  }
+  const showPortalHeader = !isProjectReview && !isWizardCreate;
 
   return (
     <PortalShellChromeProvider value={portalChrome}>
-      <div
-        data-brand-portal-root
-        className="fixed inset-0 z-0 flex min-h-0 flex-col overflow-hidden bg-[#f8f9fc]"
-      >
-      <div className="flex h-full min-h-0 flex-1 overflow-hidden">
-        <aside className="hidden h-full min-h-0 w-[248px] shrink-0 grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden border-r border-zinc-200/80 bg-white lg:grid">
-          <MarketingHomeLink
+      <PortalViewportShell mode="fixed" scrollLock brandPortalRoot>
+        <div className="flex h-full min-h-0 flex-1 overflow-hidden">
+          <BrandPortalSidebar
             locale={locale}
-            className="flex shrink-0 items-center gap-2.5 px-5 py-5 transition hover:opacity-80"
-          >
-            <BrandLogoLockup
-              contrastOn="light"
-              markClassName="h-8 w-8 rounded-lg shadow-sm ring-1 ring-violet-100"
-              wordmarkClassName="h-[17px] w-[106px]"
-              priority
-            />
-          </MarketingHomeLink>
+            navLabels={nav}
+            unreadMessageCount={unreadMessageCount}
+            brandAccount={brandAccount}
+            initials={initials}
+            avatarUrl={avatarUrl}
+            isActive={isActive}
+            onMyAdsClick={navigateToMyAds}
+          />
 
-          <nav className="min-h-0 flex-1 space-y-0.5 overflow-y-auto px-3 pb-3">
-            {brandPortalNavItems.map((item) => {
-              const active = isActive(item);
-              const workspaceActive = item.labelKey === "workspace" && active;
-              const Icon = item.icon ?? LayoutDashboard;
-              if (item.disabled) {
-                return (
-                  <div
-                    key={item.href + item.labelKey}
-                    className={sidebarDisabledClass()}
-                    aria-disabled="true"
-                    title={locale === "zh" ? "暂未开放" : "Coming soon"}
-                  >
-                    <Icon className="h-[18px] w-[18px] shrink-0" />
-                    <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
-                      <span>{nav[item.labelKey]}</span>
-                    </span>
-                  </div>
-                );
-              }
-              if (item.labelKey === "adRequirements") {
-                return (
-                  <button
-                    key={item.href + item.labelKey}
-                    type="button"
-                    onClick={(event) => {
-                      event.preventDefault();
-                      navigateToMyAds();
-                    }}
-                    className={sidebarLinkClass(active, false)}
-                  >
-                    <Icon className="h-[18px] w-[18px] shrink-0" />
-                    <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
-                      <span>{nav[item.labelKey]}</span>
-                    </span>
-                  </button>
-                );
-              }
-              return (
-                <Link
-                  key={item.href + item.labelKey}
-                  href={withLocale(item.href, locale)}
-                  className={sidebarLinkClass(active, workspaceActive)}
-                >
-                  <Icon className={cn("h-[18px] w-[18px] shrink-0", workspaceActive && "text-violet-700")} />
-                  <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
-                    <span>{nav[item.labelKey]}</span>
-                    {item.labelKey === "messages" && unreadMessageCount > 0 ? (
-                      <span className="rounded-full bg-rose-500 px-1.5 py-0.5 text-[10px] font-semibold text-white">
-                        {unreadMessageCount > 99 ? "99+" : unreadMessageCount}
-                      </span>
-                    ) : null}
-                  </span>
-                </Link>
-              );
-            })}
-          </nav>
-
-          <div className="shrink-0 border-t border-zinc-100 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-            {brandAccount ? (
-              <PortalSidebarAccountMenu
+          <PortalContentColumn>
+            {showPortalHeader ? (
+              <BrandPortalHeader
                 locale={locale}
+                pathname={pathname}
+                locationHash={locationHash}
+                navLabels={nav}
                 initials={initials}
                 avatarUrl={avatarUrl}
-                name={brandAccount.name}
-                roleLabel={locale === "zh" ? "品牌方" : "Brand"}
-                profileHref={brandPortalRoutes.brandCenter}
+                brandName={brandAccount?.name}
+                unreadMessageCount={unreadMessageCount}
+                onMyAdsClick={navigateToMyAds}
               />
             ) : null}
-          </div>
-        </aside>
 
-        <div
-          className={cn(
-            "flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden",
-            isProjectReview && "max-h-full"
-          )}
-        >
-          {!isProjectReview && !isWizardCreate ? (
-            <header
-              data-brand-portal-header
-              className="sticky top-0 z-40 shrink-0 border-b border-zinc-200/80 bg-white/95 backdrop-blur"
+            <main
+              data-brand-portal-main
+              className={cn(
+                "min-h-0 min-w-0 flex-1",
+                isProjectReview && "flex w-full flex-col overflow-hidden p-0",
+                isWizardCreate &&
+                  (isWizardStep2 || brandWizardStep === 3
+                    ? "mx-auto flex h-full w-full max-w-none flex-col overflow-y-auto overscroll-y-contain p-0"
+                    : "mx-auto flex h-full w-full max-w-none flex-col overflow-hidden p-0"),
+                !isProjectReview &&
+                  !isWizardCreate &&
+                  cn(
+                    "mx-auto w-full overflow-y-auto overscroll-y-contain px-4 py-6 sm:px-6 lg:px-8 lg:py-8",
+                    PORTAL_MAIN_SAFE_BOTTOM,
+                    isProfileEditorPage ? "max-w-none" : focusRoute ? PORTAL_CONTENT_MAX.focus : PORTAL_CONTENT_MAX.default
+                  )
+              )}
             >
-              <div className="flex h-14 items-center justify-between px-4 sm:px-6 lg:px-8">
-                {isWizardCreate ? (
-                  <Link
-                    href={withLocale(brandPortalRoutes.dashboard, locale)}
-                    className="flex items-center gap-2.5 text-sm font-semibold text-zinc-950 lg:hidden"
-                  >
-                    <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-700">
-                      <Home className="h-4 w-4" />
-                    </span>
-                    {locale === "zh" ? "新建广告需求" : "New ad brief"}
-                  </Link>
-                ) : (
-                  <div className="flex items-center gap-2 lg:hidden">
-                    <MarketingHomeLink locale={locale} className="flex items-center gap-2 font-semibold text-zinc-950">
-                      <BrandLogoLockup
-                        contrastOn="light"
-                        markClassName="h-6 w-6 rounded-md shadow-sm"
-                        wordmarkClassName="h-[13px] w-[82px]"
-                      />
-                    </MarketingHomeLink>
-                  </div>
-                )}
-                <div className="hidden lg:block" />
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <NotificationCenterBell locale={locale} className={cn(isWizardCreate && "hidden lg:block")} />
-                  <StudioUserMenu
-                    locale={locale}
-                    initials={initials}
-                    avatarUrl={avatarUrl}
-                    name={brandAccount?.name}
-                    profileHref={brandPortalRoutes.brandCenter}
-                    roleLabel={locale === "zh" ? "品牌方" : "Brand"}
-                  />
-                </div>
-              </div>
-
-              {!isWizardCreate ? (
-              <div className="border-t border-zinc-100 px-4 py-3 lg:hidden">
-                <PortalMobileNav
-                  locale={locale}
-                  pathname={pathname}
-                  items={brandPortalNavItems
-                    .filter((item) => !item.disabled)
-                    .map(({ href, labelKey, mobileIconKey }) => ({
-                      id: labelKey,
-                      href,
-                      label: nav[labelKey],
-                      iconKey: mobileIconKey,
-                      onClick: labelKey === "adRequirements" ? navigateToMyAds : undefined,
-                      active:
-                        labelKey === "workspace"
-                          ? pathname === brandPortalRoutes.dashboard && locationHash !== "#my-ads"
-                          : labelKey === "adRequirements"
-                            ? pathname === brandPortalRoutes.dashboard && locationHash === "#my-ads"
-                            : undefined
-                    }))}
-                />
-              </div>
-              ) : null}
-            </header>
-          ) : null}
-
-          <main
-            data-brand-portal-main
-            className={cn(
-              "min-h-0 min-w-0 flex-1",
-              isProjectReview
-                ? "flex w-full flex-col overflow-hidden p-0"
-                : isWizardStep2
-                  ? "mx-auto flex h-full w-full max-w-none flex-col overflow-y-auto overscroll-y-contain p-0"
-                  : isWizardCreate && brandWizardStep === 1
-                    ? "mx-auto flex h-full w-full max-w-none flex-col overflow-hidden p-0"
-                    : isWizardCreate
-                      ? "mx-auto flex h-full w-full max-w-none flex-col overflow-y-auto overscroll-y-contain p-0"
-                      : cn(
-                        "mx-auto w-full overflow-y-auto overscroll-y-contain px-4 py-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-8 lg:py-8",
-                        isProfileEditorPage || isWizardCreate
-                          ? "max-w-none"
-                          : focusRoute
-                            ? "max-w-[920px] lg:max-w-[1280px]"
-                            : "max-w-[1280px]"
-                      )
-            )}
-          >
-            {children}
-          </main>
+              {children}
+            </main>
+          </PortalContentColumn>
         </div>
-      </div>
-      </div>
+      </PortalViewportShell>
     </PortalShellChromeProvider>
   );
 }
