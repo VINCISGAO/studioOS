@@ -1037,7 +1037,7 @@ export async function startBrandCreativeDirectionsAction(formData: FormData) {
         });
       }
       if (activeJob.status === "QUEUED" || activeJob.status === "RETRYING") {
-        aiWorkerService.scheduleProcess(activeJob.id);
+        aiWorkerService.kickProcess(activeJob.id);
       }
       return { ok: true as const, status: "pending" as const, jobId: activeJob.id };
     }
@@ -1125,7 +1125,18 @@ export async function pollBrandCreativeDirectionsAction(formData: FormData) {
           error: lang === "zh" ? "AI 创意生成失败，请返回上一步重试" : "AI creative generation failed — go back and try again"
         };
       }
-      if (job && job.status !== "SUCCESS") {
+      if (job && (job.status === "QUEUED" || job.status === "RETRYING")) {
+        await aiWorkerService.processJob(jobId);
+        const refreshedJob = await aiJobRepository.findById(jobId);
+        if (refreshedJob?.status === "FAILED" || refreshedJob?.status === "DEAD") {
+          return {
+            ok: false as const,
+            error: lang === "zh" ? "AI 创意生成失败，请返回上一步重试" : "AI creative generation failed — go back and try again"
+          };
+        }
+      } else if (job && job.status === "RUNNING") {
+        return { ok: true as const, status: "pending" as const, directions: [] as CreativeDirection[] };
+      } else if (job && job.status !== "SUCCESS") {
         return { ok: true as const, status: "pending" as const, directions: [] as CreativeDirection[] };
       }
     }

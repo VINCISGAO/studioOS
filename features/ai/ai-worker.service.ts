@@ -1,3 +1,4 @@
+import { after } from "next/server";
 import { aiUsageQuotaService } from "@/features/abuse/ai-usage-quota.service";
 import { aiJobRepository } from "@/features/ai/ai-job.repository";
 import { assertCampaignEscrowFunded } from "@/features/payment/escrow-guards";
@@ -5,7 +6,7 @@ import { runCreativeDirectionJob } from "@/features/ai/creative-direction.runner
 import { campaignRepository } from "@/features/campaign/campaign.repository";
 import { campaignService } from "@/features/campaign/campaign.service";
 import { CampaignEvent, CampaignState } from "@/features/campaign/campaign.state-machine";
-import { aiConfig } from "@/lib/core/config/ai";
+import { aiConfig, hasOpenAI } from "@/lib/core/config/ai";
 import { appError } from "@/lib/core/errors";
 import { logger } from "@/lib/core/logger";
 import { AiJobState, MAX_AI_RETRIES } from "@/features/shared/state-machines/ai-job.state-machine";
@@ -57,8 +58,8 @@ export class AiWorkerService {
     });
   }
 
-  scheduleProcess(jobId: string) {
-    setImmediate(() => {
+  kickProcess(jobId: string) {
+    const run = () => {
       void this.processJob(jobId).catch((error) => {
         logger.error("AI worker failed", {
           service: "AiWorkerService",
@@ -66,7 +67,17 @@ export class AiWorkerService {
           error: error instanceof Error ? error.message : String(error)
         });
       });
-    });
+    };
+
+    try {
+      after(run);
+    } catch {
+      run();
+    }
+  }
+
+  scheduleProcess(jobId: string) {
+    this.kickProcess(jobId);
   }
 
   async processJob(jobId: string) {
@@ -211,7 +222,7 @@ export class AiWorkerService {
 }
 
 function aiGatewayProviderLabel() {
-  return process.env.OPENAI_API_KEY?.trim() ? "openai" : "template";
+  return hasOpenAI() ? "openai" : "template";
 }
 
 export const aiWorkerService = new AiWorkerService();
