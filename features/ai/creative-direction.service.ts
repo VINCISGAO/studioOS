@@ -394,16 +394,19 @@ export class CreativeDirectionService {
       await campaignService.transition(campaignId, CampaignEvent.APPROVE_CREATIVE, actor);
     }
 
-    await activityService.write(campaignId, "ai.direction_selected", {
-      userId: user.id,
-      email: user.id,
-      role: "brand"
-    }, {
-      directionId,
-      title: selected.title,
-      frozenBrief: true
-    });
-    await recordCampaignAiEvidence({
+    const frozen = brief.frozen_production_brief as FrozenProductionBrief;
+
+    await Promise.all([
+      activityService.write(campaignId, "ai.direction_selected", {
+        userId: user.id,
+        email: user.id,
+        role: "brand"
+      }, {
+        directionId,
+        title: selected.title,
+        frozenBrief: true
+      }),
+      recordCampaignAiEvidence({
       campaign,
       eventType: "CreativeDirectionSelected",
       learningType: "creative_direction_selected",
@@ -444,7 +447,8 @@ export class CreativeDirectionService {
       },
       memoryKey: "selected_direction",
       memoryValue: selected.title
-    });
+      })
+    ]);
     if (campaign.creatorId) {
       const script = [selected.title, selected.hook, selected.visualStyle, selected.tone, selected.cta]
         .filter(Boolean)
@@ -466,7 +470,7 @@ export class CreativeDirectionService {
         .catch(() => undefined);
     }
 
-    return selected;
+    return { selected, frozen };
   }
 
   async getCreativeBundle(campaignId: string, user: AuthUser) {

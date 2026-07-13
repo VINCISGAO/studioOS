@@ -4,10 +4,11 @@ import { BrandCampaignList } from "@/components/studioos/brand-campaign-list";
 import { BrandActiveCampaignCapacity } from "@/components/studioos/brand-active-campaign-capacity";
 import { BrandWorkspaceHero } from "@/components/studioos/brand-workspace-hero";
 import type { Locale } from "@/lib/i18n";
-import type { BrandProjectRow } from "@/lib/studioos/brand-dashboard";
+import type { BrandProjectRow } from "@/lib/studioos/brand-dashboard-types";
+import { computeBrandWorkspaceHeroStats } from "@/lib/studioos/brand-workspace-hero-stats";
 import type { BrandNewCampaignGate } from "@/lib/studioos/brand-active-campaign-limit";
 import { scrollToBrandMyAds, scheduleBrandMyAdsScroll } from "@/lib/studioos/brand-my-ads-scroll";
-import { useEffect, useLayoutEffect } from "react";
+import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 
 const copy = {
   en: {
@@ -46,9 +47,13 @@ export function BrandWorkspaceOverview({
   rateLimitCode?: "rate_limit_10m" | "rate_limit_24h" | null;
 }) {
   const t = copy[locale];
-  const total = rows.length;
-  const drafts = rows.filter((row) => row.phase === "draft").length;
-  const active = rows.filter((row) => row.phase === "active").length;
+  const [items, setItems] = useState(rows);
+
+  useEffect(() => {
+    setItems(rows);
+  }, [rows]);
+
+  const { total, drafts, active } = useMemo(() => computeBrandWorkspaceHeroStats(items), [items]);
 
   useLayoutEffect(() => {
     if (window.location.hash !== "#my-ads") return;
@@ -86,7 +91,8 @@ export function BrandWorkspaceOverview({
         </div>
         <BrandCampaignList
           locale={locale}
-          rows={rows}
+          rows={items}
+          onRowsChange={setItems}
           orderProjectMap={orderProjectMap}
           wizardProjectId={wizardProjectId}
           activeCampaignCount={activeCampaignCount}

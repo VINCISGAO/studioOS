@@ -24,7 +24,7 @@ async function requireCreatorId(locale: Locale) {
   if (!creatorId) {
     return {
       ok: false as const,
-      error: locale === "zh" ? "请先以 Studio 身份登录" : "Sign in as a studio account"
+      error: locale === "zh" ? "请先以创作者身份登录" : "Sign in as a studio account"
     };
   }
   return { ok: true as const, creatorId };

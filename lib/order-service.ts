@@ -9,6 +9,7 @@ import type {
 import { createSerializedStoreReader, writeJsonFileAtomic } from "@/lib/json-file-store-core";
 import { canPersistLocalDataStore } from "@/lib/can-persist-local-store";
 import { getCreatorIdForDemoEmail } from "@/features/auth/session-context";
+import { canDeleteOrder } from "@/lib/studioos/brand-delete-policy";
 import { getProject, updateProject } from "@/lib/project-service";
 import type { StoredProject } from "@/lib/project-types";
 import { readDataJson, dataStorePath } from "@/lib/serverless-store-core";
@@ -634,6 +635,28 @@ export async function updateOrderRequirements(
   order.requirements = trimmed;
   await writeStore(store);
   return order;
+}
+
+/** Single read/write when syncing frozen brief text to multiple orders. */
+export async function batchUpdateOrderRequirements(
+  orderIds: string[],
+  requirements: string
+): Promise<void> {
+  const trimmed = requirements.trim();
+  if (!trimmed || orderIds.length === 0) return;
+
+  const store = await readStore();
+  let changed = false;
+  for (const orderId of orderIds) {
+    const order = store.orders.find((item) => item.id === orderId);
+    if (order) {
+      order.requirements = trimmed;
+      changed = true;
+    }
+  }
+  if (changed) {
+    await writeStore(store);
+  }
 }
 
 export async function getOrderByInquiry(inquiryId: string): Promise<StoredOrder | null> {
@@ -1382,6 +1405,38 @@ export async function getOrderForProject(projectId: string): Promise<StoredOrder
   );
 }
 
+/** Sync unpaid campaign escrow totals when the brand changes budget before checkout. */
+export async function updateCampaignEscrowOrderAmount(input: {
+  projectId: string;
+  budgetRange: string;
+}): Promise<StoredOrder | null> {
+  const order = await getOrderForProject(input.projectId);
+  if (!order || order.payment_status !== "unpaid") {
+    return order;
+  }
+
+  const amount = parseBudgetMidpoint(input.budgetRange);
+  const { platform_fee, creator_payout } = splitFees(amount);
+  const store = await readStore();
+  const target = store.orders.find((item) => item.id === order.id);
+  if (!target) {
+    return order;
+  }
+
+  target.amount = amount;
+  target.platform_fee = platform_fee;
+  target.creator_payout = creator_payout;
+  target.budget_range = input.budgetRange;
+
+  const quote = store.quotes.find((item) => item.id === order.quote_id);
+  if (quote) {
+    quote.amount = amount;
+  }
+
+  await writeStore(store);
+  return target;
+}
+
 export async function removeJsonDeliverableVersion(orderId: string, version: number): Promise<void> {
   const store = await readStore();
   const before = store.deliverables.length;
@@ -1480,12 +1535,7 @@ export async function getLatestSubmittedDeliverableVersionsForOrders(
 }
 
 
-export function canDeleteOrder(order: Pick<StoredOrder, "status" | "payment_status">) {
-  if (order.status === "completed" || order.status === "cancelled") {
-    return true;
-  }
-  return order.status === "waiting_payment" && order.payment_status === "unpaid";
-}
+export { canDeleteOrder };
 
 export async function deleteOrdersForProjectId(
   projectId: string,

@@ -174,7 +174,7 @@ export function ProposalContractPanel({
         <Card className="border-amber-100 bg-amber-50/50 shadow-none">
           <CardContent className="p-5 text-sm text-amber-950">
             {locale === "zh"
-              ? "在 Proposal Room 讨论方案。Studio 发送正式报价后，此处自动生成 Project Contract。"
+              ? "在 Proposal Room 讨论方案。创作者发送正式报价后，此处自动生成项目合同。"
               : "Discuss scope in the Proposal Room. When the studio sends a formal proposal, your Project Contract appears here."}
           </CardContent>
         </Card>

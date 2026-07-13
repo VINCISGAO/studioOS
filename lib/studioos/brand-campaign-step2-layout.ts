@@ -1,3 +1,7 @@
+/** Brand wizard steps 2–3: main column + sticky sidebar on xl */
+export const BRAND_WIZARD_MAIN_SIDEBAR_GRID =
+  "grid gap-5 xl:grid-cols-[minmax(0,1fr)_min(380px,34%)] 2xl:grid-cols-[minmax(0,1fr)_400px]";
+
 /** Step 2 scheme card layout tokens */
 export const STEP2_SCHEME_LAYOUT = {
   /** 方案 A — 左内容区 + 右指标栏（md 起双栏） */

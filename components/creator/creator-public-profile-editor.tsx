@@ -10,6 +10,7 @@ import {
   Check,
   ChevronDown,
   Globe2,
+  ImageIcon,
   Loader2,
   MapPin,
   Plus,
@@ -31,8 +32,10 @@ import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import { getCountryOptions, labelCountry } from "@/lib/localized-options";
 import { buildAvatarInitials } from "@/lib/studioos/avatar-initials";
+import { useProfileImagePicker } from "@/components/studioos/image-crop/use-profile-image-picker";
+import { PROFILE_AVATAR_ASPECT, PROFILE_COVER_ASPECT } from "@/lib/studioos/image-crop-client";
+import { profileImageClassName } from "@/lib/studioos/profile-image-styles";
 import { normalizeCreatorMinBudget } from "@/lib/studioos/creator-price-preference";
-import { compressImageForUpload } from "@/lib/studioos/image-upload-client";
 import type { Creator } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -165,7 +168,7 @@ const copy = {
       basicTitle: "基础信息",
       basicHelper: "告诉品牌方你是谁，以及你擅长什么。",
       displayName: "展示名称",
-      displayNameHelper: "你的公开 Studio 或创作者名称。",
+      displayNameHelper: "你的公开创作者名称。",
       portfolioLink: "作品集链接",
       portfolioHelper: "官网、Showreel 或作品集页面。",
       headline: "一句话介绍",
@@ -408,8 +411,6 @@ export function CreatorPublicProfileEditor({
   const [coverUploading, setCoverUploading] = useState(false);
   const [isPending, startTransition] = useTransition();
   const initialSnapshot = useRef("");
-  const avatarInputRef = useRef<HTMLInputElement | null>(null);
-  const coverInputRef = useRef<HTMLInputElement | null>(null);
 
   const countryOptions = useMemo(() => getCountryOptions(locale, country), [locale, country]);
   const initials = useMemo(() => buildAvatarInitials(displayName, "C"), [displayName]);
@@ -604,15 +605,9 @@ export function CreatorPublicProfileEditor({
   async function handleAvatarUpload(file: File) {
     setAvatarUploading(true);
     try {
-      const uploadFile = await compressImageForUpload(file, {
-        maxBytes: 1.8 * 1024 * 1024,
-        maxDimension: 1000,
-        quality: 0.78,
-        fileNamePrefix: "creator-avatar"
-      });
       const fd = new FormData();
       fd.set("lang", locale);
-      fd.set("avatar_file", uploadFile);
+      fd.set("avatar_file", file);
       const result = await uploadCreatorAvatarAction(fd);
       if (!result.ok) {
         setToast({ message: result.error, variant: "error" });
@@ -635,15 +630,9 @@ export function CreatorPublicProfileEditor({
     setCoverPreview(nextUrl);
     setCoverUploading(true);
     try {
-      const uploadFile = await compressImageForUpload(file, {
-        maxBytes: 2.5 * 1024 * 1024,
-        maxDimension: 1800,
-        quality: 0.82,
-        fileNamePrefix: "creator-cover"
-      });
       const fd = new FormData();
       fd.set("lang", locale);
-      fd.set("cover_file", uploadFile);
+      fd.set("cover_file", file);
       const result = await uploadCreatorCoverAction(fd);
       if (!result.ok) {
         URL.revokeObjectURL(nextUrl);
@@ -666,8 +655,25 @@ export function CreatorPublicProfileEditor({
     }
   }
 
+  const avatarPicker = useProfileImagePicker({
+    locale,
+    aspectRatio: PROFILE_AVATAR_ASPECT,
+    fileNamePrefix: "creator-avatar",
+    outputPreset: "avatar",
+    onCropped: handleAvatarUpload
+  });
+  const coverPicker = useProfileImagePicker({
+    locale,
+    aspectRatio: PROFILE_COVER_ASPECT,
+    fileNamePrefix: "creator-cover",
+    outputPreset: "cover",
+    onCropped: handleCoverUpload
+  });
+
   return (
     <div className="flex h-full min-h-0 flex-col rounded-[28px] bg-[radial-gradient(circle_at_0%_0%,rgba(124,58,237,0.06),transparent_34%),linear-gradient(180deg,#ffffff_0%,#fafaff_100%)] text-zinc-950">
+      {avatarPicker.cropModal}
+      {coverPicker.cropModal}
       {toast ? (
         <div className="fixed inset-x-0 top-5 z-50 flex justify-center px-4">
           <div
@@ -741,34 +747,31 @@ export function CreatorPublicProfileEditor({
                 )}
                 <button
                   type="button"
-                  onClick={() => coverInputRef.current?.click()}
+                  onClick={() => coverPicker.openPicker()}
                   disabled={coverUploading}
-                  className="absolute right-3 top-3 rounded-full border border-white/80 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-950 shadow-[0_8px_22px_rgba(15,23,42,0.18)] backdrop-blur transition hover:bg-violet-50 disabled:cursor-not-allowed disabled:opacity-70"
+                  className="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full border border-white/90 bg-white px-3.5 py-2 text-xs font-semibold text-zinc-900 shadow-[0_6px_20px_rgba(15,23,42,0.28)] transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-70"
                 >
+                  <ImageIcon className="h-3.5 w-3.5 text-violet-600" />
                   {coverUploading ? (locale === "zh" ? "上传中…" : "Uploading…") : t.editCover}
                 </button>
                 <input
-                  ref={coverInputRef}
+                  ref={coverPicker.inputRef}
                   type="file"
                   accept="image/jpeg,image/png,image/webp,image/gif"
                   className="hidden"
-                  onChange={(event) => {
-                    const file = event.target.files?.[0];
-                    if (file) void handleCoverUpload(file);
-                    event.target.value = "";
-                  }}
+                  onChange={coverPicker.onInputChange}
                 />
               </div>
 
               <div className="-mt-9 px-3">
                 <button
                   type="button"
-                  onClick={() => avatarInputRef.current?.click()}
+                  onClick={() => avatarPicker.openPicker()}
                   className="group relative h-16 w-16 overflow-hidden rounded-[18px] border-4 border-white bg-zinc-950 text-lg font-semibold text-white shadow-[0_10px_28px_rgba(15,23,42,0.16)]"
                   aria-label={t.uploadAvatar}
                 >
                   {creator.avatar_url ? (
-                    <Image src={creator.avatar_url} alt="" fill className="object-cover" unoptimized />
+                    <Image src={creator.avatar_url} alt="" fill className={profileImageClassName("photo")} unoptimized />
                   ) : (
                     <span className="flex h-full w-full items-center justify-center">{initials || "NM"}</span>
                   )}
@@ -781,15 +784,11 @@ export function CreatorPublicProfileEditor({
                   </span>
                 </button>
                 <input
-                  ref={avatarInputRef}
+                  ref={avatarPicker.inputRef}
                   type="file"
                   accept="image/jpeg,image/png,image/webp,image/gif"
                   className="hidden"
-                  onChange={(event) => {
-                    const file = event.target.files?.[0];
-                    if (file) void handleAvatarUpload(file);
-                    event.target.value = "";
-                  }}
+                  onChange={avatarPicker.onInputChange}
                 />
               </div>
 

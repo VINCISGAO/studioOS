@@ -22,10 +22,10 @@ const copy = {
     viewAll: "Browse all studios"
   },
   zh: {
-    eyebrow: "精选制作方作品",
+    eyebrow: "精选创作者作品",
     title: "匹配之前，先看真实广告作品。",
     subtitle: "作品集优先 — 按风格、平台与品类筛选。点击播放，满意后进入方案间。",
-    viewAll: "浏览全部制作方"
+    viewAll: "浏览全部创作者"
   }
 };
 

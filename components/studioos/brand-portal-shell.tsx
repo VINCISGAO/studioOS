@@ -19,6 +19,7 @@ import { PORTAL_CONTENT_MAX, PORTAL_MAIN_SAFE_BOTTOM } from "@/lib/studioos/port
 import { brandPortalNavItems, type BrandPortalNavItem } from "@/lib/studioos/brand-portal-nav";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
 import { PortalShellChromeProvider } from "@/components/studioos/portal-shell-chrome-context";
+import { AcknowledgeAlertProvider } from "@/components/studioos/acknowledge-alert-provider";
 import {
   ReviewFocusModeProvider,
   usePortalReviewFocus
@@ -45,15 +46,17 @@ export function BrandPortalShell({
 }) {
   return (
     <ReviewFocusModeProvider searchFallback={search}>
-      <BrandPortalShellInner
-        locale={locale}
-        pathname={pathnameProp}
-        search={search}
-        unreadMessageCount={unreadMessageCount}
-        brandAccount={brandAccount}
-      >
-        {children}
-      </BrandPortalShellInner>
+      <AcknowledgeAlertProvider locale={locale}>
+        <BrandPortalShellInner
+          locale={locale}
+          pathname={pathnameProp}
+          search={search}
+          unreadMessageCount={unreadMessageCount}
+          brandAccount={brandAccount}
+        >
+          {children}
+        </BrandPortalShellInner>
+      </AcknowledgeAlertProvider>
     </ReviewFocusModeProvider>
   );
 }
@@ -87,7 +90,6 @@ function BrandPortalShellInner({
     if (!isBrandPortalWizardCreateRoute(pathname)) return 1;
     return Number(parseReviewSearchParams(search).get("step")) || 1;
   });
-  const isWizardStep2 = isWizardCreate && brandWizardStep === 2;
   const isProfileEditorPage =
     pathname === brandPortalRoutes.brandCenter ||
     pathname === brandPortalRoutes.brandProfile ||
@@ -232,13 +234,12 @@ function BrandPortalShellInner({
 
             <main
               data-brand-portal-main
+              data-brand-wizard-step={isWizardCreate ? brandWizardStep : undefined}
               className={cn(
                 "min-h-0 min-w-0 flex-1",
                 isProjectReview && "flex w-full flex-col overflow-hidden p-0",
                 isWizardCreate &&
-                  (isWizardStep2 || brandWizardStep === 3
-                    ? "mx-auto flex h-full w-full max-w-none flex-col overflow-y-auto overscroll-y-contain p-0"
-                    : "mx-auto flex h-full w-full max-w-none flex-col overflow-hidden p-0"),
+                  "mx-auto flex h-full w-full max-w-none flex-col overflow-y-auto overscroll-y-contain p-0",
                 !isProjectReview &&
                   !isWizardCreate &&
                   cn(

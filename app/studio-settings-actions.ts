@@ -35,7 +35,7 @@ async function requireCreatorContext(lang: Locale) {
 
   const creator = await getCreatorById(creatorId);
   if (!creator) {
-    return { ok: false as const, error: lang === "zh" ? "Studio 不存在" : "Studio not found" };
+    return { ok: false as const, error: lang === "zh" ? "创作者不存在" : "Studio not found" };
   }
 
   const cookieStore = await cookies();

@@ -8,12 +8,12 @@ import {
   USD_REFERENCE_RATES
 } from "@/lib/money/display-money";
 
-export type BrandDeliveryTimelineId = "3-5" | "5-7" | "7-14" | "14plus";
+export type BrandDeliveryTimelineId = "3-5" | "5-7" | "7-14" | "14plus" | "48h" | "24h";
 
 export type BrandBudgetOption = { value: string; label: string };
 export type BrandTimelineOption = { id: BrandDeliveryTimelineId; label: string; days: number };
 
-export const BRAND_BUDGET_MIN_USD = 200;
+export const BRAND_BUDGET_MIN_USD = 250;
 
 /** Canonical USD values — labels are localized at render time. */
 export const BRAND_BUDGET_PRESET_USD = [
@@ -37,16 +37,18 @@ export const BRAND_BUDGET_OPTIONS: Record<Locale, BrandBudgetOption[]> = {
 
 export const BRAND_DELIVERY_TIMELINES: Record<Locale, BrandTimelineOption[]> = {
   en: [
-    { id: "3-5", label: "3–5 days", days: 5 },
-    { id: "5-7", label: "5–7 days", days: 7 },
+    { id: "14plus", label: "14+ days", days: 21 },
     { id: "7-14", label: "7–14 days", days: 14 },
-    { id: "14plus", label: "14+ days", days: 21 }
+    { id: "5-7", label: "5–7 days", days: 7 },
+    { id: "3-5", label: "3–5 days", days: 5 },
+    { id: "48h", label: "Within 48h", days: 2 }
   ],
   zh: [
-    { id: "3-5", label: "3–5 天", days: 5 },
-    { id: "5-7", label: "5–7 天", days: 7 },
+    { id: "14plus", label: "14 天以上", days: 21 },
     { id: "7-14", label: "7–14 天", days: 14 },
-    { id: "14plus", label: "14 天以上", days: 21 }
+    { id: "5-7", label: "5–7 天", days: 7 },
+    { id: "3-5", label: "3–5 天", days: 5 },
+    { id: "48h", label: "48 小时内", days: 2 }
   ]
 };
 
@@ -61,14 +63,20 @@ export function getBrandBudgetPresets(locale: Locale): BrandBudgetOption[] {
 }
 
 function formatUsdCanonical(amount: number): string {
-  return amount.toLocaleString("en-US", { maximumFractionDigits: 0 });
+  const normalized = Math.round(amount * 100) / 100;
+  if (Number.isInteger(normalized)) {
+    return normalized.toLocaleString("en-US", { maximumFractionDigits: 0 });
+  }
+  return normalized.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 function displayAmountToUsd(amount: number, locale: Locale): number {
   const currency = getDisplayCurrency(locale);
   const rate = USD_REFERENCE_RATES[currency];
-  if (rate <= 0 || currency === "USD") return amount;
-  return Math.max(0, Math.round(amount / rate));
+  if (rate <= 0 || currency === "USD") {
+    return Math.round(amount * 100) / 100;
+  }
+  return Math.max(0, Math.round((amount / rate) * 100) / 100);
 }
 
 function usdAmountToDisplayInput(amountUsd: number, locale: Locale): string {
@@ -163,7 +171,7 @@ export function defaultBrandTimeline(): BrandDeliveryTimelineId {
   return "5-7";
 }
 
-export type BrandVideoAspectRatio = "9:16" | "16:9" | "1:1" | "4:5";
+export type BrandVideoAspectRatio = "9:16" | "16:9" | "1:1" | "4:5" | "4:3" | "21:9" | "custom";
 
 export type BrandAspectRatioOption = {
   id: BrandVideoAspectRatio;
@@ -186,12 +194,85 @@ export const BRAND_VIDEO_ASPECT_RATIOS: Record<Locale, BrandAspectRatioOption[]>
   ]
 };
 
+/** Quick Brief layer — compact aspect ratio picker. */
+export const QUICK_BRIEF_ASPECT_RATIOS: Record<Locale, BrandAspectRatioOption[]> = {
+  en: [
+    { id: "16:9", label: "16:9 Landscape", hint: "YouTube, TV, web" },
+    { id: "9:16", label: "9:16 Vertical", hint: "TikTok, Reels, Shorts" },
+    { id: "4:3", label: "4:3 Standard", hint: "Classic TV, presentations" },
+    { id: "21:9", label: "21:9 Ultrawide", hint: "Cinematic widescreen" },
+    { id: "custom", label: "Other", hint: "Enter a custom ratio" }
+  ],
+  zh: [
+    { id: "16:9", label: "16:9 横屏", hint: "YouTube、电视、网站" },
+    { id: "9:16", label: "9:16 竖屏", hint: "TikTok、Reels、短视频" },
+    { id: "4:3", label: "4:3 标准", hint: "传统电视、演示" },
+    { id: "21:9", label: "21:9 超宽", hint: "电影感宽银幕" },
+    { id: "custom", label: "其他", hint: "手动填写比例" }
+  ]
+};
+
+const PRESET_ASPECT_RATIO_IDS = new Set<string>([
+  ...BRAND_VIDEO_ASPECT_RATIOS.en.map((item) => item.id),
+  ...QUICK_BRIEF_ASPECT_RATIOS.en.map((item) => item.id).filter((id) => id !== "custom")
+]);
+
+const ASPECT_RATIO_PATTERN = /^\d+(\.\d+)?:\d+(\.\d+)?$/;
+
+export function defaultQuickBriefAspectRatio(): BrandVideoAspectRatio {
+  return defaultBrandAspectRatio();
+}
+
 export function defaultBrandAspectRatio(): BrandVideoAspectRatio {
-  return "9:16";
+  return "16:9";
 }
 
 export function isValidBrandAspectRatio(value: string): value is BrandVideoAspectRatio {
-  return BRAND_VIDEO_ASPECT_RATIOS.en.some((item) => item.id === value);
+  return value === "custom" || PRESET_ASPECT_RATIO_IDS.has(value);
+}
+
+export function isCustomAspectRatioPattern(value: string) {
+  return ASPECT_RATIO_PATTERN.test(value.trim());
+}
+
+export function resolveBriefAspectRatioValue(input: {
+  aspectRatio: BrandVideoAspectRatio;
+  aspectRatioCustom?: string;
+}) {
+  if (input.aspectRatio === "custom") {
+    return input.aspectRatioCustom?.trim() ?? "";
+  }
+  return input.aspectRatio;
+}
+
+export function validateBriefAspectRatio(
+  aspectRatio: BrandVideoAspectRatio | "",
+  aspectRatioCustom: string,
+  locale: Locale
+): { ok: true } | { ok: false; error: string } {
+  if (!aspectRatio) {
+    return {
+      ok: false,
+      error: locale === "zh" ? "请选择视频比例" : "Select a video aspect ratio"
+    };
+  }
+  if (aspectRatio !== "custom") {
+    return { ok: true };
+  }
+  const raw = aspectRatioCustom.trim();
+  if (!raw) {
+    return {
+      ok: false,
+      error: locale === "zh" ? "请填写自定义比例" : "Enter a custom aspect ratio"
+    };
+  }
+  if (!isCustomAspectRatioPattern(raw)) {
+    return {
+      ok: false,
+      error: locale === "zh" ? "比例格式无效，例如 16:9" : "Invalid ratio format — e.g. 16:9"
+    };
+  }
+  return { ok: true };
 }
 
 export function resolveAspectRatioFromProject(input: {
@@ -199,14 +280,28 @@ export function resolveAspectRatioFromProject(input: {
   video_format?: string;
   settings_json?: Record<string, unknown>;
 }): BrandVideoAspectRatio {
-  const stored = input.settings_json?.brand_questionnaire as { aspectRatio?: string } | undefined;
+  const stored = input.settings_json?.brand_questionnaire as
+    | { aspectRatio?: string; aspectRatioCustom?: string }
+    | undefined;
+  const storedCustom = stored?.aspectRatioCustom?.trim();
   if (stored?.aspectRatio && isValidBrandAspectRatio(stored.aspectRatio)) {
     return stored.aspectRatio;
   }
+  if (stored?.aspectRatio && isCustomAspectRatioPattern(stored.aspectRatio)) {
+    return "custom";
+  }
   const fromArray = input.aspect_ratios?.find((item) => isValidBrandAspectRatio(item));
   if (fromArray) return fromArray;
+  const fromArrayCustom = input.aspect_ratios?.find((item) => isCustomAspectRatioPattern(item));
+  if (fromArrayCustom) return "custom";
   if (input.video_format && isValidBrandAspectRatio(input.video_format)) {
     return input.video_format;
+  }
+  if (input.video_format && isCustomAspectRatioPattern(input.video_format)) {
+    return "custom";
+  }
+  if (storedCustom && isCustomAspectRatioPattern(storedCustom)) {
+    return "custom";
   }
   return defaultBrandAspectRatio();
 }

@@ -202,7 +202,7 @@ function scoreCreatorForProject(
       : `Studio rating ${creator.rating}`,
     zh: reviewCount
       ? `订单评分 ${creator.rating}（${reviewCount} 条评价）`
-      : `Studio 评分 ${creator.rating}`
+      : `创作者评分 ${creator.rating}`
   });
 
   if (creator.deposit_status === "paid") {

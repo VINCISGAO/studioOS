@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 
 export async function MarketingHeader({ locale }: { locale: Locale }) {
   const nav = {
-    studios: locale === "zh" ? "制作方作品库" : "Studios",
+    studios: locale === "zh" ? "创作者作品库" : "Studios",
     pricing: locale === "zh" ? "价格" : "Pricing",
     howItWorks: locale === "zh" ? "如何运作" : "How it works"
   };

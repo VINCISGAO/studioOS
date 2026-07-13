@@ -120,11 +120,11 @@ export function generateInsightsForOrg(
       pattern: studioId,
       title: {
         en: "Studio performance signal for matching",
-        zh: "Studio 匹配表现信号"
+        zh: "创作者匹配表现信号"
       },
       body: {
         en: `Studio ${studioId} averaged ${avgCtr.toFixed(1)}% CTR — ${lift.toFixed(0)}% above your baseline. Consider for similar briefs.`,
-        zh: `Studio ${studioId} 平均 CTR ${avgCtr.toFixed(1)}%，高于基线 ${lift.toFixed(0)}%，建议在类似 Brief 中优先匹配。`
+        zh: `创作者 ${studioId} 平均 CTR ${avgCtr.toFixed(1)}%，高于基线 ${lift.toFixed(0)}%，建议在类似创意简报中优先匹配。`
       },
       lift_pct: Math.round(lift),
       sample_size: group.length,

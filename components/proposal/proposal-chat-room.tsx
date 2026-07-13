@@ -32,7 +32,7 @@ const copy = {
     send: "发送",
     you: "你",
     brand: "Brand",
-    studio: "Studio",
+    studio: "创作者",
     system: "VINCIS",
     syncing: "Proposal Room · 平台存档",
     locked: "Proposal 聊天已锁定。制作阶段请使用时间轴审片。",

@@ -42,9 +42,9 @@ const copy = {
     required: "Required"
   },
   zh: {
-    title: "完善认证 Studio 主页",
-    subtitle: "成为认证服务商后，请填写公开主页、擅长领域与制作工具。系统将用 AI 生成匹配标签，并开启订单评分体系。",
-    basics: "Studio 基本信息",
+    title: "完善认证创作者主页",
+    subtitle: "成为认证服务商后，请填写公开主页、擅长领域与制作工具。系统将用智能助手生成匹配标签，并开启订单评分体系。",
+    basics: "创作者基本信息",
     expertise: "擅长领域",
     expertiseHint: "选择您专注的行业方向，AI 将据此进行 Brand 匹配推荐。",
     specialties: "擅长方向（逗号分隔）",
@@ -54,7 +54,7 @@ const copy = {
     minBudgetHint: "可选预设档位，或选「自定义金额」手动填写最低预算；低于此金额的项目不会推荐给你。",
     aiTags: "AI 匹配标签",
     aiTagsHint: "随资料编辑实时预览。标签用于 AI 自动派单与推荐排序。",
-    submit: "完成入驻并解锁 Studio",
+    submit: "完成入驻并解锁创作者功能",
     required: "必填"
   }
 };

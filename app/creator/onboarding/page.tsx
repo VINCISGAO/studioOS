@@ -61,13 +61,13 @@ const copy = {
   zh: {
     eyebrow: "承接人入驻",
     title: "申请成为 VINCIS 严选广告制作承接方。",
-    subtitle: "提交工作室资料后进入平台审核。通过审核、缴纳保证金，即可开始接收品牌询价。",
+    subtitle: "提交创作者资料后进入平台审核。通过审核、缴纳保证金，即可开始接收品牌询价。",
     submit: "提交入驻申请",
     deposit: "保证金",
     depositBody:
       "通过审核的承接人需要缴纳可退还的平台保证金后才能承接订单。发生争议时保证金可冻结，所有订单结清后可申请退还。",
     fields: {
-      studio_name: "工作室 / 承接人名称",
+      studio_name: "创作者名称",
       email: "邮箱",
       country: "国家 / 地区",
       portfolio_url: "作品集链接",
@@ -87,7 +87,7 @@ const copy = {
     footerNote: "提交后进入管理员审核",
     successTitle: "入驻申请已提交",
     successBody: "你的申请已保存，接下来会这样进行：",
-    steps: ["管理员审核你的工作室资料", "审核通过后，登录创作者账号并缴纳保证金", "发布作品，开始接收品牌询价"],
+    steps: ["管理员审核你的创作者资料", "审核通过后，登录创作者账号并缴纳保证金", "发布作品，开始接收品牌询价"],
     applicationId: "申请编号",
     pending: "待审核",
     approved: "已通过",

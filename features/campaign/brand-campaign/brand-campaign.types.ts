@@ -1,6 +1,7 @@
 import type { StoredCreativeBrief } from "@/lib/campaign-types";
 import type { CreativeDirection, FrozenProductionBrief } from "@/features/ai/creative-direction.types";
 import type { CommercialObjective } from "@/lib/project-types";
+import type { ReferenceAnalysisState } from "@/lib/studioos/reference-analysis.types";
 
 export type BrandProductionBrief = {
   legacy_project_id: string;
@@ -98,6 +99,8 @@ export type ReferenceAssetMetadata = {
   platform?: string;
   reference_type?: string;
   legacy_ref_id?: string;
+  input_kind?: "link" | "uploaded_video" | "uploaded_image";
+  analysis?: ReferenceAnalysisState;
 };
 
 export type LegacyAssetMetadata = {

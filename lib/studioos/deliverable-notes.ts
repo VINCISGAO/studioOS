@@ -41,7 +41,7 @@ export function deliverableNotesForViewer(
     secondary: translated ? original : undefined,
     secondaryLabel: translated
       ? viewerLocale === "zh"
-        ? "Studio 原文"
+        ? "创作者原文"
         : "Studio original"
       : undefined,
     showTranslationBadge: translated

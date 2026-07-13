@@ -77,7 +77,7 @@ const userRoleLabels: Record<string, LabelMap> = {
   ADMIN: { en: "Admin", zh: "管理员" },
   SUPPORT: { en: "Support", zh: "客服" },
   SYSTEM: { en: "System", zh: "系统" },
-  STUDIO: { en: "Studio", zh: "工作室" }
+  STUDIO: { en: "Studio", zh: "创作者" }
 };
 
 const disputeStatusLabels: Record<string, LabelMap> = {

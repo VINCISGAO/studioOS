@@ -7,7 +7,8 @@ import { resolveReviewCommentAction } from "@/app/review-actions";
 import { ClientBriefFormCard } from "@/components/studioos/client-brief-form-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import type { StoredCreativePackItem } from "@/lib/campaign-types";
+import { CreatorReferenceAnalysisPanel } from "@/components/studioos/reference-intake/creator-reference-analysis-panel";
+import type { StoredCreativePackItem, StoredProjectReference } from "@/lib/campaign-types";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import type { StoredDeliverable, StoredOrder } from "@/lib/order-types";
@@ -88,7 +89,8 @@ export function CreatorProjectDetailTabs({
   activeTab,
   onTabChange,
   briefSlot,
-  referenceUrls = []
+  referenceUrls = [],
+  analyzedReferences = []
 }: {
   locale: Locale;
   order: StoredOrder;
@@ -101,6 +103,7 @@ export function CreatorProjectDetailTabs({
   onTabChange: (tab: CreatorDetailTab) => void;
   briefSlot?: React.ReactNode;
   referenceUrls?: string[];
+  analyzedReferences?: StoredProjectReference[];
 }) {
   const t = copy[locale];
   const router = useRouter();
@@ -191,24 +194,21 @@ export function CreatorProjectDetailTabs({
                 formId={formId}
               />
             ) : null}
-            {referenceUrls.length || confirmedBriefFields.length ? (
+            {analyzedReferences.length ? (
+              <CreatorReferenceAnalysisPanel locale={locale} references={analyzedReferences} />
+            ) : referenceUrls.length ? (
               <div className="rounded-2xl border border-zinc-100 bg-zinc-50/40 p-4">
                 <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">{t.referenceStyle}</p>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  {(referenceUrls.length ? referenceUrls : [1, 2, 3, 4, 5]).slice(0, 5).map((item, i) => (
+                  {referenceUrls.slice(0, 5).map((item) => (
                     <div
-                      key={typeof item === "string" ? item : i}
+                      key={item}
                       className="h-14 w-20 overflow-hidden rounded-lg border border-zinc-200 bg-gradient-to-br from-violet-100 to-zinc-100"
                     >
-                      {typeof item === "string" ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={item} alt="" className="h-full w-full object-cover" />
-                      ) : null}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={item} alt="" className="h-full w-full object-cover" />
                     </div>
                   ))}
-                  <span className="flex h-14 w-14 items-center justify-center rounded-lg border border-dashed border-zinc-200 text-xs text-zinc-400">
-                    +5
-                  </span>
                 </div>
               </div>
             ) : null}

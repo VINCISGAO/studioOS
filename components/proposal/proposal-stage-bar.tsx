@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 
 const stages: { id: ProposalStage; label: { en: string; zh: string } }[] = [
   { id: "brief", label: { en: "AI Brief", zh: "AI Brief" } },
-  { id: "match", label: { en: "Studio Match", zh: "Studio 匹配" } },
+  { id: "match", label: { en: "Studio Match", zh: "创作者匹配" } },
   { id: "proposal", label: { en: "Proposal Room", zh: "Proposal Room" } },
   { id: "contract", label: { en: "Contract", zh: "合同确认" } },
   { id: "production", label: { en: "Production", zh: "制作" } },

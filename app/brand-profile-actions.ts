@@ -214,7 +214,7 @@ export async function uploadBrandAvatarAction(formData: FormData) {
   }
 
   const { saveBrandAvatarUpload } = await import("@/lib/studioos/brand-avatar-upload");
-  const { getBrandProfileByEmail } = await import("@/lib/brand-profile-service");
+  const { getBrandProfileByEmail, updateBrandLogoUrl } = await import("@/lib/brand-profile-service");
   const profile = await getBrandProfileByEmail(email);
   if (!profile) {
     return { ok: false as const, error: lang === "zh" ? "品牌资料不存在" : "Brand profile not found" };
@@ -235,19 +235,21 @@ export async function uploadBrandAvatarAction(formData: FormData) {
   if (!updated) {
     return { ok: false as const, error: lang === "zh" ? "保存头像失败" : "Failed to save avatar" };
   }
-  const { storageFileService } = await import("@/features/storage/storage-file.service");
-  try {
-    await storageFileService.recordBrandAvatar(profile.id, {
-      fileName: saved.file_name,
-      fileKey: saved.file_key,
-      publicUrl: saved.url,
-      mimeType: saved.mime_type,
-      fileSize: saved.size_bytes,
-      provider: saved.storage_provider
+
+  void import("@/features/storage/storage-file.service")
+    .then(({ storageFileService }) =>
+      storageFileService.recordBrandAvatar(profile.id, {
+        fileName: saved.file_name,
+        fileKey: saved.file_key,
+        publicUrl: saved.url,
+        mimeType: saved.mime_type,
+        fileSize: saved.size_bytes,
+        provider: saved.storage_provider
+      })
+    )
+    .catch(() => {
+      // Non-blocking audit trail — upload already succeeded.
     });
-  } catch {
-    // Non-blocking audit trail — upload already succeeded.
-  }
 
   revalidatePath("/brand/profile");
   revalidatePath("/brand/brand-center");
@@ -290,19 +292,21 @@ export async function uploadBrandCoverAction(formData: FormData) {
   if (!updated) {
     return { ok: false as const, error: lang === "zh" ? "保存封面失败" : "Failed to save cover" };
   }
-  const { storageFileService } = await import("@/features/storage/storage-file.service");
-  try {
-    await storageFileService.recordBrandCover(profile.id, {
-      fileName: saved.file_name,
-      fileKey: saved.file_key,
-      publicUrl: saved.url,
-      mimeType: saved.mime_type,
-      fileSize: saved.size_bytes,
-      provider: saved.storage_provider
+
+  void import("@/features/storage/storage-file.service")
+    .then(({ storageFileService }) =>
+      storageFileService.recordBrandCover(profile.id, {
+        fileName: saved.file_name,
+        fileKey: saved.file_key,
+        publicUrl: saved.url,
+        mimeType: saved.mime_type,
+        fileSize: saved.size_bytes,
+        provider: saved.storage_provider
+      })
+    )
+    .catch(() => {
+      // Non-blocking audit trail — upload already succeeded.
     });
-  } catch {
-    // Non-blocking audit trail — upload already succeeded.
-  }
 
   revalidatePath("/brand/profile");
   revalidatePath("/brand/brand-center");

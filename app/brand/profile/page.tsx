@@ -4,6 +4,7 @@ import { BrandProfileEditor } from "@/components/studioos/brand-profile-editor";
 import { getCurrentClientEmail } from "@/features/auth/session-context";
 import { DEMO_USERS } from "@/lib/demo-auth";
 import {
+  getBrandProfileByEmail,
   getOrCreateBrandProfile,
   syncBrandShowcaseFromOrders
 } from "@/lib/brand-profile-service";
@@ -17,9 +18,13 @@ export default async function BrandProfilePage({ searchParams }: { searchParams:
   }
 
   const demo = DEMO_USERS.find((user) => user.email === email.toLowerCase());
-  const companyName = demo?.label.replace(/\s*\(brand\)/i, "").trim() ?? email.split("@")[0] ?? "Brand";
+  const fallbackCompanyName =
+    demo?.label.replace(/\s*\(brand\)/i, "").trim() ?? email.split("@")[0] ?? "Brand";
 
-  await getOrCreateBrandProfile({ client_email: email, company_name: companyName });
+  const existingProfile = await getBrandProfileByEmail(email);
+  if (!existingProfile) {
+    await getOrCreateBrandProfile({ client_email: email, company_name: fallbackCompanyName });
+  }
   const profile = await syncBrandShowcaseFromOrders(email);
 
   return <BrandProfileEditor locale={locale} profile={profile} />;

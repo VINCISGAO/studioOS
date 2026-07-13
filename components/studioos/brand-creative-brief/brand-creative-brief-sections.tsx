@@ -8,9 +8,9 @@ export type { BriefSectionsProps } from "@/components/studioos/brand-creative-br
 
 export function BrandCreativeBriefSections(props: BriefSectionsProps) {
   return (
-    <>
-      <BrandCreativeBriefPrimarySections {...props} />
+    <div className="space-y-6">
+      {props.budgetOnly ? null : <BrandCreativeBriefPrimarySections {...props} />}
       <BrandCreativeBriefSecondarySections {...props} />
-    </>
+    </div>
   );
 }

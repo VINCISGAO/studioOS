@@ -1,46 +1,25 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   BriefFieldLabel,
   BriefPurpleChip,
   BriefSectionCard
 } from "@/components/studioos/brand-creative-brief/brand-creative-brief-ui";
 import {
-  AspectIcon,
   toggleList,
   type BriefSectionsProps
 } from "@/components/studioos/brand-creative-brief/brand-creative-brief-sections-shared";
+import { BrandCreativeBriefProductionSection } from "@/components/studioos/brand-creative-brief/brand-creative-brief-production-section";
+import { BrandCreativeBriefScheduleFields } from "@/components/studioos/brand-creative-brief/brand-creative-brief-schedule-fields";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
-import {
-  FPS_OPTIONS,
   MUST_AVOID_OPTIONS,
   MUST_INCLUDE_OPTIONS,
-  RESOLUTION_OPTIONS,
-  safeBriefFrameRateValue,
-  safeBriefResolutionValue,
-  VIDEO_DURATION_OPTIONS,
   labelForOption
 } from "@/lib/studioos/brand-creative-brief-options";
-import { getBrandBudgetPresets, BRAND_DELIVERY_TIMELINES, BRAND_VIDEO_ASPECT_RATIOS } from "@/lib/studioos/brand-campaign-options";
-import {
-  briefScheduleRangeError,
-  getBriefMaxStartDate,
-  getBriefMinDeliveryDate,
-  hasBriefScheduleMinGap,
-  isBriefScheduleDayAfter,
-  isBriefScheduleDayBefore,
-  parseBriefScheduleDate
-} from "@/lib/studioos/brand-creative-brief-form";
+import { getBrandBudgetPresets, BRAND_DELIVERY_TIMELINES } from "@/lib/studioos/brand-campaign-options";
 import { BRIEF_FIELD_TARGETS } from "@/lib/studioos/brand-creative-brief-scroll";
 import {
   durationSeconds,
@@ -54,169 +33,7 @@ import {
   settlementUsdNote
 } from "@/lib/money/display-money";
 import { cn } from "@/lib/utils";
-import { Bot, CalendarDays, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
-
-function parseDateValue(value: string) {
-  return parseBriefScheduleDate(value);
-}
-
-function formatDateValue(date: Date) {
-  const year = date.getFullYear();
-  const month = `${date.getMonth() + 1}`.padStart(2, "0");
-  const day = `${date.getDate()}`.padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
-function displayDateValue(value: string, locale: "zh" | "en") {
-  const date = parseDateValue(value);
-  if (!date) return locale === "zh" ? "选择日期" : "Select date";
-  const month = `${date.getMonth() + 1}`.padStart(2, "0");
-  const day = `${date.getDate()}`.padStart(2, "0");
-  return locale === "zh" ? `${date.getFullYear()}/${month}/${day}` : `${date.getFullYear()}-${month}-${day}`;
-}
-
-function LargeDateField({
-  locale,
-  label,
-  value,
-  onChange,
-  required = false,
-  fieldId,
-  minDate = null,
-  maxDate = null,
-  error = null
-}: {
-  locale: "zh" | "en";
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  required?: boolean;
-  fieldId?: string;
-  minDate?: Date | null;
-  maxDate?: Date | null;
-  error?: string | null;
-}) {
-  const selected = parseDateValue(value);
-  const [open, setOpen] = useState(false);
-  const [viewMonth, setViewMonth] = useState(() => {
-    const date = selected ?? new Date();
-    return new Date(date.getFullYear(), date.getMonth(), 1);
-  });
-  const monthLabel = useMemo(
-    () =>
-      locale === "zh"
-        ? `${viewMonth.getFullYear()} 年 ${viewMonth.getMonth() + 1} 月`
-        : viewMonth.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
-    [locale, viewMonth]
-  );
-  const days = useMemo(() => {
-    const year = viewMonth.getFullYear();
-    const month = viewMonth.getMonth();
-    const firstDay = new Date(year, month, 1).getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    return Array.from({ length: firstDay + daysInMonth }, (_, index) =>
-      index < firstDay ? null : new Date(year, month, index - firstDay + 1)
-    );
-  }, [viewMonth]);
-  const selectedKey = selected ? formatDateValue(selected) : "";
-  const weekdayLabels = locale === "zh" ? ["日", "一", "二", "三", "四", "五", "六"] : ["S", "M", "T", "W", "T", "F", "S"];
-
-  function moveMonth(delta: number) {
-    setViewMonth((current) => new Date(current.getFullYear(), current.getMonth() + delta, 1));
-  }
-
-  function openCalendar() {
-    if (selected) {
-      setViewMonth(new Date(selected.getFullYear(), selected.getMonth(), 1));
-    }
-    setOpen((current) => !current);
-  }
-
-  function isDayDisabled(day: Date) {
-    if (minDate && isBriefScheduleDayBefore(day, minDate)) return true;
-    if (maxDate && isBriefScheduleDayAfter(day, maxDate)) return true;
-    return false;
-  }
-
-  return (
-    <div id={fieldId} className="scroll-mt-32 relative space-y-2 rounded-xl">
-      <BriefFieldLabel label={label} required={required} />
-      <button
-        type="button"
-        onClick={openCalendar}
-        className={cn(
-          "flex h-[3.25rem] w-full items-center justify-between rounded-xl border bg-white px-4 text-left text-base shadow-sm transition hover:bg-violet-50/20",
-          error
-            ? "border-red-300 text-red-700 hover:border-red-400"
-            : "border-zinc-200 text-zinc-700 hover:border-violet-200"
-        )}
-      >
-        <span>{displayDateValue(value, locale)}</span>
-        <CalendarDays className="h-5 w-5 text-zinc-400" />
-      </button>
-      {open ? (
-        <div className="absolute bottom-full left-0 z-50 mb-2 w-[min(22rem,calc(100vw-2rem))] rounded-2xl border border-zinc-200 bg-white p-4 shadow-2xl shadow-zinc-900/15">
-          <div className="mb-3 flex items-center justify-between">
-            <button
-              type="button"
-              onClick={() => moveMonth(-1)}
-              className="flex h-9 w-9 items-center justify-center rounded-full text-zinc-500 hover:bg-zinc-100"
-              aria-label={locale === "zh" ? "上个月" : "Previous month"}
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </button>
-            <p className="text-base font-semibold text-zinc-900">{monthLabel}</p>
-            <button
-              type="button"
-              onClick={() => moveMonth(1)}
-              className="flex h-9 w-9 items-center justify-center rounded-full text-zinc-500 hover:bg-zinc-100"
-              aria-label={locale === "zh" ? "下个月" : "Next month"}
-            >
-              <ChevronRight className="h-5 w-5" />
-            </button>
-          </div>
-          <div className="grid grid-cols-7 gap-1.5 text-center text-sm font-semibold text-zinc-500">
-            {weekdayLabels.map((day, index) => (
-              <span key={`${day}-${index}`}>{day}</span>
-            ))}
-          </div>
-          <div className="mt-2 grid grid-cols-7 gap-1.5">
-            {days.map((day, index) => {
-              if (!day) {
-                return <span key={`blank-${index}`} className="h-10" />;
-              }
-              const key = formatDateValue(day);
-              const isSelected = key === selectedKey;
-              const disabled = isDayDisabled(day);
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  disabled={disabled}
-                  onClick={() => {
-                    if (disabled) return;
-                    onChange(key);
-                    setOpen(false);
-                  }}
-                  className={
-                    disabled
-                      ? "flex h-10 cursor-not-allowed items-center justify-center rounded-xl text-base font-medium text-zinc-300"
-                      : isSelected
-                        ? "flex h-10 items-center justify-center rounded-xl bg-violet-600 text-base font-semibold text-white shadow-lg shadow-violet-600/25"
-                        : "flex h-10 items-center justify-center rounded-xl text-base font-medium text-zinc-700 hover:bg-violet-50 hover:text-violet-700"
-                  }
-                >
-                  {day.getDate()}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      ) : null}
-      {error ? <p className="text-xs text-red-600">{error}</p> : null}
-    </div>
-  );
-}
+import { Bot, Sparkles } from "lucide-react";
 
 function riskBadgeClass(tone: string) {
   if (tone === "low") return "bg-emerald-50 text-emerald-700 ring-emerald-200";
@@ -247,12 +64,33 @@ export function BrandCreativeBriefSecondarySections(props: BriefSectionsProps) {
     copy: t
   } = props;
 
-  const timelineOptions = BRAND_DELIVERY_TIMELINES[locale];
-  const aspectRatioOptions = BRAND_VIDEO_ASPECT_RATIOS[locale];
   const budgetPresets = useMemo(() => getBrandBudgetPresets(locale), [locale]);
-  const marketQuote = marketQuoteForBrief(form, locale);
-  const resolutionValue = safeBriefResolutionValue(form.resolution);
-  const frameRateValue = safeBriefFrameRateValue(form.frameRate);
+  const marketQuote = useMemo(
+    () => marketQuoteForBrief(form, locale),
+    [
+      locale,
+      form.videoDuration,
+      form.videoDurationCustom,
+      form.aspectRatio,
+      form.aspectRatioCustom,
+      form.resolution,
+      form.frameRate,
+      form.videoQuantity,
+      form.estimatedShotCount,
+      form.deliveryTimeline,
+      form.budgetRange,
+      form.creativeStyles.join(",")
+    ]
+  );
+  const budgetSectionNumber = props.budgetSectionNumber ?? 5;
+  const hideTimeline = props.hideTimeline === true;
+  const budgetSectionTitle = hideTimeline
+    ? locale === "zh"
+      ? "预算"
+      : "Budget"
+    : locale === "zh"
+      ? "预算与时间"
+      : "Budget & schedule";
   const videoLengthLabel = useMemo(() => {
     const seconds = durationSeconds(form.videoDuration, form.videoDurationCustom);
     if (seconds >= 60 && seconds % 60 === 0) {
@@ -263,195 +101,82 @@ export function BrandCreativeBriefSecondarySections(props: BriefSectionsProps) {
   }, [form.videoDuration, form.videoDurationCustom, locale]);
   const fmt = (amount: number) => formatMoneyFromUsd(amount, locale);
   const settlementNote = settlementUsdNote(locale);
-  const startDate = parseBriefScheduleDate(form.scheduleStart);
-  const deliveryDate = parseBriefScheduleDate(form.scheduleDelivery);
-  const minDeliveryDate = startDate ? getBriefMinDeliveryDate(startDate) : null;
-  const maxStartDate = deliveryDate ? getBriefMaxStartDate(deliveryDate) : null;
-  const scheduleRangeErrorMessage = briefScheduleRangeError(
-    form.scheduleStart,
-    form.scheduleDelivery,
-    locale
-  );
-
-  function handleScheduleStartChange(value: string) {
-    patch("scheduleStart", value);
-    const nextStart = parseBriefScheduleDate(value);
-    const currentDelivery = parseBriefScheduleDate(form.scheduleDelivery);
-    if (nextStart && currentDelivery && !hasBriefScheduleMinGap(nextStart, currentDelivery)) {
-      patch("scheduleDelivery", "");
-    }
-  }
-
-  function handleScheduleDeliveryChange(value: string) {
-    const nextDelivery = parseBriefScheduleDate(value);
-    if (startDate && nextDelivery && !hasBriefScheduleMinGap(startDate, nextDelivery)) {
-      return;
-    }
-    patch("scheduleDelivery", value);
-  }
 
   return (
     <>
-      <BriefSectionCard
-        id="brief-section-details"
-        number={3}
-        locale={locale}
-        optional
-        title={locale === "zh" ? "更多细节" : "More details"}
-      >
-        <div className="space-y-2">
-          <BriefFieldLabel label={locale === "zh" ? "必须包含的内容" : "Must include"} />
-          <div className="flex flex-wrap gap-2">
-            {MUST_INCLUDE_OPTIONS.map((item) => (
-              <BriefPurpleChip
-                key={item.id}
-                active={form.mustInclude.includes(item.id)}
-                onClick={() => patch("mustInclude", toggleList(form.mustInclude, item.id))}
-              >
-                {labelForOption(item, locale)}
-              </BriefPurpleChip>
-            ))}
-          </div>
-          <Input
-            value={form.mustIncludeCustom}
-            onChange={(e) => patch("mustIncludeCustom", e.target.value)}
-            placeholder={locale === "zh" ? "其他必须包含" : "Other must-include"}
-            className="h-10 rounded-xl"
-          />
-        </div>
-        <div className="space-y-2">
-          <BriefFieldLabel label={locale === "zh" ? "需要避免的内容" : "Must avoid"} />
-          <div className="flex flex-wrap gap-2">
-            {MUST_AVOID_OPTIONS.map((item) => (
-              <BriefPurpleChip
-                key={item.id}
-                active={form.mustAvoid.includes(item.id)}
-                onClick={() => patch("mustAvoid", toggleList(form.mustAvoid, item.id))}
-              >
-                {labelForOption(item, locale)}
-              </BriefPurpleChip>
-            ))}
-          </div>
-          <Input
-            value={form.mustAvoidCustom}
-            onChange={(e) => patch("mustAvoidCustom", e.target.value)}
-            placeholder={locale === "zh" ? "其他需要避免" : "Other to avoid"}
-            className="h-10 rounded-xl"
-          />
-        </div>
-      </BriefSectionCard>
-
-      <BriefSectionCard id="brief-section-production" number={4} locale={locale} title={locale === "zh" ? "制作要求" : "Production requirements"}>
-        <div id={BRIEF_FIELD_TARGETS.videoDuration} className="scroll-mt-32 space-y-2 rounded-xl">
-          <BriefFieldLabel label={locale === "zh" ? "视频时长" : "Video duration"} required />
-          <div className="flex flex-wrap items-center gap-2">
-            {VIDEO_DURATION_OPTIONS.map((item) => (
-              <BriefPurpleChip
-                key={item}
-                active={form.videoDuration === item}
-                disabled={isPending}
-                onClick={() => patch("videoDuration", item)}
-              >
-                {item === "custom" ? (locale === "zh" ? "自定义" : "Custom") : item}
-              </BriefPurpleChip>
-            ))}
-            {form.videoDuration === "custom" ? (
-              <Input
-                value={form.videoDurationCustom}
-                onChange={(e) => patch("videoDurationCustom", e.target.value)}
-                placeholder={locale === "zh" ? "例如 120s 或 2min" : "e.g. 120s or 2min"}
-                className="h-10 min-w-[10rem] flex-1 rounded-xl sm:max-w-[14rem]"
-                disabled={isPending}
-              />
-            ) : null}
-          </div>
-        </div>
-        <div id={BRIEF_FIELD_TARGETS.aspectRatio} className="scroll-mt-32 space-y-2 rounded-xl">
-          <BriefFieldLabel label={locale === "zh" ? "视频比例" : "Aspect ratio"} required />
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {aspectRatioOptions.map((option) => {
-              const active = form.aspectRatio === option.id;
-              return (
-                <button
-                  key={option.id}
-                  type="button"
-                  disabled={isPending}
-                  onClick={() => onAspectRatioSelect(option.id)}
-                  className={cn(
-                    "rounded-2xl border px-3 py-4 text-left transition",
-                    active
-                      ? "border-violet-600 bg-violet-50 text-violet-700"
-                      : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300"
-                  )}
+      {props.budgetOnly ? null : (
+        <>
+      {props.hideMoreDetails ? null : (
+        <BriefSectionCard
+          id="brief-section-details"
+          number={3}
+          locale={locale}
+          optional
+          title={locale === "zh" ? "更多细节" : "More details"}
+        >
+          <div className="space-y-2">
+            <BriefFieldLabel label={locale === "zh" ? "必须包含的内容" : "Must include"} />
+            <div className="flex flex-wrap gap-2">
+              {MUST_INCLUDE_OPTIONS.map((item) => (
+                <BriefPurpleChip
+                  key={item.id}
+                  active={form.mustInclude.includes(item.id)}
+                  onClick={() => patch("mustInclude", toggleList(form.mustInclude, item.id))}
                 >
-                  <div className={cn("mb-2", active ? "text-violet-600" : "text-zinc-400")}>
-                    <AspectIcon ratio={option.id} />
-                  </div>
-                  <p className="text-sm font-semibold">{option.label}</p>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-3">
-          <div className="space-y-2">
-            <Label>{locale === "zh" ? "分辨率" : "Resolution"}</Label>
-            <Select
-              value={resolutionValue}
-              onValueChange={(value) => patch("resolution", value)}
-            >
-              <SelectTrigger className="h-11 rounded-xl">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {RESOLUTION_OPTIONS.map((item) => (
-                  <SelectItem key={item} value={item}>
-                    {item}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>{locale === "zh" ? "帧率" : "Frame rate"}</Label>
-            <Select value={frameRateValue} onValueChange={(value) => patch("frameRate", value)}>
-              <SelectTrigger className="h-11 rounded-xl">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {FPS_OPTIONS.map((item) => (
-                  <SelectItem key={item} value={item}>
-                    {item}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>{locale === "zh" ? "视频数量" : "Quantity"}</Label>
-            <div className="flex h-11 items-center rounded-xl border border-zinc-200">
-              <button
-                type="button"
-                className="px-4 text-lg text-zinc-500"
-                onClick={() => patch("videoQuantity", Math.max(1, form.videoQuantity - 1))}
-              >
-                −
-              </button>
-              <span className="flex-1 text-center text-sm font-semibold">{form.videoQuantity}</span>
-              <button
-                type="button"
-                className="px-4 text-lg text-zinc-500"
-                onClick={() => patch("videoQuantity", Math.min(10, form.videoQuantity + 1))}
-              >
-                +
-              </button>
+                  {labelForOption(item, locale)}
+                </BriefPurpleChip>
+              ))}
             </div>
+            <Input
+              value={form.mustIncludeCustom}
+              onChange={(e) => patch("mustIncludeCustom", e.target.value)}
+              placeholder={locale === "zh" ? "其他必须包含" : "Other must-include"}
+              className="h-10 rounded-xl"
+            />
           </div>
-        </div>
-      </BriefSectionCard>
+          <div className="space-y-2">
+            <BriefFieldLabel label={locale === "zh" ? "需要避免的内容" : "Must avoid"} />
+            <div className="flex flex-wrap gap-2">
+              {MUST_AVOID_OPTIONS.map((item) => (
+                <BriefPurpleChip
+                  key={item.id}
+                  active={form.mustAvoid.includes(item.id)}
+                  onClick={() => patch("mustAvoid", toggleList(form.mustAvoid, item.id))}
+                >
+                  {labelForOption(item, locale)}
+                </BriefPurpleChip>
+              ))}
+            </div>
+            <Input
+              value={form.mustAvoidCustom}
+              onChange={(e) => patch("mustAvoidCustom", e.target.value)}
+              placeholder={locale === "zh" ? "其他需要避免" : "Other to avoid"}
+              className="h-10 rounded-xl"
+            />
+          </div>
+        </BriefSectionCard>
+      )}
 
-      <BriefSectionCard id="brief-section-budget" number={5} locale={locale} title={locale === "zh" ? "预算与时间" : "Budget & schedule"}>
-        <div className="grid gap-5 lg:grid-cols-2">
+      {props.hideProduction ? null : (
+        <BrandCreativeBriefProductionSection
+          locale={locale}
+          form={form}
+          patch={patch}
+          onAspectRatioSelect={onAspectRatioSelect}
+          isPending={isPending}
+        />
+      )}
+        </>
+      )}
+
+      {props.hideBudget && !props.budgetOnly ? null : (
+      <BriefSectionCard
+        id="brief-section-budget"
+        number={budgetSectionNumber}
+        locale={locale}
+        title={budgetSectionTitle}
+      >
+        <div className={hideTimeline ? "space-y-2" : "grid gap-5 lg:grid-cols-2"}>
           <div id={BRIEF_FIELD_TARGETS.budget} className="scroll-mt-32 space-y-2 rounded-xl">
             <BriefFieldLabel label={budgetRangeLabel(locale)} required />
             <div className="grid grid-cols-2 gap-2">
@@ -474,22 +199,31 @@ export function BrandCreativeBriefSecondarySections(props: BriefSectionsProps) {
               className="h-11 rounded-xl"
             />
           </div>
-          <div className="space-y-2">
-            <BriefFieldLabel label={locale === "zh" ? "预计周期" : "Timeline"} required />
-            <div className="grid grid-cols-2 gap-2">
-              {timelineOptions.map((option) => (
-                <BriefPurpleChip
-                  key={option.id}
-                  active={form.deliveryTimeline === option.id}
-                  disabled={isPending}
-                  onClick={() => patch("deliveryTimeline", option.id)}
-                >
-                  {option.label}
-                </BriefPurpleChip>
-              ))}
+          {hideTimeline ? null : (
+            <div className="space-y-2">
+              <BriefFieldLabel label={locale === "zh" ? "预计周期" : "Timeline"} required />
+              <div className="grid grid-cols-2 gap-2">
+                {BRAND_DELIVERY_TIMELINES[locale].map((option) => (
+                  <BriefPurpleChip
+                    key={option.id}
+                    active={form.deliveryTimeline === option.id}
+                    disabled={isPending}
+                    onClick={() => patch("deliveryTimeline", option.id)}
+                  >
+                    {option.label}
+                  </BriefPurpleChip>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
+        {hideTimeline ? (
+          <p className="text-xs leading-5 text-zinc-500">
+            {locale === "zh"
+              ? `基于第 1 步规格实时估算：${videoLengthLabel} · ${marketQuote.aspectRatioLabel} · ${marketQuote.resolutionLabel}。交付周期、4K 与风格会在 Starter 曲线基础上叠加系数。`
+              : `Live estimate from step 1: ${videoLengthLabel} · ${marketQuote.aspectRatioLabel} · ${marketQuote.resolutionLabel}. Rush, 4K, and style stack on the Starter curve.`}
+          </p>
+        ) : null}
         <div className="overflow-hidden rounded-3xl border border-violet-100 bg-white shadow-[0_18px_60px_rgba(88,28,135,0.08)]">
           <div className="bg-[radial-gradient(circle_at_8%_20%,rgba(124,58,237,0.16),transparent_28%),linear-gradient(135deg,#faf5ff_0%,#ffffff_52%,#ecfdf5_100%)] px-5 py-5">
             <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between xl:gap-6">
@@ -503,15 +237,19 @@ export function BrandCreativeBriefSecondarySections(props: BriefSectionsProps) {
                     {locale === "zh" ? "VINCIS 智能制作估价引擎" : "VINCIS Production Pricing Engine"}
                   </p>
                   <p className="mt-1 max-w-3xl text-sm leading-6 text-zinc-600">
-                    {locale === "zh"
-                      ? "根据您选择的视频时长、制作规格与交付周期，估算合理预算区间。"
-                      : "Estimates a fair budget from your video length, production specs, and timeline."}
+                    {hideTimeline
+                      ? locale === "zh"
+                        ? "根据视频时长曲线、分辨率、交付周期与风格，估算 Starter → Enterprise 四档预算。"
+                        : "Estimates Starter → Enterprise tiers from duration curve, resolution, timeline, and style."
+                      : locale === "zh"
+                        ? "根据视频时长曲线、制作规格、交付周期与风格，估算 Starter → Enterprise 四档预算。"
+                        : "Estimates Starter → Enterprise tiers from duration curve, specs, timeline, and style."}
                   </p>
                 </div>
               </div>
               <div className="w-full shrink-0 rounded-2xl bg-white/90 px-4 py-3 shadow-sm ring-1 ring-violet-100 sm:px-5 sm:py-4 xl:w-auto xl:min-w-[15rem]">
                 <p className="text-xs font-semibold uppercase tracking-wide text-violet-600">
-                  {locale === "zh" ? "建议预算" : "Recommended budget"}
+                  {locale === "zh" ? "Professional 参考价" : "Professional reference"}
                 </p>
                 <p className="mt-1 text-2xl font-semibold tracking-tight text-zinc-950 sm:text-3xl">
                   {fmt(marketQuote.recommended)}
@@ -524,10 +262,13 @@ export function BrandCreativeBriefSecondarySections(props: BriefSectionsProps) {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-px border-y border-zinc-100 bg-zinc-100 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-px border-y border-zinc-100 bg-zinc-100 sm:grid-cols-3">
             {[
               [locale === "zh" ? "视频时长" : "Video length", videoLengthLabel],
-              [locale === "zh" ? "最低可执行" : "Minimum", fmt(marketQuote.minimum)],
+              [locale === "zh" ? "视频比例" : "Aspect ratio", marketQuote.aspectRatioLabel],
+              [locale === "zh" ? "视频分辨率" : "Video resolution", marketQuote.resolutionLabel],
+              [locale === "zh" ? "项目复杂度" : "Complexity", marketQuote.complexity],
+              [locale === "zh" ? "Starter" : "Starter", fmt(marketQuote.minimum)],
               [locale === "zh" ? "预算区间" : "Budget range", marketQuote.range]
             ].map(([label, value]) => (
               <div key={label} className="bg-white px-4 py-3">
@@ -535,7 +276,7 @@ export function BrandCreativeBriefSecondarySections(props: BriefSectionsProps) {
                 <p className="mt-1 text-base font-semibold text-zinc-950">{value}</p>
               </div>
             ))}
-            <div className="bg-white px-4 py-3">
+            <div className="bg-white px-4 py-3 sm:col-span-3">
               <p className="text-xs text-zinc-500">{locale === "zh" ? "风险等级" : "Risk"}</p>
               <span className={`mt-1 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${riskBadgeClass(marketQuote.riskTone)}`}>
                 <span className={`h-2 w-2 rounded-full ${riskDotClass(marketQuote.riskTone)}`} />
@@ -566,9 +307,9 @@ export function BrandCreativeBriefSecondarySections(props: BriefSectionsProps) {
                       <p className="text-xs font-semibold text-zinc-950 sm:text-sm">{tier.label}</p>
                       <p className="mt-1 text-xs leading-5 text-zinc-500">{tier.description}</p>
                     </div>
-                    {tier.key === "recommended" ? (
+                    {tier.key === "professional" ? (
                       <span className="rounded-full bg-violet-600 px-2 py-0.5 text-[10px] font-semibold text-white">
-                        {locale === "zh" ? "推荐" : "Best"}
+                        {locale === "zh" ? "推荐" : "Default"}
                       </span>
                     ) : null}
                   </div>
@@ -600,9 +341,13 @@ export function BrandCreativeBriefSecondarySections(props: BriefSectionsProps) {
                 </p>
               </div>
               <div className="grid min-w-0 flex-1 gap-2 text-xs sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
-                {(locale === "zh"
-                  ? ["视频时长", "项目复杂度", "AI 生成成本", "创作者制作工时", "修改轮次", "交付周期", "历史成交数据", "当前市场供需"]
-                  : ["Video duration", "Project complexity", "AI generation cost", "Creator hours", "Revision reserve", "Timeline", "Historical deals", "Market supply"]
+                {(hideTimeline
+                  ? locale === "zh"
+                    ? ["视频时长", "项目复杂度", "AI 生成成本", "创作者制作工时", "修改轮次", "历史成交数据", "当前市场供需"]
+                    : ["Video duration", "Project complexity", "AI generation cost", "Creator hours", "Revision reserve", "Historical deals", "Market supply"]
+                  : locale === "zh"
+                    ? ["视频时长", "项目复杂度", "AI 生成成本", "创作者制作工时", "修改轮次", "交付周期", "历史成交数据", "当前市场供需"]
+                    : ["Video duration", "Project complexity", "AI generation cost", "Creator hours", "Revision reserve", "Timeline", "Historical deals", "Market supply"]
                 ).map((item) => (
                   <span key={item} className="inline-flex items-center gap-1.5 rounded-xl bg-white px-3 py-2 font-medium text-zinc-700 ring-1 ring-zinc-100">
                     <span className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-50 text-[10px] font-bold text-emerald-600">
@@ -615,28 +360,11 @@ export function BrandCreativeBriefSecondarySections(props: BriefSectionsProps) {
             </div>
           </div>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <LargeDateField
-            locale={locale}
-            label={locale === "zh" ? "开始时间" : "Start date"}
-            value={form.scheduleStart}
-            onChange={handleScheduleStartChange}
-            required
-            fieldId={BRIEF_FIELD_TARGETS.scheduleStart}
-            maxDate={maxStartDate}
-          />
-          <LargeDateField
-            locale={locale}
-            label={locale === "zh" ? "交付时间" : "Delivery date"}
-            value={form.scheduleDelivery}
-            onChange={handleScheduleDeliveryChange}
-            required
-            fieldId={BRIEF_FIELD_TARGETS.scheduleDelivery}
-            minDate={minDeliveryDate}
-            error={scheduleRangeErrorMessage}
-          />
-        </div>
+        {props.hideScheduleFields ? null : (
+          <BrandCreativeBriefScheduleFields locale={locale} form={form} patch={patch} />
+        )}
       </BriefSectionCard>
+      )}
     </>
   );
 }

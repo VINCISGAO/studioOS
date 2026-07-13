@@ -18,11 +18,11 @@ const copy = {
     thanks: "Thanks — AI will update this studio's match rank on the next brief."
   },
   zh: {
-    title: "为 Studio 打分",
-    body: "您的评分会进入 AI 匹配计算。权重由系统内置规则决定，后台无法修改。",
+    title: "为创作者打分",
+    body: "您的评分会进入智能匹配计算。权重由系统内置规则决定，后台无法修改。",
     comment: "补充评价（选填）",
     submit: "提交评分",
-    thanks: "感谢评价 — AI 将在下次匹配时更新该 Studio 的排序。"
+    thanks: "感谢评价 — 智能系统将在下次匹配时更新该创作者的排序。"
   }
 };
 

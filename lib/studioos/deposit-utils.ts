@@ -111,7 +111,7 @@ function localizeDetailKey(key: string, locale: Locale) {
 }
 
 function localizeDepositNote(note: string, type: PayoutMethodType) {
-  if (type === "bank_wire") return "平台对公 USD 账户。转账附言请填写您的 Studio ID。";
+  if (type === "bank_wire") return "平台对公 USD 账户。转账附言请填写您的创作者 ID。";
   if (type === "crypto") return "请按保证金金额足额转账，链上手续费不予计入。";
   return note;
 }

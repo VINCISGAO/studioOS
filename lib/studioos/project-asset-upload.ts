@@ -107,6 +107,24 @@ export async function saveProjectAssetUpload(
   };
 }
 
+export async function saveProjectReferenceImageUpload(
+  projectId: string,
+  file: File
+): Promise<
+  | {
+      ok: true;
+      url: string;
+      file_name: string;
+      file_key: string;
+      storage_provider: string;
+      mime_type: string;
+      size_bytes: number;
+    }
+  | { ok: false; error: string }
+> {
+  return saveProjectAssetUpload(projectId, file, `reference_image_${Date.now()}`);
+}
+
 export async function saveProjectReferenceVideoUpload(
   projectId: string,
   file: File

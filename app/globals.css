@@ -894,3 +894,48 @@
   max-width: 100%;
   overflow: visible;
 }
+
+.quick-brief-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 9999px;
+  border: 3px solid #fff;
+  background: #7c3aed;
+  box-shadow: 0 1px 4px rgba(124, 58, 237, 0.35);
+  cursor: pointer;
+  margin-top: -8px;
+}
+
+.quick-brief-range::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 9999px;
+  border: 3px solid #fff;
+  background: #7c3aed;
+  box-shadow: 0 1px 4px rgba(124, 58, 237, 0.35);
+  cursor: pointer;
+}
+
+.quick-brief-range::-webkit-slider-runnable-track {
+  background: transparent;
+}
+
+.quick-brief-range::-moz-range-track {
+  background: transparent;
+}
+
+@keyframes quickBriefPolishSweep {
+  0% {
+    transform: translateX(-140%);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(340%);
+    opacity: 0;
+  }
+}

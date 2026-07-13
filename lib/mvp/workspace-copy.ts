@@ -18,7 +18,7 @@ export const workspaceCopy = {
     zh: {
       eyebrow: "审片中心",
       title: "分配项目",
-      subtitle: "进入项目审阅版本、打时间戳批注，并处理 Brand 反馈。",
+      subtitle: "进入项目审阅版本、打时间戳批注，并处理品牌方反馈。",
       brand: "品牌",
       status: "状态",
       issues: "待处理意见",
@@ -42,7 +42,7 @@ export const workspaceCopy = {
     zh: {
       eyebrow: "审片中心",
       title: "我的项目",
-      subtitle: "审阅 Studio 提交的版本，并确认最终成片。",
+      subtitle: "审阅创作者提交的版本，并确认最终成片。",
       newProject: "新建项目",
       review: "进入审片",
       empty: "还没有项目。新建后即可开始审片。",
@@ -86,7 +86,7 @@ export const workspaceCopy = {
       version: (n: number) => `版本 ${n}`,
       noVideo: "还没有上传视频。",
       addComment: "在当前时间点添加批注",
-      commentPlaceholder: "例如：这一帧 Logo 太小",
+      commentPlaceholder: "例如：这一帧品牌标识太小",
       addIssue: "添加意见",
       issues: "审片意见",
       open: "待处理",
@@ -101,7 +101,7 @@ export const workspaceCopy = {
       approvedFlash: "已定稿，项目状态已更新为已通过。",
       pendingSettlementFlash: "审片已通过，进入待结算。托管款释放后方可下载母版。",
       settledFlash: "结算已完成，创作者可上传无水印最终母版。",
-      revisionFlash: "已发起修改请求，Studio 可上传新版本。",
+      revisionFlash: "已发起修改请求，创作者可上传新版本。",
       commentStatus: { open: "待处理", resolved: "已解决", reopened: "已重开" }
     }
   }

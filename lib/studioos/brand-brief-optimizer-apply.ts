@@ -1,8 +1,9 @@
 import type { Locale } from "@/lib/i18n";
 import type { CommercialObjective } from "@/lib/project-types";
-import { PLATFORM_OPTIONS } from "@/lib/studioos/brand-brief-options";
+import { PLATFORM_OPTIONS, resolveCampaignObjectiveFromBrief } from "@/lib/studioos/brand-brief-options";
 import type { BrandBriefOptimizerResult } from "@/lib/studioos/brand-brief-optimizer.types";
-import { coerceBriefDocument, coerceOptimizerText } from "@/lib/studioos/brand-brief-optimizer-coerce";
+import { coerceOptimizerText } from "@/lib/studioos/brand-brief-optimizer-coerce";
+import { formatProfessionalBriefDocument } from "@/lib/studioos/brand-brief-optimizer-format";
 
 function normalizePlatforms(values: string[]) {
   const mapped = values.map((raw) => {
@@ -15,15 +16,6 @@ function normalizePlatforms(values: string[]) {
     return raw.trim();
   });
   return [...new Set(mapped.filter((item) => PLATFORM_OPTIONS.includes(item as (typeof PLATFORM_OPTIONS)[number])))];
-}
-
-function inferObjective(text: string): CommercialObjective {
-  const lower = text.toLowerCase();
-  if (/转化|conversion|purchase|下单|roi|performance/.test(lower)) return "scale";
-  if (/测试|test|a\/b|创意测试/.test(lower)) return "test";
-  if (/季节|season|holiday|圣诞|黑五/.test(lower)) return "seasonal";
-  if (/上市|launch|发布|新品/.test(lower)) return "launch";
-  return "launch";
 }
 
 function inferVideoDuration(raw: string): string {
@@ -65,14 +57,14 @@ function mapToneIds(tones: string[]) {
 }
 
 export function formatOptimizerBriefDocument(result: BrandBriefOptimizerResult, locale: Locale) {
-  void locale;
-  return coerceBriefDocument(result.brief_document).slice(0, 1500);
+  return formatProfessionalBriefDocument(result, locale).slice(0, 1500);
 }
 
 export function applyOptimizerPatches(
   form: {
     projectTitle: string;
     productName: string;
+    brandName: string;
     adOneLiner: string;
     objective: CommercialObjective;
     audienceDescription: string;
@@ -86,24 +78,35 @@ export function applyOptimizerPatches(
     extraNotes: string;
   },
   optimizer: BrandBriefOptimizerResult,
-  locale: Locale
+  locale: Locale,
+  options?: { preserveProductionSpecs?: boolean }
 ) {
   const platforms = normalizePlatforms(optimizer.recommended_platforms);
   const styles = mapStyleIds(optimizer.visual_style);
   const tones = mapToneIds(optimizer.recommended_tones);
-  const objective = inferObjective(
+  const userSource = `${form.rawSummary} ${form.productDescription}`.trim();
+  const objective = resolveCampaignObjectiveFromBrief(
+    userSource,
     `${optimizer.primary_objective} ${optimizer.secondary_objectives.join(" ")}`
   );
 
+  const preserveProductionSpecs = options?.preserveProductionSpecs === true;
+  const optimizerBrand = coerceOptimizerText(optimizer.campaign_name);
+  const formBrand = form.projectTitle.trim() || form.brandName.trim() || form.productName.trim();
+  const campaignName = optimizerBrand || formBrand;
+
   return {
-    projectTitle: form.projectTitle.trim() || coerceOptimizerText(optimizer.campaign_name),
-    productName: form.productName.trim() || coerceOptimizerText(optimizer.campaign_name),
+    projectTitle: campaignName,
+    productName: campaignName,
+    brandName: campaignName,
     adOneLiner: coerceOptimizerText(optimizer.key_message).slice(0, 100),
     objective,
     audienceDescription: coerceOptimizerText(optimizer.audience_primary),
     audienceAge: /25.?40|25-34/.test(coerceOptimizerText(optimizer.audience_primary)) ? "25-34" : form.audienceAge,
     platforms: platforms.length ? platforms : form.platforms,
-    videoDuration: inferVideoDuration(coerceOptimizerText(optimizer.recommended_video_duration)),
+    ...(preserveProductionSpecs
+      ? {}
+      : { videoDuration: inferVideoDuration(coerceOptimizerText(optimizer.recommended_video_duration)) }),
     creativeStyles: styles.length ? styles : form.creativeStyles,
     creativeTones: tones.length ? tones : form.creativeTones,
     extraNotes: [optimizer.consumer_insight, optimizer.recommended_cta]

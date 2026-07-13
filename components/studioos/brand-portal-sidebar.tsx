@@ -123,6 +123,7 @@ export function BrandPortalSidebar({
             name={brandAccount.name}
             roleLabel={locale === "zh" ? "品牌方" : "Brand"}
             profileHref={brandPortalRoutes.brandCenter}
+            imageFit="photo"
           />
         ) : null
       }

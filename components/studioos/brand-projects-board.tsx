@@ -140,7 +140,7 @@ const statusLabel: Record<Locale, Record<string, string>> = {
   zh: {
     draft: "草稿",
     matching: "匹配中",
-    studio_selected: "已选 Studio",
+    studio_selected: "已选创作者",
     proposal: "Proposal",
     contract_pending: "待签约",
     payment_pending: "待付款",

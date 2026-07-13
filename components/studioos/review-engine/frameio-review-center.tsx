@@ -39,7 +39,7 @@ const copy = {
     back: "返回",
     approve: "通过交付",
     requestChanges: "要求修改",
-    noVideo: "等待制作方上传视频。",
+    noVideo: "等待创作者上传视频。",
     uploadVersion: "上传新版本",
     uploadFirst: "上传 Version 1",
     creatorPhaseHint: "第一版从这里上传进入审片；之后的每一版也在审片中心提交。",

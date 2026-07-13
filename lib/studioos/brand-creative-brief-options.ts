@@ -53,11 +53,35 @@ export const AUDIENCE_REGION_OPTIONS = [
 export const RESOLUTION_OPTIONS = ["4K", "1080p"] as const;
 export const FPS_OPTIONS = ["24 fps", "30 fps", "60 fps"] as const;
 
+export function isValidBriefResolution(value: string | undefined | null) {
+  const normalized = value === "720p" ? "1080p" : value;
+  return RESOLUTION_OPTIONS.includes(normalized as (typeof RESOLUTION_OPTIONS)[number]);
+}
+
 export function safeBriefResolutionValue(value: string | undefined | null) {
   const normalized = value === "720p" ? "1080p" : value;
   return RESOLUTION_OPTIONS.includes(normalized as (typeof RESOLUTION_OPTIONS)[number])
     ? normalized!
     : RESOLUTION_OPTIONS[1];
+}
+
+export function validateBriefResolution(
+  resolution: string,
+  locale: Locale
+): { ok: true } | { ok: false; error: string } {
+  if (!resolution.trim()) {
+    return {
+      ok: false,
+      error: locale === "zh" ? "请选择视频分辨率" : "Select a video resolution"
+    };
+  }
+  if (!isValidBriefResolution(resolution)) {
+    return {
+      ok: false,
+      error: locale === "zh" ? "请选择有效的视频分辨率" : "Select a valid video resolution"
+    };
+  }
+  return { ok: true };
 }
 
 export function safeBriefFrameRateValue(value: string | undefined | null) {

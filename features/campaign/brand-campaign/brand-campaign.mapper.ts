@@ -75,7 +75,8 @@ export function mapReferenceAssetToStoredProjectReference(asset: CampaignAsset):
     note: meta.note ?? "",
     platform: meta.platform ?? detected,
     sort_order: meta.sort_order ?? 0,
-    created_at: asset.createdAt.toISOString()
+    created_at: asset.createdAt.toISOString(),
+    analysis: meta.analysis
   };
 }
 

@@ -14,6 +14,7 @@ import type { CreatorWork } from "@/lib/types";
 import type { Locale } from "@/lib/i18n";
 import { labelPlatform } from "@/lib/localized-options";
 import { buildAvatarInitials } from "@/lib/studioos/avatar-initials";
+import { profileImageClassName } from "@/lib/studioos/profile-image-styles";
 import type { WorkEngagementSnapshot } from "@/lib/work-engagement-utils";
 import { baseViewCount } from "@/lib/work-engagement-utils";
 import { cn } from "@/lib/utils";
@@ -88,7 +89,7 @@ export function CreatorAvatar({
       )}
     >
       {avatarUrl ? (
-        <Image src={avatarUrl} alt="" fill className="object-cover" sizes="112px" unoptimized />
+        <Image src={avatarUrl} alt="" fill className={profileImageClassName("photo")} sizes="112px" unoptimized />
       ) : (
         <div className={cn("flex h-full w-full items-center justify-center font-medium text-white", text)}>
           {buildAvatarInitials(initials, "C")}
@@ -130,7 +131,7 @@ export function CreatorEditableAvatar({
   const body = (
     <>
       {avatarUrl ? (
-        <Image src={avatarUrl} alt="" fill className="object-cover" sizes="112px" unoptimized />
+        <Image src={avatarUrl} alt="" fill className={profileImageClassName("photo")} sizes="112px" unoptimized />
       ) : (
         <div className={cn("flex h-full w-full items-center justify-center bg-zinc-900 font-medium text-white", text)}>
           {buildAvatarInitials(initials, "C")}

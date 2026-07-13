@@ -2,6 +2,7 @@ import "server-only";
 
 import { campaignAssetService } from "@/features/campaign/campaign-asset.service";
 import { campaignService } from "@/features/campaign/campaign.service";
+import { referenceAnalysisService } from "@/features/campaign/reference-analysis.service";
 import { detectReferenceType } from "@/lib/campaign/reference-type";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { dataStorePath, readDataJson, writeDataJson } from "@/lib/serverless-store-core";
@@ -202,6 +203,8 @@ export async function addProjectReference(input: {
   project_id: string;
   source_url: string;
   note?: string;
+  input_kind?: "link" | "uploaded_video" | "uploaded_image";
+  locale?: "zh" | "en";
 }): Promise<StoredProjectReference | null> {
   const url = input.source_url.trim();
   if (!url) {
@@ -212,7 +215,9 @@ export async function addProjectReference(input: {
     const prismaRef = await campaignAssetService.addLegacyProjectReference({
       legacyProjectId: input.project_id,
       source_url: url,
-      note: input.note
+      note: input.note,
+      input_kind: input.input_kind,
+      locale: input.locale
     });
     if (prismaRef) {
       return prismaRef;
@@ -228,16 +233,19 @@ export async function addProjectReference(input: {
   }
 
   const type = detectReferenceType(url);
-  const ref: StoredProjectReference = {
-    id: createId("ref"),
-    project_id: input.project_id,
-    type,
-    source_url: url,
-    note: input.note?.trim() ?? "",
-    platform: type,
-    sort_order: store.references.filter((item) => item.project_id === input.project_id).length,
-    created_at: new Date().toISOString()
-  };
+  const ref: StoredProjectReference = referenceAnalysisService.attachTemplateAnalysisToReference(
+    {
+      id: createId("ref"),
+      project_id: input.project_id,
+      type,
+      source_url: url,
+      note: input.note?.trim() ?? "",
+      platform: type,
+      sort_order: store.references.filter((item) => item.project_id === input.project_id).length,
+      created_at: new Date().toISOString()
+    },
+    "zh"
+  );
 
   store.references.unshift(ref);
   await writeStore(store);

@@ -131,6 +131,7 @@ export function useBrandBriefAssetUploads(input: {
 }) {
   const imageInputRef = useRef<HTMLInputElement>(null);
   const referenceVideoInputRef = useRef<HTMLInputElement>(null);
+  const referenceImageInputRef = useRef<HTMLInputElement>(null);
   const pendingImageSlotRef = useRef<ImageSlotId>("product_photos");
 
   const [assetPreviews, setAssetPreviews] = useState(input.initialPreviews);
@@ -140,6 +141,7 @@ export function useBrandBriefAssetUploads(input: {
   const [productReady, setProductReady] = useState(Boolean(input.initialPreviews.product_photos));
   const [isImageUploading, startImageUpload] = useTransition();
   const [isReferenceVideoUploading, setIsReferenceVideoUploading] = useState(false);
+  const [isReferenceImageUploading, setIsReferenceImageUploading] = useState(false);
 
   useEffect(() => {
     if (uploadingSlot) return;
@@ -351,6 +353,34 @@ export function useBrandBriefAssetUploads(input: {
     })();
   }
 
+  function handleReferenceImageFile(file: File) {
+    setIsReferenceImageUploading(true);
+    void (async () => {
+      try {
+        const fd = new FormData();
+        fd.set("image_file", file);
+        const res = await fetch(
+          `/api/brand/projects/${encodeURIComponent(input.projectId)}/reference-image?lang=${input.locale}`,
+          { method: "POST", body: fd }
+        );
+        const result = (await res.json()) as UploadReferenceVideoResponse;
+        if (!res.ok || !result.ok || !result.reference) {
+          throw new Error(result.error ?? (input.locale === "zh" ? "参考截图上传失败" : "Reference image upload failed"));
+        }
+        input.onReferenceUploaded?.(result.reference);
+        input.onMediaUpdated?.();
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "";
+        setSlotError(
+          "reference_videos",
+          input.locale === "zh" ? message || "参考截图上传失败" : message || "Reference image upload failed"
+        );
+      } finally {
+        setIsReferenceImageUploading(false);
+      }
+    })();
+  }
+
   return {
     assetPreviews,
     assetUploadErrors,
@@ -359,10 +389,13 @@ export function useBrandBriefAssetUploads(input: {
     productReady,
     isImageUploading,
     isReferenceVideoUploading,
+    isReferenceImageUploading,
     imageInputRef,
     referenceVideoInputRef,
+    referenceImageInputRef,
     onAssetSlotClick,
     handleImageFile,
-    handleReferenceVideoFile
+    handleReferenceVideoFile,
+    handleReferenceImageFile
   };
 }

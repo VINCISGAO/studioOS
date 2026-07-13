@@ -74,6 +74,7 @@ export function BrandCreativeBriefPrimarySections(props: BriefSectionsProps) {
 
   return (
     <>
+      {props.hideProjectOverview ? null : (
       <BriefSectionCard
         id="brief-section-overview"
         number={1}
@@ -81,100 +82,101 @@ export function BrandCreativeBriefPrimarySections(props: BriefSectionsProps) {
         title={locale === "zh" ? "项目概览" : "Project overview"}
         subtitle={locale === "zh" ? "告诉我们你的项目和品牌基本信息" : "Tell us about your project and brand"}
       >
-        <div id={BRIEF_FIELD_TARGETS.productImage} className="scroll-mt-32 space-y-2 rounded-xl">
-          <BriefFieldLabel label={locale === "zh" ? "品牌素材" : "Brand assets"} />
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            {BRAND_ASSET_SLOTS.map((slot) => {
-              const previewUrl = previews[slot.id];
-              const isUploading = uploadingAssetSlot === slot.id;
-              const slotError = assetUploadErrors[slot.id];
-              const isReferenceVideo = slot.id === "reference_videos";
-              const hasPreview = Boolean(previewUrl);
+        {props.hideBrandAssets ? null : (
+          <div id={BRIEF_FIELD_TARGETS.productImage} className="scroll-mt-32 space-y-2 rounded-xl">
+            <BriefFieldLabel label={locale === "zh" ? "品牌素材" : "Brand assets"} />
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:gap-4">
+                {BRAND_ASSET_SLOTS.map((slot) => {
+                  const previewUrl = previews[slot.id];
+                  const isUploading = uploadingAssetSlot === slot.id;
+                  const slotError = assetUploadErrors[slot.id];
+                  const isReferenceVideo = slot.id === "reference_videos";
+                  const hasPreview = Boolean(previewUrl);
 
-              const uploadProgress =
-                isReferenceVideo && isUploading ? referenceVideoUploadProgress : null;
+                  const uploadProgress =
+                    isReferenceVideo && isUploading ? referenceVideoUploadProgress : null;
 
-              return (
-                <div key={slot.id} className="space-y-1.5">
-                  <button
-                    type="button"
-                    disabled={isPending || isUploading}
-                    onClick={() => onAssetSlotClick?.(slot.id)}
-                    className={cn(
-                      "flex min-h-[132px] w-full flex-col items-center justify-center rounded-2xl border border-dashed px-3 py-4 text-center transition disabled:cursor-not-allowed disabled:opacity-60",
-                      hasPreview && !isUploading
-                        ? "border-emerald-200 bg-emerald-50/40 hover:border-emerald-300"
-                        : isUploading
-                          ? "border-violet-200 bg-violet-50/40"
-                          : "border-zinc-200 bg-zinc-50/50 hover:border-violet-300 hover:bg-violet-50/30"
-                    )}
-                  >
-                    {isUploading && uploadProgress !== null ? (
-                      <div className="mb-2 w-full max-w-[9rem] space-y-1.5">
-                        <div className="h-1.5 overflow-hidden rounded-full bg-violet-100">
-                          <div
-                            className="h-full rounded-full bg-violet-600 transition-[width] duration-150 ease-out"
-                            style={{ width: `${uploadProgress}%` }}
+                  return (
+                    <div key={slot.id} className="space-y-1.5">
+                      <button
+                        type="button"
+                        disabled={isPending || isUploading}
+                        onClick={() => onAssetSlotClick?.(slot.id)}
+                        className={cn(
+                          "flex min-h-[132px] w-full flex-col items-center justify-center rounded-2xl border border-dashed px-3 py-4 text-center transition disabled:cursor-not-allowed disabled:opacity-60",
+                          hasPreview && !isUploading
+                            ? "border-emerald-200 bg-emerald-50/40 hover:border-emerald-300"
+                            : isUploading
+                              ? "border-violet-200 bg-violet-50/40"
+                              : "border-zinc-200 bg-zinc-50/50 hover:border-violet-300 hover:bg-violet-50/30"
+                        )}
+                      >
+                        {isUploading && uploadProgress !== null ? (
+                          <div className="mb-2 w-full max-w-[9rem] space-y-1.5">
+                            <div className="h-1.5 overflow-hidden rounded-full bg-violet-100">
+                              <div
+                                className="h-full rounded-full bg-violet-600 transition-[width] duration-150 ease-out"
+                                style={{ width: `${uploadProgress}%` }}
+                              />
+                            </div>
+                            <p className="text-[11px] font-medium text-violet-700">
+                              {locale === "zh" ? `上传中 ${uploadProgress}%` : `Uploading ${uploadProgress}%`}
+                            </p>
+                          </div>
+                        ) : isUploading ? (
+                          <Loader2 className="mb-2 h-5 w-5 animate-spin text-violet-500" />
+                        ) : hasPreview && isReferenceVideo ? (
+                          <Film className="mb-2 h-5 w-5 text-emerald-600" />
+                        ) : hasPreview && !isReferenceVideo ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={previewUrl ?? ""}
+                            alt=""
+                            className="mb-2 h-14 w-14 rounded-lg object-cover ring-1 ring-white"
                           />
-                        </div>
-                        <p className="text-[11px] font-medium text-violet-700">
-                          {locale === "zh" ? `上传中 ${uploadProgress}%` : `Uploading ${uploadProgress}%`}
-                        </p>
-                      </div>
-                    ) : isUploading ? (
-                      <Loader2 className="mb-2 h-5 w-5 animate-spin text-violet-500" />
-                    ) : hasPreview && isReferenceVideo ? (
-                      <Film className="mb-2 h-5 w-5 text-emerald-600" />
-                    ) : hasPreview && !isReferenceVideo ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={previewUrl ?? ""}
-                        alt=""
-                        className="mb-2 h-14 w-14 rounded-lg object-cover ring-1 ring-white"
-                      />
-                    ) : (
-                      <ImageIcon className="mb-2 h-5 w-5 text-zinc-400" />
-                    )}
-                    <span className="text-xs font-medium text-zinc-700">{labelForOption(slot, locale)}</span>
-                    {isReferenceVideo ? (
-                      <span className="mt-1 text-[11px] text-zinc-400">MP4 / MOV / WebM · ≤200MB</span>
-                    ) : null}
-                    {hasPreview ? (
-                      <span className="mt-1 inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700">
-                        <CheckCircle2 className="h-3 w-3" />
-                        {assetPreviewLabel(slot.id, locale)}
-                      </span>
-                    ) : null}
-                  </button>
-                  {slotError ? <p className="text-xs text-red-600">{slotError}</p> : null}
-                </div>
-              );
-            })}
+                        ) : (
+                          <ImageIcon className="mb-2 h-5 w-5 text-zinc-400" />
+                        )}
+                        <span className="text-xs font-medium text-zinc-700">{labelForOption(slot, locale)}</span>
+                        {isReferenceVideo ? (
+                          <span className="mt-1 text-[11px] text-zinc-400">MP4 / MOV / WebM · ≤200MB</span>
+                        ) : null}
+                        {hasPreview ? (
+                          <span className="mt-1 inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700">
+                            <CheckCircle2 className="h-3 w-3" />
+                            {assetPreviewLabel(slot.id, locale)}
+                          </span>
+                        ) : null}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+              <input
+                ref={imageInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) onImageFileSelected(file);
+                  e.target.value = "";
+                }}
+              />
+              <input
+                ref={referenceVideoInputRef}
+                type="file"
+                accept="video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) onReferenceVideoFileSelected(file);
+                  e.target.value = "";
+                }}
+              />
           </div>
-          <input
-            ref={imageInputRef}
-            type="file"
-            accept="image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) onImageFileSelected(file);
-              e.target.value = "";
-            }}
-          />
-          <input
-            ref={referenceVideoInputRef}
-            type="file"
-            accept="video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) onReferenceVideoFileSelected(file);
-              e.target.value = "";
-            }}
-          />
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2">
+        )}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div id={BRIEF_FIELD_TARGETS.projectTitle} className="scroll-mt-32 space-y-2 rounded-xl">
               <BriefFieldLabel label={locale === "zh" ? "项目（品牌）名称" : "Project / brand name"} required />
               <div className="relative">
@@ -234,8 +236,10 @@ export function BrandCreativeBriefPrimarySections(props: BriefSectionsProps) {
                 className="h-11 rounded-xl"
               />
             </div>
-        </div>
-        <div id={BRIEF_FIELD_TARGETS.productDescription} className="scroll-mt-32 space-y-2 rounded-xl">
+            <div
+              id={BRIEF_FIELD_TARGETS.productDescription}
+              className="scroll-mt-32 space-y-2 rounded-xl sm:col-span-2 lg:col-span-4"
+            >
             <BriefFieldLabel
               label={locale === "zh" ? "详细描述您的需求" : "Detailed description"}
               required
@@ -287,50 +291,54 @@ export function BrandCreativeBriefPrimarySections(props: BriefSectionsProps) {
               <p className="text-xs leading-relaxed text-zinc-500">
                 {copy.aiPolishSubtitle}
               </p>
-              {form.refined?.optimizer ? (
+              {props.hideOptimizerPanel || !form.refined?.optimizer ? null : (
                 <BrandBriefOptimizerPanel
                   locale={locale}
                   optimizer={form.refined.optimizer}
                   source={form.refined.source}
                 />
-              ) : null}
+              )}
+            </div>
             </div>
         </div>
       </BriefSectionCard>
+      )}
 
-      <BriefSectionCard id="brief-section-creative" number={2} locale={locale} title={locale === "zh" ? "创意方向" : "Creative direction"}>
-        <div className="space-y-2">
-          <BriefFieldLabel label={locale === "zh" ? "风格（可多选）" : "Style (multi-select)"} />
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
-            {STYLE_OPTIONS.map((item) => {
-              const Icon = styleIconMap[item.icon];
-              const active = form.creativeStyles.includes(item.id);
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => patch("creativeStyles", toggleList(form.creativeStyles, item.id))}
-                  className={cn(
-                    "flex items-center gap-2 rounded-xl border px-3 py-2.5 text-left text-sm transition",
-                    active
-                      ? "border-violet-600 bg-violet-50 text-violet-700"
-                      : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300"
-                  )}
-                >
-                  <Icon className="h-4 w-4 shrink-0" />
-                  <span>{labelForOption(item, locale)}</span>
-                </button>
-              );
-            })}
+      {props.hideCreativeDirection ? null : (
+        <BriefSectionCard id="brief-section-creative" number={2} locale={locale} title={locale === "zh" ? "创意方向" : "Creative direction"}>
+          <div className="space-y-2">
+            <BriefFieldLabel label={locale === "zh" ? "风格（可多选）" : "Style (multi-select)"} />
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+              {STYLE_OPTIONS.map((item) => {
+                const Icon = styleIconMap[item.icon];
+                const active = form.creativeStyles.includes(item.id);
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => patch("creativeStyles", toggleList(form.creativeStyles, item.id))}
+                    className={cn(
+                      "flex items-center gap-2 rounded-xl border px-3 py-2.5 text-left text-sm transition",
+                      active
+                        ? "border-violet-600 bg-violet-50 text-violet-700"
+                        : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300"
+                    )}
+                  >
+                    <Icon className="h-4 w-4 shrink-0" />
+                    <span>{labelForOption(item, locale)}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <Input
+              value={form.creativeStyleCustom}
+              onChange={(e) => patch("creativeStyleCustom", e.target.value)}
+              placeholder={locale === "zh" ? "自定义风格" : "Custom style"}
+              className="mt-2 h-10 rounded-xl"
+            />
           </div>
-          <Input
-            value={form.creativeStyleCustom}
-            onChange={(e) => patch("creativeStyleCustom", e.target.value)}
-            placeholder={locale === "zh" ? "自定义风格" : "Custom style"}
-            className="mt-2 h-10 rounded-xl"
-          />
-        </div>
-      </BriefSectionCard>
+        </BriefSectionCard>
+      )}
     </>
   );
 }

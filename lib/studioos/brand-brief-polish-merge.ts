@@ -1,6 +1,7 @@
 import type { Locale } from "@/lib/i18n";
 import { isChineseLanguage } from "@/lib/i18n";
 import type { ReorganizedBrandBrief } from "@/lib/studioos/brand-brief-ai";
+import { formatQuickBriefPolishedDocument } from "@/lib/studioos/brand-brief-optimizer-format";
 
 function usesChinese(locale: Locale) {
   return locale === "zh" || isChineseLanguage(locale);
@@ -58,6 +59,24 @@ export function applyPolishedBriefToForm(input: {
   };
 }
 
+export function polishedSummaryTextFromBrief(input: {
+  original: string;
+  brief: ReorganizedBrandBrief;
+  locale: Locale;
+  maxLength?: number;
+}) {
+  const maxLength = input.maxLength ?? 1500;
+  if (input.brief.optimizer) {
+    return formatQuickBriefPolishedDocument(input.brief.optimizer, input.locale).slice(0, maxLength);
+  }
+
+  return applyPolishedBriefToForm({
+    original: input.original,
+    brief: input.brief,
+    locale: input.locale
+  }).productDescription.slice(0, maxLength);
+}
+
 export function briefPolishSystemPrompt(locale: Locale) {
   const zh = usesChinese(locale);
   if (zh) {
@@ -69,8 +88,11 @@ export function briefPolishSystemPrompt(locale: Locale) {
       "3. campaign_goal 输出完整整理后的正文（建议 300-1200 字），可用【投放平台】【目标受众】【产品卖点】【创意方向】【风格调性】【执行要求】等标签组织。",
       "4. 若用户输入已很专业，以润色和结构化为主；信息量只能≥原文，不能更少。",
       "5. campaign_goal 开头用一句「广告创意主旨为…」概括，后面跟完整整理正文。",
-      "6. notes 只放 Studio 执行备忘，不要重复 campaign_goal 已有内容。",
+      "6. notes 只放创作者执行备忘，不要重复 campaign_goal 已有内容。",
       "7. 禁止编造用户未提到的功能或数据。",
+      "8. 禁止将广告目标写成「新品上市」，除非用户明确提到新品、上市、发布或 launch。",
+      "9. 全文必须使用简体中文，禁止中英混杂的小标题或英文字段名。",
+      "10. 不要写投放平台、视频时长、分辨率、画幅等制作规格——用户会在表单里单独选择。",
       "返回 JSON：campaign_goal、product_name、target_audience、title、notes。"
     ].join("\n");
   }
@@ -83,7 +105,10 @@ export function briefPolishSystemPrompt(locale: Locale) {
     "3. campaign_goal should be the full organized brief (roughly 300-1200 chars) with clear sections.",
     "4. If the input is already strong, polish and structure it without reducing information.",
     "5. notes is for studio execution reminders only, not a duplicate of campaign_goal.",
-    "6. Do not invent product claims.",
+      "6. Do not invent product claims.",
+      "7. Do not label the campaign as a product launch unless the user explicitly says new product, launch, or release.",
+      "8. Write entirely in English. Do not mix Chinese labels or bilingual section headers.",
+      "9. Do not include delivery platforms, video duration, resolution, or aspect ratio — the user selects those in the form.",
     "Return JSON: campaign_goal, product_name, target_audience, title, notes."
   ].join("\n");
 }

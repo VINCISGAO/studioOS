@@ -5,6 +5,7 @@ import {
   AI_USAGE_QUOTA_PER_CAMPAIGN,
   AI_USAGE_USER_DAILY_COPILOT,
   aiUsageQuotaErrorMessage,
+  isAiUsageQuotaEnforced,
   type AiUsageCategory,
   type AiUsageQuotaResult
 } from "@/lib/studioos/brand-abuse-policy";
@@ -20,6 +21,10 @@ export const aiUsageQuotaService = {
     campaignId?: string | null;
     category: AiUsageCategory;
   }): Promise<AiUsageQuotaResult> {
+    if (!isAiUsageQuotaEnforced()) {
+      return { ok: true };
+    }
+
     if (input.campaignId) {
       const limit = AI_USAGE_QUOTA_PER_CAMPAIGN[input.category];
       const used = await aiUsageQuotaRepository.countForCampaign(input.campaignId, input.category);

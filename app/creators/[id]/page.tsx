@@ -37,8 +37,8 @@ const copy = {
     viewStudio: "View studio profile"
   },
   zh: {
-    back: "返回 Studio 作品库",
-    profile: "Studio 主页",
+    back: "返回创作者作品库",
+    profile: "创作者主页",
     works: "作品集",
     posts: "作品",
     about: "简介",
@@ -54,12 +54,12 @@ const copy = {
     customQuote: "按项目报价",
     turnaround: "交付周期",
     deposit: "保证金",
-    notFound: "未找到 Studio",
+    notFound: "未找到创作者",
     editProfile: "编辑资料",
     preview: "预览视频",
     openOriginal: "在原平台打开",
-    empty: "这位 Studio 还没有发布作品。",
-    viewStudio: "查看制作团队主页"
+    empty: "这位创作者还没有发布作品。",
+    viewStudio: "查看创作者主页"
   }
 };
 

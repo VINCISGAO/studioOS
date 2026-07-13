@@ -23,6 +23,7 @@ import {
   type ProjectActorRole,
   type ProjectEventName
 } from "@/lib/studioos/project-status";
+import { canDeleteProject } from "@/lib/studioos/brand-delete-policy";
 
 const STORE_PATH = dataStorePath("project-store.json");
 
@@ -760,16 +761,7 @@ export async function listProjectsForClient(clientEmail: string): Promise<Stored
     .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
 }
 
-/** Brand may abandon wizard drafts and unpaid checkout — not active production. */
-export function canDeleteProject(status: string) {
-  const normalized = normalizeCampaignStatus(status);
-  return (
-    normalized === "draft" ||
-    normalized === "payment_pending" ||
-    normalized === "completed" ||
-    normalized === "cancelled"
-  );
-}
+export { canDeleteProject };
 
 async function deletePrismaCampaignForClient(
   projectId: string,
@@ -1035,7 +1027,7 @@ export function projectStatusLabel(status: CampaignProjectStatus, locale: "en" |
     zh: {
       draft: "草稿",
       matching: "匹配中",
-      studio_selected: "已选 Studio",
+      studio_selected: "已选创作者",
       proposal: "待确认方案",
       contract_pending: "待签约",
       payment_pending: "待付款",

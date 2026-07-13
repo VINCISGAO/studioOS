@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { refineBrandBriefAction } from "@/app/brand-campaign-actions";
+import { refineBrandBriefAction, refreshBrandReferencesAction } from "@/app/brand-campaign-actions";
 import { addReferenceAction, removeReferenceAction } from "@/app/project-wizard-actions";
-import { BrandCampaignBriefStep1Panel } from "@/components/studioos/brand-campaign-brief-step1-panel";
+import { QuickBriefFlow } from "@/components/studioos/quick-brief/quick-brief-flow";
+import { useAcknowledgeAlert } from "@/components/studioos/acknowledge-alert-provider";
+import { QUICK_BRIEF_DESCRIPTION_MAX } from "@/components/studioos/quick-brief/quick-brief-description-input";
 import { BrandBriefOptimizerPanel } from "@/components/studioos/brand-brief-optimizer-panel";
 import {
   resolveInitialBrandAssetPreviews,
@@ -31,9 +33,11 @@ import {
   defaultBrandBudget,
   isPresetBudget,
   normalizeCustomBudgetInput,
-  type BrandDeliveryTimelineId,
+  resolveBriefAspectRatioValue,
+  validateBriefAspectRatio,
   type BrandVideoAspectRatio
 } from "@/lib/studioos/brand-campaign-options";
+import type { BrandDeliveryTimelineId } from "@/lib/studioos/brand-campaign-options";
 import {
   budgetRangeLabel,
   formatMoneyFromUsd,
@@ -44,7 +48,11 @@ import {
   normalizeBriefResolution
 } from "@/lib/studioos/brand-creative-brief-form";
 import { applyOptimizerPatches } from "@/lib/studioos/brand-brief-optimizer-apply";
-import { applyPolishedBriefToForm, primaryBriefSourceText } from "@/lib/studioos/brand-brief-polish-merge";
+import type { BrandBriefOptimizerResult } from "@/lib/studioos/brand-brief-optimizer.types";
+import { applyPolishedBriefToForm, polishedSummaryTextFromBrief, primaryBriefSourceText } from "@/lib/studioos/brand-brief-polish-merge";
+import { compressImageForUpload } from "@/lib/studioos/image-upload-client";
+import { resolveQuestionnaireBrandName } from "@/lib/studioos/brand-questionnaire.types";
+import { quickBriefCopy } from "@/lib/studioos/quick-brief-copy";
 import { safeBriefFrameRateValue } from "@/lib/studioos/brand-creative-brief-options";
 import { getBriefContinueBlocker } from "@/lib/studioos/brand-creative-brief-continue-validation";
 import { BRIEF_FIELD_TARGETS, scrollToBriefField } from "@/lib/studioos/brand-creative-brief-scroll";
@@ -144,14 +152,17 @@ const copy = {
     continuePending: "Continuing…",
     aspectRatioTitle: "Video aspect ratio",
     aspectRatioHint: "Required — pick the primary format for your deliverable.",
-    aspectRatioError: "Select a video aspect ratio."
+    aspectRatioError: "Select a video aspect ratio.",
+    resolutionTitle: "Video resolution",
+    resolutionHint: "Required — choose 1080P or 4K for your deliverable.",
+    resolutionError: "Select a video resolution."
   },
   zh: {
     backHome: "返回 Brand 首页",
     stepLabel: "第 1 步 / 共 4 步",
-    steps: ["需求", "准备", "确认", "Studio"],
+    steps: ["需求", "准备", "确认", "创作者"],
     title: "告诉我们你想做什么广告",
-    subtitle: "先用口语描述想法 — AI 几秒内整理成 Studio 能用的专业广告需求。",
+    subtitle: "先用口语描述想法 — 智能助手几秒内整理成创作者能用的专业广告需求。",
     aiHeroTitle: "用 AI 描述你的广告想法",
     aiHeroHint: "不会写没关系，把重点说完即可，AI 帮你整理成专业需求。",
     aiPlaceholder:
@@ -159,7 +170,7 @@ const copy = {
     detailsTitle: "补充细节",
     detailsHint: "可选 — AI 整理后可微调，或跳过 AI 手动填写。",
     productSection: "产品",
-    productBasicsHint: "链接或产品图帮助 Studio 理解你在卖什么。",
+    productBasicsHint: "链接或产品图帮助创作者理解你在卖什么。",
     questionnaire: "简单问卷",
     productName: "产品名称",
     productLink: "产品链接（选填）",
@@ -188,7 +199,7 @@ const copy = {
       "自动补全广告策略、目标受众、创意方向、平台建议、创作者类型、执行重点与缺失信息，让普通需求升级为专业广告需求。",
     aiPolishing: "正在生成专业需求…",
     budgetLabel: "预算（美金）",
-    budgetHint: "均以美金计价 · 最低 $200 · 帮助我们匹配合适档位的 Studio。",
+    budgetHint: "均以美金计价 · 最低 $200 · 帮助我们匹配合适档位的创作者。",
     budgetCustomPlaceholder: "自定义金额，如 800 或 800-1500",
     budgetMinError: "最低预算为 $200 美金。",
     budgetCustomLabel: "自定义",
@@ -224,7 +235,10 @@ const copy = {
     continuePending: "继续中…",
     aspectRatioTitle: "视频比例",
     aspectRatioHint: "必选 — 选择成片的主要规格。",
-    aspectRatioError: "请选择视频比例。"
+    aspectRatioError: "请选择视频比例。",
+    resolutionTitle: "视频分辨率",
+    resolutionHint: "必选 — 选择 1080P 或 4K。",
+    resolutionError: "请选择视频分辨率。"
   }
 };
 
@@ -241,6 +255,7 @@ export type BriefFormState = {
   budgetRange: string;
   deliveryTimeline: BrandDeliveryTimelineId;
   aspectRatio: BrandVideoAspectRatio;
+  aspectRatioCustom: string;
   projectTitle: string;
   adOneLiner: string;
   industry: string;
@@ -395,6 +410,12 @@ export function BrandCampaignStepBrief({
   isSavingDraft?: boolean;
 }) {
   const t = copy[locale];
+  const { alert } = useAcknowledgeAlert();
+
+  useEffect(() => {
+    if (error) alert(error);
+  }, [alert, error]);
+
   const objectives = objectiveOptions(locale);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const referenceVideoInputRef = useRef<HTMLInputElement>(null);
@@ -432,13 +453,23 @@ export function BrandCampaignStepBrief({
   );
   const [applyNotice, setApplyNotice] = useState<string | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
-  const [isPolishing, startPolish] = useTransition();
+  const [isPolishing, setIsPolishing] = useState(false);
+  const polishingRef = useRef(false);
+
+  useEffect(() => {
+    return () => {
+      polishingRef.current = false;
+    };
+  }, []);
   const [refUrl, setRefUrl] = useState("");
   const [references, setReferences] = useState(initialReferences);
   const [isRefPending, startRefAction] = useTransition();
   const [budgetCustom, setBudgetCustom] = useState(() => customBudgetInputFromStored(initial.budgetRange, locale));
   const [budgetCustomError, setBudgetCustomError] = useState<string | null>(null);
   const [aspectRatioError, setAspectRatioError] = useState<string | null>(null);
+  const [quickSummary, setQuickSummary] = useState(
+    () => initial.rawSummary.trim() || initial.productDescription.trim()
+  );
 
   useEffect(() => {
     setReferences(initialReferences);
@@ -458,6 +489,15 @@ export function BrandCampaignStepBrief({
   useEffect(() => {
     onBriefChange?.(form, hideTopBar ? creativeBriefAssets.productReady : productReady);
   }, [form, productReady, creativeBriefAssets.productReady, hideTopBar, onBriefChange]);
+
+  useEffect(() => {
+    const firstAssetError = Object.values(creativeBriefAssets.assetUploadErrors).find(Boolean);
+    if (firstAssetError) alert(firstAssetError);
+  }, [alert, creativeBriefAssets.assetUploadErrors]);
+
+  useEffect(() => {
+    if (uploadError) alert(uploadError);
+  }, [alert, uploadError]);
 
   function togglePlatform(platform: string) {
     setForm((prev) => ({
@@ -515,6 +555,7 @@ export function BrandCampaignStepBrief({
     }
     const result = normalizeCustomBudgetInput(budgetCustom, locale);
     if (!result.ok) {
+      alert(result.message);
       setBudgetCustomError(result.message);
       return;
     }
@@ -522,96 +563,178 @@ export function BrandCampaignStepBrief({
     setBudgetCustomError(null);
   }
 
-  function buildFormData() {
+  function buildFormData(overrides?: {
+    summary?: string;
+    budgetRange?: string;
+    deliveryTimeline?: BrandDeliveryTimelineId;
+  }) {
     const fd = new FormData();
+    const summary = overrides?.summary ?? form.rawSummary;
+    const budgetRange = overrides?.budgetRange ?? form.budgetRange;
+    const deliveryTimeline = overrides?.deliveryTimeline ?? form.deliveryTimeline;
     fd.set("lang", locale);
     fd.set("project_id", projectId);
-    fd.set("product_name", form.productName);
+    fd.set("product_name", resolveQuestionnaireBrandName({
+      projectTitle: form.projectTitle,
+      brandName: form.brandName,
+      productName: form.productName
+    }));
     fd.set("product_url", form.productUrl);
-    fd.set("product_description", form.productDescription);
+    fd.set("product_description", overrides?.summary ?? form.productDescription);
     fd.set("objective", form.objective);
     fd.set("audience_description", form.audienceDescription);
     fd.set("platforms", form.platforms.join(","));
     fd.set("extra_notes", form.extraNotes);
-    fd.set("raw_summary", form.rawSummary);
-    fd.set("budget_range", form.budgetRange);
-    fd.set("delivery_timeline", form.deliveryTimeline);
-    fd.set("aspect_ratio", form.aspectRatio);
+    fd.set("raw_summary", summary);
+    fd.set("budget_range", budgetRange);
+    fd.set("delivery_timeline", deliveryTimeline);
+    fd.set("aspect_ratio", resolveBriefAspectRatioValue(form));
     appendCreativeBriefExtendedFields(fd, form);
     return fd;
   }
 
-  function handlePolish() {
-    const hasText =
-      form.rawSummary.trim() ||
-      form.productDescription.trim() ||
-      form.audienceDescription.trim() ||
+  async function runPolishAsync(overrides?: {
+    summary?: string;
+    budgetRange?: string;
+    deliveryTimeline?: BrandDeliveryTimelineId;
+    inline?: boolean;
+  }): Promise<BrandBriefOptimizerResult | null> {
+    const summary =
+      overrides?.summary ??
+      form.rawSummary.trim() ??
+      form.productDescription.trim() ??
+      form.audienceDescription.trim() ??
       form.extraNotes.trim();
 
-    if (!hasText) {
-      setLocalError(t.needPolish);
-      return;
+    if (!summary.trim()) {
+      alert(t.needPolish);
+      return null;
+    }
+
+    if (polishingRef.current) {
+      return null;
     }
 
     setLocalError(null);
     setApplyNotice(null);
-    startPolish(() => {
-      void (async () => {
-        try {
-          const result = await refineBrandBriefAction(buildFormData());
-          if (!result.ok) {
-            setLocalError(
-              coerceErrorMessage(
-                result.error,
-                locale === "zh" ? "AI 优化失败，请重试" : "AI polish failed — try again"
-              )
-            );
-            return;
-          }
-          const userSource = primaryBriefSourceText({
-            productDescription: form.productDescription,
-            rawSummary: form.rawSummary,
-            adOneLiner: form.adOneLiner
-          });
+    polishingRef.current = true;
+    setIsPolishing(true);
 
-          if (result.brief.optimizer) {
-            const patches = applyOptimizerPatches(form, result.brief.optimizer, locale);
-            setForm((prev) => ({
-              ...prev,
-              ...patches,
-              productDescription: userSource,
-              rawSummary: userSource,
-              refined: result.brief
-            }));
-          } else {
-            const applied = applyPolishedBriefToForm({
-              original: userSource,
-              brief: result.brief,
-              locale
-            });
-            setForm((prev) => ({
-              ...prev,
-              projectTitle: prev.projectTitle.trim() || result.brief.title,
-              productName: prev.productName.trim() || result.brief.product_name,
-              productDescription: applied.productDescription,
-              rawSummary: applied.rawSummary,
-              audienceDescription: applied.audienceDescription || prev.audienceDescription,
-              extraNotes: applied.extraNotes || prev.extraNotes,
-              refined: result.brief
-            }));
-          }
-          setRefinedApplied(true);
-          setApplyNotice(t.appliedSuccess);
-        } catch (caught) {
-          setLocalError(
-            formatClientError(
-              caught,
-              locale === "zh" ? "AI 优化失败，请重试" : "AI polish failed — try again"
-            )
-          );
+    try {
+      const result = await refineBrandBriefAction(buildFormData(overrides));
+      if (!result.ok) {
+        alert(
+          coerceErrorMessage(
+            result.error,
+            locale === "zh" ? "AI 优化失败，请重试" : "AI polish failed — try again"
+          )
+        );
+        return null;
+      }
+      const userSource = primaryBriefSourceText({
+        productDescription: overrides?.summary ?? form.productDescription,
+        rawSummary: overrides?.summary ?? form.rawSummary,
+        adOneLiner: form.adOneLiner
+      });
+      const isInlinePolish = hideTopBar && overrides?.inline === true;
+      const polishedText = polishedSummaryTextFromBrief({
+        original: userSource,
+        brief: result.brief,
+        locale,
+        maxLength: QUICK_BRIEF_DESCRIPTION_MAX
+      });
+
+      if (isInlinePolish) {
+        setQuickSummary(polishedText);
+
+        if (result.brief.optimizer) {
+          const patches = applyOptimizerPatches(form, result.brief.optimizer, locale, {
+            preserveProductionSpecs: true
+          });
+          setForm((prev) => ({
+            ...prev,
+            ...patches,
+            ...(overrides?.budgetRange ? { budgetRange: overrides.budgetRange } : {}),
+            ...(overrides?.deliveryTimeline ? { deliveryTimeline: overrides.deliveryTimeline } : {}),
+            productDescription: polishedText,
+            rawSummary: polishedText,
+            refined: result.brief
+          }));
+          setApplyNotice(quickBriefCopy(locale).aiPolishDone);
+          return result.brief.optimizer;
         }
-      })();
-    });
+
+        const applied = applyPolishedBriefToForm({
+          original: userSource,
+          brief: result.brief,
+          locale
+        });
+        setForm((prev) => ({
+          ...prev,
+          projectTitle: prev.projectTitle.trim() || result.brief.title,
+          productName: prev.productName.trim() || result.brief.product_name,
+          productDescription: polishedText,
+          rawSummary: polishedText,
+          audienceDescription: applied.audienceDescription || prev.audienceDescription,
+          extraNotes: applied.extraNotes || prev.extraNotes,
+          refined: result.brief
+        }));
+        setApplyNotice(quickBriefCopy(locale).aiPolishDone);
+        return result.brief.optimizer ?? null;
+      }
+
+      if (result.brief.optimizer) {
+        const patches = applyOptimizerPatches(form, result.brief.optimizer, locale, {
+          preserveProductionSpecs: hideTopBar
+        });
+        setForm((prev) => ({
+          ...prev,
+          ...patches,
+          ...(overrides?.budgetRange ? { budgetRange: overrides.budgetRange } : {}),
+          ...(overrides?.deliveryTimeline ? { deliveryTimeline: overrides.deliveryTimeline } : {}),
+          productDescription: userSource,
+          rawSummary: overrides?.summary ?? userSource,
+          refined: result.brief
+        }));
+        setRefinedApplied(true);
+        setApplyNotice(t.appliedSuccess);
+        return result.brief.optimizer;
+      }
+
+      const applied = applyPolishedBriefToForm({
+        original: userSource,
+        brief: result.brief,
+        locale
+      });
+      setForm((prev) => ({
+        ...prev,
+        projectTitle: prev.projectTitle.trim() || result.brief.title,
+        productName: prev.productName.trim() || result.brief.product_name,
+        productDescription: applied.productDescription,
+        rawSummary: applied.rawSummary,
+        audienceDescription: applied.audienceDescription || prev.audienceDescription,
+        extraNotes: applied.extraNotes || prev.extraNotes,
+        refined: result.brief
+      }));
+      setRefinedApplied(true);
+      setApplyNotice(t.appliedSuccess);
+      return null;
+    } catch (caught) {
+      alert(
+        formatClientError(
+          caught,
+          locale === "zh" ? "AI 优化失败，请重试" : "AI polish failed — try again"
+        )
+      );
+      return null;
+    } finally {
+      polishingRef.current = false;
+      setIsPolishing(false);
+    }
+  }
+
+  function handlePolish() {
+    void runPolishAsync();
   }
 
   function handleApplyRefined() {
@@ -647,7 +770,7 @@ export function BrandCampaignStepBrief({
 
       try {
         if (file.size > MAX_SOURCE_BYTES) {
-          setUploadError(
+          alert(
             locale === "zh"
               ? "图片超过 10MB，请换一张更小的 JPG/PNG 图片"
               : "Image exceeds 10MB — choose a smaller JPG or PNG"
@@ -667,7 +790,7 @@ export function BrandCampaignStepBrief({
               fileNamePrefix: "product"
             });
           } catch {
-            setUploadError(
+            alert(
               locale === "zh"
                 ? "图片较大且浏览器压缩失败，请换一张更小的 JPG/PNG 图片"
                 : "This image is large and could not be compressed — choose a smaller JPG or PNG"
@@ -714,7 +837,7 @@ export function BrandCampaignStepBrief({
         }
 
         if (!res.ok || !result.ok) {
-          setUploadError(result.error ?? `${t.uploadFailed} (HTTP ${res.status})`);
+          alert(result.error ?? `${t.uploadFailed} (HTTP ${res.status})`);
           setProductReady(false);
           setPreviewUrl(initialProductImageUrl ?? null);
           return;
@@ -727,7 +850,7 @@ export function BrandCampaignStepBrief({
         onProductUploaded?.(savedPreview);
       } catch (error) {
         const message = error instanceof Error ? error.message : "";
-        setUploadError(
+        alert(
           locale === "zh"
             ? message.includes("too large") || message.includes("10MB")
               ? "图片超过 10MB，请换一张更小的图片"
@@ -748,7 +871,7 @@ export function BrandCampaignStepBrief({
     startReferenceVideoUpload(async () => {
       const MAX_REFERENCE_VIDEO_BYTES = 200 * 1024 * 1024;
       if (file.size > MAX_REFERENCE_VIDEO_BYTES) {
-        setLocalError(locale === "zh" ? "参考视频建议控制在 200MB 以内" : "Keep reference videos under 200MB");
+        alert(locale === "zh" ? "参考视频建议控制在 200MB 以内" : "Keep reference videos under 200MB");
         return;
       }
 
@@ -788,14 +911,14 @@ export function BrandCampaignStepBrief({
         }
 
         if (!res.ok || !result.ok || !result.reference) {
-          setLocalError(result.error ?? (locale === "zh" ? "参考视频上传失败" : "Reference video upload failed"));
+          alert(result.error ?? (locale === "zh" ? "参考视频上传失败" : "Reference video upload failed"));
           return;
         }
 
         setReferences((prev) => [result.reference!, ...prev.filter((item) => item.id !== result.reference!.id)]);
         onReferencesUpdated?.();
       } catch (error) {
-        setLocalError(error instanceof Error ? error.message : locale === "zh" ? "参考视频上传失败" : "Reference video upload failed");
+        alert(error instanceof Error ? error.message : locale === "zh" ? "参考视频上传失败" : "Reference video upload failed");
       }
     });
   }
@@ -811,22 +934,12 @@ export function BrandCampaignStepBrief({
       fd.set("source_url", refUrl.trim());
       const result = await addReferenceAction(fd);
       if (!result.ok) {
-        setLocalError(result.error);
+        alert(result.error);
         return;
       }
-      setReferences((prev) => [
-        ...prev,
-        {
-          id: `temp_${Date.now()}`,
-          project_id: projectId,
-          type: "link",
-          source_url: refUrl.trim(),
-          note: "",
-          platform: "",
-          sort_order: prev.length,
-          created_at: new Date().toISOString()
-        }
-      ]);
+      if (result.reference) {
+        setReferences((prev) => [result.reference!, ...prev.filter((item) => item.id !== result.reference!.id)]);
+      }
       setRefUrl("");
       onReferencesUpdated?.();
     });
@@ -857,7 +970,7 @@ export function BrandCampaignStepBrief({
   }
 
   function applyBriefContinueBlocker(error: string, targetId: string) {
-    setLocalError(error);
+    alert(error);
     if (targetId === BRIEF_FIELD_TARGETS.aspectRatio) {
       setAspectRatioError(error);
     }
@@ -878,6 +991,15 @@ export function BrandCampaignStepBrief({
       }
       if (!payload.aspectRatio) {
         applyBriefContinueBlocker(t.aspectRatioError, BRIEF_FIELD_TARGETS.aspectRatio);
+        return;
+      }
+      const aspectValidation = validateBriefAspectRatio(
+        payload.aspectRatio,
+        payload.aspectRatioCustom,
+        locale
+      );
+      if (!aspectValidation.ok) {
+        applyBriefContinueBlocker(aspectValidation.error, BRIEF_FIELD_TARGETS.aspectRatio);
         return;
       }
       if (budgetCustom.trim()) {
@@ -942,7 +1064,6 @@ export function BrandCampaignStepBrief({
     onSaveDraft(payload);
   }
 
-  const displayError = localError || error;
   const timelineOptions = BRAND_DELIVERY_TIMELINES[locale];
   const aspectRatioOptions = BRAND_VIDEO_ASPECT_RATIOS[locale];
   const budgetPresets = useMemo(() => getBrandBudgetPresets(locale), [locale]);
@@ -964,55 +1085,33 @@ export function BrandCampaignStepBrief({
   const showProduct = stepMode === "product" || stepMode === "all";
   const showReferences = stepMode === "references" || stepMode === "all";
 
+  function handleRefreshReferences() {
+    startRefAction(async () => {
+      const fd = new FormData();
+      fd.set("lang", locale);
+      fd.set("project_id", projectId);
+      const result = await refreshBrandReferencesAction(fd);
+      if (result.ok && result.references) {
+        setReferences(result.references);
+      }
+    });
+  }
+
   if (hideTopBar && stepMode === "all") {
     const { steps, ...briefPanelCopy } = t;
     void steps;
     return (
-      <BrandCampaignBriefStep1Panel
+      <QuickBriefFlow
         locale={locale}
-        copy={briefPanelCopy}
         form={form}
         patch={patch}
+        summary={quickSummary}
+        onSummaryChange={(value) => {
+          setQuickSummary(value);
+          setApplyNotice(null);
+        }}
         budgetCustom={budgetCustom}
-        budgetCustomError={budgetCustomError}
         budgetIsCustom={budgetIsCustom}
-        aspectRatioError={aspectRatioError}
-        displayError={displayError}
-        refinedApplied={refinedApplied}
-        applyNotice={applyNotice}
-        isPolishing={isPolishing}
-        isPending={isPending}
-        isSavingDraft={isSavingDraft}
-        isUploading={hideTopBar ? creativeBriefAssets.isImageUploading : isUploading}
-        isRefPending={isRefPending}
-        isReferenceVideoUploading={
-          hideTopBar ? creativeBriefAssets.isReferenceVideoUploading : isReferenceVideoUploading
-        }
-        continueDisabled={continueDisabled}
-        productReady={hideTopBar ? creativeBriefAssets.productReady : productReady}
-        assetPreviews={creativeBriefAssets.assetPreviews}
-        assetUploadErrors={creativeBriefAssets.assetUploadErrors}
-        uploadingAssetSlot={creativeBriefAssets.uploadingSlot}
-        referenceVideoUploadProgress={creativeBriefAssets.referenceVideoUploadProgress}
-        imageInputRef={creativeBriefAssets.imageInputRef}
-        onAssetSlotClick={creativeBriefAssets.onAssetSlotClick}
-        onImageFileSelected={creativeBriefAssets.handleImageFile}
-        referenceVideoInputRef={creativeBriefAssets.referenceVideoInputRef}
-        onReferenceVideoFileSelected={creativeBriefAssets.handleReferenceVideoFile}
-        previewUrl={previewUrl}
-        uploadError={uploadError}
-        references={references}
-        refUrl={refUrl}
-        setRefUrl={setRefUrl}
-        fileInputRef={fileInputRef}
-        onPolish={handlePolish}
-        onApplyRefined={handleApplyRefined}
-        onUploadClick={() => fileInputRef.current?.click()}
-        onUploadFile={handleUploadFile}
-        onReferenceVideoUploadClick={() => referenceVideoInputRef.current?.click()}
-        onUploadReferenceVideo={handleUploadReferenceVideo}
-        onAddRef={handleAddRef}
-        onRemoveRef={handleRemoveRef}
         onSelectPresetBudget={selectPresetBudget}
         onBudgetCustomChange={handleBudgetCustomChange}
         onBudgetCustomBlur={handleBudgetCustomBlur}
@@ -1021,9 +1120,45 @@ export function BrandCampaignStepBrief({
           setAspectRatioError(null);
           setLocalError(null);
         }}
-        onContinue={handleContinue}
+        references={references}
+        refUrl={refUrl}
+        setRefUrl={setRefUrl}
+        onAddRef={handleAddRef}
+        onRemoveRef={handleRemoveRef}
+        onPolish={(overrides) => runPolishAsync(overrides)}
+        onContinue={(payload) => onContinue(payload)}
         onSaveDraft={onSaveDraft ? handleSaveDraft : undefined}
-        updateRefined={updateRefined}
+        isPolishing={isPolishing}
+        isPending={isPending}
+        isRefPending={isRefPending}
+        isReferenceVideoUploading={creativeBriefAssets.isReferenceVideoUploading}
+        isReferenceImageUploading={creativeBriefAssets.isReferenceImageUploading}
+        isUploading={creativeBriefAssets.isImageUploading}
+        productReady={creativeBriefAssets.productReady}
+        assetPreviews={creativeBriefAssets.assetPreviews}
+        assetUploadErrors={creativeBriefAssets.assetUploadErrors}
+        uploadingAssetSlot={creativeBriefAssets.uploadingSlot}
+        referenceVideoUploadProgress={creativeBriefAssets.referenceVideoUploadProgress}
+        imageInputRef={creativeBriefAssets.imageInputRef}
+        onAssetSlotClick={creativeBriefAssets.onAssetSlotClick}
+        onImageFileSelected={creativeBriefAssets.handleImageFile}
+        referenceVideoInputRef={creativeBriefAssets.referenceVideoInputRef}
+        referenceImageInputRef={creativeBriefAssets.referenceImageInputRef}
+        onReferenceVideoFileSelected={creativeBriefAssets.handleReferenceVideoFile}
+        onReferenceImageFileSelected={creativeBriefAssets.handleReferenceImageFile}
+        previewUrl={previewUrl}
+        onUploadClick={() => fileInputRef.current?.click()}
+        fileInputRef={fileInputRef}
+        onUploadFile={handleUploadFile}
+        onUploadReferenceClick={() => creativeBriefAssets.referenceVideoInputRef.current?.click()}
+        onUploadReferenceImageClick={() => creativeBriefAssets.referenceImageInputRef.current?.click()}
+        onRefreshReferences={handleRefreshReferences}
+        onUploadReferenceVideo={handleUploadReferenceVideo}
+        uploadError={null}
+        polishNotice={applyNotice}
+        resolveBriefForContinue={resolveBriefForContinue}
+        copy={briefPanelCopy}
+        deferBudgetToLater
       />
     );
   }
@@ -1121,7 +1256,9 @@ export function BrandCampaignStepBrief({
                     <div
                       className={cn(
                         "flex h-10 items-center gap-2 rounded-lg border bg-white px-3 transition",
-                        budgetIsCustom
+                        budgetCustomError
+                          ? "border-red-300 ring-1 ring-red-100"
+                          : budgetIsCustom
                           ? "border-zinc-900 shadow-sm ring-1 ring-zinc-900/10"
                           : "border-zinc-200 hover:border-zinc-300"
                       )}
@@ -1136,15 +1273,11 @@ export function BrandCampaignStepBrief({
                         className="h-8 border-0 bg-transparent p-0 text-sm shadow-none focus-visible:ring-0"
                       />
                     </div>
-                    {budgetCustomError ? (
-                      <p className="mt-1.5 text-xs text-red-600">{budgetCustomError}</p>
-                    ) : (
-                      <p className="mt-1.5 text-xs text-zinc-400">
-                        {locale === "zh"
-                          ? `最低 ${minBudgetLabel} · 支持单个金额或区间`
-                          : `Minimum ${minBudgetLabel} · single amount or range`}
-                      </p>
-                    )}
+                    <p className="mt-1.5 text-xs text-zinc-400">
+                      {locale === "zh"
+                        ? `最低 ${minBudgetLabel} · 支持单个金额或区间`
+                        : `Minimum ${minBudgetLabel} · single amount or range`}
+                    </p>
                   </div>
                 </PlanningField>
 
@@ -1197,7 +1330,6 @@ export function BrandCampaignStepBrief({
                     </button>
                   ))}
                 </div>
-                {aspectRatioError ? <p className="text-xs text-red-600">{aspectRatioError}</p> : null}
               </div>
 
               <Button
@@ -1393,7 +1525,6 @@ export function BrandCampaignStepBrief({
                   <Upload className="ml-auto h-4 w-4 shrink-0 text-zinc-300" />
                 )}
               </button>
-              {uploadError ? <p className="text-xs text-red-600">{uploadError}</p> : null}
             </div>
           </div>
         </div>
@@ -1447,7 +1578,6 @@ export function BrandCampaignStepBrief({
                   </button>
                 ))}
               </div>
-              {aspectRatioError ? <p className="text-xs text-red-600">{aspectRatioError}</p> : null}
             </div>
             ) : null}
 
@@ -1610,9 +1740,7 @@ export function BrandCampaignStepBrief({
       {/* Footer CTA */}
       <div className="sticky bottom-4 z-10 flex flex-col gap-3 rounded-2xl border border-zinc-200/90 bg-white/95 px-5 py-4 shadow-lg backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between">
         <div className="min-h-[20px] flex-1">
-          {displayError ? (
-            <p className="text-sm text-red-600">{displayError}</p>
-          ) : refinedApplied ? (
+          {refinedApplied ? (
             <p className="text-sm text-emerald-700">{t.appliedSuccess}</p>
           ) : null}
         </div>

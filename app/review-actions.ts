@@ -449,7 +449,7 @@ export async function deleteReviewCommentAction(formData: FormData) {
     return { ok: false as const, error: lang === "zh" ? "批注不存在" : "Comment not found" };
   }
   if (existing.author !== "brand") {
-    return { ok: false as const, error: lang === "zh" ? "不能删除 Studio 回复" : "Studio replies cannot be deleted" };
+    return { ok: false as const, error: lang === "zh" ? "不能删除创作者回复" : "Studio replies cannot be deleted" };
   }
 
   if (hasDatabaseUrl() && order.project_id) {
@@ -487,7 +487,7 @@ function uploadErrorMessage(code: string, lang: Locale): string {
     if (code === "invalid-status") return "当前订单状态不可上传新版本";
     if (code === "PAYMENT_REQUIRED") return paidRevisionErrorMessage("PAYMENT_REQUIRED", lang);
     if (code === "REVIEW_LOCKED") return paidRevisionErrorMessage("REVIEW_LOCKED", lang);
-    if (code === "creator-not-assigned") return "品牌尚未选定 Studio，无法上传";
+    if (code === "creator-not-assigned") return "品牌尚未选定创作者，无法上传";
     if (code === "project-not-found") return "找不到对应项目";
     if (code === "no-database") return "数据库未配置，无法上传";
     return "无权限";
@@ -737,7 +737,7 @@ export async function requestBrandReviewAction(formData: FormData) {
         .notify({
           userId: campaign.brandId,
           campaignId: campaign.id,
-          title: lang === "zh" ? "Studio 申请项目方批阅" : "Studio requested brand review",
+          title: lang === "zh" ? "创作者申请项目方批阅" : "Studio requested brand review",
           content:
             lang === "zh"
               ? `V${version} 已准备好，请前往审片页批阅。`
@@ -910,7 +910,7 @@ export async function requestReviewRevisionAction(formData: FormData) {
         ok: true as const,
         message:
           lang === "zh"
-            ? `V${version} 批注已完成，等待 Studio 上传 V${version + 1}`
+            ? `V${version} 批注已完成，等待创作者上传 V${version + 1}`
             : `V${version} review is complete. Waiting for Studio to upload V${version + 1}.`
       };
     }
@@ -948,7 +948,7 @@ export async function requestReviewRevisionAction(formData: FormData) {
     ok: true as const,
     message:
       lang === "zh"
-        ? `V${version} 批注已完成，等待 Studio 上传 V${version + 1}`
+        ? `V${version} 批注已完成，等待创作者上传 V${version + 1}`
         : `V${version} review is complete. Waiting for Studio to upload V${version + 1}.`
   };
 }

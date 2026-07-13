@@ -90,7 +90,8 @@ export async function POST(
     const reference = await addProjectReference({
       project_id: projectId,
       source_url: saved.url,
-      note: saved.file_name
+      note: saved.file_name,
+      input_kind: "uploaded_video"
     });
     if (!reference) {
       return NextResponse.json(

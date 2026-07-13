@@ -93,7 +93,7 @@ export async function submitQuoteAction(formData: FormData) {
   await addSystemMessage(
     targetInquiry.id,
     lang === "zh"
-      ? `Studio 已发送方案：$${quote.amount.toFixed(2)}，交付 ${quote.delivery_days} 天。${quote.summary}`
+      ? `创作者已发送方案：$${quote.amount.toFixed(2)}，交付 ${quote.delivery_days} 天。${quote.summary}`
       : `Studio sent a proposal: $${quote.amount.toFixed(2)}, ${quote.delivery_days}-day delivery. ${quote.summary}`
   );
 
@@ -208,7 +208,7 @@ export async function payOrderAction(formData: FormData) {
   await addSystemMessage(
     order.inquiry_id,
     lang === "zh"
-      ? `Brand 已完成托管付款。Studio 可以开始制作 — 完成后在审片室查看视频。`
+      ? `品牌方已完成托管付款。创作者可以开始制作 — 完成后在审片室查看视频。`
       : `Escrow payment complete. The studio can start production — review deliverables in the review room when ready.`
   );
 

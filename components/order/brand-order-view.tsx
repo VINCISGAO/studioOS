@@ -65,7 +65,7 @@ const copy = {
     approveButton: "确认交付并完成订单",
     completed: "订单已完成，托管款项已释放。",
     unauthorized: "你无权访问此订单。",
-    rateTitle: "为 Studio 打分",
+    rateTitle: "为创作者打分",
     rateBody: "您的评分会计入历史订单评价，并影响 AI 推荐匹配权重。"
   }
 };

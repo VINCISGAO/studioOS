@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
+import { useAcknowledgeAlert } from "@/components/studioos/acknowledge-alert-provider";
 import { confirmBrandCampaignAction } from "@/app/brand-campaign-actions";
 import { Button } from "@/components/ui/button";
 import type { Locale } from "@/lib/i18n";
@@ -67,16 +68,21 @@ export function BrandCampaignConfirmation({
   onConfirmed: () => void;
 }) {
   const t = copy[locale];
+  const { alert } = useAcknowledgeAlert();
   const [certified, setCertified] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    if (error) alert(error);
+  }, [alert, error]);
 
   const snapshot = useMemo(() => buildConfirmedBriefSnapshot(project, locale), [project, locale]);
   const sections = useMemo(() => groupFields(snapshot.fields), [snapshot.fields]);
 
   function handleConfirm() {
     if (!certified) {
-      setError(locale === "zh" ? "请先勾选确认项" : "Please check the certification box");
+      alert(locale === "zh" ? "请先勾选确认项" : "Please check the certification box");
       return;
     }
 
@@ -164,8 +170,6 @@ export function BrandCampaignConfirmation({
         />
         <span className="text-sm leading-6 text-zinc-700">{t.certify}</span>
       </label>
-
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <Button asChild type="button" variant="outline" className="rounded-full">

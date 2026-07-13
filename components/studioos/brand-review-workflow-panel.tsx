@@ -38,24 +38,24 @@ const copy = {
   },
   zh: {
     title: "协同审片流程",
-    subtitle: "Brand 时间轴批注会同步到 Studio 审片室；Studio 标记「已解决」后，Brand 再批准交付。",
-    stepUpload: "Studio 提交版本",
-    stepComment: "Brand 添加时间轴批注",
-    stepResolve: "Studio 处理批注",
-    stepApprove: "Brand 批准交付",
-    waitingUpload: "等待 Studio 上传 Version 1。",
-    openComments: (n: number) => `${n} 条待 Studio 处理的批注`,
-    allResolved: "Studio 已处理全部时间轴批注",
-    studioRoom: "Studio 审片室",
+    subtitle: "品牌方时间轴批注会同步到创作者审片室；创作者标记「已解决」后，品牌方再批准交付。",
+    stepUpload: "创作者提交版本",
+    stepComment: "品牌方添加时间轴批注",
+    stepResolve: "创作者处理批注",
+    stepApprove: "品牌方批准交付",
+    waitingUpload: "等待创作者上传第一版。",
+    openComments: (n: number) => `${n} 条待创作者处理的批注`,
+    allResolved: "创作者已处理全部时间轴批注",
+    studioRoom: "创作者审片室",
     studioRoomHint: "Nova 在同一订单里查看批注，并在「交付工作台」上传修改版。",
     approveTitle: "批准交付",
     approveBody: "确认满意后释放托管款项。即使仍有未解决批注，也可批准以结束本轮。",
     approveButton: "批准并释放托管",
     revisionTitle: "申请修改轮次",
     revisionPlaceholder: "补充时间轴批注之外的修改说明（可选）。",
-    revisionButton: "退回 Studio 修改",
-    completed: "交付已批准，托管款项已释放给 Studio。",
-    revisionSent: "已申请修改，Studio 将上传新版本。",
+    revisionButton: "退回给创作者修改",
+    completed: "交付已批准，托管款项已释放给创作者。",
+    revisionSent: "已申请修改，创作者将上传新版本。",
     orderStatus: "订单状态"
   }
 };
@@ -156,7 +156,7 @@ export function BrandReviewWorkflowPanel({
               label={t.stepUpload}
               detail={
                 hasVersions
-                  ? `${deliverables.length} version${deliverables.length === 1 ? "" : "s"} · ${creator?.name ?? "Studio"}`
+                  ? `${deliverables.length} version${deliverables.length === 1 ? "" : "s"} · ${creator?.name ?? (locale === "zh" ? "创作者" : "Studio")}`
                   : t.waitingUpload
               }
             />
@@ -182,7 +182,7 @@ export function BrandReviewWorkflowPanel({
                   : resolvedComments.length
                     ? t.allResolved
                     : locale === "zh"
-                      ? "Studio 在审片室标记「已解决」"
+                      ? "创作者在审片室标记「已解决」"
                       : "Studio marks notes resolved in review room"
               }
             />
@@ -202,7 +202,7 @@ export function BrandReviewWorkflowPanel({
             </div>
             <Button asChild size="sm" variant="outline" className="rounded-full">
               <Link href={withLocale(brandReviewHref, locale)} target="_blank" rel="noreferrer">
-                {creator?.name ?? "Studio"} · {t.studioRoom}
+                {creator?.name ?? (locale === "zh" ? "创作者" : "Studio")} · {t.studioRoom}
               </Link>
             </Button>
           </div>

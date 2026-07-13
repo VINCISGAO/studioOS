@@ -109,7 +109,7 @@ export const landingCopy = {
       { title: "Creative velocity", desc: "Fewer layers, much higher efficiency", icon: "zap" as const }
     ],
     zh: [
-      { title: "制作方匹配", desc: "按作品集与品类精准推荐", icon: "users" as const },
+      { title: "创作者匹配", desc: "按作品集与品类精准推荐", icon: "users" as const },
       { title: "审片工作室", desc: "帧级批注，审批管理", icon: "play" as const },
       { title: "托管流程", desc: "按里程碑保护付款与交付", icon: "shield" as const },
       { title: "创意速度", desc: "减少中间层，大幅提升效率", icon: "zap" as const }
@@ -126,7 +126,7 @@ export const landingCopy = {
       { value: "70%", suffix: "↓", label: "典型成本下降" },
       { value: "72h", suffix: "", label: "首轮方案窗口" },
       { value: "4K", suffix: "", label: "交付标准" },
-      { value: "2000+", suffix: "", label: "严选制作网络" }
+      { value: "2000+", suffix: "", label: "严选创作者网络" }
     ]
   },
   logos: {
@@ -191,7 +191,7 @@ export const landingCopy = {
       subtitle: "",
       items: [
         { num: "01", title: "提交需求", desc: "上传目标、参考素材与投放要求" },
-        { num: "02", title: "匹配制作方", desc: "按品类、风格与作品质量推荐团队" },
+        { num: "02", title: "匹配创作者", desc: "按品类、风格与作品质量推荐团队" },
         { num: "03", title: "制作协作", desc: "制作、审片、修改在同一流程推进" },
         { num: "04", title: "成片交付", desc: "验收最终版本并释放交付资产" }
       ]
@@ -213,8 +213,8 @@ export const landingCopy = {
       titleLine1: "把广告制作从人工协调",
       titleLine2: "升级成一套可控的制作系统",
       subtitle:
-        "VINCIS 让品牌团队在一个工作流里完成需求简报、制作方匹配、审片、资金托管和成片交付",
-      items: ["把需求变成可执行简报", "按作品集匹配制作团队", "用审片与托管锁定交付质量"],
+        "VINCIS 让品牌团队在一个工作流里完成需求简报、创作者匹配、审片、资金托管和成片交付",
+      items: ["把需求变成可执行简报", "按作品集匹配创作者", "用审片与托管锁定交付质量"],
       trustLabel: "以全球品牌级标准设计",
       brands: ["Google", "Coca-Cola", "Samsung", "Airbnb", "TikTok", "Shopify", "Amazon", "Meta"]
     }
@@ -256,7 +256,7 @@ export const landingCopy = {
     },
     zh: {
       title: "把下一次广告项目放进制作系统",
-      subtitle: "从结构化需求、制作方匹配、里程碑托管，到团队可用的审片工作室，一次完成",
+      subtitle: "从结构化需求、创作者匹配、里程碑托管，到团队可用的审片工作室，一次完成",
       primary: "启动投放项目",
       secondary: "联系专家"
     }
@@ -804,7 +804,7 @@ const landingCopyTranslations: Partial<{
   cta: {
     "zh-TW": {
       title: "把下一次廣告專案放進真正的製作系統",
-      subtitle: "從結構化需求、製作方匹配、里程碑託管，到團隊可用的審片工作室，一次完成",
+      subtitle: "從結構化需求、創作者匹配、里程碑託管，到團隊可用的審片工作室，一次完成",
       primary: "啟動投放專案",
       secondary: "聯絡專家"
     },

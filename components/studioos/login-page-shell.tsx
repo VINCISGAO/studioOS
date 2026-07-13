@@ -10,6 +10,7 @@ import {
   Users
 } from "lucide-react";
 import { BrandLogoLockup } from "@/components/brand-logo-mark";
+import { AcknowledgeAlertProvider } from "@/components/studioos/acknowledge-alert-provider";
 import { GoogleOneTap } from "@/components/studioos/google-one-tap";
 import { LoginSocialButtons } from "@/components/studioos/login-social-buttons";
 import { LoginWorkspace } from "@/components/studioos/login-workspace";
@@ -265,6 +266,7 @@ export function LoginPageShell({
   const heroSubtitle = isBrand ? t.brandHeroSubtitle : t.creatorHeroSubtitle;
 
   return (
+    <AcknowledgeAlertProvider locale={locale}>
     <main className="relative min-h-[100dvh] overflow-hidden">
       <GoogleOneTap
         clientId={googleOneTapClientId}
@@ -435,6 +437,7 @@ export function LoginPageShell({
         </div>
       </div>
     </main>
+    </AcknowledgeAlertProvider>
   );
 }
 

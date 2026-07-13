@@ -1,4 +1,4 @@
-import type { BrandProjectRow } from "@/lib/studioos/brand-dashboard";
+import type { BrandProjectRow } from "@/lib/studioos/brand-dashboard-types";
 import { normalizeCampaignStatus } from "@/lib/studioos/project-status";
 
 /** Brand-facing ad lifecycle tabs under 我的广告 */

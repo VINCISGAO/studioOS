@@ -10,7 +10,7 @@ import type { StoredDeliverable, StoredOrder } from "@/lib/order-types";
 import type { StoredProject } from "@/lib/project-types";
 import type { ReviewComment } from "@/lib/studioos/review-comment-types";
 import type { StoredCreatorInvitation } from "@/lib/studioos/creator-invitation-types";
-import type { StoredCreativeBrief, StoredCreativePackItem } from "@/lib/campaign-types";
+import type { StoredCreativeBrief, StoredCreativePackItem, StoredProjectReference } from "@/lib/campaign-types";
 import type { Locale } from "@/lib/i18n";
 
 /** Shared portal tab ids — web + mobile */
@@ -58,6 +58,7 @@ export type CreatorProjectPortalDetail = {
   deliverables: StoredDeliverable[];
   comments: ReviewComment[];
   brief: StoredCreativeBrief | null;
+  references: StoredProjectReference[];
   canUpload: boolean;
   collaborationView: CreativeCollaborationView | null;
   aiEnabled: boolean;

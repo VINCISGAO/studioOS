@@ -68,7 +68,7 @@ export function WizardStepper({
         {!compact ? (
           <ol
             className="flex w-full justify-between gap-4 pt-1"
-            aria-label={locale === "zh" ? "Campaign 向导步骤" : "Campaign wizard steps"}
+            aria-label={locale === "zh" ? "广告项目向导步骤" : "Campaign wizard steps"}
           >
             {steps.map((step) => {
               const isCurrent = step.id === current;
@@ -127,7 +127,7 @@ export function WizardStepper({
         <ol
           className="flex flex-wrap gap-8 pt-2"
           style={{ gap: wizard.stepGap }}
-          aria-label={locale === "zh" ? "Campaign 向导步骤" : "Campaign wizard steps"}
+          aria-label={locale === "zh" ? "广告项目向导步骤" : "Campaign wizard steps"}
         >
           {steps.map((step) => {
             const isCurrent = step.id === current;

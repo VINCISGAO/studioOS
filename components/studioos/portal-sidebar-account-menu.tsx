@@ -27,7 +27,8 @@ export function PortalSidebarAccountMenu({
   name,
   roleLabel,
   profileHref,
-  accent = "zinc"
+  accent = "zinc",
+  imageFit = "photo"
 }: {
   locale: Locale;
   initials: string;
@@ -36,6 +37,7 @@ export function PortalSidebarAccountMenu({
   roleLabel: string;
   profileHref: string;
   accent?: "zinc" | "violet" | "indigo";
+  imageFit?: "photo" | "mark";
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -95,7 +97,7 @@ export function PortalSidebarAccountMenu({
           open && "bg-zinc-100"
         )}
       >
-        <PortalAccountAvatar initials={initials} avatarUrl={avatarUrl} accent={accent} />
+        <PortalAccountAvatar initials={initials} avatarUrl={avatarUrl} accent={accent} imageFit={imageFit} />
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-zinc-900">{name}</p>
           <p className="truncate text-xs text-zinc-500">{roleLabel}</p>

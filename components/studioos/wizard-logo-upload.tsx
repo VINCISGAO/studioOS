@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
+import { useAcknowledgeAlert } from "@/components/studioos/acknowledge-alert-provider";
 import { uploadLogoAssetAction } from "@/app/project-wizard-actions";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -29,11 +30,16 @@ type Props = {
 
 export function WizardLogoUpload({ locale, projectId, asset, onUploaded }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const { alert } = useAcknowledgeAlert();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<string | null>(
     isValidAssetUrl(asset?.file_url) ? assetPreviewUrl(asset!.file_url) : null
   );
+
+  useEffect(() => {
+    if (error) alert(error);
+  }, [alert, error]);
 
   function handlePick() {
     inputRef.current?.click();
@@ -100,8 +106,6 @@ export function WizardLogoUpload({ locale, projectId, asset, onUploaded }: Props
           {locale === "zh" ? "点击上传 Logo" : "Click to upload logo"}
         </button>
       )}
-
-      {error ? <p className="text-xs text-red-600">{error}</p> : null}
     </div>
   );
 }

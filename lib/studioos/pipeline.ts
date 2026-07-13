@@ -16,12 +16,12 @@ export type PipelineStage = {
 };
 
 const STAGE_LABELS: Record<PipelineStageId, { en: string; zh: string }> = {
-  brief: { en: "Brief", zh: "Brief" },
+  brief: { en: "Brief", zh: "创意简报" },
   storyboard: { en: "Storyboard", zh: "分镜" },
   scene_generation: { en: "Scene generation", zh: "场景生成" },
   voice: { en: "Voice", zh: "配音" },
   sound: { en: "Sound", zh: "音效" },
-  qa: { en: "QA", zh: "质检" },
+  qa: { en: "QA", zh: "质量检查" },
   delivery: { en: "Delivery", zh: "交付" }
 };
 

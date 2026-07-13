@@ -26,6 +26,7 @@ import {
   syncLucienChatAuthUser,
   writeAuthLucienChat
 } from "@/lib/lucien/lucien-chat-storage";
+import { resolveCopilotDisplayNameFromUser } from "@/lib/studioos/brand-account-display.shared";
 import { cn } from "@/lib/utils";
 
 type ChatLine = {
@@ -73,6 +74,11 @@ type SessionDetailData = {
 
 type AuthMeData = {
   id: string;
+  email: string;
+  role?: string;
+  fullName?: string;
+  companyName?: string;
+  displayName?: string;
 };
 
 type CopilotAnswerData = {
@@ -142,7 +148,7 @@ const DRAWER_COPY: Record<UiLocale, {
     currentEntity: "当前",
     expand: "放大聊天窗口",
     collapse: "缩回聊天窗口",
-    loading: "正在读取 VINCIS 数据...",
+    loading: "正在思考中…",
     inputPlaceholder: "问卢西恩...",
     unavailable: "卢西恩暂时不可用，请稍后再试。",
     requestFailed: "卢西恩请求失败",
@@ -162,7 +168,7 @@ const DRAWER_COPY: Record<UiLocale, {
     currentEntity: "current",
     expand: "Expand chat window",
     collapse: "Collapse chat window",
-    loading: "Reading VINCIS data...",
+    loading: "Thinking…",
     inputPlaceholder: "Ask Lucien...",
     unavailable: "Lucien is temporarily unavailable. Please try again later.",
     requestFailed: "Lucien request failed",
@@ -310,6 +316,16 @@ function localGreetingPrefix(locale: UiLocale, hour: number) {
   if (hour >= 12 && hour < 18) return "Good afternoon";
   if (hour >= 18 && hour < 24) return "Good evening";
   return "It is late";
+}
+
+function copilotRoleFromPath(pathRole: ReturnType<typeof roleKindFromPath>, authRole?: string) {
+  if (pathRole === "creator") return "CREATOR";
+  if (pathRole === "brand") return "BRAND";
+  if (pathRole === "admin") return "ADMIN";
+  if (authRole === "CREATOR" || authRole === "BRAND" || authRole === "ADMIN" || authRole === "SUPPORT") {
+    return authRole;
+  }
+  return "BRAND";
 }
 
 function fallbackDisplayName(role: ReturnType<typeof roleKindFromPath>, locale: UiLocale) {
@@ -461,6 +477,7 @@ export function AiCopilotDrawer() {
   const [expanded, setExpanded] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [authMe, setAuthMe] = useState<AuthMeData | null>(null);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<ChatLine[]>([]);
   const [suggestions, setSuggestions] = useState<string[]>(copy.defaultSuggestions);
@@ -496,7 +513,14 @@ export function AiCopilotDrawer() {
     return `/api/ai-copilot?${params.toString()}`;
   }, [pageContext.languageCode, sessionId]);
   const roleKind = roleKindFromPath(pathname);
-  const displayName = workspace?.displayName?.trim() || fallbackDisplayName(roleKind, locale);
+  const copilotRole = copilotRoleFromPath(roleKind, authMe?.role);
+  const instantDisplayName = useMemo(() => {
+    if (authMe?.email) {
+      return resolveCopilotDisplayNameFromUser(authMe, copilotRole);
+    }
+    return fallbackDisplayName(roleKind, locale);
+  }, [authMe, copilotRole, roleKind, locale]);
+  const displayName = workspace?.displayName?.trim() || instantDisplayName;
   const modelConfigured = workspace?.model?.configured ?? null;
   const introTitle =
     localHour == null
@@ -515,13 +539,14 @@ export function AiCopilotDrawer() {
           syncLucienChatAuthUser(null);
           return null;
         }
-        return payload.data.id;
+        return payload.data;
       })
-      .then((resolvedUserId) => {
-        if (cancelled || !resolvedUserId) return;
-        syncLucienChatAuthUser(resolvedUserId);
-        setUserId(resolvedUserId);
-        const stored = readAuthLucienChat(resolvedUserId, "workspace");
+      .then((resolvedUser) => {
+        if (cancelled || !resolvedUser?.id) return;
+        setAuthMe(resolvedUser);
+        syncLucienChatAuthUser(resolvedUser.id);
+        setUserId(resolvedUser.id);
+        const stored = readAuthLucienChat(resolvedUser.id, "workspace");
         if (!stored) return;
         setSessionId(stored.sessionId ?? null);
         if (stored.messages.length > 0) setMessages(stored.messages);

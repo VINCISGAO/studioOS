@@ -27,10 +27,8 @@ import { normalizeCopilotRole } from "@/features/ai-copilot/ai-copilot.types";
 import { appError } from "@/lib/core/errors";
 import { logger } from "@/lib/core/logger";
 import { asInputJson } from "@/lib/core/prisma-json";
-import { getStoredCreatorProfile } from "@/lib/creator-profile-service";
+import { resolveCopilotDisplayNameFromUser } from "@/lib/studioos/brand-account-display";
 import { hasOpenAI, resolveOpenAIModel } from "@/lib/core/config/ai";
-import { resolveBrandDisplayName } from "@/lib/studioos/brand-account-display";
-import { resolveCreatorIdByEmail } from "@/lib/studioos/creator-settings-service";
 import { normalizeLanguageCode } from "@/features/i18n/language.constants";
 import {
   isGenericLucienBoilerplate,
@@ -261,26 +259,16 @@ function lucienModelStatus() {
   };
 }
 
-async function resolveCreatorDisplayName(user: AuthUserDto, fallback: string) {
-  const creatorId = await resolveCreatorIdByEmail(user.email);
-  if (!creatorId) {
-    return user.displayName ?? user.fullName ?? fallback;
-  }
-  const profile = await getStoredCreatorProfile(creatorId);
-  return profile?.name.trim() || user.displayName || user.fullName || fallback;
-}
-
-async function buildWorkspaceSnapshot(user: AuthUserDto, role: string, context: AiCopilotContext) {
+function buildWorkspaceSnapshot(user: AuthUserDto, role: string, context: AiCopilotContext) {
   const language = context.language;
   const zh = isZh(language);
   const summaries = context.summaries;
-  const displayName = user.displayName ?? user.companyName ?? user.fullName ?? user.email.split("@")[0] ?? "VINCIS";
+  const workspaceName = resolveCopilotDisplayNameFromUser(user, role);
 
   if (role === "CREATOR") {
     const creator = asRecord(summaries.creator);
     const invitations = asArray(summaries.invitations);
     const wallet = asRecord(summaries.wallet);
-    const workspaceName = await resolveCreatorDisplayName(user, String(creator.displayName ?? displayName));
     return {
       roleLabel: zh ? "创作者" : "Creator",
       displayName: workspaceName,
@@ -304,9 +292,9 @@ async function buildWorkspaceSnapshot(user: AuthUserDto, role: string, context: 
     const orderStatus = asArray(platform.orderStatus);
     return {
       roleLabel: zh ? "管理员" : "Admin",
-      displayName,
+      displayName: workspaceName,
       workspaceName: zh ? "平台管理工作区" : "Platform Admin",
-      greeting: zh ? `早上好，${displayName}` : `Good morning, ${displayName}`,
+      greeting: zh ? `早上好，${workspaceName}` : `Good morning, ${workspaceName}`,
       subtitle: zh ? "我会读取平台真实数据，帮你查看成交、异常订单、提现和运营状态。" : "I read platform data to summarize deals, stuck orders, withdrawals, and operations.",
       stats: [
         { label: zh ? "订单状态" : "Order states", value: String(orderStatus.length), detail: zh ? "实时聚合" : "Live aggregate", icon: "box" },
@@ -319,7 +307,6 @@ async function buildWorkspaceSnapshot(user: AuthUserDto, role: string, context: 
   }
 
   const brand = asRecord(summaries.brand);
-  const workspaceName = await resolveBrandDisplayName(user.email);
   return {
     roleLabel: zh ? "品牌方" : "Brand",
     displayName: workspaceName,
@@ -346,7 +333,7 @@ export class AiCopilotService {
       aiCopilotRepository.listSessionsForUser(user.id),
       aiCopilotContextBuilder.build(user, { languageCode: input.languageCode ?? null })
     ]);
-    const workspace = await buildWorkspaceSnapshot(user, role, context);
+    const workspace = buildWorkspaceSnapshot(user, role, context);
     return {
       sessions: sessions.map((session) => ({
         id: session.id,

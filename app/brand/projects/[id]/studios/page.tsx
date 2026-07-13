@@ -66,7 +66,7 @@ export default async function BrandStudiosPage({ params, searchParams }: Props) 
     studioPerformanceLift
   }).slice(0, 6);
 
-  const title = locale === "zh" ? "推荐 Studio" : "Recommended Studios";
+  const title = locale === "zh" ? "推荐创作者" : "Recommended Studios";
   const partnerBadge = tCertificationExperience(locale).partnerBadge;
 
   return (
@@ -160,7 +160,7 @@ export default async function BrandStudiosPage({ params, searchParams }: Props) 
         ) : (
           <Card className="shadow-none">
             <CardContent className="p-10 text-center text-sm text-zinc-500">
-              {locale === "zh" ? "暂无匹配的 Studio" : "No studios matched yet."}
+              {locale === "zh" ? "暂无匹配的创作者" : "No studios matched yet."}
             </CardContent>
           </Card>
         )}

@@ -22,9 +22,9 @@ export const CAMPAIGN_WIZARD_STEP_COUNT = wizard.steps;
 export const BRAND_WIZARD_VISIBLE_STEP_COUNT = 3;
 
 export const BRAND_WIZARD_VISIBLE_STEPS: CampaignWizardStep[] = [
-  { id: 1, key: "brief", label: { en: "Describe", zh: "谈需求" } },
-  { id: 2, key: "confirm", label: { en: "Review", zh: "看方案" } },
-  { id: 3, key: "match", label: { en: "Publish", zh: "发布" } }
+  { id: 1, key: "brief", label: { en: "Requirements", zh: "谈需求" } },
+  { id: 2, key: "pack", label: { en: "Creative plan", zh: "看方案" } },
+  { id: 3, key: "confirm", label: { en: "Budget", zh: "看预算" } }
 ];
 
 export function clampBrandVisibleStep(step: number): number {
@@ -43,24 +43,24 @@ export function brandWizardStepMeta(locale: Locale, visibleStep: number) {
   const clamped = clampBrandVisibleStep(visibleStep);
   const labels: Record<number, { headline: Record<Locale, string>; subtitle: Record<Locale, string> }> = {
     1: {
-      headline: { en: "Describe your ad", zh: "创建您的创意需求" },
+      headline: { en: "Describe your ad", zh: "30 秒说清楚需求" },
       subtitle: {
-        en: "The more detail you share, the better we can match you with the right creative team.",
-        zh: "请尽可能详细地描述您的需求，AI 帮助您匹配最合适的创作团队。"
+        en: "One sentence and references — AI completes the professional brief.",
+        zh: "一句话 + 参考 — 智能助手补全专业广告需求。"
       }
     },
     2: {
-      headline: { en: "Review and confirm", zh: "确认创意方案" },
+      headline: { en: "Review creative directions", zh: "确认创意方案" },
       subtitle: {
-        en: "AI prepared your plan — check budget and certify the brief.",
-        zh: "AI 已生成方案 — 核对预算并确认需求表单。"
+        en: "AI prepared creative directions — pick the one that fits your campaign.",
+        zh: "智能助手已生成创意方案 — 选择最适合你广告项目的方向。"
       }
     },
     3: {
-      headline: { en: "Publish your ad", zh: "发布广告" },
+      headline: { en: "Confirm your budget", zh: "确认你的预算" },
       subtitle: {
-        en: "Publish sends intent invitations to matched creators — they accept or decline before you select one.",
-        zh: "发布后会向匹配的 Creator 发出意向发单 — 对方接受或拒绝后，你再从名单里选定。"
+        en: "Choose your budget — we'll create the escrow invoice and take you to payment.",
+        zh: "选择预算档位，确认后将生成托管账单并进入付款。"
       }
     }
   };
@@ -68,7 +68,7 @@ export function brandWizardStepMeta(locale: Locale, visibleStep: number) {
 }
 
 export const CAMPAIGN_WIZARD_STEPS: CampaignWizardStep[] = [
-  { id: 1, key: "brief", label: { en: "Brief", zh: "Brief" } },
+  { id: 1, key: "brief", label: { en: "Brief", zh: "创意简报" } },
   { id: 2, key: "product", label: { en: "Product", zh: "产品" } },
   { id: 3, key: "references", label: { en: "References", zh: "参考" } },
   { id: 4, key: "analysis", label: { en: "Analysis", zh: "分析" } },
@@ -137,7 +137,7 @@ export function wizardStepMeta(locale: Locale, step: number) {
       headline: { en: "Tell us about your campaign", zh: "告诉我们你想做什么广告" },
       subtitle: {
         en: "Describe your idea — AI turns it into a studio-ready brief.",
-        zh: "描述你的想法 — AI 整理成 Studio 能用的 Brief。"
+        zh: "描述你的想法 — 智能助手整理成创作者能用的创意简报。"
       }
     },
     2: {
@@ -172,11 +172,11 @@ export function wizardStepMeta(locale: Locale, step: number) {
       headline: { en: "Confirm your brief", zh: "确认需求表单" },
       subtitle: {
         en: "Certify the brief before matching creators.",
-        zh: "确认 Brief 后再进入 Studio 匹配。"
+        zh: "确认创意简报后再进入创作者匹配。"
       }
     },
     7: {
-      headline: { en: "Matching Studios", zh: "匹配 Studio" },
+      headline: { en: "Matching Studios", zh: "匹配创作者" },
       subtitle: {
         en: "Finding the best creators for your campaign.",
         zh: "正在为你匹配最合适的创作者。"

@@ -262,7 +262,7 @@ export class PaidRevisionService {
     const packLabel = paidRevisionPackLabel(input.locale);
     const message =
       input.locale === "zh"
-        ? `已解锁${packLabel}。品牌发起第4轮修改后 Studio 可上传 V4；第5轮（V5）无需再次付费。`
+        ? `已解锁${packLabel}。品牌发起第4轮修改后创作者可上传 V4；第5轮（V5）无需再次付费。`
         : `${packLabel} unlocked. Round 4 (V4) and round 5 (V5) are included — no second payment for V5.`;
 
     return {

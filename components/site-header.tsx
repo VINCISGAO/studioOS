@@ -20,13 +20,13 @@ const navText = {
     admin: "Admin"
   },
   zh: {
-    studios: "Studio 作品库",
+    studios: "创作者作品库",
     howItWorks: "如何运作",
     pricing: "价格",
     signIn: "登录",
     signOut: "退出",
-    brandPortal: "Brand 门户",
-    studioPortal: "创作者",
+    brandPortal: "品牌门户",
+    studioPortal: "创作者门户",
     admin: "管理后台"
   }
 };

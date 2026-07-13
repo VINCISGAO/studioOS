@@ -76,11 +76,11 @@ export const footerCopy: Record<MarketingLocale, FooterCopy> = {
     nav: {
       product: {
         title: "产品",
-        items: withLabels(productLinks, ["品牌如何运作", "AI 匹配", "审片与交付", "定价方案"])
+        items: withLabels(productLinks, ["品牌如何运作", "智能匹配", "审片与交付", "定价方案"])
       },
       creators: {
         title: "创作者",
-        items: withLabels(creatorLinks, ["Studio 作品库", "成为创作者", "交付标准", "创作者指南"])
+        items: withLabels(creatorLinks, ["创作者作品库", "成为创作者", "交付标准", "创作者指南"])
       },
       resources: {
         title: "资源",
@@ -89,7 +89,7 @@ export const footerCopy: Record<MarketingLocale, FooterCopy> = {
     },
     features: [
       { label: "全球连接", description: "汇聚世界品牌与创作者" },
-      { label: "AI 驱动", description: "智能匹配，高效协作" },
+      { label: "智能驱动", description: "智能匹配，高效协作" },
       { label: "安全托管", description: "资金安全，数据保障" },
       { label: "高效交付", description: "流程透明，极速完成" }
     ],
@@ -109,7 +109,7 @@ export const footerCopy: Record<MarketingLocale, FooterCopy> = {
       },
       creators: {
         title: "創作者",
-        items: withLabels(creatorLinks, ["Studio 作品庫", "成為創作者", "交付標準", "創作者指南"])
+        items: withLabels(creatorLinks, ["創作者作品庫", "成為創作者", "交付標準", "創作者指南"])
       },
       resources: {
         title: "資源",

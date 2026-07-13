@@ -194,7 +194,7 @@ export function buildMessageNextStep(
       case "certification_approved":
         return {
           title: "下一步",
-          body: "请完善 Studio 主页、擅长领域与价格意愿，完成后即可正式接单。"
+          body: "请完善创作者主页、擅长领域与价格意愿，完成后即可正式接单。"
         };
       case "order_cancelled_unpaid":
         return {

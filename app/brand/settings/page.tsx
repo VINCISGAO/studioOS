@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { BrandSettingsHub } from "@/components/studioos/brand-settings-hub";
 import { requireBrandPortalClientEmail } from "@/features/auth/session-context";
-import { getOrCreateBrandProfile } from "@/lib/brand-profile-service";
+import { getBrandProfileByEmail, getOrCreateBrandProfile } from "@/lib/brand-profile-service";
 import { DEMO_USERS } from "@/lib/demo-auth";
 import { type SearchParams, withLocale } from "@/lib/i18n";
 import { getBrandSettingsViewModel } from "@/lib/studioos/brand-settings-service";
@@ -20,8 +20,12 @@ export default async function BrandSettingsPage({ searchParams }: { searchParams
   }
 
   const demo = DEMO_USERS.find((user) => user.email === email);
-  const companyName = demo?.label.replace(/\s*\(brand\)/i, "").trim() ?? email.split("@")[0] ?? "Brand";
-  await getOrCreateBrandProfile({ client_email: email, company_name: companyName });
+  const fallbackCompanyName =
+    demo?.label.replace(/\s*\(brand\)/i, "").trim() ?? email.split("@")[0] ?? "Brand";
+  const existingProfile = await getBrandProfileByEmail(email);
+  if (!existingProfile) {
+    await getOrCreateBrandProfile({ client_email: email, company_name: fallbackCompanyName });
+  }
 
   const settings = await getBrandSettingsViewModel(email, email);
 

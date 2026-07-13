@@ -16,7 +16,8 @@ import { normalizeCampaignStatus } from "@/lib/studioos/project-status";
 import { setupBrandCampaignPayment } from "@/lib/studioos/brand-checkout-service";
 import { estimateDeliveryDays } from "@/lib/studioos/brand-campaign-display";
 import { enforceBrandPaymentDeadlineForProject } from "@/lib/studioos/brand-payment-expiry.service";
-import { isBrandProjectFunded } from "@/lib/studioos/brand-payment-funding";
+import { isLegacyOrderFunded, isPrismaEscrowFundedForProject } from "@/lib/studioos/brand-payment-funding";
+import { readBrandDisplayBudgetInput } from "@/lib/studioos/brand-budget-display-input";
 import { BRAND_PAYMENT_TIMEOUT_CANCEL_REASON } from "@/lib/studioos/brand-payment-deadline";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 
@@ -50,24 +51,34 @@ function readCancellationReason(
 }
 
 export default async function BrandCheckoutPage({ params, searchParams }: Props) {
-  const [{ id }, query] = await Promise.all([params, searchParams]);
-  const locale = await getAppUiLocale();
-  const session = await getCurrentSession();
+  const [{ id }, , locale, session] = await Promise.all([
+    params,
+    searchParams,
+    getAppUiLocale(),
+    getCurrentSession()
+  ]);
   if (!session || session.role !== "client") {
     redirect(withLocale(`/login?role=brand&next=${encodeURIComponent(`/brand/projects/${id}/checkout?lang=${locale}`)}`, locale));
   }
   const clientEmail = session.email.toLowerCase();
-  let project = await getProject(id);
+  let [project, order] = await Promise.all([getProject(id), getOrderForProject(id)]);
 
   if (!project) notFound();
   if (project.client_email !== clientEmail) {
     notFound();
   }
 
-  await enforceBrandPaymentDeadlineForProject(id);
-  project = (await getProject(id)) ?? project;
+  const expired = await enforceBrandPaymentDeadlineForProject(id);
+  if (expired) {
+    const [refreshedProject, refreshedOrder] = await Promise.all([
+      getProject(id),
+      getOrderForProject(id)
+    ]);
+    if (!refreshedProject) notFound();
+    project = refreshedProject;
+    order = refreshedOrder;
+  }
 
-  let order = await getOrderForProject(id);
   const creatorId = project.selected_studio_id;
 
   if (!order) {
@@ -87,21 +98,18 @@ export default async function BrandCheckoutPage({ params, searchParams }: Props)
     redirect(withLocale(`/brand/projects/new?project=${id}&step=3`, locale));
   }
 
-  const studio = creatorId ? await getCreatorById(creatorId) : null;
+  const [studio, prismaEscrowFunded] = await Promise.all([
+    creatorId ? getCreatorById(creatorId) : null,
+    hasDatabaseUrl() ? isPrismaEscrowFundedForProject(id) : Promise.resolve(false)
+  ]);
   const deliveryLabel = estimateDeliveryDays(project.deadline);
   const campaignStatus = normalizeCampaignStatus(project.status);
-
-  let prismaEscrowFunded = false;
-  if (hasDatabaseUrl()) {
-    prismaEscrowFunded = await isBrandProjectFunded(id, null);
-  }
 
   if (prismaEscrowFunded || isOrderPaymentEscrowed(order.payment_status)) {
     order = (await markLegacyOrderPaidForProject(id)) ?? order;
   }
 
-  const orderFunded = await isBrandProjectFunded(id, order);
-  const paidReady = orderFunded;
+  const paidReady = isLegacyOrderFunded(order) || prismaEscrowFunded;
   const orderCancelled = order.status === "cancelled" || campaignStatus === "cancelled";
   const cancelReason = readCancellationReason(project, locale, order.cancel_reason);
   const projectAlreadyStarted = ["production", "in_review", "delivered", "completed"].includes(campaignStatus);
@@ -115,6 +123,8 @@ export default async function BrandCheckoutPage({ params, searchParams }: Props)
   if (!orderCancelled && paidReady) {
     redirect(projectDetailHref);
   }
+
+  const displayBudgetInput = readBrandDisplayBudgetInput(project);
 
   return (
     <div className="min-h-[calc(100dvh-7rem)] rounded-[2rem] bg-[#f8f9fb] px-3 pb-8 pt-4 sm:px-4 sm:pt-5 lg:px-5 lg:pt-6">
@@ -136,8 +146,8 @@ export default async function BrandCheckoutPage({ params, searchParams }: Props)
           </h1>
           <p className="mt-3 max-w-3xl text-sm leading-6 text-zinc-500 sm:text-base sm:leading-7">
             {locale === "zh"
-              ? "托管付款完成后，系统才会开始匹配 Creator。下单后 30 分钟内未付款，订单将自动取消。"
-              : "Creator matching starts only after escrow payment. Unpaid orders cancel automatically after 30 minutes."}
+              ? "托管付款完成后，系统才会开始匹配 Creator。"
+              : "Creator matching starts only after escrow payment."}
           </p>
         </header>
 
@@ -159,26 +169,32 @@ export default async function BrandCheckoutPage({ params, searchParams }: Props)
           </div>
         ) : null}
 
-        <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
-          <BrandCheckoutSummary locale={locale} project={project} order={order} deliveryLabel={deliveryLabel} />
-          <div className="self-start space-y-5 xl:sticky xl:top-6">
-            {!orderCancelled ? (
-              <>
+        <div>
+          {!orderCancelled ? (
+            <BrandCheckoutPanel
+              locale={locale}
+              order={order}
+              projectId={id}
+              studioName={studio?.name ?? "Studio"}
+              escrowFunded={prismaEscrowFunded}
+              displayBudgetInput={displayBudgetInput}
+              deadlineNotice={
                 <BrandPaymentDeadlineNotice
                   locale={locale}
                   order={order}
-                  className="border-amber-300 bg-amber-50 shadow-[0_18px_45px_rgba(245,158,11,0.16)]"
+                  className="border-amber-200 bg-amber-50/80"
                 />
-                <BrandCheckoutPanel
+              }
+              summaryColumn={
+                <BrandCheckoutSummary
                   locale={locale}
+                  project={project}
                   order={order}
-                  projectId={id}
-                  studioName={studio?.name ?? "Studio"}
-                  escrowFunded={prismaEscrowFunded}
+                  deliveryLabel={deliveryLabel}
                 />
-              </>
-            ) : null}
-          </div>
+              }
+            />
+          ) : null}
         </div>
       </div>
     </div>

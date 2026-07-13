@@ -356,40 +356,69 @@ export async function getOrCreateBrandProfile(input: {
   website?: string;
   headline?: string;
   bio?: string;
+  /** When true (default), keep saved profile fields over seed defaults like email local-part. */
+  preferExisting?: boolean;
 }): Promise<StoredBrandProfile> {
   const normalized = input.client_email.toLowerCase();
+  const preferExisting = input.preferExisting !== false;
+  const pick = (saved: string, incoming: string) =>
+    preferExisting ? saved.trim() || incoming.trim() : incoming.trim() || saved.trim();
+
   const databaseProfile = await getPrismaBrandProfileByEmail(normalized);
   if (databaseProfile) {
-    const updated = await syncPrismaBrandProfile(normalized, {
+    const merged = {
       ...databaseProfile,
-      company_name: input.company_name || databaseProfile.company_name,
-      display_name: input.display_name ?? databaseProfile.display_name,
-      headline: input.headline || databaseProfile.headline,
-      bio: input.bio || databaseProfile.bio,
-      website: input.website ?? databaseProfile.website,
-      industry: input.industry ?? databaseProfile.industry,
+      company_name: pick(databaseProfile.company_name, input.company_name),
+      display_name: pick(databaseProfile.display_name, input.display_name ?? input.company_name),
+      headline: pick(databaseProfile.headline, input.headline ?? ""),
+      bio: pick(databaseProfile.bio, input.bio ?? ""),
+      website: pick(databaseProfile.website, input.website ?? ""),
+      industry: pick(databaseProfile.industry, input.industry ?? ""),
       logo_url: databaseProfile.logo_url,
       cover_url: databaseProfile.cover_url
-    });
-    return updated ?? databaseProfile;
+    };
+    const changed =
+      merged.company_name !== databaseProfile.company_name ||
+      merged.display_name !== databaseProfile.display_name ||
+      merged.headline !== databaseProfile.headline ||
+      merged.bio !== databaseProfile.bio ||
+      merged.website !== databaseProfile.website ||
+      merged.industry !== databaseProfile.industry;
+    if (!changed) {
+      return databaseProfile;
+    }
+    const updated = await syncPrismaBrandProfile(normalized, merged);
+    return updated ?? merged;
   }
 
   const store = await readStore();
   const existing = Object.values(store.profiles).find((item) => item.client_email === normalized);
 
   if (existing) {
-    existing.company_name = input.company_name || existing.company_name;
-    if (input.display_name) existing.display_name = input.display_name;
-    if (input.industry) existing.industry = input.industry;
-    if (input.website) existing.website = input.website;
-    if (input.headline && !existing.headline) existing.headline = input.headline;
-    if (input.bio && !existing.bio) existing.bio = input.bio;
-    existing.updated_at = nowIso();
-    store.profiles[existing.id] = existing;
-    await writeStore(store);
-    const updated = await syncPrismaBrandProfile(existing.client_email, existing);
-    if (updated) return updated;
-    return existing;
+    const merged = {
+      ...existing,
+      company_name: pick(existing.company_name, input.company_name),
+      display_name: pick(existing.display_name, input.display_name ?? input.company_name),
+      industry: pick(existing.industry, input.industry ?? ""),
+      website: pick(existing.website, input.website ?? ""),
+      headline: pick(existing.headline, input.headline ?? ""),
+      bio: pick(existing.bio, input.bio ?? "")
+    };
+    const changed =
+      merged.company_name !== existing.company_name ||
+      merged.display_name !== existing.display_name ||
+      merged.industry !== existing.industry ||
+      merged.website !== existing.website ||
+      merged.headline !== existing.headline ||
+      merged.bio !== existing.bio;
+    if (changed) {
+      merged.updated_at = nowIso();
+      store.profiles[existing.id] = merged;
+      await writeStore(store);
+      const updated = await syncPrismaBrandProfile(merged.client_email, merged);
+      if (updated) return updated;
+    }
+    return merged;
   }
 
   const profile: StoredBrandProfile = {
@@ -427,10 +456,14 @@ export async function saveBrandProfile(
     markComplete?: boolean;
   }
 ): Promise<StoredBrandProfile> {
-  const profile = await getOrCreateBrandProfile({
-    client_email: clientEmail,
-    company_name: input.company_name
-  });
+  const existing = await getBrandProfileByEmail(clientEmail);
+  const profile =
+    existing ??
+    (await getOrCreateBrandProfile({
+      client_email: clientEmail,
+      company_name: input.company_name,
+      preferExisting: false
+    }));
 
   const store = await readStore();
   const next: StoredBrandProfile = {
@@ -526,10 +559,13 @@ export async function updateBrandCoverUrl(
 }
 
 export async function syncBrandShowcaseFromOrders(clientEmail: string): Promise<StoredBrandProfile> {
-  const profile = await getOrCreateBrandProfile({
-    client_email: clientEmail,
-    company_name: clientEmail.split("@")[0] ?? "Brand"
-  });
+  const existing = await getBrandProfileByEmail(clientEmail);
+  const profile =
+    existing ??
+    (await getOrCreateBrandProfile({
+      client_email: clientEmail,
+      company_name: clientEmail.split("@")[0] ?? "Brand"
+    }));
 
   const orders = await listOrdersForClient(clientEmail);
   const projects = await listProjectsForClient(clientEmail);
@@ -593,10 +629,12 @@ export async function addBrandShowcaseVideo(
     platform?: string;
   }
 ): Promise<{ profile: StoredBrandProfile; ad: BrandShowcaseAd }> {
-  const profile = await getOrCreateBrandProfile({
-    client_email: clientEmail,
-    company_name: clientEmail.split("@")[0] ?? "Brand"
-  });
+  const profile =
+    (await getBrandProfileByEmail(clientEmail)) ??
+    (await getOrCreateBrandProfile({
+      client_email: clientEmail,
+      company_name: clientEmail.split("@")[0] ?? "Brand"
+    }));
 
   const ad: BrandShowcaseAd = {
     id: createId("bad"),
@@ -658,6 +696,7 @@ export async function upsertBrandProfileFromBrief(
     input.campaign_goal?.slice(0, 120) ??
     (input.product_name ? `${input.product_name} 广告推广` : "");
 
+  // Brand identity is owned by the profile editor — campaign brief must never overwrite saved names.
   return getOrCreateBrandProfile({
     client_email: clientEmail,
     company_name: input.company_name,
@@ -665,6 +704,7 @@ export async function upsertBrandProfileFromBrief(
     website: input.product_url ?? "",
     industry: input.industry ?? "",
     headline,
-    bio: input.campaign_goal ?? ""
+    bio: input.campaign_goal ?? "",
+    preferExisting: true
   });
 }

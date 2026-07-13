@@ -266,7 +266,7 @@ async function buildMessageDetail(
     actionHref: isCertificationMessage ? profileSetupHref : demoActionHref,
     actionLabel: isCertificationMessage
       ? locale === "zh"
-        ? "完善 Studio 主页"
+        ? "完善创作者主页"
         : "Complete studio profile"
       : locale === "zh"
         ? notification.type === "escrow_released"

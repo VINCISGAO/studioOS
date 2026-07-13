@@ -255,7 +255,7 @@ function buildCampaignRecommendations(metrics: ParsedPlatformMetrics): { en: str
 
   if (metrics.roas != null && metrics.roas >= 2) {
     recs.en.push("Reuse this studio and style preset for the next similar product launch.");
-    recs.zh.push("下次同类产品发布复用本 Studio 与风格预设。");
+    recs.zh.push("下次同类产品发布复用该创作者与风格预设。");
   }
 
   return recs;

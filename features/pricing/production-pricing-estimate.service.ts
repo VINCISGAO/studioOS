@@ -112,8 +112,18 @@ export function estimateProjectCost(
     creatorProductionCost * (1 + profile.targetCreatorProfitMargin) * durationUplift
   );
 
+  const fixedExpenditureQuoteAnchorUsd = roundMoney(
+    toolCostUsd * profile.fixedExpenditureToQuoteMultiplier
+  );
+  notes.push(
+    `Quote anchor: fixed expenditure $${toolCostUsd} × ${profile.fixedExpenditureToQuoteMultiplier} = $${fixedExpenditureQuoteAnchorUsd} (SAMPLE_006).`
+  );
+
   const brandFloorPriceUsd = brandPriceFromCreatorIncome(creatorMinIncomeUsd, profile);
-  const brandSuggestedPriceUsd = brandPriceFromCreatorIncome(creatorTargetIncomeUsd, profile);
+  const brandSuggestedFromMargin = brandPriceFromCreatorIncome(creatorTargetIncomeUsd, profile);
+  const brandSuggestedPriceUsd = roundMoney(
+    Math.max(brandSuggestedFromMargin, fixedExpenditureQuoteAnchorUsd)
+  );
   const brandPriorityPriceUsd = roundMoney(brandSuggestedPriceUsd * 1.22);
   const brandPremiumPriceUsd = roundMoney(brandSuggestedPriceUsd * 1.55);
 
@@ -140,6 +150,7 @@ export function estimateProjectCost(
     revisionReserveUsd,
     riskBufferUsd,
     creatorMinIncomeUsd,
+    fixedExpenditureQuoteAnchorUsd,
     brandFloorPriceUsd,
     brandSuggestedPriceUsd,
     brandPriorityPriceUsd,

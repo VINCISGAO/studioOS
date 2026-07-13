@@ -1,18 +1,15 @@
 import type { StoredOrder } from "@/lib/order-types";
 import type { StoredProject } from "@/lib/project-types";
-import { canDeleteOrder } from "@/lib/order-service";
-import { projectCta, projectHref, canDeleteProject } from "@/lib/project-service";
+import { projectCta, projectHref } from "@/lib/project-service";
 import { brandCampaignHref } from "@/lib/studioos/brand-campaign-display";
+import { canDeleteOrder, canDeleteProject } from "@/lib/studioos/brand-delete-policy";
+import type { BrandDashboardMetrics, BrandProjectRow } from "@/lib/studioos/brand-dashboard-types";
 import { isBrandPaymentTimeoutCancellation } from "@/lib/studioos/brand-payment-deadline";
 import { isVisibleBrandDraftProject } from "@/lib/studioos/brand-wizard-session";
-import { normalizeCampaignStatus, type CampaignProjectStatus } from "@/lib/studioos/project-status";
+import { normalizeCampaignStatus } from "@/lib/studioos/project-status";
 
-export type BrandDashboardMetrics = {
-  projectCount: number;
-  adsDelivered: number;
-  avgProductionDays: number;
-  monthSpend: number;
-};
+export type { BrandDashboardMetrics, BrandProjectRow } from "@/lib/studioos/brand-dashboard-types";
+export { computeBrandWorkspaceHeroStats } from "@/lib/studioos/brand-workspace-hero-stats";
 
 export function computeBrandMetrics(
   orders: StoredOrder[],
@@ -38,25 +35,6 @@ export function computeBrandMetrics(
     monthSpend
   };
 }
-
-export type BrandProjectRow = {
-  id: string;
-  kind: "campaign" | "order";
-  name: string;
-  status: CampaignProjectStatus | string;
-  updatedAt: string;
-  href: string;
-  cta: string;
-  category?: string;
-  budgetRange?: string;
-  deadline?: string;
-  wizardStep?: number;
-  progress?: number;
-  canDelete?: boolean;
-  paymentExpired?: boolean;
-  phase: "draft" | "active" | "done";
-  thumbnailUrl?: string;
-};
 
 function projectPhase(status: string): BrandProjectRow["phase"] {
   const normalized = normalizeCampaignStatus(status);

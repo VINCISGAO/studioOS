@@ -53,11 +53,11 @@ export function brandCampaignStepIndex(status: string): number {
   const normalized = normalizeCampaignStatus(status);
   const map: Partial<Record<CampaignProjectStatus, number>> = {
     draft: 0,
-    matching: 1,
+    payment_pending: 1,
+    contract_pending: 1,
+    matching: 2,
     studio_selected: 2,
     proposal: 2,
-    contract_pending: 2,
-    payment_pending: 2,
     production: 3,
     in_review: 4,
     delivered: 4,

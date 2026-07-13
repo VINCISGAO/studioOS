@@ -401,7 +401,7 @@ export function ProjectWizard({
     <div className="mx-auto max-w-2xl pb-32">
       <div className="mb-2 flex items-center justify-between gap-3">
         <p className="text-xs font-medium text-zinc-500">
-          {locale === "zh" ? "新建 Campaign" : "New campaign"}
+          {locale === "zh" ? "新建广告项目" : "New campaign"}
         </p>
         <button
           type="button"
@@ -778,7 +778,7 @@ export function ProjectWizard({
             <div className="rounded-xl border bg-zinc-50/60 p-5">
               <div className="flex items-center gap-2 text-sm font-semibold text-zinc-900">
                 <Target className="h-4 w-4" />
-                {locale === "zh" ? "Campaign 摘要" : "Campaign summary"}
+                {locale === "zh" ? "项目摘要" : "Campaign summary"}
               </div>
               <ul className="mt-4 space-y-2 text-sm text-zinc-600">
                 <li>
@@ -794,7 +794,7 @@ export function ProjectWizard({
               </ul>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="publish_title">{locale === "zh" ? "Campaign 名称" : "Campaign name"}</Label>
+              <Label htmlFor="publish_title">{locale === "zh" ? "项目名称" : "Campaign name"}</Label>
               <Input
                 id="publish_title"
                 value={publishTitle}
@@ -863,7 +863,7 @@ export function ProjectWizard({
               className="min-w-[160px] rounded-full px-6"
             >
               {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Rocket className="h-4 w-4" />}
-              {locale === "zh" ? "发布 Campaign" : "Publish"}
+              {locale === "zh" ? "发布广告项目" : "Publish"}
             </Button>
           )}
         </div>

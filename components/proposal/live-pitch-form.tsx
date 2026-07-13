@@ -51,7 +51,7 @@ export function LivePitchForm({
               rows={2}
               placeholder={
                 locale === "zh"
-                  ? "我们是 Studio X，建议这样开场..."
+                  ? "我们是某某创作者团队，建议这样开场..."
                   : "We're Studio X. Here's how we'd open the ad..."
               }
             />

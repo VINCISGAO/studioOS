@@ -71,7 +71,8 @@ import {
   creatorMinBudgetAboutLabel,
   normalizeCreatorMinBudget
 } from "@/lib/studioos/creator-price-preference";
-import { compressImageForUpload } from "@/lib/studioos/image-upload-client";
+import { useProfileImagePicker } from "@/components/studioos/image-crop/use-profile-image-picker";
+import { PROFILE_AVATAR_ASPECT } from "@/lib/studioos/image-crop-client";
 import { OrderRatingPolicyCard } from "@/components/studioos/order-rating-policy-card";
 import {
   buildCreatorWorksHeroStats,
@@ -432,15 +433,9 @@ export function CreatorProfileStudio({
   async function handleAvatarUpload(file: File) {
     setAvatarUploading(true);
     try {
-      const uploadFile = await compressImageForUpload(file, {
-        maxBytes: 1.8 * 1024 * 1024,
-        maxDimension: 1000,
-        quality: 0.78,
-        fileNamePrefix: "creator-avatar"
-      });
       const fd = new FormData();
       fd.set("lang", locale);
-      fd.set("avatar_file", uploadFile);
+      fd.set("avatar_file", file);
       const result = await uploadCreatorAvatarAction(fd);
       if (!result.ok) {
         notify(result.error, "error");
@@ -451,13 +446,21 @@ export function CreatorProfileStudio({
       writeProfileDraft(baseCreator.id, nextDraft as CreatorProfileDraft);
       setCreator((prev) => ({ ...prev, avatar_url: result.avatar_url }));
       notify(t.avatarUpdated, "success");
-      router.refresh();
+      startTransition(() => router.refresh());
     } catch {
       notify(t.avatarFailed, "error");
     } finally {
       setAvatarUploading(false);
     }
   }
+
+  const avatarPicker = useProfileImagePicker({
+    locale,
+    aspectRatio: PROFILE_AVATAR_ASPECT,
+    fileNamePrefix: "creator-avatar",
+    outputPreset: "avatar",
+    onCropped: handleAvatarUpload
+  });
 
   async function handlePublishWork(work: CreatorWork): Promise<boolean> {
     const formData = new FormData();
@@ -558,6 +561,7 @@ export function CreatorProfileStudio({
   return (
     <div className="w-full pb-10">
       {toast ? <ProfileToastBanner toast={toast} /> : null}
+      {avatarPicker.cropModal}
 
       <StudioWorksProfileHero
         name={creator.name}
@@ -567,7 +571,7 @@ export function CreatorProfileStudio({
         avatarEditable
         avatarUploading={avatarUploading}
         editAvatarLabel={t.editAvatar}
-        onAvatarUpload={(file) => void handleAvatarUpload(file)}
+        onAvatarUpload={(file) => avatarPicker.requestCrop(file)}
         tags={profileTags}
         stats={heroStats}
         verified={creator.deposit_status === "paid" || Boolean(creator.profile_completed_at)}

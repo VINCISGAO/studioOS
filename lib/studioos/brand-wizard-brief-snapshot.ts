@@ -17,6 +17,7 @@ export type WizardBriefSnapshot = {
   rawSummary: string;
   budgetRange: string;
   aspectRatio: string;
+  aspectRatioCustom: string;
   videoDuration: string;
   videoDurationCustom: string;
   estimatedShotCount: number;
@@ -54,6 +55,7 @@ export type BriefFormSnapshotInput = {
   rawSummary?: string;
   budgetRange?: string;
   aspectRatio?: string;
+  aspectRatioCustom?: string;
   videoDuration?: string;
   videoDurationCustom?: string;
   estimatedShotCount?: number;
@@ -109,13 +111,14 @@ export function snapshotFromBriefForm(form: BriefFormSnapshotInput): WizardBrief
     productName,
     productUrl: (form.productUrl ?? "").trim(),
     productDescription: (form.productDescription ?? "").trim(),
-    objective: form.objective ?? "launch",
+    objective: form.objective ?? "",
     audienceDescription: (form.audienceDescription ?? "").trim(),
     platforms: form.platforms ?? [],
     extraNotes: (form.extraNotes ?? "").trim(),
     rawSummary: (form.rawSummary ?? "").trim(),
     budgetRange: form.budgetRange ?? "",
     aspectRatio: form.aspectRatio ?? "",
+    aspectRatioCustom: (form.aspectRatioCustom ?? "").trim(),
     videoDuration: form.videoDuration ?? "",
     videoDurationCustom: (form.videoDurationCustom ?? "").trim(),
     estimatedShotCount: Math.max(0, Number(form.estimatedShotCount ?? 0) || 0),
@@ -162,13 +165,14 @@ export function parseWizardBriefSnapshot(raw: string | null | undefined): Wizard
       productName: String(parsed.productName ?? ""),
       productUrl: String(parsed.productUrl ?? ""),
       productDescription: String(parsed.productDescription ?? ""),
-      objective: String(parsed.objective ?? "launch"),
+      objective: String(parsed.objective ?? ""),
       audienceDescription: String(parsed.audienceDescription ?? ""),
       platforms: Array.isArray(parsed.platforms) ? parsed.platforms.map(String) : [],
       extraNotes: String(parsed.extraNotes ?? ""),
       rawSummary: String(parsed.rawSummary ?? ""),
       budgetRange: String(parsed.budgetRange ?? ""),
       aspectRatio: String(parsed.aspectRatio ?? ""),
+      aspectRatioCustom: String(parsed.aspectRatioCustom ?? ""),
       videoDuration: String(parsed.videoDuration ?? ""),
       videoDurationCustom: String(parsed.videoDurationCustom ?? ""),
       estimatedShotCount: Math.max(0, Number(parsed.estimatedShotCount ?? 0) || 0),

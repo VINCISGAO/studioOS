@@ -5,13 +5,17 @@ import { logger } from "@/lib/core/logger";
 import { hasOpenAI, resolveOpenAIModel } from "@/lib/core/config/ai";
 import type { Locale } from "@/lib/i18n";
 import { isChineseLanguage } from "@/lib/i18n";
-import { PLATFORM_OPTIONS } from "@/lib/studioos/brand-brief-options";
+import { PLATFORM_OPTIONS, inferPrimaryObjectiveLabel, sanitizePrimaryObjectiveLabel } from "@/lib/studioos/brand-brief-options";
 import type { BrandQuestionnaireInput } from "@/lib/studioos/brand-questionnaire.types";
+import {
+  resolveQuestionnaireBrandName
+} from "@/lib/studioos/brand-questionnaire.types";
 import {
   coerceBriefDocument,
   coerceOptimizerText,
   coerceStringArray
 } from "@/lib/studioos/brand-brief-optimizer-coerce";
+import { formatProfessionalBriefDocument } from "@/lib/studioos/brand-brief-optimizer-format";
 import type {
   BrandBriefOptimizerResult,
   BriefOptimizerGap,
@@ -77,7 +81,9 @@ function optimizerSystemPrompt(locale: Locale) {
       "consumer_insight 要写洞察，不是功能列表（例如：用户买的不是机器人，是安心）。",
       "selling_points 按 Priority 1-4+ 排序，不是原样复制。",
       "gaps 列出用户缺失但影响匹配的信息（预算、国家/市场、品牌调性、竞品、CTA 等），并给出建议。",
-      "brief_document 输出完整可执行 Brief（中英专业表达，中文为主），含 Campaign / Objective / Audience / Insight / Key Message / Selling Points / Platforms / Video / Visual Style / Creator / CTA。",
+      "若输入含 projectTitle、brandName 或 productName，campaign_name 必须与该品牌名完全一致，禁止改成其他名称（如平台名、示例名、URL 片段）。",
+      "禁止将 primary_objective 预设为「新品上市」或 Product launch，除非用户原文明确提到新品、上市、发布、launch、new product；否则使用常规推广、品牌曝光、放量转化等中性表述，或根据用户描述推断，不要替用户定义产品生命周期。",
+      "brief_document 仅作为内部字段；所有面向品牌方的文案必须使用纯简体中文，禁止英文小节标题、英文字段名或中英混杂。",
       "返回严格 JSON，字段：campaign_name, primary_objective, secondary_objectives[], recommended_kpis[], audience_primary, audience_segments[], audience_confidence (0-100), consumer_insight, key_message, selling_points[{priority,label}], recommended_platforms[], recommended_video_duration, recommended_creator_types[], recommended_tones[], recommended_cta, visual_style[], gaps[{id,message,suggestion}], brief_document。"
     ].join("\n");
   }
@@ -86,6 +92,9 @@ function optimizerSystemPrompt(locale: Locale) {
     "You are a Creative Director with 10 years of experience. Upgrade casual input into an executable professional campaign brief.",
     "Do not paraphrase or shorten. Infer strategy, fill gaps, rank selling points, write consumer insight, and recommend platforms, duration, creators, tone, and CTA.",
     "Preserve every explicit user detail. Insights must be emotional/strategic, not feature lists.",
+    "All user-facing copy must be English only. Do not mix Chinese section labels or bilingual headers.",
+    "If projectTitle, brandName, or productName is provided, campaign_name must use that exact brand name — never substitute platform names, demo labels, or URL tokens.",
+    "Never set primary_objective to Product launch unless the user explicitly mentions new product, launch, release, or go-live. Otherwise use neutral goals (general promotion, brand awareness, conversion) inferred from their words — do not assume the product is new.",
     "Return strict JSON with: campaign_name, primary_objective, secondary_objectives[], recommended_kpis[], audience_primary, audience_segments[], audience_confidence, consumer_insight, key_message, selling_points[{priority,label}], recommended_platforms[], recommended_video_duration, recommended_creator_types[], recommended_tones[], recommended_cta, visual_style[], gaps[{id,message,suggestion}], brief_document."
   ].join("\n");
 }
@@ -156,7 +165,8 @@ export function buildTemplateBrandBriefOptimizer(
 function templateOptimizer(input: BrandQuestionnaireInput, locale: Locale, formGaps: BriefOptimizerGap[]): BrandBriefOptimizerResult {
   const zh = usesChinese(locale);
   const source = (input.rawSummary || input.productDescription || "").trim();
-  const productName = input.productName?.trim() || (zh ? "Campaign 项目" : "Campaign project");
+  const brandName = resolveQuestionnaireBrandName(input);
+  const productName = brandName || (zh ? "广告项目" : "Campaign project");
   const platforms = normalizePlatforms(
     input.platforms.length ? input.platforms : ["TikTok", "Meta", "Instagram"]
   );
@@ -168,27 +178,31 @@ function templateOptimizer(input: BrandQuestionnaireInput, locale: Locale, formG
     .slice(0, 4)
     .map((label, index) => ({ priority: index + 1, label }));
 
+  const primary_objective = inferPrimaryObjectiveLabel(source, locale, input.objective);
+
   const brief_document = zh
     ? [
-        `Campaign Brief · ${productName}`,
+        `项目 · ${productName}`,
         "",
-        `Objective：${input.objectiveLabel || "新品上市 / 转化"}`,
-        `Audience：${input.audienceDescription || "25-40 岁核心目标人群"}`,
-        `Insight：消费者真正购买的不是功能堆叠，而是品牌所承诺的安心与连接感。`,
-        `Key Message：${source.slice(0, 120) || "用一条清晰的广告主张打动目标受众。"}`,
-        `Platforms：${platforms.join("、")}`,
-        `Video：30 seconds`,
-        `Visual Style：Minimal · Premium · Trustworthy`,
-        `Creator：UGC Creator · Lifestyle Creator`,
-        `CTA：了解更多并立即行动`,
+        `广告目标｜${primary_objective}`,
+        `目标受众｜${input.audienceDescription || "25-40 岁核心目标人群"}`,
+        "消费者洞察",
+        "消费者真正购买的不是功能堆叠，而是品牌所承诺的安心与连接感。",
+        "核心信息",
+        source.slice(0, 120) || "用一条清晰的广告主张打动目标受众。",
+        `投放平台｜${platforms.join("、")}`,
+        `视频时长｜30 秒`,
+        `视觉风格｜极简 · 高端 · 可信`,
+        `创作者类型｜UGC 创作者 · 生活方式博主`,
+        `行动号召｜了解更多并立即行动`,
         "",
-        "—— 执行 Brief ——",
+        "执行 Brief",
         source || "请补充更详细的创意方向、镜头与参考风格。"
       ].join("\n")
     : [
         `Campaign Brief · ${productName}`,
         "",
-        `Objective: ${input.objectiveLabel || "Launch / Conversion"}`,
+        `Objective: ${primary_objective}`,
         `Audience: ${input.audienceDescription || "Core audience aged 25-40"}`,
         `Insight: Buyers want reassurance and connection, not feature lists alone.`,
         `Key Message: ${source.slice(0, 120) || "One sharp message that moves the audience to act."}`,
@@ -202,34 +216,101 @@ function templateOptimizer(input: BrandQuestionnaireInput, locale: Locale, formG
         source || "Add creative direction, hooks, shots, and references."
       ].join("\n");
 
+  return finalizeOptimizerResult(
+    {
+      campaign_name: productName,
+      primary_objective,
+      secondary_objectives: zh ? ["品牌认知"] : ["Brand awareness"],
+      recommended_kpis: ["CTR > 2.8%", "CVR > 4%"],
+      audience_primary: input.audienceDescription || (zh ? "25-40 岁目标人群" : "Audience aged 25-40"),
+      audience_segments: zh ? ["都市中产", "移动端用户"] : ["Urban", "Mobile-first"],
+      audience_confidence: 82,
+      consumer_insight: zh
+        ? "用户真正购买的不是功能本身，而是品牌承诺的安心感与情感连接。"
+        : "People buy reassurance and emotional connection, not specs alone.",
+      key_message: source.slice(0, 100) || productName,
+      selling_points,
+      recommended_platforms: platforms,
+      recommended_video_duration: "30s",
+      recommended_creator_types: zh ? ["UGC 创作者", "生活方式博主"] : ["UGC Creator", "Lifestyle Creator"],
+      recommended_tones: zh ? ["温暖", "高端", "极简", "可信"] : ["Warm", "Premium", "Minimal", "Trustworthy"],
+      recommended_cta: zh ? "立即了解并下单" : "Learn more and order today",
+      visual_style: zh ? ["极简", "柔光", "电影感镜头"] : ["Minimal", "Soft lighting", "Cinema lens"],
+      gaps: formGaps,
+      brief_document
+    },
+    locale,
+    input
+  );
+}
+
+function replaceBrandTokens(text: string, brandName: string, wrongTokens: string[]): string {
+  let out = text;
+  for (const wrong of wrongTokens) {
+    const token = wrong.trim();
+    if (!token || token === brandName) continue;
+    out = out.split(token).join(brandName);
+  }
+  return out.replace(new RegExp(`${brandName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s+Campaign`, "gi"), brandName);
+}
+
+function enforceQuestionnaireBrandName(
+  optimizer: BrandBriefOptimizerResult,
+  input: BrandQuestionnaireInput,
+  clientEmail?: string
+): BrandBriefOptimizerResult {
+  const finalName = resolveQuestionnaireBrandName(input);
+  if (!finalName) return optimizer;
+
+  const emailToken = clientEmail?.split("@")[0]?.trim() ?? "";
+  const wrongTokens = [
+    optimizer.campaign_name,
+    emailToken
+  ].filter((item, index, list) => Boolean(item?.trim()) && item !== finalName && list.indexOf(item) === index);
+
+  const patched: BrandBriefOptimizerResult = {
+    ...optimizer,
+    campaign_name: finalName,
+    key_message: replaceBrandTokens(optimizer.key_message, finalName, wrongTokens),
+    consumer_insight: replaceBrandTokens(optimizer.consumer_insight, finalName, wrongTokens),
+    selling_points: optimizer.selling_points.map((point) => ({
+      ...point,
+      label: replaceBrandTokens(point.label, finalName, wrongTokens)
+    }))
+  };
+
+  return patched;
+}
+
+function finalizeOptimizerResult(
+  result: BrandBriefOptimizerResult,
+  locale: Locale,
+  input?: BrandQuestionnaireInput,
+  clientEmail?: string
+): BrandBriefOptimizerResult {
+  const withBrand = input ? enforceQuestionnaireBrandName(result, input, clientEmail) : result;
   return {
-    campaign_name: productName,
-    primary_objective: input.objectiveLabel || (zh ? "转化" : "Conversion"),
-    secondary_objectives: zh ? ["品牌认知"] : ["Brand awareness"],
-    recommended_kpis: ["CTR > 2.8%", "CVR > 4%"],
-    audience_primary: input.audienceDescription || (zh ? "25-40 岁目标人群" : "Audience aged 25-40"),
-    audience_segments: zh ? ["都市中产", "移动端用户"] : ["Urban", "Mobile-first"],
-    audience_confidence: 82,
-    consumer_insight: zh
-      ? "用户真正购买的不是功能本身，而是品牌承诺的安心感与情感连接。"
-      : "People buy reassurance and emotional connection, not specs alone.",
-    key_message: source.slice(0, 100) || productName,
-    selling_points,
-    recommended_platforms: platforms,
-    recommended_video_duration: "30s",
-    recommended_creator_types: zh ? ["UGC 创作者", "生活方式博主"] : ["UGC Creator", "Lifestyle Creator"],
-    recommended_tones: zh ? ["温暖", "高端", "极简", "可信"] : ["Warm", "Premium", "Minimal", "Trustworthy"],
-    recommended_cta: zh ? "立即了解并下单" : "Learn more and order today",
-    visual_style: zh ? ["Apple Minimal", "柔光", "电影感镜头"] : ["Apple Minimal", "Soft lighting", "Cinema lens"],
-    gaps: formGaps,
-    brief_document
+    ...withBrand,
+    brief_document: formatProfessionalBriefDocument(withBrand, locale)
   };
 }
 
-function normalizeOptimizerPayload(raw: Record<string, unknown>, fallback: BrandBriefOptimizerResult): BrandBriefOptimizerResult {
-  return {
+function normalizeOptimizerPayload(
+  raw: Record<string, unknown>,
+  fallback: BrandBriefOptimizerResult,
+  locale: Locale,
+  questionnaire: BrandQuestionnaireInput,
+  clientEmail?: string
+): BrandBriefOptimizerResult {
+  const source = (questionnaire.rawSummary || questionnaire.productDescription || "").trim();
+  const normalized: BrandBriefOptimizerResult = {
     campaign_name: coerceOptimizerText(raw.campaign_name, fallback.campaign_name),
-    primary_objective: coerceOptimizerText(raw.primary_objective, fallback.primary_objective),
+    primary_objective: sanitizePrimaryObjectiveLabel(
+      coerceOptimizerText(raw.primary_objective, fallback.primary_objective),
+      source,
+      locale,
+      questionnaire.objective
+    ),
     secondary_objectives: asStringArray(raw.secondary_objectives).length
       ? asStringArray(raw.secondary_objectives)
       : fallback.secondary_objectives,
@@ -279,12 +360,14 @@ function normalizeOptimizerPayload(raw: Record<string, unknown>, fallback: Brand
       : fallback.gaps,
     brief_document: coerceBriefDocument(raw.brief_document, fallback.brief_document)
   };
+  return finalizeOptimizerResult(normalized, locale, questionnaire, clientEmail);
 }
 
 export async function optimizeBrandBriefWithAI(input: {
   questionnaire: BrandQuestionnaireInput;
   locale: Locale;
   formGaps: BriefOptimizerGap[];
+  clientEmail?: string;
 }): Promise<{ optimizer: BrandBriefOptimizerResult; source: "openai" | "template"; usage: { charged: boolean; provider: string; tokenInput: number; tokenOutput: number; cost: number } }> {
   const fallback = templateOptimizer(input.questionnaire, input.locale, input.formGaps);
 
@@ -309,7 +392,7 @@ export async function optimizeBrandBriefWithAI(input: {
     if (!result.content) throw new Error("empty_openai_response");
 
     const parsed = parseJsonObject<Record<string, unknown>>(result.content);
-    const optimizer = normalizeOptimizerPayload(parsed, fallback);
+    const optimizer = normalizeOptimizerPayload(parsed, fallback, input.locale, input.questionnaire, input.clientEmail);
     optimizer.gaps = mergeGaps(optimizer.gaps, input.formGaps);
 
     return {

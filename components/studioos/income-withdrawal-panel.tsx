@@ -193,7 +193,7 @@ const copy = {
     setDefault: "设为默认",
     saveMethod: "保存收款方式",
     noMethods: "请先添加收款方式。",
-    eyebrow: "Studio 财务中心",
+    eyebrow: "创作者财务中心",
     balanceLabel: "可提现余额",
     readyToWithdraw: "可立即提现",
     escrowNote: "托管资金在 Brand 验收通过后释放",

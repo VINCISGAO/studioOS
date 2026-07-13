@@ -5,7 +5,7 @@ export const studioOS = {
   productName: "VINCIS",
   tagline: {
     en: "Infrastructure connecting global brands with AI-powered creative production.",
-    zh: "连接全球品牌与 AI 驱动创意制作的基础设施。"
+    zh: "连接全球品牌与智能创意制作的基础设施。"
   },
   hero: {
     en: "Hollywood-level ads at the lowest budget.",
@@ -72,17 +72,17 @@ export const brandNav = {
     creators: "创作者",
     dataAnalysis: "数据分析",
     messages: "消息中心",
-    aiAssistant: "AI助手",
+    aiAssistant: "智能助手",
     attribution: "广告效果归因",
     settings: "设置",
     dashboard: "总览",
     projects: "项目",
-    analytics: "Analytics",
-    creativeDna: "Creative DNA",
+    analytics: "数据分析",
+    creativeDna: "创意基因",
     assets: "素材库",
     invoices: "账单",
     team: "团队协作（暂未开放）",
-    newBrief: "新建 Brief",
+    newBrief: "新建创意简报",
     reviewRoom: "审片中心",
     settlement: "托管结算"
   }
@@ -117,7 +117,7 @@ export const studioNav = {
     income: "收益管理",
     deposit: "认证服务商",
     messages: "消息中心",
-    aiAssistant: "AI助手",
+    aiAssistant: "智能助手",
     settings: "账号设置",
     dashboard: "制作台",
     upload: "交付工作台",
@@ -145,8 +145,8 @@ export const marketingNav = {
     faq: "常见问题",
     contact: "联系",
     signIn: "登录",
-    brandPortal: "Brand 门户",
-    studioPortal: "创作者"
+    brandPortal: "品牌门户",
+    studioPortal: "创作者门户"
   }
 } as const;
 

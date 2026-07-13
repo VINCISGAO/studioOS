@@ -26,7 +26,7 @@ import {
   filterBrandRowsByLifecycle,
   type BrandAdLifecycleFilter
 } from "@/lib/studioos/brand-lifecycle";
-import type { BrandProjectRow } from "@/lib/studioos/brand-dashboard";
+import type { BrandProjectRow } from "@/lib/studioos/brand-dashboard-types";
 import { normalizeCampaignStatus } from "@/lib/studioos/project-status";
 import { cn, formatDate } from "@/lib/utils";
 import {
@@ -209,6 +209,7 @@ function SelectCheckbox({
 export function BrandCampaignList({
   locale,
   rows,
+  onRowsChange,
   orderProjectMap,
   wizardProjectId,
   activeCampaignCount = 0,
@@ -217,6 +218,7 @@ export function BrandCampaignList({
 }: {
   locale: Locale;
   rows: BrandProjectRow[];
+  onRowsChange?: (rows: BrandProjectRow[]) => void;
   orderProjectMap: Record<string, string | null | undefined>;
   wizardProjectId?: string;
   activeCampaignCount?: number;
@@ -227,7 +229,6 @@ export function BrandCampaignList({
   const t = copy[locale];
   const lifecycleLabels = brandAdLifecycleLabels[locale];
 
-  const [items, setItems] = useState(rows);
   const [filter, setFilter] = useState<Filter>("all");
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -238,7 +239,6 @@ export function BrandCampaignList({
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
-    setItems(rows);
     setSelected(new Set());
   }, [rows]);
 
@@ -248,9 +248,9 @@ export function BrandCampaignList({
     return () => window.clearTimeout(timer);
   }, [successMessage]);
 
-  const lifecycleCounts = useMemo(() => countBrandRowsByLifecycle(items), [items]);
+  const lifecycleCounts = useMemo(() => countBrandRowsByLifecycle(rows), [rows]);
 
-  const filtered = useMemo(() => filterBrandRowsByLifecycle(items, filter), [filter, items]);
+  const filtered = useMemo(() => filterBrandRowsByLifecycle(rows, filter), [filter, rows]);
 
   useEffect(() => {
     setPage(1);
@@ -273,9 +273,13 @@ export function BrandCampaignList({
   const someSelectableChecked = selectableInView.some((row) => selected.has(rowKey(row)));
 
   const pendingRows = useMemo(
-    () => items.filter((row) => pendingDeleteKeys.includes(rowKey(row))),
-    [items, pendingDeleteKeys]
+    () => rows.filter((row) => pendingDeleteKeys.includes(rowKey(row))),
+    [rows, pendingDeleteKeys]
   );
+
+  function applyRows(next: BrandProjectRow[]) {
+    onRowsChange?.(next);
+  }
 
   function toggleRow(row: BrandProjectRow) {
     if (!isSelectable(row)) return;
@@ -322,7 +326,17 @@ export function BrandCampaignList({
     const orderIds = pendingRows.filter((row) => row.kind === "order").map((row) => row.id);
     if (!projectIds.length && !orderIds.length) return;
 
+    const beforeDelete = rows;
+    const keysToDelete = new Set(pendingDeleteKeys);
+    const deleteKeysSnapshot = [...pendingDeleteKeys];
+    const optimistic = beforeDelete.filter((row) => !keysToDelete.has(rowKey(row)));
+
     setDeleteError(null);
+    applyRows(optimistic);
+    setSelected(new Set());
+    setDeleteOpen(false);
+    setPendingDeleteKeys([]);
+
     startTransition(async () => {
       const fd = new FormData();
       fd.set("lang", locale);
@@ -331,30 +345,27 @@ export function BrandCampaignList({
 
       const result = await deleteBrandProjectsAction(fd);
       if (!result.ok) {
+        applyRows(beforeDelete);
         if ("stale" in result && result.stale) {
           setDeleteError(t.staleList);
-          setDeleteOpen(false);
-          setPendingDeleteKeys([]);
-          setSelected(new Set());
           router.refresh();
           return;
         }
         setDeleteError(result.error);
+        setDeleteOpen(true);
+        setPendingDeleteKeys(deleteKeysSnapshot);
         return;
       }
 
       const deletedProjects = new Set(result.deleted);
       const deletedOrders = new Set(result.deletedOrders ?? []);
-      setItems((prev) =>
-        prev.filter(
+      applyRows(
+        beforeDelete.filter(
           (row) =>
             !(row.kind === "campaign" && deletedProjects.has(row.id)) &&
             !(row.kind === "order" && deletedOrders.has(row.id))
         )
       );
-      setSelected(new Set());
-      setDeleteOpen(false);
-      setPendingDeleteKeys([]);
 
       if (result.failures.length) {
         setSuccessMessage(t.deletedPartial);
@@ -455,8 +466,8 @@ export function BrandCampaignList({
 
         {!filtered.length ? (
           <div className="flex flex-col items-center gap-4 px-6 py-16 text-center">
-            <p className="text-sm text-zinc-500">{items.length ? t.emptyFiltered : t.emptyBody}</p>
-            {!items.length ? (
+            <p className="text-sm text-zinc-500">{rows.length ? t.emptyFiltered : t.emptyBody}</p>
+            {!rows.length ? (
               <BrandStartBriefButton
                 locale={locale}
                 projectId={wizardProjectId}

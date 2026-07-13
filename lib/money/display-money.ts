@@ -103,7 +103,8 @@ export function formatMoneyFromUsd(
   options?: { fractionDigits?: number; currency?: DisplayCurrencyCode }
 ): string {
   const currency = options?.currency ?? getDisplayCurrency(locale);
-  const converted = convertUsdToDisplayAmount(amountUsd, locale);
+  const converted =
+    currency === "USD" ? amountUsd : convertUsdToDisplayAmount(amountUsd, locale);
   const intlLocale = INTL_LOCALE_BY_CURRENCY[currency];
   const fractionDigits =
     options?.fractionDigits ?? (ZERO_DECIMAL_CURRENCIES.has(currency) ? 0 : 0);
@@ -119,12 +120,13 @@ export function formatMoneyFromUsd(
 export function formatMoneyRangeFromUsd(
   minUsd: number,
   maxUsd: number | null,
-  locale?: Locale | SupportedLanguageCode | null
+  locale?: Locale | SupportedLanguageCode | null,
+  options?: { currency?: DisplayCurrencyCode }
 ): string {
   if (maxUsd === null) {
-    return `${formatMoneyFromUsd(minUsd, locale)}+`;
+    return `${formatMoneyFromUsd(minUsd, locale, options)}+`;
   }
-  return `${formatMoneyFromUsd(minUsd, locale)} – ${formatMoneyFromUsd(maxUsd, locale)}`;
+  return `${formatMoneyFromUsd(minUsd, locale, options)} – ${formatMoneyFromUsd(maxUsd, locale, options)}`;
 }
 
 /** Parses stored budget strings like "$800", "$800–$1,200", "$2,000+". Amounts are display USD. */
@@ -202,6 +204,66 @@ export function settlementUsdNote(locale?: Locale | SupportedLanguageCode | null
     return "结算与托管仍以美元计价，以上为参考换算";
   }
   return "Settlement remains in USD — amounts shown are reference conversions";
+}
+
+/** Parses a raw custom budget field (e.g. "2000" or "1800-2000") in display currency units. */
+export function parseDisplayBudgetInput(raw: string): number | null {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+
+  const rangeMatch = trimmed.match(/^(\d+(?:\.\d+)?)\s*[-–~到]\s*(\d+(?:\.\d+)?)$/);
+  if (rangeMatch) {
+    const min = Number(rangeMatch[1]);
+    const max = Number(rangeMatch[2]);
+    if (!Number.isFinite(min) || !Number.isFinite(max) || max < min) return null;
+    return Math.round((min + max) / 2);
+  }
+
+  const digits = trimmed.replace(/[^0-9.]/g, "");
+  const amount = Number(digits);
+  return Number.isFinite(amount) && amount > 0 ? Math.round(amount) : null;
+}
+
+function formatDisplayCurrencyAmount(
+  amount: number,
+  locale?: Locale | SupportedLanguageCode | null
+): string {
+  const currency = getDisplayCurrency(locale);
+  const intlLocale = INTL_LOCALE_BY_CURRENCY[currency];
+  return new Intl.NumberFormat(intlLocale, {
+    style: "currency",
+    currency,
+    maximumFractionDigits: ZERO_DECIMAL_CURRENCIES.has(currency) ? 0 : 0,
+    minimumFractionDigits: 0
+  }).format(amount);
+}
+
+/**
+ * When escrow display differs from what the brand typed (USD settlement round-trip),
+ * return a short explanation — otherwise null.
+ */
+export function budgetEscrowVarianceNote(
+  amountUsd: number,
+  locale?: Locale | SupportedLanguageCode | null,
+  displayInput?: string | null
+): string | null {
+  const currency = getDisplayCurrency(locale);
+  if (currency === "USD" || amountUsd <= 0) return null;
+
+  const typedAmount = displayInput ? parseDisplayBudgetInput(displayInput) : null;
+  const shownAmount = convertUsdToDisplayAmount(amountUsd, locale);
+  if (typedAmount == null || typedAmount === shownAmount) return null;
+
+  const language = normalizeMoneyLanguage(locale);
+  const rate = USD_REFERENCE_RATES[currency];
+  const inputLabel = formatDisplayCurrencyAmount(typedAmount, locale);
+  const shownLabel = formatMoneyFromUsd(amountUsd, locale);
+
+  if (language === "zh-CN" || language === "zh-TW") {
+    return `你输入 ${inputLabel}，托管账单为 ${shownLabel}。订单以美元结算（参考汇率 1 USD ≈ ${rate} ${currency === "CNY" ? "人民币" : currency}），换算四舍五入可能导致略有差异。`;
+  }
+
+  return `You entered ${inputLabel}; escrow shows ${shownLabel}. Settlement is in USD (ref. rate 1 USD ≈ ${rate} ${currency}); rounding during conversion may differ slightly.`;
 }
 
 export function proUpgradeLabel(locale?: Locale | SupportedLanguageCode | null): string {

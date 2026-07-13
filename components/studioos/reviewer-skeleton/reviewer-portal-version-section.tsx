@@ -62,13 +62,13 @@ const copy = {
     continueEditing: "我还想继续修改",
     continueEditingHint: "查看第4–5轮修订加购说明",
     waitingPaidUnlock: "等待品牌完成一次加购（解锁第4–5轮修订）",
-    confirmRevisionHint: "已完成本轮批注，通知 Studio 修改并上传第二稿",
+    confirmRevisionHint: "已完成本轮批注，通知创作者修改并上传第二稿",
     approve: "无需修改，直接通过",
     approveHint: "确认本稿无需修改，进入结算流程",
     uploadNext: "上传",
     formats: "支持 MP4 / MOV",
     maxSize: "最大 500MB",
-    waitingStudio: "等待 Studio 上传",
+    waitingStudio: "等待创作者上传",
     waitingBrandReview: "当前稿已上传，请申请项目方批阅",
     processCommentsBeforeUpload: "请先处理完本轮所有品牌批注，再上传下一稿。",
     revertUpload: "退回上传",
@@ -840,7 +840,7 @@ export function ReviewerPortalVersionSection({
             <div className="flex min-h-[88px] items-center rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900">
               <Clock className="mr-2 h-5 w-5 shrink-0 text-amber-600" />
               {locale === "zh"
-                ? "已到第 5 稿上限，不能再要求 Studio 上传下一稿；请确认交付或联系平台介入。"
+                ? "已到第 5 稿上限，不能再要求创作者上传下一稿；请确认交付或联系平台介入。"
                 : "Draft 5 is the final revision round. You cannot request another upload; approve delivery or contact platform support."}
             </div>
           ) : (
@@ -882,7 +882,7 @@ export function ReviewerPortalVersionSection({
               {locale === "zh" ? "修改意见已提交" : "Revision notes submitted"}
             </span>
             <span className="mt-1 block text-xs leading-relaxed text-zinc-500">
-              {locale === "zh" ? "Studio 正在准备下一稿，上传后会进入下一轮审片。" : "Studio is preparing the next draft. Review will continue after it is uploaded."}
+              {locale === "zh" ? "创作者正在准备下一稿，上传后会进入下一轮审片。" : "Studio is preparing the next draft. Review will continue after it is uploaded."}
             </span>
           </span>
         </div>
@@ -994,7 +994,7 @@ export function ReviewerPortalVersionSection({
           <UploadCloud className="mr-2 h-5 w-5 text-zinc-400" />
           {role === "brand"
             ? locale === "zh"
-              ? "等待 Studio 上传下一稿"
+              ? "等待创作者上传下一稿"
               : "Waiting for Studio to upload the next draft"
             : locale === "zh"
               ? "当前无需操作"

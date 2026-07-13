@@ -42,8 +42,8 @@ const copy = {
   zh: {
     ads: "广告作品",
     about: "品牌介绍",
-    byStudio: "制作团队",
-    visitStudio: "查看团队主页",
+    byStudio: "创作者",
+    visitStudio: "查看创作者主页",
     edit: "编辑主页",
     website: "官网",
     industry: "行业",

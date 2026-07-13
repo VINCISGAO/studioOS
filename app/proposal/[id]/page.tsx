@@ -29,12 +29,12 @@ const copy = {
   },
   zh: {
     back: "返回匹配",
-    backStudio: "Studio 门户",
+    backStudio: "创作者门户",
     title: "Proposal Room",
     subtitle: "专业沟通留在平台内。达成一致后自动生成合同。进入制作后聊天锁定，改用时轴审片。",
-    brand: "Brand",
-    studio: "Studio",
-    dashboard: "Brand 门户"
+    brand: "品牌方",
+    studio: "创作者",
+    dashboard: "品牌门户"
   }
 };
 

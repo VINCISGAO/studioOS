@@ -41,6 +41,7 @@ export default async function StudioProjectPage({
       order={detail.order}
       project={detail.project}
       pack={detail.pack}
+      references={detail.references}
       deliverables={detail.deliverables}
       comments={detail.comments}
       canUpload={detail.canUpload}

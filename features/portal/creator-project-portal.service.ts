@@ -1,6 +1,6 @@
 import type { CreatorProjectPortalDetail } from "@/features/portal/portal.types";
 import { buildCreativeCollaborationView, readCreativeCollaboration } from "@/features/creative-collaboration/creative-collaboration.repository";
-import { getCreativeBrief, listPackItems } from "@/lib/campaign-store";
+import { getCreativeBrief, listPackItems, listReferencesForProject } from "@/lib/campaign-store";
 import { isOrderPaymentEscrowed } from "@/lib/order-types";
 import { getDeliverables, getOrder, repairSelectedCreatorCampaignOrders } from "@/lib/order-service";
 import { getProject } from "@/lib/project-service";
@@ -25,11 +25,12 @@ export const creatorProjectPortalService = {
     }
 
     const project = order.project_id ? await getProject(order.project_id) : null;
-    const [deliverables, comments, brief, pack] = await Promise.all([
+    const [deliverables, comments, brief, pack, references] = await Promise.all([
       getDeliverables(order.id),
       listReviewComments(order.id),
       order.project_id ? getCreativeBrief(order.project_id) : Promise.resolve(null),
-      order.project_id ? listPackItems(order.project_id) : Promise.resolve([])
+      order.project_id ? listPackItems(order.project_id) : Promise.resolve([]),
+      order.project_id ? listReferencesForProject(order.project_id) : Promise.resolve([])
     ]);
 
     const canUpload = isCreatorUploadActionable(order, deliverables.length);
@@ -52,6 +53,7 @@ export const creatorProjectPortalService = {
       deliverables,
       comments,
       brief,
+      references,
       canUpload,
       collaborationView,
       aiEnabled,

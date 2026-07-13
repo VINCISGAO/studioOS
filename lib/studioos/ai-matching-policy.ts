@@ -48,7 +48,7 @@ export const aiMatchingPolicyCopy = {
   },
   zh: {
     title: "订单评分体系",
-    body: "历史订单完成后由 Brand 打分。AI 按系统内置规则综合计算匹配排序，后台与 Studio 均无法修改权重。",
+    body: "历史订单完成后由品牌方打分。智能系统按内置规则综合计算匹配排序，后台与创作者均无法修改权重。",
     footnote: "匹配权重由 AI 自动判定并写入系统，不可人为调整。",
     currentRating: "当前评分",
     noReviews: "暂无订单评价",

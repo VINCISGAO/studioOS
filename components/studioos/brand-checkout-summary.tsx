@@ -3,6 +3,10 @@
 import type { ComponentType } from "react";
 import { Calendar, ClipboardCheck, Clock3, FileText, Lock, Shield, ShieldCheck } from "lucide-react";
 import type { Locale } from "@/lib/i18n";
+import { BudgetSettlementCallout } from "@/components/studioos/budget-settlement-callout";
+import { formatStoredBudgetRange, budgetEscrowVarianceNote } from "@/lib/money/display-money";
+import { readBrandDisplayBudgetInput } from "@/lib/studioos/brand-budget-display-input";
+import { parseBudgetMidpoint } from "@/lib/studioos/brand-checkout-utils";
 import type { StoredOrder } from "@/lib/order-types";
 import type { StoredProject } from "@/lib/project-types";
 
@@ -41,7 +45,7 @@ const copy = {
     delivery: "预计交付",
     createdAt: "订单创建时间",
     escrowTitle: "托管保障",
-    escrowBody: "款项托管至需你确认交付后释放，审片通过后才会结算给 Studio。",
+    escrowBody: "款项托管至需你确认交付后释放，审片通过后才会结算给创作者。",
     fundTitle: "资金安全",
     fundBody: "全程托管，按双方约定释放",
     performanceTitle: "履约保障",
@@ -57,7 +61,7 @@ const copy = {
     stepPay: "托管付款",
     stepPayBody: "款项安全托管",
     stepMatch: "开始匹配",
-    stepMatchBody: "为你匹配 Studio",
+    stepMatchBody: "为你匹配创作者",
     stepRelease: "完成交付",
     stepReleaseBody: "交易完成后释放款项"
   }
@@ -105,6 +109,14 @@ export function BrandCheckoutSummary({
     minute: "2-digit",
     hour12: false
   });
+  const budgetLabel = project.budget_range?.trim()
+    ? formatStoredBudgetRange(project.budget_range, locale)
+    : "—";
+  const varianceNote = budgetEscrowVarianceNote(
+    parseBudgetMidpoint(project.budget_range),
+    locale,
+    readBrandDisplayBudgetInput(project)
+  );
   const steps = [
     [t.stepConfirm, t.stepConfirmBody],
     [t.stepPay, t.stepPayBody],
@@ -128,7 +140,10 @@ export function BrandCheckoutSummary({
                 <Lock className="h-4 w-4 text-violet-500" />
                 {t.budget}
               </dt>
-              <dd className="mt-2 text-lg font-semibold text-zinc-950">{project.budget_range || "—"}</dd>
+              <dd className="mt-2 text-lg font-semibold text-zinc-950">{budgetLabel}</dd>
+              {varianceNote ? (
+                <BudgetSettlementCallout message={varianceNote} className="mt-2" />
+              ) : null}
             </div>
             <div className="lg:border-r lg:border-zinc-100 lg:px-5">
               <dt className="flex items-center gap-1.5 text-zinc-500">

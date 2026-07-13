@@ -8,6 +8,7 @@ import {
   optimizeBrandBriefWithAI
 } from "@/lib/studioos/brand-brief-optimizer";
 import type { BrandBriefOptimizerResult } from "@/lib/studioos/brand-brief-optimizer.types";
+import { formatProfessionalBriefDocument } from "@/lib/studioos/brand-brief-optimizer-format";
 import type { BrandQuestionnaireInput } from "@/lib/studioos/brand-questionnaire.types";
 
 export type { BrandQuestionnaireInput } from "@/lib/studioos/brand-questionnaire.types";
@@ -22,15 +23,16 @@ export type ReorganizedBrandBrief = {
   optimizer?: BrandBriefOptimizerResult;
 };
 
-function briefFromOptimizer(optimizer: BrandBriefOptimizerResult, source: "openai" | "template"): ReorganizedBrandBrief {
+function briefFromOptimizer(optimizer: BrandBriefOptimizerResult, source: "openai" | "template", locale: Locale): ReorganizedBrandBrief {
+  const briefDocument = formatProfessionalBriefDocument(optimizer, locale);
   return {
-    campaign_goal: optimizer.brief_document,
+    campaign_goal: briefDocument,
     product_name: optimizer.campaign_name,
     target_audience: optimizer.audience_primary,
     title: optimizer.campaign_name,
     notes: [optimizer.consumer_insight, optimizer.recommended_cta].filter(Boolean).join("\n\n"),
     source,
-    optimizer
+    optimizer: { ...optimizer, brief_document: briefDocument }
   };
 }
 
@@ -40,7 +42,7 @@ export function templateReorganizeBrandBrief(
 ): ReorganizedBrandBrief {
   const formGaps = detectBriefGapsFromQuestionnaire(input, locale);
   const optimizer = buildTemplateBrandBriefOptimizer(input, locale, formGaps);
-  return briefFromOptimizer(optimizer, "template");
+  return briefFromOptimizer(optimizer, "template", locale);
 }
 
 export type BrandBriefAiUsage = {
@@ -58,7 +60,8 @@ export type BrandBriefAiResult = {
 
 export async function reorganizeBrandBriefWithAI(
   input: BrandQuestionnaireInput,
-  locale: Locale
+  locale: Locale,
+  clientEmail?: string
 ): Promise<BrandBriefAiResult> {
   const formGaps = detectBriefGapsFromQuestionnaire(input, locale);
 
@@ -66,11 +69,12 @@ export async function reorganizeBrandBriefWithAI(
     const optimized = await optimizeBrandBriefWithAI({
       questionnaire: input,
       locale,
-      formGaps
+      formGaps,
+      clientEmail
     });
 
     return {
-      brief: briefFromOptimizer(optimized.optimizer, optimized.source),
+      brief: briefFromOptimizer(optimized.optimizer, optimized.source, locale),
       usage: optimized.usage
     };
   } catch (error) {
@@ -81,7 +85,7 @@ export async function reorganizeBrandBriefWithAI(
 
     const optimizer = buildTemplateBrandBriefOptimizer(input, locale, formGaps);
     return {
-      brief: briefFromOptimizer(optimizer, "template"),
+      brief: briefFromOptimizer(optimizer, "template", locale),
       usage: { charged: false, provider: "template", tokenInput: 0, tokenOutput: 0, cost: 0 }
     };
   }

@@ -24,6 +24,7 @@ import { PortalContentColumn } from "@/components/studioos/portal/portal-content
 import { PortalSidebarFrame } from "@/components/studioos/portal/portal-sidebar-frame";
 import { PortalViewportShell } from "@/components/studioos/portal/portal-viewport-shell";
 import { PortalShellChromeProvider } from "@/components/studioos/portal-shell-chrome-context";
+import { AcknowledgeAlertProvider } from "@/components/studioos/acknowledge-alert-provider";
 import { PORTAL_CONTENT_MAX, PORTAL_MAIN_SAFE_BOTTOM } from "@/lib/studioos/portal-layout-tokens";
 import {
   ReviewFocusModeProvider,
@@ -68,22 +69,24 @@ export function StudioPortalShell({
 }) {
   return (
     <ReviewFocusModeProvider searchFallback={search}>
-      <StudioPortalShellInner
-        locale={locale}
-        pathname={pathnameProp}
-        search={search}
-        creator={creator}
-        creatorId={creatorId}
-        canUseBusinessFeatures={canUseBusinessFeatures}
-        isVerified={isVerified}
-        levelUpSeen={levelUpSeen}
-        notifications={notifications}
-        unreadCount={unreadCount}
-        pendingInvitationCount={pendingInvitationCount}
-        pendingSelectionCelebration={pendingSelectionCelebration}
-      >
-        {children}
-      </StudioPortalShellInner>
+      <AcknowledgeAlertProvider locale={locale}>
+        <StudioPortalShellInner
+          locale={locale}
+          pathname={pathnameProp}
+          search={search}
+          creator={creator}
+          creatorId={creatorId}
+          canUseBusinessFeatures={canUseBusinessFeatures}
+          isVerified={isVerified}
+          levelUpSeen={levelUpSeen}
+          notifications={notifications}
+          unreadCount={unreadCount}
+          pendingInvitationCount={pendingInvitationCount}
+          pendingSelectionCelebration={pendingSelectionCelebration}
+        >
+          {children}
+        </StudioPortalShellInner>
+      </AcknowledgeAlertProvider>
     </ReviewFocusModeProvider>
   );
 }

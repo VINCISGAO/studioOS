@@ -59,8 +59,8 @@ async function main() {
     );
     checks.push({
       name: "creative.approve",
-      ok: Boolean(approved?.title),
-      detail: approved.title
+      ok: Boolean(approved?.selected?.title),
+      detail: approved.selected.title
     });
 
     const campaignAfterApprove = await prisma.campaign.findUniqueOrThrow({ where: { id: campaignId! } });

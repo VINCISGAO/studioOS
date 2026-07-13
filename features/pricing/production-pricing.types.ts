@@ -54,6 +54,8 @@ export type ProductionPricingProfileConfig = {
   revisionReserveStandard: number;
   riskBufferStandard: number;
   tokensPer15s4kGeneration: number;
+  /** Brand quote anchor: fixed AI/tool expenditure × this multiplier (learning rule: $800 → $2,400). */
+  fixedExpenditureToQuoteMultiplier: number;
   tiers: ProductionPricingTierConfig[];
 };
 
@@ -122,6 +124,7 @@ export type ProjectEstimateBreakdown = {
   revisionReserveUsd: number;
   riskBufferUsd: number;
   creatorMinIncomeUsd: number;
+  fixedExpenditureQuoteAnchorUsd: number;
   brandFloorPriceUsd: number;
   brandSuggestedPriceUsd: number;
   brandPriorityPriceUsd: number;

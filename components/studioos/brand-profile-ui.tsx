@@ -8,6 +8,7 @@ import type { BrandShowcaseAd } from "@/lib/brand-profile-types";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import { buildAvatarInitials } from "@/lib/studioos/avatar-initials";
+import { profileImageClassName } from "@/lib/studioos/profile-image-styles";
 import { brandTheme } from "@/lib/studioos/brand-theme";
 import { cn } from "@/lib/utils";
 import { ArrowRight, Building2, Camera, Globe, Loader2, Megaphone, UserRound } from "lucide-react";
@@ -36,7 +37,7 @@ export function BrandAvatar({
       )}
     >
       {avatarUrl ? (
-        <Image src={avatarUrl} alt="" fill className="object-cover" sizes="96px" unoptimized />
+        <Image src={avatarUrl} alt="" fill className={profileImageClassName("logo")} sizes="96px" unoptimized />
       ) : (
         buildAvatarInitials(initials, "B")
       )}
@@ -75,7 +76,7 @@ export function BrandEditableAvatar({
   const body = (
     <>
       {avatarUrl ? (
-        <Image src={avatarUrl} alt="" fill className="object-cover" sizes="96px" unoptimized />
+        <Image src={avatarUrl} alt="" fill className={profileImageClassName("logo")} sizes="96px" unoptimized />
       ) : (
         <div
           className={cn(

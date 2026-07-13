@@ -21,6 +21,14 @@ export const AI_USAGE_QUOTA_PER_CAMPAIGN: Record<AiUsageCategory, number> = {
 /** Extra daily copilot cap per user — limits multi-account abuse at assistant layer. */
 export const AI_USAGE_USER_DAILY_COPILOT = 200;
 
+/** Early launch: AI usage quotas are disabled until product owner re-enables them. */
+export const AI_USAGE_QUOTA_ENFORCED = false;
+
+export function isAiUsageQuotaEnforced(): boolean {
+  if (!AI_USAGE_QUOTA_ENFORCED) return false;
+  return process.env.VINCIS_AI_USAGE_QUOTA_ENFORCED === "true";
+}
+
 export type AiUsageQuotaViolation = {
   ok: false;
   code: "campaign_quota" | "user_daily_quota";

@@ -21,3 +21,7 @@ export function portalFooterInsetClass(options?: { briefSidebar?: boolean }) {
 
 export const PORTAL_SAFE_BOTTOM = "pb-[max(0.5rem,env(safe-area-inset-bottom))]";
 export const PORTAL_MAIN_SAFE_BOTTOM = "pb-[calc(1.5rem+env(safe-area-inset-bottom))]";
+
+/** Reserve space above Quick Brief fixed footer (stacked mobile buttons + safe area). */
+export const QUICK_BRIEF_FOOTER_SCROLL_PADDING =
+  "pb-[calc(8.5rem+env(safe-area-inset-bottom))] sm:pb-[calc(6.5rem+env(safe-area-inset-bottom))]";

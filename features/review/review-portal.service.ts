@@ -660,7 +660,7 @@ export class ReviewPortalService {
           title: input.locale === "zh" ? "品牌要求修改" : "Brand requested changes",
           content:
             input.locale === "zh"
-              ? `「${ctx.campaign.title}」Version ${version.versionNumber} 需要修改，请查看 Studio 审片室。`
+              ? `「${ctx.campaign.title}」Version ${version.versionNumber} 需要修改，请查看创作者审片室。`
               : `"${ctx.campaign.title}" — Version ${version.versionNumber} needs revisions. Open the review room.`,
           actionUrl: `${getAppBaseUrl()}/studio/review/${input.orderId}`,
           email: false

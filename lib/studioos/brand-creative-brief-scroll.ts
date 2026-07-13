@@ -7,6 +7,7 @@ export const BRIEF_FIELD_TARGETS = {
   productImage: "brief-field-product-image",
   aspectRatio: "brief-field-aspect-ratio",
   videoDuration: "brief-field-video-duration",
+  resolution: "brief-field-resolution",
   budget: "brief-field-budget",
   scheduleStart: "brief-field-schedule-start",
   scheduleDelivery: "brief-field-schedule-delivery"

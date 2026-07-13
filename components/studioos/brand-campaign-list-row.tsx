@@ -10,15 +10,15 @@ import {
   brandCampaignStatusLabel,
   brandCampaignStepIndex
 } from "@/lib/studioos/brand-campaign-display";
-import type { BrandProjectRow } from "@/lib/studioos/brand-dashboard";
+import type { BrandProjectRow } from "@/lib/studioos/brand-dashboard-types";
 import { brandProjectThumbnail } from "@/lib/studioos/brand-dashboard-display";
 import { normalizeCampaignStatus } from "@/lib/studioos/project-status";
 import { cn, formatDate } from "@/lib/utils";
 import { ArrowRight, Calendar, CircleDollarSign } from "lucide-react";
 
 const steps = {
-  en: ["Brief", "Studio", "Pay", "Produce", "Review"],
-  zh: ["需求", "选团队", "付款", "制作", "审片"]
+  en: ["Brief", "Pay", "Studio", "Produce", "Review"],
+  zh: ["需求", "付款", "选创作者", "制作", "审片"]
 };
 
 function friendlyName(raw: string): string {

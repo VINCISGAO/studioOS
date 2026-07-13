@@ -1,8 +1,9 @@
 "use client";
 
-import { Fragment, useState, type FormEvent } from "react";
+import { Fragment, useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { AlertCircle, ArrowRight, Check, Mail, RefreshCw, Rocket, ShieldCheck, Sparkles, Users } from "lucide-react";
+import { useAcknowledgeAlert } from "@/components/studioos/acknowledge-alert-provider";
+import { ArrowRight, Check, Mail, RefreshCw, Rocket, ShieldCheck, Sparkles, Users } from "lucide-react";
 import { LoginSubmitSpinner } from "@/components/studioos/login-demo-accounts";
 import { useLoginEmailResend } from "@/components/studioos/use-login-email-resend";
 import { Button } from "@/components/ui/button";
@@ -39,6 +40,7 @@ export function LoginWorkspace({
   visualOverride?: LoginVisual;
   t: LoginCopy;
 }) {
+  const { alert } = useAcknowledgeAlert();
   const [email, setEmail] = useState(initialEmail);
   const [code, setCode] = useState("");
   const [step, setStep] = useState<"email" | "code" | "success">("email");
@@ -56,6 +58,10 @@ export function LoginWorkspace({
   const displayError = formError ?? error;
   const visual = visualOverride ?? getLoginVisual(role);
   const darkPanel = role === "brand";
+
+  useEffect(() => {
+    if (displayError) alert(displayError);
+  }, [alert, displayError]);
 
   const labelClass = cn(
     "text-xs font-medium sm:text-sm",
@@ -311,25 +317,6 @@ export function LoginWorkspace({
         <input type="hidden" name="lang" value={locale} />
         <input type="hidden" name="expected_role" value={role} />
         {nextPath ? <input type="hidden" name="next" value={nextPath} /> : null}
-
-        {displayError ? (
-          <div
-            className={cn(
-              "flex gap-2.5 rounded-xl border px-3.5 py-2.5 text-[13px] leading-5",
-              isWrongRole
-                ? darkPanel
-                    ? "border-amber-400/30 bg-amber-500/10 text-amber-100"
-                    : "border-amber-200 bg-amber-50 text-amber-900"
-                : darkPanel
-                    ? "border-red-400/30 bg-red-500/10 text-red-100"
-                    : "border-red-200 bg-red-50 text-red-800"
-            )}
-            role="alert"
-          >
-            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-            <p>{displayError}</p>
-          </div>
-        ) : null}
 
         <div className="space-y-1.5 sm:space-y-2">
           <div className="flex items-baseline justify-between gap-2">

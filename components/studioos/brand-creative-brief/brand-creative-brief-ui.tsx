@@ -22,9 +22,10 @@ export function BriefPurpleChip({
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        "rounded-xl border px-3 py-2.5 text-sm font-medium transition",
+        "inline-flex items-center justify-center border px-3 py-2.5 text-sm font-medium transition",
+        "rounded-xl",
         active
-          ? "border-violet-600 bg-violet-50 text-violet-700 shadow-[inset_0_0_0_1px_rgba(124,58,237,0.15)]"
+          ? "border-violet-500 bg-violet-50 text-violet-700"
           : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50",
         disabled && "cursor-not-allowed opacity-60",
         className
@@ -72,7 +73,7 @@ export function BriefSectionCard({
           </div>
         </div>
       </div>
-      <div className="space-y-5 p-5 sm:p-6">{children}</div>
+      <div className="space-y-5 p-5 sm:p-6 lg:p-8">{children}</div>
     </section>
   );
 }

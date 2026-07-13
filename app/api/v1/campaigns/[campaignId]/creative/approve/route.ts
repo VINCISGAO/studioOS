@@ -13,8 +13,12 @@ export async function POST(request: Request, { params }: Params) {
     const user = await requireApiUser();
     const { campaignId } = await params;
     const body = approveSchema.parse(await request.json());
-    const selected = await creativeDirectionService.approve(campaignId, { id: user.id, role: user.role }, body.direction_id);
-    return apiSuccess({ selected });
+    const { selected, frozen } = await creativeDirectionService.approve(
+      campaignId,
+      { id: user.id, role: user.role },
+      body.direction_id
+    );
+    return apiSuccess({ selected, frozen });
   } catch (error) {
     return handleRouteError(error);
   }

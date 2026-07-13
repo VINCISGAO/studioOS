@@ -10,7 +10,7 @@ import { CreatorProjectOverviewHeader } from "@/components/studioos/creator-proj
 import { CreatorProjectOverviewStepper } from "@/components/studioos/creator-project-overview-stepper";
 import { CreatorProjectQuickAccess } from "@/components/studioos/creator-project-quick-access";
 import { CreatorProjectSuccessBanner } from "@/components/studioos/creator-project-success-banner";
-import type { StoredCreativePackItem } from "@/lib/campaign-types";
+import type { StoredCreativePackItem, StoredProjectReference } from "@/lib/campaign-types";
 import type { CreativeCollaborationView } from "@/features/creative-collaboration/creative-collaboration.types";
 import type { Locale } from "@/lib/i18n";
 import type { CreatorCommercialContext, CreatorCommercialStep } from "@/lib/studioos/commercial-lifecycle";
@@ -24,6 +24,7 @@ export function CreatorProjectOverview({
   order,
   project,
   pack,
+  references = [],
   deliverables,
   comments,
   canUpload,
@@ -36,6 +37,7 @@ export function CreatorProjectOverview({
   order: StoredOrder;
   project: StoredProject | null;
   pack: StoredCreativePackItem[];
+  references?: StoredProjectReference[];
   deliverables: StoredDeliverable[];
   comments: ReviewComment[];
   canUpload: boolean;
@@ -50,6 +52,7 @@ export function CreatorProjectOverview({
   const referenceUrls = project?.reference_links
     ? project.reference_links.split("\n").map((item) => item.trim()).filter(Boolean)
     : [];
+  const analyzedReferences = references ?? [];
 
   return (
     <div className="mx-auto max-w-6xl space-y-5 pb-10">
@@ -90,6 +93,7 @@ export function CreatorProjectOverview({
         activeTab={tab}
         onTabChange={setTab}
         referenceUrls={referenceUrls}
+        analyzedReferences={analyzedReferences}
         briefSlot={
           tab === "brief" && project && collaborationView ? (
             <CreatorProjectCollaborationHero

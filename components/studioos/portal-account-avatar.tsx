@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { buildAvatarInitials } from "@/lib/studioos/avatar-initials";
+import { profileImageClassName, type ProfileImageFit } from "@/lib/studioos/profile-image-styles";
 import { cn } from "@/lib/utils";
 
 export function PortalAccountAvatar({
@@ -10,12 +11,14 @@ export function PortalAccountAvatar({
   avatarUrl,
   size = "md",
   accent = "zinc",
+  imageFit = "photo",
   className
 }: {
   initials: string;
   avatarUrl?: string;
   size?: "sm" | "md";
   accent?: "zinc" | "violet" | "indigo";
+  imageFit?: ProfileImageFit;
   className?: string;
 }) {
   const [imageFailed, setImageFailed] = useState(false);
@@ -43,7 +46,7 @@ export function PortalAccountAvatar({
           src={imageSrc}
           alt=""
           fill
-          className="object-cover"
+          className={cn(profileImageClassName(imageFit), "rounded-full")}
           sizes="40px"
           loading="eager"
           fetchPriority="high"

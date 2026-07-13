@@ -495,7 +495,7 @@ export function StudioDeliveryHub({
               {[
                 { label: t.projectName, value: selected.order.title },
                 { label: t.brand, value: selected.order.company_name || selected.order.client_name },
-                { label: t.deliveryLead, value: locale === "zh" ? "Studio 负责人" : "Studio lead" },
+                { label: t.deliveryLead, value: locale === "zh" ? "创作者负责人" : "Studio lead" },
                 { label: t.created, value: formatDate(selected.order.created_at) },
                 {
                   label: t.deadline,

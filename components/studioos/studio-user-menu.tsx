@@ -27,7 +27,8 @@ export function StudioUserMenu({
   name,
   profileHref = "/studio/profile",
   roleLabel,
-  profileMenuLabel
+  profileMenuLabel,
+  imageFit = "photo"
 }: {
   locale: Locale;
   initials: string;
@@ -36,10 +37,11 @@ export function StudioUserMenu({
   profileHref?: string;
   roleLabel?: string;
   profileMenuLabel?: string;
+  imageFit?: "photo" | "mark";
 }) {
   const t = copy[locale];
   const profileLabel = profileMenuLabel ?? t.profile;
-  const subtitle = roleLabel ?? "Studio";
+  const subtitle = roleLabel ?? (locale === "zh" ? "创作者" : "Studio");
   const panelRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
 
@@ -67,7 +69,7 @@ export function StudioUserMenu({
         )}
         onClick={() => setOpen((value) => !value)}
       >
-        <PortalAccountAvatar initials={initials} avatarUrl={avatarUrl} size="sm" />
+        <PortalAccountAvatar initials={initials} avatarUrl={avatarUrl} size="sm" imageFit={imageFit} />
         <ChevronDown className={cn("h-4 w-4 text-zinc-400 transition", open && "rotate-180")} />
       </button>
 

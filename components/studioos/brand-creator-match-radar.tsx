@@ -11,7 +11,7 @@ const copy = {
   },
   zh: {
     title: "正在为您匹配最适合您的创作者",
-    subtitle: "基于风格、预算与工期，智能扫描 Studio 库…",
+    subtitle: "基于风格、预算与工期，智能扫描创作者库…",
     scanning: "扫描中"
   }
 };

@@ -133,6 +133,7 @@ export function BrandReviewShell({
                 profileHref={reviewMode ? "/brand/profile" : undefined}
                 roleLabel={reviewMode ? (locale === "zh" ? "品牌方" : "Brand") : undefined}
                 profileMenuLabel={reviewMode ? (locale === "zh" ? "我的主页" : "My page") : undefined}
+                imageFit="photo"
               />
             </div>
           </header>

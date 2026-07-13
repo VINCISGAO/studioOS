@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useAcknowledgeAlert } from "@/components/studioos/acknowledge-alert-provider";
 import { BrandCampaignStep2FeaturedScheme } from "@/components/studioos/brand-campaign-step2-featured-scheme";
 import { BrandCampaignStep2CompactScheme } from "@/components/studioos/brand-campaign-step2-scheme-cards";
 import { BrandCampaignStep2SchemeSidebar } from "@/components/studioos/brand-campaign-step2-scheme-sidebar";
@@ -14,7 +15,7 @@ import { buildSchemeDisplayMetrics } from "@/lib/studioos/brand-campaign-scheme-
 import type { Locale } from "@/lib/i18n";
 import { syncBrandWizardStepUrl } from "@/lib/studioos/instant-nav";
 import type { WizardBriefSnapshot } from "@/lib/studioos/brand-wizard-brief-snapshot";
-import { STEP2_SCHEME_LAYOUT } from "@/lib/studioos/brand-campaign-step2-layout";
+import { STEP2_SCHEME_LAYOUT, BRAND_WIZARD_MAIN_SIDEBAR_GRID } from "@/lib/studioos/brand-campaign-step2-layout";
 import { BRAND_CAMPAIGN_STEP2_REVIEW_COPY } from "@/lib/studioos/brand-campaign-step2-copy";
 import { localizeCreativeDirection } from "@/lib/studioos/creative-direction-localization";
 import { CREATOR_SUBMITTED_CREATIVE_DIRECTION_ID } from "@/lib/studioos/creative-direction-selection";
@@ -26,8 +27,7 @@ function parseBudgetFallback(budget: string) {
   return match ? Number(match[0]) : 300;
 }
 
-const MAIN_SIDEBAR_GRID =
-  "grid gap-5 xl:grid-cols-[minmax(0,1fr)_min(380px,34%)] 2xl:grid-cols-[minmax(0,1fr)_400px]";
+const MAIN_SIDEBAR_GRID = BRAND_WIZARD_MAIN_SIDEBAR_GRID;
 
 export function BrandCampaignStep2Review({
   locale,
@@ -65,6 +65,7 @@ export function BrandCampaignStep2Review({
   onConfirmed: (directionId: string) => void;
 }) {
   const t = BRAND_CAMPAIGN_STEP2_REVIEW_COPY[locale];
+  const { alert } = useAcknowledgeAlert();
   const [localError, setLocalError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [previewId, setPreviewId] = useState<string | null>(null);
@@ -85,6 +86,11 @@ export function BrandCampaignStep2Review({
 
   const fallbackBudget = parseBudgetFallback(budget);
   const displayError = localError || error || loadError;
+
+  useEffect(() => {
+    if (displayError) alert(displayError);
+  }, [alert, displayError]);
+
   const minGeneratingActive = now < minGeneratingUntil;
   const directionsReady = directions.length > 0 && status === "ready";
   const showGeneratingOverlay =
@@ -117,7 +123,7 @@ export function BrandCampaignStep2Review({
 
   function handleConfirm() {
     if (!selectedId) {
-      setLocalError(t.chooseError);
+      alert(t.chooseError);
       return;
     }
     setLocalError(null);
@@ -346,8 +352,6 @@ export function BrandCampaignStep2Review({
               />
             ) : null}
           </div>
-
-          {displayError ? <p className="text-sm text-red-600">{displayError}</p> : null}
         </div>
 
         <BrandCampaignStep2Footer

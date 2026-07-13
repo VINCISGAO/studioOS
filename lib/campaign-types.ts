@@ -4,6 +4,7 @@ export type ReferenceType =
   | "youtube"
   | "tiktok"
   | "instagram"
+  | "vimeo"
   | "pinterest"
   | "behance"
   | "mp4"
@@ -33,6 +34,8 @@ export type StoredProjectAsset = {
   created_at: string;
 };
 
+import type { ReferenceAnalysisState } from "@/lib/studioos/reference-analysis.types";
+
 export type StoredProjectReference = {
   id: string;
   project_id: string;
@@ -42,6 +45,7 @@ export type StoredProjectReference = {
   platform: string;
   sort_order: number;
   created_at: string;
+  analysis?: ReferenceAnalysisState;
 };
 
 export type StoredCreativeBrief = {

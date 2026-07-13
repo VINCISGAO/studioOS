@@ -30,13 +30,13 @@ const copy = {
   zh: {
     invitations: "项目邀请",
     invitationsSub: "接受新的品牌项目",
-    campaigns: "进行中的 Campaign",
+    campaigns: "进行中的广告项目",
     campaignsSub: "数据库驱动的制作流程",
     orders: "分配订单",
     review: "审片",
     deliver: "交付",
     open: "打开",
-    emptyCampaigns: "暂无进行中的 Campaign。",
+    emptyCampaigns: "暂无进行中的广告项目。",
     emptyOrders: "暂无分配订单。"
   }
 };

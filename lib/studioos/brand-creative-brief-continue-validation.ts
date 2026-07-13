@@ -2,6 +2,8 @@ import type { BriefFormState } from "@/components/studioos/brand-campaign-step-b
 import type { Locale } from "@/lib/i18n";
 import { normalizeCustomBudgetInput } from "@/lib/studioos/brand-campaign-options";
 import { validateBriefScheduleDates, validateBriefVideoDuration } from "@/lib/studioos/brand-creative-brief-form";
+import { validateBriefAspectRatio } from "@/lib/studioos/brand-campaign-options";
+import { validateBriefResolution } from "@/lib/studioos/brand-creative-brief-options";
 import { BRIEF_FIELD_TARGETS } from "@/lib/studioos/brand-creative-brief-scroll";
 
 export type BriefContinueBlocker = {
@@ -14,12 +16,13 @@ export function getBriefContinueBlocker(input: {
   form: BriefFormState;
   productReady: boolean;
   budgetCustom: string;
+  skipBudget?: boolean;
   copy: {
     needInput: string;
     aspectRatioError: string;
   };
 }): BriefContinueBlocker | null {
-  const { locale, form, productReady, budgetCustom, copy } = input;
+  const { locale, form, productReady, budgetCustom, skipBudget, copy } = input;
   const productDescription = form.productDescription.trim() || form.rawSummary.trim();
 
   if (!form.projectTitle.trim()) {
@@ -36,12 +39,6 @@ export function getBriefContinueBlocker(input: {
     };
   }
 
-  const hasVisual =
-    productReady || Boolean(form.productUrl.trim() || form.brandWebsite.trim());
-  if (!hasVisual) {
-    return { error: copy.needInput, targetId: BRIEF_FIELD_TARGETS.productImage };
-  }
-
   const hasBrief =
     Boolean(productDescription) ||
     Boolean(form.adOneLiner.trim()) ||
@@ -54,6 +51,15 @@ export function getBriefContinueBlocker(input: {
     return { error: copy.aspectRatioError, targetId: BRIEF_FIELD_TARGETS.aspectRatio };
   }
 
+  const aspectRatioValidation = validateBriefAspectRatio(
+    form.aspectRatio,
+    form.aspectRatioCustom,
+    locale
+  );
+  if (!aspectRatioValidation.ok) {
+    return { error: aspectRatioValidation.error, targetId: BRIEF_FIELD_TARGETS.aspectRatio };
+  }
+
   const durationValidation = validateBriefVideoDuration(
     form.videoDuration,
     form.videoDurationCustom,
@@ -63,7 +69,12 @@ export function getBriefContinueBlocker(input: {
     return { error: durationValidation.error, targetId: BRIEF_FIELD_TARGETS.videoDuration };
   }
 
-  if (budgetCustom.trim()) {
+  const resolutionValidation = validateBriefResolution(form.resolution, locale);
+  if (!resolutionValidation.ok) {
+    return { error: resolutionValidation.error, targetId: BRIEF_FIELD_TARGETS.resolution };
+  }
+
+  if (!skipBudget && budgetCustom.trim()) {
     const budgetResult = normalizeCustomBudgetInput(budgetCustom, locale);
     if (!budgetResult.ok) {
       return { error: budgetResult.message, targetId: BRIEF_FIELD_TARGETS.budget };

@@ -12,7 +12,9 @@ import {
 import { campaignRepository } from "@/features/campaign/campaign.repository";
 import { PermissionService, type AuthUser } from "@/features/auth/permission.service";
 import { appError } from "@/lib/core/errors";
+import { referenceAnalysisService } from "@/features/campaign/reference-analysis.service";
 import { detectReferenceType } from "@/lib/campaign/reference-type";
+import { detectReferenceInputKind } from "@/lib/studioos/reference-platform";
 import type { ProjectAssetType, ReferenceType, StoredProjectAsset } from "@/lib/campaign-types";
 import { saveCampaignAssetUpload } from "@/lib/studioos/campaign-asset-upload";
 import { hasDatabaseUrl, prisma } from "@/lib/core/database/prisma";
@@ -155,6 +157,8 @@ export class CampaignAssetService {
     source_url: string;
     note?: string;
     actorEmail?: string;
+    input_kind?: ReferenceAssetMetadata["input_kind"];
+    locale?: "zh" | "en";
   }) {
     if (!hasDatabaseUrl()) return null;
 
@@ -171,19 +175,27 @@ export class CampaignAssetService {
     }
 
     const referenceType = detectReferenceType(url);
+    const inputKind = input.input_kind ?? detectReferenceInputKind(url, referenceType);
     const sortOrder = (campaign.assets ?? []).filter((asset) => {
       const meta = asset.metadataJson as ReferenceAssetMetadata | null;
       return meta?.kind === REFERENCE_ASSET_META_KIND;
     }).length;
 
-    const metadata: ReferenceAssetMetadata = {
+    const baseMetadata: ReferenceAssetMetadata = {
       kind: REFERENCE_ASSET_META_KIND,
       source_url: url,
       note: input.note?.trim() ?? "",
       sort_order: sortOrder,
       platform: referenceType,
-      reference_type: referenceType
+      reference_type: referenceType,
+      input_kind: inputKind
     };
+
+    const metadata = referenceAnalysisService.createPendingMetadata({
+      metadata: baseMetadata,
+      referenceType,
+      locale: input.locale === "en" ? "en" : "zh"
+    });
 
     const asset = await assetRepository.create({
       campaignId: campaign.id,
@@ -203,6 +215,8 @@ export class CampaignAssetService {
       { userId: campaign.brandId, email: input.actorEmail ?? "", role: "brand" },
       { legacy_project_id: input.legacyProjectId, source_url: url }
     );
+
+    referenceAnalysisService.scheduleAnalysis(asset.id, input.legacyProjectId, input.locale === "en" ? "en" : "zh");
 
     return {
       ...mapReferenceAssetToStoredProjectReference(asset),

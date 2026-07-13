@@ -8,7 +8,7 @@ import {
   saveBrandCampaignSetupAction
 } from "@/app/brand-campaign-actions";
 import { loadWizardDataAction } from "@/app/project-wizard-actions";
-import { BrandCampaignStep3Publish } from "@/components/studioos/brand-campaign-step3-publish";
+import { BrandCampaignStep3Budget } from "@/components/studioos/brand-campaign-step3-budget";
 import { BrandCampaignStep2Review } from "@/components/studioos/brand-campaign-step2-review";
 import {
   BrandCampaignStepBrief,
@@ -31,13 +31,16 @@ import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import type { StoredProject } from "@/lib/project-types";
 import type { ReorganizedBrandBrief } from "@/lib/studioos/brand-brief-ai";
-import { estimateBudgetRange, estimateDeliveryDays } from "@/lib/studioos/brand-campaign-display";
+import { estimateDeliveryDays } from "@/lib/studioos/brand-campaign-display";
+import { formatStoredBudgetRange } from "@/lib/money/display-money";
 import {
   defaultBrandBudget,
   defaultBrandTimeline,
-  defaultBrandAspectRatio,
+  defaultQuickBriefAspectRatio,
   deliveryTimelineLabel,
+  isValidBrandAspectRatio,
   resolveAspectRatioFromProject,
+  resolveBriefAspectRatioValue,
   resolveDeliveryTimelineFromProject
 } from "@/lib/studioos/brand-campaign-options";
 import { appendCreativeBriefExtendedFields, readCreativeBriefExtendedFields } from "@/lib/studioos/brand-creative-brief-form";
@@ -53,7 +56,6 @@ import {
 } from "@/lib/studioos/instant-nav";
 import { coerceErrorMessage, formatClientError } from "@/lib/studioos/format-client-error";
 import { cn } from "@/lib/utils";
-import { Sparkles } from "lucide-react";
 
 type WizardData = {
   project: StoredProject;
@@ -112,7 +114,7 @@ function readStoredQuestionnaire(project: StoredProject): Partial<BriefFormState
     productName: stored?.productName ?? project.product_name ?? "",
     productUrl: stored?.productUrl ?? project.product_url ?? "",
     productDescription: stored?.productDescription ?? "",
-    objective: stored?.objective ?? project.commercial_objective ?? "launch",
+    objective: stored?.objective ?? project.commercial_objective ?? "",
     audienceDescription: stored?.audienceDescription ?? project.target_audience ?? "",
     platforms:
       stored?.platforms ??
@@ -147,7 +149,7 @@ function appendBriefForm(fd: FormData, state: BriefFormState) {
   fd.set("raw_summary", state.rawSummary || state.productDescription || state.adOneLiner);
   fd.set("budget_range", state.budgetRange);
   fd.set("delivery_timeline", state.deliveryTimeline);
-  fd.set("aspect_ratio", state.aspectRatio);
+  fd.set("aspect_ratio", resolveBriefAspectRatioValue(state));
   fd.set("title", state.projectTitle || state.refined?.title || state.productName);
   appendCreativeBriefExtendedFields(fd, state);
   if (state.refined) {
@@ -264,7 +266,10 @@ export function BrandCampaignWizard({
     refreshWizardMedia();
   }, [initialData.assets.length, initialData.references.length, refreshWizardMedia]);
 
-  const budget = estimateBudgetRange(wizardData.project.budget_range);
+  const budget = useMemo(() => {
+    const stored = briefSnapshot?.budgetRange?.trim() || wizardData.project.budget_range?.trim();
+    return stored ? formatStoredBudgetRange(stored, locale) : "";
+  }, [briefSnapshot?.budgetRange, wizardData.project.budget_range, locale]);
   const deliveryTimelineId = resolveDeliveryTimelineFromProject(wizardData.project);
   const delivery = estimateDeliveryDays(
     wizardData.project.deadline,
@@ -276,7 +281,7 @@ export function BrandCampaignWizard({
       productName: "",
       productUrl: "",
       productDescription: "",
-      objective: "launch",
+      objective: "",
       audienceDescription: "",
       platforms: [],
       extraNotes: "",
@@ -284,9 +289,17 @@ export function BrandCampaignWizard({
       refined: null,
       budgetRange: defaultBrandBudget(),
       deliveryTimeline: defaultBrandTimeline(),
-      aspectRatio: defaultBrandAspectRatio(),
       ...readCreativeBriefExtendedFields(wizardData.project),
-      ...readStoredQuestionnaire(wizardData.project)
+      ...readStoredQuestionnaire(wizardData.project),
+      aspectRatio: (() => {
+        const stored = wizardData.project.settings_json?.brand_questionnaire as
+          | { aspectRatio?: string }
+          | undefined;
+        const saved = stored?.aspectRatio?.trim();
+        return saved && isValidBrandAspectRatio(saved)
+          ? saved
+          : defaultQuickBriefAspectRatio();
+      })()
     }),
     [wizardData.project]
   );
@@ -357,60 +370,77 @@ export function BrandCampaignWizard({
             locale === "zh" ? "保存失败，请重试" : "Save failed — try again"
           )
         );
+        return;
       }
+      await refreshWizardProject();
     }, "save-setup");
   }
 
   const [isApprovingDirection, setIsApprovingDirection] = useState(false);
 
+  async function refreshWizardProject() {
+    const data = await loadWizardDataAction(projectId);
+    setWizardData((prev) => ({
+      ...prev,
+      project: data.project,
+      brief: data.brief,
+      pack: data.pack
+    }));
+  }
+
   async function confirmDirection(directionId: string) {
     if (isApprovingDirection) return;
     setError(null);
-    setIsApprovingDirection(true);
 
     const fd = new FormData();
     fd.set("lang", locale);
     fd.set("project_id", projectId);
     fd.set("direction_id", directionId);
 
-    try {
-      const result = await approveBrandCreativeDirectionAction(fd);
-      if (!result.ok) {
+    setStep3Mounted(true);
+    goStep(3);
+
+    runInBackground(async () => {
+      setIsApprovingDirection(true);
+      try {
+        const result = await approveBrandCreativeDirectionAction(fd);
+        if (!result.ok) {
+          goStep(2);
+          setError(
+            coerceErrorMessage(
+              result.error,
+              locale === "zh" ? "创意确认失败，请重试" : "Creative approval failed — try again"
+            )
+          );
+          return;
+        }
+        await refreshWizardProject();
+      } catch (caught) {
+        goStep(2);
         setError(
-          coerceErrorMessage(
-            result.error,
+          formatClientError(
+            caught,
             locale === "zh" ? "创意确认失败，请重试" : "Creative approval failed — try again"
           )
         );
-        return;
+      } finally {
+        setIsApprovingDirection(false);
       }
-      setStep3Mounted(true);
-      goStep(3);
-    } catch (caught) {
-      setError(
-        formatClientError(
-          caught,
-          locale === "zh" ? "创意确认失败，请重试" : "Creative approval failed — try again"
-        )
-      );
-    } finally {
-      setIsApprovingDirection(false);
-    }
+    }, "freeze-brief");
   }
 
   const maxWidth = step === 1 || step === 2 || step === 3 ? "max-w-none" : "max-w-3xl";
-  const step2FullBleed = step === 2 ? "h-full min-h-0 w-full" : "";
+  const stepFullBleed = step === 2 || step === 3 ? "h-full min-h-0 w-full" : "";
 
   return (
-    <div className={cn("mx-auto w-full", maxWidth, step2FullBleed, step === 1 && "h-full min-h-0")}>
+    <div className={cn("mx-auto w-full", maxWidth, stepFullBleed)}>
       {step !== 2 && step !== 1 && step !== 3 ? (
       <div className="mb-8">
         <WizardStepper locale={locale} currentStep={step} variant="brand" />
         <div className="mt-6 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-          <div className={cn("max-w-2xl", step === 3 && "mx-auto text-center lg:mx-0 lg:text-left")}>
+          <div className="max-w-2xl">
             <h1 className="flex items-center justify-center gap-2 text-3xl font-semibold tracking-tight text-zinc-950 sm:text-[32px] lg:justify-start">
               {meta.headline[locale]}
-              {step === 3 ? <Sparkles className="h-7 w-7 text-violet-600" /> : null}
             </h1>
             <p className="mt-3 text-base leading-relaxed text-zinc-500">{meta.subtitle[locale]}</p>
           </div>
@@ -443,9 +473,8 @@ export function BrandCampaignWizard({
       ) : null}
 
       {/* Step 2 mounts only after user continues — AI loads on explicit navigation, not on draft prefetch */}
-      {step2Mounted ? (
-        <div className={cn(step !== 2 && "hidden")} aria-hidden={step !== 2}>
-          <BrandCampaignStep2Review
+      {step === 2 && step2Mounted ? (
+        <BrandCampaignStep2Review
             locale={locale}
             project={wizardData.project}
             references={wizardData.references}
@@ -463,15 +492,18 @@ export function BrandCampaignWizard({
             onSaveDraft={() => saveDraft(briefInitial)}
             onConfirmed={confirmDirection}
           />
-        </div>
       ) : null}
 
       {step3Mounted ? (
         <div className={cn(step !== 3 && "hidden")} aria-hidden={step !== 3}>
-          <BrandCampaignStep3Publish
+          <BrandCampaignStep3Budget
             locale={locale}
             projectId={projectId}
+            project={wizardData.project}
+            delivery={delivery}
+            initial={briefInitial}
             error={error}
+            freezePending={isApprovingDirection}
             onBack={() => goStep(2)}
           />
         </div>

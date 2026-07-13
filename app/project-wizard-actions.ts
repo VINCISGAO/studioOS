@@ -180,9 +180,11 @@ export async function addReferenceAction(formData: FormData) {
     return { ok: false as const, error: lang === "zh" ? "请输入链接" : "Enter a URL" };
   }
 
-  await addProjectReference({ project_id: projectId, source_url: url });
+  await addProjectReference({ project_id: projectId, source_url: url, input_kind: "link", locale: lang });
+  const references = await listReferencesForProject(projectId);
+  const reference = references.find((item) => item.source_url === url) ?? null;
   revalidateWizard(projectId);
-  return { ok: true as const };
+  return { ok: true as const, reference };
 }
 
 export async function removeReferenceAction(formData: FormData) {

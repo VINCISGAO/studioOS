@@ -59,8 +59,8 @@ export const cinematicCopy = {
     },
     zh: {
       chapter: "01 — 开场",
-      lines: ["连接全球品牌", "与 AI 创作者"],
-      subtitle: "VINCIS 让品牌方在一个工作流里完成需求简报、AI 创作者匹配、审片、资金托管和成片交付",
+      lines: ["连接全球品牌", "与智能创作者"],
+      subtitle: "VINCIS 让品牌方在一个工作流里完成创意简报、智能创作者匹配、审片、资金托管和成片交付",
       primary: "我是品牌方",
       secondary: "我是创作者",
       loggedInPrimary: "品牌方门户",
@@ -116,7 +116,7 @@ export const cinematicCopy = {
     zh: {
       chapter: "03 — 制作网络",
       title: "品牌方直联",
-      highlight: "严选的制作方名册",
+      highlight: "严选的创作者名册",
       subtitle: "导演、剪辑、AI 制作团队 — 按作品集质量与交付纪律筛选",
       rosterEyebrow: "实时名册",
       statusActive: "制作中",
@@ -158,7 +158,7 @@ export const cinematicCopy = {
     zh: {
       chapter: "05 — 品质墙",
       title: "匹配之前，作品先说话",
-      viewAll: "浏览全部制作方"
+      viewAll: "浏览全部创作者"
     }
   },
   escrow: {

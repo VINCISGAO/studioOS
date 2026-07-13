@@ -25,7 +25,6 @@ import {
   UploadCloud,
   Users,
   X,
-  XCircle
 } from "lucide-react";
 import {
   polishBrandProfileAction,
@@ -38,7 +37,10 @@ import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import type { StoredBrandProfile } from "@/lib/brand-profile-types";
 import { buildAvatarInitials } from "@/lib/studioos/avatar-initials";
-import { compressImageForUpload } from "@/lib/studioos/image-upload-client";
+import { useProfileImagePicker } from "@/components/studioos/image-crop/use-profile-image-picker";
+import { useAcknowledgeAlert } from "@/components/studioos/acknowledge-alert-provider";
+import { PROFILE_AVATAR_ASPECT, PROFILE_COVER_ASPECT } from "@/lib/studioos/image-crop-client";
+import { profileImageClassName } from "@/lib/studioos/profile-image-styles";
 import { cn } from "@/lib/utils";
 
 const countryOptions = ["United States", "South Korea", "United Kingdom", "Spain", "France", "Singapore", "Thailand"];
@@ -160,11 +162,11 @@ const copy = {
   },
   zh: {
     title: "品牌主页",
-    subtitle: "这是创作者在接受你的 Campaign 之前会看到的公开品牌资料。",
+    subtitle: "这是创作者在接受你的广告项目合作邀请之前会看到的公开品牌资料。",
     previewPublicPage: "预览公开主页",
     saveChanges: "保存修改",
     editCover: "编辑封面",
-    campaigns: "Campaign 数",
+    campaigns: "项目数",
     avgBudget: "平均预算",
     responseRate: "响应率",
     viewPublicPage: "查看公开主页",
@@ -176,13 +178,13 @@ const copy = {
     publishProfile: "发布主页",
     profileSaved: "资料已保存。",
     profilePublished: "品牌主页已发布。",
-    logoUpdated: "Logo 已更新。",
-    logoFailed: "Logo 上传失败。",
+    logoUpdated: "品牌标识已更新。",
+    logoFailed: "品牌标识上传失败。",
     showcaseUploaded: "品牌视频已加入公开主页。",
     showcaseFailed: "视频上传失败。",
     describeFirst: "请先描述你的品牌。",
-    aiGenerated: "AI 已生成公开主页文案。",
-    fallbackHeadline: "为社交增长打造的高端 DTC 护肤品牌。",
+    aiGenerated: "智能助手已生成公开主页文案。",
+    fallbackHeadline: "为社交增长打造的高端直营护肤品牌。",
     sections: {
       basicTitle: "基础信息",
       basicHelper: "告诉创作者你的公司基础信息。",
@@ -191,31 +193,31 @@ const copy = {
       industry: "行业",
       website: "官网",
       country: "国家 / 地区",
-      aiTitle: "AI 品牌助手",
-      aiHelper: "用自然语言描述你的品牌，AI 会整理成专业的公开主页。",
-      aiButton: "AI 生成",
+      aiTitle: "智能品牌助手",
+      aiHelper: "用自然语言描述你的品牌，系统会整理成专业的公开主页。",
+      aiButton: "智能生成",
       aiPlaceholder:
-        "自然描述你的品牌。\n\n例如：我们是一个美国高端 DTC 护肤品牌，主打 clean ingredients 和 TikTok 效果广告。",
-      aiFills: "AI 会生成一句话介绍、品牌 Bio、品牌标签和品牌语气。",
+        "自然描述你的品牌。\n\n例如：我们是一个美国高端直营护肤品牌，主打天然成分和抖音效果广告。",
+      aiFills: "系统会生成一句话介绍、品牌介绍、品牌标签和品牌语气。",
       publicTitle: "公开主页",
       publicHelper: "创作者会看到的品牌介绍。",
       headline: "一句话介绍",
-      headlinePlaceholder: "为社交增长打造的高端 DTC 护肤品牌。",
+      headlinePlaceholder: "为社交增长打造的高端直营护肤品牌。",
       brandBio: "品牌介绍",
       brandBioPlaceholder: "告诉创作者你卖什么、服务谁，以及什么内容适合你的品牌。",
       brandTone: "品牌语气",
       tagsTitle: "品牌标签",
-      tagsHelper: "添加创作者和 AI 匹配都能理解的品牌信号。",
+      tagsHelper: "添加创作者和智能匹配都能理解的品牌信号。",
       addTag: "添加标签",
       assetsTitle: "品牌资产",
       assetsHelper: "上传素材，帮助创作者理解你的品牌。",
       showcaseTitle: "公开品牌视频",
       showcaseTitlePlaceholder: "显示在公开主页上的视频标题",
       visibilityTitle: "可见性",
-      visibilityHelper: "控制创作者在接受 Campaign 前能看到哪些信息。"
+      visibilityHelper: "控制创作者在接受合作邀请前能看到哪些信息。"
     },
     assets: {
-      logo: "Logo",
+      logo: "品牌标识",
       cover: "封面图",
       product: "产品图",
       reference: "品牌视频",
@@ -226,11 +228,11 @@ const copy = {
       publicProfile: "公开主页",
       website: "展示官网",
       portfolio: "展示作品集",
-      campaignHistory: "展示 Campaign 历史",
+      campaignHistory: "展示项目历史",
       followers: "接收关注"
     },
     toneDefault: "高端、清晰、适合创作者理解",
-    toneOpenAI: "AI 整理，高端、简洁",
+    toneOpenAI: "智能整理，高端、简洁",
     toneTemplate: "高端、精炼、效果导向"
   }
 };
@@ -278,23 +280,14 @@ function defaultTags(profile: StoredBrandProfile) {
 }
 
 function ToastBanner({ toast }: { toast: Toast }) {
-  const isSuccess = toast.variant === "success";
   return (
     <div className="fixed inset-x-0 top-5 z-50 flex justify-center px-4">
       <div
-        className={cn(
-          "flex max-w-md items-start gap-3 rounded-2xl border bg-white px-4 py-3 text-sm shadow-[0_14px_36px_rgba(15,23,42,0.12)]",
-          isSuccess ? "border-emerald-100 text-zinc-900" : "border-red-100 text-red-700"
-        )}
+        className="flex max-w-md items-start gap-3 rounded-2xl border border-emerald-100 bg-white px-4 py-3 text-sm text-zinc-900 shadow-[0_14px_36px_rgba(15,23,42,0.12)]"
         role="status"
       >
-        <span
-          className={cn(
-            "mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full",
-            isSuccess ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"
-          )}
-        >
-          {isSuccess ? <CheckCircle2 className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
+        <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+          <CheckCircle2 className="h-4 w-4" />
         </span>
         <span>
           <span className="font-semibold">{toast.message}</span>
@@ -473,6 +466,7 @@ function AssetUploadCard({
   helper,
   icon,
   preview,
+  previewFit = "photo",
   dragLabel,
   readyLabel,
   accept = "image/jpeg,image/png,image/webp,image/gif",
@@ -483,6 +477,7 @@ function AssetUploadCard({
   helper: string;
   icon: ReactNode;
   preview?: string | null;
+  previewFit?: "logo" | "photo";
   dragLabel: string;
   readyLabel: string;
   accept?: string;
@@ -542,9 +537,16 @@ function AssetUploadCard({
             <video src={preview} className="h-full w-full bg-black object-cover" muted playsInline />
           ) : preview.startsWith("blob:") ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={preview} alt="" className="h-full w-full object-cover" />
+            <img src={preview} alt="" className={cn("h-full w-full", profileImageClassName(previewFit))} />
           ) : (
-            <Image src={preview} alt="" width={180} height={90} className="h-full w-full object-cover" unoptimized />
+            <Image
+              src={preview}
+              alt=""
+              width={180}
+              height={90}
+              className={cn("h-full w-full", profileImageClassName(previewFit))}
+              unoptimized
+            />
           )
         ) : (
           <div className="flex flex-col items-center gap-1 px-2 text-center text-xs leading-4 text-zinc-400">
@@ -564,6 +566,8 @@ function AssetUploadCard({
 export function BrandProfileEditor({ locale, profile }: BrandProfileEditorProps) {
   const t = copy[locale];
   const router = useRouter();
+  const { alert } = useAcknowledgeAlert();
+  const formDirtyRef = useRef(false);
   const [companyName, setCompanyName] = useState(profile.company_name);
   const [displayName, setDisplayName] = useState(profile.display_name);
   const [industry, setIndustry] = useState(profile.industry || industryOptions[0]);
@@ -591,16 +595,73 @@ export function BrandProfileEditor({ locale, profile }: BrandProfileEditorProps)
     reference: profile.showcase_ads.find((item) => item.thumbnail_url)?.thumbnail_url ?? null
   });
   const [toast, setToast] = useState<Toast | null>(null);
-  const [formError, setFormError] = useState<string | null>(null);
   const [logoUploading, setLogoUploading] = useState(false);
   const [coverUploading, setCoverUploading] = useState(false);
   const [showcaseUploading, setShowcaseUploading] = useState(false);
-  const logoInputRef = useRef<HTMLInputElement | null>(null);
-  const coverInputRef = useRef<HTMLInputElement | null>(null);
   const toastTimerRef = useRef<number | null>(null);
   const [isPending, startTransition] = useTransition();
   const [isPolishing, startPolish] = useTransition();
   const publicHref = withLocale(`/brands/${profile.id}`, locale);
+
+  async function handleLogoFile(file: File) {
+    setLogoUploading(true);
+    try {
+      const fd = new FormData();
+      fd.set("lang", locale);
+      fd.set("avatar_file", file);
+      const result = await uploadBrandAvatarAction(fd);
+      if (!result.ok) {
+        notify(result.error, "error");
+        return;
+      }
+      setAssets((prev) => ({ ...prev, logo: result.logo_url }));
+      notify(t.logoUpdated, "success");
+      startTransition(() => router.refresh());
+    } catch {
+      notify(t.logoFailed, "error");
+    } finally {
+      setLogoUploading(false);
+    }
+  }
+
+  async function handleCoverFile(file: File) {
+    setCoverUploading(true);
+    try {
+      const fd = new FormData();
+      fd.set("lang", locale);
+      fd.set("cover_file", file);
+      const result = await uploadBrandCoverAction(fd);
+      if (!result.ok) {
+        notify(result.error, "error");
+        return;
+      }
+      setAssets((prev) => {
+        if (prev.cover?.startsWith("blob:")) URL.revokeObjectURL(prev.cover);
+        return { ...prev, cover: result.cover_url };
+      });
+      notify(locale === "zh" ? "封面已更新" : "Cover updated", "success");
+      startTransition(() => router.refresh());
+    } catch {
+      notify(locale === "zh" ? "封面上传失败" : "Cover upload failed", "error");
+    } finally {
+      setCoverUploading(false);
+    }
+  }
+
+  const logoPicker = useProfileImagePicker({
+    locale,
+    aspectRatio: PROFILE_AVATAR_ASPECT,
+    fileNamePrefix: "brand-logo",
+    outputPreset: "avatar",
+    onCropped: handleLogoFile
+  });
+  const coverPicker = useProfileImagePicker({
+    locale,
+    aspectRatio: PROFILE_COVER_ASPECT,
+    fileNamePrefix: "brand-cover",
+    outputPreset: "cover",
+    onCropped: handleCoverFile
+  });
 
   const initials = useMemo(() => buildAvatarInitials(displayName || companyName, "B"), [companyName, displayName]);
   const campaignCount = profile.showcase_ads.length;
@@ -610,6 +671,28 @@ export function BrandProfileEditor({ locale, profile }: BrandProfileEditorProps)
   useEffect(() => {
     setBrandTone(t.toneDefault);
   }, [t.toneDefault]);
+
+  useEffect(() => {
+    if (formDirtyRef.current) return;
+    setCompanyName(profile.company_name);
+    setDisplayName(profile.display_name);
+    setIndustry(profile.industry || industryOptions[0]);
+    setWebsite(profile.website);
+    setHeadline(profile.headline);
+    setBio(profile.bio);
+  }, [
+    profile.bio,
+    profile.company_name,
+    profile.display_name,
+    profile.headline,
+    profile.industry,
+    profile.updated_at,
+    profile.website
+  ]);
+
+  function markFormDirty() {
+    formDirtyRef.current = true;
+  }
 
   useEffect(() => {
     return () => {
@@ -623,11 +706,15 @@ export function BrandProfileEditor({ locale, profile }: BrandProfileEditorProps)
   }, [assets.cover, assets.product, assets.reference]);
 
   function notify(message: string, variant: Toast["variant"] = "success", detail?: string) {
+    if (variant === "error") {
+      alert(detail ? `${message}\n${detail}` : message);
+      return;
+    }
     if (toastTimerRef.current) {
       window.clearTimeout(toastTimerRef.current);
     }
     setToast({ message, variant, detail });
-    toastTimerRef.current = window.setTimeout(() => setToast(null), variant === "success" ? 4200 : 3200);
+    toastTimerRef.current = window.setTimeout(() => setToast(null), 4200);
   }
 
   function buildFormData(markComplete: boolean) {
@@ -644,14 +731,13 @@ export function BrandProfileEditor({ locale, profile }: BrandProfileEditorProps)
   }
 
   function handleSave(markComplete: boolean) {
-    setFormError(null);
     startTransition(async () => {
       const result = await saveBrandProfileAction(buildFormData(markComplete));
       if (!result.ok) {
-        setFormError(result.error);
-        notify(result.error, "error");
+        alert(result.error);
         return;
       }
+      formDirtyRef.current = false;
       notify(markComplete ? t.profilePublished : t.profileSaved, "success");
       router.refresh();
     });
@@ -671,9 +757,8 @@ export function BrandProfileEditor({ locale, profile }: BrandProfileEditorProps)
   }
 
   function handlePolish() {
-    setFormError(null);
     if (![aiDraft, headline, bio, companyName, displayName, industry].some((item) => item.trim())) {
-      setFormError(t.describeFirst);
+      void alert(t.describeFirst);
       return;
     }
 
@@ -689,7 +774,6 @@ export function BrandProfileEditor({ locale, profile }: BrandProfileEditorProps)
       fd.set("draft", aiDraft);
       const result = await polishBrandProfileAction(fd);
       if (!result.ok) {
-        setFormError(result.error);
         notify(result.error, "error");
         return;
       }
@@ -699,63 +783,6 @@ export function BrandProfileEditor({ locale, profile }: BrandProfileEditorProps)
       inferTagsFromAI(result.headline, result.bio);
       notify(t.aiGenerated, "success");
     });
-  }
-
-  async function handleLogoFile(file: File) {
-    setLogoUploading(true);
-    try {
-      const uploadFile = await compressImageForUpload(file, {
-        maxBytes: 1.8 * 1024 * 1024,
-        maxDimension: 1000,
-        quality: 0.78,
-        fileNamePrefix: "brand-logo"
-      });
-      const fd = new FormData();
-      fd.set("lang", locale);
-      fd.set("avatar_file", uploadFile);
-      const result = await uploadBrandAvatarAction(fd);
-      if (!result.ok) {
-        notify(result.error, "error");
-        return;
-      }
-      setAssets((prev) => ({ ...prev, logo: result.logo_url }));
-      notify(t.logoUpdated, "success");
-      router.refresh();
-    } catch {
-      notify(t.logoFailed, "error");
-    } finally {
-      setLogoUploading(false);
-    }
-  }
-
-  async function handleCoverFile(file: File) {
-    setCoverUploading(true);
-    try {
-      const uploadFile = await compressImageForUpload(file, {
-        maxBytes: 2.5 * 1024 * 1024,
-        maxDimension: 1920,
-        quality: 0.82,
-        fileNamePrefix: "brand-cover"
-      });
-      const fd = new FormData();
-      fd.set("lang", locale);
-      fd.set("cover_file", uploadFile);
-      const result = await uploadBrandCoverAction(fd);
-      if (!result.ok) {
-        notify(result.error, "error");
-        return;
-      }
-      setAssets((prev) => {
-        if (prev.cover?.startsWith("blob:")) URL.revokeObjectURL(prev.cover);
-        return { ...prev, cover: result.cover_url };
-      });
-      notify(locale === "zh" ? "封面已更新" : "Cover updated", "success");
-      router.refresh();
-    } catch {
-      notify(locale === "zh" ? "封面上传失败" : "Cover upload failed", "error");
-    } finally {
-      setCoverUploading(false);
-    }
   }
 
   async function handleShowcaseVideoFile(file: File) {
@@ -811,6 +838,8 @@ export function BrandProfileEditor({ locale, profile }: BrandProfileEditorProps)
   return (
     <div className="flex h-full min-h-0 flex-col rounded-[28px] bg-[radial-gradient(circle_at_0%_0%,rgba(124,58,237,0.06),transparent_34%),linear-gradient(180deg,#ffffff_0%,#fafaff_100%)] text-zinc-950">
       {toast ? <ToastBanner toast={toast} /> : null}
+      {logoPicker.cropModal}
+      {coverPicker.cropModal}
 
       <main className="flex min-h-0 flex-1 flex-col px-1 pb-2 sm:px-2">
         <header className="mb-6 shrink-0 rounded-[24px] border border-white/70 bg-white/80 px-4 py-4 shadow-[0_12px_45px_rgba(15,23,42,0.045)] backdrop-blur flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -851,26 +880,18 @@ export function BrandProfileEditor({ locale, profile }: BrandProfileEditorProps)
         <div className="grid min-h-0 flex-1 gap-6 md:grid-cols-[minmax(300px,340px)_minmax(0,1fr)] md:items-stretch xl:grid-cols-[360px_minmax(0,1fr)]">
           <aside className="md:row-span-2 md:self-stretch md:pr-1">
             <input
-              ref={logoInputRef}
+              ref={logoPicker.inputRef}
               type="file"
               accept="image/jpeg,image/png,image/webp,image/gif"
               className="hidden"
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                if (file) void handleLogoFile(file);
-                event.target.value = "";
-              }}
+              onChange={logoPicker.onInputChange}
             />
             <input
-              ref={coverInputRef}
+              ref={coverPicker.inputRef}
               type="file"
               accept="image/jpeg,image/png,image/webp,image/gif"
               className="hidden"
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                if (file) void handleCoverFile(file);
-                event.target.value = "";
-              }}
+              onChange={coverPicker.onInputChange}
             />
             <div className="flex h-full flex-col overflow-hidden rounded-[28px] border border-[#E8E8EC] bg-white shadow-[0_24px_70px_rgba(36,24,80,0.08)] transition duration-150 hover:-translate-y-0.5 hover:shadow-[0_30px_90px_rgba(109,76,255,0.12)]">
               <div className="relative h-[144px] bg-[radial-gradient(circle_at_18%_18%,#fff_0,#f8d5e5_24%,#eadcff_52%,#dbeafe_100%)]">
@@ -885,9 +906,10 @@ export function BrandProfileEditor({ locale, profile }: BrandProfileEditorProps)
                 <button
                   type="button"
                   disabled={coverUploading}
-                  className="absolute right-4 top-4 rounded-2xl bg-white/92 px-3 py-2 text-xs font-semibold text-zinc-800 shadow-sm ring-1 ring-white/80 backdrop-blur transition hover:bg-white disabled:opacity-60"
-                  onClick={() => coverInputRef.current?.click()}
+                  className="absolute right-4 top-4 inline-flex items-center gap-1.5 rounded-full border border-white/90 bg-white px-3.5 py-2 text-xs font-semibold text-zinc-900 shadow-[0_6px_20px_rgba(15,23,42,0.28)] transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-60"
+                  onClick={() => coverPicker.openPicker()}
                 >
+                  <ImageIcon className="h-3.5 w-3.5 text-violet-600" />
                   {coverUploading ? (locale === "zh" ? "上传中…" : "Uploading…") : t.editCover}
                 </button>
               </div>
@@ -896,10 +918,10 @@ export function BrandProfileEditor({ locale, profile }: BrandProfileEditorProps)
                 <button
                   type="button"
                   className="group relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-[18px] border-4 border-white bg-[#FFE4DE] text-center text-lg font-semibold leading-6 text-zinc-950 shadow-[0_10px_28px_rgba(15,23,42,0.12)]"
-                  onClick={() => logoInputRef.current?.click()}
+                  onClick={() => logoPicker.openPicker()}
                 >
                   {assets.logo ? (
-                    <Image src={assets.logo} alt="" fill className="object-cover" unoptimized />
+                    <Image src={assets.logo} alt="" fill className={profileImageClassName("logo")} unoptimized />
                   ) : (
                     initials || "AA"
                   )}
@@ -968,8 +990,24 @@ export function BrandProfileEditor({ locale, profile }: BrandProfileEditorProps)
               className="md:col-start-2 md:row-start-1"
             >
               <div className="grid gap-4 md:grid-cols-3">
-                <Field label={t.sections.companyName} value={companyName} onChange={setCompanyName} required />
-                <Field label={t.sections.displayName} value={displayName} onChange={setDisplayName} required />
+                <Field
+                  label={t.sections.companyName}
+                  value={companyName}
+                  onChange={(value) => {
+                    markFormDirty();
+                    setCompanyName(value);
+                  }}
+                  required
+                />
+                <Field
+                  label={t.sections.displayName}
+                  value={displayName}
+                  onChange={(value) => {
+                    markFormDirty();
+                    setDisplayName(value);
+                  }}
+                  required
+                />
                 <SelectField
                   label={t.sections.industry}
                   value={industry}
@@ -1122,10 +1160,11 @@ export function BrandProfileEditor({ locale, profile }: BrandProfileEditorProps)
                   helper="PNG, SVG"
                   icon={<ImageIcon className="h-4 w-4" />}
                   preview={assets.logo}
+                  previewFit="logo"
                   dragLabel={t.assets.drag}
                   readyLabel={t.assets.ready}
                   busy={logoUploading}
-                  onFile={(file) => void handleLogoFile(file)}
+                  onFile={(file) => logoPicker.requestCrop(file)}
                 />
                 <AssetUploadCard
                   title={t.assets.cover}
@@ -1135,7 +1174,7 @@ export function BrandProfileEditor({ locale, profile }: BrandProfileEditorProps)
                   dragLabel={t.assets.drag}
                   readyLabel={t.assets.ready}
                   busy={coverUploading}
-                  onFile={(file) => void handleCoverFile(file)}
+                  onFile={(file) => coverPicker.requestCrop(file)}
                 />
                 <AssetUploadCard
                   title={t.assets.product}
@@ -1194,10 +1233,6 @@ export function BrandProfileEditor({ locale, profile }: BrandProfileEditorProps)
                 />
               </div>
             </SectionCard>
-
-            {formError ? (
-              <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700 md:col-span-2">{formError}</div>
-            ) : null}
           </div>
         </div>
       </main>

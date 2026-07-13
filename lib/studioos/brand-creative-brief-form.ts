@@ -1,6 +1,8 @@
 import type { BriefFormState } from "@/components/studioos/brand-campaign-step-brief";
 import type { Locale } from "@/lib/i18n";
 import type { StoredProject } from "@/lib/project-types";
+import type { BrandDeliveryTimelineId } from "@/lib/studioos/brand-campaign-options";
+import { isCustomAspectRatioPattern, isValidBrandAspectRatio } from "@/lib/studioos/brand-campaign-options";
 import { RESOLUTION_OPTIONS } from "@/lib/studioos/brand-creative-brief-options";
 
 type StoredQuestionnaire = Partial<BriefFormState> & {
@@ -12,7 +14,7 @@ function normalizeVideoDuration(value: unknown, fallback: string) {
   return raw === "6s" || raw === "10s" ? "15s" : raw;
 }
 
-export function normalizeBriefResolution(value: unknown, fallback = "4K") {
+export function normalizeBriefResolution(value: unknown, fallback = "1080p") {
   const raw = String(value ?? fallback);
   if (raw === "720p") return "1080p";
   return RESOLUTION_OPTIONS.includes(raw as (typeof RESOLUTION_OPTIONS)[number]) ? raw : fallback;
@@ -45,6 +47,7 @@ export function defaultCreativeBriefExtendedFields(): Pick<
   | "scheduleStart"
   | "scheduleDelivery"
   | "schedulePublish"
+  | "aspectRatioCustom"
 > {
   return {
     projectTitle: "",
@@ -52,7 +55,7 @@ export function defaultCreativeBriefExtendedFields(): Pick<
     industry: "",
     brandName: "",
     brandWebsite: "",
-    videoDuration: "30s",
+    videoDuration: "15s",
     videoDurationCustom: "",
     estimatedShotCount: 0,
     creativeStyles: ["cinematic"],
@@ -62,7 +65,7 @@ export function defaultCreativeBriefExtendedFields(): Pick<
     audienceAge: "25-34",
     audienceRegion: "global",
     audienceGender: "all",
-    resolution: "4K",
+    resolution: "1080p",
     frameRate: "30 fps",
     videoQuantity: 1,
     mustInclude: [],
@@ -71,7 +74,8 @@ export function defaultCreativeBriefExtendedFields(): Pick<
     mustAvoidCustom: "",
     scheduleStart: "",
     scheduleDelivery: "",
-    schedulePublish: ""
+    schedulePublish: "",
+    aspectRatioCustom: ""
   };
 }
 
@@ -118,7 +122,13 @@ export function readCreativeBriefExtendedFields(
     mustAvoidCustom: String(source.mustAvoidCustom ?? ""),
     scheduleStart: String(source.scheduleStart ?? ""),
     scheduleDelivery: String(source.scheduleDelivery ?? ""),
-    schedulePublish: String(source.schedulePublish ?? "")
+    schedulePublish: String(source.schedulePublish ?? ""),
+    aspectRatioCustom: String(
+      source.aspectRatioCustom ??
+        (source.aspectRatio && !isValidBrandAspectRatio(String(source.aspectRatio)) && isCustomAspectRatioPattern(String(source.aspectRatio))
+          ? source.aspectRatio
+          : "")
+    )
   };
 }
 
@@ -160,7 +170,8 @@ export function readCreativeBriefExtendedFieldsFromFormData(
     mustAvoidCustom: String(formData.get("mustAvoidCustom") ?? "").trim(),
     scheduleStart: String(formData.get("scheduleStart") ?? "").trim(),
     scheduleDelivery: String(formData.get("scheduleDelivery") ?? "").trim(),
-    schedulePublish: String(formData.get("schedulePublish") ?? "").trim()
+    schedulePublish: String(formData.get("schedulePublish") ?? "").trim(),
+    aspectRatioCustom: String(formData.get("aspectRatioCustom") ?? "").trim()
   };
 }
 
@@ -204,6 +215,10 @@ export function addBriefScheduleDays(date: Date, days: number): Date {
   return next;
 }
 
+export function getBriefMinStartDate(now: Date = new Date()): Date {
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+}
+
 export function getBriefMinDeliveryDate(start: Date): Date {
   return addBriefScheduleDays(start, BRIEF_SCHEDULE_MIN_GAP_DAYS);
 }
@@ -233,6 +248,12 @@ export function validateBriefScheduleDates(
   if (!start || !delivery) {
     return { ok: false, error: locale === "zh" ? "日期格式无效" : "Invalid date format" };
   }
+  if (isBriefScheduleDayBefore(start, getBriefMinStartDate())) {
+    return {
+      ok: false,
+      error: locale === "zh" ? "开始时间不能早于今天" : "Start date cannot be before today"
+    };
+  }
   if (!hasBriefScheduleMinGap(start, delivery)) {
     return {
       ok: false,
@@ -253,6 +274,21 @@ export function briefScheduleRangeError(
   if (!scheduleStart.trim() || !scheduleDelivery.trim()) return null;
   const result = validateBriefScheduleDates(scheduleStart, scheduleDelivery, locale);
   return result.ok ? null : result.error;
+}
+
+export function deliveryTimelineFromScheduleDates(
+  scheduleStart: string,
+  scheduleDelivery: string
+): BrandDeliveryTimelineId {
+  const start = parseBriefScheduleDate(scheduleStart);
+  const delivery = parseBriefScheduleDate(scheduleDelivery);
+  if (!start || !delivery) return "7-14";
+  const days = Math.ceil((briefScheduleDayKey(delivery) - briefScheduleDayKey(start)) / 86400000);
+  if (days <= 2) return "48h";
+  if (days <= 5) return "3-5";
+  if (days <= 7) return "5-7";
+  if (days <= 14) return "7-14";
+  return "14plus";
 }
 
 export function validateBriefVideoDuration(

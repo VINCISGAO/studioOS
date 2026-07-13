@@ -25,6 +25,8 @@ export const PRODUCTION_PRICING_PROFILE_V1: ProductionPricingProfileConfig = {
   revisionReserveStandard: 0.1,
   riskBufferStandard: 0.1,
   tokensPer15s4kGeneration: 1500,
+  /** Learning rule: $800 fixed AI/tool spend → ~$2,400 reasonable brand quote. */
+  fixedExpenditureToQuoteMultiplier: 3,
   tiers: [
     {
       tier: "SIMPLE",
@@ -256,6 +258,108 @@ export const VERIFIED_BENCHMARK_SAMPLES: BenchmarkSampleInput[] = [
       excludes: ["creator_labor", "editing_labor", "revision_reserve", "platform_fee", "creator_profit"]
     },
     recordedAt: new Date("2026-07-12T00:00:00.000Z")
+  },
+  {
+    sampleCode: "SAMPLE_005",
+    projectName: "学习库 — SD2.0 废片摊销基准",
+    projectType: "BRAND_AD",
+    difficultyTier: "STANDARD",
+    finalDurationSeconds: 1485,
+    productionUnitSeconds: 15,
+    effectiveUnitCount: 99,
+    totalShotCount: null,
+    aiToolSpendUsd: cnyToUsd(5450),
+    aiCostPer15sUsd: cnyToUsd(55.05),
+    aiCostPerSecondUsd: cnyToUsd(3.67),
+    totalGenerations: 336,
+    usedGenerations: 99,
+    generationMultiplier: 3.394,
+    usableRate: 0.2946,
+    complexityCoefficient: 1.36,
+    dataSource: "Learning library production cost table — SD2.0 waste amortization benchmark",
+    sourceType: "DERIVED",
+    assumptionText: `SD2.0 only (no other video models). Original costs in CNY; USD fields normalize with ${CREATOR_BENCHMARK_CNY_PER_USD} CNY/USD.`,
+    confidenceLevel: "learning_library_cost_table_unverified",
+    notes:
+      "Batch SD2.0 generation benchmark with full waste amortization. 336 total 15s clips generated, 99 usable, 237 discarded. Includes 100 supporting AI images (nano banana Pro / GPT Image).",
+    metadataJson: {
+      originalCurrency: "CNY",
+      cnyPerUsd: CREATOR_BENCHMARK_CNY_PER_USD,
+      learningLibraryCategory: "学习成本",
+      videoGenerationModel: "SD2.0",
+      videoModelScope: "仅 SD2.0，不纳入其他视频模型成本",
+      basicDurationPerClipSeconds: 15,
+      durationCalculationNote: "统一按 15 秒/条素材计算",
+      wasteAndOutput: {
+        totalGeneratedClips: 336,
+        usableClips: 99,
+        wasteClips: 237,
+        wasteRate: 0.7054,
+        usableRate: 0.2946,
+        supportingImageCount: 100,
+        supportingImageNote: "含风格参考、分镜配图"
+      },
+      generationCostBreakdown: {
+        sd20UnitCostPer15sCny: 14.73,
+        sd20VideoGenerationTotalCny: 4950,
+        sd20VideoGenerationFormula: "336条 × 14.73元/条",
+        aiImageUnitCostCny: 5,
+        aiImageProviderNote: "nano banana Pro / GPT Image 商用级",
+        aiImageTotalCny: 500,
+        aiImageFormula: "100张 × 5元/张",
+        totalGenerationCostCny: 5450,
+        totalGenerationCostNote: "视频+生图全量生成成本"
+      },
+      unitFinishedProductCost: {
+        costPerUsable15sClipCny: 55.05,
+        costPerUsable15sFormula: "总成本 ÷ 可用条数，含废片分摊",
+        costPerSecondCny: 3.67,
+        costPerSecondFormula: "单条15秒成本 ÷ 15秒",
+        costPerMinuteCny: 220.2,
+        costPerMinuteFormula: "每秒成本 × 60秒",
+        totalUsableDurationMinutes: 24.75,
+        totalUsableDurationFormula: "99条 × 15秒/条"
+      },
+      includes: ["sd20_video_generation", "ai_image_generation", "waste_amortization"],
+      excludes: ["creator_labor", "editing_labor", "revision_reserve", "platform_fee", "creator_profit"]
+    },
+    recordedAt: new Date("2026-07-13T00:00:00.000Z")
+  },
+  {
+    sampleCode: "SAMPLE_006",
+    projectName: "学习库 — 固定支出×3 合理报价规则",
+    projectType: "BRAND_AD",
+    difficultyTier: "STANDARD",
+    finalDurationSeconds: 60,
+    productionUnitSeconds: 15,
+    effectiveUnitCount: 4,
+    totalShotCount: null,
+    aiToolSpendUsd: 800,
+    aiCostPer15sUsd: 200,
+    aiCostPerSecondUsd: 13.33,
+    totalGenerations: null,
+    usedGenerations: null,
+    generationMultiplier: 2.5,
+    usableRate: 0.4,
+    complexityCoefficient: 1,
+    dataSource: "Learning library — fixed expenditure to reasonable quote multiplier",
+    sourceType: "DERIVED",
+    assumptionText:
+      "Illustrative owner rule: when AI/tool fixed expenditure is $800 USD, a $2,400 brand quote is reasonable (3× multiplier).",
+    confidenceLevel: "learning_library_pricing_rule",
+    notes:
+      "Anchors brand suggested quote to fixed expenditure × 3. Fixed expenditure = AI/tool hard cost only; quote embeds labor, revision reserve, platform fee, and creator profit.",
+    metadataJson: {
+      learningLibraryCategory: "定价规则",
+      learningRule: "fixed_expenditure_to_quote_multiplier",
+      fixedExpenditureUsd: 800,
+      reasonableQuoteUsd: 2400,
+      quoteMultiplier: 3,
+      laborCostRelativeToFixedNote: "合理报价约为固定支出的 3 倍（含人力、修改、平台与利润）",
+      includes: ["ai_tool_spend"],
+      excludes: ["creator_labor_line_item", "platform_fee_line_item"]
+    },
+    recordedAt: new Date("2026-07-14T00:00:00.000Z")
   }
 ];
 

@@ -76,6 +76,18 @@ export class AssetRepository {
       orderBy: { createdAt: "desc" }
     });
   }
+
+  async updateMetadataJson(
+    assetId: string,
+    campaignId: string,
+    metadataJson: Prisma.InputJsonValue
+  ): Promise<CampaignAsset> {
+    this.assertDb();
+    return prisma.campaignAsset.update({
+      where: { id: assetId, campaignId },
+      data: { metadataJson }
+    });
+  }
 }
 
 export const assetRepository = new AssetRepository();

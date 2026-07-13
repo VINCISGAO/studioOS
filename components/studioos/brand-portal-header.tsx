@@ -55,6 +55,7 @@ export function BrandPortalHeader({
             name={brandName}
             profileHref={brandPortalRoutes.brandCenter}
             roleLabel={locale === "zh" ? "品牌方" : "Brand"}
+            imageFit="photo"
           />
         </div>
       </div>

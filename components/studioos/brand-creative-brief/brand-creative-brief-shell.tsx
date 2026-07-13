@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useAcknowledgeAlert } from "@/components/studioos/acknowledge-alert-provider";
 import { BrandLogoLockup } from "@/components/brand-logo-mark";
 import { MarketingHomeLink } from "@/components/studioos/marketing-home-link";
 import { BriefAiPromoCard } from "@/components/studioos/brand-creative-brief/brief-ai-promo-card";
@@ -61,43 +62,6 @@ const copy = {
   }
 };
 
-function BriefInlineNotice({
-  message,
-  locale,
-  onDismiss
-}: {
-  message: string;
-  locale: Locale;
-  onDismiss: () => void;
-}) {
-  const dismissLabel = locale === "zh" ? "知道了" : "Got it";
-
-  return (
-    <div className="w-full max-w-lg">
-      <div className="overflow-hidden rounded-2xl border border-emerald-100 bg-white/95 shadow-[0_14px_44px_rgba(15,23,42,0.12)] backdrop-blur-xl">
-        <div className="flex items-center gap-3 bg-gradient-to-br from-emerald-50/90 via-white to-violet-50/80 px-3.5 py-3.5">
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-md shadow-emerald-600/15">
-            <Sparkles className="h-4 w-4" />
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold leading-5 text-zinc-950">
-              {locale === "zh" ? "需要补充信息" : "More information needed"}
-            </p>
-            <p className="mt-0.5 text-sm leading-5 text-zinc-600">{message}</p>
-          </div>
-          <button
-            type="button"
-            onClick={onDismiss}
-            className="shrink-0 rounded-lg px-3 py-1.5 text-sm font-semibold text-violet-700 transition hover:bg-violet-50 hover:text-violet-800"
-          >
-            {dismissLabel}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export function BrandCreativeBriefShell({
   locale,
   children,
@@ -118,15 +82,12 @@ export function BrandCreativeBriefShell({
   continueDisabled?: boolean;
 }) {
   const t = copy[locale];
+  const { alert } = useAcknowledgeAlert();
   const [activeSection, setActiveSection] = useState("overview");
-  const [dismissedNotice, setDismissedNotice] = useState<string | null>(null);
-  const showNotice = Boolean(displayError && displayError !== dismissedNotice);
 
   useEffect(() => {
-    if (!displayError) {
-      setDismissedNotice(null);
-    }
-  }, [displayError]);
+    if (displayError) alert(displayError);
+  }, [alert, displayError]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "instant" });
@@ -216,15 +177,6 @@ export function BrandCreativeBriefShell({
             <div className="px-4 pb-4 pt-3 sm:px-6 xl:pt-4">
               <WizardStepper locale={locale} currentStep={1} variant="brand" />
             </div>
-            {displayError && showNotice ? (
-              <div className="flex justify-center px-4 pb-4 sm:px-6">
-                <BriefInlineNotice
-                  message={displayError}
-                  locale={locale}
-                  onDismiss={() => setDismissedNotice(displayError)}
-                />
-              </div>
-            ) : null}
             <BrandCreativeBriefSectionNavTop
               locale={locale}
               activeSection={activeSection}

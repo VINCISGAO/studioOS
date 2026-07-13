@@ -127,7 +127,7 @@ export async function saveCreatorProfileClientAction(input: {
   if (!input.name.trim() || !input.headline.trim()) {
     return {
       ok: false as const,
-      error: input.lang === "zh" ? "请填写 Studio 名称和一句话介绍" : "Enter studio name and headline"
+      error: input.lang === "zh" ? "请填写创作者名称和一句话介绍" : "Enter studio name and headline"
     };
   }
 
@@ -185,26 +185,29 @@ export async function uploadCreatorAvatarAction(formData: FormData) {
 
   const { getCreatorById } = await import("@/lib/creator-service");
   const { updateCreatorAvatarUrl } = await import("@/lib/creator-profile-service");
-  const creator = await getCreatorById(creatorId);
+  const [creator, works] = await Promise.all([
+    getCreatorById(creatorId),
+    getWorksForCreator(creatorId, { ownerView: true })
+  ]);
   if (!creator) {
-    return { ok: false as const, error: lang === "zh" ? "Studio 不存在" : "Studio not found" };
+    return { ok: false as const, error: lang === "zh" ? "创作者不存在" : "Studio not found" };
   }
 
-  const works = await getWorksForCreator(creatorId, { ownerView: true });
   await updateCreatorAvatarUrl(creatorId, saved.url, creator, works);
-  const { storageFileService } = await import("@/features/storage/storage-file.service");
-  try {
-    await storageFileService.recordCreatorAvatar(creatorId, {
-      fileName: saved.file_name,
-      fileKey: saved.file_key,
-      publicUrl: saved.url,
-      mimeType: saved.mime_type,
-      fileSize: saved.size_bytes,
-      provider: saved.storage_provider
+  void import("@/features/storage/storage-file.service")
+    .then(({ storageFileService }) =>
+      storageFileService.recordCreatorAvatar(creatorId, {
+        fileName: saved.file_name,
+        fileKey: saved.file_key,
+        publicUrl: saved.url,
+        mimeType: saved.mime_type,
+        fileSize: saved.size_bytes,
+        provider: saved.storage_provider
+      })
+    )
+    .catch(() => {
+      // Non-blocking audit trail — upload already succeeded.
     });
-  } catch {
-    // Non-blocking audit trail — upload already succeeded.
-  }
 
   revalidateCreatorProfilePaths(creatorId);
   return { ok: true as const, avatar_url: saved.url };
@@ -230,26 +233,29 @@ export async function uploadCreatorCoverAction(formData: FormData) {
 
   const { getCreatorById } = await import("@/lib/creator-service");
   const { updateCreatorCoverUrl } = await import("@/lib/creator-profile-service");
-  const creator = await getCreatorById(creatorId);
+  const [creator, works] = await Promise.all([
+    getCreatorById(creatorId),
+    getWorksForCreator(creatorId, { ownerView: true })
+  ]);
   if (!creator) {
-    return { ok: false as const, error: lang === "zh" ? "Studio 不存在" : "Studio not found" };
+    return { ok: false as const, error: lang === "zh" ? "创作者不存在" : "Studio not found" };
   }
 
-  const works = await getWorksForCreator(creatorId, { ownerView: true });
   await updateCreatorCoverUrl(creatorId, saved.url, creator, works);
-  const { storageFileService } = await import("@/features/storage/storage-file.service");
-  try {
-    await storageFileService.recordCreatorCover(creatorId, {
-      fileName: saved.file_name,
-      fileKey: saved.file_key,
-      publicUrl: saved.url,
-      mimeType: saved.mime_type,
-      fileSize: saved.size_bytes,
-      provider: saved.storage_provider
+  void import("@/features/storage/storage-file.service")
+    .then(({ storageFileService }) =>
+      storageFileService.recordCreatorCover(creatorId, {
+        fileName: saved.file_name,
+        fileKey: saved.file_key,
+        publicUrl: saved.url,
+        mimeType: saved.mime_type,
+        fileSize: saved.size_bytes,
+        provider: saved.storage_provider
+      })
+    )
+    .catch(() => {
+      // Non-blocking audit trail — upload already succeeded.
     });
-  } catch {
-    // Non-blocking audit trail — upload already succeeded.
-  }
 
   revalidateCreatorProfilePaths(creatorId);
   return { ok: true as const, cover_url: saved.url };
