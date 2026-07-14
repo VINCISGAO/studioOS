@@ -9,6 +9,8 @@ import type {
 } from "@prisma/client";
 import { KNOWLEDGE_DEFAULT_CATEGORIES, knowledgePathPrefixForCode } from "@/features/knowledge-center/knowledge-center.constants";
 import { KNOWLEDGE_EDITOR_CATEGORIES } from "@/lib/knowledge/knowledge-editor.constants";
+import type { Locale } from "@/lib/i18n";
+import { resolveKnowledgeAdminTranslation } from "@/lib/knowledge/knowledge-admin-translation";
 import type {
   KnowledgeArticleDetailDto,
   KnowledgeArticleListItemDto,
@@ -99,6 +101,7 @@ export function toTranslationDto(row: TranslationWithRelations): KnowledgeTransl
     path_prefix: knowledgePathPrefixForCode(row.languageCode),
     title: row.title,
     subtitle: row.subtitle,
+    body_html: row.bodyHtml ?? "",
     body_markdown: row.bodyMarkdown,
     excerpt: row.excerpt,
     reading_time_minutes: row.readingTimeMinutes,
@@ -122,6 +125,7 @@ export function toArticleDetailDto(row: ArticleWithRelations): KnowledgeArticleD
     category_slug: row.category?.slug ?? null,
     category_name: row.category?.name ?? null,
     cover_image_url: row.coverImageUrl,
+    visibility: row.visibility ?? "PUBLIC",
     tags: row.tags.map((item) => item.tag.name),
     scheduled_at: row.scheduledAt?.toISOString() ?? null,
     timezone: row.timezone,
@@ -136,21 +140,44 @@ export function toArticleDetailDto(row: ArticleWithRelations): KnowledgeArticleD
   };
 }
 
-export function toArticleListItemDto(row: ArticleWithRelations, languageCode?: string): KnowledgeArticleListItemDto {
-  const translation =
-    row.translations.find((item) => item.languageCode === languageCode) ?? row.translations[0] ?? null;
+export function toArticleListItemDto(
+  row: ArticleWithRelations,
+  languageCode?: string,
+  adminLocale?: Locale
+): KnowledgeArticleListItemDto {
+  const translation = resolveKnowledgeAdminTranslation(
+    row.translations.map((item) => ({
+      language_code: item.languageCode,
+      title: item.title,
+      status: item.status,
+      updated_at: item.updatedAt.toISOString(),
+      published_at: item.publishedAt?.toISOString() ?? null
+    })),
+    {
+      preferredLanguageCode: languageCode && languageCode !== "ALL" ? languageCode : undefined,
+      adminLocale
+    }
+  );
+
+  const rowTranslation =
+    row.translations.find((item) => item.languageCode === translation?.language_code) ??
+    row.translations[0] ??
+    null;
+
   return {
     id: row.id,
     slug: row.slug,
-    title: translation?.title ?? row.slug,
+    title: rowTranslation?.title ?? translation?.title ?? row.slug,
     category: row.category?.name ?? "",
-    status: translation?.status ?? row.status,
-    language_code: translation?.languageCode ?? "en",
+    category_slug: row.category?.slug ?? null,
+    status: rowTranslation?.status ?? row.status,
+    language_code: rowTranslation?.languageCode ?? translation?.language_code ?? "en",
     author_name: row.authorName,
-    updated_at: (translation?.updatedAt ?? row.updatedAt).toISOString(),
-    seo_score: translation?.seo?.seoScore ?? 0,
-    lucien_indexed: translation?.lucien?.lucienIndexed ?? false,
-    view_count: row.analytics?.viewCount ?? 0
+    updated_at: (rowTranslation?.updatedAt ?? row.updatedAt).toISOString(),
+    seo_score: rowTranslation?.seo?.seoScore ?? 0,
+    lucien_indexed: rowTranslation?.lucien?.lucienIndexed ?? false,
+    view_count: row.analytics?.viewCount ?? 0,
+    cover_image_url: row.coverImageUrl ?? null
   };
 }
 
