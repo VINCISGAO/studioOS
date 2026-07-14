@@ -1,4 +1,3 @@
-import Link from "next/link";
 import Image from "next/image";
 import { Download } from "lucide-react";
 import { aboutText } from "@/lib/marketing/about-copy";
@@ -67,13 +66,13 @@ export function AboutContactPressSection({ locale }: { locale: Locale }) {
         </ul>
         <p className="mt-5 text-xs leading-6 text-zinc-500">{t.press.note}</p>
         <div className="mt-6 flex items-center justify-between gap-4 rounded-2xl border border-zinc-100 bg-zinc-50 p-4">
-          <Link
+          <a
             href="mailto:press@vincis.app"
             className="inline-flex items-center gap-1 text-sm font-medium text-violet-700 hover:text-violet-900"
           >
             {t.press.downloadLink}
             <Download className="h-4 w-4" />
-          </Link>
+          </a>
           <div className="relative h-16 w-24 overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-zinc-200">
             <Image src="/images/LOGO.png" alt="VINCIS press kit" fill className="object-contain p-2" sizes="96px" />
           </div>

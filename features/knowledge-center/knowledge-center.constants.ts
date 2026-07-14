@@ -52,6 +52,14 @@ export function buildKnowledgeArticlePath(pathPrefix: KnowledgePathPrefix, slug:
   return `/${pathPrefix}/resources/${slug}`;
 }
 
+export function buildKnowledgeCategoryPath(pathPrefix: KnowledgePathPrefix, categorySlug: string) {
+  return `/${pathPrefix}/resources/category/${categorySlug}`;
+}
+
+export function buildKnowledgeIndexPath(pathPrefix: KnowledgePathPrefix) {
+  return `/${pathPrefix}/resources`;
+}
+
 export function buildKnowledgeLucienSourceKey(slug: string, languageCode: string) {
   return `knowledge_center_${slug}_${languageCode.replace("-", "_").toLowerCase()}`;
 }

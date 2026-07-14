@@ -1,10 +1,11 @@
 import { notFound } from "next/navigation";
-import { MarketingDocsShell } from "@/components/marketing/docs/marketing-docs-shell";
+import { KnowledgeCenterShell } from "@/components/knowledge-center/knowledge-center-shell";
 import { KnowledgeArticlePage } from "@/components/knowledge/knowledge-article-page";
 import {
   buildKnowledgeArticlePath,
   knowledgeCodeForPathPrefix,
-  knowledgePathPrefixForCode
+  knowledgePathPrefixForCode,
+  type KnowledgePathPrefix
 } from "@/features/knowledge-center/knowledge-center.constants";
 import { knowledgeCenterService } from "@/features/knowledge-center/knowledge-center.service";
 import { toUiLocale } from "@/lib/app-language.shared";
@@ -50,9 +51,9 @@ export default async function KnowledgeArticleRoute({ params }: Props) {
   const jsonLd = knowledgeCenterService.buildPublicArticleJsonLd(article);
 
   return (
-    <MarketingDocsShell locale={locale} active="resources">
+    <KnowledgeCenterShell locale={locale} pathPrefix={lang as KnowledgePathPrefix}>
       <KnowledgeArticlePage locale={locale} article={article} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-    </MarketingDocsShell>
+    </KnowledgeCenterShell>
   );
 }

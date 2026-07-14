@@ -1,9 +1,11 @@
+import Link from "next/link";
 import type { PublicKnowledgeArticleDto } from "@/features/knowledge-center/knowledge-center.types";
 import { extractKnowledgeToc, renderKnowledgeMarkdown } from "@/lib/knowledge/knowledge-markdown";
 import type { Locale } from "@/lib/i18n";
 import { KnowledgeArticleFaqSection } from "@/components/knowledge/knowledge-article-faq-section";
 import { KnowledgeArticleRelatedSection } from "@/components/knowledge/knowledge-article-related-section";
 import { KnowledgeCoverImage } from "@/components/knowledge/knowledge-cover-image";
+import { buildKnowledgeIndexPath } from "@/features/knowledge-center/knowledge-center.constants";
 
 export function KnowledgeArticlePage({
   locale,
@@ -21,8 +23,14 @@ export function KnowledgeArticlePage({
   });
 
   return (
-    <article className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
-      <header className="space-y-4">
+    <article className="mx-auto max-w-3xl bg-white px-4 py-10 sm:px-6 lg:px-8">
+      <Link
+        href={buildKnowledgeIndexPath(article.path_prefix)}
+        className="text-sm font-medium text-zinc-500 transition hover:text-violet-700"
+      >
+        {zh ? "← 返回知识中心" : "← Back to Knowledge Center"}
+      </Link>
+      <header className="mt-6 space-y-4">
         {article.category_name ? (
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-violet-600">{article.category_name}</p>
         ) : null}

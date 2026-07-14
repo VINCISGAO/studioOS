@@ -3,8 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
-import { buildLocalizedHref } from "@/lib/marketing/localized-href";
-import { marketingSiteNavItems } from "@/lib/marketing/marketing-site-nav";
+import { marketingSiteNavItems, marketingSiteNavHref } from "@/lib/marketing/marketing-site-nav";
 import type { MarketingDocsNavKey } from "@/lib/marketing/marketing-docs-nav";
 import type { Locale } from "@/lib/i18n";
 
@@ -56,7 +55,7 @@ export function MarketingDocsMobileNav({ locale, active }: MarketingDocsMobileNa
             {navItems.map((item) => (
               <Link
                 key={item.key}
-                href={buildLocalizedHref(item.path, locale)}
+                href={marketingSiteNavHref(item.key, locale)}
                 className={linkClassName(active === item.key)}
                 onClick={() => setOpen(false)}
               >

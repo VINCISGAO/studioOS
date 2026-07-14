@@ -1,6 +1,14 @@
 import type { Locale, MarketingLocale } from "@/lib/i18n";
+import { buildLocalizedHref, marketingHomeHref, marketingKnowledgeCenterHref } from "@/lib/marketing/localized-href";
 
-export type MarketingSiteNavKey = "about" | "process" | "cases" | "pricing" | "resources" | "faq";
+export type MarketingSiteNavKey =
+  | "about"
+  | "process"
+  | "cases"
+  | "pricing"
+  | "resources"
+  | "faq"
+  | "knowledge";
 
 export const MARKETING_SITE_NAV_ORDER: MarketingSiteNavKey[] = [
   "about",
@@ -8,7 +16,8 @@ export const MARKETING_SITE_NAV_ORDER: MarketingSiteNavKey[] = [
   "cases",
   "pricing",
   "resources",
-  "faq"
+  "faq",
+  "knowledge"
 ];
 
 export const MARKETING_SITE_NAV_PATHS: Record<MarketingSiteNavKey, string> = {
@@ -17,7 +26,8 @@ export const MARKETING_SITE_NAV_PATHS: Record<MarketingSiteNavKey, string> = {
   cases: "/cases",
   pricing: "/pricing",
   resources: "/resources",
-  faq: "/faq"
+  faq: "/faq",
+  knowledge: "/en/resources"
 };
 
 type MarketingSiteNavItemCopy = {
@@ -51,6 +61,10 @@ const zh: MarketingSiteNavCopy = {
   faq: {
     label: "常见问题",
     description: "平台使用、发布与付款相关解答"
+  },
+  knowledge: {
+    label: "知识中心",
+    description: "官方指南、学院内容与帮助文档"
   }
 };
 
@@ -78,6 +92,10 @@ const en: MarketingSiteNavCopy = {
   faq: {
     label: "FAQ",
     description: "Answers on platform use, publishing, and payments"
+  },
+  knowledge: {
+    label: "Knowledge Center",
+    description: "Official guides, academy content, and help docs"
   }
 };
 
@@ -111,6 +129,13 @@ export function marketingSiteNavLabels(
     cases: copy.cases.label,
     pricing: copy.pricing.label,
     resources: copy.resources.label,
-    faq: copy.faq.label
+    faq: copy.faq.label,
+    knowledge: copy.knowledge.label
   };
+}
+
+export function marketingSiteNavHref(key: MarketingSiteNavKey, locale: Locale | MarketingLocale): string {
+  if (key === "about") return marketingHomeHref.about(locale);
+  if (key === "knowledge") return marketingKnowledgeCenterHref(locale);
+  return buildLocalizedHref(MARKETING_SITE_NAV_PATHS[key], locale);
 }

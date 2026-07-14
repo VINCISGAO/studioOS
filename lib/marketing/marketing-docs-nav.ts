@@ -13,6 +13,7 @@ export type MarketingDocsSidebarCopy = {
   pricing: string;
   resources: string;
   faq: string;
+  knowledge: string;
   backHome: string;
   aiHelpTitle: string;
   aiHelpBody: string;

@@ -2,7 +2,7 @@
  * Production readiness gate — compile + critical module smoke checks
  * Run: npm run production:verify
  */
-import { spawnSync } from "node:child_process";
+import { spawnSync, type SpawnSyncReturns } from "node:child_process";
 import { existsSync, readFileSync, appendFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -18,6 +18,33 @@ const FAILURE_LOG = join(ROOT, "verify-failure.log");
 const MAX_CMD_BUFFER = 64 * 1024 * 1024;
 
 type Step = { name: string; ok: boolean; detail?: string };
+
+function formatCmdFailureDetail(label: string, result: SpawnSyncReturns<string>): string {
+  const full = [
+    result.status != null ? `exit: ${result.status}` : null,
+    result.signal ? `signal: ${result.signal}` : null,
+    result.error?.message,
+    result.stdout,
+    result.stderr
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  if (label === "lint") {
+    const errorBlocks = full
+      .split(/\n(?=\.\/)/)
+      .filter((block) => /\bError:/.test(block));
+    if (errorBlocks.length > 0) {
+      return errorBlocks.join("\n\n").slice(0, 12_000);
+    }
+  }
+
+  if (full.length <= 8_000) return full;
+
+  const head = full.slice(0, 3_500);
+  const tail = full.slice(-3_500);
+  return `${head}\n\n...[${full.length - 7_000} chars truncated]...\n\n${tail}`;
+}
 
 function runCmd(label: string, cmd: string, options?: { retries?: number }): Step {
   const maxAttempts = 1 + (options?.retries ?? 0);
@@ -63,16 +90,7 @@ function runCmdOnce(label: string, cmd: string): Step {
 
   console.log(`❌ ${label} (${elapsedSec}s)`);
 
-  const detail = [
-    result.status != null ? `exit: ${result.status}` : null,
-    result.signal ? `signal: ${result.signal}` : null,
-    result.error?.message,
-    result.stdout,
-    result.stderr
-  ]
-    .filter(Boolean)
-    .join("\n")
-    .slice(-4000);
+  const detail = formatCmdFailureDetail(label, result);
 
   if (detail) {
     console.log("\n--- Failure output ---");
@@ -240,7 +258,7 @@ function main() {
   steps.push(runCmd("prisma.generate", "npx prisma generate"));
   steps.push(runCmd("typecheck", "npm run typecheck"));
   steps.push(runCmd("marketing.verify_links", "npm run marketing:verify-links"));
-  steps.push(runCmd("lint", "npm run lint"));
+  steps.push(runCmd("lint", "npx next lint --no-cache --quiet"));
   steps.push(runCmd("build", "npm run build", { retries: 1 }));
   steps.push(runCheck("migrations.payment_collection", checkMigrationFiles));
   steps.push(runCheck("prisma.payment_fields", checkPrismaSchema));

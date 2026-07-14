@@ -1,8 +1,8 @@
-import Link from "next/link";
-import { MarketingDocsShell } from "@/components/marketing/docs/marketing-docs-shell";
+import { KnowledgeCenterHomePage } from "@/components/knowledge-center/knowledge-center-home-page";
+import { KnowledgeCenterShell } from "@/components/knowledge-center/knowledge-center-shell";
 import {
-  buildKnowledgeArticlePath,
-  knowledgeCodeForPathPrefix
+  knowledgeCodeForPathPrefix,
+  type KnowledgePathPrefix
 } from "@/features/knowledge-center/knowledge-center.constants";
 import { knowledgeCenterService } from "@/features/knowledge-center/knowledge-center.service";
 import { toUiLocale } from "@/lib/app-language.shared";
@@ -26,60 +26,23 @@ export default async function KnowledgeIndexPage({ params }: Props) {
   const { lang } = await params;
   const languageCode = knowledgeCodeForPathPrefix(lang);
   const locale = toUiLocale(languageCode);
-  const [rows, categories] = await Promise.all([
-    knowledgeCenterService.listPublishedPublic(languageCode),
+  const pathPrefix = lang as KnowledgePathPrefix;
+  const [articles, categories] = await Promise.all([
+    knowledgeCenterService.listPublishedHomeCards(languageCode),
     knowledgeCenterService.listCategorySummaries(languageCode)
   ]);
 
-  if (!rows.length) {
-    return (
-      <MarketingDocsShell locale={locale} active="resources">
-        <main className="mx-auto max-w-3xl px-4 py-16 text-center text-zinc-500">
-          {locale === "zh" ? "知识中心文章即将发布。" : "Knowledge Center articles are coming soon."}
-        </main>
-      </MarketingDocsShell>
-    );
-  }
+  const categoryCounts = Object.fromEntries(categories.map((item) => [item.slug, item.count]));
 
   return (
-    <MarketingDocsShell locale={locale} active="resources">
-      <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8">
-        <h1 className="text-4xl font-semibold tracking-[-0.03em] text-zinc-950">
-          {locale === "zh" ? "知识中心" : "Knowledge Center"}
-        </h1>
-        <p className="mt-3 max-w-2xl text-lg text-zinc-500">
-          {locale === "zh"
-            ? "官方指南、学院内容与帮助文档 — 一篇内容，多处使用。"
-            : "Official guides, academy content, and help docs — one article, many surfaces."}
-        </p>
-
-        {categories.length ? (
-          <div className="mt-8 flex flex-wrap gap-2">
-            {categories.map((category) => (
-              <Link
-                key={category.slug}
-                href={`/${lang}/resources/category/${category.slug}`}
-                className="rounded-full border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-700 transition hover:border-zinc-300"
-              >
-                {category.name} · {category.count}
-              </Link>
-            ))}
-          </div>
-        ) : null}
-
-        <div className="mt-10 space-y-3">
-          {rows.map((article) => (
-            <Link
-              key={article.id}
-              href={buildKnowledgeArticlePath(lang as "en" | "zh", article.slug)}
-              className="block rounded-2xl border border-zinc-200 bg-white px-5 py-4 shadow-sm transition hover:border-zinc-300"
-            >
-              <h2 className="text-lg font-semibold text-zinc-950">{article.title}</h2>
-              <p className="mt-1 text-sm text-zinc-500">{article.category}</p>
-            </Link>
-          ))}
-        </div>
-      </main>
-    </MarketingDocsShell>
+    <KnowledgeCenterShell locale={locale} pathPrefix={pathPrefix}>
+      <KnowledgeCenterHomePage
+        locale={locale}
+        pathPrefix={pathPrefix}
+        languageCode={languageCode}
+        articles={articles}
+        categoryCounts={categoryCounts}
+      />
+    </KnowledgeCenterShell>
   );
 }

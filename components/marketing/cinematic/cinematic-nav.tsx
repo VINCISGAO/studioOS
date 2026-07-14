@@ -7,10 +7,10 @@ import { BrandLogoLockup } from "@/components/brand-logo-mark";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { useMarketingHomePortalSession } from "@/components/marketing/use-marketing-home-portal-session";
 import { cinematicText } from "@/lib/marketing/cinematic-copy";
-import { marketingHomeHref, buildLocalizedHref } from "@/lib/marketing/localized-href";
+import { marketingHomeHref } from "@/lib/marketing/localized-href";
 import {
   marketingSiteNavItems,
-  MARKETING_SITE_NAV_PATHS,
+  marketingSiteNavHref,
   type MarketingSiteNavKey
 } from "@/lib/marketing/marketing-site-nav";
 import { MARKETING_SITE_NAV_ICONS } from "@/lib/marketing/marketing-site-nav-icons";
@@ -75,9 +75,8 @@ function MobileNavCard({
   );
 }
 
-function marketingSiteNavHref(key: MarketingSiteNavKey, copyLocale: Locale | MarketingLocale) {
-  if (key === "about") return marketingHomeHref.about(copyLocale);
-  return buildLocalizedHref(MARKETING_SITE_NAV_PATHS[key], copyLocale);
+function marketingSiteNavHrefForNav(key: MarketingSiteNavKey, copyLocale: Locale | MarketingLocale) {
+  return marketingSiteNavHref(key, copyLocale);
 }
 
 function MobileNavMenu({
@@ -126,7 +125,7 @@ function MobileNavMenu({
     },
     ...siteItems.map((item) => ({
       key: item.key,
-      href: marketingSiteNavHref(item.key, copyLocale),
+      href: marketingSiteNavHrefForNav(item.key, copyLocale),
       title: item.label,
       description: item.description,
       useAnchor: false,

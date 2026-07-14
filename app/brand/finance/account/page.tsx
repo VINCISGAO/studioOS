@@ -294,9 +294,12 @@ export default async function BrandFinanceAccountPage({
         </>
       )}
 
-      <a href={withLocale(brandPortalRoutes.finance, locale)} className="text-sm font-medium text-violet-600 hover:text-violet-700">
+      <Link
+        href={withLocale(brandPortalRoutes.finance, locale)}
+        className="text-sm font-medium text-violet-600 hover:text-violet-700"
+      >
         ← {locale === "zh" ? "返回财务中心" : "Back to finance center"}
-      </a>
+      </Link>
     </div>
   );
 }

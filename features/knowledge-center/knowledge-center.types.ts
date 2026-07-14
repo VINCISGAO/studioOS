@@ -80,6 +80,20 @@ export type KnowledgeArticleListItemDto = {
   view_count: number;
 };
 
+export type KnowledgeHomeArticleCardDto = {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string | null;
+  category_name: string | null;
+  category_slug: string | null;
+  cover_image_url: string | null;
+  tags: string[];
+  reading_time_minutes: number;
+  updated_at: string;
+  published_at: string | null;
+};
+
 export type KnowledgeDashboardStatsDto = {
   articles: number;
   published: number;

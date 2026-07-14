@@ -8,8 +8,34 @@ import { buildAdminCsrfToken } from "@/lib/auth/admin-csrf";
 import { getAppUiLocale } from "@/lib/app-language";
 import { buildAvatarInitials } from "@/lib/studioos/avatar-initials";
 import { toSafeNextPathname } from "@/lib/auth/post-login-redirect";
+import { logger } from "@/lib/core/logger";
 
 export const dynamic = "force-dynamic";
+
+async function safeFailedNotificationCount(profile: { id: string }) {
+  try {
+    return await adminNotificationService.countFailed({ id: profile.id, role: "ADMIN" });
+  } catch (error) {
+    logger.error("admin.layout.count_failed_notifications", {
+      service: "AdminLayout",
+      error: error instanceof Error ? error.message : String(error)
+    });
+    return 0;
+  }
+}
+
+function safeAdminCsrfToken(sessionToken: string | null | undefined) {
+  if (!sessionToken) return "";
+  try {
+    return buildAdminCsrfToken(sessionToken);
+  } catch (error) {
+    logger.error("admin.layout.csrf_token", {
+      service: "AdminLayout",
+      error: error instanceof Error ? error.message : String(error)
+    });
+    return "";
+  }
+}
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const headerList = await (await import("next/headers")).headers();
@@ -29,8 +55,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
 
   const sessionToken = await readAdminSessionToken();
-  const adminCsrfToken = sessionToken ? buildAdminCsrfToken(sessionToken) : "";
-  const failedNotificationCount = await adminNotificationService.countFailed({ id: profile.id, role: "ADMIN" });
+  const adminCsrfToken = safeAdminCsrfToken(sessionToken);
+  const failedNotificationCount = await safeFailedNotificationCount(profile);
 
   return (
     <AdminCsrfProvider token={adminCsrfToken}>

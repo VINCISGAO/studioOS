@@ -27,6 +27,7 @@ import type {
   KnowledgeArticleListItemDto,
   KnowledgeCitationGapDto,
   KnowledgeDashboardStatsDto,
+  KnowledgeHomeArticleCardDto,
   PublicKnowledgeArticleDto,
   UpsertKnowledgeArticleInput
 } from "@/features/knowledge-center/knowledge-center.types";
@@ -258,6 +259,28 @@ export class KnowledgeCenterService {
       lucien_indexed: row.translations.find((t) => t.languageCode === languageCode)?.lucien?.lucienIndexed ?? false,
       view_count: row.analytics?.viewCount ?? 0
     }));
+  }
+
+  async listPublishedHomeCards(languageCode: string, limit = 12): Promise<KnowledgeHomeArticleCardDto[]> {
+    const rows = await knowledgeCenterRepository.listPublished(languageCode, limit);
+    return rows.map((row) => {
+      const translation = row.translations.find(
+        (item) => item.languageCode === languageCode && item.status === "PUBLISHED"
+      );
+      return {
+        id: row.id,
+        slug: row.slug,
+        title: translation?.title ?? row.slug,
+        excerpt: translation?.excerpt ?? translation?.seo?.metaDescription ?? null,
+        category_name: row.category?.name ?? null,
+        category_slug: row.category?.slug ?? null,
+        cover_image_url: row.coverImageUrl,
+        tags: row.tags.map((item) => item.tag.name),
+        reading_time_minutes: translation?.readingTimeMinutes ?? 1,
+        updated_at: translation?.updatedAt.toISOString() ?? row.updatedAt.toISOString(),
+        published_at: translation?.publishedAt?.toISOString() ?? row.publishedAt?.toISOString() ?? null
+      };
+    });
   }
 
   async getArticleHreflangLanguages(slug: string, currentLanguageCode: string) {

@@ -9,8 +9,8 @@ import {
   type MarketingDocsNavKey
 } from "@/lib/marketing/marketing-docs-nav";
 import { MARKETING_SITE_NAV_ICONS } from "@/lib/marketing/marketing-site-nav-icons";
-import { marketingSiteNavItems } from "@/lib/marketing/marketing-site-nav";
-import { buildLocalizedHref, marketingHomeHref } from "@/lib/marketing/localized-href";
+import { marketingSiteNavItems, marketingSiteNavHref } from "@/lib/marketing/marketing-site-nav";
+import { marketingHomeHref } from "@/lib/marketing/localized-href";
 import { cn } from "@/lib/utils";
 import type { Locale } from "@/lib/i18n";
 
@@ -43,7 +43,7 @@ export function MarketingDocsSidebar({ locale, active }: MarketingDocsSidebarPro
           return (
             <Link
               key={link.key}
-              href={buildLocalizedHref(link.path, locale)}
+              href={marketingSiteNavHref(link.key, locale)}
               className={cn(
                 "flex items-start gap-3 rounded-xl px-3 py-2.5 transition",
                 isActive
