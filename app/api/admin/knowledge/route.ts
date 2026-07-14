@@ -6,6 +6,9 @@ import { knowledgeCenterService } from "@/features/knowledge-center/knowledge-ce
 import { parseKnowledgeArticleBody } from "@/features/knowledge-center/knowledge-center.api-parser";
 import { apiSuccess, handleRouteError } from "@/lib/core/api-route";
 
+export const runtime = "nodejs";
+export const maxDuration = 300;
+
 export async function GET(request: Request) {
   try {
     await requireAdminSession(request);

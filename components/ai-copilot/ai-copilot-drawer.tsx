@@ -771,6 +771,7 @@ export function AiCopilotDrawer() {
 
   function startLauncherDrag(event: ReactPointerEvent<HTMLButtonElement>) {
     if (event.pointerType === "mouse" && event.button !== 0) return;
+    event.preventDefault();
 
     const button = event.currentTarget;
     const rect = button.getBoundingClientRect();
@@ -862,25 +863,26 @@ export function AiCopilotDrawer() {
         title={copy.launcher}
         onClick={openLauncher}
         onPointerDown={startLauncherDrag}
+        onDragStart={(event) => event.preventDefault()}
         style={launcherStyle}
         className={cn(
-          "fixed z-[200] h-12 w-12 touch-none select-none rounded-full border-0 bg-white p-0 shadow-[0_12px_28px_rgba(15,23,42,0.18)] ring-1 ring-violet-100/90",
+          "fixed z-[210] h-12 w-12 touch-none select-none rounded-full border-0 bg-white p-0 shadow-[0_12px_28px_rgba(15,23,42,0.18)] ring-1 ring-violet-100/90",
           isLauncherDragging ? "cursor-grabbing transition-none" : "cursor-grab"
         )}
       >
         <LucienAvatar
           size="md"
           alt={copy.launcher}
-          className="shadow-none ring-0"
+          className="pointer-events-none shadow-none ring-0"
         />
         <span className="sr-only">{copy.launcher}</span>
       </Button>
 
       {open ? (
-        <div className="fixed inset-0 z-[200] flex h-[100dvh] max-h-[100dvh] justify-end overflow-hidden bg-slate-950/30 backdrop-blur-[1px]">
+        <div className="pointer-events-none fixed inset-0 z-[200] flex h-[100dvh] max-h-[100dvh] justify-end overflow-hidden bg-slate-950/30 backdrop-blur-[1px]">
           <aside
             className={cn(
-              "flex h-[100dvh] max-h-[100dvh] min-h-0 w-full flex-col overflow-hidden border-l border-violet-100 bg-[#fbfbff] shadow-2xl transition-all duration-300",
+              "pointer-events-auto flex h-[100dvh] max-h-[100dvh] min-h-0 w-full flex-col overflow-hidden border-l border-violet-100 bg-[#fbfbff] shadow-2xl transition-all duration-300",
               expanded ? "max-w-none" : "max-w-[460px]"
             )}
           >

@@ -54,6 +54,27 @@ function normalizeLegacyPath(pathname: string) {
     return `/studio/projects/${creatorOrder[1]}`;
   }
 
+  const legacyProjects = pathname.match(/^\/projects\/([^/]+)\/?$/);
+  if (legacyProjects?.[1]) {
+    return `/brand/projects/${legacyProjects[1]}`;
+  }
+  if (pathname === "/projects" || pathname === "/projects/") {
+    return "/brand/projects";
+  }
+  const legacyMatch = pathname.match(/^\/match\/([^/]+)\/?$/);
+  if (legacyMatch?.[1]) {
+    return `/brand/projects/${legacyMatch[1]}/studios`;
+  }
+  if (pathname === "/creator/onboarding" || pathname === "/creator/onboarding/") {
+    return "/studio/onboarding";
+  }
+  if (pathname === "/workspace/admin" || pathname === "/workspace/admin/") {
+    return "/admin";
+  }
+  if (pathname === "/dashboard" || pathname === "/dashboard/") {
+    return "/brand";
+  }
+
   return pathname;
 }
 

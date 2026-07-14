@@ -1,0 +1,181 @@
+
+> vincis@0.1.0 production:verify
+> node --require ./scripts/helpers/load-env.cjs --import tsx scripts/production-ready-verify.ts
+
+
+Production readiness verification
+(build alone can take 1–3 minutes — progress prints below)
+
+
+▶ Running prisma.generate…
+✅ prisma.generate (1.6s)
+
+▶ Running typecheck…
+❌ typecheck (6.3s)
+
+--- Failure output ---
+eo_title: string; meta_description: string; focus_keywords: string; category_slug: string; tags: string[]; cover_image_url: string; ... 8 more ...; timezone: string; }>'.
+      Types of property 'status' are incompatible.
+        Type 'string | undefined' is not assignable to type 'KnowledgeArticleStatus | undefined'.
+          Type 'string' is not assignable to type 'KnowledgeArticleStatus | undefined'.
+components/studioos/admin-knowledge-editor-panel.tsx(307,44): error TS2345: Argument of type '{ status?: string | undefined; visibility?: string | undefined; scheduledDate?: string | undefined; scheduledTime?: string | undefined; timezone?: string | undefined; }' is not assignable to parameter of type 'Partial<{ title: string; slug: string; subtitle: string; body_markdown: string; seo_title: string; meta_description: string; focus_keywords: string; category_slug: string; tags: string[]; cover_image_url: string; ... 8 more ...; timezone: string; }>'.
+  Types of property 'status' are incompatible.
+    Type 'string | undefined' is not assignable to type 'KnowledgeArticleStatus | undefined'.
+      Type 'string' is not assignable to type 'KnowledgeArticleStatus | undefined'.
+components/studioos/knowledge-editor/knowledge-editor-seo-card.tsx(30,5): error TS2345: Argument of type '{ slug: string; category_slug: string; tags: never[]; cover_image_url: string; status: string; visibility: string; title: string; subtitle: string; seo_title: string; meta_description: string; body_markdown: string; focus_keywords: string; }' is not assignable to parameter of type 'KnowledgeEditorFormState'.
+  Property 'cover_fallback_url' is missing in type '{ slug: string; category_slug: string; tags: never[]; cover_image_url: string; status: string; visibility: string; title: string; subtitle: string; seo_title: string; meta_description: string; body_markdown: string; focus_keywords: string; }' but required in type 'KnowledgeEditorFormState'.
+features/knowledge-center/knowledge-ai-assistant.service.ts(86,25): error TS2322: Type '(string | undefined)[]' is not assignable to type 'string[]'.
+  Type 'string | undefined' is not assignable to type 'string'.
+    Type 'undefined' is not assignable to type 'string'.
+features/knowledge-center/knowledge-ai-assistant.service.ts(109,9): error TS2322: Type '(string | undefined)[]' is not assignable to type 'string[]'.
+  Type 'string | undefined' is not assignable to type 'string'.
+    Type 'undefined' is not assignable to type 'string'.
+features/knowledge-center/knowledge-ai-assistant.service.ts(125,28): error TS2551: Property 'categorySlug' does not exist on type '{ category: { name: string; id: string; createdAt: Date; updatedAt: Date; description: string | null; sortOrder: number; slug: string; } | null; translations: ({ seo: { id: string; ... 16 more ...; externalLinkCount: number; } | null; faqs: { ...; }[]; schema: { ...; } | null; lucien: { ...; } | null; } & { ...; })[...'. Did you mean 'category'?
+scripts/knowledge-publish-verify.ts(66,5): error TS2322: Type 'boolean | undefined' is not assignable to type 'boolean'.
+  Type 'undefined' is not assignable to type 'boolean'.
+scripts/knowledge-publish-verify.ts(153,9): error TS2322: Type '{ code: "en"; label: "English"; pathPrefix: "en"; }' is not assignable to type '{ readonly code: "en"; readonly pathPrefix: "en"; readonly hreflang: "en"; readonly label: "English"; } | { readonly code: "zh-CN"; readonly pathPrefix: "zh"; readonly hreflang: "zh-CN"; readonly label: "Chinese (Simplified)"; } | ... 8 more ... | { ...; }'.
+  Property 'hreflang' is missing in type '{ code: "en"; label: "English"; pathPrefix: "en"; }' but required in type '{ readonly code: "en"; readonly pathPrefix: "en"; readonly hreflang: "en"; readonly label: "English"; }'.
+
+warn The configuration property `package.json#prisma` is deprecated and will be removed in Prisma 7. Please migrate to a Prisma config file (e.g., `prisma.config.ts`).
+For more information, see: https://pris.ly/prisma-config
+
+
+--- End failure output ---
+
+
+▶ Running marketing.verify_links…
+✅ marketing.verify_links (0.2s)
+
+▶ Running lint…
+✅ lint (8.4s)
+
+▶ Running build…
+✅ build (48.0s)
+
+▶ Running migrations.payment_collection…
+✅ migrations.payment_collection
+
+▶ Running prisma.payment_fields…
+✅ prisma.payment_fields
+
+▶ Running payment.mvp_files…
+✅ payment.mvp_files
+
+▶ Running ai_copilot.marketing_faq_knowledge…
+✅ ai_copilot.marketing_faq_knowledge
+
+▶ Running knowledge.verify…
+❌ knowledge.verify (0.6s)
+
+--- Failure output ---
+exit: 1
+
+> vincis@0.1.0 knowledge:verify
+> node --import tsx scripts/knowledge-publish-verify.ts
+
+
+/Users/linkele/Projects/studioOS/node_modules/server-only/index.js:1
+throw new Error(
+      ^
+
+Error: This module cannot be imported from a Client Component module. It should only be used from a Server Component.
+    at Object.<anonymous> (/Users/linkele/Projects/studioOS/node_modules/server-only/index.js:1:7)
+    at Module._compile (node:internal/modules/cjs/loader:1871:14)
+    at Object.transformer (/Users/linkele/Projects/studioOS/node_modules/tsx/dist/register-BOkp8V6j.cjs:9:3176)
+    at Module.load (node:internal/modules/cjs/loader:1594:32)
+    at Module._load (node:internal/modules/cjs/loader:1396:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.require (node:internal/modules/cjs/loader:1617:12)
+    at require (node:internal/modules/helpers:153:16)
+    at import_knowledge_center (/Users/linkele/Projects/studioOS/features/knowledge-center/knowledge-center.service.ts:1:8)
+    at Object.<anonymous> (/Users/linkele/Projects/studioOS/features/knowledge-center/knowledge-center.service.ts:447:43)
+
+Node.js v24.18.0
+
+--- End failure output ---
+
+
+▶ Running admin.secrets_config…
+✅ admin.secrets_config
+
+▶ Running prisma.migrate_deploy…
+✅ prisma.migrate_deploy (11.3s)
+
+▶ Running login.preflight…
+✅ login.preflight (18.2s)
+
+▶ Running payment.verify…
+✅ payment.verify (153.2s)
+
+▶ Running sprint1.verify…
+✅ sprint1.verify (10.0s)
+
+--- Summary ---
+✅ prisma.generate
+❌ typecheck
+eo_title: string; meta_description: string; focus_keywords: string; category_slug: string; tags: string[]; cover_image_url: string; ... 8 more ...; timezone: string; }>'.
+      Types of property 'status' are incompatible.
+        Type 'string | undefined' is not assignable to type 'KnowledgeArticleStatus | undefined'.
+          Type 'string' is not assignable to type 'KnowledgeArticleStatus | undefined'.
+components/studioos/admin-knowledge-editor-panel.tsx(307,44): error TS2345: Argument of type '{ status?: string | undefined; visibility?: string | undefined; scheduledDate?: string | undefined; scheduledTime?: string | undefined; timezone?: string | undefined; }' is not assignable to parameter of type 'Partial<{ title: string; slug: string; subtitle: string; body_markdown: string; seo_title: string; meta_description: string; focus_keywords: string; category_slug: string; tags: string[]; cover_image_url: string; ... 8 more ...; timezone: string; }>'.
+  Types of property 'status' are incompatible.
+    Type 'string | undefined' is not assignable to type 'KnowledgeArticleStatus | undefined'.
+      Type 'string' is not assignable to type 'KnowledgeArticleStatus | undefined'.
+components/studioos/knowledge-editor/knowledge-editor-seo-card.tsx(30,5): error TS2345: Argument of type '{ slug: string; category_slug: string; tags: never[]; cover_image_url: string; status: string; visibility: string; title: string; subtitle: string; seo_title: string; meta_description: string; body_markdown: string; focus_keywords: string; }' is not assignable to parameter of type 'KnowledgeEditorFormState'.
+  Property 'cover_fallback_url' is missing in type '{ slug: string; category_slug: string; tags: never[]; cover_image_url: string; status: string; visibility: string; title: string; subtitle: string; seo_title: string; meta_description: string; body_markdown: string; focus_keywords: string; }' but required in type 'KnowledgeEditorFormState'.
+features/knowledge-center/knowledge-ai-assistant.service.ts(86,25): error TS2322: Type '(string | undefined)[]' is not assignable to type 'string[]'.
+  Type 'string | undefined' is not assignable to type 'string'.
+    Type 'undefined' is not assignable to type 'string'.
+features/knowledge-center/knowledge-ai-assistant.service.ts(109,9): error TS2322: Type '(string | undefined)[]' is not assignable to type 'string[]'.
+  Type 'string | undefined' is not assignable to type 'string'.
+    Type 'undefined' is not assignable to type 'string'.
+features/knowledge-center/knowledge-ai-assistant.service.ts(125,28): error TS2551: Property 'categorySlug' does not exist on type '{ category: { name: string; id: string; createdAt: Date; updatedAt: Date; description: string | null; sortOrder: number; slug: string; } | null; translations: ({ seo: { id: string; ... 16 more ...; externalLinkCount: number; } | null; faqs: { ...; }[]; schema: { ...; } | null; lucien: { ...; } | null; } & { ...; })[...'. Did you mean 'category'?
+scripts/knowledge-publish-verify.ts(66,5): error TS2322: Type 'boolean | undefined' is not assignable to type 'boolean'.
+  Type 'undefined' is not assignable to type 'boolean'.
+scripts/knowledge-publish-verify.ts(153,9): error TS2322: Type '{ code: "en"; label: "English"; pathPrefix: "en"; }' is not assignable to type '{ readonly code: "en"; readonly pathPrefix: "en"; readonly hreflang: "en"; readonly label: "English"; } | { readonly code: "zh-CN"; readonly pathPrefix: "zh"; readonly hreflang: "zh-CN"; readonly label: "Chinese (Simplified)"; } | ... 8 more ... | { ...; }'.
+  Property 'hreflang' is missing in type '{ code: "en"; label: "English"; pathPrefix: "en"; }' but required in type '{ readonly code: "en"; readonly pathPrefix: "en"; readonly hreflang: "en"; readonly label: "English"; }'.
+
+warn The configuration property `package.json#prisma` is deprecated and will be removed in Prisma 7. Please migrate to a Prisma config file (e.g., `prisma.config.ts`).
+For more information, see: https://pris.ly/prisma-config
+
+
+✅ marketing.verify_links
+✅ lint
+✅ build
+✅ migrations.payment_collection — 010_payment_collection.sql present
+✅ prisma.payment_fields — Escrow payment collection fields defined
+✅ payment.mvp_files — Payment collection + webhook + admin API present
+✅ ai_copilot.marketing_faq_knowledge — 36 public marketing FAQ rows ready for Lucien
+❌ knowledge.verify
+exit: 1
+
+> vincis@0.1.0 knowledge:verify
+> node --import tsx scripts/knowledge-publish-verify.ts
+
+
+/Users/linkele/Projects/studioOS/node_modules/server-only/index.js:1
+throw new Error(
+      ^
+
+Error: This module cannot be imported from a Client Component module. It should only be used from a Server Component.
+    at Object.<anonymous> (/Users/linkele/Projects/studioOS/node_modules/server-only/index.js:1:7)
+    at Module._compile (node:internal/modules/cjs/loader:1871:14)
+    at Object.transformer (/Users/linkele/Projects/studioOS/node_modules/tsx/dist/register-BOkp8V6j.cjs:9:3176)
+    at Module.load (node:internal/modules/cjs/loader:1594:32)
+    at Module._load (node:internal/modules/cjs/loader:1396:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.require (node:internal/modules/cjs/loader:1617:12)
+    at require (node:internal/modules/helpers:153:16)
+    at import_knowledge_center (/Users/linkele/Projects/studioOS/features/knowledge-center/knowledge-center.service.ts:1:8)
+    at Object.<anonymous> (/Users/linkele/Projects/studioOS/features/knowledge-center/knowledge-center.service.ts:447:43)
+
+Node.js v24.18.0
+
+✅ admin.secrets_config — Dev secrets check passed
+✅ prisma.migrate_deploy
+✅ login.preflight
+✅ payment.verify
+✅ sprint1.verify
+
+2 step(s) failed: typecheck, knowledge.verify
+EXIT:1

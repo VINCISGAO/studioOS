@@ -89,6 +89,7 @@
     "e2e:ui": "playwright test --ui",
     "verify:local": "bash scripts/verify-local.sh",
     "payment:verify": "node --require ./scripts/helpers/register-verify-runtime.cjs --import tsx scripts/payment-collection-verify.ts",
+    "knowledge:verify": "node --import tsx scripts/knowledge-publish-verify.ts",
     "production:verify": "node --require ./scripts/helpers/load-env.cjs --import tsx scripts/production-ready-verify.ts",
     "happy-path:verify": "STUDIOOS_SCRIPT_RUNTIME=verify node --require ./scripts/helpers/register-verify-runtime.cjs --import tsx scripts/happy-path-transaction-verify.ts",
     "revision-five-round:verify": "STUDIOOS_SCRIPT_RUNTIME=verify node --require ./scripts/helpers/register-verify-runtime.cjs --import tsx scripts/revision-five-round-verify.ts",
@@ -138,7 +139,8 @@
     "bullmq": "^5.49.0",
     "hls.js": "^1.6.2",
     "ioredis": "^5.6.1",
-    "server-only": "^0.0.1"
+    "server-only": "^0.0.1",
+    "sharp": "^0.34.3"
   },
   "devDependencies": {
     "prisma": "^6.8.2",

@@ -246,6 +246,7 @@ function main() {
   steps.push(runCheck("prisma.payment_fields", checkPrismaSchema));
   steps.push(runCheck("payment.mvp_files", checkPaymentService));
   steps.push(runCheck("ai_copilot.marketing_faq_knowledge", checkMarketingFaqKnowledge));
+  steps.push(runCmd("knowledge.verify", "npm run knowledge:verify"));
   steps.push(runCheck("admin.secrets_config", checkAdminSecrets));
 
   if (process.env.DATABASE_URL) {

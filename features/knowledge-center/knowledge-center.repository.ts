@@ -8,11 +8,14 @@ import {
   toArticleDetailDto,
   toArticleListItemDto
 } from "@/features/knowledge-center/knowledge-center.mappers";
+import { ensureKnowledgeArticleSeeds } from "@/features/knowledge-center/knowledge-center.article-seeds";
+import { knowledgeTranslationWithJsonLdWhere } from "@/features/knowledge-center/knowledge-prisma.filters";
 import type {
   KnowledgeArticleDetailDto,
   KnowledgeArticleListItemDto,
   KnowledgeCitationGapDto,
   KnowledgeDashboardStatsDto,
+  KnowledgeSeoArticleRowDto,
   UpsertKnowledgeArticleInput
 } from "@/features/knowledge-center/knowledge-center.types";
 
@@ -98,6 +101,19 @@ export class KnowledgeCenterRepository {
   async ensureSeeds() {
     if (!this.isAvailable()) return;
     await ensureDefaultCategories();
+    try {
+      await ensureKnowledgeArticleSeeds();
+    } catch (error) {
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "code" in error &&
+        (error as { code?: string }).code === "P2021"
+      ) {
+        return;
+      }
+      throw error;
+    }
   }
 
   async listAdmin(filters?: {
@@ -132,6 +148,41 @@ export class KnowledgeCenterRepository {
     return rows.map((row) => toArticleListItemDto(row, filters?.language));
   }
 
+  async listSeoDashboardArticles(): Promise<KnowledgeSeoArticleRowDto[]> {
+    const model = articleModel();
+    if (!model) return [];
+    return withKnowledgeTableFallback([], async () => {
+      const rows = await model.findMany({
+        where: { deletedAt: null },
+        include: articleInclude,
+        orderBy: { updatedAt: "desc" }
+      });
+
+      const items: KnowledgeSeoArticleRowDto[] = [];
+      for (const row of rows) {
+        const publishedCodes = await this.listPublishedLanguageCodesBySlug(row.slug);
+        for (const translation of row.translations) {
+          items.push({
+            id: row.id,
+            slug: row.slug,
+            title: translation.title,
+            language_code: translation.languageCode,
+            status: translation.status,
+            seo_score: translation.seo?.seoScore ?? 0,
+            ai_friendly_score: translation.seo?.aiFriendlyScore ?? 0,
+            google_score: translation.seo?.googleScore ?? 0,
+            baidu_score: translation.seo?.baiduScore ?? 0,
+            lucien_indexed: translation.lucien?.lucienIndexed ?? false,
+            schema_ready: Boolean(translation.schema?.jsonLd),
+            hreflang_languages: publishedCodes.length,
+            updated_at: translation.updatedAt.toISOString()
+          });
+        }
+      }
+      return items;
+    });
+  }
+
   async getById(id: string): Promise<KnowledgeArticleDetailDto | null> {
     const model = articleModel();
     if (!model) return null;
@@ -150,6 +201,22 @@ export class KnowledgeCenterRepository {
       include: articleInclude
     });
     return row ? toArticleDetailDto(row) : null;
+  }
+
+  async isSlugTaken(slug: string, excludeArticleId?: string): Promise<boolean> {
+    const model = articleModel();
+    if (!model || !slug.trim()) return false;
+    return withKnowledgeTableFallback(false, async () => {
+      const row = await model.findFirst({
+        where: {
+          slug,
+          deletedAt: null,
+          ...(excludeArticleId ? { id: { not: excludeArticleId } } : {})
+        },
+        select: { id: true }
+      });
+      return Boolean(row);
+    });
   }
 
   async createArticle(data: Prisma.KnowledgeArticleCreateInput) {
@@ -461,6 +528,57 @@ export class KnowledgeCenterRepository {
     );
   }
 
+  async listPublishedLanguageCodesBySlug(slug: string): Promise<string[]> {
+    const model = articleModel();
+    if (!model) return [];
+    return withKnowledgeTableFallback([], async () => {
+      const row = await model.findFirst({
+        where: { slug, deletedAt: null },
+        select: {
+          translations: {
+            where: { status: "PUBLISHED" },
+            select: { languageCode: true }
+          }
+        }
+      });
+      return row?.translations.map((item) => item.languageCode) ?? [];
+    });
+  }
+
+  async listPublishedBySlugs(
+    slugs: string[],
+    languageCode: string
+  ): Promise<Array<{ slug: string; title: string; excerpt: string | null }>> {
+    const model = articleModel();
+    if (!model || !slugs.length) return [];
+    return withKnowledgeTableFallback([], async () => {
+      const rows = await model.findMany({
+        where: {
+          slug: { in: slugs },
+          deletedAt: null,
+          translations: { some: { languageCode, status: "PUBLISHED" } }
+        },
+        include: articleInclude
+      });
+
+      return slugs.flatMap((slug) => {
+        const row = rows.find((item) => item.slug === slug);
+        if (!row) return [];
+        const translation = row.translations.find(
+          (item) => item.languageCode === languageCode && item.status === "PUBLISHED"
+        );
+        if (!translation) return [];
+        return [
+          {
+            slug,
+            title: translation.title,
+            excerpt: translation.excerpt
+          }
+        ];
+      });
+    });
+  }
+
   async incrementView(articleId: string) {
     await prisma.knowledgeAnalytics.upsert({
       where: { articleId },
@@ -493,19 +611,44 @@ export class KnowledgeCenterRepository {
         lucien_indexed: 0,
         google_indexed: 0,
         baidu_indexed: 0,
+        bing_indexed: 0,
         avg_seo: 0,
         monthly_views: 0
       };
     }
 
-    const [articles, published, draft, languages, lucienIndexed, analytics, seoAvg] = await Promise.all([
+    const [articles, published, draft, languages, lucienIndexed, analytics, seoAvg, googleReady, baiduReady, bingReady] =
+      await Promise.all([
       prisma.knowledgeArticle.count({ where: { deletedAt: null } }),
       prisma.knowledgeTranslation.count({ where: { status: "PUBLISHED" } }),
       prisma.knowledgeTranslation.count({ where: { status: "DRAFT" } }),
       prisma.knowledgeTranslation.groupBy({ by: ["languageCode"] }),
       prisma.knowledgeLucien.count({ where: { lucienIndexed: true } }),
       prisma.knowledgeAnalytics.aggregate({ _sum: { monthlyViews: true, viewCount: true } }),
-      prisma.knowledgeSeo.aggregate({ _avg: { seoScore: true } })
+      prisma.knowledgeSeo.aggregate({ _avg: { seoScore: true } }),
+      prisma.knowledgeTranslation.count({
+        where: {
+          status: "PUBLISHED",
+          article: { deletedAt: null },
+          seo: { googleScore: { gte: 60 } },
+          ...knowledgeTranslationWithJsonLdWhere
+        }
+      }),
+      prisma.knowledgeTranslation.count({
+        where: {
+          status: "PUBLISHED",
+          article: { deletedAt: null },
+          seo: { baiduScore: { gte: 55 } }
+        }
+      }),
+      prisma.knowledgeTranslation.count({
+        where: {
+          status: "PUBLISHED",
+          article: { deletedAt: null },
+          seo: { seoScore: { gte: 65 } },
+          ...knowledgeTranslationWithJsonLdWhere
+        }
+      })
     ]);
 
     return {
@@ -514,8 +657,9 @@ export class KnowledgeCenterRepository {
       draft,
       languages: languages.length,
       lucien_indexed: lucienIndexed,
-      google_indexed: Math.min(published, lucienIndexed),
-      baidu_indexed: Math.min(published, Math.floor(lucienIndexed * 0.85)),
+      google_indexed: googleReady,
+      baidu_indexed: baiduReady,
+      bing_indexed: bingReady,
       avg_seo: Math.round(seoAvg._avg.seoScore ?? 0),
       monthly_views: analytics._sum.monthlyViews ?? 0
     };

@@ -1,18 +1,13 @@
-import { AdminPageShell } from "@/components/studioos/admin-page-shell";
 import { AdminKnowledgeEditorPanel } from "@/components/studioos/admin-knowledge-editor-panel";
 import { getAppUiLocale } from "@/lib/app-language";
-
-const copy = {
-  en: { title: "New Article", subtitle: "Create official VINCIS knowledge content." },
-  zh: { title: "新建文章", subtitle: "创建 VINCIS 官方知识内容。" }
-};
+import { KNOWLEDGE_EDITOR_MAX_WIDTH } from "@/lib/knowledge/knowledge-editor.constants";
+import { cn } from "@/lib/utils";
 
 export default async function AdminKnowledgeNewPage() {
   const locale = await getAppUiLocale();
-  const t = copy[locale];
   return (
-    <AdminPageShell locale={locale} title={t.title} subtitle={t.subtitle}>
+    <div className={cn(KNOWLEDGE_EDITOR_MAX_WIDTH, "mx-auto w-full px-4 sm:px-6")}>
       <AdminKnowledgeEditorPanel locale={locale} />
-    </AdminPageShell>
+    </div>
   );
 }

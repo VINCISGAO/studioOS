@@ -1,17 +1,32 @@
 "use client";
 
+import { KnowledgeEditorAiCard } from "@/components/studioos/knowledge-editor/knowledge-editor-ai-card";
+import { KnowledgeEditorArticleInfo } from "@/components/studioos/knowledge-editor/knowledge-editor-article-info";
+import { KnowledgeEditorCategoryCard } from "@/components/studioos/knowledge-editor/knowledge-editor-category-card";
+import { KnowledgeEditorCover } from "@/components/studioos/knowledge-editor/knowledge-editor-cover";
+import { KnowledgeEditorHeader } from "@/components/studioos/knowledge-editor/knowledge-editor-header";
+import { KnowledgeEditorLucienCard } from "@/components/studioos/knowledge-editor/knowledge-editor-lucien-card";
+import { KnowledgeEditorPublishCard } from "@/components/studioos/knowledge-editor/knowledge-editor-publish-card";
+import { KnowledgeEditorPublishIssuesCard } from "@/components/studioos/knowledge-editor/knowledge-editor-publish-issues-card";
+import { KnowledgeEditorSeoCard } from "@/components/studioos/knowledge-editor/knowledge-editor-seo-card";
+import { KnowledgeMarkdownEditor } from "@/components/studioos/knowledge-editor/knowledge-markdown-editor";
+import { useKnowledgeEditorAiActions } from "@/hooks/use-knowledge-editor-ai-actions";
+import { useKnowledgeEditorAutosave } from "@/hooks/use-knowledge-editor-autosave";
+import { useKnowledgeSlugCheck } from "@/hooks/use-knowledge-slug-check";
 import { adminMutationHeaders } from "@/lib/studioos/admin-csrf-client";
 import { adminPortalRoutes } from "@/lib/studioos/admin-portal-routes";
+import { curatedFaqsForLanguage } from "@/lib/knowledge/knowledge-ai-advertising-cluster";
+import { buildKnowledgeEditorInitialForm, type KnowledgeEditorPanelForm } from "@/lib/knowledge/knowledge-editor-initial-form";
+import {
+  knowledgeEditorPublishIssues,
+  normalizeKnowledgeSlug,
+  validateKnowledgeSlug
+} from "@/lib/knowledge/knowledge-editor-validation";
 import type { KnowledgeArticleDetailDto } from "@/features/knowledge-center/knowledge-center.types";
-import type { KnowledgePublishPipelineResult } from "@/features/knowledge-center/knowledge-publish.pipeline";
+import type { KnowledgePublishPipelineResult } from "@/features/knowledge-center/knowledge-publish.pipeline.shared";
 import type { Locale } from "@/lib/i18n";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { useCallback, useMemo, useState } from "react";
 
 type EditorProps = {
   locale: Locale;
@@ -22,95 +37,188 @@ type EditorProps = {
 export function AdminKnowledgeEditorPanel({ locale, articleId, initial }: EditorProps) {
   const zh = locale === "zh";
   const router = useRouter();
-  const translation = initial?.translations[0];
-  const [saving, setSaving] = useState(false);
+  const [currentId, setCurrentId] = useState(articleId);
+  const [slugTouched, setSlugTouched] = useState(Boolean(initial?.slug));
+  const [form, setForm] = useState(() => buildKnowledgeEditorInitialForm(locale, initial));
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const [message, setMessage] = useState<string | null>(null);
-  const [form, setForm] = useState({
-    title: translation?.title ?? "",
-    slug: initial?.slug ?? "",
-    category_slug: initial?.category_slug ?? "help-center",
-    author_name: initial?.author_name ?? "VINCIS",
-    status: initial?.status ?? "DRAFT",
-    language_code: translation?.language_code ?? (locale === "zh" ? "zh-CN" : "en"),
-    subtitle: translation?.subtitle ?? "",
-    excerpt: translation?.excerpt ?? "",
-    body_markdown: translation?.body_markdown ?? "",
-    seo_title: translation?.seo?.seo_title ?? "",
-    meta_description: translation?.seo?.meta_description ?? "",
-    ai_summary: translation?.lucien?.ai_summary ?? "",
-    ai_keywords: (translation?.lucien?.ai_keywords ?? []).join(", "),
-    lucien_learning: translation?.lucien?.lucien_learning ?? true
+  const [lucienSynced, setLucienSynced] = useState(Boolean(initial?.translations[0]?.lucien?.lucien_indexed));
+
+  const slugValidation = validateKnowledgeSlug(form.slug);
+  const slugCheck = useKnowledgeSlugCheck({
+    slug: form.slug,
+    excludeArticleId: currentId,
+    enabled: slugValidation.ok
   });
 
-  async function save(publish = false) {
-    setSaving(true);
-    setMessage(null);
-    try {
-      const payload = {
+  const publishIssues = useMemo(() => {
+    const issues = knowledgeEditorPublishIssues(form, zh);
+    if (slugCheck.status === "checking") {
+      issues.push(zh ? "正在验证 Slug…" : "Validating slug…");
+    } else if (slugCheck.isBlocking) {
+      issues.push(slugCheck.message ?? (zh ? "Slug 已被占用" : "Slug is already taken"));
+    }
+    return issues;
+  }, [form, zh, slugCheck.isBlocking, slugCheck.message, slugCheck.status]);
+
+  const publishBlocked = publishIssues.some((item) => !item.includes(zh ? "建议" : "recommended"));
+
+  const lastSavedLabel = lastSavedAt
+    ? lastSavedAt.toLocaleTimeString(locale === "zh" ? "zh-CN" : "en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false
+      })
+    : null;
+
+  const patchForm = useCallback((patch: Partial<KnowledgeEditorPanelForm>) => {
+    setForm((current) => ({ ...current, ...patch }));
+  }, []);
+
+  const buildPayload = useCallback(
+    (publish = false) => {
+      const status = publish ? "PUBLISHED" : form.status;
+      const scheduledAt =
+        form.scheduledDate && form.scheduledTime
+          ? new Date(`${form.scheduledDate}T${form.scheduledTime}:00`).toISOString()
+          : null;
+      return {
         title: form.title,
         slug: form.slug,
         category_slug: form.category_slug,
         author_name: form.author_name,
-        status: publish ? "PUBLISHED" : form.status,
+        cover_image_url: form.cover_image_url || undefined,
+        status,
+        tags: form.tags,
+        scheduled_at: scheduledAt,
+        timezone: form.timezone,
         translation: {
           language_code: form.language_code,
           title: form.title,
           subtitle: form.subtitle,
-          excerpt: form.excerpt,
+          excerpt: form.meta_description,
           body_markdown: form.body_markdown,
-          status: publish ? "PUBLISHED" : form.status,
+          status,
           seo: {
             seo_title: form.seo_title,
-            meta_description: form.meta_description
+            meta_description: form.meta_description,
+            keywords: form.focus_keywords.split(",").map((item) => item.trim()).filter(Boolean),
+            og_image_url: form.cover_fallback_url || undefined
           },
+          faqs: publish ? curatedFaqsForLanguage(form.language_code) : undefined,
           lucien: {
-            ai_summary: form.ai_summary,
-            ai_keywords: form.ai_keywords.split(",").map((item) => item.trim()).filter(Boolean),
+            ai_summary: form.meta_description,
+            ai_keywords: form.focus_keywords.split(",").map((item) => item.trim()).filter(Boolean),
             lucien_learning: form.lucien_learning
           }
         }
       };
+    },
+    [form]
+  );
 
-      const response = await fetch(articleId ? `/api/admin/knowledge/${articleId}` : "/api/admin/knowledge", {
-        method: articleId ? "PATCH" : "POST",
-        headers: { "Content-Type": "application/json", ...adminMutationHeaders() },
-        body: JSON.stringify(payload)
-      });
-      const body = (await response.json()) as {
-        data?: {
-          article?: KnowledgeArticleDetailDto;
-          pipeline?: KnowledgePublishPipelineResult;
+  const save = useCallback(
+    async (publish = false) => {
+      if (publish && publishBlocked) {
+        setMessage(publishIssues.join(" · "));
+        return;
+      }
+      setSaveState("saving");
+      setMessage(null);
+      try {
+        const response = await fetch(currentId ? `/api/admin/knowledge/${currentId}` : "/api/admin/knowledge", {
+          method: currentId ? "PATCH" : "POST",
+          headers: { "Content-Type": "application/json", ...adminMutationHeaders() },
+          body: JSON.stringify(buildPayload(publish))
+        });
+        const body = (await response.json()) as {
+          data?: { article?: KnowledgeArticleDetailDto; pipeline?: KnowledgePublishPipelineResult };
+          error?: { message?: string };
         };
-        error?: { message?: string };
-      };
-      if (!response.ok) throw new Error(body.error?.message ?? (zh ? "保存失败" : "Save failed"));
+        if (!response.ok) throw new Error(body.error?.message ?? (zh ? "保存失败" : "Save failed"));
 
-      const saved = body.data?.article;
-      const pipeline = body.data?.pipeline;
-      if (!articleId && saved?.id) {
-        router.replace(adminPortalRoutes.knowledgeEdit(saved.id));
+        const saved = body.data?.article;
+        if (!currentId && saved?.id) {
+          setCurrentId(saved.id);
+          router.replace(adminPortalRoutes.knowledgeEdit(saved.id));
+        }
+        setSaveState("saved");
+        setLastSavedAt(new Date());
+        if (publish && body.data?.pipeline?.published) {
+          setLucienSynced(true);
+          const synced = body.data.pipeline.translations_synced ?? 1;
+          const languages = body.data.pipeline.translation_languages?.join(", ") ?? form.language_code;
+          const translationErrors = body.data.pipeline.translation_errors;
+          setMessage(
+            zh
+              ? `已发布。GPT 已同步 ${synced} 种语言：${languages}${translationErrors?.length ? `（${translationErrors.length} 项翻译告警）` : ""}`
+              : `Published. GPT synced ${synced} languages: ${languages}${translationErrors?.length ? ` (${translationErrors.length} translation warnings)` : ""}`
+          );
+        } else {
+          setMessage(zh ? "已保存。" : "Saved.");
+        }
+      } catch (error) {
+        setSaveState("idle");
+        setMessage(error instanceof Error ? error.message : zh ? "保存失败" : "Save failed");
       }
+    },
+    [buildPayload, currentId, publishBlocked, publishIssues, router, zh]
+  );
 
-      if (publish && pipeline?.published) {
-        setMessage(
-          zh
-            ? `已发布。自动完成：${pipeline.steps.length} 项（含 Lucien ${pipeline.lucien_synced} 条）。`
-            : `Published. Auto-completed ${pipeline.steps.length} steps (Lucien ${pipeline.lucien_synced} rows).`
-        );
-      } else {
-        setMessage(zh ? "已保存。" : "Saved.");
-      }
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : zh ? "保存失败" : "Save failed");
-    } finally {
-      setSaving(false);
+  useKnowledgeEditorAutosave({
+    enabled: Boolean(form.title.trim()),
+    snapshot: JSON.stringify(form),
+    onSave: async () => {
+      await save(false);
     }
+  });
+
+  const { runningAction, runAction } = useKnowledgeEditorAiActions({
+    zh,
+    draft: {
+      title: form.title,
+      subtitle: form.subtitle,
+      slug: form.slug,
+      body_markdown: form.body_markdown,
+      seo_title: form.seo_title,
+      meta_description: form.meta_description,
+      focus_keywords: form.focus_keywords,
+      category_slug: form.category_slug,
+      tags: form.tags
+    },
+    onPatch: (patch) => {
+      const { message: aiMessage, ...formPatch } = patch;
+      if (Object.keys(formPatch).length) patchForm(formPatch);
+      if (aiMessage) setMessage(aiMessage);
+    }
+  });
+
+  function handleTitleChange(value: string) {
+    setForm((current) => ({
+      ...current,
+      title: value,
+      seo_title: current.seo_title || value,
+      slug: slugTouched ? current.slug : normalizeKnowledgeSlug(value)
+    }));
+  }
+
+  function generateLucienFields() {
+    const keywords = form.focus_keywords
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+    const fallbackKeywords = [form.category_slug, "AI advertising", "VINCIS"].filter(Boolean);
+    patchForm({
+      focus_keywords: keywords.length ? form.focus_keywords : fallbackKeywords.join(", "),
+      meta_description: form.meta_description || form.subtitle || form.title
+    });
+    setMessage(zh ? "已根据英文正文生成 Lucien 字段。" : "Generated Lucien fields from the English draft.");
   }
 
   async function syncLucien() {
-    if (!articleId) return;
-    setMessage(null);
-    const response = await fetch(`/api/admin/knowledge/${articleId}/sync-lucien`, {
+    if (!currentId) return;
+    const response = await fetch(`/api/admin/knowledge/${currentId}/sync-lucien`, {
       method: "POST",
       headers: adminMutationHeaders()
     });
@@ -118,88 +226,108 @@ export function AdminKnowledgeEditorPanel({ locale, articleId, initial }: Editor
       setMessage(zh ? "Lucien 同步失败" : "Lucien sync failed");
       return;
     }
-    setMessage(zh ? "已同步到 Lucien。" : "Synced to Lucien.");
+    setLucienSynced(true);
+    setMessage(zh ? "Lucien 已同步。" : "Lucien synced.");
   }
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
-      <div className="space-y-5 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-        <div className="grid gap-4 md:grid-cols-2">
-          <Field label={zh ? "标题" : "Title"}>
-            <Input value={form.title} onChange={(e) => setForm((c) => ({ ...c, title: e.target.value }))} />
-          </Field>
-          <Field label="Slug">
-            <Input value={form.slug} onChange={(e) => setForm((c) => ({ ...c, slug: e.target.value }))} placeholder="/resources/how-to-write-a-creative-brief" />
-          </Field>
+    <div className="pb-10">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,7fr)_minmax(300px,3fr)]">
+        <KnowledgeEditorHeader
+          className="xl:col-span-2"
+          locale={locale}
+          title={currentId ? (zh ? "编辑文章" : "Edit Article") : zh ? "创建文章" : "Create Article"}
+          subtitle={
+            currentId
+              ? zh
+                ? "更新源稿、SEO 与发布状态；发布时 GPT 将同步 11 种语言。"
+                : "Update the source draft and SEO; publishing triggers GPT sync to all 11 languages."
+              : zh
+                ? "撰写中文源稿并发布，GPT 将自动翻译并同步到 11 种语言。"
+                : "Write the source draft and publish — GPT auto-syncs all 11 languages."
+          }
+          saveState={saveState}
+          lastSavedAt={lastSavedAt}
+          publishDisabled={publishBlocked}
+          saving={saveState === "saving"}
+          onPreview={() => {
+            if (!form.slug) return;
+            window.open(`/en/resources/${form.slug}`, "_blank", "noopener,noreferrer");
+          }}
+          onSaveDraft={() => void save(false)}
+          onPublish={() => void save(true)}
+        />
+
+        <div className="min-w-0 space-y-5">
+          <KnowledgeEditorArticleInfo
+            locale={locale}
+            title={form.title}
+            subtitle={form.subtitle}
+            slug={form.slug}
+            slugTouched={slugTouched}
+            excludeArticleId={currentId}
+            onTitleChange={handleTitleChange}
+            onSubtitleChange={(value) => patchForm({ subtitle: value })}
+            onSlugChange={(value) => {
+              setSlugTouched(true);
+              patchForm({ slug: normalizeKnowledgeSlug(value) });
+            }}
+          />
+          <KnowledgeEditorCover
+            locale={locale}
+            value={form.cover_image_url}
+            fallbackUrl={form.cover_fallback_url}
+            onChange={(value) =>
+              patchForm({
+                cover_image_url: value.url,
+                cover_fallback_url: value.fallback_url ?? ""
+              })
+            }
+          />
+          <KnowledgeMarkdownEditor locale={locale} value={form.body_markdown} onChange={(value) => patchForm({ body_markdown: value })} lastSavedLabel={lastSavedLabel} />
         </div>
-        <Field label={zh ? "副标题" : "Subtitle"}>
-          <Input value={form.subtitle} onChange={(e) => setForm((c) => ({ ...c, subtitle: e.target.value }))} />
-        </Field>
-        <Field label="Markdown">
-          <Textarea rows={18} value={form.body_markdown} onChange={(e) => setForm((c) => ({ ...c, body_markdown: e.target.value }))} />
-        </Field>
+
+        <aside className="space-y-5 xl:sticky xl:top-6 xl:max-h-[calc(100vh-5rem)] xl:self-start xl:overflow-y-auto xl:pr-1">
+          <KnowledgeEditorSeoCard locale={locale} form={form} onChange={patchForm} />
+          <KnowledgeEditorCategoryCard
+            locale={locale}
+            categorySlug={form.category_slug}
+            tags={form.tags}
+            onCategoryChange={(value) => patchForm({ category_slug: value })}
+            onTagsChange={(tags) => patchForm({ tags })}
+          />
+          <KnowledgeEditorPublishCard
+            locale={locale}
+            status={form.status}
+            visibility={form.visibility}
+            scheduledDate={form.scheduledDate}
+            scheduledTime={form.scheduledTime}
+            timezone={form.timezone}
+            onChange={(patch) => patchForm(patch)}
+          />
+          <KnowledgeEditorPublishIssuesCard locale={locale} issues={publishIssues} />
+          <KnowledgeEditorAiCard
+            locale={locale}
+            disabled={!form.title.trim() || !form.body_markdown.trim()}
+            runningAction={runningAction}
+            onAction={(action) => void runAction(action)}
+          />
+          <KnowledgeEditorLucienCard
+            locale={locale}
+            aiSummary={form.meta_description}
+            aiKeywords={form.focus_keywords}
+            synced={lucienSynced}
+            disabled={!currentId}
+            onGenerate={generateLucienFields}
+            onSync={() => void syncLucien()}
+          />
+          {message ? (
+            <div className="rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm leading-6 text-zinc-700">
+              {message}
+            </div>
+          ) : null}
+        </aside>
       </div>
-
-      <aside className="space-y-4">
-        <section className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
-          <h3 className="text-sm font-semibold text-zinc-900">SEO</h3>
-          <div className="mt-3 space-y-3">
-            <Field label={zh ? "SEO 标题" : "SEO title"}>
-              <Input value={form.seo_title} onChange={(e) => setForm((c) => ({ ...c, seo_title: e.target.value }))} />
-            </Field>
-            <Field label="Meta Description">
-              <Textarea rows={4} value={form.meta_description} onChange={(e) => setForm((c) => ({ ...c, meta_description: e.target.value }))} />
-            </Field>
-          </div>
-        </section>
-
-        <section className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4 text-sm text-emerald-900">
-          <p className="font-semibold">{zh ? "发布后自动完成" : "On Publish, VINCIS automatically"}</p>
-          <ul className="mt-2 space-y-1 text-emerald-800">
-            <li>✓ {zh ? "生成文章页" : "Article page"}</li>
-            <li>✓ sitemap.xml · RSS · llms.txt</li>
-            <li>✓ Schema.org · {zh ? "站内搜索索引" : "site search index"}</li>
-            <li>✓ Lucien {zh ? "学习" : "learning"} · {zh ? "分类页更新" : "category index"}</li>
-          </ul>
-        </section>
-
-        <section className="rounded-2xl border border-violet-100 bg-violet-50/40 p-4">
-          <h3 className="text-sm font-semibold text-violet-900">Lucien</h3>
-          <div className="mt-3 space-y-3">
-            <Field label={zh ? "AI 摘要" : "AI summary"}>
-              <Textarea rows={3} value={form.ai_summary} onChange={(e) => setForm((c) => ({ ...c, ai_summary: e.target.value }))} />
-            </Field>
-            <Field label={zh ? "AI 关键词" : "AI keywords"}>
-              <Input value={form.ai_keywords} onChange={(e) => setForm((c) => ({ ...c, ai_keywords: e.target.value }))} />
-            </Field>
-            <Button type="button" variant="outline" onClick={() => void syncLucien()} disabled={!articleId}>
-              {zh ? "同步 Lucien" : "Sync Lucien"}
-            </Button>
-          </div>
-        </section>
-
-        <div className="flex flex-wrap gap-2">
-          <Button type="button" onClick={() => void save(false)} disabled={saving}>
-            {saving ? (zh ? "保存中…" : "Saving…") : zh ? "保存草稿" : "Save draft"}
-          </Button>
-          <Button type="button" variant="secondary" onClick={() => void save(true)} disabled={saving}>
-            {zh ? "发布" : "Publish"}
-          </Button>
-          <Button asChild variant="ghost">
-            <Link href={adminPortalRoutes.knowledge}>{zh ? "返回列表" : "Back to list"}</Link>
-          </Button>
-        </div>
-        {message ? <p className="text-sm text-zinc-600">{message}</p> : null}
-      </aside>
-    </div>
-  );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="grid gap-2">
-      <Label>{label}</Label>
-      {children}
     </div>
   );
 }

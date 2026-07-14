@@ -20,6 +20,7 @@ export function LucienAvatar({ size = "md", alt = "Lucien", className }: LucienA
     <img
       src={LUCIEN_AVATAR_SRC}
       alt={alt}
+      draggable={false}
       className={cn(
         "shrink-0 rounded-full object-cover shadow-lg shadow-violet-100 ring-1 ring-violet-200/70",
         SIZE_CLASS[size],

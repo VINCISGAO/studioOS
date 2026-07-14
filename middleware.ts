@@ -9,6 +9,7 @@ import { demoRedirectForRole } from "@/lib/demo-auth";
 import { DEMO_SESSION_COOKIE, ADMIN_SESSION_COOKIE, LOCALE_COOKIE } from "@/lib/auth-config";
 import { parseDemoSessionCookieAsync } from "@/lib/demo-session-cookie";
 import { toSafeNextPath, toSafeNextPathname } from "@/lib/auth/post-login-redirect";
+import { resolveStaticLegacyRedirect } from "@/lib/studioos/legacy-route-redirect.shared";
 
 function persistLanguageCookie(response: NextResponse, language: string) {
   response.cookies.set(LOCALE_COOKIE, normalizeAppLanguage(language), {
@@ -21,7 +22,8 @@ function persistLanguageCookie(response: NextResponse, language: string) {
 function redirectToPath(
   request: NextRequest,
   pathname: string,
-  params?: Record<string, string | undefined>
+  params?: Record<string, string | undefined>,
+  status = 308
 ) {
   const url = request.nextUrl.clone();
   url.pathname = pathname;
@@ -33,7 +35,7 @@ function redirectToPath(
       }
     }
   }
-  return NextResponse.redirect(url);
+  return NextResponse.redirect(url, status);
 }
 
 /** Next.js RSC / Server Action / prefetch — must not receive HTML redirects. */
@@ -167,6 +169,15 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  if (!isApiRoute && !isNextInternalNavigationRequest(request)) {
+    const legacyTarget = resolveStaticLegacyRedirect(pathname);
+    if (legacyTarget) {
+      const url = request.nextUrl.clone();
+      url.pathname = legacyTarget;
+      return NextResponse.redirect(url, 308);
+    }
+  }
+
   // Fix broken links like /?lang%3Dzh → /?lang=zh
   const rawSearch = request.nextUrl.search;
   if (
@@ -234,7 +245,12 @@ export async function middleware(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/brand/projects/new";
     url.search = query ? `?${query}` : "";
-    return NextResponse.redirect(url);
+    return NextResponse.redirect(url, 308);
+  }
+
+  const workspaceReviewMatch = pathname.match(/^\/workspace\/projects\/([^/]+)\/review\/?$/);
+  if (workspaceReviewMatch?.[1]) {
+    return redirectToPath(request, `/brand/projects/${workspaceReviewMatch[1]}/review`);
   }
 
   if (

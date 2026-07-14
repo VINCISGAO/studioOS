@@ -2,7 +2,7 @@ import { getCurrentCreatorId, getCurrentSession } from "@/features/auth/session-
 import { type Locale, withLocale } from "@/lib/i18n";
 
 const CREATOR_LOGIN_PATH = "/login?role=creator";
-const CREATOR_ONBOARDING_PATH = "/creator/onboarding";
+const CREATOR_ONBOARDING_PATH = "/studio/onboarding";
 
 /**
  * Linear creator portal entry: login → profile check → onboarding → studio.

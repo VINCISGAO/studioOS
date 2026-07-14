@@ -33,6 +33,7 @@ export const adminPortalRoutes = {
   academy: "/admin/academy",
   showcase: "/admin/showcase",
   knowledge: "/admin/knowledge",
+  knowledgeSeo: "/admin/knowledge/seo",
   knowledgeCitations: "/admin/knowledge/citations",
   knowledgeNew: "/admin/knowledge/new",
   knowledgeEdit: (id: string) => `/admin/knowledge/${id}`

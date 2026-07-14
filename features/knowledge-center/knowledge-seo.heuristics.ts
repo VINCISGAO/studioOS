@@ -11,7 +11,7 @@ export type KnowledgeSeoScores = {
 };
 
 function countLinks(markdown: string) {
-  const internal = (markdown.match(/\]\(\/(?:en|zh|ja|ko|th|vi|fr|es)\/resources\//g) ?? []).length;
+  const internal = (markdown.match(/\]\(\/(?:en|zh(?:-tw)?|ja|ko|ms|km|th|vi|fr|es)\/resources\//g) ?? []).length;
   const external = (markdown.match(/\]\(https?:\/\//g) ?? []).length;
   return { internal, external };
 }
@@ -90,17 +90,74 @@ function buildArticleNode(input: {
   publishedAt?: string | null;
   updatedAt: string;
   imageUrl?: string | null;
+  websiteId: string;
+  articleId: string;
 }) {
   return {
     "@type": "Article",
+    "@id": input.articleId,
     headline: input.title,
     description: input.description,
     author: { "@type": "Organization", name: input.authorName },
     publisher: { "@type": "Organization", name: "VINCIS", url: "https://vincis.app" },
     datePublished: input.publishedAt ?? input.updatedAt,
     dateModified: input.updatedAt,
-    mainEntityOfPage: input.url,
+    mainEntityOfPage: { "@id": input.url },
+    isPartOf: { "@id": input.websiteId },
     image: input.imageUrl ? [input.imageUrl] : undefined
+  };
+}
+
+function buildBreadcrumbNode(input: {
+  url: string;
+  pathPrefix: string;
+  title: string;
+  categoryName?: string | null;
+  categorySlug?: string | null;
+  origin?: string;
+}) {
+  const origin = input.origin ?? "https://vincis.app";
+  const items: Array<{ name: string; item: string }> = [
+    { name: "VINCIS", item: origin },
+    { name: "Knowledge Center", item: `${origin}/${input.pathPrefix}/resources` }
+  ];
+  if (input.categoryName && input.categorySlug) {
+    items.push({
+      name: input.categoryName,
+      item: `${origin}/${input.pathPrefix}/resources/category/${input.categorySlug}`
+    });
+  }
+  items.push({ name: input.title, item: input.url });
+
+  return {
+    "@type": "BreadcrumbList",
+    "@id": `${input.url}#breadcrumb`,
+    itemListElement: items.map((entry, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: entry.name,
+      item: entry.item
+    }))
+  };
+}
+
+function buildOrganizationNode(origin = "https://vincis.app") {
+  return {
+    "@type": "Organization",
+    "@id": `${origin}/#organization`,
+    name: "VINCIS",
+    url: origin,
+    logo: `${origin}/images/LOGO.png`
+  };
+}
+
+function buildWebsiteNode(origin = "https://vincis.app") {
+  return {
+    "@type": "WebSite",
+    "@id": `${origin}/#website`,
+    url: origin,
+    name: "VINCIS",
+    publisher: { "@id": `${origin}/#organization` }
   };
 }
 
@@ -115,7 +172,7 @@ function buildFaqNode(faqs: KnowledgeFaqInput[]) {
   };
 }
 
-/** Article + optional FAQPage JSON-LD for publish pipeline. */
+/** Organization + WebSite + Article + Breadcrumb (+ optional FAQPage) JSON-LD graph. */
 export function buildKnowledgeJsonLd(input: {
   title: string;
   description: string;
@@ -124,16 +181,46 @@ export function buildKnowledgeJsonLd(input: {
   publishedAt?: string | null;
   updatedAt: string;
   imageUrl?: string | null;
+  pathPrefix?: string;
+  categoryName?: string | null;
+  categorySlug?: string | null;
+  origin?: string;
   faqs?: KnowledgeFaqInput[];
 }) {
-  const article = buildArticleNode(input);
-  if (!input.faqs?.length) {
-    return { "@context": "https://schema.org", ...article };
+  const origin = input.origin ?? "https://vincis.app";
+  const websiteId = `${origin}/#website`;
+  const articleId = `${input.url}#article`;
+  const pathPrefix = input.pathPrefix ?? "en";
+
+  const graph: Record<string, unknown>[] = [
+    buildOrganizationNode(origin),
+    buildWebsiteNode(origin),
+    buildArticleNode({
+      title: input.title,
+      description: input.description,
+      url: input.url,
+      authorName: input.authorName,
+      publishedAt: input.publishedAt,
+      updatedAt: input.updatedAt,
+      imageUrl: input.imageUrl,
+      websiteId,
+      articleId
+    }),
+    buildBreadcrumbNode({
+      url: input.url,
+      pathPrefix,
+      title: input.title,
+      categoryName: input.categoryName,
+      categorySlug: input.categorySlug,
+      origin
+    })
+  ];
+
+  if (input.faqs?.length) {
+    graph.push(buildFaqNode(input.faqs));
   }
-  return {
-    "@context": "https://schema.org",
-    "@graph": [article, buildFaqNode(input.faqs)]
-  };
+
+  return { "@context": "https://schema.org", "@graph": graph };
 }
 
 /** @deprecated Use buildKnowledgeJsonLd */

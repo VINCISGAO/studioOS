@@ -22,7 +22,7 @@ export async function submitOnboardingAction(formData: FormData) {
   const notes = String(formData.get("notes") ?? "").trim();
 
   if (!studio_name || !email || !country || !portfolio_url || !specialties || !tools || !base_price || !delivery_speed) {
-    redirect(withLocale("/creator/onboarding?error=missing", lang));
+    redirect(withLocale("/studio/onboarding?error=missing", lang));
   }
 
   const application = await createApplication({
@@ -37,7 +37,7 @@ export async function submitOnboardingAction(formData: FormData) {
     notes
   });
 
-  redirect(withLocale(`/creator/onboarding?submitted=${application.id}`, lang));
+  redirect(withLocale(`/studio/onboarding?submitted=${application.id}`, lang));
 }
 
 export async function approveOnboardingAction(formData: FormData) {

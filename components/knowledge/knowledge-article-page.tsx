@@ -1,7 +1,9 @@
 import type { PublicKnowledgeArticleDto } from "@/features/knowledge-center/knowledge-center.types";
 import { extractKnowledgeToc, renderKnowledgeMarkdown } from "@/lib/knowledge/knowledge-markdown";
 import type { Locale } from "@/lib/i18n";
-import Link from "next/link";
+import { KnowledgeArticleFaqSection } from "@/components/knowledge/knowledge-article-faq-section";
+import { KnowledgeArticleRelatedSection } from "@/components/knowledge/knowledge-article-related-section";
+import { KnowledgeCoverImage } from "@/components/knowledge/knowledge-cover-image";
 
 export function KnowledgeArticlePage({
   locale,
@@ -35,8 +37,12 @@ export function KnowledgeArticlePage({
 
       {article.cover_image_url ? (
         <div className="mt-8 overflow-hidden rounded-[28px] bg-zinc-100">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={article.cover_image_url} alt={article.title} className="aspect-[16/9] w-full object-cover" />
+          <KnowledgeCoverImage
+            coverUrl={article.cover_image_url}
+            fallbackUrl={article.seo?.og_image_url}
+            alt={article.title}
+            className="aspect-[16/9] w-full object-cover"
+          />
         </div>
       ) : null}
 
@@ -60,32 +66,8 @@ export function KnowledgeArticlePage({
         dangerouslySetInnerHTML={{ __html: renderKnowledgeMarkdown(article.body_markdown) }}
       />
 
-      {article.faqs.length ? (
-        <section className="mt-14 rounded-[28px] border border-zinc-200 bg-white p-6">
-          <h2 className="text-2xl font-semibold text-zinc-950">FAQ</h2>
-          <div className="mt-5 space-y-5">
-            {article.faqs.map((faq) => (
-              <div key={faq.id}>
-                <h3 className="text-lg font-medium text-zinc-900">{faq.question}</h3>
-                <p className="mt-2 text-[17px] leading-8 text-zinc-600">{faq.answer}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-      ) : null}
-
-      {article.related.length ? (
-        <section className="mt-14">
-          <h2 className="text-xl font-semibold text-zinc-950">{zh ? "相关文章" : "Related Articles"}</h2>
-          <div className="mt-4 space-y-3">
-            {article.related.map((item) => (
-              <Link key={item.slug} href={item.path} className="block rounded-xl border border-zinc-200 px-4 py-3 text-sm font-medium text-zinc-800 transition hover:border-zinc-300 hover:bg-zinc-50">
-                {item.title}
-              </Link>
-            ))}
-          </div>
-        </section>
-      ) : null}
+      <KnowledgeArticleFaqSection locale={locale} faqs={article.faqs} />
+      <KnowledgeArticleRelatedSection locale={locale} related={article.related} />
     </article>
   );
 }

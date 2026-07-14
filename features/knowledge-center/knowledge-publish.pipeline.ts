@@ -7,28 +7,21 @@ import {
   knowledgePathPrefixForCode
 } from "@/features/knowledge-center/knowledge-center.constants";
 import { knowledgeLucienSyncService } from "@/features/knowledge-center/knowledge-lucien-sync.service";
+import { pingKnowledgeSearchEngines } from "@/features/knowledge-center/knowledge-search-engine-ping.service";
 import type { KnowledgeArticleDetailDto } from "@/features/knowledge-center/knowledge-center.types";
+import type { KnowledgeMultilingualSyncResult } from "@/features/knowledge-center/knowledge-multilingual.types";
+import { logger } from "@/lib/core/logger";
 
-export const KNOWLEDGE_PUBLISH_STEPS = [
-  "article_page",
-  "category_index",
-  "search_index",
-  "schema_org",
-  "sitemap",
-  "rss",
-  "llms_txt",
-  "lucien_learning",
-  "cache_revalidated"
-] as const;
+import {
+  KNOWLEDGE_PUBLISH_STEPS,
+  KNOWLEDGE_PUBLISH_STEP_LABELS,
+  formatKnowledgePublishSummary,
+  type KnowledgePublishPipelineResult,
+  type KnowledgePublishStep
+} from "@/features/knowledge-center/knowledge-publish.pipeline.shared";
 
-export type KnowledgePublishStep = (typeof KNOWLEDGE_PUBLISH_STEPS)[number];
-
-export type KnowledgePublishPipelineResult = {
-  published: boolean;
-  steps: KnowledgePublishStep[];
-  lucien_synced: number;
-  public_urls: string[];
-};
+export type { KnowledgePublishPipelineResult, KnowledgePublishStep } from "@/features/knowledge-center/knowledge-publish.pipeline.shared";
+export { KNOWLEDGE_PUBLISH_STEPS, KNOWLEDGE_PUBLISH_STEP_LABELS, formatKnowledgePublishSummary };
 
 export type KnowledgeSaveResult = {
   article: KnowledgeArticleDetailDto | null;
@@ -43,7 +36,8 @@ function isPublishedArticle(detail: KnowledgeArticleDetailDto) {
 }
 
 export async function runKnowledgePublishPipeline(
-  detail: KnowledgeArticleDetailDto
+  detail: KnowledgeArticleDetailDto,
+  multilingual?: KnowledgeMultilingualSyncResult
 ): Promise<KnowledgePublishPipelineResult> {
   const steps: KnowledgePublishStep[] = [];
   const publicUrls: string[] = [];
@@ -52,7 +46,18 @@ export async function runKnowledgePublishPipeline(
     return { published: false, steps, lucien_synced: 0, public_urls: publicUrls };
   }
 
-  steps.push("article_page", "search_index", "schema_org");
+  steps.push(
+    "html",
+    "json_ld",
+    "open_graph",
+    "twitter_card",
+    "canonical",
+    "hreflang",
+    "schema_org",
+    "article_page",
+    "site_search",
+    "ai_summary"
+  );
 
   let lucienSynced = 0;
   for (const translation of detail.translations) {
@@ -83,6 +88,10 @@ export async function runKnowledgePublishPipeline(
     steps.push("lucien_learning");
   }
 
+  if ((multilingual?.translations_synced ?? 0) > 1) {
+    steps.push("multilingual_sync");
+  }
+
   revalidatePath("/sitemap.xml");
   steps.push("sitemap");
 
@@ -95,13 +104,38 @@ export async function runKnowledgePublishPipeline(
   revalidatePath("/llms.txt");
   steps.push("llms_txt");
 
+  revalidatePath("/robots.txt");
+  steps.push("robots_txt");
+
   revalidatePath("/api/v1/knowledge/search");
   steps.push("cache_revalidated");
+
+  let pingResult;
+  try {
+    pingResult = await pingKnowledgeSearchEngines({
+      articleUrls: publicUrls.map((path) => path)
+    });
+    steps.push("search_engine_ping");
+    logger.info("knowledge.publish.search_engine_ping", {
+      service: "knowledge-center",
+      attempted: pingResult.attempted,
+      succeeded: pingResult.succeeded
+    });
+  } catch (error) {
+    logger.warn("knowledge.publish.search_engine_ping_failed", {
+      service: "knowledge-center",
+      error: error instanceof Error ? error.message : String(error)
+    });
+  }
 
   return {
     published: true,
     steps: [...new Set(steps)],
     lucien_synced: lucienSynced,
-    public_urls: publicUrls
+    public_urls: publicUrls,
+    translations_synced: multilingual?.translations_synced,
+    translation_languages: multilingual?.translation_languages,
+    translation_errors: multilingual?.errors.length ? multilingual.errors : undefined,
+    search_engine_ping: pingResult
   };
 }

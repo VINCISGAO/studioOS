@@ -11,6 +11,10 @@ export default async function sitemap() {
     { url: `${ORIGIN}/`, changeFrequency: "weekly", priority: 1 }
   ];
 
+  if (!knowledgeCenterService.isAvailable()) {
+    return entries;
+  }
+
   for (const lang of KNOWLEDGE_LANGUAGE_OPTIONS) {
     entries.push({
       url: `${ORIGIN}/${lang.pathPrefix}/resources`,
@@ -18,14 +22,19 @@ export default async function sitemap() {
       priority: 0.8
     });
 
-    const articles = await knowledgeCenterService.listPublishedPublic(lang.code);
-    for (const article of articles) {
-      entries.push({
-        url: `${ORIGIN}${buildKnowledgeArticlePath(lang.pathPrefix, article.slug)}`,
-        lastModified: new Date(article.updated_at),
-        changeFrequency: "weekly",
-        priority: 0.7
-      });
+    try {
+      const articles = await knowledgeCenterService.listPublishedPublic(lang.code);
+      for (const article of articles) {
+        entries.push({
+          url: `${ORIGIN}${buildKnowledgeArticlePath(lang.pathPrefix, article.slug)}`,
+          lastModified: new Date(article.updated_at),
+          changeFrequency: "weekly",
+          priority: 0.7
+        });
+      }
+    } catch {
+      // Knowledge tables may be unavailable during local builds without migrations.
+      continue;
     }
   }
 

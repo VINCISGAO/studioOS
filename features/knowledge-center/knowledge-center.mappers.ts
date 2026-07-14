@@ -7,10 +7,8 @@ import type {
   KnowledgeTag,
   KnowledgeTranslation
 } from "@prisma/client";
-import {
-  knowledgePathPrefixForCode,
-  KNOWLEDGE_DEFAULT_CATEGORIES
-} from "@/features/knowledge-center/knowledge-center.constants";
+import { KNOWLEDGE_DEFAULT_CATEGORIES, knowledgePathPrefixForCode } from "@/features/knowledge-center/knowledge-center.constants";
+import { KNOWLEDGE_EDITOR_CATEGORIES } from "@/lib/knowledge/knowledge-editor.constants";
 import type {
   KnowledgeArticleDetailDto,
   KnowledgeArticleListItemDto,
@@ -156,4 +154,9 @@ export function toArticleListItemDto(row: ArticleWithRelations, languageCode?: s
   };
 }
 
-export const knowledgeSeedCategories = KNOWLEDGE_DEFAULT_CATEGORIES;
+const defaultCategorySlugs = new Set<string>(KNOWLEDGE_DEFAULT_CATEGORIES.map((item) => item.slug));
+
+export const knowledgeSeedCategories = [
+  ...KNOWLEDGE_DEFAULT_CATEGORIES,
+  ...KNOWLEDGE_EDITOR_CATEGORIES.filter((item) => !defaultCategorySlugs.has(item.slug))
+];

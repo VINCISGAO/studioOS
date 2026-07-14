@@ -1,0 +1,43 @@
+
+> vincis@0.1.0 typecheck
+> npm run db:generate && tsc --noEmit
+
+
+> vincis@0.1.0 db:generate
+> bash scripts/prisma-with-env.sh generate
+
+warn The configuration property `package.json#prisma` is deprecated and will be removed in Prisma 7. Please migrate to a Prisma config file (e.g., `prisma.config.ts`).
+For more information, see: https://pris.ly/prisma-config
+
+Prisma schema loaded from prisma/schema.prisma
+
+✔ Generated Prisma Client (v6.19.3) to ./node_modules/@prisma/client in 407ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+Tip: Need your database queries to be 1000x faster? Accelerate offers you that and more: https://pris.ly/tip-2-accelerate
+
+components/studioos/admin-knowledge-editor-panel.tsx(292,63): error TS2322: Type '(patch: Partial<{ title: string; slug: string; subtitle: string; body_markdown: string; seo_title: string; meta_description: string; focus_keywords: string; category_slug: string; tags: string[]; cover_image_url: string; ... 8 more ...; timezone: string; }>) => void' is not assignable to type '(patch: Partial<KnowledgeEditorFormState>) => void'.
+  Types of parameters 'patch' and 'patch' are incompatible.
+    Type 'Partial<KnowledgeEditorFormState>' is not assignable to type 'Partial<{ title: string; slug: string; subtitle: string; body_markdown: string; seo_title: string; meta_description: string; focus_keywords: string; category_slug: string; tags: string[]; cover_image_url: string; ... 8 more ...; timezone: string; }>'.
+      Types of property 'status' are incompatible.
+        Type 'string | undefined' is not assignable to type 'KnowledgeArticleStatus | undefined'.
+          Type 'string' is not assignable to type 'KnowledgeArticleStatus | undefined'.
+components/studioos/admin-knowledge-editor-panel.tsx(307,44): error TS2345: Argument of type '{ status?: string | undefined; visibility?: string | undefined; scheduledDate?: string | undefined; scheduledTime?: string | undefined; timezone?: string | undefined; }' is not assignable to parameter of type 'Partial<{ title: string; slug: string; subtitle: string; body_markdown: string; seo_title: string; meta_description: string; focus_keywords: string; category_slug: string; tags: string[]; cover_image_url: string; ... 8 more ...; timezone: string; }>'.
+  Types of property 'status' are incompatible.
+    Type 'string | undefined' is not assignable to type 'KnowledgeArticleStatus | undefined'.
+      Type 'string' is not assignable to type 'KnowledgeArticleStatus | undefined'.
+components/studioos/knowledge-editor/knowledge-editor-seo-card.tsx(30,5): error TS2345: Argument of type '{ slug: string; category_slug: string; tags: never[]; cover_image_url: string; status: string; visibility: string; title: string; subtitle: string; seo_title: string; meta_description: string; body_markdown: string; focus_keywords: string; }' is not assignable to parameter of type 'KnowledgeEditorFormState'.
+  Property 'cover_fallback_url' is missing in type '{ slug: string; category_slug: string; tags: never[]; cover_image_url: string; status: string; visibility: string; title: string; subtitle: string; seo_title: string; meta_description: string; body_markdown: string; focus_keywords: string; }' but required in type 'KnowledgeEditorFormState'.
+features/knowledge-center/knowledge-ai-assistant.service.ts(86,25): error TS2322: Type '(string | undefined)[]' is not assignable to type 'string[]'.
+  Type 'string | undefined' is not assignable to type 'string'.
+    Type 'undefined' is not assignable to type 'string'.
+features/knowledge-center/knowledge-ai-assistant.service.ts(109,9): error TS2322: Type '(string | undefined)[]' is not assignable to type 'string[]'.
+  Type 'string | undefined' is not assignable to type 'string'.
+    Type 'undefined' is not assignable to type 'string'.
+features/knowledge-center/knowledge-ai-assistant.service.ts(125,28): error TS2551: Property 'categorySlug' does not exist on type '{ category: { name: string; id: string; createdAt: Date; updatedAt: Date; description: string | null; sortOrder: number; slug: string; } | null; translations: ({ seo: { id: string; ... 16 more ...; externalLinkCount: number; } | null; faqs: { ...; }[]; schema: { ...; } | null; lucien: { ...; } | null; } & { ...; })[...'. Did you mean 'category'?
+scripts/knowledge-publish-verify.ts(66,5): error TS2322: Type 'boolean | undefined' is not assignable to type 'boolean'.
+  Type 'undefined' is not assignable to type 'boolean'.
+scripts/knowledge-publish-verify.ts(153,9): error TS2322: Type '{ code: "en"; label: "English"; pathPrefix: "en"; }' is not assignable to type '{ readonly code: "en"; readonly pathPrefix: "en"; readonly hreflang: "en"; readonly label: "English"; } | { readonly code: "zh-CN"; readonly pathPrefix: "zh"; readonly hreflang: "zh-CN"; readonly label: "Chinese (Simplified)"; } | ... 8 more ... | { ...; }'.
+  Property 'hreflang' is missing in type '{ code: "en"; label: "English"; pathPrefix: "en"; }' but required in type '{ readonly code: "en"; readonly pathPrefix: "en"; readonly hreflang: "en"; readonly label: "English"; }'.
+EXIT:2

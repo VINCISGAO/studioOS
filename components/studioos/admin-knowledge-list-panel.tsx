@@ -5,8 +5,8 @@ import type { Locale } from "@/lib/i18n";
 import { adminPortalRoutes } from "@/lib/studioos/admin-portal-routes";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { KnowledgeAdminNavLink } from "@/components/studioos/knowledge-editor/knowledge-admin-nav-link";
 import { cn } from "@/lib/utils";
 
 function StatCard({ label, value }: { label: string; value: string | number }) {
@@ -21,11 +21,12 @@ function StatCard({ label, value }: { label: string; value: string | number }) {
 export function AdminKnowledgeStats({ locale, stats }: { locale: Locale; stats: KnowledgeDashboardStatsDto }) {
   const zh = locale === "zh";
   return (
-    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
       <StatCard label={zh ? "文章总数" : "Articles"} value={stats.articles} />
       <StatCard label={zh ? "已发布" : "Published"} value={stats.published} />
-      <StatCard label={zh ? "草稿" : "Draft"} value={stats.draft} />
-      <StatCard label={zh ? "Lucien 索引" : "Lucien indexed"} value={stats.lucien_indexed} />
+      <StatCard label={zh ? "Google 就绪" : "Google ready"} value={stats.google_indexed} />
+      <StatCard label={zh ? "百度就绪" : "Baidu ready"} value={stats.baidu_indexed} />
+      <StatCard label={zh ? "Bing 就绪" : "Bing ready"} value={stats.bing_indexed} />
       <StatCard label={zh ? "平均 SEO" : "Avg SEO"} value={stats.avg_seo} />
     </div>
   );
@@ -66,13 +67,16 @@ export function AdminKnowledgeListPanel({ locale }: { locale: Locale }) {
           placeholder={zh ? "搜索标题、Slug…" : "Search title, slug…"}
           className="max-w-md"
         />
-        <div className="flex flex-wrap gap-2">
-          <Button asChild variant="outline">
-            <Link href={adminPortalRoutes.knowledgeCitations}>{zh ? "AI 引用监控" : "AI Citation Monitor"}</Link>
-          </Button>
-          <Button asChild>
-            <Link href={adminPortalRoutes.knowledgeNew}>{zh ? "新建文章" : "New Article"}</Link>
-          </Button>
+        <div className="relative z-10 flex flex-wrap gap-2">
+          <KnowledgeAdminNavLink href={adminPortalRoutes.knowledgeSeo}>
+            {zh ? "AI SEO Dashboard" : "AI SEO Dashboard"}
+          </KnowledgeAdminNavLink>
+          <KnowledgeAdminNavLink href={adminPortalRoutes.knowledgeCitations}>
+            {zh ? "AI 引用监控" : "AI Citation Monitor"}
+          </KnowledgeAdminNavLink>
+          <KnowledgeAdminNavLink href={adminPortalRoutes.knowledgeNew} variant="primary">
+            {zh ? "新建文章" : "New Article"}
+          </KnowledgeAdminNavLink>
         </div>
       </div>
 

@@ -4,6 +4,7 @@ import type {
   KnowledgeLucienPriority,
   KnowledgeSchemaOrgType
 } from "@prisma/client";
+import type { KnowledgePathPrefix } from "@/features/knowledge-center/knowledge-center.constants";
 
 export type KnowledgeFaqInput = {
   question: string;
@@ -87,8 +88,45 @@ export type KnowledgeDashboardStatsDto = {
   lucien_indexed: number;
   google_indexed: number;
   baidu_indexed: number;
+  bing_indexed: number;
   avg_seo: number;
   monthly_views: number;
+};
+
+export type KnowledgeSeoSurfaceStatus = "ok" | "warn" | "error";
+
+export type KnowledgeSeoDashboardDto = {
+  surfaces: {
+    sitemap: { status: KnowledgeSeoSurfaceStatus; url: string; entries: number };
+    robots: { status: KnowledgeSeoSurfaceStatus; url: string };
+    llms: { status: KnowledgeSeoSurfaceStatus; url: string; entries: number };
+    schema: { status: KnowledgeSeoSurfaceStatus; covered: number; total: number };
+  };
+  indexes: {
+    google: number;
+    baidu: number;
+    bing: number;
+  };
+  articles: KnowledgeSeoArticleRowDto[];
+  published_translations: number;
+  site_search_indexed?: number;
+  note: string;
+};
+
+export type KnowledgeSeoArticleRowDto = {
+  id: string;
+  slug: string;
+  title: string;
+  language_code: string;
+  status: KnowledgeArticleStatus;
+  seo_score: number;
+  ai_friendly_score: number;
+  google_score: number;
+  baidu_score: number;
+  lucien_indexed: boolean;
+  schema_ready: boolean;
+  hreflang_languages: number;
+  updated_at: string;
 };
 
 export type KnowledgeCitationGapDto = {
@@ -187,7 +225,7 @@ export type PublicKnowledgeArticleDto = {
   id: string;
   slug: string;
   language_code: string;
-  path_prefix: string;
+  path_prefix: KnowledgePathPrefix;
   title: string;
   subtitle: string | null;
   body_markdown: string;
@@ -196,10 +234,11 @@ export type PublicKnowledgeArticleDto = {
   author_name: string;
   cover_image_url: string | null;
   category_name: string | null;
+  category_slug: string | null;
   updated_at: string;
   published_at: string | null;
   seo: KnowledgeSeoDto | null;
   faqs: KnowledgeFaqDto[];
   schema_json_ld: Record<string, unknown> | null;
-  related: Array<{ slug: string; title: string; path: string }>;
+  related: Array<{ slug: string; title: string; path: string; excerpt?: string | null }>;
 };

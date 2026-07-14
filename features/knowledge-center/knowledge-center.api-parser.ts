@@ -19,7 +19,8 @@ export function parseKnowledgeArticleBody(body: Record<string, unknown>): Upsert
   const translationRaw = (body.translation ?? body) as Record<string, unknown>;
   const languageCode = asString(translationRaw.language_code) || "en";
   const bodyMarkdown = asString(translationRaw.body_markdown);
-  if (!bodyMarkdown) throw appError("VALIDATION_ERROR", "body_markdown is required");
+  const status = (asString(translationRaw.status).toUpperCase() || asString(body.status).toUpperCase() || "DRAFT") as KnowledgeArticleStatus;
+  if (!bodyMarkdown && status === "PUBLISHED") throw appError("VALIDATION_ERROR", "body_markdown is required");
 
   const seoRaw = (translationRaw.seo ?? {}) as Record<string, unknown>;
   const lucienRaw = (translationRaw.lucien ?? {}) as Record<string, unknown>;

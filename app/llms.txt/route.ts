@@ -1,24 +1,27 @@
 import { knowledgeCenterService } from "@/features/knowledge-center/knowledge-center.service";
-import {
-  buildKnowledgeArticlePath,
-  KNOWLEDGE_LANGUAGE_OPTIONS
-} from "@/features/knowledge-center/knowledge-center.constants";
+import { KNOWLEDGE_LANGUAGE_OPTIONS } from "@/features/knowledge-center/knowledge-center.constants";
+import { buildKnowledgeLlmsTxtDocument } from "@/lib/knowledge/knowledge-llms-document";
 
 export async function GET() {
-  const lines = [
-    "# VINCIS AI Knowledge Center",
-    "# Official business knowledge for LLMs, search engines, and Lucien.",
-    ""
-  ];
+  const articlesByLanguage = await Promise.all(
+    KNOWLEDGE_LANGUAGE_OPTIONS.map(async (lang) => {
+      if (!knowledgeCenterService.isAvailable()) {
+        return { lang, articles: [] as Awaited<ReturnType<typeof knowledgeCenterService.listPublishedPublic>> };
+      }
+      try {
+        return {
+          lang,
+          articles: await knowledgeCenterService.listPublishedPublic(lang.code)
+        };
+      } catch {
+        return { lang, articles: [] as Awaited<ReturnType<typeof knowledgeCenterService.listPublishedPublic>> };
+      }
+    })
+  );
 
-  for (const lang of KNOWLEDGE_LANGUAGE_OPTIONS) {
-    const articles = await knowledgeCenterService.listPublishedPublic(lang.code);
-    for (const article of articles) {
-      lines.push(`https://vincis.app${buildKnowledgeArticlePath(lang.pathPrefix, article.slug)}`);
-    }
-  }
+  const body = buildKnowledgeLlmsTxtDocument({ articlesByLanguage });
 
-  return new Response(`${lines.join("\n")}\n`, {
+  return new Response(body, {
     headers: {
       "Content-Type": "text/plain; charset=utf-8",
       "Cache-Control": "public, max-age=3600"

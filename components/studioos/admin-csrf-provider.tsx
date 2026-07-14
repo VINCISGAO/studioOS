@@ -10,6 +10,8 @@ export function AdminCsrfProvider({
   token: string;
   children: React.ReactNode;
 }) {
+  setAdminCsrfToken(token);
+
   useEffect(() => {
     setAdminCsrfToken(token);
     return () => setAdminCsrfToken(null);
