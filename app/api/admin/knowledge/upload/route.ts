@@ -1,6 +1,6 @@
 import { requireAdminMutationUser } from "@/features/admin/auth/admin-api-guard";
-import { KNOWLEDGE_COVER_MAX_BYTES } from "@/lib/knowledge/knowledge-editor.constants";
-import { processKnowledgeCoverUpload } from "@/lib/knowledge/knowledge-cover-process";
+import { KNOWLEDGE_COVER_MAX_BYTES, KNOWLEDGE_INLINE_IMAGE_MAX_BYTES } from "@/lib/knowledge/knowledge-editor.constants";
+import { processKnowledgeCoverUpload, processKnowledgeInlineUpload } from "@/lib/knowledge/knowledge-cover-process";
 import { resolveTrustedImageMime } from "@/lib/studioos/upload-magic-bytes";
 import { apiSuccess, handleRouteError } from "@/lib/core/api-route";
 import { appError } from "@/lib/core/errors";
@@ -25,8 +25,13 @@ export async function POST(request: Request) {
     if (!file.size) {
       throw appError("VALIDATION_ERROR", "Empty file");
     }
-    if (file.size > KNOWLEDGE_COVER_MAX_BYTES) {
-      throw appError("VALIDATION_ERROR", "Cover image must be under 4MB");
+    const kind = String(formData.get("kind") ?? "cover");
+    const maxBytes = kind === "inline" ? KNOWLEDGE_INLINE_IMAGE_MAX_BYTES : KNOWLEDGE_COVER_MAX_BYTES;
+    if (file.size > maxBytes) {
+      throw appError(
+        "VALIDATION_ERROR",
+        kind === "inline" ? "Inline image must be under 5MB" : "Cover image must be under 4MB"
+      );
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
@@ -39,7 +44,10 @@ export async function POST(request: Request) {
       throw appError("VALIDATION_ERROR", "Only JPEG, PNG, WebP, and GIF images are supported");
     }
 
-    const processed = await processKnowledgeCoverUpload({ buffer, mime });
+    const processed =
+      kind === "inline"
+        ? await processKnowledgeInlineUpload({ buffer, mime })
+        : await processKnowledgeCoverUpload({ buffer, mime });
     return apiSuccess(processed);
   } catch (error) {
     return handleRouteError(error);

@@ -10,6 +10,19 @@ export type KnowledgeSeoScores = {
   external_link_count: number;
 };
 
+/** Prisma `KnowledgeSeo` create/update fields — never pass snake_case DTO keys into Prisma. */
+export function toPrismaKnowledgeSeoScoreFields(scores: KnowledgeSeoScores) {
+  return {
+    seoScore: scores.seo_score,
+    readabilityScore: scores.readability_score,
+    aiFriendlyScore: scores.ai_friendly_score,
+    googleScore: scores.google_score,
+    baiduScore: scores.baidu_score,
+    internalLinkCount: scores.internal_link_count,
+    externalLinkCount: scores.external_link_count
+  };
+}
+
 function countLinks(markdown: string) {
   const internal = (markdown.match(/\]\(\/(?:en|zh(?:-tw)?|ja|ko|ms|km|th|vi|fr|es)\/resources\//g) ?? []).length;
   const external = (markdown.match(/\]\(https?:\/\//g) ?? []).length;
@@ -30,14 +43,25 @@ export function estimateReadingTimeMinutes(markdown: string) {
 }
 
 export function slugifyKnowledgeTitle(title: string) {
-  return title
-    .trim()
+  const trimmed = title.trim();
+  const asciiSlug = trimmed
     .toLowerCase()
-    .replace(/[^a-z0-9\u4e00-\u9fff\s-]/g, "")
+    .replace(/[^a-z0-9\s-]/g, "")
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "")
-    .slice(0, 120) || "article";
+    .replace(/^-|-$/g, "");
+
+  if (asciiSlug && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(asciiSlug)) {
+    return asciiSlug.slice(0, 120);
+  }
+
+  if (!trimmed) return "article";
+
+  let hash = 0;
+  for (const char of trimmed) {
+    hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
+  }
+  return `article-${hash.toString(36)}`.slice(0, 120);
 }
 
 export function computeKnowledgeSeoScores(input: {

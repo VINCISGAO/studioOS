@@ -5,6 +5,7 @@ import {
   KNOWLEDGE_SLUG_MAX_LENGTH,
   KNOWLEDGE_VISIBILITY_OPTIONS
 } from "@/lib/knowledge/knowledge-editor.constants";
+import { knowledgeHtmlIsEmpty } from "@/lib/knowledge/knowledge-html";
 
 export type KnowledgeVisibility = (typeof KNOWLEDGE_VISIBILITY_OPTIONS)[number];
 
@@ -12,7 +13,7 @@ export type KnowledgeEditorFormState = {
   title: string;
   slug: string;
   subtitle: string;
-  body_markdown: string;
+  body_html: string;
   seo_title: string;
   meta_description: string;
   focus_keywords: string;
@@ -46,11 +47,11 @@ export function defaultKnowledgeTagForCategory(categorySlug: string) {
 }
 
 export function effectiveKnowledgeSeoTitle(form: KnowledgeEditorFormState) {
-  return form.seo_title.trim() || form.title.trim();
+  return form.title.trim();
 }
 
 export function effectiveKnowledgeMetaDescription(form: KnowledgeEditorFormState) {
-  return form.meta_description.trim() || form.subtitle.trim() || form.title.trim();
+  return form.subtitle.trim() || form.title.trim();
 }
 
 export function effectiveKnowledgeTags(form: KnowledgeEditorFormState) {
@@ -65,7 +66,7 @@ export function knowledgeEditorPublishGate(form: KnowledgeEditorFormState, zh = 
 
   if (!form.title.trim()) blockers.push(zh ? "标题必填" : "Title is required");
   if (!validateKnowledgeSlug(form.slug).ok) blockers.push(zh ? "URL 别名无效" : "Valid slug is required");
-  if (!form.body_markdown.trim()) blockers.push(zh ? "Markdown 正文必填" : "Markdown body is required");
+  if (knowledgeHtmlIsEmpty(form.body_html)) blockers.push(zh ? "正文必填" : "Body is required");
   if (!effectiveKnowledgeSeoTitle(form)) blockers.push(zh ? "SEO 标题必填" : "SEO title is required");
   if (!effectiveKnowledgeMetaDescription(form)) {
     blockers.push(zh ? "页面描述必填（可填写副标题）" : "Meta description is required (subtitle can be used)");
@@ -81,25 +82,4 @@ export function knowledgeEditorPublishGate(form: KnowledgeEditorFormState, zh = 
   }
 
   return { blockers, warnings };
-}
-
-export function knowledgeEditorPublishIssues(form: KnowledgeEditorFormState, zh = false) {
-  const gate = knowledgeEditorPublishGate(form, zh);
-  return [...gate.blockers, ...gate.warnings];
-}
-
-export function knowledgeEditorSeoTips(form: KnowledgeEditorFormState, zh = false) {
-  const tips: string[] = [];
-  const seoTitle = form.seo_title.trim();
-  const meta = form.meta_description.trim();
-  const keywords = form.focus_keywords.split(",").map((item) => item.trim()).filter(Boolean);
-  const headings = (form.body_markdown.match(/^#{1,3}\s/mg) ?? []).length;
-
-  if (seoTitle.length > 60) tips.push(zh ? "SEO 标题偏长" : "SEO title is too long");
-  if (seoTitle.length < 30) tips.push(zh ? "SEO 标题偏短" : "SEO title is short");
-  if (meta.length < 80) tips.push(zh ? "页面描述偏短" : "Meta description is too short");
-  if (meta.length > 160) tips.push(zh ? "页面描述偏长" : "Meta description is too long");
-  if (keywords.length > 8) tips.push(zh ? "关键词过多" : "Too many focus keywords");
-  if (headings < 2) tips.push(zh ? "正文标题层级不足" : "Add more headings (## / ###)");
-  return tips;
 }

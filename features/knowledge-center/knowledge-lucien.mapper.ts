@@ -41,9 +41,13 @@ export function buildKnowledgeLucienRows(input: {
 
   const sourceKey = buildKnowledgeLucienSourceKey(slug, translation.language_code);
   const summary = lucien.ai_summary?.trim() || translation.excerpt?.trim() || translation.subtitle?.trim() || "";
+  const bodyPlain = (translation.body_html || translation.body_markdown || "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
   const answerParts = [
     summary,
-    translation.body_markdown.slice(0, 4000),
+    bodyPlain.slice(0, 4000),
     ...translation.faqs.map((item) => `Q: ${item.question}\nA: ${item.answer}`)
   ].filter(Boolean);
 
@@ -61,7 +65,7 @@ export function buildKnowledgeLucienRows(input: {
     translation.subtitle,
     summary,
     keywords.join(" "),
-    translation.body_markdown.slice(0, 2000)
+    bodyPlain.slice(0, 2000)
   ]
     .filter(Boolean)
     .join("\n");

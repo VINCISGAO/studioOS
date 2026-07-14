@@ -9,6 +9,7 @@ import {
 import { knowledgeLucienSyncService } from "@/features/knowledge-center/knowledge-lucien-sync.service";
 import { pingKnowledgeSearchEngines } from "@/features/knowledge-center/knowledge-search-engine-ping.service";
 import type { KnowledgeArticleDetailDto } from "@/features/knowledge-center/knowledge-center.types";
+import type { UpsertKnowledgeArticleInput } from "@/features/knowledge-center/knowledge-center.types";
 import type { KnowledgeMultilingualSyncResult } from "@/features/knowledge-center/knowledge-multilingual.types";
 import { logger } from "@/lib/core/logger";
 
@@ -26,6 +27,14 @@ export { KNOWLEDGE_PUBLISH_STEPS, KNOWLEDGE_PUBLISH_STEP_LABELS, formatKnowledge
 export type KnowledgeSaveResult = {
   article: KnowledgeArticleDetailDto | null;
   pipeline?: KnowledgePublishPipelineResult;
+  queueMultilingualSync?: KnowledgeMultilingualBackgroundJob;
+};
+
+export type KnowledgeMultilingualBackgroundJob = {
+  articleId: string;
+  slug: string;
+  input: UpsertKnowledgeArticleInput;
+  authorName: string;
 };
 
 function isPublishedArticle(detail: KnowledgeArticleDetailDto) {
@@ -64,12 +73,21 @@ export async function runKnowledgePublishPipeline(
     if (translation.status !== "PUBLISHED") continue;
 
     if (translation.lucien?.lucien_learning) {
-      const result = await knowledgeLucienSyncService.syncTranslation({
-        slug: detail.slug,
-        translation,
-        categoryName: detail.category_name
-      });
-      lucienSynced += result.synced;
+      try {
+        const result = await knowledgeLucienSyncService.syncTranslation({
+          slug: detail.slug,
+          translation,
+          categoryName: detail.category_name
+        });
+        lucienSynced += result.synced;
+      } catch (error) {
+        logger.warn("knowledge.publish.lucien_sync_failed", {
+          service: "knowledge-center",
+          slug: detail.slug,
+          languageCode: translation.language_code,
+          error: error instanceof Error ? error.message : String(error)
+        });
+      }
     }
 
     const pathPrefix = knowledgePathPrefixForCode(translation.language_code);

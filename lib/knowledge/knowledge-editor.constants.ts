@@ -1,4 +1,4 @@
-export const KNOWLEDGE_EDITOR_MAX_WIDTH = "max-w-[1600px]";
+export const KNOWLEDGE_EDITOR_MAX_WIDTH = "max-w-[1480px]";
 
 export const KNOWLEDGE_EDITOR_CATEGORIES = [
   { slug: "ai-advertising", name: "AI Advertising" },
@@ -28,6 +28,15 @@ export const KNOWLEDGE_PUBLISH_STATUSES = ["DRAFT", "REVIEW", "SCHEDULED", "PUBL
 
 export const KNOWLEDGE_VISIBILITY_OPTIONS = ["PUBLIC", "PRIVATE", "INTERNAL"] as const;
 
+export const KNOWLEDGE_EDITOR_LANGUAGE_OPTIONS = [
+  { code: "zh-CN", zh: "中文", en: "Chinese" },
+  { code: "en", zh: "英文", en: "English" }
+] as const;
+
+export const KNOWLEDGE_ACCEPTED_IMAGE_ACCEPT = "image/png,image/jpeg,image/webp,image/gif";
+
 export const KNOWLEDGE_COVER_MAX_BYTES = 4 * 1024 * 1024;
+
+export const KNOWLEDGE_INLINE_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
 
 export const KNOWLEDGE_SLUG_MAX_LENGTH = 120;

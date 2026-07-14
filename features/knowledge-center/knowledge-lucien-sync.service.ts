@@ -31,39 +31,50 @@ export class KnowledgeLucienSyncService {
     let synced = 0;
     for (const row of rows) {
       const metadataJson = asInputJson(row.metadataJson) as Prisma.InputJsonValue;
-      await prisma.aiKnowledgeQa.upsert({
-        where: { sourceKey: row.sourceKey },
-        create: {
-          sourceKey: row.sourceKey,
-          languageCode: row.languageCode,
-          module: row.module,
-          question: row.question,
-          answer: row.answer,
-          searchText: row.searchText,
-          knowledgeType: row.knowledgeType,
-          visibility: row.visibility,
-          sourceType: row.sourceType,
-          version: row.version,
-          verifiedAt: row.verifiedAt,
-          metadataJson,
-          status: "ACTIVE"
-        },
-        update: {
-          languageCode: row.languageCode,
-          module: row.module,
-          question: row.question,
-          answer: row.answer,
-          searchText: row.searchText,
-          knowledgeType: row.knowledgeType,
-          visibility: row.visibility,
-          sourceType: row.sourceType,
-          version: row.version,
-          verifiedAt: row.verifiedAt,
-          metadataJson,
-          status: "ACTIVE"
+      try {
+        await prisma.aiKnowledgeQa.upsert({
+          where: { sourceKey: row.sourceKey },
+          create: {
+            sourceKey: row.sourceKey,
+            languageCode: row.languageCode,
+            module: row.module,
+            question: row.question,
+            answer: row.answer,
+            searchText: row.searchText,
+            knowledgeType: row.knowledgeType,
+            visibility: row.visibility,
+            sourceType: row.sourceType,
+            version: row.version,
+            verifiedAt: row.verifiedAt,
+            metadataJson,
+            status: "ACTIVE"
+          },
+          update: {
+            languageCode: row.languageCode,
+            module: row.module,
+            question: row.question,
+            answer: row.answer,
+            searchText: row.searchText,
+            knowledgeType: row.knowledgeType,
+            visibility: row.visibility,
+            sourceType: row.sourceType,
+            version: row.version,
+            verifiedAt: row.verifiedAt,
+            metadataJson,
+            status: "ACTIVE"
+          }
+        });
+        synced += 1;
+      } catch (error) {
+        const code =
+          typeof error === "object" && error !== null && "code" in error
+            ? String((error as { code?: string }).code)
+            : null;
+        if (code === "P2021" || code === "P2022") {
+          return { synced: 0 };
         }
-      });
-      synced += 1;
+        throw error;
+      }
     }
 
     const sourceKey = buildKnowledgeLucienSourceKey(input.slug, input.translation.language_code);

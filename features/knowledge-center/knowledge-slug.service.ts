@@ -12,9 +12,13 @@ export async function checkKnowledgeSlugAvailability(input: {
     return { available: false, reason: validation.message };
   }
 
-  const taken = await knowledgeCenterRepository.isSlugTaken(input.slug, input.excludeArticleId);
+  const existingArticleId = await knowledgeCenterRepository.findActiveArticleIdBySlug(
+    input.slug,
+    input.excludeArticleId
+  );
   return {
-    available: !taken,
-    reason: taken ? "This slug is already used by another article." : null
+    available: !existingArticleId,
+    reason: existingArticleId ? "This slug is already used by another article." : null,
+    existing_article_id: existingArticleId
   };
 }

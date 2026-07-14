@@ -3,7 +3,7 @@ import { AdminPortalShell } from "@/components/studioos/admin-portal-shell";
 import { AdminCsrfProvider } from "@/components/studioos/admin-csrf-provider";
 import { validateAdminSession } from "@/features/admin/auth/admin-auth.service";
 import { adminNotificationService } from "@/features/admin/notification/admin-notification.service";
-import { clearAdminSessionCookie, readAdminSessionToken } from "@/features/admin/auth/admin-session-server";
+import { readAdminSessionToken } from "@/features/admin/auth/admin-session-server";
 import { buildAdminCsrfToken } from "@/lib/auth/admin-csrf";
 import { getAppUiLocale } from "@/lib/app-language";
 import { buildAvatarInitials } from "@/lib/studioos/avatar-initials";
@@ -50,7 +50,6 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   const profile = await validateAdminSession();
   if (!profile) {
-    await clearAdminSessionCookie();
     redirect(`/admin/login?next=${encodeURIComponent(returnPath)}`);
   }
 
@@ -59,7 +58,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const failedNotificationCount = await safeFailedNotificationCount(profile);
 
   return (
-    <AdminCsrfProvider token={adminCsrfToken}>
+    <>
+      <div id="admin-csrf-bootstrap" data-csrf={adminCsrfToken} hidden aria-hidden="true" />
+      <AdminCsrfProvider token={adminCsrfToken}>
       <AdminPortalShell
         locale={locale}
         pathname={pathname}
@@ -74,5 +75,6 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         {children}
       </AdminPortalShell>
     </AdminCsrfProvider>
+    </>
   );
 }

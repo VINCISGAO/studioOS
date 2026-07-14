@@ -61,6 +61,7 @@ export function knowledgeEditorTagSuggestionLabel(tag: string, zh: boolean) {
 
 export function knowledgeEditorPublishStatusLabel(status: string, zh: boolean) {
   if (!zh) return status;
+  if (status === "ARCHIVED") return "已归档";
   return KNOWLEDGE_PUBLISH_STATUS_LABELS_ZH[status as keyof typeof KNOWLEDGE_PUBLISH_STATUS_LABELS_ZH] ?? status;
 }
 
@@ -77,6 +78,9 @@ export function knowledgeEditorSlugValidationMessage(message: string, zh: boolea
     return "仅可使用小写字母、数字和连字符。";
   }
   if (message === "This slug is already used by another article.") return "该 URL 别名已被其他文章占用。";
+  if (message.toLowerCase().includes("already used") || message.toLowerCase().includes("taken")) {
+    return "该 URL 别名已被占用。";
+  }
   return message;
 }
 

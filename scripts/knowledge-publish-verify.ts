@@ -143,6 +143,8 @@ function checkRssAndLlms(): Step {
         lang: englishLang,
         articles: [
           {
+            category_slug: "ai-advertising",
+            cover_image_url: null,
             id: "1",
             slug: "ai-video-brief",
             title: "AI Video Brief Guide",

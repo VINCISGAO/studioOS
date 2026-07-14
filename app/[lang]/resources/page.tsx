@@ -22,6 +22,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
+export const dynamic = "force-dynamic";
+
 export default async function KnowledgeIndexPage({ params }: Props) {
   const { lang } = await params;
   const languageCode = knowledgeCodeForPathPrefix(lang);

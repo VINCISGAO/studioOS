@@ -18,6 +18,22 @@ import { canPersistLocalDataStore } from "@/lib/runtime-flags";
 
 const LOCAL_ROOT = path.join(process.cwd(), ".data", "object-storage");
 const LOCAL_MULTIPART_ROOT = path.join(process.cwd(), ".data", "object-storage-multipart");
+const PUT_OBJECT_TIMEOUT_MS = 30_000;
+
+async function withPutObjectTimeout<T>(promise: Promise<T>, label: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timer = setTimeout(
+      () => reject(new Error(`${label} timed out after ${Math.round(PUT_OBJECT_TIMEOUT_MS / 1000)}s`)),
+      PUT_OBJECT_TIMEOUT_MS
+    );
+  });
+  try {
+    return await Promise.race([promise, timeoutPromise]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
 
 let s3Client: S3Client | null = null;
 
@@ -61,13 +77,16 @@ export async function putObject(key: string, body: Buffer, contentType: string) 
   const client = getS3Client();
   if (client) {
     try {
-      await client.send(
-        new PutObjectCommand({
-          Bucket: videoConfig.r2.bucket,
-          Key: key,
-          Body: body,
-          ContentType: contentType
-        })
+      await withPutObjectTimeout(
+        client.send(
+          new PutObjectCommand({
+            Bucket: videoConfig.r2.bucket,
+            Key: key,
+            Body: body,
+            ContentType: contentType
+          })
+        ),
+        "R2 upload"
       );
     } catch (error) {
       throw new Error(`R2 upload failed (${objectStorageErrorMessage(error)})`);

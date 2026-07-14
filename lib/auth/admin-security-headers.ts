@@ -17,9 +17,12 @@ export function applyAdminSecurityHeaders(
   response.headers.set("Cross-Origin-Opener-Policy", "same-origin");
   response.headers.set("Cross-Origin-Resource-Policy", "same-origin");
 
-  const scriptSrc = options.nonce
-    ? `'self' 'nonce-${options.nonce}' 'strict-dynamic'`
-    : "'self' 'unsafe-inline' 'unsafe-eval'";
+  // Strict nonce CSP blocks Next.js client chunks (no nonce on /_next/static/*).
+  // Use strict policy only in production; local dev must allow App Router hydration.
+  const scriptSrc =
+    options.production && options.nonce
+      ? `'self' 'nonce-${options.nonce}' 'strict-dynamic'`
+      : "'self' 'unsafe-inline' 'unsafe-eval'";
 
   const directives = [
     "default-src 'self'",

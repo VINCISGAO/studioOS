@@ -9,8 +9,8 @@ export function apiSuccess<T>(data: T, status = 200) {
   return NextResponse.json({ success: true, data }, { status });
 }
 
-export function apiError(code: string, message: string, status: number) {
-  return NextResponse.json({ success: false, error: { code, message } }, { status });
+export function apiError(code: string, message: string, status: number, details?: unknown) {
+  return NextResponse.json({ success: false, error: { code, message, details } }, { status });
 }
 
 export function handleRouteError(error: unknown) {
@@ -20,9 +20,25 @@ export function handleRouteError(error: unknown) {
   }
   if (isAppError(error)) {
     const status = error.code === "RATE_LIMIT" ? 429 : error.status;
-    return apiError(error.code, error.message, status);
+    return apiError(error.code, error.message, status, error.details);
   }
   console.error("[api]", error);
+
+  if (process.env.NODE_ENV !== "production" && error instanceof Error) {
+    const prismaCode =
+      typeof error === "object" && error !== null && "code" in error
+        ? String((error as { code?: string }).code)
+        : null;
+    const migrateHint =
+      prismaCode === "P2021" || prismaCode === "P2022"
+        ? " Run npm run db:migrate."
+        : "";
+    const detail = prismaCode
+      ? `${error.message} (${prismaCode})${migrateHint}`
+      : `${error.message}${migrateHint}`;
+    return apiError("SYSTEM_ERROR", detail, 500);
+  }
+
   return apiError("SYSTEM_ERROR", "Internal server error", 500);
 }
 

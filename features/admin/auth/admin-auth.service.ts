@@ -25,6 +25,7 @@ import { verifyAndConsumeAdminTotp } from "@/features/admin/auth/admin-totp-repl
 import { deriveDeviceLabel } from "@/features/admin/auth/admin-session-management.service";
 import { recordMasterStepUp } from "@/features/admin/auth/admin-step-up.service";
 import { hasDatabaseUrl, prisma } from "@/lib/core/database/prisma";
+import { logger } from "@/lib/core/logger";
 
 const LOCK_15_MIN_MS = 15 * 60 * 1000;
 const LOCK_1_HOUR_MS = 60 * 60 * 1000;
@@ -296,16 +297,24 @@ export const validateAdminSession = cache(async function validateAdminSession(re
     ? adminRequestContext(request)
     : adminRequestContext(await adminRequestFromHeaders("/admin"));
 
-  const profile = await adminSessionRepository.findValidSession({
-    token,
-    ipHash: ctx.ipHash,
-    userAgentHash: ctx.userAgentHash
-  });
+  let profile: Awaited<ReturnType<typeof adminSessionRepository.findValidSession>>;
+  try {
+    profile = await adminSessionRepository.findValidSession({
+      token,
+      ipHash: ctx.ipHash,
+      userAgentHash: ctx.userAgentHash
+    });
+  } catch (error) {
+    logger.error("admin.session.validate_db", {
+      service: "validateAdminSession",
+      error: error instanceof Error ? error.message : String(error)
+    });
+    return null;
+  }
 
   if (!profile || profile.status !== "ACTIVE" || !profile.totpEnabled) {
     if (token) {
       await revokeAdminSessionToken(token);
-      await clearAdminSessionCookie();
       if (request) {
         const auditCtx = adminRequestContext(request);
         await adminAuthAuditRepository.write({

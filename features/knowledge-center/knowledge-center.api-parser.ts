@@ -1,6 +1,8 @@
 import type { KnowledgeArticleStatus, KnowledgeLucienCategory, KnowledgeLucienPriority, KnowledgeSchemaOrgType } from "@prisma/client";
 import { appError } from "@/lib/core/errors";
 import type { UpsertKnowledgeArticleInput } from "@/features/knowledge-center/knowledge-center.types";
+import { KNOWLEDGE_VISIBILITY_OPTIONS } from "@/lib/knowledge/knowledge-editor.constants";
+import type { KnowledgeVisibility } from "@/lib/knowledge/knowledge-editor-validation";
 
 function asString(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
@@ -12,15 +14,25 @@ function asStringArray(value: unknown) {
   return [];
 }
 
+function parseVisibility(value: unknown): KnowledgeVisibility {
+  const normalized = asString(value).toUpperCase();
+  if ((KNOWLEDGE_VISIBILITY_OPTIONS as readonly string[]).includes(normalized)) {
+    return normalized as KnowledgeVisibility;
+  }
+  return "PUBLIC";
+}
+
 export function parseKnowledgeArticleBody(body: Record<string, unknown>): UpsertKnowledgeArticleInput {
   const title = asString(body.title);
   if (!title) throw appError("VALIDATION_ERROR", "title is required");
 
   const translationRaw = (body.translation ?? body) as Record<string, unknown>;
   const languageCode = asString(translationRaw.language_code) || "en";
+  const bodyHtml = asString(translationRaw.body_html);
   const bodyMarkdown = asString(translationRaw.body_markdown);
   const status = (asString(translationRaw.status).toUpperCase() || asString(body.status).toUpperCase() || "DRAFT") as KnowledgeArticleStatus;
-  if (!bodyMarkdown && status === "PUBLISHED") throw appError("VALIDATION_ERROR", "body_markdown is required");
+  const hasBody = Boolean(bodyHtml || bodyMarkdown);
+  if (!hasBody && status === "PUBLISHED") throw appError("VALIDATION_ERROR", "body_html is required");
 
   const seoRaw = (translationRaw.seo ?? {}) as Record<string, unknown>;
   const lucienRaw = (translationRaw.lucien ?? {}) as Record<string, unknown>;
@@ -33,6 +45,7 @@ export function parseKnowledgeArticleBody(body: Record<string, unknown>): Upsert
     category_id: asString(body.category_id) || undefined,
     author_name: asString(body.author_name) || "VINCIS",
     cover_image_url: asString(body.cover_image_url) || undefined,
+    visibility: parseVisibility(body.visibility),
     status: (asString(body.status).toUpperCase() || "DRAFT") as KnowledgeArticleStatus,
     tags: asStringArray(body.tags),
     scheduled_at: asString(body.scheduled_at) || null,
@@ -41,6 +54,7 @@ export function parseKnowledgeArticleBody(body: Record<string, unknown>): Upsert
       language_code: languageCode,
       title: asString(translationRaw.title) || title,
       subtitle: asString(translationRaw.subtitle) || undefined,
+      body_html: bodyHtml,
       body_markdown: bodyMarkdown,
       excerpt: asString(translationRaw.excerpt) || undefined,
       status: (asString(translationRaw.status).toUpperCase() || asString(body.status).toUpperCase() || "DRAFT") as KnowledgeArticleStatus,

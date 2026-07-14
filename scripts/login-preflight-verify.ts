@@ -5,15 +5,17 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { PrismaClient } from "@prisma/client";
 import { authSecurityService } from "../features/auth/auth-security.service";
+import {
+  probeDatabaseConnection,
+  probeDatabaseTable
+} from "./helpers/database-probe";
 import { demoRedirectForRole } from "../lib/demo-auth";
 import { toSafeNextPath, resolvePostLoginDestination } from "../lib/auth/post-login-redirect";
 import { hasSupabaseConfig } from "../lib/auth-config";
 import { hasAlipayOAuthConfig } from "../lib/alipay/alipay-oauth-config";
 
 const ROOT = join(fileURLToPath(new URL(".", import.meta.url)), "..");
-const prisma = new PrismaClient();
 
 type Check = { name: string; ok: boolean; detail?: string };
 
@@ -123,16 +125,16 @@ async function main() {
   } else {
     checks.push({ name: "env.DATABASE_URL", ok: true, detail: "present" });
 
-    try {
-      await prisma.$queryRaw`SELECT 1`;
-      checks.push({ name: "database.connect", ok: true });
-    } catch (error) {
-      checks.push({
-        name: "database.connect",
-        ok: false,
-        detail: error instanceof Error ? error.message : String(error)
-      });
-    }
+    const dbProbe = await probeDatabaseConnection();
+    checks.push({
+      name: "database.connect",
+      ok: dbProbe.ok,
+      detail: dbProbe.ok
+        ? dbProbe.via
+          ? `ok (${dbProbe.via})`
+          : "ok"
+        : dbProbe.detail
+    });
 
     const authTables = [
       "auth_locks",
@@ -141,44 +143,64 @@ async function main() {
       "auth_attempts",
       "auth_audit_logs"
     ];
-    for (const table of authTables) {
-      try {
-        await prisma.$queryRawUnsafe(`SELECT 1 FROM "${table}" LIMIT 1`);
-        checks.push({ name: `database.table.${table}`, ok: true });
-      } catch (error) {
-        checks.push({
-          name: `database.table.${table}`,
-          ok: false,
-          detail: error instanceof Error ? error.message : "missing — run npm run db:migrate:deploy"
-        });
-      }
-    }
-
-    const request = browserRequest("/login");
-    const probeEmail = `login-preflight+${Date.now()}@example.com`;
     try {
-      const start = await authSecurityService.startEmailVerification({
-        request,
-        email: probeEmail,
-        locale: "zh",
-        role: "BRAND"
-      });
-      const securityOk = start.ok || !("turnstileRequired" in start && start.turnstileRequired);
-      checks.push({
-        name: "auth.email_start_browser",
-        ok: securityOk,
-        detail: start.ok
-          ? "verification started"
-          : "error" in start
-            ? start.error
-            : "blocked by security"
-      });
-    } catch (error) {
-      checks.push({
-        name: "auth.email_start_browser",
-        ok: false,
-        detail: error instanceof Error ? error.message : String(error)
-      });
+      if (dbProbe.ok) {
+        for (const table of authTables) {
+          const tableProbe = await probeDatabaseTable(dbProbe.client, table);
+          checks.push({
+            name: `database.table.${table}`,
+            ok: tableProbe.ok,
+            detail: tableProbe.ok ? undefined : tableProbe.detail
+          });
+        }
+      } else {
+        for (const table of authTables) {
+          checks.push({
+            name: `database.table.${table}`,
+            ok: false,
+            detail: "skipped — database.connect failed"
+          });
+        }
+      }
+
+      const request = browserRequest("/login");
+      const probeEmail = `login-preflight+${Date.now()}@example.com`;
+      if (!dbProbe.ok) {
+        checks.push({
+          name: "auth.email_start_browser",
+          ok: false,
+          detail: "skipped — database.connect failed"
+        });
+      } else {
+        try {
+          const start = await authSecurityService.startEmailVerification({
+            request,
+            email: probeEmail,
+            locale: "zh",
+            role: "BRAND"
+          });
+          const securityOk = start.ok || !("turnstileRequired" in start && start.turnstileRequired);
+          checks.push({
+            name: "auth.email_start_browser",
+            ok: securityOk,
+            detail: start.ok
+              ? "verification started"
+              : "error" in start
+                ? start.error
+                : "blocked by security"
+          });
+        } catch (error) {
+          checks.push({
+            name: "auth.email_start_browser",
+            ok: false,
+            detail: error instanceof Error ? error.message : String(error)
+          });
+        }
+      }
+    } finally {
+      if (dbProbe.ok) {
+        await dbProbe.client.$disconnect().catch(() => undefined);
+      }
     }
   }
 
@@ -229,7 +251,6 @@ async function main() {
   });
 
   const failed = report(checks);
-  await prisma.$disconnect();
   process.exit(failed ? 1 : 0);
 }
 

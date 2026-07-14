@@ -30,6 +30,7 @@ export type KnowledgePublishPipelineResult = {
   translations_synced?: number;
   translation_languages?: string[];
   translation_errors?: string[];
+  multilingual_sync_queued?: boolean;
   search_engine_ping?: {
     attempted: string[];
     succeeded: string[];

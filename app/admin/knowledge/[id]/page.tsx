@@ -1,15 +1,23 @@
 import { notFound, permanentRedirect } from "next/navigation";
 import { AdminKnowledgeEditorPanel } from "@/components/studioos/admin-knowledge-editor-panel";
+import { AdminKnowledgeNewEditorPage } from "@/components/studioos/admin-knowledge-new-editor-page";
 import { knowledgeCenterService } from "@/features/knowledge-center/knowledge-center.service";
 import { getAppUiLocale } from "@/lib/app-language";
 import { KNOWLEDGE_EDITOR_MAX_WIDTH } from "@/lib/knowledge/knowledge-editor.constants";
-import { resolveKnowledgeAdminReservedPath } from "@/lib/studioos/knowledge-admin-routes";
+import {
+  isKnowledgeAdminNewArticleId,
+  resolveKnowledgeAdminReservedPath
+} from "@/lib/studioos/knowledge-admin-routes";
 import { cn } from "@/lib/utils";
 
 type Props = { params: Promise<{ id: string }> };
 
 export default async function AdminKnowledgeEditPage({ params }: Props) {
   const [{ id }, locale] = await Promise.all([params, getAppUiLocale()]);
+  if (isKnowledgeAdminNewArticleId(id)) {
+    return <AdminKnowledgeNewEditorPage locale={locale} />;
+  }
+
   const reservedPath = resolveKnowledgeAdminReservedPath(id);
   if (reservedPath) permanentRedirect(reservedPath);
 

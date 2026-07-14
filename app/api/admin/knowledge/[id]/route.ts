@@ -4,6 +4,7 @@ import {
 } from "@/features/admin/auth/admin-api-guard";
 import { knowledgeCenterService } from "@/features/knowledge-center/knowledge-center.service";
 import { parseKnowledgeArticleBody } from "@/features/knowledge-center/knowledge-center.api-parser";
+import { scheduleKnowledgeMultilingualSyncAfterResponse } from "@/features/knowledge-center/knowledge-publish-schedule";
 import { apiSuccess, handleRouteError } from "@/lib/core/api-route";
 
 export const runtime = "nodejs";
@@ -27,7 +28,9 @@ export async function PATCH(request: Request, context: RouteContext) {
     await requireAdminMutationUser(request);
     const { id } = await context.params;
     const body = (await request.json()) as Record<string, unknown>;
-    const saved = await knowledgeCenterService.update(id, parseKnowledgeArticleBody(body));
+    const parsed = parseKnowledgeArticleBody(body);
+    const saved = await knowledgeCenterService.update(id, parsed);
+    scheduleKnowledgeMultilingualSyncAfterResponse(saved);
     return apiSuccess({ article: saved.article, pipeline: saved.pipeline });
   } catch (error) {
     return handleRouteError(error);

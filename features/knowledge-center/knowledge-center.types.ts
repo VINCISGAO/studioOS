@@ -43,6 +43,7 @@ export type KnowledgeTranslationInput = {
   language_code: string;
   title: string;
   subtitle?: string;
+  body_html?: string;
   body_markdown: string;
   excerpt?: string;
   status?: KnowledgeArticleStatus;
@@ -59,6 +60,7 @@ export type UpsertKnowledgeArticleInput = {
   category_id?: string;
   author_name?: string;
   cover_image_url?: string;
+  visibility?: string;
   status?: KnowledgeArticleStatus;
   tags?: string[];
   scheduled_at?: string | null;
@@ -71,6 +73,7 @@ export type KnowledgeArticleListItemDto = {
   slug: string;
   title: string;
   category: string;
+  category_slug: string | null;
   status: KnowledgeArticleStatus;
   language_code: string;
   author_name: string;
@@ -78,6 +81,7 @@ export type KnowledgeArticleListItemDto = {
   seo_score: number;
   lucien_indexed: boolean;
   view_count: number;
+  cover_image_url: string | null;
 };
 
 export type KnowledgeHomeArticleCardDto = {
@@ -161,6 +165,7 @@ export type KnowledgeArticleDetailDto = {
   category_slug: string | null;
   category_name: string | null;
   cover_image_url: string | null;
+  visibility: string;
   tags: string[];
   scheduled_at: string | null;
   timezone: string;
@@ -180,6 +185,7 @@ export type KnowledgeTranslationDto = {
   path_prefix: string;
   title: string;
   subtitle: string | null;
+  body_html: string;
   body_markdown: string;
   excerpt: string | null;
   reading_time_minutes: number;
@@ -242,6 +248,7 @@ export type PublicKnowledgeArticleDto = {
   path_prefix: KnowledgePathPrefix;
   title: string;
   subtitle: string | null;
+  body_html: string;
   body_markdown: string;
   excerpt: string | null;
   reading_time_minutes: number;
