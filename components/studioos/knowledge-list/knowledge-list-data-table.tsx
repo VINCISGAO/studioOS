@@ -148,7 +148,7 @@ export function KnowledgeListDataTable({
                         >
                           {article.title || article.slug}
                         </Link>
-                        <p className="truncate text-xs text-zinc-400">/resources/{article.slug}</p>
+                        <p className="truncate text-xs text-zinc-400">/knowledge-center/{article.slug}</p>
                       </div>
                     </div>
                   </td>

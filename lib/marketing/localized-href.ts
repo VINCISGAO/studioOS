@@ -1,4 +1,7 @@
-import { knowledgePathPrefixForCode } from "@/features/knowledge-center/knowledge-center.constants";
+import {
+  buildKnowledgeIndexPath,
+  knowledgePathPrefixForCode
+} from "@/features/knowledge-center/knowledge-center.constants";
 import { appPath } from "@/lib/i18n";
 import type { LanguageCode, Locale, MarketingLocale } from "@/lib/i18n";
 import type { SupportedLanguageCode } from "@/features/i18n/language.constants";
@@ -29,7 +32,7 @@ export function buildLocalizedHref(path: string, locale: Locale | LanguageCode |
 /** Knowledge Center index — locale-specific path prefix, not `?lang=`. */
 export function marketingKnowledgeCenterHref(locale: Locale | LanguageCode | MarketingLocale): string {
   const prefix = knowledgePathPrefixForCode(toLanguageCode(locale));
-  return `/${prefix}/resources`;
+  return buildKnowledgeIndexPath(prefix);
 }
 
 export const marketingHomeHref = {

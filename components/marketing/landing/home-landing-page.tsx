@@ -65,7 +65,7 @@ export function HomeLandingPage({
     : resolveMarketingHomeWorkspaceCta(copyLocale, portalSession);
 
   return (
-    <div className="relative isolate min-h-dvh bg-black text-white overscroll-y-none">
+    <div className="relative isolate min-h-dvh-safe overflow-x-clip bg-black text-white overscroll-y-none">
       <MarketingViewportGuard backdrop="dark" />
       <CinematicNav
         locale={locale}

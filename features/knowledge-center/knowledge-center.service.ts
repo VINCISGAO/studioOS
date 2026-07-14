@@ -5,6 +5,7 @@ import type { KnowledgeArticleStatus } from "@prisma/client";
 import { toArticleListItemDto } from "@/features/knowledge-center/knowledge-center.mappers";
 import {
   buildKnowledgeArticlePath,
+  buildKnowledgeIndexPath,
   knowledgePathPrefixForCode
 } from "@/features/knowledge-center/knowledge-center.constants";
 import { knowledgeCenterRepository } from "@/features/knowledge-center/knowledge-center.repository";
@@ -528,7 +529,7 @@ export class KnowledgeCenterService {
       });
       const pathPrefix = knowledgePathPrefixForCode(publishInput.translation.language_code);
       revalidatePath(buildKnowledgeArticlePath(pathPrefix, slug));
-      revalidatePath(`/${pathPrefix}/resources`);
+      revalidatePath(buildKnowledgeIndexPath(pathPrefix));
       return {
         article: detail,
         pipeline: {

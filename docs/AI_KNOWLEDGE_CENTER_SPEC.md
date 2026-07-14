@@ -22,14 +22,16 @@ One content system powers:
 |---------|------|
 | Admin CMS | `/admin/knowledge` |
 | AI Citation Monitor | `/admin/knowledge/citations` |
-| Public articles (locale prefix) | `/{lang}/resources/{slug}` |
+| Public articles (locale prefix) | `/{lang}/knowledge-center/{slug}` |
+| Public index | `/{lang}/knowledge-center` |
+| Legacy redirect | `/{lang}/resources/*` → `/{lang}/knowledge-center/*` (308) |
 | Lucien sync source | `AiKnowledgeQa.sourceType = knowledge_center` |
 | LLM crawl list | `/llms.txt` |
 | Sitemap | `/sitemap.xml` |
 
 Supported locale prefixes: `en`, `zh`, `ja`, `ko`, `th`, `vi`, `fr`, `es`.
 
-> Note: `/resources` (no locale prefix) remains the **Partners** marketing page. Knowledge articles use `/{lang}/resources/...`.
+> Note: `/resources` (no locale prefix) remains the **Partners** marketing page. Knowledge Center uses `/{lang}/knowledge-center/...`.
 
 ## Data model (Prisma)
 

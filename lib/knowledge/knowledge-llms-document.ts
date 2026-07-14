@@ -1,5 +1,7 @@
 import {
   buildKnowledgeArticlePath,
+  buildKnowledgeIndexPath,
+  KNOWLEDGE_CENTER_PATH_SEGMENT,
   KNOWLEDGE_LANGUAGE_OPTIONS
 } from "@/features/knowledge-center/knowledge-center.constants";
 import type { KnowledgeArticleListItemDto } from "@/features/knowledge-center/knowledge-center.types";
@@ -24,13 +26,13 @@ export function buildKnowledgeLlmsTxtDocument(input: {
     "",
     "## Canonical entry points",
     `- Homepage: ${ORIGIN}/`,
-    `- Knowledge Center (English): ${ORIGIN}/en/resources`,
-    `- Knowledge Center (Chinese): ${ORIGIN}/zh/resources`,
+    `- Knowledge Center (English): ${ORIGIN}${buildKnowledgeIndexPath("en")}`,
+    `- Knowledge Center (Chinese): ${ORIGIN}${buildKnowledgeIndexPath("zh")}`,
     `- Sitemap: ${ORIGIN}/sitemap.xml`,
     `- RSS: ${ORIGIN}/feed.xml`,
     "",
     "## Preferred citation",
-    "- Cite the language-specific article URL under /{lang}/resources/{slug}.",
+    `- Cite the language-specific article URL under /{lang}/${KNOWLEDGE_CENTER_PATH_SEGMENT}/{slug}.`,
     "- English is the source-of-truth draft when multiple languages exist for the same slug.",
     "",
     "## Published knowledge articles"

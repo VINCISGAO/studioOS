@@ -1,6 +1,7 @@
 import { knowledgeCenterService } from "@/features/knowledge-center/knowledge-center.service";
 import {
   buildKnowledgeArticlePath,
+  buildKnowledgeIndexPath,
   KNOWLEDGE_LANGUAGE_OPTIONS
 } from "@/features/knowledge-center/knowledge-center.constants";
 import { articleToRssItem, buildKnowledgeRssXml } from "@/lib/knowledge/knowledge-rss";
@@ -25,7 +26,7 @@ export async function GET() {
 
   const xml = buildKnowledgeRssXml({
     title: "VINCIS Knowledge Center",
-    link: `${ORIGIN}/en/resources`,
+    link: `${ORIGIN}${buildKnowledgeIndexPath("en")}`,
     description: "Official AI advertising knowledge from VINCIS.",
     language: "en",
     items: items.slice(0, 50)

@@ -69,7 +69,7 @@ function MobileNavCard({
   }
 
   return (
-    <Link href={href} prefetch={false} onClick={onClose} className={className}>
+    <Link href={href} onClick={onClose} className={className}>
       {content}
     </Link>
   );
@@ -212,12 +212,11 @@ export function CinematicNav({
     <>
       <motion.header
         style={{ backgroundColor: bg, borderBottomColor: border }}
-        className="fixed inset-x-0 top-0 z-50 border-b backdrop-blur-xl"
+        className="fixed inset-x-0 top-0 z-50 border-b marketing-nav-backdrop"
       >
         <div className="relative mx-auto flex min-h-[4.25rem] max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:min-h-16 sm:px-8">
           <Link
             href={marketingHomeHref.home(copyLocale)}
-            prefetch={false}
             className={cn("flex min-w-0 items-center", useLightNav ? "text-zinc-950" : "text-white")}
           >
             <BrandLogoLockup
@@ -241,7 +240,6 @@ export function CinematicNav({
               <Link
                 key={item.key}
                 href={marketingSiteNavHref(item.key, copyLocale)}
-                prefetch={false}
                 className={cn("transition", useLightNav ? "hover:text-zinc-950" : "hover:text-white")}
               >
                 {item.label}

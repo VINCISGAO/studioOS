@@ -26,8 +26,8 @@ export function CinematicHeroFeatures({
   const [activeIndex, setActiveIndex] = useState(0);
 
   return (
-    <div className={cn("w-full", className)}>
-      <div className="grid w-full grid-cols-4 gap-3 md:gap-4">
+    <div className={cn("w-full min-w-0", className)}>
+      <div className="grid min-w-0 grid-cols-4 gap-3 md:gap-4">
         {features.map((feature, index) => {
           const Icon = featureIcons[feature.icon];
           const isActive = index === activeIndex;
@@ -40,7 +40,7 @@ export function CinematicHeroFeatures({
               onClick={() => setActiveIndex(index)}
               onMouseEnter={() => setActiveIndex(index)}
               className={cn(
-                "group flex min-h-[172px] w-full flex-col items-center justify-center rounded-lg border p-4 text-center transition duration-300 focus:outline-none focus-visible:ring-2 sm:p-5",
+                "marketing-hero-feature-card group flex min-h-[172px] w-full flex-col items-center justify-center rounded-lg border p-4 text-center transition duration-300 focus:outline-none focus-visible:ring-2 sm:p-5",
                 lightHero
                   ? isActive
                     ? "border-zinc-300 bg-white shadow-[0_20px_60px_-36px_rgba(0,0,0,0.12)] focus-visible:ring-zinc-400"

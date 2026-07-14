@@ -4,11 +4,14 @@ import {
   knowledgeCodeForPathPrefix,
   type KnowledgePathPrefix
 } from "@/features/knowledge-center/knowledge-center.constants";
-import { knowledgeCenterService } from "@/features/knowledge-center/knowledge-center.service";
+import { loadKnowledgeCenterHomePageData } from "@/features/knowledge-center/knowledge-center-public.service";
 import { toUiLocale } from "@/lib/app-language.shared";
 import type { Metadata } from "next";
 
 type Props = { params: Promise<{ lang: string }> };
+
+export const runtime = "nodejs";
+export const revalidate = 3600;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { lang } = await params;
@@ -22,19 +25,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export const dynamic = "force-dynamic";
-
 export default async function KnowledgeIndexPage({ params }: Props) {
   const { lang } = await params;
   const languageCode = knowledgeCodeForPathPrefix(lang);
   const locale = toUiLocale(languageCode);
   const pathPrefix = lang as KnowledgePathPrefix;
-  const [articles, categories] = await Promise.all([
-    knowledgeCenterService.listPublishedHomeCards(languageCode),
-    knowledgeCenterService.listCategorySummaries(languageCode)
-  ]);
-
-  const categoryCounts = Object.fromEntries(categories.map((item) => [item.slug, item.count]));
+  const { articles, categoryCounts } = await loadKnowledgeCenterHomePageData(languageCode);
 
   return (
     <KnowledgeCenterShell locale={locale} pathPrefix={pathPrefix}>

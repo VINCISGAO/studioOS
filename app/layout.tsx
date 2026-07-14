@@ -1,7 +1,13 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { landingFontClassName } from "@/lib/studioos/landing-fonts";
 import { studioOS } from "@/lib/studioos/vocabulary";
 import "./globals.css";
+
+/** Explicit viewport — matches Next default; keeps Chrome / Safari / Edge aligned. */
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1
+};
 
 export const metadata: Metadata = {
   title: "VINCIS | AI Creative Production for Global Brands",
@@ -67,7 +73,7 @@ export default function RootLayout({
         </head>
       ) : null}
       <body
-        className="min-h-dvh bg-background font-sans text-foreground antialiased"
+        className="min-h-dvh-safe bg-background font-sans text-foreground antialiased"
         suppressHydrationWarning
       >
         {children}

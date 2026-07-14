@@ -41,6 +41,20 @@ if (!process.env.DIRECT_DATABASE_URL) {
     : dbUrl;
 }
 
+/** Supabase / PgBouncer pooler needs an unpooled URL for migrations and raw SQL probes. */
+{
+  const dbUrl = process.env.DATABASE_URL ?? "";
+  const pooled =
+    dbUrl.includes("pgbouncer=true") || dbUrl.includes(":6543") || dbUrl.includes("-pooler.");
+  const directFromEnv =
+    process.env.POSTGRES_URL_NON_POOLING?.trim() ||
+    process.env.POSTGRES_PRISMA_URL?.trim() ||
+    "";
+  if (pooled && directFromEnv && directFromEnv !== dbUrl) {
+    process.env.DIRECT_DATABASE_URL = directFromEnv;
+  }
+}
+
 function appendQueryParam(url, param) {
   const key = param.split("=")[0];
   if (url.includes(`${key}=`)) return url;

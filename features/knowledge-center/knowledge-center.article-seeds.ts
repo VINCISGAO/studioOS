@@ -12,6 +12,10 @@ import {
   computeKnowledgeSeoScores,
   estimateReadingTimeMinutes
 } from "@/features/knowledge-center/knowledge-seo.heuristics";
+import {
+  buildKnowledgeArticlePath,
+  knowledgePathPrefixForCode
+} from "@/features/knowledge-center/knowledge-center.constants";
 
 const ORIGIN = "https://vincis.app";
 
@@ -158,8 +162,8 @@ async function upsertSeedTranslation(
   article: SeedArticle,
   categoryName: string | null
 ) {
-  const pathPrefix = languageCode === "zh-CN" ? "zh" : "en";
-  const url = `${ORIGIN}/${pathPrefix}/resources/${slug}`;
+  const pathPrefix = knowledgePathPrefixForCode(languageCode);
+  const url = `${ORIGIN}${buildKnowledgeArticlePath(pathPrefix, slug)}`;
   const seoScores = computeKnowledgeSeoScores({
     translation: {
       title: article.title,

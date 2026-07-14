@@ -10,10 +10,10 @@ export type MarketingSiteNavKey =
   | "faq"
   | "knowledge";
 
+/** Public site nav — cases/work page is homepage-only via featured section "View all". */
 export const MARKETING_SITE_NAV_ORDER: MarketingSiteNavKey[] = [
   "about",
   "process",
-  "cases",
   "pricing",
   "resources",
   "faq",
@@ -27,7 +27,7 @@ export const MARKETING_SITE_NAV_PATHS: Record<MarketingSiteNavKey, string> = {
   pricing: "/pricing",
   resources: "/resources",
   faq: "/faq",
-  knowledge: "/en/resources"
+  knowledge: "/en/knowledge-center"
 };
 
 type MarketingSiteNavItemCopy = {

@@ -1,9 +1,15 @@
 /** Static legacy path map (middleware + notification href normalization). */
 
+const KNOWLEDGE_CENTER_LEGACY_LANGS = "en|zh|zh-tw|ja|ko|ms|km|th|vi|fr|es";
+
 export const STATIC_LEGACY_REDIRECTS: ReadonlyArray<{
   match: RegExp;
   target: (pathname: string, match: RegExpMatchArray) => string;
 }> = [
+  {
+    match: new RegExp(`^\\/(${KNOWLEDGE_CENTER_LEGACY_LANGS})\\/resources(\\/.*)?$`, "i"),
+    target: (_pathname, groups) => `/${groups[1].toLowerCase()}/knowledge-center${groups[2] ?? ""}`
+  },
   {
     match: /^\/creator\/onboarding\/?$/,
     target: () => "/studio/onboarding"

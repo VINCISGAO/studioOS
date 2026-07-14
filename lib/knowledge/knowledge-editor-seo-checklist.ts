@@ -1,3 +1,4 @@
+import { KNOWLEDGE_CENTER_PATH_SEGMENT } from "@/features/knowledge-center/knowledge-center.constants";
 import { computeKnowledgeSeoScores } from "@/features/knowledge-center/knowledge-seo.heuristics";
 import {
   effectiveKnowledgeMetaDescription,
@@ -37,7 +38,14 @@ function countHeadings(html: string) {
 }
 
 function countInternalLinks(html: string) {
-  return (html.match(/href=["']\/(?:en|zh(?:-tw)?|ja|ko|ms|km|th|vi|fr|es)\/resources\//gi) ?? []).length;
+  return (
+    html.match(
+      new RegExp(
+        `href=["']\\/(?:en|zh(?:-tw)?|ja|ko|ms|km|th|vi|fr|es)\\/(?:resources|${KNOWLEDGE_CENTER_PATH_SEGMENT})\\/`,
+        "gi"
+      )
+    ) ?? []
+  ).length;
 }
 
 function countBodyImages(html: string) {
@@ -161,8 +169,8 @@ export function knowledgeEditorSeoChecklist(form: KnowledgeEditorFormState, zh =
           ? `${internalLinks} 条内链`
           : `${internalLinks} internal links`
         : zh
-          ? "正文中添加 /resources/ 链接"
-          : "Add /resources/ links in body"
+          ? `正文中添加 /${KNOWLEDGE_CENTER_PATH_SEGMENT}/ 链接`
+          : `Add /${KNOWLEDGE_CENTER_PATH_SEGMENT}/ links in body`
     },
     {
       id: "images",

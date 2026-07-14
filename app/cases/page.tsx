@@ -1,6 +1,5 @@
-import { CreatorsShowcaseGallery } from "@/components/marketing/creators-showcase-gallery";
-import { MarketingDocsHero } from "@/components/marketing/docs/marketing-docs-hero";
-import { MarketingDocsShell } from "@/components/marketing/docs/marketing-docs-shell";
+import { CasesShowcasePage } from "@/components/marketing/cases/cases-showcase-page";
+import { MarketingCasesShell } from "@/components/marketing/cases/marketing-cases-shell";
 import { marketingShowcaseService } from "@/features/marketing-showcase/marketing-showcase.service";
 import { casesCopy } from "@/lib/marketing/cases-copy";
 import { marketingDocsMetadata } from "@/lib/marketing/marketing-docs-metadata";
@@ -21,7 +20,7 @@ export async function generateMetadata({ searchParams }: CasesPageProps): Promis
 export default async function CasesPage({ searchParams }: CasesPageProps) {
   const params = await searchParams;
   const locale = getLocale(params);
-  const t = casesCopy(locale);
+  const copy = casesCopy(locale);
   const initialPlayId = typeof params.play === "string" ? params.play : undefined;
   const [works, categories] = await Promise.all([
     marketingShowcaseService.listPublished(),
@@ -29,16 +28,14 @@ export default async function CasesPage({ searchParams }: CasesPageProps) {
   ]);
 
   return (
-    <MarketingDocsShell locale={locale} active="cases">
-      <MarketingDocsHero eyebrow={t.eyebrow} title={t.title} subtitle={t.subtitle} variant="white" />
-      <div className="mt-6">
-        <CreatorsShowcaseGallery
-          locale={locale}
-          works={works}
-          categories={categories}
-          initialPlayId={initialPlayId}
-        />
-      </div>
-    </MarketingDocsShell>
+    <MarketingCasesShell locale={locale} backLabel={copy.backHome}>
+      <CasesShowcasePage
+        locale={locale}
+        copy={copy}
+        works={works}
+        categories={categories}
+        initialPlayId={initialPlayId}
+      />
+    </MarketingCasesShell>
   );
 }

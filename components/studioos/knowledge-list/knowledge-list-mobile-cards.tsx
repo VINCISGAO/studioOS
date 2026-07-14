@@ -71,7 +71,7 @@ export function KnowledgeListMobileCards({
               >
                 {article.title || article.slug}
               </Link>
-              <p className="mt-1 truncate text-xs text-zinc-400">/resources/{article.slug}</p>
+              <p className="mt-1 truncate text-xs text-zinc-400">/knowledge-center/{article.slug}</p>
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <KnowledgeListCategoryBadge
                   categorySlug={article.category_slug}

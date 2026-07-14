@@ -24,6 +24,8 @@ import {
   type KnowledgeSeoScores,
   toPrismaKnowledgeSeoScoreFields
 } from "@/features/knowledge-center/knowledge-seo.heuristics";
+import { logger } from "@/lib/core/logger";
+
 const articleInclude = {
   category: true,
   tags: { include: { tag: true } },
@@ -89,13 +91,31 @@ async function resolveArticleVisibilityFilter(): Promise<{ visibility: "PUBLIC" 
     await model.count({ where: { visibility: "PUBLIC" } });
     articleVisibilityColumnCached = true;
     return { visibility: "PUBLIC" };
-  } catch (error) {
-    if (isPrismaColumnDriftError(error) || isMissingKnowledgeTableError(error)) {
-      articleVisibilityColumnCached = false;
-      return {};
-    }
-    throw error;
+  } catch {
+    articleVisibilityColumnCached = false;
+    return {};
   }
+}
+
+function prismaErrorCode(error: unknown) {
+  if (typeof error === "object" && error !== null && "code" in error) {
+    return String((error as { code?: string }).code ?? "");
+  }
+  return "";
+}
+
+function isRecoverableKnowledgeReadError(error: unknown) {
+  const code = prismaErrorCode(error);
+  if (code && ["P1001", "P1002", "P1017", "P2021", "P2022", "P2024"].includes(code)) {
+    return true;
+  }
+  const message = (error instanceof Error ? error.message : String(error)).toLowerCase();
+  return (
+    message.includes("prepared statement") ||
+    message.includes("connection") ||
+    message.includes("timeout") ||
+    message.includes("does not exist")
+  );
 }
 
 async function withKnowledgeTableFallback<T>(fallback: T, run: () => Promise<T>): Promise<T> {
@@ -103,6 +123,25 @@ async function withKnowledgeTableFallback<T>(fallback: T, run: () => Promise<T>)
     return await run();
   } catch (error) {
     if (isMissingKnowledgeTableError(error) || isPrismaColumnDriftError(error)) return fallback;
+    throw error;
+  }
+}
+
+async function withKnowledgePublicReadFallback<T>(
+  fallback: T,
+  operation: string,
+  run: () => Promise<T>
+): Promise<T> {
+  try {
+    return await run();
+  } catch (error) {
+    logger.error("Knowledge public read failed", {
+      service: "KnowledgeCenterRepository",
+      operation,
+      code: prismaErrorCode(error) || undefined,
+      error: error instanceof Error ? error.message : String(error)
+    });
+    if (isRecoverableKnowledgeReadError(error)) return fallback;
     throw error;
   }
 }
@@ -536,7 +575,7 @@ export class KnowledgeCenterRepository {
   async listPublished(languageCode: string, limit = 50) {
     const model = articleModel();
     if (!model) return [];
-    return withKnowledgeTableFallback([], async () => {
+    return withKnowledgePublicReadFallback([], "listPublished", async () => {
       const visibilityFilter = await resolveArticleVisibilityFilter();
       return model.findMany({
         where: {
@@ -577,7 +616,7 @@ export class KnowledgeCenterRepository {
 
   async listCategorySummaries(languageCode: string) {
     if (!this.isAvailable()) return [];
-    return withKnowledgeTableFallback([], async () => {
+    return withKnowledgePublicReadFallback([], "listCategorySummaries", async () => {
       const visibilityFilter = await resolveArticleVisibilityFilter();
       const categories = await prisma.knowledgeCategory.findMany({ orderBy: { sortOrder: "asc" } });
       const summaries = [];

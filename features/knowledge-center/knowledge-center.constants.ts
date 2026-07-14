@@ -1,5 +1,8 @@
 export const KNOWLEDGE_CENTER_SOURCE_TYPE = "knowledge_center" as const;
 
+/** Public URL segment — not to be confused with Partners marketing page `/resources`. */
+export const KNOWLEDGE_CENTER_PATH_SEGMENT = "knowledge-center" as const;
+
 /** 11 public locales — aligned with marketing homepage + hreflang. */
 export const KNOWLEDGE_LANGUAGE_OPTIONS = [
   { code: "en", pathPrefix: "en", hreflang: "en", label: "English" },
@@ -49,15 +52,19 @@ export function isKnowledgePathPrefix(value: string): value is KnowledgePathPref
 }
 
 export function buildKnowledgeArticlePath(pathPrefix: KnowledgePathPrefix, slug: string) {
-  return `/${pathPrefix}/resources/${slug}`;
+  return `/${pathPrefix}/${KNOWLEDGE_CENTER_PATH_SEGMENT}/${slug}`;
 }
 
 export function buildKnowledgeCategoryPath(pathPrefix: KnowledgePathPrefix, categorySlug: string) {
-  return `/${pathPrefix}/resources/category/${categorySlug}`;
+  return `/${pathPrefix}/${KNOWLEDGE_CENTER_PATH_SEGMENT}/category/${categorySlug}`;
 }
 
 export function buildKnowledgeIndexPath(pathPrefix: KnowledgePathPrefix) {
-  return `/${pathPrefix}/resources`;
+  return `/${pathPrefix}/${KNOWLEDGE_CENTER_PATH_SEGMENT}`;
+}
+
+export function buildKnowledgeRssPath(pathPrefix: KnowledgePathPrefix) {
+  return `/${pathPrefix}/${KNOWLEDGE_CENTER_PATH_SEGMENT}/rss.xml`;
 }
 
 export function buildKnowledgeLucienSourceKey(slug: string, languageCode: string) {

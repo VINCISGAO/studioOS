@@ -2,7 +2,11 @@
  * Knowledge Center publish pipeline smoke checks.
  * Run: npm run knowledge:verify
  */
-import { KNOWLEDGE_LANGUAGE_OPTIONS } from "../features/knowledge-center/knowledge-center.constants";
+import {
+  buildKnowledgeArticlePath,
+  buildKnowledgeRssPath,
+  KNOWLEDGE_LANGUAGE_OPTIONS
+} from "../features/knowledge-center/knowledge-center.constants";
 import { KNOWLEDGE_PUBLISH_STEPS } from "../features/knowledge-center/knowledge-publish.pipeline.shared";
 import { buildKnowledgeJsonLd } from "../features/knowledge-center/knowledge-seo.heuristics";
 import { buildKnowledgeLlmsTxtDocument } from "../lib/knowledge/knowledge-llms-document";
@@ -93,7 +97,7 @@ function checkJsonLdBundle(): Step {
   const graph = buildKnowledgeJsonLd({
     title: "AI Video Brief Guide",
     description: "How brands brief AI creators on VINCIS.",
-    url: "https://vincis.app/en/resources/ai-video-brief",
+    url: `https://vincis.app${buildKnowledgeArticlePath("en", "ai-video-brief")}`,
     authorName: "VINCIS",
     publishedAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -121,16 +125,16 @@ function checkJsonLdBundle(): Step {
 function checkRssAndLlms(): Step {
   const rss = buildKnowledgeRssXml({
     title: "VINCIS Resources",
-    link: "https://vincis.app/en/resources/rss.xml",
+    link: `https://vincis.app${buildKnowledgeRssPath("en")}`,
     description: "Official knowledge articles",
     language: "en",
     items: [
       {
         title: "AI Video Brief Guide",
-        link: "https://vincis.app/en/resources/ai-video-brief",
+        link: `https://vincis.app${buildKnowledgeArticlePath("en", "ai-video-brief")}`,
         description: "Guide",
         pubDate: new Date().toUTCString(),
-        guid: "https://vincis.app/en/resources/ai-video-brief"
+        guid: `https://vincis.app${buildKnowledgeArticlePath("en", "ai-video-brief")}`
       }
     ]
   });
@@ -184,7 +188,7 @@ function checkSeoHeuristics(): Step {
   const jsonLd = buildKnowledgeJsonLd({
     title: "Test",
     description: "Desc",
-    url: "https://vincis.app/en/resources/test",
+    url: `https://vincis.app${buildKnowledgeArticlePath("en", "test")}`,
     authorName: "VINCIS",
     publishedAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),

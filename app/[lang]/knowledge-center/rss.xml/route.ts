@@ -1,10 +1,11 @@
 import { knowledgeCenterService } from "@/features/knowledge-center/knowledge-center.service";
 import {
   buildKnowledgeArticlePath,
-  knowledgeCodeForPathPrefix
+  buildKnowledgeIndexPath,
+  knowledgeCodeForPathPrefix,
+  type KnowledgePathPrefix
 } from "@/features/knowledge-center/knowledge-center.constants";
 import { articleToRssItem, buildKnowledgeRssXml } from "@/lib/knowledge/knowledge-rss";
-import { notFound } from "next/navigation";
 
 const ORIGIN = "https://vincis.app";
 
@@ -13,11 +14,12 @@ type Props = { params: Promise<{ lang: string }> };
 export async function GET(_request: Request, { params }: Props) {
   const { lang } = await params;
   const languageCode = knowledgeCodeForPathPrefix(lang);
+  const pathPrefix = lang as KnowledgePathPrefix;
   const articles = await knowledgeCenterService.listPublishedPublic(languageCode);
 
   const xml = buildKnowledgeRssXml({
     title: lang === "zh" ? "VINCIS 知识中心" : "VINCIS Knowledge Center",
-    link: `${ORIGIN}/${lang}/resources`,
+    link: `${ORIGIN}${buildKnowledgeIndexPath(pathPrefix)}`,
     description:
       lang === "zh"
         ? "VINCIS 官方 AI 广告知识库。"
@@ -27,7 +29,7 @@ export async function GET(_request: Request, { params }: Props) {
       articleToRssItem(
         article,
         ORIGIN,
-        buildKnowledgeArticlePath(lang as "en" | "zh", article.slug),
+        buildKnowledgeArticlePath(pathPrefix, article.slug),
         article.category
       )
     )

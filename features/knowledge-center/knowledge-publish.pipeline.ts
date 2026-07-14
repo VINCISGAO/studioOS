@@ -3,6 +3,9 @@ import "server-only";
 import { revalidatePath } from "next/cache";
 import {
   buildKnowledgeArticlePath,
+  buildKnowledgeCategoryPath,
+  buildKnowledgeIndexPath,
+  buildKnowledgeRssPath,
   KNOWLEDGE_LANGUAGE_OPTIONS,
   knowledgePathPrefixForCode
 } from "@/features/knowledge-center/knowledge-center.constants";
@@ -95,9 +98,9 @@ export async function runKnowledgePublishPipeline(
     publicUrls.push(articlePath);
 
     revalidatePath(articlePath);
-    revalidatePath(`/${pathPrefix}/resources`);
+    revalidatePath(buildKnowledgeIndexPath(pathPrefix));
     if (detail.category_slug) {
-      revalidatePath(`/${pathPrefix}/resources/category/${detail.category_slug}`);
+      revalidatePath(buildKnowledgeCategoryPath(pathPrefix, detail.category_slug));
       steps.push("category_index");
     }
   }
@@ -115,7 +118,7 @@ export async function runKnowledgePublishPipeline(
 
   revalidatePath("/feed.xml");
   for (const lang of KNOWLEDGE_LANGUAGE_OPTIONS) {
-    revalidatePath(`/${lang.pathPrefix}/resources/rss.xml`);
+    revalidatePath(buildKnowledgeRssPath(lang.pathPrefix));
   }
   steps.push("rss");
 

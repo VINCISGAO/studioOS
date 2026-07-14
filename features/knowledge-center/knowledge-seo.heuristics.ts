@@ -1,4 +1,10 @@
 import type { KnowledgeFaqInput } from "@/features/knowledge-center/knowledge-center.types";
+import {
+  buildKnowledgeCategoryPath,
+  buildKnowledgeIndexPath,
+  KNOWLEDGE_CENTER_PATH_SEGMENT,
+  type KnowledgePathPrefix
+} from "@/features/knowledge-center/knowledge-center.constants";
 
 export type KnowledgeSeoScores = {
   seo_score: number;
@@ -24,7 +30,11 @@ export function toPrismaKnowledgeSeoScoreFields(scores: KnowledgeSeoScores) {
 }
 
 function countLinks(markdown: string) {
-  const internal = (markdown.match(/\]\(\/(?:en|zh(?:-tw)?|ja|ko|ms|km|th|vi|fr|es)\/resources\//g) ?? []).length;
+  const internalPattern = new RegExp(
+    `\\]\\(\\/(?:en|zh(?:-tw)?|ja|ko|ms|km|th|vi|fr|es)\\/(?:resources|${KNOWLEDGE_CENTER_PATH_SEGMENT})\\/`,
+    "g"
+  );
+  const internal = (markdown.match(internalPattern) ?? []).length;
   const external = (markdown.match(/\]\(https?:\/\//g) ?? []).length;
   return { internal, external };
 }
@@ -143,12 +153,12 @@ function buildBreadcrumbNode(input: {
   const origin = input.origin ?? "https://vincis.app";
   const items: Array<{ name: string; item: string }> = [
     { name: "VINCIS", item: origin },
-    { name: "Knowledge Center", item: `${origin}/${input.pathPrefix}/resources` }
+    { name: "Knowledge Center", item: `${origin}${buildKnowledgeIndexPath(input.pathPrefix as KnowledgePathPrefix)}` }
   ];
   if (input.categoryName && input.categorySlug) {
     items.push({
       name: input.categoryName,
-      item: `${origin}/${input.pathPrefix}/resources/category/${input.categorySlug}`
+      item: `${origin}${buildKnowledgeCategoryPath(input.pathPrefix as KnowledgePathPrefix, input.categorySlug)}`
     });
   }
   items.push({ name: input.title, item: input.url });

@@ -113,7 +113,7 @@ export function CinematicHeroBrandsDesktop({
   lightHero?: boolean;
 }) {
   return (
-    <div className={cn("pt-8", className)}>
+    <div className={cn("marketing-hero-brands-wrap min-w-0 pt-8", className)}>
       <HeroBrandPanel trustLabel={trustLabel} lightHero={lightHero}>
         <HeroBrandMarquee lightHero={lightHero} />
       </HeroBrandPanel>

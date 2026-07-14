@@ -1,6 +1,7 @@
 import { knowledgeCenterService } from "@/features/knowledge-center/knowledge-center.service";
 import {
   buildKnowledgeArticlePath,
+  buildKnowledgeIndexPath,
   KNOWLEDGE_LANGUAGE_OPTIONS
 } from "@/features/knowledge-center/knowledge-center.constants";
 
@@ -17,7 +18,7 @@ export default async function sitemap() {
 
   for (const lang of KNOWLEDGE_LANGUAGE_OPTIONS) {
     entries.push({
-      url: `${ORIGIN}/${lang.pathPrefix}/resources`,
+      url: `${ORIGIN}${buildKnowledgeIndexPath(lang.pathPrefix)}`,
       changeFrequency: "weekly",
       priority: 0.8
     });

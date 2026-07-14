@@ -42,7 +42,7 @@ function getHeroTitleLines(titleLine1: string, titleLine2: string) {
 }
 
 const HERO_AI_TOKEN_CLASS =
-  "inline-block bg-gradient-to-br from-violet-100 from-[8%] via-fuchsia-300 via-[32%] via-violet-500 via-[52%] to-purple-900 to-[92%] bg-clip-text font-semibold text-transparent";
+  "marketing-gradient-text inline-block bg-gradient-to-br from-violet-100 from-[8%] via-fuchsia-300 via-[32%] via-violet-500 via-[52%] to-purple-900 to-[92%] bg-clip-text font-semibold text-transparent";
 
 const HERO_AI_TOKEN_PATTERN = /(AI|IA)/;
 
@@ -120,11 +120,11 @@ export function CinematicHero({
   } as const;
 
   return (
-    <section className="relative isolate flex flex-col overflow-hidden bg-white text-zinc-950 lg:min-h-[100dvh]">
+    <section className="marketing-hero-shell relative isolate flex flex-col overflow-x-clip bg-white text-zinc-950">
       <CinematicHeroBackdrop src={heroBgSrc} src2x={heroBgSrc2x} />
 
-      <div className="relative z-10 w-full px-4 pb-8 pt-[5.35rem] md:px-8 md:pb-12 lg:mx-auto lg:flex lg:min-h-[100dvh] lg:max-w-7xl lg:flex-col lg:px-8 lg:pb-0 lg:pt-0">
-        <div className="md:pt-28 lg:pt-40">
+      <div className="marketing-hero-frame marketing-content-shell relative z-10 w-full min-w-0 pb-8 pt-[5.35rem] md:pt-0 lg:pb-0">
+        <div className="marketing-hero-top shrink-0 min-w-0">
           <div
             className={cn(
               "w-full max-w-2xl text-left",
@@ -145,13 +145,13 @@ export function CinematicHero({
 
             <h1
               className={cn(
-                "mt-5 font-bold leading-[1.08] tracking-[-0.03em] text-zinc-950 md:mt-6 md:text-[4.667rem]",
+                "mt-5 font-bold leading-[1.08] tracking-[-0.03em] text-zinc-950 md:mt-6",
                 compactHeroLocale
                   ? legacyCompactTitle
                     ? "text-[1.8rem]"
                     : "text-[2.12rem]"
                   : "text-[2.65rem]",
-                latinHeroLocale && "md:text-[3.5rem]"
+                latinHeroLocale ? "md:text-[3.5rem]" : "md:text-[4.667rem]"
               )}
             >
               {titleLines.map((line, index) => renderTitleLine(line, index))}
@@ -159,7 +159,7 @@ export function CinematicHero({
 
             <p
               className={cn(
-                "mt-4 max-w-xl leading-7 text-zinc-500 md:mt-5 md:text-2xl md:leading-8",
+                "mt-4 max-w-xl min-w-0 overflow-x-clip leading-7 text-zinc-500 md:mt-5 md:text-2xl md:leading-8",
                 latinHeroLocale ? "text-pretty" : "whitespace-nowrap",
                 compactHeroLocale
                   ? legacyCompactTitle
@@ -177,17 +177,17 @@ export function CinematicHero({
             />
           </div>
 
-          {/* iPad: mobile-style vertical stack + four golden-rule cards (图二) */}
+          {/* iPad: vertical stack (golden baseline) */}
           <div className="hidden md:mt-8 md:block lg:hidden">
-            <HeroCtaGroup className={cn(heroCtaProps.className, "mb-8")} {...ctaShared} />
+            <HeroCtaGroup className={cn(heroCtaProps.className, "marketing-hero-cta-gap mb-8")} {...ctaShared} />
             <CinematicHeroFeatures locale={copyLocale} className="mt-0" lightHero />
             <CinematicHeroBrandsDesktop trustLabel={t.trustMarquee} lightHero />
           </div>
         </div>
 
-        {/* Desktop: CTA + golden rules + brands anchored to hero bottom */}
-        <div className="hidden lg:mt-auto lg:block lg:w-full lg:pb-10">
-          <HeroCtaGroup className={cn(heroCtaProps.className, "mb-8")} {...ctaShared} />
+        {/* Desktop lg+: CTA + cards + brands bottom-anchored like Safari */}
+        <div className="marketing-hero-bottom hidden min-w-0 shrink-0 lg:block lg:w-full lg:pb-10">
+          <HeroCtaGroup className={cn(heroCtaProps.className, "marketing-hero-cta-gap mb-8")} {...ctaShared} />
           <CinematicHeroFeatures locale={copyLocale} className="mt-0" lightHero />
           <CinematicHeroBrandsDesktop trustLabel={t.trustMarquee} lightHero />
         </div>
