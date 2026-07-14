@@ -21,6 +21,7 @@ import { BudgetSettlementCallout, SettlementUsdCallout } from "@/components/stud
 import { budgetCurrencyHint, budgetEscrowVarianceNote } from "@/lib/money/display-money";
 import { getPlatformCorporateAccount, paymentMethodLabel } from "@/lib/studioos/deposit-utils";
 import type { PayoutMethodType } from "@/lib/studioos/withdrawal-types";
+import { useBrandCheckoutSubmit } from "@/hooks/use-brand-checkout-submit";
 import { cn, formatCurrency } from "@/lib/utils";
 
 const BRAND_PAYMENT_METHODS: PayoutMethodType[] = ["paypal", "bank_wire", "alipay", "wechat", "crypto"];
@@ -70,7 +71,8 @@ export function BrandCheckoutPanel({
   escrowFunded,
   deadlineNotice,
   summaryColumn,
-  displayBudgetInput
+  displayBudgetInput,
+  paymentSignal
 }: {
   locale: Locale;
   order: StoredOrder;
@@ -80,13 +82,15 @@ export function BrandCheckoutPanel({
   deadlineNotice?: ReactNode;
   summaryColumn?: ReactNode;
   displayBudgetInput?: string | null;
+  /** URL error/cancel query — clears stuck pay-button pending on return. */
+  paymentSignal?: string | null;
 }) {
   const t = copy[locale];
   const varianceNote = budgetEscrowVarianceNote(order.amount, locale, displayBudgetInput);
   const currencyHint = budgetCurrencyHint(locale);
   const [method, setMethod] = useState<PayoutMethodType>("alipay");
   const [reference, setReference] = useState("");
-  const [pending, setPending] = useState(false);
+  const { pending, onSubmit } = useBrandCheckoutSubmit(paymentSignal);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const formId = `brand-checkout-${projectId}`;
 
@@ -120,18 +124,18 @@ export function BrandCheckoutPanel({
 
   return (
     <>
-      <div className="flex flex-col gap-5 pb-24 lg:flex-row lg:items-start">
-        <div className="flex min-w-0 flex-1 flex-col gap-5">
-          {deadlineNotice ? <Fragment key="deadline-notice">{deadlineNotice}</Fragment> : null}
-          {summaryColumn ? <Fragment key="summary-column">{summaryColumn}</Fragment> : null}
-        </div>
-
+      {deadlineNotice ? <div className="w-full min-w-0">{deadlineNotice}</div> : null}
+      <div className="flex w-full min-w-0 max-w-full flex-col gap-5 overflow-x-hidden pb-24 lg:flex-row lg:items-start">
         <form
           id={formId}
           action={`/brand/projects/${projectId}/checkout/pay`}
           method="post"
-          onSubmit={() => setPending(true)}
-          className="w-full shrink-0 space-y-4 lg:w-[360px]"
+          onSubmit={(event) => {
+            if (!onSubmit()) {
+              event.preventDefault();
+            }
+          }}
+          className="order-1 w-full min-w-0 shrink-0 space-y-4 lg:order-2 lg:w-[360px]"
         >
           <input type="hidden" name="lang" value={locale} />
           <input type="hidden" name="order_id" value={order.id} />
@@ -272,6 +276,10 @@ export function BrandCheckoutPanel({
             </dl>
           </div>
         </form>
+
+        <div className="order-2 flex min-w-0 flex-1 flex-col gap-5 lg:order-1">
+          {summaryColumn ? <Fragment key="summary-column">{summaryColumn}</Fragment> : null}
+        </div>
       </div>
 
       <PortalFixedFooter

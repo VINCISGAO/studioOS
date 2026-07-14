@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { getCurrentClientEmail } from "@/features/auth/session-context";
+import { brandPortalRequireOwnedResource, brandPortalRequireSession } from "@/lib/studioos/brand-portal-page-guards";
 import { listCreatorsForMatching } from "@/lib/creator-service";
 import { getWorksForCreator } from "@/lib/works-catalog";
 import { clampBrandVisibleStep, migrateLegacyBrandWizardStep } from "@/lib/campaign/wizard-steps";
@@ -33,12 +34,10 @@ export default async function BrandStudiosPage({ params, searchParams }: Props) 
   const [{ id }, query] = await Promise.all([params, searchParams]);
   const locale = await getAppUiLocale();
   const clientEmail = await getCurrentClientEmail();
+  brandPortalRequireSession(clientEmail, locale, `/brand/projects/${id}/studios`);
   const project = await getProject(id);
 
-  if (!project) notFound();
-  if (clientEmail && project.client_email !== clientEmail.toLowerCase()) {
-    notFound();
-  }
+  brandPortalRequireOwnedResource(project, clientEmail);
   if (project.status === "draft") {
     const resumeStep = clampBrandVisibleStep(migrateLegacyBrandWizardStep(project.wizard_step || 1));
     redirect(withLocale(`/brand/projects/new?project=${id}&step=${resumeStep}`, locale));

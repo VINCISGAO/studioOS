@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { BrandPublicProfile } from "@/components/studioos/brand-public-profile";
 import { brandTheme } from "@/lib/studioos/brand-theme";
-import { PageShell } from "@/components/page-shell";
 import { Button } from "@/components/ui/button";
 import { getCurrentClientEmail } from "@/features/auth/session-context";
 import { getBrandProfileById } from "@/lib/brand-profile-service";
@@ -45,36 +44,32 @@ export default async function BrandPublicPage({
 
   if (!profile.profile_completed_at && !isOwner) {
     return (
-      <PageShell locale={locale}>
-        <main className="mx-auto max-w-3xl px-4 py-16 text-center">
-          <h1 className="text-2xl font-semibold">{t.notFound}</h1>
-          <p className="mt-2 text-sm text-zinc-500">{t.notFoundHint}</p>
-          <Button asChild className="mt-6">
-            <Link href={withLocale("/", locale)}>{t.back}</Link>
-          </Button>
-        </main>
-      </PageShell>
+      <main className="mx-auto max-w-3xl px-4 py-16 text-center">
+        <h1 className="text-2xl font-semibold">{t.notFound}</h1>
+        <p className="mt-2 text-sm text-zinc-500">{t.notFoundHint}</p>
+        <Button asChild className="mt-6">
+          <Link href={withLocale("/", locale)}>{t.back}</Link>
+        </Button>
+      </main>
     );
   }
 
   return (
-    <PageShell locale={locale}>
-      <main className={cn("min-h-screen", brandTheme.pageBg)}>
-        <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-          <Button asChild variant="ghost" size="sm" className="mb-4 -ml-2 text-indigo-700 hover:bg-indigo-50 hover:text-indigo-900">
-            <Link href={withLocale(isOwner ? "/brand/profile" : "/", locale)}>
-              <ArrowLeft className="h-4 w-4" />
-              {isOwner ? t.backEdit : t.back}
-            </Link>
-          </Button>
-          <BrandPublicProfile
-            locale={locale}
-            profile={profile}
-            isOwner={isOwner}
-            isPreview={isOwner && !profile.profile_completed_at}
-          />
-        </section>
-      </main>
-    </PageShell>
+    <main className={cn("min-h-dvh", brandTheme.pageBg)}>
+      <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+        <Button asChild variant="ghost" size="sm" className="mb-4 -ml-2 text-indigo-700 hover:bg-indigo-50 hover:text-indigo-900">
+          <Link href={withLocale(isOwner ? "/brand/profile" : "/", locale)}>
+            <ArrowLeft className="h-4 w-4" />
+            {isOwner ? t.backEdit : t.back}
+          </Link>
+        </Button>
+        <BrandPublicProfile
+          locale={locale}
+          profile={profile}
+          isOwner={isOwner}
+          isPreview={isOwner && !profile.profile_completed_at}
+        />
+      </section>
+    </main>
   );
 }

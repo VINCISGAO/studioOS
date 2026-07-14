@@ -6,6 +6,7 @@ import {
 import { resolveCreatorProfileIdForLegacyId } from "@/features/matching/invitation-creator-bridge";
 import { hasDatabaseUrl, prisma } from "@/lib/core/database/prisma";
 import { getCreatorDepositSnapshot } from "@/lib/studioos/deposit-service";
+import { normalizeCountryCode } from "@/lib/geo/country";
 import { getCreatorRatingStats } from "@/lib/order-rating-service";
 import { getStoredCreatorSettings } from "@/lib/studioos/creator-settings-service";
 import type { Creator } from "@/lib/types";
@@ -22,6 +23,7 @@ async function creatorBaseFromProfile(
     headline: string | null;
     bio: string | null;
     country: string | null;
+    city: string | null;
     portfolioCover: string | null;
     portfolioUrl: string | null;
     specialtiesJson: unknown;
@@ -43,7 +45,8 @@ async function creatorBaseFromProfile(
     bio: profile.bio ?? "",
     avatar_url: profile.user.avatarUrl ?? undefined,
     cover_url: profile.portfolioCover ?? undefined,
-    country: profile.country ?? "",
+    country: normalizeCountryCode(profile.country ?? "") || "",
+    city: profile.city ?? undefined,
     email: profile.user.email,
     portfolio_url: profile.portfolioUrl ?? "",
     specialties: stringList(profile.specialtiesJson),

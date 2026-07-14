@@ -671,6 +671,7 @@ model Campaign {
   aiUsageLogs               CampaignAiUsageLog[]
   costEstimates             ProjectCostEstimate[]
   actualProductionRecord    ActualProductionRecord?
+  knowledgeArticles         KnowledgeArticle[]
 
   @@index([brandId])
   @@index([brandId, status, deletedAt])
@@ -2438,4 +2439,274 @@ enum ProductionDifficultyTier {
   COMMERCIAL
   CINEMATIC
   COMPLEX
+}
+
+enum KnowledgeArticleStatus {
+  DRAFT
+  REVIEW
+  SCHEDULED
+  PUBLISHED
+  ARCHIVED
+}
+
+enum KnowledgeSchemaOrgType {
+  ARTICLE
+  FAQ_PAGE
+  HOW_TO
+  GUIDE
+  REVIEW
+  NEWS_ARTICLE
+  VIDEO_OBJECT
+}
+
+enum KnowledgeLucienCategory {
+  BRAND
+  CREATOR
+  PRICING
+  WORKFLOW
+  AI
+  LEGAL
+  REVIEW
+  PROMPT
+}
+
+enum KnowledgeLucienPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+model KnowledgeCategory {
+  id          String             @id @default(uuid())
+  slug        String             @unique
+  name        String
+  description String?
+  sortOrder   Int                @default(0) @map("sort_order")
+  createdAt   DateTime           @default(now()) @map("created_at")
+  updatedAt   DateTime           @updatedAt @map("updated_at")
+  articles    KnowledgeArticle[]
+
+  @@index([sortOrder])
+  @@map("knowledge_categories")
+}
+
+model KnowledgeTag {
+  id          String                @id @default(uuid())
+  slug        String                @unique
+  name        String
+  createdAt   DateTime              @default(now()) @map("created_at")
+  articleTags KnowledgeArticleTag[]
+
+  @@map("knowledge_tags")
+}
+
+model KnowledgeArticle {
+  id            String                 @id @default(uuid())
+  campaignId    String?                @map("campaign_id")
+  slug          String                 @unique
+  status        KnowledgeArticleStatus @default(DRAFT)
+  authorName    String                 @default("VINCIS") @map("author_name")
+  categoryId    String?                @map("category_id")
+  coverImageUrl String?                @map("cover_image_url")
+  publishedAt   DateTime?              @map("published_at")
+  scheduledAt   DateTime?              @map("scheduled_at")
+  timezone      String                 @default("UTC")
+  deletedAt     DateTime?              @map("deleted_at")
+  createdAt     DateTime               @default(now()) @map("created_at")
+  updatedAt     DateTime               @updatedAt @map("updated_at")
+  campaign      Campaign?              @relation(fields: [campaignId], references: [id])
+  category      KnowledgeCategory?     @relation(fields: [categoryId], references: [id])
+  tags          KnowledgeArticleTag[]
+  translations  KnowledgeTranslation[]
+  analytics     KnowledgeAnalytics?
+
+  @@index([campaignId])
+  @@index([status])
+  @@index([categoryId])
+  @@index([publishedAt])
+  @@index([deletedAt])
+  @@map("knowledge_articles")
+}
+
+model KnowledgeArticleTag {
+  articleId String           @map("article_id")
+  tagId     String           @map("tag_id")
+  article   KnowledgeArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  tag       KnowledgeTag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([articleId, tagId])
+  @@map("knowledge_article_tags")
+}
+
+model KnowledgeTranslation {
+  id                 String                 @id @default(uuid())
+  articleId          String                 @map("article_id")
+  languageCode       String                 @map("language_code")
+  title              String
+  subtitle           String?
+  bodyMarkdown       String                 @map("body_markdown")
+  excerpt            String?
+  readingTimeMinutes Int                    @default(5) @map("reading_time_minutes")
+  status             KnowledgeArticleStatus @default(DRAFT)
+  publishedAt        DateTime?              @map("published_at")
+  createdAt          DateTime               @default(now()) @map("created_at")
+  updatedAt          DateTime               @updatedAt @map("updated_at")
+  article            KnowledgeArticle       @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  seo                KnowledgeSeo?
+  faqs               KnowledgeFaq[]
+  schema             KnowledgeSchema?
+  lucien             KnowledgeLucien?
+  revisions          KnowledgeRevision[]
+  searchIndex        KnowledgeSearchIndex?
+  embeddings         KnowledgeEmbedding[]
+  assets             KnowledgeAsset[]
+
+  @@unique([articleId, languageCode])
+  @@index([languageCode, status])
+  @@index([publishedAt])
+  @@map("knowledge_translations")
+}
+
+model KnowledgeRevision {
+  id             String               @id @default(uuid())
+  translationId  String               @map("translation_id")
+  versionNumber  Int                  @map("version_number")
+  authorName     String               @map("author_name")
+  snapshotJson   Json                 @map("snapshot_json")
+  createdAt      DateTime             @default(now()) @map("created_at")
+  translation    KnowledgeTranslation @relation(fields: [translationId], references: [id], onDelete: Cascade)
+
+  @@unique([translationId, versionNumber])
+  @@index([translationId, createdAt])
+  @@map("knowledge_revisions")
+}
+
+model KnowledgeAsset {
+  id            String               @id @default(uuid())
+  translationId String               @map("translation_id")
+  url           String
+  storageKey    String?              @map("storage_key")
+  mimeType      String?              @map("mime_type")
+  altText       String?              @map("alt_text")
+  sortOrder     Int                  @default(0) @map("sort_order")
+  createdAt     DateTime             @default(now()) @map("created_at")
+  translation   KnowledgeTranslation @relation(fields: [translationId], references: [id], onDelete: Cascade)
+
+  @@index([translationId])
+  @@map("knowledge_assets")
+}
+
+model KnowledgeSeo {
+  id                 String               @id @default(uuid())
+  translationId      String               @unique @map("translation_id")
+  seoTitle           String?              @map("seo_title")
+  metaDescription    String?              @map("meta_description")
+  canonicalUrl       String?              @map("canonical_url")
+  keywordsJson       Json?                @map("keywords_json")
+  ogTitle            String?              @map("og_title")
+  ogDescription      String?              @map("og_description")
+  ogImageUrl         String?              @map("og_image_url")
+  twitterCard        String?              @default("summary_large_image") @map("twitter_card")
+  seoScore           Int                  @default(0) @map("seo_score")
+  readabilityScore   Int                  @default(0) @map("readability_score")
+  aiFriendlyScore    Int                  @default(0) @map("ai_friendly_score")
+  googleScore        Int                  @default(0) @map("google_score")
+  baiduScore         Int                  @default(0) @map("baidu_score")
+  internalLinkCount  Int                  @default(0) @map("internal_link_count")
+  externalLinkCount  Int                  @default(0) @map("external_link_count")
+  updatedAt          DateTime             @updatedAt @map("updated_at")
+  translation        KnowledgeTranslation @relation(fields: [translationId], references: [id], onDelete: Cascade)
+
+  @@map("knowledge_seo")
+}
+
+model KnowledgeFaq {
+  id            String               @id @default(uuid())
+  translationId String               @map("translation_id")
+  question      String
+  answer        String
+  sortOrder     Int                  @default(0) @map("sort_order")
+  translation   KnowledgeTranslation @relation(fields: [translationId], references: [id], onDelete: Cascade)
+
+  @@index([translationId, sortOrder])
+  @@map("knowledge_faqs")
+}
+
+model KnowledgeSchema {
+  id            String                 @id @default(uuid())
+  translationId String                 @unique @map("translation_id")
+  schemaType    KnowledgeSchemaOrgType @default(ARTICLE) @map("schema_type")
+  jsonLd        Json?                  @map("json_ld")
+  updatedAt     DateTime               @updatedAt @map("updated_at")
+  translation   KnowledgeTranslation   @relation(fields: [translationId], references: [id], onDelete: Cascade)
+
+  @@map("knowledge_schemas")
+}
+
+model KnowledgeLucien {
+  id               String                  @id @default(uuid())
+  translationId    String                  @unique @map("translation_id")
+  aiSummary        String?                 @map("ai_summary")
+  aiKeywordsJson   Json?                   @map("ai_keywords_json")
+  aiTopicsJson     Json?                   @map("ai_topics_json")
+  aiIntent         String?                 @default("informational") @map("ai_intent")
+  aiConfidence     Int                     @default(80) @map("ai_confidence")
+  llmFriendly      Boolean                 @default(true) @map("llm_friendly")
+  allowCitation    Boolean                 @default(true) @map("allow_citation")
+  allowTraining    Boolean                 @default(false) @map("allow_training")
+  lucienLearning   Boolean                 @default(true) @map("lucien_learning")
+  searchPriority   Int                     @default(50) @map("search_priority")
+  category         KnowledgeLucienCategory @default(WORKFLOW)
+  weight           Int                     @default(100)
+  priority         KnowledgeLucienPriority @default(MEDIUM)
+  lucienIndexed    Boolean                 @default(false) @map("lucien_indexed")
+  lucienSyncedAt   DateTime?               @map("lucien_synced_at")
+  lucienSourceKey  String?                 @unique @map("lucien_source_key")
+  updatedAt        DateTime                @updatedAt @map("updated_at")
+  translation      KnowledgeTranslation    @relation(fields: [translationId], references: [id], onDelete: Cascade)
+
+  @@index([lucienIndexed])
+  @@index([category])
+  @@map("knowledge_lucien")
+}
+
+model KnowledgeAnalytics {
+  id              String           @id @default(uuid())
+  articleId       String           @unique @map("article_id")
+  viewCount       Int              @default(0) @map("view_count")
+  helpfulCount    Int              @default(0) @map("helpful_count")
+  notHelpfulCount Int              @default(0) @map("not_helpful_count")
+  monthlyViews    Int              @default(0) @map("monthly_views")
+  googleIndexed   Boolean          @default(false) @map("google_indexed")
+  baiduIndexed    Boolean          @default(false) @map("baidu_indexed")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  article         KnowledgeArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@map("knowledge_analytics")
+}
+
+model KnowledgeEmbedding {
+  id            String               @id @default(uuid())
+  translationId String               @map("translation_id")
+  chunkIndex    Int                  @default(0) @map("chunk_index")
+  chunkText     String               @map("chunk_text")
+  embeddingJson Json?                @map("embedding_json")
+  model         String?
+  createdAt     DateTime             @default(now()) @map("created_at")
+  translation   KnowledgeTranslation @relation(fields: [translationId], references: [id], onDelete: Cascade)
+
+  @@unique([translationId, chunkIndex])
+  @@index([translationId])
+  @@map("knowledge_embeddings")
+}
+
+model KnowledgeSearchIndex {
+  id            String               @id @default(uuid())
+  translationId String               @unique @map("translation_id")
+  searchText    String               @map("search_text")
+  updatedAt     DateTime             @updatedAt @map("updated_at")
+  translation   KnowledgeTranslation @relation(fields: [translationId], references: [id], onDelete: Cascade)
+
+  @@index([searchText])
+  @@map("knowledge_search_indexes")
 }

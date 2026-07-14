@@ -51,6 +51,8 @@ export async function saveBrandProfileAction(formData: FormData) {
   const bio = String(formData.get("bio") ?? "").trim();
   const website = String(formData.get("website") ?? "").trim();
   const industry = String(formData.get("industry") ?? "").trim();
+  const country = String(formData.get("country") ?? "").trim();
+  const city = String(formData.get("city") ?? "").trim();
   const markComplete = formData.get("mark_complete") === "1";
 
   if (markComplete && (!headline || !bio)) {
@@ -67,6 +69,8 @@ export async function saveBrandProfileAction(formData: FormData) {
     bio,
     website,
     industry,
+    country,
+    city,
     markComplete
   });
 

@@ -7,10 +7,14 @@ import type { ReferenceAnalysisReport } from "@/lib/studioos/reference-analysis.
 import { cn } from "@/lib/utils";
 import { CheckCircle2, ExternalLink, Loader2, Sparkles } from "lucide-react";
 import { useState } from "react";
+import { ReferenceAnalysisProgress } from "@/components/studioos/reference-intake/reference-analysis-progress";
 
 function analysisStatusLabel(status: string | undefined, locale: Locale) {
-  if (status === "analyzing" || status === "pending") {
-    return locale === "zh" ? "AI 正在解析参考内容…" : "AI is analyzing this reference…";
+  if (status === "pending") {
+    return locale === "zh" ? "已上传，正在排队启动 AI 分析…" : "Uploaded — starting AI analysis…";
+  }
+  if (status === "analyzing") {
+    return locale === "zh" ? "正在调用 AI 解析参考内容…" : "Calling AI to analyze this reference…";
   }
   if (status === "failed") {
     return locale === "zh" ? "解析失败，可重新上传视频或补充说明" : "Analysis failed — upload a file or add notes";
@@ -75,6 +79,7 @@ export function ReferenceAnalysisCard({
   const report = analysis?.report;
   const [view, setView] = useState<"summary" | "outline" | "shots" | "visual">("summary");
   const isLoading = analysis?.status === "pending" || analysis?.status === "analyzing";
+  const isAnalyzing = analysis?.status === "analyzing";
 
   return (
     <div className="rounded-2xl border border-violet-100 bg-violet-50/20 p-4">
@@ -92,6 +97,17 @@ export function ReferenceAnalysisCard({
               {zh ? "访问状态" : "Access"}：{referenceAccessStatusLabel(analysis.access_status, locale)}
             </p>
           ) : null}
+          {isLoading ? (
+            <p className="text-[11px] leading-5 text-violet-700/80">
+              {isAnalyzing
+                ? zh
+                  ? "后台已发起 OpenAI 分析请求，通常 10–60 秒完成"
+                  : "AI request is in flight — usually completes in 10–60 seconds"
+                : zh
+                  ? "若超过 30 秒仍无进展，系统会自动重试"
+                  : "If nothing changes after 30s, the system will retry automatically"}
+            </p>
+          ) : null}
         </div>
         {report ? (
           <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-violet-700 ring-1 ring-violet-100">
@@ -99,6 +115,13 @@ export function ReferenceAnalysisCard({
           </span>
         ) : null}
       </div>
+
+      {isLoading ? (
+        <ReferenceAnalysisProgress
+          locale={locale}
+          status={analysis?.status === "pending" ? "pending" : "analyzing"}
+        />
+      ) : null}
 
       {report ? (
         <>

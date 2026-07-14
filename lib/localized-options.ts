@@ -1,5 +1,9 @@
 import type { Locale } from "@/lib/i18n";
 import { countries, platforms, videoFormats, workCategories } from "@/lib/project-options";
+import {
+  getCountryLocalizedName,
+  getCountryOptions as buildCountryOptions
+} from "@/lib/geo/country";
 
 export type LocalizedOption = { value: string; label: string };
 
@@ -25,26 +29,13 @@ export const PLATFORM_LABELS: Record<string, Bilingual> = {
   Amazon: { en: "Amazon", zh: "亚马逊" }
 };
 
-export const COUNTRY_LABELS: Record<string, Bilingual> = {
-  China: { en: "China", zh: "中国" },
-  "South Korea": { en: "South Korea", zh: "韩国" },
-  Japan: { en: "Japan", zh: "日本" },
-  Singapore: { en: "Singapore", zh: "新加坡" },
-  India: { en: "India", zh: "印度" },
-  "United States": { en: "United States", zh: "美国" },
-  Canada: { en: "Canada", zh: "加拿大" },
-  "United Kingdom": { en: "United Kingdom", zh: "英国" },
-  Germany: { en: "Germany", zh: "德国" },
-  France: { en: "France", zh: "法国" },
-  Spain: { en: "Spain", zh: "西班牙" },
-  Italy: { en: "Italy", zh: "意大利" },
-  Netherlands: { en: "Netherlands", zh: "荷兰" },
-  Brazil: { en: "Brazil", zh: "巴西" },
-  Mexico: { en: "Mexico", zh: "墨西哥" },
-  Australia: { en: "Australia", zh: "澳大利亚" },
-  "United Arab Emirates": { en: "United Arab Emirates", zh: "阿联酋" },
-  Other: { en: "Other", zh: "其他" }
-};
+/** @deprecated Use getCountryLocalizedName from lib/geo/country */
+export const COUNTRY_LABELS: Record<string, Bilingual> = Object.fromEntries(
+  countries.map((iso2) => [
+    iso2,
+    { en: getCountryLocalizedName(iso2, "en"), zh: getCountryLocalizedName(iso2, "zh") }
+  ])
+);
 
 export const VIDEO_FORMAT_LABELS: Record<string, Bilingual> = {
   "9:16": { en: "9:16 Vertical", zh: "9:16 竖屏" },
@@ -68,7 +59,7 @@ export function labelPlatform(value: string, locale: Locale) {
 }
 
 export function labelCountry(value: string, locale: Locale) {
-  return COUNTRY_LABELS[value]?.[locale] ?? value;
+  return getCountryLocalizedName(value, locale);
 }
 
 export function labelVideoFormat(value: string, locale: Locale) {
@@ -104,14 +95,7 @@ export function getPlatformOptions(locale: Locale): LocalizedOption[] {
 }
 
 export function getCountryOptions(locale: Locale, extra?: string): LocalizedOption[] {
-  const base = countries.map((value) => ({
-    value,
-    label: labelCountry(value, locale)
-  }));
-  if (extra && !countries.includes(extra as (typeof countries)[number])) {
-    return [{ value: extra, label: labelCountry(extra, locale) }, ...base];
-  }
-  return base;
+  return buildCountryOptions(locale, extra);
 }
 
 export function getVideoFormatOptions(locale: Locale): LocalizedOption[] {

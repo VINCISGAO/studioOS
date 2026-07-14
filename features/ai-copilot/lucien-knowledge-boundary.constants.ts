@@ -38,7 +38,8 @@ export const LUCIEN_BUSINESS_SOURCE_TYPES = [
   "pricing_rule",
   "workflow_guide",
   "public_case_study",
-  "product_help"
+  "product_help",
+  "knowledge_center"
 ] as const;
 
 export type LucienBusinessSourceType = (typeof LUCIEN_BUSINESS_SOURCE_TYPES)[number];

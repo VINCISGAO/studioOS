@@ -7,10 +7,14 @@ import {
   loadBrandProjectPortalDetail,
   resolveBrandProjectRouteId
 } from "@/lib/api-client/server-portal-gateway";
-import { requireBrandPortalClientEmail } from "@/features/auth/session-context";
+import {
+  brandPortalDenyInvalidState,
+  brandPortalRequireSession
+} from "@/lib/studioos/brand-portal-page-guards";
 import { getAppUiLocale } from "@/lib/app-language";
 import { isAppError } from "@/lib/core/errors";
 import { type SearchParams, withLocale } from "@/lib/i18n";
+import { requireBrandPortalClientEmail } from "@/features/auth/session-context";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
 
 export default async function BrandProjectHubPage({
@@ -22,12 +26,8 @@ export default async function BrandProjectHubPage({
 }) {
   const [{ id }, query] = await Promise.all([params, searchParams]);
   const locale = await getAppUiLocale();
-  let clientEmail: string;
-  try {
-    clientEmail = await requireBrandPortalClientEmail();
-  } catch {
-    redirect(withLocale("/login?role=brand", locale));
-  }
+  const clientEmail = await requireBrandPortalClientEmail().catch(() => null);
+  brandPortalRequireSession(clientEmail, locale, `/brand/projects/${id}`);
 
   const resolved = await resolveBrandProjectRouteId(id);
   if (resolved.kind === "redirect_project") {
@@ -57,9 +57,9 @@ export default async function BrandProjectHubPage({
       notFound();
     }
     if (isAppError(error) && error.status === 403) {
-      redirect(withLocale("/brand", locale));
+      notFound();
     }
-    redirect(withLocale(brandPortalRoutes.dashboard, locale));
+    brandPortalDenyInvalidState(locale, "project-unavailable");
   }
 
   if (detail.flags.shouldRedirectToCheckout) {

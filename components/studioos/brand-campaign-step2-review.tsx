@@ -286,6 +286,10 @@ export function BrandCampaignStep2Review({
                     </div>
                   </div>
 
+                  <div className="rounded-xl border border-amber-200/90 bg-amber-50/70 px-4 py-3 text-sm leading-6 text-amber-950">
+                    {t.reviewHint}
+                  </div>
+
                   <BrandCampaignStep2FeaturedScheme
                     locale={locale}
                     direction={selectedDirection}

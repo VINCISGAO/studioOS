@@ -5,7 +5,6 @@ import { BrandCheckoutPanel } from "@/components/studioos/brand-checkout-panel";
 import { BrandCheckoutSummary } from "@/components/studioos/brand-checkout-summary";
 import { BrandPaymentDeadlineNotice } from "@/components/studioos/brand-payment-deadline-notice";
 import { WizardStepper } from "@/components/studioos/ui/wizard-stepper";
-import { getCreatorById } from "@/lib/creator-service";
 import { type SearchParams, withLocale } from "@/lib/i18n";
 import { getOrderForProject, markLegacyOrderPaidForProject } from "@/lib/order-service";
 import { isOrderPaymentEscrowed } from "@/lib/order-types";
@@ -15,7 +14,9 @@ import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
 import { normalizeCampaignStatus } from "@/lib/studioos/project-status";
 import { setupBrandCampaignPayment } from "@/lib/studioos/brand-checkout-service";
 import { estimateDeliveryDays } from "@/lib/studioos/brand-campaign-display";
-import { enforceBrandPaymentDeadlineForProject } from "@/lib/studioos/brand-payment-expiry.service";
+import {
+  enforceBrandPaymentDeadlineForSnapshot
+} from "@/lib/studioos/brand-payment-expiry.service";
 import { isLegacyOrderFunded, isPrismaEscrowFundedForProject } from "@/lib/studioos/brand-payment-funding";
 import { readBrandDisplayBudgetInput } from "@/lib/studioos/brand-budget-display-input";
 import { BRAND_PAYMENT_TIMEOUT_CANCEL_REASON } from "@/lib/studioos/brand-payment-deadline";
@@ -51,7 +52,7 @@ function readCancellationReason(
 }
 
 export default async function BrandCheckoutPage({ params, searchParams }: Props) {
-  const [{ id }, , locale, session] = await Promise.all([
+  const [{ id }, query, locale, session] = await Promise.all([
     params,
     searchParams,
     getAppUiLocale(),
@@ -68,7 +69,7 @@ export default async function BrandCheckoutPage({ params, searchParams }: Props)
     notFound();
   }
 
-  const expired = await enforceBrandPaymentDeadlineForProject(id);
+  const expired = await enforceBrandPaymentDeadlineForSnapshot(project, order);
   if (expired) {
     const [refreshedProject, refreshedOrder] = await Promise.all([
       getProject(id),
@@ -78,8 +79,6 @@ export default async function BrandCheckoutPage({ params, searchParams }: Props)
     project = refreshedProject;
     order = refreshedOrder;
   }
-
-  const creatorId = project.selected_studio_id;
 
   if (!order) {
     const created = await setupBrandCampaignPayment({
@@ -98,12 +97,9 @@ export default async function BrandCheckoutPage({ params, searchParams }: Props)
     redirect(withLocale(`/brand/projects/new?project=${id}&step=3`, locale));
   }
 
-  const [studio, prismaEscrowFunded] = await Promise.all([
-    creatorId ? getCreatorById(creatorId) : null,
-    hasDatabaseUrl() ? isPrismaEscrowFundedForProject(id) : Promise.resolve(false)
-  ]);
   const deliveryLabel = estimateDeliveryDays(project.deadline);
   const campaignStatus = normalizeCampaignStatus(project.status);
+  const prismaEscrowFunded = hasDatabaseUrl() ? await isPrismaEscrowFundedForProject(id) : false;
 
   if (prismaEscrowFunded || isOrderPaymentEscrowed(order.payment_status)) {
     order = (await markLegacyOrderPaidForProject(id)) ?? order;
@@ -125,10 +121,14 @@ export default async function BrandCheckoutPage({ params, searchParams }: Props)
   }
 
   const displayBudgetInput = readBrandDisplayBudgetInput(project);
+  const paymentSignal =
+    (typeof query.error === "string" ? query.error : undefined) ??
+    (typeof query.cancelled === "string" ? "cancelled" : undefined) ??
+    null;
 
   return (
-    <div className="min-h-[calc(100dvh-7rem)] rounded-[2rem] bg-[#f8f9fb] px-3 pb-8 pt-4 sm:px-4 sm:pt-5 lg:px-5 lg:pt-6">
-      <div className="mx-auto w-full max-w-6xl space-y-6">
+    <div className="w-full min-w-0 overflow-x-hidden pb-[calc(5.5rem+env(safe-area-inset-bottom))]">
+      <div className="mx-auto w-full max-w-6xl space-y-5 sm:space-y-6">
         <WizardStepper locale={locale} currentStep={3} variant="brand" />
 
         <div className="rounded-2xl border border-violet-100 bg-white/80 px-5 py-3 text-sm leading-6 text-violet-700 shadow-sm">
@@ -175,9 +175,10 @@ export default async function BrandCheckoutPage({ params, searchParams }: Props)
               locale={locale}
               order={order}
               projectId={id}
-              studioName={studio?.name ?? "Studio"}
+              studioName="Studio"
               escrowFunded={prismaEscrowFunded}
               displayBudgetInput={displayBudgetInput}
+              paymentSignal={paymentSignal}
               deadlineNotice={
                 <BrandPaymentDeadlineNotice
                   locale={locale}

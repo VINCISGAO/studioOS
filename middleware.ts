@@ -8,7 +8,7 @@ import { isHomepageLangPath, isInternalAppPath, normalizeAppLanguage } from "@/l
 import { demoRedirectForRole } from "@/lib/demo-auth";
 import { DEMO_SESSION_COOKIE, ADMIN_SESSION_COOKIE, LOCALE_COOKIE } from "@/lib/auth-config";
 import { parseDemoSessionCookieAsync } from "@/lib/demo-session-cookie";
-import { toSafeNextPathname } from "@/lib/auth/post-login-redirect";
+import { toSafeNextPath, toSafeNextPathname } from "@/lib/auth/post-login-redirect";
 
 function persistLanguageCookie(response: NextResponse, language: string) {
   response.cookies.set(LOCALE_COOKIE, normalizeAppLanguage(language), {
@@ -381,17 +381,18 @@ export async function middleware(request: NextRequest) {
   }
 
   if (pathname === "/login") {
+    const safeNext = resolveSafeLoginNext(request);
     const demoSession = await parseDemoSessionCookieAsync(
       request.cookies.get(DEMO_SESSION_COOKIE)?.value
     );
 
     if (demoSession?.role === "client" || demoSession?.role === "creator") {
-      return redirectToRoleDefault(request, demoSession.role);
+      return redirectToRoleDefault(request, demoSession.role, safeNext);
     }
 
     const portalRole = await resolveSupabasePortalRole();
     if (portalRole) {
-      return redirectToRoleDefault(request, portalRole);
+      return redirectToRoleDefault(request, portalRole, safeNext);
     }
 
     return applyLoginSecurityHeaders(response);
@@ -489,7 +490,30 @@ export async function middleware(request: NextRequest) {
   return response;
 }
 
-function redirectToRoleDefault(request: NextRequest, role: "client" | "creator") {
+function redirectToSafeRelativePath(request: NextRequest, safePath: string) {
+  const url = request.nextUrl.clone();
+  const hashIndex = safePath.indexOf("#");
+  const hash = hashIndex >= 0 ? safePath.slice(hashIndex) : "";
+  const withoutHash = hashIndex >= 0 ? safePath.slice(0, hashIndex) : safePath;
+  const [pathname, search = ""] = withoutHash.split("?");
+  url.pathname = pathname || "/";
+  url.search = search ? `?${search}` : "";
+  if (hash) {
+    url.hash = hash;
+  }
+  return NextResponse.redirect(url);
+}
+
+function resolveSafeLoginNext(request: NextRequest) {
+  const raw = request.nextUrl.searchParams.get("next");
+  if (!raw) return "";
+  return toSafeNextPath(raw) || toSafeNextPathname(raw);
+}
+
+function redirectToRoleDefault(request: NextRequest, role: "client" | "creator", safeNext?: string) {
+  if (safeNext) {
+    return redirectToSafeRelativePath(request, safeNext);
+  }
   return redirectToPath(request, demoRedirectForRole(role));
 }
 
@@ -503,7 +527,8 @@ function redirectToLogin(request: NextRequest, error?: string) {
     return redirectToAdminLogin(request);
   }
 
-  const nextPath = toSafeNextPathname(request.nextUrl.pathname);
+  const pathWithSearch = `${request.nextUrl.pathname}${request.nextUrl.search}`;
+  const nextPath = toSafeNextPath(pathWithSearch) || toSafeNextPathname(request.nextUrl.pathname);
   return redirectToPath(request, "/login", {
     ...(nextPath ? { next: nextPath } : {}),
     ...(error ? { error } : {})

@@ -1,0 +1,560 @@
+import "server-only";
+
+import type { KnowledgeArticleStatus, Prisma } from "@prisma/client";
+import { asInputJson } from "@/lib/core/prisma-json";
+import { prisma, hasDatabaseUrl } from "@/lib/core/database/prisma";
+import {
+  knowledgeSeedCategories,
+  toArticleDetailDto,
+  toArticleListItemDto
+} from "@/features/knowledge-center/knowledge-center.mappers";
+import type {
+  KnowledgeArticleDetailDto,
+  KnowledgeArticleListItemDto,
+  KnowledgeCitationGapDto,
+  KnowledgeDashboardStatsDto,
+  UpsertKnowledgeArticleInput
+} from "@/features/knowledge-center/knowledge-center.types";
+
+const articleInclude = {
+  category: true,
+  tags: { include: { tag: true } },
+  analytics: true,
+  translations: {
+    include: {
+      seo: true,
+      faqs: { orderBy: { sortOrder: "asc" } },
+      lucien: true,
+      schema: true
+    }
+  }
+} satisfies Prisma.KnowledgeArticleInclude;
+
+type KnowledgeArticleModel = (typeof prisma)["knowledgeArticle"];
+
+function isMissingKnowledgeTableError(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error as { code?: string }).code === "P2021"
+  );
+}
+
+async function withKnowledgeTableFallback<T>(fallback: T, run: () => Promise<T>): Promise<T> {
+  try {
+    return await run();
+  } catch (error) {
+    if (isMissingKnowledgeTableError(error)) return fallback;
+    throw error;
+  }
+}
+
+function articleModel(): KnowledgeArticleModel | null {
+  if (!hasDatabaseUrl()) return null;
+  const model = (prisma as { knowledgeArticle?: KnowledgeArticleModel }).knowledgeArticle;
+  if (!model || typeof model.count !== "function") return null;
+  return model;
+}
+
+async function ensureDefaultCategories() {
+  for (const [index, item] of knowledgeSeedCategories.entries()) {
+    await prisma.knowledgeCategory.upsert({
+      where: { slug: item.slug },
+      create: { slug: item.slug, name: item.name, sortOrder: index },
+      update: { name: item.name, sortOrder: index }
+    });
+  }
+}
+
+async function resolveCategoryId(input: UpsertKnowledgeArticleInput) {
+  if (input.category_id) return input.category_id;
+  if (!input.category_slug) return null;
+  const category = await prisma.knowledgeCategory.findUnique({ where: { slug: input.category_slug } });
+  return category?.id ?? null;
+}
+
+async function syncTags(articleId: string, tags: string[] | undefined) {
+  if (!tags) return;
+  await prisma.knowledgeArticleTag.deleteMany({ where: { articleId } });
+  for (const raw of tags) {
+    const name = raw.trim();
+    if (!name) continue;
+    const slug = name.toLowerCase().replace(/\s+/g, "-");
+    const tag = await prisma.knowledgeTag.upsert({
+      where: { slug },
+      create: { slug, name },
+      update: { name }
+    });
+    await prisma.knowledgeArticleTag.create({ data: { articleId, tagId: tag.id } });
+  }
+}
+
+export class KnowledgeCenterRepository {
+  isAvailable() {
+    return articleModel() !== null;
+  }
+
+  async ensureSeeds() {
+    if (!this.isAvailable()) return;
+    await ensureDefaultCategories();
+  }
+
+  async listAdmin(filters?: {
+    q?: string;
+    status?: string;
+    language?: string;
+    category?: string;
+  }): Promise<KnowledgeArticleListItemDto[]> {
+    const model = articleModel();
+    if (!model) return [];
+
+    const rows = await model.findMany({
+      where: {
+        deletedAt: null,
+        ...(filters?.status ? { status: filters.status as KnowledgeArticleStatus } : {}),
+        ...(filters?.category
+          ? { category: { slug: filters.category } }
+          : {}),
+        ...(filters?.q
+          ? {
+              OR: [
+                { slug: { contains: filters.q, mode: "insensitive" } },
+                { translations: { some: { title: { contains: filters.q, mode: "insensitive" } } } }
+              ]
+            }
+          : {})
+      },
+      include: articleInclude,
+      orderBy: { updatedAt: "desc" }
+    });
+
+    return rows.map((row) => toArticleListItemDto(row, filters?.language));
+  }
+
+  async getById(id: string): Promise<KnowledgeArticleDetailDto | null> {
+    const model = articleModel();
+    if (!model) return null;
+    const row = await model.findFirst({
+      where: { id, deletedAt: null },
+      include: articleInclude
+    });
+    return row ? toArticleDetailDto(row) : null;
+  }
+
+  async getBySlug(slug: string): Promise<KnowledgeArticleDetailDto | null> {
+    const model = articleModel();
+    if (!model) return null;
+    const row = await model.findFirst({
+      where: { slug, deletedAt: null },
+      include: articleInclude
+    });
+    return row ? toArticleDetailDto(row) : null;
+  }
+
+  async createArticle(data: Prisma.KnowledgeArticleCreateInput) {
+    const model = articleModel();
+    if (!model) return null;
+    return model.create({ data, include: articleInclude });
+  }
+
+  async updateArticle(id: string, data: Prisma.KnowledgeArticleUpdateInput) {
+    const model = articleModel();
+    if (!model) return null;
+    return model.update({ where: { id }, data, include: articleInclude });
+  }
+
+  async softDelete(id: string) {
+    const model = articleModel();
+    if (!model) return;
+    await model.update({ where: { id }, data: { deletedAt: new Date(), status: "ARCHIVED" } });
+  }
+
+  async ensureAnalytics(articleId: string) {
+    await prisma.knowledgeAnalytics.upsert({
+      where: { articleId },
+      create: { articleId },
+      update: {}
+    });
+  }
+
+  async saveRevision(input: {
+    translationId: string;
+    versionNumber: number;
+    authorName: string;
+    snapshot: Record<string, unknown>;
+  }) {
+    await prisma.knowledgeRevision.create({
+      data: {
+        translationId: input.translationId,
+        versionNumber: input.versionNumber,
+        authorName: input.authorName,
+        snapshotJson: asInputJson(input.snapshot)!
+      }
+    });
+  }
+
+  async countRevisions(translationId: string) {
+    return prisma.knowledgeRevision.count({ where: { translationId } });
+  }
+
+  async upsertTranslationBundle(
+    articleId: string,
+    input: UpsertKnowledgeArticleInput,
+    bundle: {
+      readingTimeMinutes: number;
+      seoScores: {
+        seo_score: number;
+        readability_score: number;
+        ai_friendly_score: number;
+        google_score: number;
+        baidu_score: number;
+        internal_link_count: number;
+        external_link_count: number;
+      };
+      searchText: string;
+      jsonLd: Record<string, unknown>;
+    }
+  ) {
+    const t = input.translation;
+    const translation = await prisma.knowledgeTranslation.upsert({
+      where: {
+        articleId_languageCode: {
+          articleId,
+          languageCode: t.language_code
+        }
+      },
+      create: {
+        articleId,
+        languageCode: t.language_code,
+        title: t.title.trim(),
+        subtitle: t.subtitle?.trim() || null,
+        bodyMarkdown: t.body_markdown,
+        excerpt: t.excerpt?.trim() || null,
+        readingTimeMinutes: bundle.readingTimeMinutes,
+        status: t.status ?? input.status ?? "DRAFT",
+        publishedAt: (t.status ?? input.status) === "PUBLISHED" ? new Date() : null
+      },
+      update: {
+        title: t.title.trim(),
+        subtitle: t.subtitle?.trim() || null,
+        bodyMarkdown: t.body_markdown,
+        excerpt: t.excerpt?.trim() || null,
+        readingTimeMinutes: bundle.readingTimeMinutes,
+        status: t.status ?? input.status,
+        publishedAt: (t.status ?? input.status) === "PUBLISHED" ? new Date() : undefined
+      }
+    });
+
+    await prisma.knowledgeSeo.upsert({
+      where: { translationId: translation.id },
+      create: {
+        translationId: translation.id,
+        seoTitle: t.seo?.seo_title?.trim() || t.title.trim(),
+        metaDescription: t.seo?.meta_description?.trim() || t.excerpt?.trim() || null,
+        canonicalUrl: t.seo?.canonical_url?.trim() || null,
+        keywordsJson: t.seo?.keywords?.length ? t.seo.keywords : undefined,
+        ogTitle: t.seo?.og_title?.trim() || t.title.trim(),
+        ogDescription: t.seo?.og_description?.trim() || t.seo?.meta_description?.trim() || null,
+        ogImageUrl: t.seo?.og_image_url?.trim() || input.cover_image_url?.trim() || null,
+        twitterCard: t.seo?.twitter_card ?? "summary_large_image",
+        ...bundle.seoScores
+      },
+      update: {
+        seoTitle: t.seo?.seo_title?.trim() || t.title.trim(),
+        metaDescription: t.seo?.meta_description?.trim() || t.excerpt?.trim() || null,
+        canonicalUrl: t.seo?.canonical_url?.trim() || null,
+        keywordsJson: t.seo?.keywords?.length ? t.seo.keywords : undefined,
+        ogTitle: t.seo?.og_title?.trim() || t.title.trim(),
+        ogDescription: t.seo?.og_description?.trim() || t.seo?.meta_description?.trim() || null,
+        ogImageUrl: t.seo?.og_image_url?.trim() || input.cover_image_url?.trim() || null,
+        twitterCard: t.seo?.twitter_card ?? "summary_large_image",
+        ...bundle.seoScores
+      }
+    });
+
+    await prisma.knowledgeFaq.deleteMany({ where: { translationId: translation.id } });
+    if (t.faqs?.length) {
+      await prisma.knowledgeFaq.createMany({
+        data: t.faqs.map((faq, index) => ({
+          translationId: translation.id,
+          question: faq.question.trim(),
+          answer: faq.answer.trim(),
+          sortOrder: faq.sort_order ?? index
+        }))
+      });
+    }
+
+    const lucien = t.lucien;
+    await prisma.knowledgeLucien.upsert({
+      where: { translationId: translation.id },
+      create: {
+        translationId: translation.id,
+        aiSummary: lucien?.ai_summary?.trim() || t.excerpt?.trim() || null,
+        aiKeywordsJson: lucien?.ai_keywords?.length ? lucien.ai_keywords : undefined,
+        aiTopicsJson: lucien?.ai_topics?.length ? lucien.ai_topics : undefined,
+        aiIntent: lucien?.ai_intent ?? "informational",
+        aiConfidence: lucien?.ai_confidence ?? 80,
+        llmFriendly: lucien?.llm_friendly ?? true,
+        allowCitation: lucien?.allow_citation ?? true,
+        allowTraining: lucien?.allow_training ?? false,
+        lucienLearning: lucien?.lucien_learning ?? true,
+        searchPriority: lucien?.search_priority ?? 50,
+        category: lucien?.category ?? "WORKFLOW",
+        weight: lucien?.weight ?? 100,
+        priority: lucien?.priority ?? "MEDIUM"
+      },
+      update: {
+        aiSummary: lucien?.ai_summary?.trim() || t.excerpt?.trim() || null,
+        aiKeywordsJson: lucien?.ai_keywords?.length ? lucien.ai_keywords : undefined,
+        aiTopicsJson: lucien?.ai_topics?.length ? lucien.ai_topics : undefined,
+        aiIntent: lucien?.ai_intent ?? "informational",
+        aiConfidence: lucien?.ai_confidence ?? 80,
+        llmFriendly: lucien?.llm_friendly ?? true,
+        allowCitation: lucien?.allow_citation ?? true,
+        allowTraining: lucien?.allow_training ?? false,
+        lucienLearning: lucien?.lucien_learning ?? true,
+        searchPriority: lucien?.search_priority ?? 50,
+        category: lucien?.category ?? "WORKFLOW",
+        weight: lucien?.weight ?? 100,
+        priority: lucien?.priority ?? "MEDIUM"
+      }
+    });
+
+    await prisma.knowledgeSchema.upsert({
+      where: { translationId: translation.id },
+      create: {
+        translationId: translation.id,
+        schemaType: t.schema_type ?? "ARTICLE",
+        jsonLd: asInputJson(bundle.jsonLd)!
+      },
+      update: {
+        schemaType: t.schema_type ?? "ARTICLE",
+        jsonLd: asInputJson(bundle.jsonLd)!
+      }
+    });
+
+    await prisma.knowledgeSearchIndex.upsert({
+      where: { translationId: translation.id },
+      create: { translationId: translation.id, searchText: bundle.searchText },
+      update: { searchText: bundle.searchText }
+    });
+
+    return translation.id;
+  }
+
+  async resolveCategoryAndTagsForCreate(input: UpsertKnowledgeArticleInput) {
+    return resolveCategoryId(input);
+  }
+
+  async resolveCategoryAndTags(articleId: string, input: UpsertKnowledgeArticleInput) {
+    const categoryId = await resolveCategoryId(input);
+    await syncTags(articleId, input.tags);
+    return categoryId;
+  }
+
+  async listPublished(languageCode: string, limit = 50) {
+    const model = articleModel();
+    if (!model) return [];
+    return withKnowledgeTableFallback([], async () =>
+      model.findMany({
+        where: {
+          deletedAt: null,
+          translations: {
+            some: {
+              languageCode,
+              status: "PUBLISHED"
+            }
+          }
+        },
+        include: articleInclude,
+        orderBy: { publishedAt: "desc" },
+        take: limit
+      })
+    );
+  }
+
+  async listPublishedByCategory(languageCode: string, categorySlug: string, limit = 50) {
+    const model = articleModel();
+    if (!model) return [];
+    return withKnowledgeTableFallback([], async () =>
+      model.findMany({
+        where: {
+          deletedAt: null,
+          category: { slug: categorySlug },
+          translations: { some: { languageCode, status: "PUBLISHED" } }
+        },
+        include: articleInclude,
+        orderBy: { publishedAt: "desc" },
+        take: limit
+      })
+    );
+  }
+
+  async listCategorySummaries(languageCode: string) {
+    if (!this.isAvailable()) return [];
+    return withKnowledgeTableFallback([], async () => {
+      const categories = await prisma.knowledgeCategory.findMany({ orderBy: { sortOrder: "asc" } });
+      const summaries = [];
+      for (const category of categories) {
+        const count = await prisma.knowledgeArticle.count({
+          where: {
+            deletedAt: null,
+            categoryId: category.id,
+            translations: { some: { languageCode, status: "PUBLISHED" } }
+          }
+        });
+        if (count > 0) {
+          summaries.push({ slug: category.slug, name: category.name, count });
+        }
+      }
+      return summaries;
+    });
+  }
+
+  async searchPublished(query: string, languageCode: string, limit = 20): Promise<KnowledgeArticleListItemDto[]> {
+    const q = query.trim();
+    if (!q || !this.isAvailable()) return [];
+
+    return withKnowledgeTableFallback([], async () => {
+      const indexes = await prisma.knowledgeSearchIndex.findMany({
+        where: {
+          searchText: { contains: q, mode: "insensitive" },
+          translation: { languageCode, status: "PUBLISHED", article: { deletedAt: null } }
+        },
+        select: { translation: { select: { articleId: true } } },
+        take: limit * 2
+      });
+
+      const articleIds = [...new Set(indexes.map((row) => row.translation.articleId))].slice(0, limit);
+      if (!articleIds.length) return [];
+
+      const model = articleModel();
+      if (!model) return [];
+
+      const rows = await model.findMany({
+        where: { id: { in: articleIds }, deletedAt: null },
+        include: articleInclude
+      });
+
+      return rows.map((row) => toArticleListItemDto(row, languageCode));
+    });
+  }
+
+  async getPublishedTranslation(slug: string, languageCode: string) {
+    const model = articleModel();
+    if (!model) return null;
+    return withKnowledgeTableFallback(null, async () =>
+      model.findFirst({
+        where: {
+          slug,
+          deletedAt: null,
+          translations: {
+            some: {
+              languageCode,
+              status: "PUBLISHED"
+            }
+          }
+        },
+        include: articleInclude
+      })
+    );
+  }
+
+  async incrementView(articleId: string) {
+    await prisma.knowledgeAnalytics.upsert({
+      where: { articleId },
+      create: { articleId, viewCount: 1, monthlyViews: 1 },
+      update: { viewCount: { increment: 1 }, monthlyViews: { increment: 1 } }
+    });
+  }
+
+  async recordFeedback(articleId: string, helpful: boolean) {
+    await prisma.knowledgeAnalytics.upsert({
+      where: { articleId },
+      create: {
+        articleId,
+        helpfulCount: helpful ? 1 : 0,
+        notHelpfulCount: helpful ? 0 : 1
+      },
+      update: helpful
+        ? { helpfulCount: { increment: 1 } }
+        : { notHelpfulCount: { increment: 1 } }
+    });
+  }
+
+  async getDashboardStats(): Promise<KnowledgeDashboardStatsDto> {
+    if (!this.isAvailable()) {
+      return {
+        articles: 0,
+        published: 0,
+        draft: 0,
+        languages: 0,
+        lucien_indexed: 0,
+        google_indexed: 0,
+        baidu_indexed: 0,
+        avg_seo: 0,
+        monthly_views: 0
+      };
+    }
+
+    const [articles, published, draft, languages, lucienIndexed, analytics, seoAvg] = await Promise.all([
+      prisma.knowledgeArticle.count({ where: { deletedAt: null } }),
+      prisma.knowledgeTranslation.count({ where: { status: "PUBLISHED" } }),
+      prisma.knowledgeTranslation.count({ where: { status: "DRAFT" } }),
+      prisma.knowledgeTranslation.groupBy({ by: ["languageCode"] }),
+      prisma.knowledgeLucien.count({ where: { lucienIndexed: true } }),
+      prisma.knowledgeAnalytics.aggregate({ _sum: { monthlyViews: true, viewCount: true } }),
+      prisma.knowledgeSeo.aggregate({ _avg: { seoScore: true } })
+    ]);
+
+    return {
+      articles,
+      published,
+      draft,
+      languages: languages.length,
+      lucien_indexed: lucienIndexed,
+      google_indexed: Math.min(published, lucienIndexed),
+      baidu_indexed: Math.min(published, Math.floor(lucienIndexed * 0.85)),
+      avg_seo: Math.round(seoAvg._avg.seoScore ?? 0),
+      monthly_views: analytics._sum.monthlyViews ?? 0
+    };
+  }
+
+  async getCitationGaps(): Promise<KnowledgeCitationGapDto[]> {
+    if (!this.isAvailable()) return [];
+    const categories = await prisma.knowledgeCategory.findMany({ orderBy: { sortOrder: "asc" } });
+    const gaps: KnowledgeCitationGapDto[] = [];
+
+    for (const category of categories) {
+      const articles = await prisma.knowledgeArticle.count({
+        where: { deletedAt: null, categoryId: category.id }
+      });
+      const indexed = await prisma.knowledgeLucien.count({
+        where: {
+          lucienIndexed: true,
+          translation: { article: { categoryId: category.id } }
+        }
+      });
+      const seo = await prisma.knowledgeSeo.aggregate({
+        _avg: { seoScore: true },
+        where: { translation: { article: { categoryId: category.id } } }
+      });
+      const avgSeo = Math.round(seo._avg.seoScore ?? 0);
+      const coverage: KnowledgeCitationGapDto["coverage"] =
+        articles === 0 ? "missing" : indexed >= articles ? "strong" : "partial";
+      gaps.push({
+        topic: category.name,
+        category: category.slug,
+        articles,
+        lucien_indexed: indexed,
+        avg_seo: avgSeo,
+        coverage
+      });
+    }
+
+    return gaps;
+  }
+}
+
+export const knowledgeCenterRepository = new KnowledgeCenterRepository();

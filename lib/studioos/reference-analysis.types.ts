@@ -52,6 +52,7 @@ export type ReferenceAnalysisState = {
   platform_label: string;
   report?: ReferenceAnalysisReport;
   analyzed_at?: string;
+  analysis_started_at?: string;
   analysis_error?: string;
   provider?: "openai" | "template";
 };

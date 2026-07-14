@@ -184,19 +184,6 @@ export function useBrandCampaignDirections(
   }, [enabled, locale, projectId, wizardFastPath, snapshotKey]);
 
   useEffect(() => {
-    if (!enabled || loadCompletedRef.current || !startedRef.current) return;
-    const snapshot = snapshotRef.current;
-    if (!snapshot) return;
-
-    const timer = setTimeout(() => {
-      const fd = buildStartFormData(locale, projectId, { wizardFastPath, briefSnapshot: snapshot });
-      void startBrandCreativeDirectionsAction(fd);
-    }, 400);
-
-    return () => clearTimeout(timer);
-  }, [options?.briefSnapshot, enabled, locale, projectId, wizardFastPath]);
-
-  useEffect(() => {
     if (textOnly || status !== "ready") return;
     setMediaPhase("text");
     const timer = setTimeout(() => setMediaPhase("images"), IMAGE_PHASE_DELAY_MS);

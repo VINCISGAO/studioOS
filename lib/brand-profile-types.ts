@@ -21,6 +21,8 @@ export type StoredBrandProfile = {
   bio: string;
   website: string;
   industry: string;
+  country: string;
+  city: string;
   logo_url: string;
   cover_url: string;
   profile_completed_at: string | null;

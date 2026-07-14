@@ -4,6 +4,7 @@ import { CinematicNav } from "@/components/marketing/cinematic/cinematic-nav";
 import { HomePageScreen } from "@/components/marketing/cinematic/home-page-screen";
 import { HomeHeroVideo } from "@/components/marketing/home-hero-video";
 import { HomeHeroMetrics } from "@/components/marketing/home-hero-metrics";
+import { MarketingViewportGuard } from "@/components/marketing/marketing-viewport-guard";
 import type { MarketingShowcaseWorkDto } from "@/features/marketing-showcase/marketing-showcase.types";
 import type { Locale, MarketingLocale } from "@/lib/i18n";
 import type { MarketingHomePortalSession } from "@/lib/marketing/portal-entry";
@@ -64,7 +65,8 @@ export function HomeLandingPage({
     : resolveMarketingHomeWorkspaceCta(copyLocale, portalSession);
 
   return (
-    <div className="relative bg-black text-white">
+    <div className="relative isolate min-h-dvh bg-black text-white overscroll-y-none">
+      <MarketingViewportGuard backdrop="dark" />
       <CinematicNav
         locale={locale}
         copyLocale={copyLocale}

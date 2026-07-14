@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 import { PrismaClient } from "@prisma/client";
 import { authSecurityService } from "../features/auth/auth-security.service";
 import { demoRedirectForRole } from "../lib/demo-auth";
-import { resolvePostLoginDestination } from "../lib/auth/post-login-redirect";
+import { toSafeNextPath, resolvePostLoginDestination } from "../lib/auth/post-login-redirect";
 import { hasSupabaseConfig } from "../lib/auth-config";
 import { hasAlipayOAuthConfig } from "../lib/alipay/alipay-oauth-config";
 
@@ -103,6 +103,15 @@ async function main() {
     name: "redirect.demo_role_map",
     ok: demoRedirectForRole("client") === "/brand" && demoRedirectForRole("creator") === "/studio",
     detail: "client→/brand, creator→/studio"
+  });
+  checks.push({
+    name: "redirect.wizard_next_query",
+    ok: toSafeNextPath("/brand/projects/new?project=demo&step=2&evil=1") === "/brand/projects/new?project=demo&step=2",
+    detail: toSafeNextPath("/brand/projects/new?project=demo&step=2&evil=1")
+  });
+  checks.push({
+    name: "redirect.blocks_external_next",
+    ok: toSafeNextPath("https://evil.example") === ""
   });
 
   if (!process.env.DATABASE_URL?.trim()) {

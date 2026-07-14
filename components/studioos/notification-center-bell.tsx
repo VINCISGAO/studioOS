@@ -230,7 +230,6 @@ export function NotificationCenterBell({
       if (item.actionUrl) {
         const href = normalizeInternalActionHref(item.actionUrl, locale, "/");
         router.push(href);
-        router.refresh();
       }
     });
   }

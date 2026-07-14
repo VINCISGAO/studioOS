@@ -1,4 +1,5 @@
 /** Resolve a human-readable location label from an IP address. */
+import { getCountryLocalizedName, normalizeCountryCode } from "@/lib/geo/country";
 export async function resolveGeoLocation(
   ip: string,
   fallbackCountry?: string
@@ -39,14 +40,18 @@ export async function resolveGeoLocation(
 }
 
 function defaultLocationForCountry(country?: string) {
-  if (country === "South Korea") {
+  const iso2 = normalizeCountryCode(country);
+  if (iso2 === "KR") {
     return "Seoul, South Korea";
   }
-  if (country === "Spain") {
+  if (iso2 === "ES") {
     return "Madrid, Spain";
   }
-  if (country === "United States") {
+  if (iso2 === "US") {
     return "San Francisco, United States";
+  }
+  if (iso2) {
+    return getCountryLocalizedName(iso2, "en");
   }
   return "Local network";
 }

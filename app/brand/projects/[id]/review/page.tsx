@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, Clock3, Film, MessageSquareText, UploadCloud } from "lucide-react";
 import { ReviewerTimestampWorkspace } from "@/components/studioos/reviewer-skeleton/reviewer-timestamp-workspace";
 import { getCurrentClientEmail } from "@/features/auth/session-context";
+import { brandPortalRequireOwnedResource, brandPortalRequireSession } from "@/lib/studioos/brand-portal-page-guards";
 import { type SearchParams, withLocale } from "@/lib/i18n";
 import { getDeliverables, getOrder, getOrderForProject } from "@/lib/order-service";
 import { getProject } from "@/lib/project-service";
@@ -23,10 +24,7 @@ export default async function BrandProjectReviewPage({ params, searchParams }: P
   const [{ id }, query] = await Promise.all([params, searchParams]);
   const locale = await getAppUiLocale();
   const clientEmail = await getCurrentClientEmail();
-
-  if (!clientEmail) {
-    redirect(withLocale("/login?role=brand", locale));
-  }
+  brandPortalRequireSession(clientEmail, locale, `/brand/projects/${id}/review`);
 
   const project = await getProject(id);
   const order = await getOrderForProject(id);
@@ -37,12 +35,12 @@ export default async function BrandProjectReviewPage({ params, searchParams }: P
     notFound();
   }
 
-  if (project && project.client_email.toLowerCase() !== clientEmail.toLowerCase()) {
-    notFound();
+  if (project) {
+    brandPortalRequireOwnedResource(project, clientEmail);
   }
 
-  if (!project && linkedOrder && linkedOrder.client_email.toLowerCase() !== clientEmail.toLowerCase()) {
-    notFound();
+  if (!project && linkedOrder) {
+    brandPortalRequireOwnedResource(linkedOrder, clientEmail);
   }
 
   const orderForReview = linkedOrder ?? (resolvedProjectId ? await getOrderForProject(resolvedProjectId) : null);

@@ -2,6 +2,7 @@ import type { Creator } from "@/lib/types";
 import type { CreatorProfileStore, StoredCreatorProfile } from "@/lib/creator-profile-types";
 import { hasDatabaseUrl, prisma } from "@/lib/core/database/prisma";
 import { asInputJson } from "@/lib/core/prisma-json";
+import { normalizeCountryCode } from "@/lib/geo/country";
 import { generateCreatorAiTags } from "@/lib/studioos/creator-ai-tags";
 import { normalizeCreatorMinBudget } from "@/lib/studioos/creator-price-preference";
 import { resolveCreatorProfileIdForLegacyId } from "@/features/matching/invitation-creator-bridge";
@@ -62,7 +63,8 @@ async function getDatabaseCreatorProfile(creatorId: string): Promise<StoredCreat
     bio: profile.bio ?? "",
     avatar_url: profile.user.avatarUrl ?? (typeof dna.avatar_url === "string" ? dna.avatar_url : undefined),
     cover_url: profile.portfolioCover ?? (typeof dna.cover_url === "string" ? dna.cover_url : undefined),
-    country: profile.country ?? "",
+    country: normalizeCountryCode(profile.country ?? "") || "",
+    city: profile.city ?? (typeof dna.city === "string" ? dna.city : ""),
     portfolio_url: profile.portfolioUrl ?? stringValue(dna.portfolio_url),
     specialties: stringList(profile.specialtiesJson ?? dna.specialties),
     expertise_domains: stringList(profile.expertiseDomainsJson ?? dna.expertise_domains),
@@ -103,7 +105,8 @@ async function saveDatabaseCreatorProfile(
     delivery_speed: profile.delivery_speed,
     min_project_budget_usd: profile.min_project_budget_usd,
     ai_tags: profile.ai_tags,
-    profile_completed_at: profile.profile_completed_at
+    profile_completed_at: profile.profile_completed_at,
+    city: profile.city
   };
 
   const updated = await prisma.creatorProfile.update({
@@ -112,7 +115,8 @@ async function saveDatabaseCreatorProfile(
       displayName: profile.name,
       headline: profile.headline || null,
       bio: profile.bio || null,
-      country: profile.country || null,
+      country: normalizeCountryCode(profile.country) || null,
+      city: profile.city?.trim() || null,
       portfolioUrl: profile.portfolio_url || null,
       specialtiesJson: asInputJson(profile.specialties),
       toolsJson: asInputJson(profile.tools),
@@ -302,6 +306,7 @@ export function applyStoredProfileToCreator(base: Creator, profile: StoredCreato
     avatar_url: profile.avatar_url,
     cover_url: profile.cover_url,
     country: profile.country,
+    city: profile.city,
     portfolio_url: profile.portfolio_url,
     specialties: profile.specialties,
     tools: profile.tools,

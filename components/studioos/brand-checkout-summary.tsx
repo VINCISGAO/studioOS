@@ -125,16 +125,16 @@ export function BrandCheckoutSummary({
   ];
 
   return (
-    <div className="mt-0 self-start space-y-5">
+    <div className="mt-0 w-full min-w-0 self-start space-y-5">
       <div className="overflow-hidden rounded-[1.75rem] border border-zinc-200/80 bg-white shadow-sm">
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           <div className="mb-5 flex items-center gap-2">
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-50 text-violet-600">
               <FileText className="h-4 w-4" />
             </div>
             <p className="text-sm font-semibold text-zinc-900">{t.summary}</p>
           </div>
-          <dl className="grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-4 lg:gap-0">
+          <dl className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2 lg:grid-cols-4 lg:gap-0">
             <div className="lg:border-r lg:border-zinc-100 lg:pr-5">
               <dt className="flex items-center gap-1.5 text-zinc-500">
                 <Lock className="h-4 w-4 text-violet-500" />
@@ -178,7 +178,7 @@ export function BrandCheckoutSummary({
           <h3 className="text-base font-semibold text-zinc-950">{t.escrowTitle}</h3>
         </div>
         <p className="mt-2 text-sm leading-relaxed text-zinc-500 sm:mt-3">{t.escrowBody}</p>
-        <div className="mt-4 grid gap-2.5 sm:mt-6 sm:grid-cols-4 sm:gap-3">
+        <div className="mt-4 grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:mt-6 lg:grid-cols-4 lg:gap-3">
           <EscrowFeature icon={Shield} title={t.fundTitle} body={t.fundBody} />
           <EscrowFeature icon={ClipboardCheck} title={t.performanceTitle} body={t.performanceBody} />
           <EscrowFeature icon={Lock} title={t.privacyTitle} body={t.privacyBody} />
@@ -193,7 +193,7 @@ export function BrandCheckoutSummary({
           </div>
           <h3 className="text-base font-semibold text-zinc-950">{t.flowTitle}</h3>
         </div>
-        <div className="grid gap-2.5 sm:grid-cols-4 sm:gap-3">
+        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-4 lg:gap-3">
           {steps.map(([title, body], index) => (
             <div key={title} className="relative">
               {index < 3 ? (

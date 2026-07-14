@@ -61,6 +61,11 @@
 
   html {
     scroll-behavior: smooth;
+    overscroll-behavior-y: none;
+  }
+
+  body {
+    overscroll-behavior-y: none;
   }
 
   .text-display {

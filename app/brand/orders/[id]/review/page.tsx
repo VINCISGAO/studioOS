@@ -1,11 +1,15 @@
 import { getAppUiLocale } from "@/lib/app-language";
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 import { ReviewerTimestampWorkspace } from "@/components/studioos/reviewer-skeleton/reviewer-timestamp-workspace";
 import { getCurrentClientEmail } from "@/features/auth/session-context";
 import { type SearchParams, withLocale } from "@/lib/i18n";
 import { getDeliverables, getOrder } from "@/lib/order-service";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
+import {
+  brandPortalRequireOwnedResource,
+  brandPortalRequireSession
+} from "@/lib/studioos/brand-portal-page-guards";
 import { listReviewComments } from "@/lib/studioos/review-store";
 import { resolveActiveReviewPlaybackVersion } from "@/lib/studioos/review-upload-version";
 
@@ -20,11 +24,10 @@ export default async function BrandOrderReviewPage({ params, searchParams }: Pag
   const [{ id: orderId }, query] = await Promise.all([params, searchParams]);
   const locale = await getAppUiLocale();
   const clientEmail = await getCurrentClientEmail();
+  brandPortalRequireSession(clientEmail, locale, `/brand/orders/${orderId}/review`);
   const order = await getOrder(orderId);
 
-  if (!order || !clientEmail || order.client_email.toLowerCase() !== clientEmail.toLowerCase()) {
-    notFound();
-  }
+  brandPortalRequireOwnedResource(order, clientEmail);
 
   if (order.project_id) {
     redirect(withLocale(`/brand/projects/${order.project_id}/review`, locale));

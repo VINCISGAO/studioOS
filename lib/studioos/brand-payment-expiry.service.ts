@@ -205,6 +205,14 @@ async function expireUnpaidOrder(input: {
   return true;
 }
 
+export async function enforceBrandPaymentDeadlineForSnapshot(
+  project: StoredProject,
+  order: StoredOrder | null
+): Promise<boolean> {
+  if (!order) return false;
+  return expireUnpaidOrder({ order, project });
+}
+
 export async function enforceBrandPaymentDeadlineForProject(projectId: string): Promise<boolean> {
   const [project, order] = await Promise.all([getProject(projectId), getOrderForProject(projectId)]);
   if (!project || !order) return false;

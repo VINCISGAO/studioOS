@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { CreatorPublicProfile } from "@/components/creator/creator-public-profile";
-import { PageShell } from "@/components/page-shell";
 import { Button } from "@/components/ui/button";
 import { getCreatorById } from "@/lib/creator-service";
 import { getWorksForCreator } from "@/lib/works-catalog";
@@ -77,14 +76,12 @@ export default async function CreatorProfilePage({ params, searchParams }: Creat
 
   if (!creator) {
     return (
-      <PageShell locale={locale}>
-        <main className="mx-auto max-w-3xl px-4 py-16 text-center">
-          <h1 className="text-3xl font-semibold">{t.notFound}</h1>
-          <Button asChild className="mt-6">
-            <Link href={withLocale("/creators", locale)}>{t.back}</Link>
-          </Button>
-        </main>
-      </PageShell>
+      <main className="mx-auto max-w-3xl px-4 py-16 text-center">
+        <h1 className="text-3xl font-semibold">{t.notFound}</h1>
+        <Button asChild className="mt-6">
+          <Link href={withLocale("/creators", locale)}>{t.back}</Link>
+        </Button>
+      </main>
     );
   }
 
@@ -97,27 +94,25 @@ export default async function CreatorProfilePage({ params, searchParams }: Creat
   );
 
   return (
-    <PageShell locale={locale}>
-      <main className="min-h-screen bg-white">
-        <section className="mx-auto max-w-6xl px-4 pb-12 pt-6 sm:px-6 lg:px-8">
-          <Button asChild variant="ghost" size="sm" className="mb-4 -ml-2 text-muted-foreground hover:text-foreground">
-            <Link href={withLocale(isOwner ? "/creator/profile" : "/creators", locale)}>
-              <ArrowLeft className="h-4 w-4" /> {isOwner ? (locale === "zh" ? "返回我的主页" : "Back to my profile") : t.back}
-            </Link>
-          </Button>
+    <main className="min-h-dvh bg-white">
+      <section className="mx-auto max-w-6xl px-4 pb-12 pt-6 sm:px-6 lg:px-8">
+        <Button asChild variant="ghost" size="sm" className="mb-4 -ml-2 text-muted-foreground hover:text-foreground">
+          <Link href={withLocale(isOwner ? "/creator/profile" : "/creators", locale)}>
+            <ArrowLeft className="h-4 w-4" /> {isOwner ? (locale === "zh" ? "返回我的主页" : "Back to my profile") : t.back}
+          </Link>
+        </Button>
 
-          <CreatorPublicProfile
-            locale={locale}
-            baseCreator={creator}
-            baseWorks={works}
-            engagement={engagement}
-            isLoggedIn={Boolean(userEmail)}
-            isOwner={isOwner}
-            selectedWorkId={query.work}
-            copy={t}
-          />
-        </section>
-      </main>
-    </PageShell>
+        <CreatorPublicProfile
+          locale={locale}
+          baseCreator={creator}
+          baseWorks={works}
+          engagement={engagement}
+          isLoggedIn={Boolean(userEmail)}
+          isOwner={isOwner}
+          selectedWorkId={query.work}
+          copy={t}
+        />
+      </section>
+    </main>
   );
 }

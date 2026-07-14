@@ -7,6 +7,7 @@ import { completeCreatorProfile, saveCreatorProfileDraft } from "@/lib/creator-p
 import { getWorksForCreator } from "@/lib/works-catalog";
 import { withLocale, type Locale } from "@/lib/i18n";
 import { normalizeCreatorMinBudget } from "@/lib/studioos/creator-price-preference";
+import { normalizeCountryCode } from "@/lib/geo/country";
 import { markCertificationFormProfileCompleted } from "@/lib/studioos/certification-form-service";
 
 function normalizeLang(raw: FormDataEntryValue | null): Locale {
@@ -45,7 +46,8 @@ function readProfileInput(formData: FormData) {
     name: String(formData.get("name") ?? "").trim(),
     headline: String(formData.get("headline") ?? "").trim(),
     bio: String(formData.get("bio") ?? "").trim(),
-    country: String(formData.get("country") ?? "").trim(),
+    country: normalizeCountryCode(String(formData.get("country") ?? "").trim()),
+    city: String(formData.get("city") ?? "").trim(),
     portfolio_url: String(formData.get("portfolio_url") ?? "").trim(),
     specialties: parseList(formData.get("specialties")),
     expertise_domains: parseDomains(formData),
@@ -112,6 +114,7 @@ export async function saveCreatorProfileClientAction(input: {
   headline: string;
   bio: string;
   country: string;
+  city?: string;
   portfolio_url: string;
   specialties: string[];
   tools: string[];
@@ -137,7 +140,8 @@ export async function saveCreatorProfileClientAction(input: {
       name: input.name.trim(),
       headline: input.headline.trim(),
       bio: input.bio.trim(),
-      country: input.country.trim(),
+      country: normalizeCountryCode(input.country.trim()),
+      city: input.city?.trim() ?? "",
       portfolio_url: input.portfolio_url.trim(),
       specialties: input.specialties,
       expertise_domains: input.expertise_domains ?? [],

@@ -8,6 +8,7 @@ export type CreatorProfileDraft = Pick<
   | "avatar_url"
   | "cover_url"
   | "country"
+  | "city"
   | "portfolio_url"
   | "specialties"
   | "tools"

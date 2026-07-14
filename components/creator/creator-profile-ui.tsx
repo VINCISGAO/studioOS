@@ -586,6 +586,7 @@ export function CreatorPortfolioWorksGrid({
             creatorName={creator?.name}
             creatorHref={creator?.href}
             onActivate={() => onActivate(work)}
+            redirectToLoginOnLike={false}
           />
         );
       })}

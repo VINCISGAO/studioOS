@@ -302,7 +302,6 @@ export function LoginWorkspace({
             className={cn("gap-2", visual.btn)}
             onClick={() => {
               router.push(redirectTo || appPath(role === "creator" ? "/studio" : "/brand"));
-              router.refresh();
             }}
           >
             {locale === "zh" ? "进入 VINCIS" : "Enter VINCIS"}

@@ -62,7 +62,8 @@ export function ReferenceIntakePanel({
 
     pollingRef.current = setInterval(() => {
       onRefreshReferences();
-    }, 4000);
+    }, 2000);
+    onRefreshReferences();
 
     return () => {
       if (pollingRef.current) clearInterval(pollingRef.current);

@@ -86,7 +86,6 @@ export function StudioNotificationBell({
       }
       setOpen(false);
       router.push(action.href);
-      router.refresh();
     });
   }
 

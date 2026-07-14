@@ -1,17 +1,22 @@
-import { SiteHeader } from "@/components/site-header";
+import { PublicLayout } from "@/components/layouts/public-layout";
 import type { Locale } from "@/lib/i18n";
 
+/**
+ * @deprecated Prefer route group `(public)` + `PublicLayout`.
+ * For legacy pages still on PageShell, this delegates to PublicLayout.
+ */
 export async function PageShell({
   children,
-  locale = "en"
+  locale = "en",
+  showHeader = true
 }: {
   children: React.ReactNode;
   locale?: Locale;
+  showHeader?: boolean;
 }) {
   return (
-    <div className="min-h-screen bg-background">
-      <SiteHeader locale={locale} />
+    <PublicLayout locale={locale} showHeader={showHeader}>
       {children}
-    </div>
+    </PublicLayout>
   );
 }

@@ -41,9 +41,9 @@ import { useProfileImagePicker } from "@/components/studioos/image-crop/use-prof
 import { useAcknowledgeAlert } from "@/components/studioos/acknowledge-alert-provider";
 import { PROFILE_AVATAR_ASPECT, PROFILE_COVER_ASPECT } from "@/lib/studioos/image-crop-client";
 import { profileImageClassName } from "@/lib/studioos/profile-image-styles";
+import { getCountryOptions, labelCountry } from "@/lib/localized-options";
 import { cn } from "@/lib/utils";
 
-const countryOptions = ["United States", "South Korea", "United Kingdom", "Spain", "France", "Singapore", "Thailand"];
 const industryOptions = [
   "Beauty / Skincare",
   "Fashion",
@@ -55,19 +55,6 @@ const industryOptions = [
   "Luxury"
 ];
 const seedTags = ["Beauty", "DTC", "TikTok", "Premium"];
-
-const countryLabels: Record<Locale, Record<string, string>> = {
-  en: {},
-  zh: {
-    "United States": "美国",
-    "South Korea": "韩国",
-    "United Kingdom": "英国",
-    Spain: "西班牙",
-    France: "法国",
-    Singapore: "新加坡",
-    Thailand: "泰国"
-  }
-};
 
 const industryLabels: Record<Locale, Record<string, string>> = {
   en: {},
@@ -116,7 +103,10 @@ const copy = {
       displayName: "Display Name",
       industry: "Industry",
       website: "Website",
-      country: "Country / Region",
+      country: "Country",
+      countryHelper: "ISO country — shown on your public profile.",
+      city: "City",
+      cityHelper: "City or metro area (optional).",
       aiTitle: "AI Brand Assistant",
       aiHelper: "Describe your brand in plain language. AI will turn it into a polished public profile.",
       aiButton: "Generate with AI",
@@ -192,7 +182,10 @@ const copy = {
       displayName: "展示名称",
       industry: "行业",
       website: "官网",
-      country: "国家 / 地区",
+      country: "国家",
+      countryHelper: "ISO 国家代码，将显示在公开主页。",
+      city: "城市",
+      cityHelper: "城市或都会区（选填）。",
       aiTitle: "智能品牌助手",
       aiHelper: "用自然语言描述你的品牌，系统会整理成专业的公开主页。",
       aiButton: "智能生成",
@@ -571,7 +564,8 @@ export function BrandProfileEditor({ locale, profile }: BrandProfileEditorProps)
   const [companyName, setCompanyName] = useState(profile.company_name);
   const [displayName, setDisplayName] = useState(profile.display_name);
   const [industry, setIndustry] = useState(profile.industry || industryOptions[0]);
-  const [country, setCountry] = useState(countryOptions[0]);
+  const [country, setCountry] = useState(profile.country || "US");
+  const [city, setCity] = useState(profile.city || "");
   const [website, setWebsite] = useState(profile.website);
   const [headline, setHeadline] = useState(profile.headline);
   const [bio, setBio] = useState(profile.bio);
@@ -665,7 +659,12 @@ export function BrandProfileEditor({ locale, profile }: BrandProfileEditorProps)
 
   const initials = useMemo(() => buildAvatarInitials(displayName || companyName, "B"), [companyName, displayName]);
   const campaignCount = profile.showcase_ads.length;
-  const formatCountry = (value: string) => countryLabels[locale][value] ?? value;
+  const countrySelectOptions = useMemo(() => getCountryOptions(locale, country), [locale, country]);
+  const countryValues = useMemo(
+    () => countrySelectOptions.map((option) => option.value),
+    [countrySelectOptions]
+  );
+  const formatCountry = (value: string) => labelCountry(value, locale);
   const formatIndustry = (value: string) => industryLabels[locale][value] ?? value;
 
   useEffect(() => {
@@ -678,11 +677,15 @@ export function BrandProfileEditor({ locale, profile }: BrandProfileEditorProps)
     setDisplayName(profile.display_name);
     setIndustry(profile.industry || industryOptions[0]);
     setWebsite(profile.website);
+    setCountry(profile.country || "US");
+    setCity(profile.city || "");
     setHeadline(profile.headline);
     setBio(profile.bio);
   }, [
     profile.bio,
+    profile.city,
     profile.company_name,
+    profile.country,
     profile.display_name,
     profile.headline,
     profile.industry,
@@ -724,6 +727,8 @@ export function BrandProfileEditor({ locale, profile }: BrandProfileEditorProps)
     fd.set("display_name", displayName);
     fd.set("industry", industry);
     fd.set("website", website);
+    fd.set("country", country);
+    fd.set("city", city);
     fd.set("headline", headline);
     fd.set("bio", bio);
     if (markComplete) fd.set("mark_complete", "1");
@@ -1021,9 +1026,15 @@ export function BrandProfileEditor({ locale, profile }: BrandProfileEditorProps)
                   label={t.sections.country}
                   value={country}
                   onChange={setCountry}
-                  options={countryOptions}
+                  options={countryValues}
                   formatOption={formatCountry}
                   required
+                />
+                <Field
+                  label={t.sections.city}
+                  value={city}
+                  onChange={setCity}
+                  placeholder={locale === "zh" ? "例如：上海" : "e.g. San Francisco"}
                 />
               </div>
             </SectionCard>

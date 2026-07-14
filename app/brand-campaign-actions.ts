@@ -50,6 +50,7 @@ import { readProductionBrief } from "@/features/campaign/brand-campaign/brand-ca
 import { campaignService } from "@/features/campaign/campaign.service";
 import { CampaignEvent, CampaignState } from "@/features/campaign/campaign.state-machine";
 import { campaignBridgeService } from "@/features/campaign/campaign-bridge.service";
+import { referenceAnalysisService } from "@/features/campaign/reference-analysis.service";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { aiWorkerService } from "@/features/ai/ai-worker.service";
 import { aiUsageQuotaService } from "@/features/abuse/ai-usage-quota.service";
@@ -578,7 +579,11 @@ export async function refreshBrandReferencesAction(formData: FormData) {
   if (!ctx.ok) return ctx;
 
   const references = await listReferencesForProject(projectId);
-  return { ok: true as const, references };
+  if (hasDatabaseUrl()) {
+    referenceAnalysisService.ensureReferenceAnalysesRunning(projectId, lang, references);
+  }
+  const refreshed = await listReferencesForProject(projectId);
+  return { ok: true as const, references: refreshed };
 }
 
 export async function saveBrandCampaignReferencesAction(formData: FormData) {
@@ -1617,19 +1622,9 @@ export async function warmBrandCampaignCheckoutAction(projectId: string, langInp
         locale: lang
       });
     }
-    return { ok: true as const };
   }
 
-  if (existingCampaign?.status !== CampaignState.CREATIVE_APPROVED) {
-    return { ok: true as const };
-  }
-
-  const publishFd = new FormData();
-  publishFd.set("lang", lang);
-  publishFd.set("project_id", projectId);
-  publishFd.set("confirmed", "1");
-  const result = await publishBrandCampaignAction(publishFd);
-  return result.ok ? { ok: true as const } : { ok: false as const };
+  return { ok: true as const };
 }
 
 /** Form-friendly wrapper — `<form action>` handlers must return void. */

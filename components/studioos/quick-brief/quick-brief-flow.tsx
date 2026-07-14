@@ -153,6 +153,13 @@ export function QuickBriefFlow(props: QuickBriefFlowProps) {
     }
   }
 
+  function shouldSkipAutoPolishOnNext(): boolean {
+    if (!props.form.refined) return false;
+    const summary = props.summary.trim();
+    const polishedSnapshot = (props.form.rawSummary || props.form.productDescription || "").trim();
+    return summary.length > 0 && summary === polishedSnapshot;
+  }
+
   async function handleQuickNext() {
     if (!props.summary.trim()) {
       alert(t.needPromote);
@@ -166,19 +173,21 @@ export function QuickBriefFlow(props: QuickBriefFlowProps) {
     props.patch("deliveryTimeline", deliveryTimeline);
     props.patch("rawSummary", props.summary);
     props.patch("productDescription", props.summary);
-    const result = await props.onPolish({
-      summary: props.summary,
-      budgetRange,
-      deliveryTimeline
-    });
-    if (result) {
-      setOptimizer(result);
+
+    if (!shouldSkipAutoPolishOnNext()) {
+      const result = await props.onPolish({
+        summary: props.summary,
+        budgetRange,
+        deliveryTimeline
+      });
+      if (result) {
+        setOptimizer(result);
+      }
+    } else if (props.form.refined?.optimizer) {
+      setOptimizer(props.form.refined.optimizer);
     }
+
     if (props.deferBudgetToLater) {
-      const deliveryTimeline = resolveDeliveryTimeline();
-      props.patch("deliveryTimeline", deliveryTimeline);
-      props.patch("rawSummary", props.summary);
-      props.patch("productDescription", props.summary);
       props.patch("budgetRange", resolveBudgetRange());
       props.onContinue(
         props.resolveBriefForContinue({
@@ -234,6 +243,7 @@ export function QuickBriefFlow(props: QuickBriefFlowProps) {
             polishNotice={props.polishNotice}
             isPending={props.isPending}
             isPolishing={props.isPolishing}
+            polishDisabled={shouldSkipAutoPolishOnNext()}
             onPolish={handleAiPolish}
             form={props.form}
             patch={props.patch}
@@ -256,7 +266,7 @@ export function QuickBriefFlow(props: QuickBriefFlowProps) {
           />
           <QuickBriefLayerOneFooter
             locale={props.locale}
-            isPending={props.isPending || props.isPolishing}
+            isPending={props.isPending}
             onSaveDraft={props.onSaveDraft}
             onNext={() => void handleQuickNext()}
           />

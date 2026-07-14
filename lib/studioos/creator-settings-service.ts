@@ -5,6 +5,7 @@ import { resolveCreatorProfileIdForLegacyId } from "@/features/matching/invitati
 import { hasDatabaseUrl, prisma } from "@/lib/core/database/prisma";
 import { hashPassword, verifyPassword } from "@/lib/core/password-crypto";
 import { asInputJson } from "@/lib/core/prisma-json";
+import { normalizeCountryCode } from "@/lib/geo/country";
 import type { Creator } from "@/lib/types";
 import type { Locale } from "@/lib/i18n";
 import { normalizeLanguageCode } from "@/features/i18n/language.constants";
@@ -61,20 +62,22 @@ function defaultContactEmail(creator: Creator) {
 }
 
 function defaultPhone(creator: Creator) {
-  if (creator.country === "South Korea") {
+  const country = normalizeCountryCode(creator.country);
+  if (country === "KR") {
     return "+82 10-1234-5678";
   }
-  if (creator.country === "Spain") {
+  if (country === "ES") {
     return "+34 612 345 678";
   }
   return "+1 415-555-0100";
 }
 
 function defaultTimezone(creator: Creator) {
-  if (creator.country === "South Korea") {
+  const country = normalizeCountryCode(creator.country);
+  if (country === "KR") {
     return "Asia/Seoul";
   }
-  if (creator.country === "Spain") {
+  if (country === "ES") {
     return "Europe/Madrid";
   }
   return "America/Los_Angeles";

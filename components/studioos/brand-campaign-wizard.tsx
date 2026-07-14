@@ -397,36 +397,31 @@ export function BrandCampaignWizard({
     fd.set("project_id", projectId);
     fd.set("direction_id", directionId);
 
-    setStep3Mounted(true);
-    goStep(3);
-
-    runInBackground(async () => {
-      setIsApprovingDirection(true);
-      try {
-        const result = await approveBrandCreativeDirectionAction(fd);
-        if (!result.ok) {
-          goStep(2);
-          setError(
-            coerceErrorMessage(
-              result.error,
-              locale === "zh" ? "创意确认失败，请重试" : "Creative approval failed — try again"
-            )
-          );
-          return;
-        }
-        await refreshWizardProject();
-      } catch (caught) {
-        goStep(2);
+    setIsApprovingDirection(true);
+    try {
+      const result = await approveBrandCreativeDirectionAction(fd);
+      if (!result.ok) {
         setError(
-          formatClientError(
-            caught,
+          coerceErrorMessage(
+            result.error,
             locale === "zh" ? "创意确认失败，请重试" : "Creative approval failed — try again"
           )
         );
-      } finally {
-        setIsApprovingDirection(false);
+        return;
       }
-    }, "freeze-brief");
+      await refreshWizardProject();
+      setStep3Mounted(true);
+      goStep(3);
+    } catch (caught) {
+      setError(
+        formatClientError(
+          caught,
+          locale === "zh" ? "创意确认失败，请重试" : "Creative approval failed — try again"
+        )
+      );
+    } finally {
+      setIsApprovingDirection(false);
+    }
   }
 
   const maxWidth = step === 1 || step === 2 || step === 3 ? "max-w-none" : "max-w-3xl";

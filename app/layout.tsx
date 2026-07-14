@@ -67,7 +67,7 @@ export default function RootLayout({
         </head>
       ) : null}
       <body
-        className="min-h-screen bg-background font-sans text-foreground antialiased"
+        className="min-h-dvh bg-background font-sans text-foreground antialiased"
         suppressHydrationWarning
       >
         {children}

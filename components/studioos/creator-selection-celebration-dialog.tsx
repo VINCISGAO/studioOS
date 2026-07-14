@@ -53,7 +53,6 @@ export function CreatorSelectionCelebrationDialog({
       const result = await markCreatorSelectionCelebrationSeenAction(fd);
       if (result.ok) {
         router.push(result.href);
-        router.refresh();
       }
     } finally {
       setIsPending(false);

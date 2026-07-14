@@ -27,16 +27,16 @@ import { useRouter } from "next/navigation";
 const copy = {
   en: {
     title: "Set your budget",
-    subtitle: "Choose a budget tier — we'll create the escrow invoice and take you to payment.",
-    publish: "Confirm & pay",
+    subtitle: "Review your selected plan and choose a budget tier. Payment only starts after you click the button below.",
+    publish: "Confirm budget & pay",
     publishing: "Opening checkout…",
     freezing: "Confirming plan…",
     needBudget: "Select or enter a budget before continuing."
   },
   zh: {
     title: "确认你的预算",
-    subtitle: "选择预算档位，确认后将生成托管账单并进入付款。",
-    publish: "确认并付款",
+    subtitle: "请核对已选方案并选择预算档位。只有点击下方按钮后才会进入付款。",
+    publish: "确认预算并付款",
     publishing: "正在前往付款…",
     freezing: "正在确认方案…",
     needBudget: "请先选择或填写预算。"

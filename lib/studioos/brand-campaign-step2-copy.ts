@@ -17,7 +17,9 @@ export const BRAND_CAMPAIGN_STEP2_REVIEW_COPY = {
     referenceNotice:
       "The following creative strategies are for reference only. Final creative direction will be confirmed jointly by the brand and creators.",
     generatingOverlay: "Generating creative schemes",
-    schemeTab: "Strategy"
+    schemeTab: "Strategy",
+    reviewHint:
+      "Compare strategies A/B/C above. You will only move to budget after you click the button below — payment comes one step later."
   },
   zh: {
     headline: "智能系统已为你生成 3 套创意策略",
@@ -33,7 +35,8 @@ export const BRAND_CAMPAIGN_STEP2_REVIEW_COPY = {
     creatorConfirm: "交给创作者提交创意",
     referenceNotice: "以下创意仅供参考，最终创作方向由品牌方与创作者共同确认。",
     generatingOverlay: "正在生成创意方案",
-    schemeTab: "方案"
+    schemeTab: "方案",
+    reviewHint: "请先在上面仔细对比方案 A/B/C。只有点击下方按钮后才会进入预算设置，付款还要再下一步。"
   }
 } as const;
 

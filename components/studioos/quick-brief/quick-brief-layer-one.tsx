@@ -18,6 +18,7 @@ export function QuickBriefLayerOne({
   polishNotice,
   isPending,
   isPolishing,
+  polishDisabled,
   onPolish,
   form,
   patch,
@@ -44,6 +45,8 @@ export function QuickBriefLayerOne({
   polishNotice?: string | null;
   isPending: boolean;
   isPolishing?: boolean;
+  /** When true, manual polish is disabled — brief already polished for current text. */
+  polishDisabled?: boolean;
   onPolish?: () => void | Promise<void>;
   form: BriefFormState;
   patch: <K extends keyof BriefFormState>(key: K, value: BriefFormState[K]) => void;
@@ -82,6 +85,7 @@ export function QuickBriefLayerOne({
               onChange={onSummaryChange}
               disabled={isPending || Boolean(isPolishing)}
               polishNotice={polishNotice}
+              polishDisabled={polishDisabled}
               onPolish={onPolish}
               isPolishing={isPolishing}
             />

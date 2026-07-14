@@ -5,6 +5,7 @@ import { getDeliverables, listOrdersForClient } from "@/lib/order-service";
 import { listProjectsForClient } from "@/lib/project-service";
 import { hasDatabaseUrl, prisma } from "@/lib/core/database/prisma";
 import { asInputJson } from "@/lib/core/prisma-json";
+import { normalizeCountryCode } from "@/lib/geo/country";
 
 const STORE_PATH = dataStorePath("brand-profile-store.json");
 
@@ -91,6 +92,8 @@ function mapPrismaBrandProfileToStored(input: {
     bio: String(archive.bio ?? profile.brandDescription ?? ""),
     website: profile.website ?? "",
     industry: profile.industry ?? "",
+    country: normalizeCountryCode(String(archive.country ?? "")) || "US",
+    city: String(archive.city ?? ""),
     logo_url: profile.logoUrl ?? "",
     cover_url: String(archive.cover_url ?? ""),
     profile_completed_at: null,
@@ -124,7 +127,16 @@ async function syncPrismaBrandProfile(
   clientEmail: string,
   input: Pick<
     StoredBrandProfile,
-    "company_name" | "display_name" | "headline" | "bio" | "website" | "industry" | "logo_url" | "cover_url"
+    | "company_name"
+    | "display_name"
+    | "headline"
+    | "bio"
+    | "website"
+    | "industry"
+    | "country"
+    | "city"
+    | "logo_url"
+    | "cover_url"
   >
 ) {
   if (!hasDatabaseUrl()) return null;
@@ -146,6 +158,8 @@ async function syncPrismaBrandProfile(
     bio: input.bio,
     website: input.website,
     industry: input.industry,
+    country: input.country,
+    city: input.city,
     logo_url: input.logo_url,
     cover_url: input.cover_url,
     archived_at: nowIso()
@@ -337,7 +351,13 @@ export async function getBrandProfileByEmail(email: string): Promise<StoredBrand
 
   const store = await readStore();
   const normalized = email.toLowerCase();
-  return Object.values(store.profiles).find((item) => item.client_email === normalized) ?? null;
+  const found = Object.values(store.profiles).find((item) => item.client_email === normalized);
+  if (!found) return null;
+  return {
+    ...found,
+    country: normalizeCountryCode(found.country) || "US",
+    city: found.city ?? ""
+  };
 }
 
 export async function getBrandProfileById(id: string): Promise<StoredBrandProfile | null> {
@@ -345,7 +365,13 @@ export async function getBrandProfileById(id: string): Promise<StoredBrandProfil
   if (databaseProfile) return databaseProfile;
 
   const store = await readStore();
-  return store.profiles[id] ?? null;
+  const profile = store.profiles[id];
+  if (!profile) return null;
+  return {
+    ...profile,
+    country: normalizeCountryCode(profile.country) || "US",
+    city: profile.city ?? ""
+  };
 }
 
 export async function getOrCreateBrandProfile(input: {
@@ -430,6 +456,8 @@ export async function getOrCreateBrandProfile(input: {
     bio: input.bio ?? "",
     website: input.website ?? "",
     industry: input.industry ?? "",
+    country: "US",
+    city: "",
     logo_url: "",
     cover_url: "",
     profile_completed_at: null,
@@ -453,6 +481,8 @@ export async function saveBrandProfile(
     bio: string;
     website: string;
     industry: string;
+    country?: string;
+    city?: string;
     markComplete?: boolean;
   }
 ): Promise<StoredBrandProfile> {
@@ -474,6 +504,8 @@ export async function saveBrandProfile(
     bio: input.bio.trim(),
     website: input.website.trim(),
     industry: input.industry.trim(),
+    country: normalizeCountryCode(input.country) || profile.country || "US",
+    city: (input.city ?? profile.city ?? "").trim(),
     profile_completed_at: input.markComplete ? profile.profile_completed_at ?? nowIso() : profile.profile_completed_at,
     updated_at: nowIso()
   };

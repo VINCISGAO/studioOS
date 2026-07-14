@@ -19,11 +19,11 @@ import { useEffect, useRef } from "react";
 const cardCopy = {
   en: {
     deliveryDate: (date: string) => `Delivered ${date}`,
-    loginToLike: "Sign in to like"
+    loginToLike: "Account required to like"
   },
   zh: {
     deliveryDate: (date: string) => `交付日期 ${date}`,
-    loginToLike: "登录后可点赞"
+    loginToLike: "需账号才可点赞"
   }
 };
 
@@ -128,12 +128,14 @@ function WorkLikeButton({
   workId,
   locale,
   isLoggedIn,
-  engagement
+  engagement,
+  redirectToLoginOnLike = true
 }: {
   workId: string;
   locale: Locale;
   isLoggedIn: boolean;
   engagement: WorkEngagementSnapshot;
+  redirectToLoginOnLike?: boolean;
 }) {
   const router = useRouter();
   const t = cardCopy[locale];
@@ -146,7 +148,9 @@ function WorkLikeButton({
     event.preventDefault();
 
     if (!isLoggedIn) {
-      router.push(withLocale("/login", locale));
+      if (redirectToLoginOnLike) {
+        router.push(withLocale("/login", locale));
+      }
       return;
     }
 
@@ -158,7 +162,9 @@ function WorkLikeButton({
     try {
       const response = await fetch(`/api/works/${workId}/like`, { method: "POST" });
       if (response.status === 401) {
-        router.push(withLocale("/login", locale));
+        if (redirectToLoginOnLike) {
+          router.push(withLocale("/login", locale));
+        }
         return;
       }
       if (!response.ok) {
@@ -202,7 +208,8 @@ export function PortfolioWorkCard({
   creatorName,
   creatorHref,
   onActivate,
-  ownerActions
+  ownerActions,
+  redirectToLoginOnLike = true
 }: {
   locale: Locale;
   work: CreatorWork;
@@ -219,6 +226,7 @@ export function PortfolioWorkCard({
     onDelete: () => void;
     labels: { hide: string; show: string; delete: string; hidden: string };
   };
+  redirectToLoginOnLike?: boolean;
 }) {
   const poster = resolveWorkThumbnail(work.video_url, work.thumbnail_url);
   const platformLabel = labelPlatform(work.platform, locale);
@@ -286,6 +294,7 @@ export function PortfolioWorkCard({
             locale={locale}
             isLoggedIn={isLoggedIn}
             engagement={engagement}
+            redirectToLoginOnLike={redirectToLoginOnLike}
           />
         </div>
         {ownerActions ? (

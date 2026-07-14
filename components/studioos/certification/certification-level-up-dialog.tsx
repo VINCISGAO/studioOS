@@ -47,7 +47,6 @@ export function CertificationLevelUpDialog({
       const result = await markCertificationLevelUpSeenAction(fd);
       if (result.ok) {
         router.push(result.href);
-        router.refresh();
       }
     } finally {
       setIsPending(false);

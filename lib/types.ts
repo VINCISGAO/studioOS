@@ -86,6 +86,7 @@ export type Creator = {
   avatar_url?: string;
   cover_url?: string;
   country: string;
+  city?: string;
   email: string;
   portfolio_url: string;
   specialties: string[];

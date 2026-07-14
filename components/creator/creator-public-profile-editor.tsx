@@ -31,6 +31,7 @@ import {
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import { getCountryOptions, labelCountry } from "@/lib/localized-options";
+import { formatLocationLabel, normalizeCountryCode } from "@/lib/geo/country";
 import { buildAvatarInitials } from "@/lib/studioos/avatar-initials";
 import { useProfileImagePicker } from "@/components/studioos/image-crop/use-profile-image-picker";
 import { PROFILE_AVATAR_ASPECT, PROFILE_COVER_ASPECT } from "@/lib/studioos/image-crop-client";
@@ -101,8 +102,10 @@ const copy = {
       headlineHelper: "A crisp one-line positioning statement.",
       bio: "Bio",
       bioHelper: "Describe your style, process, audience, and best-fit projects.",
-      country: "Country / Region",
-      countryHelper: "Used by brands when planning time zones and logistics.",
+      country: "Country",
+      countryHelper: "ISO country — used for time zones and logistics.",
+      city: "City",
+      cityHelper: "City or metro area (optional).",
       expertiseTitle: "Expertise",
       expertiseHelper: "Select the types of projects you're best at.",
       addChip: "Add chip",
@@ -175,8 +178,10 @@ const copy = {
       headlineHelper: "清晰表达你的定位。",
       bio: "个人简介",
       bioHelper: "描述你的风格、流程、受众和适合的项目。",
-      country: "国家 / 地区",
-      countryHelper: "用于品牌方规划时区和协作安排。",
+      country: "国家",
+      countryHelper: "ISO 国家代码，用于时区与协作安排。",
+      city: "城市",
+      cityHelper: "城市或都会区（选填）。",
       expertiseTitle: "擅长领域",
       expertiseHelper: "选择你最擅长的项目类型。",
       addChip: "添加标签",
@@ -243,6 +248,7 @@ function snapshotProfile(input: {
   headline: string;
   bio: string;
   country: string;
+  city: string;
   portfolioUrl: string;
   specialties: string[];
   tools: string[];
@@ -389,7 +395,8 @@ export function CreatorPublicProfileEditor({
   const [displayName, setDisplayName] = useState(baseCreator.name);
   const [headline, setHeadline] = useState(baseCreator.headline ?? "");
   const [bio, setBio] = useState(baseCreator.bio ?? "");
-  const [country, setCountry] = useState(baseCreator.country);
+  const [country, setCountry] = useState(normalizeCountryCode(baseCreator.country) || "US");
+  const [city, setCity] = useState(baseCreator.city ?? "");
   const [portfolioUrl, setPortfolioUrl] = useState(baseCreator.portfolio_url);
   const [specialties, setSpecialties] = useState(() => normalizeSpecialties(baseCreator.specialties));
   const [chipDraft, setChipDraft] = useState("");
@@ -423,6 +430,7 @@ export function CreatorPublicProfileEditor({
         headline,
         bio,
         country,
+        city,
         portfolioUrl,
         specialties,
         tools,
@@ -433,6 +441,7 @@ export function CreatorPublicProfileEditor({
       }),
     [
       bio,
+      city,
       country,
       coverPreview,
       deliverySpeed,
@@ -460,7 +469,8 @@ export function CreatorPublicProfileEditor({
     setDisplayName(merged.name);
     setHeadline(merged.headline ?? "");
     setBio(merged.bio ?? "");
-    setCountry(merged.country);
+    setCountry(normalizeCountryCode(merged.country) || "US");
+    setCity(merged.city ?? "");
     setPortfolioUrl(merged.portfolio_url);
     setSpecialties(normalizeSpecialties(merged.specialties));
     setTools(normalizeSpecialties(merged.tools));
@@ -471,7 +481,8 @@ export function CreatorPublicProfileEditor({
       displayName: merged.name,
       headline: merged.headline ?? "",
       bio: merged.bio ?? "",
-      country: merged.country,
+      country: normalizeCountryCode(merged.country) || "US",
+      city: merged.city ?? "",
       portfolioUrl: merged.portfolio_url,
       specialties: normalizeSpecialties(merged.specialties),
       tools: normalizeSpecialties(merged.tools),
@@ -523,6 +534,7 @@ export function CreatorPublicProfileEditor({
       headline,
       bio,
       country,
+      city,
       portfolio_url: portfolioUrl,
       specialties,
       tools,
@@ -542,6 +554,7 @@ export function CreatorPublicProfileEditor({
         headline: draft.headline ?? "",
         bio: draft.bio ?? "",
         country: draft.country,
+        city: draft.city,
         portfolio_url: draft.portfolio_url,
         specialties: draft.specialties ?? [],
         tools: draft.tools ?? [],
@@ -578,7 +591,8 @@ export function CreatorPublicProfileEditor({
     setDisplayName(merged.name);
     setHeadline(merged.headline ?? "");
     setBio(merged.bio ?? "");
-    setCountry(merged.country);
+    setCountry(normalizeCountryCode(merged.country) || "US");
+    setCity(merged.city ?? "");
     setPortfolioUrl(merged.portfolio_url);
     setSpecialties(normalizeSpecialties(merged.specialties));
     setTools(normalizeSpecialties(merged.tools));
@@ -590,7 +604,8 @@ export function CreatorPublicProfileEditor({
       displayName: merged.name,
       headline: merged.headline ?? "",
       bio: merged.bio ?? "",
-      country: merged.country,
+      country: normalizeCountryCode(merged.country) || "US",
+      city: merged.city ?? "",
       portfolioUrl: merged.portfolio_url,
       specialties: normalizeSpecialties(merged.specialties),
       tools: normalizeSpecialties(merged.tools),
@@ -802,7 +817,7 @@ export function CreatorPublicProfileEditor({
                 </p>
                 <p className="mt-3 flex items-center gap-2 text-sm text-zinc-500">
                   <MapPin className="h-4 w-4" />
-                  {labelCountry(country, locale) || "South Korea"}
+                  {formatLocationLabel(country, city, locale) || labelCountry(country, locale)}
                 </p>
 
                 <div className="mt-5 grid grid-cols-3 gap-2 rounded-[20px] border border-zinc-100 bg-zinc-50 p-2 text-center shadow-[0_10px_30px_rgba(15,23,42,0.035)]">
@@ -935,6 +950,17 @@ export function CreatorPublicProfileEditor({
                   </select>
                   <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <FieldLabel label={t.sections.city} helper={t.sections.cityHelper} />
+                <input
+                  value={city}
+                  onChange={(event) => setCity(event.target.value)}
+                  maxLength={80}
+                  placeholder={locale === "zh" ? "例如：首尔" : "e.g. Seoul"}
+                  className="h-12 w-full rounded-2xl border border-zinc-200 bg-white px-4 text-sm outline-none transition placeholder:text-zinc-400 focus:border-violet-200 focus:ring-4 focus:ring-violet-100"
+                />
               </div>
             </SectionCard>
 

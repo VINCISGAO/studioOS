@@ -81,7 +81,8 @@ export async function POST(
       project_id: projectId,
       source_url: saved.url,
       note: saved.file_name,
-      input_kind: "uploaded_image"
+      input_kind: "uploaded_image",
+      locale: lang
     });
     if (!reference) {
       return NextResponse.json(

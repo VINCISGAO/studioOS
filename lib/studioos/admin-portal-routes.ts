@@ -31,5 +31,9 @@ export const adminPortalRoutes = {
   certification: "/admin/certification",
   partners: "/admin/partners",
   academy: "/admin/academy",
-  showcase: "/admin/showcase"
+  showcase: "/admin/showcase",
+  knowledge: "/admin/knowledge",
+  knowledgeCitations: "/admin/knowledge/citations",
+  knowledgeNew: "/admin/knowledge/new",
+  knowledgeEdit: (id: string) => `/admin/knowledge/${id}`
 } as const;

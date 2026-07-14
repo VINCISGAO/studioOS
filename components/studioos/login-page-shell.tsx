@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import {
   Clapperboard,
@@ -15,6 +16,7 @@ import { GoogleOneTap } from "@/components/studioos/google-one-tap";
 import { LoginSocialButtons } from "@/components/studioos/login-social-buttons";
 import { LoginWorkspace } from "@/components/studioos/login-workspace";
 import { MarketingHomeLink } from "@/components/studioos/marketing-home-link";
+import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock";
 import type { Locale } from "@/lib/i18n";
 import { getLoginVisual, type LoginRole } from "@/lib/studioos/login-theme";
 import { studioOS, formatHeroHeadlineLine1 } from "@/lib/studioos/vocabulary";
@@ -265,9 +267,20 @@ export function LoginPageShell({
   const desktopCardTitle = locale === "zh" ? "三步完成登录" : "Three quick steps to sign in";
   const heroSubtitle = isBrand ? t.brandHeroSubtitle : t.creatorHeroSubtitle;
 
+  useBodyScrollLock(true, "both");
+
+  useEffect(() => {
+    const body = document.body;
+    const previousBackground = body.style.backgroundColor;
+    body.style.backgroundColor = isBrand ? "#050508" : "#f4f4f8";
+    return () => {
+      body.style.backgroundColor = previousBackground;
+    };
+  }, [isBrand]);
+
   return (
     <AcknowledgeAlertProvider locale={locale}>
-    <main className="relative min-h-[100dvh] overflow-hidden">
+    <main className="relative h-[100dvh] max-h-[100dvh] overflow-hidden">
       <GoogleOneTap
         clientId={googleOneTapClientId}
         locale={locale}
@@ -278,8 +291,8 @@ export function LoginPageShell({
       <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${pageVisual.bg})` }} aria-hidden />
       <div className="absolute inset-0" style={{ background: pageVisual.overlay }} aria-hidden />
 
-      <div className={cn("relative z-10 flex min-h-[100dvh] flex-col", pageVisual.panelText)}>
-        <header className="relative mx-auto flex min-h-16 w-full max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-8">
+      <div className={cn("relative z-10 flex h-full max-h-[100dvh] flex-col overflow-hidden", pageVisual.panelText)}>
+        <header className="relative mx-auto flex min-h-16 w-full max-w-7xl shrink-0 items-center justify-between gap-3 px-4 py-3 sm:px-8">
           <MarketingHomeLink locale={locale} className="inline-flex items-center">
             <BrandLogoLockup
               contrastOn={isBrand ? "dark" : "light"}
@@ -292,7 +305,7 @@ export function LoginPageShell({
           <div className="hidden w-9 sm:block" aria-hidden />
         </header>
 
-        <div className="mx-auto flex w-full max-w-[1320px] flex-1 flex-col gap-6 px-5 pb-8 sm:px-8 max-lg:justify-start lg:gap-10 lg:px-10 lg:pb-12 xl:gap-14 xl:px-12 lg:flex-row lg:items-center lg:justify-between">
+        <div className="mx-auto flex min-h-0 w-full max-w-[1320px] flex-1 flex-col gap-6 overflow-y-auto overscroll-y-contain px-5 pb-6 sm:px-8 max-lg:justify-start lg:gap-10 lg:px-10 lg:pb-12 xl:gap-14 xl:px-12 lg:flex-row lg:items-center lg:justify-between">
           <section className="hidden min-w-0 lg:block lg:flex-1 lg:pl-6 lg:py-6 xl:max-w-[820px] xl:pl-14">
             {isBrand ? (
               <>

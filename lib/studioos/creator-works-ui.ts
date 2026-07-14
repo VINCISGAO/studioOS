@@ -1,6 +1,9 @@
+import {
+  getCountryLocalizedName,
+  normalizeCountryCode
+} from "@/lib/geo/country";
 import type { Locale } from "@/lib/i18n";
 import {
-  labelCountry,
   labelDeliverySpeed,
   labelPlatform,
   labelWorkCategory
@@ -40,9 +43,14 @@ export function buildCreatorWorksProfileTags(creator: Creator, locale: Locale): 
 }
 
 export function formatCreatorWorksLocation(creator: Creator, locale: Locale): string {
-  const country = labelCountry(creator.country, locale);
-  if (creator.country === "South Korea") {
-    return locale === "zh" ? "韩国 · Seoul" : "South Korea · Seoul";
+  const iso2 = normalizeCountryCode(creator.country);
+  const country = getCountryLocalizedName(iso2, locale);
+  const city = creator.city?.trim();
+  if (city && country) {
+    return locale === "zh" ? `${country} · ${city}` : `${city}, ${country}`;
+  }
+  if (iso2 === "KR") {
+    return locale === "zh" ? "韩国 · Seoul" : "Seoul, South Korea";
   }
   return country;
 }

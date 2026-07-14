@@ -9,14 +9,14 @@ const copy = {
   en: {
     back: "Back to previous step",
     saveDraft: "Save draft",
-    confirm: "Confirm plan",
-    confirming: "Confirming…"
+    confirm: "Done reviewing — set budget",
+    confirming: "Saving your choice…"
   },
   zh: {
     back: "返回上一步",
     saveDraft: "保存草稿",
-    confirm: "确认方案",
-    confirming: "正在确认…"
+    confirm: "选好了，去设预算",
+    confirming: "正在保存选择…"
   }
 } as const;
 
