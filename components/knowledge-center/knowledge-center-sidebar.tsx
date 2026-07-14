@@ -1,12 +1,10 @@
 import Link from "next/link";
-import { ArrowRight, Headphones } from "lucide-react";
 import { OpenMarketingLucienButton } from "@/components/marketing/docs/open-marketing-lucien-button";
 import {
   buildKnowledgeArticlePath,
   type KnowledgePathPrefix
 } from "@/features/knowledge-center/knowledge-center.constants";
 import type { KnowledgeHomeArticleCardDto } from "@/features/knowledge-center/knowledge-center.types";
-import { buildLocalizedHref } from "@/lib/marketing/localized-href";
 import { knowledgeCenterHomeCopy } from "@/lib/knowledge/knowledge-center-home-copy";
 import { cn } from "@/lib/utils";
 import type { Locale } from "@/lib/i18n";
@@ -84,22 +82,10 @@ export function KnowledgeCenterSidebar({
       </div>
 
       <div className="rounded-xl border border-violet-100 bg-gradient-to-br from-violet-50 to-white p-3.5 shadow-sm sm:rounded-2xl sm:p-4">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-violet-600 shadow-sm sm:h-10 sm:w-10 sm:rounded-xl">
-          <Headphones className="h-5 w-5" strokeWidth={1.75} />
-        </div>
-        <p className="mt-3 text-xs leading-5 text-zinc-600 sm:mt-3.5 sm:text-sm sm:leading-6">{copy.supportTitle}</p>
-        <div className="mt-3 space-y-2 sm:mt-4">
-          <Link
-            href={buildLocalizedHref("/contact", locale)}
-            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-violet-600 text-sm font-semibold text-white transition hover:bg-violet-700"
-          >
-            {copy.supportButton}
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-          <OpenMarketingLucienButton className="inline-flex h-10 w-full items-center justify-center rounded-xl border border-violet-200 bg-white text-sm font-medium text-violet-700 transition hover:bg-violet-50">
-            {locale === "zh" ? "打开 AI 助手" : "Open AI assistant"}
-          </OpenMarketingLucienButton>
-        </div>
+        <p className="text-xs leading-5 text-zinc-600 sm:text-sm sm:leading-6">{copy.supportTitle}</p>
+        <OpenMarketingLucienButton className="mt-3 inline-flex h-11 w-full items-center justify-center rounded-xl bg-violet-600 text-sm font-semibold text-white transition hover:bg-violet-700 sm:mt-4">
+          {copy.supportLucienButton}
+        </OpenMarketingLucienButton>
       </div>
     </aside>
   );

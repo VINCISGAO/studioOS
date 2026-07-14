@@ -18,7 +18,10 @@ import { adminPortalRoutes } from "@/lib/studioos/admin-portal-routes";
 import { curatedFaqsForLanguage } from "@/lib/knowledge/knowledge-ai-advertising-cluster";
 import { buildKnowledgeEditorInitialForm, type KnowledgeEditorPanelForm } from "@/lib/knowledge/knowledge-editor-initial-form";
 import {
-  knowledgeEditorPublishIssues,
+  effectiveKnowledgeMetaDescription,
+  effectiveKnowledgeSeoTitle,
+  effectiveKnowledgeTags,
+  knowledgeEditorPublishGate,
   normalizeKnowledgeSlug,
   validateKnowledgeSlug
 } from "@/lib/knowledge/knowledge-editor-validation";
@@ -52,17 +55,25 @@ export function AdminKnowledgeEditorPanel({ locale, articleId, initial }: Editor
     enabled: slugValidation.ok
   });
 
-  const publishIssues = useMemo(() => {
-    const issues = knowledgeEditorPublishIssues(form, zh);
-    if (slugCheck.status === "checking") {
-      issues.push(zh ? "正在验证 Slug…" : "Validating slug…");
-    } else if (slugCheck.isBlocking) {
-      issues.push(slugCheck.message ?? (zh ? "Slug 已被占用" : "Slug is already taken"));
-    }
-    return issues;
-  }, [form, zh, slugCheck.isBlocking, slugCheck.message, slugCheck.status]);
+  const publishGate = useMemo(() => knowledgeEditorPublishGate(form, zh), [form, zh]);
 
-  const publishBlocked = publishIssues.some((item) => !item.includes(zh ? "建议" : "recommended"));
+  const publishBlockers = useMemo(() => {
+    const blockers = [...publishGate.blockers];
+    if (slugCheck.isBlocking) {
+      blockers.push(slugCheck.message ?? (zh ? "Slug 已被占用" : "Slug is already taken"));
+    }
+    return blockers;
+  }, [publishGate.blockers, slugCheck.isBlocking, slugCheck.message, zh]);
+
+  const publishWarnings = useMemo(() => {
+    const warnings = [...publishGate.warnings];
+    if (slugCheck.status === "checking") {
+      warnings.push(zh ? "正在验证 Slug…" : "Validating slug…");
+    }
+    return warnings;
+  }, [publishGate.warnings, slugCheck.status, zh]);
+
+  const publishBlocked = publishBlockers.length > 0;
 
   const lastSavedLabel = lastSavedAt
     ? lastSavedAt.toLocaleTimeString(locale === "zh" ? "zh-CN" : "en-US", {
@@ -90,25 +101,25 @@ export function AdminKnowledgeEditorPanel({ locale, articleId, initial }: Editor
         author_name: form.author_name,
         cover_image_url: form.cover_image_url || undefined,
         status,
-        tags: form.tags,
+        tags: effectiveKnowledgeTags(form),
         scheduled_at: scheduledAt,
         timezone: form.timezone,
         translation: {
           language_code: form.language_code,
           title: form.title,
           subtitle: form.subtitle,
-          excerpt: form.meta_description,
+          excerpt: effectiveKnowledgeMetaDescription(form),
           body_markdown: form.body_markdown,
           status,
           seo: {
-            seo_title: form.seo_title,
-            meta_description: form.meta_description,
+            seo_title: effectiveKnowledgeSeoTitle(form),
+            meta_description: effectiveKnowledgeMetaDescription(form),
             keywords: form.focus_keywords.split(",").map((item) => item.trim()).filter(Boolean),
             og_image_url: form.cover_fallback_url || undefined
           },
           faqs: publish ? curatedFaqsForLanguage(form.language_code) : undefined,
           lucien: {
-            ai_summary: form.meta_description,
+            ai_summary: effectiveKnowledgeMetaDescription(form),
             ai_keywords: form.focus_keywords.split(",").map((item) => item.trim()).filter(Boolean),
             lucien_learning: form.lucien_learning
           }
@@ -121,7 +132,7 @@ export function AdminKnowledgeEditorPanel({ locale, articleId, initial }: Editor
   const save = useCallback(
     async (publish = false) => {
       if (publish && publishBlocked) {
-        setMessage(publishIssues.join(" · "));
+        setMessage(publishBlockers.join(" · "));
         return;
       }
       setSaveState("saving");
@@ -163,7 +174,7 @@ export function AdminKnowledgeEditorPanel({ locale, articleId, initial }: Editor
         setMessage(error instanceof Error ? error.message : zh ? "保存失败" : "Save failed");
       }
     },
-    [buildPayload, currentId, publishBlocked, publishIssues, router, zh]
+    [buildPayload, currentId, publishBlocked, publishBlockers, router, zh]
   );
 
   useKnowledgeEditorAutosave({
@@ -305,7 +316,11 @@ export function AdminKnowledgeEditorPanel({ locale, articleId, initial }: Editor
             timezone={form.timezone}
             onChange={(patch) => patchForm(patch)}
           />
-          <KnowledgeEditorPublishIssuesCard locale={locale} issues={publishIssues} />
+          <KnowledgeEditorPublishIssuesCard
+            locale={locale}
+            blockers={publishBlockers}
+            warnings={publishWarnings}
+          />
           <KnowledgeEditorAiCard
             locale={locale}
             disabled={!form.title.trim() || !form.body_markdown.trim()}

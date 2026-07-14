@@ -39,7 +39,7 @@ export type KnowledgeCenterHomeCopy = {
   featuredViewAll: string;
   latestTitle: string;
   supportTitle: string;
-  supportButton: string;
+  supportLucienButton: string;
   emptyFeatured: string;
   emptyLatest: string;
   minRead: string;
@@ -170,8 +170,8 @@ const zh: KnowledgeCenterHomeCopy = {
   featuredTitle: "精选文章",
   featuredViewAll: "查看所有文章",
   latestTitle: "最新更新",
-  supportTitle: "找不到答案？我们的团队随时为你提供帮助",
-  supportButton: "联系支持团队",
+  supportTitle: "找不到答案，问问AI助手卢西恩",
+  supportLucienButton: "问问卢西恩",
   emptyFeatured: "精选文章即将发布。",
   emptyLatest: "暂无更新。",
   minRead: "分钟阅读",
@@ -212,8 +212,8 @@ const en: KnowledgeCenterHomeCopy = {
   featuredTitle: "Featured articles",
   featuredViewAll: "View all articles",
   latestTitle: "Latest updates",
-  supportTitle: "Can't find an answer? Our team is here to help.",
-  supportButton: "Contact support",
+  supportTitle: "Can't find an answer? Ask Lucien, your AI assistant.",
+  supportLucienButton: "Ask Lucien",
   emptyFeatured: "Featured articles are coming soon.",
   emptyLatest: "No updates yet.",
   minRead: "min read",
