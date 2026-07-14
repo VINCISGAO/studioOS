@@ -3,6 +3,7 @@ import { aiGatewayService } from "@/features/ai/ai-gateway.service";
 import { aiCopilotRepository } from "@/features/ai-copilot/ai-copilot.repository";
 import {
   answerFromKnowledge,
+  buildPublicLucienKnowledgeUserPrompt,
   findKnowledgeMatches,
   isPersistableKnowledgeMatch,
   type KnowledgeQaMatch
@@ -27,7 +28,6 @@ import { logger } from "@/lib/core/logger";
 import { resolveOpenAIModel } from "@/lib/core/config/ai";
 import type { Locale } from "@/lib/i18n";
 
-const KNOWLEDGE_DIRECT_THRESHOLD = 30;
 const PUBLIC_KNOWLEDGE_SCOPE = "public_marketing" as const;
 
 export type PublicLucienRequest = {
@@ -65,11 +65,15 @@ function buildPublicSystemPrompt(language: string) {
   return lucienSharedSystemRules(language);
 }
 
-function buildKnowledgeContext(matches: KnowledgeQaMatch[]) {
-  if (matches.length === 0) return "No approved public FAQ matches.";
-  return matches
-    .map((match, index) => `FAQ ${index + 1}:\nQ: ${match.question}\nA: ${match.answer}`)
-    .join("\n\n");
+function buildPublicLucienModelUserPrompt(message: string, matches: KnowledgeQaMatch[], language: string) {
+  if (matches.length > 0) {
+    return buildPublicLucienKnowledgeUserPrompt(message, matches, language);
+  }
+
+  const zh = language === "zh-CN" || language === "zh-TW" || language === "zh";
+  return zh
+    ? `用户问题：\n${message}\n\n请用简洁对话方式回答。若不确定，说明暂无准确信息并建议浏览 FAQ 或登录使用完整版卢西恩。`
+    : `User question:\n${message}\n\nReply concisely. If unsure, say so and suggest browsing the FAQ or signing in for the full Lucien assistant.`;
 }
 
 function fallbackAnswer(language: string, modelConfigured: boolean, suggestedExamples: string[]) {
@@ -258,42 +262,12 @@ export class PublicLucienService {
 
     const matches = await findKnowledgeMatches(message, language, PUBLIC_KNOWLEDGE_SCOPE);
     const knowledgeAnswer = answerFromKnowledge(matches);
-    const topScore = matches[0]?.score ?? 0;
-
-    if (knowledgeAnswer && topScore >= KNOWLEDGE_DIRECT_THRESHOLD) {
-      await safeRecordKnowledgeLearning(message, language, matches, guestSessionId);
-      await safeAudit({
-        surface: "public",
-        guestSessionId,
-        pagePath,
-        queryCategory: "business",
-        authorizationResult: "allowed",
-        knowledgeScope: PUBLIC_KNOWLEDGE_SCOPE,
-        dataCategories: ["faq"],
-        answerMode: "knowledge_base"
-      });
-      await safeRecordPublicInteraction({
-        guestSessionId,
-        pagePath,
-        language,
-        userMessage: message,
-        assistantAnswer: knowledgeAnswer,
-        answerMode: "knowledge_base",
-        matches
-      });
-      return {
-        answer: knowledgeAnswer,
-        suggestedQuestions,
-        answerMode: "knowledge_base",
-        modelConfigured
-      };
-    }
 
     if (modelConfigured) {
       try {
         const result = await aiGatewayService.chatCompletion({
           system: buildPublicSystemPrompt(language),
-          user: `User question:\n${message}\n\nApproved public FAQ knowledge:\n${buildKnowledgeContext(matches)}`,
+          user: buildPublicLucienModelUserPrompt(message, matches, language),
           model: resolveOpenAIModel(),
           temperature: 0.2,
           language

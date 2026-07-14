@@ -6,7 +6,8 @@ import { campaignRepository } from "@/features/campaign/campaign.repository";
 import { aiCopilotContextBuilder } from "@/features/ai-copilot/ai-copilot-context.builder";
 import {
   answerFromKnowledge,
-  findKnowledgeMatches
+  findKnowledgeMatches,
+  trimLucienChatAnswer
 } from "@/features/ai-copilot/knowledge-qa-matching";
 import { aiCopilotRepository } from "@/features/ai-copilot/ai-copilot.repository";
 import { aiCopilotToolRouter } from "@/features/ai-copilot/ai-copilot-tool.router";
@@ -120,7 +121,7 @@ function buildSystemPrompt(context: AiCopilotContext) {
     "If currentPage.cancellation.cancelled is true, state the cancellation reason directly. Do not list generic possible reasons unless the concrete reason is missing.",
     "If currentPage.cancellation.isPaymentTimeout is true, explain that the order was automatically cancelled because payment was not completed within the payment deadline.",
     "Always answer in the user's preferred language. Never mix languages unless the user asks for translation.",
-    "Use summaries.qaKnowledge as the approved business Q&A knowledge base. Prefer its tone and facts when relevant.",
+    "Use summaries.qaKnowledge as approved business snippets. Synthesize concise answers; never paste stored answers verbatim.",
     "Use summaries.aiFeedback to avoid repeating answer styles or content that this user marked as not helpful.",
     "Never expose raw internal JSON, hidden cost parameters, risk labels, or admin-only fields from tool outputs.",
     `User language: ${context.language}`,
@@ -455,7 +456,10 @@ export class AiCopilotService {
       ...context,
       summaries: {
         ...context.summaries,
-        qaKnowledge
+        qaKnowledge: qaKnowledge.map((item) => ({
+          ...item,
+          answer: trimLucienChatAnswer(item.answer)
+        }))
       }
     };
 

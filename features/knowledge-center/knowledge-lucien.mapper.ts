@@ -1,5 +1,6 @@
 import type { KnowledgeLucienCategory } from "@prisma/client";
 import {
+  buildKnowledgeLucienFaqSourceKey,
   buildKnowledgeLucienSourceKey,
   KNOWLEDGE_CENTER_SOURCE_TYPE
 } from "@/features/knowledge-center/knowledge-center.constants";
@@ -20,6 +21,8 @@ export type KnowledgeLucienQaRow = {
   metadataJson: Record<string, unknown>;
 };
 
+const LUCCHAT_SUMMARY_MAX_CHARS = 480;
+
 function lucienModuleLabel(category: KnowledgeLucienCategory) {
   return category.replaceAll("_", " ");
 }
@@ -28,6 +31,48 @@ function knowledgeTypeForCategory(category: KnowledgeLucienCategory): KnowledgeL
   if (category === "PRICING" || category === "LEGAL") return "FAQ";
   if (category === "WORKFLOW" || category === "REVIEW") return "WORKFLOW_GUIDE";
   return "PRODUCT_HELP";
+}
+
+function stripBodyPlain(translation: KnowledgeTranslationDto) {
+  return (translation.body_html || translation.body_markdown || "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function buildChatSummary(translation: KnowledgeTranslationDto, lucienSummary: string, bodyPlain: string) {
+  const summary =
+    lucienSummary ||
+    translation.excerpt?.trim() ||
+    translation.subtitle?.trim() ||
+    "";
+  if (summary) return summary.slice(0, LUCCHAT_SUMMARY_MAX_CHARS);
+  if (!bodyPlain) return "";
+  return `${bodyPlain.slice(0, LUCCHAT_SUMMARY_MAX_CHARS)}…`;
+}
+
+function sharedMetadata(input: {
+  slug: string;
+  translation: KnowledgeTranslationDto;
+  categoryName?: string | null;
+}) {
+  const { slug, translation, categoryName } = input;
+  const lucien = translation.lucien!;
+  return {
+    source: KNOWLEDGE_CENTER_SOURCE_TYPE,
+    slug,
+    languageCode: translation.language_code,
+    aiIntent: lucien.ai_intent,
+    allowCitation: lucien.allow_citation,
+    allowTraining: lucien.allow_training,
+    searchPriority: lucien.search_priority,
+    weight: lucien.weight,
+    priority: lucien.priority,
+    category: lucien.category,
+    module: categoryName ?? lucienModuleLabel(lucien.category),
+    knowledgeType: knowledgeTypeForCategory(lucien.category),
+    version: translation.updated_at
+  };
 }
 
 export function buildKnowledgeLucienRows(input: {
@@ -40,16 +85,9 @@ export function buildKnowledgeLucienRows(input: {
   if (!lucien?.lucien_learning) return [];
 
   const sourceKey = buildKnowledgeLucienSourceKey(slug, translation.language_code);
-  const summary = lucien.ai_summary?.trim() || translation.excerpt?.trim() || translation.subtitle?.trim() || "";
-  const bodyPlain = (translation.body_html || translation.body_markdown || "")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-  const answerParts = [
-    summary,
-    bodyPlain.slice(0, 4000),
-    ...translation.faqs.map((item) => `Q: ${item.question}\nA: ${item.answer}`)
-  ].filter(Boolean);
+  const bodyPlain = stripBodyPlain(translation);
+  const summary = lucien.ai_summary?.trim() || "";
+  const chatAnswer = buildChatSummary(translation, summary, bodyPlain);
 
   const keywords = [
     ...lucien.ai_keywords,
@@ -60,41 +98,65 @@ export function buildKnowledgeLucienRows(input: {
     .map((item) => item.trim())
     .filter(Boolean);
 
-  const searchText = [
+  const articleSearchText = [
     translation.title,
     translation.subtitle,
     summary,
+    translation.excerpt,
     keywords.join(" "),
-    bodyPlain.slice(0, 2000)
+    bodyPlain.slice(0, 2000),
+    ...translation.faqs.flatMap((item) => [item.question, item.answer])
   ]
     .filter(Boolean)
     .join("\n");
 
-  return [
-    {
+  const shared = sharedMetadata(input);
+  const rows: KnowledgeLucienQaRow[] = [];
+
+  if (chatAnswer || articleSearchText) {
+    rows.push({
       sourceKey,
       languageCode: translation.language_code,
-      module: categoryName ?? lucienModuleLabel(lucien.category),
+      module: shared.module,
       question: translation.title,
-      answer: answerParts.join("\n\n"),
-      searchText,
-      knowledgeType: knowledgeTypeForCategory(lucien.category),
+      answer: chatAnswer,
+      searchText: articleSearchText,
+      knowledgeType: shared.knowledgeType,
       visibility: "public",
       sourceType: KNOWLEDGE_CENTER_SOURCE_TYPE,
-      version: translation.updated_at,
+      version: shared.version,
       verifiedAt: new Date(),
       metadataJson: {
-        source: KNOWLEDGE_CENTER_SOURCE_TYPE,
-        slug,
-        languageCode: translation.language_code,
-        aiIntent: lucien.ai_intent,
-        allowCitation: lucien.allow_citation,
-        allowTraining: lucien.allow_training,
-        searchPriority: lucien.search_priority,
-        weight: lucien.weight,
-        priority: lucien.priority,
-        category: lucien.category
+        ...shared,
+        rowKind: "article_summary"
       }
-    }
-  ];
+    });
+  }
+
+  translation.faqs.forEach((faq, index) => {
+    const question = faq.question.trim();
+    const answer = faq.answer.trim();
+    if (!question || !answer) return;
+
+    rows.push({
+      sourceKey: buildKnowledgeLucienFaqSourceKey(slug, translation.language_code, index),
+      languageCode: translation.language_code,
+      module: shared.module,
+      question,
+      answer: answer.slice(0, LUCCHAT_SUMMARY_MAX_CHARS),
+      searchText: [question, answer, translation.title, summary, keywords.join(" ")].filter(Boolean).join("\n"),
+      knowledgeType: "FAQ",
+      visibility: "public",
+      sourceType: KNOWLEDGE_CENTER_SOURCE_TYPE,
+      version: shared.version,
+      verifiedAt: new Date(),
+      metadataJson: {
+        ...shared,
+        rowKind: "faq",
+        faqIndex: index
+      }
+    });
+  });
+
+  return rows;
 }

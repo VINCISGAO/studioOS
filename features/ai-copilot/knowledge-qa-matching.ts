@@ -18,6 +18,9 @@ export type KnowledgeQaMatch = {
   score: number;
 };
 
+export const LUCIEN_CHAT_ANSWER_MAX_CHARS = 480;
+export const LUCIEN_CHAT_CONTEXT_EXCERPT_MAX_CHARS = 360;
+
 function isZhLanguage(language: string) {
   return language === "zh-CN" || language === "zh-TW" || language === "zh";
 }
@@ -146,6 +149,60 @@ export function isPersistableKnowledgeMatch(match: KnowledgeQaMatch) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(match.id);
 }
 
+export function trimLucienChatAnswer(answer: string, maxChars = LUCIEN_CHAT_ANSWER_MAX_CHARS) {
+  const trimmed = answer.trim();
+  if (!trimmed || trimmed.length <= maxChars) return trimmed;
+
+  const slice = trimmed.slice(0, maxChars);
+  const lastBreak = Math.max(slice.lastIndexOf("。"), slice.lastIndexOf("！"), slice.lastIndexOf("？"), slice.lastIndexOf(". "));
+  if (lastBreak > maxChars * 0.55) {
+    return slice.slice(0, lastBreak + 1).trim();
+  }
+  return `${slice.trim()}…`;
+}
+
+export function buildLucienKnowledgeContextForModel(matches: KnowledgeQaMatch[], language: string) {
+  if (!matches.length) {
+    return isZhLanguage(language) ? "无匹配知识片段。" : "No matching knowledge snippets.";
+  }
+
+  return matches
+    .map((match, index) => {
+      const excerpt = trimLucienChatAnswer(match.answer, LUCIEN_CHAT_CONTEXT_EXCERPT_MAX_CHARS);
+      return `Snippet ${index + 1}:\nTopic: ${match.question}\nExcerpt: ${excerpt}`;
+    })
+    .join("\n\n");
+}
+
+export function buildPublicLucienKnowledgeUserPrompt(message: string, matches: KnowledgeQaMatch[], language: string) {
+  const zh = isZhLanguage(language);
+  const context = buildLucienKnowledgeContextForModel(matches, language);
+
+  if (zh) {
+    return [
+      `用户问题：\n${message}`,
+      "",
+      "参考知识片段（仅供提炼，禁止整段复制）：",
+      context,
+      "",
+      "请用 2–4 段或少量 bullet 直接回答用户问题。",
+      "要求：总结提炼关键信息；不要输出文章全文；不要重复用户问题作标题；语气像业务助手对话；必要时可引导用户阅读知识中心完整文章。"
+    ].join("\n");
+  }
+
+  return [
+    `User question:\n${message}`,
+    "",
+    "Reference snippets (for synthesis only — do not copy verbatim):",
+    context,
+    "",
+    "Reply in 2–4 short paragraphs or a few bullets.",
+    "Summarize key points; never paste the full article; do not repeat the question as a heading; sound like a helpful business assistant."
+  ].join("\n");
+}
+
 export function answerFromKnowledge(matches: KnowledgeQaMatch[]) {
-  return matches[0]?.answer ?? null;
+  const top = matches[0];
+  if (!top?.answer.trim()) return null;
+  return trimLucienChatAnswer(top.answer);
 }

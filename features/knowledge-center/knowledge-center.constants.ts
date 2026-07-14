@@ -63,3 +63,7 @@ export function buildKnowledgeIndexPath(pathPrefix: KnowledgePathPrefix) {
 export function buildKnowledgeLucienSourceKey(slug: string, languageCode: string) {
   return `knowledge_center_${slug}_${languageCode.replace("-", "_").toLowerCase()}`;
 }
+
+export function buildKnowledgeLucienFaqSourceKey(slug: string, languageCode: string, faqIndex: number) {
+  return `${buildKnowledgeLucienSourceKey(slug, languageCode)}_faq_${faqIndex}`;
+}

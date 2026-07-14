@@ -1,14 +1,10 @@
-import { knowledgeCenterService } from "@/features/knowledge-center/knowledge-center.service";
+import { syncAllPublishedKnowledgeArticlesToLucien } from "@/features/knowledge-center/knowledge-lucien-sync.core";
 
 async function main() {
-  await knowledgeCenterService.ensureSeeds();
-  const articles = await knowledgeCenterService.listAdmin({ status: "PUBLISHED" });
-  let synced = 0;
-  for (const article of articles) {
-    const result = await knowledgeCenterService.syncLucien(article.id);
-    synced += result.synced;
-  }
-  console.log(`Knowledge Center Lucien sync complete — ${synced} rows upserted from ${articles.length} articles.`);
+  const result = await syncAllPublishedKnowledgeArticlesToLucien();
+  console.log(
+    `Knowledge Center Lucien sync complete — ${result.synced} rows upserted from ${result.articles} published articles.`
+  );
 }
 
 main().catch((error) => {

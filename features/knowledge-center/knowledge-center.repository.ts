@@ -55,6 +55,8 @@ const articleAdminListInclude = {
 
 type KnowledgeArticleModel = (typeof prisma)["knowledgeArticle"];
 
+let articleVisibilityColumnCached: boolean | null = null;
+
 function isMissingKnowledgeTableError(error: unknown): boolean {
   return (
     typeof error === "object" &&
@@ -64,11 +66,43 @@ function isMissingKnowledgeTableError(error: unknown): boolean {
   );
 }
 
+function isPrismaColumnDriftError(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error as { code?: string }).code === "P2022"
+  );
+}
+
+async function resolveArticleVisibilityFilter(): Promise<{ visibility: "PUBLIC" } | Record<string, never>> {
+  if (articleVisibilityColumnCached === false) return {};
+  if (articleVisibilityColumnCached === true) return { visibility: "PUBLIC" };
+
+  const model = articleModel();
+  if (!model) {
+    articleVisibilityColumnCached = false;
+    return {};
+  }
+
+  try {
+    await model.count({ where: { visibility: "PUBLIC" } });
+    articleVisibilityColumnCached = true;
+    return { visibility: "PUBLIC" };
+  } catch (error) {
+    if (isPrismaColumnDriftError(error) || isMissingKnowledgeTableError(error)) {
+      articleVisibilityColumnCached = false;
+      return {};
+    }
+    throw error;
+  }
+}
+
 async function withKnowledgeTableFallback<T>(fallback: T, run: () => Promise<T>): Promise<T> {
   try {
     return await run();
   } catch (error) {
-    if (isMissingKnowledgeTableError(error)) return fallback;
+    if (isMissingKnowledgeTableError(error) || isPrismaColumnDriftError(error)) return fallback;
     throw error;
   }
 }
@@ -502,11 +536,12 @@ export class KnowledgeCenterRepository {
   async listPublished(languageCode: string, limit = 50) {
     const model = articleModel();
     if (!model) return [];
-    return withKnowledgeTableFallback([], async () =>
-      model.findMany({
+    return withKnowledgeTableFallback([], async () => {
+      const visibilityFilter = await resolveArticleVisibilityFilter();
+      return model.findMany({
         where: {
           deletedAt: null,
-          visibility: "PUBLIC",
+          ...visibilityFilter,
           translations: {
             some: {
               languageCode,
@@ -517,31 +552,33 @@ export class KnowledgeCenterRepository {
         include: articleInclude,
         orderBy: { publishedAt: "desc" },
         take: limit
-      })
-    );
+      });
+    });
   }
 
   async listPublishedByCategory(languageCode: string, categorySlug: string, limit = 50) {
     const model = articleModel();
     if (!model) return [];
-    return withKnowledgeTableFallback([], async () =>
-      model.findMany({
+    return withKnowledgeTableFallback([], async () => {
+      const visibilityFilter = await resolveArticleVisibilityFilter();
+      return model.findMany({
         where: {
           deletedAt: null,
-          visibility: "PUBLIC",
+          ...visibilityFilter,
           category: { slug: categorySlug },
           translations: { some: { languageCode, status: "PUBLISHED" } }
         },
         include: articleInclude,
         orderBy: { publishedAt: "desc" },
         take: limit
-      })
-    );
+      });
+    });
   }
 
   async listCategorySummaries(languageCode: string) {
     if (!this.isAvailable()) return [];
     return withKnowledgeTableFallback([], async () => {
+      const visibilityFilter = await resolveArticleVisibilityFilter();
       const categories = await prisma.knowledgeCategory.findMany({ orderBy: { sortOrder: "asc" } });
       const summaries = [];
       for (const category of categories) {
@@ -550,7 +587,7 @@ export class KnowledgeCenterRepository {
             deletedAt: null,
             categoryId: category.id,
             translations: { some: { languageCode, status: "PUBLISHED" } },
-            visibility: "PUBLIC"
+            ...visibilityFilter
           }
         });
         if (count > 0) {
@@ -566,6 +603,10 @@ export class KnowledgeCenterRepository {
     if (!q || !this.isAvailable()) return [];
 
     return withKnowledgeTableFallback([], async () => {
+      const visibilityFilter = await resolveArticleVisibilityFilter();
+      const visibilitySql =
+        "visibility" in visibilityFilter ? Prisma.sql`AND a.visibility = 'PUBLIC'` : Prisma.empty;
+
       const indexRows = await prisma.$queryRaw<Array<{ article_id: string }>>(
         Prisma.sql`
           SELECT DISTINCT t.article_id
@@ -575,7 +616,7 @@ export class KnowledgeCenterRepository {
           WHERE t.language_code = ${languageCode}
             AND t.status = CAST('PUBLISHED' AS "KnowledgeArticleStatus")
             AND a.deleted_at IS NULL
-            AND a.visibility = 'PUBLIC'
+            ${visibilitySql}
             AND to_tsvector('simple', coalesce(ksi.search_text, '')) @@ plainto_tsquery('simple', ${q})
           LIMIT ${limit * 2}
         `
@@ -599,12 +640,13 @@ export class KnowledgeCenterRepository {
   async getPublishedTranslation(slug: string, languageCode: string) {
     const model = articleModel();
     if (!model) return null;
-    return withKnowledgeTableFallback(null, async () =>
-      model.findFirst({
+    return withKnowledgeTableFallback(null, async () => {
+      const visibilityFilter = await resolveArticleVisibilityFilter();
+      return model.findFirst({
         where: {
           slug,
           deletedAt: null,
-          visibility: "PUBLIC",
+          ...visibilityFilter,
           translations: {
             some: {
               languageCode,
@@ -613,8 +655,8 @@ export class KnowledgeCenterRepository {
           }
         },
         include: articleInclude
-      })
-    );
+      });
+    });
   }
 
   async listPublishedLanguageCodesBySlug(slug: string): Promise<string[]> {
