@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { KnowledgeArticleStatus, Prisma } from "@prisma/client";
+import { Prisma, type KnowledgeArticleStatus } from "@prisma/client";
 import { asInputJson } from "@/lib/core/prisma-json";
 import { prisma, hasDatabaseUrl } from "@/lib/core/database/prisma";
 import {
@@ -18,7 +18,11 @@ import type {
   KnowledgeSeoArticleRowDto,
   UpsertKnowledgeArticleInput
 } from "@/features/knowledge-center/knowledge-center.types";
-
+import { renderKnowledgeMarkdown } from "@/lib/knowledge/knowledge-markdown";
+import {
+  type KnowledgeSeoScores,
+  toPrismaKnowledgeSeoScoreFields
+} from "@/features/knowledge-center/knowledge-seo.heuristics";
 const articleInclude = {
   category: true,
   tags: { include: { tag: true } },
@@ -125,27 +129,34 @@ export class KnowledgeCenterRepository {
     const model = articleModel();
     if (!model) return [];
 
-    const rows = await model.findMany({
-      where: {
-        deletedAt: null,
-        ...(filters?.status ? { status: filters.status as KnowledgeArticleStatus } : {}),
-        ...(filters?.category
-          ? { category: { slug: filters.category } }
-          : {}),
-        ...(filters?.q
-          ? {
-              OR: [
-                { slug: { contains: filters.q, mode: "insensitive" } },
-                { translations: { some: { title: { contains: filters.q, mode: "insensitive" } } } }
-              ]
-            }
-          : {})
-      },
-      include: articleInclude,
-      orderBy: { updatedAt: "desc" }
-    });
+    return withKnowledgeTableFallback([], async () => {
+      const statusFilter =
+        filters?.status && filters.status !== "ALL"
+          ? (filters.status as KnowledgeArticleStatus)
+          : undefined;
 
-    return rows.map((row) => toArticleListItemDto(row, filters?.language));
+      const rows = await model.findMany({
+        where: {
+          deletedAt: null,
+          ...(statusFilter ? { status: statusFilter } : {}),
+          ...(filters?.category
+            ? { category: { slug: filters.category } }
+            : {}),
+          ...(filters?.q
+            ? {
+                OR: [
+                  { slug: { contains: filters.q, mode: "insensitive" } },
+                  { translations: { some: { title: { contains: filters.q, mode: "insensitive" } } } }
+                ]
+              }
+            : {})
+        },
+        include: articleInclude,
+        orderBy: { updatedAt: "desc" }
+      });
+
+      return rows.map((row) => toArticleListItemDto(row, filters?.language));
+    });
   }
 
   async listSeoDashboardArticles(): Promise<KnowledgeSeoArticleRowDto[]> {
@@ -203,10 +214,10 @@ export class KnowledgeCenterRepository {
     return row ? toArticleDetailDto(row) : null;
   }
 
-  async isSlugTaken(slug: string, excludeArticleId?: string): Promise<boolean> {
+  async findActiveArticleIdBySlug(slug: string, excludeArticleId?: string): Promise<string | null> {
     const model = articleModel();
-    if (!model || !slug.trim()) return false;
-    return withKnowledgeTableFallback(false, async () => {
+    if (!model || !slug.trim()) return null;
+    return withKnowledgeTableFallback(null, async () => {
       const row = await model.findFirst({
         where: {
           slug,
@@ -215,8 +226,13 @@ export class KnowledgeCenterRepository {
         },
         select: { id: true }
       });
-      return Boolean(row);
+      return row?.id ?? null;
     });
+  }
+
+  async isSlugTaken(slug: string, excludeArticleId?: string): Promise<boolean> {
+    const existingArticleId = await this.findActiveArticleIdBySlug(slug, excludeArticleId);
+    return Boolean(existingArticleId);
   }
 
   async createArticle(data: Prisma.KnowledgeArticleCreateInput) {
@@ -235,6 +251,17 @@ export class KnowledgeCenterRepository {
     const model = articleModel();
     if (!model) return;
     await model.update({ where: { id }, data: { deletedAt: new Date(), status: "ARCHIVED" } });
+  }
+
+  async softDeleteMany(ids: string[]) {
+    const model = articleModel();
+    if (!model || !ids.length) return 0;
+    const uniqueIds = [...new Set(ids.filter(Boolean))];
+    const result = await model.updateMany({
+      where: { id: { in: uniqueIds }, deletedAt: null },
+      data: { deletedAt: new Date(), status: "ARCHIVED" }
+    });
+    return result.count;
   }
 
   async ensureAnalytics(articleId: string) {
@@ -270,21 +297,27 @@ export class KnowledgeCenterRepository {
     input: UpsertKnowledgeArticleInput,
     bundle: {
       readingTimeMinutes: number;
-      seoScores: {
-        seo_score: number;
-        readability_score: number;
-        ai_friendly_score: number;
-        google_score: number;
-        baidu_score: number;
-        internal_link_count: number;
-        external_link_count: number;
-      };
+      seoScores: KnowledgeSeoScores;
       searchText: string;
       jsonLd: Record<string, unknown>;
     }
   ) {
     const t = input.translation;
-    const translation = await prisma.knowledgeTranslation.upsert({
+    const htmlSource = t.body_html?.trim() || "";
+    const markdownSource = t.body_markdown?.trim() || "";
+    const bodyHtml = htmlSource
+      ? htmlSource
+      : markdownSource.includes("<")
+        ? markdownSource
+        : markdownSource
+          ? renderKnowledgeMarkdown(markdownSource)
+          : "";
+    const bodyMarkdown = markdownSource || bodyHtml.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+
+    const seoMetrics = toPrismaKnowledgeSeoScoreFields(bundle.seoScores);
+
+    return prisma.$transaction(async (tx) => {
+      const translation = await tx.knowledgeTranslation.upsert({
       where: {
         articleId_languageCode: {
           articleId,
@@ -296,7 +329,8 @@ export class KnowledgeCenterRepository {
         languageCode: t.language_code,
         title: t.title.trim(),
         subtitle: t.subtitle?.trim() || null,
-        bodyMarkdown: t.body_markdown,
+        bodyMarkdown,
+        bodyHtml,
         excerpt: t.excerpt?.trim() || null,
         readingTimeMinutes: bundle.readingTimeMinutes,
         status: t.status ?? input.status ?? "DRAFT",
@@ -305,7 +339,8 @@ export class KnowledgeCenterRepository {
       update: {
         title: t.title.trim(),
         subtitle: t.subtitle?.trim() || null,
-        bodyMarkdown: t.body_markdown,
+        bodyMarkdown,
+        bodyHtml,
         excerpt: t.excerpt?.trim() || null,
         readingTimeMinutes: bundle.readingTimeMinutes,
         status: t.status ?? input.status,
@@ -313,7 +348,7 @@ export class KnowledgeCenterRepository {
       }
     });
 
-    await prisma.knowledgeSeo.upsert({
+    await tx.knowledgeSeo.upsert({
       where: { translationId: translation.id },
       create: {
         translationId: translation.id,
@@ -325,7 +360,13 @@ export class KnowledgeCenterRepository {
         ogDescription: t.seo?.og_description?.trim() || t.seo?.meta_description?.trim() || null,
         ogImageUrl: t.seo?.og_image_url?.trim() || input.cover_image_url?.trim() || null,
         twitterCard: t.seo?.twitter_card ?? "summary_large_image",
-        ...bundle.seoScores
+        seoScore: seoMetrics.seoScore,
+        readabilityScore: seoMetrics.readabilityScore,
+        aiFriendlyScore: seoMetrics.aiFriendlyScore,
+        googleScore: seoMetrics.googleScore,
+        baiduScore: seoMetrics.baiduScore,
+        internalLinkCount: seoMetrics.internalLinkCount,
+        externalLinkCount: seoMetrics.externalLinkCount
       },
       update: {
         seoTitle: t.seo?.seo_title?.trim() || t.title.trim(),
@@ -336,13 +377,19 @@ export class KnowledgeCenterRepository {
         ogDescription: t.seo?.og_description?.trim() || t.seo?.meta_description?.trim() || null,
         ogImageUrl: t.seo?.og_image_url?.trim() || input.cover_image_url?.trim() || null,
         twitterCard: t.seo?.twitter_card ?? "summary_large_image",
-        ...bundle.seoScores
+        seoScore: seoMetrics.seoScore,
+        readabilityScore: seoMetrics.readabilityScore,
+        aiFriendlyScore: seoMetrics.aiFriendlyScore,
+        googleScore: seoMetrics.googleScore,
+        baiduScore: seoMetrics.baiduScore,
+        internalLinkCount: seoMetrics.internalLinkCount,
+        externalLinkCount: seoMetrics.externalLinkCount
       }
     });
 
-    await prisma.knowledgeFaq.deleteMany({ where: { translationId: translation.id } });
+    await tx.knowledgeFaq.deleteMany({ where: { translationId: translation.id } });
     if (t.faqs?.length) {
-      await prisma.knowledgeFaq.createMany({
+      await tx.knowledgeFaq.createMany({
         data: t.faqs.map((faq, index) => ({
           translationId: translation.id,
           question: faq.question.trim(),
@@ -353,7 +400,7 @@ export class KnowledgeCenterRepository {
     }
 
     const lucien = t.lucien;
-    await prisma.knowledgeLucien.upsert({
+    await tx.knowledgeLucien.upsert({
       where: { translationId: translation.id },
       create: {
         translationId: translation.id,
@@ -388,7 +435,7 @@ export class KnowledgeCenterRepository {
       }
     });
 
-    await prisma.knowledgeSchema.upsert({
+    await tx.knowledgeSchema.upsert({
       where: { translationId: translation.id },
       create: {
         translationId: translation.id,
@@ -401,13 +448,14 @@ export class KnowledgeCenterRepository {
       }
     });
 
-    await prisma.knowledgeSearchIndex.upsert({
-      where: { translationId: translation.id },
-      create: { translationId: translation.id, searchText: bundle.searchText },
-      update: { searchText: bundle.searchText }
-    });
+      await tx.knowledgeSearchIndex.upsert({
+        where: { translationId: translation.id },
+        create: { translationId: translation.id, searchText: bundle.searchText },
+        update: { searchText: bundle.searchText }
+      });
 
-    return translation.id;
+      return translation.id;
+    });
   }
 
   async resolveCategoryAndTagsForCreate(input: UpsertKnowledgeArticleInput) {
@@ -427,6 +475,7 @@ export class KnowledgeCenterRepository {
       model.findMany({
         where: {
           deletedAt: null,
+          visibility: "PUBLIC",
           translations: {
             some: {
               languageCode,
@@ -448,6 +497,7 @@ export class KnowledgeCenterRepository {
       model.findMany({
         where: {
           deletedAt: null,
+          visibility: "PUBLIC",
           category: { slug: categorySlug },
           translations: { some: { languageCode, status: "PUBLISHED" } }
         },
@@ -468,7 +518,8 @@ export class KnowledgeCenterRepository {
           where: {
             deletedAt: null,
             categoryId: category.id,
-            translations: { some: { languageCode, status: "PUBLISHED" } }
+            translations: { some: { languageCode, status: "PUBLISHED" } },
+            visibility: "PUBLIC"
           }
         });
         if (count > 0) {
@@ -484,16 +535,22 @@ export class KnowledgeCenterRepository {
     if (!q || !this.isAvailable()) return [];
 
     return withKnowledgeTableFallback([], async () => {
-      const indexes = await prisma.knowledgeSearchIndex.findMany({
-        where: {
-          searchText: { contains: q, mode: "insensitive" },
-          translation: { languageCode, status: "PUBLISHED", article: { deletedAt: null } }
-        },
-        select: { translation: { select: { articleId: true } } },
-        take: limit * 2
-      });
+      const indexRows = await prisma.$queryRaw<Array<{ article_id: string }>>(
+        Prisma.sql`
+          SELECT DISTINCT t.article_id
+          FROM knowledge_search_indexes ksi
+          INNER JOIN knowledge_translations t ON t.id = ksi.translation_id
+          INNER JOIN knowledge_articles a ON a.id = t.article_id
+          WHERE t.language_code = ${languageCode}
+            AND t.status = CAST('PUBLISHED' AS "KnowledgeArticleStatus")
+            AND a.deleted_at IS NULL
+            AND a.visibility = 'PUBLIC'
+            AND to_tsvector('simple', coalesce(ksi.search_text, '')) @@ plainto_tsquery('simple', ${q})
+          LIMIT ${limit * 2}
+        `
+      );
 
-      const articleIds = [...new Set(indexes.map((row) => row.translation.articleId))].slice(0, limit);
+      const articleIds = [...new Set(indexRows.map((row) => row.article_id))].slice(0, limit);
       if (!articleIds.length) return [];
 
       const model = articleModel();
@@ -516,6 +573,7 @@ export class KnowledgeCenterRepository {
         where: {
           slug,
           deletedAt: null,
+          visibility: "PUBLIC",
           translations: {
             some: {
               languageCode,
@@ -617,52 +675,90 @@ export class KnowledgeCenterRepository {
       };
     }
 
-    const [articles, published, draft, languages, lucienIndexed, analytics, seoAvg, googleReady, baiduReady, bingReady] =
-      await Promise.all([
-      prisma.knowledgeArticle.count({ where: { deletedAt: null } }),
-      prisma.knowledgeTranslation.count({ where: { status: "PUBLISHED" } }),
-      prisma.knowledgeTranslation.count({ where: { status: "DRAFT" } }),
-      prisma.knowledgeTranslation.groupBy({ by: ["languageCode"] }),
-      prisma.knowledgeLucien.count({ where: { lucienIndexed: true } }),
-      prisma.knowledgeAnalytics.aggregate({ _sum: { monthlyViews: true, viewCount: true } }),
-      prisma.knowledgeSeo.aggregate({ _avg: { seoScore: true } }),
-      prisma.knowledgeTranslation.count({
-        where: {
-          status: "PUBLISHED",
-          article: { deletedAt: null },
-          seo: { googleScore: { gte: 60 } },
-          ...knowledgeTranslationWithJsonLdWhere
-        }
-      }),
-      prisma.knowledgeTranslation.count({
-        where: {
-          status: "PUBLISHED",
-          article: { deletedAt: null },
-          seo: { baiduScore: { gte: 55 } }
-        }
-      }),
-      prisma.knowledgeTranslation.count({
-        where: {
-          status: "PUBLISHED",
-          article: { deletedAt: null },
-          seo: { seoScore: { gte: 65 } },
-          ...knowledgeTranslationWithJsonLdWhere
-        }
-      })
-    ]);
+    return withKnowledgeTableFallback(
+      {
+        articles: 0,
+        published: 0,
+        draft: 0,
+        languages: 0,
+        lucien_indexed: 0,
+        google_indexed: 0,
+        baidu_indexed: 0,
+        bing_indexed: 0,
+        avg_seo: 0,
+        monthly_views: 0
+      },
+      async () => {
+        const notDeleted = { deletedAt: null } as const;
+        const [
+          articles,
+          published,
+          draft,
+          languages,
+          lucienIndexed,
+          analytics,
+          seoAvg,
+          googleReady,
+          baiduReady,
+          bingReady
+        ] = await Promise.all([
+          prisma.knowledgeArticle.count({ where: notDeleted }),
+          prisma.knowledgeArticle.count({ where: { ...notDeleted, status: "PUBLISHED" } }),
+          prisma.knowledgeArticle.count({ where: { ...notDeleted, status: "DRAFT" } }),
+          prisma.knowledgeTranslation.groupBy({
+            by: ["languageCode"],
+            where: { article: notDeleted }
+          }),
+          prisma.knowledgeLucien.count({
+            where: { lucienIndexed: true, translation: { article: notDeleted } }
+          }),
+          prisma.knowledgeAnalytics.aggregate({
+            _sum: { monthlyViews: true, viewCount: true },
+            where: { article: notDeleted }
+          }),
+          prisma.knowledgeSeo.aggregate({
+            _avg: { seoScore: true },
+            where: { translation: { article: notDeleted } }
+          }),
+          prisma.knowledgeTranslation.count({
+            where: {
+              status: "PUBLISHED",
+              article: notDeleted,
+              seo: { googleScore: { gte: 60 } },
+              ...knowledgeTranslationWithJsonLdWhere
+            }
+          }),
+          prisma.knowledgeTranslation.count({
+            where: {
+              status: "PUBLISHED",
+              article: notDeleted,
+              seo: { baiduScore: { gte: 55 } }
+            }
+          }),
+          prisma.knowledgeTranslation.count({
+            where: {
+              status: "PUBLISHED",
+              article: notDeleted,
+              seo: { seoScore: { gte: 65 } },
+              ...knowledgeTranslationWithJsonLdWhere
+            }
+          })
+        ]);
 
-    return {
-      articles,
-      published,
-      draft,
-      languages: languages.length,
-      lucien_indexed: lucienIndexed,
-      google_indexed: googleReady,
-      baidu_indexed: baiduReady,
-      bing_indexed: bingReady,
-      avg_seo: Math.round(seoAvg._avg.seoScore ?? 0),
-      monthly_views: analytics._sum.monthlyViews ?? 0
-    };
+        return {
+          articles,
+          published,
+          draft,
+          languages: languages.length,
+          lucien_indexed: lucienIndexed,
+          google_indexed: googleReady,
+          baidu_indexed: baiduReady,
+          bing_indexed: bingReady,
+          avg_seo: Math.round(seoAvg._avg.seoScore ?? 0),
+          monthly_views: analytics._sum.monthlyViews ?? 0
+        };
+      }
+    );
   }
 
   async getCitationGaps(): Promise<KnowledgeCitationGapDto[]> {

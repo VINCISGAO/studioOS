@@ -2508,6 +2508,7 @@ model KnowledgeArticle {
   authorName    String                 @default("VINCIS") @map("author_name")
   categoryId    String?                @map("category_id")
   coverImageUrl String?                @map("cover_image_url")
+  visibility    String                 @default("PUBLIC")
   publishedAt   DateTime?              @map("published_at")
   scheduledAt   DateTime?              @map("scheduled_at")
   timezone      String                 @default("UTC")
@@ -2545,6 +2546,7 @@ model KnowledgeTranslation {
   title              String
   subtitle           String?
   bodyMarkdown       String                 @map("body_markdown")
+  bodyHtml           String                 @default("") @map("body_html")
   excerpt            String?
   readingTimeMinutes Int                    @default(5) @map("reading_time_minutes")
   status             KnowledgeArticleStatus @default(DRAFT)
@@ -2707,6 +2709,5 @@ model KnowledgeSearchIndex {
   updatedAt     DateTime             @updatedAt @map("updated_at")
   translation   KnowledgeTranslation @relation(fields: [translationId], references: [id], onDelete: Cascade)
 
-  @@index([searchText])
   @@map("knowledge_search_indexes")
 }

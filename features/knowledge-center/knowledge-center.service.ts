@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { KnowledgeArticleStatus } from "@prisma/client";
+import { toArticleListItemDto } from "@/features/knowledge-center/knowledge-center.mappers";
 import {
   buildKnowledgeArticlePath,
   knowledgePathPrefixForCode
@@ -18,10 +19,12 @@ import {
   knowledgeAlternatesToMetadataLanguages
 } from "@/features/knowledge-center/knowledge-hreflang";
 import { enrichPublicKnowledgeArticle } from "@/features/knowledge-center/knowledge-article-enrichment";
+import { toAdminPreviewArticle } from "@/features/knowledge-center/knowledge-admin-preview.mapper";
 import { checkKnowledgeSlugAvailability } from "@/features/knowledge-center/knowledge-slug.service";
 import { knowledgeSeoDashboardService } from "@/features/knowledge-center/knowledge-seo-dashboard.service";
 import { runKnowledgePublishPipeline, type KnowledgeSaveResult } from "@/features/knowledge-center/knowledge-publish.pipeline";
 import { syncKnowledgeArticleTranslations } from "@/features/knowledge-center/knowledge-multilingual-publish.service";
+import { logger } from "@/lib/core/logger";
 import type {
   KnowledgeArticleDetailDto,
   KnowledgeArticleListItemDto,
@@ -31,18 +34,21 @@ import type {
   PublicKnowledgeArticleDto,
   UpsertKnowledgeArticleInput
 } from "@/features/knowledge-center/knowledge-center.types";
+import type { KnowledgeMultilingualBackgroundJob } from "@/features/knowledge-center/knowledge-publish.pipeline";
 import { appError } from "@/lib/core/errors";
+import { aiGatewayService } from "@/features/ai/ai-gateway.service";
 
 const ORIGIN = "https://vincis.app";
 
 function buildSearchText(input: UpsertKnowledgeArticleInput) {
   const t = input.translation;
+  const bodyPlain = (t.body_html || t.body_markdown || "").replace(/<[^>]+>/g, " ");
   return [
     t.title,
     t.subtitle,
     t.excerpt,
     t.seo?.meta_description,
-    t.body_markdown.slice(0, 3000),
+    bodyPlain,
     ...(t.seo?.keywords ?? []),
     ...(t.lucien?.ai_keywords ?? []),
     ...(input.tags ?? [])
@@ -89,32 +95,51 @@ export class KnowledgeCenterService {
   async create(input: UpsertKnowledgeArticleInput): Promise<KnowledgeSaveResult> {
     await this.ensureSeeds();
     const slug = (input.slug?.trim() || slugifyKnowledgeTitle(input.title)).replace(/^\/+|\/+$/g, "");
+
+    const existingDraft = await knowledgeCenterRepository.getBySlug(slug);
+    if (existingDraft && (existingDraft.status === "DRAFT" || existingDraft.status === "REVIEW")) {
+      return this.update(existingDraft.id, input);
+    }
+
     await this.assertSlugAvailable(slug);
     const categoryId = await knowledgeCenterRepository.resolveCategoryAndTagsForCreate(input);
 
-    const article = await knowledgeCenterRepository.createArticle({
-      slug,
-      status: this.resolvePublishStatus(input, "DRAFT"),
-      authorName: input.author_name?.trim() || "VINCIS",
-      coverImageUrl: input.cover_image_url?.trim() || null,
-      scheduledAt: input.scheduled_at ? new Date(input.scheduled_at) : null,
-      timezone: input.timezone ?? "UTC",
-      category: categoryId ? { connect: { id: categoryId } } : undefined,
-      publishedAt: this.isPublishIntent(input) ? new Date() : null
-    });
+    let article: Awaited<ReturnType<typeof knowledgeCenterRepository.createArticle>> = null;
+    try {
+      article = await knowledgeCenterRepository.createArticle({
+        slug,
+        status: this.resolvePublishStatus(input, "DRAFT"),
+        authorName: input.author_name?.trim() || "VINCIS",
+        coverImageUrl: input.cover_image_url?.trim() || null,
+        visibility: input.visibility ?? "PUBLIC",
+        scheduledAt: input.scheduled_at ? new Date(input.scheduled_at) : null,
+        timezone: input.timezone ?? "UTC",
+        category: categoryId ? { connect: { id: categoryId } } : undefined,
+        publishedAt: this.isPublishIntent(input) ? new Date() : null
+      });
 
-    if (!article) return { article: null };
+      if (!article) return { article: null };
 
-    await knowledgeCenterRepository.ensureAnalytics(article.id);
-    await knowledgeCenterRepository.resolveCategoryAndTags(article.id, input);
-    await this.persistTranslation(article.id, slug, input);
+      await knowledgeCenterRepository.ensureAnalytics(article.id);
+      await knowledgeCenterRepository.resolveCategoryAndTags(article.id, input);
+      await this.persistTranslation(article.id, slug, input);
 
-    if (!this.isPublishIntent(input)) {
-      const detail = await knowledgeCenterRepository.getById(article.id);
-      return detail ? { article: detail } : { article: null };
+      if (!this.isPublishIntent(input)) {
+        const detail = await knowledgeCenterRepository.getById(article.id);
+        return detail ? { article: detail } : { article: null };
+      }
+
+      return this.finishMultilingualPublish(article.id, slug, input);
+    } catch (error) {
+      if (article?.id) {
+        try {
+          await knowledgeCenterRepository.softDelete(article.id);
+        } catch {
+          // Best-effort rollback so a failed create does not block the slug forever.
+        }
+      }
+      throw error;
     }
-
-    return this.finishMultilingualPublish(article.id, slug, input);
   }
 
   async update(id: string, input: UpsertKnowledgeArticleInput): Promise<KnowledgeSaveResult> {
@@ -129,11 +154,14 @@ export class KnowledgeCenterService {
 
     const nextStatus = this.resolvePublishStatus(input, existing.status);
 
+    await this.persistTranslation(id, slug, { ...input, status: nextStatus }, existing.author_name);
+
     await knowledgeCenterRepository.updateArticle(id, {
       slug,
       status: nextStatus,
       authorName: input.author_name?.trim() || existing.author_name,
       coverImageUrl: input.cover_image_url?.trim() || existing.cover_image_url,
+      visibility: input.visibility ?? existing.visibility ?? "PUBLIC",
       scheduledAt: input.scheduled_at ? new Date(input.scheduled_at) : undefined,
       timezone: input.timezone ?? existing.timezone,
       category: categoryId ? { connect: { id: categoryId } } : { disconnect: true },
@@ -144,8 +172,6 @@ export class KnowledgeCenterService {
             : new Date()
           : undefined
     });
-
-    await this.persistTranslation(id, slug, { ...input, status: nextStatus }, existing.author_name);
 
     if (nextStatus !== "PUBLISHED") {
       const detail = await knowledgeCenterRepository.getById(id);
@@ -172,6 +198,7 @@ export class KnowledgeCenterService {
         language_code: translation.language_code,
         title: translation.title,
         subtitle: translation.subtitle ?? undefined,
+        body_html: translation.body_html,
         body_markdown: translation.body_markdown,
         excerpt: translation.excerpt ?? undefined,
         status: "PUBLISHED",
@@ -212,6 +239,14 @@ export class KnowledgeCenterService {
     await knowledgeCenterRepository.softDelete(id);
   }
 
+  async deleteMany(ids: string[]) {
+    const uniqueIds = [...new Set(ids.filter(Boolean))];
+    for (const id of uniqueIds) {
+      await this.delete(id);
+    }
+    return uniqueIds.length;
+  }
+
   async syncLucien(articleId: string) {
     const detail = await knowledgeCenterRepository.getById(articleId);
     if (!detail) return { synced: 0 };
@@ -221,19 +256,7 @@ export class KnowledgeCenterService {
 
   async listPublishedByCategory(languageCode: string, categorySlug: string): Promise<KnowledgeArticleListItemDto[]> {
     const rows = await knowledgeCenterRepository.listPublishedByCategory(languageCode, categorySlug);
-    return rows.map((row) => ({
-      id: row.id,
-      slug: row.slug,
-      title: row.translations.find((t) => t.languageCode === languageCode)?.title ?? row.slug,
-      category: row.category?.name ?? "",
-      status: "PUBLISHED" as KnowledgeArticleStatus,
-      language_code: languageCode,
-      author_name: row.authorName,
-      updated_at: row.updatedAt.toISOString(),
-      seo_score: row.translations.find((t) => t.languageCode === languageCode)?.seo?.seoScore ?? 0,
-      lucien_indexed: row.translations.find((t) => t.languageCode === languageCode)?.lucien?.lucienIndexed ?? false,
-      view_count: row.analytics?.viewCount ?? 0
-    }));
+    return rows.map((row) => toArticleListItemDto(row, languageCode));
   }
 
   async searchPublic(query: string, languageCode: string, limit = 20) {
@@ -246,19 +269,7 @@ export class KnowledgeCenterService {
 
   async listPublishedPublic(languageCode: string): Promise<KnowledgeArticleListItemDto[]> {
     const rows = await knowledgeCenterRepository.listPublished(languageCode);
-    return rows.map((row) => ({
-      id: row.id,
-      slug: row.slug,
-      title: row.translations.find((t) => t.languageCode === languageCode)?.title ?? row.slug,
-      category: row.category?.name ?? "",
-      status: "PUBLISHED",
-      language_code: languageCode,
-      author_name: row.authorName,
-      updated_at: row.updatedAt.toISOString(),
-      seo_score: row.translations.find((t) => t.languageCode === languageCode)?.seo?.seoScore ?? 0,
-      lucien_indexed: row.translations.find((t) => t.languageCode === languageCode)?.lucien?.lucienIndexed ?? false,
-      view_count: row.analytics?.viewCount ?? 0
-    }));
+    return rows.map((row) => toArticleListItemDto(row, languageCode));
   }
 
   async listPublishedHomeCards(languageCode: string, limit = 12): Promise<KnowledgeHomeArticleCardDto[]> {
@@ -352,6 +363,7 @@ export class KnowledgeCenterService {
       path_prefix: pathPrefix,
       title: translation.title,
       subtitle: translation.subtitle,
+      body_html: translation.bodyHtml ?? "",
       body_markdown: translation.bodyMarkdown,
       excerpt: translation.excerpt,
       reading_time_minutes: translation.readingTimeMinutes,
@@ -393,8 +405,68 @@ export class KnowledgeCenterService {
     });
   }
 
+  async getAdminPreviewArticle(articleId: string, languageCode?: string) {
+    const detail = await knowledgeCenterRepository.getById(articleId);
+    if (!detail) return null;
+    return toAdminPreviewArticle(detail, languageCode);
+  }
+
   async recordFeedback(articleId: string, helpful: boolean) {
     await knowledgeCenterRepository.recordFeedback(articleId, helpful);
+  }
+
+  /** Runs GPT multilingual sync after the publish HTTP response has returned. */
+  async runBackgroundMultilingualSync(job: KnowledgeMultilingualBackgroundJob) {
+    if (!aiGatewayService.isConfigured()) {
+      logger.info("knowledge.multilingual_background.skipped", {
+        service: "KnowledgeCenterService",
+        articleId: job.articleId,
+        reason: "openai_not_configured"
+      });
+      return;
+    }
+
+    const publishInput: UpsertKnowledgeArticleInput = {
+      ...job.input,
+      status: "PUBLISHED",
+      translation: {
+        ...job.input.translation,
+        status: "PUBLISHED"
+      }
+    };
+
+    logger.info("knowledge.multilingual_background.started", {
+      service: "KnowledgeCenterService",
+      articleId: job.articleId,
+      slug: job.slug,
+      sourceLanguage: publishInput.translation.language_code
+    });
+
+    try {
+      const multilingual = await syncKnowledgeArticleTranslations({
+        base: publishInput,
+        persist: async (payload) =>
+          this.persistTranslation(job.articleId, job.slug, payload, job.authorName)
+      });
+
+      const detail = await knowledgeCenterRepository.getById(job.articleId);
+      if (detail) {
+        await runKnowledgePublishPipeline(detail, multilingual);
+      }
+
+      logger.info("knowledge.multilingual_background.completed", {
+        service: "KnowledgeCenterService",
+        articleId: job.articleId,
+        translationsSynced: multilingual.translations_synced,
+        errors: multilingual.errors.length
+      });
+    } catch (error) {
+      logger.error("knowledge.multilingual_background.failed", {
+        service: "KnowledgeCenterService",
+        articleId: job.articleId,
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
   }
 
   private async finishMultilingualPublish(
@@ -412,16 +484,61 @@ export class KnowledgeCenterService {
       }
     };
 
-    const multilingual = await syncKnowledgeArticleTranslations({
-      base: publishInput,
-      persist: async (payload) => this.persistTranslation(articleId, slug, payload, authorName)
-    });
+    const sourceCode = publishInput.translation.language_code;
+    const multilingual = {
+      translations_synced: 1,
+      translation_languages: [sourceCode],
+      errors: [] as string[]
+    };
 
     const detail = await knowledgeCenterRepository.getById(articleId);
     if (!detail) return { article: null };
 
-    const pipeline = await runKnowledgePublishPipeline(detail, multilingual);
-    return { article: detail, pipeline };
+    try {
+      const pipeline = await runKnowledgePublishPipeline(detail, multilingual);
+      return {
+        article: detail,
+        pipeline: {
+          ...pipeline,
+          multilingual_sync_queued: aiGatewayService.isConfigured()
+        },
+        queueMultilingualSync: aiGatewayService.isConfigured()
+          ? {
+              articleId,
+              slug,
+              input: publishInput,
+              authorName
+            }
+          : undefined
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      logger.error("knowledge.publish_pipeline.failed", {
+        service: "KnowledgeCenterService",
+        articleId,
+        slug,
+        error: message
+      });
+      return {
+        article: detail,
+        pipeline: {
+          published: true,
+          steps: [],
+          lucien_synced: 0,
+          public_urls: [],
+          multilingual_sync_queued: aiGatewayService.isConfigured(),
+          translation_errors: [message]
+        },
+        queueMultilingualSync: aiGatewayService.isConfigured()
+          ? {
+              articleId,
+              slug,
+              input: publishInput,
+              authorName
+            }
+          : undefined
+      };
+    }
   }
 
   private async persistTranslation(
@@ -431,8 +548,19 @@ export class KnowledgeCenterService {
     authorName = "VINCIS"
   ) {
     const t = input.translation;
-    const seoScores = computeKnowledgeSeoScores({ translation: t, seo: t.seo });
-    const readingTimeMinutes = estimateReadingTimeMinutes(t.body_markdown);
+    const bodyForScores = t.body_html?.trim() || t.body_markdown;
+    const seoScores = computeKnowledgeSeoScores({
+      translation: {
+        title: t.title,
+        subtitle: t.subtitle,
+        body_markdown: bodyForScores,
+        excerpt: t.excerpt
+      },
+      seo: t.seo
+    });
+    const readingTimeMinutes = estimateReadingTimeMinutes(
+      t.body_html ? t.body_html.replace(/<[^>]+>/g, " ") : t.body_markdown
+    );
     const pathPrefix = knowledgePathPrefixForCode(t.language_code);
     const canonical = t.seo?.canonical_url?.trim() || `${ORIGIN}${buildKnowledgeArticlePath(pathPrefix, slug)}`;
     const article = await knowledgeCenterRepository.getById(articleId);
@@ -461,16 +589,20 @@ export class KnowledgeCenterService {
     });
 
     const revisionCount = await knowledgeCenterRepository.countRevisions(translationId);
-    await knowledgeCenterRepository.saveRevision({
-      translationId,
-      versionNumber: revisionCount + 1,
-      authorName: input.author_name?.trim() || authorName,
-      snapshot: {
-        slug,
-        status: input.status,
-        translation: t
-      }
-    });
+    try {
+      await knowledgeCenterRepository.saveRevision({
+        translationId,
+        versionNumber: revisionCount + 1,
+        authorName: input.author_name?.trim() || authorName,
+        snapshot: {
+          slug,
+          status: input.status,
+          translation: t
+        }
+      });
+    } catch {
+      // Revisions are audit-only; do not block save/publish.
+    }
   }
 
   private isPublishIntent(input: UpsertKnowledgeArticleInput) {
@@ -488,7 +620,9 @@ export class KnowledgeCenterService {
   private async assertSlugAvailable(slug: string, excludeArticleId?: string) {
     const result = await checkKnowledgeSlugAvailability({ slug, excludeArticleId });
     if (!result.available) {
-      throw appError("CONFLICT", result.reason ?? "Slug is not available.");
+      throw appError("CONFLICT", result.reason ?? "Slug is not available.", {
+        existing_article_id: result.existing_article_id
+      });
     }
   }
 }
