@@ -1,5 +1,6 @@
 import "server-only";
 
+import { revalidatePath } from "next/cache";
 import type { KnowledgeArticleStatus } from "@prisma/client";
 import { toArticleListItemDto } from "@/features/knowledge-center/knowledge-center.mappers";
 import {
@@ -37,6 +38,7 @@ import type {
 import type { KnowledgeMultilingualBackgroundJob } from "@/features/knowledge-center/knowledge-publish.pipeline";
 import { appError } from "@/lib/core/errors";
 import { aiGatewayService } from "@/features/ai/ai-gateway.service";
+import type { Locale } from "@/lib/i18n";
 
 const ORIGIN = "https://vincis.app";
 
@@ -71,8 +73,8 @@ export class KnowledgeCenterService {
     status?: string;
     language?: string;
     category?: string;
+    adminLocale?: Locale;
   }): Promise<KnowledgeArticleListItemDto[]> {
-    await this.ensureSeeds();
     return knowledgeCenterRepository.listAdmin(filters);
   }
 
@@ -162,7 +164,12 @@ export class KnowledgeCenterService {
       authorName: input.author_name?.trim() || existing.author_name,
       coverImageUrl: input.cover_image_url?.trim() || existing.cover_image_url,
       visibility: input.visibility ?? existing.visibility ?? "PUBLIC",
-      scheduledAt: input.scheduled_at ? new Date(input.scheduled_at) : undefined,
+      scheduledAt:
+        nextStatus === "PUBLISHED"
+          ? null
+          : input.scheduled_at
+            ? new Date(input.scheduled_at)
+            : undefined,
       timezone: input.timezone ?? existing.timezone,
       category: categoryId ? { connect: { id: categoryId } } : { disconnect: true },
       publishedAt:
@@ -405,10 +412,10 @@ export class KnowledgeCenterService {
     });
   }
 
-  async getAdminPreviewArticle(articleId: string, languageCode?: string) {
+  async getAdminPreviewArticle(articleId: string, languageCode?: string, adminLocale?: Locale) {
     const detail = await knowledgeCenterRepository.getById(articleId);
     if (!detail) return null;
-    return toAdminPreviewArticle(detail, languageCode);
+    return toAdminPreviewArticle(detail, languageCode, adminLocale);
   }
 
   async recordFeedback(articleId: string, helpful: boolean) {
@@ -519,6 +526,9 @@ export class KnowledgeCenterService {
         slug,
         error: message
       });
+      const pathPrefix = knowledgePathPrefixForCode(publishInput.translation.language_code);
+      revalidatePath(buildKnowledgeArticlePath(pathPrefix, slug));
+      revalidatePath(`/${pathPrefix}/resources`);
       return {
         article: detail,
         pipeline: {

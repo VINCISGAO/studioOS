@@ -18,6 +18,7 @@ import type {
   KnowledgeSeoArticleRowDto,
   UpsertKnowledgeArticleInput
 } from "@/features/knowledge-center/knowledge-center.types";
+import type { Locale } from "@/lib/i18n";
 import { renderKnowledgeMarkdown } from "@/lib/knowledge/knowledge-markdown";
 import {
   type KnowledgeSeoScores,
@@ -33,6 +34,21 @@ const articleInclude = {
       faqs: { orderBy: { sortOrder: "asc" } },
       lucien: true,
       schema: true
+    }
+  }
+} satisfies Prisma.KnowledgeArticleInclude;
+
+const articleAdminListInclude = {
+  category: true,
+  analytics: true,
+  translations: {
+    select: {
+      languageCode: true,
+      title: true,
+      status: true,
+      updatedAt: true,
+      seo: { select: { seoScore: true } },
+      lucien: { select: { lucienIndexed: true } }
     }
   }
 } satisfies Prisma.KnowledgeArticleInclude;
@@ -125,6 +141,7 @@ export class KnowledgeCenterRepository {
     status?: string;
     language?: string;
     category?: string;
+    adminLocale?: Locale;
   }): Promise<KnowledgeArticleListItemDto[]> {
     const model = articleModel();
     if (!model) return [];
@@ -135,12 +152,24 @@ export class KnowledgeCenterRepository {
           ? (filters.status as KnowledgeArticleStatus)
           : undefined;
 
+      const languageFilter =
+        filters?.language && filters.language !== "ALL"
+          ? filters.language === "zh-CN"
+            ? { startsWith: "zh" }
+            : filters.language.startsWith("en")
+              ? { startsWith: "en" }
+              : filters.language
+          : undefined;
+
       const rows = await model.findMany({
         where: {
           deletedAt: null,
           ...(statusFilter ? { status: statusFilter } : {}),
           ...(filters?.category
             ? { category: { slug: filters.category } }
+            : {}),
+          ...(languageFilter
+            ? { translations: { some: { languageCode: languageFilter } } }
             : {}),
           ...(filters?.q
             ? {
@@ -151,11 +180,13 @@ export class KnowledgeCenterRepository {
               }
             : {})
         },
-        include: articleInclude,
+        include: articleAdminListInclude,
         orderBy: { updatedAt: "desc" }
       });
 
-      return rows.map((row) => toArticleListItemDto(row, filters?.language));
+      return rows.map((row) =>
+        toArticleListItemDto(row as Parameters<typeof toArticleListItemDto>[0], filters?.language, filters?.adminLocale)
+      );
     });
   }
 
