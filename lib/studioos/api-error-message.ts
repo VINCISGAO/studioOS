@@ -37,9 +37,11 @@ export function extractApiErrorMessage(body: unknown, fallback: string, status?:
     if (body && typeof body === "object") {
       const record = body as ApiErrorBody;
       const errObj = record.error;
+      if (typeof errObj === "string" && errObj.trim()) return errObj.trim();
       if (errObj && typeof errObj === "object" && typeof errObj.message === "string" && errObj.message.trim()) {
         return errObj.message.trim();
       }
+      if (typeof record.message === "string" && record.message.trim()) return record.message.trim();
     }
     return `服务器错误 (${status})`;
   }

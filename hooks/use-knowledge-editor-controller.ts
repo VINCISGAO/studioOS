@@ -134,18 +134,26 @@ export function useKnowledgeEditorController(input: {
           body: JSON.stringify(buildPayload(state, publish)),
           credentials: "same-origin"
         });
-        const body = (await response.json().catch(() => ({}))) as {
+        const rawText = await response.text();
+        let body: {
           data?: { article?: KnowledgeArticleDetailDto; pipeline?: KnowledgePublishPipelineResult };
-          error?: { message?: string; code?: string; details?: { existing_article_id?: string } };
+          error?: { message?: string; code?: string; details?: { existing_article_id?: string; prismaCode?: string } } | string;
           message?: string;
           ok?: boolean;
-        };
-        return { response, body };
+        } = {};
+        if (rawText.trim()) {
+          try {
+            body = JSON.parse(rawText) as typeof body;
+          } catch {
+            body = { message: rawText.slice(0, 280) };
+          }
+        }
+        return { response, body, rawText };
       }
 
       try {
         const activeId = currentId;
-        const { response, body } = await requestSave(activeId);
+        const { response, body, rawText } = await requestSave(activeId);
 
         if (!response.ok) {
           const detail =
@@ -157,7 +165,13 @@ export function useKnowledgeEditorController(input: {
               : "";
           const message = extractApiErrorMessage(
             body,
-            zh ? "保存失败" : "Save failed",
+            zh
+              ? rawText.trim()
+                ? `保存失败（HTTP ${response.status}）`
+                : `服务器错误 (${response.status})`
+              : rawText.trim()
+                ? `Save failed (HTTP ${response.status})`
+                : `Server error (${response.status})`,
             response.status
           );
           const localized =

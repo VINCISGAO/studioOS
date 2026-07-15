@@ -46,11 +46,15 @@ export function handleRouteError(error: unknown) {
     const message =
       process.env.NODE_ENV !== "production"
         ? detail
-        : prismaCode === "P2002"
-          ? "Duplicate record — refresh and retry."
-          : prismaCode === "P2021" || prismaCode === "P2022"
-            ? `Database schema out of date (${prismaCode}). Run db:migrate:deploy.`
-            : detail.slice(0, 280) || "Internal server error";
+        : error.constructor.name === "PrismaClientValidationError"
+          ? error.message.includes("seo_score")
+            ? "Invalid SEO field mapping (seo_score → seoScore). Restart dev server after pulling latest code."
+            : detail.slice(0, 280) || "Internal server error"
+          : prismaCode === "P2002"
+            ? "Duplicate record — refresh and retry."
+            : prismaCode === "P2021" || prismaCode === "P2022"
+              ? `Database schema out of date (${prismaCode}). Run db:migrate:deploy.`
+              : detail.slice(0, 280) || "Internal server error";
     return apiError("SYSTEM_ERROR", message, 500, prismaCode ? { prismaCode } : undefined);
   }
 
