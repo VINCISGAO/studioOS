@@ -30,7 +30,15 @@ export { KNOWLEDGE_PUBLISH_STEPS, KNOWLEDGE_PUBLISH_STEP_LABELS, formatKnowledge
 export type KnowledgeSaveResult = {
   article: KnowledgeArticleDetailDto | null;
   pipeline?: KnowledgePublishPipelineResult;
+  /** Deferred to `after()` — avoids Vercel function timeout on publish HTTP response. */
+  queuePublishPipeline?: KnowledgePublishPipelineBackgroundJob;
   queueMultilingualSync?: KnowledgeMultilingualBackgroundJob;
+};
+
+export type KnowledgePublishPipelineBackgroundJob = {
+  articleId: string;
+  slug: string;
+  sourceLanguage: string;
 };
 
 export type KnowledgeMultilingualBackgroundJob = {

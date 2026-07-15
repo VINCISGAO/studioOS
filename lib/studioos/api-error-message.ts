@@ -13,6 +13,28 @@ function readNestedErrorMessage(error: ApiErrorBody["error"]) {
   return "";
 }
 
+function looksLikeHtmlErrorPage(text: string) {
+  const trimmed = text.trim();
+  return (
+    trimmed.startsWith("<!DOCTYPE") ||
+    trimmed.startsWith("<html") ||
+    (trimmed.includes("<title") && trimmed.includes("Internal Server Error"))
+  );
+}
+
+/** Strip HTML error pages and oversized payloads into a short user-facing message. */
+export function sanitizeApiResponseText(text: string, status?: number) {
+  const trimmed = text.trim();
+  if (!trimmed) return "";
+  if (looksLikeHtmlErrorPage(trimmed)) {
+    if (status && status >= 500) {
+      return "服务器内部错误（API 返回了 HTML 错误页）。文章可能已保存，请刷新列表确认；若未出现请稍后重试或联系支持。";
+    }
+    return "请求失败（服务器返回了 HTML 错误页）";
+  }
+  return trimmed.slice(0, 280);
+}
+
 /** Normalize API / middleware JSON errors into a user-visible message. */
 export function extractApiErrorMessage(body: unknown, fallback: string, status?: number) {
   if (body && typeof body === "object") {

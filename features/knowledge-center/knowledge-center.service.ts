@@ -503,63 +503,35 @@ export class KnowledgeCenterService {
     };
 
     const sourceCode = publishInput.translation.language_code;
-    const multilingual = {
-      translations_synced: 1,
-      translation_languages: [sourceCode],
-      errors: [] as string[]
-    };
-
     const detail = await knowledgeCenterRepository.getById(articleId);
     if (!detail) return { article: null };
 
-    try {
-      const pipeline = await runKnowledgePublishPipeline(detail, multilingual);
-      return {
-        article: detail,
-        pipeline: {
-          ...pipeline,
-          multilingual_sync_queued: aiGatewayService.isConfigured()
-        },
-        queueMultilingualSync: aiGatewayService.isConfigured()
-          ? {
-              articleId,
-              slug,
-              input: publishInput,
-              authorName
-            }
-          : undefined
-      };
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      logger.error("knowledge.publish_pipeline.failed", {
-        service: "KnowledgeCenterService",
+    const pathPrefix = knowledgePathPrefixForCode(sourceCode);
+    const publicUrl = buildKnowledgeArticlePath(pathPrefix, slug);
+
+    return {
+      article: detail,
+      pipeline: {
+        published: true,
+        steps: [],
+        lucien_synced: 0,
+        public_urls: [publicUrl],
+        multilingual_sync_queued: aiGatewayService.isConfigured()
+      },
+      queuePublishPipeline: {
         articleId,
         slug,
-        error: message
-      });
-      const pathPrefix = knowledgePathPrefixForCode(publishInput.translation.language_code);
-      revalidatePath(buildKnowledgeArticlePath(pathPrefix, slug));
-      revalidatePath(buildKnowledgeIndexPath(pathPrefix));
-      return {
-        article: detail,
-        pipeline: {
-          published: true,
-          steps: [],
-          lucien_synced: 0,
-          public_urls: [],
-          multilingual_sync_queued: aiGatewayService.isConfigured(),
-          translation_errors: [message]
-        },
-        queueMultilingualSync: aiGatewayService.isConfigured()
-          ? {
-              articleId,
-              slug,
-              input: publishInput,
-              authorName
-            }
-          : undefined
-      };
-    }
+        sourceLanguage: sourceCode
+      },
+      queueMultilingualSync: aiGatewayService.isConfigured()
+        ? {
+            articleId,
+            slug,
+            input: publishInput,
+            authorName
+          }
+        : undefined
+    };
   }
 
   private async persistTranslation(

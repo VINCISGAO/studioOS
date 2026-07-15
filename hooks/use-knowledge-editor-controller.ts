@@ -4,7 +4,7 @@ import { useKnowledgeEditorToast } from "@/hooks/use-knowledge-editor-toast";
 import type { KnowledgeArticleDetailDto } from "@/features/knowledge-center/knowledge-center.types";
 import type { KnowledgePublishPipelineResult } from "@/features/knowledge-center/knowledge-publish.pipeline.shared";
 import { adminMutationHeaders, readAdminCsrfToken } from "@/lib/studioos/admin-csrf-client";
-import { extractApiErrorMessage } from "@/lib/studioos/api-error-message";
+import { extractApiErrorMessage, sanitizeApiResponseText } from "@/lib/studioos/api-error-message";
 import { adminPortalRoutes } from "@/lib/studioos/admin-portal-routes";
 import { buildKnowledgeEditorInitialForm, type KnowledgeEditorPanelForm } from "@/lib/knowledge/knowledge-editor-initial-form";
 import {
@@ -145,7 +145,7 @@ export function useKnowledgeEditorController(input: {
           try {
             body = JSON.parse(rawText) as typeof body;
           } catch {
-            body = { message: rawText.slice(0, 280) };
+            body = { message: sanitizeApiResponseText(rawText, response.status) };
           }
         }
         return { response, body, rawText };
