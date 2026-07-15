@@ -10,6 +10,9 @@ import { knowledgeCenterService } from "@/features/knowledge-center/knowledge-ce
 import { knowledgeCenterHomeCopy } from "@/lib/knowledge/knowledge-center-home-copy";
 import { toUiLocale } from "@/lib/app-language.shared";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 type Props = { params: Promise<{ lang: string; categorySlug: string }> };
 
 export default async function KnowledgeCategoryPage({ params }: Props) {

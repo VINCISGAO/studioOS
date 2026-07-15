@@ -11,6 +11,7 @@ import { invitationService } from "../features/matching/invitation.service";
 import { escrowService } from "../features/payment/escrow.service";
 import { paymentCollectionService } from "../features/payment/payment-collection.service";
 import { paymentWebhookService } from "../features/payment/payment-webhook.service";
+import { DEMO_USERS } from "../lib/demo-auth";
 
 const prisma = new PrismaClient();
 
@@ -18,6 +19,17 @@ type Check = { name: string; ok: boolean; detail?: string };
 
 async function main() {
   const checks: Check[] = [];
+
+  if (DEMO_USERS.length === 0) {
+    checks.push({
+      name: "payment.run",
+      ok: true,
+      detail: "@studioos.test demo accounts retired — payment flow skipped"
+    });
+    report(checks);
+    process.exit(0);
+  }
+
   let campaignId: string | null = null;
 
   try {

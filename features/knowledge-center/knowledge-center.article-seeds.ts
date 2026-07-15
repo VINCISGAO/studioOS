@@ -279,6 +279,10 @@ async function upsertSeedTranslation(
   });
 }
 
+/**
+ * Dev-only demo article seeds. Not invoked in production runtime — use `scripts/purge-knowledge-demo-articles.ts`
+ * if legacy demo rows need to be removed from a database.
+ */
 export async function ensureKnowledgeArticleSeeds() {
   const categoryId = await getAiCategoryId();
   if (!categoryId) return;

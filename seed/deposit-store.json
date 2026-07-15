@@ -1,20 +1,4 @@
 {
-  "creator_overlays": {
-    "creator_01": {
-      "deposit_status": "unpaid",
-      "deposit_amount": 99,
-      "paid_at": null
-    },
-    "creator_02": {
-      "deposit_status": "unpaid",
-      "deposit_amount": 99,
-      "paid_at": null
-    },
-    "creator_03": {
-      "deposit_status": "unpaid",
-      "deposit_amount": 99,
-      "paid_at": null
-    }
-  },
+  "creator_overlays": {},
   "payments": []
 }

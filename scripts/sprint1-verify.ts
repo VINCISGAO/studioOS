@@ -10,6 +10,8 @@ const prisma = new PrismaClient();
 
 type Check = { name: string; ok: boolean; detail?: string };
 
+const demoAuthRetired = DEMO_USERS.length === 0;
+
 async function main() {
   const checks: Check[] = [];
 
@@ -45,8 +47,12 @@ async function main() {
   });
   checks.push({
     name: "seed.brand",
-    ok: Boolean(brand?.passwordHash && brand.brandProfile),
-    detail: brand ? "Arc & Alloy ready" : "missing"
+    ok: demoAuthRetired ? true : Boolean(brand?.passwordHash && brand.brandProfile),
+    detail: demoAuthRetired
+      ? "@studioos.test brand retired (skipped)"
+      : brand
+        ? "Arc & Alloy ready"
+        : "missing"
   });
 
   const creator = await prisma.user.findUnique({
@@ -55,8 +61,12 @@ async function main() {
   });
   checks.push({
     name: "seed.creator",
-    ok: Boolean(creator?.passwordHash && creator.creatorProfile),
-    detail: creator ? "Nova ready" : "missing"
+    ok: demoAuthRetired ? true : Boolean(creator?.passwordHash && creator.creatorProfile),
+    detail: demoAuthRetired
+      ? "@studioos.test creator retired (skipped)"
+      : creator
+        ? "Nova ready"
+        : "missing"
   });
 
   const campaigns = await prisma.$queryRaw<{ id: string }[]>`
@@ -78,7 +88,6 @@ async function main() {
       : "optional demo campaign absent (OK after reset:demo-accounts)"
   });
 
-  const demoAuthRetired = DEMO_USERS.length === 0;
   const auth = await authService.authenticate("client.arc@studioos.test", DEMO_PASSWORD);
   checks.push({
     name: "auth.login",

@@ -1,10 +1,11 @@
 # Homepage Golden Baseline
 
-**Status:** Canonical anchor — **owner-locked 2026-07-11**  
-**Supersedes:** 2026-07-10 · commit `17a98b7`  
+**Status:** Canonical anchor — **owner-locked 2026-07-15**  
+**Supersedes:** 2026-07-11 · 2026-07-10 · commit `17a98b7`  
 **Tag / branch:** `homepage-v1` · `homepage-golden` (re-anchor via `npm run homepage:anchor` after owner approval)
 
-> **Owner rule (2026-07-11):** 没有项目 owner 在**当前对话**中的明确命令，**绝对不可以**改动首页栈的任何内容——包括文案、视频 URL、**手机 / iPad / 电脑版布局与响应式断点**、间距、动画、资产、导航交互、以及 `HomeHeroVideo` 播放组件。  
+> **Owner rule (2026-07-15):** 没有项目 owner 在**当前对话**中的明确命令，**绝对不可以**改动首页栈的任何内容——包括文案、视频 URL、**手机 / iPad / 电脑版布局与响应式断点**、间距、动画、资产、导航交互、以及 `HomeHeroVideo` 播放组件。  
+> **Agent rule:** See [`.cursor/rules/homepage-absolute-lock.mdc`](../.cursor/rules/homepage-absolute-lock.mdc). Verify: `npm run homepage:verify-lock`  
 > No agent and no engineer may change homepage stack files **without the project owner's explicit command in the current conversation.**
 
 ## Policy
@@ -62,20 +63,39 @@ Breakpoints follow Tailwind defaults: **mobile** `< sm`, **iPad** `md`–`lg` (b
 
 | Breakpoint | `background-size` | `background-position` |
 |------------|-------------------|-------------------------|
-| Mobile (default) | `auto 73%` | `center 80% 38%` |
-| iPad (`md`, below `lg`) | `auto 118%` (synced with desktop) | `center 77% 48%` |
-| Desktop (`lg`) | `auto 118%` | `center 77% 48%` |
+| Mobile (default) | `auto 109.5%` (73% × 1.5) | `80% 38%` |
+| iPad (`md`, below `lg`) | `auto 118%` (synced with desktop) | `77% 48%` |
+| Desktop (`lg`) | `auto 118%` | `77% 48%` |
 
-### Hero typography compact locales
+### Hero typography — mobile (all 11 locales unified, frozen 2026-07-15)
 
-Locales with **×0.8 mobile headline scale** only (`< md`): `vi`, `es`, `fr`, `ms`, `ja`, `en`. **iPad (`md+`) matches desktop.**
+**No per-locale compact scale on mobile.** All marketing locales share zh-CN mobile sizing:
 
-- **Latin desktop hero** (`en`, `es`, `fr`, `ms`, `vi`): from `md` — title cap `3.5rem`, subtitle `text-pretty`, title **exactly 2 lines** from `titleLine1` + `titleLine2`.
-- Legacy compact title set (`vi`, `es`, `fr`, `ms`): separate title scale path in `cinematic-hero.tsx`.
+| Element | Mobile (`< md`) |
+|---------|-----------------|
+| Eyebrow | `text-sm` |
+| Title | `text-[2.65rem]` (default) · **`ms` / `es` only:** `text-[2.385rem]` (×0.9) |
+| Subtitle | `text-[18.2px]` · `leading-[2.275rem]` (14px × 1.3) |
+| CTA title / desc | `14px` / `11px` |
+
+### Hero typography — iPad / desktop
+
+- **Latin desktop hero** (`en`, `es`, `fr`, `ms`, `vi`): from `md` — title cap `3.5rem` (**`ms` / `es`:** `3.15rem` ×0.9), subtitle `text-pretty`, title **exactly 2 lines** from `titleLine1` + `titleLine2`.
+- CJK / other locales: from `md` — title `4.667rem`.
+
+### Hero brand bar → video (mobile + iPad, frozen 2026-07-15)
+
+- Hero frame `padding-bottom: 0` below `lg`
+- Brand panel flush bottom (`max-lg:rounded-b-none`) into video
+- Video section shell `bg-zinc-950` below `lg` (no white load strip)
+
+### Hero typography compact locales (removed 2026-07-15)
+
+~~Locales with ×0.8 mobile headline scale~~ — **removed.** Do not reintroduce `COMPACT_HERO_LOCALES` or per-locale mobile hero sizing without owner command.
 
 ### Hero CTA buttons (`HeroCtaButton`)
 
-- Mobile (`< md`): compact sizing where applicable.
+- Mobile (`< md`): unified `14px` / `11px` (all locales).
 - **iPad + desktop (`md+`)**: full-size (`min-h-[6.35rem]`, desktop text/gap/padding).
 
 ### Mobile navigation (`CinematicNav` · `sm:hidden` only)

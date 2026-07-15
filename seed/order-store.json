@@ -2,10 +2,6 @@
   "quotes": [],
   "orders": [],
   "deliverables": [],
-  "dismissed_demo_ids": [
-    "ord_demo_arc_nova",
-    "ord_demo_nova_completed",
-    "ord_demo_nova_active",
-    "ord_demo_nova_first"
-  ]
+  "dismissed_demo_ids": [],
+  "deleted_order_ids": []
 }

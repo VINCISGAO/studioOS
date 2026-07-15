@@ -141,11 +141,33 @@
     }
   }
 
+  /** Mobile + iPad — brand bar sits flush on hero video (no white strip). */
+  @media (max-width: 1023.98px) {
+    .marketing-hero-shell {
+      margin-bottom: 0;
+    }
+
+    .marketing-hero-frame {
+      padding-bottom: 0 !important;
+    }
+
+    .marketing-hero-brands-mobile,
+    .marketing-hero-brands-wrap {
+      margin-bottom: 0;
+    }
+
+    .home-hero-video-section {
+      margin-top: 0;
+      padding-top: 0;
+    }
+  }
+
   /** Hero backdrop — golden baseline sizes; CSS background avoids img/object-fit drift. */
   .marketing-hero-backdrop {
     background-image: var(--hero-bg);
     background-repeat: no-repeat;
-    background-size: auto 73%;
+    /* Mobile: 73% × 1.5 — banner底图等比例放大 0.5 倍 */
+    background-size: auto 109.5%;
     background-position: 80% 38%;
   }
 
@@ -1381,7 +1403,7 @@
 }
 
 .prose-vincis hr {
-  margin-top: 2.5rem;
-  border: none;
-  border-top: 1px solid #e4e4e7;
+ margin-top: 2.5rem;
+ border: none;
+ border-top: 1px solid #e4e4e7;
 }

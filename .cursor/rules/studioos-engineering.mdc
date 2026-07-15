@@ -72,3 +72,4 @@ alwaysApply: true
 - 自动触发 AI 创意生成或在付款前消耗 AI token
 - 把 AI 创意草稿当成最终制作方向
 - 在真实 Campaign 中使用 demo fallback / placeholder shortlist 伪造邀约；测试账号必须是真实注册 creator account
+- **没有 owner 在当前对话明确命令，禁止改动首页栈**（`components/marketing/**`、`lib/marketing/**`、`app/page.tsx`、首页相关 `app/globals.css`）— 见 [homepage-absolute-lock.mdc](./homepage-absolute-lock.mdc) · `npm run homepage:verify-lock`

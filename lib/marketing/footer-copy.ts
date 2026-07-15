@@ -72,7 +72,7 @@ export const footerCopy: Record<MarketingLocale, FooterCopy> = {
   },
   "zh-CN": {
     rights: "保留所有权利。",
-    story: { lead: "每个伟大故事    都始于一次", highlight: "连接" },
+    story: { lead: "每个伟大故事 都始于一次", highlight: "连接" },
     nav: {
       product: {
         title: "产品",
@@ -101,7 +101,7 @@ export const footerCopy: Record<MarketingLocale, FooterCopy> = {
   },
   "zh-TW": {
     rights: "保留所有權利。",
-    story: { lead: "每個偉大故事    都始於一次", highlight: "連接" },
+    story: { lead: "每個偉大故事 都始於一次", highlight: "連接" },
     nav: {
       product: {
         title: "產品",

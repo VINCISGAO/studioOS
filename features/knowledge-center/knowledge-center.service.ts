@@ -6,6 +6,7 @@ import { toArticleListItemDto } from "@/features/knowledge-center/knowledge-cent
 import {
   buildKnowledgeArticlePath,
   buildKnowledgeIndexPath,
+  KNOWLEDGE_LANGUAGE_OPTIONS,
   knowledgePathPrefixForCode
 } from "@/features/knowledge-center/knowledge-center.constants";
 import { knowledgeCenterRepository } from "@/features/knowledge-center/knowledge-center.repository";
@@ -243,8 +244,13 @@ export class KnowledgeCenterService {
     if (!existing) return;
     for (const translation of existing.translations) {
       await knowledgeLucienSyncService.removeTranslationIndex(existing.slug, translation.language_code);
+      const pathPrefix = knowledgePathPrefixForCode(translation.language_code);
+      revalidatePath(buildKnowledgeArticlePath(pathPrefix, existing.slug));
     }
     await knowledgeCenterRepository.softDelete(id);
+    for (const lang of KNOWLEDGE_LANGUAGE_OPTIONS) {
+      revalidatePath(buildKnowledgeIndexPath(lang.pathPrefix));
+    }
   }
 
   async deleteMany(ids: string[]) {

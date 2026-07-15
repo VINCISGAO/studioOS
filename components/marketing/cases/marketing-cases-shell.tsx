@@ -20,7 +20,7 @@ export function MarketingCasesShell({
     <MarketingDocsLucienHost key={locale} locale={locale}>
       <div className="min-h-screen bg-[linear-gradient(180deg,#FAFAFA_0%,#F5F5F5_100%)]">
         <header className="border-b border-zinc-200/80 bg-white">
-          <div className="marketing-content-shell flex min-h-[4.25rem] items-center justify-between gap-3 py-3 sm:min-h-16">
+          <div className="marketing-content-shell flex min-h-[4.25rem] items-center justify-between gap-3 px-3 py-3 sm:min-h-16">
             <Link href={marketingHomeHref.home(locale)} className="flex min-w-0 items-center text-zinc-950">
               <BrandLogoLockup
                 contrastOn="light"

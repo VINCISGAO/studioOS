@@ -8,7 +8,10 @@ import {
   toArticleDetailDto,
   toArticleListItemDto
 } from "@/features/knowledge-center/knowledge-center.mappers";
-import { ensureKnowledgeArticleSeeds } from "@/features/knowledge-center/knowledge-center.article-seeds";
+import {
+  KNOWLEDGE_DEMO_ARTICLE_SLUGS,
+  knowledgePublicArticleWhere
+} from "@/features/knowledge-center/knowledge-public.filters";
 import { knowledgeTranslationWithJsonLdWhere } from "@/features/knowledge-center/knowledge-prisma.filters";
 import type {
   KnowledgeArticleDetailDto,
@@ -194,19 +197,6 @@ export class KnowledgeCenterRepository {
   async ensureSeeds() {
     if (!this.isAvailable()) return;
     await ensureDefaultCategories();
-    try {
-      await ensureKnowledgeArticleSeeds();
-    } catch (error) {
-      if (
-        typeof error === "object" &&
-        error !== null &&
-        "code" in error &&
-        (error as { code?: string }).code === "P2021"
-      ) {
-        return;
-      }
-      throw error;
-    }
   }
 
   async listAdmin(filters?: {
@@ -578,7 +568,7 @@ export class KnowledgeCenterRepository {
     return withKnowledgePublicReadFallback([], "listPublished", async () => {
       const visibilityFilter = await resolveArticleVisibilityFilter();
       return model.findMany({
-        where: {
+        where: knowledgePublicArticleWhere({
           deletedAt: null,
           ...visibilityFilter,
           translations: {
@@ -587,7 +577,7 @@ export class KnowledgeCenterRepository {
               status: "PUBLISHED"
             }
           }
-        },
+        }),
         include: articleInclude,
         orderBy: { publishedAt: "desc" },
         take: limit
@@ -601,12 +591,12 @@ export class KnowledgeCenterRepository {
     return withKnowledgeTableFallback([], async () => {
       const visibilityFilter = await resolveArticleVisibilityFilter();
       return model.findMany({
-        where: {
+        where: knowledgePublicArticleWhere({
           deletedAt: null,
           ...visibilityFilter,
           category: { slug: categorySlug },
           translations: { some: { languageCode, status: "PUBLISHED" } }
-        },
+        }),
         include: articleInclude,
         orderBy: { publishedAt: "desc" },
         take: limit
@@ -622,12 +612,12 @@ export class KnowledgeCenterRepository {
       const summaries = [];
       for (const category of categories) {
         const count = await prisma.knowledgeArticle.count({
-          where: {
+          where: knowledgePublicArticleWhere({
             deletedAt: null,
             categoryId: category.id,
             translations: { some: { languageCode, status: "PUBLISHED" } },
             ...visibilityFilter
-          }
+          })
         });
         if (count > 0) {
           summaries.push({ slug: category.slug, name: category.name, count });
@@ -645,6 +635,9 @@ export class KnowledgeCenterRepository {
       const visibilityFilter = await resolveArticleVisibilityFilter();
       const visibilitySql =
         "visibility" in visibilityFilter ? Prisma.sql`AND a.visibility = 'PUBLIC'` : Prisma.empty;
+      const demoSlugSql = Prisma.sql`AND a.slug NOT IN (${Prisma.join(
+        KNOWLEDGE_DEMO_ARTICLE_SLUGS.map((slug) => Prisma.sql`${slug}`)
+      )})`;
 
       const indexRows = await prisma.$queryRaw<Array<{ article_id: string }>>(
         Prisma.sql`
@@ -654,8 +647,10 @@ export class KnowledgeCenterRepository {
           INNER JOIN knowledge_articles a ON a.id = t.article_id
           WHERE t.language_code = ${languageCode}
             AND t.status = CAST('PUBLISHED' AS "KnowledgeArticleStatus")
+            AND a.status = CAST('PUBLISHED' AS "KnowledgeArticleStatus")
             AND a.deleted_at IS NULL
             ${visibilitySql}
+            ${demoSlugSql}
             AND to_tsvector('simple', coalesce(ksi.search_text, '')) @@ plainto_tsquery('simple', ${q})
           LIMIT ${limit * 2}
         `
@@ -682,7 +677,7 @@ export class KnowledgeCenterRepository {
     return withKnowledgeTableFallback(null, async () => {
       const visibilityFilter = await resolveArticleVisibilityFilter();
       return model.findFirst({
-        where: {
+        where: knowledgePublicArticleWhere({
           slug,
           deletedAt: null,
           ...visibilityFilter,
@@ -692,7 +687,7 @@ export class KnowledgeCenterRepository {
               status: "PUBLISHED"
             }
           }
-        },
+        }),
         include: articleInclude
       });
     });

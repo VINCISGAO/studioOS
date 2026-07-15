@@ -1,1 +1,4 @@
-{ "settings": {}, "email_aliases": {} }
+{
+  "settings": {},
+  "email_aliases": {}
+}

@@ -13,7 +13,6 @@ function HeroCtaButton({
   isActive,
   onHover,
   onBlocked,
-  compactLocale = false,
   lightHero = false
 }: {
   target: MarketingHeroCtaTarget;
@@ -22,7 +21,6 @@ function HeroCtaButton({
   isActive: boolean;
   onHover: () => void;
   onBlocked: (notice: string) => void;
-  compactLocale?: boolean;
   lightHero?: boolean;
 }) {
   const className = cn(
@@ -42,10 +40,7 @@ function HeroCtaButton({
       <span className="min-w-0 text-left">
         <span
           className={cn(
-            "block font-semibold leading-tight",
-            compactLocale
-              ? "text-[11.2px] sm:text-[16px] md:text-[20px]"
-              : "text-[14px] sm:text-[20px] md:text-[20px]",
+            "block text-[14px] font-semibold leading-tight sm:text-[20px] md:text-[20px]",
             lightHero
               ? isActive
                 ? "text-white"
@@ -59,10 +54,7 @@ function HeroCtaButton({
         </span>
         <span
           className={cn(
-            "mt-1 block leading-tight",
-            compactLocale
-              ? "text-[8.8px] sm:mt-1.5 sm:text-[12.8px] md:mt-1.5 md:text-base"
-              : "text-[11px] sm:mt-1.5 sm:text-base md:mt-1.5 md:text-base",
+            "mt-1 block text-[11px] leading-tight sm:mt-1.5 sm:text-base md:mt-1.5 md:text-base",
             lightHero
               ? isActive
                 ? "text-white/70"
@@ -119,7 +111,6 @@ export function HeroCtaGroup({
   primaryDescription,
   secondaryDescription,
   className,
-  compactLocale = false,
   lightHero = false
 }: {
   brandCta: MarketingHeroCtaTarget;
@@ -129,7 +120,6 @@ export function HeroCtaGroup({
   primaryDescription: string;
   secondaryDescription: string;
   className?: string;
-  compactLocale?: boolean;
   lightHero?: boolean;
 }) {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -144,7 +134,6 @@ export function HeroCtaGroup({
         isActive={activeIndex === 0}
         onHover={() => setActiveIndex(0)}
         onBlocked={setBlockedNotice}
-        compactLocale={compactLocale}
         lightHero={lightHero}
       />
       <HeroCtaButton
@@ -154,7 +143,6 @@ export function HeroCtaGroup({
         isActive={activeIndex === 1}
         onHover={() => setActiveIndex(1)}
         onBlocked={setBlockedNotice}
-        compactLocale={compactLocale}
         lightHero={lightHero}
       />
       {blockedNotice ? (

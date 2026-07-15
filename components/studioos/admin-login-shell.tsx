@@ -141,6 +141,12 @@ export function AdminLoginShell({
             <h1 className="text-xl font-semibold tracking-tight text-zinc-900">{t.consoleTitle}</h1>
           </div>
 
+          {showOpsHint && !schemaReady ? (
+            <div className="mb-4 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-xs text-zinc-600">
+              {t.unavailableOps}
+            </div>
+          ) : null}
+
           {loginUnavailable ? (
             <div className="mb-4 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-900">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />

@@ -185,16 +185,15 @@ export async function loginAdminWithTotp(input: {
     return { ok: false as const, error: adminAuthError(locale, "rateLimited") };
   }
 
-  let totpValid = false;
+  let secret: string;
   try {
-    const secret = decryptTotpSecret(profile.totpSecretEnc);
-    totpValid = await verifyAndConsumeAdminTotp({
+    secret = decryptTotpSecret(profile.totpSecretEnc);
+  } catch (error) {
+    logger.error("admin.login.totp_decrypt_failed", {
+      service: "loginAdminWithTotp",
       adminUserId: profile.id,
-      secret,
-      code,
-      purpose: "login"
+      error: error instanceof Error ? error.message : String(error)
     });
-  } catch {
     void adminAuthAuditRepository.write({
       event: "admin_login_failed",
       success: false,
@@ -205,6 +204,32 @@ export async function loginAdminWithTotp(input: {
       failureReason: "totp_decrypt_failed"
     });
     return { ok: false as const, error: publicLoginFailure(locale, "totpDecryptFailed") };
+  }
+
+  let totpValid = false;
+  try {
+    totpValid = await verifyAndConsumeAdminTotp({
+      adminUserId: profile.id,
+      secret,
+      code,
+      purpose: "login"
+    });
+  } catch (error) {
+    logger.error("admin.login.totp_verify_failed", {
+      service: "loginAdminWithTotp",
+      adminUserId: profile.id,
+      error: error instanceof Error ? error.message : String(error)
+    });
+    void adminAuthAuditRepository.write({
+      event: "admin_login_failed",
+      success: false,
+      email,
+      adminUserId: profile.id,
+      ipHash: ctx.ipHash,
+      userAgentHash: ctx.userAgentHash,
+      failureReason: "totp_verify_error"
+    });
+    return { ok: false as const, error: publicLoginFailure(locale) };
   }
 
   if (!totpValid) {

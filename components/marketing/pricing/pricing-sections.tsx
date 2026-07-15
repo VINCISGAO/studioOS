@@ -135,7 +135,7 @@ export function PricingBudgetSection({ locale }: { locale: Locale }) {
   const t = pricingText(locale);
 
   return (
-    <section className="mt-6 rounded-[1.75rem] border border-zinc-200/80 bg-white p-6 shadow-[0_18px_60px_-48px_rgba(0,0,0,0.18)] sm:p-8">
+    <section className="mt-6 rounded-[1.75rem] border border-zinc-200/80 bg-white p-6 shadow-[0_18px_60px_-32px_rgba(0,0,0,0.18)] sm:p-8">
       <div className="text-center">
         <h2 className="text-2xl font-semibold tracking-[-0.03em] text-zinc-950">{t.budgetTitle}</h2>
         <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-zinc-500">{t.budgetSubtitle}</p>

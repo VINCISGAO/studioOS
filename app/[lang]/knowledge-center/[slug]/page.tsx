@@ -13,6 +13,9 @@ import type { Metadata } from "next";
 
 const ORIGIN = "https://vincis.app";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 type Props = { params: Promise<{ lang: string; slug: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

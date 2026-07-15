@@ -1,0 +1,19 @@
+---
+description: STOP — editing homepage stack files requires owner explicit command in current conversation
+globs: app/page.tsx,app/globals.css,components/marketing/**,components/language-switcher.tsx,lib/marketing/**,lib/studioos/home-hero-space-asset.ts,lib/studioos/marketing-headline-font.ts
+alwaysApply: false
+---
+
+# Homepage stack — read-only
+
+**Owner-locked 2026-07-15.** Full policy: [homepage-absolute-lock.mdc](./homepage-absolute-lock.mdc) · [HOMEPAGE_GOLDEN.md](../../docs/HOMEPAGE_GOLDEN.md)
+
+You opened a **frozen homepage file**. Do **not** save edits unless the project owner **explicitly commanded that exact homepage change in the current conversation**.
+
+- Change **only** what they named — nothing else
+- No drive-by fixes, refactors, spacing, copy, or "while I'm here"
+- Unrelated task touching this file → **stop and ask the owner**
+
+Verify after owner-approved edit: `npm run homepage:verify-lock`
+
+Restore if wrong: `npm run homepage:restore:golden`

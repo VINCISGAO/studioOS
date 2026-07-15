@@ -75,16 +75,19 @@ function HeroBrandMarquee({ lightHero = false }: { lightHero?: boolean }) {
 function HeroBrandPanel({
   trustLabel,
   children,
-  lightHero = false
+  lightHero = false,
+  flushToVideo = false
 }: {
   trustLabel: string;
   children: ReactNode;
   lightHero?: boolean;
+  flushToVideo?: boolean;
 }) {
   return (
     <div
       className={cn(
         "rounded-2xl px-5 py-5 sm:px-6 sm:py-6",
+        flushToVideo && "max-lg:rounded-b-none max-lg:border-b-0 max-lg:pb-4",
         lightHero
           ? "border border-zinc-200/80 bg-zinc-50/60"
           : "border border-white/10 bg-white/[0.035] backdrop-blur-md"
@@ -114,7 +117,7 @@ export function CinematicHeroBrandsDesktop({
 }) {
   return (
     <div className={cn("marketing-hero-brands-wrap min-w-0 pt-8", className)}>
-      <HeroBrandPanel trustLabel={trustLabel} lightHero={lightHero}>
+      <HeroBrandPanel trustLabel={trustLabel} lightHero={lightHero} flushToVideo>
         <HeroBrandMarquee lightHero={lightHero} />
       </HeroBrandPanel>
     </div>
@@ -129,8 +132,8 @@ export function CinematicHeroBrandsMobile({
   lightHero?: boolean;
 }) {
   return (
-    <div className="mt-10 md:hidden">
-      <HeroBrandPanel trustLabel={trustLabel} lightHero={lightHero}>
+    <div className="marketing-hero-brands-mobile mt-10 md:hidden">
+      <HeroBrandPanel trustLabel={trustLabel} lightHero={lightHero} flushToVideo>
         <HeroBrandMarquee lightHero={lightHero} />
       </HeroBrandPanel>
     </div>

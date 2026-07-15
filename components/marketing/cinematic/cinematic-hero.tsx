@@ -13,23 +13,18 @@ import { cn } from "@/lib/utils";
 
 const HERO_BG_FALLBACK = "/images/background.png";
 
-const COMPACT_HERO_LOCALES = new Set<Locale | MarketingLocale>(["vi", "es", "fr", "ms", "ja", "en"]);
-
-const LEGACY_COMPACT_TITLE_LOCALES = new Set<Locale | MarketingLocale>(["vi", "es", "fr", "ms"]);
-
-/** Latin-script hero locales — desktop: lg title cap + subtitle pretty; title stays 2 explicit lines. */
+/** Latin-script hero locales — iPad/desktop only (md+). Mobile uses one shared scale for all 11 langs. */
 const LATIN_HERO_LOCALES = new Set<Locale | MarketingLocale>(["en", "es", "fr", "ms", "vi"]);
 
-function isCompactHeroLocale(locale: Locale | MarketingLocale) {
-  return COMPACT_HERO_LOCALES.has(locale);
-}
-
-function usesLegacyCompactTitle(locale: Locale | MarketingLocale) {
-  return LEGACY_COMPACT_TITLE_LOCALES.has(locale);
-}
+/** ms / es — main title ×0.9 (long Latin lines). */
+const REDUCED_HERO_TITLE_LOCALES = new Set<Locale | MarketingLocale>(["ms", "es"]);
 
 function isLatinHeroLocale(locale: Locale | MarketingLocale) {
   return LATIN_HERO_LOCALES.has(locale);
+}
+
+function usesReducedHeroTitle(locale: Locale | MarketingLocale) {
+  return REDUCED_HERO_TITLE_LOCALES.has(locale);
 }
 
 function getHeroTitleLines(titleLine1: string, titleLine2: string) {
@@ -46,8 +41,8 @@ const HERO_AI_TOKEN_CLASS =
 
 const HERO_AI_TOKEN_PATTERN = /(AI|IA)/;
 
-function renderTitleLine(line: string, index: number, allowWrap = false) {
-  const lineClass = cn("block", !allowWrap && "whitespace-nowrap", index > 0 && "mt-1.5 sm:mt-2.5");
+function renderTitleLine(line: string, index: number) {
+  const lineClass = cn("block whitespace-nowrap", index > 0 && "mt-1.5 sm:mt-2.5");
 
   if (!HERO_AI_TOKEN_PATTERN.test(line)) {
     return (
@@ -104,9 +99,8 @@ export function CinematicHero({
   const { brand: brandCta, creator: creatorCta } = resolveMarketingHeroCtaTargets(copyLocale, portalSession);
   const titleLines = getHeroTitleLines(t.titleLine1, t.titleLine2);
   const subtitleText = t.subtitle.replace(/\s*\n\s*/g, " ").trim();
-  const compactHeroLocale = isCompactHeroLocale(copyLocale);
-  const legacyCompactTitle = usesLegacyCompactTitle(copyLocale);
   const latinHeroLocale = isLatinHeroLocale(copyLocale);
+  const reducedHeroTitle = usesReducedHeroTitle(copyLocale);
 
   const ctaShared = {
     brandCta,
@@ -115,7 +109,6 @@ export function CinematicHero({
     secondary: t.secondary,
     primaryDescription: t.primaryDescription,
     secondaryDescription: t.secondaryDescription,
-    compactLocale: compactHeroLocale,
     lightHero: true
   } as const;
 
@@ -123,7 +116,7 @@ export function CinematicHero({
     <section className="marketing-hero-shell relative isolate flex flex-col overflow-x-clip bg-white text-zinc-950">
       <CinematicHeroBackdrop src={heroBgSrc} src2x={heroBgSrc2x} />
 
-      <div className="marketing-hero-frame marketing-content-shell relative z-10 w-full min-w-0 pb-8 pt-[5.35rem] md:pt-0 lg:pb-0">
+      <div className="marketing-hero-frame marketing-content-shell relative z-10 flex w-full min-w-0 flex-col pb-0 pt-[5.35rem] md:pb-0 md:pt-0 lg:pb-0">
         <div className="marketing-hero-top shrink-0 min-w-0">
           <div
             className={cn(
@@ -133,25 +126,18 @@ export function CinematicHero({
           >
             <div className="flex items-center gap-2.5">
               <span className="h-3 w-0.5 shrink-0 rounded-full bg-violet-500/90" aria-hidden />
-              <p
-                className={cn(
-                  "font-normal text-zinc-500 md:text-lg",
-                  compactHeroLocale ? "text-[11.2px] md:text-lg" : "text-sm md:text-lg"
-                )}
-              >
-                {t.eyebrow}
-              </p>
+              <p className="font-normal text-sm text-zinc-500 md:text-lg">{t.eyebrow}</p>
             </div>
 
             <h1
               className={cn(
                 "mt-5 font-bold leading-[1.08] tracking-[-0.03em] text-zinc-950 md:mt-6",
-                compactHeroLocale
-                  ? legacyCompactTitle
-                    ? "text-[1.8rem]"
-                    : "text-[2.12rem]"
-                  : "text-[2.65rem]",
-                latinHeroLocale ? "md:text-[3.5rem]" : "md:text-[4.667rem]"
+                reducedHeroTitle ? "text-[2.385rem]" : "text-[2.65rem]",
+                reducedHeroTitle
+                  ? "md:text-[3.15rem]"
+                  : latinHeroLocale
+                    ? "md:text-[3.5rem]"
+                    : "md:text-[4.667rem]"
               )}
             >
               {titleLines.map((line, index) => renderTitleLine(line, index))}
@@ -159,13 +145,8 @@ export function CinematicHero({
 
             <p
               className={cn(
-                "mt-4 max-w-xl min-w-0 overflow-x-clip leading-7 text-zinc-500 md:mt-5 md:text-2xl md:leading-8",
-                latinHeroLocale ? "text-pretty" : "whitespace-nowrap",
-                compactHeroLocale
-                  ? legacyCompactTitle
-                    ? "text-[10.4px]"
-                    : "text-[11.2px]"
-                  : "text-[14px]"
+                "mt-4 max-w-xl min-w-0 overflow-x-clip text-[18.2px] leading-[2.275rem] text-zinc-500 md:mt-5 md:text-2xl md:leading-8",
+                latinHeroLocale ? "whitespace-nowrap md:text-pretty" : "whitespace-nowrap"
               )}
             >
               {subtitleText}

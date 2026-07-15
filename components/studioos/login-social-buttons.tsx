@@ -14,10 +14,10 @@ const socialProviders: Array<{ id: SocialProviderId; label: string; icon: string
   { id: "qq", label: "QQ", icon: "/images/auth-providers/qq.svg" }
 ];
 
-const COMING_SOON_PROVIDERS = new Set<SocialProviderId>(["apple", "wechat", "qq"]);
+const COMING_SOON_PROVIDERS = new Set<SocialProviderId>(["apple", "alipay", "wechat", "qq"]);
 
-/** Google / Alipay always link to OAuth start — backend returns a clear error if not configured. */
-const LIVE_OAUTH_PROVIDERS = new Set<SocialProviderId>(["google", "alipay"]);
+/** Google links to OAuth start — backend returns a clear error if not configured. */
+const LIVE_OAUTH_PROVIDERS = new Set<SocialProviderId>(["google"]);
 
 function oauthHref(provider: SocialProviderId, locale: Locale, role: LoginRole, nextPath: string) {
   const params = new URLSearchParams({

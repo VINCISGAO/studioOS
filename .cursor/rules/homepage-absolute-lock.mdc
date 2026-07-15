@@ -1,0 +1,60 @@
+---
+description: ABSOLUTE LOCK — marketing homepage is read-only unless owner explicitly commands that exact change in the current conversation
+alwaysApply: true
+---
+
+# Homepage absolute lock (owner-locked 2026-07-15)
+
+**Priority:** Overrides all other agent impulses (refactors, fixes, polish, "while I'm here").
+
+## Hard stop
+
+Unless the project owner **explicitly names a homepage change in the current conversation**, you **MUST NOT** read, edit, create, delete, rename, or reformat any file in the homepage stack.
+
+**Do not touch the homepage to fix unrelated tasks.** If a bug might involve homepage code, **stop and ask the owner first**.
+
+## Frozen stack (every path)
+
+- `app/page.tsx`
+- `app/globals.css` (marketing / hero / landing utilities only — if unsure, do not edit)
+- `components/marketing/**`
+- `components/language-switcher.tsx`
+- `lib/marketing/**`
+- `lib/studioos/home-hero-space-asset.ts`
+- `lib/studioos/marketing-headline-font.ts`
+- `public/images/home-hero-space.png` and homepage hero / brand assets under `public/images/`
+- Hero video resolver + proxy: `lib/marketing/home-hero-video-sources.ts`, `lib/marketing/marketing-video-proxy.ts`, `app/videos/[...path]/route.ts`
+
+Canonical docs: [`docs/HOMEPAGE_GOLDEN.md`](../../docs/HOMEPAGE_GOLDEN.md) · [`components/marketing/README.md`](../../components/marketing/README.md)
+
+## Forbidden without owner command
+
+- Copy, spacing, fonts, colors, animations
+- Mobile / iPad / desktop layout or breakpoints
+- Hero background size/position, subtitle/title/CTA sizing
+- Brand bar, marquee logos, hero-to-video spacing
+- `HomeHeroVideo` player, video URLs, cache version `cv=7`
+- Section order in `HomeLandingPage`
+- Nav, footer, language switcher on homepage
+- "Restore", "sync with production", "match vincis.app" unless owner asked **in this chat**
+
+## Allowed without homepage command
+
+- Changes **outside** the paths above (admin, API, portal, DB, etc.)
+- Reading homepage files **only** to answer a question (no edits)
+
+## Owner override (only valid key)
+
+Owner must say **in the current conversation** what to change, e.g. "把手机 hero 副标题再放大" — change **only that**, nothing else.
+
+## If you already changed homepage by mistake
+
+Tell the owner immediately. Restore:
+
+```bash
+npm run homepage:restore:golden
+# or
+git checkout homepage-golden -- app/page.tsx components/marketing/ lib/marketing/ app/globals.css components/language-switcher.tsx
+```
+
+Verify lock: `npm run homepage:verify-lock`

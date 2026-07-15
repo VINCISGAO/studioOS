@@ -297,6 +297,8 @@ export async function middleware(request: NextRequest) {
   const isLegacyAdminApiRoute = pathname.startsWith("/api/v1/admin/");
   const isAdminAuthApiRoute = pathname.startsWith("/api/admin/auth/");
   const isAdminSetupApiRoute = pathname.startsWith("/api/admin/setup-totp");
+  const isAdminAuthHealthRoute =
+    pathname === "/api/admin/auth-health" && process.env.NODE_ENV !== "production";
   const isCreatorWorkspaceRoute =
     pathname === "/creator" ||
     pathname.startsWith("/creator/orders") ||
@@ -311,7 +313,12 @@ export async function middleware(request: NextRequest) {
     return Boolean(token && token.length >= 32);
   }
 
-  if ((isAdminApiRoute || isLegacyAdminApiRoute) && !isAdminAuthApiRoute && !isAdminSetupApiRoute) {
+  if (
+    (isAdminApiRoute || isLegacyAdminApiRoute) &&
+    !isAdminAuthApiRoute &&
+    !isAdminSetupApiRoute &&
+    !isAdminAuthHealthRoute
+  ) {
     if (!hasAdminSessionCookie(request)) {
       return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
     }
@@ -325,7 +332,7 @@ export async function middleware(request: NextRequest) {
     return applyAdminSecurityHeaders(response, { nonce: adminCspNonce, production: isProduction });
   }
 
-  if (isAdminPublicRoute || isAdminAuthApiRoute || isAdminSetupApiRoute) {
+  if (isAdminPublicRoute || isAdminAuthApiRoute || isAdminSetupApiRoute || isAdminAuthHealthRoute) {
     return applyAdminSecurityHeaders(response, { nonce: adminCspNonce, production: isProduction });
   }
 

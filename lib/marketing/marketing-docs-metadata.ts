@@ -30,7 +30,7 @@ export function marketingDocsMetadata(locale: Locale, page: MarketingDocsNavKey)
   if (page === "cases") {
     const copy = casesCopy(locale);
     return {
-      title: `${copy.title} | ${SITE}`,
+      title: `${copy.titleLead}${copy.titleAccent} | ${SITE}`,
       description: copy.subtitle
     };
   }

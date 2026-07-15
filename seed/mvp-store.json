@@ -1,38 +1,5 @@
 {
-  "profiles": [
-    {
-      "id": "prof_demo_brand_arc",
-      "email": "client.arc@studioos.test",
-      "role": "brand",
-      "name": "Arc & Alloy",
-      "company_name": "Arc & Alloy",
-      "created_at": "2026-06-28T10:00:00.000Z"
-    },
-    {
-      "id": "prof_demo_studio_nova",
-      "email": "creator.nova@studioos.test",
-      "role": "studio",
-      "name": "Nova Motion Studio",
-      "company_name": "Nova Motion Studio",
-      "created_at": "2026-06-28T10:00:00.000Z"
-    },
-    {
-      "id": "prof_demo_admin",
-      "email": "admin@studioos.test",
-      "role": "admin",
-      "name": "Platform Admin",
-      "company_name": "VINCIS",
-      "created_at": "2026-06-28T10:00:00.000Z"
-    },
-    {
-      "id": "prof_demo_brand_bright",
-      "email": "client.bright@studioos.test",
-      "role": "brand",
-      "name": "BrightSip",
-      "company_name": "BrightSip",
-      "created_at": "2026-06-28T10:00:00.000Z"
-    }
-  ],
+  "profiles": [],
   "projects": [],
   "versions": [],
   "comments": []

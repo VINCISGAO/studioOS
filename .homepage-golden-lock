@@ -1,0 +1,8 @@
+# VINCIS marketing homepage — owner golden lock
+# Do not delete. Agents: read-only unless owner commands in current conversation.
+
+LOCKED_AT=2026-07-15
+POLICY=.cursor/rules/homepage-absolute-lock.mdc
+GOLDEN=docs/HOMEPAGE_GOLDEN.md
+VERIFY=npm run homepage:verify-lock
+RESTORE=npm run homepage:restore:golden

@@ -1,14 +1,14 @@
 import { redirect } from "next/navigation";
+import { cache } from "react";
 import { AdminLoginShell, type AdminLoginCopy } from "@/components/studioos/admin-login-shell";
 import { validateAdminSession } from "@/features/admin/auth/admin-auth.service";
-import { readAdminSessionToken } from "@/features/admin/auth/admin-session-server";
-import { cache } from "react";
 import { adminProfileRepository } from "@/features/admin/auth/admin-profile.repository";
+import { readAdminSessionToken } from "@/features/admin/auth/admin-session-server";
+import { getAppUiLocale } from "@/lib/app-language";
+import { isProductionRuntime } from "@/lib/auth/admin-security-config";
+import { appPath, type Locale, type SearchParams } from "@/lib/i18n";
 
 const getAdminLoginSetupStatus = cache(() => adminProfileRepository.getLoginSetupStatus());
-import { getAppUiLocale } from "@/lib/app-language";
-import { appPath, type Locale, type SearchParams } from "@/lib/i18n";
-import { isProductionRuntime } from "@/lib/auth/admin-security-config";
 
 type AdminLoginPageProps = {
   searchParams: Promise<SearchParams & { next?: string; error?: string; email?: string; signedOut?: string }>;
@@ -76,10 +76,12 @@ export default async function AdminLoginPage({ searchParams }: AdminLoginPagePro
   }
 
   const initialEmail = typeof params.email === "string" ? params.email : "";
-  const error = typeof params.error === "string" ? params.error : undefined;
   const signedOut = params.signedOut === "1";
   const setupStatus = await getAdminLoginSetupStatus();
   const loginUnavailable = !setupStatus.schemaReady || !setupStatus.totpConfigured;
+  // Drop stale ?error= from a prior login attempt when no active TOTP admin exists.
+  const error =
+    loginUnavailable || typeof params.error !== "string" ? undefined : params.error;
   const showOpsHint = !isProductionRuntime();
 
   return (

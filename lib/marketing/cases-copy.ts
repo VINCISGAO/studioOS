@@ -41,7 +41,7 @@ const en: CasesPageCopy = {
   sortLatest: "Latest",
   all: "All",
   more: "More",
-  endOfList: "You’ve reached the end",
+  endOfList: "You've reached the end",
   empty: "No works match your search.",
   noWorks: "No showcase works yet.",
   noCategory: "No works in this category yet.",
