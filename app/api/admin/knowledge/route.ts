@@ -9,6 +9,7 @@ import { getAppUiLocale } from "@/lib/app-language";
 import { apiSuccess, handleRouteError } from "@/lib/core/api-route";
 import { appError } from "@/lib/core/errors";
 import { readKnowledgeMutationJson } from "@/lib/knowledge/knowledge-mutation-body";
+import { toKnowledgeSaveClientPayload } from "@/lib/knowledge/knowledge-save-client";
 import { unstable_cache } from "next/cache";
 
 export const runtime = "nodejs";
@@ -49,12 +50,12 @@ export async function POST(request: Request) {
     if (!article.article) {
       throw appError("SYSTEM_ERROR", "Database unavailable — check DATABASE_URL and run db:migrate:deploy");
     }
-    try {
-      scheduleKnowledgeMultilingualSyncAfterResponse(article);
-    } catch (scheduleError) {
-      // Publish already persisted — never fail the HTTP response on background scheduling.
+    scheduleKnowledgeMultilingualSyncAfterResponse(article);
+    const payload = toKnowledgeSaveClientPayload(article);
+    if (!payload) {
+      throw appError("SYSTEM_ERROR", "Database unavailable — check DATABASE_URL and run db:migrate:deploy");
     }
-    return apiSuccess({ article: article.article, pipeline: article.pipeline });
+    return apiSuccess(payload);
   } catch (error) {
     return handleRouteError(error);
   }

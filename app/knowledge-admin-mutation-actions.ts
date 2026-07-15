@@ -3,27 +3,20 @@
 import { guardAdminServerAction } from "@/features/admin/auth/admin-mutation-guard";
 import { parseKnowledgeArticleBody } from "@/features/knowledge-center/knowledge-center.api-parser";
 import { knowledgeCenterService } from "@/features/knowledge-center/knowledge-center.service";
-import type { KnowledgePublishPipelineResult } from "@/features/knowledge-center/knowledge-publish.pipeline.shared";
 import { scheduleKnowledgeMultilingualSyncAfterResponse } from "@/features/knowledge-center/knowledge-publish-schedule";
 import { appError, isAppError } from "@/lib/core/errors";
+import {
+  type KnowledgeSaveClientPayload,
+  toKnowledgeSaveClientPayload
+} from "@/lib/knowledge/knowledge-save-client";
 
 /** Server Actions use next.config serverActions.bodySizeLimit (320mb). */
 const KNOWLEDGE_SAVE_MAX_BYTES = 20_000_000;
 
-/** Keep the action response small — never return full body_html (can exceed RSC payload limits). */
-export type KnowledgeSaveActionArticle = {
-  id: string;
-  slug: string;
-  status: string;
-};
-
 export type KnowledgeSaveActionResult =
   | {
       success: true;
-      data: {
-        article: KnowledgeSaveActionArticle;
-        pipeline?: KnowledgePublishPipelineResult;
-      };
+      data: KnowledgeSaveClientPayload;
     }
   | {
       success: false;
@@ -93,18 +86,20 @@ export async function saveKnowledgeArticleAction(formData: FormData): Promise<Kn
     }
 
     scheduleKnowledgeMultilingualSyncAfterResponse(saved);
+    const payload = toKnowledgeSaveClientPayload(saved);
+    if (!payload) {
+      return {
+        success: false,
+        error: {
+          code: "SYSTEM_ERROR",
+          message: articleId
+            ? "Article not found"
+            : "Database unavailable — check DATABASE_URL and run db:migrate:deploy"
+        }
+      };
+    }
 
-    return {
-      success: true,
-      data: {
-        article: {
-          id: saved.article.id,
-          slug: saved.article.slug,
-          status: saved.article.status
-        },
-        pipeline: saved.pipeline
-      }
-    };
+    return { success: true, data: payload };
   } catch (error) {
     return { success: false, error: formatActionError(error) };
   }

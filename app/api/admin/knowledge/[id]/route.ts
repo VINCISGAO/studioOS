@@ -8,6 +8,7 @@ import { scheduleKnowledgeMultilingualSyncAfterResponse } from "@/features/knowl
 import { apiSuccess, handleRouteError } from "@/lib/core/api-route";
 import { appError } from "@/lib/core/errors";
 import { readKnowledgeMutationJson } from "@/lib/knowledge/knowledge-mutation-body";
+import { toKnowledgeSaveClientPayload } from "@/lib/knowledge/knowledge-save-client";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -35,12 +36,12 @@ export async function PATCH(request: Request, context: RouteContext) {
     if (!saved.article) {
       throw appError("NOT_FOUND", "Article not found");
     }
-    try {
-      scheduleKnowledgeMultilingualSyncAfterResponse(saved);
-    } catch {
-      // Background scheduling must not fail a successful save response.
+    scheduleKnowledgeMultilingualSyncAfterResponse(saved);
+    const payload = toKnowledgeSaveClientPayload(saved);
+    if (!payload) {
+      throw appError("NOT_FOUND", "Article not found");
     }
-    return apiSuccess({ article: saved.article, pipeline: saved.pipeline });
+    return apiSuccess(payload);
   } catch (error) {
     return handleRouteError(error);
   }
