@@ -3,7 +3,15 @@
 import { uploadKnowledgeImage } from "@/lib/knowledge/knowledge-upload-client";
 import { useCallback, useRef, useState } from "react";
 
-type UploadResult = { url: string; fallback_url?: string };
+type UploadResult = {
+  url: string;
+  publicUrl?: string;
+  key?: string;
+  width?: number | null;
+  height?: number | null;
+  mimeType?: string;
+  fallback_url?: string;
+};
 
 export function useKnowledgeEditorImageUpload(kind: "cover" | "inline", zh = false) {
   const [uploading, setUploading] = useState(false);

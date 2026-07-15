@@ -3,6 +3,7 @@ import { appError } from "@/lib/core/errors";
 import type { UpsertKnowledgeArticleInput } from "@/features/knowledge-center/knowledge-center.types";
 import { KNOWLEDGE_VISIBILITY_OPTIONS } from "@/lib/knowledge/knowledge-editor.constants";
 import type { KnowledgeVisibility } from "@/lib/knowledge/knowledge-editor-validation";
+import { rewriteKnowledgeAssetUrl } from "@/lib/knowledge/knowledge-asset-urls";
 
 function asString(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
@@ -44,7 +45,7 @@ export function parseKnowledgeArticleBody(body: Record<string, unknown>): Upsert
     category_slug: asString(body.category_slug) || undefined,
     category_id: asString(body.category_id) || undefined,
     author_name: asString(body.author_name) || "VINCIS",
-    cover_image_url: asString(body.cover_image_url) || undefined,
+    cover_image_url: rewriteKnowledgeAssetUrl(asString(body.cover_image_url)) || undefined,
     visibility: parseVisibility(body.visibility),
     status: (asString(body.status).toUpperCase() || "DRAFT") as KnowledgeArticleStatus,
     tags: asStringArray(body.tags),
@@ -66,7 +67,7 @@ export function parseKnowledgeArticleBody(body: Record<string, unknown>): Upsert
         keywords: asStringArray(seoRaw.keywords),
         og_title: asString(seoRaw.og_title) || undefined,
         og_description: asString(seoRaw.og_description) || undefined,
-        og_image_url: asString(seoRaw.og_image_url) || undefined,
+            og_image_url: rewriteKnowledgeAssetUrl(asString(seoRaw.og_image_url)) || undefined,
         twitter_card: asString(seoRaw.twitter_card) || undefined
       },
       faqs: faqsRaw

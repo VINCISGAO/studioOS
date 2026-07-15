@@ -17,7 +17,10 @@ const nextConfig: NextConfig = {
     webpackBuildWorker: false
   },
   images: {
-    localPatterns: [{ pathname: "/images/**" }],
+    localPatterns: [
+      { pathname: "/images/**" },
+      { pathname: "/api/knowledge/assets/**" }
+    ],
     remotePatterns: [
       {
         protocol: "https",
@@ -50,6 +53,15 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/images/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable"
+          }
+        ]
+      },
+      {
+        source: "/api/knowledge/assets/:path*",
         headers: [
           {
             key: "Cache-Control",

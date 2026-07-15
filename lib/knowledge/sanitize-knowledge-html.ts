@@ -43,7 +43,7 @@ const ALLOWED_TAGS = [
 
 const ALLOWED_ATTRIBUTES: sanitizeHtml.IOptions["allowedAttributes"] = {
   a: ["href", "target", "rel"],
-  img: ["src", "alt", "title", "width", "height"],
+  img: ["src", "alt", "title", "width", "height", "loading"],
   video: ["src", "controls", "playsinline", "width", "height"],
   source: ["src", "type"],
   iframe: ["src", "allow", "allowfullscreen", "frameborder", "width", "height"],
@@ -67,7 +67,7 @@ export function sanitizeKnowledgeHtml(input: string): string {
     allowedAttributes: ALLOWED_ATTRIBUTES,
     allowedSchemes: ["http", "https", "mailto"],
     allowedSchemesByTag: {
-      img: ["http", "https", "data"]
+      img: ["http", "https"]
     },
     transformTags: {
       a: sanitizeHtml.simpleTransform("a", {

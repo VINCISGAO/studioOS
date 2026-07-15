@@ -4,7 +4,7 @@ export const runtime = "nodejs";
 
 type Props = { params: Promise<{ fileName: string }> };
 
-/** Admin preview alias — same bytes as public route; requires admin session via middleware. */
+/** Public read-only knowledge image assets — no admin session required. */
 export async function GET(_request: Request, { params }: Props) {
   const { fileName } = await params;
   return serveKnowledgeAsset(fileName);

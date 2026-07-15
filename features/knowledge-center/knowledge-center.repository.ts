@@ -24,6 +24,7 @@ import type {
 } from "@/features/knowledge-center/knowledge-center.types";
 import type { Locale } from "@/lib/i18n";
 import { renderKnowledgeMarkdown } from "@/lib/knowledge/knowledge-markdown";
+import { rewriteKnowledgeHtmlAssetUrls } from "@/lib/knowledge/knowledge-asset-urls";
 import { sanitizeKnowledgeHtml } from "@/lib/knowledge/sanitize-knowledge-html";
 import {
   type KnowledgeSeoScores,
@@ -479,7 +480,9 @@ export class KnowledgeCenterRepository {
         : markdownSource
           ? renderKnowledgeMarkdown(markdownSource)
           : "";
-    const bodyHtml = rawBodyHtml ? sanitizeKnowledgeHtml(rawBodyHtml) : "";
+    const bodyHtml = rawBodyHtml
+      ? rewriteKnowledgeHtmlAssetUrls(sanitizeKnowledgeHtml(rawBodyHtml))
+      : "";
     const bodyMarkdown = markdownSource || bodyHtml.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
     return { bodyHtml, bodyMarkdown };
   }

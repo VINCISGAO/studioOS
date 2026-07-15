@@ -7,6 +7,10 @@ import {
 import { enrichPublicKnowledgeArticle } from "@/features/knowledge-center/knowledge-article-enrichment";
 import type { Locale } from "@/lib/i18n";
 import { pickKnowledgeAdminTranslation } from "@/lib/knowledge/knowledge-admin-translation";
+import {
+  rewriteKnowledgeAssetUrl,
+  rewriteKnowledgeHtmlAssetUrls
+} from "@/lib/knowledge/knowledge-asset-urls";
 import type {
   KnowledgeArticleDetailDto,
   PublicKnowledgeArticleDto
@@ -37,12 +41,12 @@ export async function toAdminPreviewArticle(
     path_prefix: pathPrefix,
     title: translation.title,
     subtitle: translation.subtitle,
-    body_html: translation.body_html,
+    body_html: rewriteKnowledgeHtmlAssetUrls(translation.body_html),
     body_markdown: translation.body_markdown,
     excerpt: translation.excerpt,
     reading_time_minutes: translation.reading_time_minutes,
     author_name: detail.author_name,
-    cover_image_url: detail.cover_image_url,
+    cover_image_url: rewriteKnowledgeAssetUrl(detail.cover_image_url),
     category_name: detail.category_name,
     category_slug: detail.category_slug,
     updated_at: translation.updated_at,
@@ -55,7 +59,7 @@ export async function toAdminPreviewArticle(
           keywords: seo.keywords,
           og_title: seo.og_title,
           og_description: seo.og_description,
-          og_image_url: seo.og_image_url,
+          og_image_url: rewriteKnowledgeAssetUrl(seo.og_image_url),
           twitter_card: seo.twitter_card,
           seo_score: seo.seo_score,
           readability_score: seo.readability_score,

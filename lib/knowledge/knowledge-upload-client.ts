@@ -48,6 +48,11 @@ export function formatKnowledgeUploadError(raw: string, zh: boolean) {
 
 type UploadResult = {
   url: string;
+  publicUrl?: string;
+  key?: string;
+  width?: number | null;
+  height?: number | null;
+  mimeType?: string;
   fallback_url?: string;
 };
 
@@ -123,7 +128,15 @@ export async function uploadKnowledgeImage(
 
   const body = (await response.json().catch(() => null)) as {
     success?: boolean;
-    data?: { url?: string; fallback_url?: string };
+    data?: {
+      url?: string;
+      publicUrl?: string;
+      key?: string;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string;
+      fallback_url?: string;
+    };
     error?: string | { code?: string; message?: string };
     message?: string;
   } | null;
@@ -139,5 +152,14 @@ export async function uploadKnowledgeImage(
     throw new Error(formatKnowledgeUploadError(apiError, zh));
   }
 
-  return { url: body.data.url, fallback_url: body.data.fallback_url };
+  const publicUrl = body.data.publicUrl ?? body.data.url;
+  return {
+    url: publicUrl,
+    publicUrl,
+    key: body.data.key,
+    width: body.data.width,
+    height: body.data.height,
+    mimeType: body.data.mimeType,
+    fallback_url: body.data.fallback_url
+  };
 }

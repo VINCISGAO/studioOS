@@ -20,6 +20,10 @@ import {
   knowledgeAlternatesToMetadataLanguages
 } from "@/features/knowledge-center/knowledge-hreflang";
 import { enrichPublicKnowledgeArticle } from "@/features/knowledge-center/knowledge-article-enrichment";
+import {
+  rewriteKnowledgeAssetUrl,
+  rewriteKnowledgeHtmlAssetUrls
+} from "@/lib/knowledge/knowledge-asset-urls";
 import { toAdminPreviewArticle } from "@/features/knowledge-center/knowledge-admin-preview.mapper";
 import { commitArticleSlug } from "@/features/knowledge-center/knowledge-slug.service";
 import { knowledgeSeoDashboardService } from "@/features/knowledge-center/knowledge-seo-dashboard.service";
@@ -370,12 +374,12 @@ export class KnowledgeCenterService {
       path_prefix: pathPrefix,
       title: translation.title,
       subtitle: translation.subtitle,
-      body_html: translation.bodyHtml ?? "",
+      body_html: rewriteKnowledgeHtmlAssetUrls(translation.bodyHtml ?? ""),
       body_markdown: translation.bodyMarkdown,
       excerpt: translation.excerpt,
       reading_time_minutes: translation.readingTimeMinutes,
       author_name: row.authorName,
-      cover_image_url: row.coverImageUrl,
+      cover_image_url: rewriteKnowledgeAssetUrl(row.coverImageUrl),
       category_name: row.category?.name ?? null,
       category_slug: row.category?.slug ?? null,
       updated_at: translation.updatedAt.toISOString(),
@@ -390,7 +394,7 @@ export class KnowledgeCenterService {
               : [],
             og_title: seo.ogTitle,
             og_description: seo.ogDescription,
-            og_image_url: seo.ogImageUrl,
+            og_image_url: rewriteKnowledgeAssetUrl(seo.ogImageUrl),
             twitter_card: seo.twitterCard,
             seo_score: seo.seoScore,
             readability_score: seo.readabilityScore,
