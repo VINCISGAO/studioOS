@@ -10,11 +10,25 @@ import {
 import { logger } from "@/lib/core/logger";
 
 export function scheduleKnowledgeMultilingualSyncAfterResponse(saved: KnowledgeSaveResult) {
+  const sidecarJob = saved.queueTranslationSidecars;
   const pipelineJob = saved.queuePublishPipeline;
   const multilingualJob = saved.queueMultilingualSync;
-  if (!pipelineJob && !multilingualJob) return;
+  if (!sidecarJob && !pipelineJob && !multilingualJob) return;
 
   after(async () => {
+    if (sidecarJob) {
+      try {
+        await knowledgeCenterRepository.upsertTranslationSidecars(sidecarJob);
+      } catch (error) {
+        logger.error("knowledge.translation_sidecars.background_failed", {
+          service: "KnowledgePublishRoute",
+          articleId: sidecarJob.articleId,
+          translationId: sidecarJob.translationId,
+          error: error instanceof Error ? error.message : String(error)
+        });
+      }
+    }
+
     if (pipelineJob) {
       try {
         const detail = await knowledgeCenterRepository.getById(pipelineJob.articleId);

@@ -17,7 +17,6 @@ import {
   effectiveKnowledgeTags,
   knowledgeEditorPublishGate
 } from "@/lib/knowledge/knowledge-editor-validation";
-import { knowledgeHtmlToPlainText } from "@/lib/knowledge/knowledge-html";
 import type { Locale } from "@/lib/i18n";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
@@ -83,7 +82,6 @@ export function useKnowledgeEditorController(input: {
           subtitle: state.subtitle,
           excerpt: effectiveKnowledgeMetaDescription(state),
           body_html: state.body_html,
-          body_markdown: knowledgeHtmlToPlainText(state.body_html),
           status,
           seo: {
             seo_title: effectiveKnowledgeSeoTitle(state),

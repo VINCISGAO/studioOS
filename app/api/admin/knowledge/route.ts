@@ -8,6 +8,7 @@ import { scheduleKnowledgeMultilingualSyncAfterResponse } from "@/features/knowl
 import { getAppUiLocale } from "@/lib/app-language";
 import { apiSuccess, handleRouteError } from "@/lib/core/api-route";
 import { appError } from "@/lib/core/errors";
+import { readKnowledgeMutationJson } from "@/lib/knowledge/knowledge-mutation-body";
 import { unstable_cache } from "next/cache";
 
 export const runtime = "nodejs";
@@ -42,13 +43,17 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     await requireAdminMutationUser(request);
-    const body = (await request.json()) as Record<string, unknown>;
+    const body = await readKnowledgeMutationJson(request);
     const parsed = parseKnowledgeArticleBody(body);
     const article = await knowledgeCenterService.create(parsed);
     if (!article.article) {
       throw appError("SYSTEM_ERROR", "Database unavailable — check DATABASE_URL and run db:migrate:deploy");
     }
-    scheduleKnowledgeMultilingualSyncAfterResponse(article);
+    try {
+      scheduleKnowledgeMultilingualSyncAfterResponse(article);
+    } catch (scheduleError) {
+      // Publish already persisted — never fail the HTTP response on background scheduling.
+    }
     return apiSuccess({ article: article.article, pipeline: article.pipeline });
   } catch (error) {
     return handleRouteError(error);

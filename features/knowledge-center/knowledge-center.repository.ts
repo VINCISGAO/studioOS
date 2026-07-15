@@ -467,17 +467,7 @@ export class KnowledgeCenterRepository {
     return prisma.knowledgeRevision.count({ where: { translationId } });
   }
 
-  async upsertTranslationBundle(
-    articleId: string,
-    input: UpsertKnowledgeArticleInput,
-    bundle: {
-      readingTimeMinutes: number;
-      seoScores: KnowledgeSeoScores;
-      searchText: string;
-      jsonLd: Record<string, unknown>;
-    }
-  ) {
-    const t = input.translation;
+  private resolveTranslationBodies(t: UpsertKnowledgeArticleInput["translation"]) {
     const htmlSource = t.body_html?.trim() || "";
     const markdownSource = t.body_markdown?.trim() || "";
     const bodyHtml = htmlSource
@@ -488,52 +478,79 @@ export class KnowledgeCenterRepository {
           ? renderKnowledgeMarkdown(markdownSource)
           : "";
     const bodyMarkdown = markdownSource || bodyHtml.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+    return { bodyHtml, bodyMarkdown };
+  }
 
-    const seoMetrics = toPrismaKnowledgeSeoScoreFields(bundle.seoScores);
+  async upsertTranslationCore(
+    articleId: string,
+    input: UpsertKnowledgeArticleInput,
+    bundle: { readingTimeMinutes: number }
+  ) {
+    const t = input.translation;
+    const { bodyHtml, bodyMarkdown } = this.resolveTranslationBodies(t);
 
-    return prisma.$transaction(async (tx) => {
-      const translation = await tx.knowledgeTranslation.upsert({
-        where: {
-          articleId_languageCode: {
-            articleId,
-            languageCode: t.language_code
-          }
-        },
-        create: {
+    const translation = await prisma.knowledgeTranslation.upsert({
+      where: {
+        articleId_languageCode: {
           articleId,
-          languageCode: t.language_code,
-          title: t.title.trim(),
-          subtitle: t.subtitle?.trim() || null,
-          bodyMarkdown,
-          bodyHtml,
-          excerpt: t.excerpt?.trim() || null,
-          readingTimeMinutes: bundle.readingTimeMinutes,
-          status: t.status ?? input.status ?? "DRAFT",
-          publishedAt: (t.status ?? input.status) === "PUBLISHED" ? new Date() : null
-        },
-        update: {
-          title: t.title.trim(),
-          subtitle: t.subtitle?.trim() || null,
-          bodyMarkdown,
-          bodyHtml,
-          excerpt: t.excerpt?.trim() || null,
-          readingTimeMinutes: bundle.readingTimeMinutes,
-          status: t.status ?? input.status,
-          publishedAt: (t.status ?? input.status) === "PUBLISHED" ? new Date() : undefined
+          languageCode: t.language_code
         }
-      });
+      },
+      create: {
+        articleId,
+        languageCode: t.language_code,
+        title: t.title.trim(),
+        subtitle: t.subtitle?.trim() || null,
+        bodyMarkdown,
+        bodyHtml,
+        excerpt: t.excerpt?.trim() || null,
+        readingTimeMinutes: bundle.readingTimeMinutes,
+        status: t.status ?? input.status ?? "DRAFT",
+        publishedAt: (t.status ?? input.status) === "PUBLISHED" ? new Date() : null
+      },
+      update: {
+        title: t.title.trim(),
+        subtitle: t.subtitle?.trim() || null,
+        bodyMarkdown,
+        bodyHtml,
+        excerpt: t.excerpt?.trim() || null,
+        readingTimeMinutes: bundle.readingTimeMinutes,
+        status: t.status ?? input.status,
+        publishedAt: (t.status ?? input.status) === "PUBLISHED" ? new Date() : undefined
+      }
+    });
 
+    return translation.id;
+  }
+
+  async upsertTranslationSidecars(job: {
+    translationId: string;
+    input: UpsertKnowledgeArticleInput;
+    bundle: {
+      seoScores: KnowledgeSeoScores;
+      searchText: string;
+      jsonLd: Record<string, unknown>;
+    };
+    revision?: {
+      slug: string;
+      authorName: string;
+    };
+  }) {
+    const t = job.input.translation;
+    const seoMetrics = toPrismaKnowledgeSeoScoreFields(job.bundle.seoScores);
+
+    await prisma.$transaction(async (tx) => {
       await tx.knowledgeSeo.upsert({
-        where: { translationId: translation.id },
+        where: { translationId: job.translationId },
         create: {
-          translationId: translation.id,
+          translationId: job.translationId,
           seoTitle: t.seo?.seo_title?.trim() || t.title.trim(),
           metaDescription: t.seo?.meta_description?.trim() || t.excerpt?.trim() || null,
           canonicalUrl: t.seo?.canonical_url?.trim() || null,
           keywordsJson: t.seo?.keywords?.length ? t.seo.keywords : undefined,
           ogTitle: t.seo?.og_title?.trim() || t.title.trim(),
           ogDescription: t.seo?.og_description?.trim() || t.seo?.meta_description?.trim() || null,
-          ogImageUrl: t.seo?.og_image_url?.trim() || input.cover_image_url?.trim() || null,
+          ogImageUrl: t.seo?.og_image_url?.trim() || job.input.cover_image_url?.trim() || null,
           twitterCard: t.seo?.twitter_card ?? "summary_large_image",
           seoScore: seoMetrics.seoScore,
           readabilityScore: seoMetrics.readabilityScore,
@@ -550,7 +567,7 @@ export class KnowledgeCenterRepository {
           keywordsJson: t.seo?.keywords?.length ? t.seo.keywords : undefined,
           ogTitle: t.seo?.og_title?.trim() || t.title.trim(),
           ogDescription: t.seo?.og_description?.trim() || t.seo?.meta_description?.trim() || null,
-          ogImageUrl: t.seo?.og_image_url?.trim() || input.cover_image_url?.trim() || null,
+          ogImageUrl: t.seo?.og_image_url?.trim() || job.input.cover_image_url?.trim() || null,
           twitterCard: t.seo?.twitter_card ?? "summary_large_image",
           seoScore: seoMetrics.seoScore,
           readabilityScore: seoMetrics.readabilityScore,
@@ -562,11 +579,11 @@ export class KnowledgeCenterRepository {
         }
       });
 
-      await tx.knowledgeFaq.deleteMany({ where: { translationId: translation.id } });
+      await tx.knowledgeFaq.deleteMany({ where: { translationId: job.translationId } });
       if (t.faqs?.length) {
         await tx.knowledgeFaq.createMany({
           data: t.faqs.map((faq, index) => ({
-            translationId: translation.id,
+            translationId: job.translationId,
             question: faq.question.trim(),
             answer: faq.answer.trim(),
             sortOrder: faq.sort_order ?? index
@@ -576,9 +593,9 @@ export class KnowledgeCenterRepository {
 
       const lucien = t.lucien;
       await tx.knowledgeLucien.upsert({
-        where: { translationId: translation.id },
+        where: { translationId: job.translationId },
         create: {
-          translationId: translation.id,
+          translationId: job.translationId,
           aiSummary: lucien?.ai_summary?.trim() || t.excerpt?.trim() || null,
           aiKeywordsJson: lucien?.ai_keywords?.length ? lucien.ai_keywords : undefined,
           aiTopicsJson: lucien?.ai_topics?.length ? lucien.ai_topics : undefined,
@@ -611,26 +628,67 @@ export class KnowledgeCenterRepository {
       });
 
       await tx.knowledgeSchema.upsert({
-        where: { translationId: translation.id },
+        where: { translationId: job.translationId },
         create: {
-          translationId: translation.id,
+          translationId: job.translationId,
           schemaType: t.schema_type ?? "ARTICLE",
-          jsonLd: asInputJson(bundle.jsonLd)!
+          jsonLd: asInputJson(job.bundle.jsonLd)!
         },
         update: {
           schemaType: t.schema_type ?? "ARTICLE",
-          jsonLd: asInputJson(bundle.jsonLd)!
+          jsonLd: asInputJson(job.bundle.jsonLd)!
         }
       });
 
       await tx.knowledgeSearchIndex.upsert({
-        where: { translationId: translation.id },
-        create: { translationId: translation.id, searchText: bundle.searchText },
-        update: { searchText: bundle.searchText }
+        where: { translationId: job.translationId },
+        create: { translationId: job.translationId, searchText: job.bundle.searchText },
+        update: { searchText: job.bundle.searchText }
       });
-
-      return translation.id;
     });
+
+    if (job.revision) {
+      const revisionCount = await this.countRevisions(job.translationId);
+      try {
+        await this.saveRevision({
+          translationId: job.translationId,
+          versionNumber: revisionCount + 1,
+          authorName: job.revision.authorName,
+          snapshot: {
+            slug: job.revision.slug,
+            status: job.input.status,
+            translation: t
+          }
+        });
+      } catch {
+        // Revisions are audit-only.
+      }
+    }
+  }
+
+  async upsertTranslationBundle(
+    articleId: string,
+    input: UpsertKnowledgeArticleInput,
+    bundle: {
+      readingTimeMinutes: number;
+      seoScores: KnowledgeSeoScores;
+      searchText: string;
+      jsonLd: Record<string, unknown>;
+    }
+  ) {
+    const translationId = await this.upsertTranslationCore(articleId, input, {
+      readingTimeMinutes: bundle.readingTimeMinutes
+    });
+    await this.upsertTranslationSidecars({
+      translationId,
+      input,
+      bundle: {
+        seoScores: bundle.seoScores,
+        searchText: bundle.searchText,
+        jsonLd: bundle.jsonLd
+      }
+    });
+    return translationId;
   }
 
   async resolveCategoryAndTagsForCreate(input: UpsertKnowledgeArticleInput) {

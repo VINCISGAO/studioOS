@@ -27,9 +27,29 @@ import {
 export type { KnowledgePublishPipelineResult, KnowledgePublishStep } from "@/features/knowledge-center/knowledge-publish.pipeline.shared";
 export { KNOWLEDGE_PUBLISH_STEPS, KNOWLEDGE_PUBLISH_STEP_LABELS, formatKnowledgePublishSummary };
 
+import type { KnowledgeSeoScores } from "@/features/knowledge-center/knowledge-seo.heuristics";
+
+export type KnowledgeTranslationSidecarJob = {
+  articleId: string;
+  translationId: string;
+  input: UpsertKnowledgeArticleInput;
+  bundle: {
+    readingTimeMinutes: number;
+    seoScores: KnowledgeSeoScores;
+    searchText: string;
+    jsonLd: Record<string, unknown>;
+  };
+  revision?: {
+    slug: string;
+    authorName: string;
+  };
+};
+
 export type KnowledgeSaveResult = {
   article: KnowledgeArticleDetailDto | null;
   pipeline?: KnowledgePublishPipelineResult;
+  /** Deferred SEO / Lucien / schema writes — keeps publish HTTP under Vercel timeout. */
+  queueTranslationSidecars?: KnowledgeTranslationSidecarJob;
   /** Deferred to `after()` — avoids Vercel function timeout on publish HTTP response. */
   queuePublishPipeline?: KnowledgePublishPipelineBackgroundJob;
   queueMultilingualSync?: KnowledgeMultilingualBackgroundJob;

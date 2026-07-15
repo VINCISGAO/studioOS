@@ -54,6 +54,7 @@ export function extractApiErrorMessage(body: unknown, fallback: string, status?:
   if (status === 401) return "登录已过期，请重新登录";
   if (status === 403) return "权限校验失败，请刷新页面后重试";
   if (status === 422) return "提交内容校验失败";
+  if (status === 413) return "正文过大（超过 4.4MB），请减少内容或使用图片上传";
   if (status === 409) return "数据冲突，请刷新后重试";
   if (status && status >= 500) {
     if (body && typeof body === "object") {

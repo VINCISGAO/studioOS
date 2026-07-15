@@ -24,7 +24,7 @@ import { enrichPublicKnowledgeArticle } from "@/features/knowledge-center/knowle
 import { toAdminPreviewArticle } from "@/features/knowledge-center/knowledge-admin-preview.mapper";
 import { commitArticleSlug } from "@/features/knowledge-center/knowledge-slug.service";
 import { knowledgeSeoDashboardService } from "@/features/knowledge-center/knowledge-seo-dashboard.service";
-import { runKnowledgePublishPipeline, type KnowledgeSaveResult } from "@/features/knowledge-center/knowledge-publish.pipeline";
+import { runKnowledgePublishPipeline, type KnowledgeSaveResult, type KnowledgeTranslationSidecarJob } from "@/features/knowledge-center/knowledge-publish.pipeline";
 import { syncKnowledgeArticleTranslations } from "@/features/knowledge-center/knowledge-multilingual-publish.service";
 import { logger } from "@/lib/core/logger";
 import type {
@@ -124,14 +124,17 @@ export class KnowledgeCenterService {
 
       await knowledgeCenterRepository.ensureAnalytics(article.id);
       await knowledgeCenterRepository.resolveCategoryAndTags(article.id, input);
-      await this.persistTranslation(article.id, slug, input);
+      const { sidecarJob } = await this.persistTranslation(article.id, slug, input);
 
       if (!publishing) {
         const detail = await knowledgeCenterRepository.getById(article.id);
-        return detail ? { article: detail } : { article: null };
+        return detail ? { article: detail, queueTranslationSidecars: sidecarJob } : { article: null };
       }
 
-      return this.finishMultilingualPublish(article.id, slug, input);
+      return {
+        ...(await this.finishMultilingualPublish(article.id, slug, input)),
+        queueTranslationSidecars: sidecarJob
+      };
     } catch (error) {
       if (article?.id) {
         try {
@@ -160,7 +163,7 @@ export class KnowledgeCenterService {
 
     const nextStatus = this.resolvePublishStatus(input, existing.status);
 
-    await this.persistTranslation(id, slug, { ...input, status: nextStatus }, existing.author_name);
+    const { sidecarJob } = await this.persistTranslation(id, slug, { ...input, status: nextStatus }, existing.author_name);
 
     await knowledgeCenterRepository.updateArticle(id, {
       status: nextStatus,
@@ -185,10 +188,13 @@ export class KnowledgeCenterService {
 
     if (nextStatus !== "PUBLISHED") {
       const detail = await knowledgeCenterRepository.getById(id);
-      return detail ? { article: detail } : { article: null };
+      return detail ? { article: detail, queueTranslationSidecars: sidecarJob } : { article: null };
     }
 
-    return this.finishMultilingualPublish(id, slug, { ...input, status: nextStatus }, existing.author_name);
+    return {
+      ...(await this.finishMultilingualPublish(id, slug, { ...input, status: nextStatus }, existing.author_name)),
+      queueTranslationSidecars: sidecarJob
+    };
   }
 
   async publish(id: string): Promise<KnowledgeSaveResult> {
@@ -463,8 +469,10 @@ export class KnowledgeCenterService {
     try {
       const multilingual = await syncKnowledgeArticleTranslations({
         base: publishInput,
-        persist: async (payload) =>
-          this.persistTranslation(job.articleId, job.slug, payload, job.authorName)
+        persist: async (payload) => {
+          const { sidecarJob } = await this.persistTranslation(job.articleId, job.slug, payload, job.authorName);
+          await knowledgeCenterRepository.upsertTranslationSidecars(sidecarJob);
+        }
       });
 
       const detail = await knowledgeCenterRepository.getById(job.articleId);
@@ -539,7 +547,7 @@ export class KnowledgeCenterService {
     slug: string,
     input: UpsertKnowledgeArticleInput,
     authorName = "VINCIS"
-  ) {
+  ): Promise<{ translationId: string; sidecarJob: KnowledgeTranslationSidecarJob }> {
     const t = input.translation;
     const bodyForScores = t.body_html?.trim() || t.body_markdown;
     const seoScores = computeKnowledgeSeoScores({
@@ -574,28 +582,28 @@ export class KnowledgeCenterService {
       faqs: t.faqs
     });
 
-    const translationId = await knowledgeCenterRepository.upsertTranslationBundle(articleId, input, {
-      readingTimeMinutes,
-      seoScores,
-      searchText: buildSearchText(input),
-      jsonLd
+    const translationId = await knowledgeCenterRepository.upsertTranslationCore(articleId, input, {
+      readingTimeMinutes
     });
 
-    const revisionCount = await knowledgeCenterRepository.countRevisions(translationId);
-    try {
-      await knowledgeCenterRepository.saveRevision({
+    return {
+      translationId,
+      sidecarJob: {
+        articleId,
         translationId,
-        versionNumber: revisionCount + 1,
-        authorName: input.author_name?.trim() || authorName,
-        snapshot: {
+        input,
+        bundle: {
+          readingTimeMinutes,
+          seoScores,
+          searchText: buildSearchText(input),
+          jsonLd
+        },
+        revision: {
           slug,
-          status: input.status,
-          translation: t
+          authorName: input.author_name?.trim() || authorName
         }
-      });
-    } catch {
-      // Revisions are audit-only; do not block save/publish.
-    }
+      }
+    };
   }
 
   private resolveArticleTitle(
