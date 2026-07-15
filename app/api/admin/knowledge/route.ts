@@ -32,7 +32,7 @@ const getCachedKnowledgeDashboardStats = unstable_cache(
 
 export async function GET(request: Request) {
   const requestId = createKnowledgeRequestId(request);
-  let step: KnowledgeAdminRouteStep = "auth";
+  const step: KnowledgeAdminRouteStep = "auth";
   try {
     logKnowledgeAdminStep({ requestId, route: "GET /api/admin/knowledge", step, method: "GET" });
     await requireAdminSession(request);

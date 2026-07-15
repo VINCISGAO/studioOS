@@ -25,7 +25,7 @@ type RouteContext = { params: Promise<{ id: string }> };
 export async function GET(request: Request, context: RouteContext) {
   const requestId = createKnowledgeRequestId(request);
   const route = "GET /api/admin/knowledge/:id";
-  let step: KnowledgeAdminRouteStep = "auth";
+  const step: KnowledgeAdminRouteStep = "auth";
   try {
     const { id } = await context.params;
     logKnowledgeAdminStep({ requestId, route, step, method: "GET", articleId: id });
@@ -90,7 +90,7 @@ export async function PATCH(request: Request, context: RouteContext) {
 export async function DELETE(request: Request, context: RouteContext) {
   const requestId = createKnowledgeRequestId(request);
   const route = "DELETE /api/admin/knowledge/:id";
-  let step: KnowledgeAdminRouteStep = "auth";
+  const step: KnowledgeAdminRouteStep = "auth";
   try {
     const { id } = await context.params;
     logKnowledgeAdminStep({ requestId, route, step, method: "DELETE", articleId: id });
