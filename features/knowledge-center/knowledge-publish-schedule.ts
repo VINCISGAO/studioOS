@@ -1,5 +1,6 @@
 import "server-only";
 
+import { after } from "next/server";
 import { knowledgeCenterRepository } from "@/features/knowledge-center/knowledge-center.repository";
 import { knowledgeCenterService } from "@/features/knowledge-center/knowledge-center.service";
 import {
@@ -9,13 +10,8 @@ import {
 import { logger } from "@/lib/core/logger";
 
 async function runKnowledgePostPublishWork(saved: KnowledgeSaveResult) {
-  const sidecarJob = saved.queueTranslationSidecars;
   const pipelineJob = saved.queuePublishPipeline;
   const multilingualJob = saved.queueMultilingualSync;
-
-  if (sidecarJob) {
-    await knowledgeCenterRepository.upsertTranslationSidecars(sidecarJob);
-  }
 
   if (pipelineJob) {
     const detail = await knowledgeCenterRepository.getById(pipelineJob.articleId);
@@ -33,17 +29,27 @@ async function runKnowledgePostPublishWork(saved: KnowledgeSaveResult) {
   }
 }
 
-/** Fire-and-forget post-publish work. Avoid `after()` — it can break Server Actions on Vercel. */
+/** Queue revalidate / ping / multilingual sync after the save response returns. */
 export function scheduleKnowledgeMultilingualSyncAfterResponse(saved: KnowledgeSaveResult) {
-  const hasWork =
-    saved.queueTranslationSidecars || saved.queuePublishPipeline || saved.queueMultilingualSync;
-  if (!hasWork) return;
+  if (!saved.queuePublishPipeline && !saved.queueMultilingualSync) return;
 
-  void runKnowledgePostPublishWork(saved).catch((error) => {
-    logger.error("knowledge.post_publish.background_failed", {
-      service: "KnowledgePublishSchedule",
-      articleId: saved.article?.id,
-      error: error instanceof Error ? error.message : String(error)
+  try {
+    after(() =>
+      runKnowledgePostPublishWork(saved).catch((error) => {
+        logger.error("knowledge.post_publish.background_failed", {
+          service: "KnowledgePublishSchedule",
+          articleId: saved.article?.id,
+          error: error instanceof Error ? error.message : String(error)
+        });
+      })
+    );
+  } catch {
+    void runKnowledgePostPublishWork(saved).catch((error) => {
+      logger.error("knowledge.post_publish.background_failed", {
+        service: "KnowledgePublishSchedule",
+        articleId: saved.article?.id,
+        error: error instanceof Error ? error.message : String(error)
+      });
     });
-  });
+  }
 }

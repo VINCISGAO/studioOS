@@ -1,15 +1,12 @@
 "use client";
 
-import { saveKnowledgeArticleAction, type KnowledgeSaveActionResult } from "@/app/knowledge-admin-mutation-actions";
 import { useKnowledgeEditorToast } from "@/hooks/use-knowledge-editor-toast";
 import type { KnowledgeArticleDetailDto } from "@/features/knowledge-center/knowledge-center.types";
+import type { KnowledgePublishPipelineResult } from "@/features/knowledge-center/knowledge-publish.pipeline.shared";
 import { adminMutationHeaders, readAdminCsrfToken } from "@/lib/studioos/admin-csrf-client";
 import { extractApiErrorMessage, sanitizeApiResponseText } from "@/lib/studioos/api-error-message";
 import { adminPortalRoutes } from "@/lib/studioos/admin-portal-routes";
-import {
-  isStaleServerActionError,
-  type KnowledgeSaveClientPayload
-} from "@/lib/knowledge/knowledge-save-client";
+import type { KnowledgeSaveClientPayload } from "@/lib/knowledge/knowledge-save-client";
 import { buildKnowledgeEditorInitialForm, type KnowledgeEditorPanelForm } from "@/lib/knowledge/knowledge-editor-initial-form";
 import {
   resolveKnowledgeEditorDisplayStatus,
@@ -33,7 +30,7 @@ async function saveKnowledgeArticleViaApi(input: {
   articleId?: string;
   payload: Record<string, unknown>;
   zh: boolean;
-}): Promise<KnowledgeSaveActionResult> {
+}): Promise<{ data: KnowledgeSaveClientPayload; pipeline?: KnowledgePublishPipelineResult }> {
   const response = await fetch(input.articleId ? `/api/admin/knowledge/${input.articleId}` : "/api/admin/knowledge", {
     method: input.articleId ? "PATCH" : "POST",
     headers: { "Content-Type": "application/json", ...adminMutationHeaders() },
@@ -45,43 +42,28 @@ async function saveKnowledgeArticleViaApi(input: {
     data?: KnowledgeSaveClientPayload;
     error?: { message?: string; code?: string };
     message?: string;
+    success?: boolean;
   } = {};
   if (rawText.trim()) {
     try {
       body = JSON.parse(rawText) as typeof body;
     } catch {
-      return {
-        success: false,
-        error: {
-          code: "SYSTEM_ERROR",
-          message: sanitizeApiResponseText(rawText, response.status)
-        }
-      };
+      throw new Error(sanitizeApiResponseText(rawText, response.status));
     }
   }
   if (!response.ok) {
-    return {
-      success: false,
-      error: {
-        code: body.error?.code ?? "SYSTEM_ERROR",
-        message: extractApiErrorMessage(
-          body,
-          input.zh ? `保存失败（HTTP ${response.status}）` : `Save failed (HTTP ${response.status})`,
-          response.status
-        )
-      }
-    };
+    throw new Error(
+      extractApiErrorMessage(
+        body,
+        input.zh ? `保存失败（HTTP ${response.status}）` : `Save failed (HTTP ${response.status})`,
+        response.status
+      )
+    );
   }
   if (!body.data?.article?.id) {
-    return {
-      success: false,
-      error: {
-        code: "SYSTEM_ERROR",
-        message: input.zh ? "数据库未连接，请运行 npm run db:migrate" : "Database unavailable — run db:migrate"
-      }
-    };
+    throw new Error(input.zh ? "数据库未连接，请运行 npm run db:migrate" : "Database unavailable — run db:migrate");
   }
-  return { success: true, data: body.data };
+  return { data: body.data, pipeline: body.data.pipeline };
 }
 
 export function useKnowledgeEditorController(input: {
@@ -186,64 +168,39 @@ export function useKnowledgeEditorController(input: {
 
       try {
         const activeId = currentId;
-        const csrf = readAdminCsrfToken();
-        if (!csrf) {
-          throw new Error(zh ? "安全令牌缺失，请刷新页面后重试" : "Missing security token — refresh the page");
-        }
-
         const payload = buildPayload(state, publish);
-        let result: KnowledgeSaveActionResult;
+        const { data: result, pipeline } = await saveKnowledgeArticleViaApi({
+          articleId: activeId,
+          payload,
+          zh
+        });
 
-        try {
-          const formData = new FormData();
-          formData.set("_adminCsrf", csrf);
-          if (activeId) formData.set("article_id", activeId);
-          formData.set("payload", JSON.stringify(payload));
-          result = await saveKnowledgeArticleAction(formData);
-        } catch (error) {
-          if (!isStaleServerActionError(error)) throw error;
-          result = await saveKnowledgeArticleViaApi({ articleId: activeId, payload, zh });
-        }
-
-        if (!result.success) {
-          const message =
-            zh && result.error.message === "Invalid CSRF token"
-              ? "权限校验失败，请刷新页面后重试"
-              : zh && result.error.message === "Admin session required"
-                ? "登录已过期，请重新登录"
-                : zh && result.error.code === "PAYLOAD_TOO_LARGE"
-                  ? "正文过大，请减少内容或使用图片上传"
-                  : result.error.message;
-          throw new Error(message);
-        }
-
-        const saved = result.data.article;
-        const nextId = saved?.id ?? activeId ?? null;
+        const saved = result.article;
+        const nextId = saved.id ?? activeId ?? null;
         if (!nextId) {
           throw new Error(zh ? "数据库未连接，请运行 npm run db:migrate" : "Database unavailable — run npm run db:migrate");
         }
 
-        if (!currentId && saved?.id) {
+        if (!currentId && saved.id) {
           setCurrentId(saved.id);
           router.replace(adminPortalRoutes.knowledgeEdit(saved.id));
         }
-        if (saved?.slug) {
+        if (saved.slug) {
           patchForm({ slug: saved.slug });
         }
-        if (isPublishedStatus(saved?.status)) setWasEverPublished(true);
-        if (publish && (result.data.pipeline?.published || isPublishedStatus(saved?.status))) {
+        if (isPublishedStatus(saved.status)) setWasEverPublished(true);
+        if (publish && (pipeline?.published || isPublishedStatus(saved.status))) {
           setWasEverPublished(true);
           patchForm({ status: "PUBLISHED" });
           router.refresh();
         }
 
         setSaveState("saved");
-        const publishedOk =
-          publish && (isPublishedStatus(saved?.status) || result.data.pipeline?.published);
+        const publishedOk = publish && (isPublishedStatus(saved.status) || pipeline?.published);
         notify(
           publish
             ? publishedOk
-              ? result.data.pipeline?.multilingual_sync_queued
+              ? pipeline?.multilingual_sync_queued
                 ? zh
                   ? "已发布。多语言翻译正在后台同步…"
                   : "Published. Multilingual translation is syncing in the background…"
@@ -261,19 +218,7 @@ export function useKnowledgeEditorController(input: {
         return publish ? publishedOk : true;
       } catch (error) {
         setSaveState("idle");
-        const fallback = zh ? "保存失败" : "Save failed";
-        const message =
-          error instanceof Error
-            ? error.message.includes("Server Components render")
-              ? zh
-                ? "发布失败（服务器内部错误）。请刷新页面后重试，或到文章列表确认是否已保存。"
-                : "Publish failed (server internal error). Refresh and check the article list."
-              : isStaleServerActionError(error)
-                ? zh
-                  ? "页面版本过期，请硬刷新（Cmd+Shift+R）后重试"
-                  : "Page is out of date — hard refresh (Cmd+Shift+R) and retry"
-                : error.message
-            : fallback;
+        const message = error instanceof Error ? error.message : zh ? "保存失败" : "Save failed";
         notify(message, "error");
         return false;
       }
