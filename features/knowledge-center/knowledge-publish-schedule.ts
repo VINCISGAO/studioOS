@@ -10,6 +10,15 @@ import {
 import { logger } from "@/lib/core/logger";
 
 async function runKnowledgePostSaveWork(saved: KnowledgeSaveResult, requestId?: string) {
+  logger.info("knowledge.post_save.work.start", {
+    service: "KnowledgePublishSchedule",
+    requestId,
+    articleId: saved.article?.id,
+    hasSidecarQueue: Boolean(saved.queueTranslationSidecars),
+    hasPublishPipeline: Boolean(saved.queuePublishPipeline),
+    hasMultilingualQueue: Boolean(saved.queueMultilingualSync)
+  });
+
   if (saved.queueTranslationSidecars) {
     logger.info("knowledge.post_save.sidecars.start", {
       service: "KnowledgePublishSchedule",
@@ -40,6 +49,13 @@ async function runKnowledgePostSaveWork(saved: KnowledgeSaveResult, requestId?: 
 
   if (multilingualJob) {
     await knowledgeCenterService.runBackgroundMultilingualSync(multilingualJob);
+  } else if (pipelineJob) {
+    logger.info("knowledge.post_save.multilingual_skipped", {
+      service: "KnowledgePublishSchedule",
+      requestId,
+      articleId: saved.article?.id,
+      reason: "queue_multilingual_sync_missing"
+    });
   }
 }
 
@@ -65,9 +81,23 @@ export function scheduleKnowledgePostSaveWork(saved: KnowledgeSaveResult, reques
       });
     });
 
+  logger.info("knowledge.post_save.scheduled", {
+    service: "KnowledgePublishSchedule",
+    requestId,
+    articleId: saved.article?.id,
+    hasSidecarQueue: Boolean(saved.queueTranslationSidecars),
+    hasPublishPipeline: Boolean(saved.queuePublishPipeline),
+    hasMultilingualQueue: Boolean(saved.queueMultilingualSync)
+  });
+
   try {
     after(run);
   } catch {
+    logger.warn("knowledge.post_save.after_unavailable", {
+      service: "KnowledgePublishSchedule",
+      requestId,
+      articleId: saved.article?.id
+    });
     void run();
   }
 }

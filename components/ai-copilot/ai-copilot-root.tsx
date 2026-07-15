@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { Suspense, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { syncLucienChatAuthUser } from "@/lib/lucien/lucien-chat-storage";
+import { isPublicLucienPagePath } from "@/lib/marketing/public-lucien-paths";
 
 const AiCopilotDrawer = dynamic(
   () => import("@/components/ai-copilot/ai-copilot-drawer").then((mod) => mod.AiCopilotDrawer),
@@ -18,11 +19,16 @@ function isPublicShellRoute(pathname: string) {
   return pathname === "/login" || pathname.startsWith("/login/");
 }
 
+function shouldHideWorkspaceCopilot(pathname: string) {
+  const path = pathname.split("?")[0]?.trim() ?? "";
+  return isPublicShellRoute(pathname) || isPublicLucienPagePath(path);
+}
+
 export function AiCopilotRoot() {
   const [mounted, setMounted] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
   const pathname = usePathname();
-  const hideCopilotRoot = !pathname || isPublicShellRoute(pathname);
+  const hideCopilotRoot = !pathname || shouldHideWorkspaceCopilot(pathname);
 
   useEffect(() => {
     setMounted(true);

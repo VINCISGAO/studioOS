@@ -14,6 +14,7 @@ import {
   type KnowledgeAdminRouteStep
 } from "@/lib/knowledge/knowledge-admin-api";
 import { readKnowledgeMutationJson } from "@/lib/knowledge/knowledge-mutation-body";
+import { aiGatewayService } from "@/features/ai/ai-gateway.service";
 import { toKnowledgeSaveClientPayload } from "@/lib/knowledge/knowledge-save-client";
 
 export const runtime = "nodejs";
@@ -66,7 +67,10 @@ export async function PATCH(request: Request, context: RouteContext) {
       articleId: id,
       extra: {
         hasSidecarQueue: Boolean(saved.queueTranslationSidecars),
-        hasPublishPipeline: Boolean(saved.queuePublishPipeline)
+        hasPublishPipeline: Boolean(saved.queuePublishPipeline),
+        hasMultilingualQueue: Boolean(saved.queueMultilingualSync),
+        openaiConfigured: aiGatewayService.isConfigured(),
+        multilingualSyncQueued: Boolean(saved.pipeline?.multilingual_sync_queued)
       }
     });
     scheduleKnowledgePostSaveWork(saved, requestId);

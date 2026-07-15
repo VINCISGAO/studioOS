@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { useCallback, useMemo, useState, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { MarketingDocsLucienContext } from "@/components/marketing/docs/marketing-docs-lucien-context";
+import { PublicLucienFloatingLauncher } from "@/components/marketing/faq/public-lucien-floating-launcher";
 import {
   getLucienViewerSnapshot,
   prefetchLucienViewerSnapshot,
@@ -49,6 +50,7 @@ export function MarketingDocsLucienHost({
   return (
     <MarketingDocsLucienContext.Provider value={value}>
       {children}
+      <PublicLucienFloatingLauncher locale={locale} hidden={open} />
       {open ? (
         <PublicLucienDrawer
           locale={locale}

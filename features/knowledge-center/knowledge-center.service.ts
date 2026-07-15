@@ -28,6 +28,7 @@ import { toAdminPreviewArticle } from "@/features/knowledge-center/knowledge-adm
 import { commitArticleSlug } from "@/features/knowledge-center/knowledge-slug.service";
 import { knowledgeSeoDashboardService } from "@/features/knowledge-center/knowledge-seo-dashboard.service";
 import { runKnowledgePublishPipeline, type KnowledgeSaveResult, type KnowledgeTranslationSidecarJob } from "@/features/knowledge-center/knowledge-publish.pipeline";
+import { resolveMultilingualSourceTranslation } from "@/features/knowledge-center/knowledge-multilingual-source";
 import { syncKnowledgeArticleTranslations } from "@/features/knowledge-center/knowledge-multilingual-publish.service";
 import { logger } from "@/lib/core/logger";
 import type {
@@ -437,11 +438,17 @@ export class KnowledgeCenterService {
       return;
     }
 
+    const detail = await knowledgeCenterRepository.getById(job.articleId);
+    const persistedSource = detail?.translations.find(
+      (item) => item.language_code === job.input.translation.language_code
+    );
+    const sourceTranslation = resolveMultilingualSourceTranslation(job.input.translation, persistedSource);
+
     const publishInput: UpsertKnowledgeArticleInput = {
       ...job.input,
       status: "PUBLISHED",
       translation: {
-        ...job.input.translation,
+        ...sourceTranslation,
         status: "PUBLISHED"
       }
     };
@@ -450,7 +457,8 @@ export class KnowledgeCenterService {
       service: "KnowledgeCenterService",
       articleId: job.articleId,
       slug: job.slug,
-      sourceLanguage: publishInput.translation.language_code
+      sourceLanguage: publishInput.translation.language_code,
+      bodyMarkdownChars: publishInput.translation.body_markdown?.length ?? 0
     });
 
     try {
@@ -461,9 +469,9 @@ export class KnowledgeCenterService {
         }
       });
 
-      const detail = await knowledgeCenterRepository.getById(job.articleId);
-      if (detail) {
-        await runKnowledgePublishPipeline(detail, multilingual);
+      const refreshed = await knowledgeCenterRepository.getById(job.articleId);
+      if (refreshed) {
+        await runKnowledgePublishPipeline(refreshed, multilingual);
       }
 
       logger.info("knowledge.multilingual_background.completed", {
@@ -499,6 +507,24 @@ export class KnowledgeCenterService {
     const sourceCode = publishInput.translation.language_code;
     const pathPrefix = knowledgePathPrefixForCode(sourceCode);
     const publicUrl = buildKnowledgeArticlePath(pathPrefix, slug);
+    const openaiConfigured = aiGatewayService.isConfigured();
+
+    if (!openaiConfigured) {
+      logger.info("knowledge.multilingual_background.not_queued", {
+        service: "KnowledgeCenterService",
+        articleId,
+        slug,
+        sourceLanguage: sourceCode,
+        reason: "openai_not_configured"
+      });
+    } else {
+      logger.info("knowledge.multilingual_background.queued", {
+        service: "KnowledgeCenterService",
+        articleId,
+        slug,
+        sourceLanguage: sourceCode
+      });
+    }
 
     return {
       article: this.saveRef(articleId, slug, "PUBLISHED"),
@@ -507,14 +533,14 @@ export class KnowledgeCenterService {
         steps: [],
         lucien_synced: 0,
         public_urls: [publicUrl],
-        multilingual_sync_queued: aiGatewayService.isConfigured()
+        multilingual_sync_queued: openaiConfigured
       },
       queuePublishPipeline: {
         articleId,
         slug,
         sourceLanguage: sourceCode
       },
-      queueMultilingualSync: aiGatewayService.isConfigured()
+      queueMultilingualSync: openaiConfigured
         ? {
             articleId,
             slug,
