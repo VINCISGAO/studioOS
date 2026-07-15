@@ -3,7 +3,6 @@
 import { guardAdminServerAction } from "@/features/admin/auth/admin-mutation-guard";
 import { parseKnowledgeArticleBody } from "@/features/knowledge-center/knowledge-center.api-parser";
 import { knowledgeCenterService } from "@/features/knowledge-center/knowledge-center.service";
-import type { KnowledgeArticleDetailDto } from "@/features/knowledge-center/knowledge-center.types";
 import type { KnowledgePublishPipelineResult } from "@/features/knowledge-center/knowledge-publish.pipeline.shared";
 import { scheduleKnowledgeMultilingualSyncAfterResponse } from "@/features/knowledge-center/knowledge-publish-schedule";
 import { appError, isAppError } from "@/lib/core/errors";
@@ -11,11 +10,18 @@ import { appError, isAppError } from "@/lib/core/errors";
 /** Server Actions use next.config serverActions.bodySizeLimit (320mb). */
 const KNOWLEDGE_SAVE_MAX_BYTES = 20_000_000;
 
+/** Keep the action response small — never return full body_html (can exceed RSC payload limits). */
+export type KnowledgeSaveActionArticle = {
+  id: string;
+  slug: string;
+  status: string;
+};
+
 export type KnowledgeSaveActionResult =
   | {
       success: true;
       data: {
-        article: KnowledgeArticleDetailDto;
+        article: KnowledgeSaveActionArticle;
         pipeline?: KnowledgePublishPipelineResult;
       };
     }
@@ -41,6 +47,29 @@ function parsePayload(raw: string) {
   }
 }
 
+function formatActionError(error: unknown): { code: string; message: string } {
+  if (isAppError(error)) {
+    return { code: error.code, message: error.message };
+  }
+  if (error instanceof Error) {
+    const prismaCode =
+      typeof error === "object" && error !== null && "code" in error
+        ? String((error as { code?: string }).code)
+        : null;
+    if (prismaCode === "P2002") {
+      return { code: "SYSTEM_ERROR", message: "Duplicate record — refresh and retry." };
+    }
+    if (prismaCode === "P2021" || prismaCode === "P2022") {
+      return {
+        code: "SYSTEM_ERROR",
+        message: `Database schema out of date (${prismaCode}). Run db:migrate:deploy.`
+      };
+    }
+    return { code: "SYSTEM_ERROR", message: error.message.slice(0, 280) || "Internal server error" };
+  }
+  return { code: "SYSTEM_ERROR", message: "Internal server error" };
+}
+
 export async function saveKnowledgeArticleAction(formData: FormData): Promise<KnowledgeSaveActionResult> {
   try {
     await guardAdminServerAction(formData);
@@ -63,27 +92,20 @@ export async function saveKnowledgeArticleAction(formData: FormData): Promise<Kn
       };
     }
 
-    try {
-      scheduleKnowledgeMultilingualSyncAfterResponse(saved);
-    } catch {
-      // Background scheduling must not fail a successful save.
-    }
+    scheduleKnowledgeMultilingualSyncAfterResponse(saved);
 
     return {
       success: true,
       data: {
-        article: saved.article,
+        article: {
+          id: saved.article.id,
+          slug: saved.article.slug,
+          status: saved.article.status
+        },
         pipeline: saved.pipeline
       }
     };
   } catch (error) {
-    if (isAppError(error)) {
-      return {
-        success: false,
-        error: { code: error.code, message: error.message }
-      };
-    }
-    const message = error instanceof Error ? error.message : "Internal server error";
-    return { success: false, error: { code: "SYSTEM_ERROR", message } };
+    return { success: false, error: formatActionError(error) };
   }
 }

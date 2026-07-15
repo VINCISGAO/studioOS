@@ -1,6 +1,5 @@
 import "server-only";
 
-import { after } from "next/server";
 import { knowledgeCenterRepository } from "@/features/knowledge-center/knowledge-center.repository";
 import { knowledgeCenterService } from "@/features/knowledge-center/knowledge-center.service";
 import {
@@ -9,56 +8,42 @@ import {
 } from "@/features/knowledge-center/knowledge-publish.pipeline";
 import { logger } from "@/lib/core/logger";
 
-export function scheduleKnowledgeMultilingualSyncAfterResponse(saved: KnowledgeSaveResult) {
+async function runKnowledgePostPublishWork(saved: KnowledgeSaveResult) {
   const sidecarJob = saved.queueTranslationSidecars;
   const pipelineJob = saved.queuePublishPipeline;
   const multilingualJob = saved.queueMultilingualSync;
-  if (!sidecarJob && !pipelineJob && !multilingualJob) return;
 
-  after(async () => {
-    if (sidecarJob) {
-      try {
-        await knowledgeCenterRepository.upsertTranslationSidecars(sidecarJob);
-      } catch (error) {
-        logger.error("knowledge.translation_sidecars.background_failed", {
-          service: "KnowledgePublishRoute",
-          articleId: sidecarJob.articleId,
-          translationId: sidecarJob.translationId,
-          error: error instanceof Error ? error.message : String(error)
-        });
-      }
-    }
+  if (sidecarJob) {
+    await knowledgeCenterRepository.upsertTranslationSidecars(sidecarJob);
+  }
 
-    if (pipelineJob) {
-      try {
-        const detail = await knowledgeCenterRepository.getById(pipelineJob.articleId);
-        if (detail) {
-          await runKnowledgePublishPipeline(detail, {
-            translations_synced: 1,
-            translation_languages: [pipelineJob.sourceLanguage],
-            errors: []
-          });
-        }
-      } catch (error) {
-        logger.error("knowledge.publish_pipeline.background_failed", {
-          service: "KnowledgePublishRoute",
-          articleId: pipelineJob.articleId,
-          slug: pipelineJob.slug,
-          error: error instanceof Error ? error.message : String(error)
-        });
-      }
+  if (pipelineJob) {
+    const detail = await knowledgeCenterRepository.getById(pipelineJob.articleId);
+    if (detail) {
+      await runKnowledgePublishPipeline(detail, {
+        translations_synced: 1,
+        translation_languages: [pipelineJob.sourceLanguage],
+        errors: []
+      });
     }
+  }
 
-    if (multilingualJob) {
-      try {
-        await knowledgeCenterService.runBackgroundMultilingualSync(multilingualJob);
-      } catch (error) {
-        logger.error("knowledge.multilingual_background.schedule_failed", {
-          service: "KnowledgePublishRoute",
-          articleId: multilingualJob.articleId,
-          error: error instanceof Error ? error.message : String(error)
-        });
-      }
-    }
+  if (multilingualJob) {
+    await knowledgeCenterService.runBackgroundMultilingualSync(multilingualJob);
+  }
+}
+
+/** Fire-and-forget post-publish work. Avoid `after()` — it can break Server Actions on Vercel. */
+export function scheduleKnowledgeMultilingualSyncAfterResponse(saved: KnowledgeSaveResult) {
+  const hasWork =
+    saved.queueTranslationSidecars || saved.queuePublishPipeline || saved.queueMultilingualSync;
+  if (!hasWork) return;
+
+  void runKnowledgePostPublishWork(saved).catch((error) => {
+    logger.error("knowledge.post_publish.background_failed", {
+      service: "KnowledgePublishSchedule",
+      articleId: saved.article?.id,
+      error: error instanceof Error ? error.message : String(error)
+    });
   });
 }

@@ -194,7 +194,16 @@ export function useKnowledgeEditorController(input: {
         return publish ? publishedOk : true;
       } catch (error) {
         setSaveState("idle");
-        notify(error instanceof Error ? error.message : zh ? "保存失败" : "Save failed", "error");
+        const fallback = zh ? "保存失败" : "Save failed";
+        const message =
+          error instanceof Error
+            ? error.message.includes("Server Components render")
+              ? zh
+                ? "发布失败（服务器内部错误）。请刷新页面后重试，或到文章列表确认是否已保存。"
+                : "Publish failed (server internal error). Refresh and check the article list."
+              : error.message
+            : fallback;
+        notify(message, "error");
         return false;
       }
     },
