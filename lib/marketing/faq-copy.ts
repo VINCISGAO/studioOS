@@ -75,7 +75,8 @@ const zh: FaqCopy = {
         },
         {
           question: "品牌和创作者需要注册不同账号吗？",
-          answer: "不需要。一个账号即可拥有品牌与创作者两种身份，你可以根据需要自由切换。"
+          answer:
+            "需要分别注册。同一邮箱在注册时只能选择品牌方或创作者其中一种身份，注册后不能在同账号内切换。如需同时使用两种身份，请用不同邮箱分别注册。"
         }
       ]
     },
@@ -250,7 +251,7 @@ const en: FaqCopy = {
         {
           question: "Do brands and creators need separate accounts?",
           answer:
-            "No. One account can hold both Brand and Creator identities — switch anytime based on what you need."
+            "Yes — one email maps to one identity. At signup you choose Brand or Creator, and you cannot switch later on the same account. Use separate emails if you need both roles."
         }
       ]
     },

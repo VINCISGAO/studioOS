@@ -1,4 +1,6 @@
+import { FaqLucienCtaBlock } from "@/components/marketing/faq/faq-lucien-cta-block";
 import type { KnowledgeFaqDto } from "@/features/knowledge-center/knowledge-center.types";
+import { knowledgeCenterHomeCopy } from "@/lib/knowledge/knowledge-center-home-copy";
 import type { Locale } from "@/lib/i18n";
 
 export function KnowledgeArticleFaqSection({
@@ -11,6 +13,7 @@ export function KnowledgeArticleFaqSection({
   if (!faqs.length) return null;
 
   const zh = locale === "zh";
+  const supportCopy = knowledgeCenterHomeCopy(locale);
 
   return (
     <section className="mt-14 rounded-[28px] border border-zinc-200 bg-gradient-to-b from-white to-zinc-50/80 p-6 sm:p-8" aria-labelledby="knowledge-faq-heading">
@@ -38,6 +41,12 @@ export function KnowledgeArticleFaqSection({
           </details>
         ))}
       </div>
+      <FaqLucienCtaBlock
+        locale={locale}
+        title={supportCopy.supportTitle}
+        buttonLabel={supportCopy.supportLucienButton}
+        className="relative mt-8 overflow-visible rounded-[1.75rem] border border-violet-100/70 bg-white shadow-[0_18px_60px_-48px_rgba(76,29,149,0.35)]"
+      />
     </section>
   );
 }

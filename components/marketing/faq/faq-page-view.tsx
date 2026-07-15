@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import {
-  ArrowRight,
   ChevronDown,
   Clapperboard,
   CreditCard,
@@ -13,9 +12,8 @@ import {
   Sparkles,
   UserRound
 } from "lucide-react";
-import { useMarketingDocsLucien } from "@/components/marketing/docs/marketing-docs-lucien-context";
+import { FaqLucienCtaBlock } from "@/components/marketing/faq/faq-lucien-cta-block";
 import { faqText, formatFaqCount, type FaqCategoryId } from "@/lib/marketing/faq-copy";
-import { FaqLucienCtaGraphic } from "@/components/marketing/faq/faq-cta-graphic";
 import { cn } from "@/lib/utils";
 import type { Locale } from "@/lib/i18n";
 
@@ -63,7 +61,6 @@ function FaqAnswer({
 
 export function FaqPageView({ locale }: { locale: Locale }) {
   const t = faqText(locale);
-  const { openLucien } = useMarketingDocsLucien();
   const [activeCategory, setActiveCategory] = useState<FaqCategoryId>("account");
   const [openQuestion, setOpenQuestion] = useState(0);
 
@@ -198,23 +195,7 @@ export function FaqPageView({ locale }: { locale: Locale }) {
         })}
       </section>
 
-      <section className="relative mt-10 overflow-visible rounded-[1.75rem] border border-violet-100/70 bg-white shadow-[0_18px_60px_-48px_rgba(76,29,149,0.35)]">
-        <div className="relative z-[1] p-6 pr-[min(36%,132px)] sm:p-8 sm:pr-[min(38%,168px)] lg:pr-[min(42%,280px)]">
-          <h2 className="text-2xl font-semibold tracking-[-0.03em] text-zinc-950">{t.cta.title}</h2>
-          <div className="mt-5">
-            <button
-              type="button"
-              onClick={openLucien}
-              className="inline-flex items-center gap-2 rounded-full bg-violet-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-violet-700"
-            >
-              <Sparkles className="h-4 w-4" strokeWidth={1.75} />
-              {t.cta.contactLabel}
-              <ArrowRight className="h-4 w-4" strokeWidth={1.75} />
-            </button>
-          </div>
-        </div>
-        <FaqLucienCtaGraphic locale={locale} />
-      </section>
+      <FaqLucienCtaBlock locale={locale} title={t.cta.title} buttonLabel={t.cta.contactLabel} />
     </>
   );
 }

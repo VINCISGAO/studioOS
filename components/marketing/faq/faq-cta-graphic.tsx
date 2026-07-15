@@ -7,7 +7,10 @@ export function FaqLucienCtaGraphic({ locale }: { locale: Locale }) {
     <img
       src={LUCIEN_BIG_SRC}
       alt={locale === "zh" ? "卢西恩" : "Lucien"}
-      className="pointer-events-none absolute bottom-0 right-4 -z-10 h-[min(220px,54vw)] w-auto max-w-none object-contain object-bottom sm:right-36 sm:h-[min(252px,46vw)] lg:right-48 lg:h-[276px]"
+      width={918}
+      height={1239}
+      decoding="async"
+      className="pointer-events-none mx-auto -mt-8 h-[min(200px,46vw)] w-auto max-w-none shrink-0 self-end object-contain object-bottom sm:-mt-12 sm:mr-6 sm:h-[min(252px,38vw)] lg:-mt-16 lg:mr-10 lg:h-[276px]"
     />
   );
 }
