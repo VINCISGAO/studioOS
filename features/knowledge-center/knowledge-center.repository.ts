@@ -671,16 +671,16 @@ export class KnowledgeCenterRepository {
     });
   }
 
-  async getPublishedTranslation(slug: string, languageCode: string) {
+  async getPublishedTranslation(routeKey: string, languageCode: string) {
     const model = articleModel();
     if (!model) return null;
     return withKnowledgeTableFallback(null, async () => {
       const visibilityFilter = await resolveArticleVisibilityFilter();
       return model.findFirst({
         where: knowledgePublicArticleWhere({
-          slug,
           deletedAt: null,
           ...visibilityFilter,
+          OR: [{ slug: routeKey }, { id: routeKey }],
           translations: {
             some: {
               languageCode,

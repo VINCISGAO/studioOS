@@ -65,13 +65,11 @@ export function knowledgeEditorPublishGate(form: KnowledgeEditorFormState, zh = 
   const warnings: string[] = [];
 
   if (!form.title.trim()) blockers.push(zh ? "标题必填" : "Title is required");
-  if (!validateKnowledgeSlug(form.slug).ok) blockers.push(zh ? "URL 别名无效" : "Valid slug is required");
   if (knowledgeHtmlIsEmpty(form.body_html)) blockers.push(zh ? "正文必填" : "Body is required");
-  if (!effectiveKnowledgeSeoTitle(form)) blockers.push(zh ? "SEO 标题必填" : "SEO title is required");
-  if (!effectiveKnowledgeMetaDescription(form)) {
-    blockers.push(zh ? "页面描述必填（可填写副标题）" : "Meta description is required (subtitle can be used)");
-  }
   if (!form.category_slug) blockers.push(zh ? "请选择分类" : "Category is required");
+  if (!form.subtitle.trim()) {
+    warnings.push(zh ? "未填写副标题，发布后将使用标题作为页面描述" : "No subtitle — title will be used as meta description");
+  }
   if (!form.cover_image_url.trim()) warnings.push(zh ? "建议上传封面图" : "Cover image is recommended");
   if (!form.tags.length && form.category_slug) {
     warnings.push(

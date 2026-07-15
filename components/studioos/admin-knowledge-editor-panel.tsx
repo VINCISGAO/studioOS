@@ -7,11 +7,9 @@ import { KnowledgeEditorHeroSection } from "@/components/studioos/knowledge-edit
 import { KnowledgeEditorLucienPanel } from "@/components/studioos/knowledge-editor/knowledge-editor-lucien-panel";
 import { KnowledgeEditorPublishDialog } from "@/components/studioos/knowledge-editor/knowledge-editor-publish-dialog";
 import { KnowledgeEditorPublishPanel } from "@/components/studioos/knowledge-editor/knowledge-editor-publish-panel";
-import { KnowledgeEditorSeoPanel } from "@/components/studioos/knowledge-editor/knowledge-editor-seo-panel";
 import { KnowledgeEditorTopBar } from "@/components/studioos/knowledge-editor/knowledge-editor-top-bar";
 import { KnowledgeTiptapEditor } from "@/components/studioos/knowledge-editor/tiptap/knowledge-tiptap-editor-host";
 import { useKnowledgeEditorController } from "@/hooks/use-knowledge-editor-controller";
-import { normalizeKnowledgeSlug } from "@/lib/knowledge/knowledge-editor-validation";
 import type { KnowledgeArticleDetailDto } from "@/features/knowledge-center/knowledge-center.types";
 import type { Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -29,10 +27,6 @@ export function AdminKnowledgeEditorPanel({ locale, articleId, initial }: Editor
     currentId,
     form,
     patchForm,
-    slugTouched,
-    setSlugTouched,
-    slugValidation,
-    slugCheck,
     displayStatus,
     saveState,
     message,
@@ -75,19 +69,8 @@ export function AdminKnowledgeEditorPanel({ locale, articleId, initial }: Editor
           <KnowledgeEditorArticleFields
             locale={locale}
             form={form}
-            slugValidation={slugValidation}
-            slugCheck={slugCheck}
             onChange={patchForm}
-            onTitleChange={(title) =>
-              patchForm({
-                title,
-                slug: slugTouched ? form.slug : normalizeKnowledgeSlug(title)
-              })
-            }
-            onSlugChange={(slug) => {
-              setSlugTouched(true);
-              patchForm({ slug: normalizeKnowledgeSlug(slug) });
-            }}
+            onTitleChange={(title) => patchForm({ title })}
           />
 
           <KnowledgeEditorCoverBlock
@@ -111,7 +94,6 @@ export function AdminKnowledgeEditorPanel({ locale, articleId, initial }: Editor
         </div>
 
         <aside className="flex min-w-0 flex-col gap-5">
-          <KnowledgeEditorSeoPanel locale={locale} form={form} onChange={patchForm} onNotify={(text, variant) => notify(text, variant)} />
           <KnowledgeEditorCategoryTagsPanel locale={locale} form={form} onChange={patchForm} />
           <KnowledgeEditorPublishPanel locale={locale} form={form} onChange={patchForm} />
           <KnowledgeEditorLucienPanel

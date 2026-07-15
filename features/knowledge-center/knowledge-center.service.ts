@@ -1,5 +1,6 @@
 import "server-only";
 
+import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import type { KnowledgeArticleStatus } from "@prisma/client";
 import { toArticleListItemDto } from "@/features/knowledge-center/knowledge-center.mappers";
@@ -14,8 +15,7 @@ import { knowledgeLucienSyncService } from "@/features/knowledge-center/knowledg
 import {
   buildKnowledgeJsonLd,
   computeKnowledgeSeoScores,
-  estimateReadingTimeMinutes,
-  slugifyKnowledgeTitle
+  estimateReadingTimeMinutes
 } from "@/features/knowledge-center/knowledge-seo.heuristics";
 import {
   buildKnowledgeArticleAlternates,
@@ -23,7 +23,7 @@ import {
 } from "@/features/knowledge-center/knowledge-hreflang";
 import { enrichPublicKnowledgeArticle } from "@/features/knowledge-center/knowledge-article-enrichment";
 import { toAdminPreviewArticle } from "@/features/knowledge-center/knowledge-admin-preview.mapper";
-import { checkKnowledgeSlugAvailability } from "@/features/knowledge-center/knowledge-slug.service";
+import { allocateUniqueKnowledgeSlug } from "@/features/knowledge-center/knowledge-slug.service";
 import { knowledgeSeoDashboardService } from "@/features/knowledge-center/knowledge-seo-dashboard.service";
 import { runKnowledgePublishPipeline, type KnowledgeSaveResult } from "@/features/knowledge-center/knowledge-publish.pipeline";
 import { syncKnowledgeArticleTranslations } from "@/features/knowledge-center/knowledge-multilingual-publish.service";
@@ -38,7 +38,6 @@ import type {
   UpsertKnowledgeArticleInput
 } from "@/features/knowledge-center/knowledge-center.types";
 import type { KnowledgeMultilingualBackgroundJob } from "@/features/knowledge-center/knowledge-publish.pipeline";
-import { appError } from "@/lib/core/errors";
 import { aiGatewayService } from "@/features/ai/ai-gateway.service";
 import type { Locale } from "@/lib/i18n";
 
@@ -98,20 +97,14 @@ export class KnowledgeCenterService {
 
   async create(input: UpsertKnowledgeArticleInput): Promise<KnowledgeSaveResult> {
     await this.ensureSeeds();
-    const slug = (input.slug?.trim() || slugifyKnowledgeTitle(input.title)).replace(/^\/+|\/+$/g, "");
-
-    const existingDraft = await knowledgeCenterRepository.getBySlug(slug);
-    if (existingDraft && (existingDraft.status === "DRAFT" || existingDraft.status === "REVIEW")) {
-      return this.update(existingDraft.id, input);
-    }
-
-    await this.assertSlugAvailable(slug);
+    const tempSlug = `draft-${randomUUID()}`;
     const categoryId = await knowledgeCenterRepository.resolveCategoryAndTagsForCreate(input);
+    const publishing = this.isPublishIntent(input);
 
     let article: Awaited<ReturnType<typeof knowledgeCenterRepository.createArticle>> = null;
     try {
       article = await knowledgeCenterRepository.createArticle({
-        slug,
+        slug: tempSlug,
         status: this.resolvePublishStatus(input, "DRAFT"),
         authorName: input.author_name?.trim() || "VINCIS",
         coverImageUrl: input.cover_image_url?.trim() || null,
@@ -119,16 +112,28 @@ export class KnowledgeCenterService {
         scheduledAt: input.scheduled_at ? new Date(input.scheduled_at) : null,
         timezone: input.timezone ?? "UTC",
         category: categoryId ? { connect: { id: categoryId } } : undefined,
-        publishedAt: this.isPublishIntent(input) ? new Date() : null
+        publishedAt: publishing ? new Date() : null
       });
 
       if (!article) return { article: null };
+
+      const slug = await this.resolveArticleSlug({
+        title: this.resolveArticleTitle(input),
+        articleId: article.id,
+        existingSlug: tempSlug,
+        wasPublished: false,
+        publishing
+      });
+
+      if (slug !== tempSlug) {
+        await knowledgeCenterRepository.updateArticle(article.id, { slug });
+      }
 
       await knowledgeCenterRepository.ensureAnalytics(article.id);
       await knowledgeCenterRepository.resolveCategoryAndTags(article.id, input);
       await this.persistTranslation(article.id, slug, input);
 
-      if (!this.isPublishIntent(input)) {
+      if (!publishing) {
         const detail = await knowledgeCenterRepository.getById(article.id);
         return detail ? { article: detail } : { article: null };
       }
@@ -150,10 +155,15 @@ export class KnowledgeCenterService {
     const existing = await knowledgeCenterRepository.getById(id);
     if (!existing) return { article: null };
 
-    const slug = (input.slug?.trim() || existing.slug).replace(/^\/+|\/+$/g, "");
-    if (slug !== existing.slug) {
-      await this.assertSlugAvailable(slug, id);
-    }
+    const publishing = this.isPublishIntent(input);
+    const wasPublished = existing.status === "PUBLISHED" || Boolean(existing.published_at);
+    const slug = await this.resolveArticleSlug({
+      title: this.resolveArticleTitle(input, existing),
+      articleId: id,
+      existingSlug: existing.slug,
+      wasPublished,
+      publishing
+    });
     const categoryId = await knowledgeCenterRepository.resolveCategoryAndTags(id, input);
 
     const nextStatus = this.resolvePublishStatus(input, existing.status);
@@ -199,7 +209,6 @@ export class KnowledgeCenterService {
 
     return this.update(id, {
       title: translation.title,
-      slug: existing.slug,
       category_slug: existing.category_slug ?? undefined,
       author_name: existing.author_name,
       status: "PUBLISHED",
@@ -622,6 +631,41 @@ export class KnowledgeCenterService {
     }
   }
 
+  private resolveArticleTitle(
+    input: UpsertKnowledgeArticleInput,
+    existing?: KnowledgeArticleDetailDto | null
+  ) {
+    return (
+      input.translation.title?.trim() ||
+      input.title?.trim() ||
+      existing?.translations[0]?.title?.trim() ||
+      ""
+    );
+  }
+
+  private async resolveArticleSlug(input: {
+    title: string;
+    articleId: string;
+    existingSlug?: string;
+    wasPublished: boolean;
+    publishing: boolean;
+  }) {
+    const existingSlug = input.existingSlug?.trim().replace(/^\/+|\/+$/g, "");
+    if (input.wasPublished && existingSlug) {
+      return existingSlug;
+    }
+
+    if (!input.publishing) {
+      return input.articleId.replace(/^\/+|\/+$/g, "");
+    }
+
+    return allocateUniqueKnowledgeSlug({
+      title: input.title,
+      articleId: input.articleId,
+      excludeArticleId: input.articleId
+    });
+  }
+
   private isPublishIntent(input: UpsertKnowledgeArticleInput) {
     return input.status === "PUBLISHED" || input.translation.status === "PUBLISHED";
   }
@@ -632,15 +676,6 @@ export class KnowledgeCenterService {
   ): KnowledgeArticleDetailDto["status"] {
     if (this.isPublishIntent(input)) return "PUBLISHED";
     return (input.status ?? current) as KnowledgeArticleDetailDto["status"];
-  }
-
-  private async assertSlugAvailable(slug: string, excludeArticleId?: string) {
-    const result = await checkKnowledgeSlugAvailability({ slug, excludeArticleId });
-    if (!result.available) {
-      throw appError("CONFLICT", result.reason ?? "Slug is not available.", {
-        existing_article_id: result.existing_article_id
-      });
-    }
   }
 }
 

@@ -1,7 +1,6 @@
 "use client";
 
 import { useKnowledgeEditorToast } from "@/hooks/use-knowledge-editor-toast";
-import { useKnowledgeSlugCheck } from "@/hooks/use-knowledge-slug-check";
 import type { KnowledgeArticleDetailDto } from "@/features/knowledge-center/knowledge-center.types";
 import type { KnowledgePublishPipelineResult } from "@/features/knowledge-center/knowledge-publish.pipeline.shared";
 import { adminMutationHeaders } from "@/lib/studioos/admin-csrf-client";
@@ -15,9 +14,7 @@ import {
   effectiveKnowledgeMetaDescription,
   effectiveKnowledgeSeoTitle,
   effectiveKnowledgeTags,
-  knowledgeEditorPublishGate,
-  normalizeKnowledgeSlug,
-  validateKnowledgeSlug
+  knowledgeEditorPublishGate
 } from "@/lib/knowledge/knowledge-editor-validation";
 import { knowledgeHtmlToPlainText } from "@/lib/knowledge/knowledge-html";
 import type { Locale } from "@/lib/i18n";
@@ -36,19 +33,11 @@ export function useKnowledgeEditorController(input: {
   const zh = input.locale === "zh";
   const router = useRouter();
   const [currentId, setCurrentId] = useState(input.articleId);
-  const [slugTouched, setSlugTouched] = useState(Boolean(input.initial?.slug));
   const [form, setForm] = useState(() => buildKnowledgeEditorInitialForm(input.locale, input.initial));
   const [wasEverPublished, setWasEverPublished] = useState(() => isPublishedStatus(input.initial?.status));
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
   const { message, notify, clear: clearMessage } = useKnowledgeEditorToast();
   const [publishOpen, setPublishOpen] = useState(false);
-
-  const slugValidation = validateKnowledgeSlug(form.slug);
-  const slugCheck = useKnowledgeSlugCheck({
-    slug: form.slug,
-    excludeArticleId: currentId,
-    enabled: slugValidation.ok
-  });
 
   const displayStatus = useMemo(
     () => resolveKnowledgeEditorDisplayStatus(form, wasEverPublished),
@@ -59,41 +48,9 @@ export function useKnowledgeEditorController(input: {
     setForm((current) => ({ ...current, ...patch }));
   }, []);
 
-  const prepareForm = useCallback((state: KnowledgeEditorPanelForm) => {
-    const next = { ...state };
-    if (!next.slug.trim() && next.title.trim()) {
-      next.slug = normalizeKnowledgeSlug(next.title);
-    }
-    return next;
-  }, []);
-
-  const syncPreparedForm = useCallback(
-    (state: KnowledgeEditorPanelForm) => {
-      if (state.slug !== form.slug) patchForm({ slug: state.slug });
-      return state;
-    },
-    [form.slug, patchForm]
-  );
-
   const publishGate = useCallback(
-    (state: KnowledgeEditorPanelForm) => {
-      const gate = knowledgeEditorPublishGate(state, zh);
-      const blockers = [...gate.blockers];
-      const warnings = [...gate.warnings];
-      const slugToSave = state.slug.trim();
-      const slugMatchesForm = slugToSave === form.slug.trim();
-
-      if (slugToSave && slugMatchesForm) {
-        if (slugCheck.status === "checking") {
-          blockers.push(zh ? "正在验证 URL 别名，请稍候再发布" : "Slug validation in progress — wait and retry");
-        } else if (slugCheck.isBlocking) {
-          blockers.push(slugCheck.message ?? (zh ? "URL 别名已被占用" : "Slug is taken"));
-        }
-      }
-
-      return { blockers, warnings };
-    },
-    [form.slug, slugCheck.isBlocking, slugCheck.message, slugCheck.status, zh]
+    (state: KnowledgeEditorPanelForm) => knowledgeEditorPublishGate(state, zh),
+    [zh]
   );
 
   const buildPayload = useCallback(
@@ -106,7 +63,6 @@ export function useKnowledgeEditorController(input: {
 
       return {
         title: state.title,
-        slug: state.slug,
         category_slug: state.category_slug,
         author_name: state.author_name,
         cover_image_url: state.cover_image_url || undefined,
@@ -148,7 +104,7 @@ export function useKnowledgeEditorController(input: {
 
   const save = useCallback(
     async (publish: boolean) => {
-      const state = syncPreparedForm(prepareForm(form));
+      const state = form;
 
       if (publish) {
         const { blockers } = publishGate(state);
@@ -179,28 +135,10 @@ export function useKnowledgeEditorController(input: {
       }
 
       try {
-        let activeId = currentId;
-        let { response, body } = await requestSave(activeId);
-
-        if (
-          !response.ok &&
-          response.status === 409 &&
-          !activeId &&
-          body.error?.details?.existing_article_id
-        ) {
-          const resumeId = body.error.details.existing_article_id;
-          activeId = resumeId;
-          setCurrentId(resumeId);
-          router.replace(adminPortalRoutes.knowledgeEdit(resumeId));
-          notify(
-            zh ? "检测到同 URL 别名的草稿，正在继续保存…" : "Resuming existing draft with this slug…",
-            "info"
-          );
-          ({ response, body } = await requestSave(resumeId));
-        }
+        const activeId = currentId;
+        const { response, body } = await requestSave(activeId);
 
         if (!response.ok) {
-          slugCheck.refresh();
           if (response.status === 403) {
             throw new Error(zh ? "权限校验失败，请刷新页面后重试" : "Permission denied — refresh and retry");
           }
@@ -221,6 +159,9 @@ export function useKnowledgeEditorController(input: {
         if (!currentId && saved?.id) {
           setCurrentId(saved.id);
           router.replace(adminPortalRoutes.knowledgeEdit(saved.id));
+        }
+        if (saved?.slug) {
+          patchForm({ slug: saved.slug });
         }
         if (isPublishedStatus(saved?.status)) setWasEverPublished(true);
         if (publish && (body.data?.pipeline?.published || isPublishedStatus(saved?.status))) {
@@ -252,28 +193,29 @@ export function useKnowledgeEditorController(input: {
         );
         return publish ? publishedOk : true;
       } catch (error) {
-        slugCheck.refresh();
         setSaveState("idle");
         notify(error instanceof Error ? error.message : zh ? "保存失败" : "Save failed", "error");
         return false;
       }
     },
-    [buildPayload, clearMessage, currentId, form, notify, patchForm, prepareForm, publishGate, router, slugCheck, syncPreparedForm, zh]
+    [buildPayload, clearMessage, currentId, form, notify, patchForm, publishGate, router, zh]
   );
 
   const openPublish = useCallback(() => {
-    const state = syncPreparedForm(prepareForm(form));
     setPublishOpen(true);
-    const { blockers } = publishGate(state);
+    const { blockers } = publishGate(form);
     notify(
-      blockers.length ? (zh ? "请先修复弹窗中的必填项" : "Fix required items in the dialog") : zh ? "请确认后发布" : "Review and confirm",
+      blockers.length
+        ? blockers.join(" · ")
+        : zh
+          ? "请确认后发布"
+          : "Review and confirm",
       blockers.length ? "error" : "info"
     );
-  }, [form, notify, prepareForm, publishGate, syncPreparedForm, zh]);
+  }, [form, notify, publishGate, zh]);
 
   const confirmPublish = useCallback(async () => {
-    const state = syncPreparedForm(prepareForm(form));
-    const { blockers } = publishGate(state);
+    const { blockers } = publishGate(form);
     if (blockers.length) {
       notify(blockers.join(" · "), "error");
       return;
@@ -282,7 +224,7 @@ export function useKnowledgeEditorController(input: {
     notify(zh ? "正在发布…" : "Publishing…", "info");
     const ok = await save(true);
     if (ok) setPublishOpen(false);
-  }, [form, notify, prepareForm, publishGate, save, syncPreparedForm, zh]);
+  }, [form, notify, publishGate, save, zh]);
 
   const deleteArticle = useCallback(async () => {
     if (!currentId) return;
@@ -301,18 +243,13 @@ export function useKnowledgeEditorController(input: {
     }
   }, [clearMessage, currentId, notify, router, zh]);
 
-  const publishDialogForm = prepareForm(form);
-  const publishGateState = publishGate(publishDialogForm);
+  const publishGateState = publishGate(form);
 
   return {
     zh,
     currentId,
     form,
     patchForm,
-    slugTouched,
-    setSlugTouched,
-    slugValidation,
-    slugCheck,
     displayStatus,
     saveState,
     message,
@@ -324,7 +261,7 @@ export function useKnowledgeEditorController(input: {
     deleteArticle,
     publishDialog: {
       open: publishOpen,
-      form: publishDialogForm,
+      form,
       blockers: publishGateState.blockers,
       warnings: publishGateState.warnings,
       close: () => setPublishOpen(false),

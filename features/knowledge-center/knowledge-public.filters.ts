@@ -11,16 +11,25 @@ export function isKnowledgeDemoArticleSlug(slug: string): boolean {
 export function knowledgePublicArticleWhere(
   base: Prisma.KnowledgeArticleWhereInput = {}
 ): Prisma.KnowledgeArticleWhereInput {
-  const explicitSlug = typeof base.slug === "string" ? base.slug : null;
+  const { slug: explicitSlug, OR, ...rest } = base;
 
-  if (explicitSlug && isKnowledgeDemoArticleSlug(explicitSlug)) {
+  if (OR) {
+    return {
+      ...rest,
+      OR,
+      status: "PUBLISHED"
+    };
+  }
+
+  if (typeof explicitSlug === "string" && isKnowledgeDemoArticleSlug(explicitSlug)) {
     return { id: { equals: "__knowledge_demo_blocked__" }, status: "PUBLISHED" };
   }
 
-  const { slug: _slug, ...rest } = base;
   return {
     ...rest,
     status: "PUBLISHED",
-    slug: explicitSlug ?? { notIn: [...KNOWLEDGE_DEMO_ARTICLE_SLUGS] }
+    ...(typeof explicitSlug === "string"
+      ? { slug: explicitSlug }
+      : { slug: { notIn: [...KNOWLEDGE_DEMO_ARTICLE_SLUGS] } })
   };
 }

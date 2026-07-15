@@ -83,7 +83,7 @@ export function knowledgeEditorSeoChecklist(form: KnowledgeEditorFormState, zh =
   const metaOk = meta.length >= 80 && meta.length <= 160;
   const headingOk = headingCount >= 2;
   const keywordOk = keywordCount >= 2;
-  const schemaOk = Boolean(title && meta && headingCount >= 1 && form.slug.trim());
+  const schemaOk = Boolean(title && meta && headingCount >= 1);
   const linkOk = internalLinks >= 1;
   const imageOk = imageCount >= 1;
 
@@ -154,11 +154,11 @@ export function knowledgeEditorSeoChecklist(form: KnowledgeEditorFormState, zh =
       status: schemaOk ? "ok" : "warn",
       hint: schemaOk
         ? zh
-          ? "标题/摘要/Slug 已就绪"
-          : "Title, excerpt, slug ready"
+          ? "标题/摘要已就绪"
+          : "Title and excerpt ready"
         : zh
-          ? "需标题、摘要、Slug、正文标题"
-          : "Needs title, excerpt, slug, headings"
+          ? "需标题、摘要、正文标题"
+          : "Needs title, excerpt, headings"
     },
     {
       id: "links",

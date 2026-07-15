@@ -1,11 +1,6 @@
 "use client";
 
 import type { KnowledgeEditorPanelForm } from "@/lib/knowledge/knowledge-editor-initial-form";
-import {
-  effectiveKnowledgeMetaDescription,
-  effectiveKnowledgeSeoTitle,
-  effectiveKnowledgeTags
-} from "@/lib/knowledge/knowledge-editor-validation";
 import { knowledgeHtmlIsEmpty } from "@/lib/knowledge/knowledge-html";
 import type { Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -35,7 +30,6 @@ export function KnowledgeEditorPublishDialog({
   const zh = locale === "zh";
   if (!open || typeof document === "undefined") return null;
 
-  const tags = effectiveKnowledgeTags(form);
   const scheduledAt =
     form.scheduledDate && form.scheduledTime ? new Date(`${form.scheduledDate}T${form.scheduledTime}`) : null;
   const willSchedule = Boolean(scheduledAt && scheduledAt.getTime() > Date.now());
@@ -43,12 +37,9 @@ export function KnowledgeEditorPublishDialog({
 
   const checks = [
     { label: zh ? "标题" : "Title", ok: Boolean(form.title.trim()) },
-    { label: "Slug", ok: Boolean(form.slug.trim()) },
     { label: zh ? "正文" : "Body", ok: !knowledgeHtmlIsEmpty(form.body_html) },
-    { label: zh ? "SEO 标题（=标题）" : "SEO title (= title)", ok: Boolean(effectiveKnowledgeSeoTitle(form)) },
-    { label: zh ? "Meta（=副标题）" : "Meta (= subtitle)", ok: Boolean(effectiveKnowledgeMetaDescription(form)) },
     { label: zh ? "分类" : "Category", ok: Boolean(form.category_slug.trim()) },
-    { label: zh ? "标签" : "Tags", ok: tags.length > 0 },
+    { label: zh ? "副标题 / 摘要" : "Subtitle / excerpt", ok: Boolean(form.subtitle.trim()), warn: true },
     { label: zh ? "封面" : "Cover", ok: Boolean(form.cover_image_url.trim()), warn: true }
   ];
 
