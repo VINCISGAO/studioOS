@@ -8,9 +8,16 @@ import { scheduleKnowledgeMultilingualSyncAfterResponse } from "@/features/knowl
 import { getAppUiLocale } from "@/lib/app-language";
 import { apiSuccess, handleRouteError } from "@/lib/core/api-route";
 import { appError } from "@/lib/core/errors";
+import { unstable_cache } from "next/cache";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
+
+const getCachedKnowledgeDashboardStats = unstable_cache(
+  async () => knowledgeCenterService.getDashboardStats(),
+  ["knowledge-dashboard-stats"],
+  { revalidate: 60 }
+);
 
 export async function GET(request: Request) {
   try {
@@ -24,10 +31,8 @@ export async function GET(request: Request) {
       category: url.searchParams.get("category") ?? undefined,
       adminLocale
     };
-    const [articles, stats] = await Promise.all([
-      knowledgeCenterService.listAdmin(filters),
-      knowledgeCenterService.getDashboardStats()
-    ]);
+    const articles = await knowledgeCenterService.listAdmin(filters);
+    const stats = await getCachedKnowledgeDashboardStats();
     return apiSuccess({ articles, stats });
   } catch (error) {
     return handleRouteError(error);

@@ -11,7 +11,7 @@ import { knowledgeCenterHomeCopy } from "@/lib/knowledge/knowledge-center-home-c
 import { toUiLocale } from "@/lib/app-language.shared";
 
 export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 type Props = { params: Promise<{ lang: string; categorySlug: string }> };
 

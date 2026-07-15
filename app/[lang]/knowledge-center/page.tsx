@@ -11,7 +11,7 @@ import type { Metadata } from "next";
 type Props = { params: Promise<{ lang: string }> };
 
 export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { lang } = await params;

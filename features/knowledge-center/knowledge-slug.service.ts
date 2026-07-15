@@ -13,7 +13,8 @@ export function buildKnowledgeSlugCandidate(title: string, articleId?: string) {
   const trimmed = title.trim();
   if (trimmed) {
     const fromTitle = normalizeSlug(slugifyKnowledgeTitle(trimmed));
-    if (fromTitle && fromTitle !== "article" && validateKnowledgeSlug(fromTitle).ok) {
+    // Short Latin fragments (e.g. "ai-2026" from Chinese titles) collide too often.
+    if (fromTitle && fromTitle !== "article" && fromTitle.length >= 8 && validateKnowledgeSlug(fromTitle).ok) {
       return fromTitle;
     }
   }
@@ -37,7 +38,7 @@ export async function checkKnowledgeSlugAvailability(input: {
     return { available: false, reason: validation.message };
   }
 
-  const existingArticleId = await knowledgeCenterRepository.findActiveArticleIdBySlug(
+  const existingArticleId = await knowledgeCenterRepository.findOccupiedArticleIdBySlug(
     input.slug,
     input.excludeArticleId
   );
@@ -74,4 +75,65 @@ export async function allocateUniqueKnowledgeSlug(input: {
   }
 
   throw new Error("Unable to allocate a unique knowledge article slug.");
+}
+
+function isSlugUniqueConstraintError(error: unknown) {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    String((error as { code?: string }).code) === "P2002"
+  );
+}
+
+/** Resolve and persist a unique slug, retrying on DB unique conflicts (P2002). */
+export async function commitArticleSlug(
+  articleId: string,
+  input: {
+    title: string;
+    publishing: boolean;
+    wasPublished?: boolean;
+    existingSlug?: string;
+  }
+): Promise<string> {
+  const existingSlug = input.existingSlug?.trim().replace(/^\/+|\/+$/g, "") ?? "";
+  if (input.wasPublished && existingSlug) {
+    return existingSlug;
+  }
+
+  const draftSlug = articleId.replace(/^\/+|\/+$/g, "");
+  if (!input.publishing) {
+    if (existingSlug !== draftSlug) {
+      await knowledgeCenterRepository.updateArticle(articleId, { slug: draftSlug });
+    }
+    return draftSlug;
+  }
+
+  let candidate = await allocateUniqueKnowledgeSlug({
+    title: input.title,
+    articleId,
+    excludeArticleId: articleId
+  });
+
+  if (existingSlug === candidate) {
+    return candidate;
+  }
+
+  for (let attempt = 0; attempt < 25; attempt++) {
+    try {
+      await knowledgeCenterRepository.updateArticle(articleId, { slug: candidate });
+      return candidate;
+    } catch (error) {
+      if (!isSlugUniqueConstraintError(error)) {
+        throw error;
+      }
+      const suffixLabel = `-${attempt + 2}`;
+      const base = candidate.replace(/-\d+$/, "") || candidate;
+      const maxBaseLength = Math.max(1, KNOWLEDGE_SLUG_MAX_LENGTH - suffixLabel.length);
+      candidate = `${base.slice(0, maxBaseLength)}${suffixLabel}`;
+    }
+  }
+
+  await knowledgeCenterRepository.updateArticle(articleId, { slug: draftSlug });
+  return draftSlug;
 }

@@ -1,5 +1,6 @@
 import "server-only";
 
+import { cache } from "react";
 import { Prisma, type KnowledgeArticleStatus } from "@prisma/client";
 import { asInputJson } from "@/lib/core/prisma-json";
 import { prisma, hasDatabaseUrl } from "@/lib/core/database/prisma";
@@ -52,11 +53,52 @@ const articleAdminListInclude = {
       title: true,
       status: true,
       updatedAt: true,
+      publishedAt: true,
       seo: { select: { seoScore: true } },
       lucien: { select: { lucienIndexed: true } }
     }
   }
 } satisfies Prisma.KnowledgeArticleInclude;
+
+const articlePublicListInclude = {
+  category: true,
+  tags: { include: { tag: true } },
+  analytics: true,
+  translations: {
+    select: {
+      languageCode: true,
+      title: true,
+      excerpt: true,
+      status: true,
+      readingTimeMinutes: true,
+      updatedAt: true,
+      publishedAt: true,
+      seo: { select: { metaDescription: true, seoScore: true } }
+    }
+  }
+} satisfies Prisma.KnowledgeArticleInclude;
+
+const getPublishedTranslationCached = cache(async (routeKey: string, languageCode: string) => {
+  const model = articleModel();
+  if (!model) return null;
+  return withKnowledgeTableFallback(null, async () => {
+    const visibilityFilter = await resolveArticleVisibilityFilter();
+    return model.findFirst({
+      where: knowledgePublicArticleWhere({
+        deletedAt: null,
+        ...visibilityFilter,
+        OR: [{ slug: routeKey }, { id: routeKey }],
+        translations: {
+          some: {
+            languageCode,
+            status: "PUBLISHED"
+          }
+        }
+      }),
+      include: articleInclude
+    });
+  });
+});
 
 type KnowledgeArticleModel = (typeof prisma)["knowledgeArticle"];
 
@@ -244,7 +286,8 @@ export class KnowledgeCenterRepository {
             : {})
         },
         include: articleAdminListInclude,
-        orderBy: { updatedAt: "desc" }
+        orderBy: { updatedAt: "desc" },
+        take: 100
       });
 
       return rows.map((row) =>
@@ -324,8 +367,24 @@ export class KnowledgeCenterRepository {
     });
   }
 
+  /** Slug uniqueness includes soft-deleted rows — DB unique index does not ignore deletedAt. */
+  async findOccupiedArticleIdBySlug(slug: string, excludeArticleId?: string): Promise<string | null> {
+    const model = articleModel();
+    if (!model || !slug.trim()) return null;
+    return withKnowledgeTableFallback(null, async () => {
+      const row = await model.findFirst({
+        where: {
+          slug,
+          ...(excludeArticleId ? { id: { not: excludeArticleId } } : {})
+        },
+        select: { id: true }
+      });
+      return row?.id ?? null;
+    });
+  }
+
   async isSlugTaken(slug: string, excludeArticleId?: string): Promise<boolean> {
-    const existingArticleId = await this.findActiveArticleIdBySlug(slug, excludeArticleId);
+    const existingArticleId = await this.findOccupiedArticleIdBySlug(slug, excludeArticleId);
     return Boolean(existingArticleId);
   }
 
@@ -360,18 +419,26 @@ export class KnowledgeCenterRepository {
   async softDelete(id: string) {
     const model = articleModel();
     if (!model) return;
-    await model.update({ where: { id }, data: { deletedAt: new Date(), status: "ARCHIVED" } });
+    const archivedSlug = `archived-${id}`;
+    await model.update({
+      where: { id },
+      data: { deletedAt: new Date(), status: "ARCHIVED", slug: archivedSlug }
+    });
   }
 
   async softDeleteMany(ids: string[]) {
     const model = articleModel();
     if (!model || !ids.length) return 0;
     const uniqueIds = [...new Set(ids.filter(Boolean))];
-    const result = await model.updateMany({
-      where: { id: { in: uniqueIds }, deletedAt: null },
-      data: { deletedAt: new Date(), status: "ARCHIVED" }
-    });
-    return result.count;
+    let count = 0;
+    for (const id of uniqueIds) {
+      const result = await model.updateMany({
+        where: { id, deletedAt: null },
+        data: { deletedAt: new Date(), status: "ARCHIVED", slug: `archived-${id}` }
+      });
+      count += result.count;
+    }
+    return count;
   }
 
   async ensureAnalytics(articleId: string) {
@@ -428,135 +495,135 @@ export class KnowledgeCenterRepository {
 
     return prisma.$transaction(async (tx) => {
       const translation = await tx.knowledgeTranslation.upsert({
-      where: {
-        articleId_languageCode: {
+        where: {
+          articleId_languageCode: {
+            articleId,
+            languageCode: t.language_code
+          }
+        },
+        create: {
           articleId,
-          languageCode: t.language_code
+          languageCode: t.language_code,
+          title: t.title.trim(),
+          subtitle: t.subtitle?.trim() || null,
+          bodyMarkdown,
+          bodyHtml,
+          excerpt: t.excerpt?.trim() || null,
+          readingTimeMinutes: bundle.readingTimeMinutes,
+          status: t.status ?? input.status ?? "DRAFT",
+          publishedAt: (t.status ?? input.status) === "PUBLISHED" ? new Date() : null
+        },
+        update: {
+          title: t.title.trim(),
+          subtitle: t.subtitle?.trim() || null,
+          bodyMarkdown,
+          bodyHtml,
+          excerpt: t.excerpt?.trim() || null,
+          readingTimeMinutes: bundle.readingTimeMinutes,
+          status: t.status ?? input.status,
+          publishedAt: (t.status ?? input.status) === "PUBLISHED" ? new Date() : undefined
         }
-      },
-      create: {
-        articleId,
-        languageCode: t.language_code,
-        title: t.title.trim(),
-        subtitle: t.subtitle?.trim() || null,
-        bodyMarkdown,
-        bodyHtml,
-        excerpt: t.excerpt?.trim() || null,
-        readingTimeMinutes: bundle.readingTimeMinutes,
-        status: t.status ?? input.status ?? "DRAFT",
-        publishedAt: (t.status ?? input.status) === "PUBLISHED" ? new Date() : null
-      },
-      update: {
-        title: t.title.trim(),
-        subtitle: t.subtitle?.trim() || null,
-        bodyMarkdown,
-        bodyHtml,
-        excerpt: t.excerpt?.trim() || null,
-        readingTimeMinutes: bundle.readingTimeMinutes,
-        status: t.status ?? input.status,
-        publishedAt: (t.status ?? input.status) === "PUBLISHED" ? new Date() : undefined
-      }
-    });
-
-    await tx.knowledgeSeo.upsert({
-      where: { translationId: translation.id },
-      create: {
-        translationId: translation.id,
-        seoTitle: t.seo?.seo_title?.trim() || t.title.trim(),
-        metaDescription: t.seo?.meta_description?.trim() || t.excerpt?.trim() || null,
-        canonicalUrl: t.seo?.canonical_url?.trim() || null,
-        keywordsJson: t.seo?.keywords?.length ? t.seo.keywords : undefined,
-        ogTitle: t.seo?.og_title?.trim() || t.title.trim(),
-        ogDescription: t.seo?.og_description?.trim() || t.seo?.meta_description?.trim() || null,
-        ogImageUrl: t.seo?.og_image_url?.trim() || input.cover_image_url?.trim() || null,
-        twitterCard: t.seo?.twitter_card ?? "summary_large_image",
-        seoScore: seoMetrics.seoScore,
-        readabilityScore: seoMetrics.readabilityScore,
-        aiFriendlyScore: seoMetrics.aiFriendlyScore,
-        googleScore: seoMetrics.googleScore,
-        baiduScore: seoMetrics.baiduScore,
-        internalLinkCount: seoMetrics.internalLinkCount,
-        externalLinkCount: seoMetrics.externalLinkCount
-      },
-      update: {
-        seoTitle: t.seo?.seo_title?.trim() || t.title.trim(),
-        metaDescription: t.seo?.meta_description?.trim() || t.excerpt?.trim() || null,
-        canonicalUrl: t.seo?.canonical_url?.trim() || null,
-        keywordsJson: t.seo?.keywords?.length ? t.seo.keywords : undefined,
-        ogTitle: t.seo?.og_title?.trim() || t.title.trim(),
-        ogDescription: t.seo?.og_description?.trim() || t.seo?.meta_description?.trim() || null,
-        ogImageUrl: t.seo?.og_image_url?.trim() || input.cover_image_url?.trim() || null,
-        twitterCard: t.seo?.twitter_card ?? "summary_large_image",
-        seoScore: seoMetrics.seoScore,
-        readabilityScore: seoMetrics.readabilityScore,
-        aiFriendlyScore: seoMetrics.aiFriendlyScore,
-        googleScore: seoMetrics.googleScore,
-        baiduScore: seoMetrics.baiduScore,
-        internalLinkCount: seoMetrics.internalLinkCount,
-        externalLinkCount: seoMetrics.externalLinkCount
-      }
-    });
-
-    await tx.knowledgeFaq.deleteMany({ where: { translationId: translation.id } });
-    if (t.faqs?.length) {
-      await tx.knowledgeFaq.createMany({
-        data: t.faqs.map((faq, index) => ({
-          translationId: translation.id,
-          question: faq.question.trim(),
-          answer: faq.answer.trim(),
-          sortOrder: faq.sort_order ?? index
-        }))
       });
-    }
 
-    const lucien = t.lucien;
-    await tx.knowledgeLucien.upsert({
-      where: { translationId: translation.id },
-      create: {
-        translationId: translation.id,
-        aiSummary: lucien?.ai_summary?.trim() || t.excerpt?.trim() || null,
-        aiKeywordsJson: lucien?.ai_keywords?.length ? lucien.ai_keywords : undefined,
-        aiTopicsJson: lucien?.ai_topics?.length ? lucien.ai_topics : undefined,
-        aiIntent: lucien?.ai_intent ?? "informational",
-        aiConfidence: lucien?.ai_confidence ?? 80,
-        llmFriendly: lucien?.llm_friendly ?? true,
-        allowCitation: lucien?.allow_citation ?? true,
-        allowTraining: lucien?.allow_training ?? false,
-        lucienLearning: lucien?.lucien_learning ?? true,
-        searchPriority: lucien?.search_priority ?? 50,
-        category: lucien?.category ?? "WORKFLOW",
-        weight: lucien?.weight ?? 100,
-        priority: lucien?.priority ?? "MEDIUM"
-      },
-      update: {
-        aiSummary: lucien?.ai_summary?.trim() || t.excerpt?.trim() || null,
-        aiKeywordsJson: lucien?.ai_keywords?.length ? lucien.ai_keywords : undefined,
-        aiTopicsJson: lucien?.ai_topics?.length ? lucien.ai_topics : undefined,
-        aiIntent: lucien?.ai_intent ?? "informational",
-        aiConfidence: lucien?.ai_confidence ?? 80,
-        llmFriendly: lucien?.llm_friendly ?? true,
-        allowCitation: lucien?.allow_citation ?? true,
-        allowTraining: lucien?.allow_training ?? false,
-        lucienLearning: lucien?.lucien_learning ?? true,
-        searchPriority: lucien?.search_priority ?? 50,
-        category: lucien?.category ?? "WORKFLOW",
-        weight: lucien?.weight ?? 100,
-        priority: lucien?.priority ?? "MEDIUM"
-      }
-    });
+      await tx.knowledgeSeo.upsert({
+        where: { translationId: translation.id },
+        create: {
+          translationId: translation.id,
+          seoTitle: t.seo?.seo_title?.trim() || t.title.trim(),
+          metaDescription: t.seo?.meta_description?.trim() || t.excerpt?.trim() || null,
+          canonicalUrl: t.seo?.canonical_url?.trim() || null,
+          keywordsJson: t.seo?.keywords?.length ? t.seo.keywords : undefined,
+          ogTitle: t.seo?.og_title?.trim() || t.title.trim(),
+          ogDescription: t.seo?.og_description?.trim() || t.seo?.meta_description?.trim() || null,
+          ogImageUrl: t.seo?.og_image_url?.trim() || input.cover_image_url?.trim() || null,
+          twitterCard: t.seo?.twitter_card ?? "summary_large_image",
+          seoScore: seoMetrics.seoScore,
+          readabilityScore: seoMetrics.readabilityScore,
+          aiFriendlyScore: seoMetrics.aiFriendlyScore,
+          googleScore: seoMetrics.googleScore,
+          baiduScore: seoMetrics.baiduScore,
+          internalLinkCount: seoMetrics.internalLinkCount,
+          externalLinkCount: seoMetrics.externalLinkCount
+        },
+        update: {
+          seoTitle: t.seo?.seo_title?.trim() || t.title.trim(),
+          metaDescription: t.seo?.meta_description?.trim() || t.excerpt?.trim() || null,
+          canonicalUrl: t.seo?.canonical_url?.trim() || null,
+          keywordsJson: t.seo?.keywords?.length ? t.seo.keywords : undefined,
+          ogTitle: t.seo?.og_title?.trim() || t.title.trim(),
+          ogDescription: t.seo?.og_description?.trim() || t.seo?.meta_description?.trim() || null,
+          ogImageUrl: t.seo?.og_image_url?.trim() || input.cover_image_url?.trim() || null,
+          twitterCard: t.seo?.twitter_card ?? "summary_large_image",
+          seoScore: seoMetrics.seoScore,
+          readabilityScore: seoMetrics.readabilityScore,
+          aiFriendlyScore: seoMetrics.aiFriendlyScore,
+          googleScore: seoMetrics.googleScore,
+          baiduScore: seoMetrics.baiduScore,
+          internalLinkCount: seoMetrics.internalLinkCount,
+          externalLinkCount: seoMetrics.externalLinkCount
+        }
+      });
 
-    await tx.knowledgeSchema.upsert({
-      where: { translationId: translation.id },
-      create: {
-        translationId: translation.id,
-        schemaType: t.schema_type ?? "ARTICLE",
-        jsonLd: asInputJson(bundle.jsonLd)!
-      },
-      update: {
-        schemaType: t.schema_type ?? "ARTICLE",
-        jsonLd: asInputJson(bundle.jsonLd)!
+      await tx.knowledgeFaq.deleteMany({ where: { translationId: translation.id } });
+      if (t.faqs?.length) {
+        await tx.knowledgeFaq.createMany({
+          data: t.faqs.map((faq, index) => ({
+            translationId: translation.id,
+            question: faq.question.trim(),
+            answer: faq.answer.trim(),
+            sortOrder: faq.sort_order ?? index
+          }))
+        });
       }
-    });
+
+      const lucien = t.lucien;
+      await tx.knowledgeLucien.upsert({
+        where: { translationId: translation.id },
+        create: {
+          translationId: translation.id,
+          aiSummary: lucien?.ai_summary?.trim() || t.excerpt?.trim() || null,
+          aiKeywordsJson: lucien?.ai_keywords?.length ? lucien.ai_keywords : undefined,
+          aiTopicsJson: lucien?.ai_topics?.length ? lucien.ai_topics : undefined,
+          aiIntent: lucien?.ai_intent ?? "informational",
+          aiConfidence: lucien?.ai_confidence ?? 80,
+          llmFriendly: lucien?.llm_friendly ?? true,
+          allowCitation: lucien?.allow_citation ?? true,
+          allowTraining: lucien?.allow_training ?? false,
+          lucienLearning: lucien?.lucien_learning ?? true,
+          searchPriority: lucien?.search_priority ?? 50,
+          category: lucien?.category ?? "WORKFLOW",
+          weight: lucien?.weight ?? 100,
+          priority: lucien?.priority ?? "MEDIUM"
+        },
+        update: {
+          aiSummary: lucien?.ai_summary?.trim() || t.excerpt?.trim() || null,
+          aiKeywordsJson: lucien?.ai_keywords?.length ? lucien.ai_keywords : undefined,
+          aiTopicsJson: lucien?.ai_topics?.length ? lucien.ai_topics : undefined,
+          aiIntent: lucien?.ai_intent ?? "informational",
+          aiConfidence: lucien?.ai_confidence ?? 80,
+          llmFriendly: lucien?.llm_friendly ?? true,
+          allowCitation: lucien?.allow_citation ?? true,
+          allowTraining: lucien?.allow_training ?? false,
+          lucienLearning: lucien?.lucien_learning ?? true,
+          searchPriority: lucien?.search_priority ?? 50,
+          category: lucien?.category ?? "WORKFLOW",
+          weight: lucien?.weight ?? 100,
+          priority: lucien?.priority ?? "MEDIUM"
+        }
+      });
+
+      await tx.knowledgeSchema.upsert({
+        where: { translationId: translation.id },
+        create: {
+          translationId: translation.id,
+          schemaType: t.schema_type ?? "ARTICLE",
+          jsonLd: asInputJson(bundle.jsonLd)!
+        },
+        update: {
+          schemaType: t.schema_type ?? "ARTICLE",
+          jsonLd: asInputJson(bundle.jsonLd)!
+        }
+      });
 
       await tx.knowledgeSearchIndex.upsert({
         where: { translationId: translation.id },
@@ -594,7 +661,7 @@ export class KnowledgeCenterRepository {
             }
           }
         }),
-        include: articleInclude,
+        include: articlePublicListInclude,
         orderBy: { publishedAt: "desc" },
         take: limit
       });
@@ -613,7 +680,7 @@ export class KnowledgeCenterRepository {
           category: { slug: categorySlug },
           translations: { some: { languageCode, status: "PUBLISHED" } }
         }),
-        include: articleInclude,
+        include: articlePublicListInclude,
         orderBy: { publishedAt: "desc" },
         take: limit
       });
@@ -624,22 +691,31 @@ export class KnowledgeCenterRepository {
     if (!this.isAvailable()) return [];
     return withKnowledgePublicReadFallback([], "listCategorySummaries", async () => {
       const visibilityFilter = await resolveArticleVisibilityFilter();
-      const categories = await prisma.knowledgeCategory.findMany({ orderBy: { sortOrder: "asc" } });
-      const summaries = [];
-      for (const category of categories) {
-        const count = await prisma.knowledgeArticle.count({
+      const [categories, countRows] = await Promise.all([
+        prisma.knowledgeCategory.findMany({ orderBy: { sortOrder: "asc" } }),
+        prisma.knowledgeArticle.groupBy({
+          by: ["categoryId"],
           where: knowledgePublicArticleWhere({
             deletedAt: null,
-            categoryId: category.id,
+            categoryId: { not: null },
             translations: { some: { languageCode, status: "PUBLISHED" } },
             ...visibilityFilter
-          })
-        });
-        if (count > 0) {
-          summaries.push({ slug: category.slug, name: category.name, count });
-        }
-      }
-      return summaries;
+          }),
+          _count: { _all: true }
+        })
+      ]);
+
+      const countByCategoryId = new Map(
+        countRows.map((row) => [row.categoryId, row._count._all])
+      );
+
+      return categories
+        .map((category) => ({
+          slug: category.slug,
+          name: category.name,
+          count: countByCategoryId.get(category.id) ?? 0
+        }))
+        .filter((item) => item.count > 0);
     });
   }
 
@@ -680,7 +756,7 @@ export class KnowledgeCenterRepository {
 
       const rows = await model.findMany({
         where: { id: { in: articleIds }, deletedAt: null },
-        include: articleInclude
+        include: articlePublicListInclude
       });
 
       return rows.map((row) => toArticleListItemDto(row, languageCode));
@@ -688,25 +764,7 @@ export class KnowledgeCenterRepository {
   }
 
   async getPublishedTranslation(routeKey: string, languageCode: string) {
-    const model = articleModel();
-    if (!model) return null;
-    return withKnowledgeTableFallback(null, async () => {
-      const visibilityFilter = await resolveArticleVisibilityFilter();
-      return model.findFirst({
-        where: knowledgePublicArticleWhere({
-          deletedAt: null,
-          ...visibilityFilter,
-          OR: [{ slug: routeKey }, { id: routeKey }],
-          translations: {
-            some: {
-              languageCode,
-              status: "PUBLISHED"
-            }
-          }
-        }),
-        include: articleInclude
-      });
-    });
+    return getPublishedTranslationCached(routeKey, languageCode);
   }
 
   async listPublishedLanguageCodesBySlug(slug: string): Promise<string[]> {

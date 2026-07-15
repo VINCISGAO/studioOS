@@ -1,6 +1,5 @@
 import "server-only";
 
-import { connection } from "next/server";
 import { knowledgeCenterRepository } from "@/features/knowledge-center/knowledge-center.repository";
 import type { KnowledgeHomeArticleCardDto } from "@/features/knowledge-center/knowledge-center.types";
 import { logger } from "@/lib/core/logger";
@@ -46,7 +45,6 @@ export async function loadKnowledgeCenterHomePageData(
   languageCode: string,
   limit = 12
 ): Promise<KnowledgeCenterHomePageData> {
-  await connection();
   try {
     const [rows, categories] = await Promise.all([
       knowledgeCenterRepository.listPublished(languageCode, limit),

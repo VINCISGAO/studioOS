@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, type ReactNode } from "react";
+import { Suspense, useEffect, useState, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { MarketingDocsLucienHost } from "@/components/marketing/docs/marketing-docs-lucien-host";
 import { MarketingDocsMobileHeader } from "@/components/marketing/docs/marketing-docs-mobile-header";
@@ -35,29 +35,28 @@ function MarketingDocsLayoutFrame({
   );
 }
 
-function MarketingDocsLayoutInner({ children }: { children: ReactNode }) {
-  const pathname = usePathname();
+function MarketingDocsLocaleSync({ onLocale }: { onLocale: (locale: Locale) => void }) {
   const locale = useMarketingPageLocale();
+
+  useEffect(() => {
+    onLocale(locale);
+  }, [locale, onLocale]);
+
+  return null;
+}
+
+/** Persistent docs chrome — sidebar/header render once; Suspense only covers main content. */
+export function MarketingDocsLayoutShell({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
   const active = resolveMarketingDocsActive(pathname);
+  const [locale, setLocale] = useState<Locale>("zh");
 
   return (
     <MarketingDocsLayoutFrame locale={locale} active={active}>
-      {children}
+      <Suspense fallback={<MarketingDocsContentLoading />}>
+        <MarketingDocsLocaleSync onLocale={setLocale} />
+        {children}
+      </Suspense>
     </MarketingDocsLayoutFrame>
-  );
-}
-
-/** Persistent docs chrome — sidebar stays mounted across client navigations. */
-export function MarketingDocsLayoutShell({ children }: { children: ReactNode }) {
-  return (
-    <Suspense
-      fallback={
-        <MarketingDocsLayoutFrame locale="zh" active="about">
-          <MarketingDocsContentLoading />
-        </MarketingDocsLayoutFrame>
-      }
-    >
-      <MarketingDocsLayoutInner>{children}</MarketingDocsLayoutInner>
-    </Suspense>
   );
 }

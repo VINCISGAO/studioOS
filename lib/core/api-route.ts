@@ -25,6 +25,13 @@ export function handleRouteError(error: unknown) {
   console.error("[api]", error);
 
   if (error instanceof Error) {
+    if (error.constructor.name === "PrismaClientValidationError") {
+      const hint = error.message.includes("seo_score")
+        ? "Invalid SEO field mapping (seo_score → seoScore). Fix upsertTranslationBundle in knowledge-center.repository.ts."
+        : error.message.slice(0, 280);
+      return apiError("SYSTEM_ERROR", hint, 500);
+    }
+
     const prismaCode =
       typeof error === "object" && error !== null && "code" in error
         ? String((error as { code?: string }).code)

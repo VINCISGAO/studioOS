@@ -2,7 +2,6 @@ import "server-only";
 
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
-import type { KnowledgeArticleStatus } from "@prisma/client";
 import { toArticleListItemDto } from "@/features/knowledge-center/knowledge-center.mappers";
 import {
   buildKnowledgeArticlePath,
@@ -23,7 +22,7 @@ import {
 } from "@/features/knowledge-center/knowledge-hreflang";
 import { enrichPublicKnowledgeArticle } from "@/features/knowledge-center/knowledge-article-enrichment";
 import { toAdminPreviewArticle } from "@/features/knowledge-center/knowledge-admin-preview.mapper";
-import { allocateUniqueKnowledgeSlug } from "@/features/knowledge-center/knowledge-slug.service";
+import { commitArticleSlug } from "@/features/knowledge-center/knowledge-slug.service";
 import { knowledgeSeoDashboardService } from "@/features/knowledge-center/knowledge-seo-dashboard.service";
 import { runKnowledgePublishPipeline, type KnowledgeSaveResult } from "@/features/knowledge-center/knowledge-publish.pipeline";
 import { syncKnowledgeArticleTranslations } from "@/features/knowledge-center/knowledge-multilingual-publish.service";
@@ -117,17 +116,11 @@ export class KnowledgeCenterService {
 
       if (!article) return { article: null };
 
-      const slug = await this.resolveArticleSlug({
+      const slug = await commitArticleSlug(article.id, {
         title: this.resolveArticleTitle(input),
-        articleId: article.id,
-        existingSlug: tempSlug,
-        wasPublished: false,
-        publishing
+        publishing,
+        existingSlug: tempSlug
       });
-
-      if (slug !== tempSlug) {
-        await knowledgeCenterRepository.updateArticle(article.id, { slug });
-      }
 
       await knowledgeCenterRepository.ensureAnalytics(article.id);
       await knowledgeCenterRepository.resolveCategoryAndTags(article.id, input);
@@ -157,12 +150,11 @@ export class KnowledgeCenterService {
 
     const publishing = this.isPublishIntent(input);
     const wasPublished = existing.status === "PUBLISHED" || Boolean(existing.published_at);
-    const slug = await this.resolveArticleSlug({
+    const slug = await commitArticleSlug(id, {
       title: this.resolveArticleTitle(input, existing),
-      articleId: id,
-      existingSlug: existing.slug,
+      publishing,
       wasPublished,
-      publishing
+      existingSlug: existing.slug
     });
     const categoryId = await knowledgeCenterRepository.resolveCategoryAndTags(id, input);
 
@@ -171,7 +163,6 @@ export class KnowledgeCenterService {
     await this.persistTranslation(id, slug, { ...input, status: nextStatus }, existing.author_name);
 
     await knowledgeCenterRepository.updateArticle(id, {
-      slug,
       status: nextStatus,
       authorName: input.author_name?.trim() || existing.author_name,
       coverImageUrl: input.cover_image_url?.trim() || existing.cover_image_url,
@@ -350,7 +341,11 @@ export class KnowledgeCenterService {
     });
   }
 
-  async getPublicArticle(slug: string, languageCode: string, options?: { recordView?: boolean }): Promise<PublicKnowledgeArticleDto | null> {
+  async getPublicArticle(
+    slug: string,
+    languageCode: string,
+    options?: { recordView?: boolean }
+  ): Promise<PublicKnowledgeArticleDto | null> {
     const row = await knowledgeCenterRepository.getPublishedTranslation(slug, languageCode);
     if (!row) return null;
 
@@ -641,29 +636,6 @@ export class KnowledgeCenterService {
       existing?.translations[0]?.title?.trim() ||
       ""
     );
-  }
-
-  private async resolveArticleSlug(input: {
-    title: string;
-    articleId: string;
-    existingSlug?: string;
-    wasPublished: boolean;
-    publishing: boolean;
-  }) {
-    const existingSlug = input.existingSlug?.trim().replace(/^\/+|\/+$/g, "");
-    if (input.wasPublished && existingSlug) {
-      return existingSlug;
-    }
-
-    if (!input.publishing) {
-      return input.articleId.replace(/^\/+|\/+$/g, "");
-    }
-
-    return allocateUniqueKnowledgeSlug({
-      title: input.title,
-      articleId: input.articleId,
-      excludeArticleId: input.articleId
-    });
   }
 
   private isPublishIntent(input: UpsertKnowledgeArticleInput) {
