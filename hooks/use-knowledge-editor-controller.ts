@@ -4,8 +4,8 @@ import { useKnowledgeEditorToast } from "@/hooks/use-knowledge-editor-toast";
 import type { KnowledgeArticleDetailDto } from "@/features/knowledge-center/knowledge-center.types";
 import type { KnowledgePublishPipelineResult } from "@/features/knowledge-center/knowledge-publish.pipeline.shared";
 import { adminMutationHeaders, readAdminCsrfToken } from "@/lib/studioos/admin-csrf-client";
-import { extractApiErrorMessage, sanitizeApiResponseText } from "@/lib/studioos/api-error-message";
 import { adminPortalRoutes } from "@/lib/studioos/admin-portal-routes";
+import { fetchKnowledgeAdminJson } from "@/lib/knowledge/knowledge-admin-api-client";
 import type { KnowledgeSaveClientPayload } from "@/lib/knowledge/knowledge-save-client";
 import { buildKnowledgeEditorInitialForm, type KnowledgeEditorPanelForm } from "@/lib/knowledge/knowledge-editor-initial-form";
 import {
@@ -30,40 +30,19 @@ async function saveKnowledgeArticleViaApi(input: {
   articleId?: string;
   payload: Record<string, unknown>;
   zh: boolean;
-}): Promise<{ data: KnowledgeSaveClientPayload; pipeline?: KnowledgePublishPipelineResult }> {
-  const response = await fetch(input.articleId ? `/api/admin/knowledge/${input.articleId}` : "/api/admin/knowledge", {
+}): Promise<{ data: KnowledgeSaveClientPayload; pipeline?: KnowledgePublishPipelineResult; requestId?: string }> {
+  const url = input.articleId ? `/api/admin/knowledge/${input.articleId}` : "/api/admin/knowledge";
+  const { data, requestId } = await fetchKnowledgeAdminJson<KnowledgeSaveClientPayload>({
+    url,
     method: input.articleId ? "PATCH" : "POST",
-    headers: { "Content-Type": "application/json", ...adminMutationHeaders() },
-    body: JSON.stringify(input.payload),
-    credentials: "same-origin"
+    body: input.payload,
+    headers: adminMutationHeaders(),
+    zh: input.zh
   });
-  const rawText = await response.text();
-  let body: {
-    data?: KnowledgeSaveClientPayload;
-    error?: { message?: string; code?: string };
-    message?: string;
-    success?: boolean;
-  } = {};
-  if (rawText.trim()) {
-    try {
-      body = JSON.parse(rawText) as typeof body;
-    } catch {
-      throw new Error(sanitizeApiResponseText(rawText, response.status));
-    }
-  }
-  if (!response.ok) {
-    throw new Error(
-      extractApiErrorMessage(
-        body,
-        input.zh ? `保存失败（HTTP ${response.status}）` : `Save failed (HTTP ${response.status})`,
-        response.status
-      )
-    );
-  }
-  if (!body.data?.article?.id) {
+  if (!data.article?.id) {
     throw new Error(input.zh ? "数据库未连接，请运行 npm run db:migrate" : "Database unavailable — run db:migrate");
   }
-  return { data: body.data, pipeline: body.data.pipeline };
+  return { data, pipeline: data.pipeline, requestId };
 }
 
 export function useKnowledgeEditorController(input: {

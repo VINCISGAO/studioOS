@@ -26,7 +26,8 @@ function buildSearchText(input: UpsertKnowledgeArticleInput) {
     ...(input.tags ?? [])
   ]
     .filter(Boolean)
-    .join("\n");
+    .join("\n")
+    .slice(0, 200_000);
 }
 
 export function buildKnowledgeTranslationSidecarBundle(input: {

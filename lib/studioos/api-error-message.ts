@@ -39,9 +39,9 @@ export function sanitizeApiResponseText(text: string, status?: number) {
 export function extractApiErrorMessage(body: unknown, fallback: string, status?: number) {
   if (body && typeof body === "object") {
     const record = body as ApiErrorBody;
+    if (typeof record.message === "string" && record.message.trim()) return record.message.trim();
     const nested = readNestedErrorMessage(record.error);
     if (nested) return nested;
-    if (typeof record.message === "string" && record.message.trim()) return record.message.trim();
     const errObj = record.error;
     if (errObj && typeof errObj === "object" && errObj.details && typeof errObj.details === "object") {
       const details = errObj.details as { prismaCode?: string };

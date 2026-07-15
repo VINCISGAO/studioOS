@@ -9,9 +9,19 @@ import {
 } from "@/features/knowledge-center/knowledge-publish.pipeline";
 import { logger } from "@/lib/core/logger";
 
-async function runKnowledgePostSaveWork(saved: KnowledgeSaveResult) {
+async function runKnowledgePostSaveWork(saved: KnowledgeSaveResult, requestId?: string) {
   if (saved.queueTranslationSidecars) {
+    logger.info("knowledge.post_save.sidecars.start", {
+      service: "KnowledgePublishSchedule",
+      requestId,
+      articleId: saved.article?.id
+    });
     await knowledgeCenterRepository.upsertTranslationSidecars(saved.queueTranslationSidecars);
+    logger.info("knowledge.post_save.sidecars.done", {
+      service: "KnowledgePublishSchedule",
+      requestId,
+      articleId: saved.article?.id
+    });
   }
 
   const pipelineJob = saved.queuePublishPipeline;
@@ -34,29 +44,31 @@ async function runKnowledgePostSaveWork(saved: KnowledgeSaveResult) {
 }
 
 /** Queue sidecars / revalidate / ping / multilingual sync after the save response returns. */
-export function scheduleKnowledgePostSaveWork(saved: KnowledgeSaveResult) {
+export function scheduleKnowledgePostSaveWork(saved: KnowledgeSaveResult, requestId?: string) {
   if (!saved.queueTranslationSidecars && !saved.queuePublishPipeline && !saved.queueMultilingualSync) {
     return;
   }
 
-  try {
-    after(() =>
-      runKnowledgePostSaveWork(saved).catch((error) => {
-        logger.error("knowledge.post_save.background_failed", {
-          service: "KnowledgePublishSchedule",
-          articleId: saved.article?.id,
-          error: error instanceof Error ? error.message : String(error)
-        });
-      })
-    );
-  } catch {
-    void runKnowledgePostSaveWork(saved).catch((error) => {
+  const run = () =>
+    runKnowledgePostSaveWork(saved, requestId).catch((error) => {
+      const prismaCode =
+        typeof error === "object" && error !== null && "code" in error
+          ? String((error as { code?: string }).code)
+          : undefined;
       logger.error("knowledge.post_save.background_failed", {
         service: "KnowledgePublishSchedule",
+        requestId,
         articleId: saved.article?.id,
-        error: error instanceof Error ? error.message : String(error)
+        prismaCode,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
       });
     });
+
+  try {
+    after(run);
+  } catch {
+    void run();
   }
 }
 
