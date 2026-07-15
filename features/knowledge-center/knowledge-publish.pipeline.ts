@@ -27,22 +27,14 @@ import {
 export type { KnowledgePublishPipelineResult, KnowledgePublishStep } from "@/features/knowledge-center/knowledge-publish.pipeline.shared";
 export { KNOWLEDGE_PUBLISH_STEPS, KNOWLEDGE_PUBLISH_STEP_LABELS, formatKnowledgePublishSummary };
 
-import type { KnowledgeSeoScores } from "@/features/knowledge-center/knowledge-seo.heuristics";
-
 export type KnowledgeTranslationSidecarJob = {
   articleId: string;
   translationId: string;
+  slug: string;
+  authorName: string;
   input: UpsertKnowledgeArticleInput;
-  bundle: {
-    readingTimeMinutes: number;
-    seoScores: KnowledgeSeoScores;
-    searchText: string;
-    jsonLd: Record<string, unknown>;
-  };
-  revision?: {
-    slug: string;
-    authorName: string;
-  };
+  categorySlug?: string | null;
+  categoryName?: string | null;
 };
 
 export type KnowledgeSaveResult = {

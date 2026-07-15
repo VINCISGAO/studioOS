@@ -13,7 +13,6 @@ import { knowledgeCenterRepository } from "@/features/knowledge-center/knowledge
 import { knowledgeLucienSyncService } from "@/features/knowledge-center/knowledge-lucien-sync.service";
 import {
   buildKnowledgeJsonLd,
-  computeKnowledgeSeoScores,
   estimateReadingTimeMinutes
 } from "@/features/knowledge-center/knowledge-seo.heuristics";
 import {
@@ -41,23 +40,6 @@ import { aiGatewayService } from "@/features/ai/ai-gateway.service";
 import type { Locale } from "@/lib/i18n";
 
 const ORIGIN = "https://vincis.app";
-
-function buildSearchText(input: UpsertKnowledgeArticleInput) {
-  const t = input.translation;
-  const bodyPlain = (t.body_html || t.body_markdown || "").replace(/<[^>]+>/g, " ");
-  return [
-    t.title,
-    t.subtitle,
-    t.excerpt,
-    t.seo?.meta_description,
-    bodyPlain,
-    ...(t.seo?.keywords ?? []),
-    ...(t.lucien?.ai_keywords ?? []),
-    ...(input.tags ?? [])
-  ]
-    .filter(Boolean)
-    .join("\n");
-}
 
 export class KnowledgeCenterService {
   isAvailable() {
@@ -549,59 +531,26 @@ export class KnowledgeCenterService {
     authorName = "VINCIS"
   ): Promise<{ translationId: string; sidecarJob: KnowledgeTranslationSidecarJob }> {
     const t = input.translation;
-    const bodyForScores = t.body_html?.trim() || t.body_markdown;
-    const seoScores = computeKnowledgeSeoScores({
-      translation: {
-        title: t.title,
-        subtitle: t.subtitle,
-        body_markdown: bodyForScores,
-        excerpt: t.excerpt
-      },
-      seo: t.seo
-    });
     const readingTimeMinutes = estimateReadingTimeMinutes(
       t.body_html ? t.body_html.replace(/<[^>]+>/g, " ") : t.body_markdown
     );
-    const pathPrefix = knowledgePathPrefixForCode(t.language_code);
-    const canonical = t.seo?.canonical_url?.trim() || `${ORIGIN}${buildKnowledgeArticlePath(pathPrefix, slug)}`;
-    const article = await knowledgeCenterRepository.getById(articleId);
-    const categorySlug = article?.category_slug ?? input.category_slug ?? null;
-    const categoryName = article?.category_name ?? null;
-    const jsonLd = buildKnowledgeJsonLd({
-      title: t.title,
-      description: t.seo?.meta_description?.trim() || t.excerpt?.trim() || "",
-      url: canonical,
-      authorName: input.author_name?.trim() || authorName,
-      publishedAt: input.status === "PUBLISHED" ? new Date().toISOString() : null,
-      updatedAt: new Date().toISOString(),
-      imageUrl: t.seo?.og_image_url || input.cover_image_url,
-      pathPrefix,
-      categoryName,
-      categorySlug,
-      origin: ORIGIN,
-      faqs: t.faqs
-    });
 
     const translationId = await knowledgeCenterRepository.upsertTranslationCore(articleId, input, {
       readingTimeMinutes
     });
+
+    const article = await knowledgeCenterRepository.getById(articleId);
 
     return {
       translationId,
       sidecarJob: {
         articleId,
         translationId,
+        slug,
+        authorName: input.author_name?.trim() || authorName,
         input,
-        bundle: {
-          readingTimeMinutes,
-          seoScores,
-          searchText: buildSearchText(input),
-          jsonLd
-        },
-        revision: {
-          slug,
-          authorName: input.author_name?.trim() || authorName
-        }
+        categorySlug: article?.category_slug ?? input.category_slug ?? null,
+        categoryName: article?.category_name ?? null
       }
     };
   }

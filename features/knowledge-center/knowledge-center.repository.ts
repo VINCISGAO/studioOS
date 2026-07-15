@@ -28,6 +28,7 @@ import {
   type KnowledgeSeoScores,
   toPrismaKnowledgeSeoScoreFields
 } from "@/features/knowledge-center/knowledge-seo.heuristics";
+import { buildKnowledgeTranslationSidecarBundle } from "@/features/knowledge-center/knowledge-translation-sidecar.bundle";
 import { logger } from "@/lib/core/logger";
 
 const articleInclude = {
@@ -525,19 +526,24 @@ export class KnowledgeCenterRepository {
 
   async upsertTranslationSidecars(job: {
     translationId: string;
+    slug: string;
+    authorName: string;
+    articleId: string;
     input: UpsertKnowledgeArticleInput;
-    bundle: {
-      seoScores: KnowledgeSeoScores;
-      searchText: string;
-      jsonLd: Record<string, unknown>;
-    };
-    revision?: {
-      slug: string;
-      authorName: string;
-    };
+    categorySlug?: string | null;
+    categoryName?: string | null;
   }) {
+    const bundle = buildKnowledgeTranslationSidecarBundle({
+      articleId: job.articleId,
+      slug: job.slug,
+      authorName: job.authorName,
+      categorySlug: job.categorySlug,
+      categoryName: job.categoryName,
+      payload: job.input
+    });
+
     const t = job.input.translation;
-    const seoMetrics = toPrismaKnowledgeSeoScoreFields(job.bundle.seoScores);
+    const seoMetrics = toPrismaKnowledgeSeoScoreFields(bundle.seoScores);
 
     await prisma.$transaction(async (tx) => {
       await tx.knowledgeSeo.upsert({
@@ -632,37 +638,35 @@ export class KnowledgeCenterRepository {
         create: {
           translationId: job.translationId,
           schemaType: t.schema_type ?? "ARTICLE",
-          jsonLd: asInputJson(job.bundle.jsonLd)!
+          jsonLd: asInputJson(bundle.jsonLd)!
         },
         update: {
           schemaType: t.schema_type ?? "ARTICLE",
-          jsonLd: asInputJson(job.bundle.jsonLd)!
+          jsonLd: asInputJson(bundle.jsonLd)!
         }
       });
 
       await tx.knowledgeSearchIndex.upsert({
         where: { translationId: job.translationId },
-        create: { translationId: job.translationId, searchText: job.bundle.searchText },
-        update: { searchText: job.bundle.searchText }
+        create: { translationId: job.translationId, searchText: bundle.searchText },
+        update: { searchText: bundle.searchText }
       });
     });
 
-    if (job.revision) {
-      const revisionCount = await this.countRevisions(job.translationId);
-      try {
-        await this.saveRevision({
-          translationId: job.translationId,
-          versionNumber: revisionCount + 1,
-          authorName: job.revision.authorName,
-          snapshot: {
-            slug: job.revision.slug,
-            status: job.input.status,
-            translation: t
-          }
-        });
-      } catch {
-        // Revisions are audit-only.
-      }
+    const revisionCount = await this.countRevisions(job.translationId);
+    try {
+      await this.saveRevision({
+        translationId: job.translationId,
+        versionNumber: revisionCount + 1,
+        authorName: job.authorName,
+        snapshot: {
+          slug: job.slug,
+          status: job.input.status,
+          translation: t
+        }
+      });
+    } catch {
+      // Revisions are audit-only.
     }
   }
 
@@ -681,12 +685,11 @@ export class KnowledgeCenterRepository {
     });
     await this.upsertTranslationSidecars({
       translationId,
+      articleId,
+      slug: input.slug?.trim() || articleId,
+      authorName: input.author_name?.trim() || "VINCIS",
       input,
-      bundle: {
-        seoScores: bundle.seoScores,
-        searchText: bundle.searchText,
-        jsonLd: bundle.jsonLd
-      }
+      categorySlug: input.category_slug ?? null
     });
     return translationId;
   }

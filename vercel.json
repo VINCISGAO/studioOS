@@ -4,7 +4,10 @@
   "buildCommand": "npx prisma generate && npm run build",
   "installCommand": "npm install",
   "functions": {
-    "app/api/admin/knowledge/**/*.ts": {
+    "app/api/admin/knowledge/route.ts": {
+      "maxDuration": 60
+    },
+    "app/api/admin/knowledge/[id]/route.ts": {
       "maxDuration": 60
     }
   }

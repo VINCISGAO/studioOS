@@ -1,10 +1,9 @@
 "use client";
 
+import { saveKnowledgeArticleAction } from "@/app/knowledge-admin-mutation-actions";
 import { useKnowledgeEditorToast } from "@/hooks/use-knowledge-editor-toast";
 import type { KnowledgeArticleDetailDto } from "@/features/knowledge-center/knowledge-center.types";
-import type { KnowledgePublishPipelineResult } from "@/features/knowledge-center/knowledge-publish.pipeline.shared";
 import { adminMutationHeaders, readAdminCsrfToken } from "@/lib/studioos/admin-csrf-client";
-import { extractApiErrorMessage, sanitizeApiResponseText } from "@/lib/studioos/api-error-message";
 import { adminPortalRoutes } from "@/lib/studioos/admin-portal-routes";
 import { buildKnowledgeEditorInitialForm, type KnowledgeEditorPanelForm } from "@/lib/knowledge/knowledge-editor-initial-form";
 import {
@@ -125,63 +124,33 @@ export function useKnowledgeEditorController(input: {
         return false;
       }
 
-      async function requestSave(articleId: string | undefined) {
-        const response = await fetch(articleId ? `/api/admin/knowledge/${articleId}` : "/api/admin/knowledge", {
-          method: articleId ? "PATCH" : "POST",
-          headers: { "Content-Type": "application/json", ...adminMutationHeaders() },
-          body: JSON.stringify(buildPayload(state, publish)),
-          credentials: "same-origin"
-        });
-        const rawText = await response.text();
-        let body: {
-          data?: { article?: KnowledgeArticleDetailDto; pipeline?: KnowledgePublishPipelineResult };
-          error?: { message?: string; code?: string; details?: { existing_article_id?: string; prismaCode?: string } } | string;
-          message?: string;
-          ok?: boolean;
-        } = {};
-        if (rawText.trim()) {
-          try {
-            body = JSON.parse(rawText) as typeof body;
-          } catch {
-            body = { message: sanitizeApiResponseText(rawText, response.status) };
-          }
-        }
-        return { response, body, rawText };
-      }
-
       try {
         const activeId = currentId;
-        const { response, body, rawText } = await requestSave(activeId);
-
-        if (!response.ok) {
-          const detail =
-            typeof body.error === "object" &&
-            body.error !== null &&
-            typeof body.error.details === "object" &&
-            body.error.details !== null
-              ? JSON.stringify(body.error.details)
-              : "";
-          const message = extractApiErrorMessage(
-            body,
-            zh
-              ? rawText.trim()
-                ? `保存失败（HTTP ${response.status}）`
-                : `服务器错误 (${response.status})`
-              : rawText.trim()
-                ? `Save failed (HTTP ${response.status})`
-                : `Server error (${response.status})`,
-            response.status
-          );
-          const localized =
-            zh && message === "Invalid CSRF token"
-              ? "权限校验失败，请刷新页面后重试"
-              : zh && message === "Admin session required"
-                ? "登录已过期，请重新登录"
-                : message;
-          throw new Error(detail ? `${localized} (${detail})` : localized);
+        const csrf = readAdminCsrfToken();
+        if (!csrf) {
+          throw new Error(zh ? "安全令牌缺失，请刷新页面后重试" : "Missing security token — refresh the page");
         }
 
-        const saved = body.data?.article;
+        const formData = new FormData();
+        formData.set("_adminCsrf", csrf);
+        if (activeId) formData.set("article_id", activeId);
+        formData.set("payload", JSON.stringify(buildPayload(state, publish)));
+
+        const result = await saveKnowledgeArticleAction(formData);
+
+        if (!result.success) {
+          const message =
+            zh && result.error.message === "Invalid CSRF token"
+              ? "权限校验失败，请刷新页面后重试"
+              : zh && result.error.message === "Admin session required"
+                ? "登录已过期，请重新登录"
+                : zh && result.error.code === "PAYLOAD_TOO_LARGE"
+                  ? "正文过大，请减少内容或使用图片上传"
+                  : result.error.message;
+          throw new Error(message);
+        }
+
+        const saved = result.data.article;
         const nextId = saved?.id ?? activeId ?? null;
         if (!nextId) {
           throw new Error(zh ? "数据库未连接，请运行 npm run db:migrate" : "Database unavailable — run npm run db:migrate");
@@ -195,7 +164,7 @@ export function useKnowledgeEditorController(input: {
           patchForm({ slug: saved.slug });
         }
         if (isPublishedStatus(saved?.status)) setWasEverPublished(true);
-        if (publish && (body.data?.pipeline?.published || isPublishedStatus(saved?.status))) {
+        if (publish && (result.data.pipeline?.published || isPublishedStatus(saved?.status))) {
           setWasEverPublished(true);
           patchForm({ status: "PUBLISHED" });
           router.refresh();
@@ -203,11 +172,11 @@ export function useKnowledgeEditorController(input: {
 
         setSaveState("saved");
         const publishedOk =
-          publish && (isPublishedStatus(saved?.status) || body.data?.pipeline?.published);
+          publish && (isPublishedStatus(saved?.status) || result.data.pipeline?.published);
         notify(
           publish
             ? publishedOk
-              ? body.data?.pipeline?.multilingual_sync_queued
+              ? result.data.pipeline?.multilingual_sync_queued
                 ? zh
                   ? "已发布。多语言翻译正在后台同步…"
                   : "Published. Multilingual translation is syncing in the background…"
