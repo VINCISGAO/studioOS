@@ -9,7 +9,11 @@ import {
 } from "@/features/knowledge-center/knowledge-publish.pipeline";
 import { logger } from "@/lib/core/logger";
 
-async function runKnowledgePostPublishWork(saved: KnowledgeSaveResult) {
+async function runKnowledgePostSaveWork(saved: KnowledgeSaveResult) {
+  if (saved.queueTranslationSidecars) {
+    await knowledgeCenterRepository.upsertTranslationSidecars(saved.queueTranslationSidecars);
+  }
+
   const pipelineJob = saved.queuePublishPipeline;
   const multilingualJob = saved.queueMultilingualSync;
 
@@ -29,14 +33,16 @@ async function runKnowledgePostPublishWork(saved: KnowledgeSaveResult) {
   }
 }
 
-/** Queue revalidate / ping / multilingual sync after the save response returns. */
-export function scheduleKnowledgeMultilingualSyncAfterResponse(saved: KnowledgeSaveResult) {
-  if (!saved.queuePublishPipeline && !saved.queueMultilingualSync) return;
+/** Queue sidecars / revalidate / ping / multilingual sync after the save response returns. */
+export function scheduleKnowledgePostSaveWork(saved: KnowledgeSaveResult) {
+  if (!saved.queueTranslationSidecars && !saved.queuePublishPipeline && !saved.queueMultilingualSync) {
+    return;
+  }
 
   try {
     after(() =>
-      runKnowledgePostPublishWork(saved).catch((error) => {
-        logger.error("knowledge.post_publish.background_failed", {
+      runKnowledgePostSaveWork(saved).catch((error) => {
+        logger.error("knowledge.post_save.background_failed", {
           service: "KnowledgePublishSchedule",
           articleId: saved.article?.id,
           error: error instanceof Error ? error.message : String(error)
@@ -44,8 +50,8 @@ export function scheduleKnowledgeMultilingualSyncAfterResponse(saved: KnowledgeS
       })
     );
   } catch {
-    void runKnowledgePostPublishWork(saved).catch((error) => {
-      logger.error("knowledge.post_publish.background_failed", {
+    void runKnowledgePostSaveWork(saved).catch((error) => {
+      logger.error("knowledge.post_save.background_failed", {
         service: "KnowledgePublishSchedule",
         articleId: saved.article?.id,
         error: error instanceof Error ? error.message : String(error)
@@ -53,3 +59,6 @@ export function scheduleKnowledgeMultilingualSyncAfterResponse(saved: KnowledgeS
     });
   }
 }
+
+/** @deprecated Use scheduleKnowledgePostSaveWork */
+export const scheduleKnowledgeMultilingualSyncAfterResponse = scheduleKnowledgePostSaveWork;

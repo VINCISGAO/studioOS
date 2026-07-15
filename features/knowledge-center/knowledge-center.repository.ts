@@ -662,7 +662,11 @@ export class KnowledgeCenterRepository {
         snapshot: {
           slug: job.slug,
           status: job.input.status,
-          translation: t
+          translation: {
+            language_code: t.language_code,
+            title: t.title,
+            status: t.status ?? job.input.status
+          }
         }
       });
     } catch {

@@ -4,7 +4,7 @@ import {
 } from "@/features/admin/auth/admin-api-guard";
 import { knowledgeCenterService } from "@/features/knowledge-center/knowledge-center.service";
 import { parseKnowledgeArticleBody } from "@/features/knowledge-center/knowledge-center.api-parser";
-import { scheduleKnowledgeMultilingualSyncAfterResponse } from "@/features/knowledge-center/knowledge-publish-schedule";
+import { scheduleKnowledgePostSaveWork } from "@/features/knowledge-center/knowledge-publish-schedule";
 import { apiSuccess, handleRouteError } from "@/lib/core/api-route";
 import { appError } from "@/lib/core/errors";
 import { readKnowledgeMutationJson } from "@/lib/knowledge/knowledge-mutation-body";
@@ -36,7 +36,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     if (!saved.article) {
       throw appError("NOT_FOUND", "Article not found");
     }
-    scheduleKnowledgeMultilingualSyncAfterResponse(saved);
+    scheduleKnowledgePostSaveWork(saved);
     const payload = toKnowledgeSaveClientPayload(saved);
     if (!payload) {
       throw appError("NOT_FOUND", "Article not found");

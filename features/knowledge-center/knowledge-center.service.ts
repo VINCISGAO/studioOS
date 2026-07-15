@@ -23,7 +23,7 @@ import { enrichPublicKnowledgeArticle } from "@/features/knowledge-center/knowle
 import { toAdminPreviewArticle } from "@/features/knowledge-center/knowledge-admin-preview.mapper";
 import { commitArticleSlug } from "@/features/knowledge-center/knowledge-slug.service";
 import { knowledgeSeoDashboardService } from "@/features/knowledge-center/knowledge-seo-dashboard.service";
-import { runKnowledgePublishPipeline, type KnowledgeSaveResult } from "@/features/knowledge-center/knowledge-publish.pipeline";
+import { runKnowledgePublishPipeline, type KnowledgeSaveResult, type KnowledgeTranslationSidecarJob } from "@/features/knowledge-center/knowledge-publish.pipeline";
 import { syncKnowledgeArticleTranslations } from "@/features/knowledge-center/knowledge-multilingual-publish.service";
 import { logger } from "@/lib/core/logger";
 import type {
@@ -106,14 +106,18 @@ export class KnowledgeCenterService {
 
       await knowledgeCenterRepository.ensureAnalytics(article.id);
       await knowledgeCenterRepository.resolveCategoryAndTags(article.id, input);
-      await this.persistTranslation(article.id, slug, input);
+      const sidecarJob = await this.persistTranslation(article.id, slug, input);
+      const status = this.resolvePublishStatus(input, "DRAFT");
 
       if (!publishing) {
-        const detail = await knowledgeCenterRepository.getById(article.id);
-        return detail ? { article: detail } : { article: null };
+        return {
+          article: this.saveRef(article.id, slug, status),
+          queueTranslationSidecars: sidecarJob
+        };
       }
 
-      return this.finishMultilingualPublish(article.id, slug, input);
+      const published = this.finishMultilingualPublish(article.id, slug, input);
+      return { ...published, queueTranslationSidecars: sidecarJob };
     } catch (error) {
       if (article?.id) {
         try {
@@ -142,7 +146,7 @@ export class KnowledgeCenterService {
 
     const nextStatus = this.resolvePublishStatus(input, existing.status);
 
-    await this.persistTranslation(id, slug, { ...input, status: nextStatus }, existing.author_name);
+    const sidecarJob = await this.persistTranslation(id, slug, { ...input, status: nextStatus }, existing.author_name);
 
     await knowledgeCenterRepository.updateArticle(id, {
       status: nextStatus,
@@ -166,11 +170,14 @@ export class KnowledgeCenterService {
     });
 
     if (nextStatus !== "PUBLISHED") {
-      const detail = await knowledgeCenterRepository.getById(id);
-      return detail ? { article: detail } : { article: null };
+      return {
+        article: this.saveRef(id, slug, nextStatus),
+        queueTranslationSidecars: sidecarJob
+      };
     }
 
-    return this.finishMultilingualPublish(id, slug, { ...input, status: nextStatus }, existing.author_name);
+    const published = this.finishMultilingualPublish(id, slug, { ...input, status: nextStatus }, existing.author_name);
+    return { ...published, queueTranslationSidecars: sidecarJob };
   }
 
   async publish(id: string): Promise<KnowledgeSaveResult> {
@@ -446,7 +453,7 @@ export class KnowledgeCenterService {
       const multilingual = await syncKnowledgeArticleTranslations({
         base: publishInput,
         persist: async (payload) => {
-          await this.persistTranslation(job.articleId, job.slug, payload, job.authorName);
+          await this.persistTranslation(job.articleId, job.slug, payload, job.authorName, { awaitSidecars: true });
         }
       });
 
@@ -470,12 +477,12 @@ export class KnowledgeCenterService {
     }
   }
 
-  private async finishMultilingualPublish(
+  private finishMultilingualPublish(
     articleId: string,
     slug: string,
     input: UpsertKnowledgeArticleInput,
     authorName = "VINCIS"
-  ): Promise<KnowledgeSaveResult> {
+  ): KnowledgeSaveResult {
     const publishInput: UpsertKnowledgeArticleInput = {
       ...input,
       status: "PUBLISHED",
@@ -486,14 +493,11 @@ export class KnowledgeCenterService {
     };
 
     const sourceCode = publishInput.translation.language_code;
-    const detail = await knowledgeCenterRepository.getById(articleId);
-    if (!detail) return { article: null };
-
     const pathPrefix = knowledgePathPrefixForCode(sourceCode);
     const publicUrl = buildKnowledgeArticlePath(pathPrefix, slug);
 
     return {
-      article: detail,
+      article: this.saveRef(articleId, slug, "PUBLISHED"),
       pipeline: {
         published: true,
         steps: [],
@@ -517,12 +521,42 @@ export class KnowledgeCenterService {
     };
   }
 
+  private saveRef(
+    id: string,
+    slug: string,
+    status: KnowledgeArticleDetailDto["status"]
+  ): KnowledgeArticleDetailDto {
+    return {
+      id,
+      slug,
+      status,
+      author_name: "VINCIS",
+      category_id: null,
+      category_slug: null,
+      category_name: null,
+      cover_image_url: null,
+      visibility: "PUBLIC",
+      tags: [],
+      scheduled_at: null,
+      timezone: "UTC",
+      published_at: status === "PUBLISHED" ? new Date().toISOString() : null,
+      translations: [],
+      analytics: {
+        view_count: 0,
+        helpful_count: 0,
+        not_helpful_count: 0,
+        monthly_views: 0
+      }
+    };
+  }
+
   private async persistTranslation(
     articleId: string,
     slug: string,
     input: UpsertKnowledgeArticleInput,
-    authorName = "VINCIS"
-  ) {
+    authorName = "VINCIS",
+    options?: { awaitSidecars?: boolean }
+  ): Promise<KnowledgeTranslationSidecarJob | undefined> {
     const t = input.translation;
     const readingTimeMinutes = estimateReadingTimeMinutes(
       t.body_html ? t.body_html.replace(/<[^>]+>/g, " ") : t.body_markdown
@@ -532,18 +566,22 @@ export class KnowledgeCenterService {
       readingTimeMinutes
     });
 
-    const article = await knowledgeCenterRepository.getById(articleId);
-    const sidecarJob = {
+    const sidecarJob: KnowledgeTranslationSidecarJob = {
       articleId,
       translationId,
       slug,
       authorName: input.author_name?.trim() || authorName,
       input,
-      categorySlug: article?.category_slug ?? input.category_slug ?? null,
-      categoryName: article?.category_name ?? null
+      categorySlug: input.category_slug ?? null,
+      categoryName: null
     };
 
-    await knowledgeCenterRepository.upsertTranslationSidecars(sidecarJob);
+    if (options?.awaitSidecars) {
+      await knowledgeCenterRepository.upsertTranslationSidecars(sidecarJob);
+      return undefined;
+    }
+
+    return sidecarJob;
   }
 
   private resolveArticleTitle(
