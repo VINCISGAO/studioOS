@@ -290,9 +290,7 @@ export class KnowledgeCenterRepository {
         take: 100
       });
 
-      return rows.map((row) =>
-        toArticleListItemDto(row as Parameters<typeof toArticleListItemDto>[0], filters?.language, filters?.adminLocale)
-      );
+      return rows.map((row) => toArticleListItemDto(row, filters?.language, filters?.adminLocale));
     });
   }
 

@@ -1,5 +1,6 @@
 import type {
   KnowledgeArticle,
+  KnowledgeArticleStatus,
   KnowledgeCategory,
   KnowledgeFaq,
   KnowledgeLucien,
@@ -37,6 +38,27 @@ type ArticleWithRelations = KnowledgeArticle & {
     notHelpfulCount: number;
     monthlyViews: number;
   } | null;
+};
+
+/** Minimal article shape for list cards — supports lean public-list Prisma selects. */
+export type ArticleListItemSource = {
+  id: string;
+  slug: string;
+  status: KnowledgeArticleStatus;
+  authorName: string;
+  updatedAt: Date;
+  coverImageUrl: string | null;
+  category: { name: string; slug: string } | null;
+  translations: Array<{
+    languageCode: string;
+    title: string;
+    status: KnowledgeArticleStatus;
+    updatedAt: Date;
+    publishedAt: Date | null;
+    seo: { seoScore: number } | null;
+    lucien?: { lucienIndexed: boolean } | null;
+  }>;
+  analytics: { viewCount: number } | null;
 };
 
 function stringList(value: unknown): string[] {
@@ -141,7 +163,7 @@ export function toArticleDetailDto(row: ArticleWithRelations): KnowledgeArticleD
 }
 
 export function toArticleListItemDto(
-  row: ArticleWithRelations,
+  row: ArticleListItemSource,
   languageCode?: string,
   adminLocale?: Locale
 ): KnowledgeArticleListItemDto {
