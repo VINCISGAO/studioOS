@@ -7,6 +7,7 @@ import { parseKnowledgeArticleBody } from "@/features/knowledge-center/knowledge
 import { scheduleKnowledgeMultilingualSyncAfterResponse } from "@/features/knowledge-center/knowledge-publish-schedule";
 import { getAppUiLocale } from "@/lib/app-language";
 import { apiSuccess, handleRouteError } from "@/lib/core/api-route";
+import { appError } from "@/lib/core/errors";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -39,6 +40,9 @@ export async function POST(request: Request) {
     const body = (await request.json()) as Record<string, unknown>;
     const parsed = parseKnowledgeArticleBody(body);
     const article = await knowledgeCenterService.create(parsed);
+    if (!article.article) {
+      throw appError("SYSTEM_ERROR", "Database unavailable — check DATABASE_URL and run db:migrate:deploy");
+    }
     scheduleKnowledgeMultilingualSyncAfterResponse(article);
     return apiSuccess({ article: article.article, pipeline: article.pipeline });
   } catch (error) {

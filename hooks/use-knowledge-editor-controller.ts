@@ -3,7 +3,8 @@
 import { useKnowledgeEditorToast } from "@/hooks/use-knowledge-editor-toast";
 import type { KnowledgeArticleDetailDto } from "@/features/knowledge-center/knowledge-center.types";
 import type { KnowledgePublishPipelineResult } from "@/features/knowledge-center/knowledge-publish.pipeline.shared";
-import { adminMutationHeaders } from "@/lib/studioos/admin-csrf-client";
+import { adminMutationHeaders, readAdminCsrfToken } from "@/lib/studioos/admin-csrf-client";
+import { extractApiErrorMessage } from "@/lib/studioos/api-error-message";
 import { adminPortalRoutes } from "@/lib/studioos/admin-portal-routes";
 import { buildKnowledgeEditorInitialForm, type KnowledgeEditorPanelForm } from "@/lib/knowledge/knowledge-editor-initial-form";
 import {
@@ -120,6 +121,12 @@ export function useKnowledgeEditorController(input: {
       setSaveState("saving");
       if (!publish) clearMessage();
 
+      if (!readAdminCsrfToken()) {
+        setSaveState("idle");
+        notify(zh ? "安全令牌缺失，请刷新页面后重试" : "Missing security token — refresh the page", "error");
+        return false;
+      }
+
       async function requestSave(articleId: string | undefined) {
         const response = await fetch(articleId ? `/api/admin/knowledge/${articleId}` : "/api/admin/knowledge", {
           method: articleId ? "PATCH" : "POST",
@@ -129,7 +136,9 @@ export function useKnowledgeEditorController(input: {
         });
         const body = (await response.json().catch(() => ({}))) as {
           data?: { article?: KnowledgeArticleDetailDto; pipeline?: KnowledgePublishPipelineResult };
-          error?: { message?: string; details?: { existing_article_id?: string } };
+          error?: { message?: string; code?: string; details?: { existing_article_id?: string } };
+          message?: string;
+          ok?: boolean;
         };
         return { response, body };
       }
@@ -139,15 +148,25 @@ export function useKnowledgeEditorController(input: {
         const { response, body } = await requestSave(activeId);
 
         if (!response.ok) {
-          if (response.status === 403) {
-            throw new Error(zh ? "权限校验失败，请刷新页面后重试" : "Permission denied — refresh and retry");
-          }
           const detail =
-            typeof body.error?.details === "object" && body.error.details !== null
+            typeof body.error === "object" &&
+            body.error !== null &&
+            typeof body.error.details === "object" &&
+            body.error.details !== null
               ? JSON.stringify(body.error.details)
               : "";
-          const message = body.error?.message ?? (zh ? "保存失败" : "Save failed");
-          throw new Error(detail ? `${message} (${detail})` : message);
+          const message = extractApiErrorMessage(
+            body,
+            zh ? "保存失败" : "Save failed",
+            response.status
+          );
+          const localized =
+            zh && message === "Invalid CSRF token"
+              ? "权限校验失败，请刷新页面后重试"
+              : zh && message === "Admin session required"
+                ? "登录已过期，请重新登录"
+                : message;
+          throw new Error(detail ? `${localized} (${detail})` : localized);
         }
 
         const saved = body.data?.article;

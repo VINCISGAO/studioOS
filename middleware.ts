@@ -320,7 +320,10 @@ export async function middleware(request: NextRequest) {
     !isAdminAuthHealthRoute
   ) {
     if (!hasAdminSessionCookie(request)) {
-      return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { success: false, error: { code: "UNAUTHORIZED", message: "Admin session required" } },
+        { status: 401 }
+      );
     }
     return applyAdminSecurityHeaders(response, { nonce: adminCspNonce, production: isProduction });
   }

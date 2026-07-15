@@ -6,6 +6,7 @@ import { knowledgeCenterService } from "@/features/knowledge-center/knowledge-ce
 import { parseKnowledgeArticleBody } from "@/features/knowledge-center/knowledge-center.api-parser";
 import { scheduleKnowledgeMultilingualSyncAfterResponse } from "@/features/knowledge-center/knowledge-publish-schedule";
 import { apiSuccess, handleRouteError } from "@/lib/core/api-route";
+import { appError } from "@/lib/core/errors";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -30,6 +31,9 @@ export async function PATCH(request: Request, context: RouteContext) {
     const body = (await request.json()) as Record<string, unknown>;
     const parsed = parseKnowledgeArticleBody(body);
     const saved = await knowledgeCenterService.update(id, parsed);
+    if (!saved.article) {
+      throw appError("NOT_FOUND", "Article not found");
+    }
     scheduleKnowledgeMultilingualSyncAfterResponse(saved);
     return apiSuccess({ article: saved.article, pipeline: saved.pipeline });
   } catch (error) {

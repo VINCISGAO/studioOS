@@ -24,19 +24,27 @@ export function handleRouteError(error: unknown) {
   }
   console.error("[api]", error);
 
-  if (process.env.NODE_ENV !== "production" && error instanceof Error) {
+  if (error instanceof Error) {
     const prismaCode =
       typeof error === "object" && error !== null && "code" in error
         ? String((error as { code?: string }).code)
         : null;
     const migrateHint =
       prismaCode === "P2021" || prismaCode === "P2022"
-        ? " Run npm run db:migrate."
+        ? " Run npm run db:migrate:deploy."
         : "";
     const detail = prismaCode
       ? `${error.message} (${prismaCode})${migrateHint}`
       : `${error.message}${migrateHint}`;
-    return apiError("SYSTEM_ERROR", detail, 500);
+    const message =
+      process.env.NODE_ENV !== "production"
+        ? detail
+        : prismaCode === "P2002"
+          ? "Duplicate record — refresh and retry."
+          : prismaCode === "P2021" || prismaCode === "P2022"
+            ? `Database schema out of date (${prismaCode}). Run db:migrate:deploy.`
+            : detail.slice(0, 280) || "Internal server error";
+    return apiError("SYSTEM_ERROR", message, 500, prismaCode ? { prismaCode } : undefined);
   }
 
   return apiError("SYSTEM_ERROR", "Internal server error", 500);

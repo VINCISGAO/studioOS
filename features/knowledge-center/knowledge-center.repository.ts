@@ -332,13 +332,29 @@ export class KnowledgeCenterRepository {
   async createArticle(data: Prisma.KnowledgeArticleCreateInput) {
     const model = articleModel();
     if (!model) return null;
-    return model.create({ data, include: articleInclude });
+    try {
+      return await model.create({ data, include: articleInclude });
+    } catch (error) {
+      if (isPrismaColumnDriftError(error) && "visibility" in data) {
+        const { visibility: _visibility, ...withoutVisibility } = data;
+        return model.create({ data: withoutVisibility, include: articleInclude });
+      }
+      throw error;
+    }
   }
 
   async updateArticle(id: string, data: Prisma.KnowledgeArticleUpdateInput) {
     const model = articleModel();
     if (!model) return null;
-    return model.update({ where: { id }, data, include: articleInclude });
+    try {
+      return await model.update({ where: { id }, data, include: articleInclude });
+    } catch (error) {
+      if (isPrismaColumnDriftError(error) && "visibility" in data) {
+        const { visibility: _visibility, ...withoutVisibility } = data;
+        return model.update({ where: { id }, data: withoutVisibility, include: articleInclude });
+      }
+      throw error;
+    }
   }
 
   async softDelete(id: string) {
