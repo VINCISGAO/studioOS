@@ -6,7 +6,7 @@ import {
   effectiveKnowledgeTags,
   type KnowledgeEditorFormState
 } from "@/lib/knowledge/knowledge-editor-validation";
-import { knowledgeHtmlToPlainText } from "@/lib/knowledge/knowledge-html";
+import { knowledgeHtmlToPlainText } from "@/lib/knowledge/knowledge-html-plain";
 
 export type KnowledgeEditorSeoCheckStatus = "ok" | "warn";
 

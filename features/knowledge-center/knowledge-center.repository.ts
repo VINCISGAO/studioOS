@@ -24,6 +24,7 @@ import type {
 } from "@/features/knowledge-center/knowledge-center.types";
 import type { Locale } from "@/lib/i18n";
 import { renderKnowledgeMarkdown } from "@/lib/knowledge/knowledge-markdown";
+import { sanitizeKnowledgeHtml } from "@/lib/knowledge/sanitize-knowledge-html";
 import {
   type KnowledgeSeoScores,
   toPrismaKnowledgeSeoScoreFields
@@ -471,13 +472,14 @@ export class KnowledgeCenterRepository {
   private resolveTranslationBodies(t: UpsertKnowledgeArticleInput["translation"]) {
     const htmlSource = t.body_html?.trim() || "";
     const markdownSource = t.body_markdown?.trim() || "";
-    const bodyHtml = htmlSource
+    const rawBodyHtml = htmlSource
       ? htmlSource
       : markdownSource.includes("<")
         ? markdownSource
         : markdownSource
           ? renderKnowledgeMarkdown(markdownSource)
           : "";
+    const bodyHtml = rawBodyHtml ? sanitizeKnowledgeHtml(rawBodyHtml) : "";
     const bodyMarkdown = markdownSource || bodyHtml.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
     return { bodyHtml, bodyMarkdown };
   }

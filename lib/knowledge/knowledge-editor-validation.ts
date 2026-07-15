@@ -5,7 +5,7 @@ import {
   KNOWLEDGE_SLUG_MAX_LENGTH,
   KNOWLEDGE_VISIBILITY_OPTIONS
 } from "@/lib/knowledge/knowledge-editor.constants";
-import { knowledgeHtmlIsEmpty } from "@/lib/knowledge/knowledge-html";
+import { knowledgeHtmlIsEmpty } from "@/lib/knowledge/knowledge-html-plain";
 
 export type KnowledgeVisibility = (typeof KNOWLEDGE_VISIBILITY_OPTIONS)[number];
 
