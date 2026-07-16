@@ -5,7 +5,7 @@ export const adminMetricCopy = {
   en: {
     gmv: {
       label: "GMV",
-      hint: "Escrow inflow plus settled platform revenue; falls back to campaign budgets when escrow is empty."
+      hint: "Sum of funded escrow payments only. Shows ¥0 when no payment has been collected."
     },
     platformRevenue: {
       label: "Platform revenue",
@@ -39,7 +39,7 @@ export const adminMetricCopy = {
   zh: {
     gmv: {
       label: "成交总额",
-      hint: "托管入账加已结算平台收入；无托管记录时回退到活动预算汇总。"
+      hint: "仅统计已托管入账金额；无付款记录时显示 ¥0。"
     },
     platformRevenue: {
       label: "平台收入",

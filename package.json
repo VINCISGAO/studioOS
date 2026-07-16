@@ -103,6 +103,7 @@
     "payment:verify": "node --require ./scripts/helpers/register-verify-runtime.cjs --import tsx scripts/payment-collection-verify.ts",
     "knowledge:verify": "node --import tsx scripts/knowledge-publish-verify.ts",
     "knowledge:tiptap:verify": "node --import tsx scripts/knowledge-tiptap-markdown-verify.ts",
+    "knowledge:body:verify": "node --import tsx scripts/knowledge-body-convert-verify.ts",
     "knowledge:tiptap-init": "node --import tsx scripts/knowledge-tiptap-init-verify.ts",
     "production:verify": "node --require ./scripts/helpers/load-env.cjs --import tsx scripts/production-ready-verify.ts",
     "happy-path:verify": "STUDIOOS_SCRIPT_RUNTIME=verify node --require ./scripts/helpers/register-verify-runtime.cjs --import tsx scripts/happy-path-transaction-verify.ts",

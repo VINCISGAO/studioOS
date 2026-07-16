@@ -12,6 +12,7 @@ import {
 } from "@/components/studioos/brand-creative-brief/brand-creative-brief-sections-shared";
 import { BrandCreativeBriefProductionSection } from "@/components/studioos/brand-creative-brief/brand-creative-brief-production-section";
 import { BrandCreativeBriefScheduleFields } from "@/components/studioos/brand-creative-brief/brand-creative-brief-schedule-fields";
+import { BrandBudgetStepExperience } from "@/components/studioos/brand-budget/brand-budget-step-experience";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -169,7 +170,9 @@ export function BrandCreativeBriefSecondarySections(props: BriefSectionsProps) {
         </>
       )}
 
-      {props.hideBudget && !props.budgetOnly ? null : (
+      {props.hideBudget && !props.budgetOnly ? null : props.budgetOnly ? (
+        <BrandBudgetStepExperience {...props} />
+      ) : (
       <BriefSectionCard
         id="brief-section-budget"
         number={budgetSectionNumber}

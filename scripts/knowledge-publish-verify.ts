@@ -12,6 +12,10 @@ import { buildKnowledgeJsonLd } from "../features/knowledge-center/knowledge-seo
 import { buildKnowledgeLlmsTxtDocument } from "../lib/knowledge/knowledge-llms-document";
 import { resolveKnowledgeCoverSources } from "../lib/knowledge/knowledge-cover-process.shared";
 import { renderKnowledgeMarkdown } from "../lib/knowledge/knowledge-markdown";
+import {
+  knowledgeHtmlToMarkdownServer,
+  knowledgeMarkdownToHtmlServer
+} from "../lib/knowledge/knowledge-body-convert";
 import { buildKnowledgeRssXml } from "../lib/knowledge/knowledge-rss";
 import { validateKnowledgeSlug } from "../lib/knowledge/knowledge-editor-validation";
 
@@ -207,9 +211,22 @@ function checkSeoHeuristics(): Step {
   };
 }
 
+function checkBodyConvert(): Step {
+  const html = "<h2>Title</h2><ol><li><p>One</p></li><li><p>Two</p></li></ol>";
+  const md = knowledgeHtmlToMarkdownServer(html);
+  const back = knowledgeMarkdownToHtmlServer(md);
+  const ok = /1\.\s+One/.test(md) && back.includes("<ol>") && back.includes("<h2>");
+  return {
+    name: "knowledge.body_convert",
+    ok,
+    detail: ok ? "TipTap HTML ↔ Markdown round-trip ok" : md
+  };
+}
+
 function main() {
   const steps: Step[] = [
     checkMarkdownRenderer(),
+    checkBodyConvert(),
     checkCoverSources(),
     checkSlugValidation(),
     checkMultilingualLocales(),

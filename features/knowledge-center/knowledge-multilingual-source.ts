@@ -1,4 +1,5 @@
 import type { KnowledgeTranslationDto, UpsertKnowledgeArticleInput } from "@/features/knowledge-center/knowledge-center.types";
+import { knowledgeHtmlToMarkdownServer } from "@/lib/knowledge/knowledge-body-convert";
 
 /** Prefer persisted translation bodies — editor saves body_html only. */
 export function resolveMultilingualSourceTranslation(
@@ -6,10 +7,9 @@ export function resolveMultilingualSourceTranslation(
   persisted?: KnowledgeTranslationDto | null
 ): UpsertKnowledgeArticleInput["translation"] {
   const bodyHtml = persisted?.body_html?.trim() || input.body_html?.trim() || "";
-  const bodyMarkdown =
-    persisted?.body_markdown?.trim() ||
-    input.body_markdown?.trim() ||
-    (bodyHtml ? bodyHtml.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim() : "");
+  const bodyMarkdown = bodyHtml
+    ? knowledgeHtmlToMarkdownServer(bodyHtml)
+    : persisted?.body_markdown?.trim() || input.body_markdown?.trim() || "";
 
   return {
     ...input,

@@ -34,7 +34,14 @@ function buildTranslationPrompt(
   return [
     `Translate this VINCIS Knowledge Center article from ${languageLabel(source.language_code)} to ${target.label} (${target.code}).`,
     'Return JSON only: {"title":"...","subtitle":"...","body_markdown":"...","excerpt":"...","seo_title":"...","meta_description":"...","keywords":["..."],"faqs":[{"question":"...","answer":"..."}]}',
-    "Preserve markdown headings, lists, tables, links, and code fences. Do not change URLs or slugs.",
+    "Preserve the exact document structure from SOURCE BODY MARKDOWN:",
+    "- Keep the same heading levels (# vs ## vs ###).",
+    "- Keep ordered lists as 1. 2. 3. and unordered lists as - bullets.",
+    "- Keep task lists as - [ ] / - [x] items.",
+    "- Keep markdown tables with the same row/column count.",
+    "- Keep fenced code blocks, blockquotes, and horizontal rules.",
+    "- Keep raw HTML blocks (iframe, figure, img, knowledge callouts) unchanged except translate visible text.",
+    "Do not flatten lists into paragraphs. Do not change URLs, image src, iframe src, or slugs.",
     "",
     `SOURCE TITLE: ${source.title}`,
     source.subtitle ? `SOURCE SUBTITLE: ${source.subtitle}` : null,
@@ -60,7 +67,7 @@ export async function translateKnowledgeArticleLocale(
 
   const completion = await aiGatewayService.chatCompletion({
     system:
-      "You are VINCIS Knowledge Center translator. Produce accurate, SEO-friendly knowledge articles. Keep markdown structure intact.",
+      "You are VINCIS Knowledge Center translator. Produce accurate, SEO-friendly knowledge articles. Keep markdown and embedded HTML structure identical to the source — only translate human-readable text.",
     user: buildTranslationPrompt(source, target),
     jsonMode: true,
     temperature: 0.2,

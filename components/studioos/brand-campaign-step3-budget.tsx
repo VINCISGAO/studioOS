@@ -19,23 +19,28 @@ import {
   isPresetBudget,
   normalizeCustomBudgetInput
 } from "@/lib/studioos/brand-campaign-options";
+import {
+  buildBudgetPricingInsights
+} from "@/lib/studioos/brand-budget-pricing-insights";
+import { marketQuoteForBrief } from "@/lib/studioos/brand-market-quote";
+import { convertUsdToDisplayAmount } from "@/lib/money/display-money";
 import { coerceErrorMessage, formatClientError } from "@/lib/studioos/format-client-error";
 import type { StoredProject } from "@/lib/project-types";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 const copy = {
   en: {
-    title: "Set your budget",
-    subtitle: "Review your selected plan and choose a budget tier. Payment only starts after you click the button below.",
+    title: "AI-recommended budget",
+    subtitle: "See why AI recommends this price first, then adjust tiers if needed. Payment only starts after you click the button below.",
     publish: "Confirm budget & pay",
     publishing: "Opening checkout…",
     freezing: "Confirming plan…",
     needBudget: "Select or enter a budget before continuing."
   },
   zh: {
-    title: "确认你的预算",
-    subtitle: "请核对已选方案并选择预算档位。只有点击下方按钮后才会进入付款。",
+    title: "AI 推荐预算",
+    subtitle: "先看 AI 为什么推荐这个价格，再决定是否调整档位。只有点击底部按钮后才会进入付款。",
     publish: "确认预算并付款",
     publishing: "正在前往付款…",
     freezing: "正在确认方案…",
@@ -111,6 +116,31 @@ export function BrandCampaignStep3Budget({
 
   const budgetIsCustom = Boolean(budgetCustom.trim()) || !isPresetBudget(form.budgetRange);
   const busy = isPublishing || freezePending;
+
+  const marketQuote = useMemo(() => marketQuoteForBrief(form, locale), [form, locale]);
+  const pricingInsights = useMemo(
+    () => buildBudgetPricingInsights(form, marketQuote, locale),
+    [form, marketQuote, locale]
+  );
+
+  useEffect(() => {
+    if (budgetCustom.trim()) return;
+    const isUnset =
+      !form.budgetRange.trim() ||
+      form.budgetRange === defaultBrandBudget() ||
+      isPresetBudget(form.budgetRange);
+    if (!isUnset) return;
+
+    const professionalUsd = marketQuote.recommended;
+    if (!professionalUsd) return;
+    const displayAmount = String(convertUsdToDisplayAmount(professionalUsd, locale));
+    const result = normalizeCustomBudgetInput(displayAmount, locale);
+    if (!result.ok) return;
+    setBudgetCustom(displayAmount);
+    setForm((prev) =>
+      prev.budgetRange === result.value ? prev : { ...prev, budgetRange: result.value }
+    );
+  }, [budgetCustom, form.budgetRange, locale, marketQuote.recommended]);
 
   useEffect(() => {
     if (error) setLocalError(coerceErrorMessage(error));
@@ -247,6 +277,9 @@ export function BrandCampaignStep3Budget({
             delivery={delivery}
             budgetRange={form.budgetRange}
             budgetCustom={budgetCustom}
+            insights={pricingInsights}
+            recommendedUsd={marketQuote.recommended}
+            recommendedTierLabel="Professional"
           />
         </div>
       </div>

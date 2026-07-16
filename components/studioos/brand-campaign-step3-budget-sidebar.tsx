@@ -2,6 +2,7 @@
 
 import type { Locale } from "@/lib/i18n";
 import { BudgetSettlementCallout, SettlementUsdCallout } from "@/components/studioos/budget-settlement-callout";
+import type { BudgetPricingInsights } from "@/lib/studioos/brand-budget-pricing-insights";
 import {
   formatMoneyFromUsd,
   formatStoredBudgetRange,
@@ -10,25 +11,29 @@ import {
 import type { StoredProject } from "@/lib/project-types";
 import { parseBudgetMidpoint } from "@/lib/studioos/brand-checkout-utils";
 import { resolveBrandPublishConfirmationSummary } from "@/lib/studioos/brand-publish-confirmation";
-import { CalendarDays, Clapperboard, Shield, Wallet } from "lucide-react";
+import { CalendarDays, Check, Shield, Sparkles } from "lucide-react";
+
+const PLATFORM_FEE_RATE = 0.08;
 
 const copy = {
   en: {
-    summary: "Payment summary",
-    scheme: "Selected plan",
+    escrowTitle: "Escrow payment",
+    estimatedBudget: "Estimated budget",
+    confidence: "AI confidence",
     delivery: "Delivery",
-    budget: "Your budget",
-    escrow: "Escrow invoice",
-    escrowHint: "Held until you approve delivery",
+    recommendedStudio: "Recommended tier",
+    secureEscrow: "Secure escrow",
+    escrowHint: "Funds stay protected until you approve delivery.",
     creatorNote: "Creators submit creative ideas after payment."
   },
   zh: {
-    summary: "付款摘要",
-    scheme: "已选方案",
+    escrowTitle: "托管付款",
+    estimatedBudget: "预估预算",
+    confidence: "AI 置信度",
     delivery: "交付周期",
-    budget: "提交预算",
-    escrow: "托管账单",
-    escrowHint: "确认交付后再释放款项",
+    recommendedStudio: "推荐档位",
+    secureEscrow: "安全托管",
+    escrowHint: "确认交付前资金始终受平台保护。",
     creatorNote: "付款后由匹配创作者提交创意方向。"
   }
 } as const;
@@ -38,70 +43,104 @@ export function BrandCampaignStep3BudgetSidebar({
   project,
   delivery,
   budgetRange,
-  budgetCustom = ""
+  budgetCustom = "",
+  insights,
+  recommendedUsd,
+  recommendedTierLabel = "Professional"
 }: {
   locale: Locale;
   project: StoredProject;
   delivery: string;
   budgetRange: string;
   budgetCustom?: string;
+  insights?: BudgetPricingInsights | null;
+  recommendedUsd?: number;
+  recommendedTierLabel?: string;
 }) {
   const t = copy[locale];
   const summary = resolveBrandPublishConfirmationSummary(project, locale, null, budgetRange);
-  const escrowUsd = parseBudgetMidpoint(budgetRange);
+  const selectedMidpoint = parseBudgetMidpoint(budgetRange);
+  const displayBudgetUsd = selectedMidpoint > 0 ? selectedMidpoint : recommendedUsd ?? 0;
+  const escrowUsd = displayBudgetUsd > 0 ? Math.round(displayBudgetUsd * (1 - PLATFORM_FEE_RATE)) : 0;
   const budgetLabel = budgetRange.trim()
     ? formatStoredBudgetRange(budgetRange, locale)
-    : summary.budgetRange;
-  const varianceNote = budgetEscrowVarianceNote(escrowUsd, locale, budgetCustom);
+    : recommendedUsd
+      ? formatMoneyFromUsd(recommendedUsd, locale)
+      : summary.budgetRange;
+  const varianceNote = budgetEscrowVarianceNote(displayBudgetUsd, locale, budgetCustom);
+  const fmt = (amount: number) => formatMoneyFromUsd(amount, locale);
 
   return (
     <aside className="space-y-4 xl:sticky xl:top-4 xl:self-start">
-      <section className="rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-sm">
-        <h3 className="text-sm font-semibold text-zinc-950">{t.summary}</h3>
-        <dl className="mt-3 space-y-3">
-          <div>
-            <dt className="flex items-center gap-1.5 text-[10px] font-medium text-zinc-500">
-              <Clapperboard className="h-3.5 w-3.5 text-violet-500" />
-              {t.scheme}
-            </dt>
-            <dd className="mt-1 text-sm font-semibold text-zinc-950">{summary.schemeTitle}</dd>
-            {summary.schemeSummary ? (
-              <p className="mt-1 text-xs leading-5 text-zinc-500">
-                {summary.isCreatorSubmission ? t.creatorNote : summary.schemeSummary}
-              </p>
-            ) : null}
+      <section className="overflow-hidden rounded-2xl border border-violet-100 bg-gradient-to-br from-violet-50/80 via-white to-white p-5 shadow-sm">
+        <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-violet-700">
+          <Shield className="h-4 w-4" />
+          {t.escrowTitle}
+        </p>
+
+        <div className="mt-4 space-y-3 border-b border-violet-100/80 pb-4">
+          <div className="flex items-center justify-between gap-3 text-sm">
+            <span className="text-zinc-500">{t.estimatedBudget}</span>
+            <span className="font-semibold text-zinc-950">{budgetLabel}</span>
           </div>
-          <div>
-            <dt className="flex items-center gap-1.5 text-[10px] font-medium text-zinc-500">
+          {insights ? (
+            <div className="flex items-center justify-between gap-3 text-sm">
+              <span className="inline-flex items-center gap-1 text-zinc-500">
+                <Sparkles className="h-3.5 w-3.5 text-violet-500" />
+                {t.confidence}
+              </span>
+              <span className="font-semibold text-zinc-950">{insights.confidencePercent}%</span>
+            </div>
+          ) : null}
+          <div className="flex items-center justify-between gap-3 text-sm">
+            <span className="inline-flex items-center gap-1 text-zinc-500">
               <CalendarDays className="h-3.5 w-3.5 text-violet-500" />
               {t.delivery}
-            </dt>
-            <dd className="mt-1 text-sm font-semibold text-zinc-950">{delivery}</dd>
+            </span>
+            <span className="font-semibold text-zinc-950">{insights?.deliveryLabel ?? delivery}</span>
           </div>
-          <div>
-            <dt className="flex items-center gap-1.5 text-[10px] font-medium text-zinc-500">
-              <Wallet className="h-3.5 w-3.5 text-violet-500" />
-              {t.budget}
-            </dt>
-            <dd className="mt-1 text-sm font-semibold text-zinc-950">{budgetLabel}</dd>
+          <div className="flex items-center justify-between gap-3 text-sm">
+            <span className="text-zinc-500">{t.recommendedStudio}</span>
+            <span className="font-semibold text-zinc-950">{recommendedTierLabel}</span>
           </div>
-        </dl>
-      </section>
+        </div>
 
-      <section className="rounded-2xl border border-violet-100/80 bg-gradient-to-br from-violet-50/80 via-white to-white p-4 shadow-sm">
-        <p className="flex items-center gap-1.5 text-xs font-medium text-zinc-500">
-          <Shield className="h-3.5 w-3.5 text-violet-500" />
-          {t.escrow}
-        </p>
-        <p className="mt-2 text-2xl font-semibold tracking-tight text-zinc-950">
-          {escrowUsd > 0 ? formatMoneyFromUsd(escrowUsd, locale) : "—"}
+        <p className="mt-4 text-3xl font-semibold tracking-tight text-zinc-950">
+          {escrowUsd > 0 ? fmt(escrowUsd) : "—"}
         </p>
         <p className="mt-1 text-xs leading-5 text-zinc-500">{t.escrowHint}</p>
+
+        {displayBudgetUsd > 0 ? (
+          <div className="mt-3 space-y-1 rounded-xl bg-white/80 px-3 py-2 text-xs text-zinc-600 ring-1 ring-violet-100">
+            <div className="flex justify-between gap-3">
+              <span>{locale === "zh" ? "项目预算" : "Project budget"}</span>
+              <span>{fmt(displayBudgetUsd)}</span>
+            </div>
+            <div className="flex justify-between gap-3">
+              <span>{locale === "zh" ? "平台服务费 (8%)" : "Platform fee (8%)"}</span>
+              <span>-{fmt(Math.round(displayBudgetUsd * PLATFORM_FEE_RATE))}</span>
+            </div>
+          </div>
+        ) : null}
+
         {varianceNote ? (
-          <BudgetSettlementCallout message={varianceNote} className="mt-2" />
+          <BudgetSettlementCallout message={varianceNote} className="mt-3" />
         ) : (
-          <SettlementUsdCallout locale={locale} className="mt-2" />
+          <SettlementUsdCallout locale={locale} className="mt-3" />
         )}
+      </section>
+
+      <section className="rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-sm">
+        <p className="text-sm font-semibold text-zinc-950">{summary.schemeTitle}</p>
+        {summary.schemeSummary ? (
+          <p className="mt-2 text-xs leading-5 text-zinc-500">
+            {summary.isCreatorSubmission ? t.creatorNote : summary.schemeSummary}
+          </p>
+        ) : null}
+        <p className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-emerald-700">
+          <Check className="h-4 w-4" />
+          {t.secureEscrow}
+        </p>
       </section>
     </aside>
   );

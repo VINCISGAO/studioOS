@@ -155,7 +155,6 @@ export class AdminDashboardRepository {
       escrowAgg,
       heldEscrowAgg,
       commissionAgg,
-      campaignBudgetAgg,
       pendingWithdrawals,
       disputesOpen,
       activeCampaigns,
@@ -184,10 +183,6 @@ export class AdminDashboardRepository {
       }),
       prisma.orderCommission.aggregate({
         _sum: { platformTotalRevenue: true, clientServiceFeeAmount: true }
-      }),
-      prisma.campaign.aggregate({
-        where: { deletedAt: null },
-        _sum: { budget: true }
       }),
       adminWithdrawalRepository.countPendingRequests(),
       prisma.dispute.count({ where: { status: { in: ["OPEN", "PROCESSING"] } } }),
@@ -250,10 +245,7 @@ export class AdminDashboardRepository {
       })
     ]);
 
-    let gmv = Number(escrowAgg._sum.amount ?? 0);
-    if (gmv === 0) {
-      gmv = Number(campaignBudgetAgg._sum.budget ?? 0);
-    }
+    const gmv = Number(escrowAgg._sum.amount ?? 0);
 
     const escrowHeld = Number(heldEscrowAgg._sum.remainingAmount ?? 0);
     const settlementPending = settlementQueueEscrows.reduce(
