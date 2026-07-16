@@ -10,6 +10,10 @@ import {
   toArticleListItemDto
 } from "@/features/knowledge-center/knowledge-center.mappers";
 import {
+  KNOWLEDGE_CITATION_CATEGORY_SLUGS,
+  knowledgeCitationTopicLabel
+} from "@/features/knowledge-center/knowledge-citation-categories";
+import {
   KNOWLEDGE_DEMO_ARTICLE_SLUGS,
   knowledgePublicArticleWhere
 } from "@/features/knowledge-center/knowledge-public.filters";
@@ -962,7 +966,10 @@ export class KnowledgeCenterRepository {
             where: { article: notDeleted }
           }),
           prisma.knowledgeLucien.count({
-            where: { lucienIndexed: true, translation: { article: notDeleted } }
+            where: {
+              lucienIndexed: true,
+              translation: { status: "PUBLISHED", article: notDeleted }
+            }
           }),
           prisma.knowledgeAnalytics.aggregate({
             _sum: { monthlyViews: true, viewCount: true },
@@ -1015,31 +1022,65 @@ export class KnowledgeCenterRepository {
 
   async getCitationGaps(): Promise<KnowledgeCitationGapDto[]> {
     if (!this.isAvailable()) return [];
-    const categories = await prisma.knowledgeCategory.findMany({ orderBy: { sortOrder: "asc" } });
+
+    const dbCategories = await prisma.knowledgeCategory.findMany({
+      where: { slug: { in: [...KNOWLEDGE_CITATION_CATEGORY_SLUGS] } }
+    });
+    const categoryBySlug = new Map(dbCategories.map((row) => [row.slug, row]));
     const gaps: KnowledgeCitationGapDto[] = [];
 
-    for (const category of categories) {
-      const articles = await prisma.knowledgeArticle.count({
-        where: { deletedAt: null, categoryId: category.id }
-      });
-      const indexed = await prisma.knowledgeLucien.count({
-        where: {
-          lucienIndexed: true,
-          translation: { article: { categoryId: category.id } }
-        }
-      });
-      const seo = await prisma.knowledgeSeo.aggregate({
-        _avg: { seoScore: true },
-        where: { translation: { article: { categoryId: category.id } } }
-      });
+    for (const slug of KNOWLEDGE_CITATION_CATEGORY_SLUGS) {
+      const category = categoryBySlug.get(slug);
+      if (!category) {
+        gaps.push({
+          topic: knowledgeCitationTopicLabel(slug),
+          category: slug,
+          articles: 0,
+          published_translations: 0,
+          lucien_indexed: 0,
+          avg_seo: 0,
+          coverage: "missing"
+        });
+        continue;
+      }
+
+      const articleFilter = { deletedAt: null, categoryId: category.id } as const;
+      const publishedTranslationFilter = {
+        status: "PUBLISHED" as const,
+        article: articleFilter
+      };
+
+      const [articles, publishedTranslations, lucienIndexed, seo] = await Promise.all([
+        prisma.knowledgeArticle.count({ where: articleFilter }),
+        prisma.knowledgeTranslation.count({ where: publishedTranslationFilter }),
+        prisma.knowledgeLucien.count({
+          where: {
+            lucienIndexed: true,
+            translation: publishedTranslationFilter
+          }
+        }),
+        prisma.knowledgeSeo.aggregate({
+          _avg: { seoScore: true },
+          where: { translation: { article: articleFilter } }
+        })
+      ]);
+
       const avgSeo = Math.round(seo._avg.seoScore ?? 0);
       const coverage: KnowledgeCitationGapDto["coverage"] =
-        articles === 0 ? "missing" : indexed >= articles ? "strong" : "partial";
+        articles === 0 || publishedTranslations === 0
+          ? "missing"
+          : lucienIndexed >= publishedTranslations
+            ? "strong"
+            : lucienIndexed > 0
+              ? "partial"
+              : "missing";
+
       gaps.push({
-        topic: category.name,
-        category: category.slug,
+        topic: knowledgeCitationTopicLabel(slug, category.name),
+        category: slug,
         articles,
-        lucien_indexed: indexed,
+        published_translations: publishedTranslations,
+        lucien_indexed: lucienIndexed,
         avg_seo: avgSeo,
         coverage
       });

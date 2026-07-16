@@ -17,18 +17,12 @@ import {
 import { readKnowledgeMutationJson } from "@/lib/knowledge/knowledge-mutation-body";
 import { aiGatewayService } from "@/features/ai/ai-gateway.service";
 import { toKnowledgeSaveClientPayload } from "@/lib/knowledge/knowledge-save-client";
-import { unstable_cache } from "next/cache";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
 const ROUTE = "POST /api/admin/knowledge";
-
-const getCachedKnowledgeDashboardStats = unstable_cache(
-  async () => knowledgeCenterService.getDashboardStats(),
-  ["knowledge-dashboard-stats"],
-  { revalidate: 60 }
-);
 
 export async function GET(request: Request) {
   const requestId = createKnowledgeRequestId(request);
@@ -45,8 +39,10 @@ export async function GET(request: Request) {
       category: url.searchParams.get("category") ?? undefined,
       adminLocale
     };
-    const articles = await knowledgeCenterService.listAdmin(filters);
-    const stats = await getCachedKnowledgeDashboardStats();
+    const [articles, stats] = await Promise.all([
+      knowledgeCenterService.listAdmin(filters),
+      knowledgeCenterService.getDashboardStats()
+    ]);
     return knowledgeAdminJsonSuccess({ articles, stats }, requestId);
   } catch (error) {
     return knowledgeAdminJsonError(error, requestId, { route: "GET /api/admin/knowledge", step });

@@ -16,7 +16,8 @@ import { toUiLocale } from "@/lib/app-language.shared";
 import type { Metadata } from "next";
 
 export const runtime = "nodejs";
-export const revalidate = 300;
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 type Props = { params: Promise<{ lang: string; slug: string }> };
 
@@ -43,11 +44,12 @@ export default async function KnowledgeArticleRoute({ params }: Props) {
   const { lang, slug } = await params;
   const languageCode = knowledgeCodeForPathPrefix(lang);
   const locale = toUiLocale(languageCode);
-  const article = await getPublicKnowledgeArticleCached(slug, languageCode);
+  const article = await knowledgeCenterService.getPublicArticle(slug, languageCode, { recordView: false });
   if (!article) notFound();
 
-  if (article.slug !== slug) {
-    permanentRedirect(buildKnowledgeArticlePath(lang as KnowledgePathPrefix, article.slug));
+  const canonicalSlug = knowledgeCenterService.resolvePublicArticleRouteSlug(slug, article);
+  if (canonicalSlug !== slug) {
+    permanentRedirect(buildKnowledgeArticlePath(lang as KnowledgePathPrefix, canonicalSlug));
   }
 
   scheduleKnowledgeArticleViewIncrement(article.id);

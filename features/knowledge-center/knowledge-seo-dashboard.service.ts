@@ -116,7 +116,7 @@ export class KnowledgeSeoDashboardService {
       published_translations: publishedTranslations,
       site_search_indexed: searchIndexed,
       note:
-        "Index counts reflect technical SEO readiness (schema, meta, scores). External crawl confirmation requires Search Console / Bing Webmaster integration in a later phase."
+        "「SEO 技术就绪」为站内自动检测结果（Schema、Meta、评分达标），不代表 Google / 百度 / Bing 已实际收录。真实收录需接入 Search Console / 站长平台。"
     };
   }
 }

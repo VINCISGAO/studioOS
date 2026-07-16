@@ -5,8 +5,58 @@ import { slugifyKnowledgeTitle } from "@/features/knowledge-center/knowledge-seo
 import { KNOWLEDGE_SLUG_MAX_LENGTH } from "@/lib/knowledge/knowledge-editor.constants";
 import { validateKnowledgeSlug } from "@/lib/knowledge/knowledge-editor-validation";
 
+const KNOWLEDGE_UUID_SLUG_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 function normalizeSlug(value: string) {
   return value.trim().replace(/^\/+|\/+$/g, "").slice(0, KNOWLEDGE_SLUG_MAX_LENGTH);
+}
+
+/** Detect draft/id/uuid slugs that should be upgraded to a readable public slug. */
+export function isLegacyKnowledgeArticleSlug(slug: string, articleId: string) {
+  const normalized = normalizeSlug(slug).toLowerCase();
+  const id = articleId.trim().toLowerCase();
+  if (!normalized) return true;
+  if (normalized === id) return true;
+  if (normalized === `draft-${id}`) return true;
+  return KNOWLEDGE_UUID_SLUG_RE.test(normalized);
+}
+
+export function suggestKnowledgePublicSlug(input: {
+  title: string;
+  categorySlug?: string;
+  tags?: string[];
+}) {
+  const fromTitle = buildKnowledgeSlugCandidate(input.title);
+  if (
+    fromTitle &&
+    fromTitle !== "article" &&
+    !fromTitle.startsWith("article-") &&
+    fromTitle.length >= 12 &&
+    validateKnowledgeSlug(fromTitle).ok
+  ) {
+    return fromTitle;
+  }
+
+  const yearMatch = input.title.match(/\b(20\d{2})\b/);
+  const year = yearMatch?.[1];
+  const category = input.categorySlug?.trim();
+
+  if (category && validateKnowledgeSlug(category).ok) {
+    if (year) {
+      return normalizeSlug(`${category}-guide-${year}`);
+    }
+    const suffix =
+      fromTitle && fromTitle !== "article" && !fromTitle.startsWith("article-") ? fromTitle : "guide";
+    return normalizeSlug(`${category}-${suffix}`);
+  }
+
+  const englishTag = input.tags?.find((tag) => /^[a-z0-9]+(?:-[a-z0-9]+)*$/i.test(tag.trim()));
+  if (englishTag && year) {
+    return normalizeSlug(`${englishTag.toLowerCase()}-${year}`);
+  }
+
+  return fromTitle;
 }
 
 export function buildKnowledgeSlugCandidate(title: string) {
@@ -45,8 +95,14 @@ export async function allocateUniqueKnowledgeSlug(input: {
   title: string;
   articleId: string;
   excludeArticleId?: string;
+  categorySlug?: string;
+  tags?: string[];
 }) {
-  const base = buildKnowledgeSlugCandidate(input.title);
+  const base = suggestKnowledgePublicSlug({
+    title: input.title,
+    categorySlug: input.categorySlug,
+    tags: input.tags
+  });
   let candidate = base;
   let suffix = 2;
 
@@ -86,15 +142,19 @@ export async function commitArticleSlug(
     wasPublished?: boolean;
     existingSlug?: string;
     preferredSlug?: string;
+    categorySlug?: string;
+    tags?: string[];
   }
 ): Promise<string> {
   const existingSlug = input.existingSlug?.trim().replace(/^\/+|\/+$/g, "") ?? "";
-  if (input.wasPublished && existingSlug) {
+  const legacySlug = isLegacyKnowledgeArticleSlug(existingSlug, articleId);
+
+  if (input.wasPublished && existingSlug && !legacySlug) {
     return existingSlug;
   }
 
   const draftSlug = articleId.replace(/^\/+|\/+$/g, "");
-  if (!input.publishing) {
+  if (!input.publishing && !(input.wasPublished && legacySlug)) {
     if (existingSlug !== draftSlug) {
       await knowledgeCenterRepository.updateArticle(articleId, { slug: draftSlug });
     }
@@ -116,7 +176,9 @@ export async function commitArticleSlug(
   let candidate = await allocateUniqueKnowledgeSlug({
     title: input.title,
     articleId,
-    excludeArticleId: articleId
+    excludeArticleId: articleId,
+    categorySlug: input.categorySlug,
+    tags: input.tags
   });
 
   if (existingSlug === candidate) {
@@ -140,4 +202,28 @@ export async function commitArticleSlug(
 
   await knowledgeCenterRepository.updateArticle(articleId, { slug: draftSlug });
   return draftSlug;
+}
+
+/** Upgrade a published article off draft/id/uuid slugs; no-op when already readable. */
+export async function upgradeLegacyKnowledgeArticleSlug(input: {
+  articleId: string;
+  title: string;
+  existingSlug: string;
+  categorySlug?: string;
+  tags?: string[];
+  preferredSlug?: string;
+}) {
+  if (!isLegacyKnowledgeArticleSlug(input.existingSlug, input.articleId)) {
+    return input.existingSlug;
+  }
+
+  return commitArticleSlug(input.articleId, {
+    title: input.title,
+    publishing: false,
+    wasPublished: true,
+    existingSlug: input.existingSlug,
+    preferredSlug: input.preferredSlug,
+    categorySlug: input.categorySlug,
+    tags: input.tags
+  });
 }

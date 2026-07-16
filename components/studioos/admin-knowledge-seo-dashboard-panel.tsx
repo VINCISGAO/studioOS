@@ -73,9 +73,21 @@ export function AdminKnowledgeSeoDashboardPanel({ locale }: { locale: Locale }) 
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <MetricCard label={zh ? "Google 收录就绪" : "Google index-ready"} value={dashboard.indexes.google} hint={zh ? "Schema + Meta + 分数达标" : "Schema + meta + score ready"} />
-        <MetricCard label={zh ? "百度收录就绪" : "Baidu index-ready"} value={dashboard.indexes.baidu} />
-        <MetricCard label={zh ? "Bing 收录就绪" : "Bing index-ready"} value={dashboard.indexes.bing} />
+        <MetricCard
+          label={zh ? "Google SEO 技术就绪" : "Google SEO-ready"}
+          value={dashboard.indexes.google}
+          hint={zh ? "已发布且 Schema + Meta + 分数达标" : "Published with schema, meta, and score thresholds"}
+        />
+        <MetricCard
+          label={zh ? "百度 SEO 技术就绪" : "Baidu SEO-ready"}
+          value={dashboard.indexes.baidu}
+          hint={zh ? "已发布且 Meta + 百度分数达标" : "Published with meta and Baidu score thresholds"}
+        />
+        <MetricCard
+          label={zh ? "Bing SEO 技术就绪" : "Bing SEO-ready"}
+          value={dashboard.indexes.bing}
+          hint={zh ? "已发布且 Schema + SEO 分数达标" : "Published with schema and SEO score thresholds"}
+        />
         <MetricCard label={zh ? "站内搜索索引" : "Site search indexed"} value={dashboard.site_search_indexed ?? 0} />
       </div>
 

@@ -2,10 +2,7 @@
 
 import { Editor } from "@tiptap/core";
 import { createKnowledgeEditorExtensions } from "@/lib/knowledge/tiptap/knowledge-editor-extensions";
-import {
-  knowledgeEditorPlainTextLength,
-  normalizeKnowledgeEditorContent
-} from "@/lib/knowledge/tiptap/knowledge-editor-content";
+import { normalizeKnowledgeEditorContent } from "@/lib/knowledge/tiptap/knowledge-editor-content";
 import {
   normalizeKnowledgePastedText,
   sanitizeKnowledgePastedHtml
@@ -20,21 +17,24 @@ type Props = {
   value: string;
   onChange: (html: string) => void;
   onNotify: (message: string, variant: "success" | "error" | "info") => void;
+  stickyToolbarTop?: number;
 };
 
 type EditorPhase = "initializing" | "ready" | "error";
 
 function ToolbarSkeleton() {
   return (
-    <div className="flex flex-wrap gap-1 border-b border-zinc-100 px-2 py-2">
-      {Array.from({ length: 12 }).map((_, index) => (
-        <div key={index} className="h-8 w-8 animate-pulse rounded-md bg-zinc-100" />
-      ))}
+    <div className="shrink-0 border-b border-zinc-100 bg-white/95 backdrop-blur">
+      <div className="flex flex-wrap gap-1 px-2 py-2">
+        {Array.from({ length: 12 }).map((_, index) => (
+          <div key={index} className="h-8 w-8 animate-pulse rounded-md bg-zinc-100" />
+        ))}
+      </div>
     </div>
   );
 }
 
-export function KnowledgeTiptapEditorInner({ locale, value, onChange, onNotify }: Props) {
+export function KnowledgeTiptapEditorInner({ locale, value, onChange, onNotify, stickyToolbarTop = 0 }: Props) {
   const zh = locale === "zh";
   const [phase, setPhase] = useState<EditorPhase>("initializing");
   const [initError, setInitError] = useState<string | null>(null);
@@ -148,17 +148,14 @@ export function KnowledgeTiptapEditorInner({ locale, value, onChange, onNotify }
   }, []);
 
   const ready = phase === "ready" && editor && !editor.isDestroyed;
-  const chars = ready
-    ? knowledgeEditorPlainTextLength(editor.getHTML())
-    : knowledgeEditorPlainTextLength(value);
 
   return (
     <section
       data-editor-implementation="tiptap-v2"
       data-editor-phase={phase}
-      className="flex min-h-[480px] flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm"
+      className="flex max-h-[calc(100dvh-14rem-env(safe-area-inset-bottom))] min-h-[28rem] flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm"
     >
-      <header className="border-b border-zinc-100 px-5 py-4">
+      <header className="shrink-0 border-b border-zinc-100 px-5 py-4">
         <h2 className="text-base font-semibold text-zinc-900">{zh ? "正文" : "Body"}</h2>
         <p className="mt-1 text-xs text-zinc-500">
           {zh
@@ -168,12 +165,20 @@ export function KnowledgeTiptapEditorInner({ locale, value, onChange, onNotify }
       </header>
 
       {ready ? (
-        <KnowledgeTiptapToolbar editor={editor} zh={zh} onNotify={onNotify} />
+        <div
+          className={cn(
+            "sticky z-30 shrink-0 border-b border-zinc-100 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/90",
+            stickyToolbarTop <= 0 && "top-0"
+          )}
+          style={stickyToolbarTop > 0 ? { top: stickyToolbarTop } : undefined}
+        >
+          <KnowledgeTiptapToolbar editor={editor} zh={zh} onNotify={onNotify} />
+        </div>
       ) : phase === "error" ? null : (
         <ToolbarSkeleton />
       )}
 
-      <div className={cn("knowledge-rich-editor knowledge-rich-editor--fill relative min-h-[420px] flex-1")}>
+      <div className={cn("knowledge-rich-editor knowledge-rich-editor--scroll relative min-h-0 flex-1 overflow-y-auto overscroll-y-contain")}>
         {phase === "initializing" ? (
           <p className="pointer-events-none absolute left-6 top-5 z-10 text-sm text-zinc-400">
             {zh ? "编辑器初始化中…" : "Initializing editor…"}
@@ -187,15 +192,9 @@ export function KnowledgeTiptapEditorInner({ locale, value, onChange, onNotify }
         <div
           ref={mountRef}
           key={instanceKey}
-          className={cn("min-h-[420px] flex-1 px-6 py-5", phase === "error" && "hidden")}
+          className={cn("min-h-[360px] px-6 py-5", phase === "error" && "hidden")}
         />
       </div>
-
-      <footer className="flex flex-wrap gap-3 border-t border-zinc-100 px-4 py-3 text-xs text-zinc-500">
-        <span>
-          {zh ? "字符数" : "Chars"}: {ready ? chars : "—"}
-        </span>
-      </footer>
     </section>
   );
 }

@@ -11,6 +11,7 @@ type EditorProps = {
   value: string;
   onChange: (html: string) => void;
   onNotify: (message: string, variant: "success" | "error" | "info") => void;
+  stickyToolbarTop?: number;
 };
 
 export function KnowledgeTiptapEditor(props: EditorProps) {

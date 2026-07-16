@@ -7,12 +7,15 @@ import { KnowledgeEditorHeroSection } from "@/components/studioos/knowledge-edit
 import { KnowledgeEditorLucienPanel } from "@/components/studioos/knowledge-editor/knowledge-editor-lucien-panel";
 import { KnowledgeEditorPublishDialog } from "@/components/studioos/knowledge-editor/knowledge-editor-publish-dialog";
 import { KnowledgeEditorPublishPanel } from "@/components/studioos/knowledge-editor/knowledge-editor-publish-panel";
+import { KnowledgeEditorBottomBar } from "@/components/studioos/knowledge-editor/knowledge-editor-bottom-bar";
 import { KnowledgeEditorTopBar } from "@/components/studioos/knowledge-editor/knowledge-editor-top-bar";
 import { KnowledgeTiptapEditor } from "@/components/studioos/knowledge-editor/tiptap/knowledge-tiptap-editor-host";
 import { useKnowledgeEditorController } from "@/hooks/use-knowledge-editor-controller";
 import type { KnowledgeArticleDetailDto } from "@/features/knowledge-center/knowledge-center.types";
 import type { Locale } from "@/lib/i18n";
+import { knowledgeEditorPlainTextLength } from "@/lib/knowledge/tiptap/knowledge-editor-content";
 import { cn } from "@/lib/utils";
+import { useMemo, useEffect, useRef, useState } from "react";
 
 type EditorProps = {
   locale: Locale;
@@ -37,9 +40,33 @@ export function AdminKnowledgeEditorPanel({ locale, articleId, initial }: Editor
     publishDialog
   } = editor;
 
+  const charCount = useMemo(() => knowledgeEditorPlainTextLength(form.body_html), [form.body_html]);
+  const topBarRef = useRef<HTMLDivElement>(null);
+  const [toolbarStickyTop, setToolbarStickyTop] = useState(0);
+
+  useEffect(() => {
+    const node = topBarRef.current;
+    if (!node) return;
+
+    const update = () => {
+      setToolbarStickyTop(Math.ceil(node.getBoundingClientRect().height));
+    };
+
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(node);
+    window.addEventListener("resize", update);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", update);
+    };
+  }, []);
+
   return (
-    <div className="pb-10">
-      <KnowledgeEditorTopBar
+    <div className="pb-[calc(5.5rem+env(safe-area-inset-bottom))]">
+      <div ref={topBarRef}>
+        <KnowledgeEditorTopBar
         locale={locale}
         isNew={!currentId}
         displayStatus={displayStatus}
@@ -48,6 +75,7 @@ export function AdminKnowledgeEditorPanel({ locale, articleId, initial }: Editor
         onSaveDraft={saveDraft}
         onPublish={openPublish}
       />
+      </div>
 
       {message ? (
         <div
@@ -64,7 +92,7 @@ export function AdminKnowledgeEditorPanel({ locale, articleId, initial }: Editor
 
       <KnowledgeEditorHeroSection locale={locale} isNew={!currentId} />
 
-      <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)] lg:items-stretch">
+      <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)] lg:items-start">
         <div className="flex min-w-0 flex-col gap-5">
           <KnowledgeEditorArticleFields
             locale={locale}
@@ -90,6 +118,7 @@ export function AdminKnowledgeEditorPanel({ locale, articleId, initial }: Editor
             value={form.body_html}
             onChange={(body_html) => patchForm({ body_html })}
             onNotify={(text, variant) => notify(text, variant)}
+            stickyToolbarTop={toolbarStickyTop}
           />
         </div>
 
@@ -115,6 +144,16 @@ export function AdminKnowledgeEditorPanel({ locale, articleId, initial }: Editor
         saving={publishDialog.saving}
         onClose={publishDialog.close}
         onConfirm={() => void confirmPublish()}
+      />
+
+      <KnowledgeEditorBottomBar
+        locale={locale}
+        charCount={charCount}
+        displayStatus={displayStatus}
+        saveState={saveState}
+        saving={saveState === "saving"}
+        onSaveDraft={saveDraft}
+        onPublish={openPublish}
       />
     </div>
   );

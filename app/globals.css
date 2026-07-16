@@ -1112,6 +1112,10 @@
   flex-direction: column;
 }
 
+.knowledge-rich-editor--scroll {
+  -webkit-overflow-scrolling: touch;
+}
+
 .knowledge-rich-editor--fill > div {
   display: flex;
   min-height: 0;

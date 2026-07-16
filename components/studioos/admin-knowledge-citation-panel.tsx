@@ -8,6 +8,23 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
+import { KNOWLEDGE_EDITOR_CATEGORY_LABELS_ZH } from "@/lib/knowledge/knowledge-editor-copy";
+
+function coverageLabel(coverage: KnowledgeCitationGapDto["coverage"], zh: boolean) {
+  if (coverage === "strong") return zh ? "充分" : "strong";
+  if (coverage === "partial") return zh ? "部分" : "partial";
+  return zh ? "缺失" : "missing";
+}
+
+function topicLabel(gap: KnowledgeCitationGapDto, zh: boolean) {
+  if (!zh) return gap.topic;
+  return (
+    KNOWLEDGE_EDITOR_CATEGORY_LABELS_ZH[
+      gap.category as keyof typeof KNOWLEDGE_EDITOR_CATEGORY_LABELS_ZH
+    ] ?? gap.topic
+  );
+}
+
 export function AdminKnowledgeCitationPanel({ locale }: { locale: Locale }) {
   const zh = locale === "zh";
   const [gaps, setGaps] = useState<KnowledgeCitationGapDto[]>([]);
@@ -28,7 +45,9 @@ export function AdminKnowledgeCitationPanel({ locale }: { locale: Locale }) {
         <div>
           <h2 className="text-lg font-semibold text-zinc-950">{zh ? "AI 引用监控" : "AI Citation Monitor"}</h2>
           <p className="mt-1 text-sm text-zinc-500">
-            {zh ? "跟踪 Lucien 知识覆盖、EEAT 与主题空白。" : "Track Lucien coverage, EEAT gaps, and topic whitespace."}
+            {zh
+              ? "按编辑器分类统计真实文章、已发布语言版本与 Lucien 索引覆盖。"
+              : "Real article counts by editor category, published locales, and Lucien index coverage."}
           </p>
         </div>
         <Button asChild variant="outline">
@@ -38,26 +57,35 @@ export function AdminKnowledgeCitationPanel({ locale }: { locale: Locale }) {
 
       {stats ? (
         <div className="grid gap-3 sm:grid-cols-3">
-          <Metric label={zh ? "Lucien 已索引" : "Lucien indexed"} value={stats.lucien_indexed} />
-          <Metric label={zh ? "平均 SEO" : "Avg SEO"} value={stats.avg_seo} />
-          <Metric label={zh ? "月浏览量" : "Monthly views"} value={stats.monthly_views} />
+          <Metric
+            label={zh ? "Lucien 已索引（已发布语言）" : "Lucien indexed (published)"}
+            value={stats.lucien_indexed}
+          />
+          <Metric label={zh ? "平均 SEO 分" : "Avg SEO score"} value={stats.avg_seo} />
+          <Metric label={zh ? "月浏览量（真实访问）" : "Monthly views (real)"} value={stats.monthly_views} />
         </div>
       ) : null}
 
       <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
-        <div className="grid grid-cols-[1.2fr_0.6fr_0.6fr_0.6fr_0.7fr] gap-3 border-b border-zinc-100 px-4 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-zinc-400">
-          <span>{zh ? "主题" : "Topic"}</span>
-          <span>{zh ? "文章数" : "Articles"}</span>
+        <div className="grid grid-cols-[1.2fr_0.5fr_0.6fr_0.5fr_0.5fr_0.6fr] gap-3 border-b border-zinc-100 px-4 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-zinc-400">
+          <span>{zh ? "分类" : "Category"}</span>
+          <span>{zh ? "文章" : "Articles"}</span>
+          <span>{zh ? "已发布语言" : "Published"}</span>
           <span>Lucien</span>
           <span>SEO</span>
           <span>{zh ? "覆盖" : "Coverage"}</span>
         </div>
         {gaps.map((gap) => (
-          <div key={gap.category} className="grid grid-cols-[1.2fr_0.6fr_0.6fr_0.6fr_0.7fr] gap-3 border-b border-zinc-50 px-4 py-4 text-sm">
-            <span className="font-medium text-zinc-900">{gap.topic}</span>
+          <div key={gap.category} className="grid grid-cols-[1.2fr_0.5fr_0.6fr_0.5fr_0.5fr_0.6fr] gap-3 border-b border-zinc-50 px-4 py-4 text-sm">
+            <span className="font-medium text-zinc-900">{topicLabel(gap, zh)}</span>
             <span>{gap.articles}</span>
-            <span>{gap.lucien_indexed}</span>
-            <span>{gap.avg_seo}</span>
+            <span>{gap.published_translations}</span>
+            <span>
+              {gap.published_translations
+                ? `${gap.lucien_indexed}/${gap.published_translations}`
+                : gap.lucien_indexed}
+            </span>
+            <span>{gap.avg_seo || "—"}</span>
             <span
               className={cn(
                 "font-medium",
@@ -66,7 +94,7 @@ export function AdminKnowledgeCitationPanel({ locale }: { locale: Locale }) {
                 gap.coverage === "missing" && "text-rose-600"
               )}
             >
-              {gap.coverage}
+              {coverageLabel(gap.coverage, zh)}
             </span>
           </div>
         ))}

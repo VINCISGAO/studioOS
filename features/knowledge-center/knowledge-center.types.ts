@@ -151,6 +151,7 @@ export type KnowledgeCitationGapDto = {
   topic: string;
   category: string;
   articles: number;
+  published_translations: number;
   lucien_indexed: number;
   avg_seo: number;
   coverage: "strong" | "partial" | "missing";

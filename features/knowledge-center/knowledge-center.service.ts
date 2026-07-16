@@ -25,7 +25,11 @@ import {
   rewriteKnowledgeHtmlAssetUrls
 } from "@/lib/knowledge/knowledge-asset-urls";
 import { toAdminPreviewArticle } from "@/features/knowledge-center/knowledge-admin-preview.mapper";
-import { commitArticleSlug } from "@/features/knowledge-center/knowledge-slug.service";
+import {
+  commitArticleSlug,
+  isLegacyKnowledgeArticleSlug,
+  upgradeLegacyKnowledgeArticleSlug
+} from "@/features/knowledge-center/knowledge-slug.service";
 import { knowledgeSeoDashboardService } from "@/features/knowledge-center/knowledge-seo-dashboard.service";
 import { runKnowledgePublishPipeline, type KnowledgeSaveResult, type KnowledgeTranslationSidecarJob } from "@/features/knowledge-center/knowledge-publish.pipeline";
 import { resolveMultilingualSourceTranslation } from "@/features/knowledge-center/knowledge-multilingual-source";
@@ -107,7 +111,9 @@ export class KnowledgeCenterService {
         title: this.resolveArticleTitle(input),
         publishing,
         existingSlug: tempSlug,
-        preferredSlug: input.slug
+        preferredSlug: input.slug,
+        categorySlug: input.category_slug,
+        tags: input.tags
       });
 
       await knowledgeCenterRepository.ensureAnalytics(article.id);
@@ -147,7 +153,9 @@ export class KnowledgeCenterService {
       publishing,
       wasPublished,
       existingSlug: existing.slug,
-      preferredSlug: input.slug
+      preferredSlug: input.slug,
+      categorySlug: input.category_slug ?? existing.category_slug ?? undefined,
+      tags: input.tags ?? existing.tags
     });
     const categoryId = await knowledgeCenterRepository.resolveCategoryAndTags(id, input);
 
@@ -337,16 +345,79 @@ export class KnowledgeCenterService {
     });
   }
 
+  extractSlugFromCanonicalUrl(canonicalUrl?: string | null) {
+    const value = canonicalUrl?.trim();
+    if (!value) return undefined;
+    try {
+      const pathname = new URL(value).pathname;
+      const segments = pathname.split("/").filter(Boolean);
+      const slug = segments[segments.length - 1]?.trim();
+      if (!slug || isLegacyKnowledgeArticleSlug(slug, slug)) {
+        return undefined;
+      }
+      return slug;
+    } catch {
+      return undefined;
+    }
+  }
+
+  resolvePublicArticleRouteSlug(routeSlug: string, article: PublicKnowledgeArticleDto) {
+    if (article.slug !== routeSlug && !isLegacyKnowledgeArticleSlug(article.slug, article.id)) {
+      return article.slug;
+    }
+
+    const canonicalSlug = this.extractSlugFromCanonicalUrl(article.seo?.canonical_url);
+    if (canonicalSlug && canonicalSlug !== routeSlug) {
+      return canonicalSlug;
+    }
+
+    return article.slug;
+  }
+
   async getPublicArticle(
     slug: string,
     languageCode: string,
     options?: { recordView?: boolean }
   ): Promise<PublicKnowledgeArticleDto | null> {
-    const row = await knowledgeCenterRepository.getPublishedTranslation(slug, languageCode);
+    let row = await knowledgeCenterRepository.getPublishedTranslation(slug, languageCode);
     if (!row) return null;
 
     const translation = row.translations.find((item) => item.languageCode === languageCode && item.status === "PUBLISHED");
     if (!translation) return null;
+
+    if (isLegacyKnowledgeArticleSlug(row.slug, row.id)) {
+      try {
+        const preferredSlug = this.extractSlugFromCanonicalUrl(translation.seo?.canonicalUrl);
+        const upgradedSlug = await upgradeLegacyKnowledgeArticleSlug({
+          articleId: row.id,
+          title: translation.title,
+          existingSlug: row.slug,
+          categorySlug: row.category?.slug ?? undefined,
+          tags: row.tags.map((item) => item.tag.name),
+          preferredSlug
+        });
+        if (upgradedSlug !== row.slug) {
+          logger.info("knowledge_slug.legacy_upgraded", {
+            articleId: row.id,
+            from: row.slug,
+            to: upgradedSlug
+          });
+          const pathPrefix = knowledgePathPrefixForCode(languageCode);
+          revalidatePath(buildKnowledgeArticlePath(pathPrefix, row.slug));
+          revalidatePath(buildKnowledgeArticlePath(pathPrefix, upgradedSlug));
+          row =
+            (await knowledgeCenterRepository.getPublishedTranslation(upgradedSlug, languageCode)) ??
+            (await knowledgeCenterRepository.getPublishedTranslation(row.id, languageCode)) ??
+            row;
+        }
+      } catch (error) {
+        logger.error("knowledge_slug.legacy_upgrade_failed", {
+          articleId: row.id,
+          slug: row.slug,
+          error: error instanceof Error ? error.message : String(error)
+        });
+      }
+    }
 
     const pathPrefix = knowledgePathPrefixForCode(languageCode);
     const canonical = `${ORIGIN}${buildKnowledgeArticlePath(pathPrefix, row.slug)}`;

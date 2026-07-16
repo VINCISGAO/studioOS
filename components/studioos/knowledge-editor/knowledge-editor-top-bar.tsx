@@ -47,7 +47,7 @@ export function KnowledgeEditorTopBar({
   const zh = locale === "zh";
 
   return (
-    <div className="relative z-50 mb-4 flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white px-4 py-3 shadow-sm sm:flex-row sm:flex-wrap sm:items-center">
+    <div className="relative z-50 mb-4 flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white/95 px-4 py-3 shadow-sm backdrop-blur sm:sticky sm:top-0 sm:flex-row sm:flex-wrap sm:items-center">
       <nav className="flex min-w-0 items-center gap-1 text-sm text-zinc-500">
         <Link href={adminPortalRoutes.knowledge} className="hover:text-violet-600">
           {zh ? "知识中心" : "Knowledge"}
