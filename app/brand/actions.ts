@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { DEMO_SESSION_COOKIE, VISITOR_COOKIE } from "@/lib/auth-config";
 import { resolveBrandBriefStartFromRequestCookies } from "@/lib/brand-brief-session";
-import { getOrCreateEphemeralWizardProject } from "@/lib/brand-start-brief";
+import { createFreshEphemeralWizardProject } from "@/lib/brand-start-brief";
 import { appPath } from "@/lib/i18n";
 
 /** Creates a draft campaign and opens the brand wizard. */
@@ -26,7 +26,7 @@ export async function startBrandBriefAction(_formData: FormData) {
 
   let project;
   try {
-    project = await getOrCreateEphemeralWizardProject(clientEmail);
+    project = await createFreshEphemeralWizardProject(clientEmail);
   } catch {
     redirect(appPath("/brand?error=draft-failed"));
   }

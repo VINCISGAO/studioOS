@@ -10,10 +10,13 @@ import type { Locale } from "@/lib/i18n";
 import { normalizeInternalActionHref } from "@/lib/studioos/internal-action-href";
 import { cn } from "@/lib/utils";
 import { Info, MoreHorizontal, Share2, Shield, Star } from "lucide-react";
+import { BrandMessageBubbleIllustration } from "@/components/studioos/brand-messages/brand-message-hub-art";
 
 const copy = {
   zh: {
     selectHint: "选择一条消息查看详情。",
+    selectTitle: "选择一条消息查看详情",
+    selectBody: "消息内容、项目进度和相关操作将显示在这里。",
     projectInfo: "项目信息",
     viewProjectDetail: "查看项目详情",
     viewProject: "查看项目",
@@ -21,6 +24,8 @@ const copy = {
   },
   en: {
     selectHint: "Select a message to view details.",
+    selectTitle: "Select a message to view details",
+    selectBody: "Message content, project progress, and related actions will appear here.",
     projectInfo: "Project info",
     viewProjectDetail: "View project details",
     viewProject: "View project",
@@ -30,17 +35,32 @@ const copy = {
 
 export function StudioMessageDetailPanel({
   locale,
-  detail
+  detail,
+  variant = "default"
 }: {
   locale: Locale;
   detail: MessageDetailPayload | null;
+  variant?: "default" | "brand";
 }) {
   const t = copy[locale];
 
   if (!detail) {
     return (
-      <section className="flex min-h-[640px] items-center justify-center rounded-[20px] border border-zinc-200/80 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
-        <p className="text-sm text-zinc-500">{t.selectHint}</p>
+      <section
+        className={cn(
+          "flex min-h-[520px] items-center justify-center rounded-2xl border border-zinc-200/70 bg-white shadow-sm lg:min-h-[560px]",
+          variant === "brand" ? "px-6 py-16" : ""
+        )}
+      >
+        {variant === "brand" ? (
+          <div className="max-w-sm text-center">
+            <BrandMessageBubbleIllustration className="mx-auto h-28 w-36 sm:h-32 sm:w-40" />
+            <p className="mt-6 text-base font-medium text-zinc-800">{t.selectTitle}</p>
+            <p className="mt-2 text-sm leading-relaxed text-zinc-500">{t.selectBody}</p>
+          </div>
+        ) : (
+          <p className="text-sm text-zinc-500">{t.selectHint}</p>
+        )}
       </section>
     );
   }

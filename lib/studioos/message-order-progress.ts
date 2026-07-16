@@ -6,15 +6,18 @@ import type { BrandNotificationType } from "@/lib/studioos/brand-notification-ty
 import {
   brandUserPhaseLabels,
   brandUserPhaseSubtitles,
-  creatorUserPhaseLabels,
-  creatorUserPhaseSubtitles,
+  creatorUserCommercialPhaseLabels,
+  creatorUserCommercialPhaseSubtitles,
+  creatorUserCommercialPhases,
   mapBrandStepToPhase,
-  mapCreatorStepToPhase,
+  mapCreatorStepToUserPhase,
+  creatorUserCommercialPhaseIndex,
   resolveBrandCommercialStep,
   resolveCreatorCommercialStep,
   userCommercialPhases,
   type BrandCommercialStep,
   type CreatorCommercialStep,
+  type CreatorUserCommercialPhase,
   type UserCommercialPhase
 } from "@/lib/studioos/commercial-lifecycle";
 
@@ -113,22 +116,22 @@ export function buildMessageProgressSteps(
   const commercialContext = order
     ? { order: { payment_status: order.payment_status, status: order.status } }
     : undefined;
-  const currentPhase = mapCreatorStepToPhase(creatorStep, commercialContext);
-  const currentIndex = userCommercialPhases.indexOf(currentPhase);
+  const currentPhase = mapCreatorStepToUserPhase(creatorStep, commercialContext);
+  const currentIndex = creatorUserCommercialPhaseIndex(currentPhase);
   const zh = locale === "zh";
 
-  return userCommercialPhases.map((phase: UserCommercialPhase, index) => {
+  return creatorUserCommercialPhases.map((phase: CreatorUserCommercialPhase, index) => {
     let state: ProgressStep["state"] = "upcoming";
     if (index < currentIndex) state = "done";
     else if (index === currentIndex) state = "current";
 
     return {
       id: phase,
-      title: creatorUserPhaseLabels[locale][phase],
-      subtitle: creatorUserPhaseSubtitles[locale][phase],
+      title: creatorUserCommercialPhaseLabels[locale][phase],
+      subtitle: creatorUserCommercialPhaseSubtitles[locale][phase],
       state,
       timestamp:
-        phase === "in_production" && state !== "upcoming" && order?.created_at
+        phase === "project_start" && state !== "upcoming" && order?.created_at
           ? new Date(order.created_at).toLocaleString(zh ? "zh-CN" : "en-US", {
               year: "numeric",
               month: "2-digit",

@@ -26,7 +26,7 @@ export function BrandStartBriefButton({
 }: {
   locale: Locale;
   label?: string;
-  /** Pre-resolved ephemeral draft — skips DB work on click. */
+  /** Pre-resolved ephemeral draft — only for explicit resume links, not new create. */
   projectId?: string;
   /** Active (in-progress) campaigns — drives warn / block gate when creationGate is omitted. */
   activeCampaignCount?: number;

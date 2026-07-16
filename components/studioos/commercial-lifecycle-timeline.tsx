@@ -6,13 +6,15 @@ import {
   brandUserPhaseLabel,
   brandUserPhaseLabels,
   brandUserPhaseSubtitles,
-  creatorUserPhaseLabel,
-  creatorUserPhaseLabels,
-  creatorUserPhaseSubtitles,
+  creatorUserCommercialPhaseIndex,
+  creatorUserCommercialPhaseLabel,
+  creatorUserCommercialPhaseLabels,
+  creatorUserCommercialPhaseSubtitles,
+  creatorUserCommercialPhases,
   isBrandAwaitingPayment,
   isCreatorAwaitingPayment,
   mapBrandStepToPhase,
-  mapCreatorStepToPhase,
+  mapCreatorStepToUserPhase,
   resolveBrandNextActorHint,
   resolveCreatorNextActorHint,
   userCommercialPhaseIndex,
@@ -20,6 +22,7 @@ import {
   type BrandCommercialContext,
   type BrandCommercialStep,
   type CreatorCommercialStep,
+  type CreatorUserCommercialPhase,
   type UserCommercialPhase
 } from "@/lib/studioos/commercial-lifecycle";
 import { normalizeCampaignStatus } from "@/lib/studioos/project-status";
@@ -64,19 +67,25 @@ function HorizontalPhaseTimeline({
 }: {
   locale: Locale;
   side: "brand" | "creator";
-  currentPhase: UserCommercialPhase;
+  currentPhase: UserCommercialPhase | CreatorUserCommercialPhase;
   nextHint: string;
   currentLabelOverride?: string;
   estimatedRemaining?: string | null;
 }) {
   const t = copy[locale];
-  const currentIndex = userCommercialPhaseIndex(currentPhase);
-  const phaseLabels = side === "brand" ? brandUserPhaseLabels[locale] : creatorUserPhaseLabels[locale];
-  const phaseSubtitles = side === "brand" ? brandUserPhaseSubtitles[locale] : creatorUserPhaseSubtitles[locale];
+  const isCreator = side === "creator";
+  const creatorPhase = isCreator ? (currentPhase as CreatorUserCommercialPhase) : null;
+  const brandPhase = !isCreator ? (currentPhase as UserCommercialPhase) : null;
+  const currentIndex = isCreator
+    ? creatorUserCommercialPhaseIndex(creatorPhase!)
+    : userCommercialPhaseIndex(brandPhase!);
+  const phases = isCreator ? creatorUserCommercialPhases : userCommercialPhases;
   const currentLabel =
     currentLabelOverride ??
-    (side === "brand" ? brandUserPhaseLabel(currentPhase, locale) : creatorUserPhaseLabel(currentPhase, locale));
-  const showEta = currentPhase === "recruiting" && estimatedRemaining;
+    (isCreator
+      ? creatorUserCommercialPhaseLabel(creatorPhase!, locale)
+      : brandUserPhaseLabel(brandPhase!, locale));
+  const showEta = !isCreator && brandPhase === "recruiting" && estimatedRemaining;
 
   return (
     <section className={cn(portalChrome.card, "overflow-hidden")}>
@@ -89,13 +98,19 @@ function HorizontalPhaseTimeline({
 
       <div className="px-5 py-5 sm:px-6">
         <ol className="grid gap-4 sm:grid-cols-4">
-          {userCommercialPhases.map((phase, index) => {
+          {phases.map((phase, index) => {
             const done = index < currentIndex;
             const active = index === currentIndex;
+            const title = isCreator
+              ? creatorUserCommercialPhaseLabels[locale][phase as CreatorUserCommercialPhase]
+              : brandUserPhaseLabels[locale][phase as UserCommercialPhase];
+            const subtitle = isCreator
+              ? creatorUserCommercialPhaseSubtitles[locale][phase as CreatorUserCommercialPhase]
+              : brandUserPhaseSubtitles[locale][phase as UserCommercialPhase];
 
             return (
               <li key={phase} className="relative min-w-0">
-                {index < userCommercialPhases.length - 1 ? (
+                {index < phases.length - 1 ? (
                   <span
                     className={cn(
                       "absolute left-[calc(50%+14px)] top-3.5 hidden h-px sm:block",
@@ -121,10 +136,10 @@ function HorizontalPhaseTimeline({
                       active ? "text-violet-700" : done ? "text-zinc-800" : "text-zinc-400"
                     )}
                   >
-                    {phaseLabels[phase]}
+                    {title}
                   </p>
                   <p className={cn("mt-1 text-xs leading-relaxed", active ? "text-violet-600/80" : "text-zinc-400")}>
-                    {phaseSubtitles[phase]}
+                    {subtitle}
                   </p>
                 </div>
               </li>
@@ -162,7 +177,7 @@ function UserPhaseTimeline({
 }: {
   locale: Locale;
   side: "brand" | "creator";
-  currentPhase: UserCommercialPhase;
+  currentPhase: UserCommercialPhase | CreatorUserCommercialPhase;
   nextHint: string;
   compact?: boolean;
   currentLabelOverride?: string;
@@ -182,12 +197,18 @@ function UserPhaseTimeline({
   }
 
   const t = copy[locale];
-  const currentIndex = userCommercialPhaseIndex(currentPhase);
-  const phaseLabels = side === "brand" ? brandUserPhaseLabels[locale] : creatorUserPhaseLabels[locale];
-  const phaseSubtitles = side === "brand" ? brandUserPhaseSubtitles[locale] : creatorUserPhaseSubtitles[locale];
+  const isCreator = side === "creator";
+  const creatorPhase = isCreator ? (currentPhase as CreatorUserCommercialPhase) : null;
+  const brandPhase = !isCreator ? (currentPhase as UserCommercialPhase) : null;
+  const currentIndex = isCreator
+    ? creatorUserCommercialPhaseIndex(creatorPhase!)
+    : userCommercialPhaseIndex(brandPhase!);
+  const phases = isCreator ? creatorUserCommercialPhases : userCommercialPhases;
   const currentLabel =
     currentLabelOverride ??
-    (side === "brand" ? brandUserPhaseLabel(currentPhase, locale) : creatorUserPhaseLabel(currentPhase, locale));
+    (isCreator
+      ? creatorUserCommercialPhaseLabel(creatorPhase!, locale)
+      : brandUserPhaseLabel(brandPhase!, locale));
 
   return (
     <section className={cn(portalChrome.card, "p-5 sm:p-6")}>
@@ -199,10 +220,16 @@ function UserPhaseTimeline({
       </div>
 
       <ol className="space-y-0">
-        {userCommercialPhases.map((phase, index) => {
+        {phases.map((phase, index) => {
           const done = index < currentIndex;
           const active = index === currentIndex;
           const upcoming = index > currentIndex;
+          const title = isCreator
+            ? creatorUserCommercialPhaseLabels[locale][phase as CreatorUserCommercialPhase]
+            : brandUserPhaseLabels[locale][phase as UserCommercialPhase];
+          const subtitle = isCreator
+            ? creatorUserCommercialPhaseSubtitles[locale][phase as CreatorUserCommercialPhase]
+            : brandUserPhaseSubtitles[locale][phase as UserCommercialPhase];
 
           return (
             <li key={phase}>
@@ -224,16 +251,16 @@ function UserPhaseTimeline({
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className={cn("text-sm font-semibold leading-snug", active && "text-violet-950")}>
-                    {phaseLabels[phase]}
+                    {title}
                   </p>
                   {(active || done) && (
                     <p className={cn("mt-0.5 text-xs leading-relaxed", active ? "text-violet-800/80" : "text-zinc-500")}>
-                      {phaseSubtitles[phase]}
+                      {subtitle}
                     </p>
                   )}
                 </div>
               </div>
-              {index < userCommercialPhases.length - 1 ? (
+              {index < phases.length - 1 ? (
                 <div className="ml-[23px] flex h-5 items-center">
                   <span className="h-full w-px bg-zinc-200" aria-hidden />
                 </div>
@@ -332,13 +359,13 @@ export function CreatorCommercialTimeline({
   };
   const awaitingPayment =
     currentStep === "selected" && isCreatorAwaitingPayment(commercialContext);
-  const currentPhase = mapCreatorStepToPhase(currentStep, commercialContext);
+  const currentPhase = mapCreatorStepToUserPhase(currentStep, commercialContext);
   const currentLabel =
     awaitingPayment
       ? locale === "zh"
         ? "待品牌付款"
         : "Awaiting brand payment"
-      : creatorUserPhaseLabel(currentPhase, locale);
+      : creatorUserCommercialPhaseLabel(currentPhase, locale);
 
   return (
     <UserPhaseTimeline

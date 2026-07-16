@@ -1,15 +1,15 @@
 "use client";
 
-import { ClipboardCheck, Hourglass, Paintbrush, PartyPopper, Send } from "lucide-react";
+import { CircleDollarSign, Clapperboard, Handshake, Hourglass, Megaphone } from "lucide-react";
 import type { Locale } from "@/lib/i18n";
 import {
-  creatorUserPhaseLabel,
-  creatorUserPhaseLabels,
-  creatorUserPhaseSubtitles,
-  mapCreatorStepToPhase,
+  creatorUserCommercialPhaseLabel,
+  creatorUserCommercialPhaseLabels,
+  creatorUserCommercialPhaseSubtitles,
+  creatorUserCommercialPhaseIndex,
+  creatorUserCommercialPhases,
+  mapCreatorStepToUserPhase,
   resolveCreatorNextActorHint,
-  userCommercialPhaseIndex,
-  userCommercialPhases,
   type CreatorCommercialStep
 } from "@/lib/studioos/commercial-lifecycle";
 import { cn } from "@/lib/utils";
@@ -29,7 +29,7 @@ const copy = {
   }
 } as const;
 
-const phaseIcons = [Send, Paintbrush, ClipboardCheck, PartyPopper];
+const phaseIcons = [Megaphone, Handshake, Clapperboard, CircleDollarSign];
 
 export function CreatorInvitationsProgress({
   locale,
@@ -39,9 +39,9 @@ export function CreatorInvitationsProgress({
   currentStep: CreatorCommercialStep;
 }) {
   const t = copy[locale];
-  const currentPhase = mapCreatorStepToPhase(currentStep);
-  const currentIndex = userCommercialPhaseIndex(currentPhase);
-  const currentLabel = creatorUserPhaseLabel(currentPhase, locale);
+  const currentPhase = mapCreatorStepToUserPhase(currentStep);
+  const currentIndex = creatorUserCommercialPhaseIndex(currentPhase);
+  const currentLabel = creatorUserCommercialPhaseLabel(currentPhase, locale);
   const nextHint = resolveCreatorNextActorHint(currentStep, locale);
   const showWaitingBrandBody = currentStep === "waiting_brand_selection";
 
@@ -55,10 +55,10 @@ export function CreatorInvitationsProgress({
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {userCommercialPhases.map((phase, index) => {
+        {creatorUserCommercialPhases.map((phase, index) => {
           const done = index < currentIndex;
           const active = index === currentIndex;
-          const Icon = phaseIcons[index] ?? Send;
+          const Icon = phaseIcons[index] ?? Megaphone;
 
           return (
             <div key={phase} className="relative min-w-0">
@@ -109,18 +109,14 @@ export function CreatorInvitationsProgress({
                       active ? "text-violet-950" : "text-zinc-800"
                     )}
                   >
-                    {creatorUserPhaseLabels[locale][phase]}
+                    {creatorUserCommercialPhaseLabels[locale][phase]}
                   </p>
                   <p className={cn("mt-2 text-sm leading-6", active ? "text-violet-800/80" : "text-zinc-400")}>
-                    {active
-                      ? creatorUserPhaseSubtitles[locale][phase]
-                      : done
-                        ? locale === "zh"
-                          ? "已完成该阶段"
-                          : "Stage completed"
-                        : locale === "zh"
-                          ? "等待进入该阶段"
-                          : "Waiting for this stage"}
+                    {active || done
+                      ? creatorUserCommercialPhaseSubtitles[locale][phase]
+                      : locale === "zh"
+                        ? "等待进入该阶段"
+                        : "Waiting for this stage"}
                   </p>
                 </div>
               </div>

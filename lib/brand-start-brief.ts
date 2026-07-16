@@ -7,7 +7,7 @@ import { DEMO_SESSION_COOKIE, VISITOR_COOKIE } from "@/lib/auth-config";
 import { DEMO_USERS } from "@/lib/demo-auth";
 import { createProjectDraft, deleteProjectForClient, listProjectsForClient } from "@/lib/project-service";
 import type { StoredProject } from "@/lib/project-types";
-import { isWizardEphemeralProject } from "@/lib/studioos/brand-wizard-session";
+import { isWizardEphemeralProject, hasResumableEphemeralWizardContent } from "@/lib/studioos/brand-wizard-session";
 import { normalizeCampaignStatus } from "@/lib/studioos/project-status";
 
 export {
@@ -54,11 +54,8 @@ export async function createBrandBriefDraftProjectForEmail(
   return project;
 }
 
-/** Reuse in-progress wizard session — do not spawn a new list row on every entry. */
-export async function getOrCreateEphemeralWizardProject(clientEmail: string): Promise<StoredProject> {
-  const normalized = clientEmail.toLowerCase();
-  const projects = await listProjectsForClient(normalized);
-  const ephemeral = projects
+function listEphemeralWizardDrafts(projects: StoredProject[]) {
+  return projects
     .filter(
       (project) =>
         isWizardEphemeralProject(project) && normalizeCampaignStatus(project.status) === "draft"
@@ -68,6 +65,28 @@ export async function getOrCreateEphemeralWizardProject(clientEmail: string): Pr
         new Date(b.updated_at ?? b.created_at).getTime() -
         new Date(a.updated_at ?? a.created_at).getTime()
     );
+}
+
+async function deleteEphemeralWizardDrafts(
+  clientEmail: string,
+  predicate?: (project: StoredProject) => boolean
+) {
+  const normalized = clientEmail.toLowerCase();
+  const projects = await listProjectsForClient(normalized);
+  await Promise.all(
+    listEphemeralWizardDrafts(projects)
+      .filter((project) => (predicate ? predicate(project) : true))
+      .map(async (project) => {
+        await deleteProjectForClient(project.id, normalized);
+      })
+  );
+}
+
+/** Reuse in-progress wizard session — only when opening a known project id. */
+export async function getOrCreateEphemeralWizardProject(clientEmail: string): Promise<StoredProject> {
+  const normalized = clientEmail.toLowerCase();
+  const projects = await listProjectsForClient(normalized);
+  const ephemeral = listEphemeralWizardDrafts(projects);
 
   if (ephemeral.length > 0) {
     const [keep, ...duplicates] = ephemeral;
@@ -79,6 +98,16 @@ export async function getOrCreateEphemeralWizardProject(clientEmail: string): Pr
     return keep;
   }
 
+  return createBrandBriefDraftProjectForEmail(normalized, { ephemeral: true });
+}
+
+/** Start a blank wizard — drops empty hidden ephemerals, keeps resumable in-progress drafts. */
+export async function createFreshEphemeralWizardProject(clientEmail: string): Promise<StoredProject> {
+  const normalized = clientEmail.toLowerCase();
+  await deleteEphemeralWizardDrafts(
+    normalized,
+    (project) => !hasResumableEphemeralWizardContent(project)
+  );
   return createBrandBriefDraftProjectForEmail(normalized, { ephemeral: true });
 }
 

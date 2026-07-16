@@ -355,6 +355,87 @@ export const creatorUserPhaseSubtitles = {
   }
 } as const;
 
+/** Creator portal — four user-facing steps (invitation → delivery). */
+export type CreatorUserCommercialPhase =
+  | "invitation"
+  | "cooperation"
+  | "project_start"
+  | "final_delivery";
+
+export const creatorUserCommercialPhases: CreatorUserCommercialPhase[] = [
+  "invitation",
+  "cooperation",
+  "project_start",
+  "final_delivery"
+];
+
+export const creatorUserCommercialPhaseLabels = {
+  en: {
+    invitation: "Project invitation",
+    cooperation: "Partnership confirmed",
+    project_start: "Project kickoff",
+    final_delivery: "Final delivery"
+  },
+  zh: {
+    invitation: "项目邀请",
+    cooperation: "达成合作",
+    project_start: "项目开始",
+    final_delivery: "定稿交付"
+  }
+} as const;
+
+export const creatorUserCommercialPhaseSubtitles = {
+  en: {
+    invitation: "Receive invitations and enter the shortlist flow",
+    cooperation: "Brand and creator choose each other",
+    project_start: "Upload, review, and revise deliverables",
+    final_delivery: "Payment released after collaboration completes"
+  },
+  zh: {
+    invitation: "收到项目方邀请与候选流程",
+    cooperation: "甲乙双方互相选择",
+    project_start: "经过上传，审查，修改",
+    final_delivery: "合作完成后发放款项"
+  }
+} as const;
+
+const creatorStepToUserPhase: Record<CreatorCommercialStep, CreatorUserCommercialPhase> = {
+  matching_order: "invitation",
+  intent_declined: "invitation",
+  waiting_brand_selection: "cooperation",
+  selected: "cooperation",
+  in_production: "project_start",
+  pending_review: "project_start",
+  pending_revision: "project_start",
+  pending_delivery: "project_start",
+  pending_settlement: "final_delivery",
+  completed: "final_delivery"
+};
+
+export function mapCreatorStepToUserPhase(
+  step: CreatorCommercialStep,
+  context?: CreatorCommercialContext
+): CreatorUserCommercialPhase {
+  if (step === "selected" && context?.order?.creator_id) {
+    return "project_start";
+  }
+  if (step === "selected" && context && isCreatorAwaitingPayment(context)) {
+    return "cooperation";
+  }
+  return creatorStepToUserPhase[step];
+}
+
+export function creatorUserCommercialPhaseIndex(phase: CreatorUserCommercialPhase) {
+  return creatorUserCommercialPhases.indexOf(phase);
+}
+
+export function creatorUserCommercialPhaseLabel(
+  phase: CreatorUserCommercialPhase,
+  locale: "en" | "zh"
+): string {
+  return creatorUserCommercialPhaseLabels[locale][phase];
+}
+
 const brandStepToPhase: Record<BrandCommercialStep, UserCommercialPhase> = {
   publish_requirement: "publish_requirement",
   matching: "recruiting",
@@ -440,7 +521,7 @@ export function creatorCommercialPhaseLabel(
   if (step === "selected" && context && isCreatorAwaitingPayment(context)) {
     return locale === "zh" ? "待品牌付款" : "Awaiting brand payment";
   }
-  return creatorUserPhaseLabel(mapCreatorStepToPhase(step, context), locale);
+  return creatorUserCommercialPhaseLabel(mapCreatorStepToUserPhase(step, context), locale);
 }
 
 export function resolveBrandNextActorHint(
@@ -506,14 +587,18 @@ export function resolveCreatorNextActorHint(
   context?: { orderStatus?: string | null; commercialContext?: CreatorCommercialContext }
 ): string {
   const commercialContext = context?.commercialContext;
-  const phase = mapCreatorStepToPhase(step, commercialContext);
+  const phase = mapCreatorStepToUserPhase(step, commercialContext);
   const orderStatus = context?.orderStatus ?? null;
   const awaitingPayment = commercialContext ? isCreatorAwaitingPayment(commercialContext) : false;
 
-  if (phase === "recruiting") {
+  if (phase === "invitation") {
     if (step === "intent_declined") {
       return locale === "zh" ? "您已拒绝此邀请" : "You declined this invitation";
     }
+    return locale === "zh" ? "下一步：查看并接受项目邀请" : "Next: review and accept the invitation";
+  }
+
+  if (phase === "cooperation") {
     if (step === "selected" && commercialContext?.order?.creator_id) {
       return locale === "zh"
         ? "下一步：确认创意方向，然后上传 V1"
@@ -527,10 +612,10 @@ export function resolveCreatorNextActorHint(
     if (step === "waiting_brand_selection") {
       return locale === "zh" ? "下一步：等待项目方选择" : "Next: waiting for brand selection";
     }
-    return locale === "zh" ? "下一步：查看并接受项目邀请" : "Next: review and accept the invitation";
+    return locale === "zh" ? "下一步：等待双方确认合作" : "Next: confirm the partnership";
   }
 
-  if (phase === "in_production") {
+  if (phase === "project_start") {
     if (step === "pending_revision" || orderStatus === "revision") {
       return locale === "zh" ? "下一步：修改并上传新版本" : "Next: revise and upload a new version";
     }

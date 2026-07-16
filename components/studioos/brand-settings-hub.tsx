@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { useAsyncAction } from "@/hooks/use-async-action";
@@ -9,89 +8,17 @@ import {
   toggleBrandOAuthAction,
   toggleBrandTwoFactorAction,
   updateBrandContactEmailAction,
-  updateBrandPasswordAction,
   updateBrandPhoneAction,
   updateBrandSecurityPrefsAction
 } from "@/app/brand-settings-actions";
-import { StudioSettingsBoard } from "@/components/studioos/studio-settings/studio-settings-board";
+import { BrandSettingsBoard } from "@/components/studioos/brand-settings/brand-settings-board";
+import { BrandSettingsShieldIllustration } from "@/components/studioos/brand-settings/brand-settings-art";
+import { brandSettingsCopy } from "@/components/studioos/brand-settings/brand-settings-copy";
+import { BrandSettingsStatCards } from "@/components/studioos/brand-settings/brand-settings-stat-cards";
 import { StudioSettingsDialogs } from "@/components/studioos/studio-settings/studio-settings-dialogs";
 import type { Locale } from "@/lib/i18n";
-import { withLocale } from "@/lib/i18n";
 import type { CreatorSettingsViewModel, OAuthProvider } from "@/lib/studioos/creator-settings-types";
 import { cn } from "@/lib/utils";
-import { ArrowLeft } from "lucide-react";
-
-const copy = {
-  en: {
-    back: "Back",
-    title: "Account security",
-    subtitle: "Protect your brand account and manage sign-in methods, devices, and security preferences.",
-    saved: "Saved.",
-    errorGeneric: "Something went wrong. Try again.",
-    loginInfo: "Login details",
-    email: "Email",
-    password: "Password",
-    phone: "Phone",
-    edit: "Edit",
-    twoFactor: "Two-factor authentication",
-    twoFactorEnabled: "Enabled",
-    twoFactorDisabled: "Disabled",
-    twoFactorOnHint: "Two-factor authentication is on. A verification code is required at sign-in.",
-    twoFactorOffHint:
-      "Once enabled, a verification code is required at sign-in, adding a layer of protection.",
-    manage2fa: "Manage verification",
-    enable2fa: "Enable two-factor authentication",
-    oauth: "Third-party login",
-    connected: "Connected",
-    notConnected: "Not connected",
-    connect: "Connect",
-    disconnect: "Disconnect",
-    devices: "Login devices",
-    viewAllDevices: "View all devices",
-    noDevices: "No devices yet. Sign in again to record this device.",
-    securitySettings: "Security settings",
-    loginAlerts: "Login alerts",
-    loginAlertsHint: "Email me when a new device signs in.",
-    suspiciousBlock: "Suspicious login blocking",
-    suspiciousBlockHint: "Lock the account and notify me when suspicious sign-in is detected.",
-    accountRecovery: "Account recovery",
-    accountRecoveryHint: "Set a recovery email to regain access if you cannot sign in."
-  },
-  zh: {
-    back: "返回",
-    title: "账号安全",
-    subtitle: "保护品牌方账号安全，管理登录方式、设备与安全偏好。",
-    saved: "已保存。",
-    errorGeneric: "出错了，请重试。",
-    loginInfo: "登录信息",
-    email: "邮箱",
-    password: "密码",
-    phone: "手机号码",
-    edit: "修改",
-    twoFactor: "两步验证",
-    twoFactorEnabled: "已开启",
-    twoFactorDisabled: "未开启",
-    twoFactorOnHint: "两步验证已开启。登录时需要输入验证码，保护账户更安全。",
-    twoFactorOffHint: "开启后，登录时需要输入验证码，为您的品牌方账户增加一层保护。",
-    manage2fa: "管理验证方式",
-    enable2fa: "开启两步验证",
-    oauth: "第三方登录",
-    connected: "已连接",
-    notConnected: "未连接",
-    connect: "连接",
-    disconnect: "断开",
-    devices: "登录设备",
-    viewAllDevices: "查看所有设备",
-    noDevices: "暂无设备记录，重新登录后将自动记录。",
-    securitySettings: "安全设置",
-    loginAlerts: "登录提醒",
-    loginAlertsHint: "当有新设备登录时，通过邮件通知我。",
-    suspiciousBlock: "可疑登录拦截",
-    suspiciousBlockHint: "检测到可疑登录时，自动锁定账户并通知我。",
-    accountRecovery: "账户恢复",
-    accountRecoveryHint: "设置账户恢复方式，以便在无法登录时找回账户。"
-  }
-} as const;
 
 export function BrandSettingsHub({
   locale,
@@ -100,7 +27,7 @@ export function BrandSettingsHub({
   locale: Locale;
   settings: CreatorSettingsViewModel;
 }) {
-  const t = copy[locale];
+  const t = brandSettingsCopy[locale];
   const router = useRouter();
   const [settings, setSettings] = useState(initialSettings);
   const { pending, feedback, run: runAction } = useAsyncAction({
@@ -108,14 +35,11 @@ export function BrandSettingsHub({
     errorMessage: t.errorGeneric
   });
   const [emailDialog, setEmailDialog] = useState(false);
-  const [passwordDialog, setPasswordDialog] = useState(false);
   const [phoneDialog, setPhoneDialog] = useState(false);
   const [recoveryDialog, setRecoveryDialog] = useState(false);
   const [devicesDialog, setDevicesDialog] = useState(false);
   const [emailInput, setEmailInput] = useState(settings.contactEmail);
   const [phoneInput, setPhoneInput] = useState(settings.phone);
-  const [currentPasswordInput, setCurrentPasswordInput] = useState("");
-  const [nextPasswordInput, setNextPasswordInput] = useState("");
   const [recoveryInput, setRecoveryInput] = useState(settings.security.recovery_email ?? "");
 
   useEffect(() => {
@@ -153,30 +77,23 @@ export function BrandSettingsHub({
         </div>
       ) : null}
 
-      <Link
-        href={withLocale("/brand", locale)}
-        className="inline-flex items-center gap-2 text-sm text-zinc-500 transition hover:text-zinc-800"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        {t.back}
-      </Link>
-
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 sm:text-3xl">{t.title}</h1>
-        <p className="mt-2 text-sm text-zinc-500">{t.subtitle}</p>
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="max-w-3xl">
+          <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 sm:text-[28px]">{t.title}</h1>
+          <p className="mt-2 text-sm leading-relaxed text-zinc-500 sm:text-[15px]">{t.subtitle}</p>
+        </div>
+        <BrandSettingsShieldIllustration className="mx-auto h-28 w-36 shrink-0 sm:mx-0 sm:h-32 sm:w-44" />
       </header>
 
-      <StudioSettingsBoard
+      <BrandSettingsStatCards locale={locale} copy={t} settings={settings} deviceCount={deviceCount} />
+
+      <BrandSettingsBoard
+        locale={locale}
         copy={t}
         settings={settings}
         pending={pending}
         deviceCount={deviceCount}
         onEditEmail={() => setEmailDialog(true)}
-        onEditPassword={() => {
-          setCurrentPasswordInput("");
-          setNextPasswordInput("");
-          setPasswordDialog(true);
-        }}
         onEditPhone={() => {
           setPhoneInput(settings.phone);
           setPhoneDialog(true);
@@ -240,8 +157,8 @@ export function BrandSettingsHub({
         pending={pending}
         emailDialog={emailDialog}
         setEmailDialog={setEmailDialog}
-        passwordDialog={passwordDialog}
-        setPasswordDialog={setPasswordDialog}
+        passwordDialog={false}
+        setPasswordDialog={() => {}}
         phoneDialog={phoneDialog}
         setPhoneDialog={setPhoneDialog}
         recoveryDialog={recoveryDialog}
@@ -252,10 +169,10 @@ export function BrandSettingsHub({
         setEmailInput={setEmailInput}
         phoneInput={phoneInput}
         setPhoneInput={setPhoneInput}
-        currentPasswordInput={currentPasswordInput}
-        setCurrentPasswordInput={setCurrentPasswordInput}
-        nextPasswordInput={nextPasswordInput}
-        setNextPasswordInput={setNextPasswordInput}
+        currentPasswordInput=""
+        setCurrentPasswordInput={() => {}}
+        nextPasswordInput=""
+        setNextPasswordInput={() => {}}
         recoveryInput={recoveryInput}
         setRecoveryInput={setRecoveryInput}
         onSaveEmail={() =>
@@ -268,19 +185,7 @@ export function BrandSettingsHub({
             return result;
           })
         }
-        onSavePassword={() =>
-          run(async () => {
-            const result = await updateBrandPasswordAction({
-              lang: locale,
-              currentPassword: currentPasswordInput,
-              nextPassword: nextPasswordInput
-            });
-            if (result.ok) {
-              setPasswordDialog(false);
-            }
-            return result;
-          })
-        }
+        onSavePassword={async () => ({ ok: true })}
         onSavePhone={() =>
           run(async () => {
             const result = await updateBrandPhoneAction({ lang: locale, phone: phoneInput });

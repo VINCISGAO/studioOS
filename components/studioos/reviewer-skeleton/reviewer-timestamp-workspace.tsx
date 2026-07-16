@@ -495,7 +495,7 @@ function ReviewerTimestampWorkspaceInner({
     const paymentDescription =
       result.paymentSource === "balance"
         ? locale === "zh"
-          ? `已从商家账户余额扣款：${formattedAddOnAmount}（当前订单金额 20%），第 4-5 轮修订已解锁。`
+          ? `已从品牌账户余额扣款：${formattedAddOnAmount}（当前订单金额 20%），第 4-5 轮修订已解锁。`
           : `Paid from brand account balance: ${formattedAddOnAmount} (20% of this order). Revision rounds 4-5 are now unlocked.`
         : result.paymentSource === "invoice"
           ? locale === "zh"
@@ -696,7 +696,7 @@ function ReviewerTimestampWorkspaceInner({
               </DialogTitle>
               <DialogDescription className="mt-3 max-w-[320px] text-sm leading-6 text-zinc-500">
                 {locale === "zh"
-                  ? "商家账户余额不足，系统已自动拉起本次加购付款账单。完成支付后将立即解锁第 4–5 轮修订。"
+                  ? "品牌账户余额不足，系统已自动拉起本次加购付款账单。完成支付后将立即解锁第 4–5 轮修订。"
                   : "Your brand account balance is insufficient, so VINCIS opened this add-on payment invoice. Payment unlocks rounds 4-5 immediately."}
               </DialogDescription>
             </DialogHeader>

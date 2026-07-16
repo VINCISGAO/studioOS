@@ -12,7 +12,7 @@ import {
 } from "@/lib/studioos/brand-active-campaign.server";
 import { fallbackProjectThumbnail } from "@/lib/studioos/project-thumbnail";
 import { resolveThumbnailsByProjectId } from "@/lib/studioos/resolve-project-thumbnails";
-import { pickLatestEphemeralWizardProject } from "@/lib/studioos/brand-wizard-session";
+import { pickResumableEphemeralWizardProject } from "@/lib/studioos/brand-wizard-session";
 
 export default async function BrandHomePage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const query = await searchParams;
@@ -24,7 +24,8 @@ export default async function BrandHomePage({ searchParams }: { searchParams: Pr
     getBrandPortalOrders(clientEmail),
     getBrandPortalProjects(clientEmail)
   ]);
-  const wizardProject = pickLatestEphemeralWizardProject(projects);
+  const resumeWizardProject = pickResumableEphemeralWizardProject(projects);
+  const resumeWizardProjectId = resumeWizardProject?.id;
   const thumbnailsByProjectId = await resolveThumbnailsByProjectId(projects.map((project) => project.id));
   const rows = toBrandProjectRows(orders, projects, locale).map((row) => {
     if (row.kind === "campaign") {
@@ -80,7 +81,7 @@ export default async function BrandHomePage({ searchParams }: { searchParams: Pr
         name={brandName}
         rows={rows}
         orderProjectMap={orderProjectMap}
-        wizardProjectId={wizardProject?.id}
+        resumeWizardProjectId={resumeWizardProjectId}
         activeCampaignCount={activeCampaignCount}
         creationGate={creationGateResult.gate}
         rateLimitCode={creationGateResult.rateLimitCode}

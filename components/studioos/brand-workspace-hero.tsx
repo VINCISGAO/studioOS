@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { BrandStartBriefButton } from "@/components/studioos/brand-start-brief-button";
+import { CheckCircle2, ClipboardList, Hourglass, LayoutGrid } from "lucide-react";
+import { BrandWorkspaceHeroBackdrop, BrandWorkspaceHeroMascot } from "@/components/studioos/brand-workspace/brand-workspace-art";
+import { BrandWorkspaceStatCard } from "@/components/studioos/brand-workspace/brand-workspace-stat-card";
+import { BrandWorkspaceToolbar } from "@/components/studioos/brand-workspace/brand-workspace-toolbar";
 import type { Locale } from "@/lib/i18n";
 import type { BrandNewCampaignGate } from "@/lib/studioos/brand-active-campaign-limit";
-import { CheckCircle2, ClipboardList, LayoutGrid, Pencil, Plus } from "lucide-react";
 
 type DayPart = "morning" | "afternoon" | "evening";
 
@@ -26,33 +28,26 @@ function useLocalDayPart() {
 
 const copy = {
   en: {
-    greeting: (name: string, dayPart: DayPart | null) => {
-      const prefix =
-        dayPart === "morning" ? "Good morning" : dayPart === "afternoon" ? "Good afternoon" : dayPart === "evening" ? "Good evening" : "Hi";
-      return `${prefix}, ${name}`;
+    greetingPrefix: (dayPart: DayPart | null) => {
+      if (dayPart === "morning") return "Good morning";
+      if (dayPart === "afternoon") return "Good afternoon";
+      if (dayPart === "evening") return "Good evening";
+      return "Hi";
     },
-    headline: "What ad do you want to make today?",
-    steps: "Three steps: brief, pick a studio, review and approve.",
-    publish: "Publish ad brief",
-    aiCreate: "AI smart create",
-    report: "AI analysis report",
-    total: "All ads",
+    total: "All ad briefs",
     drafts: "Drafts",
     active: "In progress",
     completed: "Completed",
     month: "vs last month"
   },
   zh: {
-    greeting: (name: string, dayPart: DayPart | null) => {
-      const prefix = dayPart === "morning" ? "早上好" : dayPart === "afternoon" ? "下午好" : dayPart === "evening" ? "晚上好" : "你好";
-      return `${prefix}，${name}`;
+    greetingPrefix: (dayPart: DayPart | null) => {
+      if (dayPart === "morning") return "早上好";
+      if (dayPart === "afternoon") return "下午好";
+      if (dayPart === "evening") return "晚上好";
+      return "你好";
     },
-    headline: "今天想做什么广告？",
-    steps: "三步搞定：说清需求、选制作团队、审片验收。",
-    publish: "发布广告需求",
-    aiCreate: "AI 智能创建",
-    report: "AI 分析报告",
-    total: "全部广告",
+    total: "全部广告需求",
     drafts: "草稿",
     active: "进行中",
     completed: "已完成",
@@ -66,7 +61,6 @@ export function BrandWorkspaceHero({
   total,
   drafts,
   active,
-  wizardProjectId,
   activeCampaignCount = 0,
   creationGate,
   rateLimitCode = null
@@ -76,7 +70,6 @@ export function BrandWorkspaceHero({
   total: number;
   drafts: number;
   active: number;
-  wizardProjectId?: string;
   activeCampaignCount?: number;
   creationGate?: BrandNewCampaignGate;
   rateLimitCode?: "rate_limit_10m" | "rate_limit_24h" | null;
@@ -98,65 +91,86 @@ export function BrandWorkspaceHero({
   }, [locale]);
 
   const stats = [
-    { label: t.total, value: total, icon: LayoutGrid, tone: "text-violet-700 bg-violet-100", delta: "+100%" },
-    { label: t.drafts, value: drafts, icon: ClipboardList, tone: "text-blue-700 bg-blue-100", delta: "--" },
-    { label: t.active, value: active, icon: Pencil, tone: "text-emerald-700 bg-emerald-100", delta: "--" },
-    { label: t.completed, value: completed, icon: CheckCircle2, tone: "text-amber-700 bg-amber-100", delta: "+100%" }
+    {
+      label: t.total,
+      value: total,
+      icon: LayoutGrid,
+      iconTone: "bg-violet-100 text-violet-700",
+      waveTone: "text-violet-500",
+      delta: "100%"
+    },
+    {
+      label: t.drafts,
+      value: drafts,
+      icon: ClipboardList,
+      iconTone: "bg-sky-100 text-sky-700",
+      waveTone: "text-sky-500",
+      delta: "--"
+    },
+    {
+      label: t.active,
+      value: active,
+      icon: Hourglass,
+      iconTone: "bg-emerald-100 text-emerald-700",
+      waveTone: "text-emerald-500",
+      delta: "--"
+    },
+    {
+      label: t.completed,
+      value: completed,
+      icon: CheckCircle2,
+      iconTone: "bg-amber-100 text-amber-700",
+      waveTone: "text-amber-500",
+      delta: "100%"
+    }
   ];
 
-  return (
-    <section className="space-y-6">
-      <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-        <div className="max-w-3xl">
-          <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 sm:text-3xl lg:text-[34px]">
-            {t.greeting(displayName, dayPart)}
-          </h1>
-          <p className="mt-2 text-base text-zinc-500 sm:text-lg">{dateLabel}</p>
-          <p className="mt-5 text-lg font-semibold text-zinc-900">{t.headline}</p>
-          <p className="mt-2 max-w-xl text-sm leading-relaxed text-zinc-500">{t.steps}</p>
-        </div>
+  const greetingPrefix = t.greetingPrefix(dayPart);
 
-        <div className="flex flex-wrap gap-3 sm:justify-end">
-          <BrandStartBriefButton
+  return (
+    <section className="relative overflow-hidden rounded-[24px] border border-violet-100/80 bg-white/40 px-4 py-5 shadow-[0_10px_40px_-28px_rgba(124,58,237,0.45)] sm:px-6 sm:py-6">
+      <BrandWorkspaceHeroBackdrop />
+
+      <div className="relative z-10 space-y-5 pr-0 xl:pr-40 2xl:pr-48">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0">
+            <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 sm:text-[28px] lg:text-[32px]">
+              {locale === "zh" ? (
+                <>
+                  {greetingPrefix}，<span className="text-violet-600">{displayName}</span>
+                </>
+              ) : (
+                <>
+                  {greetingPrefix}, <span className="text-violet-600">{displayName}</span>
+                </>
+              )}
+              <span className="ml-1.5" aria-hidden>
+                👋
+              </span>
+              <span className="ml-1" aria-hidden>
+                ✨
+              </span>
+            </h1>
+            <p className="mt-2 text-sm text-zinc-500 sm:text-base">{dateLabel}</p>
+          </div>
+
+          <BrandWorkspaceToolbar
             locale={locale}
-            projectId={wizardProjectId}
             activeCampaignCount={activeCampaignCount}
             creationGate={creationGate}
             rateLimitCode={rateLimitCode}
-            size="lg"
-            className="inline-flex h-12 items-center gap-3 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 px-6 text-sm font-semibold text-white shadow-[0_14px_28px_rgba(109,40,217,0.22)] hover:from-violet-700 hover:to-indigo-700"
-          >
-            <Plus className="h-5 w-5" />
-            {t.publish}
-          </BrandStartBriefButton>
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+          {stats.map((stat) => (
+            <BrandWorkspaceStatCard key={stat.label} monthLabel={t.month} {...stat} />
+          ))}
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-2.5 sm:gap-4 xl:grid-cols-4">
-        {stats.map((stat) => {
-          const Icon = stat.icon;
-          return (
-            <div
-              key={stat.label}
-              className="rounded-2xl border border-zinc-200/80 bg-white p-3 shadow-sm transition hover:-translate-y-0.5 hover:border-violet-200 hover:shadow-md sm:p-5"
-            >
-              <div className="flex items-start justify-between gap-2 sm:gap-3">
-                <div className="min-w-0">
-                  <p className="truncate text-xs font-medium text-zinc-500 sm:text-sm">{stat.label}</p>
-                  <p className="mt-1 text-2xl font-semibold tabular-nums tracking-tight text-zinc-950 sm:mt-2 sm:text-3xl">
-                    {stat.value}
-                  </p>
-                </div>
-                <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl sm:h-12 sm:w-12 sm:rounded-2xl ${stat.tone}`}>
-                  <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
-                </div>
-              </div>
-              <p className="mt-2 text-[11px] text-zinc-400 sm:mt-4 sm:text-xs">
-                {t.month} <span className={stat.delta.startsWith("+") ? "font-semibold text-emerald-500" : "text-zinc-400"}>{stat.delta}</span>
-              </p>
-            </div>
-          );
-        })}
+      <div className="pointer-events-none absolute bottom-3 right-3 z-10 hidden w-[140px] xl:block 2xl:right-4 2xl:w-[164px]">
+        <BrandWorkspaceHeroMascot className="h-auto w-full object-contain object-bottom drop-shadow-[0_12px_28px_rgba(124,58,237,0.22)]" />
       </div>
     </section>
   );

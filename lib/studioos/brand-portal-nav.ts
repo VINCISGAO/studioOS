@@ -27,21 +27,15 @@ export type BrandPortalNavItem = {
 export const brandPortalNavItems: BrandPortalNavItem[] = [
   {
     href: brandPortalRoutes.dashboard,
-    labelKey: "workspace",
-    icon: LayoutDashboard,
-    mobileIconKey: "layoutDashboard"
+    labelKey: "adRequirements",
+    icon: Megaphone,
+    mobileIconKey: "home"
   },
   {
     href: brandPortalRoutes.brandCenter,
     labelKey: "brandCenter",
     icon: Building2,
     mobileIconKey: "brandCenter"
-  },
-  {
-    href: `${brandPortalRoutes.dashboard}#my-ads`,
-    labelKey: "adRequirements",
-    icon: Megaphone,
-    mobileIconKey: "home"
   },
   {
     href: brandPortalRoutes.reviewHub,

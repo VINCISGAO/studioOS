@@ -27,6 +27,7 @@ import {
   writeAuthLucienChat
 } from "@/lib/lucien/lucien-chat-storage";
 import { resolveCopilotDisplayNameFromUser } from "@/lib/studioos/brand-account-display.shared";
+import { portalPageContextLabel } from "@/lib/studioos/portal-page-context-label";
 import { cn } from "@/lib/utils";
 
 type ChatLine = {
@@ -252,10 +253,23 @@ function WorkspaceReadinessStrip({
 }
 
 function inferPageContext(pathname: string) {
-  const parts = pathname.split("/").filter(Boolean);
+  const path = pathname.split("?")[0] ?? pathname;
+  const parts = path.split("/").filter(Boolean);
+  const reviewIndex = parts.indexOf("review");
+  if (
+    reviewIndex >= 0 &&
+    reviewIndex >= 2 &&
+    (parts[reviewIndex - 2] === "projects" || parts[reviewIndex - 2] === "orders")
+  ) {
+    return {
+      pagePath: pathname,
+      entityType: "review" as const,
+      entityId: parts[reviewIndex - 1] ?? null
+    };
+  }
+
   const projectIndex = parts.indexOf("projects");
   const orderIndex = parts.indexOf("orders");
-  const reviewIndex = parts.indexOf("review");
   const attributionIndex = parts.indexOf("attribution");
   const entityType = projectIndex >= 0
     ? "project"
@@ -285,16 +299,18 @@ function inferPageContext(pathname: string) {
 }
 
 function pageContextLabel(input: { pathname: string; entityType: string | null; locale: UiLocale }) {
-  const { pathname, entityType, locale } = input;
+  const { pathname, locale } = input;
+  const path = pathname.split("?")[0] ?? pathname;
+
+  if (path.startsWith("/brand") || path.startsWith("/studio") || path.startsWith("/creator") || path.startsWith("/admin")) {
+    return portalPageContextLabel(path, locale);
+  }
+
+  const { entityType } = input;
   if (entityType === "review") return locale === "zh" ? "当前：审片中心" : "Current: Review center";
   if (entityType === "project") return locale === "zh" ? "当前：项目页面" : "Current: Project page";
   if (entityType === "order") return locale === "zh" ? "当前：订单页面" : "Current: Order page";
   if (entityType === "attribution") return locale === "zh" ? "当前：归因分析" : "Current: Attribution";
-  if (pathname.startsWith("/studio/messages")) return locale === "zh" ? "当前：消息中心" : "Current: Messages";
-  if (pathname.startsWith("/studio/profile")) return locale === "zh" ? "当前：个人资料" : "Current: Profile";
-  if (pathname.startsWith("/brand")) return locale === "zh" ? "当前：品牌方工作台" : "Current: Brand workspace";
-  if (pathname.startsWith("/studio") || pathname.startsWith("/creator")) return locale === "zh" ? "当前：创作者工作台" : "Current: Creator workspace";
-  if (pathname.startsWith("/admin")) return locale === "zh" ? "当前：管理后台" : "Current: Admin";
   return locale === "zh" ? "当前：VINCIS" : "Current: VINCIS";
 }
 

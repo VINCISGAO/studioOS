@@ -66,7 +66,7 @@ export const brandNav = {
     home: "我的广告",
     campaigns: "我的广告",
     finance: "财务中心",
-    brandAccount: "商家账户",
+    brandAccount: "品牌账户",
     brandCenter: "品牌主页",
     brandLibrary: "品牌主页",
     creators: "创作者",

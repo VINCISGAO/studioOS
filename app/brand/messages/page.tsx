@@ -153,13 +153,13 @@ export default async function BrandMessagesPage({ searchParams }: { searchParams
     <Suspense fallback={<div className="h-40 animate-pulse rounded-2xl bg-zinc-100" />}>
       <div className="space-y-6">
         <header>
-          <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 sm:text-3xl">
+          <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 sm:text-[28px]">
             {locale === "zh" ? "消息中心" : "Messages"}
           </h1>
-          <p className="mt-2 text-sm text-zinc-500">
+          <p className="mt-2 text-sm leading-relaxed text-zinc-500 sm:text-[15px]">
             {locale === "zh"
-              ? "项目动态、创作者消息与付款通知。"
-              : "Project updates, creator messages, and payment alerts."}
+              ? "项目动态、创作者消息与付款通知，一目了然。"
+              : "Project updates, creator messages, and payment alerts at a glance."}
           </p>
         </header>
         <StudioMessageCenter
@@ -168,6 +168,7 @@ export default async function BrandMessagesPage({ searchParams }: { searchParams
           details={payload.details}
           initialSelectedId={initialSelectedId}
           statCards={statCards}
+          variant="brand"
           actions={{
             markRead: markBrandNotificationReadAction,
             markManyRead: markBrandNotificationsReadAction,

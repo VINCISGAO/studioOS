@@ -3,8 +3,11 @@
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { deleteBrandProjectsAction } from "@/app/brand-project-actions";
-import { BrandCampaignListRow } from "@/components/studioos/brand-campaign-list-row";
-import { BrandStartBriefButton } from "@/components/studioos/brand-start-brief-button";
+import { BrandCampaignListEmpty } from "@/components/studioos/brand-campaign-list-empty";
+import {
+  BrandCampaignTableRow,
+  brandCampaignTableHeaders
+} from "@/components/studioos/brand-campaign-table-row";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -37,7 +40,6 @@ import {
   FileText,
   Loader2,
   Minus,
-  Plus,
   Receipt,
   Trash2,
   X
@@ -49,9 +51,6 @@ type Filter = BrandAdLifecycleFilter;
 
 const copy = {
   en: {
-    empty: "No projects yet",
-    emptyBody: "Create your first ad project — AI helps you write the brief in minutes.",
-    publish: "Publish ad brief",
     emptyFiltered: "No projects match this filter.",
     delete: "Delete",
     deleteTitle: (count: number) => `Delete ${count} item${count === 1 ? "" : "s"}?`,
@@ -78,9 +77,6 @@ const copy = {
     deleteListTitle: "Items to delete"
   },
   zh: {
-    empty: "还没有广告项目",
-    emptyBody: "发布第一个广告需求，AI 帮你在几分钟内整理好说明。",
-    publish: "发布广告需求",
     emptyFiltered: "当前筛选下没有项目。",
     delete: "删除",
     deleteTitle: (count: number) => `确认删除 ${count} 项？`,
@@ -211,19 +207,23 @@ export function BrandCampaignList({
   rows,
   onRowsChange,
   orderProjectMap,
-  wizardProjectId,
+  resumeWizardProjectId,
   activeCampaignCount = 0,
   creationGate,
-  rateLimitCode = null
+  rateLimitCode = null,
+  sectionTitle,
+  sectionHint
 }: {
   locale: Locale;
   rows: BrandProjectRow[];
   onRowsChange?: (rows: BrandProjectRow[]) => void;
   orderProjectMap: Record<string, string | null | undefined>;
-  wizardProjectId?: string;
+  resumeWizardProjectId?: string;
   activeCampaignCount?: number;
   creationGate?: BrandNewCampaignGate;
   rateLimitCode?: "rate_limit_10m" | "rate_limit_24h" | null;
+  sectionTitle?: string;
+  sectionHint?: string;
 }) {
   const router = useRouter();
   const t = copy[locale];
@@ -382,6 +382,7 @@ export function BrandCampaignList({
     label: lifecycleLabels[id],
     count: lifecycleCounts[id]
   }));
+  const tableHeaders = brandCampaignTableHeaders[locale];
 
   return (
     <div className="space-y-4">
@@ -392,7 +393,40 @@ export function BrandCampaignList({
         </div>
       ) : null}
 
-      <div className="overflow-hidden rounded-2xl border border-zinc-200/90 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-2xl border border-zinc-200/70 bg-white shadow-sm">
+        {sectionTitle ? (
+          <div className="border-b border-zinc-100 px-4 py-4 sm:px-6 sm:py-5">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div className="min-w-0">
+                <h2 className="text-lg font-semibold tracking-tight text-zinc-950 sm:text-xl">{sectionTitle}</h2>
+                {sectionHint ? <p className="mt-1 text-sm text-zinc-500">{sectionHint}</p> : null}
+              </div>
+              {!selectionActive ? (
+                <div className="-mx-1 flex max-w-full gap-2 overflow-x-auto px-1 pb-1 lg:max-w-[62%] lg:justify-end lg:overflow-visible lg:pb-0">
+                  {filters.map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setFilter(item.id)}
+                      className={cn(
+                        "inline-flex shrink-0 items-center rounded-full px-3 py-1.5 text-sm font-medium transition",
+                        filter === item.id
+                          ? "bg-zinc-900 text-white shadow-sm"
+                          : "bg-zinc-50 text-zinc-600 ring-1 ring-zinc-200/80 hover:bg-white hover:text-zinc-900"
+                      )}
+                    >
+                      {item.label}
+                      <span className={cn("ml-1.5 tabular-nums", filter === item.id ? "text-white/85" : "text-zinc-400")}>
+                        {item.count}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
+
         {selectionActive ? (
           <div className="flex flex-wrap items-center gap-3 border-b border-zinc-200 bg-zinc-50 px-4 py-3 sm:px-5">
             <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-zinc-900">
@@ -427,114 +461,80 @@ export function BrandCampaignList({
               {t.clearSelection}
             </Button>
           </div>
-        ) : (
-          <div className="flex flex-col gap-3 border-b border-zinc-100 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
-            {selectableInView.length > 0 ? (
-              <label className="flex shrink-0 cursor-pointer items-center gap-2 text-sm text-zinc-600">
-                <SelectCheckbox
-                  checked={allSelectableChecked}
-                  indeterminate={someSelectableChecked && !allSelectableChecked}
-                  onChange={toggleSelectAll}
-                />
-                <span className="hidden sm:inline">{t.selectAll}</span>
-              </label>
-            ) : (
-              <div className="hidden sm:block" />
-            )}
-            <div className="flex max-w-full flex-wrap gap-2 sm:justify-end">
-              {filters.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => setFilter(item.id)}
-                  className={cn(
-                    "inline-flex shrink-0 items-center rounded-full px-3 py-1.5 text-sm font-medium transition",
-                    filter === item.id
-                      ? "bg-zinc-900 text-white"
-                      : "bg-white text-zinc-600 ring-1 ring-zinc-200 hover:text-zinc-900"
-                  )}
-                >
-                  {item.label}
-                  <span className={cn("ml-1.5 tabular-nums", filter === item.id ? "text-white/80" : "text-zinc-400")}>
-                    {item.count}
-                  </span>
-                </button>
-              ))}
-            </div>
+        ) : selectableInView.length > 0 ? (
+          <div className="flex flex-wrap items-center gap-3 border-b border-zinc-100 px-4 py-3 sm:px-5">
+            <label className="flex shrink-0 cursor-pointer items-center gap-2 text-sm text-zinc-600">
+              <SelectCheckbox
+                checked={allSelectableChecked}
+                indeterminate={someSelectableChecked && !allSelectableChecked}
+                onChange={toggleSelectAll}
+              />
+              <span className="hidden sm:inline">{t.selectAll}</span>
+            </label>
           </div>
-        )}
+        ) : null}
 
         {!filtered.length ? (
-          <div className="flex flex-col items-center gap-4 px-6 py-16 text-center">
-            <p className="text-sm text-zinc-500">{rows.length ? t.emptyFiltered : t.emptyBody}</p>
-            {!rows.length ? (
-              <BrandStartBriefButton
-                locale={locale}
-                projectId={wizardProjectId}
-                activeCampaignCount={activeCampaignCount}
-                creationGate={creationGate}
-                rateLimitCode={rateLimitCode}
-                className="inline-flex h-10 items-center gap-2 rounded-full bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800"
-              >
-                <Plus className="h-4 w-4" />
-                {t.publish}
-              </BrandStartBriefButton>
-            ) : null}
-          </div>
+          <BrandCampaignListEmpty
+            locale={locale}
+            hasRows={rows.length > 0}
+            resumeWizardProjectId={resumeWizardProjectId}
+            activeCampaignCount={activeCampaignCount}
+            creationGate={creationGate}
+            rateLimitCode={rateLimitCode}
+          />
         ) : (
-          <ul className="divide-y divide-zinc-100">
-            {pageItems.map((row) => {
-              const key = rowKey(row);
-              const checked = selected.has(key);
-              const selectable = isSelectable(row);
-              const href = resolveHref(row, orderProjectMap);
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[640px] border-collapse text-left">
+              <thead>
+                <tr className="border-b border-zinc-100 bg-zinc-50/80 text-xs font-medium text-zinc-500">
+                  <th className="w-10 px-3 py-3 sm:px-4" scope="col">
+                    <span className="sr-only">{t.selectAll}</span>
+                  </th>
+                  <th className="px-3 py-3 sm:px-4" scope="col">
+                    {tableHeaders.name}
+                  </th>
+                  <th className="hidden px-3 py-3 sm:table-cell sm:px-4" scope="col">
+                    {tableHeaders.status}
+                  </th>
+                  <th className="hidden px-3 py-3 md:table-cell md:px-4" scope="col">
+                    {tableHeaders.budget}
+                  </th>
+                  <th className="hidden px-3 py-3 lg:table-cell lg:px-4" scope="col">
+                    {tableHeaders.team}
+                  </th>
+                  <th className="hidden px-3 py-3 sm:table-cell sm:px-4" scope="col">
+                    {tableHeaders.updated}
+                  </th>
+                  <th className="px-3 py-3 text-right sm:px-4" scope="col">
+                    {tableHeaders.action}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {pageItems.map((row) => {
+                  const key = rowKey(row);
+                  const checked = selected.has(key);
+                  const selectable = isSelectable(row);
+                  const href = resolveHref(row, orderProjectMap);
 
-              return (
-                <li
-                  key={key}
-                  className={cn("group transition", checked ? "bg-zinc-50" : "hover:bg-zinc-50/60")}
-                >
-                  <div className="flex items-stretch gap-2 sm:gap-3">
-                    <div className="flex w-10 shrink-0 items-center justify-center pl-3 sm:w-11 sm:pl-4">
-                      {selectable ? (
-                        <SelectCheckbox checked={checked} onChange={() => toggleRow(row)} />
-                      ) : (
-                        <span
-                          className="flex h-4 w-4 shrink-0 items-center justify-center rounded border border-zinc-200 bg-zinc-50"
-                          title={t.lockedHint}
-                          aria-hidden
-                        />
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <BrandCampaignListRow
-                        locale={locale}
-                        row={row}
-                        href={href}
-                        openLabel={t.open}
-                        actionSlot={
-                          selectable ? (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              className="h-9 shrink-0 rounded-xl border-red-200 bg-red-50 px-3 text-red-600 hover:border-red-300 hover:bg-red-100 hover:text-red-700"
-                              disabled={isPending}
-                              onClick={() => openSingleDelete(row)}
-                              aria-label={t.delete}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                              {t.delete}
-                            </Button>
-                          ) : null
-                        }
-                      />
-                    </div>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
+                  return (
+                    <BrandCampaignTableRow
+                      key={key}
+                      locale={locale}
+                      row={row}
+                      href={href}
+                      checked={checked}
+                      selectable={selectable}
+                      onToggle={() => toggleRow(row)}
+                      onDelete={() => openSingleDelete(row)}
+                      isPending={isPending}
+                    />
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
 
         {filtered.length > 0 ? (

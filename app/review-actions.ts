@@ -984,7 +984,7 @@ export async function unlockPaidRevisionSlotAction(formData: FormData) {
         ok: false as const,
         error:
           lang === "zh"
-            ? "商家账户余额不足，已拉起加购付款账单"
+            ? "品牌账户余额不足，已拉起加购付款账单"
             : "Brand account balance is insufficient. Add-on invoice opened.",
         paymentRequired: true as const,
         invoiceId: result.invoiceId,

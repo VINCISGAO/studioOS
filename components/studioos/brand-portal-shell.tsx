@@ -1,12 +1,11 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { BrandPortalHeader } from "@/components/studioos/brand-portal-header";
 import { BrandPortalSidebar } from "@/components/studioos/brand-portal-sidebar";
 import { PortalContentColumn } from "@/components/studioos/portal/portal-content-column";
 import { PortalViewportShell } from "@/components/studioos/portal/portal-viewport-shell";
-import { scrollToBrandMyAds, isBrandDashboardPath } from "@/lib/studioos/brand-my-ads-scroll";
 import { buildAvatarInitials } from "@/lib/studioos/avatar-initials";
 import { readBrandWizardStepFromLocation } from "@/lib/studioos/instant-nav";
 import {
@@ -77,8 +76,6 @@ function BrandPortalShellInner({
   children: React.ReactNode;
 }) {
   const pathname = usePathname() ?? pathnameProp ?? "/brand";
-  const router = useRouter();
-  const [locationHash, setLocationHash] = useState("");
   const { isFocusMode: isReviewFocusMode } = usePortalReviewFocus();
   const nav = brandNav[locale];
   const initials = buildAvatarInitials(brandAccount?.name, "BR");
@@ -105,13 +102,6 @@ function BrandPortalShellInner({
   };
 
   useEffect(() => {
-    const syncHash = () => setLocationHash(window.location.hash);
-    syncHash();
-    window.addEventListener("hashchange", syncHash);
-    return () => window.removeEventListener("hashchange", syncHash);
-  }, [pathname]);
-
-  useEffect(() => {
     if (!isWizardCreate) return;
     const syncStep = () => setBrandWizardStep(readBrandWizardStepFromLocation());
     syncStep();
@@ -123,27 +113,13 @@ function BrandPortalShellInner({
     };
   }, [isWizardCreate, pathname]);
 
-  const navigateToMyAds = useCallback(() => {
-    const hashUrl = `${withLocale(brandPortalRoutes.dashboard, locale)}#my-ads`;
-    if (isBrandDashboardPath(pathname)) {
-      window.history.replaceState(window.history.state, "", hashUrl);
-      setLocationHash("#my-ads");
-      scrollToBrandMyAds({ behavior: "auto", force: true });
-      return;
-    }
-    router.push(hashUrl, { scroll: false });
-  }, [locale, pathname, router]);
-
   function isActive(item: BrandPortalNavItem) {
-    if (item.labelKey === "workspace") {
-      return pathname === brandPortalRoutes.dashboard && locationHash !== "#my-ads";
-    }
     if (item.labelKey === "adRequirements") {
       return (
         isWizardCreate ||
         pathname === brandPortalRoutes.campaigns ||
         pathname.startsWith("/brand/campaigns/") ||
-        (pathname === brandPortalRoutes.dashboard && locationHash === "#my-ads")
+        pathname === brandPortalRoutes.dashboard
       );
     }
     if (item.labelKey === "team") {
@@ -214,7 +190,6 @@ function BrandPortalShellInner({
             initials={initials}
             avatarUrl={avatarUrl}
             isActive={isActive}
-            onMyAdsClick={navigateToMyAds}
           />
 
           <PortalContentColumn>
@@ -222,13 +197,12 @@ function BrandPortalShellInner({
               <BrandPortalHeader
                 locale={locale}
                 pathname={pathname}
-                locationHash={locationHash}
                 navLabels={nav}
                 initials={initials}
                 avatarUrl={avatarUrl}
                 brandName={brandAccount?.name}
                 unreadMessageCount={unreadMessageCount}
-                onMyAdsClick={navigateToMyAds}
+                isNavItemActive={isActive}
               />
             ) : null}
 

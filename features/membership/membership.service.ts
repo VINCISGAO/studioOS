@@ -288,7 +288,71 @@ export class MembershipService {
     };
   }
 
+  /** Platform defaults — auto-bootstrap after DB purge or fresh deploy. */
+  async ensureMembershipConfigReady() {
+    this.assertDb();
+
+    const defaultBenefits = [
+      "Receive and complete orders",
+      "Normal ranking",
+      "Normal payout speed",
+      "Standard support"
+    ];
+    const verifiedBenefits = [
+      "Verified badge",
+      "Priority ranking",
+      "Priority project invitations",
+      "Faster payout",
+      "AI assistant access",
+      "AI translation access",
+      "AI contract access",
+      "Analytics dashboard",
+      "Priority support"
+    ];
+
+    if (!(await membershipRepository.getPlanByType("DEFAULT"))) {
+      await membershipRepository.upsertPlan("default-creator", {
+        slug: "default-creator",
+        name: "Default Creator",
+        planType: "DEFAULT",
+        annualFee: 0,
+        creatorCommissionPercentage: 20,
+        membershipDurationDays: 365,
+        benefitsJson: defaultBenefits,
+        isActive: true,
+        sortOrder: 0
+      });
+    }
+
+    if (!(await membershipRepository.getPlanByType("VERIFIED"))) {
+      await membershipRepository.upsertPlan("verified-creator", {
+        slug: "verified-creator",
+        name: "Verified Creator",
+        planType: "VERIFIED",
+        annualFee: 199,
+        creatorCommissionPercentage: 10,
+        membershipDurationDays: 365,
+        benefitsJson: verifiedBenefits,
+        isActive: true,
+        sortOrder: 1
+      });
+    }
+
+    if (!(await membershipRepository.getActiveCommissionRule())) {
+      await membershipRepository.createCommissionRule({
+        name: "default",
+        clientServiceFeePercentage: 10,
+        defaultCreatorCommissionPercentage: 20,
+        verifiedCreatorCommissionPercentage: 10,
+        upgradeRevenueThreshold: 300,
+        upgradeModalEnabled: true,
+        clientServiceFeeEnabled: true
+      });
+    }
+  }
+
   async ensureDefaultMembershipOnCreatorRegister(creatorId: string, creatorProfileId?: string) {
+    await this.ensureMembershipConfigReady();
     const defaultPlan = await this.requireDefaultPlan();
     await membershipRepository.getOrCreateEarnings(creatorId);
     await membershipRepository.appendHistory({

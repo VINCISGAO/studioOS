@@ -5,30 +5,28 @@ import { MarketingHomeLink } from "@/components/studioos/marketing-home-link";
 import { NotificationCenterBell } from "@/components/studioos/notification-center-bell";
 import { PortalMobileNav } from "@/components/studioos/portal-mobile-nav";
 import { StudioUserMenu } from "@/components/studioos/studio-user-menu";
-import { brandPortalNavItems } from "@/lib/studioos/brand-portal-nav";
+import { brandPortalNavItems, type BrandPortalNavItem } from "@/lib/studioos/brand-portal-nav";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
 import type { Locale } from "@/lib/i18n";
 
 export function BrandPortalHeader({
   locale,
   pathname,
-  locationHash,
   navLabels,
   initials,
   avatarUrl,
   brandName,
   unreadMessageCount,
-  onMyAdsClick
+  isNavItemActive
 }: {
   locale: Locale;
   pathname: string;
-  locationHash: string;
   navLabels: Record<string, string>;
   initials: string;
   avatarUrl?: string;
   brandName?: string;
   unreadMessageCount: number;
-  onMyAdsClick: () => void;
+  isNavItemActive: (item: BrandPortalNavItem) => boolean;
 }) {
   return (
     <header
@@ -66,18 +64,12 @@ export function BrandPortalHeader({
           pathname={pathname}
           items={brandPortalNavItems
             .filter((item) => !item.disabled)
-            .map(({ href, labelKey, mobileIconKey }) => ({
-              id: labelKey,
-              href,
-              label: navLabels[labelKey],
-              iconKey: mobileIconKey,
-              onClick: labelKey === "adRequirements" ? onMyAdsClick : undefined,
-              active:
-                labelKey === "workspace"
-                  ? pathname === brandPortalRoutes.dashboard && locationHash !== "#my-ads"
-                  : labelKey === "adRequirements"
-                    ? pathname === brandPortalRoutes.dashboard && locationHash === "#my-ads"
-                    : undefined
+            .map((item) => ({
+              id: item.labelKey,
+              href: item.href,
+              label: navLabels[item.labelKey],
+              iconKey: item.mobileIconKey,
+              active: isNavItemActive(item)
             }))}
         />
       </div>

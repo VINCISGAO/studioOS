@@ -10,6 +10,7 @@ import {
 import { StudioMessageDetailPanel } from "@/components/studioos/studio-message-detail-panel";
 import { StudioMessageListPanel } from "@/components/studioos/studio-message-list-panel";
 import { StudioMessagesStatCards } from "@/components/studioos/studio-messages-stat-cards";
+import { BrandMessageStatCards } from "@/components/studioos/brand-messages/brand-message-stat-cards";
 import type {
   MessageCategory,
   MessageDetailPayload,
@@ -57,7 +58,8 @@ export function StudioMessageCenter({
   details,
   initialSelectedId = null,
   actions = defaultActions,
-  statCards: statCardsOverride
+  statCards: statCardsOverride,
+  variant = "default"
 }: {
   locale: Locale;
   list: MessageListItem[];
@@ -65,6 +67,7 @@ export function StudioMessageCenter({
   initialSelectedId?: string | null;
   actions?: MessageCenterActions;
   statCards?: MessageStatCard[];
+  variant?: "default" | "brand";
 }) {
   const t = copy[locale];
   const router = useRouter();
@@ -74,7 +77,7 @@ export function StudioMessageCenter({
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [page, setPage] = useState(1);
   const [selectedId, setSelectedId] = useState<string | null>(
-    initialSelectedId ?? list[0]?.id ?? null
+    variant === "brand" ? initialSelectedId : (initialSelectedId ?? list[0]?.id ?? null)
   );
   const [readOverrides, setReadOverrides] = useState<Record<string, string>>({});
   const [hiddenIds, setHiddenIds] = useState<string[]>([]);
@@ -126,9 +129,9 @@ export function StudioMessageCenter({
 
   useEffect(() => {
     if (selectedId && !effectiveList.some((item) => item.id === selectedId)) {
-      setSelectedId(effectiveList[0]?.id ?? null);
+      setSelectedId(variant === "brand" ? null : effectiveList[0]?.id ?? null);
     }
-  }, [effectiveList, selectedId]);
+  }, [effectiveList, selectedId, variant]);
 
   function markReadLocally(id: string) {
     setReadOverrides((current) => ({
@@ -221,13 +224,21 @@ export function StudioMessageCenter({
 
   return (
     <div className="space-y-5">
-      <StudioMessagesStatCards
-        cards={statCards}
-        activeCategory={categoryFilter}
-        onCategoryChange={setCategoryFilter}
-      />
+      {variant === "brand" ? (
+        <BrandMessageStatCards
+          cards={statCards}
+          activeCategory={categoryFilter}
+          onCategoryChange={setCategoryFilter}
+        />
+      ) : (
+        <StudioMessagesStatCards
+          cards={statCards}
+          activeCategory={categoryFilter}
+          onCategoryChange={setCategoryFilter}
+        />
+      )}
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,420px)_minmax(0,1fr)] xl:items-start">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,38%)_minmax(0,1fr)] lg:items-stretch xl:gap-5">
         <StudioMessageListPanel
           locale={locale}
           items={pageItems}
@@ -239,6 +250,7 @@ export function StudioMessageCenter({
           page={safePage}
           totalPages={totalPages}
           isPending={isPending}
+          variant={variant}
           onTabChange={setTab}
           onSelect={selectMessage}
           onToggleSelect={toggleSelectId}
@@ -247,7 +259,7 @@ export function StudioMessageCenter({
           onDeleteSelected={deleteSelected}
           onPageChange={setPage}
         />
-        <StudioMessageDetailPanel locale={locale} detail={selected} />
+        <StudioMessageDetailPanel locale={locale} detail={selected} variant={variant} />
       </div>
     </div>
   );

@@ -22,7 +22,7 @@ export default async function BrandFinancePage({ searchParams }: { searchParams:
           title: locale === "zh" ? "账户余额" : "Account balance",
           description:
             locale === "zh"
-              ? "查看商家账户余额，充值后可直接支付加购服务费。"
+              ? "查看品牌账户余额，充值后可直接支付加购服务费。"
               : "View and top up your brand account balance for add-on fees.",
           icon: Wallet
         },

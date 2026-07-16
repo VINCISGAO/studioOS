@@ -6,29 +6,30 @@ import {
 } from "@/components/studioos/commercial-project-overview-stepper";
 import type { Locale } from "@/lib/i18n";
 import {
-  creatorUserPhaseLabels,
-  mapCreatorStepToPhase,
-  userCommercialPhaseIndex,
-  userCommercialPhases,
+  creatorUserCommercialPhaseLabels,
+  creatorUserCommercialPhaseIndex,
+  creatorUserCommercialPhases,
+  mapCreatorStepToUserPhase,
   type CreatorCommercialContext,
-  type CreatorCommercialStep
+  type CreatorCommercialStep,
+  type CreatorUserCommercialPhase
 } from "@/lib/studioos/commercial-lifecycle";
 
-function phaseSubtitle(locale: Locale, phase: string, step: CreatorCommercialStep): string {
-  if (phase === "in_production") {
+function phaseSubtitle(locale: Locale, phase: CreatorUserCommercialPhase, step: CreatorCommercialStep): string {
+  if (phase === "project_start") {
     return locale === "zh" ? "创作进行中" : "Creation in progress";
   }
-  if (phase === "completed") {
+  if (phase === "final_delivery") {
     return locale === "zh" ? "待最终交付" : "Awaiting final delivery";
   }
   if (step === "matching_order" || step === "waiting_brand_selection") {
     return locale === "zh" ? "等待品牌选择" : "Awaiting brand selection";
   }
   const dates = {
-    publish_requirement: locale === "zh" ? "需求已发布" : "Requirements posted",
-    recruiting: locale === "zh" ? "邀请已发出" : "Invitations sent"
+    invitation: locale === "zh" ? "邀请已收到" : "Invitation received",
+    cooperation: locale === "zh" ? "双方确认中" : "Confirming partnership"
   };
-  return dates[phase as keyof typeof dates] ?? "";
+  return dates[phase] ?? "";
 }
 
 export function CreatorProjectOverviewStepper({
@@ -44,9 +45,9 @@ export function CreatorProjectOverviewStepper({
   createdAt?: string | null;
   selectedAt?: string | null;
 }) {
-  const currentPhase = mapCreatorStepToPhase(creatorCommercialStep, commercialContext);
-  const currentIndex = userCommercialPhaseIndex(currentPhase);
-  const labels = creatorUserPhaseLabels[locale];
+  const currentPhase = mapCreatorStepToUserPhase(creatorCommercialStep, commercialContext);
+  const currentIndex = creatorUserCommercialPhaseIndex(currentPhase);
+  const labels = creatorUserCommercialPhaseLabels[locale];
 
   const stepDates = [
     createdAt?.split("T")[0] ?? "",
@@ -55,7 +56,7 @@ export function CreatorProjectOverviewStepper({
     ""
   ];
 
-  const steps: CommercialOverviewStep[] = userCommercialPhases.map((phase, index) => ({
+  const steps: CommercialOverviewStep[] = creatorUserCommercialPhases.map((phase, index) => ({
     label: labels[phase],
     subtitle: stepDates[index] || phaseSubtitle(locale, phase, creatorCommercialStep)
   }));

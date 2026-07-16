@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { BrandCampaignWizard } from "@/components/studioos/brand-campaign-wizard";
 import { resolveBrandBriefClientEmail } from "@/features/auth/session-context";
 import { type SearchParams, withLocale } from "@/lib/i18n";
-import { getOrCreateEphemeralWizardProject } from "@/lib/brand-start-brief";
+import { createFreshEphemeralWizardProject } from "@/lib/brand-start-brief";
 import {
   assertBrandCampaignCreationAllowed
 } from "@/lib/studioos/brand-active-campaign.server";
@@ -70,13 +70,13 @@ export default async function NewProjectPage({
   }
 
   if (!projectId) {
-    const project = await getOrCreateEphemeralWizardProject(clientEmail);
+    const project = await createFreshEphemeralWizardProject(clientEmail);
     redirect(withLocale(`/brand/projects/new?project=${project.id}&step=1`, locale));
   }
 
   const project = await getProject(projectId);
   if (!project) {
-    const fallbackProject = await getOrCreateEphemeralWizardProject(clientEmail);
+    const fallbackProject = await createFreshEphemeralWizardProject(clientEmail);
     redirect(withLocale(`/brand/projects/new?project=${fallbackProject.id}&step=1`, locale));
   }
   if (project.client_email !== clientEmail.toLowerCase()) {

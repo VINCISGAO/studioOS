@@ -3,7 +3,7 @@
 import type { MessageListItem } from "@/components/studioos/studio-message-center.types";
 import type { Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
-import { ChevronLeft, ChevronRight, Filter, Shield, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Filter, MessageSquare, Shield, Trash2 } from "lucide-react";
 
 type FilterTab = "all" | "unread" | "read";
 
@@ -14,12 +14,14 @@ const copy = {
   zh: {
     selectAll: "全选",
     markRead: "标记已读",
-    deleteSelected: "删除选中",
+    deleteSelected: "删除",
     all: "全部",
     unread: "未读",
     read: "已读",
     filter: "筛选",
     empty: "暂无消息。",
+    emptyTitle: "暂无消息",
+    emptyBody: "当有新消息时，你将在这里看到。",
     totalPages: (n: number) => `共 ${n} 页`
   },
   en: {
@@ -31,6 +33,8 @@ const copy = {
     read: "Read",
     filter: "Filter",
     empty: "No messages yet.",
+    emptyTitle: "No messages yet",
+    emptyBody: "When you receive new messages, they will appear here.",
     totalPages: (n: number) => `${n} pages`
   }
 } as const;
@@ -46,6 +50,7 @@ export function StudioMessageListPanel({
   page,
   totalPages,
   isPending,
+  variant = "default",
   onTabChange,
   onSelect,
   onToggleSelect,
@@ -64,6 +69,7 @@ export function StudioMessageListPanel({
   page: number;
   totalPages: number;
   isPending: boolean;
+  variant?: "default" | "brand";
   onTabChange: (tab: FilterTab) => void;
   onSelect: (item: MessageListItem) => void;
   onToggleSelect: (id: string) => void;
@@ -76,7 +82,12 @@ export function StudioMessageListPanel({
   const allVisibleSelected = items.length > 0 && items.every((item) => selectedIds.includes(item.id));
 
   return (
-    <section className="overflow-hidden rounded-[20px] border border-zinc-200/80 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+    <section
+      className={cn(
+        "flex h-full min-h-[520px] flex-col overflow-hidden rounded-2xl border border-zinc-200/70 bg-white shadow-sm",
+        variant === "brand" && "lg:min-h-[560px]"
+      )}
+    >
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-100 px-4 py-3">
         <label className="inline-flex items-center gap-2 text-sm text-zinc-600">
           <input
@@ -145,7 +156,7 @@ export function StudioMessageListPanel({
         </button>
       </div>
 
-      <ul className="max-h-[560px] divide-y divide-zinc-100 overflow-y-auto">
+      <ul className="max-h-[560px] flex-1 divide-y divide-zinc-100 overflow-y-auto lg:max-h-none">
         {items.length ? (
           items.map((item) => {
             const active = item.id === selectedId;
@@ -203,7 +214,19 @@ export function StudioMessageListPanel({
             );
           })
         ) : (
-          <li className="px-6 py-16 text-center text-sm text-zinc-500">{t.empty}</li>
+          <li className="flex flex-1 flex-col items-center justify-center px-6 py-14 text-center">
+            {variant === "brand" ? (
+              <>
+                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-100 text-zinc-400">
+                  <MessageSquare className="h-6 w-6" />
+                </span>
+                <p className="mt-4 text-sm font-medium text-zinc-700">{t.emptyTitle}</p>
+                <p className="mt-1.5 text-sm text-zinc-500">{t.emptyBody}</p>
+              </>
+            ) : (
+              <span className="text-sm text-zinc-500">{t.empty}</span>
+            )}
+          </li>
         )}
       </ul>
 

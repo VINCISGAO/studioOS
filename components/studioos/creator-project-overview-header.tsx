@@ -5,9 +5,9 @@ import { Button } from "@/components/ui/button";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import {
-  creatorUserPhaseLabel,
-  mapCreatorStepToPhase,
-  userCommercialPhaseIndex,
+  creatorUserCommercialPhaseIndex,
+  creatorUserCommercialPhaseLabel,
+  mapCreatorStepToUserPhase,
   type CreatorCommercialContext,
   type CreatorCommercialStep
 } from "@/lib/studioos/commercial-lifecycle";
@@ -51,8 +51,8 @@ function formatDate(raw?: string | null) {
 }
 
 function progressPercent(step: CreatorCommercialStep, context: CreatorCommercialContext) {
-  const phase = mapCreatorStepToPhase(step, context);
-  const index = userCommercialPhaseIndex(phase);
+  const phase = mapCreatorStepToUserPhase(step, context);
+  const index = creatorUserCommercialPhaseIndex(phase);
   return Math.min(100, Math.round(((index + 1) / 4) * 100));
 }
 
@@ -82,7 +82,10 @@ export function CreatorProjectOverviewHeader({
 }) {
   const t = copy[locale];
   const title = project?.title || order.title || "Campaign";
-  const stageLabel = creatorUserPhaseLabel(mapCreatorStepToPhase(creatorCommercialStep, commercialContext), locale);
+  const stageLabel = creatorUserCommercialPhaseLabel(
+    mapCreatorStepToUserPhase(creatorCommercialStep, commercialContext),
+    locale
+  );
   const percent = progressPercent(creatorCommercialStep, commercialContext);
   const formId = (project?.id ?? order.id).replace(/[^a-zA-Z0-9]/g, "").slice(-10).toUpperCase();
   const duration =

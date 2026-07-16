@@ -12,14 +12,12 @@ import { withLocale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { LayoutDashboard } from "lucide-react";
 
-function sidebarLinkClass(active: boolean, workspaceActive = false) {
+function sidebarLinkClass(active: boolean) {
   return cn(
     "relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition",
-    workspaceActive
-      ? "bg-violet-50 text-violet-700 shadow-[inset_0_0_0_1px_rgba(139,92,246,0.1)]"
-      : active
-        ? "bg-zinc-100/80 text-zinc-900"
-        : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900"
+    active
+      ? "bg-zinc-100/80 text-zinc-900"
+      : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900"
   );
 }
 
@@ -30,8 +28,7 @@ export function BrandPortalSidebar({
   brandAccount,
   initials,
   avatarUrl,
-  isActive,
-  onMyAdsClick
+  isActive
 }: {
   locale: Locale;
   navLabels: Record<string, string>;
@@ -40,7 +37,6 @@ export function BrandPortalSidebar({
   initials: string;
   avatarUrl?: string;
   isActive: (item: BrandPortalNavItem) => boolean;
-  onMyAdsClick: () => void;
 }) {
   return (
     <PortalSidebarFrame
@@ -61,7 +57,6 @@ export function BrandPortalSidebar({
         <div className="space-y-0.5 px-3 pb-3">
           {brandPortalNavItems.map((item) => {
             const active = isActive(item);
-            const workspaceActive = item.labelKey === "workspace" && active;
             const Icon = item.icon ?? LayoutDashboard;
             if (item.disabled) {
               return (
@@ -76,31 +71,13 @@ export function BrandPortalSidebar({
                 </div>
               );
             }
-            if (item.labelKey === "adRequirements") {
-              return (
-                <button
-                  key={item.href + item.labelKey}
-                  type="button"
-                  onClick={(event) => {
-                    event.preventDefault();
-                    onMyAdsClick();
-                  }}
-                  className={sidebarLinkClass(active, false)}
-                >
-                  <Icon className="h-[18px] w-[18px] shrink-0" />
-                  <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
-                    <span>{navLabels[item.labelKey]}</span>
-                  </span>
-                </button>
-              );
-            }
             return (
               <Link
                 key={item.href + item.labelKey}
                 href={withLocale(item.href, locale)}
-                className={sidebarLinkClass(active, workspaceActive)}
+                className={sidebarLinkClass(active)}
               >
-                <Icon className={cn("h-[18px] w-[18px] shrink-0", workspaceActive && "text-violet-700")} />
+                <Icon className="h-[18px] w-[18px] shrink-0" />
                 <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
                   <span>{navLabels[item.labelKey]}</span>
                   {item.labelKey === "messages" && unreadMessageCount > 0 ? (
