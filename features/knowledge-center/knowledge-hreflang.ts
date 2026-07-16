@@ -1,5 +1,7 @@
 import {
   buildKnowledgeArticlePath,
+  buildKnowledgeCategoryPath,
+  buildKnowledgeIndexPath,
   KNOWLEDGE_LANGUAGE_OPTIONS,
   knowledgeHreflangForCode,
   knowledgePathPrefixForCode
@@ -43,4 +45,20 @@ export function knowledgeAlternatesToMetadataLanguages(alternates: KnowledgeHref
     languages["x-default"] = defaultUrl;
   }
   return languages;
+}
+
+export function buildKnowledgeIndexAlternates(): KnowledgeHreflangAlternate[] {
+  return KNOWLEDGE_LANGUAGE_OPTIONS.map((lang) => ({
+    languageCode: lang.code,
+    hreflang: knowledgeHreflangForCode(lang.code),
+    url: `${ORIGIN}${buildKnowledgeIndexPath(lang.pathPrefix)}`
+  }));
+}
+
+export function buildKnowledgeCategoryAlternates(categorySlug: string): KnowledgeHreflangAlternate[] {
+  return KNOWLEDGE_LANGUAGE_OPTIONS.map((lang) => ({
+    languageCode: lang.code,
+    hreflang: knowledgeHreflangForCode(lang.code),
+    url: `${ORIGIN}${buildKnowledgeCategoryPath(lang.pathPrefix, categorySlug)}`
+  }));
 }

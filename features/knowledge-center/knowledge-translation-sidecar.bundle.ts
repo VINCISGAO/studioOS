@@ -7,6 +7,7 @@ import {
   buildKnowledgeJsonLd,
   computeKnowledgeSeoScores,
   estimateReadingTimeMinutes,
+  knowledgeExcerptFromBody,
   type KnowledgeSeoScores
 } from "@/features/knowledge-center/knowledge-seo.heuristics";
 
@@ -55,9 +56,13 @@ export function buildKnowledgeTranslationSidecarBundle(input: {
   const pathPrefix = knowledgePathPrefixForCode(t.language_code);
   const canonical =
     t.seo?.canonical_url?.trim() || `${ORIGIN}${buildKnowledgeArticlePath(pathPrefix, input.slug)}`;
+  const metaDescription =
+    t.seo?.meta_description?.trim() ||
+    t.excerpt?.trim() ||
+    knowledgeExcerptFromBody(bodyForScores);
   const jsonLd = buildKnowledgeJsonLd({
     title: t.title,
-    description: t.seo?.meta_description?.trim() || t.excerpt?.trim() || "",
+    description: metaDescription,
     url: canonical,
     authorName: input.payload.author_name?.trim() || input.authorName,
     publishedAt: input.payload.status === "PUBLISHED" ? new Date().toISOString() : null,
@@ -74,11 +79,15 @@ export function buildKnowledgeTranslationSidecarBundle(input: {
     readingTimeMinutes,
     seoScores,
     searchText: buildSearchText(input.payload),
-    jsonLd
+    jsonLd,
+    canonical,
+    metaDescription
   } satisfies {
     readingTimeMinutes: number;
     seoScores: KnowledgeSeoScores;
     searchText: string;
     jsonLd: Record<string, unknown>;
+    canonical: string;
+    metaDescription: string;
   };
 }

@@ -2,18 +2,62 @@ import Link from "next/link";
 import { KnowledgeCenterShell } from "@/components/knowledge-center/knowledge-center-shell";
 import {
   buildKnowledgeArticlePath,
+  buildKnowledgeCategoryPath,
   buildKnowledgeIndexPath,
   knowledgeCodeForPathPrefix,
   type KnowledgePathPrefix
 } from "@/features/knowledge-center/knowledge-center.constants";
 import { knowledgeCenterService } from "@/features/knowledge-center/knowledge-center.service";
+import {
+  buildKnowledgeCategoryAlternates,
+  knowledgeAlternatesToMetadataLanguages
+} from "@/features/knowledge-center/knowledge-hreflang";
 import { knowledgeCenterHomeCopy } from "@/lib/knowledge/knowledge-center-home-copy";
 import { toUiLocale } from "@/lib/app-language.shared";
+import type { Metadata } from "next";
+
+const ORIGIN = "https://vincis.app";
 
 export const runtime = "nodejs";
 export const revalidate = 300;
 
 type Props = { params: Promise<{ lang: string; categorySlug: string }> };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { lang, categorySlug } = await params;
+  const languageCode = knowledgeCodeForPathPrefix(lang);
+  const locale = toUiLocale(languageCode);
+  const pathPrefix = lang as KnowledgePathPrefix;
+  const copy = knowledgeCenterHomeCopy(locale);
+  const categories = await knowledgeCenterService.listCategorySummaries(languageCode);
+  const category = categories.find((item) => item.slug === categorySlug);
+  const topic = copy.topics.find((item) => item.slug === categorySlug);
+  const title = topic?.title ?? category?.name ?? categorySlug;
+  const description = topic?.description ?? "";
+  const canonical = `${ORIGIN}${buildKnowledgeCategoryPath(pathPrefix, categorySlug)}`;
+  const pageTitle = `${title} | VINCIS Knowledge Center`;
+
+  return {
+    title: { absolute: pageTitle },
+    description: description || undefined,
+    openGraph: {
+      type: "website",
+      siteName: "VINCIS",
+      title: pageTitle,
+      description: description || undefined,
+      url: canonical
+    },
+    twitter: {
+      card: "summary",
+      title: pageTitle,
+      description: description || undefined
+    },
+    alternates: {
+      canonical,
+      languages: knowledgeAlternatesToMetadataLanguages(buildKnowledgeCategoryAlternates(categorySlug))
+    }
+  };
+}
 
 export default async function KnowledgeCategoryPage({ params }: Props) {
   const { lang, categorySlug } = await params;

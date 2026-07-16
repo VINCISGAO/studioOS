@@ -5,7 +5,7 @@ import {
   KNOWLEDGE_SLUG_MAX_LENGTH,
   KNOWLEDGE_VISIBILITY_OPTIONS
 } from "@/lib/knowledge/knowledge-editor.constants";
-import { knowledgeHtmlIsEmpty } from "@/lib/knowledge/knowledge-html-plain";
+import { knowledgeHtmlIsEmpty, knowledgeHtmlToPlainText } from "@/lib/knowledge/knowledge-html-plain";
 
 export type KnowledgeVisibility = (typeof KNOWLEDGE_VISIBILITY_OPTIONS)[number];
 
@@ -51,7 +51,13 @@ export function effectiveKnowledgeSeoTitle(form: KnowledgeEditorFormState) {
 }
 
 export function effectiveKnowledgeMetaDescription(form: KnowledgeEditorFormState) {
-  return form.subtitle.trim() || form.title.trim();
+  const subtitle = form.subtitle.trim();
+  if (subtitle) return subtitle;
+  const plain = knowledgeHtmlToPlainText(form.body_html);
+  if (plain.length >= 40) {
+    return plain.length <= 155 ? plain : `${plain.slice(0, 154).trim()}…`;
+  }
+  return form.title.trim();
 }
 
 export function effectiveKnowledgeTags(form: KnowledgeEditorFormState) {

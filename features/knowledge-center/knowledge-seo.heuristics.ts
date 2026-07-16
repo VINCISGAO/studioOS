@@ -52,6 +52,18 @@ export function estimateReadingTimeMinutes(markdown: string) {
   return Math.max(1, Math.round(words / 220));
 }
 
+/** Plain-text excerpt for meta description when editor did not provide one. */
+export function knowledgeExcerptFromBody(body: string, max = 155) {
+  const plain = body
+    .replace(/<[^>]+>/g, " ")
+    .replace(/[#>*`\[\]()!-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!plain) return "";
+  if (plain.length <= max) return plain;
+  return `${plain.slice(0, max - 1).trim()}…`;
+}
+
 export function slugifyKnowledgeTitle(title: string) {
   const trimmed = title.trim();
   const asciiSlug = trimmed

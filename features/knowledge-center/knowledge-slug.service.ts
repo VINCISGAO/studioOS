@@ -9,24 +9,15 @@ function normalizeSlug(value: string) {
   return value.trim().replace(/^\/+|\/+$/g, "").slice(0, KNOWLEDGE_SLUG_MAX_LENGTH);
 }
 
-export function buildKnowledgeSlugCandidate(title: string, articleId?: string) {
+export function buildKnowledgeSlugCandidate(title: string) {
   const trimmed = title.trim();
-  if (trimmed) {
-    const fromTitle = normalizeSlug(slugifyKnowledgeTitle(trimmed));
-    // Short Latin fragments (e.g. "ai-2026" from Chinese titles) collide too often.
-    if (fromTitle && fromTitle !== "article" && fromTitle.length >= 8 && validateKnowledgeSlug(fromTitle).ok) {
-      return fromTitle;
-    }
+  const fromTitle = normalizeSlug(slugifyKnowledgeTitle(trimmed));
+
+  if (fromTitle && fromTitle !== "article" && validateKnowledgeSlug(fromTitle).ok) {
+    return fromTitle;
   }
 
-  if (articleId?.trim()) {
-    const fromId = normalizeSlug(articleId.trim().toLowerCase());
-    if (validateKnowledgeSlug(fromId).ok) {
-      return fromId;
-    }
-  }
-
-  return normalizeSlug(slugifyKnowledgeTitle(trimmed || "article"));
+  return fromTitle || "article";
 }
 
 export async function checkKnowledgeSlugAvailability(input: {
@@ -55,7 +46,7 @@ export async function allocateUniqueKnowledgeSlug(input: {
   articleId: string;
   excludeArticleId?: string;
 }) {
-  const base = buildKnowledgeSlugCandidate(input.title, input.articleId);
+  const base = buildKnowledgeSlugCandidate(input.title);
   let candidate = base;
   let suffix = 2;
 
@@ -94,6 +85,7 @@ export async function commitArticleSlug(
     publishing: boolean;
     wasPublished?: boolean;
     existingSlug?: string;
+    preferredSlug?: string;
   }
 ): Promise<string> {
   const existingSlug = input.existingSlug?.trim().replace(/^\/+|\/+$/g, "") ?? "";
@@ -107,6 +99,18 @@ export async function commitArticleSlug(
       await knowledgeCenterRepository.updateArticle(articleId, { slug: draftSlug });
     }
     return draftSlug;
+  }
+
+  const preferred = input.preferredSlug?.trim().replace(/^\/+|\/+$/g, "") ?? "";
+  if (preferred && validateKnowledgeSlug(preferred).ok) {
+    const check = await checkKnowledgeSlugAvailability({
+      slug: preferred,
+      excludeArticleId: articleId
+    });
+    if (check.available) {
+      await knowledgeCenterRepository.updateArticle(articleId, { slug: preferred });
+      return preferred;
+    }
   }
 
   let candidate = await allocateUniqueKnowledgeSlug({

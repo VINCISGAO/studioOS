@@ -83,6 +83,7 @@ export function useKnowledgeEditorController(input: {
 
       return {
         title: state.title,
+        slug: state.slug.trim() || undefined,
         category_slug: state.category_slug,
         author_name: state.author_name,
         cover_image_url: state.cover_image_url || undefined,

@@ -1,6 +1,7 @@
 import { knowledgeCenterService } from "@/features/knowledge-center/knowledge-center.service";
 import {
   buildKnowledgeArticlePath,
+  buildKnowledgeCategoryPath,
   buildKnowledgeIndexPath,
   KNOWLEDGE_LANGUAGE_OPTIONS
 } from "@/features/knowledge-center/knowledge-center.constants";
@@ -24,6 +25,15 @@ export default async function sitemap() {
     });
 
     try {
+      const categories = await knowledgeCenterService.listCategorySummaries(lang.code);
+      for (const category of categories) {
+        entries.push({
+          url: `${ORIGIN}${buildKnowledgeCategoryPath(lang.pathPrefix, category.slug)}`,
+          changeFrequency: "weekly",
+          priority: 0.65
+        });
+      }
+
       const articles = await knowledgeCenterService.listPublishedPublic(lang.code);
       for (const article of articles) {
         entries.push({

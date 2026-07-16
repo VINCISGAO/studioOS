@@ -106,7 +106,8 @@ export class KnowledgeCenterService {
       const slug = await commitArticleSlug(article.id, {
         title: this.resolveArticleTitle(input),
         publishing,
-        existingSlug: tempSlug
+        existingSlug: tempSlug,
+        preferredSlug: input.slug
       });
 
       await knowledgeCenterRepository.ensureAnalytics(article.id);
@@ -145,7 +146,8 @@ export class KnowledgeCenterService {
       title: this.resolveArticleTitle(input, existing),
       publishing,
       wasPublished,
-      existingSlug: existing.slug
+      existingSlug: existing.slug,
+      preferredSlug: input.slug
     });
     const categoryId = await knowledgeCenterRepository.resolveCategoryAndTags(id, input);
 
@@ -347,7 +349,7 @@ export class KnowledgeCenterService {
     if (!translation) return null;
 
     const pathPrefix = knowledgePathPrefixForCode(languageCode);
-    const canonical = `${ORIGIN}${buildKnowledgeArticlePath(pathPrefix, slug)}`;
+    const canonical = `${ORIGIN}${buildKnowledgeArticlePath(pathPrefix, row.slug)}`;
     const seo = translation.seo;
     const schemaJson = (translation.schema?.jsonLd as Record<string, unknown> | null) ?? null;
 

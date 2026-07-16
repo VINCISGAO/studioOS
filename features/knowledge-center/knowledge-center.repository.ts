@@ -549,18 +549,21 @@ export class KnowledgeCenterRepository {
 
     const t = job.input.translation;
     const seoMetrics = toPrismaKnowledgeSeoScoreFields(bundle.seoScores);
+    const seoTitle = t.seo?.seo_title?.trim() || t.title.trim();
+    const metaDescription = bundle.metaDescription || null;
+    const canonicalUrl = bundle.canonical;
 
     await prisma.$transaction(async (tx) => {
       await tx.knowledgeSeo.upsert({
         where: { translationId: job.translationId },
         create: {
           translationId: job.translationId,
-          seoTitle: t.seo?.seo_title?.trim() || t.title.trim(),
-          metaDescription: t.seo?.meta_description?.trim() || t.excerpt?.trim() || null,
-          canonicalUrl: t.seo?.canonical_url?.trim() || null,
+          seoTitle,
+          metaDescription,
+          canonicalUrl,
           keywordsJson: t.seo?.keywords?.length ? t.seo.keywords : undefined,
-          ogTitle: t.seo?.og_title?.trim() || t.title.trim(),
-          ogDescription: t.seo?.og_description?.trim() || t.seo?.meta_description?.trim() || null,
+          ogTitle: t.seo?.og_title?.trim() || seoTitle,
+          ogDescription: t.seo?.og_description?.trim() || metaDescription,
           ogImageUrl: t.seo?.og_image_url?.trim() || job.input.cover_image_url?.trim() || null,
           twitterCard: t.seo?.twitter_card ?? "summary_large_image",
           seoScore: seoMetrics.seoScore,
@@ -572,12 +575,12 @@ export class KnowledgeCenterRepository {
           externalLinkCount: seoMetrics.externalLinkCount
         },
         update: {
-          seoTitle: t.seo?.seo_title?.trim() || t.title.trim(),
-          metaDescription: t.seo?.meta_description?.trim() || t.excerpt?.trim() || null,
-          canonicalUrl: t.seo?.canonical_url?.trim() || null,
+          seoTitle,
+          metaDescription,
+          canonicalUrl,
           keywordsJson: t.seo?.keywords?.length ? t.seo.keywords : undefined,
-          ogTitle: t.seo?.og_title?.trim() || t.title.trim(),
-          ogDescription: t.seo?.og_description?.trim() || t.seo?.meta_description?.trim() || null,
+          ogTitle: t.seo?.og_title?.trim() || seoTitle,
+          ogDescription: t.seo?.og_description?.trim() || metaDescription,
           ogImageUrl: t.seo?.og_image_url?.trim() || job.input.cover_image_url?.trim() || null,
           twitterCard: t.seo?.twitter_card ?? "summary_large_image",
           seoScore: seoMetrics.seoScore,
