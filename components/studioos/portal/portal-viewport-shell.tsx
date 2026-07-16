@@ -7,9 +7,9 @@ import { cn } from "@/lib/utils";
 export type PortalViewportMode = "fixed" | "flow" | "review-dvh";
 
 const modeClass: Record<PortalViewportMode, string> = {
-  fixed: "fixed inset-0 z-0 flex min-h-0 flex-col overflow-hidden",
-  flow: "flex min-h-screen flex-col lg:h-[100dvh] lg:max-h-[100dvh] lg:overflow-hidden",
-  "review-dvh": "flex h-[100dvh] max-h-[100dvh] w-full flex-col overflow-hidden"
+  fixed: "fixed inset-0 z-0 flex min-h-0 flex-col overflow-hidden overscroll-none",
+  flow: "flex min-h-screen flex-col overscroll-none lg:h-[100dvh] lg:max-h-[100dvh] lg:overflow-hidden",
+  "review-dvh": "flex h-[100dvh] max-h-[100dvh] w-full flex-col overflow-hidden overscroll-none"
 };
 
 export function PortalViewportShell({

@@ -305,7 +305,7 @@ export function LoginPageShell({
           <div className="hidden w-9 sm:block" aria-hidden />
         </header>
 
-        <div className="mx-auto flex min-h-0 w-full max-w-[1320px] flex-1 flex-col gap-6 overflow-y-auto overscroll-y-contain px-5 pb-6 sm:px-8 max-lg:justify-start lg:gap-10 lg:px-10 lg:pb-12 xl:gap-14 xl:px-12 lg:flex-row lg:items-center lg:justify-between">
+        <div className="mx-auto flex min-h-0 w-full max-w-[1320px] flex-1 flex-col gap-6 overflow-hidden px-5 pb-6 sm:px-8 max-lg:justify-start lg:gap-10 lg:overflow-y-auto lg:overscroll-y-contain lg:px-10 lg:pb-12 xl:gap-14 xl:px-12 lg:flex-row lg:items-center lg:justify-between">
           <section className="hidden min-w-0 lg:block lg:flex-1 lg:pl-6 lg:py-6 xl:max-w-[820px] xl:pl-14">
             {isBrand ? (
               <>
