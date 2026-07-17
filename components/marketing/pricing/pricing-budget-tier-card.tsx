@@ -56,7 +56,7 @@ export function PricingBudgetTierCard({
   index: number;
 }) {
   const Icon = TIER_ICONS[index] ?? Send;
-  const styles = TIER_THEME_STYLES[theme];
+  const styles = TIER_THEME_STYLES[theme] ?? TIER_THEME_STYLES.blue;
   const isRecommended = Boolean(badge);
 
   return (

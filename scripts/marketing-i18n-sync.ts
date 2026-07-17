@@ -100,6 +100,41 @@ const namespaces: NamespaceConfig[] = [
 
 const POOL = 2;
 
+const PRESERVED_TRANSLATION_FIELDS = new Set(["theme", "id", "key", "icon", "number"]);
+
+function restorePreservedFields(source: unknown, translated: unknown): unknown {
+  if (Array.isArray(source) && Array.isArray(translated)) {
+    return translated.map((item, index) => restorePreservedFields(source[index], item));
+  }
+
+  if (
+    source &&
+    typeof source === "object" &&
+    translated &&
+    typeof translated === "object" &&
+    !Array.isArray(source)
+  ) {
+    const sourceRecord = source as Record<string, unknown>;
+    const translatedRecord = translated as Record<string, unknown>;
+    const result: Record<string, unknown> = { ...translatedRecord };
+
+    for (const [key, sourceValue] of Object.entries(sourceRecord)) {
+      if (PRESERVED_TRANSLATION_FIELDS.has(key)) {
+        result[key] = sourceValue;
+        continue;
+      }
+
+      if (key in result) {
+        result[key] = restorePreservedFields(sourceValue, result[key]);
+      }
+    }
+
+    return result;
+  }
+
+  return translated;
+}
+
 function openAIApiKey() {
   return process.env.OPENAI_API_KEY?.trim() || process.env.VINCIS_OPENAI_API_KEY?.trim() || "";
 }
@@ -153,6 +188,7 @@ async function translateMarketingCopyJson<T extends Record<string, unknown>>(inp
             `Output language: ${target.nativeName}. All user-facing text must be written in this language.`,
             "Preserve JSON keys exactly.",
             "Preserve brand name VINCIS, URLs, paths, slugs, email addresses, placeholders like {count}, and category IDs.",
+            "Never translate enum-like values for fields named theme, id, key, icon, or number — keep them identical to the source JSON.",
             "Do not add or remove fields.",
             "Return JSON only."
           ].join("\n")
@@ -248,7 +284,7 @@ async function syncNamespace(config: NamespaceConfig, force: boolean) {
       throw new Error(`Failed to translate ${config.id} -> ${targetLocale}`);
     }
 
-    bundle[targetLocale] = translated;
+    bundle[targetLocale] = restorePreservedFields(source, translated) as Record<string, unknown>;
   });
 
   mkdirSync(bundlesDir, { recursive: true });

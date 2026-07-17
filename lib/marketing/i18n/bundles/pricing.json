@@ -474,7 +474,7 @@
         "title": "スターター",
         "subtitle": "アイデアを迅速に立ち上げる",
         "audience": "軽量プロジェクト",
-        "theme": "青",
+        "theme": "blue",
         "features": [
           "製品紹介広告",
           "15〜30秒のショートビデオ",
@@ -487,7 +487,7 @@
         "subtitle": "品質とスピードのバランス",
         "badge": "推奨",
         "audience": "ほとんどのブランドに選ばれる",
-        "theme": "紫",
+        "theme": "purple",
         "features": [
           "30〜60秒のコマーシャル広告",
           "より高いクリエイティブ基準",
@@ -499,7 +499,7 @@
         "title": "プライオリティ",
         "subtitle": "より高い品質基準",
         "audience": "高い期待のプロジェクト",
-        "theme": "オレンジ",
+        "theme": "orange",
         "features": [
           "60秒以上のプレミアム広告",
           "シニアスタジオマッチング",
@@ -511,7 +511,7 @@
         "title": "トップティア",
         "subtitle": "映画制作の標準",
         "audience": "大手ブランドとカスタム作業",
-        "theme": "緑",
+        "theme": "green",
         "features": [
           "ブランドフィルムと映画広告",
           "グローバルなトップスタジオチーム",
@@ -622,7 +622,7 @@
         "title": "스타터",
         "subtitle": "아이디어를 빠르게 시작하세요",
         "audience": "경량 프로젝트",
-        "theme": "파란색",
+        "theme": "blue",
         "features": [
           "제품 홍보 광고",
           "15–30초 짧은 비디오",
@@ -635,7 +635,7 @@
         "subtitle": "품질과 속도의 균형",
         "badge": "추천",
         "audience": "대부분의 브랜드에 적합한 선택",
-        "theme": "보라색",
+        "theme": "purple",
         "features": [
           "30–60초 상업 광고",
           "높은 창의적 기준",
@@ -647,7 +647,7 @@
         "title": "우선",
         "subtitle": "더 높은 품질 기준",
         "audience": "높은 기대의 프로젝트",
-        "theme": "주황색",
+        "theme": "orange",
         "features": [
           "60초 이상의 프리미엄 광고",
           "고급 스튜디오 매칭",
@@ -659,7 +659,7 @@
         "title": "최상위",
         "subtitle": "영화 제작 표준",
         "audience": "대형 브랜드 및 맞춤 작업",
-        "theme": "녹색",
+        "theme": "green",
         "features": [
           "브랜드 필름 및 영화 광고",
           "글로벌 최고 스튜디오 팀",
@@ -770,7 +770,7 @@
         "title": "Permulaan",
         "subtitle": "Lancarkan idea dengan cepat",
         "audience": "Projek ringan",
-        "theme": "biru",
+        "theme": "blue",
         "features": [
           "Iklan pameran produk",
           "Video pendek 15–30s",
@@ -783,7 +783,7 @@
         "subtitle": "Seimbangkan kualiti dan kelajuan",
         "badge": "Disyorkan",
         "audience": "Pilihan untuk kebanyakan jenama",
-        "theme": "ungu",
+        "theme": "purple",
         "features": [
           "Iklan komersial 30–60s",
           "Standard kreatif yang lebih tinggi",
@@ -795,7 +795,7 @@
         "title": "Keutamaan",
         "subtitle": "Standard kualiti yang lebih tinggi",
         "audience": "Projek dengan jangkaan lebih tinggi",
-        "theme": "oren",
+        "theme": "orange",
         "features": [
           "Iklan premium 60s+",
           "Pemadanan studio senior",
@@ -807,7 +807,7 @@
         "title": "Tahap tertinggi",
         "subtitle": "Standard pengeluaran sinematik",
         "audience": "Jenama besar dan kerja khusus",
-        "theme": "hijau",
+        "theme": "green",
         "features": [
           "Filem jenama dan iklan sinematik",
           "Pasukan studio teratas global",
@@ -918,7 +918,7 @@
         "title": "ចាប់ផ្តើម",
         "subtitle": "ចាប់ផ្តើមគំនិតបានយ៉ាងឆាប់រហ័ស",
         "audience": "គម្រោងដែលមានទម្ងន់ស្រាល",
-        "theme": "ខៀវ",
+        "theme": "blue",
         "features": [
           "ការផ្សាយពាណិជ្ជកម្មផលិតផល",
           "វីដេអូខ្លី 15–30 វិនាទី",
@@ -931,7 +931,7 @@
         "subtitle": "តុល្យភាពគុណភាព និងល្បឿន",
         "badge": "បានណែនាំ",
         "audience": "ជាជម្រើសសម្រាប់ម៉ាកភាគច្រើន",
-        "theme": "ស្វាយ",
+        "theme": "purple",
         "features": [
           "ការផ្សាយពាណិជ្ជកម្ម 30–60 វិនាទី",
           "ស្តង់ដារច្នៃប្រឌិតខ្ពស់",
@@ -943,7 +943,7 @@
         "title": "អាទិភាព",
         "subtitle": "ស្តង់ដារគុណភាពខ្ពស់ជាង",
         "audience": "គម្រោងដែលមានការរំពឹងទុកខ្ពស់",
-        "theme": "ស្វាយ",
+        "theme": "orange",
         "features": [
           "ការផ្សាយពាណិជ្ជកម្ម 60 វិនាទីឡើងទៅ",
           "ការប្រកួតស្ទូឌីយោខ្ពស់",
@@ -955,7 +955,7 @@
         "title": "កម្រិតខ្ពស់",
         "subtitle": "ស្តង់ដារផលិតភាពស៊ីនេម៉ា",
         "audience": "ម៉ាកធំ និងការងារប្តូរតាមបំណង",
-        "theme": "បៃតង",
+        "theme": "green",
         "features": [
           "ភាពយន្តម៉ាក និងការផ្សាយស៊ីនេម៉ា",
           "ក្រុមស្ទូឌីយោល្បីល្បាញពិភពលោក",
@@ -1066,7 +1066,7 @@
         "title": "เริ่มต้น",
         "subtitle": "เริ่มต้นไอเดียได้อย่างรวดเร็ว",
         "audience": "โครงการขนาดเล็ก",
-        "theme": "น้ำเงิน",
+        "theme": "blue",
         "features": [
           "โฆษณานำเสนอผลิตภัณฑ์",
           "วิดีโอสั้น 15–30 วินาที",
@@ -1079,7 +1079,7 @@
         "subtitle": "สมดุลคุณภาพและความเร็ว",
         "badge": "แนะนำ",
         "audience": "ทางเลือกสำหรับแบรนด์ส่วนใหญ่",
-        "theme": "ม่วง",
+        "theme": "purple",
         "features": [
           "โฆษณาเชิงพาณิชย์ 30–60 วินาที",
           "มาตรฐานความคิดสร้างสรรค์ที่สูงขึ้น",
@@ -1091,7 +1091,7 @@
         "title": "ลำดับความสำคัญ",
         "subtitle": "มาตรฐานคุณภาพที่สูงขึ้น",
         "audience": "โครงการที่มีความคาดหวังสูง",
-        "theme": "ส้ม",
+        "theme": "orange",
         "features": [
           "โฆษณาพรีเมียม 60 วินาทีขึ้นไป",
           "การจับคู่สตูดิโอที่มีประสบการณ์",
@@ -1103,7 +1103,7 @@
         "title": "ระดับสูงสุด",
         "subtitle": "มาตรฐานการผลิตภาพยนตร์",
         "audience": "แบรนด์ใหญ่และงานที่กำหนดเอง",
-        "theme": "เขียว",
+        "theme": "green",
         "features": [
           "ภาพยนตร์แบรนด์และโฆษณาภาพยนตร์",
           "ทีมสตูดิโอชั้นนำระดับโลก",
@@ -1214,7 +1214,7 @@
         "title": "Khởi đầu",
         "subtitle": "Khởi động ý tưởng nhanh chóng",
         "audience": "Các dự án nhẹ",
-        "theme": "xanh dương",
+        "theme": "blue",
         "features": [
           "Quảng cáo trưng bày sản phẩm",
           "Video ngắn 15–30 giây",
@@ -1227,7 +1227,7 @@
         "subtitle": "Cân bằng chất lượng và tốc độ",
         "badge": "Khuyến nghị",
         "audience": "Lựa chọn cho hầu hết các thương hiệu",
-        "theme": "tím",
+        "theme": "purple",
         "features": [
           "Quảng cáo thương mại 30–60 giây",
           "Tiêu chuẩn sáng tạo cao hơn",
@@ -1239,7 +1239,7 @@
         "title": "Ưu tiên",
         "subtitle": "Tiêu chuẩn chất lượng cao hơn",
         "audience": "Các dự án có kỳ vọng cao hơn",
-        "theme": "cam",
+        "theme": "orange",
         "features": [
           "Quảng cáo cao cấp 60 giây trở lên",
           "Ghép nối studio cao cấp",
@@ -1251,7 +1251,7 @@
         "title": "Cao cấp",
         "subtitle": "Tiêu chuẩn sản xuất điện ảnh",
         "audience": "Thương hiệu lớn và công việc tùy chỉnh",
-        "theme": "xanh lá",
+        "theme": "green",
         "features": [
           "Phim thương hiệu và quảng cáo điện ảnh",
           "Đội ngũ studio hàng đầu toàn cầu",
@@ -1362,7 +1362,7 @@
         "title": "Débutant",
         "subtitle": "Lancer des idées rapidement",
         "audience": "Projets légers",
-        "theme": "bleu",
+        "theme": "blue",
         "features": [
           "Annonces de présentation de produits",
           "Vidéo courte de 15 à 30 secondes",
@@ -1375,7 +1375,7 @@
         "subtitle": "Équilibrer qualité et rapidité",
         "badge": "Recommandé",
         "audience": "Le choix de la plupart des marques",
-        "theme": "violet",
+        "theme": "purple",
         "features": [
           "Annonces commerciales de 30 à 60 secondes",
           "Normes créatives plus élevées",
@@ -1399,7 +1399,7 @@
         "title": "Haut de gamme",
         "subtitle": "Standard de production cinématographique",
         "audience": "Grandes marques et travaux sur mesure",
-        "theme": "vert",
+        "theme": "green",
         "features": [
           "Films de marque et annonces cinématographiques",
           "Équipes de studios de premier plan mondial",
@@ -1510,7 +1510,7 @@
         "title": "Inicio",
         "subtitle": "Lanza ideas rápidamente",
         "audience": "Proyectos ligeros",
-        "theme": "azul",
+        "theme": "blue",
         "features": [
           "Anuncios de exhibición de productos",
           "Video corto de 15–30s",
@@ -1523,7 +1523,7 @@
         "subtitle": "Equilibra calidad y velocidad",
         "badge": "Recomendado",
         "audience": "La elección para la mayoría de las marcas",
-        "theme": "púrpura",
+        "theme": "purple",
         "features": [
           "Anuncios comerciales de 30–60s",
           "Estándares creativos más altos",
@@ -1535,7 +1535,7 @@
         "title": "Prioridad",
         "subtitle": "Mayor estándar de calidad",
         "audience": "Proyectos con mayores expectativas",
-        "theme": "naranja",
+        "theme": "orange",
         "features": [
           "Anuncios premium de 60s+",
           "Emparejamiento con estudios senior",
@@ -1547,7 +1547,7 @@
         "title": "Nivel superior",
         "subtitle": "Estándar de producción cinematográfica",
         "audience": "Grandes marcas y trabajos personalizados",
-        "theme": "verde",
+        "theme": "green",
         "features": [
           "Películas de marca y anuncios cinematográficos",
           "Equipos de estudio de primer nivel global",

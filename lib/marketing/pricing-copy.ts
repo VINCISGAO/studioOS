@@ -297,7 +297,7 @@ export const pricingCopyEn: PricingCopy = {
 };
 
 export function pricingText(locale: MarketingLocale): PricingCopy {
-  return resolveMarketingCopy(
+  const copy = resolveMarketingCopy(
     {
       en: pricingCopyEn,
       "zh-CN": pricingCopyZhCN,
@@ -305,4 +305,12 @@ export function pricingText(locale: MarketingLocale): PricingCopy {
     },
     locale
   );
+
+  return {
+    ...copy,
+    budgetTiers: copy.budgetTiers.map((tier, index) => ({
+      ...tier,
+      theme: pricingCopyEn.budgetTiers[index]?.theme ?? tier.theme
+    }))
+  };
 }
