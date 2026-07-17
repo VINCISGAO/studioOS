@@ -16,6 +16,7 @@ import {
   TrendingUp,
   UploadCloud
 } from "lucide-react";
+import { BrandReviewClapperIllustration } from "@/components/studioos/brand-review-hub/brand-review-hub-art";
 import { Button } from "@/components/ui/button";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
@@ -345,8 +346,8 @@ export function StudioReviewHubBoard({ locale, items }: { locale: Locale; items:
 
       {!filtered.length ? (
         <div className="rounded-2xl border border-zinc-200/80 bg-white px-6 py-16 text-center shadow-sm">
-          <Clapperboard className="mx-auto h-8 w-8 text-zinc-300" />
-          <p className="mt-3 text-sm font-medium text-zinc-700">{t.empty}</p>
+          <BrandReviewClapperIllustration className="mx-auto h-24 w-32 sm:h-28 sm:w-36" />
+          <p className="mt-5 text-base font-semibold text-zinc-900">{t.empty}</p>
         </div>
       ) : (
         <div className={cn(view === "grid" ? "grid gap-4 xl:grid-cols-2" : "space-y-4")}>
