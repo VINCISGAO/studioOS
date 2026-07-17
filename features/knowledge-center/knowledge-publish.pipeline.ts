@@ -68,7 +68,8 @@ function isPublishedArticle(detail: KnowledgeArticleDetailDto) {
 
 export async function runKnowledgePublishPipeline(
   detail: KnowledgeArticleDetailDto,
-  multilingual?: KnowledgeMultilingualSyncResult
+  multilingual?: KnowledgeMultilingualSyncResult,
+  options?: { skipLucienSync?: boolean }
 ): Promise<KnowledgePublishPipelineResult> {
   const steps: KnowledgePublishStep[] = [];
   const publicUrls: string[] = [];
@@ -91,26 +92,17 @@ export async function runKnowledgePublishPipeline(
   );
 
   let lucienSynced = 0;
+  if (!options?.skipLucienSync) {
+    const result = await knowledgeLucienSyncService.syncPublishedArticle({
+      slug: detail.slug,
+      translations: detail.translations,
+      categoryName: detail.category_name
+    });
+    lucienSynced = result.synced;
+  }
+
   for (const translation of detail.translations) {
     if (translation.status !== "PUBLISHED") continue;
-
-    if (translation.lucien?.lucien_learning) {
-      try {
-        const result = await knowledgeLucienSyncService.syncTranslation({
-          slug: detail.slug,
-          translation,
-          categoryName: detail.category_name
-        });
-        lucienSynced += result.synced;
-      } catch (error) {
-        logger.warn("knowledge.publish.lucien_sync_failed", {
-          service: "knowledge-center",
-          slug: detail.slug,
-          languageCode: translation.language_code,
-          error: error instanceof Error ? error.message : String(error)
-        });
-      }
-    }
 
     const pathPrefix = knowledgePathPrefixForCode(translation.language_code);
     const articlePath = buildKnowledgeArticlePath(pathPrefix, detail.slug);

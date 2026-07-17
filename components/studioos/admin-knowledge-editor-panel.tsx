@@ -13,6 +13,7 @@ import { KnowledgeTiptapEditor } from "@/components/studioos/knowledge-editor/ti
 import { useKnowledgeEditorController } from "@/hooks/use-knowledge-editor-controller";
 import type { KnowledgeArticleDetailDto } from "@/features/knowledge-center/knowledge-center.types";
 import type { Locale } from "@/lib/i18n";
+import { pickKnowledgeAdminTranslation } from "@/lib/knowledge/knowledge-admin-translation";
 import { knowledgeEditorPlainTextLength } from "@/lib/knowledge/tiptap/knowledge-editor-content";
 import { cn } from "@/lib/utils";
 import { useMemo, useEffect, useRef, useState } from "react";
@@ -41,6 +42,10 @@ export function AdminKnowledgeEditorPanel({ locale, articleId, initial }: Editor
   } = editor;
 
   const charCount = useMemo(() => knowledgeEditorPlainTextLength(form.body_html), [form.body_html]);
+  const lucienTranslation = useMemo(
+    () => pickKnowledgeAdminTranslation(initial?.translations ?? [], { adminLocale: locale }),
+    [initial?.translations, locale]
+  );
   const topBarRef = useRef<HTMLDivElement>(null);
   const [toolbarStickyTop, setToolbarStickyTop] = useState(0);
 
@@ -129,6 +134,8 @@ export function AdminKnowledgeEditorPanel({ locale, articleId, initial }: Editor
             locale={locale}
             articleId={currentId}
             value={form.lucien_learning}
+            lucienIndexed={lucienTranslation?.lucien?.lucien_indexed}
+            lucienSyncedAt={lucienTranslation?.lucien?.lucien_synced_at}
             onChange={(lucien_learning) => patchForm({ lucien_learning })}
             onNotify={(text, variant) => notify(text, variant)}
           />

@@ -14,7 +14,7 @@ import {
   type KnowledgeAdminRouteStep
 } from "@/lib/knowledge/knowledge-admin-api";
 import { readKnowledgeMutationJson } from "@/lib/knowledge/knowledge-mutation-body";
-import { aiGatewayService } from "@/features/ai/ai-gateway.service";
+import { finalizeKnowledgeAdminSave } from "@/lib/knowledge/knowledge-admin-save-finalize";
 import { toKnowledgeSaveClientPayload } from "@/lib/knowledge/knowledge-save-client";
 
 export const runtime = "nodejs";
@@ -69,14 +69,14 @@ export async function PATCH(request: Request, context: RouteContext) {
         hasSidecarQueue: Boolean(saved.queueTranslationSidecars),
         hasPublishPipeline: Boolean(saved.queuePublishPipeline),
         hasMultilingualQueue: Boolean(saved.queueMultilingualSync),
-        openaiConfigured: aiGatewayService.isConfigured(),
         multilingualSyncQueued: Boolean(saved.pipeline?.multilingual_sync_queued)
       }
     });
-    scheduleKnowledgePostSaveWork(saved, requestId);
 
     step = "serialize_response";
-    const payload = toKnowledgeSaveClientPayload(saved);
+    const payload = saved.queuePublishPipeline
+      ? await finalizeKnowledgeAdminSave(saved, requestId)
+      : (scheduleKnowledgePostSaveWork(saved, requestId), toKnowledgeSaveClientPayload(saved));
     if (!payload) {
       throw appError("NOT_FOUND", "Article not found");
     }

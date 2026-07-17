@@ -9,17 +9,28 @@ import {
 } from "@/features/knowledge-center/knowledge-publish.pipeline";
 import { logger } from "@/lib/core/logger";
 
-async function runKnowledgePostSaveWork(saved: KnowledgeSaveResult, requestId?: string) {
+export type KnowledgePostSaveScheduleOptions = {
+  inlineSidecarsCompleted?: boolean;
+  inlineLucienSyncCompleted?: boolean;
+};
+
+async function runKnowledgePostSaveWork(
+  saved: KnowledgeSaveResult,
+  requestId?: string,
+  options?: KnowledgePostSaveScheduleOptions
+) {
   logger.info("knowledge.post_save.work.start", {
     service: "KnowledgePublishSchedule",
     requestId,
     articleId: saved.article?.id,
     hasSidecarQueue: Boolean(saved.queueTranslationSidecars),
     hasPublishPipeline: Boolean(saved.queuePublishPipeline),
-    hasMultilingualQueue: Boolean(saved.queueMultilingualSync)
+    hasMultilingualQueue: Boolean(saved.queueMultilingualSync),
+    inlineSidecarsCompleted: Boolean(options?.inlineSidecarsCompleted),
+    inlineLucienSyncCompleted: Boolean(options?.inlineLucienSyncCompleted)
   });
 
-  if (saved.queueTranslationSidecars) {
+  if (saved.queueTranslationSidecars && !options?.inlineSidecarsCompleted) {
     logger.info("knowledge.post_save.sidecars.start", {
       service: "KnowledgePublishSchedule",
       requestId,
@@ -39,11 +50,15 @@ async function runKnowledgePostSaveWork(saved: KnowledgeSaveResult, requestId?: 
   if (pipelineJob) {
     const detail = await knowledgeCenterRepository.getById(pipelineJob.articleId);
     if (detail) {
-      await runKnowledgePublishPipeline(detail, {
-        translations_synced: 1,
-        translation_languages: [pipelineJob.sourceLanguage],
-        errors: []
-      });
+      await runKnowledgePublishPipeline(
+        detail,
+        {
+          translations_synced: 1,
+          translation_languages: [pipelineJob.sourceLanguage],
+          errors: []
+        },
+        { skipLucienSync: options?.inlineLucienSyncCompleted }
+      );
     }
   }
 
@@ -59,14 +74,18 @@ async function runKnowledgePostSaveWork(saved: KnowledgeSaveResult, requestId?: 
   }
 }
 
-/** Queue sidecars / revalidate / ping / multilingual sync after the save response returns. */
-export function scheduleKnowledgePostSaveWork(saved: KnowledgeSaveResult, requestId?: string) {
+/** Queue revalidate / ping / multilingual sync after the save response returns. */
+export function scheduleKnowledgePostSaveWork(
+  saved: KnowledgeSaveResult,
+  requestId?: string,
+  options?: KnowledgePostSaveScheduleOptions
+) {
   if (!saved.queueTranslationSidecars && !saved.queuePublishPipeline && !saved.queueMultilingualSync) {
     return;
   }
 
   const run = () =>
-    runKnowledgePostSaveWork(saved, requestId).catch((error) => {
+    runKnowledgePostSaveWork(saved, requestId, options).catch((error) => {
       const prismaCode =
         typeof error === "object" && error !== null && "code" in error
           ? String((error as { code?: string }).code)
@@ -87,7 +106,9 @@ export function scheduleKnowledgePostSaveWork(saved: KnowledgeSaveResult, reques
     articleId: saved.article?.id,
     hasSidecarQueue: Boolean(saved.queueTranslationSidecars),
     hasPublishPipeline: Boolean(saved.queuePublishPipeline),
-    hasMultilingualQueue: Boolean(saved.queueMultilingualSync)
+    hasMultilingualQueue: Boolean(saved.queueMultilingualSync),
+    inlineSidecarsCompleted: Boolean(options?.inlineSidecarsCompleted),
+    inlineLucienSyncCompleted: Boolean(options?.inlineLucienSyncCompleted)
   });
 
   try {

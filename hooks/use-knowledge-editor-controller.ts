@@ -177,16 +177,25 @@ export function useKnowledgeEditorController(input: {
 
         setSaveState("saved");
         const publishedOk = publish && (isPublishedStatus(saved.status) || pipeline?.published);
+        const lucienSynced = (pipeline?.lucien_synced ?? 0) > 0;
         notify(
           publish
             ? publishedOk
               ? pipeline?.multilingual_sync_queued
-                ? zh
-                  ? "已发布。多语言翻译正在后台同步…"
-                  : "Published. Multilingual translation is syncing in the background…"
-                : zh
-                  ? "已发布。"
-                  : "Published."
+                ? lucienSynced
+                  ? zh
+                    ? "已发布，Lucien 已同步。多语言翻译正在后台同步…"
+                    : "Published and synced to Lucien. Multilingual translation is syncing in the background…"
+                  : zh
+                    ? "已发布。多语言翻译正在后台同步…"
+                    : "Published. Multilingual translation is syncing in the background…"
+                : lucienSynced
+                  ? zh
+                    ? "已发布，Lucien 已同步。"
+                    : "Published and synced to Lucien."
+                  : zh
+                    ? "已发布。"
+                    : "Published."
               : zh
                 ? "已保存，但发布流程未完成。"
                 : "Saved, but publish did not complete."

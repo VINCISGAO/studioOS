@@ -268,8 +268,13 @@ export class KnowledgeCenterService {
   async syncLucien(articleId: string) {
     const detail = await knowledgeCenterRepository.getById(articleId);
     if (!detail) return { synced: 0 };
-    const result = await runKnowledgePublishPipeline(detail);
-    return { synced: result.lucien_synced };
+
+    const result = await knowledgeLucienSyncService.syncPublishedArticle({
+      slug: detail.slug,
+      translations: detail.translations,
+      categoryName: detail.category_name
+    });
+    return { synced: result.synced };
   }
 
   async listPublishedByCategory(languageCode: string, categorySlug: string): Promise<KnowledgeArticleListItemDto[]> {

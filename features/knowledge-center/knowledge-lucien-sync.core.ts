@@ -86,9 +86,15 @@ export async function syncKnowledgeTranslationToLucien(input: {
   }
 
   const sourceKey = buildKnowledgeLucienSourceKey(input.slug, input.translation.language_code);
-  await prisma.knowledgeLucien.update({
+  await prisma.knowledgeLucien.upsert({
     where: { translationId: input.translation.id },
-    data: {
+    create: {
+      translationId: input.translation.id,
+      lucienIndexed: true,
+      lucienSyncedAt: new Date(),
+      lucienSourceKey: sourceKey
+    },
+    update: {
       lucienIndexed: true,
       lucienSyncedAt: new Date(),
       lucienSourceKey: sourceKey
