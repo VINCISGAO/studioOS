@@ -1,14 +1,15 @@
+import { LanguageSwitcher } from "@/components/language-switcher";
 import { MarketingDocsLucienHost } from "@/components/marketing/docs/marketing-docs-lucien-host";
 import { KnowledgeCenterHeader } from "@/components/knowledge-center/knowledge-center-header";
 import type { KnowledgePathPrefix } from "@/features/knowledge-center/knowledge-center.constants";
-import type { Locale } from "@/lib/i18n";
+import type { MarketingLocale } from "@/lib/i18n";
 
 export function KnowledgeCenterShell({
   locale,
   pathPrefix,
   children
 }: {
-  locale: Locale;
+  locale: MarketingLocale;
   pathPrefix: KnowledgePathPrefix;
   children: React.ReactNode;
 }) {

@@ -1,0 +1,1223 @@
+{
+  "en": {
+    "brandLabel": "Knowledge Center",
+    "beta": "Beta",
+    "back": "Back",
+    "nav": {
+      "home": "Home",
+      "guides": "Guides",
+      "cases": "Work",
+      "resources": "Resources",
+      "changelog": "Changelog"
+    },
+    "guideLinks": [
+      {
+        "slug": "ai",
+        "label": "AI Advertising"
+      },
+      {
+        "slug": "creator-academy",
+        "label": "AI Video"
+      },
+      {
+        "slug": "workflow",
+        "label": "Creative Briefs"
+      },
+      {
+        "slug": "brand-academy",
+        "label": "Brand Marketing"
+      },
+      {
+        "slug": "help-center",
+        "label": "Getting Started"
+      }
+    ],
+    "caseLinks": [
+      {
+        "href": "/cases",
+        "label": "Selected work"
+      },
+      {
+        "href": "/case-studies",
+        "label": "Case studies"
+      }
+    ],
+    "heroTitle": "VINCIS Knowledge Center",
+    "heroSubtitle": "Explore professional guides on AI advertising, creative production, and brand marketing",
+    "searchPlaceholder": "Search articles, guides, and playbooks…",
+    "searchButton": "Search",
+    "hotKeywordsLabel": "Popular",
+    "hotKeywords": [
+      "AI advertising",
+      "AI video",
+      "creative brief",
+      "brand marketing",
+      "case studies"
+    ],
+    "topicsTitle": "Browse topics",
+    "topicsViewAll": "View all topics",
+    "featuredTitle": "Featured articles",
+    "featuredViewAll": "View all articles",
+    "latestTitle": "Latest updates",
+    "supportTitle": "Can't find an answer? Ask Lucien, your AI assistant.",
+    "supportLucienButton": "Ask Lucien",
+    "emptyFeatured": "Featured articles are coming soon.",
+    "emptyLatest": "No updates yet.",
+    "minRead": "min read",
+    "articlesCountTemplate": "{count} articles",
+    "indexPageTitle": "VINCIS Knowledge Center | VINCIS",
+    "indexPageDescription": "Official VINCIS knowledge hub for AI advertising, video production, brand marketing, and platform guides.",
+    "searchResultsHeadingTemplate": "Results for \"{query}\"",
+    "searchResultsCountTemplate": "{count} related articles",
+    "searchResultsEmpty": "No matching articles. Try another keyword.",
+    "categoryBackLink": "← Back to Knowledge Center",
+    "topics": [
+      {
+        "slug": "ai",
+        "title": "AI Advertising",
+        "description": "How AI is reshaping creative production and campaign velocity",
+        "iconClassName": "text-violet-600 bg-violet-50"
+      },
+      {
+        "slug": "creator-academy",
+        "title": "AI Video Production",
+        "description": "Guides from brief to finished AI-native video",
+        "iconClassName": "text-sky-600 bg-sky-50"
+      },
+      {
+        "slug": "workflow",
+        "title": "Creative Briefs",
+        "description": "Write briefs teams can actually execute",
+        "iconClassName": "text-rose-600 bg-rose-50"
+      },
+      {
+        "slug": "brand-academy",
+        "title": "Brand Marketing",
+        "description": "Positioning, distribution, and growth playbooks",
+        "iconClassName": "text-amber-600 bg-amber-50"
+      },
+      {
+        "slug": "pricing",
+        "title": "Pricing & Delivery",
+        "description": "Quotes, review rounds, and escrow payments",
+        "iconClassName": "text-emerald-600 bg-emerald-50"
+      },
+      {
+        "slug": "help-center",
+        "title": "Getting Started",
+        "description": "Onboard to VINCIS and ship your first campaign",
+        "iconClassName": "text-indigo-600 bg-indigo-50"
+      }
+    ]
+  },
+  "zh-CN": {
+    "brandLabel": "知识中心",
+    "beta": "Beta",
+    "back": "返回上一页",
+    "nav": {
+      "home": "首页",
+      "guides": "指南",
+      "cases": "案例",
+      "resources": "资源",
+      "changelog": "更新日志"
+    },
+    "guideLinks": [
+      {
+        "slug": "ai",
+        "label": "AI 广告"
+      },
+      {
+        "slug": "creator-academy",
+        "label": "AI 视频制作"
+      },
+      {
+        "slug": "workflow",
+        "label": "创意简报"
+      },
+      {
+        "slug": "brand-academy",
+        "label": "品牌营销"
+      },
+      {
+        "slug": "help-center",
+        "label": "入门指南"
+      }
+    ],
+    "caseLinks": [
+      {
+        "href": "/cases",
+        "label": "精选案例"
+      },
+      {
+        "href": "/case-studies",
+        "label": "案例研究"
+      }
+    ],
+    "heroTitle": "VINCIS 知识中心",
+    "heroSubtitle": "探索 AI 广告、创意制作与品牌营销的专业知识与最佳实践",
+    "searchPlaceholder": "搜索文章、指南、案例…",
+    "searchButton": "搜索",
+    "hotKeywordsLabel": "热门搜索",
+    "hotKeywords": [
+      "AI 广告",
+      "AI 视频制作",
+      "创意简报",
+      "品牌营销",
+      "实战案例"
+    ],
+    "topicsTitle": "浏览主题",
+    "topicsViewAll": "查看所有主题",
+    "featuredTitle": "精选文章",
+    "featuredViewAll": "查看所有文章",
+    "latestTitle": "最新更新",
+    "supportTitle": "找不到答案，问问AI助手卢西恩",
+    "supportLucienButton": "问问卢西恩",
+    "emptyFeatured": "精选文章即将发布。",
+    "emptyLatest": "暂无更新。",
+    "minRead": "分钟阅读",
+    "articlesCountTemplate": "{count} 篇文章",
+    "indexPageTitle": "VINCIS 知识中心 | VINCIS",
+    "indexPageDescription": "VINCIS 官方知识中心 — AI 广告、视频制作、品牌营销与平台指南。",
+    "searchResultsHeadingTemplate": "「{query}」的搜索结果",
+    "searchResultsCountTemplate": "{count} 篇相关文章",
+    "searchResultsEmpty": "未找到匹配文章，请尝试其他关键词。",
+    "categoryBackLink": "← 返回知识中心",
+    "topics": [
+      {
+        "slug": "ai",
+        "title": "AI 广告",
+        "description": "了解 AI 如何改变广告创意与生产流程",
+        "iconClassName": "text-violet-600 bg-violet-50"
+      },
+      {
+        "slug": "creator-academy",
+        "title": "AI 视频制作",
+        "description": "从脚本到成片的 AI 视频创作指南",
+        "iconClassName": "text-sky-600 bg-sky-50"
+      },
+      {
+        "slug": "workflow",
+        "title": "创意简报",
+        "description": "写出清晰、可执行的创意简报",
+        "iconClassName": "text-rose-600 bg-rose-50"
+      },
+      {
+        "slug": "brand-academy",
+        "title": "品牌营销",
+        "description": "品牌传播、投放与增长策略",
+        "iconClassName": "text-amber-600 bg-amber-50"
+      },
+      {
+        "slug": "pricing",
+        "title": "定价与交付",
+        "description": "透明报价、审片流程与托管付款",
+        "iconClassName": "text-emerald-600 bg-emerald-50"
+      },
+      {
+        "slug": "help-center",
+        "title": "入门指南",
+        "description": "快速上手 VINCIS 平台与协作流程",
+        "iconClassName": "text-indigo-600 bg-indigo-50"
+      }
+    ]
+  },
+  "zh-TW": {
+    "brandLabel": "知識中心",
+    "beta": "Beta",
+    "back": "返回上一頁",
+    "nav": {
+      "home": "首頁",
+      "guides": "指南",
+      "cases": "案例",
+      "resources": "資源",
+      "changelog": "更新日誌"
+    },
+    "guideLinks": [
+      {
+        "slug": "ai",
+        "label": "AI 廣告"
+      },
+      {
+        "slug": "creator-academy",
+        "label": "AI 影片製作"
+      },
+      {
+        "slug": "workflow",
+        "label": "創意簡報"
+      },
+      {
+        "slug": "brand-academy",
+        "label": "品牌行銷"
+      },
+      {
+        "slug": "help-center",
+        "label": "入門指南"
+      }
+    ],
+    "caseLinks": [
+      {
+        "href": "/cases",
+        "label": "精選案例"
+      },
+      {
+        "href": "/case-studies",
+        "label": "案例研究"
+      }
+    ],
+    "heroTitle": "VINCIS 知識中心",
+    "heroSubtitle": "探索 AI 廣告、創意製作與品牌行銷的專業知識與最佳實踐",
+    "searchPlaceholder": "搜尋文章、指南、案例…",
+    "searchButton": "搜尋",
+    "hotKeywordsLabel": "熱門搜尋",
+    "hotKeywords": [
+      "AI 廣告",
+      "AI 影片製作",
+      "創意簡報",
+      "品牌行銷",
+      "實戰案例"
+    ],
+    "topicsTitle": "瀏覽主題",
+    "topicsViewAll": "查看所有主題",
+    "featuredTitle": "精選文章",
+    "featuredViewAll": "查看所有文章",
+    "latestTitle": "最新更新",
+    "supportTitle": "找不到答案，問問 AI 助手盧西恩",
+    "supportLucienButton": "問問盧西恩",
+    "emptyFeatured": "精選文章即將發布。",
+    "emptyLatest": "暫無更新。",
+    "minRead": "分鐘閱讀",
+    "articlesCountTemplate": "{count} 篇文章",
+    "indexPageTitle": "VINCIS 知識中心 | VINCIS",
+    "indexPageDescription": "VINCIS 官方知識中心 — AI 廣告、影片製作、品牌行銷與平台指南。",
+    "searchResultsHeadingTemplate": "「{query}」的搜尋結果",
+    "searchResultsCountTemplate": "{count} 篇相關文章",
+    "searchResultsEmpty": "未找到匹配文章，請嘗試其他關鍵詞。",
+    "categoryBackLink": "← 返回知識中心",
+    "topics": [
+      {
+        "slug": "ai",
+        "title": "AI 廣告",
+        "description": "了解 AI 如何改變廣告創意與生產流程",
+        "iconClassName": "text-violet-600 bg-violet-50"
+      },
+      {
+        "slug": "creator-academy",
+        "title": "AI 影片製作",
+        "description": "從腳本到成片的 AI 影片創作指南",
+        "iconClassName": "text-sky-600 bg-sky-50"
+      },
+      {
+        "slug": "workflow",
+        "title": "創意簡報",
+        "description": "寫出清晰、可執行的創意簡報",
+        "iconClassName": "text-rose-600 bg-rose-50"
+      },
+      {
+        "slug": "brand-academy",
+        "title": "品牌行銷",
+        "description": "品牌傳播、投放與增長策略",
+        "iconClassName": "text-amber-600 bg-amber-50"
+      },
+      {
+        "slug": "pricing",
+        "title": "定價與交付",
+        "description": "透明報價、審片流程與托管付款",
+        "iconClassName": "text-emerald-600 bg-emerald-50"
+      },
+      {
+        "slug": "help-center",
+        "title": "入門指南",
+        "description": "快速上手 VINCIS 平台與協作流程",
+        "iconClassName": "text-indigo-600 bg-indigo-50"
+      }
+    ]
+  },
+  "ja": {
+    "brandLabel": "ナレッジセンター",
+    "beta": "ベータ",
+    "back": "戻る",
+    "nav": {
+      "home": "ホーム",
+      "guides": "ガイド",
+      "cases": "作品",
+      "resources": "リソース",
+      "changelog": "変更履歴"
+    },
+    "guideLinks": [
+      {
+        "slug": "ai",
+        "label": "AI広告"
+      },
+      {
+        "slug": "creator-academy",
+        "label": "AIビデオ"
+      },
+      {
+        "slug": "workflow",
+        "label": "クリエイティブブリーフ"
+      },
+      {
+        "slug": "brand-academy",
+        "label": "ブランドマーケティング"
+      },
+      {
+        "slug": "help-center",
+        "label": "はじめに"
+      }
+    ],
+    "caseLinks": [
+      {
+        "href": "/cases",
+        "label": "選ばれた作品"
+      },
+      {
+        "href": "/case-studies",
+        "label": "ケーススタディ"
+      }
+    ],
+    "heroTitle": "VINCISナレッジセンター",
+    "heroSubtitle": "AI広告、クリエイティブ制作、ブランドマーケティングに関するプロフェッショナルガイドを探る",
+    "searchPlaceholder": "記事、ガイド、プレイブックを検索…",
+    "searchButton": "検索",
+    "hotKeywordsLabel": "人気",
+    "hotKeywords": [
+      "AI広告",
+      "AIビデオ",
+      "クリエイティブブリーフ",
+      "ブランドマーケティング",
+      "ケーススタディ"
+    ],
+    "topicsTitle": "トピックをブラウズ",
+    "topicsViewAll": "すべてのトピックを見る",
+    "featuredTitle": "特集記事",
+    "featuredViewAll": "すべての記事を見る",
+    "latestTitle": "最新の更新",
+    "supportTitle": "答えが見つかりませんか？あなたのAIアシスタント、ルシアンに聞いてみてください。",
+    "supportLucienButton": "ルシアンに聞く",
+    "emptyFeatured": "特集記事は近日公開予定です。",
+    "emptyLatest": "まだ更新はありません。",
+    "minRead": "分で読む",
+    "articlesCountTemplate": "{count} 記事",
+    "indexPageTitle": "VINCISナレッジセンター | VINCIS",
+    "indexPageDescription": "AI広告、ビデオ制作、ブランドマーケティング、プラットフォームガイドの公式VINCISナレッジハブ。",
+    "searchResultsHeadingTemplate": "\"{query}\" の結果",
+    "searchResultsCountTemplate": "{count} 関連記事",
+    "searchResultsEmpty": "一致する記事はありません。別のキーワードを試してください。",
+    "categoryBackLink": "← ナレッジセンターに戻る",
+    "topics": [
+      {
+        "slug": "ai",
+        "title": "AI広告",
+        "description": "AIがクリエイティブ制作とキャンペーンの速度をどのように変革しているか",
+        "iconClassName": "text-violet-600 bg-violet-50"
+      },
+      {
+        "slug": "creator-academy",
+        "title": "AIビデオ制作",
+        "description": "ブリーフから完成したAIネイティブビデオまでのガイド",
+        "iconClassName": "text-sky-600 bg-sky-50"
+      },
+      {
+        "slug": "workflow",
+        "title": "クリエイティブブリーフ",
+        "description": "チームが実行できるブリーフを書く",
+        "iconClassName": "text-rose-600 bg-rose-50"
+      },
+      {
+        "slug": "brand-academy",
+        "title": "ブランドマーケティング",
+        "description": "ポジショニング、配信、成長のプレイブック",
+        "iconClassName": "text-amber-600 bg-amber-50"
+      },
+      {
+        "slug": "pricing",
+        "title": "価格設定と納品",
+        "description": "見積もり、レビューラウンド、エスクロー支払い",
+        "iconClassName": "text-emerald-600 bg-emerald-50"
+      },
+      {
+        "slug": "help-center",
+        "title": "はじめに",
+        "description": "VINCISにオンボードし、最初のキャンペーンを出荷する",
+        "iconClassName": "text-indigo-600 bg-indigo-50"
+      }
+    ]
+  },
+  "ms": {
+    "brandLabel": "Pusat Pengetahuan",
+    "beta": "Beta",
+    "back": "Kembali",
+    "nav": {
+      "home": "Laman Utama",
+      "guides": "Panduan",
+      "cases": "Kerja",
+      "resources": "Sumber",
+      "changelog": "Rekod Perubahan"
+    },
+    "guideLinks": [
+      {
+        "slug": "ai",
+        "label": "Pengiklanan AI"
+      },
+      {
+        "slug": "creator-academy",
+        "label": "Video AI"
+      },
+      {
+        "slug": "workflow",
+        "label": "Brief Kreatif"
+      },
+      {
+        "slug": "brand-academy",
+        "label": "Pemasaran Jenama"
+      },
+      {
+        "slug": "help-center",
+        "label": "Memulakan"
+      }
+    ],
+    "caseLinks": [
+      {
+        "href": "/cases",
+        "label": "Kerja Terpilih"
+      },
+      {
+        "href": "/case-studies",
+        "label": "Kajian Kes"
+      }
+    ],
+    "heroTitle": "Pusat Pengetahuan VINCIS",
+    "heroSubtitle": "Jelajahi panduan profesional tentang pengiklanan AI, pengeluaran kreatif, dan pemasaran jenama",
+    "searchPlaceholder": "Cari artikel, panduan, dan buku panduan…",
+    "searchButton": "Cari",
+    "hotKeywordsLabel": "Popular",
+    "hotKeywords": [
+      "pengiklanan AI",
+      "video AI",
+      "brief kreatif",
+      "pemasaran jenama",
+      "kajian kes"
+    ],
+    "topicsTitle": "Lihat topik",
+    "topicsViewAll": "Lihat semua topik",
+    "featuredTitle": "Artikel Pilihan",
+    "featuredViewAll": "Lihat semua artikel",
+    "latestTitle": "Kemaskini Terkini",
+    "supportTitle": "Tidak dapat mencari jawapan? Tanya Lucien, pembantu AI anda.",
+    "supportLucienButton": "Tanya Lucien",
+    "emptyFeatured": "Artikel pilihan akan datang tidak lama lagi.",
+    "emptyLatest": "Tiada kemaskini lagi.",
+    "minRead": "min baca",
+    "articlesCountTemplate": "{count} artikel",
+    "indexPageTitle": "Pusat Pengetahuan VINCIS | VINCIS",
+    "indexPageDescription": "Pusat pengetahuan rasmi VINCIS untuk pengiklanan AI, pengeluaran video, pemasaran jenama, dan panduan platform.",
+    "searchResultsHeadingTemplate": "Keputusan untuk \"{query}\"",
+    "searchResultsCountTemplate": "{count} artikel berkaitan",
+    "searchResultsEmpty": "Tiada artikel yang sepadan. Cuba kata kunci lain.",
+    "categoryBackLink": "← Kembali ke Pusat Pengetahuan",
+    "topics": [
+      {
+        "slug": "ai",
+        "title": "Pengiklanan AI",
+        "description": "Bagaimana AI mengubah pengeluaran kreatif dan kelajuan kempen",
+        "iconClassName": "text-violet-600 bg-violet-50"
+      },
+      {
+        "slug": "creator-academy",
+        "title": "Pengeluaran Video AI",
+        "description": "Panduan dari brief hingga video asli AI yang siap",
+        "iconClassName": "text-sky-600 bg-sky-50"
+      },
+      {
+        "slug": "workflow",
+        "title": "Brief Kreatif",
+        "description": "Tulis brief yang boleh dilaksanakan oleh pasukan",
+        "iconClassName": "text-rose-600 bg-rose-50"
+      },
+      {
+        "slug": "brand-academy",
+        "title": "Pemasaran Jenama",
+        "description": "Penempatan, pengedaran, dan buku panduan pertumbuhan",
+        "iconClassName": "text-amber-600 bg-amber-50"
+      },
+      {
+        "slug": "pricing",
+        "title": "Harga & Penghantaran",
+        "description": "Sebutharga, pusingan semakan, dan pembayaran escrow",
+        "iconClassName": "text-emerald-600 bg-emerald-50"
+      },
+      {
+        "slug": "help-center",
+        "title": "Memulakan",
+        "description": "Daftar ke VINCIS dan hantar kempen pertama anda",
+        "iconClassName": "text-indigo-600 bg-indigo-50"
+      }
+    ]
+  },
+  "ko": {
+    "brandLabel": "지식 센터",
+    "beta": "베타",
+    "back": "뒤로",
+    "nav": {
+      "home": "홈",
+      "guides": "가이드",
+      "cases": "작업",
+      "resources": "리소스",
+      "changelog": "변경 로그"
+    },
+    "guideLinks": [
+      {
+        "slug": "ai",
+        "label": "AI 광고"
+      },
+      {
+        "slug": "creator-academy",
+        "label": "AI 비디오"
+      },
+      {
+        "slug": "workflow",
+        "label": "크리에이티브 브리프"
+      },
+      {
+        "slug": "brand-academy",
+        "label": "브랜드 마케팅"
+      },
+      {
+        "slug": "help-center",
+        "label": "시작하기"
+      }
+    ],
+    "caseLinks": [
+      {
+        "href": "/cases",
+        "label": "선택된 작업"
+      },
+      {
+        "href": "/case-studies",
+        "label": "사례 연구"
+      }
+    ],
+    "heroTitle": "VINCIS 지식 센터",
+    "heroSubtitle": "AI 광고, 크리에이티브 제작 및 브랜드 마케팅에 대한 전문 가이드를 탐색하세요.",
+    "searchPlaceholder": "기사, 가이드 및 플레이북 검색…",
+    "searchButton": "검색",
+    "hotKeywordsLabel": "인기",
+    "hotKeywords": [
+      "AI 광고",
+      "AI 비디오",
+      "크리에이티브 브리프",
+      "브랜드 마케팅",
+      "사례 연구"
+    ],
+    "topicsTitle": "주제 탐색",
+    "topicsViewAll": "모든 주제 보기",
+    "featuredTitle": "추천 기사",
+    "featuredViewAll": "모든 기사 보기",
+    "latestTitle": "최신 업데이트",
+    "supportTitle": "답변을 찾을 수 없나요? AI 어시스턴트 루시앙에게 물어보세요.",
+    "supportLucienButton": "루시앙에게 물어보기",
+    "emptyFeatured": "추천 기사가 곧 제공됩니다.",
+    "emptyLatest": "아직 업데이트가 없습니다.",
+    "minRead": "분 읽기",
+    "articlesCountTemplate": "{count} 기사",
+    "indexPageTitle": "VINCIS 지식 센터 | VINCIS",
+    "indexPageDescription": "AI 광고, 비디오 제작, 브랜드 마케팅 및 플랫폼 가이드에 대한 공식 VINCIS 지식 허브.",
+    "searchResultsHeadingTemplate": "\"{query}\"에 대한 결과",
+    "searchResultsCountTemplate": "{count} 관련 기사",
+    "searchResultsEmpty": "일치하는 기사가 없습니다. 다른 키워드를 시도해 보세요.",
+    "categoryBackLink": "← 지식 센터로 돌아가기",
+    "topics": [
+      {
+        "slug": "ai",
+        "title": "AI 광고",
+        "description": "AI가 크리에이티브 제작 및 캠페인 속도를 어떻게 변화시키고 있는지",
+        "iconClassName": "text-violet-600 bg-violet-50"
+      },
+      {
+        "slug": "creator-academy",
+        "title": "AI 비디오 제작",
+        "description": "브리프에서 완성된 AI 네이티브 비디오까지의 가이드",
+        "iconClassName": "text-sky-600 bg-sky-50"
+      },
+      {
+        "slug": "workflow",
+        "title": "크리에이티브 브리프",
+        "description": "팀이 실제로 실행할 수 있는 브리프 작성",
+        "iconClassName": "text-rose-600 bg-rose-50"
+      },
+      {
+        "slug": "brand-academy",
+        "title": "브랜드 마케팅",
+        "description": "포지셔닝, 배급 및 성장 플레이북",
+        "iconClassName": "text-amber-600 bg-amber-50"
+      },
+      {
+        "slug": "pricing",
+        "title": "가격 및 배송",
+        "description": "견적, 검토 라운드 및 에스크로 결제",
+        "iconClassName": "text-emerald-600 bg-emerald-50"
+      },
+      {
+        "slug": "help-center",
+        "title": "시작하기",
+        "description": "VINCIS에 온보딩하고 첫 캠페인을 진행하세요.",
+        "iconClassName": "text-indigo-600 bg-indigo-50"
+      }
+    ]
+  },
+  "th": {
+    "brandLabel": "ศูนย์ความรู้",
+    "beta": "เบต้า",
+    "back": "กลับ",
+    "nav": {
+      "home": "หน้าแรก",
+      "guides": "คู่มือ",
+      "cases": "ผลงาน",
+      "resources": "ทรัพยากร",
+      "changelog": "บันทึกการเปลี่ยนแปลง"
+    },
+    "guideLinks": [
+      {
+        "slug": "ai",
+        "label": "การโฆษณาด้วย AI"
+      },
+      {
+        "slug": "creator-academy",
+        "label": "วิดีโอ AI"
+      },
+      {
+        "slug": "workflow",
+        "label": "คำชี้แจงสร้างสรรค์"
+      },
+      {
+        "slug": "brand-academy",
+        "label": "การตลาดแบรนด์"
+      },
+      {
+        "slug": "help-center",
+        "label": "เริ่มต้นใช้งาน"
+      }
+    ],
+    "caseLinks": [
+      {
+        "href": "/cases",
+        "label": "ผลงานที่เลือก"
+      },
+      {
+        "href": "/case-studies",
+        "label": "กรณีศึกษา"
+      }
+    ],
+    "heroTitle": "ศูนย์ความรู้ VINCIS",
+    "heroSubtitle": "สำรวจคู่มือมืออาชีพเกี่ยวกับการโฆษณาด้วย AI, การผลิตสร้างสรรค์, และการตลาดแบรนด์",
+    "searchPlaceholder": "ค้นหาบทความ, คู่มือ, และคู่มือการใช้งาน…",
+    "searchButton": "ค้นหา",
+    "hotKeywordsLabel": "ยอดนิยม",
+    "hotKeywords": [
+      "การโฆษณาด้วย AI",
+      "วิดีโอ AI",
+      "คำชี้แจงสร้างสรรค์",
+      "การตลาดแบรนด์",
+      "กรณีศึกษา"
+    ],
+    "topicsTitle": "เรียกดูหัวข้อ",
+    "topicsViewAll": "ดูหัวข้อทั้งหมด",
+    "featuredTitle": "บทความที่โดดเด่น",
+    "featuredViewAll": "ดูบทความทั้งหมด",
+    "latestTitle": "อัปเดตล่าสุด",
+    "supportTitle": "ไม่พบคำตอบ? ถาม Lucien ผู้ช่วย AI ของคุณ.",
+    "supportLucienButton": "ถาม Lucien",
+    "emptyFeatured": "บทความที่โดดเด่นจะมาในเร็ว ๆ นี้.",
+    "emptyLatest": "ยังไม่มีการอัปเดต.",
+    "minRead": "นาทีในการอ่าน",
+    "articlesCountTemplate": "{count} บทความ",
+    "indexPageTitle": "ศูนย์ความรู้ VINCIS | VINCIS",
+    "indexPageDescription": "ศูนย์ความรู้ทางการของ VINCIS สำหรับการโฆษณาด้วย AI, การผลิตวิดีโอ, การตลาดแบรนด์, และคู่มือแพลตฟอร์ม.",
+    "searchResultsHeadingTemplate": "ผลลัพธ์สำหรับ \"{query}\"",
+    "searchResultsCountTemplate": "{count} บทความที่เกี่ยวข้อง",
+    "searchResultsEmpty": "ไม่พบบทความที่ตรงกัน ลองใช้คำค้นหาอื่น.",
+    "categoryBackLink": "← กลับไปที่ศูนย์ความรู้",
+    "topics": [
+      {
+        "slug": "ai",
+        "title": "การโฆษณาด้วย AI",
+        "description": "AI กำลังเปลี่ยนแปลงการผลิตสร้างสรรค์และความเร็วของแคมเปญ",
+        "iconClassName": "text-violet-600 bg-violet-50"
+      },
+      {
+        "slug": "creator-academy",
+        "title": "การผลิตวิดีโอ AI",
+        "description": "คู่มือจากคำชี้แจงจนถึงวิดีโอ AI ที่เสร็จสมบูรณ์",
+        "iconClassName": "text-sky-600 bg-sky-50"
+      },
+      {
+        "slug": "workflow",
+        "title": "คำชี้แจงสร้างสรรค์",
+        "description": "เขียนคำชี้แจงที่ทีมสามารถดำเนินการได้จริง",
+        "iconClassName": "text-rose-600 bg-rose-50"
+      },
+      {
+        "slug": "brand-academy",
+        "title": "การตลาดแบรนด์",
+        "description": "การวางตำแหน่ง, การกระจาย, และคู่มือการเติบโต",
+        "iconClassName": "text-amber-600 bg-amber-50"
+      },
+      {
+        "slug": "pricing",
+        "title": "การกำหนดราคา & การจัดส่ง",
+        "description": "การเสนอราคา, รอบการตรวจสอบ, และการชำระเงินผ่านเอสโครว์",
+        "iconClassName": "text-emerald-600 bg-emerald-50"
+      },
+      {
+        "slug": "help-center",
+        "title": "เริ่มต้นใช้งาน",
+        "description": "เข้าร่วม VINCIS และส่งแคมเปญแรกของคุณ",
+        "iconClassName": "text-indigo-600 bg-indigo-50"
+      }
+    ]
+  },
+  "km": {
+    "brandLabel": "មជ្ឈមណ្ឌលចំណេះដឹង",
+    "beta": "ប៉ុនប៉ង",
+    "back": "ត្រឡប់ក្រោយ",
+    "nav": {
+      "home": "ទំព័រដើម",
+      "guides": "មគ្គុទេសក៍",
+      "cases": "ការងារ",
+      "resources": "ធនធាន",
+      "changelog": "កំណែប្រែ"
+    },
+    "guideLinks": [
+      {
+        "slug": "ai",
+        "label": "ការផ្សាយពាណិជ្ជកម្ម AI"
+      },
+      {
+        "slug": "creator-academy",
+        "label": "វីដេអូ AI"
+      },
+      {
+        "slug": "workflow",
+        "label": "សេចក្តីសង្ខេបច្នៃប្រឌិត"
+      },
+      {
+        "slug": "brand-academy",
+        "label": "ទីផ្សារម៉ាក"
+      },
+      {
+        "slug": "help-center",
+        "label": "ចាប់ផ្តើមប្រើ"
+      }
+    ],
+    "caseLinks": [
+      {
+        "href": "/cases",
+        "label": "ការងារដែលបានជ្រើសរើស"
+      },
+      {
+        "href": "/case-studies",
+        "label": "ការសិក្សាករណី"
+      }
+    ],
+    "heroTitle": "មជ្ឈមណ្ឌលចំណេះដឹង VINCIS",
+    "heroSubtitle": "ស្វែងរកមគ្គុទេសក៍វិជ្ជាជីវៈអំពីការផ្សាយពាណិជ្ជកម្ម AI, ការផលិតច្នៃប្រឌិត និងទីផ្សារម៉ាក",
+    "searchPlaceholder": "ស្វែងរកអត្ថបទ, មគ្គុទេសក៍ និងសៀវភៅលេង…",
+    "searchButton": "ស្វែងរក",
+    "hotKeywordsLabel": "ពេញនិយម",
+    "hotKeywords": [
+      "ការផ្សាយពាណិជ្ជកម្ម AI",
+      "វីដេអូ AI",
+      "សេចក្តីសង្ខេបច្នៃប្រឌិត",
+      "ទីផ្សារម៉ាក",
+      "ការសិក្សាករណី"
+    ],
+    "topicsTitle": "ស្វែងរកប្រធានបទ",
+    "topicsViewAll": "មើលប្រធានបទទាំងអស់",
+    "featuredTitle": "អត្ថបទដែលបានលេចឡើង",
+    "featuredViewAll": "មើលអត្ថបទទាំងអស់",
+    "latestTitle": "ព័ត៌មានថ្មីៗ",
+    "supportTitle": "មិនអាចស្វែងរកចម្លើយបានទេ? សួរទៅ Lucien, ជំនួយក្រុមហ៊ុន AI របស់អ្នក។",
+    "supportLucienButton": "សួរទៅ Lucien",
+    "emptyFeatured": "អត្ថបទដែលបានលេចឡើងកំពុងមកដល់ឆាប់ៗនេះ។",
+    "emptyLatest": "មិនមានព័ត៌មានថ្មីទេ។",
+    "minRead": "នាទីអាន",
+    "articlesCountTemplate": "{count} អត្ថបទ",
+    "indexPageTitle": "មជ្ឈមណ្ឌលចំណេះដឹង VINCIS | VINCIS",
+    "indexPageDescription": "មជ្ឈមណ្ឌលចំណេះដឹងផ្លូវការរបស់ VINCIS សម្រាប់ការផ្សាយពាណិជ្ជកម្ម AI, ការផលិតវីដេអូ, ទីផ្សារម៉ាក និងមគ្គុទេសក៍វេទិកា។",
+    "searchResultsHeadingTemplate": "លទ្ធផលសម្រាប់ \"{query}\"",
+    "searchResultsCountTemplate": "{count} អត្ថបទដែលពាក់ព័ន្ធ",
+    "searchResultsEmpty": "មិនមានអត្ថបទដែលសមស្របទេ។ សូមព្យាយាមពាក្យគន្លឹះផ្សេងទៀត។",
+    "categoryBackLink": "← ត្រឡប់ទៅមជ្ឈមណ្ឌលចំណេះដឹង",
+    "topics": [
+      {
+        "slug": "ai",
+        "title": "ការផ្សាយពាណិជ្ជកម្ម AI",
+        "description": "របៀបដែល AI កំពុងបំលែងការផលិតច្នៃប្រឌិត និងល្បឿនយុទ្ធនាការ",
+        "iconClassName": "text-violet-600 bg-violet-50"
+      },
+      {
+        "slug": "creator-academy",
+        "title": "ការផលិតវីដេអូ AI",
+        "description": "មគ្គុទេសក៍ពីសេចក្តីសង្ខេបដល់វីដេអូ AI ដែលបានបញ្ចប់",
+        "iconClassName": "text-sky-600 bg-sky-50"
+      },
+      {
+        "slug": "workflow",
+        "title": "សេចក្តីសង្ខេបច្នៃប្រឌិត",
+        "description": "សរសេរសេចក្តីសង្ខេបដែលក្រុមអាចអនុវត្តបាន",
+        "iconClassName": "text-rose-600 bg-rose-50"
+      },
+      {
+        "slug": "brand-academy",
+        "title": "ទីផ្សារម៉ាក",
+        "description": "ការកំណត់ទីតាំង, ការចែកចាយ និងសៀវភៅលេងសម្រាប់ការលូតលាស់",
+        "iconClassName": "text-amber-600 bg-amber-50"
+      },
+      {
+        "slug": "pricing",
+        "title": "តម្លៃ និងការដឹកជញ្ជូន",
+        "description": "ការបញ្ជាក់, រដូវកាលពិនិត្យ និងការទូទាត់ escrow",
+        "iconClassName": "text-emerald-600 bg-emerald-50"
+      },
+      {
+        "slug": "help-center",
+        "title": "ចាប់ផ្តើមប្រើ",
+        "description": "ចូលរួមជាមួយ VINCIS និងដឹកជញ្ជូនយុទ្ធនាការដំបូងរបស់អ្នក",
+        "iconClassName": "text-indigo-600 bg-indigo-50"
+      }
+    ]
+  },
+  "vi": {
+    "brandLabel": "Trung Tâm Kiến Thức",
+    "beta": "Beta",
+    "back": "Quay lại",
+    "nav": {
+      "home": "Trang chủ",
+      "guides": "Hướng dẫn",
+      "cases": "Công việc",
+      "resources": "Tài nguyên",
+      "changelog": "Nhật ký thay đổi"
+    },
+    "guideLinks": [
+      {
+        "slug": "ai",
+        "label": "Quảng cáo AI"
+      },
+      {
+        "slug": "creator-academy",
+        "label": "Video AI"
+      },
+      {
+        "slug": "workflow",
+        "label": "Tóm tắt sáng tạo"
+      },
+      {
+        "slug": "brand-academy",
+        "label": "Tiếp thị Thương hiệu"
+      },
+      {
+        "slug": "help-center",
+        "label": "Bắt đầu"
+      }
+    ],
+    "caseLinks": [
+      {
+        "href": "/cases",
+        "label": "Công việc đã chọn"
+      },
+      {
+        "href": "/case-studies",
+        "label": "Nghiên cứu trường hợp"
+      }
+    ],
+    "heroTitle": "Trung Tâm Kiến Thức VINCIS",
+    "heroSubtitle": "Khám phá các hướng dẫn chuyên nghiệp về quảng cáo AI, sản xuất sáng tạo và tiếp thị thương hiệu",
+    "searchPlaceholder": "Tìm kiếm bài viết, hướng dẫn và sách hướng dẫn…",
+    "searchButton": "Tìm kiếm",
+    "hotKeywordsLabel": "Phổ biến",
+    "hotKeywords": [
+      "quảng cáo AI",
+      "video AI",
+      "tóm tắt sáng tạo",
+      "tiếp thị thương hiệu",
+      "nghiên cứu trường hợp"
+    ],
+    "topicsTitle": "Duyệt các chủ đề",
+    "topicsViewAll": "Xem tất cả các chủ đề",
+    "featuredTitle": "Bài viết nổi bật",
+    "featuredViewAll": "Xem tất cả bài viết",
+    "latestTitle": "Cập nhật mới nhất",
+    "supportTitle": "Không tìm thấy câu trả lời? Hỏi Lucien, trợ lý AI của bạn.",
+    "supportLucienButton": "Hỏi Lucien",
+    "emptyFeatured": "Bài viết nổi bật sẽ sớm có.",
+    "emptyLatest": "Chưa có cập nhật nào.",
+    "minRead": "phút đọc",
+    "articlesCountTemplate": "{count} bài viết",
+    "indexPageTitle": "Trung Tâm Kiến Thức VINCIS | VINCIS",
+    "indexPageDescription": "Trung tâm kiến thức chính thức của VINCIS về quảng cáo AI, sản xuất video, tiếp thị thương hiệu và hướng dẫn nền tảng.",
+    "searchResultsHeadingTemplate": "Kết quả cho \"{query}\"",
+    "searchResultsCountTemplate": "{count} bài viết liên quan",
+    "searchResultsEmpty": "Không có bài viết nào phù hợp. Thử từ khóa khác.",
+    "categoryBackLink": "← Quay lại Trung Tâm Kiến Thức",
+    "topics": [
+      {
+        "slug": "ai",
+        "title": "Quảng cáo AI",
+        "description": "Cách AI đang định hình lại sản xuất sáng tạo và tốc độ chiến dịch",
+        "iconClassName": "text-violet-600 bg-violet-50"
+      },
+      {
+        "slug": "creator-academy",
+        "title": "Sản xuất Video AI",
+        "description": "Hướng dẫn từ tóm tắt đến video AI hoàn chỉnh",
+        "iconClassName": "text-sky-600 bg-sky-50"
+      },
+      {
+        "slug": "workflow",
+        "title": "Tóm tắt Sáng tạo",
+        "description": "Viết tóm tắt mà các đội có thể thực hiện",
+        "iconClassName": "text-rose-600 bg-rose-50"
+      },
+      {
+        "slug": "brand-academy",
+        "title": "Tiếp thị Thương hiệu",
+        "description": "Các sách hướng dẫn về định vị, phân phối và tăng trưởng",
+        "iconClassName": "text-amber-600 bg-amber-50"
+      },
+      {
+        "slug": "pricing",
+        "title": "Giá cả & Giao hàng",
+        "description": "Báo giá, vòng xem xét và thanh toán ký quỹ",
+        "iconClassName": "text-emerald-600 bg-emerald-50"
+      },
+      {
+        "slug": "help-center",
+        "title": "Bắt đầu",
+        "description": "Đăng ký vào VINCIS và gửi chiến dịch đầu tiên của bạn",
+        "iconClassName": "text-indigo-600 bg-indigo-50"
+      }
+    ]
+  },
+  "fr": {
+    "brandLabel": "Centre de Connaissances",
+    "beta": "Bêta",
+    "back": "Retour",
+    "nav": {
+      "home": "Accueil",
+      "guides": "Guides",
+      "cases": "Travaux",
+      "resources": "Ressources",
+      "changelog": "Journal des modifications"
+    },
+    "guideLinks": [
+      {
+        "slug": "ai",
+        "label": "Publicité AI"
+      },
+      {
+        "slug": "creator-academy",
+        "label": "Vidéo AI"
+      },
+      {
+        "slug": "workflow",
+        "label": "Briefs Créatifs"
+      },
+      {
+        "slug": "brand-academy",
+        "label": "Marketing de Marque"
+      },
+      {
+        "slug": "help-center",
+        "label": "Commencer"
+      }
+    ],
+    "caseLinks": [
+      {
+        "href": "/cases",
+        "label": "Travaux sélectionnés"
+      },
+      {
+        "href": "/case-studies",
+        "label": "Études de cas"
+      }
+    ],
+    "heroTitle": "Centre de Connaissances VINCIS",
+    "heroSubtitle": "Explorez des guides professionnels sur la publicité AI, la production créative et le marketing de marque",
+    "searchPlaceholder": "Rechercher des articles, des guides et des playbooks…",
+    "searchButton": "Rechercher",
+    "hotKeywordsLabel": "Populaire",
+    "hotKeywords": [
+      "publicité AI",
+      "vidéo AI",
+      "brief créatif",
+      "marketing de marque",
+      "études de cas"
+    ],
+    "topicsTitle": "Parcourir les sujets",
+    "topicsViewAll": "Voir tous les sujets",
+    "featuredTitle": "Articles en vedette",
+    "featuredViewAll": "Voir tous les articles",
+    "latestTitle": "Dernières mises à jour",
+    "supportTitle": "Vous ne trouvez pas de réponse ? Demandez à Lucien, votre assistant AI.",
+    "supportLucienButton": "Demandez à Lucien",
+    "emptyFeatured": "Des articles en vedette arrivent bientôt.",
+    "emptyLatest": "Pas encore de mises à jour.",
+    "minRead": "min de lecture",
+    "articlesCountTemplate": "{count} articles",
+    "indexPageTitle": "Centre de Connaissances VINCIS | VINCIS",
+    "indexPageDescription": "Centre de connaissances officiel VINCIS pour la publicité AI, la production vidéo, le marketing de marque et les guides de la plateforme.",
+    "searchResultsHeadingTemplate": "Résultats pour \"{query}\"",
+    "searchResultsCountTemplate": "{count} articles liés",
+    "searchResultsEmpty": "Aucun article correspondant. Essayez un autre mot-clé.",
+    "categoryBackLink": "← Retour au Centre de Connaissances",
+    "topics": [
+      {
+        "slug": "ai",
+        "title": "Publicité AI",
+        "description": "Comment l'IA redéfinit la production créative et la vitesse des campagnes",
+        "iconClassName": "text-violet-600 bg-violet-50"
+      },
+      {
+        "slug": "creator-academy",
+        "title": "Production Vidéo AI",
+        "description": "Guides du brief à la vidéo AI terminée",
+        "iconClassName": "text-sky-600 bg-sky-50"
+      },
+      {
+        "slug": "workflow",
+        "title": "Briefs Créatifs",
+        "description": "Rédigez des briefs que les équipes peuvent réellement exécuter",
+        "iconClassName": "text-rose-600 bg-rose-50"
+      },
+      {
+        "slug": "brand-academy",
+        "title": "Marketing de Marque",
+        "description": "Positionnement, distribution et playbooks de croissance",
+        "iconClassName": "text-amber-600 bg-amber-50"
+      },
+      {
+        "slug": "pricing",
+        "title": "Tarification & Livraison",
+        "description": "Devis, tours de révision et paiements en séquestre",
+        "iconClassName": "text-emerald-600 bg-emerald-50"
+      },
+      {
+        "slug": "help-center",
+        "title": "Commencer",
+        "description": "Intégrez-vous à VINCIS et lancez votre première campagne",
+        "iconClassName": "text-indigo-600 bg-indigo-50"
+      }
+    ]
+  },
+  "es": {
+    "brandLabel": "Centro de Conocimiento",
+    "beta": "Beta",
+    "back": "Atrás",
+    "nav": {
+      "home": "Inicio",
+      "guides": "Guías",
+      "cases": "Trabajo",
+      "resources": "Recursos",
+      "changelog": "Registro de cambios"
+    },
+    "guideLinks": [
+      {
+        "slug": "ai",
+        "label": "Publicidad AI"
+      },
+      {
+        "slug": "creator-academy",
+        "label": "Video AI"
+      },
+      {
+        "slug": "workflow",
+        "label": "Briefs Creativos"
+      },
+      {
+        "slug": "brand-academy",
+        "label": "Marketing de Marca"
+      },
+      {
+        "slug": "help-center",
+        "label": "Introducción"
+      }
+    ],
+    "caseLinks": [
+      {
+        "href": "/cases",
+        "label": "Trabajo seleccionado"
+      },
+      {
+        "href": "/case-studies",
+        "label": "Estudios de caso"
+      }
+    ],
+    "heroTitle": "Centro de Conocimiento VINCIS",
+    "heroSubtitle": "Explora guías profesionales sobre publicidad AI, producción creativa y marketing de marca",
+    "searchPlaceholder": "Buscar artículos, guías y manuales…",
+    "searchButton": "Buscar",
+    "hotKeywordsLabel": "Popular",
+    "hotKeywords": [
+      "publicidad AI",
+      "video AI",
+      "brief creativo",
+      "marketing de marca",
+      "estudios de caso"
+    ],
+    "topicsTitle": "Explorar temas",
+    "topicsViewAll": "Ver todos los temas",
+    "featuredTitle": "Artículos destacados",
+    "featuredViewAll": "Ver todos los artículos",
+    "latestTitle": "Últimas actualizaciones",
+    "supportTitle": "¿No puedes encontrar una respuesta? Pregunta a Lucien, tu asistente AI.",
+    "supportLucienButton": "Preguntar a Lucien",
+    "emptyFeatured": "Los artículos destacados llegarán pronto.",
+    "emptyLatest": "No hay actualizaciones aún.",
+    "minRead": "min de lectura",
+    "articlesCountTemplate": "{count} artículos",
+    "indexPageTitle": "Centro de Conocimiento VINCIS | VINCIS",
+    "indexPageDescription": "Centro oficial de conocimiento VINCIS para publicidad AI, producción de video, marketing de marca y guías de la plataforma.",
+    "searchResultsHeadingTemplate": "Resultados para \"{query}\"",
+    "searchResultsCountTemplate": "{count} artículos relacionados",
+    "searchResultsEmpty": "No hay artículos coincidentes. Prueba con otra palabra clave.",
+    "categoryBackLink": "← Volver al Centro de Conocimiento",
+    "topics": [
+      {
+        "slug": "ai",
+        "title": "Publicidad AI",
+        "description": "Cómo la AI está transformando la producción creativa y la velocidad de las campañas",
+        "iconClassName": "text-violet-600 bg-violet-50"
+      },
+      {
+        "slug": "creator-academy",
+        "title": "Producción de Video AI",
+        "description": "Guías desde el brief hasta el video nativo de AI terminado",
+        "iconClassName": "text-sky-600 bg-sky-50"
+      },
+      {
+        "slug": "workflow",
+        "title": "Briefs Creativos",
+        "description": "Escribe briefs que los equipos realmente puedan ejecutar",
+        "iconClassName": "text-rose-600 bg-rose-50"
+      },
+      {
+        "slug": "brand-academy",
+        "title": "Marketing de Marca",
+        "description": "Posicionamiento, distribución y manuales de crecimiento",
+        "iconClassName": "text-amber-600 bg-amber-50"
+      },
+      {
+        "slug": "pricing",
+        "title": "Precios y Entrega",
+        "description": "Cotizaciones, rondas de revisión y pagos en depósito",
+        "iconClassName": "text-emerald-600 bg-emerald-50"
+      },
+      {
+        "slug": "help-center",
+        "title": "Introducción",
+        "description": "Inicia en VINCIS y lanza tu primera campaña",
+        "iconClassName": "text-indigo-600 bg-indigo-50"
+      }
+    ]
+  }
+}

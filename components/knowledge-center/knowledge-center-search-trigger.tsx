@@ -11,10 +11,10 @@ import {
 import type { KnowledgeArticleListItemDto } from "@/features/knowledge-center/knowledge-center.types";
 import { knowledgeCenterHomeCopy } from "@/lib/knowledge/knowledge-center-home-copy";
 import { cn } from "@/lib/utils";
-import type { Locale } from "@/lib/i18n";
+import type { MarketingLocale } from "@/lib/i18n";
 
 type KnowledgeCenterSearchTriggerProps = {
-  locale: Locale;
+  locale: MarketingLocale;
   languageCode: string;
 };
 

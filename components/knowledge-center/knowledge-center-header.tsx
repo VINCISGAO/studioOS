@@ -4,20 +4,21 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { BrandLogoLockup } from "@/components/brand-logo-mark";
+import { LanguageSwitcher } from "@/components/language-switcher";
 import {
   buildKnowledgeIndexPath,
   type KnowledgePathPrefix
 } from "@/features/knowledge-center/knowledge-center.constants";
 import { marketingHomeHref } from "@/lib/marketing/localized-href";
 import { knowledgeCenterHomeCopy } from "@/lib/knowledge/knowledge-center-home-copy";
-import type { Locale } from "@/lib/i18n";
+import type { MarketingLocale } from "@/lib/i18n";
 
 type KnowledgeCenterHeaderProps = {
-  locale: Locale;
+  locale: MarketingLocale;
   pathPrefix: KnowledgePathPrefix;
 };
 
-function KnowledgeCenterBackButton({ locale, label }: { locale: Locale; label: string }) {
+function KnowledgeCenterBackButton({ locale, label }: { locale: MarketingLocale; label: string }) {
   const router = useRouter();
 
   function handleBack() {
@@ -34,7 +35,7 @@ function KnowledgeCenterBackButton({ locale, label }: { locale: Locale; label: s
     <button
       type="button"
       onClick={handleBack}
-      className="ml-auto inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3 text-sm font-medium text-zinc-700 transition hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-950"
+      className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3 text-sm font-medium text-zinc-700 transition hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-950"
     >
       <ArrowLeft className="h-4 w-4" strokeWidth={1.75} />
       <span>{label}</span>
@@ -66,7 +67,10 @@ export function KnowledgeCenterHeader({ locale, pathPrefix }: KnowledgeCenterHea
           </Link>
         </div>
 
-        <KnowledgeCenterBackButton locale={locale} label={copy.back} />
+        <div className="ml-auto flex items-center gap-2">
+          <LanguageSwitcher locale={locale} tone="light" navPill />
+          <KnowledgeCenterBackButton locale={locale} label={copy.back} />
+        </div>
       </div>
     </header>
   );

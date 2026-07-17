@@ -4,7 +4,8 @@ import {
   type KnowledgePathPrefix
 } from "@/features/knowledge-center/knowledge-center.constants";
 import type { KnowledgeArticleListItemDto } from "@/features/knowledge-center/knowledge-center.types";
-import type { Locale } from "@/lib/i18n";
+import { knowledgeCenterHomeCopy } from "@/lib/knowledge/knowledge-center-home-copy";
+import type { MarketingLocale } from "@/lib/i18n";
 
 export function KnowledgeCenterSearchResults({
   locale,
@@ -12,7 +13,7 @@ export function KnowledgeCenterSearchResults({
   query,
   results
 }: {
-  locale: Locale;
+  locale: MarketingLocale;
   pathPrefix: KnowledgePathPrefix;
   query: string;
   results: KnowledgeArticleListItemDto[];
@@ -20,20 +21,15 @@ export function KnowledgeCenterSearchResults({
   const trimmedQuery = query.trim();
   if (!trimmedQuery) return null;
 
-  const heading =
-    locale === "zh" ? `「${trimmedQuery}」的搜索结果` : `Results for "${trimmedQuery}"`;
-  const emptyCopy =
-    locale === "zh"
-      ? "未找到匹配文章，请尝试其他关键词。"
-      : "No matching articles. Try another keyword.";
+  const copy = knowledgeCenterHomeCopy(locale);
+  const heading = copy.searchResultsHeading(trimmedQuery);
+  const emptyCopy = copy.searchResultsEmpty;
 
   return (
     <section className="border-b border-zinc-200/70 bg-white px-3 py-6 sm:px-5 sm:py-8 lg:px-8">
       <div className="mx-auto max-w-5xl">
         <h2 className="text-xl font-semibold tracking-[-0.02em] text-zinc-950 sm:text-2xl">{heading}</h2>
-        <p className="mt-1 text-sm text-zinc-500">
-          {locale === "zh" ? `${results.length} 篇相关文章` : `${results.length} related articles`}
-        </p>
+        <p className="mt-1 text-sm text-zinc-500">{copy.searchResultsCount(results.length)}</p>
 
         {results.length ? (
           <div className="mt-5 space-y-3">

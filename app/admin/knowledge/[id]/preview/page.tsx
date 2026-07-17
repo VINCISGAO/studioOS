@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { KnowledgeArticlePage } from "@/components/knowledge/knowledge-article-page";
 import { knowledgeCenterService } from "@/features/knowledge-center/knowledge-center.service";
 import { getAppUiLocale } from "@/lib/app-language";
-import { toUiLocale } from "@/lib/app-language.shared";
+import { asMarketingLocale } from "@/lib/marketing/i18n/resolve-marketing-copy";
 import { adminPortalRoutes } from "@/lib/studioos/admin-portal-routes";
 
 type Props = {
@@ -17,7 +17,7 @@ export default async function AdminKnowledgePreviewPage({ params, searchParams }
   const article = await knowledgeCenterService.getAdminPreviewArticle(id, languageCode, adminLocale);
   if (!article) notFound();
 
-  const uiLocale = toUiLocale(article.language_code);
+  const articleLocale = asMarketingLocale(article.language_code);
   const zh = adminLocale === "zh";
   const isDraft = article.published_at == null;
 
@@ -38,7 +38,7 @@ export default async function AdminKnowledgePreviewPage({ params, searchParams }
           {zh ? "返回编辑" : "Back to editor"}
         </Link>
       </div>
-      <KnowledgeArticlePage locale={uiLocale} article={article} />
+      <KnowledgeArticlePage locale={articleLocale} article={article} />
     </div>
   );
 }

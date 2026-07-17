@@ -8,7 +8,8 @@ import type {
   KnowledgeArticleListItemDto,
   KnowledgeHomeArticleCardDto
 } from "@/features/knowledge-center/knowledge-center.types";
-import type { Locale } from "@/lib/i18n";
+import type { MarketingLocale } from "@/lib/i18n";
+import { knowledgeCenterHomeCopy } from "@/lib/knowledge/knowledge-center-home-copy";
 
 export function KnowledgeCenterHomePage({
   locale,
@@ -19,7 +20,7 @@ export function KnowledgeCenterHomePage({
   searchQuery,
   searchResults
 }: {
-  locale: Locale;
+  locale: MarketingLocale;
   pathPrefix: KnowledgePathPrefix;
   languageCode: string;
   articles: KnowledgeHomeArticleCardDto[];

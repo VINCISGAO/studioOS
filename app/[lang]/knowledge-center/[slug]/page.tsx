@@ -12,7 +12,6 @@ import {
 } from "@/features/knowledge-center/knowledge-center-public.article";
 import { knowledgeCenterService } from "@/features/knowledge-center/knowledge-center.service";
 import { buildKnowledgeArticleMetadata } from "@/lib/knowledge/knowledge-article-metadata";
-import { toUiLocale } from "@/lib/app-language.shared";
 import type { Metadata } from "next";
 
 export const runtime = "nodejs";
@@ -43,7 +42,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function KnowledgeArticleRoute({ params }: Props) {
   const { lang, slug } = await params;
   const languageCode = knowledgeCodeForPathPrefix(lang);
-  const locale = toUiLocale(languageCode);
   const article = await knowledgeCenterService.getPublicArticle(slug, languageCode, { recordView: false });
   if (!article) notFound();
 
@@ -57,8 +55,8 @@ export default async function KnowledgeArticleRoute({ params }: Props) {
   const jsonLd = knowledgeCenterService.buildPublicArticleJsonLd(article);
 
   return (
-    <KnowledgeCenterShell locale={locale} pathPrefix={lang as KnowledgePathPrefix}>
-      <KnowledgeArticlePage locale={locale} article={article} />
+    <KnowledgeCenterShell locale={languageCode} pathPrefix={lang as KnowledgePathPrefix}>
+      <KnowledgeArticlePage locale={languageCode} article={article} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
     </KnowledgeCenterShell>
   );

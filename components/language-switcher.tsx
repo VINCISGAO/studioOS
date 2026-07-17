@@ -10,6 +10,7 @@ import {
 } from "@/features/i18n/language.constants";
 import { readStoredAppLanguage, setAppLanguage } from "@/lib/app-language-client";
 import { isInternalAppPath, isHomepageLangPath } from "@/lib/app-language.shared";
+import { buildKnowledgeCenterLocaleHref } from "@/lib/knowledge/knowledge-route";
 import { cn } from "@/lib/utils";
 import type { LanguageCode, Locale } from "@/lib/i18n";
 
@@ -53,6 +54,11 @@ function LanguageSwitcherInner({
       if (next === current) return;
       setAppLanguage(next);
       setOpen(false);
+      const knowledgeHref = buildKnowledgeCenterLocaleHref(pathname, next);
+      if (knowledgeHref) {
+        window.location.assign(knowledgeHref);
+        return;
+      }
       if (isHomepageLangPath(pathname) || !isInternalAppPath(pathname)) {
         const params = new URLSearchParams(searchParams.toString());
         params.set("lang", next);

@@ -4,10 +4,10 @@ import {
   type KnowledgePathPrefix
 } from "@/features/knowledge-center/knowledge-center.constants";
 import { knowledgeCenterHomeCopy } from "@/lib/knowledge/knowledge-center-home-copy";
-import type { Locale } from "@/lib/i18n";
+import type { MarketingLocale } from "@/lib/i18n";
 
 type KnowledgeCenterTopicsProps = {
-  locale: Locale;
+  locale: MarketingLocale;
   pathPrefix: KnowledgePathPrefix;
   counts: Record<string, number>;
 };

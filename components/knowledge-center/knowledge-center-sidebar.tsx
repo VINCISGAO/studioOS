@@ -7,10 +7,11 @@ import {
 import type { KnowledgeHomeArticleCardDto } from "@/features/knowledge-center/knowledge-center.types";
 import { knowledgeCenterHomeCopy } from "@/lib/knowledge/knowledge-center-home-copy";
 import { cn } from "@/lib/utils";
-import type { Locale } from "@/lib/i18n";
+import type { MarketingLocale } from "@/lib/i18n";
+import { knowledgeIntlLocale } from "@/lib/knowledge/knowledge-intl";
 
-function formatShortDate(locale: Locale, value: string) {
-  return new Date(value).toLocaleDateString(locale === "zh" ? "zh-CN" : "en-US", {
+function formatShortDate(locale: MarketingLocale, value: string) {
+  return new Date(value).toLocaleDateString(knowledgeIntlLocale(locale), {
     year: "numeric",
     month: "2-digit",
     day: "2-digit"
@@ -30,7 +31,7 @@ export function KnowledgeCenterSidebar({
   pathPrefix,
   articles
 }: {
-  locale: Locale;
+  locale: MarketingLocale;
   pathPrefix: KnowledgePathPrefix;
   articles: KnowledgeHomeArticleCardDto[];
 }) {

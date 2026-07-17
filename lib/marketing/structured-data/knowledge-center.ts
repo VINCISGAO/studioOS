@@ -4,6 +4,9 @@ import {
   buildKnowledgeIndexPath,
   type KnowledgePathPrefix
 } from "@/features/knowledge-center/knowledge-center.constants";
+import type { MarketingLocale } from "@/lib/i18n";
+import { knowledgeArticleChromeCopy } from "@/lib/knowledge/knowledge-article-chrome-copy";
+import { knowledgeCenterHomeCopy } from "@/lib/knowledge/knowledge-center-home-copy";
 import { VINCIS_SITE_ORIGIN, buildOrganizationGraphNode } from "@/lib/marketing/organization-schema";
 import { buildBreadcrumbJsonLd } from "@/lib/marketing/structured-data/breadcrumb";
 import { buildWebsiteGraphNode } from "@/lib/marketing/structured-data/website";
@@ -31,7 +34,7 @@ function buildArticleItemList(
 
 export function buildKnowledgeIndexJsonLdGraph(options: {
   pathPrefix: KnowledgePathPrefix;
-  locale: "en" | "zh";
+  locale: MarketingLocale;
   articles: KnowledgeSchemaArticle[];
   searchQuery?: string;
   origin?: typeof VINCIS_SITE_ORIGIN;
@@ -39,17 +42,15 @@ export function buildKnowledgeIndexJsonLdGraph(options: {
   const origin = options.origin ?? VINCIS_SITE_ORIGIN;
   const indexPath = buildKnowledgeIndexPath(options.pathPrefix);
   const indexUrl = `${origin}${indexPath}`;
-  const indexName = options.locale === "zh" ? "VINCIS 知识中心" : "VINCIS Knowledge Center";
+  const chrome = knowledgeArticleChromeCopy(options.locale);
+  const homeCopy = knowledgeCenterHomeCopy(options.locale);
+  const indexName = homeCopy.indexPageTitle.replace(" | VINCIS", "");
   const trimmedQuery = options.searchQuery?.trim();
 
   const collectionPage: Record<string, unknown> = {
     "@type": "CollectionPage",
     "@id": `${indexUrl}#collection`,
-    name: trimmedQuery
-      ? options.locale === "zh"
-        ? `搜索「${trimmedQuery}」`
-        : `Search results for "${trimmedQuery}"`
-      : indexName,
+    name: trimmedQuery ? chrome.schemaSearchName(trimmedQuery) : indexName,
     url: trimmedQuery ? `${indexUrl}?q=${encodeURIComponent(trimmedQuery)}` : indexUrl,
     isPartOf: { "@id": `${origin}/#website` },
     publisher: { "@id": `${origin}/#organization` }
@@ -78,6 +79,7 @@ export function buildKnowledgeIndexJsonLdGraph(options: {
 
 export function buildKnowledgeCategoryJsonLdGraph(options: {
   pathPrefix: KnowledgePathPrefix;
+  locale: MarketingLocale;
   categorySlug: string;
   categoryName: string;
   articles: KnowledgeSchemaArticle[];
@@ -87,7 +89,8 @@ export function buildKnowledgeCategoryJsonLdGraph(options: {
   const indexPath = buildKnowledgeIndexPath(options.pathPrefix);
   const categoryPath = buildKnowledgeCategoryPath(options.pathPrefix, options.categorySlug);
   const categoryUrl = `${origin}${categoryPath}`;
-  const indexName = "VINCIS Knowledge Center";
+  const homeCopy = knowledgeCenterHomeCopy(options.locale);
+  const indexName = homeCopy.indexPageTitle.replace(" | VINCIS", "");
 
   const collectionPage: Record<string, unknown> = {
     "@type": "CollectionPage",

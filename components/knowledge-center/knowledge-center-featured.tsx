@@ -8,14 +8,15 @@ import {
 } from "@/features/knowledge-center/knowledge-center.constants";
 import type { KnowledgeHomeArticleCardDto } from "@/features/knowledge-center/knowledge-center.types";
 import { knowledgeCenterHomeCopy } from "@/lib/knowledge/knowledge-center-home-copy";
-import type { Locale } from "@/lib/i18n";
+import type { MarketingLocale } from "@/lib/i18n";
+import { knowledgeIntlLocale, knowledgeShortMonthLocale } from "@/lib/knowledge/knowledge-intl";
 
-function formatArticleDate(locale: Locale, value: string | null) {
+function formatArticleDate(locale: MarketingLocale, value: string | null) {
   if (!value) return "—";
   const date = new Date(value);
-  return date.toLocaleDateString(locale === "zh" ? "zh-CN" : "en-US", {
+  return date.toLocaleDateString(knowledgeShortMonthLocale(locale), {
     year: "numeric",
-    month: locale === "zh" ? "2-digit" : "short",
+    month: "short",
     day: "2-digit"
   });
 }
@@ -44,7 +45,7 @@ export function KnowledgeCenterFeatured({
   pathPrefix,
   articles
 }: {
-  locale: Locale;
+  locale: MarketingLocale;
   pathPrefix: KnowledgePathPrefix;
   articles: KnowledgeHomeArticleCardDto[];
 }) {

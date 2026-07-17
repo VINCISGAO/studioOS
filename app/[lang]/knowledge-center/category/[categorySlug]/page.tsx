@@ -13,7 +13,6 @@ import {
   knowledgeAlternatesToMetadataLanguages
 } from "@/features/knowledge-center/knowledge-hreflang";
 import { knowledgeCenterHomeCopy } from "@/lib/knowledge/knowledge-center-home-copy";
-import { toUiLocale } from "@/lib/app-language.shared";
 import { buildKnowledgeCategoryJsonLdGraph } from "@/lib/marketing/structured-data/knowledge-center";
 import { JsonLdScript } from "@/lib/marketing/structured-data/json-ld-script";
 import type { Metadata } from "next";
@@ -28,16 +27,15 @@ type Props = { params: Promise<{ lang: string; categorySlug: string }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { lang, categorySlug } = await params;
   const languageCode = knowledgeCodeForPathPrefix(lang);
-  const locale = toUiLocale(languageCode);
   const pathPrefix = lang as KnowledgePathPrefix;
-  const copy = knowledgeCenterHomeCopy(locale);
+  const copy = knowledgeCenterHomeCopy(languageCode);
   const categories = await knowledgeCenterService.listCategorySummaries(languageCode);
   const category = categories.find((item) => item.slug === categorySlug);
   const topic = copy.topics.find((item) => item.slug === categorySlug);
   const title = topic?.title ?? category?.name ?? categorySlug;
   const description = topic?.description ?? "";
   const canonical = `${ORIGIN}${buildKnowledgeCategoryPath(pathPrefix, categorySlug)}`;
-  const pageTitle = `${title} | VINCIS Knowledge Center`;
+  const pageTitle = `${title} | ${copy.indexPageTitle.replace(" | VINCIS", "")}`;
 
   return {
     title: { absolute: pageTitle },
@@ -64,9 +62,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function KnowledgeCategoryPage({ params }: Props) {
   const { lang, categorySlug } = await params;
   const languageCode = knowledgeCodeForPathPrefix(lang);
-  const locale = toUiLocale(languageCode);
   const pathPrefix = lang as KnowledgePathPrefix;
-  const copy = knowledgeCenterHomeCopy(locale);
+  const copy = knowledgeCenterHomeCopy(languageCode);
   const categories = await knowledgeCenterService.listCategorySummaries(languageCode);
   const category = categories.find((item) => item.slug === categorySlug);
   const topic = copy.topics.find((item) => item.slug === categorySlug);
@@ -76,10 +73,11 @@ export default async function KnowledgeCategoryPage({ params }: Props) {
   const description = topic?.description ?? "";
 
   return (
-    <KnowledgeCenterShell locale={locale} pathPrefix={pathPrefix}>
+    <KnowledgeCenterShell locale={languageCode} pathPrefix={pathPrefix}>
       <JsonLdScript
         data={buildKnowledgeCategoryJsonLdGraph({
           pathPrefix,
+          locale: languageCode,
           categorySlug,
           categoryName: title,
           articles: articles.map((article) => ({ slug: article.slug, title: article.title }))
@@ -90,7 +88,7 @@ export default async function KnowledgeCategoryPage({ params }: Props) {
           href={buildKnowledgeIndexPath(pathPrefix)}
           className="text-sm font-medium text-zinc-500 transition hover:text-violet-700"
         >
-          {locale === "zh" ? "← 返回知识中心" : "← Back to Knowledge Center"}
+          {copy.categoryBackLink}
         </Link>
         <h1 className="mt-4 text-4xl font-semibold tracking-[-0.03em] text-zinc-950">{title}</h1>
         {description ? <p className="mt-3 max-w-2xl text-lg text-zinc-500">{description}</p> : null}

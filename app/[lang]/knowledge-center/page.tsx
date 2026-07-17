@@ -11,8 +11,8 @@ import {
   buildKnowledgeIndexAlternates,
   knowledgeAlternatesToMetadataLanguages
 } from "@/features/knowledge-center/knowledge-hreflang";
-import { toUiLocale } from "@/lib/app-language.shared";
 import { buildKnowledgeIndexJsonLdGraph } from "@/lib/marketing/structured-data/knowledge-center";
+import { knowledgeCenterHomeCopy } from "@/lib/knowledge/knowledge-center-home-copy";
 import { JsonLdScript } from "@/lib/marketing/structured-data/json-ld-script";
 import type { Metadata } from "next";
 
@@ -28,30 +28,25 @@ export const revalidate = 300;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { lang } = await params;
-  const locale = toUiLocale(lang === "zh" ? "zh-CN" : "en");
+  const languageCode = knowledgeCodeForPathPrefix(lang);
+  const copy = knowledgeCenterHomeCopy(languageCode);
   const pathPrefix = lang as KnowledgePathPrefix;
   const canonical = `${ORIGIN}${buildKnowledgeIndexPath(pathPrefix)}`;
-  const title =
-    locale === "zh" ? "VINCIS 知识中心 | VINCIS" : "VINCIS Knowledge Center | VINCIS";
-  const description =
-    locale === "zh"
-      ? "VINCIS 官方知识中心 — AI 广告、视频制作、品牌营销与平台指南。"
-      : "Official VINCIS knowledge hub for AI advertising, video production, brand marketing, and platform guides.";
 
   return {
-    title: { absolute: title },
-    description,
+    title: { absolute: copy.indexPageTitle },
+    description: copy.indexPageDescription,
     openGraph: {
       type: "website",
       siteName: "VINCIS",
-      title,
-      description,
+      title: copy.indexPageTitle,
+      description: copy.indexPageDescription,
       url: canonical
     },
     twitter: {
       card: "summary_large_image",
-      title,
-      description
+      title: copy.indexPageTitle,
+      description: copy.indexPageDescription
     },
     alternates: {
       canonical,
@@ -64,7 +59,6 @@ export default async function KnowledgeIndexPage({ params, searchParams }: Props
   const { lang } = await params;
   const { q } = await searchParams;
   const languageCode = knowledgeCodeForPathPrefix(lang);
-  const locale = toUiLocale(languageCode);
   const pathPrefix = lang as KnowledgePathPrefix;
   const searchQuery = q?.trim() ?? "";
   const { articles, categoryCounts } = await loadKnowledgeCenterHomePageData(languageCode);
@@ -76,17 +70,17 @@ export default async function KnowledgeIndexPage({ params, searchParams }: Props
     : articles.map((item) => ({ slug: item.slug, title: item.title }));
 
   return (
-    <KnowledgeCenterShell locale={locale} pathPrefix={pathPrefix}>
+    <KnowledgeCenterShell locale={languageCode} pathPrefix={pathPrefix}>
       <JsonLdScript
         data={buildKnowledgeIndexJsonLdGraph({
           pathPrefix,
-          locale,
+          locale: languageCode,
           articles: schemaArticles,
           searchQuery: searchQuery || undefined
         })}
       />
       <KnowledgeCenterHomePage
-        locale={locale}
+        locale={languageCode}
         pathPrefix={pathPrefix}
         languageCode={languageCode}
         articles={articles}

@@ -1,25 +1,26 @@
 import type { PublicKnowledgeArticleDto } from "@/features/knowledge-center/knowledge-center.types";
-import type { Locale } from "@/lib/i18n";
+import type { MarketingLocale } from "@/lib/i18n";
+import { knowledgeArticleChromeCopy } from "@/lib/knowledge/knowledge-article-chrome-copy";
 import Link from "next/link";
 
 export function KnowledgeArticleRelatedSection({
   locale,
   related
 }: {
-  locale: Locale;
+  locale: MarketingLocale;
   related: PublicKnowledgeArticleDto["related"];
 }) {
   if (!related.length) return null;
 
-  const zh = locale === "zh";
+  const chrome = knowledgeArticleChromeCopy(locale);
 
   return (
     <section className="mt-14" aria-labelledby="knowledge-related-heading">
       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-violet-600">
-        {zh ? "延伸阅读" : "Keep Reading"}
+        {chrome.relatedEyebrow}
       </p>
       <h2 id="knowledge-related-heading" className="mt-2 text-2xl font-semibold tracking-tight text-zinc-950">
-        {zh ? "相关阅读" : "Related Articles"}
+        {chrome.relatedTitle}
       </h2>
       <div className="mt-5 grid gap-3 sm:grid-cols-2">
         {related.map((item) => (

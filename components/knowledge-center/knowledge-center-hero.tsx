@@ -1,12 +1,13 @@
 import { KnowledgeCenterSearchTrigger } from "@/components/knowledge-center/knowledge-center-search-trigger";
 import { knowledgeCenterHomeCopy } from "@/lib/knowledge/knowledge-center-home-copy";
-import type { Locale } from "@/lib/i18n";
+import type { MarketingLocale } from "@/lib/i18n";
+import { knowledgeIntlLocale, knowledgeShortMonthLocale } from "@/lib/knowledge/knowledge-intl";
 
 export function KnowledgeCenterHero({
   locale,
   languageCode
 }: {
-  locale: Locale;
+  locale: MarketingLocale;
   languageCode: string;
 }) {
   const copy = knowledgeCenterHomeCopy(locale);

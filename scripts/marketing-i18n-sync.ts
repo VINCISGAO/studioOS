@@ -5,9 +5,11 @@ import { SUPPORTED_LANGUAGE_SEEDS } from "../features/i18n/language.constants";
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const bundlesDir = path.join(root, "lib/marketing/i18n/bundles");
+const knowledgeBundlesDir = path.join(root, "lib/knowledge/i18n/bundles");
 
 type NamespaceConfig = {
   id: string;
+  bundleDir?: string;
   loadSource: () => Promise<{ en: Record<string, unknown>; "zh-CN": Record<string, unknown> }>;
 };
 
@@ -95,12 +97,28 @@ const namespaces: NamespaceConfig[] = [
       const mod = await import("../lib/marketing/cinematic-home-copy.sources");
       return { en: mod.cinematicHomeCopyEn, "zh-CN": mod.cinematicHomeCopyZhCN };
     }
+  },
+  {
+    id: "knowledge-center-home",
+    bundleDir: knowledgeBundlesDir,
+    loadSource: async () => {
+      const mod = await import("../lib/knowledge/knowledge-center-home-copy.sources");
+      return { en: mod.knowledgeCenterHomeCopyEn, "zh-CN": mod.knowledgeCenterHomeCopyZhCN };
+    }
+  },
+  {
+    id: "knowledge-article-chrome",
+    bundleDir: knowledgeBundlesDir,
+    loadSource: async () => {
+      const mod = await import("../lib/knowledge/knowledge-article-chrome-copy.sources");
+      return { en: mod.knowledgeArticleChromeCopyEn, "zh-CN": mod.knowledgeArticleChromeCopyZhCN };
+    }
   }
 ];
 
 const POOL = 2;
 
-const PRESERVED_TRANSLATION_FIELDS = new Set(["theme", "id", "key", "icon", "number"]);
+const PRESERVED_TRANSLATION_FIELDS = new Set(["theme", "id", "key", "icon", "number", "slug", "href", "iconClassName"]);
 
 function restorePreservedFields(source: unknown, translated: unknown): unknown {
   if (Array.isArray(source) && Array.isArray(translated)) {
@@ -235,13 +253,13 @@ async function mapPool<T, R>(items: T[], worker: (item: T) => Promise<R>): Promi
   return results;
 }
 
-function bundlePath(namespace: string) {
-  return path.join(bundlesDir, `${namespace}.json`);
+function bundlePath(namespace: string, bundleDir = bundlesDir) {
+  return path.join(bundleDir, `${namespace}.json`);
 }
 
-function readExistingBundle(namespace: string): Record<string, Record<string, unknown>> {
+function readExistingBundle(namespace: string, bundleDir = bundlesDir): Record<string, Record<string, unknown>> {
   try {
-    return JSON.parse(readFileSync(bundlePath(namespace), "utf8")) as Record<
+    return JSON.parse(readFileSync(bundlePath(namespace, bundleDir), "utf8")) as Record<
       string,
       Record<string, unknown>
     >;
@@ -251,8 +269,9 @@ function readExistingBundle(namespace: string): Record<string, Record<string, un
 }
 
 async function syncNamespace(config: NamespaceConfig, force: boolean) {
+  const bundleDir = config.bundleDir ?? bundlesDir;
   const { en, "zh-CN": zhCN } = await config.loadSource();
-  const existing = readExistingBundle(config.id);
+  const existing = readExistingBundle(config.id, bundleDir);
   const bundle: Record<string, Record<string, unknown>> = {
     ...existing,
     en,
@@ -287,8 +306,8 @@ async function syncNamespace(config: NamespaceConfig, force: boolean) {
     bundle[targetLocale] = restorePreservedFields(source, translated) as Record<string, unknown>;
   });
 
-  mkdirSync(bundlesDir, { recursive: true });
-  writeFileSync(bundlePath(config.id), `${JSON.stringify(bundle, null, 2)}\n`, "utf8");
+  mkdirSync(bundleDir, { recursive: true });
+  writeFileSync(bundlePath(config.id, bundleDir), `${JSON.stringify(bundle, null, 2)}\n`, "utf8");
   console.log(`[marketing-i18n-sync] wrote ${config.id}.json (${Object.keys(bundle).length} locales)`);
 }
 
