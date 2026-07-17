@@ -8,6 +8,11 @@ import { getCurrentCreatorId } from "@/features/auth/session-context";
 import { getCurrentUserEmail } from "@/lib/session-user";
 import { getWorksEngagement } from "@/lib/work-engagement-service";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
+import { buildCreatorProfileJsonLdGraph } from "@/lib/marketing/structured-data/creator-profile";
+import { JsonLdScript } from "@/lib/marketing/structured-data/json-ld-script";
+import { creatorProfileSeoMetadata } from "@/lib/marketing/marketing-seo-metadata";
+import { VINCIS_SITE_ORIGIN } from "@/lib/marketing/organization-schema";
+import type { Metadata } from "next";
 
 const copy = {
   en: {
@@ -67,6 +72,27 @@ type CreatorProfilePageProps = {
   searchParams: Promise<SearchParams & { work?: string }>;
 };
 
+export async function generateMetadata({ params, searchParams }: CreatorProfilePageProps): Promise<Metadata> {
+  const [{ id }, query] = await Promise.all([params, searchParams]);
+  const locale = getLocale(query);
+  const creator = await getCreatorById(id);
+  if (!creator) {
+    return { title: locale === "zh" ? "未找到创作者 | VINCIS" : "Creator not found | VINCIS" };
+  }
+
+  return creatorProfileSeoMetadata({
+    locale,
+    name: creator.name,
+    headline: creator.headline || creator.bio || creator.name,
+    profilePath: `/creators/${creator.id}`,
+    image: creator.avatar_url?.startsWith("http")
+      ? creator.avatar_url
+      : creator.avatar_url
+        ? `${VINCIS_SITE_ORIGIN}${creator.avatar_url}`
+        : undefined
+  });
+}
+
 export default async function CreatorProfilePage({ params, searchParams }: CreatorProfilePageProps) {
   const [{ id }, query] = await Promise.all([params, searchParams]);
   const locale = getLocale(query);
@@ -94,7 +120,15 @@ export default async function CreatorProfilePage({ params, searchParams }: Creat
   );
 
   return (
-    <main className="min-h-dvh bg-white">
+    <>
+      <JsonLdScript
+        data={buildCreatorProfileJsonLdGraph({
+          creator,
+          works,
+          profileUrl: `${VINCIS_SITE_ORIGIN}/creators/${creator.id}`
+        })}
+      />
+      <main className="min-h-dvh bg-white">
       <section className="mx-auto max-w-6xl px-4 pb-12 pt-6 sm:px-6 lg:px-8">
         <Button asChild variant="ghost" size="sm" className="mb-4 -ml-2 text-muted-foreground hover:text-foreground">
           <Link href={withLocale(isOwner ? "/creator/profile" : "/creators", locale)}>
@@ -114,5 +148,6 @@ export default async function CreatorProfilePage({ params, searchParams }: Creat
         />
       </section>
     </main>
+    </>
   );
 }

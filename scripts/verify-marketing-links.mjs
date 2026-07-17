@@ -269,11 +269,27 @@ async function main() {
 
   try {
     const homepagePage = await fs.readFile(path.join(root, "app/page.tsx"), "utf8");
-    if (!homepagePage.includes("OrganizationJsonLd")) {
-      console.error("[verify-marketing-links] FAIL homepage missing OrganizationJsonLd");
-      failures.push("homepage OrganizationJsonLd");
+    if (!homepagePage.includes("HomePageJsonLd")) {
+      console.error("[verify-marketing-links] FAIL homepage missing HomePageJsonLd");
+      failures.push("homepage HomePageJsonLd");
     } else {
-      console.log("[verify-marketing-links] OK homepage Organization JSON-LD");
+      console.log("[verify-marketing-links] OK homepage structured data component");
+    }
+
+    const schemaFiles = [
+      "lib/marketing/structured-data/homepage.ts",
+      "lib/marketing/structured-data/pricing.ts",
+      "lib/marketing/structured-data/faq-page.ts",
+      "lib/marketing/structured-data/creator-profile.ts"
+    ];
+    for (const file of schemaFiles) {
+      try {
+        await fs.access(path.join(root, file));
+        console.log(`[verify-marketing-links] OK schema file ${file}`);
+      } catch {
+        console.error(`[verify-marketing-links] FAIL missing schema file ${file}`);
+        failures.push(file);
+      }
     }
   } catch (error) {
     console.error(`[verify-marketing-links] FAIL could not scan homepage schema: ${error}`);

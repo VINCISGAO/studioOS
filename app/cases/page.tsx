@@ -1,12 +1,14 @@
 import { CasesPageClient } from "@/components/marketing/cases/cases-page-client";
 import { marketingShowcaseService } from "@/features/marketing-showcase/marketing-showcase.service";
-import { marketingDocsMetadata } from "@/lib/marketing/marketing-docs-metadata";
+import { buildPortfolioJsonLdGraph } from "@/lib/marketing/structured-data/portfolio";
+import { JsonLdScript } from "@/lib/marketing/structured-data/json-ld-script";
+import { marketingSeoMetadata } from "@/lib/marketing/marketing-seo-metadata";
 import type { Metadata } from "next";
 
 export const revalidate = 3600;
 
 export function generateMetadata(): Metadata {
-  return marketingDocsMetadata("zh", "cases");
+  return marketingSeoMetadata("zh", "cases", "/cases");
 }
 
 export default async function CasesPage() {
@@ -15,5 +17,10 @@ export default async function CasesPage() {
     marketingShowcaseService.listCategories()
   ]);
 
-  return <CasesPageClient works={works} categories={categories} />;
+  return (
+    <>
+      <JsonLdScript data={buildPortfolioJsonLdGraph(works)} />
+      <CasesPageClient works={works} categories={categories} />
+    </>
+  );
 }

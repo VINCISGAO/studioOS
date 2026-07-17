@@ -1,12 +1,12 @@
 import { PartnersPageView } from "@/components/marketing/partners/partners-page-view";
 import { partnerProgramService } from "@/features/partner-program/partner-program.service";
-import { marketingDocsMetadata } from "@/lib/marketing/marketing-docs-metadata";
+import { marketingSeoMetadata } from "@/lib/marketing/marketing-seo-metadata";
 import type { Metadata } from "next";
 
 export const revalidate = 3600;
 
 export function generateMetadata(): Metadata {
-  return marketingDocsMetadata("zh", "resources");
+  return marketingSeoMetadata("zh", "resources", "/resources");
 }
 
 export default async function ResourcesRoute() {

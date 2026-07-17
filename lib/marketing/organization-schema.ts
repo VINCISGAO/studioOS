@@ -13,27 +13,37 @@ export const VINCIS_ORGANIZATION = {
   ] as const
 } as const;
 
-/** Standalone Organization JSON-LD for the marketing homepage. */
+function logoImageObject(origin: string) {
+  return {
+    "@type": "ImageObject",
+    url: `${origin.replace(/\/$/u, "")}/logo.png`
+  };
+}
+
+/** Standalone Organization JSON-LD for legacy callers. Prefer homepage graph builders. */
 export function buildOrganizationJsonLd(origin: string = VINCIS_SITE_ORIGIN) {
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
+    "@id": `${origin}/#organization`,
     name: VINCIS_ORGANIZATION.name,
     url: VINCIS_ORGANIZATION.url,
-    logo: `${origin.replace(/\/$/u, "")}/logo.png`,
+    logo: logoImageObject(origin),
+    image: logoImageObject(origin),
     description: VINCIS_ORGANIZATION.description,
     sameAs: [...VINCIS_ORGANIZATION.sameAs]
   };
 }
 
-/** Organization node for multi-entity JSON-LD graphs (e.g. knowledge articles). */
+/** Organization node for multi-entity JSON-LD graphs. */
 export function buildOrganizationGraphNode(origin: string = VINCIS_SITE_ORIGIN) {
   return {
     "@type": "Organization",
     "@id": `${origin}/#organization`,
     name: VINCIS_ORGANIZATION.name,
     url: origin,
-    logo: `${origin.replace(/\/$/u, "")}/logo.png`,
+    logo: logoImageObject(origin),
+    image: logoImageObject(origin),
     description: VINCIS_ORGANIZATION.description,
     sameAs: [...VINCIS_ORGANIZATION.sameAs]
   };

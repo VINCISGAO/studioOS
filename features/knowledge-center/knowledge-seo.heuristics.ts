@@ -5,6 +5,8 @@ import {
   KNOWLEDGE_CENTER_PATH_SEGMENT,
   type KnowledgePathPrefix
 } from "@/features/knowledge-center/knowledge-center.constants";
+import { buildOrganizationGraphNode } from "@/lib/marketing/organization-schema";
+import { buildWebsiteGraphNode } from "@/lib/marketing/structured-data/website";
 
 export type KnowledgeSeoScores = {
   seo_score: number;
@@ -138,19 +140,40 @@ function buildArticleNode(input: {
   imageUrl?: string | null;
   websiteId: string;
   articleId: string;
+  organizationId: string;
 }) {
+  const image = input.imageUrl
+    ? {
+        "@type": "ImageObject",
+        url: input.imageUrl
+      }
+    : undefined;
+
   return {
     "@type": "Article",
     "@id": input.articleId,
     headline: input.title,
     description: input.description,
-    author: { "@type": "Organization", name: input.authorName },
-    publisher: { "@type": "Organization", name: "VINCIS", url: "https://vincis.app" },
+    author: {
+      "@type": "Organization",
+      name: input.authorName,
+      "@id": input.organizationId
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "VINCIS",
+      url: "https://vincis.app",
+      "@id": input.organizationId,
+      logo: {
+        "@type": "ImageObject",
+        url: "https://vincis.app/logo.png"
+      }
+    },
     datePublished: input.publishedAt ?? input.updatedAt,
     dateModified: input.updatedAt,
     mainEntityOfPage: { "@id": input.url },
     isPartOf: { "@id": input.websiteId },
-    image: input.imageUrl ? [input.imageUrl] : undefined
+    image
   };
 }
 
@@ -187,20 +210,12 @@ function buildBreadcrumbNode(input: {
   };
 }
 
-import { buildOrganizationGraphNode } from "@/lib/marketing/organization-schema";
-
 function buildOrganizationNode(origin = "https://vincis.app") {
   return buildOrganizationGraphNode(origin);
 }
 
-function buildWebsiteNode(origin = "https://vincis.app") {
-  return {
-    "@type": "WebSite",
-    "@id": `${origin}/#website`,
-    url: origin,
-    name: "VINCIS",
-    publisher: { "@id": `${origin}/#organization` }
-  };
+function buildWebsiteNode(origin = "https://vincis.app", pathPrefix = "en") {
+  return buildWebsiteGraphNode(origin, pathPrefix);
 }
 
 function buildFaqNode(faqs: KnowledgeFaqInput[]) {
@@ -231,12 +246,13 @@ export function buildKnowledgeJsonLd(input: {
 }) {
   const origin = input.origin ?? "https://vincis.app";
   const websiteId = `${origin}/#website`;
+  const organizationId = `${origin}/#organization`;
   const articleId = `${input.url}#article`;
   const pathPrefix = input.pathPrefix ?? "en";
 
   const graph: Record<string, unknown>[] = [
     buildOrganizationNode(origin),
-    buildWebsiteNode(origin),
+    buildWebsiteNode(origin, pathPrefix),
     buildArticleNode({
       title: input.title,
       description: input.description,
@@ -246,7 +262,8 @@ export function buildKnowledgeJsonLd(input: {
       updatedAt: input.updatedAt,
       imageUrl: input.imageUrl,
       websiteId,
-      articleId
+      articleId,
+      organizationId
     }),
     buildBreadcrumbNode({
       url: input.url,
