@@ -65,6 +65,7 @@
     "db:seed": "node --require ./scripts/helpers/load-env.cjs --import tsx prisma/seed.ts",
     "marketing:sync-faq-knowledge": "npm run db:generate && node --require ./scripts/helpers/load-env.cjs --import tsx scripts/sync-marketing-faq-knowledge.ts",
     "knowledge:sync-lucien": "npm run db:generate && node --require ./scripts/helpers/load-env.cjs --import tsx scripts/sync-knowledge-center-lucien.ts",
+    "knowledge:sync-missing-translations": "npm run db:generate && node --require ./scripts/helpers/register-verify-runtime.cjs --import tsx scripts/sync-knowledge-missing-translations.ts",
     "knowledge:resources-probe": "npm run db:generate && node --require ./scripts/helpers/load-env.cjs --import tsx scripts/knowledge-resources-probe.ts",
     "db:studio": "bash scripts/prisma-with-env.sh studio",
     "bootstrap:admin": "node -r ./scripts/helpers/load-env.cjs scripts/bootstrap-admin-profile.mjs",

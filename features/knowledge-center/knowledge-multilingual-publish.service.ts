@@ -27,10 +27,18 @@ async function runPool<T>(items: T[], limit: number, worker: (item: T) => Promis
 export async function syncKnowledgeArticleTranslations(input: {
   base: UpsertKnowledgeArticleInput;
   persist: (payload: UpsertKnowledgeArticleInput) => Promise<void>;
+  /** When set, only translate these locale codes (still excludes source language). */
+  onlyTargetCodes?: string[];
+  concurrency?: number;
 }): Promise<KnowledgeMultilingualSyncResult> {
   const source = input.base.translation;
   const sourceCode = source.language_code;
-  const targetCodes = KNOWLEDGE_LANGUAGE_OPTIONS.map((item) => item.code).filter((code) => code !== sourceCode);
+  const onlyTargets = input.onlyTargetCodes?.length
+    ? new Set(input.onlyTargetCodes.filter((code) => code !== sourceCode))
+    : null;
+  const targetCodes = KNOWLEDGE_LANGUAGE_OPTIONS.map((item) => item.code).filter(
+    (code) => code !== sourceCode && (!onlyTargets || onlyTargets.has(code))
+  );
 
   const bundle: KnowledgeMultilingualSourceBundle = {
     language_code: sourceCode,
@@ -54,7 +62,7 @@ export async function syncKnowledgeArticleTranslations(input: {
     };
   }
 
-  await runPool(targetCodes, TRANSLATION_CONCURRENCY, async (targetCode) => {
+  await runPool(targetCodes, input.concurrency ?? TRANSLATION_CONCURRENCY, async (targetCode) => {
     try {
       const translation = await translateKnowledgeArticleLocale(bundle, targetCode);
       if (!translation) {

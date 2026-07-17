@@ -34,6 +34,7 @@ import { knowledgeSeoDashboardService } from "@/features/knowledge-center/knowle
 import { runKnowledgePublishPipeline, type KnowledgeSaveResult, type KnowledgeTranslationSidecarJob } from "@/features/knowledge-center/knowledge-publish.pipeline";
 import { resolveMultilingualSourceTranslation } from "@/features/knowledge-center/knowledge-multilingual-source";
 import { syncKnowledgeArticleTranslations } from "@/features/knowledge-center/knowledge-multilingual-publish.service";
+import { syncMissingKnowledgeArticleTranslations } from "@/features/knowledge-center/knowledge-multilingual-missing-sync.core";
 import { logger } from "@/lib/core/logger";
 import type {
   KnowledgeArticleDetailDto,
@@ -565,6 +566,14 @@ export class KnowledgeCenterService {
         error: error instanceof Error ? error.message : String(error)
       });
     }
+  }
+
+  /** GPT-translate and publish only locales that are missing a PUBLISHED translation. */
+  async syncMissingPublishedTranslations(
+    slug: string,
+    options?: { sourceLanguage?: string }
+  ) {
+    return syncMissingKnowledgeArticleTranslations(slug, options);
   }
 
   private finishMultilingualPublish(
