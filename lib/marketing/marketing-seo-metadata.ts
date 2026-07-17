@@ -3,8 +3,9 @@ import type { Locale } from "@/lib/i18n";
 import { marketingDocsMetadata } from "@/lib/marketing/marketing-docs-metadata";
 import type { MarketingDocsNavKey } from "@/lib/marketing/marketing-docs-nav";
 import { VINCIS_ORGANIZATION, VINCIS_SITE_ORIGIN } from "@/lib/marketing/organization-schema";
+import { absoluteBrandLogoUrl } from "@/lib/marketing/site-seo";
 
-const DEFAULT_OG_IMAGE = VINCIS_ORGANIZATION.logo;
+const DEFAULT_OG_IMAGE = absoluteBrandLogoUrl();
 
 function marketingCanonical(path: string, locale: Locale) {
   const base = `${VINCIS_SITE_ORIGIN}${path}`;

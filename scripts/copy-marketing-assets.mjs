@@ -208,5 +208,10 @@ copyFirstAvailable({
 copyFirstAvailable({
   label: "organization schema logo",
   dest: path.join(root, "public/logo.png"),
-  sources: [path.join(root, "public/images/LOGO.png"), path.join(root, "public/logo.png")]
+  sources: [path.join(root, "public/brand/vincis-logo-512.png"), path.join(root, "public/images/LOGO.png"), path.join(root, "public/logo.png")]
+});
+
+spawnSync(process.execPath, [path.join(root, "scripts/generate-favicon-assets.mjs")], {
+  stdio: "inherit",
+  cwd: root
 });

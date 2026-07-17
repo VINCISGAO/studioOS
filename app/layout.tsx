@@ -1,4 +1,10 @@
 import type { Metadata, Viewport } from "next";
+import {
+  vincisDefaultOpenGraph,
+  vincisDefaultTwitter,
+  vincisRootMetadataIcons
+} from "@/lib/marketing/site-seo";
+import { VINCIS_ORGANIZATION, VINCIS_SITE_ORIGIN } from "@/lib/marketing/organization-schema";
 import { landingFontClassName } from "@/lib/studioos/landing-fonts";
 import { studioOS } from "@/lib/studioos/vocabulary";
 import "./globals.css";
@@ -10,12 +16,23 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "VINCIS | AI Creative Production for Global Brands",
+  metadataBase: new URL(VINCIS_SITE_ORIGIN),
+  title: {
+    default: "VINCIS | AI Creative Production for Global Brands",
+    template: "%s | VINCIS"
+  },
   description: studioOS.hero.en,
-  icons: {
-    icon: "/images/LOGO.png?v=202607061900",
-    shortcut: "/images/LOGO.png?v=202607061900",
-    apple: "/images/LOGO.png?v=202607061900"
+  applicationName: VINCIS_ORGANIZATION.name,
+  icons: vincisRootMetadataIcons(),
+  openGraph: vincisDefaultOpenGraph(),
+  twitter: vincisDefaultTwitter(),
+  alternates: {
+    canonical: VINCIS_SITE_ORIGIN,
+    languages: {
+      en: `${VINCIS_SITE_ORIGIN}/?lang=en`,
+      "zh-CN": VINCIS_SITE_ORIGIN,
+      "x-default": VINCIS_SITE_ORIGIN
+    }
   }
 };
 

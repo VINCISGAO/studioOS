@@ -291,6 +291,36 @@ async function main() {
         failures.push(file);
       }
     }
+
+    const faviconFiles = [
+      "public/favicon.ico",
+      "public/favicon-48x48.png",
+      "public/favicon-96x96.png",
+      "public/favicon-192x192.png",
+      "public/favicon-512x512.png",
+      "public/apple-touch-icon.png",
+      "public/brand/vincis-logo-512.png"
+    ];
+    for (const file of faviconFiles) {
+      try {
+        await fs.access(path.join(root, file));
+        console.log(`[verify-marketing-links] OK favicon asset ${file}`);
+      } catch {
+        console.error(`[verify-marketing-links] FAIL missing favicon asset ${file}`);
+        failures.push(file);
+      }
+    }
+
+    const layoutContent = await fs.readFile(path.join(root, "app/layout.tsx"), "utf8");
+    if (!layoutContent.includes("metadataBase")) {
+      console.error("[verify-marketing-links] FAIL root layout missing metadataBase");
+      failures.push("root layout metadataBase");
+    } else if (!layoutContent.includes("vincisRootMetadataIcons")) {
+      console.error("[verify-marketing-links] FAIL root layout missing vincisRootMetadataIcons");
+      failures.push("root layout icons");
+    } else {
+      console.log("[verify-marketing-links] OK root layout metadataBase + icons");
+    }
   } catch (error) {
     console.error(`[verify-marketing-links] FAIL could not scan homepage schema: ${error}`);
     failures.push("homepage schema scan");

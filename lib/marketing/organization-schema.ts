@@ -1,11 +1,12 @@
 export const VINCIS_SITE_ORIGIN = "https://vincis.app" as const;
+export const VINCIS_BRAND_LOGO_PATH = "/brand/vincis-logo-512.png" as const;
 
 export const VINCIS_ORGANIZATION = {
   name: "VINCIS",
   url: VINCIS_SITE_ORIGIN,
-  logo: `${VINCIS_SITE_ORIGIN}/logo.png`,
+  logo: `${VINCIS_SITE_ORIGIN}${VINCIS_BRAND_LOGO_PATH}`,
   description:
-    "AI-powered advertising production platform connecting global brands with creators.",
+    "VINCIS is an AI-powered advertising production platform connecting global brands with AI creators.",
   sameAs: [
     "https://www.linkedin.com/company/vincis",
     "https://x.com/vincis",
@@ -16,7 +17,7 @@ export const VINCIS_ORGANIZATION = {
 function logoImageObject(origin: string) {
   return {
     "@type": "ImageObject",
-    url: `${origin.replace(/\/$/u, "")}/logo.png`
+    url: `${origin.replace(/\/$/u, "")}${VINCIS_BRAND_LOGO_PATH}`
   };
 }
 
