@@ -3,7 +3,7 @@
 import { ArrowRight, Sparkles } from "lucide-react";
 import { useMarketingDocsLucien } from "@/components/marketing/docs/marketing-docs-lucien-context";
 import { FaqLucienCtaGraphic } from "@/components/marketing/faq/faq-cta-graphic";
-import type { Locale } from "@/lib/i18n";
+import type { MarketingLocale } from "@/lib/i18n";
 
 export function FaqLucienCtaBlock({
   locale,
@@ -11,7 +11,7 @@ export function FaqLucienCtaBlock({
   buttonLabel,
   className
 }: {
-  locale: Locale;
+  locale: MarketingLocale;
   title: string;
   buttonLabel: string;
   className?: string;

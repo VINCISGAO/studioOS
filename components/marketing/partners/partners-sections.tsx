@@ -18,6 +18,8 @@ import type { PartnerCommissionTier } from "@/features/partner-program/partner-p
 import { PARTNER_REFERRAL_SHARE_OF_PLATFORM_FEE } from "@/features/partner-program/partner-program.constants";
 import { formatPartnerStatValue, partnersText } from "@/lib/marketing/partners-copy";
 import { buildLocalizedHref } from "@/lib/marketing/localized-href";
+import type { MarketingLocale } from "@/lib/i18n";
+import { isChineseMarketingLocale } from "@/lib/marketing/i18n/resolve-marketing-copy";
 import { appPath, type Locale } from "@/lib/i18n";
 
 const BENEFIT_ICONS = [BadgePercent, TrendingUp, LineChart, Wallet] as const;
@@ -32,7 +34,7 @@ type PartnerStats = {
   satisfactionRate: number;
 };
 
-export function PartnersHeroSection({ locale }: { locale: Locale }) {
+export function PartnersHeroSection({ locale }: { locale: MarketingLocale }) {
   const t = partnersText(locale);
 
   return (
@@ -63,7 +65,7 @@ export function PartnersHeroSection({ locale }: { locale: Locale }) {
   );
 }
 
-export function PartnersBenefitsSection({ locale }: { locale: Locale }) {
+export function PartnersBenefitsSection({ locale }: { locale: MarketingLocale }) {
   const t = partnersText(locale);
 
   return (
@@ -90,7 +92,7 @@ export function PartnersBenefitsSection({ locale }: { locale: Locale }) {
   );
 }
 
-export function PartnersStepsSection({ locale }: { locale: Locale }) {
+export function PartnersStepsSection({ locale }: { locale: MarketingLocale }) {
   const t = partnersText(locale);
 
   return (
@@ -125,7 +127,7 @@ export function PartnersCommissionSection({
   tiers,
   stats
 }: {
-  locale: Locale;
+  locale: MarketingLocale;
   tiers: PartnerCommissionTier[];
   stats: PartnerStats;
 }) {
@@ -153,11 +155,11 @@ export function PartnersCommissionSection({
               >
                 <span className="inline-flex items-center gap-2 font-medium text-zinc-900">
                   <Icon className="h-4 w-4 text-violet-600" strokeWidth={1.75} />
-                  {locale === "zh" ? tier.labelZh : tier.labelEn}
+                  {isChineseMarketingLocale(locale) ? tier.labelZh : tier.labelEn}
                 </span>
                 <span className="font-semibold text-violet-700">{tier.platformServiceFeeRate}%</span>
                 <span className="text-zinc-600">
-                  {locale === "zh"
+                  {isChineseMarketingLocale(locale)
                     ? `平台服务费的 ${PARTNER_REFERRAL_SHARE_OF_PLATFORM_FEE}%`
                     : `${PARTNER_REFERRAL_SHARE_OF_PLATFORM_FEE}% of platform service fee`}
                 </span>
@@ -192,7 +194,7 @@ export function PartnersCommissionSection({
   );
 }
 
-export function PartnersFaqSection({ locale }: { locale: Locale }) {
+export function PartnersFaqSection({ locale }: { locale: MarketingLocale }) {
   const t = partnersText(locale);
 
   return (

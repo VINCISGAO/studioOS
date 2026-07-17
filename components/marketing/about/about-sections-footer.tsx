@@ -1,9 +1,9 @@
 import Image from "next/image";
 import { Download } from "lucide-react";
 import { aboutText } from "@/lib/marketing/about-copy";
-import type { Locale } from "@/lib/i18n";
+import type { MarketingLocale } from "@/lib/i18n";
 
-export function AboutContactPressSection({ locale }: { locale: Locale }) {
+export function AboutContactPressSection({ locale }: { locale: MarketingLocale }) {
   const t = aboutText(locale);
 
   return (
@@ -82,7 +82,7 @@ export function AboutContactPressSection({ locale }: { locale: Locale }) {
   );
 }
 
-export function AboutClosingSection({ locale }: { locale: Locale }) {
+export function AboutClosingSection({ locale }: { locale: MarketingLocale }) {
   const t = aboutText(locale);
 
   return (

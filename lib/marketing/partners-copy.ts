@@ -1,4 +1,7 @@
-import type { Locale } from "@/lib/i18n";
+import type { MarketingLocale } from "@/lib/i18n";
+import { isChineseMarketingLocale, toLegacyLocale } from "@/lib/marketing/i18n/resolve-marketing-copy";
+import partnersBundles from "@/lib/marketing/i18n/bundles/partners.json";
+import { resolveMarketingCopy } from "@/lib/marketing/i18n/resolve-marketing-copy";
 import { formatMoneyFromUsd } from "@/lib/money/display-money";
 
 export type PartnersCopy = {
@@ -39,7 +42,7 @@ export type PartnersCopy = {
   faq: Array<{ question: string; answer: string }>;
 };
 
-const zh: PartnersCopy = {
+export const partnersCopyZhCN: PartnersCopy = {
   nav: {
     home: "首页",
     process: "如何工作",
@@ -115,7 +118,7 @@ const zh: PartnersCopy = {
   ]
 };
 
-const en: PartnersCopy = {
+export const partnersCopyEn: PartnersCopy = {
   nav: {
     home: "Home",
     process: "How it works",
@@ -191,8 +194,15 @@ const en: PartnersCopy = {
   ]
 };
 
-export function partnersText(locale: Locale): PartnersCopy {
-  return locale === "zh" ? zh : en;
+export function partnersText(locale: MarketingLocale): PartnersCopy {
+  return resolveMarketingCopy(
+    {
+      en: partnersCopyEn,
+      "zh-CN": partnersCopyZhCN,
+      ...(partnersBundles as Partial<Record<MarketingLocale, PartnersCopy>>)
+    },
+    locale
+  );
 }
 
 export function formatPartnerStatValue(
@@ -203,12 +213,13 @@ export function formatPartnerStatValue(
     referredCustomers: number;
     satisfactionRate: number;
   },
-  locale: Locale
+  locale: MarketingLocale
 ) {
-  if (index === 0) return `${stats.activePartners.toLocaleString(locale === "zh" ? "zh-CN" : "en-US")}+`;
+  const numberLocale = isChineseMarketingLocale(locale) ? "zh-CN" : "en-US";
+  if (index === 0) return `${stats.activePartners.toLocaleString(numberLocale)}+`;
   if (index === 1) {
-    return `${formatMoneyFromUsd(stats.totalPaidCommission, locale)}+`;
+    return `${formatMoneyFromUsd(stats.totalPaidCommission, toLegacyLocale(locale))}+`;
   }
-  if (index === 2) return `${stats.referredCustomers.toLocaleString(locale === "zh" ? "zh-CN" : "en-US")}+`;
+  if (index === 2) return `${stats.referredCustomers.toLocaleString(numberLocale)}+`;
   return `${stats.satisfactionRate.toFixed(1)}%`;
 }

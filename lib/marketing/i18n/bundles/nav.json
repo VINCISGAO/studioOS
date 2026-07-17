@@ -1,0 +1,332 @@
+{
+  "en": {
+    "about": {
+      "label": "About us",
+      "description": "Learn about VINCIS mission and team"
+    },
+    "process": {
+      "label": "Process",
+      "description": "The complete flow from brief to delivery"
+    },
+    "cases": {
+      "label": "Work",
+      "description": "Explore our selected work and success stories"
+    },
+    "pricing": {
+      "label": "Pricing",
+      "description": "Transparent, flexible pricing plans"
+    },
+    "resources": {
+      "label": "Partners",
+      "description": "Earn long-term referral commissions by recommending brands and creators"
+    },
+    "faq": {
+      "label": "FAQ",
+      "description": "Answers on platform use, publishing, and payments"
+    },
+    "knowledge": {
+      "label": "Knowledge Center",
+      "description": "Official guides, academy content, and help docs"
+    }
+  },
+  "zh-CN": {
+    "about": {
+      "label": "关于我们",
+      "description": "了解 VINCIS 的使命与团队"
+    },
+    "process": {
+      "label": "流程",
+      "description": "从需求到交付的完整流程"
+    },
+    "cases": {
+      "label": "案例",
+      "description": "探索我们的精选作品与成功故事"
+    },
+    "pricing": {
+      "label": "价格",
+      "description": "透明灵活的定价方案"
+    },
+    "resources": {
+      "label": "合作伙伴",
+      "description": "推荐品牌与制作者，获得长期分销佣金"
+    },
+    "faq": {
+      "label": "常见问题",
+      "description": "平台使用、发布与付款相关解答"
+    },
+    "knowledge": {
+      "label": "知识中心",
+      "description": "官方指南、学院内容与帮助文档"
+    }
+  },
+  "zh-TW": {
+    "about": {
+      "label": "關於我們",
+      "description": "了解 VINCIS 的使命與團隊"
+    },
+    "process": {
+      "label": "流程",
+      "description": "從需求到交付的完整流程"
+    },
+    "cases": {
+      "label": "案例",
+      "description": "探索我們的精選作品與成功故事"
+    },
+    "pricing": {
+      "label": "價格",
+      "description": "透明靈活的定價方案"
+    },
+    "resources": {
+      "label": "合作夥伴",
+      "description": "推薦品牌與製作者，獲得長期分銷佣金"
+    },
+    "faq": {
+      "label": "常見問題",
+      "description": "平台使用、發布與付款相關解答"
+    },
+    "knowledge": {
+      "label": "知識中心",
+      "description": "官方指南、學院內容與幫助文檔"
+    }
+  },
+  "ja": {
+    "about": {
+      "label": "私たちについて",
+      "description": "VINCISのミッションとチームについて学ぶ"
+    },
+    "process": {
+      "label": "プロセス",
+      "description": "ブリーフから納品までの完全な流れ"
+    },
+    "cases": {
+      "label": "作品",
+      "description": "私たちの選ばれた作品と成功事例を探る"
+    },
+    "pricing": {
+      "label": "価格",
+      "description": "透明で柔軟な価格プラン"
+    },
+    "resources": {
+      "label": "パートナー",
+      "description": "ブランドやクリエイターを推薦することで長期的な紹介手数料を得る"
+    },
+    "faq": {
+      "label": "FAQ",
+      "description": "プラットフォームの使用、出版、支払いに関する回答"
+    },
+    "knowledge": {
+      "label": "ナレッジセンター",
+      "description": "公式ガイド、アカデミーコンテンツ、ヘルプドキュメント"
+    }
+  },
+  "ko": {
+    "about": {
+      "label": "회사 소개",
+      "description": "VINCIS의 미션과 팀에 대해 알아보세요"
+    },
+    "process": {
+      "label": "프로세스",
+      "description": "브리프에서 배달까지의 전체 흐름"
+    },
+    "cases": {
+      "label": "작업",
+      "description": "선택된 작업 및 성공 사례를 탐색하세요"
+    },
+    "pricing": {
+      "label": "가격",
+      "description": "투명하고 유연한 가격 계획"
+    },
+    "resources": {
+      "label": "파트너",
+      "description": "브랜드와 크리에이터를 추천하여 장기적인 추천 수수료를 얻으세요"
+    },
+    "faq": {
+      "label": "자주 묻는 질문",
+      "description": "플랫폼 사용, 출판 및 결제에 대한 답변"
+    },
+    "knowledge": {
+      "label": "지식 센터",
+      "description": "공식 가이드, 아카데미 콘텐츠 및 도움말 문서"
+    }
+  },
+  "ms": {
+    "about": {
+      "label": "Tentang kami",
+      "description": "Ketahui tentang misi dan pasukan VINCIS"
+    },
+    "process": {
+      "label": "Proses",
+      "description": "Aliran lengkap dari ringkasan hingga penghantaran"
+    },
+    "cases": {
+      "label": "Kerja",
+      "description": "Terokai kerja terpilih dan kisah kejayaan kami"
+    },
+    "pricing": {
+      "label": "Harga",
+      "description": "Pelan harga yang telus dan fleksibel"
+    },
+    "resources": {
+      "label": "Rakan Kongsi",
+      "description": "Dapatkan komisen rujukan jangka panjang dengan mengesyorkan jenama dan pencipta"
+    },
+    "faq": {
+      "label": "Soalan Lazim",
+      "description": "Jawapan mengenai penggunaan platform, penerbitan, dan pembayaran"
+    },
+    "knowledge": {
+      "label": "Pusat Pengetahuan",
+      "description": "Panduan rasmi, kandungan akademi, dan dokumen bantuan"
+    }
+  },
+  "th": {
+    "about": {
+      "label": "เกี่ยวกับเรา",
+      "description": "เรียนรู้เกี่ยวกับภารกิจและทีมงานของ VINCIS"
+    },
+    "process": {
+      "label": "กระบวนการ",
+      "description": "ขั้นตอนทั้งหมดตั้งแต่การสรุปไปจนถึงการส่งมอบ"
+    },
+    "cases": {
+      "label": "ผลงาน",
+      "description": "สำรวจผลงานที่เลือกและเรื่องราวความสำเร็จของเรา"
+    },
+    "pricing": {
+      "label": "ราคา",
+      "description": "แผนราคาโปร่งใสและยืดหยุ่น"
+    },
+    "resources": {
+      "label": "พันธมิตร",
+      "description": "รับค่าคอมมิชชั่นการแนะนำระยะยาวโดยการแนะนำแบรนด์และผู้สร้าง"
+    },
+    "faq": {
+      "label": "คำถามที่พบบ่อย",
+      "description": "คำตอบเกี่ยวกับการใช้แพลตฟอร์ม การเผยแพร่ และการชำระเงิน"
+    },
+    "knowledge": {
+      "label": "ศูนย์ความรู้",
+      "description": "คู่มืออย่างเป็นทางการ เนื้อหาจากสถาบัน และเอกสารช่วยเหลือ"
+    }
+  },
+  "km": {
+    "about": {
+      "label": "អំពីយើង",
+      "description": "សូមស្គាល់បេសកកម្ម និងក្រុមការងាររបស់ VINCIS"
+    },
+    "process": {
+      "label": "ដំណើរការ",
+      "description": "ដំណើរការពេញលេញចាប់ពីការបញ្ជាក់រហូតដល់ការដឹកជញ្ជូន"
+    },
+    "cases": {
+      "label": "ការងារ",
+      "description": "សូមស្វែងរកការងារដែលបានជ្រើសរើស និងរឿងរ៉ាវជោគជ័យរបស់យើង"
+    },
+    "pricing": {
+      "label": "តម្លៃ",
+      "description": "ផែនការតម្លៃដែលមានភាពច្បាស់លាស់ និងអាចបត់បែនបាន"
+    },
+    "resources": {
+      "label": "ដៃគូ",
+      "description": "រកចំណូលជាប្រាក់កម្រៃយោងរយៈពេលវែងដោយការណែនាំម៉ាក និងអ្នកបង្កើត"
+    },
+    "faq": {
+      "label": "សំណួរញឹកញាប់",
+      "description": "ចម្លើយសម្រាប់ការប្រើប្រាស់វេទិកា ការបោះពុម្ព និងការទូទាត់"
+    },
+    "knowledge": {
+      "label": "មជ្ឈមណ្ឌលចំណេះដឹង",
+      "description": "មគ្គុទេសក៍ផ្លូវការនៅក្នុងមជ្ឈមណ្ឌល ការបណ្តុះបណ្តាល និងឯកសារជំនួយ"
+    }
+  },
+  "vi": {
+    "about": {
+      "label": "Về chúng tôi",
+      "description": "Tìm hiểu về sứ mệnh và đội ngũ của VINCIS"
+    },
+    "process": {
+      "label": "Quy trình",
+      "description": "Luồng công việc hoàn chỉnh từ yêu cầu đến giao hàng"
+    },
+    "cases": {
+      "label": "Công việc",
+      "description": "Khám phá các công việc và câu chuyện thành công đã được chọn lọc của chúng tôi"
+    },
+    "pricing": {
+      "label": "Giá cả",
+      "description": "Các kế hoạch giá cả minh bạch, linh hoạt"
+    },
+    "resources": {
+      "label": "Đối tác",
+      "description": "Kiếm hoa hồng giới thiệu lâu dài bằng cách giới thiệu các thương hiệu và nhà sáng tạo"
+    },
+    "faq": {
+      "label": "Câu hỏi thường gặp",
+      "description": "Các câu trả lời về việc sử dụng nền tảng, xuất bản và thanh toán"
+    },
+    "knowledge": {
+      "label": "Trung tâm kiến thức",
+      "description": "Hướng dẫn chính thức, nội dung học viện và tài liệu trợ giúp"
+    }
+  },
+  "fr": {
+    "about": {
+      "label": "À propos de nous",
+      "description": "Découvrez la mission et l'équipe de VINCIS"
+    },
+    "process": {
+      "label": "Processus",
+      "description": "Le flux complet du brief à la livraison"
+    },
+    "cases": {
+      "label": "Travail",
+      "description": "Explorez notre travail sélectionné et nos histoires de succès"
+    },
+    "pricing": {
+      "label": "Tarification",
+      "description": "Plans tarifaires transparents et flexibles"
+    },
+    "resources": {
+      "label": "Partenaires",
+      "description": "Gagnez des commissions de parrainage à long terme en recommandant des marques et des créateurs"
+    },
+    "faq": {
+      "label": "FAQ",
+      "description": "Réponses sur l'utilisation de la plateforme, la publication et les paiements"
+    },
+    "knowledge": {
+      "label": "Centre de connaissances",
+      "description": "Guides officiels, contenu académique et documents d'aide"
+    }
+  },
+  "es": {
+    "about": {
+      "label": "Acerca de nosotros",
+      "description": "Conoce la misión y el equipo de VINCIS"
+    },
+    "process": {
+      "label": "Proceso",
+      "description": "El flujo completo desde el briefing hasta la entrega"
+    },
+    "cases": {
+      "label": "Trabajo",
+      "description": "Explora nuestro trabajo seleccionado y historias de éxito"
+    },
+    "pricing": {
+      "label": "Precios",
+      "description": "Planes de precios transparentes y flexibles"
+    },
+    "resources": {
+      "label": "Socios",
+      "description": "Gana comisiones de referencia a largo plazo recomendando marcas y creadores"
+    },
+    "faq": {
+      "label": "Preguntas Frecuentes",
+      "description": "Respuestas sobre el uso de la plataforma, publicación y pagos"
+    },
+    "knowledge": {
+      "label": "Centro de Conocimiento",
+      "description": "Guías oficiales, contenido de la academia y documentos de ayuda"
+    }
+  }
+}

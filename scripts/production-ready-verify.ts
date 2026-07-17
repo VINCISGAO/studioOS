@@ -10,6 +10,7 @@ import {
   buildMarketingFaqKnowledgeRows,
   MARKETING_FAQ_KNOWLEDGE_PER_LOCALE
 } from "../features/ai-copilot/marketing-faq-knowledge.mapper";
+import { SUPPORTED_LANGUAGE_SEEDS } from "../features/i18n/language.constants";
 
 const ROOT = join(fileURLToPath(new URL(".", import.meta.url)), "..");
 const FAILURE_LOG = join(ROOT, "verify-failure.log");
@@ -221,27 +222,31 @@ function checkAdminSecrets(): Step {
 
 function checkMarketingFaqKnowledge(): Step {
   const rows = buildMarketingFaqKnowledgeRows();
-  const zhCount = rows.filter((row) => row.languageCode === "zh-CN").length;
-  const enCount = rows.filter((row) => row.languageCode === "en").length;
+  const expectedLocales = SUPPORTED_LANGUAGE_SEEDS.map((item) => item.code);
+  const countsByLocale = Object.fromEntries(
+    expectedLocales.map((code) => [code, rows.filter((row) => row.languageCode === code).length])
+  );
   const boundaryOk = rows.every(
     (row) =>
       row.knowledgeType === "FAQ" &&
       row.visibility === "public" &&
       row.sourceType === "marketing_faq"
   );
+  const localeCountsOk = expectedLocales.every(
+    (code) => countsByLocale[code] === MARKETING_FAQ_KNOWLEDGE_PER_LOCALE
+  );
   const ok =
-    rows.length === MARKETING_FAQ_KNOWLEDGE_PER_LOCALE * 2 &&
-    zhCount === MARKETING_FAQ_KNOWLEDGE_PER_LOCALE &&
-    enCount === MARKETING_FAQ_KNOWLEDGE_PER_LOCALE &&
+    rows.length === MARKETING_FAQ_KNOWLEDGE_PER_LOCALE * expectedLocales.length &&
+    localeCountsOk &&
     boundaryOk;
 
   return {
     name: "ai_copilot.marketing_faq_knowledge",
     ok,
     detail: ok
-      ? `${rows.length} public marketing FAQ rows ready for Lucien`
+      ? `${rows.length} public marketing FAQ rows ready for Lucien (${expectedLocales.length} locales)`
       : boundaryOk
-        ? `Expected ${MARKETING_FAQ_KNOWLEDGE_PER_LOCALE * 2} rows, got ${rows.length}`
+        ? `Expected ${MARKETING_FAQ_KNOWLEDGE_PER_LOCALE} rows per locale across ${expectedLocales.length} locales; counts: ${JSON.stringify(countsByLocale)}`
         : "Marketing FAQ rows missing Lucien public boundary tags"
   };
 }

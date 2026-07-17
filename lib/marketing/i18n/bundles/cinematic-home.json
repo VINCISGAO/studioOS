@@ -1,0 +1,1454 @@
+{
+  "en": {
+    "nav": {
+      "cases": "Work",
+      "process": "Process",
+      "pricing": "Pricing",
+      "resources": "Partners",
+      "about": "About",
+      "login": "Log in",
+      "start": "Start project"
+    },
+    "mobileNav": {
+      "descriptions": {
+        "login": "Sign in to your account and continue with VINCIS",
+        "workspace": "Return to your brand or studio workspace",
+        "about": "Learn about VINCIS mission and team",
+        "process": "The complete flow from brief to delivery",
+        "cases": "Explore our selected work and success stories",
+        "pricing": "Transparent, flexible pricing plans",
+        "resources": "Earn long-term referral commissions by recommending brands and creators"
+      }
+    },
+    "hero": {
+      "chapter": "01 — Opening",
+      "lines": [
+        "Connecting global brands",
+        "with AI creators"
+      ],
+      "subtitle": "VINCIS gives global brands one place to brief, match AI creators, review cuts, protect payment, and ship campaign-ready assets.",
+      "primary": "I'm a brand",
+      "secondary": "I'm a creator",
+      "loggedInPrimary": "Brand portal",
+      "scroll": "Scroll to enter"
+    },
+    "trust": {
+      "label": "Trusted by teams who ship at paid-social speed",
+      "brands": [
+        "Google",
+        "Samsung",
+        "Coca-Cola",
+        "Airbnb",
+        "TikTok",
+        "Shopify",
+        "Amazon",
+        "Meta",
+        "Nike",
+        "P&G"
+      ]
+    },
+    "cost": {
+      "chapter": "02 — Cost Break",
+      "title": "Traditional production, cut open.",
+      "agency": "Traditional Agency",
+      "agencyPrice": 50000,
+      "agencyLabel": "Average campaign",
+      "studio": "VINCIS",
+      "studioPrice": 8000,
+      "studioLabel": "Same deliverable tier",
+      "save": "Save up to 84%"
+    },
+    "network": {
+      "chapter": "03 — Production Network",
+      "title": "Not a marketplace.",
+      "highlight": "A curated studio roster.",
+      "subtitle": "Directors, editors, and AIGC teams — vetted for portfolio quality and delivery discipline.",
+      "rosterEyebrow": "Live roster",
+      "statusActive": "In production",
+      "statusOpen": "Taking briefs",
+      "matchNote": "Matched in under 48h on average",
+      "viewAll": "View all →"
+    },
+    "filmstrip": {
+      "chapter": "04 — From Brief to Film",
+      "title": "Five beats. One production line.",
+      "steps": [
+        {
+          "key": "brief",
+          "label": "Brief",
+          "desc": "Publish requirements"
+        },
+        {
+          "key": "match",
+          "label": "Match",
+          "desc": "Portfolio-first pairing"
+        },
+        {
+          "key": "production",
+          "label": "Production",
+          "desc": "Studio execution"
+        },
+        {
+          "key": "review",
+          "label": "Review",
+          "desc": "Frame-accurate proofing"
+        },
+        {
+          "key": "delivery",
+          "label": "Delivery",
+          "desc": "Final cut release"
+        }
+      ]
+    },
+    "wall": {
+      "chapter": "05 — Quality Wall",
+      "title": "Work that speaks before you match.",
+      "viewAll": "Browse all studios"
+    },
+    "escrow": {
+      "chapter": "Escrow Trust",
+      "title": "Trust built into every frame.",
+      "items": [
+        {
+          "title": "Escrow payment",
+          "desc": "Funds held until milestones clear."
+        },
+        {
+          "title": "Review protection",
+          "desc": "Watermarked proofs, version history."
+        },
+        {
+          "title": "Delivery unlock",
+          "desc": "Release payment when you approve."
+        }
+      ]
+    },
+    "cta": {
+      "chapter": "07 — Final Cut",
+      "title": "Ready for your next blockbuster?",
+      "subtitle": "Join brands already producing cinema-grade ads at a fraction of agency cost.",
+      "primary": "Start your campaign",
+      "secondary": "Talk to an expert"
+    }
+  },
+  "zh-CN": {
+    "nav": {
+      "cases": "案例",
+      "process": "流程",
+      "pricing": "价格",
+      "resources": "合作伙伴",
+      "about": "关于我们",
+      "login": "登录",
+      "start": "开始项目"
+    },
+    "mobileNav": {
+      "descriptions": {
+        "login": "登录您的账户，继续使用 VINCIS",
+        "workspace": "返回您的品牌方或创作者工作台",
+        "about": "了解 VINCIS 的使命与团队",
+        "process": "从需求到交付的完整流程",
+        "cases": "探索我们的精选作品与成功故事",
+        "pricing": "透明灵活的定价方案",
+        "resources": "推荐品牌与创作者，获得长期分销佣金"
+      }
+    },
+    "hero": {
+      "chapter": "01 — 开场",
+      "lines": [
+        "连接全球品牌",
+        "与智能创作者"
+      ],
+      "subtitle": "VINCIS 让品牌方在一个工作流里完成创意简报、智能创作者匹配、审片、资金托管和成片交付",
+      "primary": "我是品牌方",
+      "secondary": "我是创作者",
+      "loggedInPrimary": "品牌方门户",
+      "scroll": "向下滚动"
+    },
+    "trust": {
+      "label": "服务需要快速出片的全球品牌团队",
+      "brands": [
+        "Google",
+        "Samsung",
+        "Coca-Cola",
+        "Airbnb",
+        "TikTok",
+        "Shopify",
+        "Amazon",
+        "Meta",
+        "Nike",
+        "P&G"
+      ]
+    },
+    "cost": {
+      "chapter": "02 — 成本切开",
+      "title": "传统制作模式已经失效",
+      "agency": "传统广告公司",
+      "agencyPrice": 360000,
+      "agencyLabel": "平均投放项目",
+      "studio": "VINCIS",
+      "studioPrice": 58000,
+      "studioLabel": "同等交付标准",
+      "save": "节省最高 84%"
+    },
+    "network": {
+      "chapter": "03 — 制作网络",
+      "title": "品牌方直联",
+      "highlight": "严选的创作者名册",
+      "subtitle": "导演、剪辑、AI 制作团队 — 按作品集质量与交付纪律筛选",
+      "rosterEyebrow": "实时名册",
+      "statusActive": "制作中",
+      "statusOpen": "可接需求",
+      "matchNote": "平均 48 小时内完成匹配",
+      "viewAll": "查看全部 →"
+    },
+    "filmstrip": {
+      "chapter": "04 — 从需求到成片",
+      "title": "五个节拍，一条制作线",
+      "steps": [
+        {
+          "key": "brief",
+          "label": "需求",
+          "desc": "发布需求"
+        },
+        {
+          "key": "match",
+          "label": "匹配",
+          "desc": "作品集匹配"
+        },
+        {
+          "key": "production",
+          "label": "制作",
+          "desc": "制作执行"
+        },
+        {
+          "key": "review",
+          "label": "审片",
+          "desc": "帧级审片"
+        },
+        {
+          "key": "delivery",
+          "label": "交付",
+          "desc": "交付成片"
+        }
+      ]
+    },
+    "wall": {
+      "chapter": "05 — 品质墙",
+      "title": "匹配之前，作品先说话",
+      "viewAll": "浏览全部创作者"
+    },
+    "escrow": {
+      "chapter": "托管信任",
+      "title": "每一帧都有信任机制",
+      "items": [
+        {
+          "title": "资金托管",
+          "desc": "里程碑达成前资金锁定"
+        },
+        {
+          "title": "审片保护",
+          "desc": "水印样片，版本完整留痕"
+        },
+        {
+          "title": "交付解锁",
+          "desc": "验收满意后释放付款"
+        }
+      ]
+    },
+    "cta": {
+      "chapter": "07 — 终场",
+      "title": "下一支电影级广告，从这里开始",
+      "subtitle": "已有品牌以远低于代理成本，持续产出电影级广告",
+      "primary": "启动投放项目",
+      "secondary": "联系专家"
+    }
+  },
+  "zh-TW": {
+    "nav": {
+      "cases": "案例",
+      "process": "流程",
+      "pricing": "價格",
+      "resources": "合作夥伴",
+      "about": "關於我們",
+      "login": "登入",
+      "start": "開始專案"
+    },
+    "mobileNav": {
+      "descriptions": {
+        "login": "登入您的帳戶，繼續使用 VINCIS",
+        "workspace": "返回您的品牌方或創作者工作台",
+        "about": "了解 VINCIS 的使命與團隊",
+        "process": "從需求到交付的完整流程",
+        "cases": "探索我們的精選作品與成功故事",
+        "pricing": "透明靈活的定價方案",
+        "resources": "推薦品牌與創作者，獲得長期分銷佣金"
+      }
+    },
+    "hero": {
+      "chapter": "01 — 開場",
+      "lines": [
+        "連接全球品牌",
+        "與智能創作者"
+      ],
+      "subtitle": "VINCIS 讓品牌方在一個工作流裡完成創意簡報、智能創作者匹配、審片、資金托管和成片交付",
+      "primary": "我是品牌方",
+      "secondary": "我是創作者",
+      "loggedInPrimary": "品牌方門戶",
+      "scroll": "向下滾動"
+    },
+    "trust": {
+      "label": "服務需要快速出片的全球品牌團隊",
+      "brands": [
+        "Google",
+        "Samsung",
+        "Coca-Cola",
+        "Airbnb",
+        "TikTok",
+        "Shopify",
+        "Amazon",
+        "Meta",
+        "Nike",
+        "P&G"
+      ]
+    },
+    "cost": {
+      "chapter": "02 — 成本切開",
+      "title": "傳統製作模式已經失效",
+      "agency": "傳統廣告公司",
+      "agencyPrice": 360000,
+      "agencyLabel": "平均投放專案",
+      "studio": "VINCIS",
+      "studioPrice": 58000,
+      "studioLabel": "同等交付標準",
+      "save": "節省最高 84%"
+    },
+    "network": {
+      "chapter": "03 — 製作網絡",
+      "title": "品牌方直聯",
+      "highlight": "嚴選的創作者名冊",
+      "subtitle": "導演、剪輯、AI 製作團隊 — 按作品集質量與交付紀律篩選",
+      "rosterEyebrow": "即時名冊",
+      "statusActive": "製作中",
+      "statusOpen": "可接需求",
+      "matchNote": "平均 48 小時內完成匹配",
+      "viewAll": "查看全部 →"
+    },
+    "filmstrip": {
+      "chapter": "04 — 從需求到成片",
+      "title": "五個節拍，一條製作線",
+      "steps": [
+        {
+          "key": "brief",
+          "label": "需求",
+          "desc": "發布需求"
+        },
+        {
+          "key": "match",
+          "label": "匹配",
+          "desc": "作品集匹配"
+        },
+        {
+          "key": "production",
+          "label": "製作",
+          "desc": "製作執行"
+        },
+        {
+          "key": "review",
+          "label": "審片",
+          "desc": "幀級審片"
+        },
+        {
+          "key": "delivery",
+          "label": "交付",
+          "desc": "交付成片"
+        }
+      ]
+    },
+    "wall": {
+      "chapter": "05 — 品質牆",
+      "title": "匹配之前，作品先說話",
+      "viewAll": "瀏覽全部創作者"
+    },
+    "escrow": {
+      "chapter": "托管信任",
+      "title": "每一幀都有信任機制",
+      "items": [
+        {
+          "title": "資金托管",
+          "desc": "里程碑達成前資金鎖定"
+        },
+        {
+          "title": "審片保護",
+          "desc": "水印樣片，版本完整留痕"
+        },
+        {
+          "title": "交付解鎖",
+          "desc": "驗收滿意後釋放付款"
+        }
+      ]
+    },
+    "cta": {
+      "chapter": "07 — 终场",
+      "title": "下一支電影級廣告，從這裡開始",
+      "subtitle": "已有品牌以遠低於代理成本，持續產出電影級廣告",
+      "primary": "啟動投放專案",
+      "secondary": "聯繫專家"
+    }
+  },
+  "ja": {
+    "nav": {
+      "cases": "作品",
+      "process": "プロセス",
+      "pricing": "料金",
+      "resources": "パートナー",
+      "about": "私たちについて",
+      "login": "ログイン",
+      "start": "プロジェクトを開始"
+    },
+    "mobileNav": {
+      "descriptions": {
+        "login": "アカウントにサインインしてVINCISを続ける",
+        "workspace": "ブランドまたはスタジオのワークスペースに戻る",
+        "about": "VINCISのミッションとチームについて学ぶ",
+        "process": "ブリーフから納品までの完全なフロー",
+        "cases": "私たちの選ばれた作品と成功事例を探る",
+        "pricing": "透明で柔軟な料金プラン",
+        "resources": "ブランドやクリエイターを推薦して長期的な紹介手数料を得る"
+      }
+    },
+    "hero": {
+      "chapter": "01 — オープニング",
+      "lines": [
+        "グローバルブランドをつなぐ",
+        "AIクリエイターと"
+      ],
+      "subtitle": "VINCISは、グローバルブランドがブリーフを作成し、AIクリエイターとマッチングし、カットをレビューし、支払いを保護し、キャンペーン準備が整ったアセットを出荷するための一つの場所を提供します。",
+      "primary": "私はブランドです",
+      "secondary": "私はクリエイターです",
+      "loggedInPrimary": "ブランドポータル",
+      "scroll": "スクロールして入る"
+    },
+    "trust": {
+      "label": "有料ソーシャルスピードで出荷するチームに信頼されています",
+      "brands": [
+        "Google",
+        "Samsung",
+        "Coca-Cola",
+        "Airbnb",
+        "TikTok",
+        "Shopify",
+        "Amazon",
+        "Meta",
+        "Nike",
+        "P&G"
+      ]
+    },
+    "cost": {
+      "chapter": "02 — コストの内訳",
+      "title": "従来の制作、切り開く。",
+      "agency": "従来のエージェンシー",
+      "agencyPrice": 50000,
+      "agencyLabel": "平均キャンペーン",
+      "studio": "VINCIS",
+      "studioPrice": 8000,
+      "studioLabel": "同じ納品レベル",
+      "save": "最大84%節約"
+    },
+    "network": {
+      "chapter": "03 — 制作ネットワーク",
+      "title": "マーケットプレイスではありません。",
+      "highlight": "キュレーションされたスタジオの名簿。",
+      "subtitle": "ディレクター、エディター、AIGCチーム — ポートフォリオの品質と納品の規律を確認済み。",
+      "rosterEyebrow": "ライブ名簿",
+      "statusActive": "制作中",
+      "statusOpen": "ブリーフを受け付け中",
+      "matchNote": "平均48時間以内にマッチング",
+      "viewAll": "すべて表示 →"
+    },
+    "filmstrip": {
+      "chapter": "04 — ブリーフからフィルムへ",
+      "title": "5つのビート。1つの制作ライン。",
+      "steps": [
+        {
+          "key": "brief",
+          "label": "ブリーフ",
+          "desc": "要件を公開"
+        },
+        {
+          "key": "match",
+          "label": "マッチ",
+          "desc": "ポートフォリオ優先のペアリング"
+        },
+        {
+          "key": "production",
+          "label": "制作",
+          "desc": "スタジオの実行"
+        },
+        {
+          "key": "review",
+          "label": "レビュー",
+          "desc": "フレーム精度の校正"
+        },
+        {
+          "key": "delivery",
+          "label": "納品",
+          "desc": "最終カットのリリース"
+        }
+      ]
+    },
+    "wall": {
+      "chapter": "05 — クオリティウォール",
+      "title": "マッチする前に語る作品。",
+      "viewAll": "すべてのスタジオを閲覧"
+    },
+    "escrow": {
+      "chapter": "エスクロー信頼",
+      "title": "すべてのフレームに組み込まれた信頼。",
+      "items": [
+        {
+          "title": "エスクロー支払い",
+          "desc": "マイルストーンがクリアされるまで資金を保持。"
+        },
+        {
+          "title": "レビュー保護",
+          "desc": "透かし入りの証明書、バージョン履歴。"
+        },
+        {
+          "title": "納品解除",
+          "desc": "承認時に支払いをリリース。"
+        }
+      ]
+    },
+    "cta": {
+      "chapter": "07 — 最終カット",
+      "title": "次の大ヒット作の準備はできていますか？",
+      "subtitle": "すでにエージェンシーコストの一部でシネマグレードの広告を制作しているブランドに参加しましょう。",
+      "primary": "キャンペーンを開始",
+      "secondary": "専門家に相談"
+    }
+  },
+  "ms": {
+    "nav": {
+      "cases": "Kerja",
+      "process": "Proses",
+      "pricing": "Harga",
+      "resources": "Rakan Kongsi",
+      "about": "Tentang",
+      "login": "Log masuk",
+      "start": "Mulakan projek"
+    },
+    "mobileNav": {
+      "descriptions": {
+        "login": "Masuk ke akaun anda dan teruskan dengan VINCIS",
+        "workspace": "Kembali ke ruang kerja jenama atau studio anda",
+        "about": "Ketahui tentang misi dan pasukan VINCIS",
+        "process": "Aliran lengkap dari ringkasan hingga penghantaran",
+        "cases": "Terokai kerja terpilih dan kisah kejayaan kami",
+        "pricing": "Pelan harga yang telus dan fleksibel",
+        "resources": "Dapatkan komisen rujukan jangka panjang dengan mengesyorkan jenama dan pencipta"
+      }
+    },
+    "hero": {
+      "chapter": "01 — Pembukaan",
+      "lines": [
+        "Menghubungkan jenama global",
+        "dengan pencipta AI"
+      ],
+      "subtitle": "VINCIS memberikan jenama global satu tempat untuk merangkum, memadankan pencipta AI, mengkaji potongan, melindungi pembayaran, dan menghantar aset siap kempen.",
+      "primary": "Saya seorang jenama",
+      "secondary": "Saya seorang pencipta",
+      "loggedInPrimary": "Portal jenama",
+      "scroll": "Tatal untuk masuk"
+    },
+    "trust": {
+      "label": "Dipercayai oleh pasukan yang menghantar pada kelajuan sosial berbayar",
+      "brands": [
+        "Google",
+        "Samsung",
+        "Coca-Cola",
+        "Airbnb",
+        "TikTok",
+        "Shopify",
+        "Amazon",
+        "Meta",
+        "Nike",
+        "P&G"
+      ]
+    },
+    "cost": {
+      "chapter": "02 — Pecahan Kos",
+      "title": "Pengeluaran tradisional, dibuka.",
+      "agency": "Agensi Tradisional",
+      "agencyPrice": 50000,
+      "agencyLabel": "Kempen purata",
+      "studio": "VINCIS",
+      "studioPrice": 8000,
+      "studioLabel": "Tahap penghantaran yang sama",
+      "save": "Jimat sehingga 84%"
+    },
+    "network": {
+      "chapter": "03 — Rangkaian Pengeluaran",
+      "title": "Bukan pasaran.",
+      "highlight": "Senarai studio yang dipilih.",
+      "subtitle": "Pengarah, editor, dan pasukan AIGC — disahkan untuk kualiti portfolio dan disiplin penghantaran.",
+      "rosterEyebrow": "Senarai langsung",
+      "statusActive": "Dalam pengeluaran",
+      "statusOpen": "Menerima ringkasan",
+      "matchNote": "Dipadankan dalam masa kurang dari 48 jam secara purata",
+      "viewAll": "Lihat semua →"
+    },
+    "filmstrip": {
+      "chapter": "04 — Dari Ringkasan ke Filem",
+      "title": "Lima rentak. Satu barisan pengeluaran.",
+      "steps": [
+        {
+          "key": "brief",
+          "label": "Ringkasan",
+          "desc": "Terbitkan keperluan"
+        },
+        {
+          "key": "match",
+          "label": "Padan",
+          "desc": "Pasangan berasaskan portfolio"
+        },
+        {
+          "key": "production",
+          "label": "Pengeluaran",
+          "desc": "Pelaksanaan studio"
+        },
+        {
+          "key": "review",
+          "label": "Semak",
+          "desc": "Pembuktian tepat bingkai"
+        },
+        {
+          "key": "delivery",
+          "label": "Penghantaran",
+          "desc": "Pelepasan potongan akhir"
+        }
+      ]
+    },
+    "wall": {
+      "chapter": "05 — Dinding Kualiti",
+      "title": "Kerja yang bercakap sebelum anda memadankan.",
+      "viewAll": "Lihat semua studio"
+    },
+    "escrow": {
+      "chapter": "Kepercayaan Escrow",
+      "title": "Kepercayaan dibina dalam setiap bingkai.",
+      "items": [
+        {
+          "title": "Pembayaran escrow",
+          "desc": "Dana dipegang sehingga pencapaian jelas."
+        },
+        {
+          "title": "Perlindungan semakan",
+          "desc": "Bukti bertanda air, sejarah versi."
+        },
+        {
+          "title": "Kunci penghantaran",
+          "desc": "Lepaskan pembayaran apabila anda meluluskan."
+        }
+      ]
+    },
+    "cta": {
+      "chapter": "07 — Potongan Akhir",
+      "title": "Sedia untuk blockbuster seterusnya?",
+      "subtitle": "Sertai jenama yang sudah menghasilkan iklan tahap pawagam dengan kos agensi yang rendah.",
+      "primary": "Mulakan kempen anda",
+      "secondary": "Bercakap dengan pakar"
+    }
+  },
+  "ko": {
+    "nav": {
+      "cases": "작업",
+      "process": "프로세스",
+      "pricing": "가격",
+      "resources": "파트너",
+      "about": "소개",
+      "login": "로그인",
+      "start": "프로젝트 시작"
+    },
+    "mobileNav": {
+      "descriptions": {
+        "login": "계정에 로그인하고 VINCIS와 함께 계속 진행하세요.",
+        "workspace": "브랜드 또는 스튜디오 작업 공간으로 돌아가기",
+        "about": "VINCIS의 미션과 팀에 대해 알아보기",
+        "process": "브리프에서 배송까지의 전체 흐름",
+        "cases": "선택된 작업 및 성공 사례 탐색",
+        "pricing": "투명하고 유연한 가격 계획",
+        "resources": "브랜드 및 제작자를 추천하여 장기 추천 수수료를 얻으세요."
+      }
+    },
+    "hero": {
+      "chapter": "01 — 오프닝",
+      "lines": [
+        "글로벌 브랜드와",
+        "AI 제작자를 연결합니다."
+      ],
+      "subtitle": "VINCIS는 글로벌 브랜드가 브리프를 작성하고, AI 제작자를 매칭하며, 컷을 검토하고, 결제를 보호하고, 캠페인 준비 자산을 배송할 수 있는 단일 장소를 제공합니다.",
+      "primary": "나는 브랜드입니다",
+      "secondary": "나는 제작자입니다",
+      "loggedInPrimary": "브랜드 포털",
+      "scroll": "스크롤하여 들어가기"
+    },
+    "trust": {
+      "label": "유료 소셜 속도로 배송하는 팀이 신뢰합니다.",
+      "brands": [
+        "구글",
+        "삼성",
+        "코카콜라",
+        "에어비앤비",
+        "틱톡",
+        "쇼피파이",
+        "아마존",
+        "메타",
+        "나이키",
+        "P&G"
+      ]
+    },
+    "cost": {
+      "chapter": "02 — 비용 분석",
+      "title": "전통적인 제작, 개방.",
+      "agency": "전통적인 에이전시",
+      "agencyPrice": 50000,
+      "agencyLabel": "평균 캠페인",
+      "studio": "VINCIS",
+      "studioPrice": 8000,
+      "studioLabel": "동일한 결과물 수준",
+      "save": "최대 84% 절약"
+    },
+    "network": {
+      "chapter": "03 — 제작 네트워크",
+      "title": "마켓플레이스가 아닙니다.",
+      "highlight": "선별된 스튜디오 목록.",
+      "subtitle": "감독, 편집자 및 AIGC 팀 — 포트폴리오 품질 및 배송 규율에 대해 검증되었습니다.",
+      "rosterEyebrow": "실시간 목록",
+      "statusActive": "제작 중",
+      "statusOpen": "브리프 수락 중",
+      "matchNote": "평균 48시간 이내에 매칭",
+      "viewAll": "모두 보기 →"
+    },
+    "filmstrip": {
+      "chapter": "04 — 브리프에서 영화로",
+      "title": "다섯 단계. 하나의 제작 라인.",
+      "steps": [
+        {
+          "key": "brief",
+          "label": "브리프",
+          "desc": "요구 사항 게시"
+        },
+        {
+          "key": "match",
+          "label": "매칭",
+          "desc": "포트폴리오 우선 매칭"
+        },
+        {
+          "key": "production",
+          "label": "제작",
+          "desc": "스튜디오 실행"
+        },
+        {
+          "key": "review",
+          "label": "검토",
+          "desc": "프레임 정확한 증명"
+        },
+        {
+          "key": "delivery",
+          "label": "배송",
+          "desc": "최종 컷 릴리스"
+        }
+      ]
+    },
+    "wall": {
+      "chapter": "05 — 품질 벽",
+      "title": "매칭하기 전에 말하는 작업.",
+      "viewAll": "모든 스튜디오 탐색"
+    },
+    "escrow": {
+      "chapter": "에스크로 신뢰",
+      "title": "모든 프레임에 내재된 신뢰.",
+      "items": [
+        {
+          "title": "에스크로 결제",
+          "desc": "마일스톤이 완료될 때까지 자금 보유."
+        },
+        {
+          "title": "검토 보호",
+          "desc": "워터마크가 있는 증명, 버전 기록."
+        },
+        {
+          "title": "배송 잠금 해제",
+          "desc": "승인 시 결제 해제."
+        }
+      ]
+    },
+    "cta": {
+      "chapter": "07 — 최종 컷",
+      "title": "다음 블록버스터를 준비하시겠습니까?",
+      "subtitle": "이미 에이전시 비용의 일부로 영화급 광고를 제작하고 있는 브랜드에 참여하세요.",
+      "primary": "캠페인 시작하기",
+      "secondary": "전문가와 상담하기"
+    }
+  },
+  "km": {
+    "nav": {
+      "cases": "ការងារ",
+      "process": "ដំណើរការ",
+      "pricing": "តម្លៃ",
+      "resources": "ដៃគូ",
+      "about": "អំពី",
+      "login": "ចូល",
+      "start": "ចាប់ផ្តើមគម្រោង"
+    },
+    "mobileNav": {
+      "descriptions": {
+        "login": "ចូលទៅកាន់គណនីរបស់អ្នក និងបន្តជាមួយ VINCIS",
+        "workspace": "ត្រឡប់ទៅកាន់ម៉ាស៊ីនការងាររបស់ម៉ាកឬស្តូឌីយ៉ូរបស់អ្នក",
+        "about": "សូមស្គាល់អំពីបេសកកម្ម និងក្រុមរបស់ VINCIS",
+        "process": "ដំណើរការពេញលេញពីការបង្ហាញទៅការបញ្ជូន",
+        "cases": "ស្វែងរកការងារដែលបានជ្រើសរើស និងរឿងរ៉ាវជោគជ័យរបស់យើង",
+        "pricing": "ផែនការតម្លៃដែលមានភាពច្បាស់លាស់ និងអាចបត់បែនបាន",
+        "resources": "រកប្រាក់កម្រៃយូរៗដោយការណែនាំម៉ាក និងអ្នកបង្កើត"
+      }
+    },
+    "hero": {
+      "chapter": "01 — ការបើក",
+      "lines": [
+        "ភ្ជាប់ម៉ាកសកល",
+        "ជាមួយអ្នកបង្កើត AI"
+      ],
+      "subtitle": "VINCIS ផ្តល់ឱ្យម៉ាកសកលមួយកន្លែងដើម្បីបង្ហាញ, សម្របសម្រួលអ្នកបង្កើត AI, ពិនិត្យកាត់, ការពារបង់ប្រាក់, និងបញ្ជូនទ្រព្យសម្បត្តិដែលត្រៀមសម្រាប់យុទ្ធនាការ។",
+      "primary": "ខ្ញុំជាម៉ាក",
+      "secondary": "ខ្ញុំជាអ្នកបង្កើត",
+      "loggedInPrimary": "ព័ទ្ធម៉ាក",
+      "scroll": "រុញដើម្បីចូល"
+    },
+    "trust": {
+      "label": "ទុកចិត្តដោយក្រុមដែលបញ្ជូននៅល្បឿនបង់ប្រាក់សង្គម",
+      "brands": [
+        "Google",
+        "Samsung",
+        "Coca-Cola",
+        "Airbnb",
+        "TikTok",
+        "Shopify",
+        "Amazon",
+        "Meta",
+        "Nike",
+        "P&G"
+      ]
+    },
+    "cost": {
+      "chapter": "02 — ការបំបែកតម្លៃ",
+      "title": "ការផលិតប្រពៃណី, កាត់បន្ថយ។",
+      "agency": "អាជ្ញាធរប្រពៃណី",
+      "agencyPrice": 50000,
+      "agencyLabel": "យុទ្ធនាការមធ្យម",
+      "studio": "VINCIS",
+      "studioPrice": 8000,
+      "studioLabel": "កម្រិតដឹកជញ្ជូនដូចគ្នា",
+      "save": "សន្សំបានរហូតដល់ 84%"
+    },
+    "network": {
+      "chapter": "03 — បណ្តាញផលិតកម្ម",
+      "title": "មិនមែនជាផ្សារទេ។",
+      "highlight": "បញ្ជីស្តូឌីយ៉ូដែលបានជ្រើសរើស។",
+      "subtitle": "អ្នកដឹកនាំ, អ្នកកាត់, និងក្រុម AIGC — បានត្រួតពិនិត្យសម្រាប់គុណភាពផតថល និងវិន័យក្នុងការបញ្ជូន។",
+      "rosterEyebrow": "បញ្ជីរស់",
+      "statusActive": "កំពុងផលិត",
+      "statusOpen": "កំពុងទទួលការបង្ហាញ",
+      "matchNote": "បានសម្របសម្រួលក្នុងរយៈពេលក្រោម 48 ម៉ោងជាមធ្យម",
+      "viewAll": "មើលទាំងអស់ →"
+    },
+    "filmstrip": {
+      "chapter": "04 — ពីការបង្ហាញទៅភាពយន្ត",
+      "title": "ប្រាំបីប៉ារ៉ាម៉ែត្រ។ បន្ទាត់ផលិតកម្មមួយ។",
+      "steps": [
+        {
+          "key": "brief",
+          "label": "ការបង្ហាញ",
+          "desc": "បោះពុម្ពតម្រូវការ"
+        },
+        {
+          "key": "match",
+          "label": "សម្របសម្រួល",
+          "desc": "ការតភ្ជាប់ដែលផ្អែកលើផតថល"
+        },
+        {
+          "key": "production",
+          "label": "ផលិតកម្ម",
+          "desc": "ការអនុវត្តនៅស្តូឌីយ៉ូ"
+        },
+        {
+          "key": "review",
+          "label": "ពិនិត្យ",
+          "desc": "ការពិនិត្យដែលមានភាពត្រឹមត្រូវ"
+        },
+        {
+          "key": "delivery",
+          "label": "ការបញ្ជូន",
+          "desc": "ការបញ្ចេញកាត់ចុងក្រោយ"
+        }
+      ]
+    },
+    "wall": {
+      "chapter": "05 — ជញ្ជាំងគុណភាព",
+      "title": "ការងារដែលនិយាយមុនពេលអ្នកសម្របសម្រួល។",
+      "viewAll": "ស្វែងរកស្តូឌីយ៉ូទាំងអស់"
+    },
+    "escrow": {
+      "chapter": "ការទុកចិត្ត Escrow",
+      "title": "ការទុកចិត្តដែលបានកសាងចូលទៅក្នុងរាងកាយរាល់ក្រឡា។",
+      "items": [
+        {
+          "title": "ការបង់ប្រាក់ Escrow",
+          "desc": "ប្រាក់ត្រូវបានរក្សាទុករហូតដល់ចំណុចសំខាន់ចេញ។"
+        },
+        {
+          "title": "ការពារពិនិត្យ",
+          "desc": "ការពិនិត្យដែលមានស្លាកទឹក, ប្រវត្តិជំនាន់។"
+        },
+        {
+          "title": "ការបើកការបញ្ជូន",
+          "desc": "បញ្ចេញប្រាក់ពេលអ្នកអនុម័ត។"
+        }
+      ]
+    },
+    "cta": {
+      "chapter": "07 — កាត់ចុងក្រោយ",
+      "title": "តើអ្នកត្រៀមសម្រាប់ភាពយន្តដ៏អស្ចារ្យបន្ទាប់របស់អ្នកទេ?",
+      "subtitle": "ចូលរួមជាមួយម៉ាកដែលបានផលិតការផ្សាយដែលមានគុណភាពភាពយន្តនៅតម្លៃតិចតួចពីតម្លៃអាជ្ញាធរ។",
+      "primary": "ចាប់ផ្តើមយុទ្ធនាការ​របស់​អ្នក",
+      "secondary": "និយាយជាមួយអ្នកជំនាញ"
+    }
+  },
+  "th": {
+    "nav": {
+      "cases": "ผลงาน",
+      "process": "กระบวนการ",
+      "pricing": "ราคา",
+      "resources": "พันธมิตร",
+      "about": "เกี่ยวกับ",
+      "login": "เข้าสู่ระบบ",
+      "start": "เริ่มโปรเจกต์"
+    },
+    "mobileNav": {
+      "descriptions": {
+        "login": "เข้าสู่ระบบบัญชีของคุณและดำเนินการต่อกับ VINCIS",
+        "workspace": "กลับไปที่พื้นที่ทำงานของแบรนด์หรือสตูดิโอของคุณ",
+        "about": "เรียนรู้เกี่ยวกับภารกิจและทีมงานของ VINCIS",
+        "process": "กระบวนการทั้งหมดจากการสรุปถึงการส่งมอบ",
+        "cases": "สำรวจผลงานที่เลือกและเรื่องราวความสำเร็จของเรา",
+        "pricing": "แผนราคาโปร่งใสและยืดหยุ่น",
+        "resources": "รับค่าคอมมิชชั่นการแนะนำระยะยาวโดยการแนะนำแบรนด์และผู้สร้าง"
+      }
+    },
+    "hero": {
+      "chapter": "01 — การเปิด",
+      "lines": [
+        "เชื่อมต่อแบรนด์ระดับโลก",
+        "กับผู้สร้าง AI"
+      ],
+      "subtitle": "VINCIS มอบสถานที่เดียวให้แบรนด์ระดับโลกในการสรุป, จับคู่ผู้สร้าง AI, ตรวจสอบการตัด, ปกป้องการชำระเงิน, และจัดส่งสินทรัพย์ที่พร้อมสำหรับแคมเปญ.",
+      "primary": "ฉันคือแบรนด์",
+      "secondary": "ฉันคือผู้สร้าง",
+      "loggedInPrimary": "พอร์ทัลแบรนด์",
+      "scroll": "เลื่อนเพื่อเข้าสู่"
+    },
+    "trust": {
+      "label": "เชื่อถือได้จากทีมที่ส่งมอบในความเร็วของโซเชียลมีเดียที่จ่ายเงิน",
+      "brands": [
+        "Google",
+        "Samsung",
+        "Coca-Cola",
+        "Airbnb",
+        "TikTok",
+        "Shopify",
+        "Amazon",
+        "Meta",
+        "Nike",
+        "P&G"
+      ]
+    },
+    "cost": {
+      "chapter": "02 — การแบ่งต้นทุน",
+      "title": "การผลิตแบบดั้งเดิม, ถูกเปิดเผย.",
+      "agency": "เอเจนซี่แบบดั้งเดิม",
+      "agencyPrice": 50000,
+      "agencyLabel": "แคมเปญเฉลี่ย",
+      "studio": "VINCIS",
+      "studioPrice": 8000,
+      "studioLabel": "ระดับการส่งมอบเดียวกัน",
+      "save": "ประหยัดได้ถึง 84%"
+    },
+    "network": {
+      "chapter": "03 — เครือข่ายการผลิต",
+      "title": "ไม่ใช่ตลาด.",
+      "highlight": "รายชื่อสตูดิโอที่คัดสรรมาอย่างดี.",
+      "subtitle": "ผู้กำกับ, บรรณาธิการ, และทีม AIGC — ผ่านการตรวจสอบคุณภาพพอร์ตโฟลิโอและวินัยในการส่งมอบ.",
+      "rosterEyebrow": "รายชื่อสด",
+      "statusActive": "อยู่ในกระบวนการผลิต",
+      "statusOpen": "รับการสรุป",
+      "matchNote": "จับคู่ภายในเวลาเฉลี่ยน้อยกว่า 48 ชั่วโมง",
+      "viewAll": "ดูทั้งหมด →"
+    },
+    "filmstrip": {
+      "chapter": "04 — จากการสรุปถึงภาพยนตร์",
+      "title": "ห้าเสียง. สายการผลิตเดียว.",
+      "steps": [
+        {
+          "key": "brief",
+          "label": "การสรุป",
+          "desc": "เผยแพร่ความต้องการ"
+        },
+        {
+          "key": "match",
+          "label": "การจับคู่",
+          "desc": "การจับคู่ที่เน้นพอร์ตโฟลิโอ"
+        },
+        {
+          "key": "production",
+          "label": "การผลิต",
+          "desc": "การดำเนินการของสตูดิโอ"
+        },
+        {
+          "key": "review",
+          "label": "การตรวจสอบ",
+          "desc": "การพิสูจน์ที่แม่นยำตามเฟรม"
+        },
+        {
+          "key": "delivery",
+          "label": "การส่งมอบ",
+          "desc": "การปล่อยการตัดสุดท้าย"
+        }
+      ]
+    },
+    "wall": {
+      "chapter": "05 — กำแพงคุณภาพ",
+      "title": "ผลงานที่พูดก่อนที่คุณจะจับคู่.",
+      "viewAll": "เรียกดูสตูดิโอทั้งหมด"
+    },
+    "escrow": {
+      "chapter": "ความไว้วางใจในเอสโครว์",
+      "title": "ความไว้วางใจที่สร้างขึ้นในทุกเฟรม.",
+      "items": [
+        {
+          "title": "การชำระเงินเอสโครว์",
+          "desc": "เงินทุนจะถูกถือไว้จนกว่าจะถึงเหตุการณ์สำคัญ."
+        },
+        {
+          "title": "การป้องกันการตรวจสอบ",
+          "desc": "การพิสูจน์ที่มีลายน้ำ, ประวัติรุ่น."
+        },
+        {
+          "title": "การปลดล็อกการส่งมอบ",
+          "desc": "ปล่อยการชำระเงินเมื่อคุณอนุมัติ."
+        }
+      ]
+    },
+    "cta": {
+      "chapter": "07 — การตัดสุดท้าย",
+      "title": "พร้อมสำหรับบล็อกบัสเตอร์ถัดไปของคุณหรือยัง?",
+      "subtitle": "เข้าร่วมแบรนด์ที่ผลิตโฆษณาในระดับภาพยนตร์ในราคาที่ต่ำกว่าค่าใช้จ่ายของเอเจนซี่.",
+      "primary": "เริ่มแคมเปญของคุณ",
+      "secondary": "พูดคุยกับผู้เชี่ยวชาญ"
+    }
+  },
+  "vi": {
+    "nav": {
+      "cases": "Công việc",
+      "process": "Quy trình",
+      "pricing": "Giá cả",
+      "resources": "Đối tác",
+      "about": "Giới thiệu",
+      "login": "Đăng nhập",
+      "start": "Bắt đầu dự án"
+    },
+    "mobileNav": {
+      "descriptions": {
+        "login": "Đăng nhập vào tài khoản của bạn và tiếp tục với VINCIS",
+        "workspace": "Quay lại không gian làm việc của thương hiệu hoặc studio của bạn",
+        "about": "Tìm hiểu về sứ mệnh và đội ngũ của VINCIS",
+        "process": "Quy trình hoàn chỉnh từ yêu cầu đến giao hàng",
+        "cases": "Khám phá công việc và câu chuyện thành công đã chọn của chúng tôi",
+        "pricing": "Kế hoạch giá cả minh bạch, linh hoạt",
+        "resources": "Kiếm hoa hồng giới thiệu lâu dài bằng cách giới thiệu thương hiệu và nhà sáng tạo"
+      }
+    },
+    "hero": {
+      "chapter": "01 — Mở đầu",
+      "lines": [
+        "Kết nối các thương hiệu toàn cầu",
+        "với các nhà sáng tạo AI"
+      ],
+      "subtitle": "VINCIS cung cấp cho các thương hiệu toàn cầu một nơi để yêu cầu, kết nối với các nhà sáng tạo AI, xem xét các bản cắt, bảo vệ thanh toán và giao tài sản sẵn sàng cho chiến dịch.",
+      "primary": "Tôi là một thương hiệu",
+      "secondary": "Tôi là một nhà sáng tạo",
+      "loggedInPrimary": "Cổng thông tin thương hiệu",
+      "scroll": "Cuộn để vào"
+    },
+    "trust": {
+      "label": "Được tin cậy bởi các đội ngũ giao hàng với tốc độ mạng xã hội trả phí",
+      "brands": [
+        "Google",
+        "Samsung",
+        "Coca-Cola",
+        "Airbnb",
+        "TikTok",
+        "Shopify",
+        "Amazon",
+        "Meta",
+        "Nike",
+        "P&G"
+      ]
+    },
+    "cost": {
+      "chapter": "02 — Phân tích Chi phí",
+      "title": "Sản xuất truyền thống, bị cắt mở.",
+      "agency": "Cơ quan truyền thống",
+      "agencyPrice": 50000,
+      "agencyLabel": "Chiến dịch trung bình",
+      "studio": "VINCIS",
+      "studioPrice": 8000,
+      "studioLabel": "Cùng cấp độ giao hàng",
+      "save": "Tiết kiệm lên đến 84%"
+    },
+    "network": {
+      "chapter": "03 — Mạng lưới Sản xuất",
+      "title": "Không phải là một thị trường.",
+      "highlight": "Một danh sách studio được chọn lọc.",
+      "subtitle": "Các đạo diễn, biên tập viên và đội ngũ AIGC — được kiểm tra về chất lượng danh mục và kỷ luật giao hàng.",
+      "rosterEyebrow": "Danh sách trực tiếp",
+      "statusActive": "Đang sản xuất",
+      "statusOpen": "Nhận yêu cầu",
+      "matchNote": "Kết nối trong dưới 48h trung bình",
+      "viewAll": "Xem tất cả →"
+    },
+    "filmstrip": {
+      "chapter": "04 — Từ Yêu cầu đến Phim",
+      "title": "Năm bước. Một dây chuyền sản xuất.",
+      "steps": [
+        {
+          "key": "brief",
+          "label": "Yêu cầu",
+          "desc": "Công bố yêu cầu"
+        },
+        {
+          "key": "match",
+          "label": "Kết nối",
+          "desc": "Ghép đôi dựa trên danh mục"
+        },
+        {
+          "key": "production",
+          "label": "Sản xuất",
+          "desc": "Thực hiện tại studio"
+        },
+        {
+          "key": "review",
+          "label": "Xem xét",
+          "desc": "Kiểm tra chính xác từng khung hình"
+        },
+        {
+          "key": "delivery",
+          "label": "Giao hàng",
+          "desc": "Phát hành bản cắt cuối cùng"
+        }
+      ]
+    },
+    "wall": {
+      "chapter": "05 — Tường Chất lượng",
+      "title": "Công việc nói lên trước khi bạn kết nối.",
+      "viewAll": "Duyệt tất cả các studio"
+    },
+    "escrow": {
+      "chapter": "Tin cậy Escrow",
+      "title": "Niềm tin được xây dựng trong từng khung hình.",
+      "items": [
+        {
+          "title": "Thanh toán Escrow",
+          "desc": "Tiền được giữ cho đến khi các cột mốc được hoàn thành."
+        },
+        {
+          "title": "Bảo vệ xem xét",
+          "desc": "Bản chứng thực có watermark, lịch sử phiên bản."
+        },
+        {
+          "title": "Mở khóa giao hàng",
+          "desc": "Phát hành thanh toán khi bạn phê duyệt."
+        }
+      ]
+    },
+    "cta": {
+      "chapter": "07 — Bản cắt Cuối cùng",
+      "title": "Sẵn sàng cho bộ phim bom tấn tiếp theo của bạn?",
+      "subtitle": "Tham gia cùng các thương hiệu đã sản xuất quảng cáo đạt tiêu chuẩn điện ảnh với chi phí chỉ bằng một phần nhỏ của cơ quan.",
+      "primary": "Bắt đầu chiến dịch của bạn",
+      "secondary": "Nói chuyện với chuyên gia"
+    }
+  },
+  "fr": {
+    "nav": {
+      "cases": "Travail",
+      "process": "Processus",
+      "pricing": "Tarification",
+      "resources": "Partenaires",
+      "about": "À propos",
+      "login": "Se connecter",
+      "start": "Démarrer le projet"
+    },
+    "mobileNav": {
+      "descriptions": {
+        "login": "Connectez-vous à votre compte et continuez avec VINCIS",
+        "workspace": "Retournez à l'espace de travail de votre marque ou studio",
+        "about": "Découvrez la mission et l'équipe de VINCIS",
+        "process": "Le flux complet du brief à la livraison",
+        "cases": "Explorez notre travail sélectionné et nos histoires de succès",
+        "pricing": "Plans tarifaires transparents et flexibles",
+        "resources": "Gagnez des commissions de référence à long terme en recommandant des marques et des créateurs"
+      }
+    },
+    "hero": {
+      "chapter": "01 — Ouverture",
+      "lines": [
+        "Connecter des marques mondiales",
+        "avec des créateurs IA"
+      ],
+      "subtitle": "VINCIS offre aux marques mondiales un endroit pour briefer, associer des créateurs IA, examiner des coupes, protéger les paiements et expédier des actifs prêts pour la campagne.",
+      "primary": "Je suis une marque",
+      "secondary": "Je suis un créateur",
+      "loggedInPrimary": "Portail de la marque",
+      "scroll": "Faites défiler pour entrer"
+    },
+    "trust": {
+      "label": "Fiable pour les équipes qui livrent à la vitesse des réseaux sociaux payants",
+      "brands": [
+        "Google",
+        "Samsung",
+        "Coca-Cola",
+        "Airbnb",
+        "TikTok",
+        "Shopify",
+        "Amazon",
+        "Meta",
+        "Nike",
+        "P&G"
+      ]
+    },
+    "cost": {
+      "chapter": "02 — Analyse des coûts",
+      "title": "Production traditionnelle, découpée.",
+      "agency": "Agence traditionnelle",
+      "agencyPrice": 50000,
+      "agencyLabel": "Campagne moyenne",
+      "studio": "VINCIS",
+      "studioPrice": 8000,
+      "studioLabel": "Même niveau de livrable",
+      "save": "Économisez jusqu'à 84%"
+    },
+    "network": {
+      "chapter": "03 — Réseau de production",
+      "title": "Pas un marché.",
+      "highlight": "Une liste de studios sélectionnés.",
+      "subtitle": "Réalisateurs, monteurs et équipes AIGC — vérifiés pour la qualité du portfolio et la discipline de livraison.",
+      "rosterEyebrow": "Liste en direct",
+      "statusActive": "En production",
+      "statusOpen": "Prend des briefs",
+      "matchNote": "Apparié en moins de 48h en moyenne",
+      "viewAll": "Voir tout →"
+    },
+    "filmstrip": {
+      "chapter": "04 — Du brief au film",
+      "title": "Cinq étapes. Une ligne de production.",
+      "steps": [
+        {
+          "key": "brief",
+          "label": "Brief",
+          "desc": "Publier les exigences"
+        },
+        {
+          "key": "match",
+          "label": "Appariement",
+          "desc": "Appariement basé sur le portfolio"
+        },
+        {
+          "key": "production",
+          "label": "Production",
+          "desc": "Exécution en studio"
+        },
+        {
+          "key": "review",
+          "label": "Révision",
+          "desc": "Validation précise du cadre"
+        },
+        {
+          "key": "delivery",
+          "label": "Livraison",
+          "desc": "Publication de la version finale"
+        }
+      ]
+    },
+    "wall": {
+      "chapter": "05 — Mur de qualité",
+      "title": "Travail qui parle avant que vous ne fassiez un appariement.",
+      "viewAll": "Parcourir tous les studios"
+    },
+    "escrow": {
+      "chapter": "Confiance en séquestre",
+      "title": "Confiance intégrée dans chaque image.",
+      "items": [
+        {
+          "title": "Paiement en séquestre",
+          "desc": "Fonds retenus jusqu'à ce que les étapes soient validées."
+        },
+        {
+          "title": "Protection de révision",
+          "desc": "Preuves avec filigrane, historique des versions."
+        },
+        {
+          "title": "Déblocage de livraison",
+          "desc": "Libération du paiement lorsque vous approuvez."
+        }
+      ]
+    },
+    "cta": {
+      "chapter": "07 — Version finale",
+      "title": "Prêt pour votre prochain blockbuster ?",
+      "subtitle": "Rejoignez les marques qui produisent déjà des publicités de qualité cinématographique à une fraction du coût d'une agence.",
+      "primary": "Démarrez votre campagne",
+      "secondary": "Parlez à un expert"
+    }
+  },
+  "es": {
+    "nav": {
+      "cases": "Trabajo",
+      "process": "Proceso",
+      "pricing": "Precios",
+      "resources": "Socios",
+      "about": "Acerca de",
+      "login": "Iniciar sesión",
+      "start": "Iniciar proyecto"
+    },
+    "mobileNav": {
+      "descriptions": {
+        "login": "Inicia sesión en tu cuenta y continúa con VINCIS",
+        "workspace": "Regresa al espacio de trabajo de tu marca o estudio",
+        "about": "Conoce la misión y el equipo de VINCIS",
+        "process": "El flujo completo desde el brief hasta la entrega",
+        "cases": "Explora nuestro trabajo seleccionado y historias de éxito",
+        "pricing": "Planes de precios transparentes y flexibles",
+        "resources": "Gana comisiones de referencia a largo plazo recomendando marcas y creadores"
+      }
+    },
+    "hero": {
+      "chapter": "01 — Apertura",
+      "lines": [
+        "Conectando marcas globales",
+        "con creadores de IA"
+      ],
+      "subtitle": "VINCIS ofrece a las marcas globales un lugar para brief, emparejar creadores de IA, revisar cortes, proteger pagos y enviar activos listos para la campaña.",
+      "primary": "Soy una marca",
+      "secondary": "Soy un creador",
+      "loggedInPrimary": "Portal de marcas",
+      "scroll": "Desplázate para entrar"
+    },
+    "trust": {
+      "label": "Confiado por equipos que entregan a la velocidad de las redes sociales pagadas",
+      "brands": [
+        "Google",
+        "Samsung",
+        "Coca-Cola",
+        "Airbnb",
+        "TikTok",
+        "Shopify",
+        "Amazon",
+        "Meta",
+        "Nike",
+        "P&G"
+      ]
+    },
+    "cost": {
+      "chapter": "02 — Desglose de Costos",
+      "title": "Producción tradicional, abierta.",
+      "agency": "Agencia Tradicional",
+      "agencyPrice": 50000,
+      "agencyLabel": "Campaña promedio",
+      "studio": "VINCIS",
+      "studioPrice": 8000,
+      "studioLabel": "Mismo nivel de entregables",
+      "save": "Ahorra hasta un 84%"
+    },
+    "network": {
+      "chapter": "03 — Red de Producción",
+      "title": "No es un mercado.",
+      "highlight": "Una lista de estudios curada.",
+      "subtitle": "Directores, editores y equipos de AIGC — seleccionados por la calidad del portafolio y la disciplina de entrega.",
+      "rosterEyebrow": "Lista activa",
+      "statusActive": "En producción",
+      "statusOpen": "Aceptando briefs",
+      "matchNote": "Emparejados en menos de 48h en promedio",
+      "viewAll": "Ver todo →"
+    },
+    "filmstrip": {
+      "chapter": "04 — Del Brief al Film",
+      "title": "Cinco pasos. Una línea de producción.",
+      "steps": [
+        {
+          "key": "brief",
+          "label": "Brief",
+          "desc": "Publicar requisitos"
+        },
+        {
+          "key": "match",
+          "label": "Emparejar",
+          "desc": "Emparejamiento basado en el portafolio"
+        },
+        {
+          "key": "production",
+          "label": "Producción",
+          "desc": "Ejecución del estudio"
+        },
+        {
+          "key": "review",
+          "label": "Revisión",
+          "desc": "Pruebas precisas por fotograma"
+        },
+        {
+          "key": "delivery",
+          "label": "Entrega",
+          "desc": "Liberación del corte final"
+        }
+      ]
+    },
+    "wall": {
+      "chapter": "05 — Muro de Calidad",
+      "title": "Trabajo que habla antes de que emparejes.",
+      "viewAll": "Explorar todos los estudios"
+    },
+    "escrow": {
+      "chapter": "Fideicomiso de Confianza",
+      "title": "Confianza incorporada en cada fotograma.",
+      "items": [
+        {
+          "title": "Pago en fideicomiso",
+          "desc": "Fondos retenidos hasta que se cumplan los hitos."
+        },
+        {
+          "title": "Protección de revisión",
+          "desc": "Pruebas con marca de agua, historial de versiones."
+        },
+        {
+          "title": "Desbloqueo de entrega",
+          "desc": "Liberar el pago cuando apruebes."
+        }
+      ]
+    },
+    "cta": {
+      "chapter": "07 — Corte Final",
+      "title": "¿Listo para tu próximo éxito de taquilla?",
+      "subtitle": "Únete a las marcas que ya están produciendo anuncios de calidad cinematográfica a una fracción del costo de la agencia.",
+      "primary": "Inicia tu campaña",
+      "secondary": "Habla con un experto"
+    }
+  }
+}

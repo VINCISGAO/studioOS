@@ -1,0 +1,882 @@
+{
+  "en": {
+    "pageTitle": "Process",
+    "subtitle": "From brief to delivery",
+    "intro": [
+      "VINCIS brings communication, files, revisions, payments, and delivery into one platform so brands and creators can collaborate efficiently, transparently, and safely.",
+      "From posting a requirement to final delivery, every step has a clear status and audit trail—less back-and-forth, faster creative output."
+    ],
+    "highlights": [
+      {
+        "title": "Efficient collaboration",
+        "body": "Standardized workflow for faster teamwork"
+      },
+      {
+        "title": "Transparent control",
+        "body": "Full records with trackable progress"
+      },
+      {
+        "title": "Secure escrow",
+        "body": "Protected funds and private data"
+      },
+      {
+        "title": "Global reach",
+        "body": "Connect with quality creators worldwide"
+      }
+    ],
+    "steps": [
+      {
+        "id": "brief",
+        "number": "01",
+        "title": "Post requirements",
+        "body": "Brands submit project needs, upload assets, set budget and timeline. The system stores the brief before payment."
+      },
+      {
+        "id": "pricing",
+        "number": "02",
+        "title": "AI pricing",
+        "body": "The engine estimates a fair price range from complexity, duration, revision policy, and benchmark data."
+      },
+      {
+        "id": "matching",
+        "number": "03",
+        "title": "Match creators",
+        "body": "After payment, AI matches registered creators by style, budget, and track record, then sends invitations."
+      },
+      {
+        "id": "production",
+        "number": "04",
+        "title": "Start production",
+        "body": "Once the brand selects a creator who accepted the invite, the project goes active and V1 upload opens."
+      },
+      {
+        "id": "review",
+        "number": "05",
+        "title": "Online review",
+        "body": "Brands review on a timeline, leave timestamped notes, and creators iterate with real-time notifications."
+      },
+      {
+        "id": "delivery",
+        "number": "06",
+        "title": "Final delivery",
+        "body": "After approval, creators upload final masters and project files for brand acceptance and archiving."
+      },
+      {
+        "id": "escrow",
+        "number": "07",
+        "title": "Escrow settlement",
+        "body": "Funds stay in escrow until delivery is confirmed, then release to the creator with a full audit trail."
+      },
+      {
+        "id": "complete",
+        "number": "08",
+        "title": "Project complete",
+        "body": "The project is archived with version history and settlement records—ready for the next collaboration."
+      }
+    ],
+    "diagramTitle": "VINCIS process at a glance",
+    "ctaTitle": "Ready to start your project?",
+    "ctaBody": "Join the global brand–creator platform and ship creative work faster.",
+    "ctaButton": "Post a project"
+  },
+  "zh-CN": {
+    "pageTitle": "流程",
+    "subtitle": "从需求到交付的完整流程",
+    "intro": [
+      "VINCIS 将广告制作中的沟通、文件、修改、付款与交付整合在同一平台，让品牌与创作者之间的合作更加高效、透明、安全。",
+      "从发布需求到最终交付，每一步都有清晰的状态与记录，减少反复沟通，让创意更快落地。"
+    ],
+    "highlights": [
+      {
+        "title": "高效协作",
+        "body": "标准化流程，让协作更高效"
+      },
+      {
+        "title": "透明可控",
+        "body": "全程记录，进度可追踪"
+      },
+      {
+        "title": "安全保障",
+        "body": "资金安全，隐私保护"
+      },
+      {
+        "title": "全球连接",
+        "body": "连接全球优质创作者"
+      }
+    ],
+    "steps": [
+      {
+        "id": "brief",
+        "number": "01",
+        "title": "发布需求",
+        "body": "品牌方填写项目需求、上传素材、设定预算与交付时间，系统保存需求并进入付款前准备。"
+      },
+      {
+        "id": "pricing",
+        "number": "02",
+        "title": "AI 智能估价",
+        "body": "系统根据项目复杂度、时长、修改轮次与历史数据，自动计算合理报价区间，帮助品牌快速决策。"
+      },
+      {
+        "id": "matching",
+        "number": "03",
+        "title": "匹配创作者",
+        "body": "付款成功后，AI 根据风格、预算、能力与履约表现匹配全球创作者，并向合适人选发送合作邀约。"
+      },
+      {
+        "id": "production",
+        "number": "04",
+        "title": "正式开始制作",
+        "body": "品牌从已接受邀约的创作者中最终选定合作伙伴后，项目正式进入制作阶段，创作者可上传第一版视频。"
+      },
+      {
+        "id": "review",
+        "number": "05",
+        "title": "在线审片",
+        "body": "品牌在线观看视频、批注修改意见，所有反馈锚定在时间轴上，创作者实时收到通知并迭代新版本。"
+      },
+      {
+        "id": "delivery",
+        "number": "06",
+        "title": "最终交付",
+        "body": "项目通过后，创作者上传最终成片与项目文件，品牌可在平台内完成验收与归档。"
+      },
+      {
+        "id": "escrow",
+        "number": "07",
+        "title": "托管结算",
+        "body": "款项托管在平台，确认交付后按约定释放给创作者，全程可追溯、可审计。"
+      },
+      {
+        "id": "complete",
+        "number": "08",
+        "title": "项目完成",
+        "body": "项目归档完成，双方可查看完整合作记录、版本历史与结算信息，为下一次合作积累信任。"
+      }
+    ],
+    "diagramTitle": "一张图了解 VINCIS 流程",
+    "ctaTitle": "准备开始您的项目了吗？",
+    "ctaBody": "加入全球品牌与创作者的协作平台，让创意更快落地。",
+    "ctaButton": "发布项目需求"
+  },
+  "zh-TW": {
+    "pageTitle": "流程",
+    "subtitle": "從需求到交付的完整流程",
+    "intro": [
+      "VINCIS 將廣告製作中的溝通、文件、修改、付款與交付整合在同一平台，讓品牌與創作者之間的合作更加高效、透明、安全。",
+      "從發布需求到最終交付，每一步都有清晰的狀態與記錄，減少反覆溝通，讓創意更快落地。"
+    ],
+    "highlights": [
+      {
+        "title": "高效協作",
+        "body": "標準化流程，讓協作更高效"
+      },
+      {
+        "title": "透明可控",
+        "body": "全程記錄，進度可追蹤"
+      },
+      {
+        "title": "安全保障",
+        "body": "資金安全，隱私保護"
+      },
+      {
+        "title": "全球連接",
+        "body": "連接全球優質創作者"
+      }
+    ],
+    "steps": [
+      {
+        "id": "brief",
+        "number": "01",
+        "title": "發布需求",
+        "body": "品牌方填寫項目需求、上傳素材、設定預算與交付時間，系統保存需求並進入付款前準備。"
+      },
+      {
+        "id": "pricing",
+        "number": "02",
+        "title": "AI 智能估價",
+        "body": "系統根據項目複雜度、時長、修改輪次與歷史數據，自動計算合理報價區間，幫助品牌快速決策。"
+      },
+      {
+        "id": "matching",
+        "number": "03",
+        "title": "匹配創作者",
+        "body": "付款成功後，AI 根據風格、預算、能力與履約表現匹配全球創作者，並向合適人選發送合作邀約。"
+      },
+      {
+        "id": "production",
+        "number": "04",
+        "title": "正式開始製作",
+        "body": "品牌從已接受邀約的創作者中最終選定合作夥伴後，項目正式進入製作階段，創作者可上傳第一版視頻。"
+      },
+      {
+        "id": "review",
+        "number": "05",
+        "title": "在線審片",
+        "body": "品牌在线观看视频、批註修改意見，所有反饋錨定在時間軸上，創作者實時收到通知並迭代新版本。"
+      },
+      {
+        "id": "delivery",
+        "number": "06",
+        "title": "最終交付",
+        "body": "項目通過後，創作者上傳最終成片與項目文件，品牌可在平台內完成驗收與歸檔。"
+      },
+      {
+        "id": "escrow",
+        "number": "07",
+        "title": "托管結算",
+        "body": "款項托管在平台，確認交付後按約定釋放給創作者，全程可追溯、可審計。"
+      },
+      {
+        "id": "complete",
+        "number": "08",
+        "title": "項目完成",
+        "body": "項目歸檔完成，雙方可查看完整合作記錄、版本歷史與結算信息，為下一次合作積累信任。"
+      }
+    ],
+    "diagramTitle": "一張圖了解 VINCIS 流程",
+    "ctaTitle": "準備開始您的項目了嗎？",
+    "ctaBody": "加入全球品牌與創作者的協作平台，讓創意更快落地。",
+    "ctaButton": "發布項目需求"
+  },
+  "ja": {
+    "pageTitle": "プロセス",
+    "subtitle": "ブリーフから納品まで",
+    "intro": [
+      "VINCISは、コミュニケーション、ファイル、修正、支払い、納品を1つのプラットフォームに統合し、ブランドとクリエイターが効率的、透明性があり、安全にコラボレーションできるようにします。",
+      "要件の投稿から最終納品まで、各ステップには明確なステータスと監査履歴があり、やり取りが少なく、クリエイティブな成果物が迅速に得られます。"
+    ],
+    "highlights": [
+      {
+        "title": "効率的なコラボレーション",
+        "body": "迅速なチームワークのための標準化されたワークフロー"
+      },
+      {
+        "title": "透明な管理",
+        "body": "追跡可能な進捗を伴う完全な記録"
+      },
+      {
+        "title": "安全なエスクロー",
+        "body": "保護された資金とプライベートデータ"
+      },
+      {
+        "title": "グローバルなリーチ",
+        "body": "世界中の質の高いクリエイターとつながる"
+      }
+    ],
+    "steps": [
+      {
+        "id": "brief",
+        "number": "01",
+        "title": "要件の投稿",
+        "body": "ブランドはプロジェクトのニーズを提出し、資産をアップロードし、予算とタイムラインを設定します。システムは支払い前にブリーフを保存します。"
+      },
+      {
+        "id": "pricing",
+        "number": "02",
+        "title": "AIによる価格設定",
+        "body": "エンジンは、複雑さ、期間、修正ポリシー、ベンチマークデータから公正な価格範囲を見積もります。"
+      },
+      {
+        "id": "matching",
+        "number": "03",
+        "title": "クリエイターのマッチング",
+        "body": "支払い後、AIはスタイル、予算、実績に基づいて登録されたクリエイターをマッチングし、招待を送信します。"
+      },
+      {
+        "id": "production",
+        "number": "04",
+        "title": "制作開始",
+        "body": "ブランドが招待を受け入れたクリエイターを選択すると、プロジェクトがアクティブになり、V1のアップロードが開始されます。"
+      },
+      {
+        "id": "review",
+        "number": "05",
+        "title": "オンラインレビュー",
+        "body": "ブランドはタイムラインでレビューを行い、タイムスタンプ付きのメモを残し、クリエイターはリアルタイム通知で反復作業を行います。"
+      },
+      {
+        "id": "delivery",
+        "number": "06",
+        "title": "最終納品",
+        "body": "承認後、クリエイターはブランドの受け入れとアーカイブのために最終マスターとプロジェクトファイルをアップロードします。"
+      },
+      {
+        "id": "escrow",
+        "number": "07",
+        "title": "エスクロー決済",
+        "body": "納品が確認されるまで資金はエスクローに留まり、その後、完全な監査履歴とともにクリエイターにリリースされます。"
+      },
+      {
+        "id": "complete",
+        "number": "08",
+        "title": "プロジェクト完了",
+        "body": "プロジェクトはバージョン履歴と決済記録とともにアーカイブされ、次のコラボレーションの準備が整います。"
+      }
+    ],
+    "diagramTitle": "VINCISプロセスの概要",
+    "ctaTitle": "プロジェクトを始める準備はできましたか？",
+    "ctaBody": "グローバルなブランド–クリエイタープラットフォームに参加し、クリエイティブな作業をより早く出荷しましょう。",
+    "ctaButton": "プロジェクトを投稿"
+  },
+  "ko": {
+    "pageTitle": "프로세스",
+    "subtitle": "요구 사항에서 전달까지",
+    "intro": [
+      "VINCIS는 브랜드와 제작자가 효율적이고 투명하며 안전하게 협업할 수 있도록 커뮤니케이션, 파일, 수정, 결제 및 전달을 하나의 플랫폼으로 통합합니다.",
+      "요구 사항 게시부터 최종 전달까지, 모든 단계는 명확한 상태와 감사 추적이 있으며, 불필요한 왕복을 줄이고 더 빠른 창의적 결과물을 제공합니다."
+    ],
+    "highlights": [
+      {
+        "title": "효율적인 협업",
+        "body": "더 빠른 팀워크를 위한 표준화된 워크플로우"
+      },
+      {
+        "title": "투명한 관리",
+        "body": "추적 가능한 진행 상황을 포함한 전체 기록"
+      },
+      {
+        "title": "안전한 에스크로",
+        "body": "보호된 자금과 개인 데이터"
+      },
+      {
+        "title": "글로벌 네트워크",
+        "body": "전 세계의 우수한 제작자와 연결"
+      }
+    ],
+    "steps": [
+      {
+        "id": "brief",
+        "number": "01",
+        "title": "요구 사항 게시",
+        "body": "브랜드는 프로젝트 요구 사항을 제출하고, 자산을 업로드하며, 예산과 일정을 설정합니다. 시스템은 결제 전에 브리프를 저장합니다."
+      },
+      {
+        "id": "pricing",
+        "number": "02",
+        "title": "AI 가격 책정",
+        "body": "엔진은 복잡성, 기간, 수정 정책 및 기준 데이터를 바탕으로 공정한 가격 범위를 추정합니다."
+      },
+      {
+        "id": "matching",
+        "number": "03",
+        "title": "제작자 매칭",
+        "body": "결제 후, AI는 스타일, 예산 및 실적에 따라 등록된 제작자를 매칭하고 초대장을 보냅니다."
+      },
+      {
+        "id": "production",
+        "number": "04",
+        "title": "제작 시작",
+        "body": "브랜드가 초대를 수락한 제작자를 선택하면 프로젝트가 활성화되고 V1 업로드가 열립니다."
+      },
+      {
+        "id": "review",
+        "number": "05",
+        "title": "온라인 리뷰",
+        "body": "브랜드는 타임라인에서 리뷰를 진행하고, 타임스탬프가 있는 메모를 남기며, 제작자는 실시간 알림으로 반복 작업을 진행합니다."
+      },
+      {
+        "id": "delivery",
+        "number": "06",
+        "title": "최종 전달",
+        "body": "승인 후, 제작자는 브랜드 수용 및 보관을 위해 최종 마스터 및 프로젝트 파일을 업로드합니다."
+      },
+      {
+        "id": "escrow",
+        "number": "07",
+        "title": "에스크로 정산",
+        "body": "전달이 확인될 때까지 자금은 에스크로에 보관되며, 이후 전체 감사 추적과 함께 제작자에게 지급됩니다."
+      },
+      {
+        "id": "complete",
+        "number": "08",
+        "title": "프로젝트 완료",
+        "body": "프로젝트는 버전 기록 및 정산 기록과 함께 보관되어 다음 협업을 준비합니다."
+      }
+    ],
+    "diagramTitle": "VINCIS 프로세스 한눈에 보기",
+    "ctaTitle": "프로젝트를 시작할 준비가 되셨나요?",
+    "ctaBody": "글로벌 브랜드-제작자 플랫폼에 참여하여 창의적인 작업을 더 빠르게 진행하세요.",
+    "ctaButton": "프로젝트 게시"
+  },
+  "ms": {
+    "pageTitle": "Proses",
+    "subtitle": "Dari ringkasan kepada penghantaran",
+    "intro": [
+      "VINCIS menggabungkan komunikasi, fail, semakan, pembayaran, dan penghantaran dalam satu platform supaya jenama dan pencipta dapat bekerjasama dengan cekap, telus, dan selamat.",
+      "Dari memposting keperluan hingga penghantaran akhir, setiap langkah mempunyai status yang jelas dan jejak audit—kurang bolak-balik, hasil kreatif yang lebih cepat."
+    ],
+    "highlights": [
+      {
+        "title": "Kerjasama yang cekap",
+        "body": "Aliran kerja yang standard untuk kerja berpasukan yang lebih cepat"
+      },
+      {
+        "title": "Kawalan yang telus",
+        "body": "Rekod penuh dengan kemajuan yang boleh dijejaki"
+      },
+      {
+        "title": "Escrow yang selamat",
+        "body": "Dana dan data peribadi yang dilindungi"
+      },
+      {
+        "title": "Jangkauan global",
+        "body": "Sambungkan dengan pencipta berkualiti di seluruh dunia"
+      }
+    ],
+    "steps": [
+      {
+        "id": "brief",
+        "number": "01",
+        "title": "Hantar keperluan",
+        "body": "Jenama menghantar keperluan projek, memuat naik aset, menetapkan bajet dan garis masa. Sistem menyimpan ringkasan sebelum pembayaran."
+      },
+      {
+        "id": "pricing",
+        "number": "02",
+        "title": "Penetapan harga AI",
+        "body": "Enjin menganggarkan julat harga yang adil berdasarkan kompleksiti, tempoh, dasar semakan, dan data penanda aras."
+      },
+      {
+        "id": "matching",
+        "number": "03",
+        "title": "Padankan pencipta",
+        "body": "Selepas pembayaran, AI memadankan pencipta berdaftar mengikut gaya, bajet, dan rekod prestasi, kemudian menghantar jemputan."
+      },
+      {
+        "id": "production",
+        "number": "04",
+        "title": "Mulakan pengeluaran",
+        "body": "Setelah jenama memilih pencipta yang menerima jemputan, projek akan aktif dan muat naik V1 dibuka."
+      },
+      {
+        "id": "review",
+        "number": "05",
+        "title": "Semakan dalam talian",
+        "body": "Jenama menyemak mengikut garis masa, meninggalkan nota bertanda waktu, dan pencipta membuat iterasi dengan pemberitahuan masa nyata."
+      },
+      {
+        "id": "delivery",
+        "number": "06",
+        "title": "Penghantaran akhir",
+        "body": "Selepas kelulusan, pencipta memuat naik master akhir dan fail projek untuk penerimaan dan pengarsipan jenama."
+      },
+      {
+        "id": "escrow",
+        "number": "07",
+        "title": "Penyelesaian escrow",
+        "body": "Dana kekal dalam escrow sehingga penghantaran disahkan, kemudian dilepaskan kepada pencipta dengan jejak audit penuh."
+      },
+      {
+        "id": "complete",
+        "number": "08",
+        "title": "Projek lengkap",
+        "body": "Projek diarsipkan dengan sejarah versi dan rekod penyelesaian—sedia untuk kerjasama seterusnya."
+      }
+    ],
+    "diagramTitle": "Proses VINCIS secara ringkas",
+    "ctaTitle": "Sedia untuk memulakan projek anda?",
+    "ctaBody": "Sertai platform jenama–pencipta global dan hantar kerja kreatif dengan lebih cepat.",
+    "ctaButton": "Hantar projek"
+  },
+  "th": {
+    "pageTitle": "กระบวนการ",
+    "subtitle": "จากการสั่งงานถึงการส่งมอบ",
+    "intro": [
+      "VINCIS นำการสื่อสาร ไฟล์ การแก้ไข การชำระเงิน และการส่งมอบมารวมกันในแพลตฟอร์มเดียว เพื่อให้แบรนด์และผู้สร้างสามารถทำงานร่วมกันได้อย่างมีประสิทธิภาพ โปร่งใส และปลอดภัย",
+      "ตั้งแต่การโพสต์ความต้องการไปจนถึงการส่งมอบขั้นสุดท้าย ทุกขั้นตอนมีสถานะที่ชัดเจนและบันทึกการตรวจสอบ—ลดการสื่อสารที่ไม่จำเป็น ผลงานสร้างสรรค์ที่รวดเร็วขึ้น"
+    ],
+    "highlights": [
+      {
+        "title": "การทำงานร่วมกันอย่างมีประสิทธิภาพ",
+        "body": "กระบวนการที่เป็นมาตรฐานเพื่อการทำงานเป็นทีมที่รวดเร็วขึ้น"
+      },
+      {
+        "title": "การควบคุมที่โปร่งใส",
+        "body": "บันทึกทั้งหมดพร้อมความก้าวหน้าที่ติดตามได้"
+      },
+      {
+        "title": "การคุ้มครองเงินทุน",
+        "body": "เงินทุนและข้อมูลส่วนตัวที่ได้รับการปกป้อง"
+      },
+      {
+        "title": "การเข้าถึงทั่วโลก",
+        "body": "เชื่อมต่อกับผู้สร้างคุณภาพทั่วโลก"
+      }
+    ],
+    "steps": [
+      {
+        "id": "brief",
+        "number": "01",
+        "title": "โพสต์ความต้องการ",
+        "body": "แบรนด์ส่งความต้องการโครงการ อัปโหลดทรัพย์สิน ตั้งงบประมาณและระยะเวลา ระบบจะเก็บข้อมูลการสั่งงานก่อนการชำระเงิน"
+      },
+      {
+        "id": "pricing",
+        "number": "02",
+        "title": "การตั้งราคา AI",
+        "body": "ระบบจะประเมินช่วงราคาที่เหมาะสมจากความซับซ้อน ระยะเวลา นโยบายการแก้ไข และข้อมูลเปรียบเทียบ"
+      },
+      {
+        "id": "matching",
+        "number": "03",
+        "title": "จับคู่ผู้สร้าง",
+        "body": "หลังจากการชำระเงิน AI จะจับคู่ผู้สร้างที่ลงทะเบียนตามสไตล์ งบประมาณ และประวัติผลงาน จากนั้นจะส่งคำเชิญ"
+      },
+      {
+        "id": "production",
+        "number": "04",
+        "title": "เริ่มการผลิต",
+        "body": "เมื่อแบรนด์เลือกผู้สร้างที่ตอบรับคำเชิญ โครงการจะเริ่มทำงานและเปิดให้ส่งไฟล์ V1"
+      },
+      {
+        "id": "review",
+        "number": "05",
+        "title": "การตรวจสอบออนไลน์",
+        "body": "แบรนด์ตรวจสอบตามระยะเวลา ทิ้งหมายเหตุที่มีการบันทึกเวลา และผู้สร้างทำการปรับปรุงด้วยการแจ้งเตือนแบบเรียลไทม์"
+      },
+      {
+        "id": "delivery",
+        "number": "06",
+        "title": "การส่งมอบขั้นสุดท้าย",
+        "body": "หลังจากการอนุมัติ ผู้สร้างจะอัปโหลดไฟล์มาสเตอร์ขั้นสุดท้ายและไฟล์โครงการเพื่อการยอมรับและเก็บถาวรของแบรนด์"
+      },
+      {
+        "id": "escrow",
+        "number": "07",
+        "title": "การชำระเงินในระบบคุ้มครอง",
+        "body": "เงินทุนจะอยู่ในระบบคุ้มครองจนกว่าการส่งมอบจะได้รับการยืนยัน จากนั้นจะปล่อยให้กับผู้สร้างพร้อมบันทึกการตรวจสอบทั้งหมด"
+      },
+      {
+        "id": "complete",
+        "number": "08",
+        "title": "โครงการเสร็จสมบูรณ์",
+        "body": "โครงการจะถูกเก็บถาวรพร้อมประวัติรุ่นและบันทึกการชำระเงิน—พร้อมสำหรับการทำงานร่วมกันครั้งถัดไป"
+      }
+    ],
+    "diagramTitle": "กระบวนการ VINCIS ในภาพรวม",
+    "ctaTitle": "พร้อมที่จะเริ่มโครงการของคุณหรือยัง?",
+    "ctaBody": "เข้าร่วมแพลตฟอร์มแบรนด์–ผู้สร้างระดับโลกและส่งมอบงานสร้างสรรค์ได้เร็วขึ้น",
+    "ctaButton": "โพสต์โครงการ"
+  },
+  "km": {
+    "pageTitle": "ដំណើរការ",
+    "subtitle": "ពីការទាមទារទៅការបញ្ជូន",
+    "intro": [
+      "VINCIS នាំមកនូវការទំនាក់ទំនង ឯកសារ ការកែប្រែ ការបង់ប្រាក់ និងការបញ្ជូននៅក្នុងវេទិកាមួយ ដើម្បីឱ្យម៉ាក និងអ្នកបង្កើតអាចសហការយ៉ាងមានប្រសិទ្ធភាព មានភាពច្បាស់លាស់ និងមានសុវត្ថិភាព។",
+      "ចាប់ពីការបង្ហោះតម្រូវការទៅការបញ្ជូនចុងក្រោយ ជំហាននីមួយៗមានស្ថានភាពច្បាស់លាស់ និងផ្លូវកំណត់—មានការប្រកួតប្រជែងតិចតួច និងផលិតកម្មរហ័ស។"
+    ],
+    "highlights": [
+      {
+        "title": "ការសហការយ៉ាងមានប្រសិទ្ធភាព",
+        "body": "ដំណើរការស្តង់ដារសម្រាប់ការងារជាក្រុមដែលរហ័ស"
+      },
+      {
+        "title": "ការគ្រប់គ្រងដែលមានភាពច្បាស់លាស់",
+        "body": "កំណត់ត្រាពេញលេញជាមួយការតាមដានកំណត់ត្រា"
+      },
+      {
+        "title": "ការប្រាក់សុវត្ថិភាព",
+        "body": "ប្រាក់ដែលបានការពារនិងទិន្នន័យឯកជន"
+      },
+      {
+        "title": "ការចូលដំណើរការពិភពលោក",
+        "body": "ភ្ជាប់ជាមួយអ្នកបង្កើតដែលមានគុណភាពនៅទូទាំងពិភពលោក"
+      }
+    ],
+    "steps": [
+      {
+        "id": "brief",
+        "number": "01",
+        "title": "បង្ហោះតម្រូវការ",
+        "body": "ម៉ាកដាក់សំណើគម្រោង បង្ហោះទ្រព្យសម្បត្តិ កំណត់ថវិកា និងកាលបរិច្ឆេទ។ ប្រព័ន្ធរក្សាទុកការទាមទារមុនការបង់ប្រាក់។"
+      },
+      {
+        "id": "pricing",
+        "number": "02",
+        "title": "តម្លៃ AI",
+        "body": "ម៉ាស៊ីនគណនាតម្លៃសមរម្យពីភាពស្មុគស្មាញ រយៈពេល គោលការណ៍ការកែប្រែ និងទិន្នន័យស្តង់ដារ។"
+      },
+      {
+        "id": "matching",
+        "number": "03",
+        "title": "ផ្គូផ្គងអ្នកបង្កើត",
+        "body": "បន្ទាប់ពីការបង់ប្រាក់ AI ផ្គូផ្គងអ្នកបង្កើតដែលបានចុះឈ្មោះតាមរយៈស្តាយ ថវិកា និងកំណត់ត្រា ហើយបញ្ជូនអញ្ជើញ។"
+      },
+      {
+        "id": "production",
+        "number": "04",
+        "title": "ចាប់ផ្តើមផលិតកម្ម",
+        "body": "ពេលដែលម៉ាកបានជ្រើសរើសអ្នកបង្កើតដែលបានទទួលអញ្ជើញ គម្រោងនឹងចាប់ផ្តើម និងការបង្ហោះ V1 នឹងបើក។"
+      },
+      {
+        "id": "review",
+        "number": "05",
+        "title": "ការពិនិត្យអនឡាញ",
+        "body": "ម៉ាកពិនិត្យនៅលើកាលវិភាគ ប留下កំណត់ត្រាដែលមានម៉ោង និងអ្នកបង្កើតធ្វើការកែប្រែជាមួយការជូនដំណឹងពេលវេលាពិត។"
+      },
+      {
+        "id": "delivery",
+        "number": "06",
+        "title": "ការបញ្ជូនចុងក្រោយ",
+        "body": "បន្ទាប់ពីការអនុម័ត អ្នកបង្កើតបង្ហោះម៉ាស្ទ័រចុងក្រោយ និងឯកសាគម្រោងសម្រាប់ការទទួលយក និងការការពារ។"
+      },
+      {
+        "id": "escrow",
+        "number": "07",
+        "title": "ការសម្របសម្រួលប្រាក់",
+        "body": "ប្រាក់នៅក្នុងការសម្របសម្រួលរហូតដល់ការបញ្ជូនត្រូវបានបញ្ជាក់ បន្ទាប់មកបញ្ចេញទៅអ្នកបង្កើតជាមួយផ្លូវកំណត់ត្រាពេញលេញ។"
+      },
+      {
+        "id": "complete",
+        "number": "08",
+        "title": "គម្រោងបានបញ្ចប់",
+        "body": "គម្រោងត្រូវបានរក្សាទុកជាមួយប្រវត្តិជំនាន់ និងកំណត់ត្រាសម្របសម្រួល—រួចរាល់សម្រាប់ការសហការថ្មី។"
+      }
+    ],
+    "diagramTitle": "ដំណើរការរបស់ VINCIS នៅក្នុងមួយភ្លែត",
+    "ctaTitle": "តើអ្នកមានការរៀបចំដើម្បីចាប់ផ្តើមគម្រោងរបស់អ្នកទេ?",
+    "ctaBody": "ចូលរួមជាមួយវេទិកាម៉ាក–អ្នកបង្កើតនៅទូទាំងពិភពលោក និងបញ្ជូនការងារបង្កើតបានរហ័ស។",
+    "ctaButton": "បង្ហោះគម្រោង"
+  },
+  "fr": {
+    "pageTitle": "Processus",
+    "subtitle": "Du brief à la livraison",
+    "intro": [
+      "VINCIS regroupe la communication, les fichiers, les révisions, les paiements et la livraison sur une seule plateforme afin que les marques et les créateurs puissent collaborer efficacement, de manière transparente et sécurisée.",
+      "De la publication d'une demande à la livraison finale, chaque étape a un statut clair et une traçabilité—moins d'allers-retours, une production créative plus rapide."
+    ],
+    "highlights": [
+      {
+        "title": "Collaboration efficace",
+        "body": "Flux de travail standardisé pour un travail d'équipe plus rapide"
+      },
+      {
+        "title": "Contrôle transparent",
+        "body": "Dossiers complets avec progression traçable"
+      },
+      {
+        "title": "Escrow sécurisé",
+        "body": "Fonds protégés et données privées"
+      },
+      {
+        "title": "Portée mondiale",
+        "body": "Connectez-vous avec des créateurs de qualité dans le monde entier"
+      }
+    ],
+    "steps": [
+      {
+        "id": "brief",
+        "number": "01",
+        "title": "Publier les exigences",
+        "body": "Les marques soumettent les besoins du projet, téléchargent des ressources, définissent le budget et le calendrier. Le système stocke le brief avant le paiement."
+      },
+      {
+        "id": "pricing",
+        "number": "02",
+        "title": "Tarification AI",
+        "body": "Le moteur estime une fourchette de prix équitable en fonction de la complexité, de la durée, de la politique de révision et des données de référence."
+      },
+      {
+        "id": "matching",
+        "number": "03",
+        "title": "Associer les créateurs",
+        "body": "Après le paiement, l'IA associe les créateurs enregistrés par style, budget et antécédents, puis envoie des invitations."
+      },
+      {
+        "id": "production",
+        "number": "04",
+        "title": "Démarrer la production",
+        "body": "Une fois que la marque sélectionne un créateur ayant accepté l'invitation, le projet devient actif et le téléchargement de la version 1 s'ouvre."
+      },
+      {
+        "id": "review",
+        "number": "05",
+        "title": "Révision en ligne",
+        "body": "Les marques examinent sur une chronologie, laissent des notes horodatées, et les créateurs itèrent avec des notifications en temps réel."
+      },
+      {
+        "id": "delivery",
+        "number": "06",
+        "title": "Livraison finale",
+        "body": "Après approbation, les créateurs téléchargent les masters finaux et les fichiers du projet pour acceptation et archivage par la marque."
+      },
+      {
+        "id": "escrow",
+        "number": "07",
+        "title": "Règlement de l'escrow",
+        "body": "Les fonds restent en escrow jusqu'à ce que la livraison soit confirmée, puis sont libérés au créateur avec une traçabilité complète."
+      },
+      {
+        "id": "complete",
+        "number": "08",
+        "title": "Projet terminé",
+        "body": "Le projet est archivé avec un historique des versions et des enregistrements de règlement—prêt pour la prochaine collaboration."
+      }
+    ],
+    "diagramTitle": "Processus VINCIS en un coup d'œil",
+    "ctaTitle": "Prêt à commencer votre projet ?",
+    "ctaBody": "Rejoignez la plateforme mondiale de marques et de créateurs et expédiez votre travail créatif plus rapidement.",
+    "ctaButton": "Publier un projet"
+  },
+  "vi": {
+    "pageTitle": "Quy trình",
+    "subtitle": "Từ yêu cầu đến giao hàng",
+    "intro": [
+      "VINCIS mang đến sự kết hợp giữa giao tiếp, tệp tin, sửa đổi, thanh toán và giao hàng vào một nền tảng duy nhất để các thương hiệu và người sáng tạo có thể hợp tác hiệu quả, minh bạch và an toàn.",
+      "Từ việc đăng yêu cầu đến giao hàng cuối cùng, mỗi bước đều có trạng thái rõ ràng và dấu vết kiểm toán—ít đi lại, đầu ra sáng tạo nhanh hơn."
+    ],
+    "highlights": [
+      {
+        "title": "Hợp tác hiệu quả",
+        "body": "Quy trình làm việc chuẩn hóa cho teamwork nhanh hơn"
+      },
+      {
+        "title": "Kiểm soát minh bạch",
+        "body": "Lưu giữ đầy đủ hồ sơ với tiến trình có thể theo dõi"
+      },
+      {
+        "title": "Quỹ ký quỹ an toàn",
+        "body": "Quỹ được bảo vệ và dữ liệu riêng tư"
+      },
+      {
+        "title": "Phạm vi toàn cầu",
+        "body": "Kết nối với những người sáng tạo chất lượng trên toàn thế giới"
+      }
+    ],
+    "steps": [
+      {
+        "id": "brief",
+        "number": "01",
+        "title": "Đăng yêu cầu",
+        "body": "Các thương hiệu gửi nhu cầu dự án, tải lên tài sản, thiết lập ngân sách và thời gian. Hệ thống lưu trữ yêu cầu trước khi thanh toán."
+      },
+      {
+        "id": "pricing",
+        "number": "02",
+        "title": "Định giá AI",
+        "body": "Công cụ ước lượng một khoảng giá hợp lý dựa trên độ phức tạp, thời gian, chính sách sửa đổi và dữ liệu chuẩn."
+      },
+      {
+        "id": "matching",
+        "number": "03",
+        "title": "Ghép nối người sáng tạo",
+        "body": "Sau khi thanh toán, AI ghép nối các người sáng tạo đã đăng ký theo phong cách, ngân sách và hồ sơ, sau đó gửi lời mời."
+      },
+      {
+        "id": "production",
+        "number": "04",
+        "title": "Bắt đầu sản xuất",
+        "body": "Khi thương hiệu chọn một người sáng tạo đã chấp nhận lời mời, dự án sẽ được kích hoạt và tải lên V1 sẽ mở."
+      },
+      {
+        "id": "review",
+        "number": "05",
+        "title": "Xem xét trực tuyến",
+        "body": "Các thương hiệu xem xét theo thời gian, để lại ghi chú có dấu thời gian, và người sáng tạo thực hiện sửa đổi với thông báo theo thời gian thực."
+      },
+      {
+        "id": "delivery",
+        "number": "06",
+        "title": "Giao hàng cuối cùng",
+        "body": "Sau khi được phê duyệt, người sáng tạo tải lên các bản chính cuối cùng và tệp dự án để thương hiệu chấp nhận và lưu trữ."
+      },
+      {
+        "id": "escrow",
+        "number": "07",
+        "title": "Giải quyết quỹ ký quỹ",
+        "body": "Quỹ sẽ ở trong quỹ ký quỹ cho đến khi giao hàng được xác nhận, sau đó sẽ được giải phóng cho người sáng tạo với đầy đủ dấu vết kiểm toán."
+      },
+      {
+        "id": "complete",
+        "number": "08",
+        "title": "Dự án hoàn thành",
+        "body": "Dự án được lưu trữ với lịch sử phiên bản và hồ sơ giải quyết—sẵn sàng cho sự hợp tác tiếp theo."
+      }
+    ],
+    "diagramTitle": "Quy trình VINCIS trong nháy mắt",
+    "ctaTitle": "Sẵn sàng bắt đầu dự án của bạn?",
+    "ctaBody": "Tham gia nền tảng thương hiệu–người sáng tạo toàn cầu và giao hàng công việc sáng tạo nhanh hơn.",
+    "ctaButton": "Đăng một dự án"
+  },
+  "es": {
+    "pageTitle": "Proceso",
+    "subtitle": "Del brief a la entrega",
+    "intro": [
+      "VINCIS reúne comunicación, archivos, revisiones, pagos y entrega en una sola plataforma para que marcas y creadores puedan colaborar de manera eficiente, transparente y segura.",
+      "Desde la publicación de un requerimiento hasta la entrega final, cada paso tiene un estado claro y un rastro de auditoría: menos idas y venidas, salida creativa más rápida."
+    ],
+    "highlights": [
+      {
+        "title": "Colaboración eficiente",
+        "body": "Flujo de trabajo estandarizado para un trabajo en equipo más rápido"
+      },
+      {
+        "title": "Control transparente",
+        "body": "Registros completos con progreso rastreable"
+      },
+      {
+        "title": "Escrow seguro",
+        "body": "Fondos protegidos y datos privados"
+      },
+      {
+        "title": "Alcance global",
+        "body": "Conéctate con creadores de calidad en todo el mundo"
+      }
+    ],
+    "steps": [
+      {
+        "id": "brief",
+        "number": "01",
+        "title": "Publicar requisitos",
+        "body": "Las marcas envían las necesidades del proyecto, suben activos, establecen presupuesto y cronograma. El sistema almacena el brief antes del pago."
+      },
+      {
+        "id": "pricing",
+        "number": "02",
+        "title": "Precios AI",
+        "body": "El motor estima un rango de precios justo basado en la complejidad, duración, política de revisiones y datos de referencia."
+      },
+      {
+        "id": "matching",
+        "number": "03",
+        "title": "Emparejar creadores",
+        "body": "Después del pago, la IA empareja a los creadores registrados por estilo, presupuesto y trayectoria, y luego envía invitaciones."
+      },
+      {
+        "id": "production",
+        "number": "04",
+        "title": "Iniciar producción",
+        "body": "Una vez que la marca selecciona a un creador que aceptó la invitación, el proyecto se activa y se abre la carga de V1."
+      },
+      {
+        "id": "review",
+        "number": "05",
+        "title": "Revisión en línea",
+        "body": "Las marcas revisan en una línea de tiempo, dejan notas con marca de tiempo, y los creadores iteran con notificaciones en tiempo real."
+      },
+      {
+        "id": "delivery",
+        "number": "06",
+        "title": "Entrega final",
+        "body": "Después de la aprobación, los creadores suben los masters finales y los archivos del proyecto para la aceptación y archivo de la marca."
+      },
+      {
+        "id": "escrow",
+        "number": "07",
+        "title": "Liquidación de escrow",
+        "body": "Los fondos permanecen en escrow hasta que se confirme la entrega, luego se liberan al creador con un rastro de auditoría completo."
+      },
+      {
+        "id": "complete",
+        "number": "08",
+        "title": "Proyecto completo",
+        "body": "El proyecto se archiva con historial de versiones y registros de liquidación, listo para la próxima colaboración."
+      }
+    ],
+    "diagramTitle": "Proceso de VINCIS a simple vista",
+    "ctaTitle": "¿Listo para comenzar tu proyecto?",
+    "ctaBody": "Únete a la plataforma global de marcas y creadores y entrega trabajos creativos más rápido.",
+    "ctaButton": "Publicar un proyecto"
+  }
+}

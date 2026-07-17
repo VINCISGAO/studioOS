@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import type { Locale } from "@/lib/i18n";
+import type { MarketingLocale } from "@/lib/i18n";
 import { aboutText } from "@/lib/marketing/about-copy";
 import { casesCopy } from "@/lib/marketing/cases-copy";
 import { faqText } from "@/lib/marketing/faq-copy";
@@ -10,7 +10,7 @@ import { processText } from "@/lib/marketing/process-copy";
 
 const SITE = "VINCIS";
 
-export function marketingDocsMetadata(locale: Locale, page: MarketingDocsNavKey): Metadata {
+export function marketingDocsMetadata(locale: MarketingLocale, page: MarketingDocsNavKey): Metadata {
   if (page === "about") {
     const copy = aboutText(locale);
     return {

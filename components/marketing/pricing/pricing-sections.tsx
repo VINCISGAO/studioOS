@@ -13,7 +13,8 @@ import { PricingBudgetTierCard } from "@/components/marketing/pricing/pricing-bu
 import { PricingLucienCtaButton } from "@/components/marketing/pricing/pricing-lucien-cta-button";
 import { PLATFORM_SERVICE_INCLUDES } from "@/features/pricing/platform-service-fee.constants";
 import { pricingText } from "@/lib/marketing/pricing-copy";
-import type { Locale } from "@/lib/i18n";
+import type { MarketingLocale } from "@/lib/i18n";
+import { isChineseMarketingLocale } from "@/lib/marketing/i18n/resolve-marketing-copy";
 
 const PRINCIPLE_ICONS = [BrainCircuit, ShieldCheck, Lock, Globe2] as const;
 const TRUST_ICONS = [PieChart, Cpu, Users, TrendingUp] as const;
@@ -24,7 +25,7 @@ const TRUST_ICON_STYLES = [
   "bg-indigo-50 text-indigo-600"
 ] as const;
 
-export function PricingHeroSection({ locale }: { locale: Locale }) {
+export function PricingHeroSection({ locale }: { locale: MarketingLocale }) {
   const t = pricingText(locale);
 
   return (
@@ -47,7 +48,7 @@ export function PricingHeroSection({ locale }: { locale: Locale }) {
   );
 }
 
-export function PricingPrinciplesSection({ locale }: { locale: Locale }) {
+export function PricingPrinciplesSection({ locale }: { locale: MarketingLocale }) {
   const t = pricingText(locale);
 
   return (
@@ -71,9 +72,9 @@ export function PricingPrinciplesSection({ locale }: { locale: Locale }) {
   );
 }
 
-export function PricingServiceFeeSection({ locale }: { locale: Locale }) {
+export function PricingServiceFeeSection({ locale }: { locale: MarketingLocale }) {
   const t = pricingText(locale);
-  const includes = PLATFORM_SERVICE_INCLUDES[locale];
+  const includes = PLATFORM_SERVICE_INCLUDES[isChineseMarketingLocale(locale) ? "zh" : "en"];
 
   return (
     <section className="mt-6 rounded-[1.75rem] border border-violet-100/70 bg-white p-6 shadow-[0_18px_60px_-48px_rgba(76,29,149,0.35)] sm:p-8">
@@ -131,7 +132,7 @@ export function PricingServiceFeeSection({ locale }: { locale: Locale }) {
   );
 }
 
-export function PricingBudgetSection({ locale }: { locale: Locale }) {
+export function PricingBudgetSection({ locale }: { locale: MarketingLocale }) {
   const t = pricingText(locale);
 
   return (
@@ -158,7 +159,7 @@ export function PricingBudgetSection({ locale }: { locale: Locale }) {
   );
 }
 
-export function PricingTrustSection({ locale }: { locale: Locale }) {
+export function PricingTrustSection({ locale }: { locale: MarketingLocale }) {
   const t = pricingText(locale);
 
   return (
@@ -187,7 +188,7 @@ export function PricingTrustSection({ locale }: { locale: Locale }) {
   );
 }
 
-export function PricingClosingSection({ locale }: { locale: Locale }) {
+export function PricingClosingSection({ locale }: { locale: MarketingLocale }) {
   const t = pricingText(locale);
 
   return (

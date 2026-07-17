@@ -21,12 +21,13 @@ import {
   resolvePublicLucienDirectAnswer
 } from "@/features/ai-copilot/public-lucien-direct-answers";
 import { publicLucienSuggestions } from "@/lib/marketing/faq-copy";
+import { asMarketingLocale } from "@/lib/marketing/i18n/resolve-marketing-copy";
 import { classifyOpenAIModelError, getOpenAIWiringStatus } from "@/lib/core/config/openai-status";
 import { isPublicLucienPagePath, normalizePublicLucienPagePath } from "@/lib/marketing/public-lucien-paths";
 import { appError } from "@/lib/core/errors";
 import { logger } from "@/lib/core/logger";
 import { resolveOpenAIModel } from "@/lib/core/config/ai";
-import type { Locale } from "@/lib/i18n";
+import type { MarketingLocale } from "@/lib/i18n";
 
 const PUBLIC_KNOWLEDGE_SCOPE = "public_marketing" as const;
 
@@ -57,8 +58,8 @@ function resolveLanguage(languageCode?: string | null): string {
   return raw;
 }
 
-function resolveLocale(language: string): Locale {
-  return language === "zh-CN" || language === "zh-TW" || language === "zh" ? "zh" : "en";
+function resolveLocale(language: string): MarketingLocale {
+  return asMarketingLocale(language);
 }
 
 function buildPublicSystemPrompt(language: string) {

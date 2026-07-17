@@ -1,4 +1,6 @@
-import type { Locale } from "@/lib/i18n";
+import type { MarketingLocale } from "@/lib/i18n";
+import faqBundles from "@/lib/marketing/i18n/bundles/faq.json";
+import { resolveMarketingCopy } from "@/lib/marketing/i18n/resolve-marketing-copy";
 
 export type FaqCategoryId = "account" | "publish" | "creators" | "ai" | "payment" | "partners";
 
@@ -51,7 +53,7 @@ export type FaqCopy = {
   publicLucien: PublicLucienCopy;
 };
 
-const zh: FaqCopy = {
+export const faqCopyZhCN: FaqCopy = {
   hero: {
     eyebrow: "常见问题",
     title: "你关心的问题，这里都有答案。",
@@ -226,7 +228,7 @@ const zh: FaqCopy = {
   }
 };
 
-const en: FaqCopy = {
+export const faqCopyEn: FaqCopy = {
   hero: {
     eyebrow: "FAQ",
     title: "Answers to the questions you care about.",
@@ -404,18 +406,25 @@ const en: FaqCopy = {
   }
 };
 
-export function faqText(locale: Locale): FaqCopy {
-  return locale === "zh" ? zh : en;
+export function faqText(locale: MarketingLocale): FaqCopy {
+  return resolveMarketingCopy(
+    {
+      en: faqCopyEn,
+      "zh-CN": faqCopyZhCN,
+      ...(faqBundles as Partial<Record<MarketingLocale, FaqCopy>>)
+    },
+    locale
+  );
 }
 
 export function formatFaqCount(template: string, count: number): string {
   return template.replace("{count}", String(count));
 }
 
-export function publicLucienCopy(locale: Locale): PublicLucienCopy {
+export function publicLucienCopy(locale: MarketingLocale): PublicLucienCopy {
   return faqText(locale).publicLucien;
 }
 
-export function publicLucienSuggestions(locale: Locale): string[] {
+export function publicLucienSuggestions(locale: MarketingLocale): string[] {
   return publicLucienCopy(locale).suggestions;
 }

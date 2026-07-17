@@ -5,10 +5,10 @@ import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
 import { marketingSiteNavItems, marketingSiteNavHref } from "@/lib/marketing/marketing-site-nav";
 import type { MarketingDocsNavKey } from "@/lib/marketing/marketing-docs-nav";
-import type { Locale } from "@/lib/i18n";
+import type { MarketingLocale } from "@/lib/i18n";
 
 type MarketingDocsMobileNavProps = {
-  locale: Locale;
+  locale: MarketingLocale;
   active: MarketingDocsNavKey;
 };
 

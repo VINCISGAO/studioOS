@@ -20,7 +20,8 @@ import {
   type LucienStoredMessage
 } from "@/lib/lucien/lucien-chat-storage";
 import { cn } from "@/lib/utils";
-import type { Locale } from "@/lib/i18n";
+import type { MarketingLocale } from "@/lib/i18n";
+import { isChineseMarketingLocale } from "@/lib/marketing/i18n/resolve-marketing-copy";
 
 type ChatLine = LucienStoredMessage;
 
@@ -49,7 +50,7 @@ function resolveGuestSessionId() {
 }
 
 type PublicLucienDrawerProps = {
-  locale: Locale;
+  locale: MarketingLocale;
   open: boolean;
   onClose: () => void;
   pagePath: PublicLucienPagePath;
@@ -184,7 +185,7 @@ export function PublicLucienDrawer({
     setLoading(true);
 
     try {
-      const languageCode = locale === "zh" ? "zh-CN" : "en";
+      const languageCode = locale;
       const response = await fetch("/api/public-lucien", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -245,7 +246,7 @@ export function PublicLucienDrawer({
           <LucienAvatar size="md" />
           <div className="min-w-0 flex-1">
             <p id="public-lucien-title" className="text-base font-semibold text-zinc-950">
-              {locale === "zh" ? "卢西恩" : "Lucien"}
+              {isChineseMarketingLocale(locale) ? "卢西恩" : "Lucien"}
             </p>
             <p className="text-xs text-zinc-500">
               {publicLucienIdentityLabel(locale, viewerIdentity)}
@@ -263,7 +264,7 @@ export function PublicLucienDrawer({
 
         {modelConfigured === false ? (
           <p className="border-b border-amber-100 bg-amber-50 px-5 py-2 text-xs leading-5 text-amber-900">
-            {locale === "zh"
+            {isChineseMarketingLocale(locale)
               ? "语言模型未连接 · 可回答 FAQ 常见问题"
               : "Language model offline · FAQ answers still work"}
           </p>

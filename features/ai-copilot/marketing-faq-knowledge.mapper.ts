@@ -1,5 +1,6 @@
 import { faqText, type FaqCategoryId, type FaqItem } from "@/lib/marketing/faq-copy";
-import type { Locale } from "@/lib/i18n";
+import type { MarketingLocale } from "@/lib/i18n";
+import { MARKETING_LANGUAGE_CODES } from "@/lib/marketing/i18n/resolve-marketing-copy";
 
 export type MarketingFaqKnowledgeRow = {
   sourceKey: string;
@@ -16,7 +17,7 @@ export type MarketingFaqKnowledgeRow = {
   metadataJson: {
     source: string;
     categoryId: FaqCategoryId;
-    locale: Locale;
+    locale: MarketingLocale;
     sourceVersion: string;
     tone: string;
   };
@@ -34,12 +35,11 @@ function flattenAnswer(item: FaqItem): string {
 }
 
 export function buildMarketingFaqKnowledgeRows(): MarketingFaqKnowledgeRow[] {
-  const locales: Locale[] = ["zh", "en"];
   const rows: MarketingFaqKnowledgeRow[] = [];
 
-  for (const locale of locales) {
+  for (const locale of MARKETING_LANGUAGE_CODES) {
     const copy = faqText(locale);
-    const languageCode = locale === "zh" ? "zh-CN" : "en";
+    const languageCode = locale;
 
     for (const category of copy.categories) {
       category.items.forEach((item, index) => {

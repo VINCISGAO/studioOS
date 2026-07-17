@@ -14,9 +14,10 @@ import {
   type MarketingSiteNavKey
 } from "@/lib/marketing/marketing-site-nav";
 import { MARKETING_SITE_NAV_ICONS } from "@/lib/marketing/marketing-site-nav-icons";
+import { cn } from "@/lib/utils";
 import type { Locale, MarketingLocale } from "@/lib/i18n";
 import { motion, useMotionValueEvent, useScroll, useTransform } from "framer-motion";
-import { cn } from "@/lib/utils";
+import { asMarketingLocale } from "@/lib/marketing/i18n/resolve-marketing-copy";
 
 type WorkspaceCta = {
   href: string;
@@ -76,7 +77,7 @@ function MobileNavCard({
 }
 
 function marketingSiteNavHrefForNav(key: MarketingSiteNavKey, copyLocale: Locale | MarketingLocale) {
-  return marketingSiteNavHref(key, copyLocale);
+  return marketingSiteNavHref(key, asMarketingLocale(copyLocale));
 }
 
 function MobileNavMenu({
@@ -103,7 +104,7 @@ function MobileNavMenu({
 
   const mobileNav = cinematicText("mobileNav", copyLocale);
   const navLabels = cinematicText("nav", copyLocale);
-  const siteItems = marketingSiteNavItems(copyLocale);
+  const siteItems = marketingSiteNavItems(asMarketingLocale(copyLocale));
 
   const items: Array<{
     key: MobileNavItemKey;
@@ -183,7 +184,7 @@ export function CinematicNav({
     hydratePortalSession
   );
   const workspaceCta = hydratePortalSession ? hydratedWorkspaceCta : serverWorkspaceCta;
-  const siteNavItems = marketingSiteNavItems(copyLocale);
+  const siteNavItems = marketingSiteNavItems(asMarketingLocale(copyLocale));
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const { scrollY } = useScroll();
@@ -239,7 +240,7 @@ export function CinematicNav({
             {siteNavItems.map((item) => (
               <Link
                 key={item.key}
-                href={marketingSiteNavHref(item.key, copyLocale)}
+                href={marketingSiteNavHref(item.key, asMarketingLocale(copyLocale))}
                 className={cn("transition", useLightNav ? "hover:text-zinc-950" : "hover:text-white")}
               >
                 {item.label}
@@ -248,7 +249,7 @@ export function CinematicNav({
           </nav>
 
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-            <LanguageSwitcher locale={copyLocale} tone={useLightNav ? "light" : "dark"} navPill />
+            <LanguageSwitcher locale={asMarketingLocale(copyLocale)} tone={useLightNav ? "light" : "dark"} navPill />
             <Link
               href={workspaceCta?.href ?? marketingHomeHref.login(copyLocale)}
               prefetch={workspaceCta ? true : false}

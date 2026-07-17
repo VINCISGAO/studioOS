@@ -9,14 +9,15 @@ import {
 import { calculatePlatformFeeSplit } from "@/features/pricing/platform-service-fee.constants";
 import { partnersText } from "@/lib/marketing/partners-copy";
 import { cn } from "@/lib/utils";
-import type { Locale } from "@/lib/i18n";
+import type { MarketingLocale } from "@/lib/i18n";
+import { isChineseMarketingLocale } from "@/lib/marketing/i18n/resolve-marketing-copy";
 
 export function PartnersEarningsCalculator({
   locale,
   tiers,
   className
 }: {
-  locale: Locale;
+  locale: MarketingLocale;
   tiers: PartnerCommissionTier[];
   className?: string;
 }) {
@@ -48,7 +49,7 @@ export function PartnersEarningsCalculator({
         >
           {tiers.map((tier) => (
             <option key={tier.id} value={tier.id}>
-              {locale === "zh" ? tier.labelZh : tier.labelEn}
+              {isChineseMarketingLocale(locale) ? tier.labelZh : tier.labelEn}
             </option>
           ))}
         </select>
@@ -74,20 +75,22 @@ export function PartnersEarningsCalculator({
         <div>
           <p className="text-xs text-zinc-500">{t.calculatorLabels.partnerShare}</p>
           <p className="mt-1 text-sm font-semibold text-zinc-900">
-            {PARTNER_REFERRAL_SHARE_OF_PLATFORM_FEE}% {locale === "zh" ? "（平台服务费）" : "(of platform fee)"}
+            {PARTNER_REFERRAL_SHARE_OF_PLATFORM_FEE}%{" "}
+            {isChineseMarketingLocale(locale) ? "（平台服务费）" : "(of platform fee)"}
           </p>
         </div>
         <div>
           <p className="text-xs text-zinc-500">{t.calculatorLabels.platformFeeAmount}</p>
           <p className="mt-1 text-sm font-semibold text-zinc-900">
-            ${split.platformFee.toLocaleString(locale === "zh" ? "zh-CN" : "en-US")} {t.calculatorLabels.currency}
+            ${split.platformFee.toLocaleString(isChineseMarketingLocale(locale) ? "zh-CN" : "en-US")}{" "}
+            {t.calculatorLabels.currency}
           </p>
         </div>
       </div>
       <div className="mt-auto rounded-2xl bg-violet-50 px-4 py-5 text-center">
         <p className="text-sm text-violet-700">{t.calculatorLabels.estimatedEarnings}</p>
         <p className="mt-2 text-3xl font-bold tracking-[-0.03em] text-violet-700">
-          ${split.partnerReferral.toLocaleString(locale === "zh" ? "zh-CN" : "en-US")}{" "}
+          ${split.partnerReferral.toLocaleString(isChineseMarketingLocale(locale) ? "zh-CN" : "en-US")}{" "}
           {t.calculatorLabels.currency}
         </p>
       </div>

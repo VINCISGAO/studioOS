@@ -1,5 +1,7 @@
-import type { Locale, MarketingLocale } from "@/lib/i18n";
+import type { MarketingLocale } from "@/lib/i18n";
+import navBundles from "@/lib/marketing/i18n/bundles/nav.json";
 import { buildLocalizedHref, marketingHomeHref, marketingKnowledgeCenterHref } from "@/lib/marketing/localized-href";
+import { resolveMarketingCopy } from "@/lib/marketing/i18n/resolve-marketing-copy";
 
 export type MarketingSiteNavKey =
   | "about"
@@ -35,9 +37,9 @@ type MarketingSiteNavItemCopy = {
   description: string;
 };
 
-type MarketingSiteNavCopy = Record<MarketingSiteNavKey, MarketingSiteNavItemCopy>;
+export type MarketingSiteNavCopy = Record<MarketingSiteNavKey, MarketingSiteNavItemCopy>;
 
-const zh: MarketingSiteNavCopy = {
+export const marketingSiteNavZhCN: MarketingSiteNavCopy = {
   about: {
     label: "关于我们",
     description: "了解 VINCIS 的使命与团队"
@@ -56,7 +58,7 @@ const zh: MarketingSiteNavCopy = {
   },
   resources: {
     label: "合作伙伴",
-    description: "推荐品牌与创作者，获得长期分销佣金"
+    description: "推荐品牌与制作者，获得长期分销佣金"
   },
   faq: {
     label: "常见问题",
@@ -68,7 +70,7 @@ const zh: MarketingSiteNavCopy = {
   }
 };
 
-const en: MarketingSiteNavCopy = {
+export const marketingSiteNavEn: MarketingSiteNavCopy = {
   about: {
     label: "About us",
     description: "Learn about VINCIS mission and team"
@@ -99,17 +101,18 @@ const en: MarketingSiteNavCopy = {
   }
 };
 
-export function resolveMarketingSiteNavLocale(locale: Locale | MarketingLocale): Locale {
-  if (locale === "zh") return "zh";
-  if (typeof locale === "string" && locale.startsWith("zh")) return "zh";
-  return "en";
+export function marketingSiteNavCopy(locale: MarketingLocale): MarketingSiteNavCopy {
+  return resolveMarketingCopy(
+    {
+      en: marketingSiteNavEn,
+      "zh-CN": marketingSiteNavZhCN,
+      ...(navBundles as Partial<Record<MarketingLocale, MarketingSiteNavCopy>>)
+    },
+    locale
+  );
 }
 
-export function marketingSiteNavCopy(locale: Locale | MarketingLocale): MarketingSiteNavCopy {
-  return resolveMarketingSiteNavLocale(locale) === "zh" ? zh : en;
-}
-
-export function marketingSiteNavItems(locale: Locale | MarketingLocale) {
+export function marketingSiteNavItems(locale: MarketingLocale) {
   const copy = marketingSiteNavCopy(locale);
   return MARKETING_SITE_NAV_ORDER.map((key) => ({
     key,
@@ -119,9 +122,7 @@ export function marketingSiteNavItems(locale: Locale | MarketingLocale) {
   }));
 }
 
-export function marketingSiteNavLabels(
-  locale: Locale | MarketingLocale
-): Record<MarketingSiteNavKey, string> {
+export function marketingSiteNavLabels(locale: MarketingLocale): Record<MarketingSiteNavKey, string> {
   const copy = marketingSiteNavCopy(locale);
   return {
     about: copy.about.label,
@@ -134,7 +135,7 @@ export function marketingSiteNavLabels(
   };
 }
 
-export function marketingSiteNavHref(key: MarketingSiteNavKey, locale: Locale | MarketingLocale): string {
+export function marketingSiteNavHref(key: MarketingSiteNavKey, locale: MarketingLocale): string {
   if (key === "about") return marketingHomeHref.about(locale);
   if (key === "knowledge") return marketingKnowledgeCenterHref(locale);
   return buildLocalizedHref(MARKETING_SITE_NAV_PATHS[key], locale);

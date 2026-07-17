@@ -3,7 +3,8 @@ import { headers } from "next/headers";
 import { BrandLogoLockup } from "@/components/brand-logo-mark";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { Button } from "@/components/ui/button";
-import type { Locale } from "@/lib/i18n";
+import type { Locale, MarketingLocale } from "@/lib/i18n";
+import { isChineseMarketingLocale } from "@/lib/marketing/i18n/resolve-marketing-copy";
 import { withLocale } from "@/lib/i18n";
 import {
   resolveMarketingPortalHref,
@@ -12,11 +13,12 @@ import {
 import { getCurrentSession } from "@/lib/session-user";
 import { cn } from "@/lib/utils";
 
-export async function MarketingHeader({ locale }: { locale: Locale }) {
+export async function MarketingHeader({ locale }: { locale: MarketingLocale }) {
+  const zh = isChineseMarketingLocale(locale);
   const nav = {
-    studios: locale === "zh" ? "创作者作品库" : "Studios",
-    pricing: locale === "zh" ? "价格" : "Pricing",
-    howItWorks: locale === "zh" ? "如何运作" : "How it works"
+    studios: zh ? "创作者作品库" : "Studios",
+    pricing: zh ? "价格" : "Pricing",
+    howItWorks: zh ? "如何运作" : "How it works"
   };
 
   const headerList = await headers();

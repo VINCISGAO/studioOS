@@ -9,7 +9,7 @@ import {
   type SupportedLanguageCode
 } from "@/features/i18n/language.constants";
 import { readStoredAppLanguage, setAppLanguage } from "@/lib/app-language-client";
-import { isHomepageLangPath } from "@/lib/app-language.shared";
+import { isInternalAppPath, isHomepageLangPath } from "@/lib/app-language.shared";
 import { cn } from "@/lib/utils";
 import type { LanguageCode, Locale } from "@/lib/i18n";
 
@@ -53,7 +53,7 @@ function LanguageSwitcherInner({
       if (next === current) return;
       setAppLanguage(next);
       setOpen(false);
-      if (isHomepageLangPath(pathname)) {
+      if (isHomepageLangPath(pathname) || !isInternalAppPath(pathname)) {
         const params = new URLSearchParams(searchParams.toString());
         params.set("lang", next);
         const query = params.toString();

@@ -10,6 +10,7 @@ import { getWorksEngagement } from "@/lib/work-engagement-service";
 import { getLocale, type SearchParams, withLocale } from "@/lib/i18n";
 import { buildCreatorProfileJsonLdGraph } from "@/lib/marketing/structured-data/creator-profile";
 import { JsonLdScript } from "@/lib/marketing/structured-data/json-ld-script";
+import { asMarketingLocale } from "@/lib/marketing/i18n/resolve-marketing-copy";
 import { creatorProfileSeoMetadata } from "@/lib/marketing/marketing-seo-metadata";
 import { VINCIS_SITE_ORIGIN } from "@/lib/marketing/organization-schema";
 import type { Metadata } from "next";
@@ -81,7 +82,7 @@ export async function generateMetadata({ params, searchParams }: CreatorProfileP
   }
 
   return creatorProfileSeoMetadata({
-    locale,
+    locale: asMarketingLocale(locale),
     name: creator.name,
     headline: creator.headline || creator.bio || creator.name,
     profilePath: `/creators/${creator.id}`,

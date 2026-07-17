@@ -1,10 +1,10 @@
-import type { Locale } from "@/lib/i18n";
+import type { MarketingLocale } from "@/lib/i18n";
 import { faqText } from "@/lib/marketing/faq-copy";
 import { VINCIS_SITE_ORIGIN, buildOrganizationGraphNode } from "@/lib/marketing/organization-schema";
 import { buildBreadcrumbJsonLd } from "@/lib/marketing/structured-data/breadcrumb";
 import { buildWebsiteGraphNode } from "@/lib/marketing/structured-data/website";
 
-export function buildMarketingFaqJsonLdGraph(locale: Locale, origin = VINCIS_SITE_ORIGIN) {
+export function buildMarketingFaqJsonLdGraph(locale: MarketingLocale, origin = VINCIS_SITE_ORIGIN) {
   const copy = faqText(locale);
   const questions = copy.categories.flatMap((category) => category.items);
 

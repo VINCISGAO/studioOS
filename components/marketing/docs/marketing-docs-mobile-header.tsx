@@ -6,13 +6,13 @@ import { BrandLogoLockup } from "@/components/brand-logo-mark";
 import { MarketingDocsMobileNav } from "@/components/marketing/docs/marketing-docs-mobile-nav";
 import { marketingDocsNavText, type MarketingDocsNavKey } from "@/lib/marketing/marketing-docs-nav";
 import { marketingHomeHref } from "@/lib/marketing/localized-href";
-import type { Locale } from "@/lib/i18n";
+import type { MarketingLocale } from "@/lib/i18n";
 
 export function MarketingDocsMobileHeader({
   locale,
   active
 }: {
-  locale: Locale;
+  locale: MarketingLocale;
   active: MarketingDocsNavKey;
 }) {
   const nav = marketingDocsNavText(locale);

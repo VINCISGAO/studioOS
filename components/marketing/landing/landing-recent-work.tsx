@@ -7,6 +7,7 @@ import { landingText } from "@/lib/marketing/landing-copy";
 import type { MarketingShowcaseWorkDto } from "@/features/marketing-showcase/marketing-showcase.types";
 import { marketingHomeHref } from "@/lib/marketing/localized-href";
 import { isChineseLanguage, type Locale, type MarketingLocale } from "@/lib/i18n";
+import { asMarketingLocale } from "@/lib/marketing/i18n/resolve-marketing-copy";
 import { labelWorkCategory } from "@/lib/localized-options";
 import { ShowcaseCover } from "@/components/marketing/showcase/showcase-cover";
 import { MarketingShowcaseVideoModal } from "@/components/marketing/showcase/marketing-showcase-video-modal";
@@ -134,7 +135,6 @@ export function LandingRecentWork({
   const t = landingText("work", copyLocale);
   const [activeWork, setActiveWork] = useState<MarketingShowcaseWorkDto | null>(null);
   const featuredWorks = selectFeaturedWorks(works);
-  const modalLocale = isChineseLanguage(copyLocale) ? "zh" : "en";
   const subtitle = isChineseLanguage(copyLocale)
     ? "来自全球品牌的真实商业项目，按预算与品类精选展示。"
     : "Real commercial projects from global brands, curated by budget and category.";
@@ -183,7 +183,7 @@ export function LandingRecentWork({
       {activeWork ? (
         <MarketingShowcaseVideoModal
           work={activeWork}
-          locale={modalLocale}
+          locale={asMarketingLocale(copyLocale)}
           onClose={() => setActiveWork(null)}
         />
       ) : null}

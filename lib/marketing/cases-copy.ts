@@ -1,4 +1,6 @@
-import type { Locale } from "@/lib/i18n";
+import type { MarketingLocale } from "@/lib/i18n";
+import casesBundles from "@/lib/marketing/i18n/bundles/cases.json";
+import { resolveMarketingCopy } from "@/lib/marketing/i18n/resolve-marketing-copy";
 
 export type CasesPageCopy = {
   eyebrow: string;
@@ -16,7 +18,7 @@ export type CasesPageCopy = {
   backHome: string;
 };
 
-const zh: CasesPageCopy = {
+export const casesCopyZhCN: CasesPageCopy = {
   eyebrow: "成功案例",
   titleLead: "作品自己会说话",
   titleAccent: "。",
@@ -32,7 +34,7 @@ const zh: CasesPageCopy = {
   backHome: "返回首页"
 };
 
-const en: CasesPageCopy = {
+export const casesCopyEn: CasesPageCopy = {
   eyebrow: "Case studies",
   titleLead: "Works speak for themselves",
   titleAccent: ".",
@@ -48,8 +50,15 @@ const en: CasesPageCopy = {
   backHome: "Back to home"
 };
 
-export function casesCopy(locale: Locale): CasesPageCopy {
-  return locale === "zh" ? zh : en;
+export function casesCopy(locale: MarketingLocale): CasesPageCopy {
+  return resolveMarketingCopy(
+    {
+      en: casesCopyEn,
+      "zh-CN": casesCopyZhCN,
+      ...(casesBundles as Partial<Record<MarketingLocale, CasesPageCopy>>)
+    },
+    locale
+  );
 }
 
 /** Primary category pills shown before "More" — matches design order. */

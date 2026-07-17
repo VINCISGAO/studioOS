@@ -1,9 +1,11 @@
+import type { MarketingLocale } from "@/lib/i18n";
+import { isChineseMarketingLocale } from "@/lib/marketing/i18n/resolve-marketing-copy";
 import { VINCIS_SITE_ORIGIN, buildOrganizationGraphNode } from "@/lib/marketing/organization-schema";
 import { buildBreadcrumbJsonLd } from "@/lib/marketing/structured-data/breadcrumb";
 import { buildWebsiteGraphNode } from "@/lib/marketing/structured-data/website";
 
-export function buildContactJsonLdGraph(locale: "en" | "zh", origin = VINCIS_SITE_ORIGIN) {
-  const zh = locale === "zh";
+export function buildContactJsonLdGraph(locale: MarketingLocale, origin = VINCIS_SITE_ORIGIN) {
+  const zh = isChineseMarketingLocale(locale);
 
   return {
     "@context": "https://schema.org",
@@ -13,10 +15,9 @@ export function buildContactJsonLdGraph(locale: "en" | "zh", origin = VINCIS_SIT
         contactPoint: [
           {
             "@type": "ContactPoint",
-            contactType: "customer support",
+            contactType: zh ? "客户服务" : "customer support",
             email: "hello@vincis.app",
-            availableLanguage: ["English", "Chinese"],
-            areaServed: "Worldwide"
+            availableLanguage: ["English", "Chinese"]
           }
         ]
       },
@@ -30,10 +31,9 @@ export function buildContactJsonLdGraph(locale: "en" | "zh", origin = VINCIS_SIT
       ),
       {
         "@type": "ContactPage",
-        "@id": `${origin}/contact#contactpage`,
+        "@id": `${origin}/contact#webpage`,
         name: zh ? "联系 VINCIS" : "Contact VINCIS",
-        url: `${origin}/contact`,
-        mainEntity: { "@id": `${origin}/#organization` }
+        url: `${origin}/contact`
       }
     ]
   };

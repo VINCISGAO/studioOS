@@ -13,7 +13,7 @@ import {
   Users
 } from "lucide-react";
 import { aboutText } from "@/lib/marketing/about-copy";
-import type { Locale } from "@/lib/i18n";
+import type { MarketingLocale } from "@/lib/i18n";
 
 const PLATFORM_ICONS = [
   Sparkles,
@@ -30,7 +30,7 @@ const PLATFORM_ICONS = [
 const HERO_POINT_ICONS = [Target, Globe2, Sparkles, BarChart3] as const;
 const STORY_POINT_ICONS = [Play, MessageSquare, ShieldCheck] as const;
 
-export function AboutHeroSection({ locale }: { locale: Locale }) {
+export function AboutHeroSection({ locale }: { locale: MarketingLocale }) {
   const t = aboutText(locale);
   const [introOne = "", introTwo = "", beliefCopy = ""] = t.hero.paragraphs;
   const [beliefLead = "", beliefRest = ""] = beliefCopy.split("\n");
@@ -77,7 +77,7 @@ export function AboutHeroSection({ locale }: { locale: Locale }) {
   );
 }
 
-export function AboutStorySection({ locale }: { locale: Locale }) {
+export function AboutStorySection({ locale }: { locale: MarketingLocale }) {
   const t = aboutText(locale);
   const storyPoints = t.story.paragraphs.slice(1, 4);
 
@@ -110,7 +110,7 @@ export function AboutStorySection({ locale }: { locale: Locale }) {
   );
 }
 
-export function AboutPlatformSection({ locale }: { locale: Locale }) {
+export function AboutPlatformSection({ locale }: { locale: MarketingLocale }) {
   const t = aboutText(locale);
 
   return (
@@ -135,7 +135,7 @@ export function AboutPlatformSection({ locale }: { locale: Locale }) {
   );
 }
 
-export function AboutStatsSection({ locale }: { locale: Locale }) {
+export function AboutStatsSection({ locale }: { locale: MarketingLocale }) {
   const t = aboutText(locale);
 
   return (

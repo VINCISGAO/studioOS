@@ -3,7 +3,8 @@
 import { ArrowUpRight, Play } from "lucide-react";
 import { ShowcaseCover } from "@/components/marketing/showcase/showcase-cover";
 import type { MarketingShowcaseWorkDto } from "@/features/marketing-showcase/marketing-showcase.types";
-import type { Locale } from "@/lib/i18n";
+import type { MarketingLocale } from "@/lib/i18n";
+import { toLegacyLocale } from "@/lib/marketing/i18n/resolve-marketing-copy";
 import { labelPlatform, labelWorkCategory } from "@/lib/localized-options";
 
 export function CasesWorkCard({
@@ -12,11 +13,12 @@ export function CasesWorkCard({
   onOpen
 }: {
   work: MarketingShowcaseWorkDto;
-  locale: Locale;
+  locale: MarketingLocale;
   onOpen: () => void;
 }) {
-  const categoryLabel = labelWorkCategory(work.category, locale);
-  const meta = `${categoryLabel} · ${labelPlatform(work.platform, locale)}`;
+  const legacyLocale = toLegacyLocale(locale);
+  const categoryLabel = labelWorkCategory(work.category, legacyLocale);
+  const meta = `${categoryLabel} · ${labelPlatform(work.platform, legacyLocale)}`;
 
   return (
     <button

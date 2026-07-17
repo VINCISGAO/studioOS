@@ -1,0 +1,1630 @@
+{
+  "en": {
+    "eyebrow": "Pricing",
+    "title": "Transparent pricing that makes every campaign ",
+    "titleAccent": "easier to start.",
+    "intro": "VINCIS uses an AI Production Pricing Engine to deliver transparent, professional quotes based on complexity, duration, delivery speed, and more.",
+    "philosophy": "VINCIS does not chase the lowest price. We build every deal on fair budget × quality delivery × sustainable creator earnings.",
+    "principles": [
+      {
+        "title": "AI pricing engine",
+        "body": "Fair budget ranges from real production data and historical deals — not guesswork."
+      },
+      {
+        "title": "Transparent costs",
+        "body": "The platform service fee covers AI, matching, escrow, review, collaboration, storage, and security — every line is explainable."
+      },
+      {
+        "title": "Escrow protection",
+        "body": "Funds stay in escrow until delivery is confirmed, protecting brands and creators equally."
+      },
+      {
+        "title": "Sustainable creator earnings",
+        "body": "80% of brand payment goes to creators; the platform service fee funds the full transaction infrastructure."
+      }
+    ],
+    "budgetTitle": "How to read a budget",
+    "budgetSubtitle": "Different budget levels match different project needs and creator resources",
+    "budgetTiers": [
+      {
+        "title": "Starter",
+        "subtitle": "Launch ideas quickly",
+        "audience": "Lightweight projects",
+        "theme": "blue",
+        "features": [
+          "Product showcase ads",
+          "15–30s short video",
+          "Essential production needs",
+          "Fast creative validation"
+        ]
+      },
+      {
+        "title": "Recommended",
+        "subtitle": "Balance quality and speed",
+        "badge": "Recommended",
+        "audience": "The choice for most brands",
+        "theme": "purple",
+        "features": [
+          "30–60s commercial ads",
+          "Higher creative standards",
+          "Priority creator matching",
+          "Platform default budget band"
+        ]
+      },
+      {
+        "title": "Priority",
+        "subtitle": "Higher quality bar",
+        "audience": "Higher-expectation projects",
+        "theme": "orange",
+        "features": [
+          "60s+ premium ads",
+          "Senior studio matching",
+          "Faster response and delivery",
+          "More stable production"
+        ]
+      },
+      {
+        "title": "Top tier",
+        "subtitle": "Cinematic production standard",
+        "audience": "Large brands and custom work",
+        "theme": "green",
+        "features": [
+          "Brand films and cinematic ads",
+          "Global top studio teams",
+          "Custom end-to-end service",
+          "Dedicated creative execution"
+        ]
+      }
+    ],
+    "trustTitle": "Why trust VINCIS pricing?",
+    "trustPoints": [
+      {
+        "title": "Real cost model",
+        "body": "Grounded in real production samples and historical deals — not market hype."
+      },
+      {
+        "title": "AI-powered quotes",
+        "body": "Complexity is calculated automatically for accurate, fair pricing."
+      },
+      {
+        "title": "Creator ecosystem",
+        "body": "Fair pricing keeps creator earnings healthy and attracts great studios."
+      },
+      {
+        "title": "Continuous learning",
+        "body": "Every completed project improves the next quote."
+      }
+    ],
+    "serviceFeeTitle": "Platform service fee",
+    "serviceFeeSubtitle": "You buy full transaction infrastructure — not a contact list",
+    "serviceFeeIntro": "VINCIS is a full advertising transaction platform. The platform service fee (production service fee) funds AI creative analysis, global creator matching, escrow, online review, collaboration, storage, security, and operations.",
+    "serviceFeeIncludesTitle": "What the fee includes",
+    "serviceFeeSplitTitle": "How funds are split",
+    "serviceFeeSplit": [
+      {
+        "label": "Brand pays",
+        "value": "100%"
+      },
+      {
+        "label": "Creator payout",
+        "value": "80%"
+      },
+      {
+        "label": "Platform service fee",
+        "value": "20% (default standard)"
+      }
+    ],
+    "serviceFeeTierTitle": "Tiered by partnership level",
+    "serviceFeeTierColumns": [
+      "Customer type",
+      "Platform service fee",
+      "Details"
+    ],
+    "serviceFeeTiers": [
+      {
+        "title": "Standard project",
+        "rate": "20%",
+        "note": "Default standard rate covering full platform infrastructure"
+      },
+      {
+        "title": "Annual partnership",
+        "rate": "18%",
+        "note": "Long-term incentive with healthy platform margin"
+      },
+      {
+        "title": "Enterprise",
+        "rate": "15%",
+        "note": "Custom enterprise agreements available"
+      }
+    ],
+    "serviceFeeNote": "20% is the default standard platform service fee, not a single fixed rate for every deal. We never use the word “commission take.”",
+    "closingTitleLead": "Not the lowest price —",
+    "closingTitleAccent": "the best value to close.",
+    "closingBody": [
+      "Great ads need reasonable budgets. Prices that are too low usually mean less craft and more risk.",
+      "VINCIS helps brands buy better work at fair budgets so every deal is worth closing."
+    ],
+    "closingCta": "Get an AI estimate",
+    "closingNote": "Fast response · Secure and reliable"
+  },
+  "zh-CN": {
+    "eyebrow": "价格",
+    "title": "透明定价，让每个广告项目",
+    "titleAccent": "更容易开始。",
+    "intro": "VINCIS 通过智能制作估价引擎，根据项目复杂度、视频长度、交付速度等因素，为您提供透明、合理的专业报价。",
+    "philosophy": "VINCIS 不追求最低价，而是通过合理预算 × 高质量交付 × 创作者可持续收益，确保每一次合作都建立在公平与信任之上。",
+    "principles": [
+      {
+        "title": "智能估价",
+        "body": "基于真实制作数据与历史成交，智能计算合理预算区间，告别盲目报价。"
+      },
+      {
+        "title": "成本透明",
+        "body": "平台服务费覆盖智能匹配、托管、审片、协作、存储与安全保障等完整基础设施，每一项都有明确依据。"
+      },
+      {
+        "title": "托管支付保障",
+        "body": "资金平台托管，确认交付后放款，品牌与创作者双向保障，安全无忧。"
+      },
+      {
+        "title": "创作者可持续收益",
+        "body": "品牌付款中 80% 直接归属创作者，平台服务费用于支撑完整交易基础设施与长期生态。"
+      }
+    ],
+    "budgetTitle": "预算如何理解？",
+    "budgetSubtitle": "不同预算等级，匹配不同的项目需求与创作资源",
+    "budgetTiers": [
+      {
+        "title": "基础预算",
+        "subtitle": "快速启动创意",
+        "audience": "适合轻量项目",
+        "theme": "blue",
+        "features": [
+          "适合产品展示类广告",
+          "15-30 秒短视频",
+          "满足基础制作需求",
+          "快速验证创意方向"
+        ]
+      },
+      {
+        "title": "推荐预算",
+        "subtitle": "兼顾质量与效率",
+        "badge": "推荐",
+        "audience": "大多数品牌的选择",
+        "theme": "purple",
+        "features": [
+          "30-60 秒商业广告",
+          "更高创意与制作标准",
+          "优先匹配优质创作者",
+          "平台推荐预算区间"
+        ]
+      },
+      {
+        "title": "优先预算",
+        "subtitle": "更高品质要求",
+        "audience": "适用于高要求项目",
+        "theme": "orange",
+        "features": [
+          "60 秒以上精品广告",
+          "匹配资深创作者",
+          "更快响应与交付",
+          "更高制作稳定性"
+        ]
+      },
+      {
+        "title": "顶级预算",
+        "subtitle": "电影级制作标准",
+        "audience": "大型品牌与定制项目",
+        "theme": "green",
+        "features": [
+          "品牌宣传片与电影感广告",
+          "全球顶级创作者团队",
+          "定制化全流程服务",
+          "专属创意与执行支持"
+        ]
+      }
+    ],
+    "trustTitle": "为什么相信 VINCIS 的报价？",
+    "trustPoints": [
+      {
+        "title": "真实成本模型",
+        "body": "基于真实制作样本与历史成交数据，而不是市场喊价。"
+      },
+      {
+        "title": "智能计算",
+        "body": "综合项目复杂度自动计算，报价准确且公平。"
+      },
+      {
+        "title": "创作者生态保障",
+        "body": "合理定价保障创作者收益，吸引全球优秀制作团队。"
+      },
+      {
+        "title": "持续学习进化",
+        "body": "每完成一个项目，模型持续优化下一次报价。"
+      }
+    ],
+    "serviceFeeTitle": "平台服务费",
+    "serviceFeeSubtitle": "您购买的是完整广告交易基础设施，而不是联系人列表",
+    "serviceFeeIntro": "VINCIS 是完整的广告交易平台。平台服务费（Production Service Fee）用于支撑 AI 创意分析、全球 Creator 匹配、托管支付、在线审片、项目协作、文件存储、安全保障及平台运营等完整服务。",
+    "serviceFeeIncludesTitle": "平台服务费包含",
+    "serviceFeeSplitTitle": "资金如何分配",
+    "serviceFeeSplit": [
+      {
+        "label": "品牌支付",
+        "value": "100%"
+      },
+      {
+        "label": "Creator 收益",
+        "value": "80%"
+      },
+      {
+        "label": "平台服务费",
+        "value": "20%（默认标准）"
+      }
+    ],
+    "serviceFeeTierTitle": "按合作层级收取",
+    "serviceFeeTierColumns": [
+      "客户类型",
+      "平台服务费",
+      "说明"
+    ],
+    "serviceFeeTiers": [
+      {
+        "title": "标准项目",
+        "rate": "20%",
+        "note": "默认标准费率，覆盖完整平台基础设施成本"
+      },
+      {
+        "title": "年度合作客户",
+        "rate": "18%",
+        "note": "长期合作激励，兼顾客户竞争力与平台健康毛利"
+      },
+      {
+        "title": "企业客户",
+        "rate": "15%",
+        "note": "Enterprise 定制合作，可按协议单独约定"
+      }
+    ],
+    "serviceFeeNote": "20% 为默认标准平台服务费，而非唯一固定费率。我们统一使用「平台服务费」表述，不使用「抽成」一词。",
+    "closingTitleLead": "不是最低价，",
+    "closingTitleAccent": "而是最值得成交的价格。",
+    "closingBody": [
+      "优秀的广告需要合理预算。过低的价格往往意味着更少投入与更高风险。",
+      "VINCIS 帮助品牌用合理预算获得更高质量作品，也让每一次合作更值得成交。"
+    ],
+    "closingCta": "获取 AI 智能估价",
+    "closingNote": "快速响应 · 安全可靠"
+  },
+  "zh-TW": {
+    "eyebrow": "價格",
+    "title": "透明定價，讓每個廣告項目",
+    "titleAccent": "更容易開始。",
+    "intro": "VINCIS 透過智能製作估價引擎，根據項目複雜度、視頻長度、交付速度等因素，為您提供透明、合理的專業報價。",
+    "philosophy": "VINCIS 不追求最低價，而是透過合理預算 × 高品質交付 × 創作者可持續收益，確保每一次合作都建立在公平與信任之上。",
+    "principles": [
+      {
+        "title": "智能估價",
+        "body": "基於真實製作數據與歷史成交，智能計算合理預算區間，告別盲目報價。"
+      },
+      {
+        "title": "成本透明",
+        "body": "平台服務費覆蓋智能匹配、托管、審片、協作、存儲與安全保障等完整基礎設施，每一項都有明確依據。"
+      },
+      {
+        "title": "托管支付保障",
+        "body": "資金平台托管，確認交付後放款，品牌與創作者雙向保障，安全無憂。"
+      },
+      {
+        "title": "創作者可持續收益",
+        "body": "品牌付款中 80% 直接歸屬創作者，平台服務費用於支撐完整交易基礎設施與長期生態。"
+      }
+    ],
+    "budgetTitle": "預算如何理解？",
+    "budgetSubtitle": "不同預算等級，匹配不同的項目需求與創作資源",
+    "budgetTiers": [
+      {
+        "title": "基礎預算",
+        "subtitle": "快速啟動創意",
+        "audience": "適合輕量項目",
+        "theme": "blue",
+        "features": [
+          "適合產品展示類廣告",
+          "15-30 秒短視頻",
+          "滿足基礎製作需求",
+          "快速驗證創意方向"
+        ]
+      },
+      {
+        "title": "推薦預算",
+        "subtitle": "兼顧質量與效率",
+        "badge": "推薦",
+        "audience": "大多數品牌的選擇",
+        "theme": "purple",
+        "features": [
+          "30-60 秒商業廣告",
+          "更高創意與製作標準",
+          "優先匹配優質創作者",
+          "平台推薦預算區間"
+        ]
+      },
+      {
+        "title": "優先預算",
+        "subtitle": "更高品質要求",
+        "audience": "適用於高要求項目",
+        "theme": "orange",
+        "features": [
+          "60 秒以上精品廣告",
+          "匹配資深創作者",
+          "更快響應與交付",
+          "更高製作穩定性"
+        ]
+      },
+      {
+        "title": "頂級預算",
+        "subtitle": "電影級製作標準",
+        "audience": "大型品牌與定制項目",
+        "theme": "green",
+        "features": [
+          "品牌宣傳片與電影感廣告",
+          "全球頂級創作者團隊",
+          "定制化全流程服務",
+          "專屬創意與執行支持"
+        ]
+      }
+    ],
+    "trustTitle": "為什麼相信 VINCIS 的報價？",
+    "trustPoints": [
+      {
+        "title": "真實成本模型",
+        "body": "基於真實製作樣本與歷史成交數據，而不是市場喊價。"
+      },
+      {
+        "title": "智能計算",
+        "body": "綜合項目複雜度自動計算，報價準確且公平。"
+      },
+      {
+        "title": "創作者生態保障",
+        "body": "合理定價保障創作者收益，吸引全球優秀製作團隊。"
+      },
+      {
+        "title": "持續學習進化",
+        "body": "每完成一個項目，模型持續優化下一次報價。"
+      }
+    ],
+    "serviceFeeTitle": "平台服務費",
+    "serviceFeeSubtitle": "您購買的是完整廣告交易基礎設施，而不是聯絡人列表",
+    "serviceFeeIntro": "VINCIS 是完整的廣告交易平台。平台服務費（Production Service Fee）用於支撐 AI 創意分析、全球 Creator 匹配、托管支付、在線審片、項目協作、文件存儲、安全保障及平台運營等完整服務。",
+    "serviceFeeIncludesTitle": "平台服務費包含",
+    "serviceFeeSplitTitle": "資金如何分配",
+    "serviceFeeSplit": [
+      {
+        "label": "品牌支付",
+        "value": "100%"
+      },
+      {
+        "label": "Creator 收益",
+        "value": "80%"
+      },
+      {
+        "label": "平台服務費",
+        "value": "20%（默認標準）"
+      }
+    ],
+    "serviceFeeTierTitle": "按合作層級收取",
+    "serviceFeeTierColumns": [
+      "客戶類型",
+      "平台服務費",
+      "說明"
+    ],
+    "serviceFeeTiers": [
+      {
+        "title": "標準項目",
+        "rate": "20%",
+        "note": "默認標準費率，覆蓋完整平台基礎設施成本"
+      },
+      {
+        "title": "年度合作客戶",
+        "rate": "18%",
+        "note": "長期合作激勵，兼顧客戶競爭力與平台健康毛利"
+      },
+      {
+        "title": "企業客戶",
+        "rate": "15%",
+        "note": "Enterprise 定制合作，可按協議單獨約定"
+      }
+    ],
+    "serviceFeeNote": "20% 為默認標準平台服務費，而非唯一固定費率。我們統一使用「平台服務費」表述，不使用「抽成」一詞。",
+    "closingTitleLead": "不是最低價，",
+    "closingTitleAccent": "而是最值得成交的價格。",
+    "closingBody": [
+      "優秀的廣告需要合理預算。過低的價格往往意味著更少投入與更高風險。",
+      "VINCIS 幫助品牌用合理預算獲得更高質量作品，也讓每一次合作更值得成交。"
+    ],
+    "closingCta": "獲取 AI 智能估價",
+    "closingNote": "快速響應 · 安全可靠"
+  },
+  "ja": {
+    "eyebrow": "料金",
+    "title": "すべてのキャンペーンをより簡単にする透明な料金",
+    "titleAccent": "開始しやすく。",
+    "intro": "VINCISはAIプロダクション料金エンジンを使用して、複雑さ、期間、納品速度などに基づいた透明でプロフェッショナルな見積もりを提供します。",
+    "philosophy": "VINCISは最低価格を追求しません。私たちはすべての取引を公正な予算 × 品質の提供 × 持続可能なクリエイターの収益に基づいて構築します。",
+    "principles": [
+      {
+        "title": "AI料金エンジン",
+        "body": "公正な予算は実際のプロダクションデータと過去の取引に基づいており、推測ではありません。"
+      },
+      {
+        "title": "透明なコスト",
+        "body": "プラットフォームサービス料はAI、マッチング、エスクロー、レビュー、コラボレーション、ストレージ、セキュリティをカバーしており、すべての項目は説明可能です。"
+      },
+      {
+        "title": "エスクロー保護",
+        "body": "資金は納品が確認されるまでエスクローに留まり、ブランドとクリエイターを平等に保護します。"
+      },
+      {
+        "title": "持続可能なクリエイターの収益",
+        "body": "ブランドの支払いの80%がクリエイターに渡り、プラットフォームサービス料が全取引インフラを支えます。"
+      }
+    ],
+    "budgetTitle": "予算の読み方",
+    "budgetSubtitle": "異なる予算レベルが異なるプロジェクトのニーズとクリエイターのリソースにマッチします",
+    "budgetTiers": [
+      {
+        "title": "スターター",
+        "subtitle": "アイデアを迅速に立ち上げる",
+        "audience": "軽量プロジェクト",
+        "theme": "青",
+        "features": [
+          "製品紹介広告",
+          "15〜30秒のショートビデオ",
+          "基本的な制作ニーズ",
+          "迅速なクリエイティブ検証"
+        ]
+      },
+      {
+        "title": "推奨",
+        "subtitle": "品質とスピードのバランス",
+        "badge": "推奨",
+        "audience": "ほとんどのブランドに選ばれる",
+        "theme": "紫",
+        "features": [
+          "30〜60秒のコマーシャル広告",
+          "より高いクリエイティブ基準",
+          "優先クリエイターマッチング",
+          "プラットフォームデフォルトの予算帯"
+        ]
+      },
+      {
+        "title": "プライオリティ",
+        "subtitle": "より高い品質基準",
+        "audience": "高い期待のプロジェクト",
+        "theme": "オレンジ",
+        "features": [
+          "60秒以上のプレミアム広告",
+          "シニアスタジオマッチング",
+          "迅速な応答と納品",
+          "より安定した制作"
+        ]
+      },
+      {
+        "title": "トップティア",
+        "subtitle": "映画制作の標準",
+        "audience": "大手ブランドとカスタム作業",
+        "theme": "緑",
+        "features": [
+          "ブランドフィルムと映画広告",
+          "グローバルなトップスタジオチーム",
+          "カスタムエンドツーエンドサービス",
+          "専任のクリエイティブ実行"
+        ]
+      }
+    ],
+    "trustTitle": "なぜVINCISの料金を信頼するのか？",
+    "trustPoints": [
+      {
+        "title": "実際のコストモデル",
+        "body": "実際のプロダクションサンプルと過去の取引に基づいており、市場の誇大広告ではありません。"
+      },
+      {
+        "title": "AI駆動の見積もり",
+        "body": "複雑さは自動的に計算され、正確で公正な料金が提供されます。"
+      },
+      {
+        "title": "クリエイターエコシステム",
+        "body": "公正な料金がクリエイターの収益を健全に保ち、優れたスタジオを引き付けます。"
+      },
+      {
+        "title": "継続的な学習",
+        "body": "完了したプロジェクトは次の見積もりを改善します。"
+      }
+    ],
+    "serviceFeeTitle": "プラットフォームサービス料",
+    "serviceFeeSubtitle": "あなたはフルな取引インフラを購入します — 連絡先リストではありません",
+    "serviceFeeIntro": "VINCISは完全な広告取引プラットフォームです。プラットフォームサービス料（制作サービス料）は、AIクリエイティブ分析、グローバルクリエイターマッチング、エスクロー、オンラインレビュー、コラボレーション、ストレージ、セキュリティ、運営を支えます。",
+    "serviceFeeIncludesTitle": "料金に含まれるもの",
+    "serviceFeeSplitTitle": "資金の分配方法",
+    "serviceFeeSplit": [
+      {
+        "label": "ブランドが支払う",
+        "value": "100%"
+      },
+      {
+        "label": "クリエイターへの支払い",
+        "value": "80%"
+      },
+      {
+        "label": "プラットフォームサービス料",
+        "value": "20%（デフォルト標準）"
+      }
+    ],
+    "serviceFeeTierTitle": "パートナーシップレベルによる階層化",
+    "serviceFeeTierColumns": [
+      "顧客タイプ",
+      "プラットフォームサービス料",
+      "詳細"
+    ],
+    "serviceFeeTiers": [
+      {
+        "title": "標準プロジェクト",
+        "rate": "20%",
+        "note": "フルプラットフォームインフラをカバーするデフォルト標準料金"
+      },
+      {
+        "title": "年間パートナーシップ",
+        "rate": "18%",
+        "note": "健全なプラットフォームマージンを持つ長期的なインセンティブ"
+      },
+      {
+        "title": "エンタープライズ",
+        "rate": "15%",
+        "note": "カスタムエンタープライズ契約が利用可能"
+      }
+    ],
+    "serviceFeeNote": "20%はデフォルトの標準プラットフォームサービス料であり、すべての取引に対する単一の固定料金ではありません。「コミッションテイク」という言葉は決して使用しません。",
+    "closingTitleLead": "最低価格ではなく —",
+    "closingTitleAccent": "締結するための最高の価値。",
+    "closingBody": [
+      "優れた広告には合理的な予算が必要です。価格が低すぎると、通常は技術が不足し、リスクが増します。",
+      "VINCISはブランドが公正な予算でより良い作品を購入できるよう支援し、すべての取引が締結する価値があるものとなります。"
+    ],
+    "closingCta": "AI見積もりを取得",
+    "closingNote": "迅速な応答 · 安全で信頼性あり"
+  },
+  "ko": {
+    "eyebrow": "가격",
+    "title": "모든 캠페인을 더 쉽게 시작할 수 있는 투명한 가격",
+    "titleAccent": "시작하기 쉽습니다.",
+    "intro": "VINCIS는 AI 제작 가격 엔진을 사용하여 복잡성, 기간, 배송 속도 등을 기반으로 투명하고 전문적인 견적을 제공합니다.",
+    "philosophy": "VINCIS는 최저가를 추구하지 않습니다. 우리는 모든 거래를 공정한 예산 × 품질 제공 × 지속 가능한 제작자 수익으로 구축합니다.",
+    "principles": [
+      {
+        "title": "AI 가격 엔진",
+        "body": "공정한 예산은 실제 제작 데이터와 역사적 거래에서 도출되며, 추측이 아닙니다."
+      },
+      {
+        "title": "투명한 비용",
+        "body": "플랫폼 서비스 수수료는 AI, 매칭, 에스크로, 검토, 협업, 저장 및 보안을 포함하며, 모든 항목은 설명 가능합니다."
+      },
+      {
+        "title": "에스크로 보호",
+        "body": "자금은 배송이 확인될 때까지 에스크로에 보관되어 브랜드와 제작자를 동등하게 보호합니다."
+      },
+      {
+        "title": "지속 가능한 제작자 수익",
+        "body": "브랜드 지불의 80%가 제작자에게 전달되며, 플랫폼 서비스 수수료는 전체 거래 인프라를 지원합니다."
+      }
+    ],
+    "budgetTitle": "예산 읽는 법",
+    "budgetSubtitle": "다양한 예산 수준이 다양한 프로젝트 요구와 제작자 자원에 맞습니다.",
+    "budgetTiers": [
+      {
+        "title": "스타터",
+        "subtitle": "아이디어를 빠르게 시작하세요",
+        "audience": "경량 프로젝트",
+        "theme": "파란색",
+        "features": [
+          "제품 홍보 광고",
+          "15–30초 짧은 비디오",
+          "필수 제작 요구",
+          "빠른 창의성 검증"
+        ]
+      },
+      {
+        "title": "추천",
+        "subtitle": "품질과 속도의 균형",
+        "badge": "추천",
+        "audience": "대부분의 브랜드에 적합한 선택",
+        "theme": "보라색",
+        "features": [
+          "30–60초 상업 광고",
+          "높은 창의적 기준",
+          "우선 제작자 매칭",
+          "플랫폼 기본 예산 범위"
+        ]
+      },
+      {
+        "title": "우선",
+        "subtitle": "더 높은 품질 기준",
+        "audience": "높은 기대의 프로젝트",
+        "theme": "주황색",
+        "features": [
+          "60초 이상의 프리미엄 광고",
+          "고급 스튜디오 매칭",
+          "더 빠른 응답 및 배송",
+          "더 안정적인 제작"
+        ]
+      },
+      {
+        "title": "최상위",
+        "subtitle": "영화 제작 표준",
+        "audience": "대형 브랜드 및 맞춤 작업",
+        "theme": "녹색",
+        "features": [
+          "브랜드 필름 및 영화 광고",
+          "글로벌 최고 스튜디오 팀",
+          "맞춤형 엔드 투 엔드 서비스",
+          "전담 창의적 실행"
+        ]
+      }
+    ],
+    "trustTitle": "왜 VINCIS 가격을 신뢰해야 할까요?",
+    "trustPoints": [
+      {
+        "title": "실제 비용 모델",
+        "body": "실제 제작 샘플과 역사적 거래에 기반하며, 시장의 과대 광고가 아닙니다."
+      },
+      {
+        "title": "AI 기반 견적",
+        "body": "복잡성은 자동으로 계산되어 정확하고 공정한 가격을 제공합니다."
+      },
+      {
+        "title": "제작자 생태계",
+        "body": "공정한 가격은 제작자의 수익을 건강하게 유지하고 훌륭한 스튜디오를 유치합니다."
+      },
+      {
+        "title": "지속적인 학습",
+        "body": "모든 완료된 프로젝트는 다음 견적을 개선합니다."
+      }
+    ],
+    "serviceFeeTitle": "플랫폼 서비스 수수료",
+    "serviceFeeSubtitle": "전체 거래 인프라를 구매하는 것입니다 — 연락처 목록이 아닙니다.",
+    "serviceFeeIntro": "VINCIS는 전체 광고 거래 플랫폼입니다. 플랫폼 서비스 수수료(제작 서비스 수수료)는 AI 창의적 분석, 글로벌 제작자 매칭, 에스크로, 온라인 검토, 협업, 저장, 보안 및 운영을 지원합니다.",
+    "serviceFeeIncludesTitle": "수수료에 포함된 내용",
+    "serviceFeeSplitTitle": "자금 분배 방법",
+    "serviceFeeSplit": [
+      {
+        "label": "브랜드 지불",
+        "value": "100%"
+      },
+      {
+        "label": "제작자 지급",
+        "value": "80%"
+      },
+      {
+        "label": "플랫폼 서비스 수수료",
+        "value": "20% (기본 표준)"
+      }
+    ],
+    "serviceFeeTierTitle": "파트너십 수준에 따른 계층화",
+    "serviceFeeTierColumns": [
+      "고객 유형",
+      "플랫폼 서비스 수수료",
+      "세부사항"
+    ],
+    "serviceFeeTiers": [
+      {
+        "title": "표준 프로젝트",
+        "rate": "20%",
+        "note": "전체 플랫폼 인프라를 포함하는 기본 표준 요율"
+      },
+      {
+        "title": "연간 파트너십",
+        "rate": "18%",
+        "note": "건전한 플랫폼 마진을 가진 장기 인센티브"
+      },
+      {
+        "title": "기업",
+        "rate": "15%",
+        "note": "맞춤형 기업 계약 가능"
+      }
+    ],
+    "serviceFeeNote": "20%는 기본 표준 플랫폼 서비스 수수료로, 모든 거래에 대해 고정된 단일 요율이 아닙니다. 우리는 '커미션 수수료'라는 단어를 사용하지 않습니다.",
+    "closingTitleLead": "최저가가 아닌 —",
+    "closingTitleAccent": "가장 좋은 가치를 제공합니다.",
+    "closingBody": [
+      "훌륭한 광고는 합리적인 예산이 필요합니다. 너무 낮은 가격은 보통 품질이 떨어지고 위험이 증가함을 의미합니다.",
+      "VINCIS는 브랜드가 공정한 예산으로 더 나은 작업을 구매하도록 도와주어 모든 거래가 성사될 가치가 있도록 합니다."
+    ],
+    "closingCta": "AI 견적 받기",
+    "closingNote": "빠른 응답 · 안전하고 신뢰할 수 있음"
+  },
+  "ms": {
+    "eyebrow": "Harga",
+    "title": "Harga yang telus yang memudahkan setiap kempen ",
+    "titleAccent": "untuk dimulakan.",
+    "intro": "VINCIS menggunakan Enjin Harga Pengeluaran AI untuk memberikan sebut harga yang telus dan profesional berdasarkan kompleksiti, tempoh, kelajuan penghantaran, dan banyak lagi.",
+    "philosophy": "VINCIS tidak mengejar harga terendah. Kami membina setiap perjanjian berdasarkan bajet yang adil × kualiti penghantaran × pendapatan pencipta yang mampan.",
+    "principles": [
+      {
+        "title": "Enjin harga AI",
+        "body": "Bajet yang adil berdasarkan data pengeluaran sebenar dan perjanjian sejarah — bukan tekaan."
+      },
+      {
+        "title": "Kos yang telus",
+        "body": "Yuran perkhidmatan platform merangkumi AI, pemadanan, escrow, semakan, kolaborasi, penyimpanan, dan keselamatan — setiap baris boleh dijelaskan."
+      },
+      {
+        "title": "Perlindungan escrow",
+        "body": "Dana kekal dalam escrow sehingga penghantaran disahkan, melindungi jenama dan pencipta secara sama rata."
+      },
+      {
+        "title": "Pendapatan pencipta yang mampan",
+        "body": "80% daripada pembayaran jenama pergi kepada pencipta; yuran perkhidmatan platform membiayai keseluruhan infrastruktur transaksi."
+      }
+    ],
+    "budgetTitle": "Cara membaca bajet",
+    "budgetSubtitle": "Tahap bajet yang berbeza sepadan dengan keperluan projek dan sumber pencipta yang berbeza",
+    "budgetTiers": [
+      {
+        "title": "Permulaan",
+        "subtitle": "Lancarkan idea dengan cepat",
+        "audience": "Projek ringan",
+        "theme": "biru",
+        "features": [
+          "Iklan pameran produk",
+          "Video pendek 15–30s",
+          "Keperluan pengeluaran asas",
+          "Pengesahan kreatif yang cepat"
+        ]
+      },
+      {
+        "title": "Disyorkan",
+        "subtitle": "Seimbangkan kualiti dan kelajuan",
+        "badge": "Disyorkan",
+        "audience": "Pilihan untuk kebanyakan jenama",
+        "theme": "ungu",
+        "features": [
+          "Iklan komersial 30–60s",
+          "Standard kreatif yang lebih tinggi",
+          "Pemadanan pencipta keutamaan",
+          "Jalur bajet lalai platform"
+        ]
+      },
+      {
+        "title": "Keutamaan",
+        "subtitle": "Standard kualiti yang lebih tinggi",
+        "audience": "Projek dengan jangkaan lebih tinggi",
+        "theme": "oren",
+        "features": [
+          "Iklan premium 60s+",
+          "Pemadanan studio senior",
+          "Respons dan penghantaran yang lebih cepat",
+          "Pengeluaran yang lebih stabil"
+        ]
+      },
+      {
+        "title": "Tahap tertinggi",
+        "subtitle": "Standard pengeluaran sinematik",
+        "audience": "Jenama besar dan kerja khusus",
+        "theme": "hijau",
+        "features": [
+          "Filem jenama dan iklan sinematik",
+          "Pasukan studio teratas global",
+          "Perkhidmatan dari awal hingga akhir yang khusus",
+          "Pelaksanaan kreatif yang berdedikasi"
+        ]
+      }
+    ],
+    "trustTitle": "Mengapa percayakan harga VINCIS?",
+    "trustPoints": [
+      {
+        "title": "Model kos sebenar",
+        "body": "Berdasarkan sampel pengeluaran sebenar dan perjanjian sejarah — bukan gembar-gembur pasaran."
+      },
+      {
+        "title": "Sebut harga berkuasa AI",
+        "body": "Kompleksiti dikira secara automatik untuk harga yang tepat dan adil."
+      },
+      {
+        "title": "Ekosistem pencipta",
+        "body": "Harga yang adil memastikan pendapatan pencipta sihat dan menarik studio yang hebat."
+      },
+      {
+        "title": "Pembelajaran berterusan",
+        "body": "Setiap projek yang selesai meningkatkan sebut harga seterusnya."
+      }
+    ],
+    "serviceFeeTitle": "Yuran perkhidmatan platform",
+    "serviceFeeSubtitle": "Anda membeli infrastruktur transaksi penuh — bukan senarai kontak",
+    "serviceFeeIntro": "VINCIS adalah platform transaksi pengiklanan penuh. Yuran perkhidmatan platform (yuran perkhidmatan pengeluaran) membiayai analisis kreatif AI, pemadanan pencipta global, escrow, semakan dalam talian, kolaborasi, penyimpanan, keselamatan, dan operasi.",
+    "serviceFeeIncludesTitle": "Apa yang termasuk dalam yuran",
+    "serviceFeeSplitTitle": "Bagaimana dana dibahagikan",
+    "serviceFeeSplit": [
+      {
+        "label": "Jenama membayar",
+        "value": "100%"
+      },
+      {
+        "label": "Pembayaran pencipta",
+        "value": "80%"
+      },
+      {
+        "label": "Yuran perkhidmatan platform",
+        "value": "20% (standard lalai)"
+      }
+    ],
+    "serviceFeeTierTitle": "Dikategorikan mengikut tahap perkongsian",
+    "serviceFeeTierColumns": [
+      "Jenis pelanggan",
+      "Yuran perkhidmatan platform",
+      "Butiran"
+    ],
+    "serviceFeeTiers": [
+      {
+        "title": "Projek standard",
+        "rate": "20%",
+        "note": "Kadar standard lalai yang merangkumi keseluruhan infrastruktur platform"
+      },
+      {
+        "title": "Perkongsian tahunan",
+        "rate": "18%",
+        "note": "Incentif jangka panjang dengan margin platform yang sihat"
+      },
+      {
+        "title": "Perusahaan",
+        "rate": "15%",
+        "note": "Perjanjian perusahaan khusus tersedia"
+      }
+    ],
+    "serviceFeeNote": "20% adalah yuran perkhidmatan platform standard lalai, bukan kadar tetap tunggal untuk setiap perjanjian. Kami tidak pernah menggunakan istilah “komisen.”",
+    "closingTitleLead": "Bukan harga terendah —",
+    "closingTitleAccent": "nilai terbaik untuk ditutup.",
+    "closingBody": [
+      "Iklan yang hebat memerlukan bajet yang munasabah. Harga yang terlalu rendah biasanya bermakna kurang kerajinan dan lebih banyak risiko.",
+      "VINCIS membantu jenama membeli kerja yang lebih baik dengan bajet yang adil supaya setiap perjanjian berbaloi untuk ditutup."
+    ],
+    "closingCta": "Dapatkan anggaran AI",
+    "closingNote": "Respons cepat · Selamat dan boleh dipercayai"
+  },
+  "km": {
+    "eyebrow": "តម្លៃ",
+    "title": "តម្លៃដែលមានភាពច្បាស់លាស់ដែលធ្វើឲ្យគម្រោងរាល់គម្រោង ",
+    "titleAccent": "ចាប់ផ្តើមបានងាយស្រួល។",
+    "intro": "VINCIS ប្រើប្រាស់ម៉ាស៊ីនគណនាតម្លៃផលិតកម្ម AI ដើម្បីផ្តល់ការបញ្ជាក់ដែលមានភាពច្បាស់លាស់ និងជំនាញ ដែលផ្អែកលើកម្រិតភាពស្មុគស្មាញ, រយៈពេល, ល្បឿនការដឹកជញ្ជូន, និងផ្សេងៗទៀត។",
+    "philosophy": "VINCIS មិនតាមរកតម្លៃទាបបំផុតទេ។ យើងកសាងកិច្ចព្រមព្រៀងរាល់កិច្ចដោយផ្អែកលើថវិកាដែលសមរម្យ × គុណភាពការដឹកជញ្ជូន × ចំណូលដែលអាចរកបានយូរៗ។",
+    "principles": [
+      {
+        "title": "ម៉ាស៊ីនគណនាតម្លៃ AI",
+        "body": "ថវិកាសមរម្យផ្អែកលើទិន្នន័យផលិតកម្មពិត និងកិច្ចព្រមព្រៀងប្រវត្តិសាស្ត្រ — មិនមែនជាការទាយសម្ងាត់ទេ។"
+      },
+      {
+        "title": "ថ្លៃដើមដែលមានភាពច្បាស់លាស់",
+        "body": "ថ្លៃសេវាផ្លាតហ្វូមគ្របដណ្តប់ AI, ការប្រកួត, ការផ្ទុកប្រាក់, ការត្រួតពិនិត្យ, ការសហការណ៍, ការផ្ទុក, និងសុវត្ថិភាព — បន្ទាត់រាល់បន្ទាត់អាចពន្យល់បាន។"
+      },
+      {
+        "title": "ការការពារប្រាក់ផ្ទុក",
+        "body": "ប្រាក់នៅក្នុងការផ្ទុករហូតដល់ការបញ្ជាក់ការដឹកជញ្ជូន, ការពារម៉ាក និងអ្នកបង្កើតយ៉ាងស្មើ។"
+      },
+      {
+        "title": "ចំណូលដែលអាចរកបានយូរៗ",
+        "body": "80% នៃការទូទាត់ពីម៉ាកទៅអ្នកបង្កើត; ថ្លៃសេវាផ្លាតហ្វូមគ្របដណ្តប់សInfrastructure ការធ្វើប្រតិបត្តិការ។"
+      }
+    ],
+    "budgetTitle": "របៀបអានថវិកា",
+    "budgetSubtitle": "កម្រិតថវិកាផ្សេងៗត្រូវនឹងតម្រូវការគម្រោង និងធនធានអ្នកបង្កើតផ្សេងៗ",
+    "budgetTiers": [
+      {
+        "title": "ចាប់ផ្តើម",
+        "subtitle": "ចាប់ផ្តើមគំនិតបានយ៉ាងឆាប់រហ័ស",
+        "audience": "គម្រោងដែលមានទម្ងន់ស្រាល",
+        "theme": "ខៀវ",
+        "features": [
+          "ការផ្សាយពាណិជ្ជកម្មផលិតផល",
+          "វីដេអូខ្លី 15–30 វិនាទី",
+          "តម្រូវការផលិតកម្មមូលដ្ឋាន",
+          "ការផ្ទៀងផ្ទាត់ច្នៃប្រឌិតយ៉ាងឆាប់រហ័ស"
+        ]
+      },
+      {
+        "title": "បានណែនាំ",
+        "subtitle": "តុល្យភាពគុណភាព និងល្បឿន",
+        "badge": "បានណែនាំ",
+        "audience": "ជាជម្រើសសម្រាប់ម៉ាកភាគច្រើន",
+        "theme": "ស្វាយ",
+        "features": [
+          "ការផ្សាយពាណិជ្ជកម្ម 30–60 វិនាទី",
+          "ស្តង់ដារច្នៃប្រឌិតខ្ពស់",
+          "ការប្រកួតអ្នកបង្កើតដែលមានអាទិភាព",
+          "ថវិកាប្រកាសលំនាំដើម"
+        ]
+      },
+      {
+        "title": "អាទិភាព",
+        "subtitle": "ស្តង់ដារគុណភាពខ្ពស់ជាង",
+        "audience": "គម្រោងដែលមានការរំពឹងទុកខ្ពស់",
+        "theme": "ស្វាយ",
+        "features": [
+          "ការផ្សាយពាណិជ្ជកម្ម 60 វិនាទីឡើងទៅ",
+          "ការប្រកួតស្ទូឌីយោខ្ពស់",
+          "ការឆ្លើយតប និងការដឹកជញ្ជូនយ៉ាងឆាប់រហ័ស",
+          "ការផលិតដែលមានស្ថិរភាពបន្ថែម"
+        ]
+      },
+      {
+        "title": "កម្រិតខ្ពស់",
+        "subtitle": "ស្តង់ដារផលិតភាពស៊ីនេម៉ា",
+        "audience": "ម៉ាកធំ និងការងារប្តូរតាមបំណង",
+        "theme": "បៃតង",
+        "features": [
+          "ភាពយន្តម៉ាក និងការផ្សាយស៊ីនេម៉ា",
+          "ក្រុមស្ទូឌីយោល្បីល្បាញពិភពលោក",
+          "សេវាកម្មប្តូរតាមបំណង",
+          "ការអនុវត្តច្នៃប្រឌិតដែលមានការប្តេជ្ញា"
+        ]
+      }
+    ],
+    "trustTitle": "ហេតុអ្វីបានជាទុកចិត្តលើតម្លៃ VINCIS?",
+    "trustPoints": [
+      {
+        "title": "ម៉ូដែលថ្លៃពិត",
+        "body": "ផ្អែកលើគំរូផលិតកម្មពិត និងកិច្ចព្រមព្រៀងប្រវត្តិសាស្ត្រ — មិនមែនជាការប្រកួតទីផ្សារទេ។"
+      },
+      {
+        "title": "ការបញ្ជាក់ដែលមានអំណាច AI",
+        "body": "ភាពស្មុគស្មាញត្រូវបានគណនាដោយស្វ័យប្រវត្តិសម្រាប់តម្លៃដែលត្រឹមត្រូវ និងសមរម្យ។"
+      },
+      {
+        "title": "អេកូស៊ីស្តែមអ្នកបង្កើត",
+        "body": "តម្លៃសមរម្យរក្សាចំណូលអ្នកបង្កើតឲ្យមានសុខភាពល្អ និងទាក់ទាញស្ទូឌីយោដ៏អស្ចារ្យ។"
+      },
+      {
+        "title": "ការសិក្សាបន្ត",
+        "body": "គម្រោងរាល់គម្រោងដែលបានបញ្ចប់ធ្វើឲ្យការបញ្ជាក់បន្ទាប់ប្រសើរឡើង។"
+      }
+    ],
+    "serviceFeeTitle": "ថ្លៃសេវាផ្លាតហ្វូម",
+    "serviceFeeSubtitle": "អ្នកទិញសInfrastructure ការធ្វើប្រតិបត្តិការពេញលេញ — មិនមែនជាបញ្ជីទំនាក់ទំនងទេ",
+    "serviceFeeIntro": "VINCIS គឺជាវេទិកាធ្វើប្រតិបត្តិការផ្សាយពាណិជ្ជកម្មពេញលេញ។ ថ្លៃសេវាផ្លាតហ្វូម (ថ្លៃសេវាផលិតកម្ម) គ្របដណ្តប់ការវិភាគច្នៃប្រឌិត AI, ការប្រកួតអ្នកបង្កើតពិភពលោក, ការផ្ទុកប្រាក់, ការត្រួតពិនិត្យអនឡាញ, ការសហការណ៍, ការផ្ទុក, សុវត្ថិភាព, និងការធ្វើប្រតិបត្តិការ។",
+    "serviceFeeIncludesTitle": "អ្វីដែលថ្លៃនេះរួមបញ្ចូល",
+    "serviceFeeSplitTitle": "របៀបចែកប្រាក់",
+    "serviceFeeSplit": [
+      {
+        "label": "ម៉ាកបង់",
+        "value": "100%"
+      },
+      {
+        "label": "ការទូទាត់អ្នកបង្កើត",
+        "value": "80%"
+      },
+      {
+        "label": "ថ្លៃសេវាផ្លាតហ្វូម",
+        "value": "20% (ស្តង់ដារលំនាំដើម)"
+      }
+    ],
+    "serviceFeeTierTitle": "ចែកចាយតាមកម្រិតភាពជាដៃគូ",
+    "serviceFeeTierColumns": [
+      "ប្រភេទអតិថិជន",
+      "ថ្លៃសេវាផ្លាតហ្វូម",
+      "ព័ត៌មានលម្អិត"
+    ],
+    "serviceFeeTiers": [
+      {
+        "title": "គម្រោងស្តង់ដារ",
+        "rate": "20%",
+        "note": "អត្រាស្តង់ដារលំនាំដើមដែលគ្របដណ្តប់សInfrastructure ពេញលេញ"
+      },
+      {
+        "title": "ភាពជាដៃគូប្រចាំឆ្នាំ",
+        "rate": "18%",
+        "note": "ការលើកទឹកចិត្តរយៈពេលវែងដែលមានអត្រាផលិតកម្មសុខភាពល្អ"
+      },
+      {
+        "title": "អាជីវកម្ម",
+        "rate": "15%",
+        "note": "កិច្ចព្រមព្រៀងអាជីវកម្មដែលមានការប្តូរតាមបំណងអាចមាន"
+      }
+    ],
+    "serviceFeeNote": "20% គឺជាថ្លៃសេវាផ្លាតហ្វូមស្តង់ដារលំនាំដើម, មិនមែនជាអត្រាដែលត្រូវបានកំណត់តែមួយសម្រាប់កិច្ចព្រមព្រៀងរាល់កិច្ច។ យើងមិនធ្វើការប្រើពាក្យ “ការទទួលកម្រៃ”។",
+    "closingTitleLead": "មិនមែនតម្លៃទាបបំផុត —",
+    "closingTitleAccent": "តម្លៃល្អបំផុតដើម្បីបញ្ចប់។",
+    "closingBody": [
+      "ការផ្សាយពាណិជ្ជកម្មដ៏អស្ចារ្យត្រូវការថវិកាសមរម្យ។ តម្លៃដែលទាបពេកធម្មតាមានន័យថាការបង្កើតមានភាពអន់ខ្សោយ និងមានហានិភ័យច្រើន។",
+      "VINCIS ជួយម៉ាកទិញការងារល្អប្រសើរនៅក្នុងថវិកាសមរម្យដូច្នេះកិច្ចព្រមព្រៀងរាល់កិច្ចមានតម្លៃដើម្បីបញ្ចប់។"
+    ],
+    "closingCta": "ទទួលការប៉ាន់ស្មាន AI",
+    "closingNote": "ការឆ្លើយតបយ៉ាងឆាប់រហ័ស · សុវត្ថិភាព និងអាចទុកចិត្តបាន"
+  },
+  "th": {
+    "eyebrow": "ราคา",
+    "title": "ราคาที่โปร่งใสทำให้ทุกแคมเปญ ",
+    "titleAccent": "เริ่มต้นได้ง่ายขึ้น.",
+    "intro": "VINCIS ใช้เครื่องมือการตั้งราคา AI Production เพื่อให้ข้อเสนอที่โปร่งใสและเป็นมืออาชีพตามความซับซ้อน ระยะเวลา ความเร็วในการส่งมอบ และอื่นๆ.",
+    "philosophy": "VINCIS ไม่ไล่ตามราคาที่ต่ำที่สุด เราสร้างข้อตกลงทุกอย่างบนงบประมาณที่ยุติธรรม × การส่งมอบคุณภาพ × รายได้ที่ยั่งยืนสำหรับผู้สร้าง.",
+    "principles": [
+      {
+        "title": "เครื่องมือการตั้งราคา AI",
+        "body": "งบประมาณที่ยุติธรรมมาจากข้อมูลการผลิตจริงและข้อตกลงในอดีต — ไม่ใช่การคาดเดา."
+      },
+      {
+        "title": "ค่าใช้จ่ายที่โปร่งใส",
+        "body": "ค่าธรรมเนียมบริการแพลตฟอร์มครอบคลุม AI, การจับคู่, การเก็บเงิน, การตรวจสอบ, การทำงานร่วมกัน, การจัดเก็บ และความปลอดภัย — ทุกบรรทัดสามารถอธิบายได้."
+      },
+      {
+        "title": "การป้องกันการเก็บเงิน",
+        "body": "เงินจะอยู่ในบัญชีเก็บเงินจนกว่าจะมีการยืนยันการส่งมอบ เพื่อปกป้องแบรนด์และผู้สร้างอย่างเท่าเทียมกัน."
+      },
+      {
+        "title": "รายได้ที่ยั่งยืนสำหรับผู้สร้าง",
+        "body": "80% ของการชำระเงินจากแบรนด์ไปยังผู้สร้าง; ค่าธรรมเนียมบริการแพลตฟอร์มสนับสนุนโครงสร้างพื้นฐานการทำธุรกรรมทั้งหมด."
+      }
+    ],
+    "budgetTitle": "วิธีอ่านงบประมาณ",
+    "budgetSubtitle": "ระดับงบประมาณที่แตกต่างกันตรงกับความต้องการของโครงการและทรัพยากรของผู้สร้างที่แตกต่างกัน",
+    "budgetTiers": [
+      {
+        "title": "เริ่มต้น",
+        "subtitle": "เริ่มต้นไอเดียได้อย่างรวดเร็ว",
+        "audience": "โครงการขนาดเล็ก",
+        "theme": "น้ำเงิน",
+        "features": [
+          "โฆษณานำเสนอผลิตภัณฑ์",
+          "วิดีโอสั้น 15–30 วินาที",
+          "ความต้องการการผลิตที่จำเป็น",
+          "การตรวจสอบความคิดสร้างสรรค์อย่างรวดเร็ว"
+        ]
+      },
+      {
+        "title": "แนะนำ",
+        "subtitle": "สมดุลคุณภาพและความเร็ว",
+        "badge": "แนะนำ",
+        "audience": "ทางเลือกสำหรับแบรนด์ส่วนใหญ่",
+        "theme": "ม่วง",
+        "features": [
+          "โฆษณาเชิงพาณิชย์ 30–60 วินาที",
+          "มาตรฐานความคิดสร้างสรรค์ที่สูงขึ้น",
+          "การจับคู่ผู้สร้างที่มีลำดับความสำคัญ",
+          "งบประมาณมาตรฐานของแพลตฟอร์ม"
+        ]
+      },
+      {
+        "title": "ลำดับความสำคัญ",
+        "subtitle": "มาตรฐานคุณภาพที่สูงขึ้น",
+        "audience": "โครงการที่มีความคาดหวังสูง",
+        "theme": "ส้ม",
+        "features": [
+          "โฆษณาพรีเมียม 60 วินาทีขึ้นไป",
+          "การจับคู่สตูดิโอที่มีประสบการณ์",
+          "การตอบสนองและการส่งมอบที่รวดเร็วขึ้น",
+          "การผลิตที่มีเสถียรภาพมากขึ้น"
+        ]
+      },
+      {
+        "title": "ระดับสูงสุด",
+        "subtitle": "มาตรฐานการผลิตภาพยนตร์",
+        "audience": "แบรนด์ใหญ่และงานที่กำหนดเอง",
+        "theme": "เขียว",
+        "features": [
+          "ภาพยนตร์แบรนด์และโฆษณาภาพยนตร์",
+          "ทีมสตูดิโอชั้นนำระดับโลก",
+          "บริการแบบกำหนดเองตั้งแต่ต้นจนจบ",
+          "การดำเนินการสร้างสรรค์ที่มุ่งเน้น"
+        ]
+      }
+    ],
+    "trustTitle": "ทำไมถึงไว้วางใจราคาของ VINCIS?",
+    "trustPoints": [
+      {
+        "title": "โมเดลต้นทุนจริง",
+        "body": "ตั้งอยู่บนตัวอย่างการผลิตจริงและข้อตกลงในอดีต — ไม่ใช่การโฆษณาในตลาด."
+      },
+      {
+        "title": "ข้อเสนอที่ขับเคลื่อนด้วย AI",
+        "body": "ความซับซ้อนจะถูกคำนวณโดยอัตโนมัติเพื่อการตั้งราคาที่ถูกต้องและยุติธรรม."
+      },
+      {
+        "title": "ระบบนิเวศของผู้สร้าง",
+        "body": "การตั้งราคาที่ยุติธรรมช่วยรักษารายได้ของผู้สร้างให้มีสุขภาพดีและดึงดูดสตูดิโอที่ยอดเยี่ยม."
+      },
+      {
+        "title": "การเรียนรู้ที่ต่อเนื่อง",
+        "body": "ทุกโครงการที่เสร็จสมบูรณ์จะช่วยปรับปรุงข้อเสนอถัดไป."
+      }
+    ],
+    "serviceFeeTitle": "ค่าธรรมเนียมบริการแพลตฟอร์ม",
+    "serviceFeeSubtitle": "คุณซื้อโครงสร้างพื้นฐานการทำธุรกรรมทั้งหมด — ไม่ใช่รายชื่อผู้ติดต่อ",
+    "serviceFeeIntro": "VINCIS เป็นแพลตฟอร์มการทำธุรกรรมโฆษณาแบบครบวงจร ค่าธรรมเนียมบริการแพลตฟอร์ม (ค่าธรรมเนียมบริการการผลิต) สนับสนุนการวิเคราะห์ความคิดสร้างสรรค์ด้วย AI, การจับคู่ผู้สร้างทั่วโลก, การเก็บเงิน, การตรวจสอบออนไลน์, การทำงานร่วมกัน, การจัดเก็บ, ความปลอดภัย และการดำเนินงาน.",
+    "serviceFeeIncludesTitle": "สิ่งที่ค่าธรรมเนียมรวมอยู่",
+    "serviceFeeSplitTitle": "การแบ่งเงิน",
+    "serviceFeeSplit": [
+      {
+        "label": "แบรนด์จ่าย",
+        "value": "100%"
+      },
+      {
+        "label": "การจ่ายเงินให้ผู้สร้าง",
+        "value": "80%"
+      },
+      {
+        "label": "ค่าธรรมเนียมบริการแพลตฟอร์ม",
+        "value": "20% (มาตรฐานเริ่มต้น)"
+      }
+    ],
+    "serviceFeeTierTitle": "แบ่งตามระดับการเป็นพันธมิตร",
+    "serviceFeeTierColumns": [
+      "ประเภทลูกค้า",
+      "ค่าธรรมเนียมบริการแพลตฟอร์ม",
+      "รายละเอียด"
+    ],
+    "serviceFeeTiers": [
+      {
+        "title": "โครงการมาตรฐาน",
+        "rate": "20%",
+        "note": "อัตรามาตรฐานเริ่มต้นที่ครอบคลุมโครงสร้างพื้นฐานของแพลตฟอร์มทั้งหมด"
+      },
+      {
+        "title": "การเป็นพันธมิตรประจำปี",
+        "rate": "18%",
+        "note": "แรงจูงใจระยะยาวที่มีมาร์จิ้นแพลตฟอร์มที่ดีต่อสุขภาพ"
+      },
+      {
+        "title": "องค์กร",
+        "rate": "15%",
+        "note": "ข้อตกลงองค์กรที่กำหนดเองมีให้"
+      }
+    ],
+    "serviceFeeNote": "20% เป็นค่าธรรมเนียมบริการแพลตฟอร์มมาตรฐานเริ่มต้น ไม่ใช่อัตราคงที่เดียวสำหรับทุกข้อตกลง เราไม่เคยใช้คำว่า “ค่าคอมมิชชั่น.”",
+    "closingTitleLead": "ไม่ใช่ราคาที่ต่ำที่สุด —",
+    "closingTitleAccent": "แต่เป็นมูลค่าที่ดีที่สุดในการปิด.",
+    "closingBody": [
+      "โฆษณาที่ดีต้องการงบประมาณที่เหมาะสม ราคาที่ต่ำเกินไปมักหมายถึงฝีมือที่น้อยลงและความเสี่ยงที่มากขึ้น.",
+      "VINCIS ช่วยให้แบรนด์ซื้อผลงานที่ดีกว่าด้วยงบประมาณที่ยุติธรรมเพื่อให้ทุกข้อตกลงมีค่าปิด."
+    ],
+    "closingCta": "รับการประเมินจาก AI",
+    "closingNote": "ตอบสนองรวดเร็ว · ปลอดภัยและเชื่อถือได้"
+  },
+  "vi": {
+    "eyebrow": "Bảng giá",
+    "title": "Bảng giá minh bạch giúp mọi chiến dịch ",
+    "titleAccent": "dễ dàng bắt đầu.",
+    "intro": "VINCIS sử dụng Công cụ Định giá Sản xuất AI để cung cấp báo giá minh bạch, chuyên nghiệp dựa trên độ phức tạp, thời gian, tốc độ giao hàng và nhiều yếu tố khác.",
+    "philosophy": "VINCIS không theo đuổi giá thấp nhất. Chúng tôi xây dựng mọi thỏa thuận dựa trên ngân sách công bằng × chất lượng giao hàng × thu nhập bền vững cho người sáng tạo.",
+    "principles": [
+      {
+        "title": "Công cụ định giá AI",
+        "body": "Ngân sách công bằng dựa trên dữ liệu sản xuất thực tế và các thỏa thuận lịch sử — không phải đoán mò."
+      },
+      {
+        "title": "Chi phí minh bạch",
+        "body": "Phí dịch vụ nền tảng bao gồm AI, ghép nối, ký quỹ, đánh giá, hợp tác, lưu trữ và bảo mật — mọi khoản đều có thể giải thích."
+      },
+      {
+        "title": "Bảo vệ ký quỹ",
+        "body": "Quỹ sẽ ở trong ký quỹ cho đến khi giao hàng được xác nhận, bảo vệ cả thương hiệu và người sáng tạo một cách công bằng."
+      },
+      {
+        "title": "Thu nhập bền vững cho người sáng tạo",
+        "body": "80% khoản thanh toán của thương hiệu được chuyển cho người sáng tạo; phí dịch vụ nền tảng tài trợ cho toàn bộ hạ tầng giao dịch."
+      }
+    ],
+    "budgetTitle": "Cách đọc ngân sách",
+    "budgetSubtitle": "Các mức ngân sách khác nhau phù hợp với các nhu cầu dự án và nguồn lực người sáng tạo khác nhau",
+    "budgetTiers": [
+      {
+        "title": "Khởi đầu",
+        "subtitle": "Khởi động ý tưởng nhanh chóng",
+        "audience": "Các dự án nhẹ",
+        "theme": "xanh dương",
+        "features": [
+          "Quảng cáo trưng bày sản phẩm",
+          "Video ngắn 15–30 giây",
+          "Nhu cầu sản xuất cơ bản",
+          "Xác thực sáng tạo nhanh"
+        ]
+      },
+      {
+        "title": "Được khuyến nghị",
+        "subtitle": "Cân bằng chất lượng và tốc độ",
+        "badge": "Khuyến nghị",
+        "audience": "Lựa chọn cho hầu hết các thương hiệu",
+        "theme": "tím",
+        "features": [
+          "Quảng cáo thương mại 30–60 giây",
+          "Tiêu chuẩn sáng tạo cao hơn",
+          "Ghép nối người sáng tạo ưu tiên",
+          "Ngân sách mặc định của nền tảng"
+        ]
+      },
+      {
+        "title": "Ưu tiên",
+        "subtitle": "Tiêu chuẩn chất lượng cao hơn",
+        "audience": "Các dự án có kỳ vọng cao hơn",
+        "theme": "cam",
+        "features": [
+          "Quảng cáo cao cấp 60 giây trở lên",
+          "Ghép nối studio cao cấp",
+          "Phản hồi và giao hàng nhanh hơn",
+          "Sản xuất ổn định hơn"
+        ]
+      },
+      {
+        "title": "Cao cấp",
+        "subtitle": "Tiêu chuẩn sản xuất điện ảnh",
+        "audience": "Thương hiệu lớn và công việc tùy chỉnh",
+        "theme": "xanh lá",
+        "features": [
+          "Phim thương hiệu và quảng cáo điện ảnh",
+          "Đội ngũ studio hàng đầu toàn cầu",
+          "Dịch vụ tùy chỉnh từ đầu đến cuối",
+          "Thực hiện sáng tạo chuyên dụng"
+        ]
+      }
+    ],
+    "trustTitle": "Tại sao nên tin tưởng vào giá của VINCIS?",
+    "trustPoints": [
+      {
+        "title": "Mô hình chi phí thực tế",
+        "body": "Dựa trên các mẫu sản xuất thực tế và các thỏa thuận lịch sử — không phải sự thổi phồng của thị trường."
+      },
+      {
+        "title": "Báo giá dựa trên AI",
+        "body": "Độ phức tạp được tính toán tự động để có giá cả chính xác và công bằng."
+      },
+      {
+        "title": "Hệ sinh thái người sáng tạo",
+        "body": "Giá cả công bằng giữ cho thu nhập của người sáng tạo khỏe mạnh và thu hút các studio tuyệt vời."
+      },
+      {
+        "title": "Học hỏi liên tục",
+        "body": "Mỗi dự án hoàn thành cải thiện báo giá tiếp theo."
+      }
+    ],
+    "serviceFeeTitle": "Phí dịch vụ nền tảng",
+    "serviceFeeSubtitle": "Bạn mua hạ tầng giao dịch đầy đủ — không phải danh sách liên hệ",
+    "serviceFeeIntro": "VINCIS là một nền tảng giao dịch quảng cáo đầy đủ. Phí dịch vụ nền tảng (phí dịch vụ sản xuất) tài trợ cho phân tích sáng tạo AI, ghép nối người sáng tạo toàn cầu, ký quỹ, đánh giá trực tuyến, hợp tác, lưu trữ, bảo mật và hoạt động.",
+    "serviceFeeIncludesTitle": "Phí bao gồm những gì",
+    "serviceFeeSplitTitle": "Cách phân chia quỹ",
+    "serviceFeeSplit": [
+      {
+        "label": "Thương hiệu thanh toán",
+        "value": "100%"
+      },
+      {
+        "label": "Thanh toán cho người sáng tạo",
+        "value": "80%"
+      },
+      {
+        "label": "Phí dịch vụ nền tảng",
+        "value": "20% (tiêu chuẩn mặc định)"
+      }
+    ],
+    "serviceFeeTierTitle": "Phân cấp theo mức độ hợp tác",
+    "serviceFeeTierColumns": [
+      "Loại khách hàng",
+      "Phí dịch vụ nền tảng",
+      "Chi tiết"
+    ],
+    "serviceFeeTiers": [
+      {
+        "title": "Dự án tiêu chuẩn",
+        "rate": "20%",
+        "note": "Tỷ lệ tiêu chuẩn mặc định bao gồm toàn bộ hạ tầng nền tảng"
+      },
+      {
+        "title": "Hợp tác hàng năm",
+        "rate": "18%",
+        "note": "Khuyến khích dài hạn với biên lợi nhuận nền tảng khỏe mạnh"
+      },
+      {
+        "title": "Doanh nghiệp",
+        "rate": "15%",
+        "note": "Các thỏa thuận doanh nghiệp tùy chỉnh có sẵn"
+      }
+    ],
+    "serviceFeeNote": "20% là phí dịch vụ nền tảng tiêu chuẩn mặc định, không phải là tỷ lệ cố định cho mọi thỏa thuận. Chúng tôi không bao giờ sử dụng từ “hoa hồng.”",
+    "closingTitleLead": "Không phải giá thấp nhất —",
+    "closingTitleAccent": "giá trị tốt nhất để hoàn tất.",
+    "closingBody": [
+      "Quảng cáo tuyệt vời cần ngân sách hợp lý. Giá quá thấp thường có nghĩa là ít sự tinh xảo và nhiều rủi ro hơn.",
+      "VINCIS giúp các thương hiệu mua được công việc tốt hơn với ngân sách công bằng để mọi thỏa thuận đều đáng giá."
+    ],
+    "closingCta": "Nhận ước tính AI",
+    "closingNote": "Phản hồi nhanh · An toàn và đáng tin cậy"
+  },
+  "fr": {
+    "eyebrow": "Tarification",
+    "title": "Tarification transparente qui rend chaque campagne ",
+    "titleAccent": "plus facile à démarrer.",
+    "intro": "VINCIS utilise un moteur de tarification de production AI pour fournir des devis transparents et professionnels basés sur la complexité, la durée, la rapidité de livraison, et plus encore.",
+    "philosophy": "VINCIS ne recherche pas le prix le plus bas. Nous construisons chaque accord sur un budget équitable × une livraison de qualité × des revenus durables pour les créateurs.",
+    "principles": [
+      {
+        "title": "Moteur de tarification AI",
+        "body": "Le budget équitable est basé sur des données de production réelles et des accords historiques — pas de conjectures."
+      },
+      {
+        "title": "Coûts transparents",
+        "body": "Les frais de service de la plateforme couvrent l'IA, le matching, l'entiercement, la révision, la collaboration, le stockage et la sécurité — chaque ligne est explicable."
+      },
+      {
+        "title": "Protection par séquestre",
+        "body": "Les fonds restent en séquestre jusqu'à ce que la livraison soit confirmée, protégeant ainsi les marques et les créateurs de manière égale."
+      },
+      {
+        "title": "Revenus durables pour les créateurs",
+        "body": "80% du paiement de la marque va aux créateurs ; les frais de service de la plateforme financent l'infrastructure complète de la transaction."
+      }
+    ],
+    "budgetTitle": "Comment lire un budget",
+    "budgetSubtitle": "Différents niveaux de budget correspondent à différents besoins de projet et ressources créatrices",
+    "budgetTiers": [
+      {
+        "title": "Débutant",
+        "subtitle": "Lancer des idées rapidement",
+        "audience": "Projets légers",
+        "theme": "bleu",
+        "features": [
+          "Annonces de présentation de produits",
+          "Vidéo courte de 15 à 30 secondes",
+          "Besoins de production essentiels",
+          "Validation créative rapide"
+        ]
+      },
+      {
+        "title": "Recommandé",
+        "subtitle": "Équilibrer qualité et rapidité",
+        "badge": "Recommandé",
+        "audience": "Le choix de la plupart des marques",
+        "theme": "violet",
+        "features": [
+          "Annonces commerciales de 30 à 60 secondes",
+          "Normes créatives plus élevées",
+          "Matching de créateurs prioritaire",
+          "Plage budgétaire par défaut de la plateforme"
+        ]
+      },
+      {
+        "title": "Prioritaire",
+        "subtitle": "Barre de qualité plus élevée",
+        "audience": "Projets avec des attentes plus élevées",
+        "theme": "orange",
+        "features": [
+          "Annonces premium de plus de 60 secondes",
+          "Matching avec des studios seniors",
+          "Réponse et livraison plus rapides",
+          "Production plus stable"
+        ]
+      },
+      {
+        "title": "Haut de gamme",
+        "subtitle": "Standard de production cinématographique",
+        "audience": "Grandes marques et travaux sur mesure",
+        "theme": "vert",
+        "features": [
+          "Films de marque et annonces cinématographiques",
+          "Équipes de studios de premier plan mondial",
+          "Service sur mesure de bout en bout",
+          "Exécution créative dédiée"
+        ]
+      }
+    ],
+    "trustTitle": "Pourquoi faire confiance à la tarification de VINCIS ?",
+    "trustPoints": [
+      {
+        "title": "Modèle de coût réel",
+        "body": "Basé sur des échantillons de production réels et des accords historiques — pas de battage médiatique."
+      },
+      {
+        "title": "Devis alimentés par l'IA",
+        "body": "La complexité est calculée automatiquement pour une tarification précise et équitable."
+      },
+      {
+        "title": "Écosystème de créateurs",
+        "body": "Une tarification équitable maintient des revenus sains pour les créateurs et attire de grands studios."
+      },
+      {
+        "title": "Apprentissage continu",
+        "body": "Chaque projet complété améliore le devis suivant."
+      }
+    ],
+    "serviceFeeTitle": "Frais de service de la plateforme",
+    "serviceFeeSubtitle": "Vous achetez l'infrastructure complète de la transaction — pas une liste de contacts",
+    "serviceFeeIntro": "VINCIS est une plateforme complète de transactions publicitaires. Les frais de service de la plateforme (frais de service de production) financent l'analyse créative par IA, le matching global de créateurs, l'entiercement, la révision en ligne, la collaboration, le stockage, la sécurité et les opérations.",
+    "serviceFeeIncludesTitle": "Ce que les frais incluent",
+    "serviceFeeSplitTitle": "Comment les fonds sont répartis",
+    "serviceFeeSplit": [
+      {
+        "label": "La marque paie",
+        "value": "100%"
+      },
+      {
+        "label": "Paiement aux créateurs",
+        "value": "80%"
+      },
+      {
+        "label": "Frais de service de la plateforme",
+        "value": "20% (standard par défaut)"
+      }
+    ],
+    "serviceFeeTierTitle": "Par niveaux de partenariat",
+    "serviceFeeTierColumns": [
+      "Type de client",
+      "Frais de service de la plateforme",
+      "Détails"
+    ],
+    "serviceFeeTiers": [
+      {
+        "title": "Projet standard",
+        "rate": "20%",
+        "note": "Taux standard par défaut couvrant l'infrastructure complète de la plateforme"
+      },
+      {
+        "title": "Partenariat annuel",
+        "rate": "18%",
+        "note": "Incitation à long terme avec une marge saine pour la plateforme"
+      },
+      {
+        "title": "Entreprise",
+        "rate": "15%",
+        "note": "Accords d'entreprise sur mesure disponibles"
+      }
+    ],
+    "serviceFeeNote": "20% est le frais de service standard par défaut de la plateforme, pas un taux fixe unique pour chaque accord. Nous n'utilisons jamais le terme « commission ». ",
+    "closingTitleLead": "Pas le prix le plus bas —",
+    "closingTitleAccent": "la meilleure valeur à conclure.",
+    "closingBody": [
+      "De grandes annonces nécessitent des budgets raisonnables. Des prix trop bas signifient généralement moins de savoir-faire et plus de risques.",
+      "VINCIS aide les marques à acheter un meilleur travail à des budgets équitables afin que chaque accord vaille la peine d'être conclu."
+    ],
+    "closingCta": "Obtenez une estimation AI",
+    "closingNote": "Réponse rapide · Securisé et fiable"
+  },
+  "es": {
+    "eyebrow": "Precios",
+    "title": "Precios transparentes que hacen que cada campaña ",
+    "titleAccent": "sea más fácil de iniciar.",
+    "intro": "VINCIS utiliza un Motor de Precios de Producción AI para ofrecer cotizaciones transparentes y profesionales basadas en la complejidad, duración, velocidad de entrega y más.",
+    "philosophy": "VINCIS no persigue el precio más bajo. Construimos cada trato sobre un presupuesto justo × calidad de entrega × ganancias sostenibles para los creadores.",
+    "principles": [
+      {
+        "title": "Motor de precios AI",
+        "body": "El presupuesto justo se basa en datos de producción reales y acuerdos históricos, no en suposiciones."
+      },
+      {
+        "title": "Costos transparentes",
+        "body": "La tarifa de servicio de la plataforma cubre AI, emparejamiento, depósito en garantía, revisión, colaboración, almacenamiento y seguridad; cada línea es explicable."
+      },
+      {
+        "title": "Protección de depósito en garantía",
+        "body": "Los fondos permanecen en depósito en garantía hasta que se confirme la entrega, protegiendo a las marcas y a los creadores por igual."
+      },
+      {
+        "title": "Ganancias sostenibles para los creadores",
+        "body": "El 80% del pago de la marca va a los creadores; la tarifa de servicio de la plataforma financia toda la infraestructura de transacciones."
+      }
+    ],
+    "budgetTitle": "Cómo leer un presupuesto",
+    "budgetSubtitle": "Diferentes niveles de presupuesto coinciden con diferentes necesidades de proyectos y recursos de creadores",
+    "budgetTiers": [
+      {
+        "title": "Inicio",
+        "subtitle": "Lanza ideas rápidamente",
+        "audience": "Proyectos ligeros",
+        "theme": "azul",
+        "features": [
+          "Anuncios de exhibición de productos",
+          "Video corto de 15–30s",
+          "Necesidades de producción esenciales",
+          "Validación creativa rápida"
+        ]
+      },
+      {
+        "title": "Recomendado",
+        "subtitle": "Equilibra calidad y velocidad",
+        "badge": "Recomendado",
+        "audience": "La elección para la mayoría de las marcas",
+        "theme": "púrpura",
+        "features": [
+          "Anuncios comerciales de 30–60s",
+          "Estándares creativos más altos",
+          "Emparejamiento prioritario de creadores",
+          "Banda de presupuesto predeterminada de la plataforma"
+        ]
+      },
+      {
+        "title": "Prioridad",
+        "subtitle": "Mayor estándar de calidad",
+        "audience": "Proyectos con mayores expectativas",
+        "theme": "naranja",
+        "features": [
+          "Anuncios premium de 60s+",
+          "Emparejamiento con estudios senior",
+          "Respuesta y entrega más rápidas",
+          "Producción más estable"
+        ]
+      },
+      {
+        "title": "Nivel superior",
+        "subtitle": "Estándar de producción cinematográfica",
+        "audience": "Grandes marcas y trabajos personalizados",
+        "theme": "verde",
+        "features": [
+          "Películas de marca y anuncios cinematográficos",
+          "Equipos de estudio de primer nivel global",
+          "Servicio personalizado de principio a fin",
+          "Ejecución creativa dedicada"
+        ]
+      }
+    ],
+    "trustTitle": "¿Por qué confiar en los precios de VINCIS?",
+    "trustPoints": [
+      {
+        "title": "Modelo de costo real",
+        "body": "Basado en muestras de producción reales y acuerdos históricos, no en el bombo del mercado."
+      },
+      {
+        "title": "Cotizaciones impulsadas por AI",
+        "body": "La complejidad se calcula automáticamente para una fijación de precios precisa y justa."
+      },
+      {
+        "title": "Ecosistema de creadores",
+        "body": "Precios justos mantienen las ganancias de los creadores saludables y atraen grandes estudios."
+      },
+      {
+        "title": "Aprendizaje continuo",
+        "body": "Cada proyecto completado mejora la siguiente cotización."
+      }
+    ],
+    "serviceFeeTitle": "Tarifa de servicio de la plataforma",
+    "serviceFeeSubtitle": "Compras la infraestructura completa de transacciones, no una lista de contactos",
+    "serviceFeeIntro": "VINCIS es una plataforma completa de transacciones publicitarias. La tarifa de servicio de la plataforma (tarifa de servicio de producción) financia el análisis creativo de AI, el emparejamiento global de creadores, el depósito en garantía, la revisión en línea, la colaboración, el almacenamiento, la seguridad y las operaciones.",
+    "serviceFeeIncludesTitle": "Lo que incluye la tarifa",
+    "serviceFeeSplitTitle": "Cómo se dividen los fondos",
+    "serviceFeeSplit": [
+      {
+        "label": "La marca paga",
+        "value": "100%"
+      },
+      {
+        "label": "Pago al creador",
+        "value": "80%"
+      },
+      {
+        "label": "Tarifa de servicio de la plataforma",
+        "value": "20% (estándar predeterminado)"
+      }
+    ],
+    "serviceFeeTierTitle": "Clasificado por nivel de asociación",
+    "serviceFeeTierColumns": [
+      "Tipo de cliente",
+      "Tarifa de servicio de la plataforma",
+      "Detalles"
+    ],
+    "serviceFeeTiers": [
+      {
+        "title": "Proyecto estándar",
+        "rate": "20%",
+        "note": "Tarifa estándar predeterminada que cubre toda la infraestructura de la plataforma"
+      },
+      {
+        "title": "Asociación anual",
+        "rate": "18%",
+        "note": "Incentivo a largo plazo con margen saludable para la plataforma"
+      },
+      {
+        "title": "Empresa",
+        "rate": "15%",
+        "note": "Acuerdos personalizados para empresas disponibles"
+      }
+    ],
+    "serviceFeeNote": "El 20% es la tarifa de servicio estándar predeterminada de la plataforma, no una única tarifa fija para cada trato. Nunca usamos la palabra “comisión”.",
+    "closingTitleLead": "No el precio más bajo —",
+    "closingTitleAccent": "el mejor valor para cerrar.",
+    "closingBody": [
+      "Los grandes anuncios necesitan presupuestos razonables. Los precios que son demasiado bajos generalmente significan menos calidad y más riesgo.",
+      "VINCIS ayuda a las marcas a comprar un mejor trabajo a presupuestos justos para que cada trato valga la pena cerrar."
+    ],
+    "closingCta": "Obtener una estimación AI",
+    "closingNote": "Respuesta rápida · Seguro y confiable"
+  }
+}

@@ -1,4 +1,6 @@
-import type { Locale } from "@/lib/i18n";
+import type { MarketingLocale } from "@/lib/i18n";
+import pricingBundles from "@/lib/marketing/i18n/bundles/pricing.json";
+import { resolveMarketingCopy } from "@/lib/marketing/i18n/resolve-marketing-copy";
 
 export type BudgetTierTheme = "blue" | "purple" | "orange" | "green";
 
@@ -38,7 +40,7 @@ export type PricingCopy = {
   closingNote: string;
 };
 
-const zh: PricingCopy = {
+export const pricingCopyZhCN: PricingCopy = {
   eyebrow: "价格",
   title: "透明定价，让每个广告项目",
   titleAccent: "更容易开始。",
@@ -166,7 +168,7 @@ const zh: PricingCopy = {
   closingNote: "快速响应 · 安全可靠"
 };
 
-const en: PricingCopy = {
+export const pricingCopyEn: PricingCopy = {
   eyebrow: "Pricing",
   title: "Transparent pricing that makes every campaign ",
   titleAccent: "easier to start.",
@@ -294,6 +296,13 @@ const en: PricingCopy = {
   closingNote: "Fast response · Secure and reliable"
 };
 
-export function pricingText(locale: Locale): PricingCopy {
-  return locale === "zh" ? zh : en;
+export function pricingText(locale: MarketingLocale): PricingCopy {
+  return resolveMarketingCopy(
+    {
+      en: pricingCopyEn,
+      "zh-CN": pricingCopyZhCN,
+      ...(pricingBundles as Partial<Record<MarketingLocale, PricingCopy>>)
+    },
+    locale
+  );
 }

@@ -1,4 +1,6 @@
-import type { Locale } from "@/lib/i18n";
+import type { MarketingLocale } from "@/lib/i18n";
+import aboutBundles from "@/lib/marketing/i18n/bundles/about.json";
+import { resolveMarketingCopy } from "@/lib/marketing/i18n/resolve-marketing-copy";
 
 export type AboutCopy = {
   pageTitle: string;
@@ -80,7 +82,7 @@ export type AboutCopy = {
   };
 };
 
-const zh: AboutCopy = {
+export const aboutCopyZhCN: AboutCopy = {
   pageTitle: "关于我们",
   sidebar: {
     about: "关于我们",
@@ -243,7 +245,7 @@ const zh: AboutCopy = {
   }
 };
 
-const en: AboutCopy = {
+export const aboutCopyEn: AboutCopy = {
   pageTitle: "About us",
   sidebar: {
     about: "About us",
@@ -415,6 +417,13 @@ const en: AboutCopy = {
   }
 };
 
-export function aboutText(locale: Locale): AboutCopy {
-  return locale === "zh" ? zh : en;
+export function aboutText(locale: MarketingLocale): AboutCopy {
+  return resolveMarketingCopy(
+    {
+      en: aboutCopyEn,
+      "zh-CN": aboutCopyZhCN,
+      ...(aboutBundles as Partial<Record<MarketingLocale, AboutCopy>>)
+    },
+    locale
+  );
 }

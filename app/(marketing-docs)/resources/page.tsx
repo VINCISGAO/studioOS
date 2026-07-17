@@ -1,18 +1,22 @@
-import { PartnersPageView } from "@/components/marketing/partners/partners-page-view";
-import { partnerProgramService } from "@/features/partner-program/partner-program.service";
-import { marketingSeoMetadata } from "@/lib/marketing/marketing-seo-metadata";
+import { PartnersPage } from "@/components/marketing/partners/partners-page";
+import {
+  buildMarketingDocsRouteMetadata,
+  resolveMarketingDocsRouteLocale
+} from "@/lib/marketing/i18n/marketing-docs-route";
+import type { SearchParams } from "@/lib/i18n";
 import type { Metadata } from "next";
 
-export const revalidate = 3600;
+export const dynamic = "force-dynamic";
 
-export function generateMetadata(): Metadata {
-  return marketingSeoMetadata("zh", "resources", "/resources");
+export async function generateMetadata({
+  searchParams
+}: {
+  searchParams: Promise<SearchParams>;
+}): Promise<Metadata> {
+  return buildMarketingDocsRouteMetadata("resources", "/resources", searchParams);
 }
 
-export default async function ResourcesRoute() {
-  const data = await partnerProgramService.getMarketingPageData();
-
-  return (
-    <PartnersPageView commissionTiers={data.commissionTiers} stats={data.stats} />
-  );
+export default async function ResourcesRoute({ searchParams }: { searchParams: Promise<SearchParams> }) {
+  const locale = await resolveMarketingDocsRouteLocale(searchParams);
+  return <PartnersPage locale={locale} />;
 }

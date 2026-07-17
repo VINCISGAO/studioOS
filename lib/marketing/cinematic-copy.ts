@@ -1,5 +1,7 @@
 import type { Locale, MarketingLocale } from "@/lib/i18n";
 import { isChineseLanguage } from "@/lib/i18n";
+import cinematicHomeBundles from "@/lib/marketing/i18n/bundles/cinematic-home.json";
+import { asMarketingLocale, resolveMarketingCopy } from "@/lib/marketing/i18n/resolve-marketing-copy";
 
 export const cinematicCopy = {
   nav: {
@@ -516,10 +518,27 @@ function resolveCinematicCopyLocale(locale: Locale | MarketingLocale) {
   return locale;
 }
 
+type CinematicHomeBundle = Partial<
+  Record<MarketingLocale, { [S in keyof typeof cinematicCopy]?: (typeof cinematicCopy)[S]["en"] }>
+>;
+
 export function cinematicText<K extends keyof typeof cinematicCopy>(
   section: K,
   locale: Locale | MarketingLocale
 ): (typeof cinematicCopy)[K]["en"] {
+  const marketingLocale = asMarketingLocale(String(locale));
+
+  try {
+    const localeBundle = resolveMarketingCopy(
+      cinematicHomeBundles as unknown as CinematicHomeBundle,
+      marketingLocale
+    );
+    const bundled = localeBundle[section];
+    if (bundled) return bundled as (typeof cinematicCopy)[K]["en"];
+  } catch {
+    // fall through to legacy overlays
+  }
+
   const normalizedLocale = resolveCinematicCopyLocale(locale);
   const translated = cinematicCopyTranslations[section]?.[normalizedLocale as MarketingLocale];
   if (translated) return translated as unknown as (typeof cinematicCopy)[K]["en"];

@@ -8,14 +8,14 @@ import { MarketingDocsSidebar } from "@/components/marketing/docs/marketing-docs
 import { MarketingDocsContentLoading } from "@/components/marketing/docs/marketing-docs-content-loading";
 import { useMarketingPageLocale } from "@/hooks/use-marketing-page-locale";
 import { resolveMarketingDocsActive } from "@/lib/marketing/resolve-marketing-docs-active";
-import type { Locale } from "@/lib/i18n";
+import type { MarketingLocale } from "@/lib/i18n";
 
 function MarketingDocsLayoutFrame({
   locale,
   active,
   children
 }: {
-  locale: Locale;
+  locale: MarketingLocale;
   active: ReturnType<typeof resolveMarketingDocsActive>;
   children: ReactNode;
 }) {
@@ -35,7 +35,7 @@ function MarketingDocsLayoutFrame({
   );
 }
 
-function MarketingDocsLocaleSync({ onLocale }: { onLocale: (locale: Locale) => void }) {
+function MarketingDocsLocaleSync({ onLocale }: { onLocale: (locale: MarketingLocale) => void }) {
   const locale = useMarketingPageLocale();
 
   useEffect(() => {
@@ -49,7 +49,7 @@ function MarketingDocsLocaleSync({ onLocale }: { onLocale: (locale: Locale) => v
 export function MarketingDocsLayoutShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const active = resolveMarketingDocsActive(pathname);
-  const [locale, setLocale] = useState<Locale>("zh");
+  const [locale, setLocale] = useState<MarketingLocale>("zh-CN");
 
   return (
     <MarketingDocsLayoutFrame locale={locale} active={active}>

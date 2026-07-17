@@ -7,9 +7,9 @@ import {
   PartnersStepsSection
 } from "@/components/marketing/partners/partners-sections";
 import { partnerProgramService } from "@/features/partner-program/partner-program.service";
-import type { Locale } from "@/lib/i18n";
+import type { MarketingLocale } from "@/lib/i18n";
 
-export async function PartnersPage({ locale }: { locale: Locale }) {
+export async function PartnersPage({ locale }: { locale: MarketingLocale }) {
   const data = await partnerProgramService.getMarketingPageData();
 
   return (

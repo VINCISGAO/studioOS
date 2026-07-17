@@ -30,6 +30,8 @@
     "marketing:predeploy-check": "node scripts/predeploy-homepage-check.mjs",
     "marketing:verify-links": "node scripts/verify-marketing-links.mjs",
     "marketing:generate-favicons": "node scripts/generate-favicon-assets.mjs",
+    "marketing:i18n-seed": "node --require ./scripts/helpers/load-env.cjs --import tsx scripts/marketing-i18n-seed.ts",
+    "marketing:i18n-sync": "node --require ./scripts/helpers/load-env.cjs --import tsx scripts/marketing-i18n-sync.ts",
     "marketing:hero-layout-probe": "node scripts/hero-layout-probe.mjs",
     "openai:verify": "node scripts/verify-openai.mjs",
     "marketing:upload-recent-work-videos": "node scripts/upload-home-recent-work-videos-r2.mjs",

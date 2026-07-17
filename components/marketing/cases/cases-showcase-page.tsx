@@ -18,7 +18,8 @@ import {
   CASES_PRIMARY_CATEGORIES,
   type CasesPageCopy
 } from "@/lib/marketing/cases-copy";
-import type { Locale } from "@/lib/i18n";
+import type { MarketingLocale } from "@/lib/i18n";
+import { toLegacyLocale } from "@/lib/marketing/i18n/resolve-marketing-copy";
 import { labelWorkCategory } from "@/lib/localized-options";
 import { cn } from "@/lib/utils";
 
@@ -32,7 +33,8 @@ function normalizeSearch(value: string) {
   return value.trim().toLowerCase();
 }
 
-function workSearchHaystack(work: MarketingShowcaseWorkDto, locale: Locale) {
+function workSearchHaystack(work: MarketingShowcaseWorkDto, locale: MarketingLocale) {
+  const legacyLocale = toLegacyLocale(locale);
   return [
     work.title,
     work.description,
@@ -40,14 +42,14 @@ function workSearchHaystack(work: MarketingShowcaseWorkDto, locale: Locale) {
     work.platform,
     work.format,
     ...(work.tags ?? []),
-    labelWorkCategory(work.category, locale)
+    labelWorkCategory(work.category, legacyLocale)
   ]
     .filter(Boolean)
     .join(" ")
     .toLowerCase();
 }
 
-function filterWorks(works: MarketingShowcaseWorkDto[], query: string, locale: Locale) {
+function filterWorks(works: MarketingShowcaseWorkDto[], query: string, locale: MarketingLocale) {
   const normalized = normalizeSearch(query);
   if (!normalized) return works;
   const terms = normalized.split(/\s+/).filter(Boolean);
@@ -98,12 +100,13 @@ export function CasesShowcasePage({
   categories,
   initialPlayId
 }: {
-  locale: Locale;
+  locale: MarketingLocale;
   copy: CasesPageCopy;
   works: MarketingShowcaseWorkDto[];
   categories: string[];
   initialPlayId?: string;
 }) {
+  const legacyLocale = toLegacyLocale(locale);
   const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [moreOpen, setMoreOpen] = useState(false);
@@ -185,7 +188,7 @@ export function CasesShowcasePage({
             <CategoryPill
               key={category}
               active={activeCategory === category}
-              label={labelWorkCategory(category, locale)}
+              label={labelWorkCategory(category, legacyLocale)}
               icon={Icon}
               onClick={() => {
                 setActiveCategory(category);
@@ -234,7 +237,7 @@ export function CasesShowcasePage({
                           : "text-zinc-700 hover:bg-zinc-50"
                       )}
                     >
-                      {labelWorkCategory(category, locale)}
+                      {labelWorkCategory(category, legacyLocale)}
                     </button>
                   ))}
                 </div>

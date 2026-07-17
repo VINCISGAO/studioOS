@@ -17,7 +17,7 @@ type HomePageProps = {
 export async function generateMetadata({ searchParams }: HomePageProps): Promise<Metadata> {
   const resolvedSearchParams = await searchParams;
   const copyLocale = resolvedSearchParams.lang ? getLanguageCode(resolvedSearchParams) : await getAppLanguage();
-  return homePageSeoMetadata(toUiLocale(copyLocale));
+  return homePageSeoMetadata(copyLocale);
 }
 
 /** Marketing homepage — presentation and conversion only. */

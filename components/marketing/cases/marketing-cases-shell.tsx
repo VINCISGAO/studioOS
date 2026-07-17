@@ -5,14 +5,14 @@ import { ArrowLeft } from "lucide-react";
 import { BrandLogoLockup } from "@/components/brand-logo-mark";
 import { MarketingDocsLucienHost } from "@/components/marketing/docs/marketing-docs-lucien-host";
 import { marketingHomeHref } from "@/lib/marketing/localized-href";
-import type { Locale } from "@/lib/i18n";
+import type { MarketingLocale } from "@/lib/i18n";
 
 export function MarketingCasesShell({
   locale,
   backLabel,
   children
 }: {
-  locale: Locale;
+  locale: MarketingLocale;
   backLabel: string;
   children: React.ReactNode;
 }) {

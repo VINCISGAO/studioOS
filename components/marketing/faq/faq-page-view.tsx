@@ -15,7 +15,7 @@ import {
 import { FaqLucienCtaBlock } from "@/components/marketing/faq/faq-lucien-cta-block";
 import { faqText, formatFaqCount, type FaqCategoryId } from "@/lib/marketing/faq-copy";
 import { cn } from "@/lib/utils";
-import type { Locale } from "@/lib/i18n";
+import type { MarketingLocale } from "@/lib/i18n";
 
 const CATEGORY_ICONS: Record<FaqCategoryId, typeof UserRound> = {
   account: UserRound,
@@ -59,7 +59,7 @@ function FaqAnswer({
   );
 }
 
-export function FaqPageView({ locale }: { locale: Locale }) {
+export function FaqPageView({ locale }: { locale: MarketingLocale }) {
   const t = faqText(locale);
   const [activeCategory, setActiveCategory] = useState<FaqCategoryId>("account");
   const [openQuestion, setOpenQuestion] = useState(0);

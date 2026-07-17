@@ -1,0 +1,1740 @@
+{
+  "en": {
+    "hero": {
+      "eyebrow": "FAQ",
+      "title": "Answers to the questions you care about.",
+      "subtitle": "We gathered the most common questions to help you understand VINCIS. If you cannot find an answer, contact us anytime."
+    },
+    "categories": [
+      {
+        "id": "account",
+        "title": "Account & registration",
+        "items": [
+          {
+            "question": "What is VINCIS?",
+            "answer": "VINCIS connects global brands with AI creators. Brands find the right creators for ads; creators access real commercial projects worldwide."
+          },
+          {
+            "question": "Does registration cost money?",
+            "answer": "Registration, browsing, and profile setup are free. Some professional AI features and premium membership require an upgrade."
+          },
+          {
+            "question": "Do brands and creators need separate accounts?",
+            "answer": "Yes — one email maps to one identity. At signup you choose Brand or Creator, and you cannot switch later on the same account. Use separate emails if you need both roles."
+          }
+        ]
+      },
+      {
+        "id": "publish",
+        "title": "Publishing projects",
+        "items": [
+          {
+            "question": "How do I publish a project?",
+            "answer": "Open Brand Portal, click \"Publish project,\" and fill in requirements, budget, and timeline. AI helps structure the brief."
+          },
+          {
+            "question": "Why does AI suggest a budget?",
+            "answer": "VINCIS does not use random quotes. The engine weighs complexity, duration, AI cost, creator hours, revisions, and historical deals."
+          },
+          {
+            "question": "What if my budget is below the AI suggestion?",
+            "answer": "You can still publish. A lower budget may reduce matched creators, lower match success, and increase wait time."
+          },
+          {
+            "question": "Why can I only run three projects at once?",
+            "answer": "To protect quality and creator capacity, each brand can run up to three active projects by default."
+          }
+        ]
+      },
+      {
+        "id": "creators",
+        "title": "Creators",
+        "items": [
+          {
+            "question": "How do creators get projects?",
+            "answer": "After a project is published, AI matches creators by skill, portfolio, rate, region, and fit. Brands can also invite directly."
+          },
+          {
+            "question": "Can I decline a project?",
+            "answer": "Yes. Declining does not penalize your account, but sharing a reason helps AI improve future recommendations."
+          },
+          {
+            "question": "How do creators get paid?",
+            "answer": "After delivery is confirmed by the brand, escrow funds are released and settled to the creator account."
+          }
+        ]
+      },
+      {
+        "id": "ai",
+        "title": "AI features",
+        "items": [
+          {
+            "question": "Will AI make the entire ad for me?",
+            "answer": "No. AI acts as a creative advisor — briefing, directions, production options, and efficiency support. Final work is done by professional creators."
+          },
+          {
+            "question": "Why did AI recommend this creator?",
+            "answer": "AI weighs real data across these dimensions — not random ranking:",
+            "bullets": [
+              "Professional capability",
+              "Portfolio history",
+              "Project experience",
+              "Close rate",
+              "On-time delivery",
+              "User ratings",
+              "Current availability",
+              "Project fit"
+            ]
+          },
+          {
+            "question": "Why is Moodboard limited to Professional?",
+            "answer": "AI Moodboard, Storyboard, and Prompt Package require significant compute. Professional unlocks these advanced planning tools."
+          }
+        ]
+      },
+      {
+        "id": "payment",
+        "title": "Payment & settlement",
+        "items": [
+          {
+            "question": "Why is escrow required?",
+            "answer": "Escrow protects both sides. Brands do not pay out before final delivery; creators do not worry about non-payment after delivery."
+          },
+          {
+            "question": "How does the platform charge?",
+            "answer": "VINCIS uses a transparent platform service fee covering AI analysis, matching, escrow, review center, file management, and operations."
+          },
+          {
+            "question": "Why is there a platform service fee?",
+            "answer": "Beyond matching, VINCIS provides full production infrastructure: AI tools, online review, version control, global payments, security, and project management."
+          }
+        ]
+      },
+      {
+        "id": "partners",
+        "title": "Partners",
+        "items": [
+          {
+            "question": "How do I join the Partner Program?",
+            "answer": "After approval you receive a referral link or invite code. Successful brand referrals earn platform rewards."
+          },
+          {
+            "question": "How do partners earn commission?",
+            "answer": "Rewards are calculated from completed deals. All partner earnings come from the platform service fee — never added to brand spend or deducted from creator payout."
+          }
+        ]
+      }
+    ],
+    "cta": {
+      "title": "Didn't find your answer?",
+      "contactLabel": "Ask AI assistant Lucien"
+    },
+    "labels": {
+      "questionCount": "{count} questions",
+      "totalQuestions": "{count} questions total"
+    },
+    "publicLucien": {
+      "welcome": "Hi, I'm Lucien. Before you sign in, I can answer common questions about registration, publishing, payments, and the partner program.",
+      "identity": {
+        "guest": "Guest",
+        "brand": "Brand",
+        "creator": "Creator",
+        "admin": "Admin",
+        "support": "Support"
+      },
+      "inputPlaceholder": "Ask Lucien…",
+      "close": "Close",
+      "loading": "Lucien is thinking…",
+      "unavailable": "Lucien is temporarily unavailable. Please try again later.",
+      "requestFailed": "Lucien request failed",
+      "loginHint": "Sign in for the full Lucien assistant with project and account context.",
+      "loginLabel": "Sign in to VINCIS",
+      "suggestions": [
+        "What is VINCIS?",
+        "How do I publish a project?",
+        "What is escrow payment?",
+        "Why is Moodboard limited to Professional?"
+      ]
+    }
+  },
+  "zh-CN": {
+    "hero": {
+      "eyebrow": "常见问题",
+      "title": "你关心的问题，这里都有答案。",
+      "subtitle": "我们整理了最常见的问题，帮助你更好地了解 VINCIS。如果没有找到答案，可以随时联系我们。"
+    },
+    "categories": [
+      {
+        "id": "account",
+        "title": "账户与注册",
+        "items": [
+          {
+            "question": "VINCIS 是什么？",
+            "answer": "VINCIS 是一个连接全球品牌与智能创作者的平台。品牌可以快速找到合适的创作者完成广告制作，创作者也能获得来自全球的真实商业项目。"
+          },
+          {
+            "question": "注册需要付费吗？",
+            "answer": "注册、浏览平台和完善个人资料均免费。部分智能专业功能及高级会员服务需要升级后使用。"
+          },
+          {
+            "question": "品牌和创作者需要注册不同账号吗？",
+            "answer": "需要分别注册。同一邮箱在注册时只能选择品牌方或创作者其中一种身份，注册后不能在同账号内切换。如需同时使用两种身份，请用不同邮箱分别注册。"
+          }
+        ]
+      },
+      {
+        "id": "publish",
+        "title": "发布项目",
+        "items": [
+          {
+            "question": "如何发布一个项目？",
+            "answer": "进入品牌工作台，点击「发布项目」，填写需求、预算、交付时间等信息即可。系统会帮助整理需求并生成专业创意简报。"
+          },
+          {
+            "question": "为什么会给我预算建议？",
+            "answer": "VINCIS 不采用随机报价。系统会根据项目复杂度、视频时长、智能制作成本、创作者工时、修改次数以及历史成交数据，智能计算合理预算。"
+          },
+          {
+            "question": "我的预算低于系统建议怎么办？",
+            "answer": "仍然可以发布。但预算过低可能减少可匹配创作者数量，降低匹配成功率，并延长等待时间。"
+          },
+          {
+            "question": "为什么最多只能同时进行三个项目？",
+            "answer": "为了保证项目质量与创作者资源分配，每个品牌默认最多可同时进行三个项目。这样能够避免资源浪费，也提升项目成功率。"
+          }
+        ]
+      },
+      {
+        "id": "creators",
+        "title": "创作者",
+        "items": [
+          {
+            "question": "创作者如何接单？",
+            "answer": "项目发布后，系统会根据专业能力、作品、报价、地区及项目需求智能匹配创作者，也支持品牌主动邀请。"
+          },
+          {
+            "question": "我可以拒绝项目吗？",
+            "answer": "可以。拒绝不会影响账号，但建议填写拒绝原因，帮助系统提供更精准的项目推荐。"
+          },
+          {
+            "question": "创作者如何获得付款？",
+            "answer": "项目完成并经品牌确认交付后，平台会自动释放托管资金，并结算至创作者账户。"
+          }
+        ]
+      },
+      {
+        "id": "ai",
+        "title": "智能功能",
+        "items": [
+          {
+            "question": "智能助手会替我完成整个广告吗？",
+            "answer": "不会。智能助手更像一位创意顾问，它可以帮助整理需求、生成创意方向、推荐制作方案，并协助品牌与创作者提升效率。最终作品仍由专业创作者完成。"
+          },
+          {
+            "question": "为什么推荐这位创作者？",
+            "answer": "系统会综合分析以下维度，所有推荐都来自真实数据，而不是随机排序。",
+            "bullets": [
+              "专业能力",
+              "历史作品",
+              "项目经验",
+              "成交率",
+              "准时率",
+              "用户评价",
+              "当前档期",
+              "项目匹配度"
+            ]
+          },
+          {
+            "question": "为什么专业版会员才能使用情绪板？",
+            "answer": "情绪板、分镜板和提示词包等功能需要大量智能计算资源。专业版会员可解锁这些高级创意工具，以获得更完整的创意策划体验。"
+          }
+        ]
+      },
+      {
+        "id": "payment",
+        "title": "支付与结算",
+        "items": [
+          {
+            "question": "为什么需要托管付款？",
+            "answer": "托管支付可以同时保护品牌与创作者。品牌确认最终交付前，资金不会直接支付给创作者；创作者完成交付后，也无需担心无法收款。"
+          },
+          {
+            "question": "平台如何收费？",
+            "answer": "VINCIS 采用透明的平台服务费模式。服务费包含智能分析、项目匹配、托管支付、审片中心、文件管理及平台运营等完整服务。"
+          },
+          {
+            "question": "为什么平台收取服务费？",
+            "answer": "平台不仅提供交易撮合，还提供完整的广告制作协作系统，包括智能工具、在线审片、版本管理、全球支付、安全保障及项目管理服务。"
+          }
+        ]
+      },
+      {
+        "id": "partners",
+        "title": "合作伙伴",
+        "items": [
+          {
+            "question": "如何加入合作伙伴计划？",
+            "answer": "申请通过后即可获得专属推广链接或邀请码。成功推荐品牌完成交易后，即可获得平台奖励。"
+          },
+          {
+            "question": "合作伙伴如何获得佣金？",
+            "answer": "佣金根据实际成交项目计算。所有奖励均来自平台服务费，不会增加品牌支付金额，也不会减少创作者收入。"
+          }
+        ]
+      }
+    ],
+    "cta": {
+      "title": "没有找到你的答案？",
+      "contactLabel": "问问智能助手卢西恩"
+    },
+    "labels": {
+      "questionCount": "{count} 个问题",
+      "totalQuestions": "共 {count} 个问题"
+    },
+    "publicLucien": {
+      "welcome": "你好，我是卢西恩。登录前我可以解答平台常见问题，例如注册、发布项目、付款与合作伙伴计划。",
+      "identity": {
+        "guest": "访客",
+        "brand": "品牌方",
+        "creator": "创作者",
+        "admin": "管理员",
+        "support": "平台支持"
+      },
+      "inputPlaceholder": "问问卢西恩…",
+      "close": "关闭",
+      "loading": "卢西恩正在思考…",
+      "unavailable": "卢西恩暂时不可用，请稍后再试。",
+      "requestFailed": "卢西恩请求失败",
+      "loginHint": "登录后可使用完整版卢西恩，查看项目与账号专属信息。",
+      "loginLabel": "登录 VINCIS",
+      "suggestions": [
+        "VINCIS 是什么？",
+        "如何发布一个项目？",
+        "什么是托管付款？",
+        "为什么专业版会员才能使用情绪板？"
+      ]
+    }
+  },
+  "zh-TW": {
+    "hero": {
+      "eyebrow": "常見問題",
+      "title": "你關心的問題，這裡都有答案。",
+      "subtitle": "我們整理了最常見的問題，幫助你更好地了解 VINCIS。如果沒有找到答案，可以隨時聯繫我們。"
+    },
+    "categories": [
+      {
+        "id": "account",
+        "title": "帳戶與註冊",
+        "items": [
+          {
+            "question": "VINCIS 是什麼？",
+            "answer": "VINCIS 是一個連接全球品牌與智能創作者的平台。品牌可以快速找到合適的創作者完成廣告製作，創作者也能獲得來自全球的真實商業項目。"
+          },
+          {
+            "question": "註冊需要付費嗎？",
+            "answer": "註冊、瀏覽平台和完善個人資料均免費。部分智能專業功能及高級會員服務需要升級後使用。"
+          },
+          {
+            "question": "品牌和創作者需要註冊不同帳號嗎？",
+            "answer": "需要分別註冊。同一郵箱在註冊時只能選擇品牌方或創作者其中一種身份，註冊後不能在同帳號內切換。如需同時使用兩種身份，請用不同郵箱分別註冊。"
+          }
+        ]
+      },
+      {
+        "id": "publish",
+        "title": "發布項目",
+        "items": [
+          {
+            "question": "如何發布一個項目？",
+            "answer": "進入品牌工作台，點擊「發布項目」，填寫需求、預算、交付時間等信息即可。系統會幫助整理需求並生成專業創意簡報。"
+          },
+          {
+            "question": "為什麼會給我預算建議？",
+            "answer": "VINCIS 不採用隨機報價。系統會根據項目複雜度、視頻時長、智能製作成本、創作者工時、修改次數以及歷史成交數據，智能計算合理預算。"
+          },
+          {
+            "question": "我的預算低於系統建議怎麼辦？",
+            "answer": "仍然可以發布。但預算過低可能減少可匹配創作者數量，降低匹配成功率，並延長等待時間。"
+          },
+          {
+            "question": "為什麼最多只能同時進行三個項目？",
+            "answer": "為了保證項目質量與創作者資源分配，每個品牌默認最多可同時進行三個項目。這樣能夠避免資源浪費，也提升項目成功率。"
+          }
+        ]
+      },
+      {
+        "id": "creators",
+        "title": "創作者",
+        "items": [
+          {
+            "question": "創作者如何接單？",
+            "answer": "項目發布後，系統會根據專業能力、作品、報價、地區及項目需求智能匹配創作者，也支持品牌主動邀請。"
+          },
+          {
+            "question": "我可以拒絕項目嗎？",
+            "answer": "可以。拒絕不會影響帳號，但建議填寫拒絕原因，幫助系統提供更精準的項目推薦。"
+          },
+          {
+            "question": "創作者如何獲得付款？",
+            "answer": "項目完成並經品牌確認交付後，平台會自動釋放托管資金，並結算至創作者帳戶。"
+          }
+        ]
+      },
+      {
+        "id": "ai",
+        "title": "智能功能",
+        "items": [
+          {
+            "question": "智能助手會替我完成整個廣告嗎？",
+            "answer": "不會。智能助手更像一位創意顧問，它可以幫助整理需求、生成創意方向、推薦製作方案，並協助品牌與創作者提升效率。最終作品仍由專業創作者完成。"
+          },
+          {
+            "question": "為什麼推薦這位創作者？",
+            "answer": "系統會綜合分析以下維度，所有推薦都來自真實數據，而不是隨機排序。",
+            "bullets": [
+              "專業能力",
+              "歷史作品",
+              "項目經驗",
+              "成交率",
+              "準時率",
+              "用戶評價",
+              "當前檔期",
+              "項目匹配度"
+            ]
+          },
+          {
+            "question": "為什麼專業版會員才能使用情緒板？",
+            "answer": "情緒板、分鏡板和提示詞包等功能需要大量智能計算資源。專業版會員可解鎖這些高級創意工具，以獲得更完整的創意策劃體驗。"
+          }
+        ]
+      },
+      {
+        "id": "payment",
+        "title": "支付與結算",
+        "items": [
+          {
+            "question": "為什麼需要托管付款？",
+            "answer": "托管支付可以同時保護品牌與創作者。品牌確認最終交付前，資金不會直接支付給創作者；創作者完成交付後，也無需擔心無法收款。"
+          },
+          {
+            "question": "平台如何收費？",
+            "answer": "VINCIS 採用透明的平台服務費模式。服務費包含智能分析、項目匹配、托管支付、審片中心、文件管理及平台運營等完整服務。"
+          },
+          {
+            "question": "為什麼平台收取服務費？",
+            "answer": "平台不僅提供交易撮合，還提供完整的廣告製作協作系統，包括智能工具、在線審片、版本管理、全球支付、安全保障及項目管理服務。"
+          }
+        ]
+      },
+      {
+        "id": "partners",
+        "title": "合作夥伴",
+        "items": [
+          {
+            "question": "如何加入合作夥伴計畫？",
+            "answer": "申請通過後即可獲得專屬推廣鏈接或邀請碼。成功推薦品牌完成交易後，即可獲得平台獎勵。"
+          },
+          {
+            "question": "合作夥伴如何獲得佣金？",
+            "answer": "佣金根據實際成交項目計算。所有獎勵均來自平台服務費，不會增加品牌支付金額，也不會減少創作者收入。"
+          }
+        ]
+      }
+    ],
+    "cta": {
+      "title": "沒有找到你的答案？",
+      "contactLabel": "問問智能助手盧西恩"
+    },
+    "labels": {
+      "questionCount": "{count} 個問題",
+      "totalQuestions": "共 {count} 個問題"
+    },
+    "publicLucien": {
+      "welcome": "你好，我是盧西恩。登入前我可以解答平台常見問題，例如註冊、發布項目、付款與合作夥伴計畫。",
+      "identity": {
+        "guest": "訪客",
+        "brand": "品牌方",
+        "creator": "創作者",
+        "admin": "管理員",
+        "support": "平台支持"
+      },
+      "inputPlaceholder": "問問盧西恩…",
+      "close": "關閉",
+      "loading": "盧西恩正在思考…",
+      "unavailable": "盧西恩暫時不可用，請稍後再試。",
+      "requestFailed": "盧西恩請求失敗",
+      "loginHint": "登入後可使用完整版盧西恩，查看項目與帳號專屬信息。",
+      "loginLabel": "登入 VINCIS",
+      "suggestions": [
+        "VINCIS 是什麼？",
+        "如何發布一個項目？",
+        "什麼是托管付款？",
+        "為什麼專業版會員才能使用情緒板？"
+      ]
+    }
+  },
+  "ja": {
+    "hero": {
+      "eyebrow": "FAQ",
+      "title": "あなたが気にする質問への回答。",
+      "subtitle": "VINCISを理解するための最も一般的な質問を集めました。回答が見つからない場合は、いつでもお問い合わせください。"
+    },
+    "categories": [
+      {
+        "id": "account",
+        "title": "アカウントと登録",
+        "items": [
+          {
+            "question": "VINCISとは何ですか？",
+            "answer": "VINCISは、グローバルブランドとAIクリエイターをつなげます。ブランドは広告に適したクリエイターを見つけ、クリエイターは世界中の実際の商業プロジェクトにアクセスできます。"
+          },
+          {
+            "question": "登録にはお金がかかりますか？",
+            "answer": "登録、ブラウジング、プロフィール設定は無料です。一部のプロフェッショナルAI機能やプレミアムメンバーシップにはアップグレードが必要です。"
+          },
+          {
+            "question": "ブランドとクリエイターは別々のアカウントが必要ですか？",
+            "answer": "はい — 一つのメールアドレスは一つのアイデンティティに対応します。サインアップ時にブランドまたはクリエイターを選択し、同じアカウントで後から切り替えることはできません。両方の役割が必要な場合は、別々のメールを使用してください。"
+          }
+        ]
+      },
+      {
+        "id": "publish",
+        "title": "プロジェクトの公開",
+        "items": [
+          {
+            "question": "プロジェクトを公開するにはどうすればよいですか？",
+            "answer": "ブランドポータルを開き、「プロジェクトを公開」をクリックし、要件、予算、タイムラインを入力します。AIがブリーフを構成するのを助けます。"
+          },
+          {
+            "question": "なぜAIは予算を提案するのですか？",
+            "answer": "VINCISはランダムな見積もりを使用しません。エンジンは複雑さ、期間、AIコスト、クリエイターの時間、修正、過去の取引を考慮します。"
+          },
+          {
+            "question": "私の予算がAIの提案を下回った場合はどうなりますか？",
+            "answer": "それでも公開できます。低い予算はマッチするクリエイターを減少させ、マッチ成功率を下げ、待機時間を増加させる可能性があります。"
+          },
+          {
+            "question": "なぜ同時に3つのプロジェクトしか実行できないのですか？",
+            "answer": "品質とクリエイターのキャパシティを保護するために、各ブランドはデフォルトで最大3つのアクティブプロジェクトを実行できます。"
+          }
+        ]
+      },
+      {
+        "id": "creators",
+        "title": "クリエイター",
+        "items": [
+          {
+            "question": "クリエイターはどのようにプロジェクトを取得しますか？",
+            "answer": "プロジェクトが公開された後、AIがスキル、ポートフォリオ、料金、地域、フィット感に基づいてクリエイターをマッチングします。ブランドは直接招待することもできます。"
+          },
+          {
+            "question": "プロジェクトを辞退できますか？",
+            "answer": "はい。辞退してもアカウントにペナルティはありませんが、理由を共有することでAIが今後の推薦を改善するのに役立ちます。"
+          },
+          {
+            "question": "クリエイターはどのように支払いを受けますか？",
+            "answer": "ブランドによって納品が確認された後、エスクロー資金が解放され、クリエイターのアカウントに入金されます。"
+          }
+        ]
+      },
+      {
+        "id": "ai",
+        "title": "AI機能",
+        "items": [
+          {
+            "question": "AIは私のために広告全体を作成しますか？",
+            "answer": "いいえ。AIはクリエイティブアドバイザーとして機能します — ブリーフ、指示、制作オプション、効率サポートを提供します。最終的な作業はプロのクリエイターによって行われます。"
+          },
+          {
+            "question": "なぜAIはこのクリエイターを推薦したのですか？",
+            "answer": "AIはこれらの次元にわたる実データを考慮します — ランダムなランキングではありません：",
+            "bullets": [
+              "プロフェッショナルな能力",
+              "ポートフォリオの履歴",
+              "プロジェクト経験",
+              "成約率",
+              "納期遵守",
+              "ユーザー評価",
+              "現在の空き状況",
+              "プロジェクトのフィット感"
+            ]
+          },
+          {
+            "question": "なぜムードボードはプロフェッショナルに制限されているのですか？",
+            "answer": "AIムードボード、ストーリーボード、プロンプトパッケージは、かなりの計算リソースを必要とします。プロフェッショナルはこれらの高度な計画ツールをアンロックします。"
+          }
+        ]
+      },
+      {
+        "id": "payment",
+        "title": "支払いと決済",
+        "items": [
+          {
+            "question": "なぜエスクローが必要なのですか？",
+            "answer": "エスクローは両方の側を保護します。ブランドは最終納品前に支払いを行わず、クリエイターは納品後の未払いを心配する必要がありません。"
+          },
+          {
+            "question": "プラットフォームはどのように料金を請求しますか？",
+            "answer": "VINCISは、AI分析、マッチング、エスクロー、レビューセンター、ファイル管理、運営をカバーする透明なプラットフォームサービス料を使用します。"
+          },
+          {
+            "question": "なぜプラットフォームサービス料があるのですか？",
+            "answer": "マッチングを超えて、VINCISは完全な制作インフラを提供します：AIツール、オンラインレビュー、バージョン管理、グローバルな支払い、安全性、プロジェクト管理。"
+          }
+        ]
+      },
+      {
+        "id": "partners",
+        "title": "パートナー",
+        "items": [
+          {
+            "question": "パートナープログラムに参加するにはどうすればよいですか？",
+            "answer": "承認後、紹介リンクまたは招待コードを受け取ります。成功したブランドの紹介はプラットフォームの報酬を得ます。"
+          },
+          {
+            "question": "パートナーはどのようにコミッションを得ますか？",
+            "answer": "報酬は完了した取引から計算されます。すべてのパートナーの収益はプラットフォームサービス料から来ており、ブランドの支出に追加されたり、クリエイターの支払いから差し引かれたりすることはありません。"
+          }
+        ]
+      }
+    ],
+    "cta": {
+      "title": "回答が見つかりませんでしたか？",
+      "contactLabel": "AIアシスタントのルシアンに聞いてみてください"
+    },
+    "labels": {
+      "questionCount": "{count} 件の質問",
+      "totalQuestions": "{count} 件の質問合計"
+    },
+    "publicLucien": {
+      "welcome": "こんにちは、私はルシアンです。サインインする前に、登録、公開、支払い、パートナープログラムに関する一般的な質問にお答えできます。",
+      "identity": {
+        "guest": "ゲスト",
+        "brand": "ブランド",
+        "creator": "クリエイター",
+        "admin": "管理者",
+        "support": "サポート"
+      },
+      "inputPlaceholder": "ルシアンに聞いてみてください…",
+      "close": "閉じる",
+      "loading": "ルシアンが考えています…",
+      "unavailable": "ルシアンは一時的に利用できません。後でもう一度お試しください。",
+      "requestFailed": "ルシアンのリクエストが失敗しました",
+      "loginHint": "プロジェクトとアカウントのコンテキストを持つ完全なルシアンアシスタントのためにサインインしてください。",
+      "loginLabel": "VINCISにサインイン",
+      "suggestions": [
+        "VINCISとは何ですか？",
+        "プロジェクトを公開するにはどうすればよいですか？",
+        "エスクロー支払いとは何ですか？",
+        "なぜムードボードはプロフェッショナルに制限されているのですか？"
+      ]
+    }
+  },
+  "ko": {
+    "hero": {
+      "eyebrow": "자주 묻는 질문",
+      "title": "당신이 궁금해하는 질문에 대한 답변.",
+      "subtitle": "VINCIS를 이해하는 데 도움이 되는 가장 일반적인 질문을 모았습니다. 답변을 찾을 수 없다면 언제든지 저희에게 연락해 주세요."
+    },
+    "categories": [
+      {
+        "id": "account",
+        "title": "계정 및 등록",
+        "items": [
+          {
+            "question": "VINCIS란 무엇인가요?",
+            "answer": "VINCIS는 글로벌 브랜드와 AI 제작자를 연결합니다. 브랜드는 광고를 위한 적합한 제작자를 찾고, 제작자는 전 세계의 실제 상업 프로젝트에 접근할 수 있습니다."
+          },
+          {
+            "question": "등록에 비용이 드나요?",
+            "answer": "등록, 탐색 및 프로필 설정은 무료입니다. 일부 전문 AI 기능 및 프리미엄 멤버십은 업그레이드가 필요합니다."
+          },
+          {
+            "question": "브랜드와 제작자는 별도의 계정이 필요한가요?",
+            "answer": "네 — 하나의 이메일은 하나의 신원에 매핑됩니다. 가입 시 브랜드 또는 제작자를 선택하며, 동일한 계정에서 나중에 전환할 수 없습니다. 두 역할이 필요하다면 별도의 이메일을 사용하세요."
+          }
+        ]
+      },
+      {
+        "id": "publish",
+        "title": "프로젝트 게시",
+        "items": [
+          {
+            "question": "프로젝트를 어떻게 게시하나요?",
+            "answer": "브랜드 포털을 열고 \"프로젝트 게시\"를 클릭한 후 요구 사항, 예산 및 일정을 입력하세요. AI가 브리프 구조를 도와줍니다."
+          },
+          {
+            "question": "AI가 예산을 제안하는 이유는 무엇인가요?",
+            "answer": "VINCIS는 무작위 견적을 사용하지 않습니다. 엔진은 복잡성, 기간, AI 비용, 제작자 시간, 수정 및 과거 거래를 고려합니다."
+          },
+          {
+            "question": "내 예산이 AI 제안보다 낮으면 어떻게 되나요?",
+            "answer": "여전히 게시할 수 있습니다. 낮은 예산은 매칭된 제작자를 줄이고, 매칭 성공률을 낮추며, 대기 시간을 늘릴 수 있습니다."
+          },
+          {
+            "question": "왜 한 번에 세 개의 프로젝트만 진행할 수 있나요?",
+            "answer": "품질과 제작자 용량을 보호하기 위해 각 브랜드는 기본적으로 최대 세 개의 활성 프로젝트를 진행할 수 있습니다."
+          }
+        ]
+      },
+      {
+        "id": "creators",
+        "title": "제작자",
+        "items": [
+          {
+            "question": "제작자는 프로젝트를 어떻게 받나요?",
+            "answer": "프로젝트가 게시된 후 AI가 기술, 포트폴리오, 요금, 지역 및 적합성에 따라 제작자를 매칭합니다. 브랜드는 직접 초대할 수도 있습니다."
+          },
+          {
+            "question": "프로젝트를 거절할 수 있나요?",
+            "answer": "네. 거절해도 계정에 불이익이 없지만, 이유를 공유하면 AI가 향후 추천을 개선하는 데 도움이 됩니다."
+          },
+          {
+            "question": "제작자는 어떻게 보수를 받나요?",
+            "answer": "브랜드가 납품을 확인한 후 에스크로 자금이 해제되어 제작자 계좌로 정산됩니다."
+          }
+        ]
+      },
+      {
+        "id": "ai",
+        "title": "AI 기능",
+        "items": [
+          {
+            "question": "AI가 전체 광고를 만들어 주나요?",
+            "answer": "아니요. AI는 창의적 조언자로 작용하며, 브리핑, 방향, 제작 옵션 및 효율성 지원을 제공합니다. 최종 작업은 전문 제작자가 수행합니다."
+          },
+          {
+            "question": "왜 AI가 이 제작자를 추천했나요?",
+            "answer": "AI는 다음과 같은 차원에서 실제 데이터를 고려합니다 — 무작위 순위가 아닙니다:",
+            "bullets": [
+              "전문 능력",
+              "포트폴리오 이력",
+              "프로젝트 경험",
+              "클로즈율",
+              "정시 납품",
+              "사용자 평가",
+              "현재 가용성",
+              "프로젝트 적합성"
+            ]
+          },
+          {
+            "question": "왜 무드보드는 전문 사용자에게만 제한되나요?",
+            "answer": "AI 무드보드, 스토리보드 및 프롬프트 패키지는 상당한 컴퓨팅 자원을 요구합니다. 전문 사용자가 이러한 고급 계획 도구를 잠금 해제합니다."
+          }
+        ]
+      },
+      {
+        "id": "payment",
+        "title": "결제 및 정산",
+        "items": [
+          {
+            "question": "왜 에스크로가 필요한가요?",
+            "answer": "에스크로는 양측을 보호합니다. 브랜드는 최종 납품 전에 지급하지 않으며, 제작자는 납품 후 미지급에 대한 걱정을 하지 않아도 됩니다."
+          },
+          {
+            "question": "플랫폼은 어떻게 요금을 부과하나요?",
+            "answer": "VINCIS는 AI 분석, 매칭, 에스크로, 리뷰 센터, 파일 관리 및 운영을 포함한 투명한 플랫폼 서비스 요금을 사용합니다."
+          },
+          {
+            "question": "왜 플랫폼 서비스 요금이 있나요?",
+            "answer": "매칭을 넘어 VINCIS는 전체 제작 인프라를 제공합니다: AI 도구, 온라인 리뷰, 버전 관리, 글로벌 결제, 보안 및 프로젝트 관리."
+          }
+        ]
+      },
+      {
+        "id": "partners",
+        "title": "파트너",
+        "items": [
+          {
+            "question": "파트너 프로그램에 어떻게 가입하나요?",
+            "answer": "승인 후 추천 링크 또는 초대 코드를 받습니다. 성공적인 브랜드 추천은 플랫폼 보상을 얻습니다."
+          },
+          {
+            "question": "파트너는 어떻게 수수료를 얻나요?",
+            "answer": "보상은 완료된 거래에서 계산됩니다. 모든 파트너 수익은 플랫폼 서비스 요금에서 발생하며, 브랜드 지출에 추가되거나 제작자 지급에서 차감되지 않습니다."
+          }
+        ]
+      }
+    ],
+    "cta": {
+      "title": "답변을 찾지 못하셨나요?",
+      "contactLabel": "AI 어시스턴트 루시앙에게 문의하기"
+    },
+    "labels": {
+      "questionCount": "{count} 질문",
+      "totalQuestions": "{count} 질문 총"
+    },
+    "publicLucien": {
+      "welcome": "안녕하세요, 저는 루시앙입니다. 로그인하기 전에 등록, 게시, 결제 및 파트너 프로그램에 대한 일반적인 질문에 답변할 수 있습니다.",
+      "identity": {
+        "guest": "게스트",
+        "brand": "브랜드",
+        "creator": "제작자",
+        "admin": "관리자",
+        "support": "지원"
+      },
+      "inputPlaceholder": "루시앙에게 질문하기…",
+      "close": "닫기",
+      "loading": "루시앙이 생각 중입니다…",
+      "unavailable": "루시앙이 일시적으로 사용할 수 없습니다. 나중에 다시 시도해 주세요.",
+      "requestFailed": "루시앙 요청 실패",
+      "loginHint": "프로젝트 및 계정 컨텍스트가 포함된 전체 루시앙 어시스턴트를 사용하려면 로그인하세요.",
+      "loginLabel": "VINCIS에 로그인",
+      "suggestions": [
+        "VINCIS란 무엇인가요?",
+        "프로젝트를 어떻게 게시하나요?",
+        "에스크로 결제가 무엇인가요?",
+        "왜 무드보드는 전문 사용자에게만 제한되나요?"
+      ]
+    }
+  },
+  "ms": {
+    "hero": {
+      "eyebrow": "Soalan Lazim",
+      "title": "Jawapan kepada soalan yang anda pedulikan.",
+      "subtitle": "Kami mengumpulkan soalan-soalan yang paling biasa untuk membantu anda memahami VINCIS. Jika anda tidak dapat menemukan jawapan, hubungi kami bila-bila masa."
+    },
+    "categories": [
+      {
+        "id": "account",
+        "title": "Akaun & pendaftaran",
+        "items": [
+          {
+            "question": "Apa itu VINCIS?",
+            "answer": "VINCIS menghubungkan jenama global dengan pencipta AI. Jenama mencari pencipta yang tepat untuk iklan; pencipta mengakses projek komersial sebenar di seluruh dunia."
+          },
+          {
+            "question": "Adakah pendaftaran memerlukan bayaran?",
+            "answer": "Pendaftaran, melayari, dan penyediaan profil adalah percuma. Beberapa ciri AI profesional dan keahlian premium memerlukan peningkatan."
+          },
+          {
+            "question": "Adakah jenama dan pencipta memerlukan akaun berasingan?",
+            "answer": "Ya — satu emel merujuk kepada satu identiti. Semasa pendaftaran, anda memilih Jenama atau Pencipta, dan anda tidak boleh bertukar kemudian pada akaun yang sama. Gunakan emel berasingan jika anda memerlukan kedua-dua peranan."
+          }
+        ]
+      },
+      {
+        "id": "publish",
+        "title": "Menerbitkan projek",
+        "items": [
+          {
+            "question": "Bagaimana saya menerbitkan projek?",
+            "answer": "Buka Portal Jenama, klik \"Menerbitkan projek,\" dan isi keperluan, bajet, dan garis masa. AI membantu menyusun ringkasan."
+          },
+          {
+            "question": "Mengapa AI mencadangkan bajet?",
+            "answer": "VINCIS tidak menggunakan sebut harga rawak. Enjin menilai kompleksiti, tempoh, kos AI, jam pencipta, semakan, dan tawaran sejarah."
+          },
+          {
+            "question": "Apa yang berlaku jika bajet saya di bawah cadangan AI?",
+            "answer": "Anda masih boleh menerbitkan. Bajet yang lebih rendah mungkin mengurangkan pencipta yang sepadan, menurunkan kejayaan padanan, dan meningkatkan masa menunggu."
+          },
+          {
+            "question": "Mengapa saya hanya boleh menjalankan tiga projek pada satu masa?",
+            "answer": "Untuk melindungi kualiti dan kapasiti pencipta, setiap jenama boleh menjalankan sehingga tiga projek aktif secara lalai."
+          }
+        ]
+      },
+      {
+        "id": "creators",
+        "title": "Pencipta",
+        "items": [
+          {
+            "question": "Bagaimana pencipta mendapatkan projek?",
+            "answer": "Setelah projek diterbitkan, AI memadankan pencipta berdasarkan kemahiran, portfolio, kadar, kawasan, dan kesesuaian. Jenama juga boleh menjemput secara langsung."
+          },
+          {
+            "question": "Bolehkah saya menolak projek?",
+            "answer": "Ya. Menolak tidak akan menghukum akaun anda, tetapi berkongsi alasan membantu AI meningkatkan cadangan masa depan."
+          },
+          {
+            "question": "Bagaimana pencipta dibayar?",
+            "answer": "Setelah penghantaran disahkan oleh jenama, dana escrow akan dilepaskan dan diselesaikan ke akaun pencipta."
+          }
+        ]
+      },
+      {
+        "id": "ai",
+        "title": "Ciri AI",
+        "items": [
+          {
+            "question": "Adakah AI akan membuat keseluruhan iklan untuk saya?",
+            "answer": "Tidak. AI bertindak sebagai penasihat kreatif — ringkasan, arahan, pilihan pengeluaran, dan sokongan kecekapan. Kerja akhir dilakukan oleh pencipta profesional."
+          },
+          {
+            "question": "Mengapa AI mencadangkan pencipta ini?",
+            "answer": "AI menilai data sebenar merentasi dimensi ini — bukan penarafan rawak:",
+            "bullets": [
+              "Keupayaan profesional",
+              "Sejarah portfolio",
+              "Pengalaman projek",
+              "Kadar penutupan",
+              "Penghantaran tepat pada masanya",
+              "Penilaian pengguna",
+              "Ketersediaan semasa",
+              "Kesesuaian projek"
+            ]
+          },
+          {
+            "question": "Mengapa Moodboard terhad kepada Profesional?",
+            "answer": "AI Moodboard, Storyboard, dan Prompt Package memerlukan pengiraan yang signifikan. Profesional membuka kunci alat perancangan lanjutan ini."
+          }
+        ]
+      },
+      {
+        "id": "payment",
+        "title": "Pembayaran & penyelesaian",
+        "items": [
+          {
+            "question": "Mengapa escrow diperlukan?",
+            "answer": "Escrow melindungi kedua-dua pihak. Jenama tidak membayar sebelum penghantaran akhir; pencipta tidak perlu risau tentang pembayaran yang tidak diterima selepas penghantaran."
+          },
+          {
+            "question": "Bagaimana platform mengenakan bayaran?",
+            "answer": "VINCIS menggunakan yuran perkhidmatan platform yang telus yang merangkumi analisis AI, pemadanan, escrow, pusat semakan, pengurusan fail, dan operasi."
+          },
+          {
+            "question": "Mengapa terdapat yuran perkhidmatan platform?",
+            "answer": "Selain pemadanan, VINCIS menyediakan infrastruktur pengeluaran penuh: alat AI, semakan dalam talian, kawalan versi, pembayaran global, keselamatan, dan pengurusan projek."
+          }
+        ]
+      },
+      {
+        "id": "partners",
+        "title": "Rakan Kongsi",
+        "items": [
+          {
+            "question": "Bagaimana saya menyertai Program Rakan Kongsi?",
+            "answer": "Setelah diluluskan, anda akan menerima pautan rujukan atau kod jemputan. Rujukan jenama yang berjaya memperoleh ganjaran platform."
+          },
+          {
+            "question": "Bagaimana rakan kongsi memperoleh komisen?",
+            "answer": "Ganjaran dikira daripada perjanjian yang diselesaikan. Semua pendapatan rakan kongsi datang daripada yuran perkhidmatan platform — tidak pernah ditambah kepada perbelanjaan jenama atau ditolak daripada pembayaran pencipta."
+          }
+        ]
+      }
+    ],
+    "cta": {
+      "title": "Tidak menemui jawapan anda?",
+      "contactLabel": "Tanya pembantu AI Lucien"
+    },
+    "labels": {
+      "questionCount": "{count} soalan",
+      "totalQuestions": "{count} soalan keseluruhan"
+    },
+    "publicLucien": {
+      "welcome": "Hai, saya Lucien. Sebelum anda log masuk, saya boleh menjawab soalan-soalan biasa tentang pendaftaran, penerbitan, pembayaran, dan program rakan kongsi.",
+      "identity": {
+        "guest": "Tetamu",
+        "brand": "Jenama",
+        "creator": "Pencipta",
+        "admin": "Admin",
+        "support": "Sokongan"
+      },
+      "inputPlaceholder": "Tanya Lucien…",
+      "close": "Tutup",
+      "loading": "Lucien sedang berfikir…",
+      "unavailable": "Lucien tidak tersedia buat sementara waktu. Sila cuba lagi nanti.",
+      "requestFailed": "Permintaan Lucien gagal",
+      "loginHint": "Log masuk untuk pembantu Lucien penuh dengan konteks projek dan akaun.",
+      "loginLabel": "Log masuk ke VINCIS",
+      "suggestions": [
+        "Apa itu VINCIS?",
+        "Bagaimana saya menerbitkan projek?",
+        "Apa itu pembayaran escrow?",
+        "Mengapa Moodboard terhad kepada Profesional?"
+      ]
+    }
+  },
+  "th": {
+    "hero": {
+      "eyebrow": "คำถามที่พบบ่อย",
+      "title": "คำตอบสำหรับคำถามที่คุณสนใจ.",
+      "subtitle": "เราได้รวบรวมคำถามที่พบบ่อยที่สุดเพื่อช่วยให้คุณเข้าใจ VINCIS หากคุณไม่พบคำตอบ ติดต่อเราได้ตลอดเวลา."
+    },
+    "categories": [
+      {
+        "id": "account",
+        "title": "บัญชี & การลงทะเบียน",
+        "items": [
+          {
+            "question": "VINCIS คืออะไร?",
+            "answer": "VINCIS เชื่อมต่อแบรนด์ระดับโลกกับผู้สร้าง AI แบรนด์สามารถค้นหาผู้สร้างที่เหมาะสมสำหรับโฆษณา; ผู้สร้างสามารถเข้าถึงโครงการเชิงพาณิชย์จริงทั่วโลก."
+          },
+          {
+            "question": "การลงทะเบียนมีค่าใช้จ่ายหรือไม่?",
+            "answer": "การลงทะเบียน การเรียกดู และการตั้งค่าโปรไฟล์ฟรี ฟีเจอร์ AI มืออาชีพบางอย่างและการเป็นสมาชิกพรีเมียมต้องการการอัปเกรด."
+          },
+          {
+            "question": "แบรนด์และผู้สร้างต้องการบัญชีแยกกันหรือไม่?",
+            "answer": "ใช่ — อีเมลหนึ่งบัญชีเชื่อมโยงกับตัวตนหนึ่งที่เดียว ในการลงทะเบียนคุณเลือก แบรนด์ หรือ ผู้สร้าง และคุณไม่สามารถเปลี่ยนได้ในภายหลังในบัญชีเดียวกัน ใช้อีเมลแยกกันหากคุณต้องการทั้งสองบทบาท."
+          }
+        ]
+      },
+      {
+        "id": "publish",
+        "title": "การเผยแพร่โครงการ",
+        "items": [
+          {
+            "question": "ฉันจะเผยแพร่โครงการได้อย่างไร?",
+            "answer": "เปิด Brand Portal คลิก \"เผยแพร่โครงการ\" และกรอกข้อกำหนด งบประมาณ และระยะเวลา AI จะช่วยจัดโครงสร้างการสรุป."
+          },
+          {
+            "question": "ทำไม AI ถึงแนะนำงบประมาณ?",
+            "answer": "VINCIS ไม่ใช้การเสนอราคาที่สุ่ม ระบบจะพิจารณาความซับซ้อน ระยะเวลา ค่าใช้จ่าย AI ชั่วโมงของผู้สร้าง การแก้ไข และข้อตกลงในอดีต."
+          },
+          {
+            "question": "ถ้างบประมาณของฉันต่ำกว่าที่ AI แนะนำจะทำอย่างไร?",
+            "answer": "คุณยังสามารถเผยแพร่ได้ งบประมาณที่ต่ำกว่าอาจลดจำนวนผู้สร้างที่ตรงกัน ลดความสำเร็จในการจับคู่ และเพิ่มเวลารอ."
+          },
+          {
+            "question": "ทำไมฉันถึงสามารถดำเนินโครงการได้เพียงสามโครงการพร้อมกัน?",
+            "answer": "เพื่อปกป้องคุณภาพและความสามารถของผู้สร้าง แบรนด์แต่ละแบรนด์สามารถดำเนินโครงการที่ใช้งานอยู่ได้สูงสุดสามโครงการตามค่าเริ่มต้น."
+          }
+        ]
+      },
+      {
+        "id": "creators",
+        "title": "ผู้สร้าง",
+        "items": [
+          {
+            "question": "ผู้สร้างจะได้รับโครงการได้อย่างไร?",
+            "answer": "หลังจากที่โครงการถูกเผยแพร่ AI จะจับคู่ผู้สร้างตามทักษะ พอร์ตโฟลิโอ อัตรา ภูมิภาค และความเหมาะสม แบรนด์ยังสามารถเชิญโดยตรงได้."
+          },
+          {
+            "question": "ฉันสามารถปฏิเสธโครงการได้หรือไม่?",
+            "answer": "ได้ ปฏิเสธจะไม่ทำให้บัญชีของคุณถูกลงโทษ แต่การแชร์เหตุผลช่วยให้ AI ปรับปรุงคำแนะนำในอนาคต."
+          },
+          {
+            "question": "ผู้สร้างจะได้รับเงินอย่างไร?",
+            "answer": "หลังจากที่แบรนด์ยืนยันการส่งมอบ เงินในบัญชีเอสโครว์จะถูกปล่อยและชำระให้กับบัญชีของผู้สร้าง."
+          }
+        ]
+      },
+      {
+        "id": "ai",
+        "title": "ฟีเจอร์ AI",
+        "items": [
+          {
+            "question": "AI จะทำโฆษณาทั้งหมดให้ฉันหรือไม่?",
+            "answer": "ไม่ AI ทำหน้าที่เป็นที่ปรึกษาด้านสร้างสรรค์ — การสรุป ทิศทาง ตัวเลือกการผลิต และการสนับสนุนด้านประสิทธิภาพ งานสุดท้ายจะทำโดยผู้สร้างมืออาชีพ."
+          },
+          {
+            "question": "ทำไม AI ถึงแนะนำผู้สร้างนี้?",
+            "answer": "AI จะพิจารณาข้อมูลจริงในมิติที่เหล่านี้ — ไม่ใช่การจัดอันดับแบบสุ่ม:",
+            "bullets": [
+              "ความสามารถระดับมืออาชีพ",
+              "ประวัติพอร์ตโฟลิโอ",
+              "ประสบการณ์โครงการ",
+              "อัตราการปิด",
+              "การส่งมอบตรงเวลา",
+              "การให้คะแนนจากผู้ใช้",
+              "ความพร้อมในปัจจุบัน",
+              "ความเหมาะสมของโครงการ"
+            ]
+          },
+          {
+            "question": "ทำไม Moodboard ถึงจำกัดเฉพาะมืออาชีพ?",
+            "answer": "AI Moodboard, Storyboard และ Prompt Package ต้องการการประมวลผลที่สำคัญ มืออาชีพจะปลดล็อกเครื่องมือการวางแผนขั้นสูงเหล่านี้."
+          }
+        ]
+      },
+      {
+        "id": "payment",
+        "title": "การชำระเงิน & การชำระบัญชี",
+        "items": [
+          {
+            "question": "ทำไมต้องมีการเอสโครว์?",
+            "answer": "เอสโครว์ปกป้องทั้งสองฝ่าย แบรนด์จะไม่จ่ายเงินก่อนการส่งมอบสุดท้าย; ผู้สร้างไม่ต้องกังวลเกี่ยวกับการไม่ชำระเงินหลังการส่งมอบ."
+          },
+          {
+            "question": "แพลตฟอร์มเรียกเก็บเงินอย่างไร?",
+            "answer": "VINCIS ใช้ค่าธรรมเนียมบริการแพลตฟอร์มที่โปร่งใสซึ่งครอบคลุมการวิเคราะห์ AI การจับคู่ เอสโครว์ ศูนย์ตรวจสอบ การจัดการไฟล์ และการดำเนินงาน."
+          },
+          {
+            "question": "ทำไมถึงมีค่าธรรมเนียมบริการแพลตฟอร์ม?",
+            "answer": "นอกเหนือจากการจับคู่ VINCIS ยังให้โครงสร้างพื้นฐานการผลิตเต็มรูปแบบ: เครื่องมือ AI การตรวจสอบออนไลน์ การควบคุมเวอร์ชัน การชำระเงินทั่วโลก ความปลอดภัย และการจัดการโครงการ."
+          }
+        ]
+      },
+      {
+        "id": "partners",
+        "title": "พันธมิตร",
+        "items": [
+          {
+            "question": "ฉันจะเข้าร่วมโปรแกรมพันธมิตรได้อย่างไร?",
+            "answer": "หลังจากได้รับการอนุมัติคุณจะได้รับลิงก์การแนะนำหรือรหัสเชิญ การแนะนำแบรนด์ที่สำเร็จจะได้รับรางวัลจากแพลตฟอร์ม."
+          },
+          {
+            "question": "พันธมิตรจะได้รับค่าคอมมิชชั่นอย่างไร?",
+            "answer": "รางวัลจะคำนวณจากข้อตกลงที่เสร็จสมบูรณ์ รายได้ทั้งหมดของพันธมิตรจะมาจากค่าธรรมเนียมบริการแพลตฟอร์ม — ไม่เคยเพิ่มไปยังการใช้จ่ายของแบรนด์หรือหักจากการจ่ายของผู้สร้าง."
+          }
+        ]
+      }
+    ],
+    "cta": {
+      "title": "ไม่พบคำตอบของคุณ?",
+      "contactLabel": "ถามผู้ช่วย AI Lucien"
+    },
+    "labels": {
+      "questionCount": "{count} คำถาม",
+      "totalQuestions": "{count} คำถามทั้งหมด"
+    },
+    "publicLucien": {
+      "welcome": "สวัสดี ฉันคือ Lucien ก่อนที่คุณจะลงชื่อเข้าใช้ ฉันสามารถตอบคำถามทั่วไปเกี่ยวกับการลงทะเบียน การเผยแพร่ การชำระเงิน และโปรแกรมพันธมิตร.",
+      "identity": {
+        "guest": "ผู้เยี่ยมชม",
+        "brand": "แบรนด์",
+        "creator": "ผู้สร้าง",
+        "admin": "ผู้ดูแลระบบ",
+        "support": "สนับสนุน"
+      },
+      "inputPlaceholder": "ถาม Lucien…",
+      "close": "ปิด",
+      "loading": "Lucien กำลังคิด…",
+      "unavailable": "Lucien ไม่สามารถใช้งานได้ชั่วคราว กรุณาลองใหม่ในภายหลัง.",
+      "requestFailed": "คำขอของ Lucien ล้มเหลว",
+      "loginHint": "ลงชื่อเข้าใช้เพื่อใช้ Lucien ผู้ช่วยเต็มรูปแบบพร้อมบริบทของโครงการและบัญชี.",
+      "loginLabel": "ลงชื่อเข้าใช้ VINCIS",
+      "suggestions": [
+        "VINCIS คืออะไร?",
+        "ฉันจะเผยแพร่โครงการได้อย่างไร?",
+        "การชำระเงินแบบเอสโครว์คืออะไร?",
+        "ทำไม Moodboard ถึงจำกัดเฉพาะมืออาชีพ?"
+      ]
+    }
+  },
+  "km": {
+    "hero": {
+      "eyebrow": "សំណួរញឹកញាប់",
+      "title": "ចម្លើយសម្រាប់សំណួរដែលអ្នកយល់អំពីវា។",
+      "subtitle": "យើងបានប្រមូលសំណួរដែលពេញនិយមបំផុតដើម្បីជួយអ្នកយល់ដឹងអំពី VINCIS។ ប្រសិនបើអ្នកមិនអាចរកឃើញចម្លើយទេ សូមទំនាក់ទំនងមកយើងគ្រប់ពេលវេលា។"
+    },
+    "categories": [
+      {
+        "id": "account",
+        "title": "គណនី និងការចុះឈ្មោះ",
+        "items": [
+          {
+            "question": "VINCIS គឺអ្វី?",
+            "answer": "VINCIS តភ្ជាប់ម៉ាកសកលជាមួយអ្នកបង្កើត AI។ ម៉ាកស្វែងរកអ្នកបង្កើតដែលសមស្របសម្រាប់ការផ្សាយពាណិជ្ជកម្ម; អ្នកបង្កើតចូលដំណើរការគម្រោងពាណិជ្ជកម្មពិតប្រាកដនៅទូទាំងពិភពលោក។"
+          },
+          {
+            "question": "ការចុះឈ្មោះមានថ្លៃប្រាក់ទេ?",
+            "answer": "ការចុះឈ្មោះ ការស្វែងរក និងការកំណត់ប្រវត្តិគឺឥតគិតថ្លៃ។ មុខងារ AI ជំនាញខាងវិជ្ជាជីវៈខ្លះ និងការជាវសមាសភាពពិសេសត្រូវការការកែលម្អ។"
+          },
+          {
+            "question": "ម៉ាក និងអ្នកបង្កើតត្រូវការគណនីផ្សេងគ្នាទេ?",
+            "answer": "បាទ — អ៊ីមែលមួយភ្ជាប់ទៅនឹងអត្តសញ្ញាណមួយ។ នៅពេលចុះឈ្មោះ អ្នកជ្រើសរើសម៉ាកឬអ្នកបង្កើត ហើយអ្នកមិនអាចប្តូរទៅវិញវិញនៅលើគណនីដូចគ្នាបានទេ។ ប្រើអ៊ីមែលផ្សេងៗប្រសិនបើអ្នកត្រូវការបួនតួនាទីទាំងពីរ។"
+          }
+        ]
+      },
+      {
+        "id": "publish",
+        "title": "ការបោះពុម្ពគម្រោង",
+        "items": [
+          {
+            "question": "ធ្វើដូចម្តេចដើម្បីបោះពុម្ពគម្រោង?",
+            "answer": "បើក Brand Portal, ចុច \"បោះពុម្ពគម្រោង\" ហើយបំពេញតម្រូវការនិងថ្លៃដើម និងកាលបរិច្ឆេទ។ AI ជួយរៀបចំការបញ្ជាក់។"
+          },
+          {
+            "question": "ហេតុអ្វីបានជា AI ធ្វើការផ្តល់អនុសាសន៍ថ្លៃដើម?",
+            "answer": "VINCIS មិនប្រើការបញ្ជាក់ចៃដន្យទេ។ ម៉ាស៊ីនគិតគូរពីភាពស្មុគស្មាញ រយៈពេល ថ្លៃ AI ម៉ោងអ្នកបង្កើត ការកែប្រែ និងកិច្ចព្រមព្រៀងប្រវត្តិសាស្ត្រ។"
+          },
+          {
+            "question": "តើធ្វើដូចម្តេចប្រសិនបើថ្លៃដើមរបស់ខ្ញុំទាបជាងការផ្តល់អនុសាសន៍របស់ AI?",
+            "answer": "អ្នកអាចបោះពុម្ពបាន។ ថ្លៃដើមទាបអាចកាត់បន្ថយអ្នកបង្កើតដែលត្រូវបានផ្គូផ្គង កាត់បន្ថយភាពជោគជ័យនៃការផ្គូផ្គង និងបន្ថែមពេលវេលារង់ចាំ។"
+          },
+          {
+            "question": "ហេតុអ្វីបានជា ខ្ញុំអាចដំណើរការគម្រោងបីគម្រោងតែប៉ុណ្ណោះ?",
+            "answer": "ដើម្បីការពារភាពគុណនិងសមត្ថភាពអ្នកបង្កើត ម៉ាកមួយអាចដំណើរការគម្រោងសកម្មបានដល់បីគម្រោងដោយលំនាំដើម។"
+          }
+        ]
+      },
+      {
+        "id": "creators",
+        "title": "អ្នកបង្កើត",
+        "items": [
+          {
+            "question": "ធ្វើដូចម្តេចដើម្បីឈ្នះគម្រោង?",
+            "answer": "បន្ទាប់ពីគម្រោងត្រូវបានបោះពុម្ព AI នឹងផ្គូផ្គងអ្នកបង្កើតដោយជំនាញ បណ្ណាល័យ តម្លៃ តំបន់ និងភាពសមស្រប។ ម៉ាកក៏អាចអញ្ជើញដោយផ្ទាល់បានផងដែរ។"
+          },
+          {
+            "question": "តើខ្ញុំអាចបដិសេធគម្រោងមួយបានទេ?",
+            "answer": "បាទ។ ការបដិសេធមិនធ្វើឲ្យគណនីរបស់អ្នកត្រូវបានទណ្ឌកម្មទេ ប៉ុន្តែការចែករំលែកមូលហេតុអាចជួយ AI បង្កើនការផ្តល់អនុសាសន៍នៅពេលអនាគត។"
+          },
+          {
+            "question": "អ្នកបង្កើតទទួលប្រាក់យ៉ាងដូចម្តេច?",
+            "answer": "បន្ទាប់ពីការបញ្ជាក់ពីម៉ាកថាបានដឹកជញ្ជូនប្រាក់កក់នឹងត្រូវបានបញ្ចេញ និងដោះស្រាយទៅគណនីអ្នកបង្កើត។"
+          }
+        ]
+      },
+      {
+        "id": "ai",
+        "title": "មុខងារ AI",
+        "items": [
+          {
+            "question": "តើ AI នឹងធ្វើការផ្សាយពាណិជ្ជកម្មទាំងមូលសម្រាប់ខ្ញុំទេ?",
+            "answer": "មិនទេ។ AI មានតួនាទីជាអ្នកប្រឹក្សាផ្នែកច្នៃប្រឌិត — ការបញ្ជាក់ ការណែនាំ ជម្រើសផលិតកម្ម និងការគាំទ្រសមត្ថភាព។ ការងារចុងក្រោយត្រូវបានធ្វើដោយអ្នកបង្កើតវិជ្ជាជីវៈ។"
+          },
+          {
+            "question": "ហេតុអ្វីបានជា AI ធ្វើការផ្តល់អនុសាសន៍អ្នកបង្កើតនេះ?",
+            "answer": "AI គិតគូរពីទិន្នន័យពិតនៅលើវិមាត្រទាំងនេះ — មិនមែនជាការរៀបចំចៃដន្យទេ៖",
+            "bullets": [
+              "សមត្ថភាពវិជ្ជាជីវៈ",
+              "ប្រវត្តិបណ្ណាល័យ",
+              "បទពិសោធន៍គម្រោង",
+              "អត្រាទំនាក់ទំនង",
+              "ការដឹកជញ្ជូនតាមពេលវេលា",
+              "ការវាយតម្លៃពីអ្នកប្រើ",
+              "ភាពអាចប្រើប្រាស់បច្ចុប្បន្ន",
+              "ភាពសមស្របនៃគម្រោង"
+            ]
+          },
+          {
+            "question": "ហេតុអ្វីបានជា Moodboard ត្រូវបានកំណត់សម្រាប់វិជ្ជាជីវៈ?",
+            "answer": "AI Moodboard, Storyboard និងកញ្ចប់ការណែនាំត្រូវការការគណនាដែលសំខាន់។ វិជ្ជាជីវៈបើកឱ្យប្រើឧបករណ៍គម្រោងដ៏ជ្រាលជ្រៅទាំងនេះ។"
+          }
+        ]
+      },
+      {
+        "id": "payment",
+        "title": "ការទូទាត់ និងការដោះស្រាយ",
+        "items": [
+          {
+            "question": "ហេតុអ្វីបានជា escrow ត្រូវការទេ?",
+            "answer": "Escrow ការពារពីទាំងពីរផ្នែក។ ម៉ាកមិនបង់ប្រាក់មុនពេលដឹកជញ្ជូនចុងក្រោយទេ; អ្នកបង្កើតមិនត្រូវបារម្ភអំពីការមិនបង់ប្រាក់បន្ទាប់ពីការដឹកជញ្ជូន។"
+          },
+          {
+            "question": "វេទិកាដាក់ថ្លៃយ៉ាងដូចម្តេច?",
+            "answer": "VINCIS ប្រើថ្លៃសេវាវេទិកាដែលមានភាពច្បាស់លាស់គ្របដណ្តប់ការវិភាគ AI ការផ្គូផ្គង escrow មជ្ឈមណ្ឌលពិនិត្យ ការគ្រប់គ្រងឯកសារ និងប្រតិបត្តិការ។"
+          },
+          {
+            "question": "ហេតុអ្វីបានជា មានថ្លៃសេវាវេទិកា?",
+            "answer": "ក្រៅពីការផ្គូផ្គង VINCIS ផ្តល់ឧបករណ៍ផលិតកម្មពេញលេញ៖ ឧបករណ៍ AI ការពិនិត្យអនឡាញ ការគ្រប់គ្រងកំណែ ការទូទាត់សកល សុវត្ថិភាព និងការគ្រប់គ្រងគម្រោង។"
+          }
+        ]
+      },
+      {
+        "id": "partners",
+        "title": "ដៃគូ",
+        "items": [
+          {
+            "question": "ធ្វើដូចម្តេចដើម្បីចូលរួមកម្មវិធីដៃគូ?",
+            "answer": "បន្ទាប់ពីការអនុម័ត អ្នកនឹងទទួលបានតំណភ្ជាប់យោងឬកូដអញ្ជើញ។ ការយោងម៉ាកជោគជ័យនឹងទទួលបានរង្វាន់វេទិកា។"
+          },
+          {
+            "question": "ដៃគូធ្វើដូចម្តេចដើម្បីទទួលបានកម្រៃ?",
+            "answer": "រង្វាន់ត្រូវបានគណនាពីកិច្ចព្រមព្រៀងដែលបានបញ្ចប់។ ការប្រាក់របស់ដៃគូទាំងអស់មកពីថ្លៃសេវាវេទិកា — មិនដែលបន្ថែមទៅលើចំណាយម៉ាកឬកាត់បន្ថយពីការទូទាត់អ្នកបង្កើត។"
+          }
+        ]
+      }
+    ],
+    "cta": {
+      "title": "មិនបានរកឃើញចម្លើយរបស់អ្នកទេ?",
+      "contactLabel": "សួរអ្នកជំនួយ AI Lucien"
+    },
+    "labels": {
+      "questionCount": "{count} សំណួរ",
+      "totalQuestions": "{count} សំណួរទាំងមូល"
+    },
+    "publicLucien": {
+      "welcome": "សួស្តី ខ្ញុំគឺ Lucien។ មុនពេលអ្នកចុះឈ្មោះ ខ្ញុំអាចឆ្លើយសំណួរពេញនិយមអំពីការចុះឈ្មោះ ការបោះពុម្ព ការទូទាត់ និងកម្មវិធីដៃគូ។",
+      "identity": {
+        "guest": "ភ្ញៀវ",
+        "brand": "ម៉ាក",
+        "creator": "អ្នកបង្កើត",
+        "admin": "អ្នកគ្រប់គ្រង",
+        "support": "គាំទ្រ"
+      },
+      "inputPlaceholder": "សួរ Lucien…",
+      "close": "បិទ",
+      "loading": "Lucien កំពុងគិត…",
+      "unavailable": "Lucien មិនអាចប្រើបានក្នុងពេលនេះ។ សូមព្យាយាមម្តងទៀតក្រោយ។",
+      "requestFailed": "ការស្នើសុំ Lucien បានបរាជ័យ",
+      "loginHint": "ចុះឈ្មោះសម្រាប់អ្នកជំនួយ Lucien ពេញលេញជាមួយគម្រោង និងបរិបទគណនី។",
+      "loginLabel": "ចុះឈ្មោះទៅ VINCIS",
+      "suggestions": [
+        "VINCIS គឺអ្វី?",
+        "ធ្វើដូចម្តេចដើម្បីបោះពុម្ពគម្រោង?",
+        "ការទូទាត់ escrow គឺអ្វី?",
+        "ហេតុអ្វីបានជា Moodboard ត្រូវបានកំណត់សម្រាប់វិជ្ជាជីវៈ?"
+      ]
+    }
+  },
+  "vi": {
+    "hero": {
+      "eyebrow": "Câu hỏi thường gặp",
+      "title": "Câu trả lời cho những câu hỏi bạn quan tâm.",
+      "subtitle": "Chúng tôi đã tập hợp những câu hỏi thường gặp nhất để giúp bạn hiểu về VINCIS. Nếu bạn không tìm thấy câu trả lời, hãy liên hệ với chúng tôi bất cứ lúc nào."
+    },
+    "categories": [
+      {
+        "id": "account",
+        "title": "Tài khoản & đăng ký",
+        "items": [
+          {
+            "question": "VINCIS là gì?",
+            "answer": "VINCIS kết nối các thương hiệu toàn cầu với các nhà sáng tạo AI. Các thương hiệu tìm kiếm những nhà sáng tạo phù hợp cho quảng cáo; các nhà sáng tạo tiếp cận các dự án thương mại thực tế trên toàn thế giới."
+          },
+          {
+            "question": "Đăng ký có tốn tiền không?",
+            "answer": "Đăng ký, duyệt và thiết lập hồ sơ là miễn phí. Một số tính năng AI chuyên nghiệp và thành viên cao cấp yêu cầu nâng cấp."
+          },
+          {
+            "question": "Các thương hiệu và nhà sáng tạo có cần tài khoản riêng không?",
+            "answer": "Có — một email tương ứng với một danh tính. Khi đăng ký, bạn chọn Thương hiệu hoặc Nhà sáng tạo, và bạn không thể chuyển đổi sau này trên cùng một tài khoản. Sử dụng email riêng nếu bạn cần cả hai vai trò."
+          }
+        ]
+      },
+      {
+        "id": "publish",
+        "title": "Xuất bản dự án",
+        "items": [
+          {
+            "question": "Làm thế nào để tôi xuất bản một dự án?",
+            "answer": "Mở Cổng Thương hiệu, nhấp vào \"Xuất bản dự án,\" và điền vào các yêu cầu, ngân sách và thời gian. AI giúp cấu trúc bản tóm tắt."
+          },
+          {
+            "question": "Tại sao AI lại gợi ý một ngân sách?",
+            "answer": "VINCIS không sử dụng các báo giá ngẫu nhiên. Hệ thống đánh giá độ phức tạp, thời gian, chi phí AI, giờ làm việc của nhà sáng tạo, các lần chỉnh sửa và các giao dịch lịch sử."
+          },
+          {
+            "question": "Nếu ngân sách của tôi thấp hơn gợi ý của AI thì sao?",
+            "answer": "Bạn vẫn có thể xuất bản. Ngân sách thấp hơn có thể giảm số lượng nhà sáng tạo phù hợp, giảm khả năng thành công và tăng thời gian chờ đợi."
+          },
+          {
+            "question": "Tại sao tôi chỉ có thể chạy ba dự án cùng một lúc?",
+            "answer": "Để bảo vệ chất lượng và khả năng của nhà sáng tạo, mỗi thương hiệu có thể chạy tối đa ba dự án hoạt động theo mặc định."
+          }
+        ]
+      },
+      {
+        "id": "creators",
+        "title": "Nhà sáng tạo",
+        "items": [
+          {
+            "question": "Nhà sáng tạo nhận dự án như thế nào?",
+            "answer": "Sau khi một dự án được xuất bản, AI sẽ ghép nối các nhà sáng tạo theo kỹ năng, danh mục, mức giá, khu vực và sự phù hợp. Các thương hiệu cũng có thể mời trực tiếp."
+          },
+          {
+            "question": "Tôi có thể từ chối một dự án không?",
+            "answer": "Có. Việc từ chối không bị phạt tài khoản của bạn, nhưng chia sẻ lý do giúp AI cải thiện các gợi ý trong tương lai."
+          },
+          {
+            "question": "Nhà sáng tạo được thanh toán như thế nào?",
+            "answer": "Sau khi việc giao hàng được thương hiệu xác nhận, tiền ký quỹ sẽ được giải phóng và chuyển vào tài khoản của nhà sáng tạo."
+          }
+        ]
+      },
+      {
+        "id": "ai",
+        "title": "Tính năng AI",
+        "items": [
+          {
+            "question": "AI có làm toàn bộ quảng cáo cho tôi không?",
+            "answer": "Không. AI hoạt động như một cố vấn sáng tạo — tóm tắt, hướng dẫn, tùy chọn sản xuất và hỗ trợ hiệu quả. Công việc cuối cùng được thực hiện bởi các nhà sáng tạo chuyên nghiệp."
+          },
+          {
+            "question": "Tại sao AI lại gợi ý nhà sáng tạo này?",
+            "answer": "AI đánh giá dữ liệu thực tế trên các khía cạnh này — không phải xếp hạng ngẫu nhiên:",
+            "bullets": [
+              "Khả năng chuyên nghiệp",
+              "Lịch sử danh mục",
+              "Kinh nghiệm dự án",
+              "Tỷ lệ gần gũi",
+              "Giao hàng đúng hạn",
+              "Đánh giá của người dùng",
+              "Khả năng hiện tại",
+              "Sự phù hợp của dự án"
+            ]
+          },
+          {
+            "question": "Tại sao Moodboard chỉ giới hạn cho Professional?",
+            "answer": "AI Moodboard, Storyboard và Gói Gợi ý yêu cầu tính toán đáng kể. Professional mở khóa các công cụ lập kế hoạch nâng cao này."
+          }
+        ]
+      },
+      {
+        "id": "payment",
+        "title": "Thanh toán & giải quyết",
+        "items": [
+          {
+            "question": "Tại sao cần có ký quỹ?",
+            "answer": "Ký quỹ bảo vệ cả hai bên. Các thương hiệu không thanh toán trước khi giao hàng cuối cùng; các nhà sáng tạo không lo lắng về việc không được thanh toán sau khi giao hàng."
+          },
+          {
+            "question": "Nền tảng tính phí như thế nào?",
+            "answer": "VINCIS sử dụng một khoản phí dịch vụ nền tảng minh bạch bao gồm phân tích AI, ghép nối, ký quỹ, trung tâm đánh giá, quản lý tệp và hoạt động."
+          },
+          {
+            "question": "Tại sao lại có phí dịch vụ nền tảng?",
+            "answer": "Ngoài việc ghép nối, VINCIS cung cấp cơ sở hạ tầng sản xuất đầy đủ: công cụ AI, đánh giá trực tuyến, kiểm soát phiên bản, thanh toán toàn cầu, bảo mật và quản lý dự án."
+          }
+        ]
+      },
+      {
+        "id": "partners",
+        "title": "Đối tác",
+        "items": [
+          {
+            "question": "Làm thế nào để tôi tham gia Chương trình Đối tác?",
+            "answer": "Sau khi được phê duyệt, bạn sẽ nhận được một liên kết giới thiệu hoặc mã mời. Những giới thiệu thương hiệu thành công sẽ nhận được phần thưởng từ nền tảng."
+          },
+          {
+            "question": "Các đối tác kiếm hoa hồng như thế nào?",
+            "answer": "Phần thưởng được tính từ các giao dịch hoàn thành. Tất cả thu nhập của đối tác đến từ phí dịch vụ nền tảng — không bao giờ được thêm vào chi tiêu của thương hiệu hoặc trừ vào thanh toán của nhà sáng tạo."
+          }
+        ]
+      }
+    ],
+    "cta": {
+      "title": "Bạn không tìm thấy câu trả lời của mình?",
+      "contactLabel": "Hỏi trợ lý AI Lucien"
+    },
+    "labels": {
+      "questionCount": "{count} câu hỏi",
+      "totalQuestions": "{count} câu hỏi tổng cộng"
+    },
+    "publicLucien": {
+      "welcome": "Chào, tôi là Lucien. Trước khi bạn đăng nhập, tôi có thể trả lời các câu hỏi thường gặp về đăng ký, xuất bản, thanh toán và chương trình đối tác.",
+      "identity": {
+        "guest": "Khách",
+        "brand": "Thương hiệu",
+        "creator": "Nhà sáng tạo",
+        "admin": "Quản trị viên",
+        "support": "Hỗ trợ"
+      },
+      "inputPlaceholder": "Hỏi Lucien…",
+      "close": "Đóng",
+      "loading": "Lucien đang suy nghĩ…",
+      "unavailable": "Lucien hiện không khả dụng. Vui lòng thử lại sau.",
+      "requestFailed": "Yêu cầu của Lucien không thành công",
+      "loginHint": "Đăng nhập để có trợ lý Lucien đầy đủ với bối cảnh dự án và tài khoản.",
+      "loginLabel": "Đăng nhập vào VINCIS",
+      "suggestions": [
+        "VINCIS là gì?",
+        "Làm thế nào để tôi xuất bản một dự án?",
+        "Thanh toán ký quỹ là gì?",
+        "Tại sao Moodboard chỉ giới hạn cho Professional?"
+      ]
+    }
+  },
+  "fr": {
+    "hero": {
+      "eyebrow": "FAQ",
+      "title": "Réponses aux questions qui vous intéressent.",
+      "subtitle": "Nous avons rassemblé les questions les plus courantes pour vous aider à comprendre VINCIS. Si vous ne trouvez pas de réponse, contactez-nous à tout moment."
+    },
+    "categories": [
+      {
+        "id": "account",
+        "title": "Compte et inscription",
+        "items": [
+          {
+            "question": "Qu'est-ce que VINCIS ?",
+            "answer": "VINCIS connecte des marques mondiales avec des créateurs IA. Les marques trouvent les bons créateurs pour les publicités ; les créateurs accèdent à de vrais projets commerciaux dans le monde entier."
+          },
+          {
+            "question": "L'inscription coûte-t-elle de l'argent ?",
+            "answer": "L'inscription, la navigation et la configuration du profil sont gratuites. Certaines fonctionnalités professionnelles d'IA et l'adhésion premium nécessitent une mise à niveau."
+          },
+          {
+            "question": "Les marques et les créateurs ont-ils besoin de comptes séparés ?",
+            "answer": "Oui — un email correspond à une identité. Lors de l'inscription, vous choisissez Marque ou Créateur, et vous ne pouvez pas changer plus tard sur le même compte. Utilisez des emails séparés si vous avez besoin des deux rôles."
+          }
+        ]
+      },
+      {
+        "id": "publish",
+        "title": "Publication de projets",
+        "items": [
+          {
+            "question": "Comment publier un projet ?",
+            "answer": "Ouvrez le Portail Marque, cliquez sur \"Publier un projet\" et remplissez les exigences, le budget et le calendrier. L'IA aide à structurer le brief."
+          },
+          {
+            "question": "Pourquoi l'IA suggère-t-elle un budget ?",
+            "answer": "VINCIS n'utilise pas de devis aléatoires. Le moteur évalue la complexité, la durée, le coût de l'IA, les heures des créateurs, les révisions et les accords historiques."
+          },
+          {
+            "question": "Que se passe-t-il si mon budget est inférieur à la suggestion de l'IA ?",
+            "answer": "Vous pouvez toujours publier. Un budget inférieur peut réduire le nombre de créateurs correspondants, diminuer le succès des correspondances et augmenter le temps d'attente."
+          },
+          {
+            "question": "Pourquoi ne puis-je exécuter que trois projets à la fois ?",
+            "answer": "Pour protéger la qualité et la capacité des créateurs, chaque marque peut exécuter jusqu'à trois projets actifs par défaut."
+          }
+        ]
+      },
+      {
+        "id": "creators",
+        "title": "Créateurs",
+        "items": [
+          {
+            "question": "Comment les créateurs obtiennent-ils des projets ?",
+            "answer": "Après qu'un projet soit publié, l'IA associe les créateurs par compétence, portfolio, tarif, région et adéquation. Les marques peuvent également inviter directement."
+          },
+          {
+            "question": "Puis-je refuser un projet ?",
+            "answer": "Oui. Refuser ne pénalise pas votre compte, mais partager une raison aide l'IA à améliorer les recommandations futures."
+          },
+          {
+            "question": "Comment les créateurs sont-ils payés ?",
+            "answer": "Après que la livraison soit confirmée par la marque, les fonds en séquestre sont libérés et réglés sur le compte du créateur."
+          }
+        ]
+      },
+      {
+        "id": "ai",
+        "title": "Fonctionnalités IA",
+        "items": [
+          {
+            "question": "L'IA va-t-elle créer toute la publicité pour moi ?",
+            "answer": "Non. L'IA agit comme un conseiller créatif — briefing, directives, options de production et support à l'efficacité. Le travail final est réalisé par des créateurs professionnels."
+          },
+          {
+            "question": "Pourquoi l'IA a-t-elle recommandé ce créateur ?",
+            "answer": "L'IA évalue des données réelles selon ces dimensions — pas de classement aléatoire :",
+            "bullets": [
+              "Capacité professionnelle",
+              "Historique du portfolio",
+              "Expérience de projet",
+              "Taux de réussite",
+              "Livraison à temps",
+              "Évaluations des utilisateurs",
+              "Disponibilité actuelle",
+              "Adéquation au projet"
+            ]
+          },
+          {
+            "question": "Pourquoi Moodboard est-il limité aux professionnels ?",
+            "answer": "L'IA Moodboard, le Storyboard et le Package de Prompt nécessitent une puissance de calcul significative. Le niveau Professionnel débloque ces outils de planification avancés."
+          }
+        ]
+      },
+      {
+        "id": "payment",
+        "title": "Paiement et règlement",
+        "items": [
+          {
+            "question": "Pourquoi le séquestre est-il requis ?",
+            "answer": "Le séquestre protège les deux parties. Les marques ne paient pas avant la livraison finale ; les créateurs ne s'inquiètent pas du non-paiement après la livraison."
+          },
+          {
+            "question": "Comment la plateforme facture-t-elle ?",
+            "answer": "VINCIS utilise des frais de service de plateforme transparents couvrant l'analyse IA, l'appariement, le séquestre, le centre de révision, la gestion des fichiers et les opérations."
+          },
+          {
+            "question": "Pourquoi y a-t-il des frais de service de plateforme ?",
+            "answer": "Au-delà de l'appariement, VINCIS fournit une infrastructure de production complète : outils IA, révision en ligne, contrôle de version, paiements mondiaux, sécurité et gestion de projet."
+          }
+        ]
+      },
+      {
+        "id": "partners",
+        "title": "Partenaires",
+        "items": [
+          {
+            "question": "Comment rejoindre le Programme Partenaire ?",
+            "answer": "Après approbation, vous recevez un lien de parrainage ou un code d'invitation. Les parrainages de marques réussis gagnent des récompenses sur la plateforme."
+          },
+          {
+            "question": "Comment les partenaires gagnent-ils des commissions ?",
+            "answer": "Les récompenses sont calculées à partir des transactions complètes. Tous les gains des partenaires proviennent des frais de service de la plateforme — jamais ajoutés aux dépenses de la marque ou déduits du paiement du créateur."
+          }
+        ]
+      }
+    ],
+    "cta": {
+      "title": "Vous n'avez pas trouvé votre réponse ?",
+      "contactLabel": "Demandez à l'assistant IA Lucien"
+    },
+    "labels": {
+      "questionCount": "{count} questions",
+      "totalQuestions": "{count} questions au total"
+    },
+    "publicLucien": {
+      "welcome": "Bonjour, je suis Lucien. Avant de vous connecter, je peux répondre aux questions courantes sur l'inscription, la publication, les paiements et le programme partenaire.",
+      "identity": {
+        "guest": "Invité",
+        "brand": "Marque",
+        "creator": "Créateur",
+        "admin": "Admin",
+        "support": "Support"
+      },
+      "inputPlaceholder": "Demandez à Lucien…",
+      "close": "Fermer",
+      "loading": "Lucien réfléchit…",
+      "unavailable": "Lucien est temporairement indisponible. Veuillez réessayer plus tard.",
+      "requestFailed": "La demande à Lucien a échoué",
+      "loginHint": "Connectez-vous pour accéder à l'assistant Lucien complet avec le contexte du projet et du compte.",
+      "loginLabel": "Connectez-vous à VINCIS",
+      "suggestions": [
+        "Qu'est-ce que VINCIS ?",
+        "Comment publier un projet ?",
+        "Qu'est-ce que le paiement en séquestre ?",
+        "Pourquoi Moodboard est-il limité aux professionnels ?"
+      ]
+    }
+  },
+  "es": {
+    "hero": {
+      "eyebrow": "FAQ",
+      "title": "Respuestas a las preguntas que te importan.",
+      "subtitle": "Hemos recopilado las preguntas más comunes para ayudarte a entender VINCIS. Si no encuentras una respuesta, contáctanos en cualquier momento."
+    },
+    "categories": [
+      {
+        "id": "account",
+        "title": "Cuenta y registro",
+        "items": [
+          {
+            "question": "¿Qué es VINCIS?",
+            "answer": "VINCIS conecta marcas globales con creadores de IA. Las marcas encuentran los creadores adecuados para anuncios; los creadores acceden a proyectos comerciales reales en todo el mundo."
+          },
+          {
+            "question": "¿Registrar una cuenta cuesta dinero?",
+            "answer": "El registro, la navegación y la configuración del perfil son gratuitos. Algunas funciones profesionales de IA y la membresía premium requieren una actualización."
+          },
+          {
+            "question": "¿Las marcas y los creadores necesitan cuentas separadas?",
+            "answer": "Sí, un correo electrónico corresponde a una identidad. Al registrarte, eliges Marca o Creador, y no puedes cambiar más tarde en la misma cuenta. Usa correos electrónicos separados si necesitas ambos roles."
+          }
+        ]
+      },
+      {
+        "id": "publish",
+        "title": "Publicación de proyectos",
+        "items": [
+          {
+            "question": "¿Cómo publico un proyecto?",
+            "answer": "Abre el Portal de Marca, haz clic en \"Publicar proyecto\" y completa los requisitos, presupuesto y cronograma. La IA ayuda a estructurar el resumen."
+          },
+          {
+            "question": "¿Por qué la IA sugiere un presupuesto?",
+            "answer": "VINCIS no utiliza cotizaciones aleatorias. El motor evalúa la complejidad, duración, costo de IA, horas del creador, revisiones y acuerdos históricos."
+          },
+          {
+            "question": "¿Qué pasa si mi presupuesto está por debajo de la sugerencia de IA?",
+            "answer": "Aún puedes publicar. Un presupuesto más bajo puede reducir los creadores coincidentes, disminuir el éxito de coincidencia y aumentar el tiempo de espera."
+          },
+          {
+            "question": "¿Por qué solo puedo ejecutar tres proyectos a la vez?",
+            "answer": "Para proteger la calidad y la capacidad del creador, cada marca puede ejecutar hasta tres proyectos activos por defecto."
+          }
+        ]
+      },
+      {
+        "id": "creators",
+        "title": "Creadores",
+        "items": [
+          {
+            "question": "¿Cómo obtienen proyectos los creadores?",
+            "answer": "Después de que se publica un proyecto, la IA empareja a los creadores por habilidad, portafolio, tarifa, región y ajuste. Las marcas también pueden invitar directamente."
+          },
+          {
+            "question": "¿Puedo rechazar un proyecto?",
+            "answer": "Sí. Rechazar no penaliza tu cuenta, pero compartir un motivo ayuda a la IA a mejorar futuras recomendaciones."
+          },
+          {
+            "question": "¿Cómo reciben pago los creadores?",
+            "answer": "Después de que la marca confirma la entrega, los fondos en custodia se liberan y se liquidan en la cuenta del creador."
+          }
+        ]
+      },
+      {
+        "id": "ai",
+        "title": "Funciones de IA",
+        "items": [
+          {
+            "question": "¿La IA hará todo el anuncio por mí?",
+            "answer": "No. La IA actúa como un asesor creativo: resumen, direcciones, opciones de producción y soporte de eficiencia. El trabajo final lo realizan creadores profesionales."
+          },
+          {
+            "question": "¿Por qué la IA recomendó a este creador?",
+            "answer": "La IA evalúa datos reales en estas dimensiones, no en un ranking aleatorio:",
+            "bullets": [
+              "Capacidad profesional",
+              "Historial de portafolio",
+              "Experiencia en proyectos",
+              "Tasa de cierre",
+              "Entrega a tiempo",
+              "Calificaciones de usuarios",
+              "Disponibilidad actual",
+              "Ajuste del proyecto"
+            ]
+          },
+          {
+            "question": "¿Por qué Moodboard está limitado a Profesional?",
+            "answer": "AI Moodboard, Storyboard y Prompt Package requieren un cálculo significativo. Profesional desbloquea estas herramientas avanzadas de planificación."
+          }
+        ]
+      },
+      {
+        "id": "payment",
+        "title": "Pago y liquidación",
+        "items": [
+          {
+            "question": "¿Por qué se requiere custodia?",
+            "answer": "La custodia protege a ambas partes. Las marcas no pagan antes de la entrega final; los creadores no se preocupan por el impago después de la entrega."
+          },
+          {
+            "question": "¿Cómo cobra la plataforma?",
+            "answer": "VINCIS utiliza una tarifa de servicio de plataforma transparente que cubre análisis de IA, emparejamiento, custodia, centro de revisión, gestión de archivos y operaciones."
+          },
+          {
+            "question": "¿Por qué hay una tarifa de servicio de plataforma?",
+            "answer": "Más allá del emparejamiento, VINCIS proporciona toda la infraestructura de producción: herramientas de IA, revisión en línea, control de versiones, pagos globales, seguridad y gestión de proyectos."
+          }
+        ]
+      },
+      {
+        "id": "partners",
+        "title": "Socios",
+        "items": [
+          {
+            "question": "¿Cómo me uno al Programa de Socios?",
+            "answer": "Después de la aprobación, recibes un enlace de referencia o un código de invitación. Las referencias de marcas exitosas ganan recompensas en la plataforma."
+          },
+          {
+            "question": "¿Cómo ganan comisión los socios?",
+            "answer": "Las recompensas se calculan a partir de acuerdos completados. Todas las ganancias de los socios provienen de la tarifa de servicio de la plataforma, nunca se suman al gasto de la marca ni se deducen del pago del creador."
+          }
+        ]
+      }
+    ],
+    "cta": {
+      "title": "¿No encontraste tu respuesta?",
+      "contactLabel": "Preguntar al asistente de IA Lucien"
+    },
+    "labels": {
+      "questionCount": "{count} preguntas",
+      "totalQuestions": "{count} preguntas en total"
+    },
+    "publicLucien": {
+      "welcome": "Hola, soy Lucien. Antes de que inicies sesión, puedo responder preguntas comunes sobre registro, publicación, pagos y el programa de socios.",
+      "identity": {
+        "guest": "Invitado",
+        "brand": "Marca",
+        "creator": "Creador",
+        "admin": "Admin",
+        "support": "Soporte"
+      },
+      "inputPlaceholder": "Pregunta a Lucien…",
+      "close": "Cerrar",
+      "loading": "Lucien está pensando…",
+      "unavailable": "Lucien está temporalmente no disponible. Por favor, intenta de nuevo más tarde.",
+      "requestFailed": "La solicitud a Lucien falló",
+      "loginHint": "Inicia sesión para el asistente completo de Lucien con contexto de proyecto y cuenta.",
+      "loginLabel": "Iniciar sesión en VINCIS",
+      "suggestions": [
+        "¿Qué es VINCIS?",
+        "¿Cómo publico un proyecto?",
+        "¿Qué es el pago en custodia?",
+        "¿Por qué Moodboard está limitado a Profesional?"
+      ]
+    }
+  }
+}

@@ -1,0 +1,68 @@
+{
+  "en": {
+    "title": "Contact",
+    "subtitle": "Tell us about your next campaign.",
+    "emailLabel": "hello@vincis.app",
+    "cta": "Start a brief instead"
+  },
+  "zh-CN": {
+    "title": "联系",
+    "subtitle": "告诉我们你的下一个 Campaign。",
+    "emailLabel": "hello@vincis.app",
+    "cta": "直接开始 Brief"
+  },
+  "ja": {
+    "title": "お問い合わせ",
+    "subtitle": "次のキャンペーンについて教えてください。",
+    "emailLabel": "hello@vincis.app",
+    "cta": "代わりにブリーフを始める"
+  },
+  "zh-TW": {
+    "title": "聯繫",
+    "subtitle": "告訴我們你的下一個 Campaign。",
+    "emailLabel": "hello@vincis.app",
+    "cta": "直接開始 Brief"
+  },
+  "ko": {
+    "title": "연락처",
+    "subtitle": "다음 캠페인에 대해 알려주세요.",
+    "emailLabel": "hello@vincis.app",
+    "cta": "대신 간단한 브리프 시작하기"
+  },
+  "ms": {
+    "title": "Hubungi",
+    "subtitle": "Kongsi tentang kempen anda yang seterusnya.",
+    "emailLabel": "hello@vincis.app",
+    "cta": "Mulakan ringkasan sebaliknya"
+  },
+  "km": {
+    "title": "ទំនាក់ទំនង",
+    "subtitle": "ប្រាប់ពួកយើងអំពីយុទ្ធនាការបន្ទាប់របស់អ្នក។",
+    "emailLabel": "hello@vincis.app",
+    "cta": "ចាប់ផ្តើមការពិពណ៌នាដោយខ្លីមួយ"
+  },
+  "th": {
+    "title": "ติดต่อ",
+    "subtitle": "บอกเราเกี่ยวกับแคมเปญถัดไปของคุณ.",
+    "emailLabel": "hello@vincis.app",
+    "cta": "เริ่มต้นการสรุปแทน"
+  },
+  "vi": {
+    "title": "Liên hệ",
+    "subtitle": "Hãy cho chúng tôi biết về chiến dịch tiếp theo của bạn.",
+    "emailLabel": "hello@vincis.app",
+    "cta": "Bắt đầu một bản tóm tắt thay thế"
+  },
+  "fr": {
+    "title": "Contact",
+    "subtitle": "Parlez-nous de votre prochaine campagne.",
+    "emailLabel": "hello@vincis.app",
+    "cta": "Commencez un brief à la place"
+  },
+  "es": {
+    "title": "Contacto",
+    "subtitle": "Cuéntanos sobre tu próxima campaña.",
+    "emailLabel": "hello@vincis.app",
+    "cta": "Iniciar un breve en su lugar"
+  }
+}

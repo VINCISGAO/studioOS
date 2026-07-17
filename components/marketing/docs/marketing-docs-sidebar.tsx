@@ -10,10 +10,10 @@ import { MARKETING_SITE_NAV_ICONS } from "@/lib/marketing/marketing-site-nav-ico
 import { marketingSiteNavItems, marketingSiteNavHref } from "@/lib/marketing/marketing-site-nav";
 import { marketingHomeHref } from "@/lib/marketing/localized-href";
 import { cn } from "@/lib/utils";
-import type { Locale } from "@/lib/i18n";
+import type { MarketingLocale } from "@/lib/i18n";
 
 type MarketingDocsSidebarProps = {
-  locale: Locale;
+  locale: MarketingLocale;
   active: MarketingDocsNavKey;
 };
 

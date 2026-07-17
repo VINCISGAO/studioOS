@@ -1,0 +1,794 @@
+{
+  "en": {
+    "welcome": "Welcome back",
+    "brandLoginTitle": "Welcome back",
+    "welcomeSubtitleBrand": "Sign in in three simple steps.",
+    "creatorWelcome": "Welcome back",
+    "creatorWelcomeSubtitle": "Sign in in three simple steps.",
+    "brandTab": "Brand",
+    "creatorTab": "Creator",
+    "brandHeroLine1": "Connect global creators",
+    "brandHeroLine2": "Creativity without borders",
+    "brandHeroHighlight": "Creativity without borders",
+    "brandHeroSubtitle": "AI matches global creators — from brief and production to review and delivery, all in one place.",
+    "brandFeatures": [
+      {
+        "title": "Precision creator matching",
+        "description": "Find the right team automatically by industry, style, budget, and portfolio history.",
+        "icon": "target"
+      },
+      {
+        "title": "Cinema-grade ad production",
+        "description": "Access top global directors, cinematographers, and AIGC creator teams.",
+        "icon": "clapperboard"
+      },
+      {
+        "title": "Escrow payment protection",
+        "description": "Funds held in escrow, online review, and verified delivery — transparent at every step.",
+        "icon": "shield"
+      }
+    ],
+    "creatorHeroLine1": "Creativity deserves to be seen",
+    "creatorHeroLine2": "Talent deserves to be fulfilled",
+    "creatorHeroHighlightLine1": "seen",
+    "creatorHeroHighlightLine2": "fulfilled",
+    "creatorHeroSubtitle": "Join a global creator community and connect great work with more opportunities.",
+    "creatorFeatures": [
+      {
+        "title": "Global projects",
+        "description": "Collaborate with brands around the world",
+        "icon": "users"
+      },
+      {
+        "title": "Showcase your work",
+        "description": "Build your portfolio and get more exposure",
+        "icon": "trending"
+      },
+      {
+        "title": "Fair collaboration",
+        "description": "Clear workflows that protect creator rights",
+        "icon": "shield"
+      }
+    ],
+    "brandLogos": [
+      "GOOGLE",
+      "COCA-COLA",
+      "SAMSUNG",
+      "NIKE"
+    ],
+    "email": "Enter email",
+    "emailPlaceholder": "you@company.com",
+    "password": "Password",
+    "passwordPlaceholder": "Enter password",
+    "rememberMe": "Remember me",
+    "forgotPassword": "Forgot password?",
+    "login": "Sign in",
+    "socialDivider": "Or continue with",
+    "noAccount": "",
+    "signUp": "",
+    "configError": "Add Supabase environment keys to enable authentication.",
+    "unsupported": "This login provider is not configured yet.",
+    "wrongRoleHint": "This account belongs to the other role. Switch tabs or use a matching demo account.",
+    "rights": "All rights reserved."
+  },
+  "zh-CN": {
+    "welcome": "欢迎回来",
+    "brandLoginTitle": "欢迎回来",
+    "welcomeSubtitleBrand": "简单三步完成登录",
+    "creatorWelcome": "欢迎回来",
+    "creatorWelcomeSubtitle": "简单三步完成登录",
+    "brandTab": "品牌方",
+    "creatorTab": "创作者",
+    "brandHeroLine1": "连接全球创作者",
+    "brandHeroLine2": "让创意没有边界",
+    "brandHeroHighlight": "让创意没有边界",
+    "brandHeroSubtitle": "从想法到交付，一站完成高质量广告制作",
+    "brandFeatures": [
+      {
+        "title": "精准匹配创作者",
+        "description": "根据行业、风格、预算与历史作品，自动找到最适合你的团队。",
+        "icon": "target"
+      },
+      {
+        "title": "电影级广告制作",
+        "description": "覆盖全球优秀导演、摄影、AIGC创作者团队。",
+        "icon": "clapperboard"
+      },
+      {
+        "title": "托管支付保障",
+        "description": "资金托管、在线审片、验收交付，每一步都透明、安全。",
+        "icon": "shield"
+      }
+    ],
+    "creatorHeroLine1": "创意值得被看见",
+    "creatorHeroLine2": "才华值得被成就",
+    "creatorHeroHighlightLine1": "被看见",
+    "creatorHeroHighlightLine2": "被成就",
+    "creatorHeroSubtitle": "加入全球创作者社区，让优秀作品连接更多可能",
+    "creatorFeatures": [
+      {
+        "title": "连接全球项目",
+        "description": "与世界各地的品牌方合作",
+        "icon": "users"
+      },
+      {
+        "title": "展示你的作品",
+        "description": "建立个人作品集，获得更多曝光",
+        "icon": "trending"
+      },
+      {
+        "title": "公平透明的合作",
+        "description": "清晰流程，保障创作者权益",
+        "icon": "shield"
+      }
+    ],
+    "brandLogos": [
+      "GOOGLE",
+      "COCA-COLA",
+      "SAMSUNG",
+      "NIKE"
+    ],
+    "email": "输入邮箱",
+    "emailPlaceholder": "you@company.com",
+    "password": "密码",
+    "passwordPlaceholder": "输入密码",
+    "rememberMe": "记住我",
+    "forgotPassword": "忘记密码？",
+    "login": "登录",
+    "socialDivider": "或使用其他方式快速进入",
+    "noAccount": "",
+    "signUp": "",
+    "configError": "请配置 Supabase 环境密钥以启用登录。",
+    "unsupported": "该登录方式尚未配置。",
+    "wrongRoleHint": "该账号属于另一种身份，请切换标签或使用对应演示账号。",
+    "rights": "保留所有权利。"
+  },
+  "zh-TW": {
+    "welcome": "歡迎回來",
+    "brandLoginTitle": "歡迎回來",
+    "welcomeSubtitleBrand": "簡單三步完成登入",
+    "creatorWelcome": "歡迎回來",
+    "creatorWelcomeSubtitle": "簡單三步完成登入",
+    "brandTab": "品牌方",
+    "creatorTab": "創作者",
+    "brandHeroLine1": "連接全球創作者",
+    "brandHeroLine2": "讓創意沒有邊界",
+    "brandHeroHighlight": "讓創意沒有邊界",
+    "brandHeroSubtitle": "從想法到交付，一站完成高品質廣告製作",
+    "brandFeatures": [
+      {
+        "title": "精準匹配創作者",
+        "description": "根據行業、風格、預算與歷史作品，自動找到最適合你的團隊。",
+        "icon": "target"
+      },
+      {
+        "title": "電影級廣告製作",
+        "description": "覆蓋全球優秀導演、攝影、AIGC創作者團隊。",
+        "icon": "clapperboard"
+      },
+      {
+        "title": "托管支付保障",
+        "description": "資金托管、在線審片、驗收交付，每一步都透明、安全。",
+        "icon": "shield"
+      }
+    ],
+    "creatorHeroLine1": "創意值得被看見",
+    "creatorHeroLine2": "才華值得被成就",
+    "creatorHeroHighlightLine1": "被看見",
+    "creatorHeroHighlightLine2": "被成就",
+    "creatorHeroSubtitle": "加入全球創作者社區，讓優秀作品連接更多可能",
+    "creatorFeatures": [
+      {
+        "title": "連接全球項目",
+        "description": "與世界各地的品牌方合作",
+        "icon": "users"
+      },
+      {
+        "title": "展示你的作品",
+        "description": "建立個人作品集，獲得更多曝光",
+        "icon": "trending"
+      },
+      {
+        "title": "公平透明的合作",
+        "description": "清晰流程，保障創作者權益",
+        "icon": "shield"
+      }
+    ],
+    "brandLogos": [
+      "GOOGLE",
+      "COCA-COLA",
+      "SAMSUNG",
+      "NIKE"
+    ],
+    "email": "輸入郵箱",
+    "emailPlaceholder": "you@company.com",
+    "password": "密碼",
+    "passwordPlaceholder": "輸入密碼",
+    "rememberMe": "記住我",
+    "forgotPassword": "忘記密碼？",
+    "login": "登入",
+    "socialDivider": "或使用其他方式快速進入",
+    "noAccount": "",
+    "signUp": "",
+    "configError": "請配置 Supabase 環境密鑰以啟用登入。",
+    "unsupported": "該登入方式尚未配置。",
+    "wrongRoleHint": "該帳號屬於另一種身份，請切換標籤或使用對應演示帳號。",
+    "rights": "保留所有權利。"
+  },
+  "ja": {
+    "welcome": "お帰りなさい",
+    "brandLoginTitle": "お帰りなさい",
+    "welcomeSubtitleBrand": "3つの簡単なステップでサインイン。",
+    "creatorWelcome": "お帰りなさい",
+    "creatorWelcomeSubtitle": "3つの簡単なステップでサインイン。",
+    "brandTab": "ブランド",
+    "creatorTab": "クリエイター",
+    "brandHeroLine1": "グローバルクリエイターをつなぐ",
+    "brandHeroLine2": "国境を越えた創造性",
+    "brandHeroHighlight": "国境を越えた創造性",
+    "brandHeroSubtitle": "AIがグローバルクリエイターをマッチング — ブリーフから制作、レビュー、納品まで、すべてが一つの場所で。",
+    "brandFeatures": [
+      {
+        "title": "精密なクリエイターマッチング",
+        "description": "業界、スタイル、予算、ポートフォリオ履歴に基づいて自動的に適切なチームを見つけます。",
+        "icon": "target"
+      },
+      {
+        "title": "シネマグレードの広告制作",
+        "description": "トップのグローバルディレクター、撮影監督、AIGCクリエイターチームにアクセス。",
+        "icon": "clapperboard"
+      },
+      {
+        "title": "エスクロー支払い保護",
+        "description": "エスクローに保留された資金、オンラインレビュー、確認済みの納品 — すべてのステップで透明性を確保。",
+        "icon": "shield"
+      }
+    ],
+    "creatorHeroLine1": "創造性は見られるに値する",
+    "creatorHeroLine2": "才能は実現されるに値する",
+    "creatorHeroHighlightLine1": "見られる",
+    "creatorHeroHighlightLine2": "実現される",
+    "creatorHeroSubtitle": "グローバルクリエイターコミュニティに参加し、素晴らしい作品をより多くの機会とつなげましょう。",
+    "creatorFeatures": [
+      {
+        "title": "グローバルプロジェクト",
+        "description": "世界中のブランドとコラボレーション",
+        "icon": "users"
+      },
+      {
+        "title": "作品を披露",
+        "description": "ポートフォリオを構築し、より多くの露出を得る",
+        "icon": "trending"
+      },
+      {
+        "title": "公正なコラボレーション",
+        "description": "クリエイターの権利を保護する明確なワークフロー",
+        "icon": "shield"
+      }
+    ],
+    "brandLogos": [
+      "GOOGLE",
+      "COCA-COLA",
+      "SAMSUNG",
+      "NIKE"
+    ],
+    "email": "メールアドレスを入力",
+    "emailPlaceholder": "you@company.com",
+    "password": "パスワード",
+    "passwordPlaceholder": "パスワードを入力",
+    "rememberMe": "次回から自動的にログイン",
+    "forgotPassword": "パスワードを忘れましたか？",
+    "login": "サインイン",
+    "socialDivider": "または、次の方法で続行",
+    "noAccount": "",
+    "signUp": "",
+    "configError": "認証を有効にするためにSupabase環境キーを追加してください。",
+    "unsupported": "このログインプロバイダーはまだ設定されていません。",
+    "wrongRoleHint": "このアカウントは別の役割に属しています。タブを切り替えるか、一致するデモアカウントを使用してください。",
+    "rights": "全著作権所有。"
+  },
+  "ko": {
+    "welcome": "다시 오신 것을 환영합니다",
+    "brandLoginTitle": "다시 오신 것을 환영합니다",
+    "welcomeSubtitleBrand": "세 가지 간단한 단계로 로그인하세요.",
+    "creatorWelcome": "다시 오신 것을 환영합니다",
+    "creatorWelcomeSubtitle": "세 가지 간단한 단계로 로그인하세요.",
+    "brandTab": "브랜드",
+    "creatorTab": "크리에이터",
+    "brandHeroLine1": "글로벌 크리에이터 연결",
+    "brandHeroLine2": "경계를 넘는 창의성",
+    "brandHeroHighlight": "경계를 넘는 창의성",
+    "brandHeroSubtitle": "AI가 글로벌 크리에이터를 매칭합니다 — 브리프 및 제작에서 리뷰 및 배달까지, 모든 것이 한 곳에 있습니다.",
+    "brandFeatures": [
+      {
+        "title": "정확한 크리에이터 매칭",
+        "description": "산업, 스타일, 예산 및 포트폴리오 이력에 따라 자동으로 적합한 팀을 찾습니다.",
+        "icon": "target"
+      },
+      {
+        "title": "영화 수준의 광고 제작",
+        "description": "최고의 글로벌 감독, 촬영 감독 및 AIGC 크리에이터 팀에 접근하세요.",
+        "icon": "clapperboard"
+      },
+      {
+        "title": "에스크로 결제 보호",
+        "description": "에스크로에 보관된 자금, 온라인 리뷰 및 검증된 배달 — 모든 단계에서 투명합니다.",
+        "icon": "shield"
+      }
+    ],
+    "creatorHeroLine1": "창의성은 보여질 자격이 있습니다",
+    "creatorHeroLine2": "재능은 실현될 자격이 있습니다",
+    "creatorHeroHighlightLine1": "보여질",
+    "creatorHeroHighlightLine2": "실현될",
+    "creatorHeroSubtitle": "글로벌 크리에이터 커뮤니티에 참여하고 훌륭한 작업을 더 많은 기회와 연결하세요.",
+    "creatorFeatures": [
+      {
+        "title": "글로벌 프로젝트",
+        "description": "전 세계 브랜드와 협업하세요",
+        "icon": "users"
+      },
+      {
+        "title": "작품 전시",
+        "description": "포트폴리오를 구축하고 더 많은 노출을 얻으세요",
+        "icon": "trending"
+      },
+      {
+        "title": "공정한 협업",
+        "description": "크리에이터 권리를 보호하는 명확한 워크플로우",
+        "icon": "shield"
+      }
+    ],
+    "brandLogos": [
+      "구글",
+      "코카콜라",
+      "삼성",
+      "나이키"
+    ],
+    "email": "이메일 입력",
+    "emailPlaceholder": "you@company.com",
+    "password": "비밀번호",
+    "passwordPlaceholder": "비밀번호 입력",
+    "rememberMe": "로그인 상태 유지",
+    "forgotPassword": "비밀번호를 잊으셨나요?",
+    "login": "로그인",
+    "socialDivider": "또는 다음으로 계속하세요",
+    "noAccount": "",
+    "signUp": "",
+    "configError": "인증을 활성화하려면 Supabase 환경 키를 추가하세요.",
+    "unsupported": "이 로그인 제공자는 아직 구성되지 않았습니다.",
+    "wrongRoleHint": "이 계정은 다른 역할에 속합니다. 탭을 전환하거나 일치하는 데모 계정을 사용하세요.",
+    "rights": "모든 권리 보유."
+  },
+  "ms": {
+    "welcome": "Selamat datang kembali",
+    "brandLoginTitle": "Selamat datang kembali",
+    "welcomeSubtitleBrand": "Log masuk dalam tiga langkah mudah.",
+    "creatorWelcome": "Selamat datang kembali",
+    "creatorWelcomeSubtitle": "Log masuk dalam tiga langkah mudah.",
+    "brandTab": "Jenama",
+    "creatorTab": "Pencipta",
+    "brandHeroLine1": "Sambungkan pencipta global",
+    "brandHeroLine2": "Kreativiti tanpa sempadan",
+    "brandHeroHighlight": "Kreativiti tanpa sempadan",
+    "brandHeroSubtitle": "AI memadankan pencipta global — dari ringkasan dan pengeluaran hingga semakan dan penghantaran, semuanya dalam satu tempat.",
+    "brandFeatures": [
+      {
+        "title": "Padanan pencipta yang tepat",
+        "description": "Cari pasukan yang tepat secara automatik mengikut industri, gaya, bajet, dan sejarah portfolio.",
+        "icon": "target"
+      },
+      {
+        "title": "Pengeluaran iklan tahap pawagam",
+        "description": "Akses pengarah, sinematografer, dan pasukan pencipta AIGC terkemuka di dunia.",
+        "icon": "clapperboard"
+      },
+      {
+        "title": "Perlindungan pembayaran escrow",
+        "description": "Dana disimpan dalam escrow, semakan dalam talian, dan penghantaran yang disahkan — telus pada setiap langkah.",
+        "icon": "shield"
+      }
+    ],
+    "creatorHeroLine1": "Kreativiti layak untuk dilihat",
+    "creatorHeroLine2": "Bakat layak untuk dipenuhi",
+    "creatorHeroHighlightLine1": "dilihat",
+    "creatorHeroHighlightLine2": "dipenuhi",
+    "creatorHeroSubtitle": "Sertai komuniti pencipta global dan sambungkan kerja hebat dengan lebih banyak peluang.",
+    "creatorFeatures": [
+      {
+        "title": "Projek global",
+        "description": "Berkolaborasi dengan jenama di seluruh dunia",
+        "icon": "users"
+      },
+      {
+        "title": "Tampilkan kerja anda",
+        "description": "Bina portfolio anda dan dapatkan lebih banyak pendedahan",
+        "icon": "trending"
+      },
+      {
+        "title": "Kolaborasi yang adil",
+        "description": "Aliran kerja yang jelas yang melindungi hak pencipta",
+        "icon": "shield"
+      }
+    ],
+    "brandLogos": [
+      "GOOGLE",
+      "COCA-COLA",
+      "SAMSUNG",
+      "NIKE"
+    ],
+    "email": "Masukkan emel",
+    "emailPlaceholder": "anda@syarikat.com",
+    "password": "Kata laluan",
+    "passwordPlaceholder": "Masukkan kata laluan",
+    "rememberMe": "Ingat saya",
+    "forgotPassword": "Lupa kata laluan?",
+    "login": "Log masuk",
+    "socialDivider": "Atau teruskan dengan",
+    "noAccount": "",
+    "signUp": "",
+    "configError": "Tambah kunci persekitaran Supabase untuk membolehkan pengesahan.",
+    "unsupported": "Penyedia log masuk ini belum dikonfigurasikan.",
+    "wrongRoleHint": "Akaun ini milik peranan lain. Tukar tab atau gunakan akaun demo yang sepadan.",
+    "rights": "Semua hak terpelihara."
+  },
+  "th": {
+    "welcome": "ยินดีต้อนรับกลับ",
+    "brandLoginTitle": "ยินดีต้อนรับกลับ",
+    "welcomeSubtitleBrand": "ลงชื่อเข้าใช้ในสามขั้นตอนง่ายๆ",
+    "creatorWelcome": "ยินดีต้อนรับกลับ",
+    "creatorWelcomeSubtitle": "ลงชื่อเข้าใช้ในสามขั้นตอนง่ายๆ",
+    "brandTab": "แบรนด์",
+    "creatorTab": "ผู้สร้าง",
+    "brandHeroLine1": "เชื่อมต่อผู้สร้างทั่วโลก",
+    "brandHeroLine2": "ความคิดสร้างสรรค์ไร้พรมแดน",
+    "brandHeroHighlight": "ความคิดสร้างสรรค์ไร้พรมแดน",
+    "brandHeroSubtitle": "AI เชื่อมต่อผู้สร้างทั่วโลก — ตั้งแต่การสรุปและการผลิตไปจนถึงการตรวจสอบและการส่งมอบ ทุกอย่างในที่เดียว",
+    "brandFeatures": [
+      {
+        "title": "การจับคู่ผู้สร้างที่แม่นยำ",
+        "description": "ค้นหาทีมที่เหมาะสมโดยอัตโนมัติตามอุตสาหกรรม สไตล์ งบประมาณ และประวัติผลงาน",
+        "icon": "target"
+      },
+      {
+        "title": "การผลิตโฆษณาในระดับโรงภาพยนตร์",
+        "description": "เข้าถึงผู้กำกับระดับโลก ช่างภาพยนตร์ และทีมผู้สร้าง AIGC ชั้นนำ",
+        "icon": "clapperboard"
+      },
+      {
+        "title": "การป้องกันการชำระเงินแบบ Escrow",
+        "description": "เงินจะถูกเก็บในบัญชี Escrow การตรวจสอบออนไลน์ และการส่งมอบที่ได้รับการตรวจสอบ — โปร่งใสในทุกขั้นตอน",
+        "icon": "shield"
+      }
+    ],
+    "creatorHeroLine1": "ความคิดสร้างสรรค์สมควรที่จะได้รับการมองเห็น",
+    "creatorHeroLine2": "ความสามารถสมควรที่จะได้รับการเติมเต็ม",
+    "creatorHeroHighlightLine1": "มองเห็น",
+    "creatorHeroHighlightLine2": "เติมเต็ม",
+    "creatorHeroSubtitle": "เข้าร่วมชุมชนผู้สร้างทั่วโลกและเชื่อมโยงผลงานที่ยอดเยี่ยมกับโอกาสมากมาย",
+    "creatorFeatures": [
+      {
+        "title": "โครงการระดับโลก",
+        "description": "ร่วมมือกับแบรนด์ทั่วโลก",
+        "icon": "users"
+      },
+      {
+        "title": "แสดงผลงานของคุณ",
+        "description": "สร้างผลงานของคุณและได้รับการเปิดเผยมากขึ้น",
+        "icon": "trending"
+      },
+      {
+        "title": "การร่วมมืออย่างเป็นธรรม",
+        "description": "กระบวนการที่ชัดเจนที่ปกป้องสิทธิของผู้สร้าง",
+        "icon": "shield"
+      }
+    ],
+    "brandLogos": [
+      "GOOGLE",
+      "COCA-COLA",
+      "SAMSUNG",
+      "NIKE"
+    ],
+    "email": "กรอกอีเมล",
+    "emailPlaceholder": "you@company.com",
+    "password": "รหัสผ่าน",
+    "passwordPlaceholder": "กรอกรหัสผ่าน",
+    "rememberMe": "จดจำฉัน",
+    "forgotPassword": "ลืมรหัสผ่าน?",
+    "login": "ลงชื่อเข้าใช้",
+    "socialDivider": "หรือดำเนินการต่อด้วย",
+    "noAccount": "",
+    "signUp": "",
+    "configError": "เพิ่มคีย์สภาพแวดล้อม Supabase เพื่อเปิดใช้งานการตรวจสอบสิทธิ์",
+    "unsupported": "ผู้ให้บริการเข้าสู่ระบบนี้ยังไม่ได้รับการกำหนดค่า",
+    "wrongRoleHint": "บัญชีนี้เป็นของบทบาทอื่น เปลี่ยนแท็บหรือใช้บัญชีสาธิตที่ตรงกัน",
+    "rights": "สงวนสิทธิ์ทั้งหมด"
+  },
+  "km": {
+    "welcome": "សូមស្វាគមន៍ត្រឡប់មកវិញ",
+    "brandLoginTitle": "សូមស្វាគមន៍ត្រឡប់មកវិញ",
+    "welcomeSubtitleBrand": "ចុះឈ្មោះក្នុងជំហានសាមញ្ញបី។",
+    "creatorWelcome": "សូមស្វាគមន៍ត្រឡប់មកវិញ",
+    "creatorWelcomeSubtitle": "ចុះឈ្មោះក្នុងជំហានសាមញ្ញបី។",
+    "brandTab": "ម៉ាក",
+    "creatorTab": "អ្នកបង្កើត",
+    "brandHeroLine1": "ភ្ជាប់អ្នកបង្កើតជាសកល",
+    "brandHeroLine2": "ភាពច្នៃប្រឌិតគ្មានព្រំដែន",
+    "brandHeroHighlight": "ភាពច្នៃប្រឌិតគ្មានព្រំដែន",
+    "brandHeroSubtitle": "AI ផ្គូរផ្គងអ្នកបង្កើតជាសកល - ពីការបញ្ជាក់ និងផលិតកម្ម ទៅការពិនិត្យ និងការដឹកជញ្ជូន ទាំងអស់នៅកន្លែងតែមួយ។",
+    "brandFeatures": [
+      {
+        "title": "ការផ្គូរផ្គងអ្នកបង្កើតយ៉ាងត្រឹមត្រូវ",
+        "description": "ស្វែងរកក្រុមដែលត្រឹមត្រូវដោយស្វ័យប្រវត្តិតាមឧស្សាហកម្ម, ស្តាយ, ប្រាក់ចំណូល និងប្រវត្តិផ្ទាំងការងារ។",
+        "icon": "target"
+      },
+      {
+        "title": "ផលិតកម្មពាណិជ្ជកម្មថ្នាក់ស kina",
+        "description": "ចូលដំណើរការទៅកាន់អ្នកដឹកនាំ, អ្នកថត និងក្រុមអ្នកបង្កើត AIGC ដែលល្អបំផុត។",
+        "icon": "clapperboard"
+      },
+      {
+        "title": "ការការពារបង់ប្រាក់ escrow",
+        "description": "ប្រាក់ត្រូវបានរក្សាទុកក្នុង escrow, ការពិនិត្យអនឡាញ និងការដឹកជញ្ជូនដែលបានផ្ទៀងផ្ទាត់ - មានភាពច្បាស់លាស់នៅគ្រប់ជំហាន។",
+        "icon": "shield"
+      }
+    ],
+    "creatorHeroLine1": "ភាពច្នៃប្រឌិតគួរត្រូវបានមើលឃើញ",
+    "creatorHeroLine2": "ទេវតាគួរត្រូវបានបំពេញ",
+    "creatorHeroHighlightLine1": "មើលឃើញ",
+    "creatorHeroHighlightLine2": "បានបំពេញ",
+    "creatorHeroSubtitle": "ចូលរួមជាមួយសហគមន៍អ្នកបង្កើតជាសកល និងភ្ជាប់ការងារល្អជាមួយឱកាសច្រើនទៀត។",
+    "creatorFeatures": [
+      {
+        "title": "គម្រោងសកល",
+        "description": "សហការជាមួយម៉ាកនៅជុំវិញពិភពលោក",
+        "icon": "users"
+      },
+      {
+        "title": "បង្ហាញការងាររបស់អ្នក",
+        "description": "បង្កើតផ្ទាំងការងាររបស់អ្នក និងទទួលបានការបង្ហាញបន្ថែម",
+        "icon": "trending"
+      },
+      {
+        "title": "ការសហការយ៉ាងសមរម្យ",
+        "description": "ដំណើរការដែលច្បាស់លាស់ដែលការពារសិទ្ធិរបស់អ្នកបង្កើត",
+        "icon": "shield"
+      }
+    ],
+    "brandLogos": [
+      "GOOGLE",
+      "COCA-COLA",
+      "SAMSUNG",
+      "NIKE"
+    ],
+    "email": "បញ្ចូលអ៊ីមែល",
+    "emailPlaceholder": "you@company.com",
+    "password": "ពាក្យសម្ងាត់",
+    "passwordPlaceholder": "បញ្ចូលពាក្យសម្ងាត់",
+    "rememberMe": "ចងចាំខ្ញុំ",
+    "forgotPassword": "ភ្លេចពាក្យសម្ងាត់?",
+    "login": "ចុះឈ្មោះ",
+    "socialDivider": "ឬបន្តជាមួយ",
+    "noAccount": "",
+    "signUp": "",
+    "configError": "បន្ថែមកូនសោបរិយាកាស Supabase ដើម្បីអនុញ្ញាតឱ្យមានការផ្ទៀងផ្ទាត់។",
+    "unsupported": "អ្នកផ្គត់ផ្គង់ការចុះឈ្មោះនេះមិនបានកំណត់នៅឡើយទេ។",
+    "wrongRoleHint": "គណនីនេះ thuộc vềតួនាទីផ្សេងទៀត។ ប្ដូរតាបឬប្រើគណនីដេមូដែលផ្គូរផ្គង។",
+    "rights": "សិទ្ធិទាំងអស់បានរក្សាទុក។"
+  },
+  "vi": {
+    "welcome": "Chào mừng trở lại",
+    "brandLoginTitle": "Chào mừng trở lại",
+    "welcomeSubtitleBrand": "Đăng nhập chỉ trong ba bước đơn giản.",
+    "creatorWelcome": "Chào mừng trở lại",
+    "creatorWelcomeSubtitle": "Đăng nhập chỉ trong ba bước đơn giản.",
+    "brandTab": "Thương hiệu",
+    "creatorTab": "Người sáng tạo",
+    "brandHeroLine1": "Kết nối những người sáng tạo toàn cầu",
+    "brandHeroLine2": "Sáng tạo không biên giới",
+    "brandHeroHighlight": "Sáng tạo không biên giới",
+    "brandHeroSubtitle": "AI kết nối những người sáng tạo toàn cầu — từ tóm tắt và sản xuất đến đánh giá và giao hàng, tất cả trong một nơi.",
+    "brandFeatures": [
+      {
+        "title": "Khớp người sáng tạo chính xác",
+        "description": "Tự động tìm đội ngũ phù hợp theo ngành, phong cách, ngân sách và lịch sử danh mục.",
+        "icon": "target"
+      },
+      {
+        "title": "Sản xuất quảng cáo chất lượng điện ảnh",
+        "description": "Truy cập các đạo diễn hàng đầu toàn cầu, nhà quay phim và đội ngũ người sáng tạo AIGC.",
+        "icon": "clapperboard"
+      },
+      {
+        "title": "Bảo vệ thanh toán ký quỹ",
+        "description": "Quỹ được giữ trong ký quỹ, đánh giá trực tuyến và giao hàng đã được xác minh — minh bạch ở mọi bước.",
+        "icon": "shield"
+      }
+    ],
+    "creatorHeroLine1": "Sáng tạo xứng đáng được nhìn thấy",
+    "creatorHeroLine2": "Tài năng xứng đáng được thực hiện",
+    "creatorHeroHighlightLine1": "nhìn thấy",
+    "creatorHeroHighlightLine2": "thực hiện",
+    "creatorHeroSubtitle": "Tham gia cộng đồng người sáng tạo toàn cầu và kết nối công việc tuyệt vời với nhiều cơ hội hơn.",
+    "creatorFeatures": [
+      {
+        "title": "Dự án toàn cầu",
+        "description": "Hợp tác với các thương hiệu trên toàn thế giới",
+        "icon": "users"
+      },
+      {
+        "title": "Trưng bày công việc của bạn",
+        "description": "Xây dựng danh mục của bạn và nhận được nhiều sự chú ý hơn",
+        "icon": "trending"
+      },
+      {
+        "title": "Hợp tác công bằng",
+        "description": "Quy trình làm việc rõ ràng bảo vệ quyền lợi của người sáng tạo",
+        "icon": "shield"
+      }
+    ],
+    "brandLogos": [
+      "GOOGLE",
+      "COCA-COLA",
+      "SAMSUNG",
+      "NIKE"
+    ],
+    "email": "Nhập email",
+    "emailPlaceholder": "you@company.com",
+    "password": "Mật khẩu",
+    "passwordPlaceholder": "Nhập mật khẩu",
+    "rememberMe": "Ghi nhớ tôi",
+    "forgotPassword": "Quên mật khẩu?",
+    "login": "Đăng nhập",
+    "socialDivider": "Hoặc tiếp tục với",
+    "noAccount": "",
+    "signUp": "",
+    "configError": "Thêm khóa môi trường Supabase để kích hoạt xác thực.",
+    "unsupported": "Nhà cung cấp đăng nhập này chưa được cấu hình.",
+    "wrongRoleHint": "Tài khoản này thuộc về vai trò khác. Chuyển đổi tab hoặc sử dụng tài khoản demo phù hợp.",
+    "rights": "Tất cả quyền được bảo lưu."
+  },
+  "fr": {
+    "welcome": "Bienvenue à nouveau",
+    "brandLoginTitle": "Bienvenue à nouveau",
+    "welcomeSubtitleBrand": "Connectez-vous en trois étapes simples.",
+    "creatorWelcome": "Bienvenue à nouveau",
+    "creatorWelcomeSubtitle": "Connectez-vous en trois étapes simples.",
+    "brandTab": "Marque",
+    "creatorTab": "Créateur",
+    "brandHeroLine1": "Connecter des créateurs du monde entier",
+    "brandHeroLine2": "Créativité sans frontières",
+    "brandHeroHighlight": "Créativité sans frontières",
+    "brandHeroSubtitle": "L'IA associe des créateurs du monde entier — de la brief et la production à la révision et la livraison, le tout au même endroit.",
+    "brandFeatures": [
+      {
+        "title": "Correspondance précise des créateurs",
+        "description": "Trouvez automatiquement la bonne équipe par secteur, style, budget et historique de portfolio.",
+        "icon": "target"
+      },
+      {
+        "title": "Production publicitaire de qualité cinéma",
+        "description": "Accédez aux meilleurs réalisateurs, directeurs de la photographie et équipes de créateurs AIGC au monde.",
+        "icon": "clapperboard"
+      },
+      {
+        "title": "Protection de paiement en séquestre",
+        "description": "Fonds détenus en séquestre, révision en ligne et livraison vérifiée — transparent à chaque étape.",
+        "icon": "shield"
+      }
+    ],
+    "creatorHeroLine1": "La créativité mérite d'être vue",
+    "creatorHeroLine2": "Le talent mérite d'être réalisé",
+    "creatorHeroHighlightLine1": "vue",
+    "creatorHeroHighlightLine2": "réalisé",
+    "creatorHeroSubtitle": "Rejoignez une communauté de créateurs mondiale et connectez un excellent travail avec plus d'opportunités.",
+    "creatorFeatures": [
+      {
+        "title": "Projets mondiaux",
+        "description": "Collaborez avec des marques du monde entier",
+        "icon": "users"
+      },
+      {
+        "title": "Mettez en valeur votre travail",
+        "description": "Construisez votre portfolio et obtenez plus d'exposition",
+        "icon": "trending"
+      },
+      {
+        "title": "Collaboration équitable",
+        "description": "Flux de travail clairs qui protègent les droits des créateurs",
+        "icon": "shield"
+      }
+    ],
+    "brandLogos": [
+      "GOOGLE",
+      "COCA-COLA",
+      "SAMSUNG",
+      "NIKE"
+    ],
+    "email": "Entrez l'email",
+    "emailPlaceholder": "vous@entreprise.com",
+    "password": "Mot de passe",
+    "passwordPlaceholder": "Entrez le mot de passe",
+    "rememberMe": "Se souvenir de moi",
+    "forgotPassword": "Mot de passe oublié ?",
+    "login": "Se connecter",
+    "socialDivider": "Ou continuez avec",
+    "noAccount": "",
+    "signUp": "",
+    "configError": "Ajoutez les clés d'environnement Supabase pour activer l'authentification.",
+    "unsupported": "Ce fournisseur de connexion n'est pas encore configuré.",
+    "wrongRoleHint": "Ce compte appartient à l'autre rôle. Changez d'onglet ou utilisez un compte de démonstration correspondant.",
+    "rights": "Tous droits réservés."
+  },
+  "es": {
+    "welcome": "Bienvenido de nuevo",
+    "brandLoginTitle": "Bienvenido de nuevo",
+    "welcomeSubtitleBrand": "Inicia sesión en tres simples pasos.",
+    "creatorWelcome": "Bienvenido de nuevo",
+    "creatorWelcomeSubtitle": "Inicia sesión en tres simples pasos.",
+    "brandTab": "Marca",
+    "creatorTab": "Creador",
+    "brandHeroLine1": "Conecta creadores globales",
+    "brandHeroLine2": "Creatividad sin fronteras",
+    "brandHeroHighlight": "Creatividad sin fronteras",
+    "brandHeroSubtitle": "La IA conecta creadores globales: desde el brief y la producción hasta la revisión y entrega, todo en un solo lugar.",
+    "brandFeatures": [
+      {
+        "title": "Emparejamiento preciso de creadores",
+        "description": "Encuentra automáticamente el equipo adecuado por industria, estilo, presupuesto e historial de portafolio.",
+        "icon": "target"
+      },
+      {
+        "title": "Producción publicitaria de calidad cinematográfica",
+        "description": "Accede a los mejores directores, cinematógrafos y equipos de creadores de AIGC a nivel mundial.",
+        "icon": "clapperboard"
+      },
+      {
+        "title": "Protección de pago en depósito",
+        "description": "Fondos mantenidos en depósito, revisión en línea y entrega verificada: transparente en cada paso.",
+        "icon": "shield"
+      }
+    ],
+    "creatorHeroLine1": "La creatividad merece ser vista",
+    "creatorHeroLine2": "El talento merece ser realizado",
+    "creatorHeroHighlightLine1": "vista",
+    "creatorHeroHighlightLine2": "realizado",
+    "creatorHeroSubtitle": "Únete a una comunidad global de creadores y conecta grandes trabajos con más oportunidades.",
+    "creatorFeatures": [
+      {
+        "title": "Proyectos globales",
+        "description": "Colabora con marcas de todo el mundo",
+        "icon": "users"
+      },
+      {
+        "title": "Muestra tu trabajo",
+        "description": "Construye tu portafolio y obtén más exposición",
+        "icon": "trending"
+      },
+      {
+        "title": "Colaboración justa",
+        "description": "Flujos de trabajo claros que protegen los derechos de los creadores",
+        "icon": "shield"
+      }
+    ],
+    "brandLogos": [
+      "GOOGLE",
+      "COCA-COLA",
+      "SAMSUNG",
+      "NIKE"
+    ],
+    "email": "Ingresa tu correo electrónico",
+    "emailPlaceholder": "tú@empresa.com",
+    "password": "Contraseña",
+    "passwordPlaceholder": "Ingresa la contraseña",
+    "rememberMe": "Recuérdame",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "login": "Iniciar sesión",
+    "socialDivider": "O continúa con",
+    "noAccount": "",
+    "signUp": "",
+    "configError": "Agrega las claves del entorno de Supabase para habilitar la autenticación.",
+    "unsupported": "Este proveedor de inicio de sesión aún no está configurado.",
+    "wrongRoleHint": "Esta cuenta pertenece a otro rol. Cambia de pestañas o usa una cuenta de demostración correspondiente.",
+    "rights": "Todos los derechos reservados."
+  }
+}

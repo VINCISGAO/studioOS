@@ -4,9 +4,9 @@ import {
   ProcessHighlightsSection,
   ProcessStepsSection
 } from "@/components/marketing/process/process-sections";
-import type { Locale } from "@/lib/i18n";
+import type { MarketingLocale } from "@/lib/i18n";
 
-export function ProcessPage({ locale }: { locale: Locale }) {
+export function ProcessPage({ locale }: { locale: MarketingLocale }) {
   return (
     <MarketingDocsShell locale={locale} active="process">
       <ProcessHeroSection locale={locale} />

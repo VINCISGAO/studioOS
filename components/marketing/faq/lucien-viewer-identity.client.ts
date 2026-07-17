@@ -7,7 +7,7 @@ import {
   type PublicLucienAuthUser,
   type PublicLucienViewerIdentity
 } from "@/lib/marketing/public-lucien-identity";
-import type { Locale } from "@/lib/i18n";
+import type { MarketingLocale } from "@/lib/i18n";
 
 export type LucienViewerSnapshot = {
   viewerIdentity: PublicLucienViewerIdentity;
@@ -21,7 +21,7 @@ type ApiResponse<T> = {
 };
 
 type ViewerCache = {
-  locale: Locale | null;
+  locale: MarketingLocale | null;
   snapshot: LucienViewerSnapshot | null;
   inflight: Promise<LucienViewerSnapshot> | null;
 };
@@ -32,7 +32,7 @@ const viewerCache: ViewerCache = {
   inflight: null
 };
 
-function buildGuestLucienViewerSnapshot(locale: Locale): LucienViewerSnapshot {
+function buildGuestLucienViewerSnapshot(locale: MarketingLocale): LucienViewerSnapshot {
   return {
     viewerIdentity: "guest",
     authUser: null,
@@ -41,7 +41,7 @@ function buildGuestLucienViewerSnapshot(locale: Locale): LucienViewerSnapshot {
 }
 
 function buildLucienViewerSnapshot(
-  locale: Locale,
+  locale: MarketingLocale,
   user: PublicLucienAuthUser | null
 ): LucienViewerSnapshot {
   const viewerIdentity = user ? resolvePublicLucienViewerIdentity(user.role) : "guest";
@@ -52,7 +52,7 @@ function buildLucienViewerSnapshot(
   };
 }
 
-async function requestLucienViewerSnapshot(locale: Locale): Promise<LucienViewerSnapshot> {
+async function requestLucienViewerSnapshot(locale: MarketingLocale): Promise<LucienViewerSnapshot> {
   try {
     const response = await fetch("/api/v1/auth/me", {
       credentials: "same-origin",
@@ -70,14 +70,14 @@ async function requestLucienViewerSnapshot(locale: Locale): Promise<LucienViewer
   return buildGuestLucienViewerSnapshot(locale);
 }
 
-export function getLucienViewerSnapshot(locale: Locale): LucienViewerSnapshot {
+export function getLucienViewerSnapshot(locale: MarketingLocale): LucienViewerSnapshot {
   if (viewerCache.locale === locale && viewerCache.snapshot) {
     return viewerCache.snapshot;
   }
   return buildGuestLucienViewerSnapshot(locale);
 }
 
-export function prefetchLucienViewerSnapshot(locale: Locale): Promise<LucienViewerSnapshot> {
+export function prefetchLucienViewerSnapshot(locale: MarketingLocale): Promise<LucienViewerSnapshot> {
   if (viewerCache.locale === locale && viewerCache.snapshot) {
     return Promise.resolve(viewerCache.snapshot);
   }

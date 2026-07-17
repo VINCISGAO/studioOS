@@ -1,0 +1,2444 @@
+{
+  "en": {
+    "nav": {
+      "howItWorks": "How it works",
+      "forBrands": "For Brands",
+      "forCreators": "For Creators",
+      "caseStudies": "Case Studies",
+      "pricing": "Pricing",
+      "login": "Log in",
+      "startProject": "Start a project"
+    },
+    "split": {
+      "panelEyebrow": "Get started",
+      "panelTitle": "Sign in or create an account",
+      "panelSubtitle": "Choose your workspace — brands launch campaigns, creators deliver cinema-grade work.",
+      "welcomeBack": "Welcome back",
+      "loggedInSubtitle": "Continue to your VINCIS workspace.",
+      "brandTab": "Brand",
+      "creatorTab": "Creator",
+      "emailLabel": "Work email",
+      "emailPlaceholder": "you@company.com",
+      "continue": "Continue",
+      "orDivider": "or",
+      "signInBrand": "Brand sign in",
+      "signInCreator": "Creator sign in",
+      "noAccount": "New to VINCIS?",
+      "createAccount": "Create account",
+      "explorePricing": "View pricing",
+      "legalNotice": "By continuing you agree to our Terms and Privacy Policy.",
+      "leftFootnote": "Trusted by global brands for portfolio-first matching, frame-accurate review, and escrow-backed delivery."
+    },
+    "hero": {
+      "eyebrow": "AI-powered · Global collaboration",
+      "titleLine1": "Connecting global brands",
+      "titleHighlight": "",
+      "titleLine2": "with AI creators",
+      "subtitle": "Premium advertising is no longer exclusive to big companies",
+      "primary": "I'm a brand",
+      "secondary": "I'm a creator",
+      "primaryDescription": "Match with vetted AI studios",
+      "secondaryDescription": "Join to get global orders",
+      "trusted": "Built for brand teams shipping paid-social creative at speed",
+      "showreel": "View the workflow",
+      "statBudget": "Starting production budget",
+      "statWindow": "First concept window",
+      "statDelivery": "Delivery and rights standard",
+      "trustMarquee": "TRUSTED BY GLOBAL BRAND TEAMS"
+    },
+    "heroFeatures": [
+      {
+        "title": "Studio matching",
+        "desc": "Vetted teams ranked by portfolio fit",
+        "icon": "users"
+      },
+      {
+        "title": "Review rooms",
+        "desc": "Frame-level notes and approval management",
+        "icon": "play"
+      },
+      {
+        "title": "Escrow workflow",
+        "desc": "Milestone-based payment protection",
+        "icon": "shield"
+      },
+      {
+        "title": "Creative velocity",
+        "desc": "Fewer layers, much higher efficiency",
+        "icon": "zap"
+      }
+    ],
+    "stats": [
+      {
+        "value": "70%",
+        "suffix": "↓",
+        "label": "Typical cost reduction"
+      },
+      {
+        "value": "72h",
+        "suffix": "",
+        "label": "First concept window"
+      },
+      {
+        "value": "4K",
+        "suffix": "",
+        "label": "Delivery standard"
+      },
+      {
+        "value": "2000+",
+        "suffix": "",
+        "label": "Vetted studio network"
+      }
+    ],
+    "logos": {
+      "label": "Production model designed for modern marketing teams",
+      "brands": [
+        "Strategy",
+        "Brief",
+        "Match",
+        "Review",
+        "Escrow",
+        "Delivery",
+        "Rights",
+        "Analytics"
+      ]
+    },
+    "cost": {
+      "title": "Traditional ad production is broken",
+      "body": "Agencies add layers of markup, slow timelines, and opaque revisions.\nWhile brands still need cinema-grade output on paid-social timelines.",
+      "pains": [
+        "High agency markup",
+        "8–12 week timelines",
+        "Limited creator access",
+        "Endless revision loops"
+      ],
+      "compareTitle": "See the difference",
+      "traditional": "Traditional Agency",
+      "studio": "VINCIS",
+      "saveBadge": "Save about 80%",
+      "savings": [
+        "Budget saved about 80%",
+        "Time saved about 95-96%"
+      ],
+      "rows": [
+        {
+          "label": "Average Cost",
+          "trad": "$25,000+",
+          "studio": "$5,000"
+        },
+        {
+          "label": "Production Time",
+          "trad": "8–12 weeks",
+          "studio": "72 hours"
+        },
+        {
+          "label": "Creator Access",
+          "trad": "Through layers",
+          "studio": "Direct network"
+        },
+        {
+          "label": "Revisions",
+          "trad": "Extra fees",
+          "studio": "Included workflow"
+        }
+      ]
+    },
+    "steps": {
+      "eyebrow": "HOW IT WORKS",
+      "title": "From brief to final cut, one production flow",
+      "subtitle": "",
+      "items": [
+        {
+          "num": "01",
+          "title": "Share Your Vision",
+          "desc": "Upload your brief and references in minutes."
+        },
+        {
+          "num": "02",
+          "title": "Match & Plan",
+          "desc": "Portfolio-first matching with vetted studios."
+        },
+        {
+          "num": "03",
+          "title": "Create & Collaborate",
+          "desc": "Production, review, and revisions in one flow."
+        },
+        {
+          "num": "04",
+          "title": "Deliver & Scale",
+          "desc": "Approve final cut and scale winning creative."
+        }
+      ]
+    },
+    "why": {
+      "eyebrow": "Platform position",
+      "titleLine1": "Move commercial production out of manual coordination",
+      "titleLine2": "into one controlled operating system",
+      "subtitle": "VINCIS gives brand teams one place to brief, match studios, review cuts, protect payment, and release campaign-ready assets.",
+      "items": [
+        "Structured brief intake",
+        "Vetted studio matching",
+        "Frame review and escrow delivery"
+      ],
+      "trustLabel": "Built for global brand standards",
+      "brands": [
+        "Google",
+        "Coca-Cola",
+        "Samsung",
+        "Airbnb",
+        "TikTok",
+        "Shopify",
+        "Amazon",
+        "Meta"
+      ]
+    },
+    "work": {
+      "eyebrow": "RECENT WORK",
+      "title": "Work that speaks for itself",
+      "featured": "Featured",
+      "viewAll": "View all case studies"
+    },
+    "features": {
+      "networkTitle": "Creator network",
+      "networkItems": [
+        "Curated creators",
+        "Work certification",
+        "Delivery ratings",
+        "Platform escrow"
+      ],
+      "trustTitle": "Trust & escrow",
+      "trustItems": [
+        "Payment protection",
+        "Review watermarks",
+        "Version history",
+        "Pay when satisfied"
+      ]
+    },
+    "cta": {
+      "title": "Bring your next campaign into a real production system",
+      "subtitle": "Start with a structured brief, matched studios, protected milestones, and a review room your team can actually use.",
+      "primary": "Start your project",
+      "secondary": "Talk to an expert"
+    }
+  },
+  "zh-CN": {
+    "nav": {
+      "howItWorks": "如何运作",
+      "forBrands": "品牌方",
+      "forCreators": "创作者",
+      "caseStudies": "案例",
+      "pricing": "价格",
+      "login": "登录",
+      "startProject": "开始项目"
+    },
+    "split": {
+      "panelEyebrow": "开始使用",
+      "panelTitle": "登录或注册账号",
+      "panelSubtitle": "选择您的工作台 — 品牌方发起项目，创作者交付电影级作品",
+      "welcomeBack": "欢迎回来",
+      "loggedInSubtitle": "继续进入您的 VINCIS 工作台。",
+      "brandTab": "品牌方",
+      "creatorTab": "创作者",
+      "emailLabel": "工作邮箱",
+      "emailPlaceholder": "you@company.com",
+      "continue": "继续",
+      "orDivider": "或",
+      "signInBrand": "品牌方登录",
+      "signInCreator": "创作者登录",
+      "noAccount": "还没有账号？",
+      "createAccount": "立即注册",
+      "explorePricing": "查看价格",
+      "legalNotice": "继续即表示您同意我们的服务条款与隐私政策。",
+      "leftFootnote": "全球品牌信赖 — 作品集优先匹配、帧级审片、托管交付"
+    },
+    "hero": {
+      "eyebrow": "AI 驱动 · 全球协作",
+      "titleLine1": "连接全球品牌",
+      "titleHighlight": "",
+      "titleLine2": "与 AI 创作者",
+      "subtitle": "顶级广告不再是大公司专属",
+      "primary": "我是品牌方",
+      "secondary": "我是创作者",
+      "primaryDescription": "匹配优质 AI 创作者",
+      "secondaryDescription": "入驻获取全球订单",
+      "trusted": "为需要高速投放素材的品牌团队而建",
+      "showreel": "查看流程",
+      "statBudget": "起步制作预算",
+      "statWindow": "首轮方案窗口",
+      "statDelivery": "交付与版权标准",
+      "trustMarquee": "全球品牌信赖之选"
+    },
+    "heroFeatures": [
+      {
+        "title": "创作者匹配",
+        "desc": "按作品集与品类精准推荐",
+        "icon": "users"
+      },
+      {
+        "title": "审片工作室",
+        "desc": "帧级批注，审批管理",
+        "icon": "play"
+      },
+      {
+        "title": "托管流程",
+        "desc": "按里程碑保护付款与交付",
+        "icon": "shield"
+      },
+      {
+        "title": "创意速度",
+        "desc": "减少中间层，大幅提升效率",
+        "icon": "zap"
+      }
+    ],
+    "stats": [
+      {
+        "value": "70%",
+        "suffix": "↓",
+        "label": "典型成本下降"
+      },
+      {
+        "value": "72h",
+        "suffix": "",
+        "label": "首轮方案窗口"
+      },
+      {
+        "value": "4K",
+        "suffix": "",
+        "label": "交付标准"
+      },
+      {
+        "value": "2000+",
+        "suffix": "",
+        "label": "严选创作者网络"
+      }
+    ],
+    "logos": {
+      "label": "为现代市场团队设计的制作模型",
+      "brands": [
+        "策略",
+        "简报",
+        "匹配",
+        "审片",
+        "托管",
+        "交付",
+        "版权",
+        "分析"
+      ]
+    },
+    "cost": {
+      "title": "传统广告制作模式已经失效",
+      "body": "代理层层加价、周期冗长、修改不透明\n品牌方却仍需在付费社交节奏下拿到电影级成片",
+      "pains": [
+        "代理层层加价",
+        "8–12 周制作周期",
+        "创作者触达受限",
+        "修改陷入循环"
+      ],
+      "compareTitle": "一眼看懂差异",
+      "traditional": "传统广告公司",
+      "studio": "VINCIS",
+      "saveBadge": "节省约 99%",
+      "savings": [
+        "经费节约约 99%",
+        "时间节约约 95-96%"
+      ],
+      "rows": [
+        {
+          "label": "平均成本",
+          "trad": "$20,000+",
+          "studio": "$200+"
+        },
+        {
+          "label": "制作周期",
+          "trad": "8–12 周",
+          "studio": "72 小时"
+        },
+        {
+          "label": "创作者触达",
+          "trad": "多层中介",
+          "studio": "直连网络"
+        },
+        {
+          "label": "修改机制",
+          "trad": "额外收费",
+          "studio": "流程内包含"
+        }
+      ]
+    },
+    "steps": {
+      "eyebrow": "如何运作",
+      "title": "从需求简报到成片交付",
+      "subtitle": "",
+      "items": [
+        {
+          "num": "01",
+          "title": "提交需求",
+          "desc": "上传目标、参考素材与投放要求"
+        },
+        {
+          "num": "02",
+          "title": "匹配创作者",
+          "desc": "按品类、风格与作品质量推荐团队"
+        },
+        {
+          "num": "03",
+          "title": "制作协作",
+          "desc": "制作、审片、修改在同一流程推进"
+        },
+        {
+          "num": "04",
+          "title": "成片交付",
+          "desc": "验收最终版本并释放交付资产"
+        }
+      ]
+    },
+    "why": {
+      "eyebrow": "产品定位",
+      "titleLine1": "把广告制作从人工协调",
+      "titleLine2": "升级成一套可控的制作系统",
+      "subtitle": "VINCIS 让品牌团队在一个工作流里完成需求简报、创作者匹配、审片、资金托管和成片交付",
+      "items": [
+        "把需求变成可执行简报",
+        "按作品集匹配创作者",
+        "用审片与托管锁定交付质量"
+      ],
+      "trustLabel": "以全球品牌级标准设计",
+      "brands": [
+        "Google",
+        "Coca-Cola",
+        "Samsung",
+        "Airbnb",
+        "TikTok",
+        "Shopify",
+        "Amazon",
+        "Meta"
+      ]
+    },
+    "work": {
+      "eyebrow": "精选项目",
+      "title": "精选项目",
+      "featured": "精选案例",
+      "viewAll": "查看全部案例"
+    },
+    "features": {
+      "networkTitle": "创作者网络",
+      "networkItems": [
+        "严选创作者",
+        "作品认证",
+        "交付评分",
+        "平台托管"
+      ],
+      "trustTitle": "信任与托管",
+      "trustItems": [
+        "付款保护",
+        "审片版水印",
+        "版本记录",
+        "满意后结算"
+      ]
+    },
+    "cta": {
+      "title": "把下一次广告项目放进制作系统",
+      "subtitle": "从结构化需求、创作者匹配、里程碑托管，到团队可用的审片工作室，一次完成",
+      "primary": "启动投放项目",
+      "secondary": "联系专家"
+    }
+  },
+  "zh-TW": {
+    "nav": {
+      "howItWorks": "如何運作",
+      "forBrands": "品牌方",
+      "forCreators": "創作者",
+      "caseStudies": "案例",
+      "pricing": "價格",
+      "login": "登入",
+      "startProject": "開始專案"
+    },
+    "split": {
+      "panelEyebrow": "開始使用",
+      "panelTitle": "登入或註冊帳號",
+      "panelSubtitle": "選擇您的工作台 — 品牌方發起專案，創作者交付電影級作品",
+      "welcomeBack": "歡迎回來",
+      "loggedInSubtitle": "繼續進入您的 VINCIS 工作台。",
+      "brandTab": "品牌方",
+      "creatorTab": "創作者",
+      "emailLabel": "工作郵箱",
+      "emailPlaceholder": "you@company.com",
+      "continue": "繼續",
+      "orDivider": "或",
+      "signInBrand": "品牌方登入",
+      "signInCreator": "創作者登入",
+      "noAccount": "還沒有帳號？",
+      "createAccount": "立即註冊",
+      "explorePricing": "查看價格",
+      "legalNotice": "繼續即表示您同意我們的服務條款與隱私政策。",
+      "leftFootnote": "全球品牌信賴 — 作品集優先匹配、幀級審片、托管交付"
+    },
+    "hero": {
+      "eyebrow": "AI 驅動 · 全球協作",
+      "titleLine1": "連接全球品牌",
+      "titleHighlight": "",
+      "titleLine2": "與 AI 創作者",
+      "subtitle": "頂級廣告不再是大公司專屬",
+      "primary": "我是品牌方",
+      "secondary": "我是創作者",
+      "primaryDescription": "匹配優質 AI 創作者",
+      "secondaryDescription": "入駐獲取全球訂單",
+      "trusted": "為需要高速投放素材的品牌團隊而建",
+      "showreel": "查看流程",
+      "statBudget": "起步製作預算",
+      "statWindow": "首輪方案窗口",
+      "statDelivery": "交付與版權標準",
+      "trustMarquee": "全球品牌信賴之選"
+    },
+    "heroFeatures": [
+      {
+        "title": "創作者匹配",
+        "desc": "按作品集與品類精準推薦",
+        "icon": "users"
+      },
+      {
+        "title": "審片工作室",
+        "desc": "幀級批註，審批管理",
+        "icon": "play"
+      },
+      {
+        "title": "托管流程",
+        "desc": "按里程碑保護付款與交付",
+        "icon": "shield"
+      },
+      {
+        "title": "創意速度",
+        "desc": "減少中間層，大幅提升效率",
+        "icon": "zap"
+      }
+    ],
+    "stats": [
+      {
+        "value": "70%",
+        "suffix": "↓",
+        "label": "典型成本下降"
+      },
+      {
+        "value": "72h",
+        "suffix": "",
+        "label": "首輪方案窗口"
+      },
+      {
+        "value": "4K",
+        "suffix": "",
+        "label": "交付標準"
+      },
+      {
+        "value": "2000+",
+        "suffix": "",
+        "label": "嚴選創作者網絡"
+      }
+    ],
+    "logos": {
+      "label": "為現代市場團隊設計的製作模型",
+      "brands": [
+        "策略",
+        "簡報",
+        "匹配",
+        "審片",
+        "托管",
+        "交付",
+        "版權",
+        "分析"
+      ]
+    },
+    "cost": {
+      "title": "傳統廣告製作模式已經失效",
+      "body": "代理層層加價、週期冗長、修改不透明\n品牌方卻仍需在付費社交節奏下拿到電影級成片",
+      "pains": [
+        "代理層層加價",
+        "8–12 週製作週期",
+        "創作者觸達受限",
+        "修改陷入循環"
+      ],
+      "compareTitle": "一眼看懂差異",
+      "traditional": "傳統廣告公司",
+      "studio": "VINCIS",
+      "saveBadge": "節省約 99%",
+      "savings": [
+        "經費節約約 99%",
+        "時間節約約 95-96%"
+      ],
+      "rows": [
+        {
+          "label": "平均成本",
+          "trad": "$20,000+",
+          "studio": "$200+"
+        },
+        {
+          "label": "製作週期",
+          "trad": "8–12 週",
+          "studio": "72 小時"
+        },
+        {
+          "label": "創作者觸達",
+          "trad": "多層中介",
+          "studio": "直連網絡"
+        },
+        {
+          "label": "修改機制",
+          "trad": "額外收費",
+          "studio": "流程內包含"
+        }
+      ]
+    },
+    "steps": {
+      "eyebrow": "如何運作",
+      "title": "從需求簡報到成片交付",
+      "subtitle": "",
+      "items": [
+        {
+          "num": "01",
+          "title": "提交需求",
+          "desc": "上傳目標、參考素材與投放要求"
+        },
+        {
+          "num": "02",
+          "title": "匹配創作者",
+          "desc": "按品類、風格與作品質量推薦團隊"
+        },
+        {
+          "num": "03",
+          "title": "製作協作",
+          "desc": "製作、審片、修改在同一流程推進"
+        },
+        {
+          "num": "04",
+          "title": "成片交付",
+          "desc": "驗收最終版本並釋放交付資產"
+        }
+      ]
+    },
+    "why": {
+      "eyebrow": "產品定位",
+      "titleLine1": "把廣告製作從人工協調",
+      "titleLine2": "升級成一套可控的製作系統",
+      "subtitle": "VINCIS 讓品牌團隊在一個工作流裡完成需求簡報、創作者匹配、審片、資金托管和成片交付",
+      "items": [
+        "把需求變成可執行簡報",
+        "按作品集匹配創作者",
+        "用審片與托管鎖定交付質量"
+      ],
+      "trustLabel": "以全球品牌級標準設計",
+      "brands": [
+        "Google",
+        "Coca-Cola",
+        "Samsung",
+        "Airbnb",
+        "TikTok",
+        "Shopify",
+        "Amazon",
+        "Meta"
+      ]
+    },
+    "work": {
+      "eyebrow": "精選專案",
+      "title": "精選專案",
+      "featured": "精選案例",
+      "viewAll": "查看全部案例"
+    },
+    "features": {
+      "networkTitle": "創作者網絡",
+      "networkItems": [
+        "嚴選創作者",
+        "作品認證",
+        "交付評分",
+        "平台托管"
+      ],
+      "trustTitle": "信任與托管",
+      "trustItems": [
+        "付款保護",
+        "審片版水印",
+        "版本記錄",
+        "滿意後結算"
+      ]
+    },
+    "cta": {
+      "title": "把下一次廣告專案放進製作系統",
+      "subtitle": "從結構化需求、創作者匹配、里程碑托管，到團隊可用的審片工作室，一次完成",
+      "primary": "啟動投放專案",
+      "secondary": "聯繫專家"
+    }
+  },
+  "ja": {
+    "nav": {
+      "howItWorks": "仕組み",
+      "forBrands": "ブランド向け",
+      "forCreators": "クリエイター向け",
+      "caseStudies": "ケーススタディ",
+      "pricing": "料金",
+      "login": "ログイン",
+      "startProject": "プロジェクトを開始"
+    },
+    "split": {
+      "panelEyebrow": "始めましょう",
+      "panelTitle": "サインインまたはアカウントを作成",
+      "panelSubtitle": "ワークスペースを選択 — ブランドはキャンペーンを開始し、クリエイターはシネマグレードの作品を提供します。",
+      "welcomeBack": "お帰りなさい",
+      "loggedInSubtitle": "あなたのVINCISワークスペースに進んでください。",
+      "brandTab": "ブランド",
+      "creatorTab": "クリエイター",
+      "emailLabel": "仕事用メール",
+      "emailPlaceholder": "you@company.com",
+      "continue": "続ける",
+      "orDivider": "または",
+      "signInBrand": "ブランドサインイン",
+      "signInCreator": "クリエイターサインイン",
+      "noAccount": "VINCISは初めてですか？",
+      "createAccount": "アカウントを作成",
+      "explorePricing": "料金を見る",
+      "legalNotice": "続行することで、当社の利用規約とプライバシーポリシーに同意したことになります。",
+      "leftFootnote": "ポートフォリオファーストのマッチング、フレーム精度のレビュー、エスクローによる納品で、世界中のブランドに信頼されています。"
+    },
+    "hero": {
+      "eyebrow": "AI駆動 · グローバルコラボレーション",
+      "titleLine1": "グローバルブランドをつなぐ",
+      "titleHighlight": "",
+      "titleLine2": "AIクリエイターと",
+      "subtitle": "プレミアム広告はもはや大企業だけのものではありません",
+      "primary": "私はブランドです",
+      "secondary": "私はクリエイターです",
+      "primaryDescription": "審査済みのAIスタジオとマッチング",
+      "secondaryDescription": "グローバルな注文を受けるために参加",
+      "trusted": "迅速に有料ソーシャルクリエイティブを出荷するブランドチームのために構築されています",
+      "showreel": "ワークフローを見る",
+      "statBudget": "開始生産予算",
+      "statWindow": "最初のコンセプトウィンドウ",
+      "statDelivery": "納品および権利基準",
+      "trustMarquee": "グローバルブランドチームに信頼されています"
+    },
+    "heroFeatures": [
+      {
+        "title": "スタジオマッチング",
+        "desc": "ポートフォリオ適合に基づいてランク付けされた審査済みチーム",
+        "icon": "users"
+      },
+      {
+        "title": "レビュー室",
+        "desc": "フレームレベルのノートと承認管理",
+        "icon": "play"
+      },
+      {
+        "title": "エスクローワークフロー",
+        "desc": "マイルストーンベースの支払い保護",
+        "icon": "shield"
+      },
+      {
+        "title": "クリエイティブの速度",
+        "desc": "層が少なく、はるかに高い効率",
+        "icon": "zap"
+      }
+    ],
+    "stats": [
+      {
+        "value": "70%",
+        "suffix": "↓",
+        "label": "典型的なコスト削減"
+      },
+      {
+        "value": "72h",
+        "suffix": "",
+        "label": "最初のコンセプトウィンドウ"
+      },
+      {
+        "value": "4K",
+        "suffix": "",
+        "label": "納品基準"
+      },
+      {
+        "value": "2000+",
+        "suffix": "",
+        "label": "審査済みスタジオネットワーク"
+      }
+    ],
+    "logos": {
+      "label": "現代のマーケティングチームのために設計された生産モデル",
+      "brands": [
+        "戦略",
+        "ブリーフ",
+        "マッチ",
+        "レビュー",
+        "エスクロー",
+        "納品",
+        "権利",
+        "分析"
+      ]
+    },
+    "cost": {
+      "title": "従来の広告制作は壊れています",
+      "body": "代理店はマークアップの層を追加し、タイムラインを遅くし、不透明な修正を行います。\nブランドは依然として有料ソーシャルタイムラインでシネマグレードの出力を必要としています。",
+      "pains": [
+        "高い代理店マークアップ",
+        "8〜12週間のタイムライン",
+        "限られたクリエイターアクセス",
+        "終わりのない修正ループ"
+      ],
+      "compareTitle": "違いを見てみましょう",
+      "traditional": "従来の代理店",
+      "studio": "VINCIS",
+      "saveBadge": "約80%節約",
+      "savings": [
+        "予算の約80%を節約",
+        "時間の約95〜96%を節約"
+      ],
+      "rows": [
+        {
+          "label": "平均コスト",
+          "trad": "$25,000+",
+          "studio": "$5,000"
+        },
+        {
+          "label": "制作時間",
+          "trad": "8〜12週間",
+          "studio": "72時間"
+        },
+        {
+          "label": "クリエイターアクセス",
+          "trad": "層を通じて",
+          "studio": "直接ネットワーク"
+        },
+        {
+          "label": "修正",
+          "trad": "追加料金",
+          "studio": "含まれるワークフロー"
+        }
+      ]
+    },
+    "steps": {
+      "eyebrow": "仕組み",
+      "title": "ブリーフから最終カットまで、1つの制作フロー",
+      "subtitle": "",
+      "items": [
+        {
+          "num": "01",
+          "title": "ビジョンを共有",
+          "desc": "数分でブリーフと参考資料をアップロードします。"
+        },
+        {
+          "num": "02",
+          "title": "マッチ＆プラン",
+          "desc": "審査済みスタジオとのポートフォリオファーストマッチング。"
+        },
+        {
+          "num": "03",
+          "title": "作成＆コラボレーション",
+          "desc": "制作、レビュー、修正を1つのフローで。"
+        },
+        {
+          "num": "04",
+          "title": "納品＆スケール",
+          "desc": "最終カットを承認し、勝利したクリエイティブをスケールします。"
+        }
+      ]
+    },
+    "why": {
+      "eyebrow": "プラットフォームの位置付け",
+      "titleLine1": "商業制作を手動調整から移行",
+      "titleLine2": "1つの制御されたオペレーティングシステムへ",
+      "subtitle": "VINCISはブランドチームに、ブリーフ、スタジオのマッチング、カットのレビュー、支払いの保護、キャンペーン準備が整ったアセットのリリースを行うための1つの場所を提供します。",
+      "items": [
+        "構造化されたブリーフの受け入れ",
+        "審査済みスタジオのマッチング",
+        "フレームレビューとエスクロー納品"
+      ],
+      "trustLabel": "グローバルブランド基準のために構築されています",
+      "brands": [
+        "Google",
+        "Coca-Cola",
+        "Samsung",
+        "Airbnb",
+        "TikTok",
+        "Shopify",
+        "Amazon",
+        "Meta"
+      ]
+    },
+    "work": {
+      "eyebrow": "最近の作品",
+      "title": "自らを語る作品",
+      "featured": "特集",
+      "viewAll": "すべてのケーススタディを見る"
+    },
+    "features": {
+      "networkTitle": "クリエイターネットワーク",
+      "networkItems": [
+        "キュレーションされたクリエイター",
+        "作品認証",
+        "納品評価",
+        "プラットフォームエスクロー"
+      ],
+      "trustTitle": "信頼とエスクロー",
+      "trustItems": [
+        "支払い保護",
+        "レビュー透かし",
+        "バージョン履歴",
+        "満足したら支払い"
+      ]
+    },
+    "cta": {
+      "title": "次のキャンペーンを実際の制作システムに持ち込む",
+      "subtitle": "構造化されたブリーフ、マッチしたスタジオ、保護されたマイルストーン、実際に使用できるレビュー室から始めましょう。",
+      "primary": "プロジェクトを開始",
+      "secondary": "専門家に相談"
+    }
+  },
+  "ko": {
+    "nav": {
+      "howItWorks": "작동 방식",
+      "forBrands": "브랜드를 위한",
+      "forCreators": "크리에이터를 위한",
+      "caseStudies": "사례 연구",
+      "pricing": "가격",
+      "login": "로그인",
+      "startProject": "프로젝트 시작하기"
+    },
+    "split": {
+      "panelEyebrow": "시작하기",
+      "panelTitle": "로그인 또는 계정 생성",
+      "panelSubtitle": "작업 공간을 선택하세요 — 브랜드는 캠페인을 시작하고, 크리에이터는 영화 수준의 작업을 제공합니다.",
+      "welcomeBack": "다시 오신 것을 환영합니다",
+      "loggedInSubtitle": "당신의 VINCIS 작업 공간으로 계속 진행하세요.",
+      "brandTab": "브랜드",
+      "creatorTab": "크리에이터",
+      "emailLabel": "업무 이메일",
+      "emailPlaceholder": "you@company.com",
+      "continue": "계속",
+      "orDivider": "또는",
+      "signInBrand": "브랜드 로그인",
+      "signInCreator": "크리에이터 로그인",
+      "noAccount": "VINCIS에 처음이신가요?",
+      "createAccount": "계정 생성",
+      "explorePricing": "가격 보기",
+      "legalNotice": "계속 진행함으로써 당사의 이용 약관 및 개인정보 보호정책에 동의하게 됩니다.",
+      "leftFootnote": "포트폴리오 우선 매칭, 프레임 정확한 검토 및 에스크로 지원 배송을 위해 글로벌 브랜드에 신뢰받고 있습니다."
+    },
+    "hero": {
+      "eyebrow": "AI 기반 · 글로벌 협업",
+      "titleLine1": "글로벌 브랜드 연결",
+      "titleHighlight": "",
+      "titleLine2": "AI 크리에이터와 함께",
+      "subtitle": "프리미엄 광고는 더 이상 대기업만의 전유물이 아닙니다",
+      "primary": "저는 브랜드입니다",
+      "secondary": "저는 크리에이터입니다",
+      "primaryDescription": "검증된 AI 스튜디오와 매칭",
+      "secondaryDescription": "글로벌 주문을 받기 위해 가입하세요",
+      "trusted": "빠른 속도로 유료 소셜 크리에이티브를 제공하는 브랜드 팀을 위해 구축되었습니다",
+      "showreel": "작업 흐름 보기",
+      "statBudget": "시작 제작 예산",
+      "statWindow": "첫 번째 개념 창",
+      "statDelivery": "배송 및 권리 기준",
+      "trustMarquee": "글로벌 브랜드 팀에 의해 신뢰받음"
+    },
+    "heroFeatures": [
+      {
+        "title": "스튜디오 매칭",
+        "desc": "포트폴리오 적합성에 따라 순위가 매겨진 검증된 팀",
+        "icon": "users"
+      },
+      {
+        "title": "검토실",
+        "desc": "프레임 수준의 노트 및 승인 관리",
+        "icon": "play"
+      },
+      {
+        "title": "에스크로 작업 흐름",
+        "desc": "이정표 기반의 지불 보호",
+        "icon": "shield"
+      },
+      {
+        "title": "창의적인 속도",
+        "desc": "더 적은 레이어, 훨씬 더 높은 효율성",
+        "icon": "zap"
+      }
+    ],
+    "stats": [
+      {
+        "value": "70%",
+        "suffix": "↓",
+        "label": "일반적인 비용 절감"
+      },
+      {
+        "value": "72h",
+        "suffix": "",
+        "label": "첫 번째 개념 창"
+      },
+      {
+        "value": "4K",
+        "suffix": "",
+        "label": "배송 기준"
+      },
+      {
+        "value": "2000+",
+        "suffix": "",
+        "label": "검증된 스튜디오 네트워크"
+      }
+    ],
+    "logos": {
+      "label": "현대 마케팅 팀을 위한 제작 모델",
+      "brands": [
+        "전략",
+        "브리프",
+        "매칭",
+        "검토",
+        "에스크로",
+        "배송",
+        "권리",
+        "분석"
+      ]
+    },
+    "cost": {
+      "title": "전통적인 광고 제작은 망가졌습니다",
+      "body": "대행사는 마크업을 추가하고, 느린 일정, 불투명한 수정이 발생합니다.\n브랜드는 여전히 유료 소셜 일정에서 영화 수준의 출력을 필요로 합니다.",
+      "pains": [
+        "높은 대행사 마크업",
+        "8–12주 일정",
+        "제한된 크리에이터 접근",
+        "끝없는 수정 루프"
+      ],
+      "compareTitle": "차이를 확인하세요",
+      "traditional": "전통적인 대행사",
+      "studio": "VINCIS",
+      "saveBadge": "약 80% 절약",
+      "savings": [
+        "예산 약 80% 절약",
+        "시간 약 95-96% 절약"
+      ],
+      "rows": [
+        {
+          "label": "평균 비용",
+          "trad": "$25,000+",
+          "studio": "$5,000"
+        },
+        {
+          "label": "제작 시간",
+          "trad": "8–12주",
+          "studio": "72시간"
+        },
+        {
+          "label": "크리에이터 접근",
+          "trad": "레이어를 통해",
+          "studio": "직접 네트워크"
+        },
+        {
+          "label": "수정",
+          "trad": "추가 비용",
+          "studio": "포함된 작업 흐름"
+        }
+      ]
+    },
+    "steps": {
+      "eyebrow": "작동 방식",
+      "title": "브리프에서 최종 컷까지, 하나의 제작 흐름",
+      "subtitle": "",
+      "items": [
+        {
+          "num": "01",
+          "title": "비전을 공유하세요",
+          "desc": "몇 분 안에 브리프와 참고 자료를 업로드하세요."
+        },
+        {
+          "num": "02",
+          "title": "매칭 및 계획",
+          "desc": "검증된 스튜디오와 포트폴리오 우선 매칭."
+        },
+        {
+          "num": "03",
+          "title": "제작 및 협업",
+          "desc": "하나의 흐름에서 제작, 검토 및 수정을 진행하세요."
+        },
+        {
+          "num": "04",
+          "title": "배송 및 확장",
+          "desc": "최종 컷을 승인하고 성공적인 크리에이티브를 확장하세요."
+        }
+      ]
+    },
+    "why": {
+      "eyebrow": "플랫폼 위치",
+      "titleLine1": "상업 제작을 수동 조정에서 벗어나",
+      "titleLine2": "하나의 통제된 운영 시스템으로",
+      "subtitle": "VINCIS는 브랜드 팀이 브리프를 작성하고, 스튜디오를 매칭하고, 컷을 검토하고, 지불을 보호하며, 캠페인 준비 자산을 출시할 수 있는 하나의 장소를 제공합니다.",
+      "items": [
+        "구조화된 브리프 수집",
+        "검증된 스튜디오 매칭",
+        "프레임 검토 및 에스크로 배송"
+      ],
+      "trustLabel": "글로벌 브랜드 기준을 위해 구축됨",
+      "brands": [
+        "구글",
+        "코카콜라",
+        "삼성",
+        "에어비앤비",
+        "틱톡",
+        "쇼피파이",
+        "아마존",
+        "메타"
+      ]
+    },
+    "work": {
+      "eyebrow": "최근 작업",
+      "title": "스스로 말하는 작업",
+      "featured": "추천",
+      "viewAll": "모든 사례 연구 보기"
+    },
+    "features": {
+      "networkTitle": "크리에이터 네트워크",
+      "networkItems": [
+        "선별된 크리에이터",
+        "작업 인증",
+        "배송 평가",
+        "플랫폼 에스크로"
+      ],
+      "trustTitle": "신뢰 및 에스크로",
+      "trustItems": [
+        "지불 보호",
+        "검토 워터마크",
+        "버전 기록",
+        "만족할 때 지불"
+      ]
+    },
+    "cta": {
+      "title": "다음 캠페인을 실제 제작 시스템으로 가져오세요",
+      "subtitle": "구조화된 브리프, 매칭된 스튜디오, 보호된 이정표 및 팀이 실제로 사용할 수 있는 검토실로 시작하세요.",
+      "primary": "프로젝트 시작하기",
+      "secondary": "전문가와 상담하기"
+    }
+  },
+  "ms": {
+    "nav": {
+      "howItWorks": "Cara ia berfungsi",
+      "forBrands": "Untuk Jenama",
+      "forCreators": "Untuk Pencipta",
+      "caseStudies": "Kajian Kes",
+      "pricing": "Harga",
+      "login": "Log masuk",
+      "startProject": "Mulakan projek"
+    },
+    "split": {
+      "panelEyebrow": "Mulakan",
+      "panelTitle": "Log masuk atau buat akaun",
+      "panelSubtitle": "Pilih ruang kerja anda — jenama melancarkan kempen, pencipta menghasilkan kerja berkualiti sinema.",
+      "welcomeBack": "Selamat datang kembali",
+      "loggedInSubtitle": "Teruskan ke ruang kerja VINCIS anda.",
+      "brandTab": "Jenama",
+      "creatorTab": "Pencipta",
+      "emailLabel": "Emel kerja",
+      "emailPlaceholder": "anda@syarikat.com",
+      "continue": "Teruskan",
+      "orDivider": "atau",
+      "signInBrand": "Log masuk Jenama",
+      "signInCreator": "Log masuk Pencipta",
+      "noAccount": "Baru di VINCIS?",
+      "createAccount": "Buat akaun",
+      "explorePricing": "Lihat harga",
+      "legalNotice": "Dengan meneruskan, anda bersetuju dengan Terma dan Dasar Privasi kami.",
+      "leftFootnote": "Dipercayai oleh jenama global untuk pemadanan portfolio, semakan tepat bingkai, dan penghantaran yang disokong oleh escrow."
+    },
+    "hero": {
+      "eyebrow": "Dikuasakan oleh AI · Kerjasama global",
+      "titleLine1": "Menghubungkan jenama global",
+      "titleHighlight": "",
+      "titleLine2": "dengan pencipta AI",
+      "subtitle": "Iklan premium tidak lagi eksklusif untuk syarikat besar",
+      "primary": "Saya seorang jenama",
+      "secondary": "Saya seorang pencipta",
+      "primaryDescription": "Padankan dengan studio AI yang disahkan",
+      "secondaryDescription": "Sertai untuk mendapatkan pesanan global",
+      "trusted": "Dibina untuk pasukan jenama yang menghantar kreatif berbayar dengan cepat",
+      "showreel": "Lihat aliran kerja",
+      "statBudget": "Bajet pengeluaran permulaan",
+      "statWindow": "Tetingkap konsep pertama",
+      "statDelivery": "Standard penghantaran dan hak",
+      "trustMarquee": "DIPERCAYAI OLEH PASUKAN JENAMA GLOBAL"
+    },
+    "heroFeatures": [
+      {
+        "title": "Padanan studio",
+        "desc": "Pasukan yang disahkan dinilai berdasarkan kesesuaian portfolio",
+        "icon": "users"
+      },
+      {
+        "title": "Bilik semakan",
+        "desc": "Nota dan pengurusan kelulusan pada tahap bingkai",
+        "icon": "play"
+      },
+      {
+        "title": "Aliran kerja escrow",
+        "desc": "Perlindungan pembayaran berdasarkan pencapaian",
+        "icon": "shield"
+      },
+      {
+        "title": "Kelajuan kreatif",
+        "desc": "Lapisan yang lebih sedikit, kecekapan yang jauh lebih tinggi",
+        "icon": "zap"
+      }
+    ],
+    "stats": [
+      {
+        "value": "70%",
+        "suffix": "↓",
+        "label": "Pengurangan kos biasa"
+      },
+      {
+        "value": "72h",
+        "suffix": "",
+        "label": "Tetingkap konsep pertama"
+      },
+      {
+        "value": "4K",
+        "suffix": "",
+        "label": "Standard penghantaran"
+      },
+      {
+        "value": "2000+",
+        "suffix": "",
+        "label": "Rangkaian studio yang disahkan"
+      }
+    ],
+    "logos": {
+      "label": "Model pengeluaran yang direka untuk pasukan pemasaran moden",
+      "brands": [
+        "Strategi",
+        "Ringkasan",
+        "Padanan",
+        "Semakan",
+        "Escrow",
+        "Penghantaran",
+        "Hak",
+        "Analitik"
+      ]
+    },
+    "cost": {
+      "title": "Pengeluaran iklan tradisional adalah rosak",
+      "body": "Agen menambah lapisan markup, garis masa yang perlahan, dan semakan yang tidak jelas.\nSementara jenama masih memerlukan output berkualiti sinema pada garis masa berbayar-sosial.",
+      "pains": [
+        "Markup agen yang tinggi",
+        "Garis masa 8–12 minggu",
+        "Akses pencipta yang terhad",
+        "Gelung semakan tanpa henti"
+      ],
+      "compareTitle": "Lihat perbezaannya",
+      "traditional": "Agen Tradisional",
+      "studio": "VINCIS",
+      "saveBadge": "Jimat kira-kira 80%",
+      "savings": [
+        "Bajet dijimatkan kira-kira 80%",
+        "Masa dijimatkan kira-kira 95-96%"
+      ],
+      "rows": [
+        {
+          "label": "Kos Purata",
+          "trad": "$25,000+",
+          "studio": "$5,000"
+        },
+        {
+          "label": "Masa Pengeluaran",
+          "trad": "8–12 minggu",
+          "studio": "72 jam"
+        },
+        {
+          "label": "Akses Pencipta",
+          "trad": "Melalui lapisan",
+          "studio": "Rangkaian langsung"
+        },
+        {
+          "label": "Semakan",
+          "trad": "Yuran tambahan",
+          "studio": "Aliran kerja termasuk"
+        }
+      ]
+    },
+    "steps": {
+      "eyebrow": "CARA IA BERFUNGSI",
+      "title": "Dari ringkasan ke potongan akhir, satu aliran pengeluaran",
+      "subtitle": "",
+      "items": [
+        {
+          "num": "01",
+          "title": "Kongsi Visi Anda",
+          "desc": "Muat naik ringkasan dan rujukan anda dalam beberapa minit."
+        },
+        {
+          "num": "02",
+          "title": "Padan & Rancang",
+          "desc": "Padanan berasaskan portfolio dengan studio yang disahkan."
+        },
+        {
+          "num": "03",
+          "title": "Cipta & Berkolaborasi",
+          "desc": "Pengeluaran, semakan, dan semakan dalam satu aliran."
+        },
+        {
+          "num": "04",
+          "title": "Hantar & Skala",
+          "desc": "Luluskan potongan akhir dan skala kreatif yang menang."
+        }
+      ]
+    },
+    "why": {
+      "eyebrow": "Posisi platform",
+      "titleLine1": "Pindahkan pengeluaran komersial keluar dari penyelarasan manual",
+      "titleLine2": "ke dalam satu sistem operasi yang terkawal",
+      "subtitle": "VINCIS memberikan pasukan jenama satu tempat untuk merumuskan, memadankan studio, menyemak potongan, melindungi pembayaran, dan melepaskan aset siap kempen.",
+      "items": [
+        "Pengambilan ringkasan yang terstruktur",
+        "Padanan studio yang disahkan",
+        "Semakan bingkai dan penghantaran escrow"
+      ],
+      "trustLabel": "Dibina untuk standard jenama global",
+      "brands": [
+        "Google",
+        "Coca-Cola",
+        "Samsung",
+        "Airbnb",
+        "TikTok",
+        "Shopify",
+        "Amazon",
+        "Meta"
+      ]
+    },
+    "work": {
+      "eyebrow": "KERJA TERKINI",
+      "title": "Kerja yang bercakap untuk dirinya sendiri",
+      "featured": "Ditampilkan",
+      "viewAll": "Lihat semua kajian kes"
+    },
+    "features": {
+      "networkTitle": "Rangkaian pencipta",
+      "networkItems": [
+        "Pencipta terkurasi",
+        "Sijil kerja",
+        "Penilaian penghantaran",
+        "Escrow platform"
+      ],
+      "trustTitle": "Kepercayaan & escrow",
+      "trustItems": [
+        "Perlindungan pembayaran",
+        "Tanda air semakan",
+        "Sejarah versi",
+        "Bayar apabila berpuas hati"
+      ]
+    },
+    "cta": {
+      "title": "Bawa kempen seterusnya anda ke dalam sistem pengeluaran yang sebenar",
+      "subtitle": "Mulakan dengan ringkasan yang terstruktur, studio yang dipadankan, pencapaian yang dilindungi, dan bilik semakan yang boleh digunakan oleh pasukan anda.",
+      "primary": "Mulakan projek anda",
+      "secondary": "Bercakap dengan pakar"
+    }
+  },
+  "th": {
+    "nav": {
+      "howItWorks": "วิธีการทำงาน",
+      "forBrands": "สำหรับแบรนด์",
+      "forCreators": "สำหรับผู้สร้าง",
+      "caseStudies": "กรณีศึกษา",
+      "pricing": "ราคา",
+      "login": "เข้าสู่ระบบ",
+      "startProject": "เริ่มโครงการ"
+    },
+    "split": {
+      "panelEyebrow": "เริ่มต้น",
+      "panelTitle": "ลงชื่อเข้าใช้หรือสร้างบัญชี",
+      "panelSubtitle": "เลือกพื้นที่ทำงานของคุณ — แบรนด์เปิดตัวแคมเปญ, ผู้สร้างส่งมอบงานระดับภาพยนตร์.",
+      "welcomeBack": "ยินดีต้อนรับกลับ",
+      "loggedInSubtitle": "ดำเนินการต่อไปยังพื้นที่ทำงาน VINCIS ของคุณ.",
+      "brandTab": "แบรนด์",
+      "creatorTab": "ผู้สร้าง",
+      "emailLabel": "อีเมลทำงาน",
+      "emailPlaceholder": "you@company.com",
+      "continue": "ดำเนินการต่อ",
+      "orDivider": "หรือ",
+      "signInBrand": "เข้าสู่ระบบแบรนด์",
+      "signInCreator": "เข้าสู่ระบบผู้สร้าง",
+      "noAccount": "ใหม่กับ VINCIS?",
+      "createAccount": "สร้างบัญชี",
+      "explorePricing": "ดูราคา",
+      "legalNotice": "โดยการดำเนินการต่อคุณยอมรับข้อกำหนดและนโยบายความเป็นส่วนตัวของเรา.",
+      "leftFootnote": "เชื่อถือได้จากแบรนด์ระดับโลกสำหรับการจับคู่ที่เน้นพอร์ตโฟลิโอ, การตรวจสอบที่แม่นยำ, และการส่งมอบที่มีการรับประกัน."
+    },
+    "hero": {
+      "eyebrow": "ขับเคลื่อนด้วย AI · ความร่วมมือระดับโลก",
+      "titleLine1": "เชื่อมต่อแบรนด์ระดับโลก",
+      "titleHighlight": "",
+      "titleLine2": "กับผู้สร้าง AI",
+      "subtitle": "โฆษณาพรีเมียมไม่ใช่เรื่องเฉพาะของบริษัทใหญ่ๆ อีกต่อไป",
+      "primary": "ฉันคือแบรนด์",
+      "secondary": "ฉันคือผู้สร้าง",
+      "primaryDescription": "จับคู่กับสตูดิโอ AI ที่ผ่านการตรวจสอบ",
+      "secondaryDescription": "เข้าร่วมเพื่อรับคำสั่งซื้อระดับโลก",
+      "trusted": "สร้างขึ้นสำหรับทีมแบรนด์ที่ส่งมอบงานสร้างสรรค์ที่จ่ายเงินในความเร็ว",
+      "showreel": "ดูการทำงาน",
+      "statBudget": "งบประมาณการผลิตเริ่มต้น",
+      "statWindow": "หน้าต่างแนวคิดแรก",
+      "statDelivery": "มาตรฐานการส่งมอบและสิทธิ์",
+      "trustMarquee": "เชื่อถือได้จากทีมแบรนด์ระดับโลก"
+    },
+    "heroFeatures": [
+      {
+        "title": "การจับคู่สตูดิโอ",
+        "desc": "ทีมที่ผ่านการตรวจสอบจัดอันดับตามความเหมาะสมของพอร์ตโฟลิโอ",
+        "icon": "users"
+      },
+      {
+        "title": "ห้องตรวจสอบ",
+        "desc": "การจัดการหมายเหตุและการอนุมัติในระดับเฟรม",
+        "icon": "play"
+      },
+      {
+        "title": "กระบวนการเอสโครว์",
+        "desc": "การป้องกันการชำระเงินตามเหตุการณ์สำคัญ",
+        "icon": "shield"
+      },
+      {
+        "title": "ความเร็วในการสร้างสรรค์",
+        "desc": "ชั้นน้อยลง, ประสิทธิภาพสูงขึ้นมาก",
+        "icon": "zap"
+      }
+    ],
+    "stats": [
+      {
+        "value": "70%",
+        "suffix": "↓",
+        "label": "การลดต้นทุนทั่วไป"
+      },
+      {
+        "value": "72h",
+        "suffix": "",
+        "label": "หน้าต่างแนวคิดแรก"
+      },
+      {
+        "value": "4K",
+        "suffix": "",
+        "label": "มาตรฐานการส่งมอบ"
+      },
+      {
+        "value": "2000+",
+        "suffix": "",
+        "label": "เครือข่ายสตูดิโอที่ผ่านการตรวจสอบ"
+      }
+    ],
+    "logos": {
+      "label": "โมเดลการผลิตที่ออกแบบมาสำหรับทีมการตลาดสมัยใหม่",
+      "brands": [
+        "กลยุทธ์",
+        "สรุป",
+        "จับคู่",
+        "ตรวจสอบ",
+        "เอสโครว์",
+        "การส่งมอบ",
+        "สิทธิ์",
+        "การวิเคราะห์"
+      ]
+    },
+    "cost": {
+      "title": "การผลิตโฆษณาแบบดั้งเดิมมีปัญหา",
+      "body": "เอเจนซี่เพิ่มชั้นของการทำเครื่องหมาย, ระยะเวลาที่ช้า, และการแก้ไขที่ไม่โปร่งใส.\nในขณะที่แบรนด์ยังคงต้องการผลลัพธ์ระดับภาพยนตร์ในระยะเวลาที่จ่ายเงิน.",
+      "pains": [
+        "การทำเครื่องหมายของเอเจนซี่สูง",
+        "ระยะเวลา 8–12 สัปดาห์",
+        "การเข้าถึงผู้สร้างที่จำกัด",
+        "วงจรการแก้ไขที่ไม่มีที่สิ้นสุด"
+      ],
+      "compareTitle": "ดูความแตกต่าง",
+      "traditional": "เอเจนซี่แบบดั้งเดิม",
+      "studio": "VINCIS",
+      "saveBadge": "ประหยัดประมาณ 80%",
+      "savings": [
+        "งบประมาณประหยัดประมาณ 80%",
+        "เวลาประหยัดประมาณ 95-96%"
+      ],
+      "rows": [
+        {
+          "label": "ต้นทุนเฉลี่ย",
+          "trad": "$25,000+",
+          "studio": "$5,000"
+        },
+        {
+          "label": "เวลาการผลิต",
+          "trad": "8–12 สัปดาห์",
+          "studio": "72 ชั่วโมง"
+        },
+        {
+          "label": "การเข้าถึงผู้สร้าง",
+          "trad": "ผ่านชั้น",
+          "studio": "เครือข่ายโดยตรง"
+        },
+        {
+          "label": "การแก้ไข",
+          "trad": "ค่าธรรมเนียมเพิ่มเติม",
+          "studio": "รวมในกระบวนการทำงาน"
+        }
+      ]
+    },
+    "steps": {
+      "eyebrow": "วิธีการทำงาน",
+      "title": "จากสรุปถึงการตัดสุดท้าย, กระบวนการผลิตเดียว",
+      "subtitle": "",
+      "items": [
+        {
+          "num": "01",
+          "title": "แชร์วิสัยทัศน์ของคุณ",
+          "desc": "อัปโหลดสรุปและเอกสารอ้างอิงในไม่กี่นาที."
+        },
+        {
+          "num": "02",
+          "title": "จับคู่ & วางแผน",
+          "desc": "การจับคู่ที่เน้นพอร์ตโฟลิโอกับสตูดิโอที่ผ่านการตรวจสอบ."
+        },
+        {
+          "num": "03",
+          "title": "สร้าง & ร่วมมือ",
+          "desc": "การผลิต, การตรวจสอบ, และการแก้ไขในกระบวนการเดียว."
+        },
+        {
+          "num": "04",
+          "title": "ส่งมอบ & ขยาย",
+          "desc": "อนุมัติการตัดสุดท้ายและขยายงานสร้างสรรค์ที่ชนะ."
+        }
+      ]
+    },
+    "why": {
+      "eyebrow": "ตำแหน่งแพลตฟอร์ม",
+      "titleLine1": "ย้ายการผลิตเชิงพาณิชย์ออกจากการประสานงานด้วยมือ",
+      "titleLine2": "เข้าสู่ระบบปฏิบัติการที่ควบคุมได้",
+      "subtitle": "VINCIS ให้ทีมแบรนด์มีที่เดียวในการสรุป, จับคู่สตูดิโอ, ตรวจสอบการตัด, ปกป้องการชำระเงิน, และปล่อยสินทรัพย์ที่พร้อมสำหรับแคมเปญ.",
+      "items": [
+        "การรับสรุปที่มีโครงสร้าง",
+        "การจับคู่สตูดิโอที่ผ่านการตรวจสอบ",
+        "การตรวจสอบเฟรมและการส่งมอบเอสโครว์"
+      ],
+      "trustLabel": "สร้างขึ้นสำหรับมาตรฐานแบรนด์ระดับโลก",
+      "brands": [
+        "Google",
+        "Coca-Cola",
+        "Samsung",
+        "Airbnb",
+        "TikTok",
+        "Shopify",
+        "Amazon",
+        "Meta"
+      ]
+    },
+    "work": {
+      "eyebrow": "ผลงานล่าสุด",
+      "title": "ผลงานที่พูดสำหรับตัวเอง",
+      "featured": "ผลงานเด่น",
+      "viewAll": "ดูกรณีศึกษาทั้งหมด"
+    },
+    "features": {
+      "networkTitle": "เครือข่ายผู้สร้าง",
+      "networkItems": [
+        "ผู้สร้างที่คัดสรร",
+        "การรับรองงาน",
+        "การจัดอันดับการส่งมอบ",
+        "การส่งมอบเอสโครว์ในแพลตฟอร์ม"
+      ],
+      "trustTitle": "ความเชื่อถือและเอสโครว์",
+      "trustItems": [
+        "การป้องกันการชำระเงิน",
+        "การตรวจสอบลายน้ำ",
+        "ประวัติรุ่น",
+        "จ่ายเมื่อพอใจ"
+      ]
+    },
+    "cta": {
+      "title": "นำแคมเปญถัดไปของคุณเข้าสู่ระบบการผลิตจริง",
+      "subtitle": "เริ่มต้นด้วยสรุปที่มีโครงสร้าง, สตูดิโอที่จับคู่, เหตุการณ์สำคัญที่ได้รับการป้องกัน, และห้องตรวจสอบที่ทีมของคุณสามารถใช้งานได้จริง.",
+      "primary": "เริ่มโครงการของคุณ",
+      "secondary": "พูดคุยกับผู้เชี่ยวชาญ"
+    }
+  },
+  "km": {
+    "nav": {
+      "howItWorks": "វិធីដែលវាធ្វើការ",
+      "forBrands": "សម្រាប់ម៉ាក",
+      "forCreators": "សម្រាប់អ្នកបង្កើត",
+      "caseStudies": "ករណីសិក្សា",
+      "pricing": "តម្លៃ",
+      "login": "ចូល",
+      "startProject": "ចាប់ផ្តើមគម្រោង"
+    },
+    "split": {
+      "panelEyebrow": "ចាប់ផ្តើម",
+      "panelTitle": "ចូលឬបង្កើតគណនី",
+      "panelSubtitle": "ជ្រើសរើសកន្លែងធ្វើការរបស់អ្នក - ម៉ាកចាប់ផ្តើមយុទ្ធនាការ, អ្នកបង្កើតផ្តល់ការងារដែលមានគុណភាពខ្ពស់ដូចជាហិរញ្ញវត្ថុ។",
+      "welcomeBack": "សូមស្វាគមន៍ត្រឡប់មកវិញ",
+      "loggedInSubtitle": "បន្តទៅកាន់កន្លែងធ្វើការរបស់ VINCIS របស់អ្នក។",
+      "brandTab": "ម៉ាក",
+      "creatorTab": "អ្នកបង្កើត",
+      "emailLabel": "អ៊ីមែលធ្វើការ",
+      "emailPlaceholder": "you@company.com",
+      "continue": "បន្ត",
+      "orDivider": "ឬ",
+      "signInBrand": "ចូលម៉ាក",
+      "signInCreator": "ចូលអ្នកបង្កើត",
+      "noAccount": "ថ្មីសម្រាប់ VINCIS?",
+      "createAccount": "បង្កើតគណនី",
+      "explorePricing": "មើលតម្លៃ",
+      "legalNotice": "ដោយការបន្តអ្នកយល់ព្រមនឹងល័ក្ខខ័ណ្ឌ និងគោលការណ៍ឯកជនភាពរបស់យើង។",
+      "leftFootnote": "ទុកចិត្តដោយម៉ាកអន្តរជាតិសម្រាប់ការប្រកួតតាមផតថល, ការពិនិត្យត្រឹមត្រូវ, និងការដឹកជញ្ជូនដែលមានការធានា។"
+    },
+    "hero": {
+      "eyebrow": "មានអាយធី · ការសហការអន្តរជាតិ",
+      "titleLine1": "ភ្ជាប់ម៉ាកអន្តរជាតិ",
+      "titleHighlight": "",
+      "titleLine2": "ជាមួយអ្នកបង្កើត AI",
+      "subtitle": "ការផ្សាយពាណិជ្ជកម្មពិសេសមិនមែនជាការពិសេសសម្រាប់ក្រុមហ៊ុនធំទេ",
+      "primary": "ខ្ញុំជាម៉ាក",
+      "secondary": "ខ្ញុំជាអ្នកបង្កើត",
+      "primaryDescription": "ផ្គូផ្គងជាមួយស្តូឌីយ៉ូ AI ដែលបានត្រួតពិនិត្យ",
+      "secondaryDescription": "ចូលរួមដើម្បីទទួលការបញ្ជាទិញអន្តរជាតិ",
+      "trusted": "បង្កើតសម្រាប់ក្រុមម៉ាកដែលដឹកនាំការផលិតការផ្សាយបង់ប្រាក់យ៉ាងលឿន",
+      "showreel": "មើលដំណើរការផលិត",
+      "statBudget": "ថវិកាដំណើរការចាប់ផ្តើម",
+      "statWindow": "កញ្ចក់គំនិតដំបូង",
+      "statDelivery": "ស្តង់ដារដឹកជញ្ជូន និងសិទ្ធិ",
+      "trustMarquee": "ទុកចិត្តដោយក្រុមម៉ាកអន្តរជាតិ"
+    },
+    "heroFeatures": [
+      {
+        "title": "ការផ្គូផ្គងស្តូឌីយ៉ូ",
+        "desc": "ក្រុមដែលបានត្រួតពិនិត្យតាមការប្រកួតតាមផតថល",
+        "icon": "users"
+      },
+      {
+        "title": "បន្ទប់ពិនិត្យ",
+        "desc": "កំណត់ត្រាតាមកញ្ចក់ និងការគ្រប់គ្រងការអនុម័ត",
+        "icon": "play"
+      },
+      {
+        "title": "ដំណើរការតាមការធានា",
+        "desc": "ការការពារទូទាត់តាមកម្រិត",
+        "icon": "shield"
+      },
+      {
+        "title": "ល្បឿនច្នៃប្រឌិត",
+        "desc": "ស្រទាប់តិចជាង, ប្រសិទ្ធភាពខ្ពស់ជាង",
+        "icon": "zap"
+      }
+    ],
+    "stats": [
+      {
+        "value": "70%",
+        "suffix": "↓",
+        "label": "ការកាត់បន្ថយថ្លៃដើមធម្មតា"
+      },
+      {
+        "value": "72h",
+        "suffix": "",
+        "label": "កញ្ចក់គំនិតដំបូង"
+      },
+      {
+        "value": "4K",
+        "suffix": "",
+        "label": "ស្តង់ដារដឹកជញ្ជូន"
+      },
+      {
+        "value": "2000+",
+        "suffix": "",
+        "label": "បណ្តាញស្តូឌីយ៉ូដែលបានត្រួតពិនិត្យ"
+      }
+    ],
+    "logos": {
+      "label": "ម៉ូដែលផលិតកម្មដែលបានរចនាសម្រាប់ក្រុមទីផ្សារថ្មី",
+      "brands": [
+        "យុទ្ធសាស្ត្រ",
+        "សេចក្តីសង្ខេប",
+        "ការផ្គូផ្គង",
+        "ការពិនិត្យ",
+        "ការធានា",
+        "ការដឹកជញ្ជូន",
+        "សិទ្ធិ",
+        "វិភាគ"
+      ]
+    },
+    "cost": {
+      "title": "ការផលិតផ្សាយពាណិជ្ជកម្មបែបប្រពៃណីមានបញ្ហា",
+      "body": "អាជីវកម្មបន្ថែមស្រទាប់នៃការបន្ថែមថ្លៃ, ពេលវេលាដែលយឺត, និងការកែប្រែដែលមិនច្បាស់។\nក្នុងពេលដែលម៉ាកនៅតែត្រូវការប្រសិទ្ធភាពខ្ពស់ដូចជាហិរញ្ញវត្ថុនៅលើពេលវេលាបង់ប្រាក់។",
+      "pains": [
+        "ការបន្ថែមថ្លៃខ្ពស់",
+        "8–12 សប្តាហ៍",
+        "ការចូលដំណើរការដែលមានកំណត់",
+        "វដ្តកែប្រែអស់កម្លាំង"
+      ],
+      "compareTitle": "មើលភាពខុសគ្នា",
+      "traditional": "អាជីវកម្មប្រពៃណី",
+      "studio": "VINCIS",
+      "saveBadge": "សន្សំប្រហែល 80%",
+      "savings": [
+        "ថវិកាសន្សំប្រហែល 80%",
+        "ពេលវេលាសន្សំប្រហែល 95-96%"
+      ],
+      "rows": [
+        {
+          "label": "ថ្លៃដើមមធ្យម",
+          "trad": "$25,000+",
+          "studio": "$5,000"
+        },
+        {
+          "label": "ពេលវេលាផលិត",
+          "trad": "8–12 សប្តាហ៍",
+          "studio": "72 ម៉ោង"
+        },
+        {
+          "label": "ការចូលដំណើរការរបស់អ្នកបង្កើត",
+          "trad": "តាមស្រទាប់",
+          "studio": "បណ្តាញផ្ទាល់"
+        },
+        {
+          "label": "ការកែប្រែ",
+          "trad": "ថ្លៃបន្ថែម",
+          "studio": "ដំណើរការដែលបានរួមបញ្ចូល"
+        }
+      ]
+    },
+    "steps": {
+      "eyebrow": "វិធីដែលវាធ្វើការ",
+      "title": "ពីសេចក្តីសង្ខេបដល់កាត់ចុងក្រោយ, ដំណើរការផលិតមួយ",
+      "subtitle": "",
+      "items": [
+        {
+          "num": "01",
+          "title": "ចែករំលែកចក្ខុវិស័យរបស់អ្នក",
+          "desc": "បញ្ចូលសេចក្តីសង្ខេប និងឯកសារយោងក្នុងរយៈពេលប៉ុន្មាននាទី។"
+        },
+        {
+          "num": "02",
+          "title": "ផ្គូផ្គង និងគ្រោង",
+          "desc": "ការផ្គូផ្គងតាមផតថលជាមួយស្តូឌីយ៉ូដែលបានត្រួតពិនិត្យ។"
+        },
+        {
+          "num": "03",
+          "title": "បង្កើត និងសហការណ៍",
+          "desc": "ការផលិត, ការពិនិត្យ, និងការកែប្រែក្នុងដំណើរការមួយ។"
+        },
+        {
+          "num": "04",
+          "title": "ដឹកជញ្ជូន និងពង្រីក",
+          "desc": "អនុម័តកាត់ចុងក្រោយ និងពង្រីកការច្នៃប្រឌិតដែលឈ្នះ។"
+        }
+      ]
+    },
+    "why": {
+      "eyebrow": "ទីតាំងវេទិកា",
+      "titleLine1": "ផ្លាស់ប្តូរការផលិតពាណិជ្ជកម្មចេញពីការសម្របសម្រួលដៃ",
+      "titleLine2": "ទៅក្នុងប្រព័ន្ធប្រតិបត្តិការដែលគ្រប់គ្រង",
+      "subtitle": "VINCIS ផ្តល់ឱ្យក្រុមម៉ាកមួយកន្លែងដើម្បីសេចក្តីសង្ខេប, ផ្គូផ្គងស្តូឌីយ៉ូ, ពិនិត្យកាត់, ការការពារទូទាត់, និងបញ្ចេញទ្រព្យសម្បត្តិដែលត្រៀមសម្រាប់យុទ្ធនាការ។",
+      "items": [
+        "ការទទួលសេចក្តីសង្ខេបដែលមានរចនាសម្ព័ន្ធ",
+        "ការផ្គូផ្គងស្តូឌីយ៉ូដែលបានត្រួតពិនិត្យ",
+        "ការពិនិត្យតាមកញ្ចក់ និងការដឹកជញ្ជូនដែលមានការធានា"
+      ],
+      "trustLabel": "បង្កើតសម្រាប់ស្តង់ដារម៉ាកអន្តរជាតិ",
+      "brands": [
+        "Google",
+        "Coca-Cola",
+        "Samsung",
+        "Airbnb",
+        "TikTok",
+        "Shopify",
+        "Amazon",
+        "Meta"
+      ]
+    },
+    "work": {
+      "eyebrow": "ការងារថ្មីៗ",
+      "title": "ការងារដែលនិយាយសម្រាប់ខ្លួនវា",
+      "featured": "មានលក្ខណៈពិសេស",
+      "viewAll": "មើលករណីសិក្សាទាំងអស់"
+    },
+    "features": {
+      "networkTitle": "បណ្តាញអ្នកបង្កើត",
+      "networkItems": [
+        "អ្នកបង្កើតដែលបានជ្រើសរើស",
+        "ការបញ្ជាក់ការងារ",
+        "ការវាយតម្លៃការដឹកជញ្ជូន",
+        "ការធានាផលិតកម្ម"
+      ],
+      "trustTitle": "ការទុកចិត្ត និងការធានា",
+      "trustItems": [
+        "ការការពារទូទាត់",
+        "សញ្ញាទឹកពិនិត្យ",
+        "ប្រវត្តិសាស្ត្រកំណែ",
+        "បង់ប្រាក់នៅពេលពេញចិត្ត"
+      ]
+    },
+    "cta": {
+      "title": "នាំយុទ្ធនាការបន្ទាប់របស់អ្នកចូលទៅក្នុងប្រព័ន្ធផលិតកម្មពិត",
+      "subtitle": "ចាប់ផ្តើមជាមួយសេចក្តីសង្ខេបដែលមានរចនាសម្ព័ន្ធ, ស្តូឌីយ៉ូដែលបានផ្គូផ្គង, កម្រិតដែលមានការការពារ, និងបន្ទប់ពិនិត្យដែលក្រុមរបស់អ្នកអាចប្រើប្រាស់បាន។",
+      "primary": "ចាប់ផ្តើមគម្រោងរបស់អ្នក",
+      "secondary": "និយាយជាមួយអ្នកជំនាញ"
+    }
+  },
+  "vi": {
+    "nav": {
+      "howItWorks": "Cách thức hoạt động",
+      "forBrands": "Dành cho Thương hiệu",
+      "forCreators": "Dành cho Người sáng tạo",
+      "caseStudies": "Nghiên cứu trường hợp",
+      "pricing": "Giá cả",
+      "login": "Đăng nhập",
+      "startProject": "Bắt đầu một dự án"
+    },
+    "split": {
+      "panelEyebrow": "Bắt đầu ngay",
+      "panelTitle": "Đăng nhập hoặc tạo tài khoản",
+      "panelSubtitle": "Chọn không gian làm việc của bạn — các thương hiệu khởi động chiến dịch, các nhà sáng tạo cung cấp công việc chất lượng điện ảnh.",
+      "welcomeBack": "Chào mừng trở lại",
+      "loggedInSubtitle": "Tiếp tục đến không gian làm việc VINCIS của bạn.",
+      "brandTab": "Thương hiệu",
+      "creatorTab": "Người sáng tạo",
+      "emailLabel": "Email công việc",
+      "emailPlaceholder": "you@company.com",
+      "continue": "Tiếp tục",
+      "orDivider": "hoặc",
+      "signInBrand": "Đăng nhập thương hiệu",
+      "signInCreator": "Đăng nhập người sáng tạo",
+      "noAccount": "Mới đến VINCIS?",
+      "createAccount": "Tạo tài khoản",
+      "explorePricing": "Xem giá cả",
+      "legalNotice": "Bằng cách tiếp tục, bạn đồng ý với Điều khoản và Chính sách Bảo mật của chúng tôi.",
+      "leftFootnote": "Được tin cậy bởi các thương hiệu toàn cầu cho việc ghép nối theo danh mục, đánh giá chính xác từng khung hình và giao hàng có bảo đảm."
+    },
+    "hero": {
+      "eyebrow": "Được hỗ trợ bởi AI · Hợp tác toàn cầu",
+      "titleLine1": "Kết nối các thương hiệu toàn cầu",
+      "titleHighlight": "",
+      "titleLine2": "với các nhà sáng tạo AI",
+      "subtitle": "Quảng cáo cao cấp không còn là đặc quyền của các công ty lớn",
+      "primary": "Tôi là một thương hiệu",
+      "secondary": "Tôi là một người sáng tạo",
+      "primaryDescription": "Ghép nối với các studio AI đã được kiểm duyệt",
+      "secondaryDescription": "Tham gia để nhận đơn hàng toàn cầu",
+      "trusted": "Được xây dựng cho các đội ngũ thương hiệu giao hàng sáng tạo trên mạng xã hội có trả phí nhanh chóng",
+      "showreel": "Xem quy trình làm việc",
+      "statBudget": "Ngân sách sản xuất khởi điểm",
+      "statWindow": "Thời gian khái niệm đầu tiên",
+      "statDelivery": "Tiêu chuẩn giao hàng và quyền",
+      "trustMarquee": "ĐƯỢC TIN CẬY BỞI CÁC ĐỘI NGŨ THƯƠNG HIỆU TOÀN CẦU"
+    },
+    "heroFeatures": [
+      {
+        "title": "Ghép nối studio",
+        "desc": "Các đội ngũ đã được kiểm duyệt được xếp hạng theo sự phù hợp với danh mục",
+        "icon": "users"
+      },
+      {
+        "title": "Phòng đánh giá",
+        "desc": "Ghi chú và quản lý phê duyệt ở mức khung hình",
+        "icon": "play"
+      },
+      {
+        "title": "Quy trình giao hàng có bảo đảm",
+        "desc": "Bảo vệ thanh toán dựa trên các cột mốc",
+        "icon": "shield"
+      },
+      {
+        "title": "Tốc độ sáng tạo",
+        "desc": "Ít lớp hơn, hiệu quả cao hơn nhiều",
+        "icon": "zap"
+      }
+    ],
+    "stats": [
+      {
+        "value": "70%",
+        "suffix": "↓",
+        "label": "Giảm chi phí điển hình"
+      },
+      {
+        "value": "72h",
+        "suffix": "",
+        "label": "Thời gian khái niệm đầu tiên"
+      },
+      {
+        "value": "4K",
+        "suffix": "",
+        "label": "Tiêu chuẩn giao hàng"
+      },
+      {
+        "value": "2000+",
+        "suffix": "",
+        "label": "Mạng lưới studio đã được kiểm duyệt"
+      }
+    ],
+    "logos": {
+      "label": "Mô hình sản xuất được thiết kế cho các đội ngũ tiếp thị hiện đại",
+      "brands": [
+        "Chiến lược",
+        "Tóm tắt",
+        "Ghép nối",
+        "Đánh giá",
+        "Giao hàng có bảo đảm",
+        "Giao hàng",
+        "Quyền",
+        "Phân tích"
+      ]
+    },
+    "cost": {
+      "title": "Sản xuất quảng cáo truyền thống đã bị hỏng",
+      "body": "Các đại lý thêm các lớp phí, thời gian chậm và các sửa đổi không minh bạch.\nTrong khi các thương hiệu vẫn cần đầu ra chất lượng điện ảnh trong thời gian mạng xã hội có trả phí.",
+      "pains": [
+        "Phí đại lý cao",
+        "Thời gian 8–12 tuần",
+        "Truy cập người sáng tạo hạn chế",
+        "Vòng sửa đổi vô tận"
+      ],
+      "compareTitle": "Xem sự khác biệt",
+      "traditional": "Đại lý Truyền thống",
+      "studio": "VINCIS",
+      "saveBadge": "Tiết kiệm khoảng 80%",
+      "savings": [
+        "Ngân sách tiết kiệm khoảng 80%",
+        "Thời gian tiết kiệm khoảng 95-96%"
+      ],
+      "rows": [
+        {
+          "label": "Chi phí trung bình",
+          "trad": "$25,000+",
+          "studio": "$5,000"
+        },
+        {
+          "label": "Thời gian sản xuất",
+          "trad": "8–12 tuần",
+          "studio": "72 giờ"
+        },
+        {
+          "label": "Truy cập người sáng tạo",
+          "trad": "Thông qua các lớp",
+          "studio": "Mạng lưới trực tiếp"
+        },
+        {
+          "label": "Sửa đổi",
+          "trad": "Phí bổ sung",
+          "studio": "Quy trình đã bao gồm"
+        }
+      ]
+    },
+    "steps": {
+      "eyebrow": "CÁCH THỨC HOẠT ĐỘNG",
+      "title": "Từ tóm tắt đến bản cắt cuối cùng, một quy trình sản xuất",
+      "subtitle": "",
+      "items": [
+        {
+          "num": "01",
+          "title": "Chia sẻ Tầm nhìn của bạn",
+          "desc": "Tải lên tóm tắt và tài liệu tham khảo của bạn trong vài phút."
+        },
+        {
+          "num": "02",
+          "title": "Ghép nối & Lập kế hoạch",
+          "desc": "Ghép nối theo danh mục với các studio đã được kiểm duyệt."
+        },
+        {
+          "num": "03",
+          "title": "Tạo & Hợp tác",
+          "desc": "Sản xuất, đánh giá và sửa đổi trong một quy trình."
+        },
+        {
+          "num": "04",
+          "title": "Giao hàng & Mở rộng",
+          "desc": "Phê duyệt bản cắt cuối cùng và mở rộng sáng tạo thắng lợi."
+        }
+      ]
+    },
+    "why": {
+      "eyebrow": "Vị trí nền tảng",
+      "titleLine1": "Di chuyển sản xuất thương mại ra khỏi sự phối hợp thủ công",
+      "titleLine2": "vào một hệ thống điều hành được kiểm soát",
+      "subtitle": "VINCIS cung cấp cho các đội ngũ thương hiệu một nơi để tóm tắt, ghép nối các studio, đánh giá các bản cắt, bảo vệ thanh toán và phát hành các tài sản sẵn sàng cho chiến dịch.",
+      "items": [
+        "Tiếp nhận tóm tắt có cấu trúc",
+        "Ghép nối studio đã được kiểm duyệt",
+        "Đánh giá khung hình và giao hàng có bảo đảm"
+      ],
+      "trustLabel": "Được xây dựng cho các tiêu chuẩn thương hiệu toàn cầu",
+      "brands": [
+        "Google",
+        "Coca-Cola",
+        "Samsung",
+        "Airbnb",
+        "TikTok",
+        "Shopify",
+        "Amazon",
+        "Meta"
+      ]
+    },
+    "work": {
+      "eyebrow": "CÔNG VIỆC GẦN ĐÂY",
+      "title": "Công việc tự nói lên điều đó",
+      "featured": "Nổi bật",
+      "viewAll": "Xem tất cả nghiên cứu trường hợp"
+    },
+    "features": {
+      "networkTitle": "Mạng lưới người sáng tạo",
+      "networkItems": [
+        "Người sáng tạo được chọn lọc",
+        "Chứng nhận công việc",
+        "Đánh giá giao hàng",
+        "Giao hàng có bảo đảm trên nền tảng"
+      ],
+      "trustTitle": "Tin cậy & bảo đảm",
+      "trustItems": [
+        "Bảo vệ thanh toán",
+        "Đánh giá có dấu nước",
+        "Lịch sử phiên bản",
+        "Thanh toán khi hài lòng"
+      ]
+    },
+    "cta": {
+      "title": "Đưa chiến dịch tiếp theo của bạn vào một hệ thống sản xuất thực sự",
+      "subtitle": "Bắt đầu với một tóm tắt có cấu trúc, các studio đã ghép nối, các cột mốc được bảo vệ và một phòng đánh giá mà đội ngũ của bạn có thể thực sự sử dụng.",
+      "primary": "Bắt đầu dự án của bạn",
+      "secondary": "Nói chuyện với một chuyên gia"
+    }
+  },
+  "fr": {
+    "nav": {
+      "howItWorks": "Comment ça fonctionne",
+      "forBrands": "Pour les marques",
+      "forCreators": "Pour les créateurs",
+      "caseStudies": "Études de cas",
+      "pricing": "Tarification",
+      "login": "Se connecter",
+      "startProject": "Démarrer un projet"
+    },
+    "split": {
+      "panelEyebrow": "Commencer",
+      "panelTitle": "Connectez-vous ou créez un compte",
+      "panelSubtitle": "Choisissez votre espace de travail — les marques lancent des campagnes, les créateurs livrent un travail de qualité cinématographique.",
+      "welcomeBack": "Content de vous revoir",
+      "loggedInSubtitle": "Continuez vers votre espace de travail VINCIS.",
+      "brandTab": "Marque",
+      "creatorTab": "Créateur",
+      "emailLabel": "Email professionnel",
+      "emailPlaceholder": "vous@entreprise.com",
+      "continue": "Continuer",
+      "orDivider": "ou",
+      "signInBrand": "Connexion marque",
+      "signInCreator": "Connexion créateur",
+      "noAccount": "Nouveau sur VINCIS ?",
+      "createAccount": "Créer un compte",
+      "explorePricing": "Voir les tarifs",
+      "legalNotice": "En continuant, vous acceptez nos Conditions et notre Politique de confidentialité.",
+      "leftFootnote": "Fiable pour les marques mondiales pour un appariement axé sur le portfolio, une révision précise au cadre et une livraison sécurisée par séquestre."
+    },
+    "hero": {
+      "eyebrow": "Alimenté par l'IA · Collaboration mondiale",
+      "titleLine1": "Connecter des marques mondiales",
+      "titleHighlight": "",
+      "titleLine2": "avec des créateurs IA",
+      "subtitle": "La publicité premium n'est plus exclusive aux grandes entreprises",
+      "primary": "Je suis une marque",
+      "secondary": "Je suis un créateur",
+      "primaryDescription": "Associez-vous à des studios IA vérifiés",
+      "secondaryDescription": "Rejoignez-nous pour obtenir des commandes mondiales",
+      "trusted": "Conçu pour les équipes de marque expédiant des créations payées sur les réseaux sociaux rapidement",
+      "showreel": "Voir le flux de travail",
+      "statBudget": "Budget de production de départ",
+      "statWindow": "Fenêtre de premier concept",
+      "statDelivery": "Norme de livraison et de droits",
+      "trustMarquee": "FIABLE PAR DES ÉQUIPES DE MARQUE MONDIALES"
+    },
+    "heroFeatures": [
+      {
+        "title": "Appariement de studio",
+        "desc": "Équipes vérifiées classées par adéquation de portfolio",
+        "icon": "users"
+      },
+      {
+        "title": "Salles de révision",
+        "desc": "Notes au niveau du cadre et gestion des approbations",
+        "icon": "play"
+      },
+      {
+        "title": "Flux de travail par séquestre",
+        "desc": "Protection de paiement basée sur des jalons",
+        "icon": "shield"
+      },
+      {
+        "title": "Vitesse créative",
+        "desc": "Moins de couches, beaucoup plus d'efficacité",
+        "icon": "zap"
+      }
+    ],
+    "stats": [
+      {
+        "value": "70%",
+        "suffix": "↓",
+        "label": "Réduction de coût typique"
+      },
+      {
+        "value": "72h",
+        "suffix": "",
+        "label": "Fenêtre de premier concept"
+      },
+      {
+        "value": "4K",
+        "suffix": "",
+        "label": "Norme de livraison"
+      },
+      {
+        "value": "2000+",
+        "suffix": "",
+        "label": "Réseau de studios vérifiés"
+      }
+    ],
+    "logos": {
+      "label": "Modèle de production conçu pour les équipes de marketing modernes",
+      "brands": [
+        "Stratégie",
+        "Brief",
+        "Appariement",
+        "Révision",
+        "Séquestre",
+        "Livraison",
+        "Droits",
+        "Analytique"
+      ]
+    },
+    "cost": {
+      "title": "La production publicitaire traditionnelle est cassée",
+      "body": "Les agences ajoutent des couches de majoration, des délais lents et des révisions opaques.\nAlors que les marques ont toujours besoin d'une production de qualité cinématographique dans des délais payés sur les réseaux sociaux.",
+      "pains": [
+        "Majoration élevée des agences",
+        "Délais de 8 à 12 semaines",
+        "Accès limité aux créateurs",
+        "Boucles de révisions sans fin"
+      ],
+      "compareTitle": "Voir la différence",
+      "traditional": "Agence traditionnelle",
+      "studio": "VINCIS",
+      "saveBadge": "Économisez environ 80%",
+      "savings": [
+        "Budget économisé d'environ 80%",
+        "Temps économisé d'environ 95-96%"
+      ],
+      "rows": [
+        {
+          "label": "Coût moyen",
+          "trad": "$25,000+",
+          "studio": "$5,000"
+        },
+        {
+          "label": "Temps de production",
+          "trad": "8–12 semaines",
+          "studio": "72 heures"
+        },
+        {
+          "label": "Accès aux créateurs",
+          "trad": "À travers des couches",
+          "studio": "Réseau direct"
+        },
+        {
+          "label": "Révisions",
+          "trad": "Frais supplémentaires",
+          "studio": "Flux de travail inclus"
+        }
+      ]
+    },
+    "steps": {
+      "eyebrow": "COMMENT ÇA FONCTIONNE",
+      "title": "Du brief au montage final, un flux de production",
+      "subtitle": "",
+      "items": [
+        {
+          "num": "01",
+          "title": "Partagez votre vision",
+          "desc": "Téléchargez votre brief et vos références en quelques minutes."
+        },
+        {
+          "num": "02",
+          "title": "Appariement & Planification",
+          "desc": "Appariement axé sur le portfolio avec des studios vérifiés."
+        },
+        {
+          "num": "03",
+          "title": "Créer & Collaborer",
+          "desc": "Production, révision et révisions dans un seul flux."
+        },
+        {
+          "num": "04",
+          "title": "Livrer & Élargir",
+          "desc": "Approuvez le montage final et élargissez la création gagnante."
+        }
+      ]
+    },
+    "why": {
+      "eyebrow": "Position de la plateforme",
+      "titleLine1": "Déplacez la production commerciale hors de la coordination manuelle",
+      "titleLine2": "dans un système d'exploitation contrôlé",
+      "subtitle": "VINCIS offre aux équipes de marque un endroit pour briefer, apparier des studios, réviser des montages, protéger les paiements et libérer des actifs prêts pour la campagne.",
+      "items": [
+        "Intégration de brief structurée",
+        "Appariement de studios vérifiés",
+        "Révision au cadre et livraison par séquestre"
+      ],
+      "trustLabel": "Conçu pour les normes des marques mondiales",
+      "brands": [
+        "Google",
+        "Coca-Cola",
+        "Samsung",
+        "Airbnb",
+        "TikTok",
+        "Shopify",
+        "Amazon",
+        "Meta"
+      ]
+    },
+    "work": {
+      "eyebrow": "Travail RÉCENT",
+      "title": "Un travail qui parle de lui-même",
+      "featured": "En vedette",
+      "viewAll": "Voir toutes les études de cas"
+    },
+    "features": {
+      "networkTitle": "Réseau de créateurs",
+      "networkItems": [
+        "Créateurs sélectionnés",
+        "Certification de travail",
+        "Évaluations de livraison",
+        "Séquestre de plateforme"
+      ],
+      "trustTitle": "Confiance & séquestre",
+      "trustItems": [
+        "Protection des paiements",
+        "Filigranes de révision",
+        "Historique des versions",
+        "Payer lorsque satisfait"
+      ]
+    },
+    "cta": {
+      "title": "Intégrez votre prochaine campagne dans un véritable système de production",
+      "subtitle": "Commencez par un brief structuré, des studios appariés, des jalons protégés et une salle de révision que votre équipe peut réellement utiliser.",
+      "primary": "Démarrez votre projet",
+      "secondary": "Parlez à un expert"
+    }
+  },
+  "es": {
+    "nav": {
+      "howItWorks": "Cómo funciona",
+      "forBrands": "Para marcas",
+      "forCreators": "Para creadores",
+      "caseStudies": "Estudios de caso",
+      "pricing": "Precios",
+      "login": "Iniciar sesión",
+      "startProject": "Iniciar un proyecto"
+    },
+    "split": {
+      "panelEyebrow": "Comienza",
+      "panelTitle": "Inicia sesión o crea una cuenta",
+      "panelSubtitle": "Elige tu espacio de trabajo: las marcas lanzan campañas, los creadores entregan trabajos de calidad cinematográfica.",
+      "welcomeBack": "Bienvenido de nuevo",
+      "loggedInSubtitle": "Continúa a tu espacio de trabajo VINCIS.",
+      "brandTab": "Marca",
+      "creatorTab": "Creador",
+      "emailLabel": "Correo electrónico de trabajo",
+      "emailPlaceholder": "tú@empresa.com",
+      "continue": "Continuar",
+      "orDivider": "o",
+      "signInBrand": "Iniciar sesión como marca",
+      "signInCreator": "Iniciar sesión como creador",
+      "noAccount": "¿Nuevo en VINCIS?",
+      "createAccount": "Crear cuenta",
+      "explorePricing": "Ver precios",
+      "legalNotice": "Al continuar, aceptas nuestros Términos y Política de Privacidad.",
+      "leftFootnote": "Confiado por marcas globales para emparejamiento basado en portafolios, revisión precisa por fotograma y entrega respaldada por escrow."
+    },
+    "hero": {
+      "eyebrow": "Impulsado por IA · Colaboración global",
+      "titleLine1": "Conectando marcas globales",
+      "titleHighlight": "",
+      "titleLine2": "con creadores de IA",
+      "subtitle": "La publicidad premium ya no es exclusiva de las grandes empresas",
+      "primary": "Soy una marca",
+      "secondary": "Soy un creador",
+      "primaryDescription": "Emparejar con estudios de IA verificados",
+      "secondaryDescription": "Únete para obtener pedidos globales",
+      "trusted": "Construido para equipos de marca que envían creativos de pago social rápidamente",
+      "showreel": "Ver el flujo de trabajo",
+      "statBudget": "Presupuesto de producción inicial",
+      "statWindow": "Ventana del primer concepto",
+      "statDelivery": "Estándar de entrega y derechos",
+      "trustMarquee": "CONFIADO POR EQUIPOS DE MARCA GLOBAL"
+    },
+    "heroFeatures": [
+      {
+        "title": "Emparejamiento de estudios",
+        "desc": "Equipos verificados clasificados por ajuste de portafolio",
+        "icon": "users"
+      },
+      {
+        "title": "Salas de revisión",
+        "desc": "Notas a nivel de fotograma y gestión de aprobaciones",
+        "icon": "play"
+      },
+      {
+        "title": "Flujo de trabajo de escrow",
+        "desc": "Protección de pago basada en hitos",
+        "icon": "shield"
+      },
+      {
+        "title": "Velocidad creativa",
+        "desc": "Menos capas, mucha mayor eficiencia",
+        "icon": "zap"
+      }
+    ],
+    "stats": [
+      {
+        "value": "70%",
+        "suffix": "↓",
+        "label": "Reducción de costos típica"
+      },
+      {
+        "value": "72h",
+        "suffix": "",
+        "label": "Ventana del primer concepto"
+      },
+      {
+        "value": "4K",
+        "suffix": "",
+        "label": "Estándar de entrega"
+      },
+      {
+        "value": "2000+",
+        "suffix": "",
+        "label": "Red de estudios verificados"
+      }
+    ],
+    "logos": {
+      "label": "Modelo de producción diseñado para equipos de marketing modernos",
+      "brands": [
+        "Estrategia",
+        "Resumen",
+        "Emparejar",
+        "Revisión",
+        "Escrow",
+        "Entrega",
+        "Derechos",
+        "Analítica"
+      ]
+    },
+    "cost": {
+      "title": "La producción publicitaria tradicional está rota",
+      "body": "Las agencias añaden capas de margen, plazos lentos y revisiones opacas.\nMientras las marcas aún necesitan resultados de calidad cinematográfica en plazos de pago social.",
+      "pains": [
+        "Alto margen de agencia",
+        "Plazos de 8 a 12 semanas",
+        "Acceso limitado a creadores",
+        "Bucles de revisión interminables"
+      ],
+      "compareTitle": "Ve la diferencia",
+      "traditional": "Agencia Tradicional",
+      "studio": "VINCIS",
+      "saveBadge": "Ahorra alrededor del 80%",
+      "savings": [
+        "Presupuesto ahorrado alrededor del 80%",
+        "Tiempo ahorrado alrededor del 95-96%"
+      ],
+      "rows": [
+        {
+          "label": "Costo Promedio",
+          "trad": "$25,000+",
+          "studio": "$5,000"
+        },
+        {
+          "label": "Tiempo de Producción",
+          "trad": "8–12 semanas",
+          "studio": "72 horas"
+        },
+        {
+          "label": "Acceso a Creadores",
+          "trad": "A través de capas",
+          "studio": "Red directa"
+        },
+        {
+          "label": "Revisiones",
+          "trad": "Tarifas adicionales",
+          "studio": "Flujo de trabajo incluido"
+        }
+      ]
+    },
+    "steps": {
+      "eyebrow": "CÓMO FUNCIONA",
+      "title": "De resumen a corte final, un flujo de producción",
+      "subtitle": "",
+      "items": [
+        {
+          "num": "01",
+          "title": "Comparte tu visión",
+          "desc": "Sube tu resumen y referencias en minutos."
+        },
+        {
+          "num": "02",
+          "title": "Emparejar y Planificar",
+          "desc": "Emparejamiento basado en portafolios con estudios verificados."
+        },
+        {
+          "num": "03",
+          "title": "Crear y Colaborar",
+          "desc": "Producción, revisión y revisiones en un solo flujo."
+        },
+        {
+          "num": "04",
+          "title": "Entregar y Escalar",
+          "desc": "Aprueba el corte final y escala la creatividad ganadora."
+        }
+      ]
+    },
+    "why": {
+      "eyebrow": "Posición de la plataforma",
+      "titleLine1": "Mover la producción comercial fuera de la coordinación manual",
+      "titleLine2": "hacia un sistema operativo controlado",
+      "subtitle": "VINCIS ofrece a los equipos de marca un lugar para resumir, emparejar estudios, revisar cortes, proteger pagos y liberar activos listos para la campaña.",
+      "items": [
+        "Ingreso estructurado de resúmenes",
+        "Emparejamiento de estudios verificados",
+        "Revisión de fotogramas y entrega de escrow"
+      ],
+      "trustLabel": "Construido para estándares de marca global",
+      "brands": [
+        "Google",
+        "Coca-Cola",
+        "Samsung",
+        "Airbnb",
+        "TikTok",
+        "Shopify",
+        "Amazon",
+        "Meta"
+      ]
+    },
+    "work": {
+      "eyebrow": "TRABAJO RECIENTE",
+      "title": "Trabajo que habla por sí mismo",
+      "featured": "Destacado",
+      "viewAll": "Ver todos los estudios de caso"
+    },
+    "features": {
+      "networkTitle": "Red de creadores",
+      "networkItems": [
+        "Creadores seleccionados",
+        "Certificación de trabajo",
+        "Calificaciones de entrega",
+        "Escrow de plataforma"
+      ],
+      "trustTitle": "Confianza y escrow",
+      "trustItems": [
+        "Protección de pago",
+        "Marcas de revisión",
+        "Historial de versiones",
+        "Pagar cuando estés satisfecho"
+      ]
+    },
+    "cta": {
+      "title": "Lleva tu próxima campaña a un sistema de producción real",
+      "subtitle": "Comienza con un resumen estructurado, estudios emparejados, hitos protegidos y una sala de revisión que tu equipo realmente puede usar.",
+      "primary": "Inicia tu proyecto",
+      "secondary": "Habla con un experto"
+    }
+  }
+}

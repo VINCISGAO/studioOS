@@ -28,7 +28,7 @@ function FooterNavSections({
   groups,
   className
 }: {
-  locale: Locale | MarketingLocale;
+  locale: MarketingLocale | MarketingLocale;
   groups: FooterNavGroup[];
   className?: string;
 }) {
@@ -65,7 +65,7 @@ function FooterBottomBar({
   rights,
   className
 }: {
-  locale: Locale | MarketingLocale;
+  locale: MarketingLocale | MarketingLocale;
   rights: string;
   className?: string;
 }) {
@@ -98,7 +98,7 @@ function FooterCta({
   button,
   compact = false
 }: {
-  locale: Locale | MarketingLocale;
+  locale: MarketingLocale | MarketingLocale;
   title: string;
   subtitle: string;
   button: string;
@@ -134,7 +134,7 @@ export function MarketingFooter({
   locale,
   tone = "light"
 }: {
-  locale: Locale | MarketingLocale;
+  locale: MarketingLocale | MarketingLocale;
   tone?: "light" | "dark";
 }) {
   const copy = getFooterCopy(locale);

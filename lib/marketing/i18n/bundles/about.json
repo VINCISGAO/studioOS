@@ -1,0 +1,2334 @@
+{
+  "en": {
+    "pageTitle": "About us",
+    "sidebar": {
+      "about": "About us",
+      "cases": "Case studies",
+      "process": "Process",
+      "faq": "FAQ",
+      "aiAssistant": "AI assistant",
+      "ctaTitle": "Ready to create?",
+      "ctaBody": "Connect with global creators and bring your ideas to life.",
+      "ctaButton": "Get started",
+      "darkMode": "Dark mode"
+    },
+    "hero": {
+      "title": "Connect every idea. Make every collaboration simpler.",
+      "paragraphs": [
+        "VINCIS is a global AI advertising platform that connects brands and creators so ideas can move from brief to final delivery in one place.",
+        "From brief publishing and intelligent matching to collaboration, version review, escrow payments, and final delivery, we redesigned the full production workflow to be simpler, more transparent, and more efficient.",
+        "Great creative work should not be limited by geography, resources, or communication overhead.\nWhether you are a brand looking for quality ads or a creator with AI production skills, VINCIS helps you find the right partner faster and build trust."
+      ],
+      "features": [
+        {
+          "title": "Help brands find excellent creators more easily.",
+          "body": "Intelligent matching and real portfolio data help brands find the right studio faster."
+        },
+        {
+          "title": "Give creators more global project opportunities.",
+          "body": "Connect creators to global brand demand with more stable, high-quality collaborations."
+        },
+        {
+          "title": "Use AI to improve efficiency, not replace creativity.",
+          "body": "AI optimizes workflow and collaboration while creative decisions stay human-led."
+        },
+        {
+          "title": "Make advertising production more transparent, fair, and efficient.",
+          "body": "From pricing and collaboration to review and payment, the full process stays traceable."
+        }
+      ],
+      "watchFilm": "Watch brand film",
+      "filmDuration": "1:35"
+    },
+    "quickNav": [
+      {
+        "id": "story",
+        "label": "Our story"
+      },
+      {
+        "id": "mission",
+        "label": "Mission"
+      },
+      {
+        "id": "why",
+        "label": "Why VINCIS"
+      },
+      {
+        "id": "values",
+        "label": "Values"
+      },
+      {
+        "id": "contact",
+        "label": "Contact"
+      },
+      {
+        "id": "press",
+        "label": "Press kit"
+      }
+    ],
+    "story": {
+      "eyebrow": "Our story",
+      "title": "Our Story",
+      "paragraphs": [
+        "Every great product starts with a real problem.",
+        "AI video has advanced quickly, and more creators are producing high-quality ads with AI. Yet brands still struggle to find the right talent, and creators still struggle to access stable, high-quality opportunities.",
+        "Brands cannot easily tell who can truly deliver. Creators cannot easily find reliable projects. High communication cost, messy workflows, weak payment protection, and slow revision cycles remain the norm.",
+        "VINCIS was built in that context—to connect global brands and creators on a foundation of transparency, professionalism, and trust."
+      ],
+      "quote": "Every great story begins with a connection.",
+      "moreLink": "Read more"
+    },
+    "mission": {
+      "title": "Our mission",
+      "body": "Our mission is simple: connect global brands and creators so every strong idea has a chance to become real.",
+      "bullets": [
+        "Help brands find excellent creators more easily.",
+        "Give creators more global project opportunities.",
+        "Use AI to improve efficiency, not replace creativity.",
+        "Make advertising production more transparent, fair, and efficient."
+      ],
+      "moreLink": "Contact us"
+    },
+    "why": {
+      "title": "Why VINCIS",
+      "paragraphs": [
+        "We are not building another portfolio site or a basic job board. VINCIS is redefining how AI advertising collaborations work.",
+        "Brands should not spend weeks hunting for the right team. Creators should not spend all their time pitching. AI helps both sides match more precisely so great creators get more opportunities and brands get better work at fair cost.",
+        "Technology is not the goal. Helping people collaborate better is why VINCIS exists."
+      ],
+      "bullets": [
+        "AI-powered matching instead of manual search",
+        "Transparent workflow with escrow protection",
+        "Built for collaboration, not just listings"
+      ],
+      "moreLink": "Learn more"
+    },
+    "values": {
+      "title": "Our values",
+      "items": [
+        {
+          "title": "Creativity first",
+          "body": "Great work starts with great ideas. AI improves speed; creators supply the vision that moves people."
+        },
+        {
+          "title": "Trusted collaboration",
+          "body": "Every project matters. Transparent workflow, version control, escrow, and structured collaboration keep both sides confident."
+        },
+        {
+          "title": "Global connection",
+          "body": "Talent is everywhere. We help brands work across borders with creators who truly fit their needs."
+        },
+        {
+          "title": "Continuous innovation",
+          "body": "AI is changing how work gets made. VINCIS keeps exploring better tools, workflows, and collaboration models."
+        }
+      ],
+      "moreLink": "Learn more"
+    },
+    "platform": {
+      "title": "What we build",
+      "subtitle": "VINCIS delivers the full advertising collaboration stack:",
+      "items": [
+        "AI brief structuring",
+        "Global creator matching",
+        "Project collaboration",
+        "Multi-version management",
+        "Online review center",
+        "Escrow payments",
+        "AI creative assistant",
+        "Multilingual support",
+        "Data-driven pricing engine"
+      ],
+      "closing": "So brands can focus on creative direction and creators can focus on making."
+    },
+    "stats": [
+      {
+        "value": "10,000+",
+        "label": "Global creators"
+      },
+      {
+        "value": "2,000+",
+        "label": "Brand clients"
+      },
+      {
+        "value": "15,000+",
+        "label": "Completed projects"
+      },
+      {
+        "value": "70+",
+        "label": "Countries & regions"
+      }
+    ],
+    "team": {
+      "title": "Global team",
+      "body": "VINCIS is built for a global market. Our team spans advertising, film production, AI, product design, and engineering—and we keep improving the platform with brands, creators, and partners worldwide.",
+      "moreLink": "Meet the team",
+      "members": [
+        {
+          "name": "Guowei Li",
+          "role": "Founder & CEO"
+        },
+        {
+          "name": "Yawen Chen",
+          "role": "Head of Product"
+        },
+        {
+          "name": "Marcus Lee",
+          "role": "Creative Director"
+        },
+        {
+          "name": "Sarah Kim",
+          "role": "Head of Engineering"
+        }
+      ]
+    },
+    "press": {
+      "title": "Press kit",
+      "body": "Media, partners, and industry organizations are welcome to learn more about VINCIS.",
+      "items": [
+        "Brand overview",
+        "Logo & brand guidelines",
+        "Official imagery",
+        "Product screenshots",
+        "Brand film",
+        "Press materials",
+        "Contact information"
+      ],
+      "downloadLink": "Download press kit",
+      "note": "For interviews, partnerships, or media licensing, please contact us."
+    },
+    "contact": {
+      "title": "Contact",
+      "body": "Whether you are a brand, creator, journalist, or partner—we would like to hear from you.",
+      "business": "Business",
+      "press": "Press",
+      "support": "Support",
+      "website": "Website",
+      "sendMessage": "Send a message"
+    },
+    "closing": {
+      "en": "Every great story begins with a connection.",
+      "local": "Every great story begins with a connection. VINCIS aims to be the bridge between global brands and creators—so strong ideas can cross language, geography, and industry boundaries and become work that matters."
+    }
+  },
+  "zh-CN": {
+    "pageTitle": "关于我们",
+    "sidebar": {
+      "about": "关于我们",
+      "cases": "成功案例",
+      "process": "流程",
+      "faq": "常见问题",
+      "aiAssistant": "AI 助手",
+      "ctaTitle": "准备好开始创作了吗？",
+      "ctaBody": "连接全球创作者，让您的创意成为现实。",
+      "ctaButton": "立即开始",
+      "darkMode": "深色模式"
+    },
+    "hero": {
+      "title": "连接每一个创意，让每一次合作更简单。",
+      "paragraphs": [
+        "VINCIS 是一个面向全球的 AI 广告创作平台，连接品牌与创作者，让创意从一个想法开始，到最终作品交付，都能够在同一个平台高效完成。",
+        "从需求发布、智能匹配、项目协作、版本审核到托管支付与最终交付，我们重新设计了整个广告制作流程，让复杂的创作合作变得更加简单、透明⁠与高效。",
+        "我们相信，优秀的创意不应该因为地域、资源或沟通成本而被埋没。\n无论你是一家正在寻找优质广告的品牌，还是一位拥有创作能力的 AI 创作者，VINCIS 都希望帮助你更快找到彼此，并建立值得信赖的合作关系。"
+      ],
+      "features": [
+        {
+          "title": "让品牌更容易找到优秀的创作者。",
+          "body": "通过智能匹配与真实作品数据，帮助品牌快速找到风格契合的创作者。"
+        },
+        {
+          "title": "让创作者获得更多来自全球的项目机会。",
+          "body": "连接全球品牌需求，让更多创作者获得稳定、高质量的合作机会。"
+        },
+        {
+          "title": "让 AI 成为提高效率的工具，而不是取代创造力。",
+          "body": "AI 负责流程优化与协作效率，创意与决策始终由人主导。"
+        },
+        {
+          "title": "让广告制作变得更加透明、公平、高效。",
+          "body": "从报价、协作到审片与支付，全流程透明可追溯。"
+        }
+      ],
+      "watchFilm": "观看品牌影片",
+      "filmDuration": "1:35"
+    },
+    "quickNav": [
+      {
+        "id": "story",
+        "label": "品牌故事"
+      },
+      {
+        "id": "mission",
+        "label": "我们的使命"
+      },
+      {
+        "id": "why",
+        "label": "为什么创立 VINCIS"
+      },
+      {
+        "id": "values",
+        "label": "我们的价值观"
+      },
+      {
+        "id": "contact",
+        "label": "联系我们"
+      },
+      {
+        "id": "press",
+        "label": "媒体资料"
+      }
+    ],
+    "story": {
+      "eyebrow": "品牌故事",
+      "title": "Our Story",
+      "paragraphs": [
+        "Every great story begins with a connection.",
+        "AI 视频正在让高质量广告更容易被创作，但品牌仍然很难快速找到真正合适的创作者，创作者也缺少稳定、高质量的项目机会。",
+        "能力难判断、沟通成本高、流程不透明、付款缺乏保障、修改效率低，仍然是行业里最常见的问题。",
+        "VINCIS 因此诞生：连接全球品牌与创作者，让每一次合作都更透明、更专业、更值得信任。"
+      ],
+      "quote": "Every great story begins with a connection.",
+      "moreLink": "了解更多故事"
+    },
+    "mission": {
+      "title": "我们的使命",
+      "body": "我们的使命很简单：连接全球品牌与创作者，让每一个优秀创意都有机会成为现实。",
+      "bullets": [
+        "让品牌更容易找到优秀的创作者。",
+        "让创作者获得更多来自全球的项目机会。",
+        "让 AI 成为提高效率的工具，而不是取代创造力。",
+        "让广告制作变得更加透明、公平、高效。"
+      ],
+      "moreLink": "联系我们"
+    },
+    "why": {
+      "title": "为什么创立 VINCIS",
+      "paragraphs": [
+        "我们的目标并不是再做一个作品展示网站，也不是一个简单的接单平台。VINCIS 希望重新定义 AI 广告制作的合作方式。",
+        "在这里，品牌不需要花费大量时间寻找合适的团队；创作者也不需要不断推销自己寻找机会。AI 会帮助双方完成更精准的匹配，让真正优秀的创作者获得更多机会，让品牌以更合理的成本完成更高质量的作品。",
+        "技术不是目的。帮助人与人更高效地合作，才是 VINCIS 存在的意义。"
+      ],
+      "bullets": [
+        "AI 驱动的精准匹配，而非人海搜索",
+        "透明流程与托管支付，建立信任",
+        "专注协作效率，而非简单信息展示"
+      ],
+      "moreLink": "了解更多"
+    },
+    "values": {
+      "title": "我们的价值观",
+      "items": [
+        {
+          "title": "创意第一",
+          "body": "优秀的作品永远来自优秀的创意。AI 可以提升效率，但真正打动人的，始终是创作者的想法。"
+        },
+        {
+          "title": "信任协作",
+          "body": "每一个项目都值得被认真对待。通过透明的流程、版本管理、托管支付和完整的协作机制，让品牌与创作者都能够安心合作。"
+        },
+        {
+          "title": "全球连接",
+          "body": "优秀的创作者遍布世界各地。我们希望帮助更多品牌跨越地域限制，与真正适合自己的创作者建立合作。"
+        },
+        {
+          "title": "持续创新",
+          "body": "AI 正在改变创作方式。VINCIS 将持续探索新的技术、新的工作流程和新的协作模式，让创意制作变得更加简单。"
+        }
+      ],
+      "moreLink": "了解更多"
+    },
+    "platform": {
+      "title": "我们打造的平台",
+      "subtitle": "VINCIS 提供完整的广告制作协作体验，包括：",
+      "items": [
+        "AI 智能需求整理",
+        "全球创作者匹配",
+        "项目协作与沟通",
+        "多版本管理",
+        "在线审片中心",
+        "托管支付（Escrow）",
+        "AI 创意助手",
+        "全球多语言支持",
+        "数据驱动的智能报价系统"
+      ],
+      "closing": "让品牌能够专注于创意，让创作者专注于创作。"
+    },
+    "stats": [
+      {
+        "value": "10,000+",
+        "label": "全球创作者"
+      },
+      {
+        "value": "2,000+",
+        "label": "品牌客户"
+      },
+      {
+        "value": "15,000+",
+        "label": "完成项目"
+      },
+      {
+        "value": "70+",
+        "label": "覆盖国家和地区"
+      }
+    ],
+    "team": {
+      "title": "全球团队",
+      "body": "VINCIS 是一个面向全球市场打造的平台。我们的团队拥有广告创意、影视制作、AI 技术、产品设计与软件工程等不同背景，并持续与来自世界各地的品牌、创作者和合作伙伴共同完善平台。",
+      "moreLink": "了解我们的团队",
+      "members": [
+        {
+          "name": "李国威",
+          "role": "创始人 & CEO"
+        },
+        {
+          "name": "陈雅文",
+          "role": "产品负责人"
+        },
+        {
+          "name": "Marcus Lee",
+          "role": "创意总监"
+        },
+        {
+          "name": "Sarah Kim",
+          "role": "工程负责人"
+        }
+      ]
+    },
+    "press": {
+      "title": "媒体资料",
+      "body": "欢迎媒体、合作伙伴及行业机构了解 VINCIS。",
+      "items": [
+        "品牌介绍",
+        "Logo 与品牌规范",
+        "官方宣传图片",
+        "产品截图",
+        "品牌影片",
+        "新闻资料",
+        "联系方式"
+      ],
+      "downloadLink": "下载资源包",
+      "note": "如需采访、商务合作或媒体授权，请联系我们。"
+    },
+    "contact": {
+      "title": "联系我们",
+      "body": "无论你是品牌、创作者、媒体还是合作伙伴，我们都期待与你建立联系。",
+      "business": "商务合作",
+      "press": "媒体合作",
+      "support": "客户支持",
+      "website": "官方网站",
+      "sendMessage": "发送消息"
+    },
+    "closing": {
+      "en": "Every great story begins with a connection.",
+      "local": "每一个伟大的故事，都始于一次连接。VINCIS 希望成为连接全球品牌与创作者的桥梁，让更多优秀的创意跨越语言、地域与行业边界，从一个想法开始，最终成为真正影响世界的作品。"
+    }
+  },
+  "zh-TW": {
+    "pageTitle": "關於我們",
+    "sidebar": {
+      "about": "關於我們",
+      "cases": "成功案例",
+      "process": "流程",
+      "faq": "常見問題",
+      "aiAssistant": "AI 助手",
+      "ctaTitle": "準備好開始創作了嗎？",
+      "ctaBody": "連接全球創作者，讓您的創意成為現實。",
+      "ctaButton": "立即開始",
+      "darkMode": "深色模式"
+    },
+    "hero": {
+      "title": "連接每一個創意，讓每一次合作更簡單。",
+      "paragraphs": [
+        "VINCIS 是一個面向全球的 AI 廣告創作平台，連接品牌與創作者，讓創意從一個想法開始，到最終作品交付，都能夠在同一個平台高效完成。",
+        "從需求發布、智能匹配、項目協作、版本審核到托管支付與最終交付，我們重新設計了整個廣告製作流程，讓複雜的創作合作變得更加簡單、透明與高效。",
+        "我們相信，優秀的創意不應該因為地域、資源或溝通成本而被埋沒。\n無論你是一家正在尋找優質廣告的品牌，還是一位擁有創作能力的 AI 創作者，VINCIS 都希望幫助你更快找到彼此，並建立值得信賴的合作關係。"
+      ],
+      "features": [
+        {
+          "title": "讓品牌更容易找到優秀的創作者。",
+          "body": "通過智能匹配與真實作品數據，幫助品牌快速找到風格契合的創作者。"
+        },
+        {
+          "title": "讓創作者獲得更多來自全球的項目機會。",
+          "body": "連接全球品牌需求，讓更多創作者獲得穩定、高質量的合作機會。"
+        },
+        {
+          "title": "讓 AI 成為提高效率的工具，而不是取代創造力。",
+          "body": "AI 負責流程優化與協作效率，創意與決策始終由人主導。"
+        },
+        {
+          "title": "讓廣告製作變得更加透明、公平、高效。",
+          "body": "從報價、協作到審片與支付，全流程透明可追溯。"
+        }
+      ],
+      "watchFilm": "觀看品牌影片",
+      "filmDuration": "1:35"
+    },
+    "quickNav": [
+      {
+        "id": "story",
+        "label": "品牌故事"
+      },
+      {
+        "id": "mission",
+        "label": "我們的使命"
+      },
+      {
+        "id": "why",
+        "label": "為什麼創立 VINCIS"
+      },
+      {
+        "id": "values",
+        "label": "我們的價值觀"
+      },
+      {
+        "id": "contact",
+        "label": "聯繫我們"
+      },
+      {
+        "id": "press",
+        "label": "媒體資料"
+      }
+    ],
+    "story": {
+      "eyebrow": "品牌故事",
+      "title": "Our Story",
+      "paragraphs": [
+        "每個偉大的故事都始於一次連接。",
+        "AI 視頻正在讓高質量廣告更容易被創作，但品牌仍然很難快速找到真正合適的創作者，創作者也缺少穩定、高質量的項目機會。",
+        "能力難判斷、溝通成本高、流程不透明、付款缺乏保障、修改效率低，仍然是行業裡最常見的問題。",
+        "VINCIS 因此誕生：連接全球品牌與創作者，讓每一次合作都更透明、更專業、更值得信任。"
+      ],
+      "quote": "每個偉大的故事都始於一次連接。",
+      "moreLink": "了解更多故事"
+    },
+    "mission": {
+      "title": "我們的使命",
+      "body": "我們的使命很簡單：連接全球品牌與創作者，讓每一個優秀創意都有機會成為現實。",
+      "bullets": [
+        "讓品牌更容易找到優秀的創作者。",
+        "讓創作者獲得更多來自全球的項目機會。",
+        "讓 AI 成為提高效率的工具，而不是取代創造力。",
+        "讓廣告製作變得更加透明、公平、高效。"
+      ],
+      "moreLink": "聯繫我們"
+    },
+    "why": {
+      "title": "為什麼創立 VINCIS",
+      "paragraphs": [
+        "我們的目標並不是再做一個作品展示網站，也不是一個簡單的接單平台。VINCIS 希望重新定義 AI 廣告製作的合作方式。",
+        "在這裡，品牌不需要花費大量時間尋找合適的團隊；創作者也不需要不斷推銷自己尋找機會。AI 會幫助雙方完成更精準的匹配，讓真正優秀的創作者獲得更多機會，讓品牌以更合理的成本完成更高質量的作品。",
+        "技術不是目的。幫助人與人更高效地合作，才是 VINCIS 存在的意義。"
+      ],
+      "bullets": [
+        "AI 驅動的精準匹配，而非人海搜索",
+        "透明流程與托管支付，建立信任",
+        "專注協作效率，而非簡單信息展示"
+      ],
+      "moreLink": "了解更多"
+    },
+    "values": {
+      "title": "我們的價值觀",
+      "items": [
+        {
+          "title": "創意第一",
+          "body": "優秀的作品永遠來自優秀的創意。AI 可以提升效率，但真正打動人的，始終是創作者的想法。"
+        },
+        {
+          "title": "信任協作",
+          "body": "每一個項目都值得被認真對待。通過透明的流程、版本管理、托管支付和完整的協作機制，讓品牌與創作者都能夠安心合作。"
+        },
+        {
+          "title": "全球連接",
+          "body": "優秀的創作者遍布世界各地。我們希望幫助更多品牌跨越地域限制，與真正適合自己的創作者建立合作。"
+        },
+        {
+          "title": "持續創新",
+          "body": "AI 正在改變創作方式。VINCIS 將持續探索新的技術、新的工作流程和新的協作模式，讓創意製作變得更加簡單。"
+        }
+      ],
+      "moreLink": "了解更多"
+    },
+    "platform": {
+      "title": "我們打造的平台",
+      "subtitle": "VINCIS 提供完整的廣告製作協作體驗，包括：",
+      "items": [
+        "AI 智能需求整理",
+        "全球創作者匹配",
+        "項目協作與溝通",
+        "多版本管理",
+        "在線審片中心",
+        "托管支付（Escrow）",
+        "AI 創意助手",
+        "全球多語言支持",
+        "數據驅動的智能報價系統"
+      ],
+      "closing": "讓品牌能夠專注於創意，讓創作者專注於創作。"
+    },
+    "stats": [
+      {
+        "value": "10,000+",
+        "label": "全球創作者"
+      },
+      {
+        "value": "2,000+",
+        "label": "品牌客戶"
+      },
+      {
+        "value": "15,000+",
+        "label": "完成項目"
+      },
+      {
+        "value": "70+",
+        "label": "覆蓋國家和地區"
+      }
+    ],
+    "team": {
+      "title": "全球團隊",
+      "body": "VINCIS 是一個面向全球市場打造的平台。我們的團隊擁有廣告創意、影視製作、AI 技術、產品設計與軟件工程等不同背景，並持續與來自世界各地的品牌、創作者和合作夥伴共同完善平台。",
+      "moreLink": "了解我們的團隊",
+      "members": [
+        {
+          "name": "李國威",
+          "role": "創始人 & CEO"
+        },
+        {
+          "name": "陳雅文",
+          "role": "產品負責人"
+        },
+        {
+          "name": "Marcus Lee",
+          "role": "創意總監"
+        },
+        {
+          "name": "Sarah Kim",
+          "role": "工程負責人"
+        }
+      ]
+    },
+    "press": {
+      "title": "媒體資料",
+      "body": "歡迎媒體、合作夥伴及行業機構了解 VINCIS。",
+      "items": [
+        "品牌介紹",
+        "Logo 與品牌規範",
+        "官方宣傳圖片",
+        "產品截圖",
+        "品牌影片",
+        "新聞資料",
+        "聯繫方式"
+      ],
+      "downloadLink": "下載資源包",
+      "note": "如需採訪、商務合作或媒體授權，請聯繫我們。"
+    },
+    "contact": {
+      "title": "聯繫我們",
+      "body": "無論你是品牌、創作者、媒體還是合作夥伴，我們都期待與你建立聯繫。",
+      "business": "商務合作",
+      "press": "媒體合作",
+      "support": "客戶支持",
+      "website": "官方網站",
+      "sendMessage": "發送消息"
+    },
+    "closing": {
+      "en": "Every great story begins with a connection.",
+      "local": "每一個偉大的故事，都始於一次連接。VINCIS 希望成為連接全球品牌與創作者的橋樑，讓更多優秀的創意跨越語言、地域與行業邊界，從一個想法開始，最終成為真正影響世界的作品。"
+    }
+  },
+  "ja": {
+    "pageTitle": "私たちについて",
+    "sidebar": {
+      "about": "私たちについて",
+      "cases": "ケーススタディ",
+      "process": "プロセス",
+      "faq": "よくある質問",
+      "aiAssistant": "AIアシスタント",
+      "ctaTitle": "作成する準備はできましたか？",
+      "ctaBody": "世界中のクリエイターとつながり、アイデアを実現しましょう。",
+      "ctaButton": "始める",
+      "darkMode": "ダークモード"
+    },
+    "hero": {
+      "title": "すべてのアイデアをつなぎ、すべてのコラボレーションをシンプルに。",
+      "paragraphs": [
+        "VINCISは、ブランドとクリエイターをつなぐグローバルなAI広告プラットフォームで、アイデアがブリーフから最終納品まで一つの場所で進むことができます。",
+        "ブリーフの公開からインテリジェントなマッチング、コラボレーション、バージョンレビュー、エスクロー決済、最終納品まで、私たちは全ての制作ワークフローをよりシンプルで透明性が高く、効率的に再設計しました。",
+        "素晴らしいクリエイティブな作品は、地理、リソース、コミュニケーションのオーバーヘッドによって制限されるべきではありません。\n質の高い広告を求めるブランドであれ、AI制作スキルを持つクリエイターであれ、VINCISはあなたが適切なパートナーをより早く見つけ、信頼を築く手助けをします。"
+      ],
+      "features": [
+        {
+          "title": "ブランドが優れたクリエイターをより簡単に見つける手助けをします。",
+          "body": "インテリジェントなマッチングと実際のポートフォリオデータが、ブランドが適切なスタジオをより早く見つける手助けをします。"
+        },
+        {
+          "title": "クリエイターにより多くのグローバルプロジェクトの機会を提供します。",
+          "body": "クリエイターをグローバルなブランドの需要に結びつけ、より安定した高品質なコラボレーションを実現します。"
+        },
+        {
+          "title": "AIを使用して効率を向上させ、創造性を置き換えません。",
+          "body": "AIはワークフローとコラボレーションを最適化し、クリエイティブな決定は人間が主導します。"
+        },
+        {
+          "title": "広告制作をより透明で公正、効率的にします。",
+          "body": "価格設定やコラボレーションからレビュー、支払いまで、全プロセスが追跡可能です。"
+        }
+      ],
+      "watchFilm": "ブランドフィルムを見る",
+      "filmDuration": "1:35"
+    },
+    "quickNav": [
+      {
+        "id": "story",
+        "label": "私たちのストーリー"
+      },
+      {
+        "id": "mission",
+        "label": "ミッション"
+      },
+      {
+        "id": "why",
+        "label": "なぜVINCISなのか"
+      },
+      {
+        "id": "values",
+        "label": "価値観"
+      },
+      {
+        "id": "contact",
+        "label": "お問い合わせ"
+      },
+      {
+        "id": "press",
+        "label": "プレスキット"
+      }
+    ],
+    "story": {
+      "eyebrow": "私たちのストーリー",
+      "title": "私たちのストーリー",
+      "paragraphs": [
+        "すべての優れた製品は、実際の問題から始まります。",
+        "AIビデオは急速に進化しており、より多くのクリエイターがAIを使って高品質な広告を制作しています。しかし、ブランドは依然として適切な才能を見つけるのに苦労しており、クリエイターは安定した高品質な機会にアクセスするのに苦労しています。",
+        "ブランドは、誰が本当に成果を出せるかを簡単に判断できません。クリエイターは信頼できるプロジェクトを簡単に見つけられません。高いコミュニケーションコスト、混乱したワークフロー、弱い支払い保護、遅い修正サイクルが依然として常態です。",
+        "VINCISは、そのような状況の中で構築されました。透明性、プロフェッショナリズム、信頼の基盤の上で、グローバルなブランドとクリエイターをつなげるために。"
+      ],
+      "quote": "すべての素晴らしいストーリーは、つながりから始まります。",
+      "moreLink": "もっと読む"
+    },
+    "mission": {
+      "title": "私たちのミッション",
+      "body": "私たちのミッションはシンプルです：グローバルなブランドとクリエイターをつなげ、すべての強いアイデアが現実になるチャンスを持つことです。",
+      "bullets": [
+        "ブランドが優れたクリエイターをより簡単に見つける手助けをします。",
+        "クリエイターにより多くのグローバルプロジェクトの機会を提供します。",
+        "AIを使用して効率を向上させ、創造性を置き換えません。",
+        "広告制作をより透明で公正、効率的にします。"
+      ],
+      "moreLink": "お問い合わせ"
+    },
+    "why": {
+      "title": "なぜVINCISなのか",
+      "paragraphs": [
+        "私たちは、別のポートフォリオサイトや基本的な求人掲示板を構築しているわけではありません。VINCISは、AI広告のコラボレーションのあり方を再定義しています。",
+        "ブランドは、適切なチームを見つけるために何週間も費やすべきではありません。クリエイターは、すべての時間を提案に費やすべきではありません。AIは両者がより正確にマッチングできるようにし、優れたクリエイターがより多くの機会を得て、ブランドが公正なコストでより良い作品を得る手助けをします。",
+        "技術は目的ではありません。人々がより良くコラボレーションできるようにすることが、VINCISの存在理由です。"
+      ],
+      "bullets": [
+        "手動検索ではなくAIによるマッチング",
+        "エスクロー保護付きの透明なワークフロー",
+        "リスティングだけでなくコラボレーションのために構築"
+      ],
+      "moreLink": "もっと学ぶ"
+    },
+    "values": {
+      "title": "私たちの価値観",
+      "items": [
+        {
+          "title": "創造性を最優先",
+          "body": "素晴らしい作品は素晴らしいアイデアから始まります。AIはスピードを向上させ、クリエイターは人々を動かすビジョンを提供します。"
+        },
+        {
+          "title": "信頼できるコラボレーション",
+          "body": "すべてのプロジェクトは重要です。透明なワークフロー、バージョン管理、エスクロー、構造化されたコラボレーションが両者の信頼を保ちます。"
+        },
+        {
+          "title": "グローバルなつながり",
+          "body": "才能はどこにでもあります。私たちは、ブランドが本当に必要なクリエイターと国境を越えて協力できるようにします。"
+        },
+        {
+          "title": "継続的な革新",
+          "body": "AIは仕事の作り方を変えています。VINCISは、より良いツール、ワークフロー、コラボレーションモデルを探求し続けます。"
+        }
+      ],
+      "moreLink": "もっと学ぶ"
+    },
+    "platform": {
+      "title": "私たちが構築するもの",
+      "subtitle": "VINCISは、広告コラボレーションの全スタックを提供します：",
+      "items": [
+        "AIブリーフ構造化",
+        "グローバルクリエイターマッチング",
+        "プロジェクトコラボレーション",
+        "マルチバージョン管理",
+        "オンラインレビューセンター",
+        "エスクロー決済",
+        "AIクリエイティブアシスタント",
+        "多言語サポート",
+        "データ駆動の価格設定エンジン"
+      ],
+      "closing": "ブランドはクリエイティブな方向性に集中し、クリエイターは制作に集中できるように。"
+    },
+    "stats": [
+      {
+        "value": "10,000+",
+        "label": "グローバルクリエイター"
+      },
+      {
+        "value": "2,000+",
+        "label": "ブランドクライアント"
+      },
+      {
+        "value": "15,000+",
+        "label": "完了したプロジェクト"
+      },
+      {
+        "value": "70+",
+        "label": "国・地域"
+      }
+    ],
+    "team": {
+      "title": "グローバルチーム",
+      "body": "VINCISはグローバル市場のために構築されています。私たちのチームは広告、映画制作、AI、プロダクトデザイン、エンジニアリングにわたり、世界中のブランド、クリエイター、パートナーと共にプラットフォームを改善し続けています。",
+      "moreLink": "チームに会う",
+      "members": [
+        {
+          "name": "Guowei Li",
+          "role": "創設者兼CEO"
+        },
+        {
+          "name": "Yawen Chen",
+          "role": "プロダクト責任者"
+        },
+        {
+          "name": "Marcus Lee",
+          "role": "クリエイティブディレクター"
+        },
+        {
+          "name": "Sarah Kim",
+          "role": "エンジニアリング責任者"
+        }
+      ]
+    },
+    "press": {
+      "title": "プレスキット",
+      "body": "メディア、パートナー、業界団体は、VINCISについてもっと学ぶことを歓迎します。",
+      "items": [
+        "ブランド概要",
+        "ロゴとブランドガイドライン",
+        "公式画像",
+        "製品スクリーンショット",
+        "ブランドフィルム",
+        "プレス資料",
+        "連絡先情報"
+      ],
+      "downloadLink": "プレスキットをダウンロード",
+      "note": "インタビュー、パートナーシップ、メディアライセンスについては、お問い合わせください。"
+    },
+    "contact": {
+      "title": "お問い合わせ",
+      "body": "ブランド、クリエイター、ジャーナリスト、パートナーのいずれであっても、私たちはあなたからのご連絡をお待ちしています。",
+      "business": "ビジネス",
+      "press": "プレス",
+      "support": "サポート",
+      "website": "ウェブサイト",
+      "sendMessage": "メッセージを送信"
+    },
+    "closing": {
+      "en": "Every great story begins with a connection.",
+      "local": "すべての素晴らしいストーリーは、つながりから始まります。VINCISは、グローバルなブランドとクリエイターの架け橋となり、強いアイデアが言語、地理、業界の境界を越えて重要な作品になることを目指しています。"
+    }
+  },
+  "ko": {
+    "pageTitle": "회사 소개",
+    "sidebar": {
+      "about": "회사 소개",
+      "cases": "사례 연구",
+      "process": "프로세스",
+      "faq": "자주 묻는 질문",
+      "aiAssistant": "AI 어시스턴트",
+      "ctaTitle": "생성할 준비가 되셨나요?",
+      "ctaBody": "전 세계의 크리에이터와 연결하여 아이디어를 실현하세요.",
+      "ctaButton": "시작하기",
+      "darkMode": "다크 모드"
+    },
+    "hero": {
+      "title": "모든 아이디어를 연결하세요. 모든 협업을 더 간단하게 만드세요.",
+      "paragraphs": [
+        "VINCIS는 브랜드와 크리에이터를 연결하여 아이디어가 한 곳에서 브리프에서 최종 전달까지 진행될 수 있도록 하는 글로벌 AI 광고 플랫폼입니다.",
+        "브리프 게시 및 지능형 매칭부터 협업, 버전 검토, 에스크로 결제 및 최종 전달까지, 우리는 전체 제작 워크플로우를 더 간단하고 투명하며 효율적으로 재설계했습니다.",
+        "훌륭한 창의적 작업은 지리, 자원 또는 커뮤니케이션 오버헤드에 의해 제한되어서는 안 됩니다.\n품질 광고를 찾는 브랜드이든 AI 제작 기술을 가진 크리에이터이든, VINCIS는 여러분이 적합한 파트너를 더 빠르게 찾고 신뢰를 구축할 수 있도록 돕습니다."
+      ],
+      "features": [
+        {
+          "title": "브랜드가 우수한 크리에이터를 더 쉽게 찾도록 돕습니다.",
+          "body": "지능형 매칭과 실제 포트폴리오 데이터가 브랜드가 적합한 스튜디오를 더 빠르게 찾도록 돕습니다."
+        },
+        {
+          "title": "크리에이터에게 더 많은 글로벌 프로젝트 기회를 제공합니다.",
+          "body": "더 안정적이고 고품질의 협업으로 크리에이터를 글로벌 브랜드 수요와 연결합니다."
+        },
+        {
+          "title": "AI를 사용하여 효율성을 개선하고 창의성을 대체하지 않습니다.",
+          "body": "AI는 워크플로우와 협업을 최적화하지만 창의적 결정은 인간이 주도합니다."
+        },
+        {
+          "title": "광고 제작을 더 투명하고 공정하며 효율적으로 만듭니다.",
+          "body": "가격 책정 및 협업에서 검토 및 결제에 이르기까지 전체 프로세스는 추적 가능합니다."
+        }
+      ],
+      "watchFilm": "브랜드 필름 보기",
+      "filmDuration": "1:35"
+    },
+    "quickNav": [
+      {
+        "id": "story",
+        "label": "우리의 이야기"
+      },
+      {
+        "id": "mission",
+        "label": "미션"
+      },
+      {
+        "id": "why",
+        "label": "왜 VINCIS인가"
+      },
+      {
+        "id": "values",
+        "label": "가치"
+      },
+      {
+        "id": "contact",
+        "label": "연락처"
+      },
+      {
+        "id": "press",
+        "label": "보도 자료"
+      }
+    ],
+    "story": {
+      "eyebrow": "우리의 이야기",
+      "title": "우리의 이야기",
+      "paragraphs": [
+        "모든 훌륭한 제품은 실제 문제에서 시작됩니다.",
+        "AI 비디오는 빠르게 발전하였고, 더 많은 크리에이터들이 AI로 고품질 광고를 제작하고 있습니다. 그러나 브랜드는 여전히 적합한 인재를 찾는 데 어려움을 겪고 있으며, 크리에이터는 여전히 안정적이고 고품질의 기회를 찾는 데 어려움을 겪고 있습니다.",
+        "브랜드는 누가 진정으로 결과를 제공할 수 있는지 쉽게 알 수 없습니다. 크리에이터는 신뢰할 수 있는 프로젝트를 쉽게 찾을 수 없습니다. 높은 커뮤니케이션 비용, 복잡한 워크플로우, 약한 결제 보호 및 느린 수정 주기가 여전히 일반적입니다.",
+        "VINCIS는 이러한 맥락에서 구축되었습니다. 투명성, 전문성 및 신뢰의 기반 위에 글로벌 브랜드와 크리에이터를 연결하기 위해서입니다."
+      ],
+      "quote": "모든 훌륭한 이야기는 연결에서 시작됩니다.",
+      "moreLink": "더 읽기"
+    },
+    "mission": {
+      "title": "우리의 미션",
+      "body": "우리의 미션은 간단합니다: 글로벌 브랜드와 크리에이터를 연결하여 모든 강력한 아이디어가 현실이 될 기회를 제공합니다.",
+      "bullets": [
+        "브랜드가 우수한 크리에이터를 더 쉽게 찾도록 돕습니다.",
+        "크리에이터에게 더 많은 글로벌 프로젝트 기회를 제공합니다.",
+        "AI를 사용하여 효율성을 개선하고 창의성을 대체하지 않습니다.",
+        "광고 제작을 더 투명하고 공정하며 효율적으로 만듭니다."
+      ],
+      "moreLink": "연락하기"
+    },
+    "why": {
+      "title": "왜 VINCIS인가",
+      "paragraphs": [
+        "우리는 또 다른 포트폴리오 사이트나 기본적인 구인 게시판을 만들고 있지 않습니다. VINCIS는 AI 광고 협업의 방식을 재정의하고 있습니다.",
+        "브랜드는 적합한 팀을 찾기 위해 몇 주를 소비해서는 안 됩니다. 크리에이터는 모든 시간을 피칭하는 데 소비해서는 안 됩니다. AI는 양측이 더 정확하게 매칭되도록 도와주어 훌륭한 크리에이터가 더 많은 기회를 얻고 브랜드가 공정한 비용으로 더 나은 작업을 받을 수 있도록 합니다.",
+        "기술은 목표가 아닙니다. 사람들이 더 나은 협업을 할 수 있도록 돕는 것이 VINCIS의 존재 이유입니다."
+      ],
+      "bullets": [
+        "수동 검색 대신 AI 기반 매칭",
+        "에스크로 보호가 있는 투명한 워크플로우",
+        "단순한 목록이 아닌 협업을 위해 구축됨"
+      ],
+      "moreLink": "더 알아보기"
+    },
+    "values": {
+      "title": "우리의 가치",
+      "items": [
+        {
+          "title": "창의성 우선",
+          "body": "훌륭한 작업은 훌륭한 아이디어에서 시작됩니다. AI는 속도를 개선하고, 크리에이터는 사람들을 움직이는 비전을 제공합니다."
+        },
+        {
+          "title": "신뢰할 수 있는 협업",
+          "body": "모든 프로젝트는 중요합니다. 투명한 워크플로우, 버전 관리, 에스크로 및 구조화된 협업이 양측의 신뢰를 유지합니다."
+        },
+        {
+          "title": "글로벌 연결",
+          "body": "인재는 어디에나 있습니다. 우리는 브랜드가 진정으로 그들의 필요에 맞는 크리에이터와 국경을 넘어 작업할 수 있도록 돕습니다."
+        },
+        {
+          "title": "지속적인 혁신",
+          "body": "AI는 작업 제작 방식을 변화시키고 있습니다. VINCIS는 더 나은 도구, 워크플로우 및 협업 모델을 탐색하고 있습니다."
+        }
+      ],
+      "moreLink": "더 알아보기"
+    },
+    "platform": {
+      "title": "우리가 만드는 것",
+      "subtitle": "VINCIS는 전체 광고 협업 스택을 제공합니다:",
+      "items": [
+        "AI 브리프 구조화",
+        "글로벌 크리에이터 매칭",
+        "프로젝트 협업",
+        "다중 버전 관리",
+        "온라인 검토 센터",
+        "에스크로 결제",
+        "AI 크리에이티브 어시스턴트",
+        "다국어 지원",
+        "데이터 기반 가격 책정 엔진"
+      ],
+      "closing": "그래서 브랜드는 창의적 방향에 집중하고 크리에이터는 제작에 집중할 수 있습니다."
+    },
+    "stats": [
+      {
+        "value": "10,000+",
+        "label": "글로벌 크리에이터"
+      },
+      {
+        "value": "2,000+",
+        "label": "브랜드 고객"
+      },
+      {
+        "value": "15,000+",
+        "label": "완료된 프로젝트"
+      },
+      {
+        "value": "70+",
+        "label": "국가 및 지역"
+      }
+    ],
+    "team": {
+      "title": "글로벌 팀",
+      "body": "VINCIS는 글로벌 시장을 위해 구축되었습니다. 우리의 팀은 광고, 영화 제작, AI, 제품 디자인 및 엔지니어링에 걸쳐 있으며, 우리는 전 세계의 브랜드, 크리에이터 및 파트너와 함께 플랫폼을 지속적으로 개선하고 있습니다.",
+      "moreLink": "팀 만나기",
+      "members": [
+        {
+          "name": "Guowei Li",
+          "role": "창립자 & CEO"
+        },
+        {
+          "name": "Yawen Chen",
+          "role": "제품 책임자"
+        },
+        {
+          "name": "Marcus Lee",
+          "role": "크리에이티브 디렉터"
+        },
+        {
+          "name": "Sarah Kim",
+          "role": "엔지니어링 책임자"
+        }
+      ]
+    },
+    "press": {
+      "title": "보도 자료",
+      "body": "미디어, 파트너 및 산업 조직은 VINCIS에 대해 더 알아보기를 환영합니다.",
+      "items": [
+        "브랜드 개요",
+        "로고 및 브랜드 가이드라인",
+        "공식 이미지",
+        "제품 스크린샷",
+        "브랜드 필름",
+        "보도 자료",
+        "연락처 정보"
+      ],
+      "downloadLink": "보도 자료 다운로드",
+      "note": "인터뷰, 파트너십 또는 미디어 라이센스에 대해서는 저희에게 연락해 주세요."
+    },
+    "contact": {
+      "title": "연락처",
+      "body": "브랜드, 크리에이터, 저널리스트 또는 파트너이든—우리는 여러분의 소식을 듣고 싶습니다.",
+      "business": "비즈니스",
+      "press": "보도",
+      "support": "지원",
+      "website": "웹사이트",
+      "sendMessage": "메시지 보내기"
+    },
+    "closing": {
+      "en": "Every great story begins with a connection.",
+      "local": "모든 훌륭한 이야기는 연결에서 시작됩니다. VINCIS는 글로벌 브랜드와 크리에이터 간의 다리가 되어 강력한 아이디어가 언어, 지리 및 산업 경계를 넘어 중요한 작업으로 발전할 수 있도록 합니다."
+    }
+  },
+  "ms": {
+    "pageTitle": "Tentang kami",
+    "sidebar": {
+      "about": "Tentang kami",
+      "cases": "Kajian kes",
+      "process": "Proses",
+      "faq": "Soalan Lazim",
+      "aiAssistant": "Pembantu AI",
+      "ctaTitle": "Sedia untuk mencipta?",
+      "ctaBody": "Sambungkan dengan pencipta global dan hidupkan idea anda.",
+      "ctaButton": "Mula sekarang",
+      "darkMode": "Mod gelap"
+    },
+    "hero": {
+      "title": "Sambungkan setiap idea. Permudahkan setiap kerjasama.",
+      "paragraphs": [
+        "VINCIS adalah platform pengiklanan AI global yang menghubungkan jenama dan pencipta supaya idea dapat bergerak dari ringkasan kepada penghantaran akhir di satu tempat.",
+        "Dari penerbitan ringkasan dan pemadanan pintar kepada kerjasama, semakan versi, pembayaran escrow, dan penghantaran akhir, kami merombak aliran kerja pengeluaran sepenuhnya untuk menjadi lebih mudah, lebih telus, dan lebih cekap.",
+        "Kerja kreatif yang hebat tidak seharusnya terhad oleh geografi, sumber, atau kos komunikasi.\nSama ada anda seorang jenama yang mencari iklan berkualiti atau pencipta dengan kemahiran pengeluaran AI, VINCIS membantu anda mencari rakan kongsi yang tepat dengan lebih cepat dan membina kepercayaan."
+      ],
+      "features": [
+        {
+          "title": "Bantu jenama mencari pencipta yang cemerlang dengan lebih mudah.",
+          "body": "Pemadanan pintar dan data portfolio sebenar membantu jenama mencari studio yang tepat dengan lebih cepat."
+        },
+        {
+          "title": "Berikan pencipta lebih banyak peluang projek global.",
+          "body": "Sambungkan pencipta kepada permintaan jenama global dengan kerjasama yang lebih stabil dan berkualiti tinggi."
+        },
+        {
+          "title": "Gunakan AI untuk meningkatkan kecekapan, bukan menggantikan kreativiti.",
+          "body": "AI mengoptimumkan aliran kerja dan kerjasama sementara keputusan kreatif tetap dipimpin oleh manusia."
+        },
+        {
+          "title": "Jadikan pengeluaran pengiklanan lebih telus, adil, dan cekap.",
+          "body": "Dari penetapan harga dan kerjasama kepada semakan dan pembayaran, keseluruhan proses tetap boleh dijejaki."
+        }
+      ],
+      "watchFilm": "Tonton filem jenama",
+      "filmDuration": "1:35"
+    },
+    "quickNav": [
+      {
+        "id": "story",
+        "label": "Kisah kami"
+      },
+      {
+        "id": "mission",
+        "label": "Misi"
+      },
+      {
+        "id": "why",
+        "label": "Mengapa VINCIS"
+      },
+      {
+        "id": "values",
+        "label": "Nilai"
+      },
+      {
+        "id": "contact",
+        "label": "Hubungi"
+      },
+      {
+        "id": "press",
+        "label": "Kits media"
+      }
+    ],
+    "story": {
+      "eyebrow": "Kisah kami",
+      "title": "Kisah Kami",
+      "paragraphs": [
+        "Setiap produk hebat bermula dengan masalah sebenar.",
+        "Video AI telah berkembang dengan cepat, dan lebih banyak pencipta menghasilkan iklan berkualiti tinggi dengan AI. Namun, jenama masih berjuang untuk mencari bakat yang tepat, dan pencipta masih berjuang untuk mengakses peluang yang stabil dan berkualiti tinggi.",
+        "Jenama tidak dapat dengan mudah memberitahu siapa yang benar-benar dapat menyampaikan. Pencipta tidak dapat dengan mudah mencari projek yang boleh dipercayai. Kos komunikasi yang tinggi, aliran kerja yang bercelaru, perlindungan pembayaran yang lemah, dan kitaran semakan yang perlahan tetap menjadi norma.",
+        "VINCIS dibina dalam konteks itu—untuk menghubungkan jenama global dan pencipta di atas asas ketelusan, profesionalisme, dan kepercayaan."
+      ],
+      "quote": "Setiap cerita hebat bermula dengan sambungan.",
+      "moreLink": "Baca lebih lanjut"
+    },
+    "mission": {
+      "title": "Misi kami",
+      "body": "Misi kami adalah mudah: menghubungkan jenama global dan pencipta supaya setiap idea yang kuat mempunyai peluang untuk menjadi nyata.",
+      "bullets": [
+        "Bantu jenama mencari pencipta yang cemerlang dengan lebih mudah.",
+        "Berikan pencipta lebih banyak peluang projek global.",
+        "Gunakan AI untuk meningkatkan kecekapan, bukan menggantikan kreativiti.",
+        "Jadikan pengeluaran pengiklanan lebih telus, adil, dan cekap."
+      ],
+      "moreLink": "Hubungi kami"
+    },
+    "why": {
+      "title": "Mengapa VINCIS",
+      "paragraphs": [
+        "Kami tidak membina laman portfolio lain atau papan kerja asas. VINCIS sedang mendefinisikan semula cara kerjasama pengiklanan AI berfungsi.",
+        "Jenama tidak seharusnya menghabiskan minggu mencari pasukan yang tepat. Pencipta tidak seharusnya menghabiskan semua masa mereka untuk membentangkan idea. AI membantu kedua-dua pihak untuk memadankan dengan lebih tepat supaya pencipta hebat mendapat lebih banyak peluang dan jenama mendapat kerja yang lebih baik dengan kos yang adil.",
+        "Teknologi bukanlah matlamat. Membantu orang berkerjasama dengan lebih baik adalah sebab VINCIS wujud."
+      ],
+      "bullets": [
+        "Pemadanan berkuasa AI bukannya pencarian manual",
+        "Aliran kerja yang telus dengan perlindungan escrow",
+        "Dibina untuk kerjasama, bukan sekadar senarai"
+      ],
+      "moreLink": "Ketahui lebih lanjut"
+    },
+    "values": {
+      "title": "Nilai kami",
+      "items": [
+        {
+          "title": "Kreativiti diutamakan",
+          "body": "Kerja hebat bermula dengan idea hebat. AI meningkatkan kelajuan; pencipta menyediakan visi yang menggerakkan orang."
+        },
+        {
+          "title": "Kerjasama yang dipercayai",
+          "body": "Setiap projek adalah penting. Aliran kerja yang telus, kawalan versi, escrow, dan kerjasama terstruktur memastikan kedua-dua pihak yakin."
+        },
+        {
+          "title": "Sambungan global",
+          "body": "Bakat ada di mana-mana. Kami membantu jenama bekerja merentasi sempadan dengan pencipta yang benar-benar memenuhi keperluan mereka."
+        },
+        {
+          "title": "Inovasi berterusan",
+          "body": "AI sedang mengubah cara kerja dihasilkan. VINCIS terus meneroka alat, aliran kerja, dan model kerjasama yang lebih baik."
+        }
+      ],
+      "moreLink": "Ketahui lebih lanjut"
+    },
+    "platform": {
+      "title": "Apa yang kami bina",
+      "subtitle": "VINCIS menyediakan keseluruhan tumpuan kerjasama pengiklanan:",
+      "items": [
+        "Penyusunan ringkasan AI",
+        "Pemadanan pencipta global",
+        "Kerjasama projek",
+        "Pengurusan pelbagai versi",
+        "Pusat semakan dalam talian",
+        "Pembayaran escrow",
+        "Pembantu kreatif AI",
+        "Sokongan pelbagai bahasa",
+        "Enjin penetapan harga berasaskan data"
+      ],
+      "closing": "Supaya jenama boleh fokus pada arah kreatif dan pencipta boleh fokus pada penghasilan."
+    },
+    "stats": [
+      {
+        "value": "10,000+",
+        "label": "Pencipta global"
+      },
+      {
+        "value": "2,000+",
+        "label": "Pelanggan jenama"
+      },
+      {
+        "value": "15,000+",
+        "label": "Projek yang diselesaikan"
+      },
+      {
+        "value": "70+",
+        "label": "Negara & wilayah"
+      }
+    ],
+    "team": {
+      "title": "Pasukan global",
+      "body": "VINCIS dibina untuk pasaran global. Pasukan kami merangkumi pengiklanan, pengeluaran filem, AI, reka bentuk produk, dan kejuruteraan—dan kami terus memperbaiki platform dengan jenama, pencipta, dan rakan kongsi di seluruh dunia.",
+      "moreLink": "Temui pasukan",
+      "members": [
+        {
+          "name": "Guowei Li",
+          "role": "Pengasas & CEO"
+        },
+        {
+          "name": "Yawen Chen",
+          "role": "Ketua Produk"
+        },
+        {
+          "name": "Marcus Lee",
+          "role": "Pengarah Kreatif"
+        },
+        {
+          "name": "Sarah Kim",
+          "role": "Ketua Kejuruteraan"
+        }
+      ]
+    },
+    "press": {
+      "title": "Kits media",
+      "body": "Media, rakan kongsi, dan organisasi industri dialu-alukan untuk mengetahui lebih lanjut tentang VINCIS.",
+      "items": [
+        "Gambaran keseluruhan jenama",
+        "Logo & garis panduan jenama",
+        "Imej rasmi",
+        "Tangkapan skrin produk",
+        "Filem jenama",
+        "Bahan media",
+        "Maklumat hubungan"
+      ],
+      "downloadLink": "Muat turun kits media",
+      "note": "Untuk temuramah, perkongsian, atau pelesenan media, sila hubungi kami."
+    },
+    "contact": {
+      "title": "Hubungi",
+      "body": "Sama ada anda seorang jenama, pencipta, wartawan, atau rakan kongsi—kami ingin mendengar daripada anda.",
+      "business": "Perniagaan",
+      "press": "Media",
+      "support": "Sokongan",
+      "website": "Laman web",
+      "sendMessage": "Hantar mesej"
+    },
+    "closing": {
+      "en": "Every great story begins with a connection.",
+      "local": "Setiap cerita hebat bermula dengan sambungan. VINCIS bertujuan untuk menjadi jambatan antara jenama global dan pencipta—supaya idea yang kuat dapat melintasi sempadan bahasa, geografi, dan industri dan menjadi kerja yang bermakna."
+    }
+  },
+  "th": {
+    "pageTitle": "เกี่ยวกับเรา",
+    "sidebar": {
+      "about": "เกี่ยวกับเรา",
+      "cases": "กรณีศึกษา",
+      "process": "กระบวนการ",
+      "faq": "คำถามที่พบบ่อย",
+      "aiAssistant": "ผู้ช่วย AI",
+      "ctaTitle": "พร้อมที่จะสร้างแล้วหรือยัง?",
+      "ctaBody": "เชื่อมต่อกับผู้สร้างทั่วโลกและทำให้ไอเดียของคุณมีชีวิต.",
+      "ctaButton": "เริ่มต้น",
+      "darkMode": "โหมดมืด"
+    },
+    "hero": {
+      "title": "เชื่อมต่อทุกไอเดีย ทำให้การร่วมมือทุกอย่างง่ายขึ้น.",
+      "paragraphs": [
+        "VINCIS เป็นแพลตฟอร์มโฆษณา AI ระดับโลกที่เชื่อมต่อแบรนด์และผู้สร้างเพื่อให้ไอเดียสามารถเคลื่อนที่จากการสรุปไปยังการส่งมอบสุดท้ายในที่เดียว.",
+        "ตั้งแต่การเผยแพร่สรุปและการจับคู่ที่ชาญฉลาดไปจนถึงการร่วมมือ, การตรวจสอบเวอร์ชัน, การชำระเงินผ่าน Escrow, และการส่งมอบสุดท้าย, เราได้ออกแบบกระบวนการผลิตทั้งหมดให้เรียบง่าย, โปร่งใส, และมีประสิทธิภาพมากขึ้น.",
+        "งานสร้างสรรค์ที่ยอดเยี่ยมไม่ควรถูกจำกัดด้วยภูมิศาสตร์, ทรัพยากร, หรือค่าใช้จ่ายในการสื่อสาร.\nไม่ว่าคุณจะเป็นแบรนด์ที่มองหาโฆษณาคุณภาพหรือผู้สร้างที่มีทักษะการผลิต AI, VINCIS ช่วยให้คุณค้นหาคู่ค้าที่ยอดเยี่ยมได้เร็วขึ้นและสร้างความไว้วางใจ."
+      ],
+      "features": [
+        {
+          "title": "ช่วยแบรนด์ค้นหาผู้สร้างที่ยอดเยี่ยมได้ง่ายขึ้น.",
+          "body": "การจับคู่ที่ชาญฉลาดและข้อมูลพอร์ตโฟลิโอจริงช่วยให้แบรนด์ค้นหาสตูดิโอที่เหมาะสมได้เร็วขึ้น."
+        },
+        {
+          "title": "ให้ผู้สร้างมีโอกาสทำโปรเจกต์ระดับโลกมากขึ้น.",
+          "body": "เชื่อมต่อผู้สร้างกับความต้องการของแบรนด์ทั่วโลกด้วยการร่วมมือที่มีเสถียรภาพและมีคุณภาพสูง."
+        },
+        {
+          "title": "ใช้ AI เพื่อปรับปรุงประสิทธิภาพ ไม่ใช่เพื่อแทนที่ความคิดสร้างสรรค์.",
+          "body": "AI ช่วยเพิ่มประสิทธิภาพการทำงานและการร่วมมือในขณะที่การตัดสินใจสร้างสรรค์ยังคงอยู่ในมือมนุษย์."
+        },
+        {
+          "title": "ทำให้การผลิตโฆษณาโปร่งใส, ยุติธรรม, และมีประสิทธิภาพมากขึ้น.",
+          "body": "ตั้งแต่การตั้งราคาและการร่วมมือไปจนถึงการตรวจสอบและการชำระเงิน, กระบวนการทั้งหมดยังคงสามารถติดตามได้."
+        }
+      ],
+      "watchFilm": "ดูภาพยนตร์แบรนด์",
+      "filmDuration": "1:35"
+    },
+    "quickNav": [
+      {
+        "id": "story",
+        "label": "เรื่องราวของเรา"
+      },
+      {
+        "id": "mission",
+        "label": "ภารกิจ"
+      },
+      {
+        "id": "why",
+        "label": "ทำไมถึงเลือก VINCIS"
+      },
+      {
+        "id": "values",
+        "label": "ค่านิยม"
+      },
+      {
+        "id": "contact",
+        "label": "ติดต่อ"
+      },
+      {
+        "id": "press",
+        "label": "ชุดสื่อ"
+      }
+    ],
+    "story": {
+      "eyebrow": "เรื่องราวของเรา",
+      "title": "เรื่องราวของเรา",
+      "paragraphs": [
+        "ผลิตภัณฑ์ที่ยอดเยี่ยมทุกชิ้นเริ่มต้นจากปัญหาที่แท้จริง.",
+        "วิดีโอ AI ได้พัฒนาอย่างรวดเร็ว และผู้สร้างมากขึ้นกำลังผลิตโฆษณาคุณภาพสูงด้วย AI. อย่างไรก็ตาม แบรนด์ยังคงประสบปัญหาในการค้นหาความสามารถที่เหมาะสม และผู้สร้างยังคงประสบปัญหาในการเข้าถึงโอกาสที่มีเสถียรภาพและมีคุณภาพสูง.",
+        "แบรนด์ไม่สามารถบอกได้ง่ายๆ ว่าใครสามารถส่งมอบได้จริง ผู้สร้างไม่สามารถค้นหาโปรเจกต์ที่เชื่อถือได้ได้ง่าย ค่าใช้จ่ายในการสื่อสารที่สูง, กระบวนการที่ยุ่งเหยิง, การป้องกันการชำระเงินที่อ่อนแอ, และรอบการแก้ไขที่ช้า ยังคงเป็นเรื่องปกติ.",
+        "VINCIS ถูกสร้างขึ้นในบริบทนั้น—เพื่อเชื่อมต่อแบรนด์ระดับโลกและผู้สร้างบนพื้นฐานของความโปร่งใส, ความเป็นมืออาชีพ, และความไว้วางใจ."
+      ],
+      "quote": "เรื่องราวที่ยอดเยี่ยมทุกเรื่องเริ่มต้นจากการเชื่อมต่อ.",
+      "moreLink": "อ่านเพิ่มเติม"
+    },
+    "mission": {
+      "title": "ภารกิจของเรา",
+      "body": "ภารกิจของเราง่ายมาก: เชื่อมต่อแบรนด์ระดับโลกและผู้สร้างเพื่อให้ไอเดียที่แข็งแกร่งทุกชิ้นมีโอกาสที่จะกลายเป็นจริง.",
+      "bullets": [
+        "ช่วยแบรนด์ค้นหาผู้สร้างที่ยอดเยี่ยมได้ง่ายขึ้น.",
+        "ให้ผู้สร้างมีโอกาสทำโปรเจกต์ระดับโลกมากขึ้น.",
+        "ใช้ AI เพื่อปรับปรุงประสิทธิภาพ ไม่ใช่เพื่อแทนที่ความคิดสร้างสรรค์.",
+        "ทำให้การผลิตโฆษณาโปร่งใส, ยุติธรรม, และมีประสิทธิภาพมากขึ้น."
+      ],
+      "moreLink": "ติดต่อเรา"
+    },
+    "why": {
+      "title": "ทำไมถึงเลือก VINCIS",
+      "paragraphs": [
+        "เราไม่ได้สร้างเว็บไซต์พอร์ตโฟลิโออีกแห่งหรือบอร์ดงานพื้นฐาน VINCIS กำลังนิยามใหม่ว่าการร่วมมือด้านโฆษณา AI ทำงานอย่างไร.",
+        "แบรนด์ไม่ควรใช้เวลาหลายสัปดาห์ในการค้นหาทีมที่เหมาะสม ผู้สร้างไม่ควรใช้เวลาทั้งหมดในการเสนอราคา AI ช่วยให้ทั้งสองฝ่ายจับคู่ได้อย่างแม่นยำมากขึ้นเพื่อให้ผู้สร้างที่ยอดเยี่ยมได้รับโอกาสมากขึ้นและแบรนด์ได้รับงานที่ดีกว่าที่มีค่าใช้จ่ายที่ยุติธรรม.",
+        "เทคโนโลยีไม่ใช่เป้าหมาย การช่วยให้ผู้คนร่วมมือกันได้ดียิ่งขึ้นคือเหตุผลที่ VINCIS มีอยู่."
+      ],
+      "bullets": [
+        "การจับคู่ที่ขับเคลื่อนด้วย AI แทนการค้นหาด้วยมือ",
+        "กระบวนการที่โปร่งใสพร้อมการป้องกันการชำระเงิน",
+        "สร้างขึ้นเพื่อการร่วมมือ ไม่ใช่แค่การลงประกาศ"
+      ],
+      "moreLink": "เรียนรู้เพิ่มเติม"
+    },
+    "values": {
+      "title": "ค่านิยมของเรา",
+      "items": [
+        {
+          "title": "ความคิดสร้างสรรค์เป็นอันดับแรก",
+          "body": "งานที่ยอดเยี่ยมเริ่มต้นจากไอเดียที่ยอดเยี่ยม AI ช่วยเพิ่มความเร็ว; ผู้สร้างให้วิสัยทัศน์ที่ทำให้ผู้คนเคลื่อนไหว."
+        },
+        {
+          "title": "การร่วมมือที่เชื่อถือได้",
+          "body": "ทุกโปรเจกต์มีความสำคัญ กระบวนการที่โปร่งใส, การควบคุมเวอร์ชัน, การชำระเงินผ่าน Escrow, และการร่วมมือที่มีโครงสร้างทำให้ทั้งสองฝ่ายมั่นใจ."
+        },
+        {
+          "title": "การเชื่อมต่อระดับโลก",
+          "body": "ความสามารถอยู่ทุกที่ เราช่วยแบรนด์ทำงานข้ามพรมแดนกับผู้สร้างที่เหมาะสมกับความต้องการของพวกเขา."
+        },
+        {
+          "title": "นวัตกรรมอย่างต่อเนื่อง",
+          "body": "AI กำลังเปลี่ยนแปลงวิธีการทำงาน VINCIS ยังคงสำรวจเครื่องมือ, กระบวนการทำงาน, และรูปแบบการร่วมมือที่ดีกว่า."
+        }
+      ],
+      "moreLink": "เรียนรู้เพิ่มเติม"
+    },
+    "platform": {
+      "title": "สิ่งที่เราสร้างขึ้น",
+      "subtitle": "VINCIS นำเสนอชุดการร่วมมือด้านโฆษณาทั้งหมด:",
+      "items": [
+        "การจัดโครงสร้างสรุป AI",
+        "การจับคู่ผู้สร้างระดับโลก",
+        "การร่วมมือในโปรเจกต์",
+        "การจัดการหลายเวอร์ชัน",
+        "ศูนย์ตรวจสอบออนไลน์",
+        "การชำระเงินผ่าน Escrow",
+        "ผู้ช่วยสร้างสรรค์ AI",
+        "การสนับสนุนหลายภาษา",
+        "เครื่องยนต์ตั้งราคาที่ขับเคลื่อนด้วยข้อมูล"
+      ],
+      "closing": "ดังนั้นแบรนด์สามารถมุ่งเน้นไปที่การกำหนดทิศทางสร้างสรรค์และผู้สร้างสามารถมุ่งเน้นไปที่การสร้าง."
+    },
+    "stats": [
+      {
+        "value": "10,000+",
+        "label": "ผู้สร้างระดับโลก"
+      },
+      {
+        "value": "2,000+",
+        "label": "ลูกค้าแบรนด์"
+      },
+      {
+        "value": "15,000+",
+        "label": "โปรเจกต์ที่เสร็จสมบูรณ์"
+      },
+      {
+        "value": "70+",
+        "label": "ประเทศและภูมิภาค"
+      }
+    ],
+    "team": {
+      "title": "ทีมระดับโลก",
+      "body": "VINCIS ถูกสร้างขึ้นสำหรับตลาดระดับโลก ทีมของเราครอบคลุมด้านโฆษณา, การผลิตภาพยนตร์, AI, การออกแบบผลิตภัณฑ์, และวิศวกรรม—และเรายังคงปรับปรุงแพลตฟอร์มร่วมกับแบรนด์, ผู้สร้าง, และพันธมิตรทั่วโลก.",
+      "moreLink": "พบกับทีม",
+      "members": [
+        {
+          "name": "Guowei Li",
+          "role": "ผู้ก่อตั้ง & CEO"
+        },
+        {
+          "name": "Yawen Chen",
+          "role": "หัวหน้าฝ่ายผลิตภัณฑ์"
+        },
+        {
+          "name": "Marcus Lee",
+          "role": "ผู้อำนวยการสร้างสรรค์"
+        },
+        {
+          "name": "Sarah Kim",
+          "role": "หัวหน้าฝ่ายวิศวกรรม"
+        }
+      ]
+    },
+    "press": {
+      "title": "ชุดสื่อ",
+      "body": "สื่อ, พันธมิตร, และองค์กรในอุตสาหกรรมยินดีต้อนรับเพื่อเรียนรู้เพิ่มเติมเกี่ยวกับ VINCIS.",
+      "items": [
+        "ภาพรวมแบรนด์",
+        "โลโก้ & แนวทางแบรนด์",
+        "ภาพถ่ายทางการ",
+        "ภาพหน้าจอผลิตภัณฑ์",
+        "ภาพยนตร์แบรนด์",
+        "วัสดุสำหรับสื่อ",
+        "ข้อมูลการติดต่อ"
+      ],
+      "downloadLink": "ดาวน์โหลดชุดสื่อ",
+      "note": "สำหรับการสัมภาษณ์, การเป็นพันธมิตร, หรือการอนุญาตสื่อ, กรุณาติดต่อเรา."
+    },
+    "contact": {
+      "title": "ติดต่อ",
+      "body": "ไม่ว่าคุณจะเป็นแบรนด์, ผู้สร้าง, นักข่าว, หรือพันธมิตร—เรายินดีที่จะได้ยินจากคุณ.",
+      "business": "ธุรกิจ",
+      "press": "สื่อ",
+      "support": "สนับสนุน",
+      "website": "เว็บไซต์",
+      "sendMessage": "ส่งข้อความ"
+    },
+    "closing": {
+      "en": "Every great story begins with a connection.",
+      "local": "ทุกเรื่องราวที่ยอดเยี่ยมเริ่มต้นจากการเชื่อมต่อ VINCIS มุ่งหวังที่จะเป็นสะพานเชื่อมระหว่างแบรนด์ระดับโลกและผู้สร้าง—เพื่อให้ไอเดียที่แข็งแกร่งสามารถข้ามขอบเขตทางภาษา, ภูมิศาสตร์, และอุตสาหกรรมและกลายเป็นงานที่มีความหมาย."
+    }
+  },
+  "km": {
+    "pageTitle": "អំពី​ពួក​យើង",
+    "sidebar": {
+      "about": "អំពី​ពួក​យើង",
+      "cases": "ករណីសិក្សា",
+      "process": "ដំណើរការ",
+      "faq": "សំណួរដែលគេឆ្លើយ",
+      "aiAssistant": "ជំនួយក្រុមហ៊ុន AI",
+      "ctaTitle": "តើអ្នក Prepared សម្រាប់បង្កើតទេ?",
+      "ctaBody": "ភ្ជាប់ជាមួយអ្នកបង្កើតនៅទូទាំងពិភពលោក និងនាំយកគំនិតរបស់អ្នកទៅជីវិត។",
+      "ctaButton": "ចាប់ផ្តើម",
+      "darkMode": "ម៉ូដងងឹត"
+    },
+    "hero": {
+      "title": "ភ្ជាប់គំនិតរាល់គំនិត។ ធ្វើឱ្យការសហការទាំងអស់កាន់តែងាយស្រួល។",
+      "paragraphs": [
+        "VINCIS គឺជាវេទិកាផ្សព្វផ្សាយ AI ទូទាំងពិភពលោកដែលភ្ជាប់ម៉ាក និងអ្នកបង្កើត ដើម្បីឱ្យគំនិតអាចផ្លាស់ប្តូរពីការបង្ហោះទៅការដឹកជញ្ជូនចុងក្រោយនៅកន្លែងតែមួយ។",
+        "ចាប់ពីការបង្ហោះការបញ្ជាក់ និងការប៉ាន់ស្មានឆ្លាតវៃ ទៅកាន់ការសហការ ការត្រួតពិនិត្យកំណែ ការទូទាត់ប្រាក់ និងការដឹកជញ្ជូនចុងក្រោយ យើងបានរចនាឡើងវិញដំណើរការផលិតកម្មទាំងមូលឱ្យកាន់តែងាយស្រួល មានភាពច្បាស់លាស់ និងមានប្រសិទ្ធភាព។",
+        "ការងារបង្កើតដ៏អស្ចារ្យមិនគួរត្រូវបានកំណត់ដោយភូមិសាស្ត្រ ឬធនធាន ឬការប្រាស្រ័យទាក់ទង។\nមិនថាអ្នកជាម៉ាកដែលកំពុងស្វែងរកការផ្សព្វផ្សាយដែលមានគុណភាព ឬជាអ្នកបង្កើតដែលមានជំនាញផលិតកម្ម AI VINCIS ជួយអ្នកស្វែងរកដៃគូដែលត្រឹមត្រូវបានលឿន និងកសាងការជឿជាក់។"
+      ],
+      "features": [
+        {
+          "title": "ជួយម៉ាកស្វែងរកអ្នកបង្កើតដ៏អស្ចារ្យបានយ៉ាងងាយស្រួល។",
+          "body": "ការប៉ាន់ស្មានឆ្លាតវៃ និងទិន្នន័យពិតប្រាកដពីក្រុមហ៊ុនជួយម៉ាកស្វែងរកស្តូឌីយ៉ូដែលត្រឹមត្រូវបានលឿន។"
+        },
+        {
+          "title": "ផ្តល់ឱ្យអ្នកបង្កើតនូវឱកាសគម្រោងទូទាំងពិភពលោកបន្ថែម។",
+          "body": "ភ្ជាប់អ្នកបង្កើតទៅនឹងការទាមទារម៉ាកនៅទូទាំងពិភពលោកជាមួយការសហការដែលមានស្ថិរភាព និងគុណភាពខ្ពស់។"
+        },
+        {
+          "title": "ប្រើ AI ដើម្បីបង្កើនប្រសិទ្ធភាព មិនមែនជំនួសការបង្កើត។",
+          "body": "AI បង្កើនប្រសិទ្ធភាពនៃដំណើរការ និងការសហការ ខណៈដែលការសម្រេចចិត្តបង្កើតនៅតែជាដៃគូមនុស្ស។"
+        },
+        {
+          "title": "ធ្វើឱ្យការផលិតផ្សព្វផ្សាយមានភាពច្បាស់លាស់ យុត្តិធម៌ និងប្រសិទ្ធភាព។",
+          "body": "ចាប់ពីតម្លៃ និងការសហការ ទៅកាន់ការត្រួតពិនិត្យ និងការទូទាត់ ដំណើរការទាំងមូលនៅតែអាចតាមដានបាន។"
+        }
+      ],
+      "watchFilm": "មើលភាពយន្តម៉ាក",
+      "filmDuration": "1:35"
+    },
+    "quickNav": [
+      {
+        "id": "story",
+        "label": "រឿងរ៉ាវរបស់យើង"
+      },
+      {
+        "id": "mission",
+        "label": "បេសកកម្ម"
+      },
+      {
+        "id": "why",
+        "label": "ហេតុអ្វីបានជា VINCIS"
+      },
+      {
+        "id": "values",
+        "label": "តម្លៃ"
+      },
+      {
+        "id": "contact",
+        "label": "ទំនាក់ទំនង"
+      },
+      {
+        "id": "press",
+        "label": "កញ្ចប់សារព័ត៌មាន"
+      }
+    ],
+    "story": {
+      "eyebrow": "រឿងរ៉ាវរបស់យើង",
+      "title": "រឿងរ៉ាវរបស់យើង",
+      "paragraphs": [
+        "ផលិតផលដ៏អស្ចារ្យរាល់យ៉ាងចាប់ផ្តើមពីបញ្ហាពិតប្រាកដមួយ។",
+        "វីដេអូ AI បានរីកចម្រើនយ៉ាងឆាប់រហ័ស ហើយអ្នកបង្កើតច្រើនកំពុងផលិតការផ្សព្វផ្សាយដែលមានគុណភាពខ្ពស់ជាមួយ AI។ ទោះយ៉ាងណាម៉ាកនៅតែប្រឈមមុខនឹងការស្វែងរកទេពកោសល្យដែលត្រឹមត្រូវ ហើយអ្នកបង្កើតនៅតែប្រឈមមុខនឹងការចូលដំណើរការដែលមានស្ថិរភាព និងគុណភាពខ្ពស់។",
+        "ម៉ាកមិនអាចប្រាប់បានយ៉ាងងាយស្រួលថាអ្នកណាអាចផ្តល់បានពិតប្រាកដ។ អ្នកបង្កើតមិនអាចស្វែងរកគម្រោងដែលអាចទុកចិត្តបានយ៉ាងងាយស្រួល។ តម្លៃការប្រាស្រ័យទាក់ទងខ្ពស់ ដំណើរការមិនរៀបចំ ការពារទូទាត់ខ្សោយ និងវដ្តកំណែយឺតនៅតែជាមាតិកា។",
+        "VINCIS ត្រូវបានកសាងឡើងក្នុងបរិបទនោះ—ដើម្បីភ្ជាប់ម៉ាក និងអ្នកបង្កើតនៅទូទាំងពិភពលោកលើមូលដ្ឋាននៃភាពច្បាស់លាស់ វិជ្ជាជីវៈ និងការជឿជាក់។"
+      ],
+      "quote": "រឿងរ៉ាវដ៏អស្ចារ្យរាល់យ៉ាងចាប់ផ្តើមពីការភ្ជាប់។",
+      "moreLink": "អានបន្ថែម"
+    },
+    "mission": {
+      "title": "បេសកកម្មរបស់យើង",
+      "body": "បេសកកម្មរបស់យើងគឺសាមញ្ញ៖ ភ្ជាប់ម៉ាក និងអ្នកបង្កើតនៅទូទាំងពិភពលោក ដើម្បីឱ្យគំនិតដ៏ខ្លាំងរាល់យ៉ាងមានឱកាសក្លាយទៅជាពិត។",
+      "bullets": [
+        "ជួយម៉ាកស្វែងរកអ្នកបង្កើតដ៏អស្ចារ្យបានយ៉ាងងាយស្រួល។",
+        "ផ្តល់ឱ្យអ្នកបង្កើតនូវឱកាសគម្រោងទូទាំងពិភពលោកបន្ថែម។",
+        "ប្រើ AI ដើម្បីបង្កើនប្រសិទ្ធភាព មិនមែនជំនួសការបង្កើត។",
+        "ធ្វើឱ្យការផលិតផ្សព្វផ្សាយមានភាពច្បាស់លាស់ យុត្តិធម៌ និងប្រសិទ្ធភាព។"
+      ],
+      "moreLink": "ទំនាក់ទំនងមកយើង"
+    },
+    "why": {
+      "title": "ហេតុអ្វីបានជា VINCIS",
+      "paragraphs": [
+        "យើងមិនកំពុងកសាងគេហទំព័រពត៌មានឬក្រុមហ៊ុនការងារមូលដ្ឋានទេ។ VINCIS កំពុងកំណត់ឡើងវិញពីរបៀបដែលការសហការផ្សព្វផ្សាយ AI ដំណើរការ។",
+        "ម៉ាកមិនគួរត្រូវចំណាយសប្តាហ៍ក្នុងការស្វែងរកក្រុមដែលត្រឹមត្រូវ។ អ្នកបង្កើតមិនគួរត្រូវចំណាយពេលទាំងអស់ក្នុងការផ្តល់ជូន។ AI ជួយទាំងពីរផ្នែកដើម្បីផ្គូផ្គងបានយ៉ាងត្រឹមត្រូវ ដូច្នេះអ្នកបង្កើតដ៏អស្ចារ្យទទួលបានឱកាសបន្ថែម ហើយម៉ាកទទួលបានការងារដែលល្អប្រសើរនៅតម្លៃយុត្តិធម៌។",
+        "បច្ចេកវិទ្យាមិនមែនជាគោលបំណងទេ។ ការជួយមនុស្សឱ្យសហការបានល្អប្រសើរនេះគឺហេតុអ្វីបានជា VINCIS មានអត្តសញ្ញាណ។"
+      ],
+      "bullets": [
+        "ការប៉ាន់ស្មានដោយ AI ជំនួសការស្វែងរកដៃគូដោយដៃ",
+        "ដំណើរការច្បាស់លាស់ជាមួយការពារទូទាត់",
+        "កសាងសម្រាប់ការសហការ មិនមែនគ្រាន់តែបញ្ជីទេ"
+      ],
+      "moreLink": "សូមស្វែងយល់បន្ថែម"
+    },
+    "values": {
+      "title": "តម្លៃរបស់យើង",
+      "items": [
+        {
+          "title": "ការបង្កើតជាមុន",
+          "body": "ការងារដ៏អស្ចារ្យចាប់ផ្តើមពីគំនិតដ៏អស្ចារ្យ។ AI បង្កើនល្បឿន; អ្នកបង្កើតផ្តល់នូវវិស័យដែលចលនាអ្នក។"
+        },
+        {
+          "title": "ការសហការដែលអាចទុកចិត្តបាន",
+          "body": "គម្រោងរាល់យ៉ាងមានសារៈសំខាន់។ ដំណើរការច្បាស់លាស់ ការត្រួតពិនិត្យកំណែ ការពារទូទាត់ និងការសហការដែលមានរចនាសម្ព័ន្ធរក្សាទុកទាំងពីរផ្នែកឱ្យមានការជឿជាក់។"
+        },
+        {
+          "title": "ការភ្ជាប់ទូទាំងពិភពលោក",
+          "body": "ទេពកោសល្យមាននៅគ្រប់ទីកន្លែង។ យើងជួយម៉ាកធ្វើការជាមួយអ្នកបង្កើតដែលពិតជាផ្គូផ្គងតាមតម្រូវការរបស់ពួកគេ។"
+        },
+        {
+          "title": "ការបង្កើតថ្មីជាបន្ត",
+          "body": "AI កំពុងផ្លាស់ប្តូរប្រភេទការងារដែលត្រូវបានផលិត។ VINCIS បន្តស្វែងរកឧបករណ៍ ដំណើរការ និងម៉ូដែលសហការដែលល្អប្រសើរ។"
+        }
+      ],
+      "moreLink": "សូមស្វែងយល់បន្ថែម"
+    },
+    "platform": {
+      "title": "អ្វីដែលយើងកំពុងកសាង",
+      "subtitle": "VINCIS ផ្តល់នូវស្តាក់សហការផ្សព្វផ្សាយទាំងមូល៖",
+      "items": [
+        "ការរៀបចំការបញ្ជាក់ AI",
+        "ការប៉ាន់ស្មានអ្នកបង្កើតទូទាំងពិភពលោក",
+        "ការសហការគម្រោង",
+        "ការគ្រប់គ្រងកំណែច្រើន",
+        "មជ្ឈមណ្ឌលត្រួតពិនិត្យអនឡាញ",
+        "ការទូទាត់ប្រាក់ escrow",
+        "ជំនួយក្រុមហ៊ុន AI",
+        "ការគាំទ្រភាសាច្រើន",
+        "ម៉ាស៊ីនតម្លៃដែលមានទិន្នន័យ"
+      ],
+      "closing": "ដូច្នេះម៉ាកអាចផ្តោតលើទិសដៅបង្កើត និងអ្នកបង្កើតអាចផ្តោតលើការបង្កើត។"
+    },
+    "stats": [
+      {
+        "value": "10,000+",
+        "label": "អ្នកបង្កើតទូទាំងពិភពលោក"
+      },
+      {
+        "value": "2,000+",
+        "label": "អតិថិជនម៉ាក"
+      },
+      {
+        "value": "15,000+",
+        "label": "គម្រោងដែលបានបញ្ចប់"
+      },
+      {
+        "value": "70+",
+        "label": "ប្រទេស និងតំបន់"
+      }
+    ],
+    "team": {
+      "title": "ក្រុមទូទាំងពិភពលោក",
+      "body": "VINCIS ត្រូវបានកសាងសម្រាប់ទីផ្សារទូទាំងពិភពលោក។ ក្រុមរបស់យើងមានការផ្សំផ្សាយពីការផ្សព្វផ្សាយ ការផលិតភាពយន្ត AI ការរចនាផលិតផល និងវិស្វកម្ម—ហើយយើងបន្តធ្វើឱ្យប្រសើរឡើងវិញវេទិកាជាមួយម៉ាក អ្នកបង្កើត និងដៃគូនៅទូទាំងពិភពលោក។",
+      "moreLink": "ជួបក្រុម",
+      "members": [
+        {
+          "name": "Guowei Li",
+          "role": "អ្នកបង្កើត និង CEO"
+        },
+        {
+          "name": "Yawen Chen",
+          "role": "ប្រធានផ្នែកផលិតផល"
+        },
+        {
+          "name": "Marcus Lee",
+          "role": "អ្នកដឹកនាំការបង្កើត"
+        },
+        {
+          "name": "Sarah Kim",
+          "role": "ប្រធានផ្នែកវិស្វកម្ម"
+        }
+      ]
+    },
+    "press": {
+      "title": "កញ្ចប់សារព័ត៌មាន",
+      "body": "មេឌៀ ដៃគូ និងអង្គការឧស្សាហកម្មសូមស្វាគមន៍ដើម្បីស្វែងយល់បន្ថែមអំពី VINCIS។",
+      "items": [
+        "ទិដ្ឋភាពម៉ាក",
+        "ឡូហ្គូ និងមគ្គុទេសក៍ម៉ាក",
+        "រូបភាពផ្លូវការនានា",
+        "រូបថតផលិតផល",
+        "ភាពយន្តម៉ាក",
+        "សម្ភារៈសារព័ត៌មាន",
+        "ព័ត៌មានទំនាក់ទំនង"
+      ],
+      "downloadLink": "ទាញយកកញ្ចប់សារព័ត៌មាន",
+      "note": "សម្រាប់ការសម្ភាសន៍ ការសហការ ឬការអនុញ្ញាតសារព័ត៌មាន សូមទំនាក់ទំនងមកយើង។"
+    },
+    "contact": {
+      "title": "ទំនាក់ទំនង",
+      "body": "មិនថាអ្នកជាម៉ាក អ្នកបង្កើត អ្នកសារព័ត៌មាន ឬដៃគូ—យើងចង់ឮពីអ្នក។",
+      "business": "អាជីវកម្ម",
+      "press": "សារព័ត៌មាន",
+      "support": "គាំទ្រ",
+      "website": "គេហទំព័រ",
+      "sendMessage": "ផ្ញើសារមួយ"
+    },
+    "closing": {
+      "en": "Every great story begins with a connection.",
+      "local": "រឿងរ៉ាវដ៏អស្ចារ្យរាល់យ៉ាងចាប់ផ្តើមពីការភ្ជាប់។ VINCIS មានគោលបំណងធ្វើជាស្ពានរវាងម៉ាកទូទាំងពិភពលោក និងអ្នកបង្កើត—ដូច្នេះគំនិតដ៏ខ្លាំងអាចឆ្លងកាត់ភាសា ភូមិសាស្ត្រ និងដែនកំណត់ឧស្សាហកម្ម និងក្លាយទៅជាការងារដែលមានសារៈសំខាន់។"
+    }
+  },
+  "vi": {
+    "pageTitle": "Về chúng tôi",
+    "sidebar": {
+      "about": "Về chúng tôi",
+      "cases": "Nghiên cứu trường hợp",
+      "process": "Quy trình",
+      "faq": "Câu hỏi thường gặp",
+      "aiAssistant": "Trợ lý AI",
+      "ctaTitle": "Sẵn sàng để tạo ra?",
+      "ctaBody": "Kết nối với những người sáng tạo toàn cầu và biến ý tưởng của bạn thành hiện thực.",
+      "ctaButton": "Bắt đầu ngay",
+      "darkMode": "Chế độ tối"
+    },
+    "hero": {
+      "title": "Kết nối mọi ý tưởng. Đơn giản hóa mọi sự hợp tác.",
+      "paragraphs": [
+        "VINCIS là nền tảng quảng cáo AI toàn cầu kết nối các thương hiệu và người sáng tạo để ý tưởng có thể di chuyển từ bản tóm tắt đến giao hàng cuối cùng tại một nơi.",
+        "Từ việc xuất bản bản tóm tắt và ghép nối thông minh đến hợp tác, xem xét phiên bản, thanh toán ký quỹ và giao hàng cuối cùng, chúng tôi đã thiết kế lại toàn bộ quy trình sản xuất để trở nên đơn giản hơn, minh bạch hơn và hiệu quả hơn.",
+        "Công việc sáng tạo tuyệt vời không nên bị giới hạn bởi địa lý, nguồn lực hoặc chi phí giao tiếp.\nDù bạn là một thương hiệu đang tìm kiếm quảng cáo chất lượng hay một người sáng tạo có kỹ năng sản xuất AI, VINCIS giúp bạn tìm kiếm đối tác phù hợp nhanh hơn và xây dựng lòng tin."
+      ],
+      "features": [
+        {
+          "title": "Giúp các thương hiệu tìm kiếm những người sáng tạo xuất sắc dễ dàng hơn.",
+          "body": "Ghép nối thông minh và dữ liệu danh mục thực giúp các thương hiệu tìm kiếm studio phù hợp nhanh hơn."
+        },
+        {
+          "title": "Cung cấp cho người sáng tạo nhiều cơ hội dự án toàn cầu hơn.",
+          "body": "Kết nối người sáng tạo với nhu cầu thương hiệu toàn cầu thông qua các hợp tác ổn định, chất lượng cao hơn."
+        },
+        {
+          "title": "Sử dụng AI để cải thiện hiệu quả, không thay thế sự sáng tạo.",
+          "body": "AI tối ưu hóa quy trình làm việc và hợp tác trong khi các quyết định sáng tạo vẫn do con người dẫn dắt."
+        },
+        {
+          "title": "Làm cho sản xuất quảng cáo trở nên minh bạch, công bằng và hiệu quả hơn.",
+          "body": "Từ định giá và hợp tác đến xem xét và thanh toán, toàn bộ quy trình vẫn có thể theo dõi."
+        }
+      ],
+      "watchFilm": "Xem phim thương hiệu",
+      "filmDuration": "1:35"
+    },
+    "quickNav": [
+      {
+        "id": "story",
+        "label": "Câu chuyện của chúng tôi"
+      },
+      {
+        "id": "mission",
+        "label": "Sứ mệnh"
+      },
+      {
+        "id": "why",
+        "label": "Tại sao chọn VINCIS"
+      },
+      {
+        "id": "values",
+        "label": "Giá trị"
+      },
+      {
+        "id": "contact",
+        "label": "Liên hệ"
+      },
+      {
+        "id": "press",
+        "label": "Bộ công cụ báo chí"
+      }
+    ],
+    "story": {
+      "eyebrow": "Câu chuyện của chúng tôi",
+      "title": "Câu Chuyện Của Chúng Tôi",
+      "paragraphs": [
+        "Mỗi sản phẩm tuyệt vời bắt đầu từ một vấn đề thực sự.",
+        "Video AI đã phát triển nhanh chóng, và ngày càng nhiều người sáng tạo đang sản xuất quảng cáo chất lượng cao với AI. Tuy nhiên, các thương hiệu vẫn gặp khó khăn trong việc tìm kiếm tài năng phù hợp, và người sáng tạo vẫn gặp khó khăn trong việc tiếp cận các cơ hội ổn định, chất lượng cao.",
+        "Các thương hiệu không thể dễ dàng xác định ai có thể thực sự giao hàng. Người sáng tạo không thể dễ dàng tìm thấy các dự án đáng tin cậy. Chi phí giao tiếp cao, quy trình làm việc lộn xộn, bảo vệ thanh toán yếu và chu kỳ xem xét chậm vẫn là điều bình thường.",
+        "VINCIS được xây dựng trong bối cảnh đó—để kết nối các thương hiệu và người sáng tạo toàn cầu trên nền tảng của sự minh bạch, chuyên nghiệp và lòng tin."
+      ],
+      "quote": "Mỗi câu chuyện tuyệt vời bắt đầu từ một kết nối.",
+      "moreLink": "Đọc thêm"
+    },
+    "mission": {
+      "title": "Sứ mệnh của chúng tôi",
+      "body": "Sứ mệnh của chúng tôi rất đơn giản: kết nối các thương hiệu và người sáng tạo toàn cầu để mỗi ý tưởng mạnh mẽ đều có cơ hội trở thành hiện thực.",
+      "bullets": [
+        "Giúp các thương hiệu tìm kiếm những người sáng tạo xuất sắc dễ dàng hơn.",
+        "Cung cấp cho người sáng tạo nhiều cơ hội dự án toàn cầu hơn.",
+        "Sử dụng AI để cải thiện hiệu quả, không thay thế sự sáng tạo.",
+        "Làm cho sản xuất quảng cáo trở nên minh bạch, công bằng và hiệu quả hơn."
+      ],
+      "moreLink": "Liên hệ với chúng tôi"
+    },
+    "why": {
+      "title": "Tại sao chọn VINCIS",
+      "paragraphs": [
+        "Chúng tôi không xây dựng một trang danh mục khác hay một bảng việc làm cơ bản. VINCIS đang định nghĩa lại cách thức hoạt động của các hợp tác quảng cáo AI.",
+        "Các thương hiệu không nên mất hàng tuần để tìm kiếm đội ngũ phù hợp. Người sáng tạo không nên dành toàn bộ thời gian để thuyết trình. AI giúp cả hai bên ghép nối chính xác hơn để những người sáng tạo tuyệt vời có nhiều cơ hội hơn và các thương hiệu nhận được công việc tốt hơn với chi phí công bằng.",
+        "Công nghệ không phải là mục tiêu. Giúp mọi người hợp tác tốt hơn là lý do VINCIS tồn tại."
+      ],
+      "bullets": [
+        "Ghép nối bằng AI thay vì tìm kiếm thủ công",
+        "Quy trình làm việc minh bạch với bảo vệ ký quỹ",
+        "Xây dựng cho sự hợp tác, không chỉ là danh sách"
+      ],
+      "moreLink": "Tìm hiểu thêm"
+    },
+    "values": {
+      "title": "Giá trị của chúng tôi",
+      "items": [
+        {
+          "title": "Sáng tạo là trên hết",
+          "body": "Công việc tuyệt vời bắt đầu từ những ý tưởng tuyệt vời. AI cải thiện tốc độ; người sáng tạo cung cấp tầm nhìn để thu hút mọi người."
+        },
+        {
+          "title": "Hợp tác đáng tin cậy",
+          "body": "Mỗi dự án đều quan trọng. Quy trình làm việc minh bạch, kiểm soát phiên bản, ký quỹ và hợp tác có cấu trúc giữ cho cả hai bên tự tin."
+        },
+        {
+          "title": "Kết nối toàn cầu",
+          "body": "Tài năng có mặt ở khắp mọi nơi. Chúng tôi giúp các thương hiệu làm việc xuyên biên giới với những người sáng tạo thực sự phù hợp với nhu cầu của họ."
+        },
+        {
+          "title": "Đổi mới liên tục",
+          "body": "AI đang thay đổi cách thức sản xuất công việc. VINCIS tiếp tục khám phá các công cụ, quy trình làm việc và mô hình hợp tác tốt hơn."
+        }
+      ],
+      "moreLink": "Tìm hiểu thêm"
+    },
+    "platform": {
+      "title": "Những gì chúng tôi xây dựng",
+      "subtitle": "VINCIS cung cấp toàn bộ hệ thống hợp tác quảng cáo:",
+      "items": [
+        "Cấu trúc bản tóm tắt AI",
+        "Ghép nối người sáng tạo toàn cầu",
+        "Hợp tác dự án",
+        "Quản lý đa phiên bản",
+        "Trung tâm xem xét trực tuyến",
+        "Thanh toán ký quỹ",
+        "Trợ lý sáng tạo AI",
+        "Hỗ trợ đa ngôn ngữ",
+        "Công cụ định giá dựa trên dữ liệu"
+      ],
+      "closing": "Để các thương hiệu có thể tập trung vào định hướng sáng tạo và người sáng tạo có thể tập trung vào việc sản xuất."
+    },
+    "stats": [
+      {
+        "value": "10,000+",
+        "label": "Người sáng tạo toàn cầu"
+      },
+      {
+        "value": "2,000+",
+        "label": "Khách hàng thương hiệu"
+      },
+      {
+        "value": "15,000+",
+        "label": "Dự án đã hoàn thành"
+      },
+      {
+        "value": "70+",
+        "label": "Quốc gia & khu vực"
+      }
+    ],
+    "team": {
+      "title": "Đội ngũ toàn cầu",
+      "body": "VINCIS được xây dựng cho thị trường toàn cầu. Đội ngũ của chúng tôi bao gồm quảng cáo, sản xuất phim, AI, thiết kế sản phẩm và kỹ thuật—và chúng tôi tiếp tục cải thiện nền tảng với các thương hiệu, người sáng tạo và đối tác trên toàn thế giới.",
+      "moreLink": "Gặp gỡ đội ngũ",
+      "members": [
+        {
+          "name": "Guowei Li",
+          "role": "Người sáng lập & CEO"
+        },
+        {
+          "name": "Yawen Chen",
+          "role": "Trưởng phòng Sản phẩm"
+        },
+        {
+          "name": "Marcus Lee",
+          "role": "Giám đốc Sáng tạo"
+        },
+        {
+          "name": "Sarah Kim",
+          "role": "Trưởng phòng Kỹ thuật"
+        }
+      ]
+    },
+    "press": {
+      "title": "Bộ công cụ báo chí",
+      "body": "Các phương tiện truyền thông, đối tác và tổ chức ngành được chào đón để tìm hiểu thêm về VINCIS.",
+      "items": [
+        "Tổng quan về thương hiệu",
+        "Logo & hướng dẫn thương hiệu",
+        "Hình ảnh chính thức",
+        "Ảnh chụp màn hình sản phẩm",
+        "Phim thương hiệu",
+        "Tài liệu báo chí",
+        "Thông tin liên hệ"
+      ],
+      "downloadLink": "Tải xuống bộ công cụ báo chí",
+      "note": "Đối với phỏng vấn, hợp tác hoặc cấp phép truyền thông, vui lòng liên hệ với chúng tôi."
+    },
+    "contact": {
+      "title": "Liên hệ",
+      "body": "Dù bạn là một thương hiệu, người sáng tạo, nhà báo hay đối tác—chúng tôi muốn nghe từ bạn.",
+      "business": "Kinh doanh",
+      "press": "Báo chí",
+      "support": "Hỗ trợ",
+      "website": "Trang web",
+      "sendMessage": "Gửi tin nhắn"
+    },
+    "closing": {
+      "en": "Every great story begins with a connection.",
+      "local": "Mỗi câu chuyện tuyệt vời bắt đầu từ một kết nối. VINCIS nhằm trở thành cầu nối giữa các thương hiệu toàn cầu và người sáng tạo—để những ý tưởng mạnh mẽ có thể vượt qua rào cản ngôn ngữ, địa lý và ngành nghề và trở thành những công việc có ý nghĩa."
+    }
+  },
+  "fr": {
+    "pageTitle": "À propos de nous",
+    "sidebar": {
+      "about": "À propos de nous",
+      "cases": "Études de cas",
+      "process": "Processus",
+      "faq": "FAQ",
+      "aiAssistant": "Assistant IA",
+      "ctaTitle": "Prêt à créer ?",
+      "ctaBody": "Connectez-vous avec des créateurs du monde entier et donnez vie à vos idées.",
+      "ctaButton": "Commencer",
+      "darkMode": "Mode sombre"
+    },
+    "hero": {
+      "title": "Connectez chaque idée. Simplifiez chaque collaboration.",
+      "paragraphs": [
+        "VINCIS est une plateforme publicitaire mondiale alimentée par l'IA qui connecte les marques et les créateurs afin que les idées puissent passer du brief à la livraison finale en un seul endroit.",
+        "De la publication du brief et du matching intelligent à la collaboration, la révision des versions, les paiements en séquestre et la livraison finale, nous avons redessiné l'ensemble du flux de production pour le rendre plus simple, plus transparent et plus efficace.",
+        "Un excellent travail créatif ne devrait pas être limité par la géographie, les ressources ou les frais de communication.\nQue vous soyez une marque à la recherche d'annonces de qualité ou un créateur avec des compétences en production IA, VINCIS vous aide à trouver le bon partenaire plus rapidement et à établir la confiance."
+      ],
+      "features": [
+        {
+          "title": "Aider les marques à trouver d'excellents créateurs plus facilement.",
+          "body": "Le matching intelligent et les données de portfolio réelles aident les marques à trouver le bon studio plus rapidement."
+        },
+        {
+          "title": "Offrir aux créateurs plus d'opportunités de projets globaux.",
+          "body": "Connectez les créateurs à la demande mondiale des marques avec des collaborations plus stables et de haute qualité."
+        },
+        {
+          "title": "Utiliser l'IA pour améliorer l'efficacité, pas pour remplacer la créativité.",
+          "body": "L'IA optimise le flux de travail et la collaboration tandis que les décisions créatives restent dirigées par des humains."
+        },
+        {
+          "title": "Rendre la production publicitaire plus transparente, équitable et efficace.",
+          "body": "De la tarification et de la collaboration à la révision et au paiement, l'ensemble du processus reste traçable."
+        }
+      ],
+      "watchFilm": "Regarder le film de marque",
+      "filmDuration": "1:35"
+    },
+    "quickNav": [
+      {
+        "id": "story",
+        "label": "Notre histoire"
+      },
+      {
+        "id": "mission",
+        "label": "Mission"
+      },
+      {
+        "id": "why",
+        "label": "Pourquoi VINCIS"
+      },
+      {
+        "id": "values",
+        "label": "Valeurs"
+      },
+      {
+        "id": "contact",
+        "label": "Contact"
+      },
+      {
+        "id": "press",
+        "label": "Dossier de presse"
+      }
+    ],
+    "story": {
+      "eyebrow": "Notre histoire",
+      "title": "Notre Histoire",
+      "paragraphs": [
+        "Chaque grand produit commence par un vrai problème.",
+        "La vidéo IA a progressé rapidement, et de plus en plus de créateurs produisent des annonces de haute qualité avec l'IA. Pourtant, les marques ont encore du mal à trouver le bon talent, et les créateurs ont toujours du mal à accéder à des opportunités stables et de haute qualité.",
+        "Les marques ne peuvent pas facilement dire qui peut vraiment livrer. Les créateurs ne peuvent pas facilement trouver des projets fiables. Les coûts de communication élevés, les flux de travail désordonnés, la protection des paiements faible et les cycles de révision lents restent la norme.",
+        "VINCIS a été construit dans ce contexte—pour connecter les marques mondiales et les créateurs sur une base de transparence, de professionnalisme et de confiance."
+      ],
+      "quote": "Chaque grande histoire commence par une connexion.",
+      "moreLink": "En savoir plus"
+    },
+    "mission": {
+      "title": "Notre mission",
+      "body": "Notre mission est simple : connecter les marques mondiales et les créateurs afin que chaque idée forte ait une chance de devenir réelle.",
+      "bullets": [
+        "Aider les marques à trouver d'excellents créateurs plus facilement.",
+        "Offrir aux créateurs plus d'opportunités de projets globaux.",
+        "Utiliser l'IA pour améliorer l'efficacité, pas pour remplacer la créativité.",
+        "Rendre la production publicitaire plus transparente, équitable et efficace."
+      ],
+      "moreLink": "Contactez-nous"
+    },
+    "why": {
+      "title": "Pourquoi VINCIS",
+      "paragraphs": [
+        "Nous ne construisons pas un autre site de portfolio ou un tableau d'offres d'emploi basique. VINCIS redéfinit la manière dont fonctionnent les collaborations publicitaires alimentées par l'IA.",
+        "Les marques ne devraient pas passer des semaines à chercher la bonne équipe. Les créateurs ne devraient pas passer tout leur temps à faire des propositions. L'IA aide les deux parties à s'associer plus précisément afin que les grands créateurs obtiennent plus d'opportunités et que les marques obtiennent un meilleur travail à un coût équitable.",
+        "La technologie n'est pas le but. Aider les gens à mieux collaborer est la raison d'être de VINCIS."
+      ],
+      "bullets": [
+        "Matching alimenté par l'IA au lieu de recherche manuelle",
+        "Flux de travail transparent avec protection par séquestre",
+        "Conçu pour la collaboration, pas seulement pour les annonces"
+      ],
+      "moreLink": "En savoir plus"
+    },
+    "values": {
+      "title": "Nos valeurs",
+      "items": [
+        {
+          "title": "Créativité d'abord",
+          "body": "Un grand travail commence par de grandes idées. L'IA améliore la vitesse ; les créateurs apportent la vision qui touche les gens."
+        },
+        {
+          "title": "Collaboration de confiance",
+          "body": "Chaque projet compte. Un flux de travail transparent, le contrôle des versions, le séquestre et une collaboration structurée gardent les deux parties confiantes."
+        },
+        {
+          "title": "Connexion mondiale",
+          "body": "Le talent est partout. Nous aidons les marques à travailler au-delà des frontières avec des créateurs qui correspondent vraiment à leurs besoins."
+        },
+        {
+          "title": "Innovation continue",
+          "body": "L'IA change la manière dont le travail est réalisé. VINCIS continue d'explorer de meilleurs outils, flux de travail et modèles de collaboration."
+        }
+      ],
+      "moreLink": "En savoir plus"
+    },
+    "platform": {
+      "title": "Ce que nous construisons",
+      "subtitle": "VINCIS propose l'ensemble de la pile de collaboration publicitaire :",
+      "items": [
+        "Structuration de brief IA",
+        "Matching de créateurs globaux",
+        "Collaboration de projet",
+        "Gestion multi-version",
+        "Centre de révision en ligne",
+        "Paiements en séquestre",
+        "Assistant créatif IA",
+        "Support multilingue",
+        "Moteur de tarification basé sur les données"
+      ],
+      "closing": "Ainsi, les marques peuvent se concentrer sur la direction créative et les créateurs peuvent se concentrer sur la réalisation."
+    },
+    "stats": [
+      {
+        "value": "10 000+",
+        "label": "Créateurs mondiaux"
+      },
+      {
+        "value": "2 000+",
+        "label": "Clients de marque"
+      },
+      {
+        "value": "15 000+",
+        "label": "Projets complétés"
+      },
+      {
+        "value": "70+",
+        "label": "Pays et régions"
+      }
+    ],
+    "team": {
+      "title": "Équipe mondiale",
+      "body": "VINCIS est construit pour un marché mondial. Notre équipe couvre la publicité, la production cinématographique, l'IA, le design produit et l'ingénierie—et nous continuons à améliorer la plateforme avec des marques, des créateurs et des partenaires du monde entier.",
+      "moreLink": "Rencontrez l'équipe",
+      "members": [
+        {
+          "name": "Guowei Li",
+          "role": "Fondateur & PDG"
+        },
+        {
+          "name": "Yawen Chen",
+          "role": "Responsable Produit"
+        },
+        {
+          "name": "Marcus Lee",
+          "role": "Directeur Créatif"
+        },
+        {
+          "name": "Sarah Kim",
+          "role": "Responsable Ingénierie"
+        }
+      ]
+    },
+    "press": {
+      "title": "Dossier de presse",
+      "body": "Les médias, partenaires et organisations de l'industrie sont invités à en savoir plus sur VINCIS.",
+      "items": [
+        "Aperçu de la marque",
+        "Logo & directives de marque",
+        "Images officielles",
+        "Captures d'écran du produit",
+        "Film de marque",
+        "Matériaux de presse",
+        "Informations de contact"
+      ],
+      "downloadLink": "Télécharger le dossier de presse",
+      "note": "Pour des interviews, des partenariats ou des licences médiatiques, veuillez nous contacter."
+    },
+    "contact": {
+      "title": "Contact",
+      "body": "Que vous soyez une marque, un créateur, un journaliste ou un partenaire—nous aimerions avoir de vos nouvelles.",
+      "business": "Affaires",
+      "press": "Presse",
+      "support": "Support",
+      "website": "Site web",
+      "sendMessage": "Envoyer un message"
+    },
+    "closing": {
+      "en": "Every great story begins with a connection.",
+      "local": "Chaque grande histoire commence par une connexion. VINCIS vise à être le pont entre les marques mondiales et les créateurs—afin que les idées fortes puissent franchir les barrières linguistiques, géographiques et sectorielles et devenir un travail qui compte."
+    }
+  },
+  "es": {
+    "pageTitle": "Acerca de nosotros",
+    "sidebar": {
+      "about": "Acerca de nosotros",
+      "cases": "Estudios de caso",
+      "process": "Proceso",
+      "faq": "Preguntas frecuentes",
+      "aiAssistant": "Asistente de IA",
+      "ctaTitle": "¿Listo para crear?",
+      "ctaBody": "Conéctate con creadores globales y da vida a tus ideas.",
+      "ctaButton": "Comenzar",
+      "darkMode": "Modo oscuro"
+    },
+    "hero": {
+      "title": "Conecta cada idea. Haz que cada colaboración sea más simple.",
+      "paragraphs": [
+        "VINCIS es una plataforma global de publicidad impulsada por IA que conecta marcas y creadores para que las ideas puedan pasar de un brief a la entrega final en un solo lugar.",
+        "Desde la publicación del brief y la coincidencia inteligente hasta la colaboración, revisión de versiones, pagos en depósito y entrega final, rediseñamos todo el flujo de trabajo de producción para que sea más simple, más transparente y más eficiente.",
+        "Un gran trabajo creativo no debería estar limitado por la geografía, los recursos o la sobrecarga de comunicación.\nYa seas una marca que busca anuncios de calidad o un creador con habilidades de producción de IA, VINCIS te ayuda a encontrar al socio adecuado más rápido y a construir confianza."
+      ],
+      "features": [
+        {
+          "title": "Ayuda a las marcas a encontrar creadores excelentes más fácilmente.",
+          "body": "La coincidencia inteligente y los datos reales del portafolio ayudan a las marcas a encontrar el estudio adecuado más rápido."
+        },
+        {
+          "title": "Ofrece a los creadores más oportunidades de proyectos globales.",
+          "body": "Conecta a los creadores con la demanda global de marcas a través de colaboraciones más estables y de alta calidad."
+        },
+        {
+          "title": "Usa IA para mejorar la eficiencia, no para reemplazar la creatividad.",
+          "body": "La IA optimiza el flujo de trabajo y la colaboración mientras que las decisiones creativas permanecen lideradas por humanos."
+        },
+        {
+          "title": "Haz que la producción publicitaria sea más transparente, justa y eficiente.",
+          "body": "Desde la fijación de precios y la colaboración hasta la revisión y el pago, todo el proceso se mantiene rastreable."
+        }
+      ],
+      "watchFilm": "Ver película de la marca",
+      "filmDuration": "1:35"
+    },
+    "quickNav": [
+      {
+        "id": "story",
+        "label": "Nuestra historia"
+      },
+      {
+        "id": "mission",
+        "label": "Misión"
+      },
+      {
+        "id": "why",
+        "label": "Por qué VINCIS"
+      },
+      {
+        "id": "values",
+        "label": "Valores"
+      },
+      {
+        "id": "contact",
+        "label": "Contacto"
+      },
+      {
+        "id": "press",
+        "label": "Kit de prensa"
+      }
+    ],
+    "story": {
+      "eyebrow": "Nuestra historia",
+      "title": "Nuestra Historia",
+      "paragraphs": [
+        "Cada gran producto comienza con un problema real.",
+        "El video de IA ha avanzado rápidamente, y más creadores están produciendo anuncios de alta calidad con IA. Sin embargo, las marcas aún luchan por encontrar el talento adecuado, y los creadores aún luchan por acceder a oportunidades estables y de alta calidad.",
+        "Las marcas no pueden decir fácilmente quién puede realmente entregar. Los creadores no pueden encontrar fácilmente proyectos confiables. El alto costo de comunicación, los flujos de trabajo desordenados, la débil protección de pagos y los lentos ciclos de revisión siguen siendo la norma.",
+        "VINCIS fue construido en ese contexto—para conectar marcas y creadores globales sobre una base de transparencia, profesionalismo y confianza."
+      ],
+      "quote": "Cada gran historia comienza con una conexión.",
+      "moreLink": "Leer más"
+    },
+    "mission": {
+      "title": "Nuestra misión",
+      "body": "Nuestra misión es simple: conectar marcas y creadores globales para que cada idea fuerte tenga la oportunidad de hacerse realidad.",
+      "bullets": [
+        "Ayudar a las marcas a encontrar creadores excelentes más fácilmente.",
+        "Ofrecer a los creadores más oportunidades de proyectos globales.",
+        "Usar IA para mejorar la eficiencia, no para reemplazar la creatividad.",
+        "Hacer que la producción publicitaria sea más transparente, justa y eficiente."
+      ],
+      "moreLink": "Contáctanos"
+    },
+    "why": {
+      "title": "Por qué VINCIS",
+      "paragraphs": [
+        "No estamos construyendo otro sitio de portafolio o una bolsa de trabajo básica. VINCIS está redefiniendo cómo funcionan las colaboraciones publicitarias con IA.",
+        "Las marcas no deberían pasar semanas buscando el equipo adecuado. Los creadores no deberían pasar todo su tiempo presentando propuestas. La IA ayuda a ambos lados a coincidir más precisamente para que los grandes creadores obtengan más oportunidades y las marcas obtengan un mejor trabajo a un costo justo.",
+        "La tecnología no es el objetivo. Ayudar a las personas a colaborar mejor es por lo que existe VINCIS."
+      ],
+      "bullets": [
+        "Coincidencia impulsada por IA en lugar de búsqueda manual",
+        "Flujo de trabajo transparente con protección de depósito",
+        "Construido para la colaboración, no solo para listados"
+      ],
+      "moreLink": "Aprender más"
+    },
+    "values": {
+      "title": "Nuestros valores",
+      "items": [
+        {
+          "title": "Creatividad primero",
+          "body": "Un gran trabajo comienza con grandes ideas. La IA mejora la velocidad; los creadores aportan la visión que mueve a las personas."
+        },
+        {
+          "title": "Colaboración de confianza",
+          "body": "Cada proyecto importa. Un flujo de trabajo transparente, control de versiones, depósito y colaboración estructurada mantienen a ambas partes confiadas."
+        },
+        {
+          "title": "Conexión global",
+          "body": "El talento está en todas partes. Ayudamos a las marcas a trabajar más allá de las fronteras con creadores que realmente se ajustan a sus necesidades."
+        },
+        {
+          "title": "Innovación continua",
+          "body": "La IA está cambiando cómo se realiza el trabajo. VINCIS sigue explorando mejores herramientas, flujos de trabajo y modelos de colaboración."
+        }
+      ],
+      "moreLink": "Aprender más"
+    },
+    "platform": {
+      "title": "Lo que construimos",
+      "subtitle": "VINCIS ofrece toda la pila de colaboración publicitaria:",
+      "items": [
+        "Estructuración de briefs con IA",
+        "Coincidencia global de creadores",
+        "Colaboración en proyectos",
+        "Gestión de múltiples versiones",
+        "Centro de revisión en línea",
+        "Pagos en depósito",
+        "Asistente creativo de IA",
+        "Soporte multilingüe",
+        "Motor de precios basado en datos"
+      ],
+      "closing": "Para que las marcas puedan centrarse en la dirección creativa y los creadores puedan centrarse en crear."
+    },
+    "stats": [
+      {
+        "value": "10,000+",
+        "label": "Creadores globales"
+      },
+      {
+        "value": "2,000+",
+        "label": "Clientes de marca"
+      },
+      {
+        "value": "15,000+",
+        "label": "Proyectos completados"
+      },
+      {
+        "value": "70+",
+        "label": "Países y regiones"
+      }
+    ],
+    "team": {
+      "title": "Equipo global",
+      "body": "VINCIS está construido para un mercado global. Nuestro equipo abarca publicidad, producción cinematográfica, IA, diseño de productos e ingeniería—y seguimos mejorando la plataforma con marcas, creadores y socios en todo el mundo.",
+      "moreLink": "Conoce al equipo",
+      "members": [
+        {
+          "name": "Guowei Li",
+          "role": "Fundador y CEO"
+        },
+        {
+          "name": "Yawen Chen",
+          "role": "Jefa de Producto"
+        },
+        {
+          "name": "Marcus Lee",
+          "role": "Director Creativo"
+        },
+        {
+          "name": "Sarah Kim",
+          "role": "Jefa de Ingeniería"
+        }
+      ]
+    },
+    "press": {
+      "title": "Kit de prensa",
+      "body": "Los medios, socios y organizaciones de la industria son bienvenidos a aprender más sobre VINCIS.",
+      "items": [
+        "Descripción general de la marca",
+        "Logotipo y directrices de marca",
+        "Imágenes oficiales",
+        "Capturas de pantalla del producto",
+        "Película de marca",
+        "Materiales de prensa",
+        "Información de contacto"
+      ],
+      "downloadLink": "Descargar kit de prensa",
+      "note": "Para entrevistas, asociaciones o licencias de medios, contáctanos."
+    },
+    "contact": {
+      "title": "Contacto",
+      "body": "Ya seas una marca, creador, periodista o socio—nos gustaría saber de ti.",
+      "business": "Negocios",
+      "press": "Prensa",
+      "support": "Soporte",
+      "website": "Sitio web",
+      "sendMessage": "Enviar un mensaje"
+    },
+    "closing": {
+      "en": "Every great story begins with a connection.",
+      "local": "Cada gran historia comienza con una conexión. VINCIS tiene como objetivo ser el puente entre marcas y creadores globales—para que las ideas fuertes puedan cruzar fronteras de idioma, geografía e industria y convertirse en trabajos que importan."
+    }
+  }
+}

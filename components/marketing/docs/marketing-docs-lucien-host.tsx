@@ -11,7 +11,8 @@ import {
   type LucienViewerSnapshot
 } from "@/components/marketing/faq/lucien-viewer-identity.client";
 import { normalizePublicLucienPagePath } from "@/lib/marketing/public-lucien-paths";
-import type { Locale } from "@/lib/i18n";
+import type { Locale, MarketingLocale } from "@/lib/i18n";
+import { asMarketingLocale } from "@/lib/marketing/i18n/resolve-marketing-copy";
 
 const PublicLucienDrawer = dynamic(
   () =>
@@ -25,9 +26,10 @@ export function MarketingDocsLucienHost({
   locale,
   children
 }: {
-  locale: Locale;
+  locale: Locale | MarketingLocale;
   children: ReactNode;
 }) {
+  const marketingLocale = asMarketingLocale(locale);
   const [open, setOpen] = useState(false);
   const [viewer, setViewer] = useState<LucienViewerSnapshot | null>(null);
   const pathname = usePathname();
@@ -35,25 +37,25 @@ export function MarketingDocsLucienHost({
 
   const openLucien = useCallback(() => {
     setOpen(true);
-    setViewer((current) => current ?? getLucienViewerSnapshot(locale));
-    void prefetchLucienViewerSnapshot(locale).then(setViewer);
-  }, [locale]);
+    setViewer((current) => current ?? getLucienViewerSnapshot(marketingLocale));
+    void prefetchLucienViewerSnapshot(marketingLocale).then(setViewer);
+  }, [marketingLocale]);
 
   const value = useMemo(
     () => ({
       openLucien,
-      viewer: viewer ?? getLucienViewerSnapshot(locale)
+      viewer: viewer ?? getLucienViewerSnapshot(marketingLocale)
     }),
-    [locale, openLucien, viewer]
+    [marketingLocale, openLucien, viewer]
   );
 
   return (
     <MarketingDocsLucienContext.Provider value={value}>
       {children}
-      <PublicLucienFloatingLauncher locale={locale} hidden={open} />
+      <PublicLucienFloatingLauncher locale={marketingLocale} hidden={open} />
       {open ? (
         <PublicLucienDrawer
-          locale={locale}
+          locale={marketingLocale}
           open={open}
           pagePath={pagePath}
           viewer={value.viewer}

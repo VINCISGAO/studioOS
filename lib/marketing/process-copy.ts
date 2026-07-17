@@ -1,4 +1,6 @@
-import type { Locale } from "@/lib/i18n";
+import type { MarketingLocale } from "@/lib/i18n";
+import processBundles from "@/lib/marketing/i18n/bundles/process.json";
+import { resolveMarketingCopy } from "@/lib/marketing/i18n/resolve-marketing-copy";
 
 export type ProcessStepId =
   | "brief"
@@ -27,7 +29,7 @@ export type ProcessCopy = {
   ctaButton: string;
 };
 
-const zh: ProcessCopy = {
+export const processCopyZhCN: ProcessCopy = {
   pageTitle: "流程",
   subtitle: "从需求到交付的完整流程",
   intro: [
@@ -96,7 +98,7 @@ const zh: ProcessCopy = {
   ctaButton: "发布项目需求"
 };
 
-const en: ProcessCopy = {
+export const processCopyEn: ProcessCopy = {
   pageTitle: "Process",
   subtitle: "From brief to delivery",
   intro: [
@@ -165,6 +167,13 @@ const en: ProcessCopy = {
   ctaButton: "Post a project"
 };
 
-export function processText(locale: Locale): ProcessCopy {
-  return locale === "zh" ? zh : en;
+export function processText(locale: MarketingLocale): ProcessCopy {
+  return resolveMarketingCopy(
+    {
+      en: processCopyEn,
+      "zh-CN": processCopyZhCN,
+      ...(processBundles as Partial<Record<MarketingLocale, ProcessCopy>>)
+    },
+    locale
+  );
 }

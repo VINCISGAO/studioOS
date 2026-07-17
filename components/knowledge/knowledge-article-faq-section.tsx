@@ -2,6 +2,7 @@ import { FaqLucienCtaBlock } from "@/components/marketing/faq/faq-lucien-cta-blo
 import type { KnowledgeFaqDto } from "@/features/knowledge-center/knowledge-center.types";
 import { knowledgeCenterHomeCopy } from "@/lib/knowledge/knowledge-center-home-copy";
 import type { Locale } from "@/lib/i18n";
+import { asMarketingLocale } from "@/lib/marketing/i18n/resolve-marketing-copy";
 
 export function KnowledgeArticleFaqSection({
   locale,
@@ -42,7 +43,7 @@ export function KnowledgeArticleFaqSection({
         ))}
       </div>
       <FaqLucienCtaBlock
-        locale={locale}
+        locale={asMarketingLocale(locale)}
         title={supportCopy.supportTitle}
         buttonLabel={supportCopy.supportLucienButton}
         className="relative mt-8 overflow-visible rounded-[1.75rem] border border-violet-100/70 bg-white shadow-[0_18px_60px_-48px_rgba(76,29,149,0.35)]"

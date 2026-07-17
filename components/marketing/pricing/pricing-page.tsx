@@ -7,9 +7,9 @@ import {
   PricingServiceFeeSection,
   PricingTrustSection
 } from "@/components/marketing/pricing/pricing-sections";
-import type { Locale } from "@/lib/i18n";
+import type { MarketingLocale } from "@/lib/i18n";
 
-export function PricingPageView({ locale }: { locale: Locale }) {
+export function PricingPageView({ locale }: { locale: MarketingLocale }) {
   return (
     <MarketingDocsShell locale={locale} active="pricing">
       <PricingHeroSection locale={locale} />

@@ -7,6 +7,7 @@ import { HomeHeroMetrics } from "@/components/marketing/home-hero-metrics";
 import { MarketingViewportGuard } from "@/components/marketing/marketing-viewport-guard";
 import type { MarketingShowcaseWorkDto } from "@/features/marketing-showcase/marketing-showcase.types";
 import type { Locale, MarketingLocale } from "@/lib/i18n";
+import { asMarketingLocale } from "@/lib/marketing/i18n/resolve-marketing-copy";
 import type { MarketingHomePortalSession } from "@/lib/marketing/portal-entry";
 import { resolveMarketingHomeWorkspaceCta } from "@/lib/marketing/portal-entry";
 import { getHomeHeroSpaceBackgroundSources } from "@/lib/studioos/home-hero-space-asset";
@@ -114,7 +115,7 @@ export function HomeLandingPage({
         </HomePageScreen>
       </main>
 
-      <MarketingFooter locale={copyLocale} tone="light" />
+      <MarketingFooter locale={asMarketingLocale(copyLocale)} tone="light" />
     </div>
   );
 }

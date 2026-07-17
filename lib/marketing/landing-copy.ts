@@ -1,5 +1,7 @@
 import type { Locale, MarketingLocale } from "@/lib/i18n";
 import { isChineseLanguage } from "@/lib/i18n";
+import landingHomeBundles from "@/lib/marketing/i18n/bundles/landing-home.json";
+import { asMarketingLocale, resolveMarketingCopy } from "@/lib/marketing/i18n/resolve-marketing-copy";
 
 /** VINCIS marketing copy. */
 export const landingCopy = {
@@ -865,10 +867,27 @@ function resolveMarketingCopyLocale(locale: Locale | MarketingLocale) {
   return locale;
 }
 
+type LandingHomeBundle = Partial<
+  Record<MarketingLocale, { [S in keyof typeof landingCopy]?: (typeof landingCopy)[S]["en"] }>
+>;
+
 export function landingText<K extends keyof typeof landingCopy>(
   section: K,
   locale: Locale | MarketingLocale
 ): (typeof landingCopy)[K]["en"] {
+  const marketingLocale = asMarketingLocale(String(locale));
+
+  try {
+    const localeBundle = resolveMarketingCopy(
+      landingHomeBundles as unknown as LandingHomeBundle,
+      marketingLocale
+    );
+    const bundled = localeBundle[section];
+    if (bundled) return bundled as (typeof landingCopy)[K]["en"];
+  } catch {
+    // fall through to legacy overlays
+  }
+
   const normalizedLocale = resolveMarketingCopyLocale(locale);
   const translated = landingCopyTranslations[section]?.[normalizedLocale as MarketingLocale];
   if (translated) return translated as unknown as (typeof landingCopy)[K]["en"];

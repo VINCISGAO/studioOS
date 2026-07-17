@@ -1,0 +1,1388 @@
+{
+  "en": {
+    "nav": {
+      "home": "Home",
+      "process": "How it works",
+      "pricing": "Pricing",
+      "partners": "Partners",
+      "resources": "Resources",
+      "login": "Log in",
+      "register": "Become a partner"
+    },
+    "hero": {
+      "titleLead": "Become a VINCIS partner",
+      "titleAccent": "and unlock sustainable earnings",
+      "body": "Refer brands or creators to VINCIS and earn 40% of the platform service fee — no project management required.",
+      "links": [
+        {
+          "label": "Join the partner program",
+          "href": "/login"
+        },
+        {
+          "label": "Platform service fee",
+          "href": "/pricing"
+        },
+        {
+          "label": "Revenue share model",
+          "href": "#commission"
+        },
+        {
+          "label": "FAQ",
+          "href": "/faq"
+        }
+      ]
+    },
+    "benefitsTitle": "Partner benefits",
+    "benefits": [
+      {
+        "title": "Transparent revenue share",
+        "body": "Earn 40% of the platform service fee — not a flat take of the order"
+      },
+      {
+        "title": "Recurring income",
+        "body": "Keep earning as referred customers continue spending"
+      },
+      {
+        "title": "Real-time tracking",
+        "body": "Monitor clicks, signups, payments, and commissions live"
+      },
+      {
+        "title": "Fast withdrawal",
+        "body": "Low thresholds, multiple payout methods, same-day options"
+      }
+    ],
+    "stepsTitle": "How to start earning",
+    "steps": [
+      {
+        "title": "Register as a partner",
+        "body": "Submit basic details and receive your unique referral link"
+      },
+      {
+        "title": "Share your link",
+        "body": "Send it to potential brand clients or creators"
+      },
+      {
+        "title": "Customer signs up & pays",
+        "body": "They register through your link and complete first payment"
+      },
+      {
+        "title": "Earn commission",
+        "body": "After customer payment, your share is calculated from the platform service fee"
+      },
+      {
+        "title": "Withdraw earnings",
+        "body": "Commissions accumulate automatically and can be withdrawn at threshold"
+      }
+    ],
+    "commissionTitle": "Partner revenue share",
+    "commissionColumns": [
+      "Customer type",
+      "Platform service fee",
+      "Partner share"
+    ],
+    "calculatorTitle": "Earnings calculator",
+    "calculatorLabels": {
+      "customerType": "Customer type",
+      "orderAmount": "Estimated order amount (USD)",
+      "platformServiceFee": "Platform service fee rate",
+      "partnerShare": "Partner share",
+      "platformFeeAmount": "Platform service fee amount",
+      "estimatedEarnings": "Estimated partner earnings",
+      "currency": "USD"
+    },
+    "statsTitle": "Partners already in the program",
+    "stats": [
+      {
+        "label": "Active partners"
+      },
+      {
+        "label": "Total commissions paid"
+      },
+      {
+        "label": "Customers referred"
+      },
+      {
+        "label": "Partner satisfaction"
+      }
+    ],
+    "faqTitle": "FAQ",
+    "faq": [
+      {
+        "question": "Is there a fee to join?",
+        "answer": "Joining is free. After a referred customer pays, you earn 40% of the platform service fee."
+      },
+      {
+        "question": "How often is commission settled?",
+        "answer": "Commissions are credited in real time after customer payment. Withdrawals typically arrive in 1–3 business days."
+      },
+      {
+        "question": "How are referrals tracked?",
+        "answer": "Every partner gets a unique referral link and dashboard for clicks, signups, payments, and commissions."
+      },
+      {
+        "question": "What can I promote?",
+        "answer": "VINCIS platform services, creator tools, brand production services, and Academy courses."
+      }
+    ]
+  },
+  "zh-CN": {
+    "nav": {
+      "home": "首页",
+      "process": "如何工作",
+      "pricing": "价格",
+      "partners": "合作伙伴",
+      "resources": "资源中心",
+      "login": "登录",
+      "register": "注册成为合作伙伴"
+    },
+    "hero": {
+      "titleLead": "成为 VINCIS 合作伙伴",
+      "titleAccent": "开启可持续的收益机会",
+      "body": "通过推荐品牌或创作者加入 VINCIS，您将获得平台服务费中 40% 的合作伙伴分成。无需管理项目，只需分享链接，即可持续获得收入。",
+      "links": [
+        {
+          "label": "立即加入合作伙伴计划",
+          "href": "/login"
+        },
+        {
+          "label": "了解平台服务费",
+          "href": "/pricing"
+        },
+        {
+          "label": "查看分成机制",
+          "href": "#commission"
+        },
+        {
+          "label": "常见问题",
+          "href": "/faq"
+        }
+      ]
+    },
+    "benefitsTitle": "合作伙伴权益",
+    "benefits": [
+      {
+        "title": "透明分成机制",
+        "body": "获得平台服务费的 40%，而非订单总额的固定抽成"
+      },
+      {
+        "title": "长期持续收益",
+        "body": "客户持续消费，您持续获得佣金"
+      },
+      {
+        "title": "实时数据追踪",
+        "body": "实时查看点击、注册、付费等全流程数据"
+      },
+      {
+        "title": "快速提现",
+        "body": "低门槛、多种提现方式，最快当日到账"
+      }
+    ],
+    "stepsTitle": "如何开始赚取收益",
+    "steps": [
+      {
+        "title": "注册成为合作伙伴",
+        "body": "填写基本信息，获得专属推荐链接"
+      },
+      {
+        "title": "分享您的链接",
+        "body": "将链接分享给潜在品牌客户或创作者"
+      },
+      {
+        "title": "客户注册并付费",
+        "body": "客户通过您的链接注册并完成首次付费"
+      },
+      {
+        "title": "获得佣金",
+        "body": "客户付款后，按平台服务费比例计算您的合作伙伴分成"
+      },
+      {
+        "title": "提现收益",
+        "body": "佣金自动累计，达到门槛后即可申请提现"
+      }
+    ],
+    "commissionTitle": "合作伙伴分成机制",
+    "commissionColumns": [
+      "客户类型",
+      "平台服务费",
+      "合作伙伴分成"
+    ],
+    "calculatorTitle": "收益计算器",
+    "calculatorLabels": {
+      "customerType": "客户类型",
+      "orderAmount": "预计订单金额 (USD)",
+      "platformServiceFee": "平台服务费比例",
+      "partnerShare": "合作伙伴分成",
+      "platformFeeAmount": "平台服务费金额",
+      "estimatedEarnings": "预估合作伙伴收益",
+      "currency": "USD"
+    },
+    "statsTitle": "加入 VINCIS 合作伙伴计划的伙伴",
+    "stats": [
+      {
+        "label": "活跃合作伙伴"
+      },
+      {
+        "label": "已支付佣金总额"
+      },
+      {
+        "label": "通过合作伙伴带来的客户"
+      },
+      {
+        "label": "合作伙伴满意度"
+      }
+    ],
+    "faqTitle": "常见问题",
+    "faq": [
+      {
+        "question": "加入合作伙伴计划需要费用吗？",
+        "answer": "完全免费。注册成为合作伙伴无需任何费用。客户付款后，您获得平台服务费中的 40% 作为合作伙伴分成。"
+      },
+      {
+        "question": "佣金多久结算一次？",
+        "answer": "客户完成付款后，佣金会实时计入您的账户。达到提现门槛后即可申请提现，通常 1–3 个工作日到账。"
+      },
+      {
+        "question": "如何追踪我的推荐客户？",
+        "answer": "每位合作伙伴都有专属推荐链接和后台数据面板，可实时查看点击、注册、付费与佣金明细。"
+      },
+      {
+        "question": "我可以推广哪些内容？",
+        "answer": "您可以推广 VINCIS 平台服务、创作者工具、品牌广告制作服务，以及 Academy 课程内容。"
+      }
+    ]
+  },
+  "zh-TW": {
+    "nav": {
+      "home": "首頁",
+      "process": "如何工作",
+      "pricing": "價格",
+      "partners": "合作夥伴",
+      "resources": "資源中心",
+      "login": "登入",
+      "register": "註冊成為合作夥伴"
+    },
+    "hero": {
+      "titleLead": "成為 VINCIS 合作夥伴",
+      "titleAccent": "開啟可持續的收益機會",
+      "body": "透過推薦品牌或創作者加入 VINCIS，您將獲得平台服務費中 40% 的合作夥伴分成。無需管理項目，只需分享連結，即可持續獲得收入。",
+      "links": [
+        {
+          "label": "立即加入合作夥伴計畫",
+          "href": "/login"
+        },
+        {
+          "label": "了解平台服務費",
+          "href": "/pricing"
+        },
+        {
+          "label": "查看分成機制",
+          "href": "#commission"
+        },
+        {
+          "label": "常見問題",
+          "href": "/faq"
+        }
+      ]
+    },
+    "benefitsTitle": "合作夥伴權益",
+    "benefits": [
+      {
+        "title": "透明分成機制",
+        "body": "獲得平台服務費的 40%，而非訂單總額的固定抽成"
+      },
+      {
+        "title": "長期持續收益",
+        "body": "客戶持續消費，您持續獲得佣金"
+      },
+      {
+        "title": "即時數據追蹤",
+        "body": "即時查看點擊、註冊、付費等全流程數據"
+      },
+      {
+        "title": "快速提現",
+        "body": "低門檻、多種提現方式，最快當日到帳"
+      }
+    ],
+    "stepsTitle": "如何開始賺取收益",
+    "steps": [
+      {
+        "title": "註冊成為合作夥伴",
+        "body": "填寫基本資訊，獲得專屬推薦連結"
+      },
+      {
+        "title": "分享您的連結",
+        "body": "將連結分享給潛在品牌客戶或創作者"
+      },
+      {
+        "title": "客戶註冊並付費",
+        "body": "客戶透過您的連結註冊並完成首次付費"
+      },
+      {
+        "title": "獲得佣金",
+        "body": "客戶付款後，按平台服務費比例計算您的合作夥伴分成"
+      },
+      {
+        "title": "提現收益",
+        "body": "佣金自動累計，達到門檻後即可申請提現"
+      }
+    ],
+    "commissionTitle": "合作夥伴分成機制",
+    "commissionColumns": [
+      "客戶類型",
+      "平台服務費",
+      "合作夥伴分成"
+    ],
+    "calculatorTitle": "收益計算器",
+    "calculatorLabels": {
+      "customerType": "客戶類型",
+      "orderAmount": "預計訂單金額 (USD)",
+      "platformServiceFee": "平台服務費比例",
+      "partnerShare": "合作夥伴分成",
+      "platformFeeAmount": "平台服務費金額",
+      "estimatedEarnings": "預估合作夥伴收益",
+      "currency": "USD"
+    },
+    "statsTitle": "加入 VINCIS 合作夥伴計畫的夥伴",
+    "stats": [
+      {
+        "label": "活躍合作夥伴"
+      },
+      {
+        "label": "已支付佣金總額"
+      },
+      {
+        "label": "透過合作夥伴帶來的客戶"
+      },
+      {
+        "label": "合作夥伴滿意度"
+      }
+    ],
+    "faqTitle": "常見問題",
+    "faq": [
+      {
+        "question": "加入合作夥伴計畫需要費用嗎？",
+        "answer": "完全免費。註冊成為合作夥伴無需任何費用。客戶付款後，您獲得平台服務費中的 40% 作為合作夥伴分成。"
+      },
+      {
+        "question": "佣金多久結算一次？",
+        "answer": "客戶完成付款後，佣金會即時計入您的帳戶。達到提現門檻後即可申請提現，通常 1–3 個工作日到帳。"
+      },
+      {
+        "question": "如何追蹤我的推薦客戶？",
+        "answer": "每位合作夥伴都有專屬推薦連結和後台數據面板，可即時查看點擊、註冊、付費與佣金明細。"
+      },
+      {
+        "question": "我可以推廣哪些內容？",
+        "answer": "您可以推廣 VINCIS 平台服務、創作者工具、品牌廣告製作服務，以及 Academy 課程內容。"
+      }
+    ]
+  },
+  "ja": {
+    "nav": {
+      "home": "ホーム",
+      "process": "仕組み",
+      "pricing": "料金",
+      "partners": "パートナー",
+      "resources": "リソース",
+      "login": "ログイン",
+      "register": "パートナーになる"
+    },
+    "hero": {
+      "titleLead": "VINCISのパートナーになろう",
+      "titleAccent": "持続可能な収益を解放しよう",
+      "body": "ブランドやクリエイターをVINCISに紹介し、プラットフォームサービス料の40%を獲得 — プロジェクト管理は不要です。",
+      "links": [
+        {
+          "label": "パートナープログラムに参加",
+          "href": "/login"
+        },
+        {
+          "label": "プラットフォームサービス料",
+          "href": "/pricing"
+        },
+        {
+          "label": "収益分配モデル",
+          "href": "#commission"
+        },
+        {
+          "label": "FAQ",
+          "href": "/faq"
+        }
+      ]
+    },
+    "benefitsTitle": "パートナーの利点",
+    "benefits": [
+      {
+        "title": "透明な収益分配",
+        "body": "プラットフォームサービス料の40%を獲得 — 注文の一律取り分ではありません"
+      },
+      {
+        "title": "継続的な収入",
+        "body": "紹介した顧客が引き続き支出する限り、収入を得続けます"
+      },
+      {
+        "title": "リアルタイム追跡",
+        "body": "クリック、サインアップ、支払い、コミッションをリアルタイムで監視"
+      },
+      {
+        "title": "迅速な引き出し",
+        "body": "低い閾値、複数の支払い方法、当日オプション"
+      }
+    ],
+    "stepsTitle": "収益を得る方法",
+    "steps": [
+      {
+        "title": "パートナーとして登録",
+        "body": "基本情報を提出し、ユニークな紹介リンクを受け取ります"
+      },
+      {
+        "title": "リンクを共有",
+        "body": "潜在的なブランドクライアントやクリエイターに送信"
+      },
+      {
+        "title": "顧客がサインアップ＆支払い",
+        "body": "彼らはあなたのリンクを通じて登録し、最初の支払いを完了します"
+      },
+      {
+        "title": "コミッションを得る",
+        "body": "顧客の支払い後、プラットフォームサービス料からあなたの取り分が計算されます"
+      },
+      {
+        "title": "収益を引き出す",
+        "body": "コミッションは自動的に蓄積され、閾値で引き出すことができます"
+      }
+    ],
+    "commissionTitle": "パートナー収益分配",
+    "commissionColumns": [
+      "顧客タイプ",
+      "プラットフォームサービス料",
+      "パートナーの取り分"
+    ],
+    "calculatorTitle": "収益計算機",
+    "calculatorLabels": {
+      "customerType": "顧客タイプ",
+      "orderAmount": "推定注文額 (USD)",
+      "platformServiceFee": "プラットフォームサービス料率",
+      "partnerShare": "パートナーの取り分",
+      "platformFeeAmount": "プラットフォームサービス料額",
+      "estimatedEarnings": "推定パートナー収益",
+      "currency": "USD"
+    },
+    "statsTitle": "すでにプログラムに参加しているパートナー",
+    "stats": [
+      {
+        "label": "アクティブなパートナー"
+      },
+      {
+        "label": "支払われた総コミッション"
+      },
+      {
+        "label": "紹介した顧客"
+      },
+      {
+        "label": "パートナーの満足度"
+      }
+    ],
+    "faqTitle": "FAQ",
+    "faq": [
+      {
+        "question": "参加するのに料金はかかりますか？",
+        "answer": "参加は無料です。紹介した顧客が支払った後、プラットフォームサービス料の40%を獲得します。"
+      },
+      {
+        "question": "コミッションはどのくらいの頻度で清算されますか？",
+        "answer": "コミッションは顧客の支払い後にリアルタイムでクレジットされます。引き出しは通常1〜3営業日で届きます。"
+      },
+      {
+        "question": "紹介はどのように追跡されますか？",
+        "answer": "すべてのパートナーにはユニークな紹介リンクと、クリック、サインアップ、支払い、コミッションのためのダッシュボードが提供されます。"
+      },
+      {
+        "question": "何を宣伝できますか？",
+        "answer": "VINCISのプラットフォームサービス、クリエイターツール、ブランド制作サービス、アカデミーコースを宣伝できます。"
+      }
+    ]
+  },
+  "ko": {
+    "nav": {
+      "home": "홈",
+      "process": "작동 방식",
+      "pricing": "가격",
+      "partners": "파트너",
+      "resources": "리소스",
+      "login": "로그인",
+      "register": "파트너가 되기"
+    },
+    "hero": {
+      "titleLead": "VINCIS 파트너가 되세요",
+      "titleAccent": "지속 가능한 수익을 잠금 해제하세요",
+      "body": "브랜드나 크리에이터를 VINCIS에 추천하고 플랫폼 서비스 수수료의 40%를 받으세요 — 프로젝트 관리가 필요하지 않습니다.",
+      "links": [
+        {
+          "label": "파트너 프로그램 가입",
+          "href": "/login"
+        },
+        {
+          "label": "플랫폼 서비스 수수료",
+          "href": "/pricing"
+        },
+        {
+          "label": "수익 공유 모델",
+          "href": "#commission"
+        },
+        {
+          "label": "자주 묻는 질문",
+          "href": "/faq"
+        }
+      ]
+    },
+    "benefitsTitle": "파트너 혜택",
+    "benefits": [
+      {
+        "title": "투명한 수익 공유",
+        "body": "플랫폼 서비스 수수료의 40%를 받습니다 — 주문의 고정 수수료가 아닙니다."
+      },
+      {
+        "title": "지속적인 수익",
+        "body": "추천한 고객이 계속 소비하는 동안 수익을 계속 얻습니다."
+      },
+      {
+        "title": "실시간 추적",
+        "body": "클릭, 가입, 결제 및 수수료를 실시간으로 모니터링합니다."
+      },
+      {
+        "title": "빠른 인출",
+        "body": "낮은 기준, 다양한 지급 방법, 당일 옵션"
+      }
+    ],
+    "stepsTitle": "수익을 얻는 방법",
+    "steps": [
+      {
+        "title": "파트너로 등록하기",
+        "body": "기본 정보를 제출하고 고유한 추천 링크를 받습니다."
+      },
+      {
+        "title": "링크 공유하기",
+        "body": "잠재적인 브랜드 고객이나 크리에이터에게 링크를 전송합니다."
+      },
+      {
+        "title": "고객이 가입하고 결제하기",
+        "body": "그들이 귀하의 링크를 통해 등록하고 첫 결제를 완료합니다."
+      },
+      {
+        "title": "수수료 받기",
+        "body": "고객 결제 후, 귀하의 몫은 플랫폼 서비스 수수료에서 계산됩니다."
+      },
+      {
+        "title": "수익 인출하기",
+        "body": "수수료가 자동으로 누적되며 기준에 도달하면 인출할 수 있습니다."
+      }
+    ],
+    "commissionTitle": "파트너 수익 공유",
+    "commissionColumns": [
+      "고객 유형",
+      "플랫폼 서비스 수수료",
+      "파트너 몫"
+    ],
+    "calculatorTitle": "수익 계산기",
+    "calculatorLabels": {
+      "customerType": "고객 유형",
+      "orderAmount": "예상 주문 금액 (USD)",
+      "platformServiceFee": "플랫폼 서비스 수수료 비율",
+      "partnerShare": "파트너 몫",
+      "platformFeeAmount": "플랫폼 서비스 수수료 금액",
+      "estimatedEarnings": "예상 파트너 수익",
+      "currency": "USD"
+    },
+    "statsTitle": "이미 프로그램에 참여 중인 파트너",
+    "stats": [
+      {
+        "label": "활동 중인 파트너"
+      },
+      {
+        "label": "지급된 총 수수료"
+      },
+      {
+        "label": "추천된 고객"
+      },
+      {
+        "label": "파트너 만족도"
+      }
+    ],
+    "faqTitle": "자주 묻는 질문",
+    "faq": [
+      {
+        "question": "가입에 비용이 있나요?",
+        "answer": "가입은 무료입니다. 추천한 고객이 결제하면 플랫폼 서비스 수수료의 40%를 받습니다."
+      },
+      {
+        "question": "수수료는 얼마나 자주 정산되나요?",
+        "answer": "수수료는 고객 결제 후 실시간으로 적립됩니다. 인출은 일반적으로 1-3 영업일 내에 도착합니다."
+      },
+      {
+        "question": "추천은 어떻게 추적되나요?",
+        "answer": "모든 파트너는 고유한 추천 링크와 클릭, 가입, 결제 및 수수료를 위한 대시보드를 받습니다."
+      },
+      {
+        "question": "무엇을 홍보할 수 있나요?",
+        "answer": "VINCIS 플랫폼 서비스, 크리에이터 도구, 브랜드 제작 서비스 및 아카데미 과정입니다."
+      }
+    ]
+  },
+  "ms": {
+    "nav": {
+      "home": "Laman Utama",
+      "process": "Cara ia berfungsi",
+      "pricing": "Harga",
+      "partners": "Rakan Kongsi",
+      "resources": "Sumber",
+      "login": "Log masuk",
+      "register": "Jadi rakan kongsi"
+    },
+    "hero": {
+      "titleLead": "Jadi rakan kongsi VINCIS",
+      "titleAccent": "dan buka kunci pendapatan yang mampan",
+      "body": "Rujuk jenama atau pencipta kepada VINCIS dan dapatkan 40% daripada yuran perkhidmatan platform — tiada pengurusan projek diperlukan.",
+      "links": [
+        {
+          "label": "Sertai program rakan kongsi",
+          "href": "/login"
+        },
+        {
+          "label": "Yuran perkhidmatan platform",
+          "href": "/pricing"
+        },
+        {
+          "label": "Model perkongsian pendapatan",
+          "href": "#commission"
+        },
+        {
+          "label": "Soalan Lazim",
+          "href": "/faq"
+        }
+      ]
+    },
+    "benefitsTitle": "Manfaat rakan kongsi",
+    "benefits": [
+      {
+        "title": "Perkongsian pendapatan yang telus",
+        "body": "Dapatkan 40% daripada yuran perkhidmatan platform — bukan pengambilan tetap daripada pesanan"
+      },
+      {
+        "title": "Pendapatan berulang",
+        "body": "Teruskan memperoleh pendapatan apabila pelanggan yang dirujuk terus berbelanja"
+      },
+      {
+        "title": "Penjejakan masa nyata",
+        "body": "Pantau klik, pendaftaran, pembayaran, dan komisen secara langsung"
+      },
+      {
+        "title": "Pengeluaran cepat",
+        "body": "Ambang rendah, pelbagai kaedah pembayaran, pilihan pada hari yang sama"
+      }
+    ],
+    "stepsTitle": "Cara untuk mula memperoleh",
+    "steps": [
+      {
+        "title": "Daftar sebagai rakan kongsi",
+        "body": "Hantar butiran asas dan terima pautan rujukan unik anda"
+      },
+      {
+        "title": "Kongsi pautan anda",
+        "body": "Hantar kepada pelanggan jenama atau pencipta yang berpotensi"
+      },
+      {
+        "title": "Pelanggan mendaftar & membayar",
+        "body": "Mereka mendaftar melalui pautan anda dan menyelesaikan pembayaran pertama"
+      },
+      {
+        "title": "Dapatkan komisen",
+        "body": "Selepas pembayaran pelanggan, bahagian anda dikira daripada yuran perkhidmatan platform"
+      },
+      {
+        "title": "Tarik pendapatan",
+        "body": "Komisen terkumpul secara automatik dan boleh ditarik pada ambang"
+      }
+    ],
+    "commissionTitle": "Perkongsian pendapatan rakan kongsi",
+    "commissionColumns": [
+      "Jenis pelanggan",
+      "Yuran perkhidmatan platform",
+      "Bahagian rakan kongsi"
+    ],
+    "calculatorTitle": "Kalkulator pendapatan",
+    "calculatorLabels": {
+      "customerType": "Jenis pelanggan",
+      "orderAmount": "Anggaran jumlah pesanan (USD)",
+      "platformServiceFee": "Kadar yuran perkhidmatan platform",
+      "partnerShare": "Bahagian rakan kongsi",
+      "platformFeeAmount": "Jumlah yuran perkhidmatan platform",
+      "estimatedEarnings": "Anggaran pendapatan rakan kongsi",
+      "currency": "USD"
+    },
+    "statsTitle": "Rakan kongsi yang sudah dalam program",
+    "stats": [
+      {
+        "label": "Rakan kongsi aktif"
+      },
+      {
+        "label": "Jumlah komisen dibayar"
+      },
+      {
+        "label": "Pelanggan yang dirujuk"
+      },
+      {
+        "label": "Kepuasan rakan kongsi"
+      }
+    ],
+    "faqTitle": "Soalan Lazim",
+    "faq": [
+      {
+        "question": "Adakah terdapat yuran untuk menyertai?",
+        "answer": "Menyertai adalah percuma. Selepas pelanggan yang dirujuk membayar, anda memperoleh 40% daripada yuran perkhidmatan platform."
+      },
+      {
+        "question": "Seberapa kerap komisen diselesaikan?",
+        "answer": "Komisen dikreditkan secara masa nyata selepas pembayaran pelanggan. Pengeluaran biasanya tiba dalam 1–3 hari bekerja."
+      },
+      {
+        "question": "Bagaimana rujukan dijejaki?",
+        "answer": "Setiap rakan kongsi mendapat pautan rujukan unik dan papan pemuka untuk klik, pendaftaran, pembayaran, dan komisen."
+      },
+      {
+        "question": "Apa yang boleh saya promosikan?",
+        "answer": "Perkhidmatan platform VINCIS, alat pencipta, perkhidmatan pengeluaran jenama, dan kursus Akademi."
+      }
+    ]
+  },
+  "km": {
+    "nav": {
+      "home": "ទំព័រដើម",
+      "process": "វិធីធ្វើការ",
+      "pricing": "តម្លៃ",
+      "partners": "ដៃគូ",
+      "resources": "ធនធាន",
+      "login": "ចូល",
+      "register": "ក្លាយជាដៃគូ"
+    },
+    "hero": {
+      "titleLead": "ក្លាយជាដៃគូ VINCIS",
+      "titleAccent": "និងបើកចំហការប្រាក់ចំណូលដែលមានស្ថិរភាព",
+      "body": "យោងទៅកាន់ម៉ាកឬអ្នកបង្កើតទៅកាន់ VINCIS ហើយទទួលបាន 40% នៃកម្រៃសេវាផ្លាតហ្វូម - មិនចាំបាច់គ្រប់គ្រងគម្រោងទេ។",
+      "links": [
+        {
+          "label": "ចូលរួមកម្មវិធីដៃគូ",
+          "href": "/login"
+        },
+        {
+          "label": "កម្រៃសេវាផ្លាតហ្វូម",
+          "href": "/pricing"
+        },
+        {
+          "label": "គំរូចែកចាយប្រាក់ចំណូល",
+          "href": "#commission"
+        },
+        {
+          "label": "សំណួរញឹកញាប់",
+          "href": "/faq"
+        }
+      ]
+    },
+    "benefitsTitle": "អត្ថប្រយោជន៍សម្រាប់ដៃគូ",
+    "benefits": [
+      {
+        "title": "ការចែកចាយប្រាក់ចំណូលដែលមានភាពច្បាស់លាស់",
+        "body": "ទទួលបាន 40% នៃកម្រៃសេវាផ្លាតហ្វូម - មិនមែនជាការទទួលយកតាមបែបផ្ទាល់នៃការបញ្ជាទិញទេ"
+      },
+      {
+        "title": "ប្រាក់ចំណូលជាប្រចាំ",
+        "body": "បន្តទទួលប្រាក់ចំណូលនៅពេលដែលអតិថិជនដែលបានយោងបន្តចំណាយ"
+      },
+      {
+        "title": "ការតាមដានពេលវេលាពិត",
+        "body": "តាមដានការចុច ការចុះឈ្មោះ ការទូទាត់ និងកម្រៃជូនពេលវេលាពិត"
+      },
+      {
+        "title": "ការទាញយកប្រាក់យ៉ាងរហ័ស",
+        "body": "មានកម្រិតទាប វិធីសាស្ត្រទូទាត់ច្រើន ជម្រើសនៅថ្ងៃដូចគ្នា"
+      }
+    ],
+    "stepsTitle": "វិធីចាប់ផ្តើមទទួលប្រាក់ចំណូល",
+    "steps": [
+      {
+        "title": "ចុះឈ្មោះជាដៃគូ",
+        "body": "ដាក់សំណុំបែបបទព័ត៌មានមូលដ្ឋាន ហើយទទួលបានតំណភ្ជាប់យោងដ៏អស្ចារ្យរបស់អ្នក"
+      },
+      {
+        "title": "ចែករំលែកតំណភ្ជាប់របស់អ្នក",
+        "body": "ផ្ញើវាទៅកាន់អតិថិជនម៉ាកឬអ្នកបង្កើតដែលអាចក្លាយជាអតិថិជន"
+      },
+      {
+        "title": "អតិថិជនចុះឈ្មោះ និងទូទាត់",
+        "body": "ពួកគេចុះឈ្មោះតាមតំណភ្ជាប់របស់អ្នក ហើយបញ្ចប់ការទូទាត់ដំបូង"
+      },
+      {
+        "title": "ទទួលបានកម្រៃ",
+        "body": "បន្ទាប់ពីការទូទាត់របស់អតិថិជន ការចែកចាយរបស់អ្នកត្រូវបានគណនាពីកម្រៃសេវាផ្លាតហ្វូម"
+      },
+      {
+        "title": "ទាញយកប្រាក់ចំណូល",
+        "body": "កម្រៃនឹងប្រមូលផ្តុំដោយស្វ័យប្រវត្តិ ហើយអាចទាញយកបាននៅកម្រិត"
+      }
+    ],
+    "commissionTitle": "ការចែកចាយប្រាក់ចំណូលរបស់ដៃគូ",
+    "commissionColumns": [
+      "ប្រភេទអតិថិជន",
+      "កម្រៃសេវាផ្លាតហ្វូម",
+      "ការចែកចាយរបស់ដៃគូ"
+    ],
+    "calculatorTitle": "ម៉ាស៊ីនគណនាប្រាក់ចំណូល",
+    "calculatorLabels": {
+      "customerType": "ប្រភេទអតិថិជន",
+      "orderAmount": "ចំនួនបញ្ជាទិញដែលបានគណនាដោយប្រហែល (USD)",
+      "platformServiceFee": "អត្រាកម្រៃសេវាផ្លាតហ្វូម",
+      "partnerShare": "ការចែកចាយរបស់ដៃគូ",
+      "platformFeeAmount": "ចំនួនកម្រៃសេវាផ្លាតហ្វូម",
+      "estimatedEarnings": "ប្រាក់ចំណូលដែលបានគណនាដោយប្រហែលរបស់ដៃគូ",
+      "currency": "USD"
+    },
+    "statsTitle": "ដៃគូដែលមាននៅក្នុងកម្មវិធី",
+    "stats": [
+      {
+        "label": "ដៃគូសកម្ម"
+      },
+      {
+        "label": "កម្រៃសរុបដែលបានបង់"
+      },
+      {
+        "label": "អតិថិជនដែលបានយោង"
+      },
+      {
+        "label": "ការពេញចិត្តរបស់ដៃគូ"
+      }
+    ],
+    "faqTitle": "សំណួរញឹកញាប់",
+    "faq": [
+      {
+        "question": "តើមានកម្រៃសម្រាប់ការចូលរួមទេ?",
+        "answer": "ការចូលរួមគឺឥតគិតថ្លៃ។ បន្ទាប់ពីអតិថិជនដែលបានយោងទូទាត់ អ្នកនឹងទទួលបាន 40% នៃកម្រៃសេវាផ្លាតហ្វូម។"
+      },
+      {
+        "question": "តើកម្រៃត្រូវបានដោះស្រាយប៉ុន្មានដង?",
+        "answer": "កម្រៃត្រូវបានបញ្ចូលក្នុងពេលវេលាពិតបន្ទាប់ពីការទូទាត់របស់អតិថិជន។ ការទាញយកប្រាក់ធម្មតានឹងមកដល់ក្នុងរយៈពេល 1–3 ថ្ងៃធ្វើការ។"
+      },
+      {
+        "question": "តើការយោងត្រូវបានតាមដានយ៉ាងដូចម្តេច?",
+        "answer": "ដៃគូរៀងរាល់គ្នានឹងទទួលបានតំណភ្ជាប់យោងដ៏អស្ចារ្យ និងផ្ទាំងគ្រប់គ្រងសម្រាប់ការចុច ការចុះឈ្មោះ ការទូទាត់ និងកម្រៃ។"
+      },
+      {
+        "question": "តើខ្ញុំអាចផ្សព្វផ្សាយអ្វីខ្លះ?",
+        "answer": "សេវាកម្មផ្លាតហ្វូម VINCIS ឧបករណ៍បង្កើត សេវាកម្មផលិតម៉ាក និងវគ្គសិក្សាអាកាឌេមី។"
+      }
+    ]
+  },
+  "th": {
+    "nav": {
+      "home": "หน้าแรก",
+      "process": "วิธีการทำงาน",
+      "pricing": "ราคา",
+      "partners": "พันธมิตร",
+      "resources": "ทรัพยากร",
+      "login": "เข้าสู่ระบบ",
+      "register": "เข้าร่วมเป็นพันธมิตร"
+    },
+    "hero": {
+      "titleLead": "เข้าร่วมเป็นพันธมิตรกับ VINCIS",
+      "titleAccent": "และปลดล็อกรายได้ที่ยั่งยืน",
+      "body": "แนะนำแบรนด์หรือผู้สร้างให้กับ VINCIS และรับ 40% ของค่าบริการแพลตฟอร์ม — ไม่ต้องจัดการโครงการ.",
+      "links": [
+        {
+          "label": "เข้าร่วมโปรแกรมพันธมิตร",
+          "href": "/login"
+        },
+        {
+          "label": "ค่าบริการแพลตฟอร์ม",
+          "href": "/pricing"
+        },
+        {
+          "label": "โมเดลการแบ่งรายได้",
+          "href": "#commission"
+        },
+        {
+          "label": "คำถามที่พบบ่อย",
+          "href": "/faq"
+        }
+      ]
+    },
+    "benefitsTitle": "ประโยชน์ของพันธมิตร",
+    "benefits": [
+      {
+        "title": "การแบ่งรายได้ที่โปร่งใส",
+        "body": "รับ 40% ของค่าบริการแพลตฟอร์ม — ไม่ใช่การหักแบบคงที่จากคำสั่ง"
+      },
+      {
+        "title": "รายได้ที่เกิดขึ้นซ้ำ",
+        "body": "รับรายได้ต่อเนื่องเมื่อมีลูกค้าที่แนะนำใช้จ่ายต่อ"
+      },
+      {
+        "title": "การติดตามแบบเรียลไทม์",
+        "body": "ติดตามการคลิก, การลงทะเบียน, การชำระเงิน, และค่าคอมมิชชั่นแบบสด"
+      },
+      {
+        "title": "การถอนเงินที่รวดเร็ว",
+        "body": "เกณฑ์ต่ำ, วิธีการจ่ายหลายแบบ, ตัวเลือกในวันเดียวกัน"
+      }
+    ],
+    "stepsTitle": "วิธีเริ่มต้นรับรายได้",
+    "steps": [
+      {
+        "title": "ลงทะเบียนเป็นพันธมิตร",
+        "body": "ส่งรายละเอียดพื้นฐานและรับลิงก์การแนะนำเฉพาะของคุณ"
+      },
+      {
+        "title": "แชร์ลิงก์ของคุณ",
+        "body": "ส่งให้กับลูกค้าแบรนด์หรือผู้สร้างที่มีศักยภาพ"
+      },
+      {
+        "title": "ลูกค้าลงทะเบียนและชำระเงิน",
+        "body": "พวกเขาลงทะเบียนผ่านลิงก์ของคุณและทำการชำระเงินครั้งแรก"
+      },
+      {
+        "title": "รับค่าคอมมิชชั่น",
+        "body": "หลังจากการชำระเงินของลูกค้า, ส่วนแบ่งของคุณจะถูกคำนวณจากค่าบริการแพลตฟอร์ม"
+      },
+      {
+        "title": "ถอนรายได้",
+        "body": "ค่าคอมมิชชั่นจะสะสมโดยอัตโนมัติและสามารถถอนเมื่อถึงเกณฑ์"
+      }
+    ],
+    "commissionTitle": "การแบ่งรายได้ของพันธมิตร",
+    "commissionColumns": [
+      "ประเภทลูกค้า",
+      "ค่าบริการแพลตฟอร์ม",
+      "ส่วนแบ่งพันธมิตร"
+    ],
+    "calculatorTitle": "เครื่องคิดเลขรายได้",
+    "calculatorLabels": {
+      "customerType": "ประเภทลูกค้า",
+      "orderAmount": "จำนวนเงินคำสั่งซื้อโดยประมาณ (USD)",
+      "platformServiceFee": "อัตราค่าบริการแพลตฟอร์ม",
+      "partnerShare": "ส่วนแบ่งพันธมิตร",
+      "platformFeeAmount": "จำนวนค่าบริการแพลตฟอร์ม",
+      "estimatedEarnings": "รายได้ที่คาดการณ์ของพันธมิตร",
+      "currency": "USD"
+    },
+    "statsTitle": "พันธมิตรที่เข้าร่วมในโปรแกรมแล้ว",
+    "stats": [
+      {
+        "label": "พันธมิตรที่ใช้งานอยู่"
+      },
+      {
+        "label": "ค่าคอมมิชชั่นรวมที่จ่าย"
+      },
+      {
+        "label": "ลูกค้าที่แนะนำ"
+      },
+      {
+        "label": "ความพึงพอใจของพันธมิตร"
+      }
+    ],
+    "faqTitle": "คำถามที่พบบ่อย",
+    "faq": [
+      {
+        "question": "มีค่าธรรมเนียมในการเข้าร่วมไหม?",
+        "answer": "การเข้าร่วมฟรี หลังจากลูกค้าที่แนะนำชำระเงิน, คุณจะได้รับ 40% ของค่าบริการแพลตฟอร์ม."
+      },
+      {
+        "question": "ค่าคอมมิชชั่นจะถูกชำระบ่อยแค่ไหน?",
+        "answer": "ค่าคอมมิชชั่นจะถูกเครดิตแบบเรียลไทม์หลังจากการชำระเงินของลูกค้า การถอนเงินมักจะใช้เวลา 1–3 วันทำการ."
+      },
+      {
+        "question": "การแนะนำถูกติดตามอย่างไร?",
+        "answer": "พันธมิตรแต่ละคนจะได้รับลิงก์การแนะนำเฉพาะและแดชบอร์ดสำหรับการคลิก, การลงทะเบียน, การชำระเงิน, และค่าคอมมิชชั่น."
+      },
+      {
+        "question": "ฉันสามารถโปรโมทอะไรได้บ้าง?",
+        "answer": "บริการแพลตฟอร์ม VINCIS, เครื่องมือสำหรับผู้สร้าง, บริการผลิตแบรนด์, และหลักสูตรใน Academy."
+      }
+    ]
+  },
+  "vi": {
+    "nav": {
+      "home": "Trang chủ",
+      "process": "Cách hoạt động",
+      "pricing": "Giá cả",
+      "partners": "Đối tác",
+      "resources": "Tài nguyên",
+      "login": "Đăng nhập",
+      "register": "Trở thành đối tác"
+    },
+    "hero": {
+      "titleLead": "Trở thành đối tác của VINCIS",
+      "titleAccent": "và mở khóa thu nhập bền vững",
+      "body": "Giới thiệu các thương hiệu hoặc nhà sáng tạo đến VINCIS và kiếm 40% phí dịch vụ của nền tảng — không cần quản lý dự án.",
+      "links": [
+        {
+          "label": "Tham gia chương trình đối tác",
+          "href": "/login"
+        },
+        {
+          "label": "Phí dịch vụ nền tảng",
+          "href": "/pricing"
+        },
+        {
+          "label": "Mô hình chia sẻ doanh thu",
+          "href": "#commission"
+        },
+        {
+          "label": "Câu hỏi thường gặp",
+          "href": "/faq"
+        }
+      ]
+    },
+    "benefitsTitle": "Lợi ích của đối tác",
+    "benefits": [
+      {
+        "title": "Chia sẻ doanh thu minh bạch",
+        "body": "Kiếm 40% phí dịch vụ của nền tảng — không phải là một khoản cố định từ đơn hàng"
+      },
+      {
+        "title": "Thu nhập định kỳ",
+        "body": "Tiếp tục kiếm tiền khi khách hàng được giới thiệu tiếp tục chi tiêu"
+      },
+      {
+        "title": "Theo dõi thời gian thực",
+        "body": "Giám sát số lần nhấp chuột, đăng ký, thanh toán và hoa hồng trực tiếp"
+      },
+      {
+        "title": "Rút tiền nhanh chóng",
+        "body": "Ngưỡng thấp, nhiều phương thức thanh toán, tùy chọn trong ngày"
+      }
+    ],
+    "stepsTitle": "Cách bắt đầu kiếm tiền",
+    "steps": [
+      {
+        "title": "Đăng ký làm đối tác",
+        "body": "Gửi thông tin cơ bản và nhận liên kết giới thiệu độc đáo của bạn"
+      },
+      {
+        "title": "Chia sẻ liên kết của bạn",
+        "body": "Gửi nó đến các khách hàng thương hiệu tiềm năng hoặc nhà sáng tạo"
+      },
+      {
+        "title": "Khách hàng đăng ký & thanh toán",
+        "body": "Họ đăng ký qua liên kết của bạn và hoàn tất thanh toán đầu tiên"
+      },
+      {
+        "title": "Kiếm hoa hồng",
+        "body": "Sau khi khách hàng thanh toán, phần của bạn được tính từ phí dịch vụ của nền tảng"
+      },
+      {
+        "title": "Rút thu nhập",
+        "body": "Hoa hồng tự động tích lũy và có thể được rút khi đạt ngưỡng"
+      }
+    ],
+    "commissionTitle": "Chia sẻ doanh thu đối tác",
+    "commissionColumns": [
+      "Loại khách hàng",
+      "Phí dịch vụ nền tảng",
+      "Phần của đối tác"
+    ],
+    "calculatorTitle": "Máy tính thu nhập",
+    "calculatorLabels": {
+      "customerType": "Loại khách hàng",
+      "orderAmount": "Số tiền đơn hàng ước tính (USD)",
+      "platformServiceFee": "Tỷ lệ phí dịch vụ nền tảng",
+      "partnerShare": "Phần của đối tác",
+      "platformFeeAmount": "Số tiền phí dịch vụ nền tảng",
+      "estimatedEarnings": "Thu nhập ước tính của đối tác",
+      "currency": "USD"
+    },
+    "statsTitle": "Đối tác đã tham gia chương trình",
+    "stats": [
+      {
+        "label": "Đối tác hoạt động"
+      },
+      {
+        "label": "Tổng hoa hồng đã thanh toán"
+      },
+      {
+        "label": "Khách hàng được giới thiệu"
+      },
+      {
+        "label": "Sự hài lòng của đối tác"
+      }
+    ],
+    "faqTitle": "Câu hỏi thường gặp",
+    "faq": [
+      {
+        "question": "Có phí để tham gia không?",
+        "answer": "Tham gia là miễn phí. Sau khi khách hàng được giới thiệu thanh toán, bạn kiếm 40% phí dịch vụ của nền tảng."
+      },
+      {
+        "question": "Hoa hồng được thanh toán bao lâu một lần?",
+        "answer": "Hoa hồng được ghi có ngay lập tức sau khi khách hàng thanh toán. Việc rút tiền thường mất từ 1–3 ngày làm việc."
+      },
+      {
+        "question": "Cách theo dõi các giới thiệu?",
+        "answer": "Mỗi đối tác nhận được một liên kết giới thiệu độc đáo và bảng điều khiển để theo dõi số lần nhấp chuột, đăng ký, thanh toán và hoa hồng."
+      },
+      {
+        "question": "Tôi có thể quảng bá gì?",
+        "answer": "Dịch vụ nền tảng VINCIS, công cụ cho nhà sáng tạo, dịch vụ sản xuất thương hiệu và các khóa học của Học viện."
+      }
+    ]
+  },
+  "fr": {
+    "nav": {
+      "home": "Accueil",
+      "process": "Comment ça fonctionne",
+      "pricing": "Tarification",
+      "partners": "Partenaires",
+      "resources": "Ressources",
+      "login": "Se connecter",
+      "register": "Devenir partenaire"
+    },
+    "hero": {
+      "titleLead": "Devenez partenaire de VINCIS",
+      "titleAccent": "et débloquez des revenus durables",
+      "body": "Référez des marques ou des créateurs à VINCIS et gagnez 40 % des frais de service de la plateforme — aucune gestion de projet requise.",
+      "links": [
+        {
+          "label": "Rejoindre le programme de partenariat",
+          "href": "/login"
+        },
+        {
+          "label": "Frais de service de la plateforme",
+          "href": "/pricing"
+        },
+        {
+          "label": "Modèle de partage des revenus",
+          "href": "#commission"
+        },
+        {
+          "label": "FAQ",
+          "href": "/faq"
+        }
+      ]
+    },
+    "benefitsTitle": "Avantages pour les partenaires",
+    "benefits": [
+      {
+        "title": "Partage des revenus transparent",
+        "body": "Gagnez 40 % des frais de service de la plateforme — pas un montant fixe sur la commande"
+      },
+      {
+        "title": "Revenu récurrent",
+        "body": "Continuez à gagner tant que les clients référés continuent de dépenser"
+      },
+      {
+        "title": "Suivi en temps réel",
+        "body": "Surveillez les clics, les inscriptions, les paiements et les commissions en direct"
+      },
+      {
+        "title": "Retrait rapide",
+        "body": "Seuils bas, plusieurs méthodes de paiement, options le jour même"
+      }
+    ],
+    "stepsTitle": "Comment commencer à gagner",
+    "steps": [
+      {
+        "title": "Inscrivez-vous en tant que partenaire",
+        "body": "Soumettez des informations de base et recevez votre lien de parrainage unique"
+      },
+      {
+        "title": "Partagez votre lien",
+        "body": "Envoyez-le à des clients de marque potentiels ou à des créateurs"
+      },
+      {
+        "title": "Le client s'inscrit et paie",
+        "body": "Il s'inscrit via votre lien et effectue le premier paiement"
+      },
+      {
+        "title": "Gagnez une commission",
+        "body": "Après le paiement du client, votre part est calculée à partir des frais de service de la plateforme"
+      },
+      {
+        "title": "Retirez vos gains",
+        "body": "Les commissions s'accumulent automatiquement et peuvent être retirées au seuil"
+      }
+    ],
+    "commissionTitle": "Partage des revenus des partenaires",
+    "commissionColumns": [
+      "Type de client",
+      "Frais de service de la plateforme",
+      "Part des partenaires"
+    ],
+    "calculatorTitle": "Calculateur de gains",
+    "calculatorLabels": {
+      "customerType": "Type de client",
+      "orderAmount": "Montant estimé de la commande (USD)",
+      "platformServiceFee": "Taux de frais de service de la plateforme",
+      "partnerShare": "Part des partenaires",
+      "platformFeeAmount": "Montant des frais de service de la plateforme",
+      "estimatedEarnings": "Gains estimés du partenaire",
+      "currency": "USD"
+    },
+    "statsTitle": "Partenaires déjà dans le programme",
+    "stats": [
+      {
+        "label": "Partenaires actifs"
+      },
+      {
+        "label": "Total des commissions versées"
+      },
+      {
+        "label": "Clients référés"
+      },
+      {
+        "label": "Satisfaction des partenaires"
+      }
+    ],
+    "faqTitle": "FAQ",
+    "faq": [
+      {
+        "question": "Y a-t-il des frais pour rejoindre ?",
+        "answer": "L'adhésion est gratuite. Après qu'un client référé ait payé, vous gagnez 40 % des frais de service de la plateforme."
+      },
+      {
+        "question": "À quelle fréquence les commissions sont-elles réglées ?",
+        "answer": "Les commissions sont créditées en temps réel après le paiement du client. Les retraits arrivent généralement dans un délai de 1 à 3 jours ouvrables."
+      },
+      {
+        "question": "Comment les références sont-elles suivies ?",
+        "answer": "Chaque partenaire reçoit un lien de parrainage unique et un tableau de bord pour les clics, les inscriptions, les paiements et les commissions."
+      },
+      {
+        "question": "Que puis-je promouvoir ?",
+        "answer": "Les services de la plateforme VINCIS, les outils pour créateurs, les services de production de marque et les cours de l'Académie."
+      }
+    ]
+  },
+  "es": {
+    "nav": {
+      "home": "Inicio",
+      "process": "Cómo funciona",
+      "pricing": "Precios",
+      "partners": "Socios",
+      "resources": "Recursos",
+      "login": "Iniciar sesión",
+      "register": "Conviértete en socio"
+    },
+    "hero": {
+      "titleLead": "Conviértete en socio de VINCIS",
+      "titleAccent": "y desbloquea ingresos sostenibles",
+      "body": "Refiere marcas o creadores a VINCIS y gana el 40% de la tarifa de servicio de la plataforma — no se requiere gestión de proyectos.",
+      "links": [
+        {
+          "label": "Únete al programa de socios",
+          "href": "/login"
+        },
+        {
+          "label": "Tarifa de servicio de la plataforma",
+          "href": "/pricing"
+        },
+        {
+          "label": "Modelo de reparto de ingresos",
+          "href": "#commission"
+        },
+        {
+          "label": "FAQ",
+          "href": "/faq"
+        }
+      ]
+    },
+    "benefitsTitle": "Beneficios para socios",
+    "benefits": [
+      {
+        "title": "Reparto de ingresos transparente",
+        "body": "Gana el 40% de la tarifa de servicio de la plataforma — no un porcentaje fijo del pedido"
+      },
+      {
+        "title": "Ingresos recurrentes",
+        "body": "Sigue ganando a medida que los clientes referidos continúan gastando"
+      },
+      {
+        "title": "Seguimiento en tiempo real",
+        "body": "Monitorea clics, registros, pagos y comisiones en vivo"
+      },
+      {
+        "title": "Retiro rápido",
+        "body": "Bajos umbrales, múltiples métodos de pago, opciones el mismo día"
+      }
+    ],
+    "stepsTitle": "Cómo empezar a ganar",
+    "steps": [
+      {
+        "title": "Regístrate como socio",
+        "body": "Envía tus datos básicos y recibe tu enlace de referencia único"
+      },
+      {
+        "title": "Comparte tu enlace",
+        "body": "Envíalo a posibles clientes de marcas o creadores"
+      },
+      {
+        "title": "El cliente se registra y paga",
+        "body": "Se registra a través de tu enlace y completa el primer pago"
+      },
+      {
+        "title": "Gana comisiones",
+        "body": "Después del pago del cliente, tu parte se calcula a partir de la tarifa de servicio de la plataforma"
+      },
+      {
+        "title": "Retira tus ganancias",
+        "body": "Las comisiones se acumulan automáticamente y se pueden retirar al alcanzar el umbral"
+      }
+    ],
+    "commissionTitle": "Reparto de ingresos para socios",
+    "commissionColumns": [
+      "Tipo de cliente",
+      "Tarifa de servicio de la plataforma",
+      "Parte del socio"
+    ],
+    "calculatorTitle": "Calculadora de ganancias",
+    "calculatorLabels": {
+      "customerType": "Tipo de cliente",
+      "orderAmount": "Monto estimado del pedido (USD)",
+      "platformServiceFee": "Tasa de tarifa de servicio de la plataforma",
+      "partnerShare": "Parte del socio",
+      "platformFeeAmount": "Monto de la tarifa de servicio de la plataforma",
+      "estimatedEarnings": "Ganancias estimadas del socio",
+      "currency": "USD"
+    },
+    "statsTitle": "Socios ya en el programa",
+    "stats": [
+      {
+        "label": "Socios activos"
+      },
+      {
+        "label": "Comisiones totales pagadas"
+      },
+      {
+        "label": "Clientes referidos"
+      },
+      {
+        "label": "Satisfacción del socio"
+      }
+    ],
+    "faqTitle": "FAQ",
+    "faq": [
+      {
+        "question": "¿Hay una tarifa para unirse?",
+        "answer": "Unirse es gratis. Después de que un cliente referido paga, ganas el 40% de la tarifa de servicio de la plataforma."
+      },
+      {
+        "question": "¿Con qué frecuencia se liquidan las comisiones?",
+        "answer": "Las comisiones se acreditan en tiempo real después del pago del cliente. Los retiros suelen llegar en 1–3 días hábiles."
+      },
+      {
+        "question": "¿Cómo se rastrean las referencias?",
+        "answer": "Cada socio recibe un enlace de referencia único y un panel para clics, registros, pagos y comisiones."
+      },
+      {
+        "question": "¿Qué puedo promocionar?",
+        "answer": "Servicios de la plataforma VINCIS, herramientas para creadores, servicios de producción de marcas y cursos de la Academia."
+      }
+    ]
+  }
+}

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import type { MarketingDocsNavKey } from "@/lib/marketing/marketing-docs-nav";
-import type { Locale } from "@/lib/i18n";
+import type { MarketingLocale } from "@/lib/i18n";
 
 /**
  * @deprecated Layout provides docs chrome via MarketingDocsLayoutShell.
@@ -12,7 +12,7 @@ export function MarketingDocsShell({
   active: _active
 }: {
   children: ReactNode;
-  locale?: Locale;
+  locale?: MarketingLocale;
   active?: MarketingDocsNavKey;
 }) {
   return <>{children}</>;

@@ -5,13 +5,14 @@ import { useMarketingDocsLucien } from "@/components/marketing/docs/marketing-do
 import { useFloatingLauncherDrag } from "@/hooks/use-floating-launcher-drag";
 import { publicLucienCopy } from "@/lib/marketing/faq-copy";
 import { cn } from "@/lib/utils";
-import type { Locale } from "@/lib/i18n";
+import type { MarketingLocale } from "@/lib/i18n";
+import { isChineseMarketingLocale } from "@/lib/marketing/i18n/resolve-marketing-copy";
 
 export function PublicLucienFloatingLauncher({
   locale,
   hidden = false
 }: {
-  locale: Locale;
+  locale: MarketingLocale;
   hidden?: boolean;
 }) {
   const { openLucien } = useMarketingDocsLucien();
@@ -30,7 +31,7 @@ export function PublicLucienFloatingLauncher({
       onDragStart={(event) => event.preventDefault()}
       style={launcherStyle}
       aria-label={t.inputPlaceholder}
-      title={locale === "zh" ? "问问卢西恩" : "Ask Lucien"}
+      title={isChineseMarketingLocale(locale) ? "问问卢西恩" : "Ask Lucien"}
       className={cn(
         "fixed z-[200] flex h-12 w-12 touch-none select-none items-center justify-center rounded-full",
         "bg-white shadow-[0_12px_28px_rgba(15,23,42,0.18)] ring-1 ring-violet-100/90",
@@ -41,7 +42,7 @@ export function PublicLucienFloatingLauncher({
     >
       <LucienAvatar
         size="md"
-        alt={locale === "zh" ? "卢西恩" : "Lucien"}
+        alt={isChineseMarketingLocale(locale) ? "卢西恩" : "Lucien"}
         className="pointer-events-none shadow-none ring-0"
       />
     </button>

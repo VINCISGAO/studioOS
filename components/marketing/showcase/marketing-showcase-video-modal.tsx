@@ -5,6 +5,8 @@ import { Maximize2, Pause, Play, X } from "lucide-react";
 import { resolveVideoEmbed } from "@/lib/media-url";
 import { showcaseVideoSrc } from "@/lib/marketing/showcase-official";
 import type { MarketingShowcaseWorkDto } from "@/features/marketing-showcase/marketing-showcase.types";
+import type { MarketingLocale } from "@/lib/i18n";
+import { isChineseMarketingLocale } from "@/lib/marketing/i18n/resolve-marketing-copy";
 import { cn } from "@/lib/utils";
 
 export function MarketingShowcaseVideoModal({
@@ -13,7 +15,7 @@ export function MarketingShowcaseVideoModal({
   onClose
 }: {
   work: MarketingShowcaseWorkDto;
-  locale: "zh" | "en";
+  locale: MarketingLocale;
   onClose: () => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -22,7 +24,7 @@ export function MarketingShowcaseVideoModal({
   const [videoFailed, setVideoFailed] = useState(false);
   const embed = resolveVideoEmbed(work.video_url);
   const directVideoSrc = showcaseVideoSrc(work);
-  const isZh = locale === "zh";
+  const isZh = isChineseMarketingLocale(locale);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {

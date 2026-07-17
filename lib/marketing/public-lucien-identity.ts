@@ -1,5 +1,6 @@
 import { publicLucienCopy, type PublicLucienCopy } from "@/lib/marketing/faq-copy";
-import type { Locale } from "@/lib/i18n";
+import type { MarketingLocale } from "@/lib/i18n";
+import { isChineseMarketingLocale } from "@/lib/marketing/i18n/resolve-marketing-copy";
 
 export type PublicLucienViewerIdentity = "guest" | "brand" | "creator" | "admin" | "support";
 
@@ -13,7 +14,7 @@ export function resolvePublicLucienViewerIdentity(role?: string | null): PublicL
 }
 
 export function publicLucienIdentityLabel(
-  locale: Locale,
+  locale: MarketingLocale,
   identity: PublicLucienViewerIdentity
 ): string {
   return publicLucienCopy(locale).identity[identity];
@@ -28,7 +29,7 @@ export type PublicLucienAuthUser = {
 };
 
 export function publicLucienWelcomeMessage(
-  locale: Locale,
+  locale: MarketingLocale,
   identity: PublicLucienViewerIdentity,
   user?: PublicLucienAuthUser | null
 ): string {
@@ -41,7 +42,7 @@ export function publicLucienWelcomeMessage(
     user?.fullName?.trim() ||
     null;
 
-  if (locale === "zh") {
+  if (isChineseMarketingLocale(locale)) {
     const greeting = name ? `${name}，` : "";
     if (identity === "brand") {
       return `${greeting}你好，我是卢西恩。我可以解答平台常见问题，也可以在你登录后协助项目与付款相关事项。`;

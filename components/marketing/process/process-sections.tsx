@@ -1,13 +1,13 @@
 import { Globe2, Lock, Sparkles, Users } from "lucide-react";
 import { ProcessStepIcon } from "@/components/marketing/process/process-step-icon";
 import { processText } from "@/lib/marketing/process-copy";
-import type { Locale } from "@/lib/i18n";
+import type { MarketingLocale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 const HIGHLIGHT_ICONS = [Users, Sparkles, Lock, Globe2] as const;
 const FEATURED_STEP_COUNT = 5;
 
-export function ProcessHeroSection({ locale }: { locale: Locale }) {
+export function ProcessHeroSection({ locale }: { locale: MarketingLocale }) {
   const t = processText(locale);
 
   return (
@@ -26,7 +26,7 @@ export function ProcessHeroSection({ locale }: { locale: Locale }) {
   );
 }
 
-export function ProcessHighlightsSection({ locale }: { locale: Locale }) {
+export function ProcessHighlightsSection({ locale }: { locale: MarketingLocale }) {
   const t = processText(locale);
 
   return (
@@ -52,7 +52,7 @@ export function ProcessHighlightsSection({ locale }: { locale: Locale }) {
   );
 }
 
-export function ProcessStepsSection({ locale }: { locale: Locale }) {
+export function ProcessStepsSection({ locale }: { locale: MarketingLocale }) {
   const t = processText(locale);
   const featuredSteps = t.steps.slice(0, FEATURED_STEP_COUNT);
 

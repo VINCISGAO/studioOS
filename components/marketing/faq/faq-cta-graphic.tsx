@@ -1,12 +1,13 @@
 import { LUCIEN_BIG_SRC } from "@/components/ai-copilot/lucien-avatar";
-import type { Locale } from "@/lib/i18n";
+import type { MarketingLocale } from "@/lib/i18n";
+import { isChineseMarketingLocale } from "@/lib/marketing/i18n/resolve-marketing-copy";
 
 /** Head overflows above the CTA card; card height follows text + button only. */
-export function FaqLucienCtaGraphic({ locale }: { locale: Locale }) {
+export function FaqLucienCtaGraphic({ locale }: { locale: MarketingLocale }) {
   return (
     <img
       src={LUCIEN_BIG_SRC}
-      alt={locale === "zh" ? "卢西恩" : "Lucien"}
+      alt={isChineseMarketingLocale(locale) ? "卢西恩" : "Lucien"}
       width={918}
       height={1239}
       decoding="async"
