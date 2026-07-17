@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Search } from "lucide-react";
 import {
   buildKnowledgeArticlePath,
@@ -17,19 +18,37 @@ type KnowledgeCenterSearchTriggerProps = {
   languageCode: string;
 };
 
-export function KnowledgeCenterSearchTrigger({
+function KnowledgeCenterSearchTriggerInner({
   locale,
   languageCode
 }: KnowledgeCenterSearchTriggerProps) {
   const copy = knowledgeCenterHomeCopy(locale);
   const pathPrefix = knowledgePathPrefixForCode(languageCode);
   const inputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<KnowledgeArticleListItemDto[]>([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
 
-  const runSearch = useCallback(
+  const syncQueryParam = useCallback(
+    (value: string) => {
+      const params = new URLSearchParams(searchParams.toString());
+      const trimmed = value.trim();
+      if (trimmed) {
+        params.set("q", trimmed);
+      } else {
+        params.delete("q");
+      }
+      const qs = params.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    },
+    [pathname, router, searchParams]
+  );
+
+  const fetchResults = useCallback(
     async (value: string) => {
       const q = value.trim();
       if (!q) {
@@ -47,12 +66,29 @@ export function KnowledgeCenterSearchTrigger({
           data?: { results: KnowledgeArticleListItemDto[] };
         };
         setResults(payload.data?.results ?? []);
-        setOpen(true);
       } finally {
         setLoading(false);
       }
     },
     [languageCode]
+  );
+
+  const runSearch = useCallback(
+    async (value: string, options?: { syncUrl?: boolean; openDropdown?: boolean }) => {
+      const syncUrl = options?.syncUrl ?? true;
+      const openDropdown = options?.openDropdown ?? true;
+      const q = value.trim();
+      if (!q) {
+        setResults([]);
+        setOpen(false);
+        if (syncUrl) syncQueryParam("");
+        return;
+      }
+      if (syncUrl) syncQueryParam(q);
+      await fetchResults(q);
+      if (openDropdown) setOpen(true);
+    },
+    [fetchResults, syncQueryParam]
   );
 
   useEffect(() => {
@@ -65,6 +101,18 @@ export function KnowledgeCenterSearchTrigger({
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
+
+  useEffect(() => {
+    const q = searchParams.get("q")?.trim() ?? "";
+    setQuery(q);
+    if (q) {
+      void fetchResults(q);
+      setOpen(false);
+    } else {
+      setResults([]);
+      setOpen(false);
+    }
+  }, [searchParams, fetchResults]);
 
   return (
     <div className="relative mx-auto w-full max-w-3xl">
@@ -127,5 +175,13 @@ export function KnowledgeCenterSearchTrigger({
         ))}
       </div>
     </div>
+  );
+}
+
+export function KnowledgeCenterSearchTrigger(props: KnowledgeCenterSearchTriggerProps) {
+  return (
+    <Suspense fallback={null}>
+      <KnowledgeCenterSearchTriggerInner {...props} />
+    </Suspense>
   );
 }

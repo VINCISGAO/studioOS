@@ -14,6 +14,8 @@ import {
 } from "@/features/knowledge-center/knowledge-hreflang";
 import { knowledgeCenterHomeCopy } from "@/lib/knowledge/knowledge-center-home-copy";
 import { toUiLocale } from "@/lib/app-language.shared";
+import { buildKnowledgeCategoryJsonLdGraph } from "@/lib/marketing/structured-data/knowledge-center";
+import { JsonLdScript } from "@/lib/marketing/structured-data/json-ld-script";
 import type { Metadata } from "next";
 
 const ORIGIN = "https://vincis.app";
@@ -75,6 +77,14 @@ export default async function KnowledgeCategoryPage({ params }: Props) {
 
   return (
     <KnowledgeCenterShell locale={locale} pathPrefix={pathPrefix}>
+      <JsonLdScript
+        data={buildKnowledgeCategoryJsonLdGraph({
+          pathPrefix,
+          categorySlug,
+          categoryName: title,
+          articles: articles.map((article) => ({ slug: article.slug, title: article.title }))
+        })}
+      />
       <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
         <Link
           href={buildKnowledgeIndexPath(pathPrefix)}

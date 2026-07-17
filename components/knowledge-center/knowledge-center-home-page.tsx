@@ -1,9 +1,13 @@
 import { KnowledgeCenterFeatured } from "@/components/knowledge-center/knowledge-center-featured";
 import { KnowledgeCenterHero } from "@/components/knowledge-center/knowledge-center-hero";
+import { KnowledgeCenterSearchResults } from "@/components/knowledge-center/knowledge-center-search-results";
 import { KnowledgeCenterSidebar } from "@/components/knowledge-center/knowledge-center-sidebar";
 import { KnowledgeCenterTopics } from "@/components/knowledge-center/knowledge-center-topics";
 import type { KnowledgePathPrefix } from "@/features/knowledge-center/knowledge-center.constants";
-import type { KnowledgeHomeArticleCardDto } from "@/features/knowledge-center/knowledge-center.types";
+import type {
+  KnowledgeArticleListItemDto,
+  KnowledgeHomeArticleCardDto
+} from "@/features/knowledge-center/knowledge-center.types";
 import type { Locale } from "@/lib/i18n";
 
 export function KnowledgeCenterHomePage({
@@ -11,17 +15,31 @@ export function KnowledgeCenterHomePage({
   pathPrefix,
   languageCode,
   articles,
-  categoryCounts
+  categoryCounts,
+  searchQuery,
+  searchResults
 }: {
   locale: Locale;
   pathPrefix: KnowledgePathPrefix;
   languageCode: string;
   articles: KnowledgeHomeArticleCardDto[];
   categoryCounts: Record<string, number>;
+  searchQuery?: string;
+  searchResults?: KnowledgeArticleListItemDto[];
 }) {
+  const hasSearch = Boolean(searchQuery?.trim());
+
   return (
     <>
       <KnowledgeCenterHero locale={locale} languageCode={languageCode} />
+      {hasSearch && searchResults ? (
+        <KnowledgeCenterSearchResults
+          locale={locale}
+          pathPrefix={pathPrefix}
+          query={searchQuery ?? ""}
+          results={searchResults}
+        />
+      ) : null}
       <KnowledgeCenterTopics locale={locale} pathPrefix={pathPrefix} counts={categoryCounts} />
       <section className="border-t border-zinc-200/70 bg-[#fafafa] px-3 py-5 sm:px-5 sm:py-7 lg:px-8">
         <div className="mx-auto flex max-w-7xl flex-col gap-5 sm:gap-6 lg:flex-row lg:items-start lg:gap-8">
