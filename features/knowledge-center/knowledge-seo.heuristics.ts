@@ -187,14 +187,10 @@ function buildBreadcrumbNode(input: {
   };
 }
 
+import { buildOrganizationGraphNode } from "@/lib/marketing/organization-schema";
+
 function buildOrganizationNode(origin = "https://vincis.app") {
-  return {
-    "@type": "Organization",
-    "@id": `${origin}/#organization`,
-    name: "VINCIS",
-    url: origin,
-    logo: `${origin}/images/LOGO.png`
-  };
+  return buildOrganizationGraphNode(origin);
 }
 
 function buildWebsiteNode(origin = "https://vincis.app") {

@@ -268,6 +268,19 @@ async function main() {
   }
 
   try {
+    const homepagePage = await fs.readFile(path.join(root, "app/page.tsx"), "utf8");
+    if (!homepagePage.includes("OrganizationJsonLd")) {
+      console.error("[verify-marketing-links] FAIL homepage missing OrganizationJsonLd");
+      failures.push("homepage OrganizationJsonLd");
+    } else {
+      console.log("[verify-marketing-links] OK homepage Organization JSON-LD");
+    }
+  } catch (error) {
+    console.error(`[verify-marketing-links] FAIL could not scan homepage schema: ${error}`);
+    failures.push("homepage schema scan");
+  }
+
+  try {
     const placeholderScan = await fs.readFile(
       path.join(root, "components/marketing/marketing-footer.tsx"),
       "utf8"

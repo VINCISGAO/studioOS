@@ -204,3 +204,9 @@ copyFirstAvailable({
     path.join(root, "assets/marketing/recent-work/video-demo-2.jpg")
   ]
 });
+
+copyFirstAvailable({
+  label: "organization schema logo",
+  dest: path.join(root, "public/logo.png"),
+  sources: [path.join(root, "public/images/LOGO.png"), path.join(root, "public/logo.png")]
+});

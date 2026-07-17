@@ -1,3 +1,4 @@
+import { OrganizationJsonLd } from "@/components/marketing/organization-json-ld";
 import { HomeLandingPage } from "@/components/marketing/landing/home-landing-page";
 import { getAppLanguage } from "@/lib/app-language";
 import { toUiLocale } from "@/lib/app-language.shared";
@@ -24,12 +25,15 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const heroVideoSrc = resolveHomeHeroVideoPlaybackSrc(copyLocale);
 
   return (
-    <HomeLandingPage
-      locale={locale}
-      copyLocale={copyLocale}
-      heroVideoSrc={heroVideoSrc}
-      featuredWorks={featuredWorks}
-      hydratePortalSession
-    />
+    <>
+      <OrganizationJsonLd />
+      <HomeLandingPage
+        locale={locale}
+        copyLocale={copyLocale}
+        heroVideoSrc={heroVideoSrc}
+        featuredWorks={featuredWorks}
+        hydratePortalSession
+      />
+    </>
   );
 }
