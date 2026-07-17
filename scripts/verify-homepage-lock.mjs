@@ -20,7 +20,16 @@ const checks = [
   },
   {
     file: "components/marketing/cinematic/cinematic-hero.tsx",
-    includes: ["text-[2.65rem]", "text-[18.2px]", "LATIN_HERO_LOCALES", "REDUCED_HERO_TITLE_LOCALES", "text-[2.385rem]"]
+    includes: [
+      "text-[2.65rem]",
+      "text-[18.2px]",
+      "LATIN_HERO_LOCALES",
+      "REDUCED_HERO_TITLE_LOCALES",
+      "MOBILE_COMPACT_HERO_TITLE_LOCALES",
+      "MOBILE_EXTRA_COMPACT_HERO_TITLE_LOCALES",
+      "MOBILE_COMPACT_HERO_TITLE_REM",
+      "text-[1.908rem]"
+    ]
   },
   {
     file: "components/marketing/home-hero-video.tsx",

@@ -67,14 +67,12 @@ Breakpoints follow Tailwind defaults: **mobile** `< sm`, **iPad** `md`–`lg` (b
 | iPad (`md`, below `lg`) | `auto 118%` (synced with desktop) | `77% 48%` |
 | Desktop (`lg`) | `auto 118%` | `77% 48%` |
 
-### Hero typography — mobile (all 11 locales unified, frozen 2026-07-15)
-
-**No per-locale compact scale on mobile.** All marketing locales share zh-CN mobile sizing:
+### Hero typography — mobile (frozen 2026-07-15, compact title 2026-07-17)
 
 | Element | Mobile (`< md`) |
 |---------|-----------------|
 | Eyebrow | `text-sm` |
-| Title | `text-[2.65rem]` (default) · **`ms` / `es` only:** `text-[2.385rem]` (×0.9) |
+| Title | `text-[2.65rem]` (default) · **`en`, `ja`, `es`:** `text-[2.12rem]` (×0.8) · **`fr`, `ms`, `vi`:** `text-[1.908rem]` (×0.72) |
 | Subtitle | `text-[18.2px]` · `leading-[2.275rem]` (14px × 1.3) |
 | CTA title / desc | `14px` / `11px` |
 
@@ -89,9 +87,9 @@ Breakpoints follow Tailwind defaults: **mobile** `< sm`, **iPad** `md`–`lg` (b
 - Brand panel flush bottom (`max-lg:rounded-b-none`) into video
 - Video section shell `bg-zinc-950` below `lg` (no white load strip)
 
-### Hero typography compact locales (removed 2026-07-15)
+### Hero typography compact locales (owner 2026-07-17)
 
-~~Locales with ×0.8 mobile headline scale~~ — **removed.** Do not reintroduce `COMPACT_HERO_LOCALES` or per-locale mobile hero sizing without owner command.
+Mobile title ×0.8 (`text-[2.12rem]`) for **`en`, `ja`, `es`**; **`fr`, `ms`, `vi`** use ×0.72 (`text-[1.908rem]`) on top — see `MOBILE_COMPACT_HERO_TITLE_LOCALES` / `MOBILE_EXTRA_COMPACT_HERO_TITLE_LOCALES` in `cinematic-hero.tsx`. Other locales stay `text-[2.65rem]`. iPad/desktop unchanged.
 
 ### Hero CTA buttons (`HeroCtaButton`)
 

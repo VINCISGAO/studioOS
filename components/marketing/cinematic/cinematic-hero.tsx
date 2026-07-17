@@ -13,11 +13,28 @@ import { cn } from "@/lib/utils";
 
 const HERO_BG_FALLBACK = "/images/background.png";
 
-/** Latin-script hero locales — iPad/desktop only (md+). Mobile uses one shared scale for all 11 langs. */
+/** Latin-script hero locales — iPad/desktop only (md+). */
 const LATIN_HERO_LOCALES = new Set<Locale | MarketingLocale>(["en", "es", "fr", "ms", "vi"]);
 
-/** ms / es — main title ×0.9 (long Latin lines). */
+/** ms / es — iPad/desktop title ×0.9 (long Latin lines). */
 const REDUCED_HERO_TITLE_LOCALES = new Set<Locale | MarketingLocale>(["ms", "es"]);
+
+/** Mobile-only title ×0.8 for long-line locales (owner 2026-07-17). */
+const MOBILE_COMPACT_HERO_TITLE_LOCALES = new Set<Locale | MarketingLocale>([
+  "en",
+  "ja",
+  "ms",
+  "vi",
+  "fr",
+  "es"
+]);
+
+/** Mobile title ×0.72 (×0.8 then ×0.9) for extra-long lines — fr / ms / vi (owner 2026-07-17). */
+const MOBILE_EXTRA_COMPACT_HERO_TITLE_LOCALES = new Set<Locale | MarketingLocale>(["fr", "ms", "vi"]);
+
+const MOBILE_HERO_TITLE_REM = 2.65;
+const MOBILE_COMPACT_HERO_TITLE_REM = MOBILE_HERO_TITLE_REM * 0.8; // 2.12rem — keep in sync with text-[2.12rem]
+const MOBILE_EXTRA_COMPACT_HERO_TITLE_REM = MOBILE_COMPACT_HERO_TITLE_REM * 0.9; // 1.908rem — text-[1.908rem]
 
 function isLatinHeroLocale(locale: Locale | MarketingLocale) {
   return LATIN_HERO_LOCALES.has(locale);
@@ -25,6 +42,20 @@ function isLatinHeroLocale(locale: Locale | MarketingLocale) {
 
 function usesReducedHeroTitle(locale: Locale | MarketingLocale) {
   return REDUCED_HERO_TITLE_LOCALES.has(locale);
+}
+
+function usesMobileCompactHeroTitle(locale: Locale | MarketingLocale) {
+  return MOBILE_COMPACT_HERO_TITLE_LOCALES.has(locale);
+}
+
+function usesMobileExtraCompactHeroTitle(locale: Locale | MarketingLocale) {
+  return MOBILE_EXTRA_COMPACT_HERO_TITLE_LOCALES.has(locale);
+}
+
+function mobileHeroTitleClass(locale: Locale | MarketingLocale) {
+  if (usesMobileExtraCompactHeroTitle(locale)) return "text-[1.908rem]";
+  if (usesMobileCompactHeroTitle(locale)) return "text-[2.12rem]";
+  return "text-[2.65rem]";
 }
 
 function getHeroTitleLines(titleLine1: string, titleLine2: string) {
@@ -132,7 +163,7 @@ export function CinematicHero({
             <h1
               className={cn(
                 "mt-5 font-bold leading-[1.08] tracking-[-0.03em] text-zinc-950 md:mt-6",
-                reducedHeroTitle ? "text-[2.385rem]" : "text-[2.65rem]",
+                mobileHeroTitleClass(copyLocale),
                 reducedHeroTitle
                   ? "md:text-[3.15rem]"
                   : latinHeroLocale
