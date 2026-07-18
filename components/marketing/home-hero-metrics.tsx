@@ -9,19 +9,19 @@ export function HomeHeroMetrics({
   const t = landingText("hero", copyLocale);
 
   return (
-    <section className="bg-white px-0 py-0 lg:px-8 lg:py-0" aria-label={t.statBudget}>
+    <section className="marketing-home-metrics px-0 py-0 lg:px-8 lg:py-0" aria-label={t.statBudget}>
       <div className="mx-auto w-full max-w-[1216px]">
-        <div className="grid w-full grid-cols-3 gap-2 border-y border-zinc-200/80 py-3.5 text-center sm:gap-3 sm:py-5">
+        <div className="grid w-full grid-cols-3 gap-2 py-3.5 text-center sm:gap-3 sm:py-5">
           <div className="text-center">
-            <p className="text-[1.15rem] font-semibold tracking-[-0.02em] text-zinc-950 sm:text-xl">$200+</p>
+            <p className="text-[1.15rem] font-semibold tracking-[-0.02em] text-[#e8e0d0] sm:text-xl">$200+</p>
             <p className="mt-1 text-[10px] leading-4 text-zinc-500 sm:text-xs">{t.statBudget}</p>
           </div>
           <div className="text-center">
-            <p className="text-[1.15rem] font-semibold tracking-[-0.02em] text-zinc-950 sm:text-xl">72h</p>
+            <p className="text-[1.15rem] font-semibold tracking-[-0.02em] text-[#e8e0d0] sm:text-xl">72h</p>
             <p className="mt-1 text-[10px] leading-4 text-zinc-500 sm:text-xs">{t.statWindow}</p>
           </div>
           <div className="text-center">
-            <p className="text-[1.15rem] font-semibold tracking-[-0.02em] text-zinc-950 sm:text-xl">1080P/4K</p>
+            <p className="text-[1.15rem] font-semibold tracking-[-0.02em] text-[#e8e0d0] sm:text-xl">1080P/4K</p>
             <p className="mt-1 text-[10px] leading-4 text-zinc-500 sm:text-xs">{t.statDelivery}</p>
           </div>
         </div>

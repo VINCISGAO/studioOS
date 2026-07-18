@@ -225,14 +225,31 @@ export const landingCopy = {
     en: {
       eyebrow: "RECENT WORK",
       title: "Work that speaks for itself",
+      subtitle: "Real commercial projects from global brands, curated by budget and category.",
       featured: "Featured",
       viewAll: "View all case studies"
     },
     zh: {
-      eyebrow: "精选项目",
-      title: "精选项目",
+      eyebrow: "作品自己会说话",
+      title: "作品自己会说话",
+      subtitle: "来自全球品牌的真实商业项目，按预算与品类精选展示。",
       featured: "精选案例",
       viewAll: "查看全部案例"
+    }
+  },
+  aiCompanion: {
+    en: {
+      eyebrow: "AI COMPANION",
+      title: "Dedicated AI, every step of the way",
+      subtitle:
+        "Real commercial projects from global brands, with exclusive AI guidance from brief to final delivery.",
+      videoPlaceholder: "Companion video coming soon"
+    },
+    zh: {
+      eyebrow: "全程专属AI陪伴",
+      title: "全程专属AI陪伴",
+      subtitle: "来自全球品牌的真实商业项目，搭配从简报到成片的全流程 AI 专属陪伴。",
+      videoPlaceholder: "陪伴视频即将上线"
     }
   },
   features: {
@@ -737,15 +754,127 @@ const landingCopyTranslations: Partial<{
     }
   },
   work: {
-    "zh-TW": { eyebrow: "精選作品", title: "作品自己會說話", featured: "精選案例", viewAll: "查看全部案例" },
-    ja: { eyebrow: "最近の制作実績", title: "作品がすべてを語ります", featured: "注目", viewAll: "すべての事例を見る" },
-    ko: { eyebrow: "최근 작업", title: "작품이 스스로 말합니다", featured: "추천", viewAll: "전체 사례 보기" },
-    ms: { eyebrow: "KERJA TERKINI", title: "Hasil kerja yang bercakap sendiri", featured: "Pilihan", viewAll: "Lihat semua kajian kes" },
-    km: { eyebrow: "ការងារថ្មីៗ", title: "ស្នាដៃនិយាយដោយខ្លួនវា", featured: "ពិសេស", viewAll: "មើលករណីសិក្សាទាំងអស់" },
-    th: { eyebrow: "ผลงานล่าสุด", title: "ผลงานพูดแทนตัวเอง", featured: "แนะนำ", viewAll: "ดูเคสทั้งหมด" },
-    vi: { eyebrow: "DỰ ÁN GẦN ĐÂY", title: "Tác phẩm tự nói lên chất lượng", featured: "Nổi bật", viewAll: "Xem tất cả case study" },
-    fr: { eyebrow: "RÉALISATIONS RÉCENTES", title: "Des travaux qui parlent d'eux-mêmes", featured: "À la une", viewAll: "Voir tous les cas" },
-    es: { eyebrow: "TRABAJOS RECIENTES", title: "Trabajos que hablan por sí solos", featured: "Destacado", viewAll: "Ver todos los casos" }
+    "zh-TW": {
+      eyebrow: "作品自己會說話",
+      title: "作品自己會說話",
+      subtitle: "來自全球品牌的真實商業專案，按預算與品類精選展示。",
+      featured: "精選案例",
+      viewAll: "查看全部案例"
+    },
+    ja: {
+      eyebrow: "最近の制作実績",
+      title: "作品がすべてを語ります",
+      subtitle: "グローバルブランドの実案件を、予算とカテゴリー別に厳選して紹介。",
+      featured: "注目",
+      viewAll: "すべての事例を見る"
+    },
+    ko: {
+      eyebrow: "최근 작업",
+      title: "작품이 스스로 말합니다",
+      subtitle: "글로벌 브랜드의 실제 프로젝트를 예산과 카테고리별로 엄선해 소개합니다.",
+      featured: "추천",
+      viewAll: "전체 사례 보기"
+    },
+    ms: {
+      eyebrow: "KERJA TERKINI",
+      title: "Hasil kerja yang bercakap sendiri",
+      subtitle: "Projek komersial sebenar jenama global, dipaparkan mengikut bajet dan kategori.",
+      featured: "Pilihan",
+      viewAll: "Lihat semua kajian kes"
+    },
+    km: {
+      eyebrow: "ការងារថ្មីៗ",
+      title: "ស្នាដៃនិយាយដោយខ្លួនវា",
+      subtitle: "គម្រោងពាណិជ្ជកម្មពិតពីម៉ាកពិភពលោក បង្ហាញតាមថវិកា និងប្រភេទ។",
+      featured: "ពិសេស",
+      viewAll: "មើលករណីសិក្សាទាំងអស់"
+    },
+    th: {
+      eyebrow: "ผลงานล่าสุด",
+      title: "ผลงานพูดแทนตัวเอง",
+      subtitle: "โปรเจกต์เชิงพาณิชย์จริงจากแบรนด์ทั่วโลก คัดสรรตามงบประมาณและหมวดหมู่",
+      featured: "แนะนำ",
+      viewAll: "ดูเคสทั้งหมด"
+    },
+    vi: {
+      eyebrow: "DỰ ÁN GẦN ĐÂY",
+      title: "Tác phẩm tự nói lên chất lượng",
+      subtitle: "Dự án thương mại thật từ thương hiệu toàn cầu, tuyển chọn theo ngân sách và danh mục.",
+      featured: "Nổi bật",
+      viewAll: "Xem tất cả case study"
+    },
+    fr: {
+      eyebrow: "RÉALISATIONS RÉCENTES",
+      title: "Des travaux qui parlent d'eux-mêmes",
+      subtitle: "Des projets commerciaux réels de marques mondiales, sélectionnés par budget et catégorie.",
+      featured: "À la une",
+      viewAll: "Voir tous les cas"
+    },
+    es: {
+      eyebrow: "TRABAJOS RECIENTES",
+      title: "Trabajos que hablan por sí solos",
+      subtitle: "Proyectos comerciales reales de marcas globales, seleccionados por presupuesto y categoría.",
+      featured: "Destacado",
+      viewAll: "Ver todos los casos"
+    }
+  },
+  aiCompanion: {
+    "zh-TW": {
+      eyebrow: "全程專屬AI陪伴",
+      title: "全程專屬AI陪伴",
+      subtitle: "來自全球品牌的真實商業專案，搭配從簡報到成片的全流程 AI 專屬陪伴。",
+      videoPlaceholder: "陪伴影片即將上線"
+    },
+    ja: {
+      eyebrow: "AI伴走",
+      title: "全工程専属のAI伴走",
+      subtitle: "グローバルブランドの実案件に、ブリーフから納品まで専属AIが伴走します。",
+      videoPlaceholder: "伴走動画は近日公開"
+    },
+    ko: {
+      eyebrow: "AI 동행",
+      title: "전 과정 전용 AI 동행",
+      subtitle: "글로벌 브랜드의 실제 프로젝트와 브리프부터 납품까지의 전용 AI 동행.",
+      videoPlaceholder: "동행 영상 곧 공개"
+    },
+    ms: {
+      eyebrow: "AI TEMAN",
+      title: "AI teman khusus sepanjang perjalanan",
+      subtitle: "Projek komersial sebenar jenama global, dengan AI khusus dari ringkasan hingga penghantaran.",
+      videoPlaceholder: "Video teman akan datang"
+    },
+    km: {
+      eyebrow: "AI ដៃគូ",
+      title: "AI ដៃគូផ្តាច់មុខពេញដំណើរការ",
+      subtitle: "គម្រោងពាណិជ្ជកម្មពិតពីម៉ាកពិភពលោក ជាមួយ AI ផ្តាច់មុខពីសេចក្តីសង្ខេបដល់ការប្រគល់។",
+      videoPlaceholder: "វីដេអូដៃគូនឹងមកដល់ឆាប់ៗ"
+    },
+    th: {
+      eyebrow: "AI คู่หู",
+      title: "AI คู่หูเฉพาะตลอดทุกขั้นตอน",
+      subtitle: "โปรเจกต์เชิงพาณิชย์จริงจากแบรนด์ทั่วโลก พร้อม AI คู่หูตั้งแต่บรีฟถึงส่งมอบ",
+      videoPlaceholder: "วิดีโอคู่หูจะมาเร็ว ๆ นี้"
+    },
+    vi: {
+      eyebrow: "AI ĐỒNG HÀNH",
+      title: "AI đồng hành riêng suốt hành trình",
+      subtitle: "Dự án thương mại thật từ thương hiệu toàn cầu, kèm AI đồng hành từ brief đến bàn giao.",
+      videoPlaceholder: "Video đồng hành sắp ra mắt"
+    },
+    fr: {
+      eyebrow: "COMPAGNON IA",
+      title: "Un accompagnement IA dédié de bout en bout",
+      subtitle:
+        "Des projets commerciaux réels pour des marques mondiales, avec une IA dédiée du brief à la livraison.",
+      videoPlaceholder: "Vidéo compagnon bientôt disponible"
+    },
+    es: {
+      eyebrow: "COMPAÑÍA IA",
+      title: "Acompañamiento con IA dedicado de principio a fin",
+      subtitle:
+        "Proyectos comerciales reales de marcas globales, con IA exclusiva del brief a la entrega.",
+      videoPlaceholder: "Video de acompañamiento próximamente"
+    }
   },
   features: {
     "zh-TW": {
@@ -870,6 +999,27 @@ function resolveMarketingCopyLocale(locale: Locale | MarketingLocale) {
 type LandingHomeBundle = Partial<
   Record<MarketingLocale, { [S in keyof typeof landingCopy]?: (typeof landingCopy)[S]["en"] }>
 >;
+
+type LandingWorkCopy = WidenCopy<(typeof landingCopy)["work"]["en"]>;
+
+export function landingWorkCopyForLocale(locale: Locale | MarketingLocale): LandingWorkCopy {
+  const marketingLocale = asMarketingLocale(String(locale));
+  const translated = landingCopyTranslations.work?.[marketingLocale as keyof typeof landingCopyTranslations.work];
+  if (translated) return translated as LandingWorkCopy;
+  if (marketingLocale === "zh-CN" || locale === "zh") return landingCopy.work.zh as LandingWorkCopy;
+  return landingCopy.work.en as LandingWorkCopy;
+}
+
+type LandingAiCompanionCopy = WidenCopy<(typeof landingCopy)["aiCompanion"]["en"]>;
+
+export function landingAiCompanionCopyForLocale(locale: Locale | MarketingLocale): LandingAiCompanionCopy {
+  const marketingLocale = asMarketingLocale(String(locale));
+  const translated =
+    landingCopyTranslations.aiCompanion?.[marketingLocale as keyof typeof landingCopyTranslations.aiCompanion];
+  if (translated) return translated as LandingAiCompanionCopy;
+  if (marketingLocale === "zh-CN" || locale === "zh") return landingCopy.aiCompanion.zh as LandingAiCompanionCopy;
+  return landingCopy.aiCompanion.en as LandingAiCompanionCopy;
+}
 
 export function landingText<K extends keyof typeof landingCopy>(
   section: K,

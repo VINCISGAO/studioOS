@@ -15,7 +15,13 @@ export const homeHeroVideoFilenames: Record<MarketingLocale, string> = {
   es: "VINCIS Brand Film (ES).mp4"
 };
 
-const KNOWN_HERO_FILENAMES = new Set(Object.values(homeHeroVideoFilenames));
+/** Shared animation — all locales; see `resolveHomeAiCompanionVideoPlaybackSrc`. */
+export const homeAiCompanionVideoFilename = "VINCIS animation video.mp4";
+
+const KNOWN_HERO_FILENAMES = new Set([
+  ...Object.values(homeHeroVideoFilenames),
+  homeAiCompanionVideoFilename
+]);
 
 /** Bust browser/CDN caches after URL scheme changes. */
 const HERO_VIDEO_CACHE_VERSION = "7";

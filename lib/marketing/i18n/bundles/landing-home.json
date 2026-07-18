@@ -195,6 +195,7 @@
     "work": {
       "eyebrow": "RECENT WORK",
       "title": "Work that speaks for itself",
+      "subtitle": "Real commercial projects from global brands, curated by budget and category.",
       "featured": "Featured",
       "viewAll": "View all case studies"
     },
@@ -219,6 +220,12 @@
       "subtitle": "Start with a structured brief, matched studios, protected milestones, and a review room your team can actually use.",
       "primary": "Start your project",
       "secondary": "Talk to an expert"
+    },
+    "aiCompanion": {
+      "eyebrow": "AI COMPANION",
+      "title": "Dedicated AI, every step of the way",
+      "subtitle": "Real commercial projects from global brands, with exclusive AI guidance from brief to final delivery.",
+      "videoPlaceholder": "Companion video coming soon"
     }
   },
   "zh-CN": {
@@ -415,8 +422,9 @@
       ]
     },
     "work": {
-      "eyebrow": "精选项目",
-      "title": "精选项目",
+      "eyebrow": "作品自己会说话",
+      "title": "作品自己会说话",
+      "subtitle": "来自全球品牌的真实商业项目，按预算与品类精选展示。",
       "featured": "精选案例",
       "viewAll": "查看全部案例"
     },
@@ -441,6 +449,12 @@
       "subtitle": "从结构化需求、创作者匹配、里程碑托管，到团队可用的审片工作室，一次完成",
       "primary": "启动投放项目",
       "secondary": "联系专家"
+    },
+    "aiCompanion": {
+      "eyebrow": "全程专属AI陪伴",
+      "title": "全程专属AI陪伴",
+      "subtitle": "来自全球品牌的真实商业项目，搭配从简报到成片的全流程 AI 专属陪伴。",
+      "videoPlaceholder": "陪伴视频即将上线"
     }
   },
   "zh-TW": {
@@ -637,8 +651,9 @@
       ]
     },
     "work": {
-      "eyebrow": "精選專案",
-      "title": "精選專案",
+      "eyebrow": "作品自己會說話",
+      "title": "作品自己會說話",
+      "subtitle": "來自全球品牌的真實商業專案，按預算與品類精選展示。",
       "featured": "精選案例",
       "viewAll": "查看全部案例"
     },
@@ -663,6 +678,12 @@
       "subtitle": "從結構化需求、創作者匹配、里程碑托管，到團隊可用的審片工作室，一次完成",
       "primary": "啟動投放專案",
       "secondary": "聯繫專家"
+    },
+    "aiCompanion": {
+      "eyebrow": "全程專屬AI陪伴",
+      "title": "全程專屬AI陪伴",
+      "subtitle": "來自全球品牌的真實商業專案，搭配從簡報到成片的全流程 AI 專屬陪伴。",
+      "videoPlaceholder": "陪伴影片即將上線"
     }
   },
   "ja": {
@@ -859,10 +880,11 @@
       ]
     },
     "work": {
-      "eyebrow": "最近の作品",
-      "title": "自らを語る作品",
-      "featured": "特集",
-      "viewAll": "すべてのケーススタディを見る"
+      "eyebrow": "最近の制作実績",
+      "title": "作品がすべてを語ります",
+      "subtitle": "グローバルブランドの実案件を、予算とカテゴリー別に厳選して紹介。",
+      "featured": "注目",
+      "viewAll": "すべての事例を見る"
     },
     "features": {
       "networkTitle": "クリエイターネットワーク",
@@ -885,6 +907,12 @@
       "subtitle": "構造化されたブリーフ、マッチしたスタジオ、保護されたマイルストーン、実際に使用できるレビュー室から始めましょう。",
       "primary": "プロジェクトを開始",
       "secondary": "専門家に相談"
+    },
+    "aiCompanion": {
+      "eyebrow": "AI伴走",
+      "title": "全工程専属のAI伴走",
+      "subtitle": "グローバルブランドの実案件に、ブリーフから納品まで専属AIが伴走します。",
+      "videoPlaceholder": "伴走動画は近日公開"
     }
   },
   "ko": {
@@ -1082,9 +1110,10 @@
     },
     "work": {
       "eyebrow": "최근 작업",
-      "title": "스스로 말하는 작업",
+      "title": "작품이 스스로 말합니다",
+      "subtitle": "글로벌 브랜드의 실제 프로젝트를 예산과 카테고리별로 엄선해 소개합니다.",
       "featured": "추천",
-      "viewAll": "모든 사례 연구 보기"
+      "viewAll": "전체 사례 보기"
     },
     "features": {
       "networkTitle": "크리에이터 네트워크",
@@ -1107,6 +1136,12 @@
       "subtitle": "구조화된 브리프, 매칭된 스튜디오, 보호된 이정표 및 팀이 실제로 사용할 수 있는 검토실로 시작하세요.",
       "primary": "프로젝트 시작하기",
       "secondary": "전문가와 상담하기"
+    },
+    "aiCompanion": {
+      "eyebrow": "AI 동행",
+      "title": "전 과정 전용 AI 동행",
+      "subtitle": "글로벌 브랜드의 실제 프로젝트와 브리프부터 납품까지의 전용 AI 동행.",
+      "videoPlaceholder": "동행 영상 곧 공개"
     }
   },
   "ms": {
@@ -1304,8 +1339,9 @@
     },
     "work": {
       "eyebrow": "KERJA TERKINI",
-      "title": "Kerja yang bercakap untuk dirinya sendiri",
-      "featured": "Ditampilkan",
+      "title": "Hasil kerja yang bercakap sendiri",
+      "subtitle": "Projek komersial sebenar jenama global, dipaparkan mengikut bajet dan kategori.",
+      "featured": "Pilihan",
       "viewAll": "Lihat semua kajian kes"
     },
     "features": {
@@ -1329,6 +1365,12 @@
       "subtitle": "Mulakan dengan ringkasan yang terstruktur, studio yang dipadankan, pencapaian yang dilindungi, dan bilik semakan yang boleh digunakan oleh pasukan anda.",
       "primary": "Mulakan projek anda",
       "secondary": "Bercakap dengan pakar"
+    },
+    "aiCompanion": {
+      "eyebrow": "AI TEMAN",
+      "title": "AI teman khusus sepanjang perjalanan",
+      "subtitle": "Projek komersial sebenar jenama global, dengan AI khusus dari ringkasan hingga penghantaran.",
+      "videoPlaceholder": "Video teman akan datang"
     }
   },
   "th": {
@@ -1526,9 +1568,10 @@
     },
     "work": {
       "eyebrow": "ผลงานล่าสุด",
-      "title": "ผลงานที่พูดสำหรับตัวเอง",
-      "featured": "ผลงานเด่น",
-      "viewAll": "ดูกรณีศึกษาทั้งหมด"
+      "title": "ผลงานพูดแทนตัวเอง",
+      "subtitle": "โปรเจกต์เชิงพาณิชย์จริงจากแบรนด์ทั่วโลก คัดสรรตามงบประมาณและหมวดหมู่",
+      "featured": "แนะนำ",
+      "viewAll": "ดูเคสทั้งหมด"
     },
     "features": {
       "networkTitle": "เครือข่ายผู้สร้าง",
@@ -1551,6 +1594,12 @@
       "subtitle": "เริ่มต้นด้วยสรุปที่มีโครงสร้าง, สตูดิโอที่จับคู่, เหตุการณ์สำคัญที่ได้รับการป้องกัน, และห้องตรวจสอบที่ทีมของคุณสามารถใช้งานได้จริง.",
       "primary": "เริ่มโครงการของคุณ",
       "secondary": "พูดคุยกับผู้เชี่ยวชาญ"
+    },
+    "aiCompanion": {
+      "eyebrow": "AI คู่หู",
+      "title": "AI คู่หูเฉพาะตลอดทุกขั้นตอน",
+      "subtitle": "โปรเจกต์เชิงพาณิชย์จริงจากแบรนด์ทั่วโลก พร้อม AI คู่หูตั้งแต่บรีฟถึงส่งมอบ",
+      "videoPlaceholder": "วิดีโอคู่หูจะมาเร็ว ๆ นี้"
     }
   },
   "km": {
@@ -1748,8 +1797,9 @@
     },
     "work": {
       "eyebrow": "ការងារថ្មីៗ",
-      "title": "ការងារដែលនិយាយសម្រាប់ខ្លួនវា",
-      "featured": "មានលក្ខណៈពិសេស",
+      "title": "ស្នាដៃនិយាយដោយខ្លួនវា",
+      "subtitle": "គម្រោងពាណិជ្ជកម្មពិតពីម៉ាកពិភពលោក បង្ហាញតាមថវិកា និងប្រភេទ។",
+      "featured": "ពិសេស",
       "viewAll": "មើលករណីសិក្សាទាំងអស់"
     },
     "features": {
@@ -1773,6 +1823,12 @@
       "subtitle": "ចាប់ផ្តើមជាមួយសេចក្តីសង្ខេបដែលមានរចនាសម្ព័ន្ធ, ស្តូឌីយ៉ូដែលបានផ្គូផ្គង, កម្រិតដែលមានការការពារ, និងបន្ទប់ពិនិត្យដែលក្រុមរបស់អ្នកអាចប្រើប្រាស់បាន។",
       "primary": "ចាប់ផ្តើមគម្រោងរបស់អ្នក",
       "secondary": "និយាយជាមួយអ្នកជំនាញ"
+    },
+    "aiCompanion": {
+      "eyebrow": "AI ដៃគូ",
+      "title": "AI ដៃគូផ្តាច់មុខពេញដំណើរការ",
+      "subtitle": "គម្រោងពាណិជ្ជកម្មពិតពីម៉ាកពិភពលោក ជាមួយ AI ផ្តាច់មុខពីសេចក្តីសង្ខេបដល់ការប្រគល់។",
+      "videoPlaceholder": "វីដេអូដៃគូនឹងមកដល់ឆាប់ៗ"
     }
   },
   "vi": {
@@ -1969,10 +2025,11 @@
       ]
     },
     "work": {
-      "eyebrow": "CÔNG VIỆC GẦN ĐÂY",
-      "title": "Công việc tự nói lên điều đó",
+      "eyebrow": "DỰ ÁN GẦN ĐÂY",
+      "title": "Tác phẩm tự nói lên chất lượng",
+      "subtitle": "Dự án thương mại thật từ thương hiệu toàn cầu, tuyển chọn theo ngân sách và danh mục.",
       "featured": "Nổi bật",
-      "viewAll": "Xem tất cả nghiên cứu trường hợp"
+      "viewAll": "Xem tất cả case study"
     },
     "features": {
       "networkTitle": "Mạng lưới người sáng tạo",
@@ -1995,6 +2052,12 @@
       "subtitle": "Bắt đầu với một tóm tắt có cấu trúc, các studio đã ghép nối, các cột mốc được bảo vệ và một phòng đánh giá mà đội ngũ của bạn có thể thực sự sử dụng.",
       "primary": "Bắt đầu dự án của bạn",
       "secondary": "Nói chuyện với một chuyên gia"
+    },
+    "aiCompanion": {
+      "eyebrow": "AI ĐỒNG HÀNH",
+      "title": "AI đồng hành riêng suốt hành trình",
+      "subtitle": "Dự án thương mại thật từ thương hiệu toàn cầu, kèm AI đồng hành từ brief đến bàn giao.",
+      "videoPlaceholder": "Video đồng hành sắp ra mắt"
     }
   },
   "fr": {
@@ -2191,10 +2254,11 @@
       ]
     },
     "work": {
-      "eyebrow": "Travail RÉCENT",
-      "title": "Un travail qui parle de lui-même",
-      "featured": "En vedette",
-      "viewAll": "Voir toutes les études de cas"
+      "eyebrow": "RÉALISATIONS RÉCENTES",
+      "title": "Des travaux qui parlent d'eux-mêmes",
+      "subtitle": "Des projets commerciaux réels de marques mondiales, sélectionnés par budget et catégorie.",
+      "featured": "À la une",
+      "viewAll": "Voir tous les cas"
     },
     "features": {
       "networkTitle": "Réseau de créateurs",
@@ -2217,6 +2281,12 @@
       "subtitle": "Commencez par un brief structuré, des studios appariés, des jalons protégés et une salle de révision que votre équipe peut réellement utiliser.",
       "primary": "Démarrez votre projet",
       "secondary": "Parlez à un expert"
+    },
+    "aiCompanion": {
+      "eyebrow": "COMPAGNON IA",
+      "title": "Un accompagnement IA dédié de bout en bout",
+      "subtitle": "Des projets commerciaux réels pour des marques mondiales, avec une IA dédiée du brief à la livraison.",
+      "videoPlaceholder": "Vidéo compagnon bientôt disponible"
     }
   },
   "es": {
@@ -2413,10 +2483,11 @@
       ]
     },
     "work": {
-      "eyebrow": "TRABAJO RECIENTE",
-      "title": "Trabajo que habla por sí mismo",
+      "eyebrow": "TRABAJOS RECIENTES",
+      "title": "Trabajos que hablan por sí solos",
+      "subtitle": "Proyectos comerciales reales de marcas globales, seleccionados por presupuesto y categoría.",
       "featured": "Destacado",
-      "viewAll": "Ver todos los estudios de caso"
+      "viewAll": "Ver todos los casos"
     },
     "features": {
       "networkTitle": "Red de creadores",
@@ -2439,6 +2510,12 @@
       "subtitle": "Comienza con un resumen estructurado, estudios emparejados, hitos protegidos y una sala de revisión que tu equipo realmente puede usar.",
       "primary": "Inicia tu proyecto",
       "secondary": "Habla con un experto"
+    },
+    "aiCompanion": {
+      "eyebrow": "COMPAÑÍA IA",
+      "title": "Acompañamiento con IA dedicado de principio a fin",
+      "subtitle": "Proyectos comerciales reales de marcas globales, con IA exclusiva del brief a la entrega.",
+      "videoPlaceholder": "Video de acompañamiento próximamente"
     }
   }
 }

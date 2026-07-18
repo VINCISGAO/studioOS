@@ -92,7 +92,12 @@ const CREATOR_PORTAL_TARGETS = [
 
 const HOMEPAGE_ANCHOR_FILES = [
   "components/marketing/landing/home-landing-page.tsx",
-  "components/marketing/cinematic/home-page-screen.tsx"
+  "components/marketing/landing/landing-how-it-works.tsx",
+  "components/marketing/landing/landing-sections.tsx",
+  "components/marketing/landing/landing-cost-comparison.tsx",
+  "components/marketing/landing/landing-recent-work.tsx",
+  "components/marketing/cinematic/cinematic-escrow.tsx",
+  "components/marketing/landing/landing-ai-companion-video-slot.tsx"
 ];
 
 function normalizePathname(href) {

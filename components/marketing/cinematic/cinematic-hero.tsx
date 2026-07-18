@@ -1,6 +1,6 @@
 "use client";
 
-import { useMarketingHomePortalSession } from "@/components/marketing/use-marketing-home-portal-session";
+import { useResolvedMarketingHomePortal } from "@/components/marketing/marketing-home-portal-context";
 import { landingText } from "@/lib/marketing/landing-copy";
 import type { MarketingHomePortalSession } from "@/lib/marketing/portal-entry";
 import { resolveMarketingHeroCtaTargets } from "@/lib/marketing/portal-entry";
@@ -120,12 +120,10 @@ export function CinematicHero({
   portalSession?: MarketingHomePortalSession | null;
   hydratePortalSession?: boolean;
 }) {
-  const { session: hydratedPortalSession } = useMarketingHomePortalSession(
-    copyLocale,
-    serverPortalSession,
-    hydratePortalSession
-  );
-  const portalSession = hydratePortalSession ? hydratedPortalSession : serverPortalSession;
+  const { session: portalSession } = useResolvedMarketingHomePortal({
+    hydrateFromClient: hydratePortalSession,
+    serverSession: serverPortalSession
+  });
   const t = landingText("hero", copyLocale);
   const { brand: brandCta, creator: creatorCta } = resolveMarketingHeroCtaTargets(copyLocale, portalSession);
   const titleLines = getHeroTitleLines(t.titleLine1, t.titleLine2);

@@ -27,13 +27,14 @@ Not allowed without owner command:
 | Page entry | `app/page.tsx` → `HomeLandingPage` |
 | Video player (frozen) | `components/marketing/home-hero-video.tsx` |
 | Video resolver | `lib/marketing/home-hero-video-sources.ts` |
+| Companion video resolver | `lib/marketing/home-ai-companion-video-sources.ts` |
 | Copy | `lib/marketing/landing-copy.ts`, `lib/marketing/cinematic-copy.ts`, `lib/marketing/footer-copy.ts` |
 | UI | `components/marketing/**`, `components/language-switcher.tsx` |
 | Styles | `app/globals.css` (marketing utilities) |
 | Proxy | `lib/marketing/marketing-video-proxy.ts`, `app/videos/[...path]/route.ts` |
 | Upload / verify | `scripts/upload-home-hero-videos-r2.mjs`, `scripts/verify-home-hero-r2.mjs` |
 
-**No** `<link rel="preload" as="video">` on homepage (Safari download bug) — `app/page.tsx` passes `heroVideoSrc` only to `HomeHeroVideo`.
+**No** `<link rel="preload" as="video">` on homepage (Safari download bug) — `app/page.tsx` passes `heroVideoSrc` to `HomeHeroVideo` and `companionVideoSrc` to `#ai-companion` (same player, shared animation asset for all 11 locales).
 
 ## Section order (frozen)
 
@@ -44,9 +45,9 @@ Not allowed without owner command:
 3. **`HomeHeroVideo`** ← protected video playback component
 4. `HomeHeroMetrics`
 5. `LandingCostComparison` (`#cost`)
-6. `LandingRecentWork` (`#work`)
+6. `LandingAiCompanionSection` (`#ai-companion`) — dark companion video band between cost stats and how-it-works
 7. `LandingHowItWorks` (`#how-it-works`)
-8. `CinematicNetwork` (`#network`)
+8. `LandingRecentWork` (`#work`) — featured case cards
 9. `CinematicEscrow` (`#escrow`)
 10. `LandingCta` (`#cta`)
 11. `MarketingFooter`

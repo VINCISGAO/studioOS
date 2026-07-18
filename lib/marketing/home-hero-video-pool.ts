@@ -7,7 +7,7 @@ type PooledHeroVideo = {
   src: string;
 };
 
-let pooled: PooledHeroVideo | null = null;
+const pooledBySrc = new Map<string, PooledHeroVideo>();
 
 function ensurePoolHolder(): HTMLElement {
   const existing = document.getElementById(POOL_HOLDER_ID);
@@ -21,34 +21,44 @@ function ensurePoolHolder(): HTMLElement {
   return holder;
 }
 
-function createPooledVideo(): HTMLVideoElement {
+function createPooledVideo(src: string, preload: "auto" | "metadata" | "none"): HTMLVideoElement {
   const element = document.createElement("video");
-  element.preload = "auto";
+  element.preload = preload;
   element.playsInline = true;
   element.muted = true;
   element.loop = true;
-  element.autoplay = true;
+  element.autoplay = false;
   element.setAttribute("playsinline", "");
   element.setAttribute("webkit-playsinline", "");
+  element.src = src;
   return element;
 }
 
-export function acquireHomeHeroVideo(src: string): HTMLVideoElement {
-  if (!pooled) {
-    pooled = { element: createPooledVideo(), src: "" };
+/** One pooled `<video>` per playback URL so hero + companion can coexist. */
+export function acquireHomeHeroVideo(
+  src: string,
+  options?: { preload?: "auto" | "metadata" | "none" }
+): HTMLVideoElement {
+  const preload = options?.preload ?? "auto";
+  const existing = pooledBySrc.get(src);
+  if (existing) {
+    if (preload === "auto" && existing.element.preload !== "auto") {
+      existing.element.preload = "auto";
+      if (existing.element.readyState === HTMLMediaElement.HAVE_NOTHING) {
+        existing.element.load();
+      }
+    }
+    return existing.element;
   }
 
-  const { element } = pooled;
-  if (pooled.src !== src) {
-    pooled.src = src;
-    element.src = src;
-  }
-
+  const element = createPooledVideo(src, preload);
+  pooledBySrc.set(src, { element, src });
   return element;
 }
 
 export function isHomeHeroVideoBuffered(src: string): boolean {
-  if (!pooled || pooled.src !== src) return false;
+  const pooled = pooledBySrc.get(src);
+  if (!pooled) return false;
   return pooled.element.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA;
 }
 

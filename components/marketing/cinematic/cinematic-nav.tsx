@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Menu, User, X } from "lucide-react";
 import { BrandLogoLockup } from "@/components/brand-logo-mark";
 import { LanguageSwitcher } from "@/components/language-switcher";
-import { useMarketingHomePortalSession } from "@/components/marketing/use-marketing-home-portal-session";
+import { useResolvedMarketingHomePortal } from "@/components/marketing/marketing-home-portal-context";
 import { cinematicText } from "@/lib/marketing/cinematic-copy";
 import { marketingHomeHref } from "@/lib/marketing/localized-href";
 import {
@@ -178,12 +178,10 @@ export function CinematicNav({
   hydratePortalSession?: boolean;
   heroTone?: "dark" | "light";
 }) {
-  const { workspaceCta: hydratedWorkspaceCta } = useMarketingHomePortalSession(
-    copyLocale,
-    null,
-    hydratePortalSession
-  );
-  const workspaceCta = hydratePortalSession ? hydratedWorkspaceCta : serverWorkspaceCta;
+  const { workspaceCta } = useResolvedMarketingHomePortal({
+    hydrateFromClient: hydratePortalSession,
+    serverWorkspaceCta: serverWorkspaceCta
+  });
   const siteNavItems = marketingSiteNavItems(asMarketingLocale(copyLocale));
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);

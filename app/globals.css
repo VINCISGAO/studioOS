@@ -985,6 +985,182 @@
   .home-hero-video-fullscreen-btn {
     z-index: 30;
   }
+
+  /** Fullscreen letterbox — always cinema black, never page white. */
+  .home-hero-video-shell:fullscreen,
+  .home-hero-video-shell:-webkit-full-screen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    border: 0;
+    border-radius: 0;
+    background: #09090b !important;
+    box-shadow: none;
+  }
+
+  .home-hero-video-shell:fullscreen .home-hero-video-player,
+  .home-hero-video-shell:-webkit-full-screen .home-hero-video-player {
+    background: #09090b;
+  }
+
+  .home-hero-video-shell:fullscreen video,
+  .home-hero-video-shell:-webkit-full-screen video {
+    background: #09090b;
+  }
+
+  /** Homepage surfaces — two zones, one soft transition (no harsh zebra strips). */
+  .marketing-home-dark {
+    background: #050505;
+    color: #ffffff;
+  }
+
+  .marketing-home-light {
+    background: #fbfaf7;
+    color: #18181b;
+  }
+
+  .marketing-home-metrics {
+    border-top: 1px solid rgb(255 255 255 / 0.08);
+    border-bottom: 1px solid rgb(255 255 255 / 0.08);
+    background: linear-gradient(180deg, rgb(255 255 255 / 0.03), rgb(255 255 255 / 0.015));
+  }
+
+  .marketing-home-dark-card {
+    border: 1px solid rgb(255 255 255 / 0.08);
+    background: rgb(255 255 255 / 0.04);
+    box-shadow: 0 18px 50px -42px rgb(0 0 0 / 0.55);
+  }
+
+  .marketing-home-dark-card:hover {
+    border-color: rgb(255 255 255 / 0.12);
+    background: rgb(255 255 255 / 0.06);
+  }
+
+  .marketing-home-light-card {
+    border: 1px solid rgb(24 24 27 / 0.08);
+    background: rgb(255 255 255 / 0.82);
+    box-shadow: 0 18px 50px -42px rgb(24 24 27 / 0.28);
+  }
+
+  .marketing-home-light-card:hover {
+    border-color: rgb(24 24 27 / 0.12);
+    background: rgb(255 255 255 / 0.96);
+  }
+
+  .marketing-home-cta-panel {
+    border: 1px solid rgb(255 255 255 / 0.2);
+    background: linear-gradient(165deg, #101214 0%, #070809 100%);
+    box-shadow: 0 32px 90px -56px rgb(0 0 0 / 0.75);
+  }
+
+  .marketing-home-cta-panel .landing-btn-ghost {
+    border-color: rgb(255 255 255 / 0.42);
+    color: rgb(255 255 255);
+  }
+
+  .marketing-home-cta-panel .landing-btn-ghost:hover {
+    border-color: rgb(255 255 255 / 0.62);
+    background: rgb(255 255 255 / 0.06);
+  }
+
+  .marketing-home-work-grid {
+    gap: 0.875rem;
+  }
+
+  @media (min-width: 640px) {
+    .marketing-home-work-grid {
+      gap: 1rem;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .marketing-home-work-grid {
+      gap: 1.25rem;
+    }
+  }
+
+  /** AI companion — sits inside dark zone; breathing room only, no extra surface flip. */
+  .home-ai-companion-video-band__top {
+    background: transparent;
+    padding-top: 1.75rem;
+    padding-bottom: 1.75rem;
+  }
+
+  .home-ai-companion-video-band__frame {
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+    max-width: 76rem;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .home-ai-companion-video-band__placeholder {
+    position: relative;
+    display: flex;
+    aspect-ratio: 21 / 9;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: 0;
+    background: #09090b;
+  }
+
+  .home-ai-companion-video-band .home-hero-video-section {
+    margin: 0;
+    padding: 0 !important;
+    background: transparent !important;
+  }
+
+  .home-ai-companion-video-band .home-hero-video-shell {
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+    max-width: 76rem;
+    border-radius: 0;
+    background: #09090b !important;
+    box-shadow: none;
+  }
+
+  .home-ai-companion-video-band .home-hero-video-player {
+    background: #09090b;
+  }
+
+  @media (min-width: 640px) {
+    .home-ai-companion-video-band__top {
+      padding-top: 2.25rem;
+      padding-bottom: 2.25rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .home-ai-companion-video-band__top {
+      padding-top: 2.75rem;
+      padding-bottom: 2.75rem;
+    }
+
+    .home-ai-companion-video-band .home-hero-video-section {
+      padding-left: 2rem !important;
+      padding-right: 2rem !important;
+    }
+
+    .home-ai-companion-video-band__frame {
+      padding-left: 2rem;
+      padding-right: 2rem;
+    }
+
+    .home-ai-companion-video-band__placeholder,
+    .home-ai-companion-video-band .home-hero-video-shell {
+      overflow: hidden;
+      border-radius: 0.5rem;
+      border: 1px solid rgb(255 255 255 / 0.12);
+      box-shadow: 0 28px 90px -64px rgb(0 0 0 / 0.45);
+    }
+  }
 }
 
 .hero-copy-stack {

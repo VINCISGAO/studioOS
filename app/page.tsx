@@ -6,6 +6,7 @@ import { loadHomeShowcaseWorks } from "@/lib/marketing/home-showcase-works";
 import { homePageSeoMetadata } from "@/lib/marketing/marketing-seo-metadata";
 import { getLanguageCode, type SearchParams } from "@/lib/i18n";
 import { resolveHomeHeroVideoPlaybackSrc } from "@/lib/marketing/home-hero-video-sources";
+import { resolveHomeAiCompanionVideoPlaybackSrc } from "@/lib/marketing/home-ai-companion-video-sources";
 import type { Metadata } from "next";
 
 export const revalidate = 300;
@@ -31,6 +32,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
   const locale = toUiLocale(copyLocale);
   const heroVideoSrc = resolveHomeHeroVideoPlaybackSrc(copyLocale);
+  const companionVideoSrc = resolveHomeAiCompanionVideoPlaybackSrc(copyLocale);
 
   return (
     <>
@@ -39,6 +41,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         locale={locale}
         copyLocale={copyLocale}
         heroVideoSrc={heroVideoSrc}
+        companionVideoSrc={companionVideoSrc}
         featuredWorks={featuredWorks}
         hydratePortalSession
       />

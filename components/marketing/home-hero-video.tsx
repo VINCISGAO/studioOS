@@ -132,9 +132,11 @@ type HomeHeroVideoProps = {
   locale: MarketingLocale;
   videoSrc: string;
   heroPosterSrc?: string;
+  /** Companion embed: skip outer section to avoid nested landmarks. */
+  embedded?: boolean;
 };
 
-export function HomeHeroVideo({ locale, videoSrc, heroPosterSrc }: HomeHeroVideoProps) {
+export function HomeHeroVideo({ locale, videoSrc, heroPosterSrc, embedded = false }: HomeHeroVideoProps) {
   const shellRef = useRef<HTMLDivElement>(null);
   const videoMountRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -260,7 +262,14 @@ export function HomeHeroVideo({ locale, videoSrc, heroPosterSrc }: HomeHeroVideo
     if (!muted) {
       video.volume = 1;
     }
-    mount.appendChild(video);
+    if (video.parentElement !== mount) {
+      mount.appendChild(video);
+    }
+
+    if (video.readyState === HTMLMediaElement.HAVE_NOTHING) {
+      video.preload = "auto";
+      video.load();
+    }
 
     const syncDuration = () => {
       if (Number.isFinite(video.duration)) {
@@ -350,38 +359,45 @@ export function HomeHeroVideo({ locale, videoSrc, heroPosterSrc }: HomeHeroVideo
     );
   }, [isFullscreen, videoReady]);
 
+  const shellClassName = cn(
+    "home-hero-video-shell group relative w-full cursor-pointer touch-manipulation overflow-hidden rounded-none bg-zinc-950 shadow-none lg:mx-auto lg:max-w-[1216px] lg:rounded-lg lg:border lg:border-white/10 lg:shadow-[0_28px_90px_-64px_rgba(0,0,0,0.45)]",
+    isFullscreen && "flex max-w-none items-center justify-center rounded-none border-0 bg-[#09090b] shadow-none",
+    controlsActive && "home-hero-video-controls-visible"
+  );
+
+  const sectionClassName = "home-hero-video-section bg-zinc-950 px-0 pb-0 pt-0 lg:px-8 lg:py-6";
+
   if (!safeSrc) {
-    return (
-      <section className="home-hero-video-section bg-zinc-950 px-0 pb-0 pt-0 lg:bg-white lg:px-8 lg:pt-6">
-        <div
-          className="relative mx-auto aspect-[21/9] w-full overflow-hidden rounded-none bg-zinc-950 lg:mx-auto lg:max-w-[1216px] lg:rounded-lg lg:bg-white lg:shadow-[0_28px_90px_-64px_rgba(0,0,0,0.12)]"
-          style={
-            heroPosterSrc
-              ? {
-                  backgroundImage: `url(${heroPosterSrc})`,
-                  backgroundSize: "cover",
-                  backgroundPosition: "center"
-                }
-              : undefined
-          }
-        >
-          <p className="absolute inset-x-0 bottom-4 text-center text-xs text-zinc-400">
-            {zh ? "视频暂时无法播放" : "Video is temporarily unavailable"}
-          </p>
-        </div>
-      </section>
+    const placeholderShell = (
+      <div
+        className="relative mx-auto aspect-[21/9] w-full overflow-hidden rounded-none bg-zinc-950 lg:mx-auto lg:max-w-[1216px] lg:rounded-lg lg:border lg:border-white/10 lg:shadow-[0_28px_90px_-64px_rgba(0,0,0,0.45)]"
+        style={
+          heroPosterSrc
+            ? {
+                backgroundImage: `url(${heroPosterSrc})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center"
+              }
+            : undefined
+        }
+      >
+        <p className="absolute inset-x-0 bottom-4 text-center text-xs text-zinc-400">
+          {zh ? "视频暂时无法播放" : "Video is temporarily unavailable"}
+        </p>
+      </div>
     );
+
+    if (embedded) {
+      return <div className={sectionClassName}>{placeholderShell}</div>;
+    }
+
+    return <section className={sectionClassName}>{placeholderShell}</section>;
   }
 
-  return (
-    <section className="home-hero-video-section bg-zinc-950 px-0 pb-0 pt-0 lg:bg-white lg:px-8 lg:pt-6">
-      <div
-        ref={shellRef}
-        className={cn(
-          "home-hero-video-shell group relative w-full cursor-pointer touch-manipulation overflow-hidden rounded-none bg-zinc-950 shadow-none lg:mx-auto lg:max-w-[1216px] lg:bg-white lg:shadow-[0_28px_90px_-64px_rgba(0,0,0,0.12)]",
-          isFullscreen && "flex max-w-none items-center justify-center",
-          controlsActive && "home-hero-video-controls-visible"
-        )}
+  const player = (
+    <div
+      ref={shellRef}
+      className={shellClassName}
         aria-label={!failed && playing ? (zh ? "暂停视频" : "Pause video") : undefined}
         onClick={(event) => {
           if (
@@ -419,7 +435,7 @@ export function HomeHeroVideo({ locale, videoSrc, heroPosterSrc }: HomeHeroVideo
           ref={videoMountRef}
           className={cn(
             "home-hero-video-player relative z-0 w-full",
-            isFullscreen ? "flex max-h-full max-w-full shrink-0 items-center justify-center" : "aspect-[21/9]"
+            isFullscreen ? "flex max-h-full max-w-full shrink-0 items-center justify-center bg-[#09090b]" : "aspect-[21/9]"
           )}
         />
 
@@ -532,6 +548,11 @@ export function HomeHeroVideo({ locale, videoSrc, heroPosterSrc }: HomeHeroVideo
           </div>
         ) : null}
       </div>
-    </section>
   );
+
+  if (embedded) {
+    return <div className={sectionClassName}>{player}</div>;
+  }
+
+  return <section className={sectionClassName}>{player}</section>;
 }

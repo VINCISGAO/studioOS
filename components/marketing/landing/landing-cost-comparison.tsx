@@ -323,7 +323,7 @@ export function LandingCostComparison({
   const labels = comparisonLabels[comparisonLocale] ?? (locale === "zh" ? comparisonLabels["zh-CN"] : comparisonLabels.en);
 
   return (
-    <LandingSection className="relative overflow-hidden bg-[#000000] !pt-0 !pb-14 sm:!py-16 lg:!py-20">
+    <LandingSection id="cost" className="relative overflow-hidden bg-transparent !pt-0 !pb-0 sm:!pt-16 sm:!pb-0 lg:!pt-20 lg:!pb-0">
       <div
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_55%_at_50%_-10%,rgba(255,255,255,0.07),transparent_55%)]"
         aria-hidden

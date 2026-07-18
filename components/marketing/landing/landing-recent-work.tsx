@@ -135,12 +135,9 @@ export function LandingRecentWork({
   const t = landingText("work", copyLocale);
   const [activeWork, setActiveWork] = useState<MarketingShowcaseWorkDto | null>(null);
   const featuredWorks = selectFeaturedWorks(works);
-  const subtitle = isChineseLanguage(copyLocale)
-    ? "来自全球品牌的真实商业项目，按预算与品类精选展示。"
-    : "Real commercial projects from global brands, curated by budget and category.";
 
   return (
-    <section className="bg-[#FFFFFF] pb-8 pt-6 sm:pb-16 sm:pt-16">
+    <section id="work" className="bg-[#FFFFFF] pb-8 pt-6 sm:pb-16 sm:pt-16">
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl text-center">
           <MarketingEyebrowPill tone="light">{t.eyebrow}</MarketingEyebrowPill>
@@ -150,7 +147,7 @@ export function LandingRecentWork({
           >
             {t.title}
           </MarketingSectionTitle>
-          <p className="mt-2 px-1 text-xs leading-5 text-zinc-500 sm:mt-4 sm:text-sm sm:leading-6">{subtitle}</p>
+          <p className="mt-2 px-1 text-xs leading-5 text-zinc-500 sm:mt-4 sm:text-sm sm:leading-6">{t.subtitle}</p>
         </div>
 
         {featuredWorks.length > 0 ? (
