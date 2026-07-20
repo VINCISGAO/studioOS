@@ -43,6 +43,7 @@ export function buildPortfolioJsonLdGraph(
       description: work.description,
       thumbnailUrl,
       contentUrl: videoUrl,
+      uploadDate: work.created_at,
       publisher: { "@id": `${origin}/#organization` },
       genre: work.category
     });
