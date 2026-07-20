@@ -35,7 +35,7 @@ export const creatorPortalNavItems: CreatorPortalNavItem[] = [
     requiresBusinessAccess: false
   },
   {
-    href: creatorPortalRoutes.profile,
+    href: creatorPortalRoutes.works,
     labelKey: "works",
     icon: Palette,
     mobileIconKey: "works",

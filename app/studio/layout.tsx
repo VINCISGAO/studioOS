@@ -31,7 +31,7 @@ export default async function StudioLayout({ children }: { children: React.React
   const pathname = headerList.get("x-pathname") ?? "/studio";
   const search = headerList.get("x-search") ?? "";
   const locale = await getAppUiLocale();
-  const guardRedirect = await resolveCreatorPortalGuardRedirect(locale);
+  const guardRedirect = await resolveCreatorPortalGuardRedirect(locale, pathname);
   if (guardRedirect) {
     redirect(guardRedirect);
   }

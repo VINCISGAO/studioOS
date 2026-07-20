@@ -44,9 +44,18 @@ export class StripeCheckoutService {
         campaign_id: input.campaignId,
         escrow_id: input.escrowId
       },
-      success_url: `${appUrl}/brand/projects/${portalProjectId}?tab=match`,
+      success_url:
+        `${appUrl}/brand/projects/${portalProjectId}` +
+        "?tab=match&matching=1&checkout_session_id={CHECKOUT_SESSION_ID}",
       cancel_url: `${appUrl}/brand/projects/${portalProjectId}/checkout?pay=cancelled`
     });
+  }
+
+  async retrieveCheckout(sessionId: string): Promise<Stripe.Checkout.Session> {
+    if (!this.isConfigured()) {
+      throw new Error("Stripe is not configured");
+    }
+    return getStripe().checkout.sessions.retrieve(sessionId);
   }
 }
 

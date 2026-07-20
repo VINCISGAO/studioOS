@@ -20,6 +20,7 @@ import {
 import type { StoredCreatorInvitation } from "@/lib/studioos/creator-invitation-types";
 import { countUnreadBrandNotifications } from "@/lib/studioos/brand-notification-service";
 import { getAiMatchReportStatisticsForProject } from "@/lib/studioos/ai-match-report-statistics";
+import { isResolvableCampaignCreatorId } from "@/lib/studioos/brand-checkout-utils";
 import { listReviewComments } from "@/lib/studioos/review-store";
 import { appError } from "@/lib/core/errors";
 
@@ -64,7 +65,9 @@ export const brandProjectPortalService = {
     const cancelled = isBrandProjectCancelled(project, linkedOrder);
     const awaitingPayment =
       !funded && !cancelled && isBrandAwaitingPayment({ project, order: linkedOrder });
-    const hasActiveProject = Boolean(linkedOrder?.creator_id || project.selected_studio_id);
+    const hasActiveProject = Boolean(
+      isResolvableCampaignCreatorId(linkedOrder?.creator_id) || project.selected_studio_id
+    );
     const shouldRedirectToCheckout = shouldBrandMatchTabRedirectToCheckout({
       activeTab,
       funded,

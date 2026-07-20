@@ -5,7 +5,7 @@ import { resolvePostLoginDestination, toSafeNextPath } from "@/lib/auth/post-log
 import { hasSupabaseConfig } from "@/lib/auth-config";
 import { getAppLanguage } from "@/lib/app-language";
 import { toUiLocale } from "@/lib/app-language.shared";
-import { getLanguageCode, type SearchParams, withLocale } from "@/lib/i18n";
+import { getLanguageCode, isChineseLanguage, type SearchParams, withLocale } from "@/lib/i18n";
 import { loginCopy } from "@/lib/marketing/login-copy.resolver";
 import { getCurrentCreatorId } from "@/features/auth/session-context";
 import { getCurrentSession } from "@/lib/session-user";
@@ -70,7 +70,7 @@ function resolveNextPath(raw: SearchParams["next"]) {
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams;
   const languageCode = params.lang ? getLanguageCode(params) : await getAppLanguage();
-  const locale = toUiLocale(languageCode);
+  const locale = isChineseLanguage(languageCode) ? "zh" : toUiLocale("en");
   const t = loginCopy(languageCode);
   const nextPath = resolveNextPath(params.next);
   const rawError = typeof params.error === "string" ? params.error : undefined;

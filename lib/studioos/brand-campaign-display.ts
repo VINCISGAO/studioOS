@@ -92,7 +92,7 @@ export function brandCampaignHref(input: {
 
   if (input.status === "review" || input.status === "revision") {
     if (input.projectId) return `/brand/projects/${input.projectId}/review`;
-    return `/brand/projects/${input.id}/review`;
+    return `/brand/orders/${input.id}/review`;
   }
   if (input.status === "waiting_payment" && input.projectId) {
     return `/brand/projects/${input.projectId}/checkout`;

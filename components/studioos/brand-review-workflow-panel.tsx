@@ -115,7 +115,12 @@ export function BrandReviewWorkflowPanel({
     reviewUi?.canDecide ??
     Boolean(order && (order.status === "review" || order.status === "revision") && hasVersions);
   const isCompleted = reviewUi?.orderApproved ?? order?.status === "completed";
-  const brandReviewHref = brandPortalRoutes.projectReview(projectId ?? order?.project_id ?? order?.id ?? "");
+  const reviewProjectId = projectId ?? order?.project_id;
+  const brandReviewHref = reviewProjectId
+    ? brandPortalRoutes.projectReview(reviewProjectId)
+    : order
+      ? brandPortalRoutes.orderReview(order.id)
+      : brandPortalRoutes.reviewHub;
 
   if (!order) {
     return (

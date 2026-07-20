@@ -38,7 +38,7 @@ import {
 } from "@/lib/studioos/invitation-lifecycle";
 import { getWorksForCreator } from "@/lib/works-catalog-core";
 import { getOrderForProject } from "@/lib/order-service";
-import { isOrderPaymentEscrowed } from "@/lib/order-types";
+import { isBrandProjectFunded } from "@/lib/studioos/brand-payment-funding";
 
 function invitationMatchCopy(locale: Locale, brandName: string, projectTitle: string) {
   if (locale === "zh") {
@@ -140,7 +140,7 @@ export class InvitationPortalService {
       return existing;
     }
     const escrowOrder = await getOrderForProject(project.id);
-    if (!escrowOrder || !isOrderPaymentEscrowed(escrowOrder.payment_status)) {
+    if (!(await isBrandProjectFunded(project.id, escrowOrder))) {
       return [];
     }
 
@@ -281,7 +281,7 @@ export class InvitationPortalService {
     }
 
     const escrowOrder = await getOrderForProject(project.id);
-    if (!escrowOrder || !isOrderPaymentEscrowed(escrowOrder.payment_status)) {
+    if (!(await isBrandProjectFunded(project.id, escrowOrder))) {
       return { ok: false, error: "payment-required" };
     }
 

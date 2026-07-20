@@ -21,6 +21,8 @@ import { isLegacyOrderFunded, isPrismaEscrowFundedForProject } from "@/lib/studi
 import { readBrandDisplayBudgetInput } from "@/lib/studioos/brand-budget-display-input";
 import { BRAND_PAYMENT_TIMEOUT_CANCEL_REASON } from "@/lib/studioos/brand-payment-deadline";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
+import { paymentService } from "@/features/payment/payment.service";
+import { resolveBrandProjectRouteId } from "@/lib/api-client/server-portal-gateway";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -60,6 +62,16 @@ export default async function BrandCheckoutPage({ params, searchParams }: Props)
   ]);
   if (!session || session.role !== "client") {
     redirect(withLocale(`/login?role=brand&next=${encodeURIComponent(`/brand/projects/${id}/checkout?lang=${locale}`)}`, locale));
+  }
+  const resolved = await resolveBrandProjectRouteId(id);
+  if (resolved.kind === "redirect_project") {
+    redirect(withLocale(brandPortalRoutes.projectCheckout(resolved.projectId), locale));
+  }
+  if (resolved.kind === "redirect_review") {
+    redirect(withLocale(brandPortalRoutes.orderReview(resolved.orderId), locale));
+  }
+  if (resolved.kind === "not_found") {
+    notFound();
   }
   const clientEmail = session.email.toLowerCase();
   let [project, order] = await Promise.all([getProject(id), getOrderForProject(id)]);
@@ -103,6 +115,9 @@ export default async function BrandCheckoutPage({ params, searchParams }: Props)
 
   if (prismaEscrowFunded || isOrderPaymentEscrowed(order.payment_status)) {
     order = (await markLegacyOrderPaidForProject(id)) ?? order;
+    if (prismaEscrowFunded) {
+      await paymentService.syncFundedCampaignForLegacyProject(id);
+    }
   }
 
   const paidReady = isLegacyOrderFunded(order) || prismaEscrowFunded;

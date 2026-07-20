@@ -191,6 +191,57 @@ export class PaymentService {
     };
   }
 
+  private async advanceCampaignAfterPayment(campaignId: string, actor: AuthUser) {
+    let current = await prisma.campaign.findUniqueOrThrow({ where: { id: campaignId } });
+
+    if (current.status === CampaignState.ESCROW_PENDING) {
+      try {
+        await campaignService.transition(campaignId, CampaignEvent.PAYMENT_SUCCESS, actor);
+      } catch (error) {
+        current = await prisma.campaign.findUniqueOrThrow({ where: { id: campaignId } });
+        if (current.status === CampaignState.ESCROW_PENDING) throw error;
+      }
+    }
+
+    current = await prisma.campaign.findUniqueOrThrow({ where: { id: campaignId } });
+    if (current.status === CampaignState.ESCROW_FUNDED) {
+      try {
+        await campaignService.transition(campaignId, CampaignEvent.START_MATCHING, actor);
+      } catch (error) {
+        current = await prisma.campaign.findUniqueOrThrow({ where: { id: campaignId } });
+        if (current.status === CampaignState.ESCROW_FUNDED) throw error;
+      }
+    }
+  }
+
+  private async finalizeAlreadyFunded(input: {
+    campaignId: string;
+    stripePaymentId?: string;
+    stripeSessionId?: string;
+    actor: AuthUser;
+  }) {
+    await this.advanceCampaignAfterPayment(input.campaignId, input.actor);
+    await paymentBridgeService.syncLegacyAfterEscrowFunded(input.campaignId);
+    await paymentCollectionService
+      .finalizeSuccessfulPayment({
+        campaignId: input.campaignId,
+        stripePaymentId: input.stripePaymentId,
+        stripeSessionId: input.stripeSessionId
+      })
+      .catch(() => undefined);
+
+    const [escrow, campaign] = await Promise.all([
+      paymentRepository.findByCampaignId(input.campaignId),
+      prisma.campaign.findUniqueOrThrow({ where: { id: input.campaignId } })
+    ]);
+
+    return {
+      alreadyFunded: true,
+      escrow: serializeEscrow(escrow!),
+      campaignStatus: campaign.status
+    };
+  }
+
   async completePayment(input: {
     campaignId: string;
     stripePaymentId?: string;
@@ -204,24 +255,11 @@ export class PaymentService {
     if (!escrow) {
       escrow = await this.ensureEscrowRecord(input.campaignId);
     }
+    const actor = input.actor ?? { id: campaign.brandId, role: "BRAND" };
 
     if (escrow.status === EscrowState.HELD) {
-      await paymentCollectionService
-        .finalizeSuccessfulPayment({
-          campaignId: input.campaignId,
-          stripePaymentId: input.stripePaymentId,
-          stripeSessionId: input.stripeSessionId
-        })
-        .catch(() => undefined);
-
-      return {
-        alreadyFunded: true,
-        escrow: serializeEscrow(escrow),
-        campaignStatus: campaign.status
-      };
+      return this.finalizeAlreadyFunded({ ...input, actor });
     }
-
-    const actor = input.actor ?? { id: campaign.brandId, role: "BRAND" };
 
     if (escrow.status === EscrowState.CREATED) {
       await this.transitionEscrow(input.campaignId, "START_PAYMENT", actor);
@@ -235,10 +273,18 @@ export class PaymentService {
       throw appError("INVALID_TRANSITION", `Cannot complete payment from escrow status ${escrow.status}`);
     }
 
-    await this.transitionEscrow(input.campaignId, "PAYMENT_HELD", actor, {
-      stripeSessionId: input.stripeSessionId,
-      stripePaymentId: input.stripePaymentId
-    });
+    try {
+      await this.transitionEscrow(input.campaignId, "PAYMENT_HELD", actor, {
+        stripeSessionId: input.stripeSessionId,
+        stripePaymentId: input.stripePaymentId
+      });
+    } catch (error) {
+      const current = await paymentRepository.findByCampaignId(input.campaignId);
+      if (current?.status === EscrowState.HELD) {
+        return this.finalizeAlreadyFunded({ ...input, actor });
+      }
+      throw error;
+    }
 
     if (input.stripePaymentId) {
       await paymentRepository.updateStatus(input.campaignId, EscrowState.HELD, {
@@ -246,15 +292,7 @@ export class PaymentService {
       });
     }
 
-    const afterCreate = await prisma.campaign.findUniqueOrThrow({ where: { id: input.campaignId } });
-    if (afterCreate.status === CampaignState.ESCROW_PENDING) {
-      await campaignService.transition(input.campaignId, CampaignEvent.PAYMENT_SUCCESS, actor);
-    }
-
-    const afterPay = await prisma.campaign.findUniqueOrThrow({ where: { id: input.campaignId } });
-    if (afterPay.status === CampaignState.ESCROW_FUNDED) {
-      await campaignService.transition(input.campaignId, CampaignEvent.START_MATCHING, actor);
-    }
+    await this.advanceCampaignAfterPayment(input.campaignId, actor);
 
     await paymentBridgeService.syncLegacyAfterEscrowFunded(input.campaignId);
 
@@ -272,6 +310,73 @@ export class PaymentService {
       escrow: serializeEscrow(finalEscrow!),
       campaignStatus: finalCampaign.status
     };
+  }
+
+  async syncFundedCampaignForLegacyProject(legacyProjectId: string) {
+    const campaign = await campaignRepository.findByLegacyProjectId(legacyProjectId);
+    if (!campaign) return false;
+
+    const escrow = await paymentRepository.findByCampaignId(campaign.id);
+    if (escrow?.status !== EscrowState.HELD) return false;
+
+    await this.finalizeAlreadyFunded({
+      campaignId: campaign.id,
+      stripePaymentId: escrow.stripePaymentId ?? undefined,
+      stripeSessionId: escrow.stripeSessionId ?? undefined,
+      actor: { id: campaign.brandId, role: "BRAND" }
+    });
+    return true;
+  }
+
+  /**
+   * Reconcile the browser return from Stripe instead of relying on webhook
+   * delivery winning the race against the success redirect.
+   */
+  async reconcileBrandCampaignCheckoutReturn(input: {
+    legacyProjectId: string;
+    clientEmail: string;
+    stripeSessionId: string;
+  }) {
+    this.assertDb();
+    const campaign = await campaignRepository.findByLegacyProjectId(input.legacyProjectId);
+    if (!campaign) throw appError("NOT_FOUND", "Campaign not found");
+
+    const brandUser = await userRepository.findByEmail(input.clientEmail.toLowerCase());
+    if (!brandUser || campaign.brandId !== brandUser.id) {
+      throw appError("FORBIDDEN", "Not allowed for this campaign");
+    }
+
+    const escrow = await paymentRepository.findByCampaignId(campaign.id);
+    if (!escrow || escrow.stripeSessionId !== input.stripeSessionId) {
+      throw appError("FORBIDDEN", "Stripe checkout session does not belong to this campaign");
+    }
+
+    const session = await stripeCheckoutService.retrieveCheckout(input.stripeSessionId);
+    if (
+      session.metadata?.campaign_id !== campaign.id ||
+      session.metadata?.escrow_id !== escrow.id
+    ) {
+      throw appError("FORBIDDEN", "Stripe checkout metadata does not match this campaign");
+    }
+    if (session.payment_status !== "paid") {
+      throw appError("INVALID_TRANSITION", `Stripe checkout is not paid: ${session.payment_status}`);
+    }
+
+    const expectedAmount = Math.round(Number(escrow.amount) * 100);
+    const expectedCurrency = escrow.currency.toLowerCase();
+    if (
+      (session.amount_total ?? 0) !== expectedAmount ||
+      (session.currency ?? "").toLowerCase() !== expectedCurrency
+    ) {
+      throw appError("VALIDATION_ERROR", "Stripe checkout amount or currency mismatch");
+    }
+
+    return this.completePayment({
+      campaignId: campaign.id,
+      stripePaymentId: session.payment_intent?.toString() ?? session.id,
+      stripeSessionId: session.id,
+      actor: { id: brandUser.id, role: brandUser.role }
+    });
   }
 
   async demoPay(campaignId: string, user: AuthUser) {

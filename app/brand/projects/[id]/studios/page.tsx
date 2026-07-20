@@ -24,6 +24,7 @@ import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
 import { orgIdFromEmail } from "@/lib/studioos/creative-performance-store";
 import { tCertificationExperience } from "@/lib/studioos/certification-experience-copy";
 import { isCreatorVerified } from "@/lib/studioos/deposit-guard";
+import { resolveBrandProjectRouteId } from "@/lib/api-client/server-portal-gateway";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -35,6 +36,16 @@ export default async function BrandStudiosPage({ params, searchParams }: Props) 
   const locale = await getAppUiLocale();
   const clientEmail = await getCurrentClientEmail();
   brandPortalRequireSession(clientEmail, locale, `/brand/projects/${id}/studios`);
+  const resolved = await resolveBrandProjectRouteId(id);
+  if (resolved.kind === "redirect_project") {
+    redirect(withLocale(brandPortalRoutes.projectStudios(resolved.projectId), locale));
+  }
+  if (resolved.kind === "redirect_review") {
+    redirect(withLocale(brandPortalRoutes.orderReview(resolved.orderId), locale));
+  }
+  if (resolved.kind === "not_found") {
+    notFound();
+  }
   const project = await getProject(id);
 
   brandPortalRequireOwnedResource(project, clientEmail);

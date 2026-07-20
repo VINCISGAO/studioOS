@@ -30,17 +30,29 @@ export class PaymentBridgeService {
     try {
       const { getOrderForProject, markOrderPaid } = await import("@/lib/order-service");
       const { syncBrandOrderPaid } = await import("@/lib/studioos/brand-checkout-service");
+      const { getProject } = await import("@/lib/project-service");
+      const { publishCampaignIntentInvitations } = await import(
+        "@/lib/studioos/campaign-invitation-notify"
+      );
 
       const order = await getOrderForProject(legacyProjectId);
-      if (!order || order.payment_status !== "unpaid") return;
+      if (order?.payment_status === "unpaid") {
+        const paid = await markOrderPaid(order.id);
+        if (paid) {
+          await syncBrandOrderPaid(paid);
+          logger.info("Legacy order marked paid after Prisma escrow", {
+            service: "PaymentBridgeService",
+            campaignId,
+            orderId: order.id
+          });
+        }
+      }
 
-      const paid = await markOrderPaid(order.id);
-      if (paid) {
-        await syncBrandOrderPaid(paid);
-        logger.info("Legacy order marked paid after Prisma escrow", {
-          service: "PaymentBridgeService",
-          campaignId,
-          orderId: order.id
+      const project = await getProject(legacyProjectId);
+      if (project) {
+        await publishCampaignIntentInvitations({
+          project,
+          locale: order?.client_locale === "zh" ? "zh" : "en"
         });
       }
     } catch (error) {

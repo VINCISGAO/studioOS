@@ -30,6 +30,7 @@ export const brandPortalRoutes = {
   team: "/brand/team",
   project: (id: string) => `/brand/projects/${id}`,
   projectReview: (id: string) => `/brand/projects/${id}/review`,
+  orderReview: (id: string) => `/brand/orders/${id}/review`,
   projectCheckout: (id: string) => `/brand/projects/${id}/checkout`,
   projectStudios: (id: string) => `/brand/projects/${id}/studios`
 } as const;

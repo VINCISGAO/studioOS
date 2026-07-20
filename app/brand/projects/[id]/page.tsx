@@ -15,6 +15,8 @@ import { getAppUiLocale } from "@/lib/app-language";
 import { isAppError } from "@/lib/core/errors";
 import { type SearchParams, withLocale } from "@/lib/i18n";
 import { requireBrandPortalClientEmail } from "@/features/auth/session-context";
+import { paymentService } from "@/features/payment/payment.service";
+import { isPrismaEscrowFundedForProject } from "@/lib/studioos/brand-payment-funding";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
 
 export default async function BrandProjectHubPage({
@@ -22,19 +24,42 @@ export default async function BrandProjectHubPage({
   searchParams
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<SearchParams & { matching?: string; tab?: string }>;
+  searchParams: Promise<SearchParams & { matching?: string; tab?: string; checkout_session_id?: string }>;
 }) {
   const [{ id }, query] = await Promise.all([params, searchParams]);
   const locale = await getAppUiLocale();
   const clientEmail = await requireBrandPortalClientEmail().catch(() => null);
   brandPortalRequireSession(clientEmail, locale, `/brand/projects/${id}`);
 
+  const checkoutSessionId =
+    typeof query.checkout_session_id === "string" ? query.checkout_session_id : null;
+  if (checkoutSessionId) {
+    try {
+      await paymentService.reconcileBrandCampaignCheckoutReturn({
+        legacyProjectId: id,
+        clientEmail,
+        stripeSessionId: checkoutSessionId
+      });
+    } catch {
+      if (await isPrismaEscrowFundedForProject(id)) {
+        redirect(withLocale(`${brandPortalRoutes.project(id)}?tab=match&matching=1`, locale));
+      }
+      redirect(
+        withLocale(
+          `${brandPortalRoutes.projectCheckout(id)}?error=payment-verification`,
+          locale
+        )
+      );
+    }
+    redirect(withLocale(`${brandPortalRoutes.project(id)}?tab=match&matching=1`, locale));
+  }
+
   const resolved = await resolveBrandProjectRouteId(id);
   if (resolved.kind === "redirect_project") {
     redirect(withLocale(brandPortalRoutes.project(resolved.projectId), locale));
   }
   if (resolved.kind === "redirect_review") {
-    redirect(withLocale(brandPortalRoutes.projectReview(resolved.orderId), locale));
+    redirect(withLocale(brandPortalRoutes.orderReview(resolved.orderId), locale));
   }
   if (resolved.kind === "not_found") {
     notFound();

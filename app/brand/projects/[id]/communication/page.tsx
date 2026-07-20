@@ -1,10 +1,17 @@
 import { getAppUiLocale } from "@/lib/app-language";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { CommunicationChatPanel } from "@/components/studioos/communication/communication-chat-panel";
 import { getSessionUser } from "@/features/auth/session.service";
+import { requireBrandPortalClientEmail } from "@/features/auth/session-context";
 import { platformLocalizationService } from "@/features/communication/platform-localization.service";
 import { type SearchParams, withLocale } from "@/lib/i18n";
 import { getProject } from "@/lib/project-service";
+import { resolveBrandProjectRouteId } from "@/lib/api-client/server-portal-gateway";
+import {
+  brandPortalRequireOwnedResource,
+  brandPortalRequireSession
+} from "@/lib/studioos/brand-portal-page-guards";
+import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
 
 export const dynamic = "force-dynamic";
 
@@ -17,13 +24,29 @@ export default async function BrandProjectCommunicationPage({
 }) {
   const [{ id }, query] = await Promise.all([params, searchParams]);
   const locale = await getAppUiLocale();
+  const clientEmail = await requireBrandPortalClientEmail().catch(() => null);
+  brandPortalRequireSession(clientEmail, locale, `/brand/projects/${id}/communication`);
+
+  const resolved = await resolveBrandProjectRouteId(id);
+  if (resolved.kind === "redirect_project") {
+    redirect(
+      withLocale(`${brandPortalRoutes.project(resolved.projectId)}/communication`, locale)
+    );
+  }
+  if (resolved.kind === "redirect_review") {
+    redirect(withLocale(brandPortalRoutes.orderReview(resolved.orderId), locale));
+  }
+  if (resolved.kind === "not_found") {
+    notFound();
+  }
+
   const sessionUser = await getSessionUser();
   if (!sessionUser) {
     redirect(withLocale("/login?role=brand", locale));
   }
 
   const project = await getProject(id);
-  if (!project) redirect(withLocale("/brand", locale));
+  brandPortalRequireOwnedResource(project, clientEmail);
 
   const prismaCampaignId = await platformLocalizationService.resolveCampaignIdFromLegacyProject(id);
   const localizedBrief = prismaCampaignId
