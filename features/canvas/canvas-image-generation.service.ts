@@ -50,9 +50,11 @@ export class CanvasImageGenerationService {
   }
 
   async processJob(jobId: string, ownerId: string) {
+    const claimed = await canvasRepository.claimGenerationJob(jobId, ownerId);
+    if (claimed.count === 0) return;
+
     const job = await canvasRepository.findGenerationJob(jobId, ownerId);
     if (!job || job.type !== "IMAGE") return;
-    if (job.status !== "QUEUED" && job.status !== "SUBMITTING") return;
 
     const user = await authService.getUserById(ownerId);
     if (!user) {
@@ -65,12 +67,6 @@ export class CanvasImageGenerationService {
       });
       return;
     }
-
-    await canvasRepository.updateGenerationJob(jobId, {
-      status: "PROCESSING",
-      progress: 20,
-      startedAt: new Date()
-    });
 
     if (!hasOpenAI()) {
       await canvasRepository.updateGenerationJob(jobId, {

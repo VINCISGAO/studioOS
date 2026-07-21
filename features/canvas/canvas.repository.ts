@@ -396,6 +396,22 @@ export const canvasRepository = {
     return prisma.generationJob.findFirst({ where: { id: jobId, ownerId } });
   },
 
+  claimGenerationJob(jobId: string, ownerId: string) {
+    return prisma.generationJob.updateMany({
+      where: {
+        id: jobId,
+        ownerId,
+        type: "IMAGE",
+        status: { in: ["QUEUED", "SUBMITTING"] }
+      },
+      data: {
+        status: "PROCESSING",
+        progress: 20,
+        startedAt: new Date()
+      }
+    });
+  },
+
   listGenerationJobs(projectId: string, ownerId: string, since: Date) {
     return prisma.generationJob.findMany({
       where: { creativeProjectId: projectId, ownerId, createdAt: { gte: since } },
