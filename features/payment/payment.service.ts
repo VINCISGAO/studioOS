@@ -451,8 +451,11 @@ export class PaymentService {
       campaign.status === CampaignState.ESCROW_FUNDED ||
       campaign.status === CampaignState.INVITATION_SENT
     ) {
-      await this.syncFundedCampaignForLegacyProject(input.legacyProjectId);
-      return { ok: true, mode: "demo", alreadyFunded: true };
+      const reconciledEscrow = await paymentRepository.findByCampaignId(campaign.id);
+      if (reconciledEscrow && CAMPAIGN_ESCROW_FUNDED_STATES.has(reconciledEscrow.status)) {
+        await this.syncFundedCampaignForLegacyProject(input.legacyProjectId);
+        return { ok: true, mode: "demo", alreadyFunded: true };
+      }
     }
 
     try {
