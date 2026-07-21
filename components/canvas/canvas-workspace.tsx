@@ -13,7 +13,6 @@ import {
 import { FloatingToolbar } from "@/components/canvas/floating-toolbar";
 import { InfiniteCanvas } from "@/components/canvas/infinite-canvas";
 import { JobStatusPanel } from "@/components/canvas/job-status-panel";
-import { SelectionToolbar } from "@/components/canvas/selection-toolbar";
 import { useCanvasMediaActions } from "@/components/canvas/hooks/use-canvas-media-actions";
 import type { CanvasSnapshot, VincisCanvasNode } from "@/lib/canvas/types";
 import type { Locale } from "@/lib/i18n";
@@ -30,7 +29,7 @@ import { CANVAS_SEND_TO_CHAT_EVENT } from "@/lib/canvas/canvas-chat-bridge";
 import {
   defaultPanelAnchor,
   nextVideoLayoutPosition,
-  panelAnchorAboveNode,
+  panelAnchorBelowNode,
   viewportCenterFlowPoint,
   type ViewportRect
 } from "@/lib/canvas/viewport-anchor";
@@ -86,7 +85,7 @@ function CanvasWorkspaceInner({
     });
     addNode(layout.node);
     setVideoSession({ slotNodeId: layout.slotNodeId });
-    setPanelAnchor(panelAnchorAboveNode(layout.node, state.viewport, rect));
+    setPanelAnchor(panelAnchorBelowNode(layout.node, state.viewport, rect));
     setPanel("video");
   }, [addNode, locale]);
 
@@ -94,7 +93,7 @@ function CanvasWorkspaceInner({
     const rect = readCanvasRect(canvasAreaRef.current);
     const state = useCanvasStore.getState();
     setVideoSession({ slotNodeId: node.id });
-    setPanelAnchor(panelAnchorAboveNode(node, state.viewport, rect));
+    setPanelAnchor(panelAnchorBelowNode(node, state.viewport, rect));
     setPanel("video");
   }, []);
 
@@ -102,7 +101,7 @@ function CanvasWorkspaceInner({
     if (!panel || panel !== "video" || !videoSession) return;
     const node = nodes.find((item) => item.id === videoSession.slotNodeId);
     if (!node) return;
-    setPanelAnchor(panelAnchorAboveNode(node, viewport, readCanvasRect(canvasAreaRef.current)));
+    setPanelAnchor(panelAnchorBelowNode(node, viewport, readCanvasRect(canvasAreaRef.current)));
   }, [panel, videoSession, nodes, viewport]);
 
   useEffect(() => {
@@ -219,17 +218,6 @@ function CanvasWorkspaceInner({
             locale={locale}
             tokenBalance={snapshot.projectContext.tokenBalance}
           />
-          <SelectionToolbar
-            onRegenerate={regenerate}
-            onImageToVideo={(nodeId) => {
-              const node = useCanvasStore.getState().nodes.find((item) => item.id === nodeId);
-              if (node?.data.prompt) generate("video", { prompt: `Animate: ${node.data.prompt}` });
-            }}
-            onExtendVideo={(nodeId) => {
-              const node = useCanvasStore.getState().nodes.find((item) => item.id === nodeId);
-              if (node?.data.prompt) generate("video", { prompt: `Extend: ${node.data.prompt}` });
-            }}
-          />
           <FloatingToolbar onGenerate={openGenerationPanel} />
           <JobStatusPanel />
           {panel && panelAnchor ? (
@@ -239,6 +227,7 @@ function CanvasWorkspaceInner({
               projectId={snapshot.projectId}
               busy={generationPending}
               anchor={panelAnchor}
+              anchorPlacement={videoSession ? "below" : "above"}
               onClose={closeGenerationPanel}
               onSubmit={(input) => {
                 generate(input.kind, {

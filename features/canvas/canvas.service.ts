@@ -6,7 +6,11 @@ import {
   type CanvasCampaignRecord,
   type CanvasProjectRecord
 } from "@/features/canvas/canvas.repository";
+import { canvasImageGenerationService } from "@/features/canvas/canvas-image-generation.service";
 import { appError } from "@/lib/core/errors";
+import { hasOpenAI } from "@/lib/core/config/ai";
+import { isObjectStorageConfigured } from "@/lib/core/config/video";
+import { canPersistLocalDataStore } from "@/lib/runtime-flags";
 import type {
   CanvasNodeData,
   CanvasSnapshot,
@@ -40,6 +44,21 @@ type ParsedEdge = {
 function assertCreator(user: AuthUserDto) {
   if (user.role !== "CREATOR" && !user.hasCreatorProfile) {
     throw appError("FORBIDDEN", "Creator access required");
+  }
+}
+
+function assertImageGenerationInfrastructure() {
+  if (!hasOpenAI()) {
+    throw appError(
+      "SYSTEM_ERROR",
+      "OPENAI_API_KEY is not configured. Set it in Vercel environment variables and redeploy."
+    );
+  }
+  if (!isObjectStorageConfigured() && !canPersistLocalDataStore()) {
+    throw appError(
+      "SYSTEM_ERROR",
+      "Object storage (R2) is not configured. Set R2_ENDPOINT, R2_ACCESS_KEY, R2_SECRET_KEY, and R2_BUCKET in production."
+    );
   }
 }
 
@@ -332,6 +351,10 @@ export class CanvasService {
     },
     user: AuthUserDto
   ) {
+    if (input.type === "IMAGE") {
+      assertImageGenerationInfrastructure();
+    }
+
     const project = await this.resolveProject(input.projectId, user);
     const { id: canvasId } = await canvasRepository.ensureCanvas(
       project.id,
@@ -339,6 +362,8 @@ export class CanvasService {
       project.campaignId
     );
     const estimatedCredits = input.type === "IMAGE" ? 4 : input.type === "VIDEO" ? 20 : 8;
+    const provider =
+      input.type === "IMAGE" && hasOpenAI() ? "openai" : "vincis-mock";
     const job = await canvasRepository.createGenerationJob({
       creativeProjectId: project.id,
       campaignId: project.campaignId,
@@ -346,6 +371,7 @@ export class CanvasService {
       ownerId: user.id,
       nodeId: input.nodeId,
       type: input.type,
+      provider,
       model: input.model,
       prompt: input.prompt,
       payload: input.parameters as Prisma.InputJsonValue,
@@ -353,10 +379,14 @@ export class CanvasService {
       estimatedCredits
     });
 
+    if (input.type === "IMAGE" && provider === "openai" && job.status === "QUEUED") {
+      canvasImageGenerationService.scheduleJob(job.id, user.id);
+    }
+
     if (project.campaignId) {
       await activityService.write(
         project.campaignId,
-        "canvas.mock_generation_requested",
+        input.type === "IMAGE" ? "canvas.image_generation_requested" : "canvas.mock_generation_requested",
         { userId: user.id, email: user.email, role: "creator" },
         { job_id: job.id, node_id: input.nodeId, type: input.type }
       );
@@ -370,20 +400,22 @@ export class CanvasService {
     if (!job) throw appError("NOT_FOUND", "Generation job not found");
 
     const elapsed = Date.now() - job.createdAt.getTime();
-    if (job.status === "QUEUED" && elapsed >= 500) {
-      job = await canvasRepository.updateGenerationJob(job.id, {
-        status: "PROCESSING",
-        progress: 45,
-        startedAt: new Date()
-      });
-    }
-    if ((job.status === "QUEUED" || job.status === "PROCESSING") && elapsed >= 1800) {
-      job = await canvasRepository.updateGenerationJob(job.id, {
-        status: "SUCCEEDED",
-        progress: 100,
-        actualCredits: 0,
-        completedAt: new Date()
-      });
+    if (job.provider === "vincis-mock") {
+      if (job.status === "QUEUED" && elapsed >= 500) {
+        job = await canvasRepository.updateGenerationJob(job.id, {
+          status: "PROCESSING",
+          progress: 45,
+          startedAt: new Date()
+        });
+      }
+      if ((job.status === "QUEUED" || job.status === "PROCESSING") && elapsed >= 1800) {
+        job = await canvasRepository.updateGenerationJob(job.id, {
+          status: "SUCCEEDED",
+          progress: 100,
+          actualCredits: 0,
+          completedAt: new Date()
+        });
+      }
     }
     return serializeJob(job);
   }

@@ -39,6 +39,27 @@ export function clampPanelAnchor(
   };
 }
 
+export function clampPanelAnchorBelow(
+  anchor: { x: number; y: number },
+  rect: ViewportRect,
+  panelWidth = GENERATION_PANEL_WIDTH,
+  panelHeight = GENERATION_PANEL_HEIGHT
+) {
+  const margin = 16;
+  const half = panelWidth / 2;
+  return {
+    x: Math.min(Math.max(anchor.x, margin + half), rect.width - margin - half),
+    y: Math.min(Math.max(anchor.y, margin), rect.height - margin - panelHeight)
+  };
+}
+
+function resolveNodeDimensions(node: Pick<VincisCanvasNode, "width" | "height" | "measured">) {
+  return {
+    width: node.width ?? node.measured?.width ?? VIDEO_CARD.width,
+    height: node.height ?? node.measured?.height ?? VIDEO_CARD.height
+  };
+}
+
 export function nextVideoLayoutPosition(
   viewport: Viewport,
   rect: ViewportRect,
@@ -52,11 +73,11 @@ export function nextVideoLayoutPosition(
 }
 
 export function panelAnchorAboveNode(
-  node: Pick<VincisCanvasNode, "position" | "width" | "height">,
+  node: Pick<VincisCanvasNode, "position" | "width" | "height" | "measured">,
   viewport: Viewport,
   rect: ViewportRect
 ) {
-  const width = node.width ?? VIDEO_CARD.width;
+  const { width } = resolveNodeDimensions(node);
   const flowCenter = {
     x: node.position.x + width / 2,
     y: node.position.y
@@ -64,6 +85,25 @@ export function panelAnchorAboveNode(
   const screen = flowToScreenPoint(flowCenter, viewport);
   return clampPanelAnchor(
     { x: screen.x, y: screen.y - 12 },
+    rect,
+    GENERATION_PANEL_WIDTH,
+    GENERATION_PANEL_HEIGHT + 40
+  );
+}
+
+export function panelAnchorBelowNode(
+  node: Pick<VincisCanvasNode, "position" | "width" | "height" | "measured">,
+  viewport: Viewport,
+  rect: ViewportRect
+) {
+  const { width, height } = resolveNodeDimensions(node);
+  const flowAnchor = {
+    x: node.position.x + width / 2,
+    y: node.position.y + height
+  };
+  const screen = flowToScreenPoint(flowAnchor, viewport);
+  return clampPanelAnchorBelow(
+    { x: screen.x, y: screen.y + 12 },
     rect,
     GENERATION_PANEL_WIDTH,
     GENERATION_PANEL_HEIGHT + 40

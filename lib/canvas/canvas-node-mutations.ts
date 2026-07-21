@@ -296,6 +296,9 @@ export function applyGenerationJobEvent(nodes: VincisCanvasNode[], event: Genera
                     ? "ready"
                     : "loading",
               assetId: event.outputAssetId ?? node.data.assetId,
+              url: event.outputAssetId
+                ? `/api/canvas/assets/${event.outputAssetId}/preview`
+                : node.data.url,
               error: event.errorMessage ?? undefined
             }
           }

@@ -90,8 +90,8 @@ export function GenerationKindSelector({
               className={cn(
                 "flex h-14 w-14 flex-col items-center justify-center gap-1 rounded-xl border transition",
                 active
-                  ? "border-zinc-900 bg-zinc-50 text-zinc-900"
-                  : "border-zinc-200 bg-zinc-50 text-zinc-500 hover:border-zinc-300"
+                  ? "border-zinc-300 bg-white text-zinc-900 shadow-sm"
+                  : "border-zinc-200/80 bg-zinc-50 text-zinc-500 hover:border-zinc-300 hover:bg-white"
               )}
             >
               <Icon className="h-4 w-4" />

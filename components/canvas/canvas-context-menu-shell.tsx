@@ -1,6 +1,10 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  clampContextMenuPosition,
+  CONTEXT_MENU_MAX_HEIGHT
+} from "@/lib/canvas/context-menu-position";
 import { cn } from "@/lib/utils";
 
 export type CanvasContextMenuItem = {
@@ -29,18 +33,31 @@ export function CanvasContextMenuShell({
   onClose: () => void;
 }) {
   const menuRef = useRef<HTMLDivElement>(null);
+  const [position, setPosition] = useState({ left: x, top: y });
+
+  useLayoutEffect(() => {
+    setPosition({ left: x, top: y });
+    const menu = menuRef.current;
+    if (!menu) return;
+    const rect = menu.getBoundingClientRect();
+    setPosition(clampContextMenuPosition(x, y, { width: rect.width, height: rect.height }));
+  }, [x, y, sections]);
 
   useEffect(() => {
     const onPointerDown = (event: MouseEvent) => {
+      if (event.button === 2) return;
       if (!menuRef.current?.contains(event.target as Node)) onClose();
     };
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose();
     };
-    window.addEventListener("mousedown", onPointerDown);
-    window.addEventListener("keydown", onKeyDown);
+    const timer = window.setTimeout(() => {
+      window.addEventListener("mousedown", onPointerDown, true);
+      window.addEventListener("keydown", onKeyDown);
+    }, 0);
     return () => {
-      window.removeEventListener("mousedown", onPointerDown);
+      window.clearTimeout(timer);
+      window.removeEventListener("mousedown", onPointerDown, true);
       window.removeEventListener("keydown", onKeyDown);
     };
   }, [onClose]);
@@ -48,8 +65,12 @@ export function CanvasContextMenuShell({
   return (
     <div
       ref={menuRef}
-      className="fixed z-[100] min-w-[240px] overflow-hidden rounded-xl border border-zinc-200 bg-white py-1.5 shadow-xl"
-      style={{ left: x, top: y }}
+      className="fixed z-[100] min-w-[240px] overflow-y-auto overscroll-contain rounded-xl border border-zinc-200 bg-white py-1.5 shadow-xl"
+      style={{
+        left: position.left,
+        top: position.top,
+        maxHeight: CONTEXT_MENU_MAX_HEIGHT
+      }}
       role="menu"
     >
       {sections.map((section, sectionIndex) => (

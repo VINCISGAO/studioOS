@@ -143,6 +143,10 @@ function InfiniteCanvasFlow({
     (event: MouseEvent | React.MouseEvent, node: VincisCanvasNode) => {
       if (!isCanvasMediaNode(node)) return;
       event.preventDefault();
+      event.stopPropagation();
+      if ("nativeEvent" in event) {
+        event.nativeEvent.stopPropagation();
+      }
       setContextMenu(null);
       const state = useCanvasStore.getState();
       if (!state.selectedNodeIds.includes(node.id)) {

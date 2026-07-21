@@ -17,7 +17,13 @@ export async function POST(request: Request) {
         parameters: {
           aspectRatio: input.aspectRatio,
           resolution: input.resolution,
-          outputs: input.outputs
+          outputs: input.outputs,
+          quality: input.quality,
+          width: input.width,
+          height: input.height,
+          referenceAssetId: input.referenceAssetId,
+          referenceUrl: input.referenceUrl,
+          referenceNodeId: input.referenceNodeId
         }
       },
       user

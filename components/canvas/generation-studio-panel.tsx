@@ -52,6 +52,7 @@ export function GenerationStudioPanel({
   projectId,
   busy,
   anchor,
+  anchorPlacement = "above",
   onClose,
   onSubmit
 }: {
@@ -60,6 +61,7 @@ export function GenerationStudioPanel({
   projectId: string;
   busy: boolean;
   anchor: { x: number; y: number };
+  anchorPlacement?: "above" | "below";
   onClose: () => void;
   onSubmit: (input: GenerationSubmitInput) => void;
 }) {
@@ -127,7 +129,7 @@ export function GenerationStudioPanel({
         style={{
           left: anchor.x,
           top: anchor.y,
-          transform: "translate(-50%, -100%)"
+          transform: anchorPlacement === "below" ? "translate(-50%, 0)" : "translate(-50%, -100%)"
         }}
       >
         <div
@@ -155,7 +157,7 @@ export function GenerationStudioPanel({
                   references.openReferenceCanvasPicker(referenceSlot);
                 }}
               />
-              <div className="px-3 pt-2">
+              <div className="px-4 pt-3">
                 <GenerationKindSelector
                   selectedSlot={referenceSlot}
                   locale={locale}
@@ -181,7 +183,7 @@ export function GenerationStudioPanel({
 
           <div
             className={cn(
-              kind === "music" ? "px-4 pb-4 pt-4" : kind === "image" ? "px-3 pb-1 pt-3" : "px-3 pb-1 pt-2"
+              kind === "music" ? "px-4 pb-4 pt-4" : kind === "image" ? "px-3 pb-1 pt-3" : "px-4 pb-2 pt-3"
             )}
           >
             {kind === "image" ? (
@@ -224,7 +226,7 @@ export function GenerationStudioPanel({
                 rows={2}
                 maxLength={4000}
                 placeholder={t.placeholder}
-                className="min-h-[56px] w-full resize-none bg-transparent text-sm leading-6 text-zinc-900 outline-none placeholder:text-zinc-400"
+                className="min-h-[72px] w-full resize-none bg-transparent text-sm leading-6 text-zinc-900 outline-none placeholder:text-zinc-400"
               />
             )}
           </div>

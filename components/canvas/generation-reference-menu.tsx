@@ -62,7 +62,7 @@ export function GenerationReferenceMenu({
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        className="inline-flex max-w-[132px] items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-1.5 py-1 text-[11px] text-zinc-700 hover:bg-zinc-50"
+        className="inline-flex h-8 max-w-[132px] shrink-0 items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-1.5 text-[11px] text-zinc-700 hover:bg-zinc-50"
       >
         <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-zinc-50 text-zinc-600">
           <current.Icon className="h-3.5 w-3.5" />

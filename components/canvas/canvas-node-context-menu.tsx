@@ -76,136 +76,168 @@ export function CanvasNodeContextMenu({
     ? Boolean(resolveCanvasNodeChatReference(primaryNode.data))
     : false;
 
-  const sections: CanvasContextMenuItem[][] = [
-    [
-      { id: "copy", label: "复制", shortcut: `${mod}C`, disabled: !hasSelection, onSelect: copySelected },
-      { id: "cut", label: "剪切", shortcut: `${mod}X`, disabled: !hasSelection, onSelect: cutSelected },
-      {
-        id: "paste",
-        label: "粘贴",
-        shortcut: `${mod}V`,
-        disabled: !canPaste,
-        onSelect: () => pasteAt(flowPosition)
-      },
-      {
-        id: "duplicate",
-        label: "创建副本",
-        shortcut: `${mod}D`,
-        disabled: !hasSelection,
-        onSelect: duplicateSelected
-      }
-    ],
-    [
-      {
-        id: "forward",
-        label: "上移一层",
-        shortcut: `${mod}]`,
-        disabled: !hasSelection,
-        onSelect: bringForward
-      },
-      {
-        id: "backward",
-        label: "下移一层",
-        shortcut: `${mod}[`,
-        disabled: !hasSelection,
-        onSelect: sendBackward
-      },
-      {
-        id: "front",
-        label: "移动至顶层",
-        shortcut: "]",
-        disabled: !hasSelection,
-        onSelect: bringToFront
-      },
-      {
-        id: "back",
-        label: "移动至底层",
-        shortcut: "[",
-        disabled: !hasSelection,
-        onSelect: sendToBack
-      }
-    ],
-    [
-      {
-        id: "send-chat",
-        label: "发送至对话",
-        disabled: !canSendToChat,
-        onSelect: () => {
-          if (!primaryNode) return;
-          const payload = resolveCanvasNodeChatReference(primaryNode.data);
-          if (payload) dispatchCanvasSendToChat(payload);
+  const sections = useMemo<CanvasContextMenuItem[][]>(
+    () => [
+      [
+        { id: "copy", label: "复制", shortcut: `${mod}C`, disabled: !hasSelection, onSelect: copySelected },
+        { id: "cut", label: "剪切", shortcut: `${mod}X`, disabled: !hasSelection, onSelect: cutSelected },
+        {
+          id: "paste",
+          label: "粘贴",
+          shortcut: `${mod}V`,
+          disabled: !canPaste,
+          onSelect: () => pasteAt(flowPosition)
+        },
+        {
+          id: "duplicate",
+          label: "创建副本",
+          shortcut: `${mod}D`,
+          disabled: !hasSelection,
+          onSelect: duplicateSelected
         }
-      }
-    ],
-    [
-      {
-        id: "group",
-        label: "创建编组",
-        shortcut: `${mod}G`,
-        disabled: !canGroup,
-        onSelect: groupSelectedInFrame
-      },
-      {
-        id: "ungroup",
-        label: "解除编组",
-        shortcut: `${mod}⇧G`,
-        disabled: !canUngroup,
-        onSelect: ungroupSelected
-      },
-      {
-        id: "auto-layout",
-        label: "自动布局",
-        shortcut: "⇧A",
-        disabled: !canAutoLayout,
-        onSelect: autoLayoutSelected
-      },
-      {
-        id: "merge",
-        label: "合并图层",
-        shortcut: `${mod}E`,
-        disabled: !canMerge,
-        onSelect: mergeSelectedLayers
-      }
-    ],
-    [
-      {
-        id: "hidden",
-        label: allHidden ? "显示" : "显示/隐藏",
-        shortcut: `${mod}⇧H`,
-        disabled: !hasSelection,
-        onSelect: toggleSelectedHidden
-      },
-      {
-        id: "lock",
-        label: allLocked ? "解锁" : "锁定/解锁",
-        shortcut: `${mod}⇧L`,
-        disabled: !hasSelection,
-        onSelect: toggleSelectedLocked
-      }
-    ],
-    [
-      {
-        id: "export",
-        label: "导出",
-        disabled: !canExport,
-        onSelect: () => {
-          if (!primaryNode) return;
-          const href = resolveCanvasNodeDownloadHref(primaryNode.data);
-          if (href) window.open(href, "_blank", "noopener,noreferrer");
+      ],
+      [
+        {
+          id: "forward",
+          label: "上移一层",
+          shortcut: `${mod}]`,
+          disabled: !hasSelection,
+          onSelect: bringForward
+        },
+        {
+          id: "backward",
+          label: "下移一层",
+          shortcut: `${mod}[`,
+          disabled: !hasSelection,
+          onSelect: sendBackward
+        },
+        {
+          id: "front",
+          label: "移动至顶层",
+          shortcut: "]",
+          disabled: !hasSelection,
+          onSelect: bringToFront
+        },
+        {
+          id: "back",
+          label: "移动至底层",
+          shortcut: "[",
+          disabled: !hasSelection,
+          onSelect: sendToBack
         }
-      }
+      ],
+      [
+        {
+          id: "send-chat",
+          label: "发送至对话",
+          disabled: !canSendToChat,
+          onSelect: () => {
+            if (!primaryNode) return;
+            const payload = resolveCanvasNodeChatReference(primaryNode.data);
+            if (payload) dispatchCanvasSendToChat(payload);
+          }
+        }
+      ],
+      [
+        {
+          id: "group",
+          label: "创建编组",
+          shortcut: `${mod}G`,
+          disabled: !canGroup,
+          onSelect: groupSelectedInFrame
+        },
+        {
+          id: "ungroup",
+          label: "解除编组",
+          shortcut: `${mod}⇧G`,
+          disabled: !canUngroup,
+          onSelect: ungroupSelected
+        },
+        {
+          id: "auto-layout",
+          label: "自动布局",
+          shortcut: "⇧A",
+          disabled: !canAutoLayout,
+          onSelect: autoLayoutSelected
+        },
+        {
+          id: "merge",
+          label: "合并图层",
+          shortcut: `${mod}E`,
+          disabled: !canMerge,
+          onSelect: mergeSelectedLayers
+        }
+      ],
+      [
+        {
+          id: "hidden",
+          label: allHidden ? "显示" : "显示/隐藏",
+          shortcut: `${mod}⇧H`,
+          disabled: !hasSelection,
+          onSelect: toggleSelectedHidden
+        },
+        {
+          id: "lock",
+          label: allLocked ? "解锁" : "锁定/解锁",
+          shortcut: `${mod}⇧L`,
+          disabled: !hasSelection,
+          onSelect: toggleSelectedLocked
+        }
+      ],
+      [
+        {
+          id: "export",
+          label: "导出",
+          disabled: !canExport,
+          onSelect: () => {
+            if (!primaryNode) return;
+            const href = resolveCanvasNodeDownloadHref(primaryNode.data);
+            if (href) window.open(href, "_blank", "noopener,noreferrer");
+          }
+        }
+      ],
+      [
+        {
+          id: "delete",
+          label: "删除",
+          shortcut: "⌫",
+          destructive: true,
+          disabled: !hasSelection,
+          onSelect: deleteSelected
+        }
+      ]
     ],
     [
-      {
-        id: "delete",
-        label: "删除",
-        shortcut: "⌫",
-        destructive: true,
-        disabled: !hasSelection,
-        onSelect: deleteSelected
-      }
+      allHidden,
+      allLocked,
+      bringForward,
+      bringToFront,
+      canAutoLayout,
+      canExport,
+      canGroup,
+      canMerge,
+      canPaste,
+      canSendToChat,
+      canUngroup,
+      copySelected,
+      cutSelected,
+      deleteSelected,
+      duplicateSelected,
+      flowPosition,
+      groupSelectedInFrame,
+      hasSelection,
+      mergeSelectedLayers,
+      mod,
+      pasteAt,
+      primaryNode,
+      sendBackward,
+      sendToBack,
+      toggleSelectedHidden,
+      toggleSelectedLocked,
+      ungroupSelected,
+      autoLayoutSelected
     ]
-  ];
+  );
 
   if (!primaryNode && !multiSelected) return null;
 

@@ -93,7 +93,8 @@ export function GenerationStudioToolbar({
   }
 
   return (
-    <div className="flex items-center gap-1.5 overflow-visible border-t border-zinc-100 px-2.5 py-2">
+    <div className="flex items-center gap-2 overflow-visible border-t border-zinc-100 px-3 py-2.5">
+      <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-visible">
       {isVideo ? (
         <GenerationReferenceMenu
           locale={locale}
@@ -103,21 +104,21 @@ export function GenerationStudioToolbar({
       ) : null}
 
       {!isMusic ? (
-      <div className="relative overflow-visible">
+      <div className="relative shrink-0 overflow-visible">
         <button
           type="button"
           onClick={() => (isVideo || isImage) && toggleMenu("settings")}
           disabled={!isVideo && !isImage}
           className={cn(
-            "inline-flex items-center gap-1 rounded-full border px-2.5 py-1.5 text-[11px] text-zinc-600 transition hover:bg-zinc-50 disabled:opacity-40",
+            "inline-flex h-8 shrink-0 items-center gap-1 whitespace-nowrap rounded-full border px-2.5 text-[11px] text-zinc-600 transition hover:bg-zinc-50 disabled:opacity-40",
             isImage ? "border-transparent bg-transparent px-0 hover:bg-transparent" : "border-zinc-200"
           )}
         >
           {settingsLabel}
           {settingsOpen && (isImage || isVideo) ? (
-            <ChevronUp className="h-3.5 w-3.5 text-zinc-400" />
+            <ChevronUp className="h-3.5 w-3.5 shrink-0 text-zinc-400" />
           ) : (
-            <ChevronDown className="h-3.5 w-3.5 text-zinc-400" />
+            <ChevronDown className="h-3.5 w-3.5 shrink-0 text-zinc-400" />
           )}
         </button>
         {settingsOpen && isVideo ? (
@@ -139,12 +140,12 @@ export function GenerationStudioToolbar({
       ) : null}
 
       {isVideo ? (
-        <div className="relative">
+        <div className="relative shrink-0">
           <button
             type="button"
             onClick={() => toggleMenu("camera")}
             className={cn(
-              "inline-flex h-8 w-8 items-center justify-center rounded-full border transition",
+              "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition",
               cameraActive
                 ? "border-zinc-900 bg-zinc-900 text-white"
                 : "border-zinc-200 text-zinc-500 hover:bg-zinc-50"
@@ -164,15 +165,16 @@ export function GenerationStudioToolbar({
           ) : null}
         </div>
       ) : null}
+      </div>
 
-      <div className="ml-auto flex shrink-0 items-center gap-1.5">
+      <div className="flex shrink-0 items-center gap-1.5">
         {!isMusic ? (
         <div className="relative">
           <button
             type="button"
             onClick={() => (isVideo || isImage) && toggleMenu("model")}
             disabled={!isVideo && !isImage}
-            className="inline-flex max-w-[108px] items-center gap-1.5 rounded-full border border-zinc-200 px-2.5 py-1.5 text-[11px] text-zinc-700 hover:bg-zinc-50 disabled:opacity-40"
+            className="inline-flex h-8 max-w-[108px] shrink-0 items-center gap-1.5 rounded-full border border-zinc-200 px-2.5 text-[11px] text-zinc-700 hover:bg-zinc-50 disabled:opacity-40"
           >
             {isImage ? (
               <GenerationGptLogo className="h-4 w-4 shrink-0 text-zinc-900" />
@@ -217,12 +219,7 @@ export function GenerationStudioToolbar({
           type="button"
           disabled={submitDisabled}
           onClick={onSubmit}
-          className={cn(
-            "inline-flex items-center gap-1 rounded-full px-2.5 py-1.5 text-xs font-medium disabled:opacity-40",
-            isImage
-              ? "border border-zinc-200 bg-zinc-100 text-zinc-700 hover:bg-zinc-200/80"
-              : "bg-zinc-800 text-white hover:bg-zinc-900"
-          )}
+          className="inline-flex h-8 shrink-0 items-center gap-1 rounded-full border border-zinc-200 bg-zinc-100 px-2.5 text-xs font-medium text-zinc-700 hover:bg-zinc-200/80 disabled:opacity-40"
         >
           {generating ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : <Zap className="h-3.5 w-3.5" />}
           {credits}

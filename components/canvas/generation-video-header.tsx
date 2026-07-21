@@ -26,8 +26,8 @@ export function GenerationVideoHeader({
   const t = copy[locale];
 
   return (
-    <div className="flex items-start justify-between gap-2 px-3 pt-3">
-      <p className="max-w-[72%] text-[11px] leading-4 text-zinc-400">{t.hint}</p>
+    <div className="flex items-center justify-between gap-3 px-4 pb-1 pt-3">
+      <p className="min-w-0 flex-1 text-[11px] leading-4 text-zinc-400">{t.hint}</p>
       <GenerationUploadMenu
         locale={locale}
         open={uploadOpen}

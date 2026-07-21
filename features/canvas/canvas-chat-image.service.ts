@@ -14,12 +14,32 @@ import {
 } from "@/lib/canvas/openai-image-generation";
 import { appError } from "@/lib/core/errors";
 import { hasOpenAI } from "@/lib/core/config/ai";
+import { isObjectStorageConfigured } from "@/lib/core/config/video";
 import { asInputJson } from "@/lib/core/prisma-json";
+import { canPersistLocalDataStore } from "@/lib/runtime-flags";
 import { normalizeLanguageCode } from "@/features/i18n/language.constants";
 
 function localeFromLanguageCode(languageCode?: string | null): "en" | "zh" {
   const normalized = normalizeLanguageCode(languageCode ?? "en");
   return normalized.startsWith("zh") ? "zh" : "en";
+}
+
+function storageUnavailableMessage(locale: "en" | "zh") {
+  return locale === "zh"
+    ? "生产环境未配置对象存储（R2），无法保存生成的图片。请在 Vercel 配置 R2_ENDPOINT、R2_ACCESS_KEY、R2_SECRET_KEY、R2_BUCKET 后重新部署。"
+    : "Object storage (R2) is not configured in production. Set R2_ENDPOINT, R2_ACCESS_KEY, R2_SECRET_KEY, and R2_BUCKET in Vercel, then redeploy.";
+}
+
+function assertChatImageInfrastructure(locale: "en" | "zh") {
+  if (!hasOpenAI()) return copyForLocale(locale).unconfigured;
+  if (!isObjectStorageConfigured() && !canPersistLocalDataStore()) {
+    return storageUnavailableMessage(locale);
+  }
+  return null;
+}
+
+function copyForLocale(locale: "en" | "zh") {
+  return canvasChatImageCopy(locale);
 }
 
 async function learnCanvasChatTurn(
@@ -93,14 +113,17 @@ export class CanvasChatImageService {
       })
     });
 
-    if (!hasOpenAI()) {
-      const answer = copy.unconfigured;
+    const infrastructureError = assertChatImageInfrastructure(locale);
+    if (infrastructureError) {
+      const answer = infrastructureError;
       const assistantMessage = await aiCopilotRepository.createMessage({
         sessionId: session.id,
         userId: null,
         role: "ASSISTANT",
         content: answer,
-        metadataJson: asInputJson({ answerMode: "model_unconfigured" })
+        metadataJson: asInputJson({
+          answerMode: infrastructureError === copy.unconfigured ? "model_unconfigured" : "storage_unconfigured"
+        })
       });
       await aiCopilotRepository.touchSession(session.id);
       await learnCanvasChatTurn(user, {
@@ -109,15 +132,19 @@ export class CanvasChatImageService {
         messageId: assistantMessage.id,
         userMessage,
         assistantAnswer: answer,
-        answerMode: "model_unconfigured",
+        answerMode:
+          infrastructureError === copy.unconfigured ? "model_unconfigured" : "storage_unconfigured",
         languageCode: input.languageCode
       });
       return {
         sessionId: session.id,
         messageId: assistantMessage.id,
         answer,
-        answerMode: "model_unconfigured" as const,
-        modelConfigured: false,
+        answerMode:
+          infrastructureError === copy.unconfigured
+            ? ("model_unconfigured" as const)
+            : ("storage_unconfigured" as const),
+        modelConfigured: infrastructureError !== copy.unconfigured,
         participants: ["gpt", "lucien_learning"] as const
       };
     }
@@ -231,18 +258,54 @@ export class CanvasChatImageService {
       };
     }
 
-    const asset = await canvasAssetService.saveGeneratedBuffer(input.projectId, user, {
-      buffer: generated.buffer,
-      mimeType: generated.mimeType,
-      fileName: "canvas-chat-image.png",
-      metadata: {
-        prompt: imagePrompt,
-        userMessage: input.message.trim(),
-        model: generated.model,
-        referenceAssetId: input.referenceAssetId ?? null,
-        mode: hasReference ? "image_to_image" : "text_to_image"
-      }
-    });
+    let asset;
+    try {
+      asset = await canvasAssetService.saveGeneratedBuffer(input.projectId, user, {
+        buffer: generated.buffer,
+        mimeType: generated.mimeType,
+        fileName: "canvas-chat-image.png",
+        metadata: {
+          prompt: imagePrompt,
+          userMessage: input.message.trim(),
+          model: generated.model,
+          referenceAssetId: input.referenceAssetId ?? null,
+          mode: hasReference ? "image_to_image" : "text_to_image"
+        }
+      });
+    } catch (error) {
+      const storageMessage =
+        error instanceof Error && error.message.includes("Durable object storage")
+          ? storageUnavailableMessage(locale)
+          : error instanceof Error
+            ? error.message
+            : storageUnavailableMessage(locale);
+      const answer = `${copy.failed}\n\n${storageMessage}`;
+      const assistantMessage = await aiCopilotRepository.createMessage({
+        sessionId: session.id,
+        userId: null,
+        role: "ASSISTANT",
+        content: answer,
+        metadataJson: asInputJson({ answerMode: "image_generation_failed", imagePrompt })
+      });
+      await aiCopilotRepository.touchSession(session.id);
+      await learnCanvasChatTurn(user, {
+        projectId: input.projectId,
+        sessionId: session.id,
+        messageId: assistantMessage.id,
+        userMessage,
+        assistantAnswer: answer,
+        answerMode: "image_generation_failed",
+        languageCode: input.languageCode
+      });
+      return {
+        sessionId: session.id,
+        messageId: assistantMessage.id,
+        answer,
+        answerMode: "image_generation_failed" as const,
+        modelConfigured: true,
+        participants: ["gpt", "lucien_learning"] as const
+      };
+    }
 
     const answerMode = hasReference ? "image_to_image" : "image_generation";
     const answer = hasReference ? copy.successFromReference : copy.success;

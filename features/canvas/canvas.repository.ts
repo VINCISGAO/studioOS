@@ -360,6 +360,7 @@ export const canvasRepository = {
     ownerId: string;
     nodeId: string;
     type: GenerationType;
+    provider: string;
     model: string;
     prompt: string;
     payload: Prisma.InputJsonValue;
@@ -380,7 +381,7 @@ export const canvasRepository = {
         ownerId: input.ownerId,
         nodeId: input.nodeId,
         type: input.type,
-        provider: "vincis-mock",
+        provider: input.provider,
         model: input.model,
         prompt: input.prompt,
         input: input.payload,
@@ -411,6 +412,9 @@ export const canvasRepository = {
       startedAt?: Date;
       completedAt?: Date;
       actualCredits?: number;
+      outputAssetId?: string;
+      errorCode?: string;
+      errorMessage?: string;
     }
   ) {
     return prisma.generationJob.update({ where: { id }, data });
