@@ -305,7 +305,9 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
 
   copySelected() {
     set((state) => {
-      const selected = state.nodes.filter((node) => state.selectedNodeIds.includes(node.id));
+      const selected = state.nodes.filter(
+        (node) => state.selectedNodeIds.includes(node.id) || node.selected
+      );
       if (!selected.length) return state;
       return {
         clipboardNodes: selected.map((node) => ({ ...node, selected: false }))

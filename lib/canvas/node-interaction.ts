@@ -13,8 +13,8 @@ export function nodeZIndex(node: VincisCanvasNode) {
 export function applyCanvasNodeInteractionFlags(node: VincisCanvasNode): VincisCanvasNode {
   const locked = node.data.locked === true;
   const hidden = node.data.hidden === true;
-  const draggable = locked ? false : node.draggable ?? true;
-  const selectable = locked ? false : node.selectable ?? true;
+  const draggable = !locked;
+  const selectable = !locked;
 
   if (
     node.hidden === hidden &&

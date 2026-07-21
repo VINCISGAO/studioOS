@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import type { OnSelectionChangeFunc } from "@xyflow/react";
 import { CanvasChatPanel } from "@/components/canvas/canvas-chat-panel";
 import { CanvasCreditsHud } from "@/components/canvas/canvas-credits-hud";
 import { useCanvasStore } from "@/components/canvas/canvas-store";
@@ -82,11 +81,6 @@ function CanvasWorkspaceInner({
     useCanvasStore.getState().setInteractionMode("select");
     setReady(true);
   }, [snapshot]);
-
-  useEffect(() => {
-    if (!ready) return;
-    useCanvasStore.getState().setInteractionMode("select");
-  }, [ready]);
 
   const openVideoGenerationSlot = useCallback((node: VincisCanvasNode) => {
     const rect = readCanvasRect(canvasAreaRef.current);
@@ -214,10 +208,8 @@ function CanvasWorkspaceInner({
     return () => window.removeEventListener(CANVAS_SEND_TO_CHAT_EVENT, onSendToChat);
   }, []);
 
-  const handleSelectionChange = useCallback<OnSelectionChangeFunc<VincisCanvasNode>>(
-    ({ nodes: selectedNodes }) => {
-      if (selectedNodes.length !== 1) return;
-      const node = selectedNodes[0];
+  const handleNodeClick = useCallback(
+    (node: VincisCanvasNode) => {
       if (isUneditedVideoGenerationSlot(node)) {
         openVideoGenerationSlot(node);
         return;
@@ -244,7 +236,7 @@ function CanvasWorkspaceInner({
             onCanvasPointerDown={() => {
               if (panel) closeGenerationPanel();
             }}
-            onSelectionChange={handleSelectionChange}
+            onNodeClick={handleNodeClick}
           />
           <CanvasCreditsHud
             locale={locale}

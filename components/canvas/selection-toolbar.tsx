@@ -70,6 +70,10 @@ export function SelectionToolbar({
 }) {
   const nodes = useCanvasStore((state) => state.nodes);
   const selectedNodeIds = useCanvasStore((state) => state.selectedNodeIds);
+  const effectiveSelectedNodeIds =
+    selectedNodeIds.length > 0
+      ? selectedNodeIds
+      : nodes.filter((node) => node.selected).map((node) => node.id);
   const clipboardNodes = useCanvasStore((state) => state.clipboardNodes);
   const copySelected = useCanvasStore((state) => state.copySelected);
   const cutSelected = useCanvasStore((state) => state.cutSelected);
@@ -80,11 +84,11 @@ export function SelectionToolbar({
   const sortSelected = useCanvasStore((state) => state.sortSelected);
   const groupSelectedInFrame = useCanvasStore((state) => state.groupSelectedInFrame);
 
-  if (!selectedNodeIds.length) return null;
+  if (!effectiveSelectedNodeIds.length) return null;
 
-  const selected = nodes.find((node) => node.id === selectedNodeIds[0]);
-  const oneSelected = selectedNodeIds.length === 1 && selected;
-  const canPaste = clipboardNodes.length > 0 || selectedNodeIds.length > 0;
+  const selected = nodes.find((node) => node.id === effectiveSelectedNodeIds[0]);
+  const oneSelected = effectiveSelectedNodeIds.length === 1 && selected;
+  const canPaste = clipboardNodes.length > 0 || effectiveSelectedNodeIds.length > 0;
   const canRegenerate = Boolean(oneSelected && selected.data.prompt);
   const canImageToVideo = Boolean(oneSelected && selected.type === "image");
   const canExtendVideo = Boolean(oneSelected && selected.type === "video");
@@ -96,7 +100,7 @@ export function SelectionToolbar({
     <div className="pointer-events-none absolute left-1/2 top-4 z-30 -translate-x-1/2">
       <div className="pointer-events-auto flex max-w-[calc(100vw-2rem)] items-center gap-0.5 overflow-x-auto rounded-xl border border-zinc-200 bg-white p-1 shadow-lg">
         <span className="shrink-0 px-2 text-[11px] font-medium text-zinc-400">
-          {selectedNodeIds.length} 项
+          {effectiveSelectedNodeIds.length} 项
         </span>
         <SelectionAction label="复制" onClick={copySelected}>
           <Copy className="h-4 w-4" />
@@ -113,10 +117,10 @@ export function SelectionToolbar({
         <SelectionAction label="自动布局" onClick={autoLayout}>
           <Rows3 className="h-4 w-4" />
         </SelectionAction>
-        <SelectionAction label="对齐" disabled={selectedNodeIds.length < 2} onClick={alignSelected}>
+        <SelectionAction label="对齐" disabled={effectiveSelectedNodeIds.length < 2} onClick={alignSelected}>
           <AlignHorizontalSpaceAround className="h-4 w-4" />
         </SelectionAction>
-        <SelectionAction label="排序" disabled={selectedNodeIds.length < 2} onClick={sortSelected}>
+        <SelectionAction label="排序" disabled={effectiveSelectedNodeIds.length < 2} onClick={sortSelected}>
           <ArrowRightFromLine className="h-4 w-4" />
         </SelectionAction>
         <SelectionAction label="创建 Frame 分组" onClick={groupSelectedInFrame}>

@@ -8,7 +8,7 @@ import { CanvasVideoNodeMenu } from "@/components/canvas/nodes/canvas-video-node
 
 export function VideoNode({ id, data, selected }: NodeProps<VincisCanvasNode>) {
   return (
-    <>
+    <div className="h-full w-full">
       <CanvasVideoNodeMenu nodeId={id} data={data} selected={selected} />
       <CanvasVideoCard data={data} selected={selected}>
         {data.status === "loading" ? (
@@ -44,6 +44,6 @@ export function VideoNode({ id, data, selected }: NodeProps<VincisCanvasNode>) {
           </div>
         )}
       </CanvasVideoCard>
-    </>
+    </div>
   );
 }

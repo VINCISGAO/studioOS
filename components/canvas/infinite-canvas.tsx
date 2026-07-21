@@ -9,8 +9,7 @@ import {
   ReactFlow,
   ReactFlowProvider,
   useReactFlow,
-  type NodeTypes,
-  type OnSelectionChangeFunc
+  type NodeTypes
 } from "@xyflow/react";
 import { CanvasNavigatorDock } from "@/components/canvas/canvas-navigator-dock";
 import { CanvasViewportEmptyHint } from "@/components/canvas/canvas-viewport-empty-hint";
@@ -18,6 +17,7 @@ import { useCanvasStore } from "@/components/canvas/canvas-store";
 import { useCanvasAutosave } from "@/components/canvas/hooks/use-canvas-autosave";
 import { useCanvasShortcuts } from "@/components/canvas/hooks/use-canvas-shortcuts";
 import { useCanvasViewportActions } from "@/components/canvas/hooks/use-canvas-viewport-actions";
+import { useCanvasFlowGraph } from "@/components/canvas/hooks/use-canvas-flow-graph";
 import { useCanvasViewportContent } from "@/components/canvas/hooks/use-canvas-viewport-content";
 import { useGenerationEvents } from "@/components/canvas/hooks/use-generation-events";
 import { ImageNode } from "@/components/canvas/nodes/image-node";
@@ -53,19 +53,16 @@ function InfiniteCanvasFlow({
   projectId,
   locale,
   onCanvasPointerDown,
-  onSelectionChange
+  onNodeClick
 }: {
   projectId: string;
   locale: Locale;
   onCanvasPointerDown?: () => void;
-  onSelectionChange?: OnSelectionChangeFunc<VincisCanvasNode>;
+  onNodeClick?: (node: VincisCanvasNode) => void;
 }) {
-  const nodes = useCanvasStore((state) => state.nodes);
-  const edges = useCanvasStore((state) => state.edges);
+  const { nodes, edges, onNodesChange, onEdgesChange } = useCanvasFlowGraph(projectId);
   const viewport = useCanvasStore((state) => state.viewport);
   const canvasBackgroundColor = useCanvasStore((state) => state.canvasBackgroundColor);
-  const onNodesChange = useCanvasStore((state) => state.onNodesChange);
-  const onEdgesChange = useCanvasStore((state) => state.onEdgesChange);
   const connect = useCanvasStore((state) => state.connect);
   const setViewport = useCanvasStore((state) => state.setViewport);
   const interactionMode = useCanvasStore((state) => state.interactionMode);
@@ -140,10 +137,20 @@ function InfiniteCanvasFlow({
     event.preventDefault();
   }, []);
 
+  const handleNodeClick = useCallback(
+    (_event: React.MouseEvent, node: VincisCanvasNode) => {
+      onNodeClick?.(node);
+    },
+    [onNodeClick]
+  );
+
   return (
     <div
       ref={flowRef}
-      className={cn("canvas-flow absolute inset-0", isMoveMode ? "mode-move" : "mode-select")}
+      className={cn(
+        "canvas-flow absolute inset-0 z-[1]",
+        isMoveMode ? "mode-move" : "mode-select"
+      )}
       style={{ backgroundColor: canvasBackgroundColor }}
     >
       <ReactFlow
@@ -154,8 +161,8 @@ function InfiniteCanvasFlow({
         onEdgesChange={onEdgesChange}
         onConnect={connect}
         onMoveEnd={(_event, nextViewport) => setViewport(nextViewport, { persist: true })}
-        onPaneClick={isMoveMode ? undefined : onCanvasPointerDown}
-        onSelectionChange={isMoveMode ? undefined : onSelectionChange}
+        onPaneClick={onCanvasPointerDown}
+        onNodeClick={handleNodeClick}
         onPaneContextMenu={blockContextMenu}
         onNodeContextMenu={blockContextMenu}
         onDragOver={handleChatImageDragOver}
@@ -170,7 +177,7 @@ function InfiniteCanvasFlow({
         panOnScroll
         multiSelectionKeyCode={["Meta", "Control", "Shift"]}
         nodesDraggable={!isMoveMode}
-        elementsSelectable={!isMoveMode}
+        elementsSelectable
         deleteKeyCode={null}
         elevateNodesOnSelect
         proOptions={{ hideAttribution: true }}
@@ -225,20 +232,21 @@ export function InfiniteCanvas({
   projectId,
   locale,
   onCanvasPointerDown,
-  onSelectionChange
+  onNodeClick
 }: {
   projectId: string;
   locale: Locale;
   onCanvasPointerDown?: () => void;
-  onSelectionChange?: OnSelectionChangeFunc<VincisCanvasNode>;
+  onNodeClick?: (node: VincisCanvasNode) => void;
 }) {
   return (
     <ReactFlowProvider>
       <InfiniteCanvasFlow
+        key={projectId}
         projectId={projectId}
         locale={locale}
         onCanvasPointerDown={onCanvasPointerDown}
-        onSelectionChange={onSelectionChange}
+        onNodeClick={onNodeClick}
       />
     </ReactFlowProvider>
   );
