@@ -75,7 +75,7 @@ export function SelectionToolbar({
   const cutSelected = useCanvasStore((state) => state.cutSelected);
   const duplicateSelected = useCanvasStore((state) => state.duplicateSelected);
   const deleteSelected = useCanvasStore((state) => state.deleteSelected);
-  const autoLayout = useCanvasStore((state) => state.autoLayout);
+  const autoLayoutSelected = useCanvasStore((state) => state.autoLayoutSelected);
   const alignSelected = useCanvasStore((state) => state.alignSelected);
   const sortSelected = useCanvasStore((state) => state.sortSelected);
   const groupSelectedInFrame = useCanvasStore((state) => state.groupSelectedInFrame);
@@ -110,7 +110,11 @@ export function SelectionToolbar({
         <SelectionAction label="创建副本" onClick={duplicateSelected}>
           <CopyPlus className="h-4 w-4" />
         </SelectionAction>
-        <SelectionAction label="自动布局" onClick={autoLayout}>
+        <SelectionAction
+          label="自动布局"
+          disabled={selectedNodeIds.length < 2}
+          onClick={autoLayoutSelected}
+        >
           <Rows3 className="h-4 w-4" />
         </SelectionAction>
         <SelectionAction label="对齐" disabled={selectedNodeIds.length < 2} onClick={alignSelected}>

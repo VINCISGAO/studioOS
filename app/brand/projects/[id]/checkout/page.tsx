@@ -25,7 +25,6 @@ import {
 import { readBrandDisplayBudgetInput } from "@/lib/studioos/brand-budget-display-input";
 import { BRAND_PAYMENT_TIMEOUT_CANCEL_REASON } from "@/lib/studioos/brand-payment-deadline";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
-import { paymentService } from "@/features/payment/payment.service";
 import { resolveBrandProjectRouteId } from "@/lib/api-client/server-portal-gateway";
 
 type Props = {
@@ -120,9 +119,6 @@ export default async function BrandCheckoutPage({ params, searchParams }: Props)
   if (prismaEscrowFunded || isOrderPaymentEscrowed(order.payment_status)) {
     await ensureBrandCampaignPaymentSynced(id);
     order = (await markLegacyOrderPaidForProject(id)) ?? order;
-    if (prismaEscrowFunded) {
-      await paymentService.syncFundedCampaignForLegacyProject(id);
-    }
   }
 
   const paidReady = isLegacyOrderFunded(order) || prismaEscrowFunded;
