@@ -11,6 +11,7 @@ import { cancelUnpaidOrder, getOrder, markLegacyOrderPaidForProject } from "@/li
 import { getProject } from "@/lib/project-service";
 import { getCurrentSession } from "@/lib/session-user";
 import { syncBrandOrderPaid } from "@/lib/studioos/brand-checkout-service";
+import { ensureBrandCampaignPaymentSynced } from "@/lib/studioos/brand-payment-funding";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
 
 function normalizeLang(raw: FormDataEntryValue | null): Locale {
@@ -59,6 +60,7 @@ export async function payBrandCampaignCheckoutAction(formData: FormData) {
         redirect(result.checkoutUrl);
       }
 
+      await ensureBrandCampaignPaymentSynced(projectId);
       const paidLegacyOrder = await markLegacyOrderPaidForProject(projectId);
       if (paidLegacyOrder) {
         await syncBrandOrderPaid(paidLegacyOrder);

@@ -31,7 +31,7 @@ export function VideoNode({ id, data, selected }: NodeProps<VincisCanvasNode>) {
             <span className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-zinc-100">
               <Play className="ml-0.5 h-5 w-5 text-zinc-400" />
             </span>
-            <p className="text-xs leading-5 text-zinc-400">{data.prompt || "等待生成视频…"}</p>
+            <p className="px-2 text-xs leading-5 text-zinc-400">{data.prompt || "等待生成视频…"}</p>
           </div>
         ) : (
           <div className="flex h-full flex-col items-center justify-center bg-white p-5 text-center">

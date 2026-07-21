@@ -2,7 +2,7 @@ export type GenerationKind = "image" | "video" | "music";
 
 export type VideoReferenceMode = "reference" | "edit" | "keyframes";
 
-export const GENERATION_PANEL_WIDTH = 480;
+export const GENERATION_PANEL_WIDTH = 520;
 export const GENERATION_MUSIC_PANEL_WIDTH = 620;
 export const GENERATION_PANEL_HEIGHT = 300;
 
@@ -266,9 +266,9 @@ export function getVideoModelLabel(modelId: VideoModelId) {
 }
 
 export function getVideoModelDisplayLabel(modelId: VideoModelId) {
-  if (modelId === "seedance-2.0") return "Seedan...";
+  if (modelId === "seedance-2.0") return "Seedance 2.0";
   const label = getVideoModelLabel(modelId);
-  return label.length > 8 ? `${label.slice(0, 5)}...` : label;
+  return label.length > 14 ? `${label.slice(0, 12)}…` : label;
 }
 
 export function estimateVideoCredits(

@@ -33,7 +33,12 @@ import {
   toggleSelectedNodeFlag,
   ungroupSelectedNodes
 } from "@/lib/canvas/canvas-node-mutations";
-import { applyCanvasNodeInteractionFlagsAll } from "@/lib/canvas/node-interaction";
+import { sanitizeLoadedCanvasNodes } from "@/lib/canvas/canvas-node-sanitize";
+import {
+  applyCanvasNodeInteractionFlags,
+  applyCanvasNodeInteractionFlagsAll,
+  deselectAllCanvasNodes
+} from "@/lib/canvas/node-interaction";
 import { DEFAULT_CANVAS_BACKGROUND, normalizeHexColor } from "@/lib/canvas/color";
 
 type SaveState = "idle" | "dirty" | "saving" | "saved" | "error";
@@ -61,7 +66,7 @@ type CanvasStore = {
   onNodesChange: (changes: NodeChange<VincisCanvasNode>[]) => void;
   onEdgesChange: (changes: EdgeChange<VincisCanvasEdge>[]) => void;
   connect: (connection: Connection) => void;
-  setViewport: (viewport: Viewport) => void;
+  setViewport: (viewport: Viewport, options?: { persist?: boolean }) => void;
   setCanvasBackgroundColor: (color: string) => void;
   setInteractionMode: (mode: CanvasInteractionMode) => void;
   addNode: (node: VincisCanvasNode) => void;
@@ -139,7 +144,7 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
       projectTitle: snapshot.title,
       mode: snapshot.mode,
       campaignId: snapshot.campaignId,
-      nodes: applyCanvasNodeInteractionFlagsAll(snapshot.nodes),
+      nodes: sanitizeLoadedCanvasNodes(snapshot.nodes),
       edges: snapshot.edges,
       viewport: snapshot.viewport,
       canvasBackgroundColor: snapshot.canvasBackgroundColor,
@@ -157,9 +162,11 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     set((state) => {
       const nodes = applyNodeChanges(changes, state.nodes);
       const dirty = changes.some((change) => change.type !== "select");
+      const selectOnly = changes.every((change) => change.type === "select");
+      const nextNodes = selectOnly ? nodes : applyCanvasNodeInteractionFlagsAll(nodes);
       return {
-        nodes: applyCanvasNodeInteractionFlagsAll(nodes),
-        selectedNodeIds: nodes.filter((node) => node.selected).map((node) => node.id),
+        nodes: nextNodes,
+        selectedNodeIds: nextNodes.filter((node) => node.selected).map((node) => node.id),
         revision: dirty ? state.revision + 1 : state.revision,
         saveState: dirty ? "dirty" : state.saveState,
         ...(dirty ? recordHistory(state) : {})
@@ -185,7 +192,7 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     }));
   },
 
-  setViewport(viewport) {
+  setViewport(viewport, options) {
     const previous = get().viewport;
     if (
       previous.x === viewport.x &&
@@ -196,8 +203,8 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     }
     set((state) => ({
       viewport,
-      revision: state.revision + 1,
-      saveState: "dirty"
+      revision: options?.persist ? state.revision + 1 : state.revision,
+      saveState: options?.persist ? "dirty" : state.saveState
     }));
   },
 
@@ -218,7 +225,10 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
 
   addNode(node) {
     set((state) => ({
-      nodes: [...state.nodes.map((item) => ({ ...item, selected: false })), { ...node, selected: true }],
+      nodes: [
+        ...deselectAllCanvasNodes(state.nodes),
+        applyCanvasNodeInteractionFlags({ ...node, selected: true })
+      ],
       selectedNodeIds: [node.id],
       revision: state.revision + 1,
       saveState: "dirty",
@@ -231,8 +241,10 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     const selectedId = selectNodeId ?? nodes[0]?.id;
     set((state) => ({
       nodes: [
-        ...state.nodes.map((item) => ({ ...item, selected: false })),
-        ...nodes.map((node) => ({ ...node, selected: node.id === selectedId }))
+        ...deselectAllCanvasNodes(state.nodes),
+        ...nodes.map((node) =>
+          applyCanvasNodeInteractionFlags({ ...node, selected: node.id === selectedId })
+        )
       ],
       selectedNodeIds: selectedId ? [selectedId] : [],
       revision: state.revision + 1,
@@ -279,9 +291,16 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
   },
 
   deleteSelected() {
-    set((state) =>
-      withDirtyHistory(state, deleteSelectedNodes(state.nodes, state.edges, state.selectedNodeIds))
-    );
+    set((state) => {
+      const selectedNodeIds = state.selectedNodeIds.length
+        ? state.selectedNodeIds
+        : state.nodes.filter((node) => node.selected).map((node) => node.id);
+      if (!selectedNodeIds.length) return state;
+      return withDirtyHistory(
+        state,
+        deleteSelectedNodes(state.nodes, state.edges, selectedNodeIds)
+      );
+    });
   },
 
   copySelected() {

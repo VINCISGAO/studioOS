@@ -16,7 +16,10 @@ import { isAppError } from "@/lib/core/errors";
 import { type SearchParams, withLocale } from "@/lib/i18n";
 import { requireBrandPortalClientEmail } from "@/features/auth/session-context";
 import { paymentService } from "@/features/payment/payment.service";
-import { isPrismaEscrowFundedForProject } from "@/lib/studioos/brand-payment-funding";
+import {
+  ensureBrandCampaignPaymentSynced,
+  isPrismaEscrowFundedForProject
+} from "@/lib/studioos/brand-payment-funding";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
 
 export default async function BrandProjectHubPage({
@@ -42,6 +45,7 @@ export default async function BrandProjectHubPage({
       });
     } catch {
       if (await isPrismaEscrowFundedForProject(id)) {
+        await ensureBrandCampaignPaymentSynced(id);
         redirect(withLocale(`${brandPortalRoutes.project(id)}?tab=match&matching=1`, locale));
       }
       redirect(
@@ -51,6 +55,7 @@ export default async function BrandProjectHubPage({
         )
       );
     }
+    await ensureBrandCampaignPaymentSynced(id);
     redirect(withLocale(`${brandPortalRoutes.project(id)}?tab=match&matching=1`, locale));
   }
 
@@ -68,6 +73,8 @@ export default async function BrandProjectHubPage({
   if (query.tab === "review") {
     redirect(withLocale(`/brand/projects/${id}/review`, locale));
   }
+
+  await ensureBrandCampaignPaymentSynced(id);
 
   let detail;
   try {

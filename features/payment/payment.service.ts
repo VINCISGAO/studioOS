@@ -20,6 +20,7 @@ import {
 } from "@/features/shared/state-machines/escrow.state-machine";
 import type { EscrowStatus } from "@prisma/client";
 import { CampaignEvents } from "@/features/shared/types/events";
+import { CAMPAIGN_ESCROW_FUNDED_STATES } from "@/features/payment/escrow-guards";
 import type { Locale } from "@/lib/i18n";
 
 const PAYABLE_CAMPAIGN_STATES = new Set<string>([
@@ -439,6 +440,21 @@ export class PaymentService {
       email: brandUser.email
     };
 
+    const escrow = await paymentRepository.findByCampaignId(campaign.id);
+    if (escrow && CAMPAIGN_ESCROW_FUNDED_STATES.has(escrow.status)) {
+      await this.syncFundedCampaignForLegacyProject(input.legacyProjectId);
+      return { ok: true, mode: "demo", alreadyFunded: true };
+    }
+
+    if (
+      campaign.status === CampaignState.MATCHING ||
+      campaign.status === CampaignState.ESCROW_FUNDED ||
+      campaign.status === CampaignState.INVITATION_SENT
+    ) {
+      await this.syncFundedCampaignForLegacyProject(input.legacyProjectId);
+      return { ok: true, mode: "demo", alreadyFunded: true };
+    }
+
     try {
       if (stripeCheckoutService.isConfigured()) {
         const checkout = await this.startCheckout(campaign.id, actor, {
@@ -450,6 +466,7 @@ export class PaymentService {
       }
 
       const paid = await this.demoPay(campaign.id, actor);
+      await this.syncFundedCampaignForLegacyProject(input.legacyProjectId);
       return {
         ok: true,
         mode: "demo",
@@ -457,6 +474,15 @@ export class PaymentService {
       };
     } catch (error) {
       const message = error instanceof Error ? error.message : "payment-failed";
+      const refreshedEscrow = await paymentRepository.findByCampaignId(campaign.id);
+      if (refreshedEscrow && CAMPAIGN_ESCROW_FUNDED_STATES.has(refreshedEscrow.status)) {
+        await this.syncFundedCampaignForLegacyProject(input.legacyProjectId);
+        return { ok: true, mode: "demo", alreadyFunded: true };
+      }
+      if (message.includes("CAMPAIGN_LOCKED") || message.includes("already funded")) {
+        await this.syncFundedCampaignForLegacyProject(input.legacyProjectId);
+        return { ok: true, mode: "demo", alreadyFunded: true };
+      }
       if (message.includes("no assigned creator")) {
         return { ok: false, error: "creator-not-selected" };
       }

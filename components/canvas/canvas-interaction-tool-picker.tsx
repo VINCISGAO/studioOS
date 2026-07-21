@@ -58,8 +58,10 @@ export function CanvasInteractionToolPicker() {
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
         className={cn(
-          "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition",
-          "bg-zinc-900 text-white"
+          "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border transition",
+          mode === "move"
+            ? "border-amber-300 bg-amber-50 text-amber-700"
+            : "border-transparent bg-zinc-900 text-white"
         )}
       >
         <current.Icon className="h-[18px] w-[18px]" strokeWidth={2.25} />

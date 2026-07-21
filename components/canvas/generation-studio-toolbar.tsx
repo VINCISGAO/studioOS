@@ -93,7 +93,7 @@ export function GenerationStudioToolbar({
   }
 
   return (
-    <div className="flex items-center gap-2 overflow-visible border-t border-zinc-100 px-3 py-2.5">
+    <div className="flex items-center justify-between gap-3 overflow-visible border-t border-zinc-100 px-3 py-2.5">
       <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-visible">
       {isVideo ? (
         <GenerationReferenceMenu
@@ -174,14 +174,14 @@ export function GenerationStudioToolbar({
             type="button"
             onClick={() => (isVideo || isImage) && toggleMenu("model")}
             disabled={!isVideo && !isImage}
-            className="inline-flex h-8 max-w-[108px] shrink-0 items-center gap-1.5 rounded-full border border-zinc-200 px-2.5 text-[11px] text-zinc-700 hover:bg-zinc-50 disabled:opacity-40"
+            className="inline-flex h-8 min-w-[128px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-zinc-200 px-2.5 text-[11px] text-zinc-700 hover:bg-zinc-50 disabled:opacity-40"
           >
             {isImage ? (
               <GenerationGptLogo className="h-4 w-4 shrink-0 text-zinc-900" />
             ) : isVideo ? (
               <BarChart3 className="h-4 w-4 shrink-0" />
             ) : null}
-            <span className="truncate">
+            <span className="min-w-0 truncate">
               {isVideo ? videoModelLabel : isImage ? imageModelLabel : ""}
             </span>
             {(isVideo || isImage) ? (

@@ -700,6 +700,25 @@ export async function transitionProject(
     }
   }
 
+  if (event === "project.campaign_funded" && hasDatabaseUrl()) {
+    const { ensureBrandCampaignPaymentSynced } = await import("@/lib/studioos/brand-payment-funding");
+    await ensureBrandCampaignPaymentSynced(projectId);
+    const synced = await getProject(projectId);
+    if (!synced) {
+      return { ok: false, code: "NOT_FOUND", message: "Project not found" };
+    }
+    void appendProjectEvent({
+      project_id: projectId,
+      event_name: event,
+      from_state: { status: fromStatus },
+      to_state: { status: synced.status },
+      actor_id: options?.actor_id ?? null,
+      actor_role: options?.actor_role ?? "system",
+      metadata: options?.metadata ?? {}
+    }).catch(() => undefined);
+    return { ok: true, project: synced };
+  }
+
   if (hasDatabaseUrl()) {
     return {
       ok: false,

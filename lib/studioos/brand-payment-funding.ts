@@ -6,6 +6,14 @@ import { isOrderPaymentEscrowed, type StoredOrder } from "@/lib/order-types";
 import { normalizeCampaignStatus } from "@/lib/studioos/project-status";
 import type { StoredProject } from "@/lib/project-types";
 
+/** Reconcile Prisma escrow HELD → campaign MATCHING + legacy order/invitations. Idempotent. */
+export async function ensureBrandCampaignPaymentSynced(projectId: string): Promise<boolean> {
+  if (!hasDatabaseUrl()) return false;
+  if (!(await isPrismaEscrowFundedForProject(projectId))) return false;
+  const { paymentService } = await import("@/features/payment/payment.service");
+  return paymentService.syncFundedCampaignForLegacyProject(projectId);
+}
+
 export async function isPrismaEscrowFundedForProject(projectId: string): Promise<boolean> {
   if (!hasDatabaseUrl()) return false;
 

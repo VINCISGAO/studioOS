@@ -135,7 +135,7 @@ export function GenerationStudioPanel({
         <div
           className={cn(
             "pointer-events-auto max-w-[calc(100vw-24px)] rounded-[24px] border border-zinc-200/90 bg-white shadow-[0_12px_40px_rgba(15,23,42,0.08)]",
-            kind === "music" ? "w-[620px]" : "w-[480px]"
+            kind === "music" ? "w-[620px]" : "w-[520px]"
           )}
         >
           {kind === "video" ? (

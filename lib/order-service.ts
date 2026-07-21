@@ -351,10 +351,12 @@ function prismaOrderToStored(order: PrismaOrderLike | OrderListRow): StoredOrder
       ? metadata.cancel_reason.trim()
       : null;
   const legacyCreatorId =
-    order.creatorProfile?.legacyCreatorId ??
-    getCreatorIdForDemoEmail(order.creator.email ?? "") ??
-    order.creatorProfileId ??
-    order.creatorId;
+    typeof metadata.creator_legacy_id === "string"
+      ? metadata.creator_legacy_id
+      : order.creatorProfile?.legacyCreatorId ??
+        getCreatorIdForDemoEmail(order.creator.email ?? "") ??
+        order.creatorProfileId ??
+        order.creatorId;
   const status =
     order.status === "COMPLETED"
       ? "completed"
@@ -733,7 +735,7 @@ export async function markOrderPaid(orderId: string): Promise<StoredOrder | null
 
   order.payment_status = "escrowed";
   const isCampaignEscrow = order.creator_id === CAMPAIGN_PENDING_CREATOR_ID;
-  order.status = isCampaignEscrow ? "waiting_payment" : "in_production";
+  order.status = isCampaignEscrow ? "paid" : "in_production";
   order.paid_at = new Date().toISOString();
   await writeStore(store);
 
@@ -1366,6 +1368,51 @@ export async function createCampaignEscrowOrder(input: {
 
   store.orders.unshift(order);
   await writeStore(store);
+
+  if (hasDatabaseUrl()) {
+    const [campaign, client] = await Promise.all([
+      campaignRepository.findByLegacyProjectId(input.project.id),
+      userRepository.findByEmail(input.client.client_email.toLowerCase())
+    ]);
+
+    if (campaign && client) {
+      const existingRows = await orderRepository.listForLegacyProjectId(input.project.id);
+      const pendingEscrow = existingRows.find(
+        (row) => row.status === "PENDING" && row.creatorProfileId == null
+      );
+      if (pendingEscrow) {
+        return prismaOrderToStored(pendingEscrow);
+      }
+
+      const persisted = await orderRepository.create({
+        campaignId: campaign.id,
+        clientId: client.id,
+        creatorId: client.id,
+        creatorProfileId: null,
+        serviceProject: order.title,
+        currency: "USD",
+        orderAmount: order.amount,
+        platformCommission: order.platform_fee,
+        creatorIncome: order.creator_payout,
+        metadataJson: {
+          legacy_order_id: order.id,
+          project_id: input.project.id,
+          inquiry_id: inquiryId,
+          quote_id: quoteId,
+          company_name: order.company_name,
+          requirements: order.requirements,
+          budget_range: input.project.budget_range,
+          campaign_escrow: true,
+          creator_legacy_id: CAMPAIGN_PENDING_CREATOR_ID
+        }
+      });
+      const hydrated = await orderRepository.findById(persisted.id);
+      if (hydrated) {
+        return prismaOrderToStored(hydrated);
+      }
+    }
+  }
+
   return order;
 }
 

@@ -17,7 +17,11 @@ import { estimateDeliveryDays } from "@/lib/studioos/brand-campaign-display";
 import {
   enforceBrandPaymentDeadlineForSnapshot
 } from "@/lib/studioos/brand-payment-expiry.service";
-import { isLegacyOrderFunded, isPrismaEscrowFundedForProject } from "@/lib/studioos/brand-payment-funding";
+import {
+  ensureBrandCampaignPaymentSynced,
+  isLegacyOrderFunded,
+  isPrismaEscrowFundedForProject
+} from "@/lib/studioos/brand-payment-funding";
 import { readBrandDisplayBudgetInput } from "@/lib/studioos/brand-budget-display-input";
 import { BRAND_PAYMENT_TIMEOUT_CANCEL_REASON } from "@/lib/studioos/brand-payment-deadline";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
@@ -114,6 +118,7 @@ export default async function BrandCheckoutPage({ params, searchParams }: Props)
   const prismaEscrowFunded = hasDatabaseUrl() ? await isPrismaEscrowFundedForProject(id) : false;
 
   if (prismaEscrowFunded || isOrderPaymentEscrowed(order.payment_status)) {
+    await ensureBrandCampaignPaymentSynced(id);
     order = (await markLegacyOrderPaidForProject(id)) ?? order;
     if (prismaEscrowFunded) {
       await paymentService.syncFundedCampaignForLegacyProject(id);

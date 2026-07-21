@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ReactFlowProvider } from "@xyflow/react";
+import type { OnSelectionChangeFunc } from "@xyflow/react";
 import { CanvasChatPanel } from "@/components/canvas/canvas-chat-panel";
 import { CanvasCreditsHud } from "@/components/canvas/canvas-credits-hud";
 import { useCanvasStore } from "@/components/canvas/canvas-store";
@@ -13,6 +13,7 @@ import {
 import { FloatingToolbar } from "@/components/canvas/floating-toolbar";
 import { InfiniteCanvas } from "@/components/canvas/infinite-canvas";
 import { JobStatusPanel } from "@/components/canvas/job-status-panel";
+import { SelectionToolbar } from "@/components/canvas/selection-toolbar";
 import { useCanvasMediaActions } from "@/components/canvas/hooks/use-canvas-media-actions";
 import type { CanvasSnapshot, VincisCanvasNode } from "@/lib/canvas/types";
 import type { Locale } from "@/lib/i18n";
@@ -60,21 +61,48 @@ function CanvasWorkspaceInner({
   const [videoSession, setVideoSession] = useState<VideoGenerationSession | null>(null);
   const [chatCollapsed, setChatCollapsed] = useState(false);
   const initialVideoLayoutCreated = useRef(false);
+  const initializedProjectId = useRef<string | null>(null);
   const canvasAreaRef = useRef<HTMLDivElement>(null);
   const addNode = useCanvasStore((state) => state.addNode);
   const nodes = useCanvasStore((state) => state.nodes);
+  const pasteAt = useCanvasStore((state) => state.pasteAt);
   const viewport = useCanvasStore((state) => state.viewport);
   const { generate, regenerate, generationPending } = useCanvasMediaActions(
     snapshot.projectId
   );
 
   useEffect(() => {
+    if (initializedProjectId.current === snapshot.projectId) {
+      setReady(true);
+      return;
+    }
+    initializedProjectId.current = snapshot.projectId;
+    initialVideoLayoutCreated.current = false;
     useCanvasStore.getState().initialize(snapshot);
+    useCanvasStore.getState().setInteractionMode("select");
     setReady(true);
   }, [snapshot]);
 
+  useEffect(() => {
+    if (!ready) return;
+    useCanvasStore.getState().setInteractionMode("select");
+  }, [ready]);
+
+  const openVideoGenerationSlot = useCallback((node: VincisCanvasNode) => {
+    const rect = readCanvasRect(canvasAreaRef.current);
+    const state = useCanvasStore.getState();
+    setVideoSession({ slotNodeId: node.id });
+    setPanelAnchor(panelAnchorBelowNode(node, state.viewport, rect));
+    setPanel("video");
+  }, []);
+
   const openVideoGeneration = useCallback(() => {
     const state = useCanvasStore.getState();
+    const existingSlot = state.nodes.find(isUneditedVideoGenerationSlot);
+    if (existingSlot) {
+      openVideoGenerationSlot(existingSlot);
+      return;
+    }
     const rect = readCanvasRect(canvasAreaRef.current);
     const layoutIndex = countVideoGenerationLayouts(state.nodes);
     const position = nextVideoLayoutPosition(state.viewport, rect, layoutIndex);
@@ -87,15 +115,7 @@ function CanvasWorkspaceInner({
     setVideoSession({ slotNodeId: layout.slotNodeId });
     setPanelAnchor(panelAnchorBelowNode(layout.node, state.viewport, rect));
     setPanel("video");
-  }, [addNode, locale]);
-
-  const openVideoGenerationSlot = useCallback((node: VincisCanvasNode) => {
-    const rect = readCanvasRect(canvasAreaRef.current);
-    const state = useCanvasStore.getState();
-    setVideoSession({ slotNodeId: node.id });
-    setPanelAnchor(panelAnchorBelowNode(node, state.viewport, rect));
-    setPanel("video");
-  }, []);
+  }, [addNode, locale, openVideoGenerationSlot]);
 
   useEffect(() => {
     if (!panel || panel !== "video" || !videoSession) return;
@@ -194,6 +214,24 @@ function CanvasWorkspaceInner({
     return () => window.removeEventListener(CANVAS_SEND_TO_CHAT_EVENT, onSendToChat);
   }, []);
 
+  const handleSelectionChange = useCallback<OnSelectionChangeFunc<VincisCanvasNode>>(
+    ({ nodes: selectedNodes }) => {
+      if (selectedNodes.length !== 1) return;
+      const node = selectedNodes[0];
+      if (isUneditedVideoGenerationSlot(node)) {
+        openVideoGenerationSlot(node);
+        return;
+      }
+      if (panel) closeGenerationPanel();
+    },
+    [openVideoGenerationSlot, panel]
+  );
+
+  const pasteSelectionAtCenter = useCallback(() => {
+    const rect = readCanvasRect(canvasAreaRef.current);
+    pasteAt(viewportCenterFlowPoint(viewport, rect));
+  }, [pasteAt, viewport]);
+
   if (!ready) return <div className="h-full bg-[#f7f7f6]" />;
 
   return (
@@ -206,17 +244,23 @@ function CanvasWorkspaceInner({
             onCanvasPointerDown={() => {
               if (panel) closeGenerationPanel();
             }}
-            onNodeClick={(node) => {
-              if (isUneditedVideoGenerationSlot(node)) {
-                openVideoGenerationSlot(node);
-                return;
-              }
-              if (panel) closeGenerationPanel();
-            }}
+            onSelectionChange={handleSelectionChange}
           />
           <CanvasCreditsHud
             locale={locale}
             tokenBalance={snapshot.projectContext.tokenBalance}
+          />
+          <SelectionToolbar
+            onPaste={pasteSelectionAtCenter}
+            onRegenerate={regenerate}
+            onImageToVideo={(nodeId) => {
+              const node = useCanvasStore.getState().nodes.find((item) => item.id === nodeId);
+              if (node?.data.prompt) generate("video", { prompt: `Animate: ${node.data.prompt}` });
+            }}
+            onExtendVideo={(nodeId) => {
+              const node = useCanvasStore.getState().nodes.find((item) => item.id === nodeId);
+              if (node?.data.prompt) generate("video", { prompt: `Extend: ${node.data.prompt}` });
+            }}
           />
           <FloatingToolbar onGenerate={openGenerationPanel} />
           <JobStatusPanel />
@@ -262,13 +306,11 @@ export function CanvasWorkspace({
   const [queryClient] = useState(() => new QueryClient());
   return (
     <QueryClientProvider client={queryClient}>
-      <ReactFlowProvider>
-        <CanvasWorkspaceInner
-          snapshot={snapshot}
-          locale={locale}
-          initialPanel={initialPanel}
-        />
-      </ReactFlowProvider>
+      <CanvasWorkspaceInner
+        snapshot={snapshot}
+        locale={locale}
+        initialPanel={initialPanel}
+      />
     </QueryClientProvider>
   );
 }
