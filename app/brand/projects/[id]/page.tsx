@@ -16,6 +16,7 @@ import { isAppError } from "@/lib/core/errors";
 import { type SearchParams, withLocale } from "@/lib/i18n";
 import { requireBrandPortalClientEmail } from "@/features/auth/session-context";
 import { paymentService } from "@/features/payment/payment.service";
+import { getProject } from "@/lib/project-service";
 import {
   ensureBrandCampaignPaymentSynced,
   isPrismaEscrowFundedForProject
@@ -44,7 +45,10 @@ export default async function BrandProjectHubPage({
         stripeSessionId: checkoutSessionId
       });
     } catch {
-      if (await isPrismaEscrowFundedForProject(id)) {
+      const ownedProject = await getProject(id);
+      const ownsProject =
+        ownedProject?.client_email.trim().toLowerCase() === clientEmail.trim().toLowerCase();
+      if (ownsProject && (await isPrismaEscrowFundedForProject(id))) {
         await ensureBrandCampaignPaymentSynced(id);
         redirect(withLocale(`${brandPortalRoutes.project(id)}?tab=match&matching=1`, locale));
       }
@@ -74,8 +78,6 @@ export default async function BrandProjectHubPage({
     redirect(withLocale(`/brand/projects/${id}/review`, locale));
   }
 
-  await ensureBrandCampaignPaymentSynced(id);
-
   let detail;
   try {
     detail = await loadBrandProjectPortalDetail({
@@ -93,6 +95,8 @@ export default async function BrandProjectHubPage({
     }
     brandPortalDenyInvalidState(locale, "project-unavailable");
   }
+
+  await ensureBrandCampaignPaymentSynced(id);
 
   if (detail.flags.shouldRedirectToCheckout) {
     redirect(withLocale(brandPortalRoutes.projectCheckout(id), locale));
