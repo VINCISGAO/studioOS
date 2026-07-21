@@ -30,7 +30,8 @@ import {
   ArrowUpFromLine,
   BookOpen,
   Bell,
-  Activity
+  Activity,
+  WandSparkles
 } from "lucide-react";
 import {
   isPortalMobileNavIconKey,
@@ -40,6 +41,7 @@ import {
 const PORTAL_NAV_ICONS: Record<PortalMobileNavIconKey, LucideIcon> = {
   home: Home,
   invitations: Inbox,
+  canvas: WandSparkles,
   projects: FolderKanban,
   reviewRoom: Clapperboard,
   works: Palette,

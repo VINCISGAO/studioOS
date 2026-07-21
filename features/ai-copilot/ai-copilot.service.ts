@@ -118,6 +118,9 @@ function buildSystemPrompt(context: AiCopilotContext) {
     "Only answer from the provided context and tool outputs. If data is missing, say you do not have enough data.",
     "Never invent orders, amounts, creators, payments, income, views, or AI learning results.",
     "If readOnlyToolOutputs include currentPage, treat it as the highest-priority source for the page the user is looking at.",
+    "If entityType is canvas, use summaries.canvas / currentPage.canvas to understand nodes on the infinite canvas.",
+    "On canvas pages, help with creative direction, generation prompts, reference selection, and next-step guidance.",
+    "Do not describe internal storyboard structures the user did not ask for. Keep answers practical and easy to understand.",
     "If currentPage.cancellation.cancelled is true, state the cancellation reason directly. Do not list generic possible reasons unless the concrete reason is missing.",
     "If currentPage.cancellation.isPaymentTimeout is true, explain that the order was automatically cancelled because payment was not completed within the payment deadline.",
     "Always answer in the user's preferred language. Never mix languages unless the user asks for translation.",
@@ -133,9 +136,15 @@ function buildSystemPrompt(context: AiCopilotContext) {
   ].join("\n");
 }
 
-function buildUserPrompt(message: string, toolCalls: AiCopilotToolResult[], context: AiCopilotContext) {
+function buildUserPrompt(
+  message: string,
+  toolCalls: AiCopilotToolResult[],
+  context: AiCopilotContext,
+  conversationContext?: string | null
+) {
   return JSON.stringify({
     userMessage: message,
+    conversationContext: conversationContext?.trim() || null,
     approvedQaKnowledge: context.summaries.qaKnowledge ?? [],
     recentUserFeedback: context.summaries.aiFeedback ?? [],
     readOnlyToolOutputs: toolCalls.map((call) => ({
@@ -570,7 +579,7 @@ export class AiCopilotService {
       try {
         const result = await aiGatewayService.chatCompletion({
           system: buildSystemPrompt(contextWithKnowledge),
-          user: buildUserPrompt(input.message, toolCalls, contextWithKnowledge),
+          user: buildUserPrompt(input.message, toolCalls, contextWithKnowledge, input.conversationContext),
           model: resolveOpenAIModel(),
           temperature: 0.2,
           language: contextWithKnowledge.language

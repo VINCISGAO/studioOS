@@ -66,6 +66,7 @@ model User {
   wallet                Wallet?
   oauthAccounts         UserOAuthAccount[]
   campaignAiUsageLogs   CampaignAiUsageLog[]
+  creativeProjects      CreativeProject[]      @relation("CreativeProjectOwner")
 
   @@index([role])
   @@index([status])
@@ -669,6 +670,11 @@ model Campaign {
   reviewAnnotations         ReviewAnnotation[]
   comments                  ReviewComment[]
   aiUsageLogs               CampaignAiUsageLog[]
+  creativeProject           CreativeProject?
+  creativeCanvases          CreativeCanvas[]
+  canvasNodes               CanvasNode[]
+  canvasEdges               CanvasEdge[]
+  generationJobs            GenerationJob[]
   costEstimates             ProjectCostEstimate[]
   actualProductionRecord    ActualProductionRecord?
   knowledgeArticles         KnowledgeArticle[]
@@ -830,6 +836,155 @@ model CampaignAsset {
   @@index([campaignId])
   @@index([assetType])
   @@map("campaign_assets")
+}
+
+model CreativeProject {
+  id             String               @id @default(uuid())
+  ownerId        String               @map("owner_id")
+  title          String
+  mode           CreativeProjectMode  @default(STANDALONE)
+  campaignId     String?              @unique @map("campaign_id")
+  createdBy      String               @map("created_by")
+  createdAt      DateTime             @default(now()) @map("created_at")
+  updatedAt      DateTime             @updatedAt @map("updated_at")
+  deletedAt      DateTime?            @map("deleted_at")
+  owner          User                 @relation("CreativeProjectOwner", fields: [ownerId], references: [id])
+  campaign       Campaign?            @relation(fields: [campaignId], references: [id])
+  canvas         CreativeCanvas?
+  assets         CreativeProjectAsset[]
+  nodes          CanvasNode[]
+  edges          CanvasEdge[]
+  generationJobs GenerationJob[]
+
+  @@index([ownerId, deletedAt])
+  @@index([ownerId, updatedAt])
+  @@map("creative_projects")
+}
+
+model CreativeProjectAsset {
+  id                String          @id @default(uuid())
+  creativeProjectId String          @map("creative_project_id")
+  uploadedBy        String          @map("uploaded_by")
+  assetType         AssetType       @map("asset_type")
+  fileName          String          @map("file_name")
+  fileKey           String          @map("file_key")
+  storageProvider   String          @default("r2") @map("storage_provider")
+  mimeType          String          @map("mime_type")
+  fileSize          BigInt          @map("file_size")
+  previewUrl        String?         @map("preview_url")
+  metadataJson      Json?           @map("metadata_json")
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+  deletedAt         DateTime?       @map("deleted_at")
+  creativeProject   CreativeProject @relation(fields: [creativeProjectId], references: [id], onDelete: Cascade)
+
+  @@index([creativeProjectId])
+  @@map("creative_project_assets")
+}
+
+model CreativeCanvas {
+  id                String          @id @default(uuid())
+  creativeProjectId String          @unique @map("creative_project_id")
+  campaignId        String?         @map("campaign_id")
+  createdBy         String          @map("created_by")
+  viewport          Json?
+  version           Int             @default(1)
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+  creativeProject   CreativeProject @relation(fields: [creativeProjectId], references: [id], onDelete: Cascade)
+  campaign          Campaign?       @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  nodes             CanvasNode[]
+  edges             CanvasEdge[]
+  jobs              GenerationJob[]
+
+  @@index([createdBy])
+  @@index([campaignId])
+  @@map("creative_canvases")
+}
+
+model CanvasNode {
+  id                String          @id
+  creativeProjectId String          @map("creative_project_id")
+  campaignId        String?         @map("campaign_id")
+  canvasId          String          @map("canvas_id")
+  type              String
+  positionX         Float           @map("position_x")
+  positionY         Float           @map("position_y")
+  width             Float?
+  height            Float?
+  parentId          String?         @map("parent_id")
+  data              Json
+  zIndex            Int             @default(0) @map("z_index")
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+  creativeProject   CreativeProject @relation(fields: [creativeProjectId], references: [id], onDelete: Cascade)
+  campaign          Campaign?       @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  canvas            CreativeCanvas  @relation(fields: [canvasId], references: [id], onDelete: Cascade)
+
+  @@index([creativeProjectId])
+  @@index([campaignId])
+  @@index([canvasId])
+  @@index([parentId])
+  @@map("canvas_nodes")
+}
+
+model CanvasEdge {
+  id                String          @id
+  creativeProjectId String          @map("creative_project_id")
+  campaignId        String?         @map("campaign_id")
+  canvasId          String          @map("canvas_id")
+  source            String
+  target            String
+  sourceHandle      String?         @map("source_handle")
+  targetHandle      String?         @map("target_handle")
+  data              Json?
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+  creativeProject   CreativeProject @relation(fields: [creativeProjectId], references: [id], onDelete: Cascade)
+  campaign          Campaign?       @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  canvas            CreativeCanvas  @relation(fields: [canvasId], references: [id], onDelete: Cascade)
+
+  @@index([creativeProjectId])
+  @@index([campaignId])
+  @@index([canvasId])
+  @@map("canvas_edges")
+}
+
+model GenerationJob {
+  id                String           @id @default(uuid())
+  creativeProjectId String           @map("creative_project_id")
+  campaignId        String?          @map("campaign_id")
+  canvasId          String           @map("canvas_id")
+  ownerId           String           @map("owner_id")
+  nodeId            String?          @map("node_id")
+  type              GenerationType
+  provider          String
+  model             String
+  prompt            String
+  input             Json
+  status            GenerationStatus @default(QUEUED)
+  idempotencyKey    String           @map("idempotency_key")
+  providerTaskId    String?          @map("provider_task_id")
+  outputAssetId     String?          @map("output_asset_id")
+  progress          Int              @default(0)
+  errorCode         String?          @map("error_code")
+  errorMessage      String?          @map("error_message")
+  estimatedCredits  Int              @map("estimated_credits")
+  actualCredits     Int?             @map("actual_credits")
+  createdAt         DateTime         @default(now()) @map("created_at")
+  startedAt         DateTime?        @map("started_at")
+  completedAt       DateTime?        @map("completed_at")
+  creativeProject   CreativeProject  @relation(fields: [creativeProjectId], references: [id], onDelete: Cascade)
+  campaign          Campaign?        @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  canvas            CreativeCanvas   @relation(fields: [canvasId], references: [id], onDelete: Cascade)
+
+  @@unique([ownerId, idempotencyKey])
+  @@index([creativeProjectId])
+  @@index([campaignId])
+  @@index([canvasId])
+  @@index([ownerId, status])
+  @@index([status, createdAt])
+  @@map("generation_jobs")
 }
 
 model PerformanceSource {
@@ -2062,6 +2217,26 @@ enum AssetType {
   PDF
   ZIP
   OTHER
+}
+
+enum CreativeProjectMode {
+  STANDALONE
+  ORDER
+}
+
+enum GenerationType {
+  IMAGE
+  VIDEO
+  MUSIC
+}
+
+enum GenerationStatus {
+  QUEUED
+  SUBMITTING
+  PROCESSING
+  SUCCEEDED
+  FAILED
+  CANCELLED
 }
 
 enum PerformanceSourceStatus {

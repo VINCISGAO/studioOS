@@ -9,6 +9,7 @@ import { appError } from "@/lib/core/errors";
 import type { AiCopilotContext, AiCopilotPageContext } from "@/features/ai-copilot/ai-copilot.types";
 import { normalizeCopilotRole } from "@/features/ai-copilot/ai-copilot.types";
 import { getProject } from "@/lib/project-service";
+import { canvasRepository } from "@/features/canvas/canvas.repository";
 import { normalizeCampaignStatus } from "@/lib/studioos/project-status";
 import {
   BRAND_PAYMENT_DEADLINE_MINUTES,
@@ -41,13 +42,43 @@ export class AiCopilotContextBuilder {
     });
     const language = normalizeLanguageCode(page.languageCode ?? dbUser?.languageCode ?? dbUser?.language ?? user.languageCode);
 
-    const summaries =
+    const aiFeedback = await this.aiFeedbackSummary(user.id, role);
+
+    const baseSummaries =
       role === "ADMIN" || role === "SUPPORT"
         ? await this.adminSummary()
         : role === "CREATOR"
           ? await this.creatorSummary(user.id)
           : await this.brandSummary(user.id, user.email, language, page);
-    const aiFeedback = await this.aiFeedbackSummary(user.id, role);
+
+    const summaries = { ...baseSummaries, aiFeedback };
+
+    if (page.entityType === "canvas" && page.entityId) {
+      const canvas = await this.canvasSummary(page.entityId, user.id);
+      return {
+        ...page,
+        user: {
+          id: user.id,
+          email: user.email,
+          role,
+          fullName: user.fullName,
+          languageCode: language
+        },
+        language,
+        country: dbUser?.country ?? null,
+        timezone: dbUser?.timezone ?? null,
+        summaries: {
+          ...summaries,
+          canvas,
+          currentPage: {
+            pagePath: page.pagePath ?? null,
+            entityType: "canvas",
+            entityId: page.entityId,
+            canvas
+          }
+        }
+      };
+    }
 
     return {
       ...page,
@@ -61,10 +92,34 @@ export class AiCopilotContextBuilder {
       language,
       country: dbUser?.country ?? null,
       timezone: dbUser?.timezone ?? null,
-      summaries: {
-        ...summaries,
-        aiFeedback
-      }
+      summaries
+    };
+  }
+
+  private async canvasSummary(projectId: string, ownerId: string) {
+    const project = await canvasRepository.findProjectForOwner(projectId, ownerId);
+    if (!project) return null;
+    const canvas = await canvasRepository.findCanvas(projectId);
+    const nodes = canvas?.nodes ?? [];
+    return {
+      projectId,
+      title: project.title,
+      mode: project.mode,
+      campaignTitle: project.campaign?.title ?? null,
+      nodeCount: nodes.length,
+      nodes: nodes.slice(0, 24).map((node) => {
+        const data =
+          node.data && typeof node.data === "object" && !Array.isArray(node.data)
+            ? (node.data as Record<string, unknown>)
+            : {};
+        return {
+          id: node.id,
+          type: node.type,
+          title: typeof data.title === "string" ? data.title : node.type,
+          status: typeof data.status === "string" ? data.status : null,
+          prompt: typeof data.prompt === "string" ? data.prompt.slice(0, 160) : null
+        };
+      })
     };
   }
 

@@ -1,0 +1,428 @@
+import type { CreativeProjectMode, GenerationStatus, GenerationType, Prisma } from "@prisma/client";
+import { prisma } from "@/lib/core/database/prisma";
+
+const campaignContextSelect = {
+  id: true,
+  title: true,
+  creatorId: true,
+  status: true,
+  deadline: true,
+  currentVersion: true,
+  brand: {
+    select: {
+      fullName: true,
+      brandProfile: {
+        select: { companyName: true, logoUrl: true, brandDnaJson: true }
+      }
+    }
+  },
+  orders: {
+    select: { id: true },
+    orderBy: { createdAt: "desc" as const },
+    take: 1
+  },
+  assets: {
+    where: { deletedAt: null },
+    select: { id: true, assetType: true }
+  }
+} as const;
+
+export const canvasRepository = {
+  findProjectForOwner(projectId: string, ownerId: string) {
+    return prisma.creativeProject.findFirst({
+      where: { id: projectId, ownerId, deletedAt: null },
+      include: {
+        campaign: { select: campaignContextSelect },
+        canvas: {
+          select: { id: true, updatedAt: true, version: true, viewport: true }
+        }
+      }
+    });
+  },
+
+  findProjectByCampaignForCreator(campaignId: string, ownerId: string) {
+    return prisma.creativeProject.findFirst({
+      where: { campaignId, ownerId, deletedAt: null },
+      include: {
+        campaign: { select: campaignContextSelect },
+        canvas: {
+          select: { id: true, updatedAt: true, version: true, viewport: true }
+        }
+      }
+    });
+  },
+
+  findCampaignForCreator(campaignId: string, creatorId: string) {
+    return prisma.campaign.findFirst({
+      where: { id: campaignId, creatorId, deletedAt: null },
+      select: campaignContextSelect
+    });
+  },
+
+  listStandaloneProjects(ownerId: string) {
+    return prisma.creativeProject.findMany({
+      where: { ownerId, mode: "STANDALONE", deletedAt: null },
+      select: {
+        id: true,
+        title: true,
+        updatedAt: true,
+        canvas: { select: { updatedAt: true } }
+      },
+      orderBy: { updatedAt: "desc" },
+      take: 24
+    });
+  },
+
+  listOrderProjects(ownerId: string) {
+    return prisma.campaign.findMany({
+      where: { creatorId: ownerId, deletedAt: null },
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        updatedAt: true,
+        creativeProject: {
+          select: {
+            id: true,
+            canvas: { select: { updatedAt: true } }
+          }
+        }
+      },
+      orderBy: { updatedAt: "desc" }
+    });
+  },
+
+  createStandaloneProject(input: { ownerId: string; createdBy: string; title: string }) {
+    return prisma.creativeProject.create({
+      data: {
+        ownerId: input.ownerId,
+        createdBy: input.createdBy,
+        title: input.title,
+        mode: "STANDALONE"
+      },
+      select: { id: true, title: true }
+    });
+  },
+
+  createOrderProject(input: {
+    ownerId: string;
+    createdBy: string;
+    campaignId: string;
+    title: string;
+  }) {
+    return prisma.creativeProject.create({
+      data: {
+        ownerId: input.ownerId,
+        createdBy: input.createdBy,
+        campaignId: input.campaignId,
+        title: input.title,
+        mode: "ORDER"
+      },
+      select: { id: true, title: true, campaignId: true }
+    });
+  },
+
+  ensureCanvas(projectId: string, createdBy: string, campaignId?: string | null) {
+    return prisma.creativeCanvas.upsert({
+      where: { creativeProjectId: projectId },
+      create: {
+        creativeProjectId: projectId,
+        campaignId: campaignId ?? null,
+        createdBy,
+        viewport: { x: 0, y: 0, zoom: 1 }
+      },
+      update: {},
+      select: { id: true }
+    });
+  },
+
+  findCanvas(projectId: string) {
+    return prisma.creativeCanvas.findUnique({
+      where: { creativeProjectId: projectId },
+      include: {
+        creativeProject: { select: { title: true, mode: true, campaignId: true } },
+        nodes: { orderBy: [{ zIndex: "asc" }, { createdAt: "asc" }] },
+        edges: { orderBy: { createdAt: "asc" } }
+      }
+    });
+  },
+
+  async replaceSnapshot(input: {
+    canvasId: string;
+    creativeProjectId: string;
+    campaignId?: string | null;
+    viewport: Prisma.InputJsonValue;
+    nodes: {
+      id: string;
+      type: string;
+      positionX: number;
+      positionY: number;
+      width?: number;
+      height?: number;
+      data: Prisma.InputJsonValue;
+      zIndex: number;
+      parentId?: string;
+    }[];
+    edges: {
+      id: string;
+      source: string;
+      target: string;
+      sourceHandle?: string | null;
+      targetHandle?: string | null;
+      data?: Prisma.InputJsonValue;
+    }[];
+  }) {
+    return prisma.$transaction(async (tx) => {
+      await tx.canvasEdge.deleteMany({ where: { canvasId: input.canvasId } });
+      await tx.canvasNode.deleteMany({ where: { canvasId: input.canvasId } });
+
+      if (input.nodes.length) {
+        await tx.canvasNode.createMany({
+          data: input.nodes.map((node) => ({
+            ...node,
+            creativeProjectId: input.creativeProjectId,
+            campaignId: input.campaignId ?? null,
+            canvasId: input.canvasId
+          }))
+        });
+      }
+      if (input.edges.length) {
+        await tx.canvasEdge.createMany({
+          data: input.edges.map((edge) => ({
+            ...edge,
+            creativeProjectId: input.creativeProjectId,
+            campaignId: input.campaignId ?? null,
+            canvasId: input.canvasId
+          }))
+        });
+      }
+
+      return tx.creativeCanvas.update({
+        where: { id: input.canvasId },
+        data: { viewport: input.viewport, version: { increment: 1 } },
+        select: { version: true, updatedAt: true }
+      });
+    });
+  },
+
+  sumGenerationCredits(projectId: string) {
+    return prisma.generationJob.aggregate({
+      where: { creativeProjectId: projectId, status: { not: "CANCELLED" } },
+      _sum: { estimatedCredits: true, actualCredits: true }
+    });
+  },
+
+  createAiDirectorLog(input: {
+    campaignId?: string | null;
+    input: Prisma.InputJsonValue;
+    output: Prisma.InputJsonValue;
+    provider: string;
+    tokenInput: number;
+    tokenOutput: number;
+    cost: number;
+    latencyMs: number;
+  }) {
+    return prisma.aiJob.create({
+      data: {
+        campaignId: input.campaignId ?? null,
+        type: "CANVAS_DIRECTOR_PLAN",
+        provider: input.provider,
+        status: "SUCCESS",
+        inputJson: input.input,
+        outputJson: input.output,
+        tokenInput: input.tokenInput,
+        tokenOutput: input.tokenOutput,
+        cost: input.cost,
+        latencyMs: input.latencyMs,
+        completedAt: new Date()
+      }
+    });
+  },
+
+  findCampaignAsset(assetId: string, campaignId: string) {
+    return prisma.campaignAsset.findFirst({
+      where: { id: assetId, campaignId, deletedAt: null }
+    });
+  },
+
+  findProjectAsset(assetId: string, projectId: string) {
+    return prisma.creativeProjectAsset.findFirst({
+      where: { id: assetId, creativeProjectId: projectId, deletedAt: null }
+    });
+  },
+
+  findAssetById(assetId: string) {
+    return prisma.campaignAsset.findFirst({
+      where: { id: assetId, deletedAt: null }
+    });
+  },
+
+  findProjectAssetById(assetId: string) {
+    return prisma.creativeProjectAsset.findFirst({
+      where: { id: assetId, deletedAt: null }
+    });
+  },
+
+  listProjectAssets(projectId: string) {
+    return prisma.creativeProjectAsset.findMany({
+      where: { creativeProjectId: projectId, deletedAt: null },
+      orderBy: { createdAt: "desc" },
+      take: 48,
+      select: {
+        id: true,
+        fileName: true,
+        mimeType: true,
+        assetType: true,
+        previewUrl: true,
+        metadataJson: true,
+        createdAt: true
+      }
+    });
+  },
+
+  listCampaignAssets(campaignId: string) {
+    return prisma.campaignAsset.findMany({
+      where: { campaignId, deletedAt: null },
+      orderBy: { createdAt: "desc" },
+      take: 48,
+      select: {
+        id: true,
+        fileName: true,
+        mimeType: true,
+        assetType: true,
+        previewUrl: true,
+        metadataJson: true,
+        createdAt: true
+      }
+    });
+  },
+
+  softDeleteProjectAssets(projectId: string, assetIds: string[]) {
+    return prisma.creativeProjectAsset.updateMany({
+      where: {
+        creativeProjectId: projectId,
+        id: { in: assetIds },
+        deletedAt: null
+      },
+      data: { deletedAt: new Date() }
+    });
+  },
+
+  softDeleteCampaignAssets(campaignId: string, assetIds: string[]) {
+    return prisma.campaignAsset.updateMany({
+      where: {
+        campaignId,
+        id: { in: assetIds },
+        deletedAt: null
+      },
+      data: { deletedAt: new Date() }
+    });
+  },
+
+  createCampaignAsset(input: {
+    campaignId: string;
+    uploadedBy: string;
+    assetType: "REFERENCE_IMAGE" | "REFERENCE_VIDEO" | "MUSIC";
+    fileName: string;
+    fileKey: string;
+    storageProvider: string;
+    mimeType: string;
+    fileSize: number;
+    previewUrl?: string;
+    metadataJson: Prisma.InputJsonValue;
+  }) {
+    return prisma.campaignAsset.create({
+      data: { ...input, fileSize: BigInt(input.fileSize) }
+    });
+  },
+
+  createProjectAsset(input: {
+    creativeProjectId: string;
+    uploadedBy: string;
+    assetType: "REFERENCE_IMAGE" | "REFERENCE_VIDEO" | "MUSIC";
+    fileName: string;
+    fileKey: string;
+    storageProvider: string;
+    mimeType: string;
+    fileSize: number;
+    previewUrl?: string;
+    metadataJson: Prisma.InputJsonValue;
+  }) {
+    return prisma.creativeProjectAsset.create({
+      data: { ...input, fileSize: BigInt(input.fileSize) }
+    });
+  },
+
+  createGenerationJob(input: {
+    creativeProjectId: string;
+    campaignId?: string | null;
+    canvasId: string;
+    ownerId: string;
+    nodeId: string;
+    type: GenerationType;
+    model: string;
+    prompt: string;
+    payload: Prisma.InputJsonValue;
+    idempotencyKey: string;
+    estimatedCredits: number;
+  }) {
+    return prisma.generationJob.upsert({
+      where: {
+        ownerId_idempotencyKey: {
+          ownerId: input.ownerId,
+          idempotencyKey: input.idempotencyKey
+        }
+      },
+      create: {
+        creativeProjectId: input.creativeProjectId,
+        campaignId: input.campaignId ?? null,
+        canvasId: input.canvasId,
+        ownerId: input.ownerId,
+        nodeId: input.nodeId,
+        type: input.type,
+        provider: "vincis-mock",
+        model: input.model,
+        prompt: input.prompt,
+        input: input.payload,
+        idempotencyKey: input.idempotencyKey,
+        estimatedCredits: input.estimatedCredits
+      },
+      update: {}
+    });
+  },
+
+  findGenerationJob(jobId: string, ownerId: string) {
+    return prisma.generationJob.findFirst({ where: { id: jobId, ownerId } });
+  },
+
+  listGenerationJobs(projectId: string, ownerId: string, since: Date) {
+    return prisma.generationJob.findMany({
+      where: { creativeProjectId: projectId, ownerId, createdAt: { gte: since } },
+      orderBy: { createdAt: "asc" },
+      take: 50
+    });
+  },
+
+  updateGenerationJob(
+    id: string,
+    data: {
+      status: GenerationStatus;
+      progress: number;
+      startedAt?: Date;
+      completedAt?: Date;
+      actualCredits?: number;
+    }
+  ) {
+    return prisma.generationJob.update({ where: { id }, data });
+  }
+};
+
+export type CanvasProjectRecord = NonNullable<
+  Awaited<ReturnType<typeof canvasRepository.findProjectForOwner>>
+>;
+
+export type CanvasCampaignRecord = NonNullable<
+  Awaited<ReturnType<typeof canvasRepository.findCampaignForCreator>>
+>;
+
+export type CanvasProjectModeValue = CreativeProjectMode;

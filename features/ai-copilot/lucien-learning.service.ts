@@ -69,6 +69,8 @@ function interactionConfidence(answerMode: string) {
   if (answerMode === "boundary_refusal") return 1;
   if (answerMode === "knowledge_base") return 0.92;
   if (answerMode === "model") return 0.88;
+  if (answerMode === "image_generation" || answerMode === "image_to_image") return 0.9;
+  if (answerMode === "image_generation_failed") return 0.95;
   return 0.75;
 }
 

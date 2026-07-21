@@ -15,6 +15,7 @@ export type AiCopilotPageContext = {
 export type AiCopilotRequest = AiCopilotPageContext & {
   sessionId?: string | null;
   message: string;
+  conversationContext?: string | null;
 };
 
 export type AiCopilotContext = AiCopilotPageContext & {

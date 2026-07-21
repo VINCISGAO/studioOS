@@ -2,6 +2,7 @@
 export type PortalMobileNavIconKey =
   | "home"
   | "invitations"
+  | "canvas"
   | "projects"
   | "reviewRoom"
   | "works"
@@ -37,6 +38,7 @@ export type PortalMobileNavIconKey =
 export const portalMobileNavIconKeys: PortalMobileNavIconKey[] = [
   "home",
   "invitations",
+  "canvas",
   "projects",
   "reviewRoom",
   "works",

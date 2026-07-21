@@ -132,6 +132,8 @@ function StudioPortalShellInner({
   const visibleUnreadCount = unreadCount;
 
   const isReviewPage = isCreatorPortalReviewRoute(pathname);
+  const isCanvasPage =
+    pathname === creatorPortalRoutes.canvas || pathname.startsWith(`${creatorPortalRoutes.canvas}/`);
   const hidePortalHeader = isReviewPage;
   const isProfileEditorPage = pathname === creatorPortalRoutes.profile;
 
@@ -221,7 +223,7 @@ function StudioPortalShellInner({
 
           <PortalContentColumn>
           {!hidePortalHeader ? (
-            <header className="sticky top-0 z-40 shrink-0 border-b border-zinc-200/80 bg-white/95 backdrop-blur">
+            <header className="sticky top-0 z-50 shrink-0 overflow-visible border-b border-zinc-200/80 bg-white/95 backdrop-blur">
               <div className="flex h-14 items-center justify-between px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center gap-2 lg:hidden">
                   <MarketingHomeLink locale={locale} className="flex items-center gap-2 font-semibold text-zinc-950">
@@ -276,7 +278,7 @@ function StudioPortalShellInner({
             <main
               className={cn(
                 "min-h-0 min-w-0 flex-1",
-                isReviewPage
+                isReviewPage || isCanvasPage
                   ? "flex w-full flex-col overflow-hidden p-0"
                   : cn(
                       "mx-auto w-full overflow-y-auto overscroll-y-contain px-4 py-6 sm:px-6 lg:px-8 lg:py-8",

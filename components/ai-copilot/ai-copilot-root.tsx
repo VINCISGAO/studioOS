@@ -21,6 +21,7 @@ function isPublicShellRoute(pathname: string) {
 
 function shouldHideWorkspaceCopilot(pathname: string) {
   const path = pathname.split("?")[0]?.trim() ?? "";
+  if (path.startsWith("/studio/canvas")) return true;
   return isPublicShellRoute(pathname) || isPublicLucienPagePath(path);
 }
 

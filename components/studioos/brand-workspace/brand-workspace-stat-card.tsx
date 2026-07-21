@@ -79,16 +79,18 @@ export function BrandWorkspaceStatCard({
         className="flex min-h-[128px] flex-col rounded-2xl border border-zinc-200/60 bg-white p-4 shadow-[0_4px_24px_-12px_rgba(15,23,42,0.1)] sm:min-h-[140px] sm:p-5"
         aria-label={label}
       >
-        <span
-          className={cn(
-            "inline-flex h-9 w-9 items-center justify-center rounded-xl sm:h-10 sm:w-10",
-            iconTone
-          )}
-        >
-          <Icon className="h-[18px] w-[18px]" />
-        </span>
-        <p className="mt-2 text-xs font-medium text-zinc-500">{label}</p>
-        <p className="mt-3 text-2xl font-semibold tracking-tight text-zinc-950 sm:mt-4 sm:text-[28px]">
+        <div className="flex items-center gap-2.5">
+          <span
+            className={cn(
+              "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl sm:h-10 sm:w-10",
+              iconTone
+            )}
+          >
+            <Icon className="h-[18px] w-[18px]" />
+          </span>
+          <p className="text-xs font-medium text-zinc-500">{label}</p>
+        </div>
+        <p className="mt-3 text-2xl font-semibold tracking-tight text-zinc-950 sm:text-[28px]">
           {value}
         </p>
         {comparisonText ? (
@@ -104,27 +106,26 @@ export function BrandWorkspaceStatCard({
       aria-label={label}
     >
       <div className="relative z-10">
-        <span
+        <div className="flex items-center gap-2.5">
+          <span
+            className={cn(
+              "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl sm:h-10 sm:w-10",
+              iconTone
+            )}
+          >
+            <Icon className="h-[18px] w-[18px]" />
+          </span>
+          <p className="text-xs font-medium text-zinc-500">{label}</p>
+        </div>
+        <p
           className={cn(
-            "inline-flex h-9 w-9 items-center justify-center rounded-xl sm:h-10 sm:w-10",
-            iconTone
+            "mt-3 font-semibold tracking-tight text-zinc-950",
+            compactValue ? "text-xl sm:text-2xl" : "text-[30px] tabular-nums sm:text-[34px]"
           )}
         >
-          <Icon className="h-[18px] w-[18px]" />
-        </span>
-        <p className="mt-2 text-xs font-medium text-zinc-500">{label}</p>
+          {value}
+        </p>
       </div>
-
-      <p
-        className={cn(
-          "pointer-events-none absolute inset-x-0 top-[46%] z-10 -translate-y-1/2 text-center font-semibold tracking-tight text-zinc-950",
-          compactValue
-            ? "px-2 text-xl sm:text-2xl"
-            : "text-[30px] tabular-nums sm:text-[34px]"
-        )}
-      >
-        {value}
-      </p>
 
       <p className="absolute bottom-4 left-4 z-10 max-w-[58%] text-xs text-zinc-400">
         {comparisonText ?? (

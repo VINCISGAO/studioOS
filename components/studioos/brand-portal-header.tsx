@@ -31,7 +31,7 @@ export function BrandPortalHeader({
   return (
     <header
       data-brand-portal-header
-      className="sticky top-0 z-40 shrink-0 border-b border-zinc-200/80 bg-white/95 backdrop-blur"
+      className="sticky top-0 z-50 shrink-0 overflow-visible border-b border-zinc-200/80 bg-white/95 backdrop-blur"
     >
       <div className="flex h-14 items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-2 lg:hidden">

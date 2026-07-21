@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
@@ -9,15 +10,22 @@ import { cn } from "@/lib/utils";
 import { PortalAccountAvatar } from "@/components/studioos/portal-account-avatar";
 import { ChevronDown, LogOut, UserRound } from "lucide-react";
 
+const MENU_WIDTH = 224;
+
 const copy = {
   en: {
     profile: "Edit profile",
     signOut: "Sign out"
   },
   zh: {
-    profile: "编辑资料",
+    profile: "编辑主页",
     signOut: "退出登录"
   }
+};
+
+type MenuAnchor = {
+  top: number;
+  left: number;
 };
 
 export function StudioUserMenu({
@@ -42,24 +50,64 @@ export function StudioUserMenu({
   const t = copy[locale];
   const profileLabel = profileMenuLabel ?? t.profile;
   const subtitle = roleLabel ?? (locale === "zh" ? "创作者" : "Studio");
-  const panelRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [anchor, setAnchor] = useState<MenuAnchor | null>(null);
 
   useEffect(() => {
-    function onPointerDown(event: MouseEvent) {
-      if (!panelRef.current?.contains(event.target as Node)) {
-        setOpen(false);
-      }
+    setMounted(true);
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!open) {
+      setAnchor(null);
+      return;
     }
-    if (open) {
-      document.addEventListener("mousedown", onPointerDown);
-      return () => document.removeEventListener("mousedown", onPointerDown);
-    }
+    const rect = buttonRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    setAnchor({
+      top: rect.bottom + 8,
+      left: Math.max(8, rect.right - MENU_WIDTH)
+    });
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const updateAnchor = () => {
+      const rect = buttonRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      setAnchor({
+        top: rect.bottom + 8,
+        left: Math.max(8, rect.right - MENU_WIDTH)
+      });
+    };
+
+    window.addEventListener("resize", updateAnchor);
+    window.addEventListener("scroll", updateAnchor, true);
+    return () => {
+      window.removeEventListener("resize", updateAnchor);
+      window.removeEventListener("scroll", updateAnchor, true);
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (buttonRef.current?.contains(target) || menuRef.current?.contains(target)) return;
+      setOpen(false);
+    };
+    window.addEventListener("pointerdown", onPointerDown);
+    return () => window.removeEventListener("pointerdown", onPointerDown);
   }, [open]);
 
   return (
-    <div ref={panelRef} className="relative">
+    <>
       <button
+        ref={buttonRef}
         type="button"
         aria-expanded={open}
         aria-haspopup="menu"
@@ -73,42 +121,47 @@ export function StudioUserMenu({
         <ChevronDown className={cn("h-4 w-4 text-zinc-400 transition", open && "rotate-180")} />
       </button>
 
-      {open ? (
-        <div
-          role="menu"
-          className="absolute right-0 z-50 mt-2 w-56 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-lg"
-        >
-          {name ? (
-            <div className="border-b border-zinc-100 px-4 py-3">
-              <p className="truncate text-sm font-semibold text-zinc-900">{name}</p>
-              <p className="text-xs text-zinc-500">{subtitle}</p>
-            </div>
-          ) : null}
-          <div className="p-1">
-            <Link
-              href={withLocale(profileHref, locale)}
-              role="menuitem"
-              className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm text-zinc-700 transition hover:bg-zinc-50"
-              onClick={() => setOpen(false)}
+      {mounted && open && anchor
+        ? createPortal(
+            <div
+              ref={menuRef}
+              role="menu"
+              className="fixed z-[300] w-56 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-lg"
+              style={{ top: anchor.top, left: anchor.left }}
             >
-              <UserRound className="h-4 w-4 text-zinc-400" />
-              {profileLabel}
-            </Link>
-            <form action="/auth/sign-out" method="post">
-              <input type="hidden" name="lang" value={locale} />
-              <Button
-                type="submit"
-                role="menuitem"
-                variant="ghost"
-                className="h-auto w-full justify-start gap-2 rounded-lg px-3 py-2.5 text-sm font-normal text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900"
-              >
-                <LogOut className="h-4 w-4 text-zinc-400" />
-                {t.signOut}
-              </Button>
-            </form>
-          </div>
-        </div>
-      ) : null}
-    </div>
+              {name ? (
+                <div className="border-b border-zinc-100 px-4 py-3">
+                  <p className="truncate text-sm font-semibold text-zinc-900">{name}</p>
+                  <p className="text-xs text-zinc-500">{subtitle}</p>
+                </div>
+              ) : null}
+              <div className="p-1">
+                <Link
+                  href={withLocale(profileHref, locale)}
+                  role="menuitem"
+                  className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm text-zinc-700 transition hover:bg-zinc-50"
+                  onClick={() => setOpen(false)}
+                >
+                  <UserRound className="h-4 w-4 text-zinc-400" />
+                  {profileLabel}
+                </Link>
+                <form action="/auth/sign-out" method="post">
+                  <input type="hidden" name="lang" value={locale} />
+                  <Button
+                    type="submit"
+                    role="menuitem"
+                    variant="ghost"
+                    className="h-auto w-full justify-start gap-2 rounded-lg px-3 py-2.5 text-sm font-normal text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900"
+                  >
+                    <LogOut className="h-4 w-4 text-zinc-400" />
+                    {t.signOut}
+                  </Button>
+                </form>
+              </div>
+            </div>,
+            document.body
+          )
+        : null}
+    </>
   );
 }

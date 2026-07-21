@@ -13,6 +13,7 @@ import {
   S3Client,
   UploadPartCommand
 } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { isObjectStorageConfigured, videoConfig } from "@/lib/core/config/video";
 import { canPersistLocalDataStore } from "@/lib/runtime-flags";
 
@@ -122,6 +123,26 @@ export async function getObject(key: string): Promise<Buffer | null> {
   } catch {
     return null;
   }
+}
+
+export async function createSignedObjectDownloadUrl(input: {
+  key: string;
+  fileName: string;
+  expiresIn?: number;
+}): Promise<string | null> {
+  const client = getS3Client();
+  if (!client) return null;
+
+  const safeFileName = input.fileName.replace(/[\r\n"\\/]/g, "_").slice(0, 180) || "download";
+  return getSignedUrl(
+    client,
+    new GetObjectCommand({
+      Bucket: videoConfig.r2.bucket,
+      Key: input.key,
+      ResponseContentDisposition: `attachment; filename="${safeFileName}"`
+    }),
+    { expiresIn: Math.min(Math.max(input.expiresIn ?? 60, 15), 300) }
+  );
 }
 
 export async function getObjectMetadata(

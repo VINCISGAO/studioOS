@@ -11,7 +11,7 @@ export function openAIVisionModel() {
 }
 
 export function openAIImageModel() {
-  return (process.env["OPENAI_IMAGE_MODEL"] ?? "").trim() || "gpt-image-1";
+  return (process.env["OPENAI_IMAGE_MODEL"] ?? "").trim() || "gpt-image-1.5";
 }
 
 export function hasMetaAds() {

@@ -89,10 +89,28 @@ export function StudioPortalSidebarNav({
     if (item.labelKey === "reviewRoom") {
       return pathname === creatorPortalRoutes.reviewHub || pathname.startsWith("/studio/review/");
     }
+    if (item.labelKey === "creationTools") {
+      return (
+        pathname === creatorPortalRoutes.canvasEnter ||
+        pathname === creatorPortalRoutes.canvas ||
+        pathname.startsWith(`${creatorPortalRoutes.canvas}/`)
+      );
+    }
     return pathname === item.href || pathname.startsWith(`${item.href}/`);
   }
 
-  function sidebarLinkClass(active: boolean, locked: boolean, certified: boolean) {
+  function sidebarLinkClass(
+    active: boolean,
+    locked: boolean,
+    certified: boolean,
+    highlighted: boolean
+  ) {
+    if (highlighted && !locked) {
+      return cn(
+        "relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition",
+        "bg-blue-50 text-blue-700 shadow-[inset_0_0_0_1px_rgba(59,130,246,0.12)]"
+      );
+    }
     return cn(
       "relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition",
       locked
@@ -113,13 +131,14 @@ export function StudioPortalSidebarNav({
         const locked = isNavLocked(item);
         const justUnlocked = isAnimating && unlockedSet.has(labelKey);
         const certifiedItem = isVerified && !locked;
+        const highlighted = labelKey === "creationTools";
         const ItemIcon = locked ? Lock : justUnlocked ? Sparkles : Icon;
 
         return (
           <Link
             key={item.href + labelKey}
             href={navHref(item)}
-            className={sidebarLinkClass(active && !locked, locked, certifiedItem)}
+            className={sidebarLinkClass(active && !locked, locked, certifiedItem, highlighted)}
             title={
               locked && !isAnimating
                 ? item.labelKey === "income"
@@ -130,7 +149,9 @@ export function StudioPortalSidebarNav({
                 : undefined
             }
           >
-            {active && !locked ? (
+            {highlighted && !locked ? (
+              <span className="absolute bottom-2 left-0 top-2 w-[3px] rounded-full bg-blue-500" />
+            ) : active && !locked ? (
               <span
                 className={cn(
                   "absolute bottom-2 left-0 top-2 w-[3px] rounded-full",
@@ -142,7 +163,8 @@ export function StudioPortalSidebarNav({
               className={cn(
                 "h-[18px] w-[18px] shrink-0",
                 justUnlocked && "text-violet-600",
-                active && !locked && certifiedItem && "text-violet-700"
+                highlighted && !locked && "text-blue-600",
+                active && !locked && certifiedItem && !highlighted && "text-violet-700"
               )}
             />
             <span className="flex-1">{nav[labelKey]}</span>

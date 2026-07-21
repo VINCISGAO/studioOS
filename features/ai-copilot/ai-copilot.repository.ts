@@ -20,6 +20,43 @@ export class AiCopilotRepository {
     });
   }
 
+  findRecentCanvasSession(userId: string, projectId: string, since: Date) {
+    return prisma.chatSession.findFirst({
+      where: {
+        userId,
+        status: "OPEN",
+        updatedAt: { gte: since },
+        messages: {
+          some: {
+            createdAt: { gte: since },
+            metadataJson: {
+              path: ["entityId"],
+              equals: projectId
+            }
+          }
+        }
+      },
+      orderBy: { updatedAt: "desc" }
+    });
+  }
+
+  listSessionMessagesSince(sessionId: string, since: Date) {
+    return prisma.chatMessage.findMany({
+      where: {
+        sessionId,
+        createdAt: { gte: since }
+      },
+      orderBy: { createdAt: "asc" }
+    });
+  }
+
+  closeSession(sessionId: string) {
+    return prisma.chatSession.update({
+      where: { id: sessionId },
+      data: { status: "CLOSED" }
+    });
+  }
+
   getMessageWithSession(messageId: string) {
     return prisma.chatMessage.findUnique({
       where: { id: messageId },

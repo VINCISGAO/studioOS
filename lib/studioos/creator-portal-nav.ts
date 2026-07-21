@@ -10,7 +10,8 @@ import {
   Palette,
   Receipt,
   Settings,
-  Shield
+  Shield,
+  WandSparkles
 } from "lucide-react";
 
 export type CreatorPortalNavKey = keyof typeof studioNav.en;
@@ -47,6 +48,13 @@ export const creatorPortalNavItems: CreatorPortalNavItem[] = [
     icon: ClipboardList,
     mobileIconKey: "invitations",
     requiresBusinessAccess: true
+  },
+  {
+    href: creatorPortalRoutes.canvasEnter,
+    labelKey: "creationTools",
+    icon: WandSparkles,
+    mobileIconKey: "canvas",
+    requiresBusinessAccess: false
   },
   {
     href: creatorPortalRoutes.projects,

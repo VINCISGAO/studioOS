@@ -1,0 +1,40 @@
+.canvas-flow .react-flow__pane {
+  cursor: default;
+}
+
+.canvas-flow.mode-move .react-flow__pane {
+  cursor: grab;
+}
+
+.canvas-flow.mode-move .react-flow__pane.dragging {
+  cursor: grabbing;
+}
+
+.canvas-flow .react-flow__pane.dragging {
+  cursor: crosshair;
+}
+
+.canvas-flow .react-flow__pane.selection {
+  cursor: crosshair;
+}
+
+.canvas-flow .react-flow__pane.draggable {
+  cursor: grab;
+}
+
+.canvas-flow .react-flow__pane.dragging.draggable {
+  cursor: grabbing;
+}
+
+.canvas-flow .react-flow__nodesselection-rect,
+.canvas-flow .react-flow__selection {
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgb(59, 130, 246);
+  border-radius: 4px;
+}
+
+.canvas-flow .react-flow__node.selected .canvas-video-resizer line,
+.canvas-flow .react-flow__node.selected .canvas-video-resizer rect {
+  border-color: rgb(59, 130, 246);
+  stroke: rgb(59, 130, 246);
+}

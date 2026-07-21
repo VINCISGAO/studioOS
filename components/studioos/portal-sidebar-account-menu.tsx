@@ -15,7 +15,7 @@ const copy = {
     signOut: "Sign out"
   },
   zh: {
-    profile: "编辑资料",
+    profile: "编辑主页",
     signOut: "退出登录"
   }
 };
