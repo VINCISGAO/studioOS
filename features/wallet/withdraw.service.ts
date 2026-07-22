@@ -32,10 +32,6 @@ export class WithdrawService {
     }
 
     const wallet = await walletRepository.getOrCreate(user.id);
-    const available = Number(wallet.availableBalance);
-    if (amount > available) {
-      throw appError("VALIDATION_ERROR", "Amount exceeds available balance");
-    }
 
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
@@ -65,21 +61,33 @@ export class WithdrawService {
       throw appError("VALIDATION_ERROR", "Daily withdrawal limit reached");
     }
 
-    const balanceAfter = roundMoney(available - amount);
-    const result = await walletRepository.applyLedgerUpdate({
-      walletId: wallet.id,
-      availableDelta: -amount,
-      entries: [
-        {
+    const result = await prisma.$transaction(async (tx) => {
+      const currentWallet = await tx.wallet.findUniqueOrThrow({ where: { id: wallet.id } });
+      const available = Number(currentWallet.availableBalance);
+      if (amount > available) {
+        throw appError("VALIDATION_ERROR", "Amount exceeds available balance");
+      }
+
+      const balanceAfter = roundMoney(available - amount);
+      const updatedWallet = await tx.wallet.update({
+        where: { id: wallet.id },
+        data: { availableBalance: balanceAfter }
+      });
+
+      const requestTx = await tx.transaction.create({
+        data: {
+          walletId: wallet.id,
           type: "WITHDRAW_REQUEST",
           amount,
           balanceAfter,
           description: `Withdraw request by ${user.id}`
         }
-      ]
+      });
+
+      return { wallet: updatedWallet, requestTx };
     });
 
-    const requestTx = result.transactions[0]!;
+    const requestTx = result.requestTx;
     return {
       withdrawId: requestTx.id,
       status: "pending" as const,

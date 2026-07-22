@@ -756,7 +756,12 @@ export const creditWalletRepository = {
     assertPositiveInt(input.amount, "Reserve amount");
 
     const existing = await this.findReservationByIdempotency(input.idempotencyKey);
-    if (existing) return existing;
+    if (existing) {
+      if (existing.userId !== input.userId) {
+        throw appError("VALIDATION_ERROR", "Idempotency key conflict");
+      }
+      return existing;
+    }
 
     return prisma.$transaction(async (tx) => {
       const wallet = await tx.creditWallet.upsert({

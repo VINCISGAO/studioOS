@@ -258,7 +258,9 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     set((state) => ({
       nodes: state.nodes.map((node) =>
         node.id === nodeId ? { ...node, data: { ...node.data, ...data } } : node
-      )
+      ),
+      revision: state.revision + 1,
+      saveState: "dirty"
     }));
   },
 

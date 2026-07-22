@@ -1,6 +1,7 @@
 import type Stripe from "stripe";
 import { walletRepository } from "@/features/wallet/wallet.repository";
 import { confirmCreatorDepositFromStripe } from "@/lib/studioos/deposit-service";
+import { CREATOR_DEPOSIT_USD } from "@/lib/studioos/deposit-copy";
 import { paidRevisionService } from "@/features/review/paid-revision.service";
 import { logger } from "@/lib/core/logger";
 
@@ -28,7 +29,7 @@ export class StripePaymentFulfillmentService {
     const { amountMinor, currency } = readMinor(session);
     const expectedMinor = Number(session.metadata.amount_minor ?? "0");
     const expectedCurrency = (session.metadata.currency ?? "USD").toUpperCase();
-    if (expectedMinor > 0 && amountMinor !== expectedMinor) {
+    if (!expectedMinor || amountMinor !== expectedMinor) {
       throw new Error("Stripe wallet recharge amount mismatch");
     }
     if (expectedCurrency !== currency) {
@@ -37,28 +38,21 @@ export class StripePaymentFulfillmentService {
 
     const wallet = await walletRepository.getOrCreate(userId);
     const amount = amountMinor / 100;
-    const balanceAfter = Number(wallet.availableBalance) + amount;
-    await walletRepository.applyLedgerUpdate({
+    const result = await walletRepository.creditBrandWalletRechargeOnce({
       walletId: wallet.id,
-      availableDelta: amount,
-      entries: [
-        {
-          type: "ESCROW_DEPOSIT",
-          amount,
-          balanceAfter,
-          description: `Stripe wallet recharge (${session.id})`
-        }
-      ]
+      sessionId: session.id,
+      amount
     });
 
     logger.info("Brand wallet recharged via Stripe", {
       service: "StripePaymentFulfillmentService",
       userId,
       sessionId: session.id,
-      amount
+      amount,
+      duplicate: result.duplicate
     });
 
-    return { handled: true as const, userId, amount, sessionId: session.id };
+    return { handled: true as const, userId, amount, sessionId: session.id, duplicate: result.duplicate };
   }
 
   async fulfillCreatorDeposit(session: Stripe.Checkout.Session) {
@@ -73,6 +67,12 @@ export class StripePaymentFulfillmentService {
     }
 
     const { amountMinor } = readMinor(session);
+    const expectedMinor = Number(session.metadata.amount_minor ?? "0");
+    const expectedDepositMinor = Math.round(CREATOR_DEPOSIT_USD * 100);
+    if (!expectedMinor || amountMinor !== expectedMinor || amountMinor !== expectedDepositMinor) {
+      throw new Error("Creator deposit amount mismatch");
+    }
+
     const result = await confirmCreatorDepositFromStripe({
       creatorId,
       paymentId,

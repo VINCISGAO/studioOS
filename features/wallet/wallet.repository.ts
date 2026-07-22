@@ -82,6 +82,49 @@ export class WalletRepository {
       return { wallet: updated, transactions };
     });
   }
+
+  async creditBrandWalletRechargeOnce(input: {
+    walletId: string;
+    sessionId: string;
+    amount: number;
+  }) {
+    return prisma.$transaction(async (tx) => {
+      const existing = await tx.transaction.findFirst({
+        where: {
+          walletId: input.walletId,
+          type: "ESCROW_DEPOSIT",
+          description: { contains: `(${input.sessionId})` }
+        }
+      });
+      if (existing) {
+        const wallet = await tx.wallet.findUniqueOrThrow({ where: { id: input.walletId } });
+        return { duplicate: true as const, wallet };
+      }
+
+      const wallet = await tx.wallet.findUniqueOrThrow({ where: { id: input.walletId } });
+      const available = Number(wallet.availableBalance) + input.amount;
+      if (available < 0) {
+        throw new Error("Wallet balance cannot go negative");
+      }
+
+      const updated = await tx.wallet.update({
+        where: { id: input.walletId },
+        data: { availableBalance: available }
+      });
+
+      await tx.transaction.create({
+        data: {
+          walletId: input.walletId,
+          type: "ESCROW_DEPOSIT",
+          amount: input.amount,
+          balanceAfter: available,
+          description: `Stripe wallet recharge (${input.sessionId})`
+        }
+      });
+
+      return { duplicate: false as const, wallet: updated };
+    });
+  }
 }
 
 export const walletRepository = new WalletRepository();
