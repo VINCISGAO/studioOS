@@ -45,7 +45,7 @@ export function CanvasChatPanel({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const chatReference = useCanvasChatReference(projectId);
-  const history = useCanvasChatHistory(projectId, !collapsed);
+  const history = useCanvasChatHistory(projectId);
 
   useEffect(() => {
     const onSendToChat = (event: Event) => {
@@ -174,16 +174,20 @@ export function CanvasChatPanel({
           </div>
         </div>
         <p className="mt-1 text-[10px] text-zinc-400">
-          {locale === "zh"
-            ? `对话记忆保留 ${history.memoryHours} 小时，刷新页面后仍可继续。`
-            : `Chat memory lasts ${history.memoryHours} hours and persists after refresh.`}
+          {hasHistory
+            ? locale === "zh"
+              ? "上次对话已保留，直接继续即可。"
+              : "Your last chat is kept here — continue anytime."
+            : locale === "zh"
+              ? "开始新对话，发送消息即可。"
+              : "Start a new chat by sending a message."}
         </p>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
-        {history.loading ? (
+        {history.loading && !hasHistory ? (
           <div className="px-4 py-6 text-sm text-zinc-500">
-            {locale === "zh" ? "正在恢复对话记录…" : "Restoring chat history…"}
+            {locale === "zh" ? "加载中…" : "Loading…"}
           </div>
         ) : !hasHistory ? (
           <CanvasChatSkills locale={locale} onSelect={(prompt) => setDraft(prompt)} />

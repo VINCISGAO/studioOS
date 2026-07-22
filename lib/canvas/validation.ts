@@ -75,6 +75,19 @@ const generationBaseSchema = z.object({
   idempotencyKey: z.string().min(8).max(120)
 });
 
+const generationModeSchema = z
+  .enum([
+    "TEXT_TO_IMAGE",
+    "TEXT_TO_VIDEO",
+    "TEXT_TO_MUSIC",
+    "REGENERATE",
+    "EXTEND",
+    "UPSCALE",
+    "REMOVE_BACKGROUND",
+    "SUBJECT_ISOLATE"
+  ])
+  .optional();
+
 export const imageGenerationSchema = generationBaseSchema.extend({
   aspectRatio: z
     .enum([
@@ -104,7 +117,8 @@ export const imageGenerationSchema = generationBaseSchema.extend({
     .string()
     .max(120)
     .regex(/^[a-zA-Z0-9_-]+$/)
-    .optional()
+    .optional(),
+  mode: generationModeSchema
 });
 
 export const videoGenerationSchema = generationBaseSchema.extend({
@@ -122,12 +136,14 @@ export const videoGenerationSchema = generationBaseSchema.extend({
     .string()
     .max(120)
     .regex(/^[a-zA-Z0-9_-]+$/)
-    .optional()
+    .optional(),
+  mode: generationModeSchema
 });
 
 export const musicGenerationSchema = generationBaseSchema.extend({
   duration: z.number().int().min(10).max(180).default(30),
   instrumental: z.boolean().default(true),
+  mode: z.enum(["simple", "custom", "soundtrack"]).default("custom"),
   style: z.string().trim().max(120).optional(),
   mood: z.string().trim().max(120).optional()
 });

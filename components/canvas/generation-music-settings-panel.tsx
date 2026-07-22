@@ -3,11 +3,11 @@
 import { ChevronDown, LoaderCircle, Mic2, Plus, X, Zap } from "lucide-react";
 import { GenerationMusicLyricsSection } from "@/components/canvas/generation-music-lyrics-section";
 import { GenerationMusicStyleSection } from "@/components/canvas/generation-music-style-section";
+import type { PublicAiModelCapabilities, PublicAiModelView } from "@/features/canvas/ai-model-catalog.types";
+import { musicModesForCapabilities } from "@/lib/canvas/ai-model-settings";
 import {
-  MUSIC_MODELS,
   type MusicCreationMode,
   type MusicGenerationSettings,
-  type MusicModelVersion,
   type VocalGender
 } from "@/lib/canvas/generation-ui";
 import type { Locale } from "@/lib/i18n";
@@ -27,7 +27,8 @@ const copy = {
     songName: "输入歌曲名称",
     simpleHint: "简单模式：只需填写风格即可快速生成。",
     generate: "生成音乐",
-    close: "关闭"
+    close: "关闭",
+    model: "模型"
   },
   en: {
     simple: "Simple",
@@ -42,32 +43,52 @@ const copy = {
     songName: "Enter song name",
     simpleHint: "Simple mode: fill in style to generate quickly.",
     generate: "Generate music",
-    close: "Close"
+    close: "Close",
+    model: "Model"
   }
 } as const;
+
+const modeLabels: Record<MusicCreationMode, keyof (typeof copy)["zh"]> = {
+  simple: "simple",
+  custom: "custom",
+  soundtrack: "soundtrack"
+};
 
 export function GenerationMusicSettingsPanel({
   locale,
   settings,
   settingsLabel,
+  models,
+  selectedModelId,
+  capabilities,
   generating,
   submitDisabled,
   credits,
   onChange,
+  onModelChange,
   onClose,
   onSubmit
 }: {
   locale: Locale;
   settings: MusicGenerationSettings;
   settingsLabel: string;
+  models: PublicAiModelView[];
+  selectedModelId: string;
+  capabilities: PublicAiModelCapabilities | null;
   generating: boolean;
   submitDisabled: boolean;
   credits: number;
   onChange: (settings: MusicGenerationSettings) => void;
+  onModelChange: (modelId: string) => void;
   onClose: () => void;
   onSubmit: () => void;
 }) {
   const t = copy[locale];
+  const allowedModes = capabilities ? musicModesForCapabilities(capabilities) : (["simple", "custom", "soundtrack"] as const);
+  const durationOptions =
+    capabilities && capabilities.supportedDurations.length > 0
+      ? capabilities.supportedDurations
+      : [30, 60, 120];
 
   function patch(partial: Partial<MusicGenerationSettings>) {
     onChange({ ...settings, ...partial });
@@ -88,7 +109,7 @@ export function GenerationMusicSettingsPanel({
     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-3 border-b border-zinc-100 pb-3">
         <div className="flex min-w-0 flex-1 items-center gap-4">
-          {(["simple", "custom", "soundtrack"] as const).map((mode) => (
+          {allowedModes.map((mode) => (
             <button
               key={mode}
               type="button"
@@ -100,21 +121,23 @@ export function GenerationMusicSettingsPanel({
                   : "border-transparent text-zinc-400 hover:text-zinc-600"
               )}
             >
-              {mode === "simple" ? t.simple : mode === "custom" ? t.custom : t.soundtrack}
+              {t[modeLabels[mode]]}
             </button>
           ))}
         </div>
         <label className="inline-flex shrink-0 items-center gap-1 rounded-full border border-zinc-200 bg-white px-2.5 py-1.5 text-[11px] text-zinc-600">
+          <span className="sr-only">{t.model}</span>
           <select
-            value={settings.modelVersion}
-            onChange={(event) =>
-              patch({ modelVersion: event.target.value as MusicModelVersion })
-            }
+            value={selectedModelId}
+            onChange={(event) => onModelChange(event.target.value)}
             className="max-w-[108px] bg-transparent text-[11px] outline-none"
           >
-            {MUSIC_MODELS.map((model) => (
+            {models.length === 0 ? (
+              <option value="">{locale === "zh" ? "暂无模型" : "No models"}</option>
+            ) : null}
+            {models.map((model) => (
               <option key={model.id} value={model.id}>
-                {model.label[locale === "zh" ? "zh" : "en"]}
+                {model.displayName}
               </option>
             ))}
           </select>
@@ -134,26 +157,28 @@ export function GenerationMusicSettingsPanel({
         {[
           { key: "referenceEnabled" as const, label: t.reference },
           { key: "remixEnabled" as const, label: t.remix },
-          { key: "vocalEnabled" as const, label: t.vocal }
-        ].map(({ key, label }) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => toggleQuickFlag(key)}
-            className={cn(
-              "inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-[12px] transition",
-              settings[key]
-                ? "border-zinc-900 bg-zinc-900 text-white"
-                : "border-zinc-200 bg-zinc-50 text-zinc-600 hover:border-zinc-300"
-            )}
-          >
-            <Plus className="h-3.5 w-3.5" />
-            {label}
-          </button>
-        ))}
+          { key: "vocalEnabled" as const, label: t.vocal, hidden: !capabilities?.supportsVocal }
+        ]
+          .filter((item) => !item.hidden)
+          .map(({ key, label }) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => toggleQuickFlag(key)}
+              className={cn(
+                "inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-[12px] transition",
+                settings[key]
+                  ? "border-zinc-900 bg-zinc-900 text-white"
+                  : "border-zinc-200 bg-zinc-50 text-zinc-600 hover:border-zinc-300"
+              )}
+            >
+              <Plus className="h-3.5 w-3.5" />
+              {label}
+            </button>
+          ))}
       </div>
 
-      {settings.mode !== "simple" ? (
+      {settings.mode !== "simple" && capabilities?.supportsLyrics !== false ? (
         <GenerationMusicLyricsSection
           locale={locale}
           lyrics={settings.lyrics}
@@ -163,13 +188,15 @@ export function GenerationMusicSettingsPanel({
         />
       ) : null}
 
-      <GenerationMusicStyleSection
-        locale={locale}
-        style={settings.style}
-        onStyleChange={(style) => patch({ style })}
-      />
+      {capabilities?.supportsStyleTags !== false ? (
+        <GenerationMusicStyleSection
+          locale={locale}
+          style={settings.style}
+          onStyleChange={(style) => patch({ style })}
+        />
+      ) : null}
 
-      {!settings.instrumental && settings.mode !== "simple" ? (
+      {!settings.instrumental && settings.mode !== "simple" && capabilities?.supportsVocal ? (
         <div className="flex items-center justify-between rounded-2xl border border-zinc-200 bg-zinc-50/80 px-4 py-3">
           <span className="text-[12px] font-medium text-zinc-700">{t.vocalGender}</span>
           <div className="flex items-center gap-1 rounded-full border border-zinc-200 bg-white p-0.5">
@@ -189,6 +216,26 @@ export function GenerationMusicSettingsPanel({
               </button>
             ))}
           </div>
+        </div>
+      ) : null}
+
+      {durationOptions.length > 0 ? (
+        <div className="flex flex-wrap gap-2">
+          {durationOptions.map((duration) => (
+            <button
+              key={duration}
+              type="button"
+              onClick={() => patch({ duration })}
+              className={cn(
+                "rounded-full border px-3 py-1.5 text-[12px] transition",
+                settings.duration === duration
+                  ? "border-zinc-900 bg-zinc-900 text-white"
+                  : "border-zinc-200 text-zinc-600 hover:border-zinc-300"
+              )}
+            >
+              {duration}s
+            </button>
+          ))}
         </div>
       ) : null}
 

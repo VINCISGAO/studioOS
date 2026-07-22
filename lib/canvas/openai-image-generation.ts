@@ -49,6 +49,29 @@ export function buildDirectImageEditPrompt(message: string, locale: "en" | "zh")
     : `Edit this reference image: ${trimmed}. ${photorealism}`;
 }
 
+export function buildImageEditPromptByMode(
+  mode: string | undefined,
+  message: string,
+  locale: "en" | "zh"
+) {
+  if (mode === "UPSCALE") {
+    return locale === "zh"
+      ? "在不改变构图和内容的前提下，将这张图片放大并增强细节与清晰度，输出更高分辨率版本。"
+      : "Upscale this image while preserving composition and content, enhancing detail and clarity.";
+  }
+  if (mode === "REMOVE_BACKGROUND") {
+    return locale === "zh"
+      ? "去除背景，保留主体，输出干净的主体抠图，背景使用纯白或透明效果。"
+      : "Remove the background and keep the subject as a clean cutout on white or transparent background.";
+  }
+  if (mode === "SUBJECT_ISOLATE") {
+    return locale === "zh"
+      ? "提取并分离画面主体，去除杂乱背景，突出人物或产品主体。"
+      : "Isolate the main subject and remove distracting background elements.";
+  }
+  return buildDirectImageEditPrompt(message, locale);
+}
+
 export function buildDirectImageGenerationPrompt(message: string, locale: "en" | "zh") {
   const trimmed = message.trim();
   const photorealism =

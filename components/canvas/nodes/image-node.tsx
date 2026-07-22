@@ -4,10 +4,13 @@ import { ImageIcon, Sparkles } from "lucide-react";
 import type { NodeProps } from "@xyflow/react";
 import type { VincisCanvasNode } from "@/lib/canvas/types";
 import { CanvasNodeFrame } from "@/components/canvas/nodes/canvas-node-frame";
+import { CanvasVideoNodeMenu } from "@/components/canvas/nodes/canvas-video-node-menu";
 
-export function ImageNode({ data, selected }: NodeProps<VincisCanvasNode>) {
+export function ImageNode({ id, data, selected }: NodeProps<VincisCanvasNode>) {
   return (
-    <CanvasNodeFrame data={data} selected={selected} icon={<ImageIcon className="h-4 w-4" />}>
+    <>
+      <CanvasVideoNodeMenu nodeId={id} data={data} selected={selected} variant="image" />
+      <CanvasNodeFrame data={data} selected={selected} icon={<ImageIcon className="h-4 w-4" />}>
       {data.status === "loading" ? (
         <div className="flex h-full flex-col items-center justify-center bg-zinc-50 p-5 text-center">
           <Sparkles className="mb-3 h-5 w-5 animate-pulse text-zinc-400" />
@@ -39,6 +42,7 @@ export function ImageNode({ data, selected }: NodeProps<VincisCanvasNode>) {
           </p>
         </div>
       )}
-    </CanvasNodeFrame>
+      </CanvasNodeFrame>
+    </>
   );
 }

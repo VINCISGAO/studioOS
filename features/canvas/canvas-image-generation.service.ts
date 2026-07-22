@@ -2,9 +2,11 @@ import { after } from "next/server";
 import { authService } from "@/features/auth/auth.service";
 import { canvasAssetService } from "@/features/canvas/canvas-asset.service";
 import { canvasRepository } from "@/features/canvas/canvas.repository";
+import { creditGenerationBillingService } from "@/features/credit-wallet/credit-generation-billing.service";
 import {
   buildDirectImageEditPrompt,
   buildDirectImageGenerationPrompt,
+  buildImageEditPromptByMode,
   editOpenAIImage,
   generateOpenAIImage
 } from "@/lib/canvas/openai-image-generation";
@@ -12,6 +14,7 @@ import { hasOpenAI } from "@/lib/core/config/ai";
 import { logger } from "@/lib/core/logger";
 
 type ImageJobInput = {
+  mode?: string;
   referenceAssetId?: string;
   referenceUrl?: string;
   referenceNodeId?: string;
@@ -21,6 +24,7 @@ function readImageJobInput(raw: unknown): ImageJobInput {
   if (!raw || typeof raw !== "object") return {};
   const record = raw as Record<string, unknown>;
   return {
+    mode: typeof record.mode === "string" ? record.mode : undefined,
     referenceAssetId:
       typeof record.referenceAssetId === "string" ? record.referenceAssetId : undefined,
     referenceUrl: typeof record.referenceUrl === "string" ? record.referenceUrl : undefined,
@@ -87,7 +91,7 @@ export class CanvasImageGenerationService {
     const payload = readImageJobInput(job.input);
     const referenceAssetId = payload.referenceAssetId?.trim();
     const imagePrompt = referenceAssetId
-      ? buildDirectImageEditPrompt(job.prompt, locale)
+      ? buildImageEditPromptByMode(payload.mode, job.prompt, locale)
       : buildDirectImageGenerationPrompt(job.prompt, locale);
 
     await canvasRepository.updateGenerationJob(jobId, {
@@ -155,7 +159,7 @@ export class CanvasImageGenerationService {
           userPrompt: job.prompt,
           model: generated.model,
           referenceAssetId: referenceAssetId ?? null,
-          mode: referenceAssetId ? "image_to_image" : "text_to_image",
+          mode: payload.mode ?? (referenceAssetId ? "image_to_image" : "text_to_image"),
           generationJobId: job.id,
           nodeId: job.nodeId
         }
@@ -177,6 +181,11 @@ export class CanvasImageGenerationService {
         errorMessage: message,
         completedAt: new Date()
       });
+    }
+
+    const settledJob = await canvasRepository.findGenerationJob(jobId, ownerId);
+    if (settledJob) {
+      await creditGenerationBillingService.syncJobBilling(settledJob);
     }
   }
 }

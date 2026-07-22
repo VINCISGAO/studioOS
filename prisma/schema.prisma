@@ -64,6 +64,12 @@ model User {
   preferredLanguage     Language                   @relation(fields: [languageCode], references: [code])
   walletAccount         WalletAccount?
   wallet                Wallet?
+  creditWallet          CreditWallet?
+  creatorEarningWallet  CreatorEarningWallet?
+  creditPurchaseOrders  CreditPurchaseOrder[]
+  creditTransactions    CreditTransaction[]
+  earningToCreditConversions EarningToCreditConversion[]
+  creatorEarningTransactions CreatorEarningTransaction[]
   oauthAccounts         UserOAuthAccount[]
   campaignAiUsageLogs   CampaignAiUsageLog[]
   creativeProjects      CreativeProject[]      @relation("CreativeProjectOwner")
@@ -495,6 +501,10 @@ model CreatorProfile {
   aiEnabled            Boolean                @default(true) @map("ai_enabled")
   profileCompletedAt   DateTime?              @map("profile_completed_at")
   legacyCreatorId      String?                @unique @map("legacy_creator_id")
+  stripeConnectAccountId       String?          @unique @map("stripe_connect_account_id")
+  stripeConnectDetailsSubmitted Boolean         @default(false) @map("stripe_connect_details_submitted")
+  stripeConnectPayoutsEnabled   Boolean         @default(false) @map("stripe_connect_payouts_enabled")
+  stripeConnectOnboardedAt      DateTime?        @map("stripe_connect_onboarded_at")
   attributions         Attribution[]
   connectedChannels    ConnectedChannel[]
   conversations        Conversation[]
@@ -960,6 +970,8 @@ model GenerationJob {
   type              GenerationType
   provider          String
   model             String
+  aiModelId         String?          @map("ai_model_id")
+  modelDisplayName  String?          @map("model_display_name")
   prompt            String
   input             Json
   status            GenerationStatus @default(QUEUED)
@@ -971,12 +983,21 @@ model GenerationJob {
   errorMessage      String?          @map("error_message")
   estimatedCredits  Int              @map("estimated_credits")
   actualCredits     Int?             @map("actual_credits")
+  creditReservationId String?        @unique @map("credit_reservation_id")
+  pricingRuleId       String?        @map("pricing_rule_id")
+  pricingRuleVersion  Int?           @map("pricing_rule_version")
+  creditsQuoted       Int?           @map("credits_quoted")
+  providerCostSnapshot Json?         @map("provider_cost_snapshot")
+  pricingSnapshot   Json?            @map("pricing_snapshot")
+  quotedAt          DateTime?        @map("quoted_at")
   createdAt         DateTime         @default(now()) @map("created_at")
   startedAt         DateTime?        @map("started_at")
   completedAt       DateTime?        @map("completed_at")
   creativeProject   CreativeProject  @relation(fields: [creativeProjectId], references: [id], onDelete: Cascade)
   campaign          Campaign?        @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   canvas            CreativeCanvas   @relation(fields: [canvasId], references: [id], onDelete: Cascade)
+  creditReservation CreditReservation? @relation(fields: [creditReservationId], references: [id], onDelete: SetNull)
+  aiModel           AiModel?           @relation(fields: [aiModelId], references: [id], onDelete: SetNull)
 
   @@unique([ownerId, idempotencyKey])
   @@index([creativeProjectId])
@@ -2239,6 +2260,60 @@ enum GenerationStatus {
   CANCELLED
 }
 
+enum CreditTransactionType {
+  PURCHASE
+  EARNING_CONVERSION
+  BONUS
+  RESERVE
+  CAPTURE
+  RELEASE
+  REFUND
+  ADMIN_ADJUSTMENT
+  EXPIRATION
+}
+
+enum CreditSource {
+  CASH_PAYMENT
+  CREATOR_EARNINGS
+  PROMOTION
+  SYSTEM
+  ADMIN
+  GENERATION_JOB
+}
+
+enum CreatorEarningTransactionType {
+  CONVERSION_OUT
+  SETTLEMENT_IN
+  WITHDRAWAL_OUT
+  ADJUSTMENT
+}
+
+enum CreditPurchaseStatus {
+  PENDING
+  PAYMENT_CREATED
+  PAID
+  CREDITED
+  FAILED
+  CANCELLED
+  PARTIALLY_REFUNDED
+  REFUNDED
+  DISPUTED
+}
+
+enum ConversionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum CreditReservationStatus {
+  ACTIVE
+  CAPTURED
+  RELEASED
+  EXPIRED
+}
+
 enum PerformanceSourceStatus {
   PENDING
   IMPORTED
@@ -2885,4 +2960,413 @@ model KnowledgeSearchIndex {
   translation   KnowledgeTranslation @relation(fields: [translationId], references: [id], onDelete: Cascade)
 
   @@map("knowledge_search_indexes")
+}
+
+// ─── VINCIS Credits (user-scoped AI billing ledger) ─────────────────────────
+
+model CreditWallet {
+  id                String   @id @default(cuid())
+  userId            String   @unique @map("user_id")
+  availableCredits  Int      @default(0) @map("available_credits")
+  reservedCredits   Int      @default(0) @map("reserved_credits")
+  lifetimePurchased Int      @default(0) @map("lifetime_purchased")
+  lifetimeBonus     Int      @default(0) @map("lifetime_bonus")
+  lifetimeSpent     Int      @default(0) @map("lifetime_spent")
+  lifetimeRefunded  Int      @default(0) @map("lifetime_refunded")
+  purchaseBlocked   Boolean  @default(false) @map("purchase_blocked")
+  version           Int      @default(0)
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions      CreditTransaction[]
+  reservations      CreditReservation[]
+  purchaseOrders    CreditPurchaseOrder[]
+  earningConversions EarningToCreditConversion[]
+
+  @@map("credit_wallets")
+}
+
+model CreatorEarningWallet {
+  id                    String   @id @default(cuid())
+  userId                String   @unique @map("user_id")
+  availableBalanceMinor Int      @default(0) @map("available_balance_minor")
+  pendingBalanceMinor   Int      @default(0) @map("pending_balance_minor")
+  frozenBalanceMinor    Int      @default(0) @map("frozen_balance_minor")
+  withdrawnBalanceMinor Int      @default(0) @map("withdrawn_balance_minor")
+  version               Int      @default(0)
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  earningConversions    EarningToCreditConversion[]
+  earningTransactions   CreatorEarningTransaction[]
+
+  @@map("creator_earning_wallets")
+}
+
+model CreatorEarningTransaction {
+  id                 String                        @id @default(cuid())
+  userId             String                        @map("user_id")
+  walletId           String                        @map("wallet_id")
+  type               CreatorEarningTransactionType
+  amountMinor        Int                           @map("amount_minor")
+  balanceBeforeMinor Int                           @map("balance_before_minor")
+  balanceAfterMinor  Int                           @map("balance_after_minor")
+  referenceType      String?                       @map("reference_type")
+  referenceId        String?                       @map("reference_id")
+  description        String?
+  metadata           Json?
+  createdAt          DateTime                      @default(now()) @map("created_at")
+  user               User                          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wallet             CreatorEarningWallet          @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([walletId, createdAt])
+  @@index([referenceType, referenceId])
+  @@map("creator_earning_transactions")
+}
+
+model CreditTransaction {
+  id            String                @id @default(cuid())
+  userId        String                @map("user_id")
+  walletId      String                @map("wallet_id")
+  type          CreditTransactionType
+  amount        Int
+  balanceBefore Int                   @map("balance_before")
+  balanceAfter  Int                   @map("balance_after")
+  source        CreditSource
+  referenceType String?               @map("reference_type")
+  referenceId   String?               @map("reference_id")
+  description   String?
+  metadata      Json?
+  createdBy     String?               @map("created_by")
+  createdAt     DateTime              @default(now()) @map("created_at")
+  user          User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wallet        CreditWallet          @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([walletId, createdAt])
+  @@index([referenceType, referenceId])
+  @@map("credit_transactions")
+}
+
+model CreditPurchaseOrder {
+  id                     String                      @id @default(cuid())
+  userId                 String                      @map("user_id")
+  walletId               String                      @map("wallet_id")
+  packageId              String?                     @map("package_id")
+  packageVersion         Int?                        @map("package_version")
+  regionalPriceId        String?                     @map("regional_price_id")
+  regionCode             String?                     @map("region_code")
+  credits                Int
+  bonusCredits           Int                         @default(0) @map("bonus_credits")
+  currency               String
+  amountMinor            Int                         @map("amount_minor")
+  stripePriceIdSnapshot  String?                     @map("stripe_price_id_snapshot")
+  pricingSnapshot        Json?                       @map("pricing_snapshot")
+  provider               String                      @default("stripe")
+  providerSessionId      String?                     @map("provider_session_id")
+  providerPaymentId      String?                     @map("provider_payment_id")
+  providerChargeId       String?                     @map("provider_charge_id")
+  totalRefundedMinor     Int                         @default(0) @map("total_refunded_minor")
+  creditsClawedBack      Int                         @default(0) @map("credits_clawed_back")
+  creditsDisputeHeld     Int                         @default(0) @map("credits_dispute_held")
+  stripeDisputeId        String?                     @map("stripe_dispute_id")
+  disputeStatus          String?                     @map("dispute_status")
+  status                 CreditPurchaseStatus
+  idempotencyKey         String                      @unique @map("idempotency_key")
+  paidAt                 DateTime?                   @map("paid_at")
+  creditedAt             DateTime?                   @map("credited_at")
+  cancelledAt            DateTime?                   @map("cancelled_at")
+  failedAt               DateTime?                   @map("failed_at")
+  createdAt              DateTime                    @default(now()) @map("created_at")
+  updatedAt              DateTime                    @updatedAt @map("updated_at")
+  user                   User                        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wallet                 CreditWallet                @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  package                CreditPackage?              @relation(fields: [packageId], references: [id], onDelete: SetNull)
+  regionalPrice          CreditPackageRegionalPrice? @relation(fields: [regionalPriceId], references: [id], onDelete: SetNull)
+  refundEvents           CreditPurchaseRefundEvent[]
+
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+  @@index([providerSessionId])
+  @@index([providerPaymentId])
+  @@index([providerChargeId])
+  @@index([regionalPriceId])
+  @@map("credit_purchase_orders")
+}
+
+model CreditPurchaseRefundEvent {
+  id                      String              @id @default(cuid())
+  orderId                 String              @map("order_id")
+  providerRefundId        String              @unique @map("provider_refund_id")
+  refundAmountMinor       Int                 @map("refund_amount_minor")
+  cumulativeRefundedMinor Int                 @map("cumulative_refunded_minor")
+  creditsClawedBackDelta  Int                 @map("credits_clawed_back_delta")
+  createdAt               DateTime            @default(now()) @map("created_at")
+  order                   CreditPurchaseOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId, createdAt])
+  @@map("credit_purchase_refund_events")
+}
+
+enum AiModelCategory {
+  VIDEO
+  IMAGE
+  MUSIC
+  VOICE
+  THREE_D
+}
+
+enum CreditPricingRuleStatus {
+  DRAFT
+  VALIDATED
+  PUBLISHED
+  ARCHIVED
+}
+
+enum CreditPlatformAuditEntity {
+  CREDIT_PACKAGE
+  CREDIT_PACKAGE_REGIONAL_PRICE
+  AI_MODEL
+  PRICING_RULE
+}
+
+model CreditPlatformAuditLog {
+  id            String                    @id @default(cuid())
+  actorUserId   String?                   @map("actor_user_id")
+  action        String
+  entityType    CreditPlatformAuditEntity @map("entity_type")
+  entityId      String?                   @map("entity_id")
+  metadata      Json?
+  createdAt     DateTime                  @default(now()) @map("created_at")
+
+  @@index([entityType, entityId, createdAt])
+  @@index([createdAt])
+  @@map("credit_platform_audit_logs")
+}
+
+model AiModel {
+  id                String          @id @default(cuid())
+  internalModelId   String          @unique @map("internal_model_id")
+  displayName       String          @map("display_name")
+  provider          String
+  category          AiModelCategory
+  generationType    GenerationType  @map("generation_type")
+  logoUrl           String?         @map("logo_url")
+  description       String?
+  enabled           Boolean         @default(false)
+  recommended       Boolean         @default(false)
+  isDefault         Boolean         @default(false) @map("is_default")
+  sortOrder         Int             @default(0) @map("sort_order")
+  baseCreditPrice   Int?            @map("base_credit_price")
+  providerCostMinor Int?            @map("provider_cost_minor")
+  marginPercent     Int?            @map("margin_percent")
+  publiclyAvailable       Boolean         @default(true) @map("publicly_available")
+  supportedModes          String[]        @default([]) @map("supported_modes")
+  supportedAspectRatios   String[]        @default([]) @map("supported_aspect_ratios")
+  supportedDurations      Int[]           @default([]) @map("supported_durations")
+  supportedResolutions    String[]        @default([]) @map("supported_resolutions")
+  maxOutputCount          Int             @default(1) @map("max_output_count")
+  maxReferenceImages      Int             @default(0) @map("max_reference_images")
+  supportsFirstFrame      Boolean         @default(false) @map("supports_first_frame")
+  supportsLastFrame       Boolean         @default(false) @map("supports_last_frame")
+  supportsAudioInput      Boolean         @default(false) @map("supports_audio_input")
+  supportsPromptEnhancement Boolean         @default(false) @map("supports_prompt_enhancement")
+  supportsSeed            Boolean         @default(false) @map("supports_seed")
+  supportsNegativePrompt  Boolean         @default(false) @map("supports_negative_prompt")
+  supportsInstrumental    Boolean         @default(false) @map("supports_instrumental")
+  supportsVocal           Boolean         @default(false) @map("supports_vocal")
+  supportsLyrics          Boolean         @default(false) @map("supports_lyrics")
+  supportsStyleTags       Boolean         @default(false) @map("supports_style_tags")
+  minDurationSec          Int?            @map("min_duration_sec")
+  maxDurationSec          Int?            @map("max_duration_sec")
+  startsAt          DateTime?       @map("starts_at")
+  endsAt            DateTime?       @map("ends_at")
+  deletedAt         DateTime?       @map("deleted_at")
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+  pricingRules      CreditPricingRule[]
+  generationJobs    GenerationJob[]
+
+  @@index([category, enabled, sortOrder])
+  @@index([generationType, enabled])
+  @@map("ai_models")
+}
+
+model CreditPackage {
+  id               String                      @id @default(cuid())
+  name             String
+  slug             String?                     @unique
+  version          Int                         @default(1)
+  versionLabel     String?                     @map("version_label")
+  credits          Int
+  bonusCredits     Int                         @default(0) @map("bonus_credits")
+  currency         String                      @default("USD")
+  amountMinor      Int                         @map("amount_minor")
+  regionCodes      String[]                    @default([]) @map("region_codes")
+  membershipTier   String?                     @map("membership_tier")
+  visible          Boolean                     @default(true)
+  isDefault        Boolean                     @default(false) @map("is_default")
+  enabled          Boolean                     @default(true)
+  sortOrder        Int                         @default(0) @map("sort_order")
+  startsAt         DateTime?                   @map("starts_at")
+  endsAt           DateTime?                   @map("ends_at")
+  deletedAt        DateTime?                   @map("deleted_at")
+  duplicatedFromId String?                     @map("duplicated_from_id")
+  createdAt        DateTime                    @default(now()) @map("created_at")
+  updatedAt        DateTime                    @updatedAt @map("updated_at")
+  orders           CreditPurchaseOrder[]
+  regionalPrices   CreditPackageRegionalPrice[]
+
+  @@index([enabled, visible, sortOrder])
+  @@index([deletedAt])
+  @@map("credit_packages")
+}
+
+model CreditPackageRegionalPrice {
+  id             String                @id @default(cuid())
+  packageId      String                @map("package_id")
+  regionCode     String                @default("GLOBAL") @map("region_code")
+  currency       String
+  amountMinor    Int                   @map("amount_minor")
+  bonusCredits   Int                   @default(0) @map("bonus_credits")
+  stripePriceId  String?               @map("stripe_price_id")
+  enabled        Boolean               @default(true)
+  startsAt       DateTime?             @map("starts_at")
+  endsAt         DateTime?             @map("ends_at")
+  taxBehavior    String?               @map("tax_behavior")
+  version        Int                   @default(1)
+  createdAt      DateTime              @default(now()) @map("created_at")
+  updatedAt      DateTime              @updatedAt @map("updated_at")
+  package        CreditPackage         @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  purchaseOrders CreditPurchaseOrder[]
+
+  @@unique([packageId, regionCode, currency, version])
+  @@index([packageId, enabled, regionCode])
+  @@index([packageId, regionCode, enabled, startsAt, endsAt])
+  @@map("credit_package_regional_prices")
+}
+
+model EarningToCreditConversion {
+  id                   String             @id @default(cuid())
+  userId               String             @map("user_id")
+  earningWalletId      String             @map("earning_wallet_id")
+  creditWalletId       String             @map("credit_wallet_id")
+  currency             String             @default("USD")
+  earningAmountMinor   Int                @map("earning_amount_minor")
+  creditsGranted       Int                @map("credits_granted")
+  exchangeRateSnapshot Json               @map("exchange_rate_snapshot")
+  status               ConversionStatus   @default(PENDING)
+  idempotencyKey       String             @unique @map("idempotency_key")
+  earningTransactionId String?            @map("earning_transaction_id")
+  creditTransactionId  String?            @map("credit_transaction_id")
+  createdAt            DateTime           @default(now()) @map("created_at")
+  completedAt          DateTime?          @map("completed_at")
+  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  earningWallet        CreatorEarningWallet @relation(fields: [earningWalletId], references: [id], onDelete: Cascade)
+  creditWallet         CreditWallet       @relation(fields: [creditWalletId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("earning_to_credit_conversions")
+}
+
+model CreditReservation {
+  id               String                  @id @default(cuid())
+  userId           String                  @map("user_id")
+  walletId         String                  @map("wallet_id")
+  estimatedCredits Int                     @map("estimated_credits")
+  capturedCredits  Int                     @default(0) @map("captured_credits")
+  releasedCredits  Int                     @default(0) @map("released_credits")
+  status           CreditReservationStatus @default(ACTIVE)
+  idempotencyKey   String                  @unique @map("idempotency_key")
+  pricingSnapshot  Json?                   @map("pricing_snapshot")
+  generationJobId  String?                 @map("generation_job_id")
+  createdAt        DateTime                @default(now()) @map("created_at")
+  capturedAt       DateTime?               @map("captured_at")
+  releasedAt       DateTime?               @map("released_at")
+  wallet           CreditWallet            @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  generationJob    GenerationJob?
+
+  @@index([userId, status])
+  @@index([walletId, status])
+  @@map("credit_reservations")
+}
+
+model CreditPricingRule {
+  id                    String                   @id @default(cuid())
+  aiModelId             String?                  @map("ai_model_id")
+  provider                String
+  model                   String
+  generationType          GenerationType           @map("generation_type")
+  mode                    String?
+  label                   String?
+  durationSec             Int?                     @map("duration_sec")
+  resolution              String?
+  aspectRatio             String?                  @map("aspect_ratio")
+  inputType               String?                  @map("input_type")
+  outputCount             Int                      @default(1) @map("output_count")
+  providerCostMinor       Int?                     @map("provider_cost_minor")
+  creditPrice             Int                      @map("credit_price")
+  marginPercent           Int?                     @map("margin_percent")
+  marginAmountMinor       Int?                     @map("margin_amount_minor")
+  refundOnFailure         Boolean                  @default(true) @map("refund_on_failure")
+  minimumBalance          Int                      @default(0) @map("minimum_balance")
+  enabled                 Boolean                  @default(true)
+  status                  CreditPricingRuleStatus  @default(DRAFT)
+  version                 Int                      @default(1)
+  sourceRuleId            String?                  @map("source_rule_id")
+  replacesRuleId          String?                  @map("replaces_rule_id")
+  changeReason            String?                  @map("change_reason")
+  internalNotes           String?                  @map("internal_notes")
+  sortOrder               Int                      @default(0) @map("sort_order")
+  startsAt                DateTime?                @map("starts_at")
+  endsAt                  DateTime?                @map("ends_at")
+  validatedAt             DateTime?                @map("validated_at")
+  publishedAt             DateTime?                @map("published_at")
+  publishedByUserId       String?                  @map("published_by_user_id")
+  archivedAt              DateTime?                @map("archived_at")
+  publishIdempotencyKey   String?                  @unique @map("publish_idempotency_key")
+  createdAt               DateTime                 @default(now()) @map("created_at")
+  updatedAt               DateTime                 @updatedAt @map("updated_at")
+  aiModel                 AiModel?                 @relation(fields: [aiModelId], references: [id], onDelete: SetNull)
+  versions                CreditPricingRuleVersion[]
+
+  @@index([generationType, model, status])
+  @@index([generationType, model, mode, status])
+  @@index([aiModelId, status])
+  @@index([status, startsAt, endsAt])
+  @@map("credit_pricing_rules")
+}
+
+model CreditPricingRuleVersion {
+  id                  String            @id @default(cuid())
+  ruleId              String            @map("rule_id")
+  version             Int
+  snapshot            Json
+  changeReason        String?           @map("change_reason")
+  publishedAt         DateTime          @map("published_at")
+  publishedByUserId   String?           @map("published_by_user_id")
+  createdAt           DateTime          @default(now()) @map("created_at")
+  rule                CreditPricingRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+
+  @@unique([ruleId, version])
+  @@index([ruleId, publishedAt])
+  @@map("credit_pricing_rule_versions")
+}
+
+model CreditExchangeRateConfig {
+  id                  String   @id @default(cuid())
+  currency            String   @default("USD")
+  creditsPerUnitMinor Int      @map("credits_per_unit_minor")
+  proBonusPercent     Int      @default(0) @map("pro_bonus_percent")
+  promoBonusPercent   Int      @default(0) @map("promo_bonus_percent")
+  minConversionMinor  Int      @default(100) @map("min_conversion_minor")
+  dailyLimitMinor     Int?     @map("daily_limit_minor")
+  monthlyLimitMinor   Int?     @map("monthly_limit_minor")
+  enabled             Boolean  @default(true)
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  @@unique([currency])
+  @@map("credit_exchange_rate_configs")
 }

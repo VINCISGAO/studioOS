@@ -177,7 +177,7 @@ function StudioPortalShellInner({
             logo={
               <MarketingHomeLink
                 locale={locale}
-                className="flex items-center gap-2.5 px-5 py-5 transition hover:opacity-80"
+                className="flex flex-col items-start gap-2 px-5 py-5 transition hover:opacity-80"
               >
                 <BrandLogoLockup
                   contrastOn="light"
@@ -185,15 +185,13 @@ function StudioPortalShellInner({
                   wordmarkClassName="h-[17px] w-[106px]"
                   priority
                 />
-                <div className="min-w-0">
-                  {isVerified ? (
-                    <CertifiedPartnerBadge
-                      label={partnerBadgeSidebar}
-                      compact
-                      className="mt-1.5 bg-violet-50 text-violet-700 ring-violet-200/60"
-                    />
-                  ) : null}
-                </div>
+                {isVerified ? (
+                  <CertifiedPartnerBadge
+                    label={partnerBadgeSidebar}
+                    compact
+                    className="bg-violet-50 text-violet-700 ring-violet-200/60"
+                  />
+                ) : null}
               </MarketingHomeLink>
             }
             nav={

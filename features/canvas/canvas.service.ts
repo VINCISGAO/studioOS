@@ -6,7 +6,9 @@ import {
   type CanvasCampaignRecord,
   type CanvasProjectRecord
 } from "@/features/canvas/canvas.repository";
+import { aiModelGenerationGuard } from "@/features/canvas/ai-model-generation.guard";
 import { canvasImageGenerationService } from "@/features/canvas/canvas-image-generation.service";
+import { canvasVideoGenerationService } from "@/features/canvas/canvas-video-generation.service";
 import { appError } from "@/lib/core/errors";
 import { hasOpenAI } from "@/lib/core/config/ai";
 import { isObjectStorageConfigured } from "@/lib/core/config/video";
@@ -18,11 +20,10 @@ import type {
   VincisCanvasEdge,
   VincisCanvasNode
 } from "@/lib/canvas/types";
-import {
-  CANVAS_CREATOR_TOKEN_BUDGET,
-  computeCanvasTokenBalance,
-  computeGenerationCredits
-} from "@/lib/canvas/generation-credits";
+import { creditGenerationBillingService } from "@/features/credit-wallet/credit-generation-billing.service";
+import { creditLedgerService } from "@/features/credit-wallet/credit-ledger.service";
+import { creditWalletRepository } from "@/features/credit-wallet/credit-wallet.repository";
+import { creditWalletService } from "@/features/credit-wallet/credit-wallet.service";
 import { DEFAULT_CANVAS_BACKGROUND, normalizeHexColor } from "@/lib/canvas/color";
 import { assertCanvasPayloadSize } from "@/lib/canvas/validation";
 
@@ -126,7 +127,11 @@ function buildStandaloneContext() {
 function buildSnapshot(
   project: CanvasProjectRecord,
   canvas: NonNullable<Awaited<ReturnType<typeof canvasRepository.findCanvas>>>,
-  creditTotals: { used: number }
+  walletSummary: {
+    availableCredits: number;
+    reservedCredits: number;
+    lifetimeSpent: number;
+  }
 ): CanvasSnapshot {
   const campaign = project.campaign;
   const context =
@@ -173,8 +178,9 @@ function buildSnapshot(
     campaignTitle: project.title,
     projectContext: {
       ...context,
-      creditsUsed: creditTotals.used,
-      tokenBalance: computeCanvasTokenBalance(creditTotals.used)
+      creditsUsed: walletSummary.lifetimeSpent,
+      tokenBalance: walletSummary.availableCredits,
+      reservedCredits: walletSummary.reservedCredits
     },
     nodes,
     edges,
@@ -271,12 +277,17 @@ export class CanvasService {
   async getOrCreateSnapshot(projectId: string, user: AuthUserDto): Promise<CanvasSnapshot> {
     const project = await this.resolveProject(projectId, user);
     await canvasRepository.ensureCanvas(project.id, user.id, project.campaignId);
-    const [canvas, creditTotals] = await Promise.all([
+    const [canvas, wallet] = await Promise.all([
       canvasRepository.findCanvas(project.id),
-      canvasRepository.sumGenerationCredits(project.id)
+      creditWalletService.getBalance(user.id)
     ]);
     if (!canvas) throw appError("SYSTEM_ERROR", "Canvas could not be created");
-    return buildSnapshot(project, canvas, creditTotals);
+    const walletRecord = await creditWalletRepository.getOrCreateWallet(user.id);
+    return buildSnapshot(project, canvas, {
+      availableCredits: wallet.availableCredits,
+      reservedCredits: wallet.reservedCredits,
+      lifetimeSpent: walletRecord.lifetimeSpent
+    });
   }
 
   async saveSnapshot(
@@ -361,18 +372,26 @@ export class CanvasService {
       user.id,
       project.campaignId
     );
-    const estimatedCredits = computeGenerationCredits({
+
+    const resolved = await aiModelGenerationGuard.resolveForGeneration({
       type: input.type,
       model: input.model,
       parameters: input.parameters
     });
-    const creditTotals = await canvasRepository.sumGenerationCredits(project.id);
-    if (creditTotals.used + estimatedCredits > CANVAS_CREATOR_TOKEN_BUDGET) {
-      throw appError("VALIDATION_ERROR", "Insufficient credits");
-    }
+
+    const billing = await creditGenerationBillingService.reserveForGeneration({
+      userId: user.id,
+      type: input.type,
+      model: resolved.internalModelId,
+      parameters: input.parameters,
+      idempotencyKey: input.idempotencyKey,
+      campaignId: project.campaignId
+    });
 
     const provider =
-      input.type === "IMAGE" && hasOpenAI() ? "openai" : "vincis-mock";
+      input.type === "IMAGE" && hasOpenAI() && resolved.provider === "openai"
+        ? "openai"
+        : resolved.provider || "vincis-mock";
     const job = await canvasRepository.createGenerationJob({
       creativeProjectId: project.id,
       campaignId: project.campaignId,
@@ -381,15 +400,33 @@ export class CanvasService {
       nodeId: input.nodeId,
       type: input.type,
       provider,
-      model: input.model,
+      model: resolved.internalModelId,
+      aiModelId: resolved.recordId,
+      modelDisplayName: resolved.displayName,
       prompt: input.prompt,
       payload: input.parameters as Prisma.InputJsonValue,
       idempotencyKey: input.idempotencyKey,
-      estimatedCredits
+      estimatedCredits: billing.estimatedCredits,
+      creditReservationId: billing.reservation.id,
+      pricingRuleId: billing.quote.ruleId,
+      pricingRuleVersion: billing.quote.ruleVersion,
+      creditsQuoted: billing.quote.credits,
+      providerCostSnapshot: {
+        providerCostMinor: billing.quote.providerCostMinor,
+        outputCount: billing.quote.outputCount
+      } as Prisma.InputJsonValue,
+      pricingSnapshot: billing.pricingSnapshot as Prisma.InputJsonValue,
+      quotedAt: new Date(billing.quote.quotedAt)
     });
+
+    await creditLedgerService.linkReservationToJob(billing.reservation.id, job.id);
 
     if (input.type === "IMAGE" && provider === "openai" && job.status === "QUEUED") {
       canvasImageGenerationService.scheduleJob(job.id, user.id);
+    }
+
+    if (input.type === "VIDEO" && job.status === "QUEUED") {
+      canvasVideoGenerationService.scheduleJob(job.id, user.id);
     }
 
     if (project.campaignId) {
@@ -400,7 +437,7 @@ export class CanvasService {
         { job_id: job.id, node_id: input.nodeId, type: input.type }
       );
     }
-    return { ...serializeJob(job), chargedCredits: estimatedCredits };
+    return { ...serializeJob(job), chargedCredits: billing.estimatedCredits };
   }
 
   async getJob(jobId: string, user: AuthUserDto) {
@@ -409,7 +446,7 @@ export class CanvasService {
     if (!job) throw appError("NOT_FOUND", "Generation job not found");
 
     const elapsed = Date.now() - job.createdAt.getTime();
-    if (job.provider === "vincis-mock") {
+    if (job.provider === "vincis-mock" && job.type !== "VIDEO") {
       if (job.status === "QUEUED" && elapsed >= 500) {
         job = await canvasRepository.updateGenerationJob(job.id, {
           status: "PROCESSING",
@@ -426,6 +463,10 @@ export class CanvasService {
         });
       }
     }
+
+    job = (await canvasRepository.findGenerationJob(jobId, user.id)) ?? job;
+    await creditGenerationBillingService.syncJobBilling(job);
+    job = (await canvasRepository.findGenerationJob(jobId, user.id)) ?? job;
     return serializeJob(job);
   }
 

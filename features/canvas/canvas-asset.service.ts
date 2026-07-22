@@ -324,6 +324,77 @@ export class CanvasAssetService {
     };
   }
 
+  async saveGeneratedVideoBuffer(
+    projectId: string,
+    user: AuthUserDto,
+    input: {
+      buffer: Buffer;
+      mimeType: string;
+      fileName: string;
+      metadata: Record<string, unknown>;
+    }
+  ) {
+    const project = await canvasService.assertAccess(projectId, user);
+    if (!input.buffer.length) throw appError("VALIDATION_ERROR", "Generated video is empty");
+    if (input.buffer.length > MAX_VIDEO_BYTES) {
+      throw appError("VALIDATION_ERROR", "Generated video exceeds the 200MB limit");
+    }
+
+    const extension =
+      input.mimeType === "video/webm"
+        ? "webm"
+        : input.mimeType === "video/quicktime"
+          ? "mov"
+          : "mp4";
+    const objectName = `${randomUUID()}.${extension}`;
+    const storagePrefix = project.campaignId
+      ? `campaigns/${project.campaignId}/canvas`
+      : `creative-projects/${project.id}/canvas`;
+    const fileKey = `${storagePrefix}/${objectName}`;
+    const stored = await putObject(fileKey, input.buffer, input.mimeType);
+    const metadataJson = buildGeneratedAssetMetadata(input.metadata);
+
+    const asset = project.campaignId
+      ? await canvasRepository.createCampaignAsset({
+          campaignId: project.campaignId,
+          uploadedBy: user.id,
+          assetType: "REFERENCE_VIDEO",
+          fileName: safeDisplayName(input.fileName),
+          fileKey: stored.key,
+          storageProvider: stored.backend,
+          mimeType: input.mimeType,
+          fileSize: input.buffer.length,
+          metadataJson: asInputJson(metadataJson) ?? {}
+        })
+      : await canvasRepository.createProjectAsset({
+          creativeProjectId: project.id,
+          uploadedBy: user.id,
+          assetType: "REFERENCE_VIDEO",
+          fileName: safeDisplayName(input.fileName),
+          fileKey: stored.key,
+          storageProvider: stored.backend,
+          mimeType: input.mimeType,
+          fileSize: input.buffer.length,
+          metadataJson: asInputJson(metadataJson) ?? {}
+        });
+
+    if (project.campaignId) {
+      await activityService.write(
+        project.campaignId,
+        "canvas.video_generated",
+        { userId: user.id, email: user.email, role: "creator" },
+        { asset_id: asset.id, mime_type: input.mimeType, size_bytes: input.buffer.length }
+      );
+    }
+
+    return {
+      id: asset.id,
+      fileName: asset.fileName,
+      mimeType: asset.mimeType,
+      url: `/api/canvas/assets/${asset.id}/preview`
+    };
+  }
+
   async listProjectAssets(projectId: string, user: AuthUserDto) {
     const project = await canvasService.assertAccess(projectId, user);
     const rows = project.campaignId

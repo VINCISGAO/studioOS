@@ -38,17 +38,17 @@ function writeStoredSessionId(projectId: string, sessionId: string | null) {
   }
 }
 
-export function useCanvasChatHistory(projectId: string, enabled: boolean) {
+export function useCanvasChatHistory(projectId: string) {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<CanvasChatHistoryMessage[]>([]);
   const [memoryHours, setMemoryHours] = useState(12);
   const [expiresAt, setExpiresAt] = useState<string | null>(null);
-  const [loading, setLoading] = useState(enabled);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const loadHistory = useCallback(async () => {
-    setLoading(true);
     setError(null);
+    setLoading(true);
     try {
       const response = await fetch(`/api/canvas/chat?projectId=${encodeURIComponent(projectId)}`);
       const payload = (await response.json()) as {
@@ -76,9 +76,8 @@ export function useCanvasChatHistory(projectId: string, enabled: boolean) {
   }, [projectId]);
 
   useEffect(() => {
-    if (!enabled) return;
     void loadHistory();
-  }, [enabled, loadHistory]);
+  }, [loadHistory]);
 
   async function resetSession() {
     if (sessionId) {

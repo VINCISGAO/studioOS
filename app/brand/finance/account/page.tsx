@@ -11,6 +11,7 @@ import { getBrandWalletSnapshot } from "@/features/wallet/brand-wallet.service";
 import { getCurrentClientEmail } from "@/features/auth/session-context";
 import { type Locale, type SearchParams, withLocale } from "@/lib/i18n";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
+import { isPaymentStubMode } from "@/lib/payment/payment-stub";
 
 import { formatMoneyFromUsd } from "@/lib/money/display-money";
 
@@ -41,6 +42,8 @@ export default async function BrandFinanceAccountPage({
 
   const snapshot = await getBrandWalletSnapshot(clientEmail, 16);
   const recharged = query.recharged === "1";
+  const checkoutSuccess = query.checkout === "success";
+  const checkoutCancelled = query.checkout === "cancelled";
   const balanceReset = query.balance_reset === "1";
   const walletError = typeof query.wallet_error === "string" ? query.wallet_error : null;
   const invoiceId = typeof query.invoice_id === "string" ? query.invoice_id : null;
@@ -116,9 +119,14 @@ export default async function BrandFinanceAccountPage({
         </div>
       ) : (
         <>
-          {recharged ? (
+          {recharged || checkoutSuccess ? (
             <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
               {locale === "zh" ? "充值成功，账户余额已更新。" : "Recharge completed. Your balance has been updated."}
+            </div>
+          ) : null}
+          {checkoutCancelled ? (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800">
+              {locale === "zh" ? "付款已取消，可重新发起充值。" : "Payment cancelled. You can start a new top-up."}
             </div>
           ) : null}
           {balanceReset ? (
@@ -240,6 +248,7 @@ export default async function BrandFinanceAccountPage({
               hasPendingInvoice={hasPendingInvoice}
               invoiceAmount={invoiceAmount}
               returnTo={returnTo}
+              stripeCheckoutEnabled={!isPaymentStubMode()}
             />
           </section>
 

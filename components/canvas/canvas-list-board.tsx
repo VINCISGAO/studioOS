@@ -14,7 +14,7 @@ type RecentCanvas = {
 
 const copy = {
   zh: {
-    title: "AI工具",
+    title: "AI创作工具",
     newCanvas: "New Canvas",
     creating: "正在打开…",
     recent: "Recent Canvas",
@@ -23,7 +23,7 @@ const copy = {
     updated: "更新于"
   },
   en: {
-    title: "AI Tools",
+    title: "AI Creative Tools",
     newCanvas: "New Canvas",
     creating: "Opening…",
     recent: "Recent Canvas",

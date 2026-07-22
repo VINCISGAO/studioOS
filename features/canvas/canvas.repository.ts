@@ -210,11 +210,13 @@ export const canvasRepository = {
       where: { creativeProjectId: projectId, status: { not: "CANCELLED" } },
       select: { estimatedCredits: true, actualCredits: true }
     });
-    const used = jobs.reduce(
-      (total, job) => total + (job.actualCredits ?? job.estimatedCredits),
-      0
-    );
-    return { used };
+    const used = jobs.reduce((total, job) => {
+      const raw = job.actualCredits ?? job.estimatedCredits;
+      const credits =
+        typeof raw === "number" && Number.isFinite(raw) ? Math.max(0, Math.round(raw)) : 0;
+      return total + credits;
+    }, 0);
+    return { used: Math.max(0, used) };
   },
 
   createAiDirectorLog(input: {
@@ -367,10 +369,19 @@ export const canvasRepository = {
     type: GenerationType;
     provider: string;
     model: string;
+    aiModelId?: string | null;
+    modelDisplayName?: string | null;
     prompt: string;
     payload: Prisma.InputJsonValue;
     idempotencyKey: string;
     estimatedCredits: number;
+    creditReservationId?: string;
+    pricingRuleId?: string | null;
+    pricingRuleVersion?: number | null;
+    creditsQuoted?: number | null;
+    providerCostSnapshot?: Prisma.InputJsonValue;
+    pricingSnapshot?: Prisma.InputJsonValue;
+    quotedAt?: Date | null;
   }) {
     return prisma.generationJob.upsert({
       where: {
@@ -388,10 +399,19 @@ export const canvasRepository = {
         type: input.type,
         provider: input.provider,
         model: input.model,
+        aiModelId: input.aiModelId ?? null,
+        modelDisplayName: input.modelDisplayName ?? null,
         prompt: input.prompt,
         input: input.payload,
         idempotencyKey: input.idempotencyKey,
-        estimatedCredits: input.estimatedCredits
+        estimatedCredits: input.estimatedCredits,
+        creditReservationId: input.creditReservationId ?? null,
+        pricingRuleId: input.pricingRuleId ?? null,
+        pricingRuleVersion: input.pricingRuleVersion ?? null,
+        creditsQuoted: input.creditsQuoted ?? input.estimatedCredits,
+        providerCostSnapshot: input.providerCostSnapshot,
+        pricingSnapshot: input.pricingSnapshot,
+        quotedAt: input.quotedAt ?? null
       },
       update: {}
     });

@@ -23,7 +23,8 @@ export async function POST(request: Request) {
           height: input.height,
           referenceAssetId: input.referenceAssetId,
           referenceUrl: input.referenceUrl,
-          referenceNodeId: input.referenceNodeId
+          referenceNodeId: input.referenceNodeId,
+          mode: input.mode
         }
       },
       user

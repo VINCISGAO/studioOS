@@ -5,7 +5,9 @@ const STUDIO_PATHS_ALWAYS_ALLOWED = [
   "/studio/settings",
   "/studio/works",
   "/studio/profile",
-  "/studio/income"
+  "/studio/income",
+  "/studio/canvas",
+  "/studio/credits"
 ];
 
 export function isStudioPathAlwaysAllowed(pathname: string) {

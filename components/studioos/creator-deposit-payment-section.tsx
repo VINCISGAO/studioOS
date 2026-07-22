@@ -14,7 +14,7 @@ import {
   Wallet,
   X
 } from "lucide-react";
-import { submitDepositPaymentAction } from "@/app/deposit-actions";
+import { submitDepositPaymentAction, startDepositStripeCheckoutAction } from "@/app/deposit-actions";
 import { CreatorDepositPendingCard } from "@/components/studioos/creator-deposit-pending-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -98,13 +98,15 @@ export function CreatorDepositPaymentSection({
   creatorId,
   snapshot,
   submitted,
-  scrollToPayment
+  scrollToPayment,
+  stripeCheckoutEnabled = false
 }: {
   locale: Locale;
   creatorId: string;
   snapshot: CreatorDepositSnapshot;
   submitted?: boolean;
   scrollToPayment?: boolean;
+  stripeCheckoutEnabled?: boolean;
 }) {
   const t = tCertified(locale);
   const extra = copyExtra[locale];
@@ -144,6 +146,37 @@ export function CreatorDepositPaymentSection({
       <div id="deposit-payment">
         <CreatorDepositPendingCard locale={locale} snapshot={snapshot} submitted={submitted} />
       </div>
+    );
+  }
+
+  if (stripeCheckoutEnabled) {
+    return (
+      <section
+        id="deposit-payment"
+        className="overflow-hidden rounded-2xl border border-zinc-200/90 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.04)]"
+      >
+        <div className="border-b border-zinc-100 px-5 py-4 sm:px-6">
+          <h2 className="text-base font-semibold tracking-tight text-zinc-950">{t.paySection}</h2>
+          <p className="mt-0.5 text-sm text-zinc-500">
+            {locale === "zh"
+              ? "通过 Stripe 安全收银台完成认证保证金付款。"
+              : "Pay the certification deposit securely via Stripe checkout."}
+          </p>
+        </div>
+        <form action={startDepositStripeCheckoutAction} className="space-y-6 p-5 sm:p-6">
+          <input type="hidden" name="lang" value={locale} />
+          <div className="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-5">
+            <p className="text-xs font-medium uppercase tracking-wide text-emerald-700">{extra.amountDue}</p>
+            <p className="mt-2 text-3xl font-semibold tracking-tight text-zinc-950">
+              {formatCurrency(snapshot.amount_usd, locale)}
+            </p>
+          </div>
+          <Button type="submit" size="lg" className="h-12 w-full rounded-xl bg-zinc-900 text-sm font-medium hover:bg-zinc-800">
+            <CreditCard className="h-4 w-4" />
+            {locale === "zh" ? "Stripe 安全付款" : "Pay securely with Stripe"}
+          </Button>
+        </form>
+      </section>
     );
   }
 

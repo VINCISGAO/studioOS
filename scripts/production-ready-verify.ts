@@ -276,6 +276,11 @@ function main() {
     steps.push(runCmd("prisma.migrate_deploy", "npm run db:migrate:deploy"));
     steps.push(runCmd("login.preflight", "npm run login:preflight"));
     steps.push(runCmd("payment.verify", "npm run payment:verify"));
+    steps.push(runCmd("credits:pricing:verify", "npm run credits:pricing:verify"));
+    steps.push(runCmd("credits:pricing:workflow:verify", "npm run credits:pricing:workflow:verify"));
+    steps.push(runCmd("credits:regional-pricing:verify", "npm run credits:regional-pricing:verify"));
+    steps.push(runCmd("canvas:ai-models:verify", "npm run canvas:ai-models:verify"));
+    steps.push(runCmd("credits:verify", "npm run credits:verify"));
     steps.push(runCmd("sprint1.verify", "npm run sprint1:verify"));
   } else {
     console.log("\n▶ Skipping DB checks (DATABASE_URL not set)");

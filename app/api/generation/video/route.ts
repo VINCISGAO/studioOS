@@ -14,7 +14,18 @@ export async function POST(request: Request) {
         prompt: input.prompt,
         model: input.model,
         idempotencyKey: input.idempotencyKey,
-        parameters: { aspectRatio: input.aspectRatio, duration: input.duration }
+        parameters: {
+          aspectRatio: input.aspectRatio,
+          duration: input.duration,
+          quality: input.quality,
+          audio: input.audio,
+          webSearch: input.webSearch,
+          cameraMovements: input.cameraMovements,
+          referenceAssetId: input.referenceAssetId,
+          referenceUrl: input.referenceUrl,
+          referenceNodeId: input.referenceNodeId,
+          mode: input.mode
+        }
       },
       user
     );

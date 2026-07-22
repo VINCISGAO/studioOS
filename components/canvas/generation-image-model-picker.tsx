@@ -1,19 +1,21 @@
 "use client";
 
 import { Check } from "lucide-react";
-import { IMAGE_MODELS, type ImageModelId } from "@/lib/canvas/generation-ui";
+import type { PublicAiModelView } from "@/features/canvas/ai-model-catalog.types";
 import type { Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 export function GenerationImageModelPicker({
   locale,
+  models,
   selectedModel,
   onSelect,
   onClose
 }: {
   locale: Locale;
-  selectedModel: ImageModelId;
-  onSelect: (modelId: ImageModelId) => void;
+  models: PublicAiModelView[];
+  selectedModel: string;
+  onSelect: (modelId: string) => void;
   onClose: () => void;
 }) {
   return (
@@ -26,7 +28,12 @@ export function GenerationImageModelPicker({
           {locale === "zh" ? "关闭" : "Close"}
         </button>
       </div>
-      {IMAGE_MODELS.map((model) => {
+      {models.length === 0 ? (
+        <p className="px-3 py-4 text-xs text-zinc-500">
+          {locale === "zh" ? "暂无可用模型" : "No models available"}
+        </p>
+      ) : null}
+      {models.map((model) => {
         const active = model.id === selectedModel;
         return (
           <button
@@ -41,7 +48,7 @@ export function GenerationImageModelPicker({
               active && "bg-zinc-50"
             )}
           >
-            <span className="text-zinc-900">{model.label}</span>
+            <span className="text-zinc-900">{model.displayName}</span>
             {active ? <Check className="h-4 w-4 text-zinc-900" /> : null}
           </button>
         );

@@ -12,6 +12,7 @@ type BrandWalletRechargeFormProps = {
   hasPendingInvoice: boolean;
   invoiceAmount: number;
   returnTo: string;
+  stripeCheckoutEnabled?: boolean;
 };
 
 const PRESET_AMOUNTS = [200, 500, 1000] as const;
@@ -34,7 +35,8 @@ export function BrandWalletRechargeForm({
   currency,
   hasPendingInvoice,
   invoiceAmount,
-  returnTo
+  returnTo,
+  stripeCheckoutEnabled = false
 }: BrandWalletRechargeFormProps) {
   const defaultAmount = hasPendingInvoice && Number.isFinite(invoiceAmount) && invoiceAmount > 0
     ? String(Math.round(invoiceAmount))
@@ -131,8 +133,12 @@ export function BrandWalletRechargeForm({
       <p className="mt-4 flex items-start gap-2 text-xs leading-5 text-zinc-500">
         <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-violet-500" />
         {locale === "zh"
-          ? "本地测试环境会在你确认后模拟付款完成并入账。"
-          : "In local testing, payment is simulated and credited after confirmation."}
+          ? stripeCheckoutEnabled
+            ? "确认后将跳转 Stripe 安全收银台，付款成功后自动入账。"
+            : "本地测试环境会在你确认后模拟付款完成并入账。"
+          : stripeCheckoutEnabled
+            ? "After confirmation you will be redirected to Stripe checkout. Funds are credited after payment."
+            : "In local testing, payment is simulated and credited after confirmation."}
       </p>
 
       {confirming ? (

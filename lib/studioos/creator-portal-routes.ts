@@ -13,6 +13,7 @@ export const creatorPortalRoutes = {
   works: "/studio/works",
   income: "/studio/income",
   deposit: "/studio/deposit",
+  credits: "/studio/credits",
   messages: "/studio/messages",
   aiAssistant: "/studio/ai",
   settings: "/studio/settings",

@@ -39,14 +39,29 @@ export class WithdrawService {
 
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
-    const todayCount = await prisma.transaction.count({
+    const todayRequests = await prisma.transaction.findMany({
       where: {
         walletId: wallet.id,
         type: "WITHDRAW_REQUEST",
         createdAt: { gte: todayStart }
-      }
+      },
+      select: { id: true }
     });
-    if (todayCount >= paymentConfig.maxWithdrawPerDay) {
+    let activeWithdrawCount = 0;
+    for (const request of todayRequests) {
+      const failed = await prisma.transaction.findFirst({
+        where: {
+          walletId: wallet.id,
+          type: "WITHDRAW_FAILED",
+          description: { contains: request.id }
+        },
+        select: { id: true }
+      });
+      if (!failed) {
+        activeWithdrawCount += 1;
+      }
+    }
+    if (activeWithdrawCount >= paymentConfig.maxWithdrawPerDay) {
       throw appError("VALIDATION_ERROR", "Daily withdrawal limit reached");
     }
 
@@ -130,6 +145,40 @@ export class WithdrawService {
         availableBalance: Number(result.wallet.availableBalance)
       }
     };
+  }
+
+  async failWithdraw(withdrawId: string, reason: string) {
+    this.assertDb();
+    const requestTx = await walletRepository.findTransaction(withdrawId);
+    if (!requestTx || requestTx.type !== "WITHDRAW_REQUEST") {
+      throw appError("NOT_FOUND", "Withdraw request not found");
+    }
+
+    const alreadySuccess = await prisma.transaction.findFirst({
+      where: {
+        walletId: requestTx.walletId,
+        type: "WITHDRAW_SUCCESS",
+        description: { contains: withdrawId }
+      }
+    });
+    if (alreadySuccess) {
+      return { alreadyFailed: false, alreadyCompleted: true };
+    }
+
+    const amount = Number(requestTx.amount);
+    await walletRepository.applyLedgerUpdate({
+      walletId: requestTx.walletId,
+      availableDelta: amount,
+      entries: [
+        {
+          type: "WITHDRAW_FAILED",
+          amount,
+          description: `Withdraw failed ref:${withdrawId} — ${reason}`
+        }
+      ]
+    });
+
+    return { alreadyFailed: false, alreadyCompleted: false };
   }
 
   /** Demo path — creator confirms payout locally without admin. */

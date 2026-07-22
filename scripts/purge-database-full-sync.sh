@@ -22,4 +22,4 @@ bash scripts/purge-database-full-production.sh
 
 echo ""
 echo "✅ JSON stores cleared and production database wiped."
-echo "   Clear Supabase auth users manually, then redeploy Vercel."
+echo "   OAuth identities and the protected master-admin login must remain untouched."

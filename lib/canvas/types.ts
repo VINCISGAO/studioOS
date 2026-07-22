@@ -30,6 +30,9 @@ export type CanvasNodeData = {
   hidden?: boolean;
   text?: string;
   skill?: string;
+  generationModel?: string;
+  generationParameters?: Record<string, string | number | boolean>;
+  generationMode?: string;
   layoutKind?: "VIDEO_GENERATION" | "IMAGE_GENERATION" | "MUSIC_GENERATION";
   layoutIndex?: number;
 };
@@ -52,6 +55,7 @@ export type CanvasSnapshot = {
     reviewHref: string | null;
     creditsUsed: number;
     tokenBalance: number;
+    reservedCredits?: number;
     brandKit: {
       connected: boolean;
       logoUrl: string | null;

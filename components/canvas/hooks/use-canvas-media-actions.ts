@@ -4,6 +4,11 @@ import { useMutation } from "@tanstack/react-query";
 import { useCanvasStore } from "@/components/canvas/canvas-store";
 import type { GenerationKind } from "@/components/canvas/generation-panel";
 import type { GenerationJobEvent, VincisCanvasNode } from "@/lib/canvas/types";
+import {
+  patchNodeGenerationMetadata,
+  readNodeGenerationContext,
+  type CanvasGenerationMode
+} from "@/lib/canvas/node-generation-context";
 import { readViewportRect, spawnNodeAtViewportCenter } from "@/lib/canvas/viewport-anchor";
 
 type ApiEnvelope<T> = {
@@ -44,6 +49,23 @@ function nodeKindFromType(type: VincisCanvasNode["type"]): GenerationKind {
   if (type === "video") return "video";
   if (type === "music") return "music";
   return "image";
+}
+
+function defaultModeForKind(kind: GenerationKind): CanvasGenerationMode {
+  if (kind === "video") return "TEXT_TO_VIDEO";
+  if (kind === "music") return "TEXT_TO_MUSIC";
+  return "TEXT_TO_IMAGE";
+}
+
+function nodeReference(node: VincisCanvasNode) {
+  if (!node.data.assetId) return null;
+  return {
+    assetId: node.data.assetId,
+    url: node.data.url,
+    fileName: node.data.fileName,
+    mimeType: node.data.mimeType,
+    nodeId: node.id
+  };
 }
 
 export function useCanvasMediaActions(
@@ -93,6 +115,7 @@ export function useCanvasMediaActions(
       nodeId: string;
       prompt: string;
       model: string;
+      mode: CanvasGenerationMode;
       parameters: Record<string, string | number | boolean>;
       reference?: {
         url?: string;
@@ -108,6 +131,7 @@ export function useCanvasMediaActions(
         prompt: input.prompt,
         model: input.model,
         idempotencyKey: crypto.randomUUID(),
+        mode: input.mode,
         ...input.parameters
       };
       if (input.reference?.assetId) body.referenceAssetId = input.reference.assetId;
@@ -126,6 +150,24 @@ export function useCanvasMediaActions(
       return payload.data;
     },
     onSuccess: (job, variables) => {
+      patchNodeData(
+        variables.nodeId,
+        patchNodeGenerationMetadata(
+          {
+            ...(useCanvasStore.getState().nodes.find((node) => node.id === variables.nodeId)?.data ??
+              {}),
+            title:
+              useCanvasStore.getState().nodes.find((node) => node.id === variables.nodeId)?.data
+                .title ?? "Generation",
+            status: "loading"
+          },
+          {
+            model: variables.model,
+            parameters: variables.parameters,
+            mode: variables.mode
+          }
+        )
+      );
       patchNodeData(variables.nodeId, { jobId: job.id, progress: job.progress });
       if (job.chargedCredits && job.chargedCredits > 0) {
         options?.onCreditsCharged?.(job.chargedCredits);
@@ -150,6 +192,7 @@ export function useCanvasMediaActions(
     input: {
       prompt: string;
       model?: string;
+      mode?: CanvasGenerationMode;
       parameters?: Record<string, string | number | boolean>;
       reference?: {
         url?: string;
@@ -164,6 +207,14 @@ export function useCanvasMediaActions(
     const generationType = kind === "image" ? "IMAGE" : kind === "video" ? "VIDEO" : "MUSIC";
     const title = kind === "image" ? "图片生成" : kind === "video" ? "视频生成" : "音乐生成";
     const nodeId = input.targetNodeId ?? `node_${crypto.randomUUID()}`;
+    const mode = input.mode ?? defaultModeForKind(kind);
+    const parameters =
+      input.parameters ??
+      (kind === "image"
+        ? { aspectRatio: "1:1", resolution: "1024", outputs: 1, quality: "high" }
+        : kind === "video"
+          ? { aspectRatio: "auto", duration: 5, quality: "720p", audio: true, webSearch: false }
+          : { duration: 30, instrumental: true });
 
     if (input.targetNodeId) {
       updateNodeData(nodeId, {
@@ -182,30 +233,93 @@ export function useCanvasMediaActions(
       nodeId,
       prompt: input.prompt,
       model: input.model ?? "vincis-mock-v1",
-      parameters:
-        input.parameters ??
-        (kind === "image"
-          ? { aspectRatio: "1:1", resolution: "1024", outputs: 1 }
-          : kind === "video"
-            ? { aspectRatio: "auto", duration: 5, quality: "720p", audio: true, webSearch: false }
-            : { duration: 30, instrumental: true }),
+      mode,
+      parameters,
       reference: input.reference ?? null
     });
   }
 
+  function requireNode(nodeId: string) {
+    return useCanvasStore.getState().nodes.find((item) => item.id === nodeId) ?? null;
+  }
+
   function regenerate(nodeId: string) {
-    const node = useCanvasStore.getState().nodes.find((item) => item.id === nodeId);
+    const node = requireNode(nodeId);
     if (!node?.data.prompt) return;
+    const ctx = readNodeGenerationContext(node);
     generate(nodeKindFromType(node.type), {
-      prompt: node.data.prompt,
+      prompt: ctx.prompt,
+      model: ctx.model,
+      mode: "REGENERATE",
+      parameters: ctx.parameters,
+      reference: nodeReference(node),
       targetNodeId: nodeId
     });
   }
 
   function extendVideo(nodeId: string) {
-    const node = useCanvasStore.getState().nodes.find((item) => item.id === nodeId);
-    if (!node?.data.prompt) return;
-    generate("video", { prompt: `Extend: ${node.data.prompt}`, targetNodeId: nodeId });
+    const node = requireNode(nodeId);
+    if (!node || node.type !== "video") return;
+    const ctx = readNodeGenerationContext(node);
+    const currentDuration = Number(ctx.parameters.duration ?? 5);
+    generate("video", {
+      prompt: ctx.prompt || "Extend video",
+      model: ctx.model,
+      mode: "EXTEND",
+      parameters: {
+        ...ctx.parameters,
+        duration: Math.min(15, currentDuration + 5)
+      },
+      reference: nodeReference(node),
+      targetNodeId: nodeId
+    });
+  }
+
+  function upscale(nodeId: string) {
+    const node = requireNode(nodeId);
+    if (!node || !node.data.assetId) return;
+    const ctx = readNodeGenerationContext(node);
+    if (node.type === "video") {
+      generate("video", {
+        prompt: ctx.prompt || "Upscale video",
+        model: ctx.model,
+        mode: "UPSCALE",
+        parameters: {
+          ...ctx.parameters,
+          quality: "1080p"
+        },
+        reference: nodeReference(node),
+        targetNodeId: nodeId
+      });
+      return;
+    }
+    if (node.type !== "image") return;
+    generate("image", {
+      prompt: ctx.prompt || "Upscale image",
+      model: ctx.model,
+      mode: "UPSCALE",
+      parameters: {
+        ...ctx.parameters,
+        quality: "high",
+        resolution: "2048"
+      },
+      reference: nodeReference(node),
+      targetNodeId: nodeId
+    });
+  }
+
+  function removeBackground(nodeId: string) {
+    const node = requireNode(nodeId);
+    if (!node || node.type !== "image" || !node.data.assetId) return;
+    const ctx = readNodeGenerationContext(node);
+    generate("image", {
+      prompt: ctx.prompt || "Remove background",
+      model: ctx.model,
+      mode: "REMOVE_BACKGROUND",
+      parameters: ctx.parameters,
+      reference: nodeReference(node),
+      targetNodeId: nodeId
+    });
   }
 
   return {
@@ -213,6 +327,8 @@ export function useCanvasMediaActions(
     generate,
     regenerate,
     extendVideo,
+    upscale,
+    removeBackground,
     generationPending: generationMutation.isPending
   };
 }

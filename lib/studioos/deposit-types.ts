@@ -17,6 +17,7 @@ export type DepositPayment = {
   payment_reference?: string;
   status: DepositPaymentStatus;
   status_note?: string;
+  stripe_session_id?: string | null;
   created_at: string;
   confirmed_at: string | null;
 };

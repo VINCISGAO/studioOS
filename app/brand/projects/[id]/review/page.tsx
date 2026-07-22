@@ -12,6 +12,7 @@ import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
 import { resolveReviewPortalUiState } from "@/features/review/review-portal-ui-state";
 import { listReviewComments } from "@/lib/studioos/review-store";
 import { resolveActiveReviewPlaybackVersion } from "@/lib/studioos/review-upload-version";
+import { isPaymentStubMode } from "@/lib/payment/payment-stub";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -166,6 +167,7 @@ export default async function BrandProjectReviewPage({ params, searchParams }: P
       portalUi={portalUi}
       backHref={withLocale(`${brandPortalRoutes.project(resolvedProjectId)}?tab=production`, locale)}
       backLabel={locale === "zh" ? "返回项目" : "Back to project"}
+      stripeCheckoutEnabled={!isPaymentStubMode()}
     />
   );
 }

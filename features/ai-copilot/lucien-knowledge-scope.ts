@@ -20,9 +20,9 @@ export const LUCIEN_KNOWLEDGE_SCOPE_FILTERS: Record<
   LucienKnowledgeRetrievalFilter
 > = {
   public_marketing: {
-    knowledgeTypes: ["FAQ", "PRODUCT_HELP", "WORKFLOW_GUIDE"],
+    knowledgeTypes: ["FAQ", "PRODUCT_HELP", "WORKFLOW_GUIDE", "BUSINESS_POLICY"],
     visibilities: ["public"],
-    allowedSourceTypes: ["marketing_faq", "knowledge_center"],
+    allowedSourceTypes: ["marketing_faq", "knowledge_center", "business_policy"],
     blockedSourceTypes: ["dev_seed", "engineering_doc", "security_report"]
   },
   authenticated_business: {

@@ -55,6 +55,8 @@ export const adminPortalNavItems: AdminPortalNavItem[] = [
   { key: "settlements", href: adminPortalRoutes.settlements, icon: ArrowDownToLine, iconKey: "settlements", section: "finance" },
   { key: "withdrawals", href: adminPortalRoutes.withdrawals, icon: ArrowUpFromLine, iconKey: "withdrawals", section: "finance" },
   { key: "wallets", href: adminPortalRoutes.wallets, icon: Wallet, iconKey: "adminWallets", section: "finance" },
+  { key: "credits", href: adminPortalRoutes.credits, icon: Wallet, iconKey: "adminWallets", section: "finance" },
+  { key: "creditsPricing", href: adminPortalRoutes.creditsPricing, icon: Wallet, iconKey: "adminWallets", section: "finance" },
   { key: "ledger", href: adminPortalRoutes.ledger, icon: BookOpen, iconKey: "ledger", section: "finance" },
   { key: "notifications", href: adminPortalRoutes.notifications, icon: Bell, iconKey: "notifications", section: "platform" },
   { key: "membership", href: adminPortalRoutes.membership, icon: Crown, iconKey: "membership", section: "platform" },

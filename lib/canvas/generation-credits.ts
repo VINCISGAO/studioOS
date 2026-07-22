@@ -116,10 +116,26 @@ export function computeGenerationCredits(input: {
   });
 }
 
-export function computeCanvasTokenBalance(creditsUsed: number) {
-  return Math.max(0, CANVAS_CREATOR_TOKEN_BUDGET - creditsUsed);
+export function normalizeCanvasCreditsUsed(creditsUsed: unknown): number {
+  if (typeof creditsUsed !== "number" || !Number.isFinite(creditsUsed)) return 0;
+  return Math.min(CANVAS_CREATOR_TOKEN_BUDGET, Math.max(0, Math.round(creditsUsed)));
 }
 
-export function hasEnoughCanvasCredits(balance: number, cost: number) {
-  return balance >= cost;
+export function normalizeCanvasTokenBalance(balance: unknown): number {
+  if (typeof balance !== "number" || !Number.isFinite(balance)) {
+    return 0;
+  }
+  return Math.max(0, Math.round(balance));
+}
+
+export function computeCanvasTokenBalance(creditsUsed: unknown) {
+  const used = normalizeCanvasCreditsUsed(creditsUsed);
+  return Math.max(0, CANVAS_CREATOR_TOKEN_BUDGET - used);
+}
+
+export function hasEnoughCanvasCredits(balance: unknown, cost: number) {
+  const normalizedBalance = normalizeCanvasTokenBalance(balance);
+  const normalizedCost =
+    typeof cost === "number" && Number.isFinite(cost) ? Math.max(0, Math.round(cost)) : 0;
+  return normalizedBalance >= normalizedCost;
 }

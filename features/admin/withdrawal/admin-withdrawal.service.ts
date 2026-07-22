@@ -81,7 +81,10 @@ export class AdminWithdrawalService {
   async approve(user: AuthUser, withdrawId: string) {
     PermissionService.assert(user, "admin.wallet.manage");
     const requestTx = await walletRepository.findTransaction(withdrawId);
-    const result = await withdrawService.completeWithdraw(withdrawId, user);
+    const { stripeConnectWithdrawalService } = await import(
+      "@/features/payment/stripe-connect-withdrawal.service"
+    );
+    const result = await stripeConnectWithdrawalService.executeTransferForAdminWithdraw(withdrawId, user);
     if (requestTx) {
       const walletRow = await prisma.wallet.findUnique({ where: { id: requestTx.walletId } });
       if (walletRow) {

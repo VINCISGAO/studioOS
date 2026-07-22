@@ -4,11 +4,8 @@ import {
   type GenerationKind,
   type GenerationReference,
   type ImageGenerationSettings,
-  type ImageModelId,
   type MusicGenerationSettings,
-  type MusicModelVersion,
-  type VideoGenerationSettings,
-  type VideoModelId
+  type VideoGenerationSettings
 } from "@/lib/canvas/generation-ui";
 
 export type GenerationSubmitInput = {
@@ -26,9 +23,9 @@ export function buildGenerationSubmitInput(input: {
   videoSettings: VideoGenerationSettings;
   imageSettings: ImageGenerationSettings;
   musicSettings: MusicGenerationSettings;
-  selectedVideoModel: VideoModelId;
-  selectedImageModel: ImageModelId;
-  selectedMusicModel: MusicModelVersion;
+  selectedVideoModel: string;
+  selectedImageModel: string;
+  selectedMusicModel: string;
 }): GenerationSubmitInput {
   return {
     kind: input.kind,

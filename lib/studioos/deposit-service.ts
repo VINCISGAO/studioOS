@@ -207,6 +207,17 @@ export async function submitDepositPayment(
     locale: "en" | "zh";
   }
 ): Promise<{ ok: true; payment: DepositPayment } | { ok: false; error: string }> {
+  const { isPaymentStubMode } = await import("@/lib/payment/payment-stub");
+  if (!isPaymentStubMode()) {
+    return {
+      ok: false,
+      error:
+        input.locale === "zh"
+          ? "请使用 Stripe 安全收银台完成保证金付款"
+          : "Please complete the deposit via Stripe checkout"
+    };
+  }
+
   const store = await readStore();
   await advanceDemoDepositPayments(store);
 
@@ -244,4 +255,88 @@ export async function submitDepositPayment(
   await writeStore(store);
   await runPostDepositConfirmationSideEffects([confirmed]);
   return { ok: true, payment };
+}
+
+export async function createDepositStripePayment(creatorId: string): Promise<
+  | { ok: true; payment: DepositPayment; amountUsd: number }
+  | { ok: false; error: string }
+> {
+  const store = await readStore();
+  await advanceDemoDepositPayments(store);
+
+  const overlay = store.creator_overlays[creatorId];
+  if (overlay?.deposit_status === "paid") {
+    return { ok: false, error: "Deposit already paid" };
+  }
+
+  const existingPending = store.payments.find(
+    (item) => item.creator_id === creatorId && isActiveDepositPayment(item.status)
+  );
+  if (existingPending) {
+    return { ok: true, payment: existingPending, amountUsd: existingPending.amount_usd };
+  }
+
+  const payment: DepositPayment = {
+    id: createId("dep_pay"),
+    creator_id: creatorId,
+    amount_usd: CREATOR_DEPOSIT_USD,
+    payment_method: "bank_wire",
+    payment_reference: "stripe_checkout",
+    status: "pending",
+    created_at: new Date().toISOString(),
+    confirmed_at: null,
+    stripe_session_id: null
+  };
+
+  store.payments.unshift(payment);
+  await writeStore(store);
+  return { ok: true, payment, amountUsd: CREATOR_DEPOSIT_USD };
+}
+
+export async function attachDepositStripeSession(input: {
+  creatorId: string;
+  paymentId: string;
+  stripeSessionId: string;
+}) {
+  const store = await readStore();
+  const payment = store.payments.find(
+    (item) => item.id === input.paymentId && item.creator_id === input.creatorId
+  );
+  if (!payment) return false;
+  payment.stripe_session_id = input.stripeSessionId;
+  await writeStore(store);
+  return true;
+}
+
+export async function confirmCreatorDepositFromStripe(input: {
+  creatorId: string;
+  paymentId: string;
+  stripeSessionId: string;
+  amountUsd: number;
+}) {
+  const store = await readStore();
+  const already = store.payments.find(
+    (item) =>
+      item.stripe_session_id === input.stripeSessionId && item.status === "confirmed"
+  );
+  if (already) {
+    return { duplicate: true as const, paymentId: already.id, creatorId: already.creator_id };
+  }
+
+  const payment = store.payments.find(
+    (item) => item.id === input.paymentId && item.creator_id === input.creatorId
+  );
+  if (!payment) {
+    throw new Error("Deposit payment not found");
+  }
+  if (payment.status === "confirmed") {
+    return { duplicate: true as const, paymentId: payment.id, creatorId: payment.creator_id };
+  }
+
+  payment.amount_usd = input.amountUsd;
+  payment.stripe_session_id = input.stripeSessionId;
+  const confirmed = applyDepositConfirmation(store, payment);
+  await writeStore(store);
+  await runPostDepositConfirmationSideEffects([confirmed]);
+  return { duplicate: false as const, paymentId: payment.id, creatorId: payment.creator_id };
 }

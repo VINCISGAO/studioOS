@@ -73,3 +73,4 @@ alwaysApply: true
 - 把 AI 创意草稿当成最终制作方向
 - 在真实 Campaign 中使用 demo fallback / placeholder shortlist 伪造邀约；测试账号必须是真实注册 creator account
 - **没有 owner 在当前对话明确命令，禁止改动首页栈**（`components/marketing/**`、`lib/marketing/**`、`app/page.tsx`、首页相关 `app/globals.css`）— 见 [homepage-absolute-lock.mdc](./homepage-absolute-lock.mdc) · `npm run homepage:verify-lock`
+- **AI Tools 无限画布是功能，不是账号豁免理由** — 清测试用户时，测试账号的画布数据一并删除；只保留 owner 账号及其画布。禁止 `TRUNCATE users CASCADE` 误删精选文章 / 管理员 / owner 数据 — 见 [ai-tools-absolute-lock.mdc](./ai-tools-absolute-lock.mdc)

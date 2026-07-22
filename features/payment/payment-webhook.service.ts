@@ -26,6 +26,10 @@ export class PaymentWebhookService {
           result = await this.handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session);
           processed = true;
           break;
+        case "checkout.session.async_payment_succeeded":
+          result = await this.handleAsyncPaymentSucceeded(event.data.object as Stripe.Checkout.Session);
+          processed = true;
+          break;
         case "checkout.session.expired":
           result = await this.handleCheckoutExpired(event.data.object as Stripe.Checkout.Session);
           processed = true;
@@ -36,6 +40,32 @@ export class PaymentWebhookService {
           break;
         case "payment_intent.payment_failed":
           result = await this.handlePaymentIntentFailed(event.data.object as Stripe.PaymentIntent);
+          processed = true;
+          break;
+        case "charge.refunded":
+          result = await this.handleChargeRefunded(event.data.object as Stripe.Charge);
+          processed = true;
+          break;
+        case "charge.dispute.created":
+          result = await this.handleDisputeCreated(event.data.object as Stripe.Dispute);
+          processed = true;
+          break;
+        case "charge.dispute.closed":
+          result = await this.handleDisputeClosed(event.data.object as Stripe.Dispute);
+          processed = true;
+          break;
+        case "account.updated":
+          result = await this.handleAccountUpdated(event.data.object as Stripe.Account);
+          processed = true;
+          break;
+        case "transfer.created":
+        case "transfer.reversed":
+          result = await this.handleTransferEvent(event.type, event.data.object as Stripe.Transfer);
+          processed = true;
+          break;
+        case "payout.paid":
+        case "payout.failed":
+          result = await this.handlePayoutEvent(event.type, event.data.object as Stripe.Payout);
           processed = true;
           break;
         default:
@@ -60,6 +90,11 @@ export class PaymentWebhookService {
   }
 
   private async handleCheckoutExpired(session: Stripe.Checkout.Session) {
+    if (session.metadata?.type === "credit_package_purchase") {
+      const { creditPurchaseService } = await import("@/features/credit-wallet/credit-purchase.service");
+      return creditPurchaseService.handleStripeCheckoutCancelled(session);
+    }
+
     const campaignId = session.metadata?.campaign_id;
     return paymentCollectionService.handlePaymentFailed({
       campaignId: campaignId ?? undefined,
@@ -69,6 +104,11 @@ export class PaymentWebhookService {
   }
 
   private async handleCheckoutFailed(session: Stripe.Checkout.Session) {
+    if (session.metadata?.type === "credit_package_purchase") {
+      const { creditPurchaseService } = await import("@/features/credit-wallet/credit-purchase.service");
+      return creditPurchaseService.handleStripeCheckoutFailed(session);
+    }
+
     const campaignId = session.metadata?.campaign_id;
     return paymentCollectionService.handlePaymentFailed({
       campaignId: campaignId ?? undefined,
@@ -85,7 +125,165 @@ export class PaymentWebhookService {
     });
   }
 
+  private async handleChargeRefunded(charge: Stripe.Charge) {
+    const { creditPurchaseService } = await import("@/features/credit-wallet/credit-purchase.service");
+    const refund = charge.refunds?.data?.[0];
+    const result = await creditPurchaseService.handleStripeRefund({
+      charge,
+      refundId: refund?.id ?? `${charge.id}:${charge.amount_refunded}`
+    });
+    if (result.handled) {
+      logger.info("Credit purchase refunded via Stripe", {
+        service: "PaymentWebhookService",
+        orderId: result.orderId,
+        duplicate: result.duplicate,
+        clawedBack: result.clawedBack,
+        shortfall: result.shortfall,
+        cumulativeRefundedMinor: result.cumulativeRefundedMinor
+      });
+    }
+    return result;
+  }
+
+  private async handleDisputeCreated(dispute: Stripe.Dispute) {
+    const { creditPurchaseService } = await import("@/features/credit-wallet/credit-purchase.service");
+    const result = await creditPurchaseService.handleStripeDisputeCreated(dispute);
+    if (result.handled) {
+      logger.warn("Credit purchase dispute opened", {
+        service: "PaymentWebhookService",
+        orderId: result.orderId,
+        duplicate: result.duplicate,
+        heldCredits: result.heldCredits
+      });
+    }
+    return result;
+  }
+
+  private async handleDisputeClosed(dispute: Stripe.Dispute) {
+    const { creditPurchaseService } = await import("@/features/credit-wallet/credit-purchase.service");
+    const result = await creditPurchaseService.handleStripeDisputeClosed(dispute);
+    if (result.handled) {
+      logger.info("Credit purchase dispute closed", {
+        service: "PaymentWebhookService",
+        orderId: result.orderId,
+        duplicate: result.duplicate,
+        merchantWon: result.merchantWon,
+        releasedCredits: result.releasedCredits,
+        forfeitedCredits: result.forfeitedCredits
+      });
+    }
+    return result;
+  }
+
+  private async handleAccountUpdated(account: Stripe.Account) {
+    const { stripeConnectService } = await import("@/features/payment/stripe-connect.service");
+    return stripeConnectService.syncAccountFromWebhook(account);
+  }
+
+  private async handleTransferEvent(type: string, transfer: Stripe.Transfer) {
+    logger.info("Stripe Connect transfer event", {
+      service: "PaymentWebhookService",
+      type,
+      transferId: transfer.id,
+      destination: transfer.destination,
+      amount: transfer.amount,
+      withdrawId: transfer.metadata?.vincis_withdraw_id ?? null
+    });
+    return {
+      handled: true,
+      type,
+      transferId: transfer.id,
+      withdrawId: transfer.metadata?.vincis_withdraw_id ?? null
+    };
+  }
+
+  private async handlePayoutEvent(type: string, payout: Stripe.Payout) {
+    logger.info("Stripe Connect payout event", {
+      service: "PaymentWebhookService",
+      type,
+      payoutId: payout.id,
+      amount: payout.amount,
+      status: payout.status
+    });
+    return { handled: true, type, payoutId: payout.id, status: payout.status };
+  }
+
+  private async handleAsyncPaymentSucceeded(session: Stripe.Checkout.Session) {
+    if (session.metadata?.type !== "credit_package_purchase") {
+      return { ignored: true, reason: "not_credit_purchase" };
+    }
+
+    const { creditPurchaseService } = await import("@/features/credit-wallet/credit-purchase.service");
+    const result = await creditPurchaseService.handleStripeCheckoutPaid({ session });
+
+    logger.info("Credit package credited via async Stripe payment", {
+      service: "PaymentWebhookService",
+      userId: session.metadata.user_id,
+      orderId: session.metadata.order_id,
+      duplicate: result.duplicate,
+      sessionId: session.id
+    });
+
+    return {
+      orderId: session.metadata.order_id,
+      credited: !result.duplicate,
+      totalCredits: result.totalCredits ?? null,
+      asyncPayment: true
+    };
+  }
+
   private async handleCheckoutCompleted(session: Stripe.Checkout.Session) {
+    if (session.metadata?.type === "credit_package_purchase") {
+      const { creditPurchaseService } = await import("@/features/credit-wallet/credit-purchase.service");
+      const result = await creditPurchaseService.handleStripeCheckoutCompleted(session);
+
+      if ("deferred" in result && result.deferred) {
+        logger.info("Credit purchase checkout completed with deferred payment", {
+          service: "PaymentWebhookService",
+          userId: session.metadata.user_id,
+          orderId: session.metadata.order_id,
+          paymentStatus: result.paymentStatus,
+          sessionId: session.id
+        });
+        return {
+          orderId: result.orderId,
+          deferred: true,
+          paymentStatus: result.paymentStatus
+        };
+      }
+
+      if (!("duplicate" in result)) {
+        return { ignored: true, reason: "credit_checkout_not_handled" };
+      }
+
+      logger.info("Credit package credited via Stripe", {
+        service: "PaymentWebhookService",
+        userId: session.metadata.user_id,
+        orderId: session.metadata.order_id,
+        duplicate: result.duplicate,
+        sessionId: session.id
+      });
+
+      return {
+        orderId: session.metadata.order_id,
+        credited: !result.duplicate,
+        totalCredits: result.totalCredits ?? null
+      };
+    }
+
+    const { stripePaymentFulfillmentService } = await import(
+      "@/features/payment/stripe-payment-fulfillment.service"
+    );
+
+    const walletRecharge = await stripePaymentFulfillmentService.fulfillBrandWalletRecharge(session);
+    if (walletRecharge.handled) return walletRecharge;
+
+    const creatorDeposit = await stripePaymentFulfillmentService.fulfillCreatorDeposit(session);
+    if (creatorDeposit.handled) return creatorDeposit;
+
+    const paidRevision = await stripePaymentFulfillmentService.fulfillPaidRevisionAddon(session);
+    if (paidRevision.handled) return paidRevision;
+
     const campaignId = session.metadata?.campaign_id;
     const orderId = session.metadata?.order_id;
     if (session.payment_status !== "paid") {

@@ -1,0 +1,67 @@
+---
+description: Absolute protection for the owner AI Tools infinite canvas workspace and data
+alwaysApply: true
+---
+
+# AI Tools absolute lock (owner-locked)
+
+**Priority:** Same tier as [super-admin-absolute-lock.mdc](./super-admin-absolute-lock.mdc). Overrides cleanup,
+reset, purge, and refactor impulses.
+
+## What is protected
+
+The **AI Tools** workspace (`/studio/canvas`) — infinite canvas projects, nodes, edges, assets, and generation jobs
+the owner builds and uses for image / video / music / text generation.
+
+### Protected product surface
+
+- `app/studio/canvas/**`
+- `app/api/canvas/**`
+- `components/canvas/**`
+- `features/canvas/**`
+- `lib/canvas/**`
+- `components/ai-copilot/**` when used inside the canvas workspace
+
+### Protected database tables (never truncate, cascade-delete, or bulk-wipe)
+
+- `creative_projects`
+- `creative_canvases`
+- `canvas_nodes`
+- `canvas_edges`
+- `creative_project_assets`
+- `generation_jobs`
+
+Related object storage keys / R2 assets referenced by `creative_project_assets.file_key` are part of the same
+protected asset set.
+
+## Hard stop
+
+Unless the project owner **explicitly orders deletion of AI Tools data in the current conversation**, you
+**MUST NOT**:
+
+- Delete, truncate, anonymize, or overwrite rows in the protected tables above
+- Run `TRUNCATE "users" ... CASCADE` or any operation that cascades into `creative_projects`
+- Run `TRUNCATE "campaigns" ... CASCADE` when canvas rows reference those campaigns
+- Clear `.data` or production storage in ways that orphan canvas asset keys without owner approval
+- “Simplify” reset / purge scripts by widening CASCADE scope to include canvas tables
+
+## User-data reset rules
+
+When the owner asks to clear **user test data** for retesting:
+
+- **Delete every ordinary user account** except the owner portal user (`ADMIN_LOGIN_EMAIL`)
+- **Canvas is a feature, not an account exemption** — test users with canvas projects are deleted together with their canvas rows
+- **Preserve:** master admin, owner portal user (+ that user's canvas, if any), Knowledge Center articles, verification codes, platform AI learning row counts
+- **Forbidden default:** `TRUNCATE TABLE "users" RESTART IDENTITY CASCADE`
+- Use `scripts/reset-user-test-data.ts` with granular deletes and postflight checks
+
+## Recovery
+
+If AI Tools data is lost, treat as **P0**. Prefer Neon point-in-time recovery to a branch **before** the
+destructive operation; verify canvas + asset counts before switching production `main`.
+
+## Related protected content
+
+Published Knowledge Center articles are **separate platform content**, not AI Tools canvas rows, but they must
+**not** be deleted by a “user data reset” either. Never CASCADE-delete `knowledge_*` tables when clearing users
+or campaigns unless the owner explicitly orders that exact deletion in the current conversation.

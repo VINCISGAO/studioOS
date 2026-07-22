@@ -17,6 +17,9 @@ import { JobStatusPanel } from "@/components/canvas/job-status-panel";
 import { SelectionToolbar } from "@/components/canvas/selection-toolbar";
 import { useCanvasGenerationSlots } from "@/components/canvas/hooks/use-canvas-generation-slots";
 import { useCanvasMediaActions } from "@/components/canvas/hooks/use-canvas-media-actions";
+import {
+  normalizeCanvasTokenBalance
+} from "@/lib/canvas/generation-credits";
 import type { CanvasSnapshot, VincisCanvasNode } from "@/lib/canvas/types";
 import type { Locale } from "@/lib/i18n";
 import {
@@ -39,23 +42,31 @@ function CanvasWorkspaceInner({
   const [chatCollapsed, setChatCollapsed] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [fullscreenSupported, setFullscreenSupported] = useState(false);
-  const [tokenBalance, setTokenBalance] = useState(snapshot.projectContext.tokenBalance);
+  const [tokenBalance, setTokenBalance] = useState(() =>
+    normalizeCanvasTokenBalance(snapshot.projectContext.tokenBalance)
+  );
   const initializedProjectId = useRef<string | null>(null);
   const fullscreenAreaRef = useRef<HTMLDivElement>(null);
   const canvasAreaRef = useRef<HTMLDivElement>(null);
   const pasteAt = useCanvasStore((state) => state.pasteAt);
   const viewport = useCanvasStore((state) => state.viewport);
-  const { generate, regenerate, extendVideo, generationPending } = useCanvasMediaActions(
+  const { generate, regenerate, extendVideo, upscale, removeBackground, generationPending } =
+    useCanvasMediaActions(
     snapshot.projectId,
     {
       onCreditsCharged: (amount) => {
-        setTokenBalance((current) => Math.max(0, current - amount));
+        const charge =
+          typeof amount === "number" && Number.isFinite(amount) && amount > 0
+            ? Math.round(amount)
+            : 0;
+        if (!charge) return;
+        setTokenBalance((current) => Math.max(0, Math.round(current - charge)));
       }
     }
   );
   const nodeActions = useMemo(
-    () => ({ regenerate, extendVideo }),
-    [extendVideo, regenerate]
+    () => ({ regenerate, extendVideo, upscale, removeBackground }),
+    [extendVideo, regenerate, removeBackground, upscale]
   );
   const {
     panel,
@@ -79,7 +90,7 @@ function CanvasWorkspaceInner({
     initializedProjectId.current = snapshot.projectId;
     useCanvasStore.getState().initialize(snapshot);
     useCanvasStore.getState().setInteractionMode("select");
-    setTokenBalance(snapshot.projectContext.tokenBalance);
+    setTokenBalance(normalizeCanvasTokenBalance(snapshot.projectContext.tokenBalance));
     setReady(true);
   }, [snapshot]);
 
@@ -216,7 +227,11 @@ function CanvasWorkspaceInner({
                 <Maximize2 className="h-3.5 w-3.5" />
               )}
             </button>
-            <CanvasCreditsHud locale={locale} tokenBalance={tokenBalance} />
+            <CanvasCreditsHud
+              locale={locale}
+              tokenBalance={tokenBalance}
+              reservedCredits={snapshot.projectContext.reservedCredits ?? 0}
+            />
             <SelectionToolbar onPaste={pasteSelectionAtCenter} />
             <FloatingToolbar onGenerate={openGeneration} />
             <JobStatusPanel />

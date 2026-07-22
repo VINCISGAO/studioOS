@@ -12,6 +12,7 @@ import {
 } from "@/lib/studioos/brand-portal-page-guards";
 import { listReviewComments } from "@/lib/studioos/review-store";
 import { resolveActiveReviewPlaybackVersion } from "@/lib/studioos/review-upload-version";
+import { isPaymentStubMode } from "@/lib/payment/payment-stub";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -72,6 +73,7 @@ export default async function BrandOrderReviewPage({ params, searchParams }: Pag
       initialVersion={await resolveActiveReviewPlaybackVersion(order.id, deliverables)}
       backHref={withLocale(brandPortalRoutes.reviewHub, locale)}
       backLabel={locale === "zh" ? "返回上一步" : "Back"}
+      stripeCheckoutEnabled={!isPaymentStubMode()}
     />
   );
 }

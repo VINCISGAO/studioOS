@@ -27,6 +27,7 @@ export const ErrorCodes = {
   CONFLICT: { code: "CONFLICT", status: 409 },
   PAYMENT_FAILED: { code: "PAYMENT_FAILED", status: 402 },
   PAYMENT_REQUIRED: { code: "PAYMENT_REQUIRED", status: 402 },
+  PACKAGE_PRICE_UNAVAILABLE: { code: "PACKAGE_PRICE_UNAVAILABLE", status: 422 },
   RATE_LIMIT: { code: "RATE_LIMIT", status: 429 },
   PAYLOAD_TOO_LARGE: { code: "PAYLOAD_TOO_LARGE", status: 413 },
   SYSTEM_ERROR: { code: "SYSTEM_ERROR", status: 500 }

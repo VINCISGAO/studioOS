@@ -4,12 +4,15 @@ import { Music2 } from "lucide-react";
 import type { NodeProps } from "@xyflow/react";
 import type { VincisCanvasNode } from "@/lib/canvas/types";
 import { CanvasNodeFrame } from "@/components/canvas/nodes/canvas-node-frame";
+import { CanvasVideoNodeMenu } from "@/components/canvas/nodes/canvas-video-node-menu";
 
 const WAVEFORM = [18, 32, 44, 28, 52, 38, 24, 46, 56, 34, 20, 42, 50, 30, 16, 36];
 
-export function MusicNode({ data, selected }: NodeProps<VincisCanvasNode>) {
+export function MusicNode({ id, data, selected }: NodeProps<VincisCanvasNode>) {
   return (
-    <CanvasNodeFrame
+    <>
+      <CanvasVideoNodeMenu nodeId={id} data={data} selected={selected} variant="music" />
+      <CanvasNodeFrame
       data={data}
       selected={selected}
       icon={<Music2 className="h-4 w-4" />}
@@ -48,6 +51,7 @@ export function MusicNode({ data, selected }: NodeProps<VincisCanvasNode>) {
           </p>
         )}
       </div>
-    </CanvasNodeFrame>
+      </CanvasNodeFrame>
+    </>
   );
 }

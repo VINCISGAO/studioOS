@@ -1,7 +1,9 @@
 import { getAppUiLocale } from "@/lib/app-language";
 import { redirect } from "next/navigation";
+import { IncomeStripeConnectSection } from "@/components/studioos/income-stripe-connect-section";
 import { IncomeWithdrawalPanel } from "@/components/studioos/income-withdrawal-panel";
-import { getCurrentCreator } from "@/features/auth/session-context";
+import { stripeConnectService } from "@/features/payment/stripe-connect.service";
+import { getCurrentCreator, getCurrentAuthUser } from "@/features/auth/session-context";
 import { resolveCreatorCertificationAccessFromOrders } from "@/lib/studioos/creator-certification-access";
 import { type SearchParams, withLocale } from "@/lib/i18n";
 import { listOrdersForCreator } from "@/lib/order-service";
@@ -12,19 +14,29 @@ import {
 } from "@/lib/studioos/withdrawal-service";
 import Link from "next/link";
 
-export default async function StudioIncomePage({ searchParams }: { searchParams: Promise<SearchParams> }) {
+export default async function StudioIncomePage({
+  searchParams
+}: {
+  searchParams: Promise<SearchParams & { connect?: string }>;
+}) {
+  const query = await searchParams;
   const locale = await getAppUiLocale();
   const creator = await getCurrentCreator();
   if (!creator) redirect(withLocale("/login?role=creator", locale));
+  const authUser = await getCurrentAuthUser();
 
   const orders = await listOrdersForCreator(creator.id);
   const access = await resolveCreatorCertificationAccessFromOrders(creator.id, orders);
 
-  const [snapshot, payoutMethods, withdrawals] = await Promise.all([
+  const [snapshot, payoutMethods, withdrawals, connectStatus] = await Promise.all([
     getCreatorIncomeSnapshot(creator.id),
     listPayoutMethods(creator.id),
-    listWithdrawals(creator.id)
+    listWithdrawals(creator.id),
+    authUser ? stripeConnectService.getStatus(authUser.id) : Promise.resolve(null)
   ]);
+
+  const connectNotice =
+    query.connect === "return" ? ("return" as const) : query.connect === "refresh" ? ("refresh" as const) : null;
 
   return (
     <div className="space-y-6">
@@ -59,6 +71,14 @@ export default async function StudioIncomePage({ searchParams }: { searchParams:
             : "Withdrawable balance, pending settlement, history, and withdrawals."}
         </p>
       </header>
+      {connectStatus ? (
+        <IncomeStripeConnectSection
+          locale={locale}
+          status={connectStatus}
+          availableUsd={snapshot.available_usd}
+          connectNotice={connectNotice}
+        />
+      ) : null}
       <IncomeWithdrawalPanel
         locale={locale}
         snapshot={snapshot}

@@ -1,23 +1,23 @@
 "use client";
 
 import { Check } from "lucide-react";
-import { MUSIC_MODELS, type MusicModelVersion } from "@/lib/canvas/generation-ui";
+import type { PublicAiModelView } from "@/features/canvas/ai-model-catalog.types";
 import type { Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 export function GenerationMusicModelPicker({
   locale,
+  models,
   selectedModel,
   onSelect,
   onClose
 }: {
   locale: Locale;
-  selectedModel: MusicModelVersion;
-  onSelect: (modelId: MusicModelVersion) => void;
+  models: PublicAiModelView[];
+  selectedModel: string;
+  onSelect: (modelId: string) => void;
   onClose: () => void;
 }) {
-  const lang = locale === "zh" ? "zh" : "en";
-
   return (
     <div className="absolute bottom-full right-0 z-50 mb-2 w-[min(92vw,220px)] overflow-hidden rounded-2xl border border-zinc-200 bg-white py-1 shadow-2xl">
       <div className="flex items-center justify-between px-3 py-2">
@@ -28,7 +28,12 @@ export function GenerationMusicModelPicker({
           {locale === "zh" ? "关闭" : "Close"}
         </button>
       </div>
-      {MUSIC_MODELS.map((model) => {
+      {models.length === 0 ? (
+        <p className="px-3 py-4 text-xs text-zinc-500">
+          {locale === "zh" ? "暂无可用模型" : "No models available"}
+        </p>
+      ) : null}
+      {models.map((model) => {
         const active = model.id === selectedModel;
         return (
           <button
@@ -43,7 +48,7 @@ export function GenerationMusicModelPicker({
               active && "bg-zinc-50"
             )}
           >
-            <span className="text-zinc-900">{model.label[lang]}</span>
+            <span className="text-zinc-900">{model.displayName}</span>
             {active ? <Check className="h-4 w-4 text-zinc-900" /> : null}
           </button>
         );

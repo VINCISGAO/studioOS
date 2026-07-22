@@ -1,9 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { getCurrentClientEmail } from "@/features/auth/session-context";
 import { getCurrentCreatorId } from "@/features/auth/session-context";
+import { platformPaymentService } from "@/features/payment/platform-payment.service";
 import type { Locale } from "@/lib/i18n";
+import { withLocale } from "@/lib/i18n";
 import {
   addDeliverable,
   approveOrderDelivery,
@@ -984,8 +987,8 @@ export async function unlockPaidRevisionSlotAction(formData: FormData) {
         ok: false as const,
         error:
           lang === "zh"
-            ? "品牌账户余额不足，已拉起加购付款账单"
-            : "Brand account balance is insufficient. Add-on invoice opened.",
+            ? "品牌账户余额不足，请完成加购付款"
+            : "Brand account balance is insufficient. Complete add-on payment to continue.",
         paymentRequired: true as const,
         invoiceId: result.invoiceId,
         addOnAmount: result.addOnAmount,
@@ -1010,6 +1013,51 @@ export async function unlockPaidRevisionSlotAction(formData: FormData) {
     shortfallAmount: result.shortfallAmount,
     balanceAfter: result.balanceAfter
   };
+}
+
+export async function startPaidRevisionStripeCheckoutAction(formData: FormData) {
+  const lang = normalizeLang(formData.get("lang"));
+  const orderId = String(formData.get("order_id") ?? "");
+  const projectId = String(formData.get("project_id") ?? "").trim();
+
+  const clientEmail = (await getCurrentClientEmail())?.toLowerCase() ?? null;
+  const order = await getOrder(orderId);
+  if (!order || !clientEmail || order.client_email.toLowerCase() !== clientEmail) {
+    redirect(withLocale("/login?role=brand", lang));
+  }
+
+  const resolvedProject = resolveOrderProjectId(order, projectId);
+  if (!resolvedProject.ok) {
+    redirect(withLocale(`/brand/projects/${order.project_id ?? orderId}/review?paid_revision=error`, lang));
+  }
+
+  const { isPaymentStubMode } = await import("@/lib/payment/payment-stub");
+  if (isPaymentStubMode()) {
+    redirect(
+      withLocale(
+        `/brand/projects/${resolvedProject.projectId ?? orderId}/review?paid_revision=stub`,
+        lang
+      )
+    );
+  }
+
+  try {
+    const checkout = await platformPaymentService.createPaidRevisionCheckout({
+      orderId,
+      projectId: resolvedProject.projectId,
+      brandEmail: clientEmail,
+      locale: lang
+    });
+    redirect(checkout.checkoutUrl);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "checkout-failed";
+    redirect(
+      withLocale(
+        `/brand/projects/${resolvedProject.projectId ?? orderId}/review?paid_revision=error&message=${encodeURIComponent(message)}`,
+        lang
+      )
+    );
+  }
 }
 
 function mapSettlementStatus(

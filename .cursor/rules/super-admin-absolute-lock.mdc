@@ -1,0 +1,26 @@
+---
+description: Absolute protection for the owner super-admin identity and authentication
+alwaysApply: true
+---
+
+# Super-admin absolute lock
+
+This rule is owner-locked and applies to every task.
+
+- The owner master-admin identity is the `AdminUser` row with `isMaster = true`, using
+  `ADMIN_LOGIN_EMAIL` (current fallback: `gwxaxxw@gmail.com`).
+- Never delete, truncate, anonymize, suspend, demote, rename, or overwrite that identity unless
+  the owner explicitly orders that exact action in the current conversation.
+- Never rotate, clear, regenerate, or replace its TOTP secret, passkeys, recovery credentials,
+  setup state, active login/session data, or authentication audit chain without the same explicit
+  current-conversation authorization.
+- Database purge/reset scripts must preserve `admin_users` and every table required by existing
+  master-admin login. They must run a preflight identity/login-integrity check before deletion and
+  a post-reset verification afterward.
+- Never run master-admin bootstrap/restore/rotation commands as routine cleanup. Recovery scripts
+  are emergency-only and require explicit owner authorization.
+- Google OAuth, Alipay OAuth, email verification codes, verification routes, provider identities,
+  callback/session logic, environment-variable contracts, and production login configuration are
+  protected and must not be deleted or damaged by user-data resets.
+- If a requested reset is ambiguous about database target, user scope, or protected auth records,
+  stop and ask before any destructive operation.

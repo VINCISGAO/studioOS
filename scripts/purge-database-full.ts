@@ -29,8 +29,14 @@ const PRESERVE_TABLES = new Set([
   "languages",
   "language_keys",
   "language_translations",
-  /** Owner master admin — never wipe super-admin identity on full purge. */
-  "admin_users"
+  /** Owner master admin and every dependency required by existing login. */
+  "admin_users",
+  "admin_sessions",
+  "admin_webauthn_credentials",
+  "admin_totp_consumptions",
+  "admin_audit_logs",
+  /** Verification records are auth infrastructure, not disposable business data. */
+  "email_verification_codes"
 ]);
 
 const EMPTY_RUNTIME_STORES: Record<string, Record<string, unknown>> = {
@@ -182,8 +188,8 @@ async function main() {
 
     console.log("\nPreserved tables:", [...PRESERVE_TABLES].join(", "));
     console.log("\nNext steps:");
-    console.log("  1. Supabase Dashboard → Authentication → Users → delete all auth users");
-    console.log("  2. If admin login fails: npm run bootstrap:admin:restore-master");
+    console.log("  1. Do not delete OAuth identities or verification infrastructure");
+    console.log("  2. Verify the existing master-admin login without rotating credentials");
     console.log("  3. Redeploy or wait for ISR cache on Vercel (knowledge center / marketing)");
     console.log("  4. Do NOT run npm run db:seed unless you want demo data again\n");
   } finally {

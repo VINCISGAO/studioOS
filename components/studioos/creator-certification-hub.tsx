@@ -22,6 +22,7 @@ type Props = {
   error?: string;
   profileComplete?: boolean;
   scrollToPayment?: boolean;
+  stripeCheckoutEnabled?: boolean;
 };
 
 const requiredCopy = {
@@ -44,7 +45,8 @@ export function CreatorCertificationHub({
   submitted,
   error,
   profileComplete = true,
-  scrollToPayment = false
+  scrollToPayment = false,
+  stripeCheckoutEnabled = false
 }: Props) {
   const t = tCertified(locale);
 
@@ -143,6 +145,7 @@ export function CreatorCertificationHub({
           snapshot={snapshot}
           submitted={submitted}
           scrollToPayment={scrollToPayment}
+          stripeCheckoutEnabled={stripeCheckoutEnabled}
         />
         <CreatorDepositSidebar locale={locale} />
       </div>

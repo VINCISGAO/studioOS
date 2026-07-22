@@ -1,16 +1,12 @@
-import {
-  computeImageGenerationCredits,
-  computeMusicGenerationCredits,
-  computeVideoGenerationCredits
-} from "@/lib/canvas/generation-credits";
-
 export type GenerationKind = "image" | "video" | "music";
+
+export type CanvasModelId = string;
 
 export type VideoReferenceMode = "reference" | "edit" | "keyframes";
 
-export const GENERATION_PANEL_WIDTH = 520;
-export const GENERATION_MUSIC_PANEL_WIDTH = 620;
-export const GENERATION_PANEL_HEIGHT = 300;
+export const GENERATION_PANEL_WIDTH = 548;
+export const GENERATION_MUSIC_PANEL_WIDTH = 580;
+export const GENERATION_PANEL_HEIGHT = 268;
 
 export type GenerationReference = {
   url: string;
@@ -40,7 +36,7 @@ export type ImageAspectRatioId =
   | "9:16_4k"
   | "auto";
 
-export type ImageModelId = "gpt-image" | "gpt-image-mini";
+export type ImageModelId = CanvasModelId;
 
 export type ImageGenerationSettings = {
   quality: ImageQualityTier;
@@ -51,23 +47,9 @@ export type ImageGenerationSettings = {
   outputs: number;
 };
 
-export type ImageModelOption = {
-  id: ImageModelId;
-  label: string;
-};
-
-export const IMAGE_MODELS: ImageModelOption[] = [
-  { id: "gpt-image", label: "GPT Image" },
-  { id: "gpt-image-mini", label: "GPT Image Mini" }
-];
-
-export function getImageModelLabel(modelId: ImageModelId) {
-  return IMAGE_MODELS.find((model) => model.id === modelId)?.label ?? modelId;
-}
-
-export function getImageModelDisplayLabel(modelId: ImageModelId) {
-  if (modelId === "gpt-image") return "GPT Im...";
-  return getImageModelLabel(modelId);
+export function truncateModelDisplayLabel(label: string, maxLength = 14) {
+  if (label.length <= maxLength) return label;
+  return `${label.slice(0, Math.max(1, maxLength - 1))}…`;
 }
 
 export const IMAGE_ASPECT_RATIOS: ImageAspectRatioId[] = [
@@ -86,8 +68,6 @@ export const IMAGE_ASPECT_RATIOS: ImageAspectRatioId[] = [
 ];
 
 export const IMAGE_QUALITY_TIERS: ImageQualityTier[] = ["auto", "high", "medium", "low"];
-
-export const DEFAULT_IMAGE_MODEL: ImageModelId = "gpt-image";
 
 export const DEFAULT_IMAGE_SETTINGS: ImageGenerationSettings = {
   quality: "medium",
@@ -153,15 +133,6 @@ export function applyImageAspectRatio(settings: ImageGenerationSettings, ratio: 
   };
 }
 
-export function estimateImageCredits(settings: ImageGenerationSettings) {
-  return computeImageGenerationCredits({
-    quality: settings.quality,
-    width: settings.width,
-    height: settings.height,
-    outputs: settings.outputs
-  });
-}
-
 export type VideoAspectRatio = "auto" | "16:9" | "4:3" | "1:1" | "3:4" | "9:16" | "21:9";
 export type VideoQuality = "480p" | "720p" | "1080p" | "4k";
 
@@ -178,15 +149,7 @@ export type CameraMovementId =
   | "tilt_down"
   | "orbit_shot";
 
-export type VideoModelId =
-  | "seedance-2.0"
-  | "seedance-2.0-fast"
-  | "seedance-2.0-mini"
-  | "kling-3.0"
-  | "kling-3.0-omni"
-  | "veo-3.1"
-  | "veo-3.1-fast"
-  | "gemini-omni-flash";
+export type VideoModelId = CanvasModelId;
 
 export type VideoGenerationSettings = {
   aspectRatio: VideoAspectRatio;
@@ -197,28 +160,10 @@ export type VideoGenerationSettings = {
   cameraMovements: CameraMovementId[];
 };
 
-export type VideoModelOption = {
-  id: VideoModelId;
-  label: string;
-  provider: "seedance" | "kling" | "veo" | "gemini";
-  memberOnly: boolean;
-};
-
 export type CameraMovementOption = {
   id: CameraMovementId;
   label: { zh: string; en: string };
 };
-
-export const VIDEO_MODELS: VideoModelOption[] = [
-  { id: "seedance-2.0", label: "Seedance 2.0", provider: "seedance", memberOnly: true },
-  { id: "seedance-2.0-fast", label: "Seedance 2.0 Fast", provider: "seedance", memberOnly: true },
-  { id: "seedance-2.0-mini", label: "Seedance 2.0 Mini", provider: "seedance", memberOnly: true },
-  { id: "kling-3.0", label: "Kling 3.0", provider: "kling", memberOnly: true },
-  { id: "kling-3.0-omni", label: "Kling 3.0 Omni", provider: "kling", memberOnly: true },
-  { id: "veo-3.1", label: "Veo 3.1", provider: "veo", memberOnly: true },
-  { id: "veo-3.1-fast", label: "Veo 3.1 Fast", provider: "veo", memberOnly: true },
-  { id: "gemini-omni-flash", label: "Gemini Omni Flash", provider: "gemini", memberOnly: true }
-];
 
 export const CAMERA_MOVEMENTS: CameraMovementOption[] = [
   { id: "orbit_subject", label: { zh: "环绕主体运镜", en: "Orbit subject" } },
@@ -233,8 +178,6 @@ export const CAMERA_MOVEMENTS: CameraMovementOption[] = [
   { id: "tilt_down", label: { zh: "向下摇摄", en: "Tilt down" } },
   { id: "orbit_shot", label: { zh: "环绕拍摄", en: "Orbit shot" } }
 ];
-
-export const DEFAULT_VIDEO_MODEL: VideoModelId = "seedance-2.0";
 
 export const VIDEO_ASPECT_RATIOS: VideoAspectRatio[] = [
   "auto",
@@ -263,35 +206,8 @@ export function formatVideoSettingsLabel(settings: VideoGenerationSettings, loca
   return `${ratio} · ${settings.duration}s · ${settings.quality}`;
 }
 
-export function getVideoModelLabel(modelId: VideoModelId) {
-  return VIDEO_MODELS.find((model) => model.id === modelId)?.label ?? modelId;
-}
-
-export function getVideoModelDisplayLabel(modelId: VideoModelId) {
-  if (modelId === "seedance-2.0") return "Seedance 2.0";
-  const label = getVideoModelLabel(modelId);
-  return label.length > 14 ? `${label.slice(0, 12)}…` : label;
-}
-
-export function estimateVideoCredits(
-  settings: VideoGenerationSettings,
-  modelId: VideoModelId = DEFAULT_VIDEO_MODEL
-) {
-  return computeVideoGenerationCredits(
-    {
-      aspectRatio: settings.aspectRatio,
-      duration: settings.duration,
-      quality: settings.quality,
-      audio: settings.audio,
-      webSearch: settings.webSearch,
-      cameraMovements: settings.cameraMovements
-    },
-    modelId
-  );
-}
-
 export type MusicCreationMode = "simple" | "custom" | "soundtrack";
-export type MusicModelVersion = "v7.5-all" | "v7.5-studio" | "v7.5-basic";
+export type MusicModelVersion = CanvasModelId;
 export type VocalGender = "female" | "male";
 
 export type MusicGenerationSettings = {
@@ -308,17 +224,6 @@ export type MusicGenerationSettings = {
   duration: number;
 };
 
-export type MusicModelOption = {
-  id: MusicModelVersion;
-  label: { zh: string; en: string };
-};
-
-export const MUSIC_MODELS: MusicModelOption[] = [
-  { id: "v7.5-all", label: { zh: "V7.5-全部", en: "V7.5 All" } },
-  { id: "v7.5-studio", label: { zh: "V7.5-Studio", en: "V7.5 Studio" } },
-  { id: "v7.5-basic", label: { zh: "V7.5-Basic", en: "V7.5 Basic" } }
-];
-
 export const MUSIC_STYLE_TAGS = {
   zh: ["梦幻流行", "电吉他", "中速", "精力充沛", "未来主义", "氛围感", "钢琴", "电子"],
   en: ["Dream pop", "Electric guitar", "Mid tempo", "Energetic", "Futuristic", "Ambient", "Piano", "Electronic"]
@@ -326,7 +231,7 @@ export const MUSIC_STYLE_TAGS = {
 
 export const DEFAULT_MUSIC_SETTINGS: MusicGenerationSettings = {
   mode: "custom",
-  modelVersion: "v7.5-all",
+  modelVersion: "",
   lyrics: "",
   style: "",
   instrumental: true,
@@ -337,15 +242,6 @@ export const DEFAULT_MUSIC_SETTINGS: MusicGenerationSettings = {
   vocalEnabled: false,
   duration: 30
 };
-
-export function getMusicModelLabel(modelId: MusicModelVersion, locale: "zh" | "en") {
-  return MUSIC_MODELS.find((model) => model.id === modelId)?.label[locale] ?? modelId;
-}
-
-export function getMusicModelDisplayLabel(modelId: MusicModelVersion, locale: "zh" | "en") {
-  const label = getMusicModelLabel(modelId, locale);
-  return label.length > 10 ? `${label.slice(0, 8)}...` : label;
-}
 
 export function formatMusicSettingsLabel(settings: MusicGenerationSettings, locale: "zh" | "en") {
   const modeLabel =
@@ -384,14 +280,6 @@ export function canSubmitMusicSettings(settings: MusicGenerationSettings) {
     settings.songName.trim().length >= 1 ||
     (!settings.instrumental && settings.lyrics.trim().length >= 2)
   );
-}
-
-export function estimateMusicCredits(settings: MusicGenerationSettings) {
-  return computeMusicGenerationCredits({
-    mode: settings.mode,
-    instrumental: settings.instrumental,
-    duration: settings.duration
-  });
 }
 
 export type CanvasLibraryAsset = {

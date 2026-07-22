@@ -63,6 +63,7 @@ export class PaidRevisionService {
     brandEmail: string;
     locale: Locale;
     payInvoice?: boolean;
+    stripeSessionId?: string;
   }): Promise<
     | {
         ok: true;
@@ -70,7 +71,7 @@ export class PaidRevisionService {
         unlockedVersion: number;
         addOnAmount: number;
         currency: string;
-        paymentSource: "balance" | "invoice" | "demo";
+        paymentSource: "balance" | "invoice" | "demo" | "stripe";
         invoiceId: string | null;
         availableBefore: number;
         shortfallAmount: number;
@@ -114,13 +115,16 @@ export class PaidRevisionService {
     const currency = "USD";
     let campaignId: string | undefined;
     let brandUserId: string | null = null;
-    let paymentSource: "balance" | "invoice" | "demo" = "demo";
+    let paymentSource: "balance" | "invoice" | "demo" | "stripe" = "demo";
     let invoiceId: string | null = null;
     let availableBefore = 0;
     let shortfallAmount = 0;
     let balanceAfter = 0;
 
-    if (hasDatabaseUrl()) {
+    if (input.stripeSessionId) {
+      paymentSource = "stripe";
+      invoiceId = input.stripeSessionId;
+    } else if (hasDatabaseUrl()) {
       const brandUser = await userRepository.findByEmail(normalizedEmail);
       if (!brandUser || brandUser.role !== "BRAND") {
         return { ok: false, error: "unauthorized" };
@@ -278,6 +282,77 @@ export class PaidRevisionService {
       balanceAfter,
       message
     };
+  }
+
+  async quotePaidRevisionCheckout(input: {
+    orderId: string;
+    projectId: string | null;
+    brandEmail: string;
+  }) {
+    const normalizedEmail = input.brandEmail.trim().toLowerCase();
+    const order = await getOrder(input.orderId);
+    if (!order || order.client_email.toLowerCase() !== normalizedEmail) {
+      throw new Error("unauthorized");
+    }
+
+    const current = await this.readPaidSlotsUnlocked({
+      orderId: input.orderId,
+      projectId: input.projectId
+    });
+    if (hasPaidRevisionPackUnlocked(current)) {
+      throw new Error("all-paid-slots-unlocked");
+    }
+
+    const addOnAmount = Math.round(order.amount * PAID_REVISION_SURCHARGE_RATE * 100) / 100;
+    const amountMinor = Math.round(addOnAmount * 100);
+    return {
+      amountUsd: addOnAmount,
+      amountMinor,
+      currency: "USD",
+      description: `Paid revision add-on for order ${input.orderId}`
+    };
+  }
+
+  async completePaidRevisionFromStripe(input: {
+    orderId: string;
+    projectId: string | null;
+    brandEmail: string;
+    locale: Locale;
+    stripeSessionId: string;
+    expectedAmountMinor: number;
+  }) {
+    const order = await getOrder(input.orderId);
+    if (!order) throw new Error("order-not-found");
+
+    const current = await this.readPaidSlotsUnlocked({
+      orderId: input.orderId,
+      projectId: input.projectId
+    });
+    if (hasPaidRevisionPackUnlocked(current)) {
+      return { duplicate: true as const, orderId: input.orderId };
+    }
+
+    if (input.expectedAmountMinor > 0) {
+      const expected = input.expectedAmountMinor;
+      const actual = Math.round(order.amount * PAID_REVISION_SURCHARGE_RATE * 100);
+      if (expected !== actual) {
+        throw new Error("Paid revision amount mismatch");
+      }
+    }
+
+    const result = await this.unlockNextPaidRevisionSlot({
+      orderId: input.orderId,
+      projectId: input.projectId,
+      brandEmail: input.brandEmail,
+      locale: input.locale,
+      stripeSessionId: input.stripeSessionId
+    });
+
+    if (!result.ok) {
+      throw new Error(result.error);
+    }
+
+    return { duplicate: false as const, orderId: input.orderId, unlockedVersion: result.unlockedVersion };
   }
 }
 

@@ -3,7 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentCreatorId } from "@/features/auth/session-context";
+import { platformPaymentService } from "@/features/payment/platform-payment.service";
 import { getCreatorDepositSnapshot, submitDepositPayment } from "@/lib/studioos/deposit-service";
+import { isPaymentStubMode } from "@/lib/payment/payment-stub";
 import { DEPOSIT_PAYMENT_METHODS } from "@/lib/studioos/deposit-utils";
 import type { PayoutMethodType } from "@/lib/studioos/withdrawal-types";
 import { withLocale, type Locale } from "@/lib/i18n";
@@ -32,6 +34,26 @@ function revalidateCertificationPaths() {
 
 function certificationCelebratePath(locale: Locale) {
   return withLocale(`${creatorPortalRoutes.home}?certified=1`, locale);
+}
+
+export async function startDepositStripeCheckoutAction(formData: FormData) {
+  const lang = normalizeLang(formData.get("lang"));
+  const creatorId = await getCurrentCreatorId();
+  if (!creatorId) {
+    redirect(withLocale("/login?role=creator", lang));
+  }
+
+  if (isPaymentStubMode()) {
+    redirect(withLocale("/studio/deposit?error=stripe-unavailable", lang));
+  }
+
+  try {
+    const checkout = await platformPaymentService.createCreatorDepositCheckout(creatorId, lang);
+    redirect(checkout.checkoutUrl);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "checkout-failed";
+    redirect(withLocale(`/studio/deposit?error=${encodeURIComponent(message)}`, lang));
+  }
 }
 
 export async function submitDepositPaymentAction(formData: FormData) {

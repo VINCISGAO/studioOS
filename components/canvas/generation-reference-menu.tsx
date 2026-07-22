@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 
 const copy = {
   zh: {
-    reference: "参考图/视频",
+    reference: "参考",
     edit: "视频编辑",
     keyframes: "首尾帧"
   },
@@ -32,16 +32,19 @@ const modes: {
 export function GenerationReferenceMenu({
   locale,
   mode,
+  allowedModes = modes.map((item) => item.id),
   onModeChange
 }: {
   locale: Locale;
   mode: VideoReferenceMode;
+  allowedModes?: VideoReferenceMode[];
   onModeChange: (mode: VideoReferenceMode) => void;
 }) {
   const t = copy[locale];
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
-  const current = modes.find((item) => item.id === mode) ?? modes[0];
+  const visibleModes = modes.filter((item) => allowedModes.includes(item.id));
+  const current = visibleModes.find((item) => item.id === mode) ?? visibleModes[0] ?? modes[0];
 
   useEffect(() => {
     if (!open) return;
@@ -62,12 +65,12 @@ export function GenerationReferenceMenu({
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        className="inline-flex h-8 max-w-[132px] shrink-0 items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-1.5 text-[11px] text-zinc-700 hover:bg-zinc-50"
+        className="inline-flex h-8 items-center gap-1.5 whitespace-nowrap rounded-full border border-zinc-200 bg-white px-2 pr-2.5 text-[11px] text-zinc-700 hover:bg-zinc-50"
       >
         <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-zinc-50 text-zinc-600">
           <current.Icon className="h-3.5 w-3.5" />
         </span>
-        <span className="truncate">{t[current.labelKey]}</span>
+        <span className="whitespace-nowrap">{t[current.labelKey]}</span>
         {open ? (
           <ChevronUp className="h-3.5 w-3.5 shrink-0 text-zinc-400" />
         ) : (
@@ -76,8 +79,8 @@ export function GenerationReferenceMenu({
       </button>
 
       {open ? (
-        <div className="absolute bottom-full left-0 z-50 mb-2 w-[168px] overflow-hidden rounded-2xl border border-zinc-200 bg-white py-1 shadow-xl">
-          {modes.map(({ id, labelKey, Icon }) => {
+        <div className="absolute bottom-full left-0 z-[120] mb-2 w-[168px] overflow-hidden rounded-2xl border border-zinc-200 bg-white py-1 shadow-xl">
+          {visibleModes.map(({ id, labelKey, Icon }) => {
             const active = mode === id;
             return (
               <button

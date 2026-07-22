@@ -9,6 +9,7 @@ import { hasSeenCertificationLevelUp } from "@/lib/studioos/creator-settings-ser
 import { creatorPortalRoutes } from "@/lib/studioos/creator-portal-routes";
 import { type SearchParams, withLocale } from "@/lib/i18n";
 import { listOrdersForCreator } from "@/lib/order-service";
+import { isPaymentStubMode } from "@/lib/payment/payment-stub";
 
 export const dynamic = "force-dynamic";
 
@@ -69,6 +70,7 @@ export default async function StudioDepositPage({
       error={depositAlreadyPaidError ? undefined : errorMessage}
       profileComplete={hasCompletedCreatorProfile(creator)}
       scrollToPayment={scrollToPayment}
+      stripeCheckoutEnabled={!isPaymentStubMode()}
     />
   );
 }

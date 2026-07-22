@@ -11,7 +11,8 @@ import {
   Receipt,
   Settings,
   Shield,
-  WandSparkles
+  WandSparkles,
+  Zap
 } from "lucide-react";
 
 export type CreatorPortalNavKey = keyof typeof studioNav.en;
@@ -26,8 +27,12 @@ export type CreatorPortalNavItem = {
   showUnreadDot?: boolean;
 };
 
-/** Creator sidebar IA — home → profile → orders → project details → review → income → messages → certification → settings */
-export const creatorPortalNavItems: CreatorPortalNavItem[] = [
+export type CreatorPortalNavGroup = {
+  titleKey?: Extract<CreatorPortalNavKey, "aiTools">;
+  items: CreatorPortalNavItem[];
+};
+
+export const creatorPortalMainNavItems: CreatorPortalNavItem[] = [
   {
     href: creatorPortalRoutes.home,
     labelKey: "home",
@@ -48,13 +53,6 @@ export const creatorPortalNavItems: CreatorPortalNavItem[] = [
     icon: ClipboardList,
     mobileIconKey: "invitations",
     requiresBusinessAccess: true
-  },
-  {
-    href: creatorPortalRoutes.canvasEnter,
-    labelKey: "creationTools",
-    icon: WandSparkles,
-    mobileIconKey: "canvas",
-    requiresBusinessAccess: false
   },
   {
     href: creatorPortalRoutes.projects,
@@ -100,4 +98,32 @@ export const creatorPortalNavItems: CreatorPortalNavItem[] = [
     mobileIconKey: "settings",
     requiresBusinessAccess: false
   }
+];
+
+export const creatorPortalAiToolsNavItems: CreatorPortalNavItem[] = [
+  {
+    href: creatorPortalRoutes.canvasEnter,
+    labelKey: "infiniteCanvas",
+    icon: WandSparkles,
+    mobileIconKey: "canvas",
+    requiresBusinessAccess: false
+  },
+  {
+    href: creatorPortalRoutes.credits,
+    labelKey: "tokenManagement",
+    icon: Zap,
+    mobileIconKey: "settings",
+    requiresBusinessAccess: false
+  }
+];
+
+/** Main nav first; AI tools pinned as the bottom module. */
+export const creatorPortalNavGroups: CreatorPortalNavGroup[] = [
+  { items: creatorPortalMainNavItems },
+  { titleKey: "aiTools", items: creatorPortalAiToolsNavItems }
+];
+
+export const creatorPortalNavItems: CreatorPortalNavItem[] = [
+  ...creatorPortalMainNavItems,
+  ...creatorPortalAiToolsNavItems
 ];

@@ -69,6 +69,31 @@ Protected assets include `AiPreference`, `MemoryFact`, `RelationshipDna`, `AIEve
 
 Do not delete these during cleanup, dead-code audits, or refactors. They may only be upgraded, migrated, versioned, or replaced with an explicit historical-data migration plan.
 
+### Protected AI Tools (Infinite Canvas)
+
+The owner AI Tools workspace at `/studio/canvas` is owner-locked platform data, separate from disposable user test data.
+
+Canonical rule: `.cursor/rules/ai-tools-absolute-lock.mdc`
+
+Protected database tables:
+
+- `creative_projects`
+- `creative_canvases`
+- `canvas_nodes`
+- `canvas_edges`
+- `creative_project_assets`
+- `generation_jobs`
+
+Protected code surface:
+
+- `app/studio/canvas/**`
+- `app/api/canvas/**`
+- `components/canvas/**`
+- `features/canvas/**`
+- `lib/canvas/**`
+
+Never delete or cascade-wipe these rows during user-data resets, purges, or cleanup unless the owner explicitly orders AI Tools deletion in the current conversation. Never use `TRUNCATE "users" ... CASCADE` when canvas rows exist.
+
 ### Protected AI Creative Collaboration
 
 AI creative generation is a post-payment Brand-Creator collaboration draft flow.

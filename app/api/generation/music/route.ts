@@ -17,6 +17,7 @@ export async function POST(request: Request) {
         parameters: {
           duration: input.duration,
           instrumental: input.instrumental,
+          mode: input.mode,
           style: input.style,
           mood: input.mood
         }

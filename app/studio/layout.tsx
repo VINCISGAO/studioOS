@@ -20,6 +20,7 @@ import { countInvitationsByTab, listInvitationsForCreator, syncCreatorInvitation
 import { ensureCreatorAssignmentNotificationsForOrders } from "@/lib/studioos/creator-assignment-notify";
 import { enforceBrandPaymentDeadlinesForCreator } from "@/lib/studioos/brand-payment-expiry.service";
 import { resolvePendingSelectionCelebration } from "@/lib/studioos/creator-selection-celebration";
+import { resolveCreatorPortalUnreadCount } from "@/lib/studioos/creator-portal-notifications";
 import {
   isStudioFeaturePath,
   studioCertificationRedirectPath,
@@ -78,7 +79,8 @@ export default async function StudioLayout({ children }: { children: React.React
     });
   }
 
-  const unreadCount = notifications.filter((item) => !item.read_at).length;
+  const legacyUnreadCount = notifications.filter((item) => !item.read_at).length;
+  const unreadCount = await resolveCreatorPortalUnreadCount(legacyUnreadCount);
   const pendingSelectionCelebration =
     creator && (canUseBusinessFeatures || isVerified)
       ? await resolvePendingSelectionCelebration({

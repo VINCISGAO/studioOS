@@ -12,9 +12,13 @@ export function UploadNode({ id, data, selected }: NodeProps<VincisCanvasNode>) 
   const isVideo = mime.startsWith("video/");
   const isAudio = mime.startsWith("audio/");
 
+  const hasDownloadableAsset = Boolean(data.url || data.assetId);
+
   return (
     <>
-      {isVideo ? <CanvasVideoNodeMenu nodeId={id} data={data} selected={selected} variant="upload" /> : null}
+      {hasDownloadableAsset ? (
+        <CanvasVideoNodeMenu nodeId={id} data={data} selected={selected} variant="upload" />
+      ) : null}
       <CanvasNodeFrame data={data} selected={selected} icon={<FileUp className="h-4 w-4" />}>
       {isImage && data.url ? (
         <img

@@ -7,6 +7,7 @@ import {
   requestBrandReviewAction,
   requestReviewRevisionAction,
   revertCreatorReviewUploadAction,
+  startPaidRevisionStripeCheckoutAction,
   unlockPaidRevisionSlotAction
 } from "@/app/review-actions";
 import {
@@ -59,6 +60,7 @@ export function ReviewerTimestampWorkspace(props: {
   backLabel?: string;
   replaceUploadVersion?: number | null;
   canRevertUpload?: boolean;
+  stripeCheckoutEnabled?: boolean;
 }) {
   return <ReviewerTimestampWorkspaceInner {...props} />;
 }
@@ -75,7 +77,8 @@ function ReviewerTimestampWorkspaceInner({
   backHref,
   backLabel,
   replaceUploadVersion = null,
-  canRevertUpload = true
+  canRevertUpload = true,
+  stripeCheckoutEnabled = false
 }: {
   locale: Locale;
   role: "brand" | "creator";
@@ -89,6 +92,7 @@ function ReviewerTimestampWorkspaceInner({
   backLabel?: string;
   replaceUploadVersion?: number | null;
   canRevertUpload?: boolean;
+  stripeCheckoutEnabled?: boolean;
 }) {
   const { isFocusMode, focusTheme, exitFocusMode, enterFocusMode, setFocusTheme } = useReviewFocusMode();
   const router = useRouter();
@@ -501,7 +505,11 @@ function ReviewerTimestampWorkspaceInner({
           ? locale === "zh"
             ? `已完成加购账单 ${result.invoiceId} 支付：${formattedShortfallAmount}；已扣除加购费 ${formattedAddOnAmount}，第 4-5 轮修订已解锁。`
             : `Invoice ${result.invoiceId} paid for ${formattedShortfallAmount}; the add-on fee ${formattedAddOnAmount} was charged and rounds 4-5 are now unlocked.`
-          : locale === "zh"
+          : result.paymentSource === "stripe"
+            ? locale === "zh"
+              ? `Stripe 付款已完成：${formattedAddOnAmount}（当前订单金额 20%），第 4-5 轮修订已解锁。`
+              : `Stripe payment completed: ${formattedAddOnAmount} (20% of this order). Revision rounds 4-5 are now unlocked.`
+            : locale === "zh"
             ? `已支付加购账单：${formattedAddOnAmount}（当前订单金额 20%），第 4-5 轮修订已解锁。`
             : `Add-on invoice paid: ${formattedAddOnAmount} (20% of this order). Revision rounds 4-5 are now unlocked.`;
     setPaymentInvoice(null);
@@ -516,6 +524,16 @@ function ReviewerTimestampWorkspaceInner({
 
   function handlePayRevisionInvoice() {
     if (!paymentInvoice || unlockPending) return;
+    if (stripeCheckoutEnabled) {
+      startUnlockTransition(async () => {
+        const fd = new FormData();
+        fd.set("lang", locale);
+        fd.set("order_id", order.id);
+        if (order.project_id) fd.set("project_id", order.project_id);
+        await startPaidRevisionStripeCheckoutAction(fd);
+      });
+      return;
+    }
     startUnlockTransition(async () => {
       const fd = new FormData();
       fd.set("lang", locale);
@@ -741,9 +759,13 @@ function ReviewerTimestampWorkspaceInner({
                 ? locale === "zh"
                   ? "支付中..."
                   : "Paying..."
-                : locale === "zh"
-                  ? "立即支付"
-                  : "Pay now"}
+                : stripeCheckoutEnabled
+                  ? locale === "zh"
+                    ? "Stripe 付款"
+                    : "Pay with Stripe"
+                  : locale === "zh"
+                    ? "立即支付"
+                    : "Pay now"}
             </button>
           </DialogFooter>
         </DialogContent>

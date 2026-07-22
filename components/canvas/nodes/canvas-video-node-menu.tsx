@@ -3,9 +3,9 @@
 import {
   Clock3,
   Download,
+  Eraser,
   Scan,
-  Sparkles,
-  UserRound
+  Sparkles
 } from "lucide-react";
 import { NodeToolbar, Position } from "@xyflow/react";
 import type { CanvasNodeData } from "@/lib/canvas/types";
@@ -13,7 +13,7 @@ import { useCanvasNodeActions } from "@/components/canvas/canvas-node-actions-co
 import { canDownloadCanvasNode, resolveCanvasNodeDownloadHref } from "@/lib/canvas/node-download";
 import { cn } from "@/lib/utils";
 
-function IconButton({
+function MenuItem({
   label,
   icon,
   disabled,
@@ -27,14 +27,15 @@ function IconButton({
   href?: string | null;
 }) {
   const className = cn(
-    "flex h-9 w-9 items-center justify-center rounded-xl text-zinc-600 transition",
-    disabled ? "cursor-not-allowed opacity-30" : "hover:bg-zinc-100 hover:text-zinc-900"
+    "flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-zinc-700 transition",
+    disabled ? "cursor-not-allowed opacity-35" : "hover:bg-zinc-100 hover:text-zinc-950"
   );
 
   if (href && !disabled) {
     return (
       <a href={href} className={className} download aria-label={label} title={label}>
         {icon}
+        <span>{label}</span>
       </a>
     );
   }
@@ -49,9 +50,12 @@ function IconButton({
       title={label}
     >
       {icon}
+      <span>{label}</span>
     </button>
   );
 }
+
+export type CanvasMediaNodeMenuVariant = "video" | "image" | "music" | "upload";
 
 export function CanvasVideoNodeMenu({
   nodeId,
@@ -62,13 +66,19 @@ export function CanvasVideoNodeMenu({
   nodeId: string;
   data: CanvasNodeData;
   selected: boolean;
-  variant?: "video" | "upload";
+  variant?: CanvasMediaNodeMenuVariant;
 }) {
   const actions = useCanvasNodeActions();
   const downloadHref = resolveCanvasNodeDownloadHref(data);
   const canDownload = canDownloadCanvasNode(data);
-  const canRegenerate = variant === "video" && Boolean(data.prompt) && data.status === "ready";
-  const canExtend = variant === "video" && Boolean(data.prompt) && data.status === "ready";
+  const isVideo = variant === "video";
+  const isImage = variant === "image";
+  const hasAsset = Boolean(data.assetId);
+  const isReady = data.status === "ready" && hasAsset;
+  const canRegenerate = variant !== "upload" && Boolean(data.prompt) && isReady;
+  const canExtend = isVideo && isReady;
+  const canUpscale = (isImage || isVideo) && isReady;
+  const canRemoveBackground = isImage && isReady;
 
   return (
     <NodeToolbar
@@ -77,24 +87,42 @@ export function CanvasVideoNodeMenu({
       offset={12}
       className="!border-0 !bg-transparent !p-0 !shadow-none"
     >
-      <div className="flex flex-col gap-1 rounded-[20px] border border-zinc-200 bg-white p-1.5 shadow-xl">
-        <IconButton label="高清" icon={<Scan className="h-4 w-4" />} disabled />
-        <IconButton label="主体" icon={<UserRound className="h-4 w-4" />} disabled />
-        <IconButton
-          label="延长"
-          icon={<Clock3 className="h-4 w-4" />}
-          disabled={!canExtend}
-          onClick={() => actions?.extendVideo(nodeId)}
-        />
-        <IconButton
-          label="画同款"
-          icon={<Sparkles className="h-4 w-4" />}
-          disabled={!canRegenerate}
-          onClick={() => actions?.regenerate(nodeId)}
-        />
-        <IconButton
+      <div className="min-w-[148px] rounded-[20px] border border-zinc-200 bg-white p-1.5 shadow-xl">
+        {canUpscale ? (
+          <MenuItem
+            label="放大"
+            icon={<Scan className="h-4 w-4 shrink-0" />}
+            disabled={!canUpscale}
+            onClick={() => actions?.upscale(nodeId)}
+          />
+        ) : null}
+        {isImage ? (
+          <MenuItem
+            label="去除背景"
+            icon={<Eraser className="h-4 w-4 shrink-0" />}
+            disabled={!canRemoveBackground}
+            onClick={() => actions?.removeBackground(nodeId)}
+          />
+        ) : null}
+        {isVideo ? (
+          <MenuItem
+            label="视频延长"
+            icon={<Clock3 className="h-4 w-4 shrink-0" />}
+            disabled={!canExtend}
+            onClick={() => actions?.extendVideo(nodeId)}
+          />
+        ) : null}
+        {variant !== "upload" ? (
+          <MenuItem
+            label="画同款"
+            icon={<Sparkles className="h-4 w-4 shrink-0" />}
+            disabled={!canRegenerate}
+            onClick={() => actions?.regenerate(nodeId)}
+          />
+        ) : null}
+        <MenuItem
           label="下载"
-          icon={<Download className="h-4 w-4" />}
+          icon={<Download className="h-4 w-4 shrink-0" />}
           disabled={!canDownload}
           href={downloadHref}
         />
