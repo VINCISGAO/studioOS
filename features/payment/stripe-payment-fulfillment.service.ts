@@ -36,6 +36,23 @@ export class StripePaymentFulfillmentService {
     }
 
     const wallet = await walletRepository.getOrCreate(userId);
+    const existing = await walletRepository.findWalletRechargeByStripeSessionId(wallet.id, session.id);
+    if (existing) {
+      logger.info("Brand wallet recharge already fulfilled", {
+        service: "StripePaymentFulfillmentService",
+        userId,
+        sessionId: session.id,
+        duplicate: true
+      });
+      return {
+        handled: true as const,
+        userId,
+        amount: Number(existing.amount),
+        sessionId: session.id,
+        duplicate: true
+      };
+    }
+
     const amount = amountMinor / 100;
     const balanceAfter = Number(wallet.availableBalance) + amount;
     await walletRepository.applyLedgerUpdate({
@@ -111,7 +128,8 @@ export class StripePaymentFulfillmentService {
       brandEmail,
       locale,
       stripeSessionId: session.id,
-      expectedAmountMinor: Number(session.metadata.amount_minor ?? "0")
+      expectedAmountMinor: Number(session.metadata.amount_minor ?? "0"),
+      actualAmountMinor: readMinor(session).amountMinor
     });
 
     logger.info("Paid revision add-on fulfilled via Stripe", {

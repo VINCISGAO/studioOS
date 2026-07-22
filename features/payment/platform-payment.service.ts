@@ -16,6 +16,20 @@ function stripeReturnUrl(appUrl: string, path: string) {
   return `${appUrl}${path}${separator}session_id={CHECKOUT_SESSION_ID}`;
 }
 
+function assertSafeBrandCheckoutPath(path: string | undefined, fallback: string) {
+  const resolved = (path ?? fallback).trim();
+  if (
+    !resolved.startsWith("/brand/") ||
+    resolved.startsWith("//") ||
+    resolved.includes("://") ||
+    resolved.includes("@") ||
+    resolved.includes("\\")
+  ) {
+    throw appError("VALIDATION_ERROR", "Invalid checkout return path");
+  }
+  return resolved;
+}
+
 export class PlatformPaymentService {
   async createCreatorDepositCheckout(userId: string, locale: Locale) {
     if (isPaymentStubMode()) {
@@ -108,8 +122,14 @@ export class PlatformPaymentService {
         amount_minor: String(amountMinor),
         currency: "USD"
       },
-      successUrl: stripeReturnUrl(appUrl, input.successPath ?? "/brand/finance/account?checkout=success"),
-      cancelUrl: `${appUrl}${input.cancelPath ?? "/brand/finance/account?checkout=cancelled"}`
+      successUrl: stripeReturnUrl(
+        appUrl,
+        assertSafeBrandCheckoutPath(input.successPath, "/brand/finance/account?checkout=success")
+      ),
+      cancelUrl: `${appUrl}${assertSafeBrandCheckoutPath(
+        input.cancelPath,
+        "/brand/finance/account?checkout=cancelled"
+      )}`
     });
 
     if (!session.url) {
