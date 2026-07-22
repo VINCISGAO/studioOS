@@ -99,7 +99,11 @@ export const imageGenerationSchema = generationBaseSchema.extend({
   resolution: z.enum(["1024", "1536", "2048", "2560", "3840"]).default("1024"),
   outputs: z.number().int().min(1).max(4).default(1),
   referenceAssetId: z.string().uuid().optional(),
-  referenceUrl: z.string().max(2000).optional(),
+  referenceUrl: z
+    .string()
+    .max(2000)
+    .refine((value) => value.startsWith("/api/canvas/assets/"), "Invalid canvas asset URL")
+    .optional(),
   referenceNodeId: z
     .string()
     .max(120)
@@ -117,7 +121,11 @@ export const videoGenerationSchema = generationBaseSchema.extend({
   webSearch: z.boolean().default(false),
   cameraMovements: z.string().max(500).optional(),
   referenceAssetId: z.string().uuid().optional(),
-  referenceUrl: z.string().max(2000).optional(),
+  referenceUrl: z
+    .string()
+    .max(2000)
+    .refine((value) => value.startsWith("/api/canvas/assets/"), "Invalid canvas asset URL")
+    .optional(),
   referenceNodeId: z
     .string()
     .max(120)
