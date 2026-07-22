@@ -320,6 +320,7 @@ export class PaidRevisionService {
     locale: Locale;
     stripeSessionId: string;
     expectedAmountMinor: number;
+    actualAmountMinor?: number;
   }) {
     const order = await getOrder(input.orderId);
     if (!order) throw new Error("order-not-found");
@@ -332,12 +333,16 @@ export class PaidRevisionService {
       return { duplicate: true as const, orderId: input.orderId };
     }
 
-    if (input.expectedAmountMinor > 0) {
-      const expected = input.expectedAmountMinor;
-      const actual = Math.round(order.amount * PAID_REVISION_SURCHARGE_RATE * 100);
-      if (expected !== actual) {
-        throw new Error("Paid revision amount mismatch");
-      }
+    const computedMinor = Math.round(order.amount * PAID_REVISION_SURCHARGE_RATE * 100);
+    if (input.expectedAmountMinor > 0 && input.expectedAmountMinor !== computedMinor) {
+      throw new Error("Paid revision amount mismatch");
+    }
+    if (
+      input.actualAmountMinor != null &&
+      input.actualAmountMinor > 0 &&
+      input.actualAmountMinor !== computedMinor
+    ) {
+      throw new Error("Paid revision Stripe amount mismatch");
     }
 
     const result = await this.unlockNextPaidRevisionSlot({

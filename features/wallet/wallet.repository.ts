@@ -28,6 +28,16 @@ export class WalletRepository {
     return prisma.transaction.findUnique({ where: { id } });
   }
 
+  findWalletRechargeByStripeSessionId(walletId: string, sessionId: string) {
+    return prisma.transaction.findFirst({
+      where: {
+        walletId,
+        type: "ESCROW_DEPOSIT",
+        description: `Stripe wallet recharge (${sessionId})`
+      }
+    });
+  }
+
   async applyLedgerUpdate(input: {
     walletId: string;
     campaignId?: string;

@@ -39,8 +39,9 @@ export class StripeConnectWithdrawalService {
 
     const withdraw = await withdrawService.requestWithdraw(user, amountUsd);
 
+    let transfer: Awaited<ReturnType<typeof stripeConnectService.createTransfer>> | null = null;
     try {
-      const transfer = await stripeConnectService.createTransfer({
+      transfer = await stripeConnectService.createTransfer({
         userId: user.id,
         withdrawId: withdraw.withdrawId,
         amountUsd: withdraw.amount,
@@ -72,10 +73,20 @@ export class StripeConnectWithdrawalService {
         alreadyCompleted: completed.alreadyCompleted
       };
     } catch (error) {
-      await withdrawService.failWithdraw(
-        withdraw.withdrawId,
-        error instanceof Error ? error.message : "Stripe transfer failed"
-      );
+      if (!transfer) {
+        await withdrawService.failWithdraw(
+          withdraw.withdrawId,
+          error instanceof Error ? error.message : "Stripe transfer failed"
+        );
+      } else {
+        logger.error("stripe.connect.withdraw_complete_failed_after_transfer", {
+          service: "StripeConnectWithdrawalService",
+          userId: user.id,
+          withdrawId: withdraw.withdrawId,
+          transferId: transfer.transferId,
+          error: error instanceof Error ? error.message : String(error)
+        });
+      }
       throw error;
     }
   }
@@ -105,22 +116,35 @@ export class StripeConnectWithdrawalService {
     }
 
     const amountUsd = roundMoney(Number(requestTx.amount));
-    const transfer = await stripeConnectService.createTransfer({
-      userId: wallet.userId,
-      withdrawId,
-      amountUsd,
-      idempotencyKey: withdrawId
-    });
+    let transfer: Awaited<ReturnType<typeof stripeConnectService.createTransfer>> | null = null;
+    try {
+      transfer = await stripeConnectService.createTransfer({
+        userId: wallet.userId,
+        withdrawId,
+        amountUsd,
+        idempotencyKey: withdrawId
+      });
 
-    const completed = await withdrawService.completeWithdraw(withdrawId, admin);
-    await prisma.transaction.update({
-      where: { id: withdrawId },
-      data: {
-        description: `Stripe Connect transfer ${transfer.transferId} ref:${withdrawId}`
+      const completed = await withdrawService.completeWithdraw(withdrawId, admin);
+      await prisma.transaction.update({
+        where: { id: withdrawId },
+        data: {
+          description: `Stripe Connect transfer ${transfer.transferId} ref:${withdrawId}`
+        }
+      });
+
+      return { ...completed, transferId: transfer.transferId };
+    } catch (error) {
+      if (transfer) {
+        logger.error("stripe.connect.admin_withdraw_complete_failed_after_transfer", {
+          service: "StripeConnectWithdrawalService",
+          withdrawId,
+          transferId: transfer.transferId,
+          error: error instanceof Error ? error.message : String(error)
+        });
       }
-    });
-
-    return { ...completed, transferId: transfer.transferId };
+      throw error;
+    }
   }
 }
 
