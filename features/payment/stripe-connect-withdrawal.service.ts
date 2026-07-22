@@ -1,5 +1,6 @@
 import type { AuthUser } from "@/features/auth/permission.service";
 import { stripeConnectService } from "@/features/payment/stripe-connect.service";
+import type { StripeConnectTransferResult } from "@/features/payment/stripe-connect.types";
 import { withdrawService } from "@/features/wallet/withdraw.service";
 import { walletRepository } from "@/features/wallet/wallet.repository";
 import { appError } from "@/lib/core/errors";
@@ -39,8 +40,9 @@ export class StripeConnectWithdrawalService {
 
     const withdraw = await withdrawService.requestWithdraw(user, amountUsd);
 
+    let transfer: StripeConnectTransferResult | null = null;
     try {
-      const transfer = await stripeConnectService.createTransfer({
+      transfer = await stripeConnectService.createTransfer({
         userId: user.id,
         withdrawId: withdraw.withdrawId,
         amountUsd: withdraw.amount,
@@ -72,6 +74,41 @@ export class StripeConnectWithdrawalService {
         alreadyCompleted: completed.alreadyCompleted
       };
     } catch (error) {
+      if (transfer) {
+        try {
+          const completed = await withdrawService.completeWithdraw(withdraw.withdrawId, user);
+          await prisma.transaction.update({
+            where: { id: withdraw.withdrawId },
+            data: {
+              description: `Stripe Connect transfer ${transfer.transferId} ref:${withdraw.withdrawId}`
+            }
+          });
+          logger.warn("stripe.connect.withdrawal_completed_after_retry", {
+            service: "StripeConnectWithdrawalService",
+            userId: user.id,
+            withdrawId: withdraw.withdrawId,
+            transferId: transfer.transferId,
+            error: error instanceof Error ? error.message : String(error)
+          });
+          return {
+            withdrawId: withdraw.withdrawId,
+            transferId: transfer.transferId,
+            amountUsd: withdraw.amount,
+            wallet: completed.wallet,
+            alreadyCompleted: completed.alreadyCompleted
+          };
+        } catch (completionError) {
+          logger.error("stripe.connect.withdrawal_transfer_without_completion", {
+            service: "StripeConnectWithdrawalService",
+            userId: user.id,
+            withdrawId: withdraw.withdrawId,
+            transferId: transfer.transferId,
+            error: completionError instanceof Error ? completionError.message : String(completionError)
+          });
+          throw completionError;
+        }
+      }
+
       await withdrawService.failWithdraw(
         withdraw.withdrawId,
         error instanceof Error ? error.message : "Stripe transfer failed"

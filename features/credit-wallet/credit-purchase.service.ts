@@ -141,6 +141,9 @@ export class CreditPurchaseService {
     });
 
     const existing = await creditWalletRepository.findPurchaseOrderByIdempotency(input.idempotencyKey);
+    if (existing && existing.userId !== user.id) {
+      throw appError("VALIDATION_ERROR", "Idempotency key conflict");
+    }
     if (existing?.status === "CREDITED") {
       throw appError("VALIDATION_ERROR", "This purchase was already completed");
     }

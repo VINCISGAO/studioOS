@@ -33,6 +33,18 @@ function readImageJobInput(raw: unknown): ImageJobInput {
   };
 }
 
+async function failImageJob(
+  jobId: string,
+  ownerId: string,
+  update: Parameters<typeof canvasRepository.updateGenerationJob>[1]
+) {
+  await canvasRepository.updateGenerationJob(jobId, update);
+  const settledJob = await canvasRepository.findGenerationJob(jobId, ownerId);
+  if (settledJob) {
+    await creditGenerationBillingService.syncJobBilling(settledJob);
+  }
+}
+
 export class CanvasImageGenerationService {
   scheduleJob(jobId: string, ownerId: string) {
     const run = () => {
@@ -60,7 +72,7 @@ export class CanvasImageGenerationService {
 
     const user = await authService.getUserById(ownerId);
     if (!user) {
-      await canvasRepository.updateGenerationJob(jobId, {
+      await failImageJob(jobId, ownerId, {
         status: "FAILED",
         progress: 100,
         errorCode: "OWNER_NOT_FOUND",
@@ -77,7 +89,7 @@ export class CanvasImageGenerationService {
     });
 
     if (!hasOpenAI()) {
-      await canvasRepository.updateGenerationJob(jobId, {
+      await failImageJob(jobId, ownerId, {
         status: "FAILED",
         progress: 100,
         errorCode: "OPENAI_NOT_CONFIGURED",
@@ -104,7 +116,7 @@ export class CanvasImageGenerationService {
       try {
         const reference = await canvasAssetService.loadBuffer(referenceAssetId, user);
         if (!reference.mimeType.startsWith("image/")) {
-          await canvasRepository.updateGenerationJob(jobId, {
+          await failImageJob(jobId, ownerId, {
             status: "FAILED",
             progress: 100,
             errorCode: "INVALID_REFERENCE",
@@ -120,7 +132,7 @@ export class CanvasImageGenerationService {
           locale
         });
       } catch (error) {
-        await canvasRepository.updateGenerationJob(jobId, {
+        await failImageJob(jobId, ownerId, {
           status: "FAILED",
           progress: 100,
           errorCode: "REFERENCE_LOAD_FAILED",
@@ -134,7 +146,7 @@ export class CanvasImageGenerationService {
     }
 
     if (!generated.ok) {
-      await canvasRepository.updateGenerationJob(jobId, {
+      await failImageJob(jobId, ownerId, {
         status: "FAILED",
         progress: 100,
         errorCode: "OPENAI_FAILED",
@@ -172,20 +184,20 @@ export class CanvasImageGenerationService {
         actualCredits: job.estimatedCredits,
         completedAt: new Date()
       });
+      const settledJob = await canvasRepository.findGenerationJob(jobId, ownerId);
+      if (settledJob) {
+        await creditGenerationBillingService.syncJobBilling(settledJob);
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to store generated image";
-      await canvasRepository.updateGenerationJob(jobId, {
+      await failImageJob(jobId, ownerId, {
         status: "FAILED",
         progress: 100,
         errorCode: "STORAGE_FAILED",
         errorMessage: message,
         completedAt: new Date()
       });
-    }
-
-    const settledJob = await canvasRepository.findGenerationJob(jobId, ownerId);
-    if (settledJob) {
-      await creditGenerationBillingService.syncJobBilling(settledJob);
+      return;
     }
   }
 }

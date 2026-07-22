@@ -323,6 +323,10 @@ export class PaidRevisionService {
   }) {
     const order = await getOrder(input.orderId);
     if (!order) throw new Error("order-not-found");
+    const normalizedEmail = input.brandEmail.trim().toLowerCase();
+    if (order.client_email.toLowerCase() !== normalizedEmail) {
+      throw new Error("unauthorized");
+    }
 
     const current = await this.readPaidSlotsUnlocked({
       orderId: input.orderId,

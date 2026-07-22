@@ -1,4 +1,5 @@
 import { getAppBaseUrl } from "@/lib/app-url";
+import { isSafeInternalPostLoginPath } from "@/lib/auth/post-login-redirect";
 import { authService } from "@/features/auth/auth.service";
 import { stripeUnifiedCheckoutService } from "@/features/payment/stripe-unified-checkout.service";
 import { paidRevisionService } from "@/features/review/paid-revision.service";
@@ -14,6 +15,14 @@ import type { Locale } from "@/lib/i18n";
 function stripeReturnUrl(appUrl: string, path: string) {
   const separator = path.includes("?") ? "&" : "?";
   return `${appUrl}${path}${separator}session_id={CHECKOUT_SESSION_ID}`;
+}
+
+function sanitizeBrandCheckoutPath(path: string | undefined, fallback: string) {
+  const candidate = path?.trim() || fallback;
+  if (!isSafeInternalPostLoginPath(candidate) || !candidate.startsWith("/brand/")) {
+    return fallback;
+  }
+  return candidate;
 }
 
 export class PlatformPaymentService {
@@ -108,8 +117,14 @@ export class PlatformPaymentService {
         amount_minor: String(amountMinor),
         currency: "USD"
       },
-      successUrl: stripeReturnUrl(appUrl, input.successPath ?? "/brand/finance/account?checkout=success"),
-      cancelUrl: `${appUrl}${input.cancelPath ?? "/brand/finance/account?checkout=cancelled"}`
+      successUrl: stripeReturnUrl(
+        appUrl,
+        sanitizeBrandCheckoutPath(input.successPath, "/brand/finance/account?checkout=success")
+      ),
+      cancelUrl: `${appUrl}${sanitizeBrandCheckoutPath(
+        input.cancelPath,
+        "/brand/finance/account?checkout=cancelled"
+      )}`
     });
 
     if (!session.url) {
