@@ -18,6 +18,11 @@ import type {
   VincisCanvasEdge,
   VincisCanvasNode
 } from "@/lib/canvas/types";
+import {
+  CANVAS_CREATOR_TOKEN_BUDGET,
+  computeCanvasTokenBalance,
+  computeGenerationCredits
+} from "@/lib/canvas/generation-credits";
 import { DEFAULT_CANVAS_BACKGROUND, normalizeHexColor } from "@/lib/canvas/color";
 import { assertCanvasPayloadSize } from "@/lib/canvas/validation";
 
@@ -121,7 +126,7 @@ function buildStandaloneContext() {
 function buildSnapshot(
   project: CanvasProjectRecord,
   canvas: NonNullable<Awaited<ReturnType<typeof canvasRepository.findCanvas>>>,
-  creditTotals: Awaited<ReturnType<typeof canvasRepository.sumGenerationCredits>>
+  creditTotals: { used: number }
 ): CanvasSnapshot {
   const campaign = project.campaign;
   const context =
@@ -168,13 +173,8 @@ function buildSnapshot(
     campaignTitle: project.title,
     projectContext: {
       ...context,
-    creditsUsed:
-        creditTotals._sum.actualCredits ?? creditTotals._sum.estimatedCredits ?? 0,
-      tokenBalance: Math.max(
-        0,
-        3151 -
-          (creditTotals._sum.actualCredits ?? creditTotals._sum.estimatedCredits ?? 0)
-      )
+      creditsUsed: creditTotals.used,
+      tokenBalance: computeCanvasTokenBalance(creditTotals.used)
     },
     nodes,
     edges,
@@ -361,7 +361,16 @@ export class CanvasService {
       user.id,
       project.campaignId
     );
-    const estimatedCredits = input.type === "IMAGE" ? 4 : input.type === "VIDEO" ? 20 : 8;
+    const estimatedCredits = computeGenerationCredits({
+      type: input.type,
+      model: input.model,
+      parameters: input.parameters
+    });
+    const creditTotals = await canvasRepository.sumGenerationCredits(project.id);
+    if (creditTotals.used + estimatedCredits > CANVAS_CREATOR_TOKEN_BUDGET) {
+      throw appError("VALIDATION_ERROR", "Insufficient credits");
+    }
+
     const provider =
       input.type === "IMAGE" && hasOpenAI() ? "openai" : "vincis-mock";
     const job = await canvasRepository.createGenerationJob({
@@ -391,7 +400,7 @@ export class CanvasService {
         { job_id: job.id, node_id: input.nodeId, type: input.type }
       );
     }
-    return serializeJob(job);
+    return { ...serializeJob(job), chargedCredits: estimatedCredits };
   }
 
   async getJob(jobId: string, user: AuthUserDto) {
@@ -412,7 +421,7 @@ export class CanvasService {
         job = await canvasRepository.updateGenerationJob(job.id, {
           status: "SUCCEEDED",
           progress: 100,
-          actualCredits: 0,
+          actualCredits: job.estimatedCredits,
           completedAt: new Date()
         });
       }

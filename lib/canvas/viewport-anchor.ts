@@ -1,12 +1,31 @@
 import type { Viewport } from "@xyflow/react";
 import type { VincisCanvasNode } from "@/lib/canvas/types";
 import { GENERATION_PANEL_HEIGHT, GENERATION_PANEL_WIDTH } from "@/lib/canvas/generation-ui";
-import { VIDEO_CARD } from "@/lib/canvas/video-layout";
+import { VIDEO_CARD } from "@/lib/canvas/generation-layout";
 
 export type ViewportRect = {
   width: number;
   height: number;
 };
+
+export function readViewportRect(element: HTMLElement | null): ViewportRect {
+  if (!element) {
+    return { width: window.innerWidth, height: window.innerHeight };
+  }
+  return { width: element.clientWidth, height: element.clientHeight };
+}
+
+export function spawnNodeAtViewportCenter(
+  viewport: Viewport,
+  rect: ViewportRect,
+  card: { width: number; height: number }
+) {
+  const center = viewportCenterFlowPoint(viewport, rect);
+  return {
+    x: center.x - card.width / 2,
+    y: center.y - card.height / 2
+  };
+}
 
 export function viewportCenterFlowPoint(viewport: Viewport, rect: ViewportRect) {
   return {
@@ -60,16 +79,26 @@ function resolveNodeDimensions(node: Pick<VincisCanvasNode, "width" | "height" |
   };
 }
 
+export function nextSlotLayoutPosition(
+  viewport: Viewport,
+  rect: ViewportRect,
+  layoutIndex: number,
+  card: { width: number; height: number; gapY?: number }
+): { x: number; y: number } {
+  const center = viewportCenterFlowPoint(viewport, rect);
+  const gapY = card.gapY ?? 32;
+  return {
+    x: center.x - card.width / 2,
+    y: center.y - card.height / 2 + layoutIndex * (card.height + gapY)
+  };
+}
+
 export function nextVideoLayoutPosition(
   viewport: Viewport,
   rect: ViewportRect,
   layoutIndex: number
 ): { x: number; y: number } {
-  const center = viewportCenterFlowPoint(viewport, rect);
-  return {
-    x: center.x - VIDEO_CARD.width / 2,
-    y: center.y - VIDEO_CARD.height / 2 + layoutIndex * (VIDEO_CARD.height + 32)
-  };
+  return nextSlotLayoutPosition(viewport, rect, layoutIndex, VIDEO_CARD);
 }
 
 export function panelAnchorAboveNode(

@@ -205,11 +205,16 @@ export const canvasRepository = {
     });
   },
 
-  sumGenerationCredits(projectId: string) {
-    return prisma.generationJob.aggregate({
+  async sumGenerationCredits(projectId: string) {
+    const jobs = await prisma.generationJob.findMany({
       where: { creativeProjectId: projectId, status: { not: "CANCELLED" } },
-      _sum: { estimatedCredits: true, actualCredits: true }
+      select: { estimatedCredits: true, actualCredits: true }
     });
+    const used = jobs.reduce(
+      (total, job) => total + (job.actualCredits ?? job.estimatedCredits),
+      0
+    );
+    return { used };
   },
 
   createAiDirectorLog(input: {

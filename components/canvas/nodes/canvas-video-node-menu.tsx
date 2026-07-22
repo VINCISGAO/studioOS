@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { NodeToolbar, Position } from "@xyflow/react";
 import type { CanvasNodeData } from "@/lib/canvas/types";
+import { useCanvasNodeActions } from "@/components/canvas/canvas-node-actions-context";
 import { canDownloadCanvasNode, resolveCanvasNodeDownloadHref } from "@/lib/canvas/node-download";
 import { cn } from "@/lib/utils";
 
@@ -52,10 +53,6 @@ function IconButton({
   );
 }
 
-function dispatchNodeAction(action: "extend-video" | "regenerate", nodeId: string) {
-  window.dispatchEvent(new CustomEvent("canvas:node-action", { detail: { action, nodeId } }));
-}
-
 export function CanvasVideoNodeMenu({
   nodeId,
   data,
@@ -67,6 +64,7 @@ export function CanvasVideoNodeMenu({
   selected: boolean;
   variant?: "video" | "upload";
 }) {
+  const actions = useCanvasNodeActions();
   const downloadHref = resolveCanvasNodeDownloadHref(data);
   const canDownload = canDownloadCanvasNode(data);
   const canRegenerate = variant === "video" && Boolean(data.prompt) && data.status === "ready";
@@ -86,13 +84,13 @@ export function CanvasVideoNodeMenu({
           label="延长"
           icon={<Clock3 className="h-4 w-4" />}
           disabled={!canExtend}
-          onClick={() => dispatchNodeAction("extend-video", nodeId)}
+          onClick={() => actions?.extendVideo(nodeId)}
         />
         <IconButton
           label="画同款"
           icon={<Sparkles className="h-4 w-4" />}
           disabled={!canRegenerate}
-          onClick={() => dispatchNodeAction("regenerate", nodeId)}
+          onClick={() => actions?.regenerate(nodeId)}
         />
         <IconButton
           label="下载"

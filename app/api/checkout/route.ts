@@ -4,6 +4,7 @@ import { getCurrentClientEmail } from "@/features/auth/session-context";
 import { getInquiry } from "@/lib/chat-service";
 import { getQuote } from "@/lib/order-service";
 import { getStripe } from "@/lib/stripe";
+import { shouldBypassExternalCheckout } from "@/lib/payment/payment-stub";
 
 export async function POST(request: Request) {
   const body = (await request.json()) as {
@@ -48,6 +49,10 @@ export async function POST(request: Request) {
       { error: "A confirmed quote amount is required before Checkout." },
       { status: 400 }
     );
+  }
+
+  if (shouldBypassExternalCheckout()) {
+    return NextResponse.json({ url: `${appUrl}/dashboard?checkout=success&stub=1` });
   }
 
   if (!process.env.STRIPE_SECRET_KEY) {

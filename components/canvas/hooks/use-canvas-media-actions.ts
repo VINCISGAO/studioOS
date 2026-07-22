@@ -4,6 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useCanvasStore } from "@/components/canvas/canvas-store";
 import type { GenerationKind } from "@/components/canvas/generation-panel";
 import type { GenerationJobEvent, VincisCanvasNode } from "@/lib/canvas/types";
+import { readViewportRect, spawnNodeAtViewportCenter } from "@/lib/canvas/viewport-anchor";
 
 type ApiEnvelope<T> = {
   success: boolean;
@@ -19,33 +20,39 @@ type UploadedAsset = {
   url: string;
 };
 
-function nodePosition() {
-  const viewport = useCanvasStore.getState().viewport;
-  return {
-    x: (window.innerWidth * 0.48 - viewport.x) / viewport.zoom,
-    y: (window.innerHeight * 0.42 - viewport.y) / viewport.zoom
-  };
-}
+const LOADING_CARD = { width: 320, height: 220 };
 
-function loadingNode(
+function spawnLoadingNode(
   id: string,
   title: string,
   prompt: string,
   generationType?: "IMAGE" | "VIDEO" | "MUSIC"
 ): VincisCanvasNode {
+  const state = useCanvasStore.getState();
+  const rect = readViewportRect(null);
   return {
     id,
     type: "loading",
-    position: nodePosition(),
-    width: 320,
-    height: 220,
+    position: spawnNodeAtViewportCenter(state.viewport, rect, LOADING_CARD),
+    width: LOADING_CARD.width,
+    height: LOADING_CARD.height,
     data: { title, prompt, status: "loading", progress: 8, generationType }
   };
 }
 
-export function useCanvasMediaActions(projectId: string) {
+function nodeKindFromType(type: VincisCanvasNode["type"]): GenerationKind {
+  if (type === "video") return "video";
+  if (type === "music") return "music";
+  return "image";
+}
+
+export function useCanvasMediaActions(
+  projectId: string,
+  options?: { onCreditsCharged?: (amount: number) => void }
+) {
   const addNode = useCanvasStore((state) => state.addNode);
   const updateNodeData = useCanvasStore((state) => state.updateNodeData);
+  const patchNodeData = useCanvasStore((state) => state.patchNodeData);
   const setNodeTypeAndData = useCanvasStore((state) => state.setNodeTypeAndData);
 
   const uploadMutation = useMutation({
@@ -119,7 +126,10 @@ export function useCanvasMediaActions(projectId: string) {
       return payload.data;
     },
     onSuccess: (job, variables) => {
-      updateNodeData(variables.nodeId, { jobId: job.id, progress: job.progress });
+      patchNodeData(variables.nodeId, { jobId: job.id, progress: job.progress });
+      if (job.chargedCredits && job.chargedCredits > 0) {
+        options?.onCreditsCharged?.(job.chargedCredits);
+      }
     },
     onError: (error, variables) => {
       updateNodeData(variables.nodeId, {
@@ -131,7 +141,7 @@ export function useCanvasMediaActions(projectId: string) {
 
   function upload(file: File) {
     const nodeId = `node_${crypto.randomUUID()}`;
-    addNode(loadingNode(nodeId, "正在上传素材", file.name));
+    addNode(spawnLoadingNode(nodeId, "正在上传素材", file.name));
     uploadMutation.mutate({ file, nodeId });
   }
 
@@ -164,7 +174,7 @@ export function useCanvasMediaActions(projectId: string) {
         generationType
       });
     } else {
-      addNode(loadingNode(nodeId, title, input.prompt, generationType));
+      addNode(spawnLoadingNode(nodeId, title, input.prompt, generationType));
     }
 
     generationMutation.mutate({
@@ -186,15 +196,23 @@ export function useCanvasMediaActions(projectId: string) {
   function regenerate(nodeId: string) {
     const node = useCanvasStore.getState().nodes.find((item) => item.id === nodeId);
     if (!node?.data.prompt) return;
-    const kind =
-      node.type === "video" ? "video" : node.type === "music" ? "music" : "image";
-    generate(kind, { prompt: node.data.prompt });
+    generate(nodeKindFromType(node.type), {
+      prompt: node.data.prompt,
+      targetNodeId: nodeId
+    });
+  }
+
+  function extendVideo(nodeId: string) {
+    const node = useCanvasStore.getState().nodes.find((item) => item.id === nodeId);
+    if (!node?.data.prompt) return;
+    generate("video", { prompt: `Extend: ${node.data.prompt}`, targetNodeId: nodeId });
   }
 
   return {
     upload,
     generate,
     regenerate,
+    extendVideo,
     generationPending: generationMutation.isPending
   };
 }

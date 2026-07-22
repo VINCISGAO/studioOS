@@ -36,6 +36,10 @@ export function MusicNode({ data, selected }: NodeProps<VincisCanvasNode>) {
             preload="metadata"
             className="nodrag nopan mt-3 h-8 w-full"
           />
+        ) : data.status === "idle" ? (
+          <p className="mt-3 truncate text-center text-xs text-zinc-400">
+            {data.prompt || "等待生成音乐…"}
+          </p>
         ) : (
           <p className="mt-3 truncate text-center text-xs text-zinc-500">
             {data.status === "loading"

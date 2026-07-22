@@ -22,18 +22,15 @@ import type { EscrowStatus } from "@prisma/client";
 import { CampaignEvents } from "@/features/shared/types/events";
 import { CAMPAIGN_ESCROW_FUNDED_STATES } from "@/features/payment/escrow-guards";
 import type { Locale } from "@/lib/i18n";
+import {
+  allowDemoPaymentFallback,
+  shouldBypassExternalCheckout
+} from "@/lib/payment/payment-stub";
 
 const PAYABLE_CAMPAIGN_STATES = new Set<string>([
   CampaignState.CREATIVE_APPROVED,
   CampaignState.ESCROW_PENDING,
 ]);
-
-function allowDemoPaymentFallback() {
-  if (process.env.VINCIS_ENABLE_DEMO_PAYMENT === "1" || process.env.STUDIOOS_ENABLE_DEMO_PAYMENT === "1") {
-    return true;
-  }
-  return process.env.NODE_ENV !== "production" && process.env.VERCEL !== "1";
-}
 
 export type BrandCampaignPaymentResult =
   | { ok: true; mode: "demo"; alreadyFunded: boolean }
@@ -159,36 +156,39 @@ export class PaymentService {
       escrow = await paymentRepository.findByCampaignId(campaignId);
     }
 
-    if (!stripeCheckoutService.isConfigured()) {
-      if (!allowDemoPaymentFallback()) {
-        throw appError("SYSTEM_ERROR", "Stripe checkout is not configured");
-      }
+    if (!shouldBypassExternalCheckout() && stripeCheckoutService.isConfigured()) {
+      const session = await stripeCheckoutService.createCampaignCheckout({
+        campaignId,
+        escrowId: escrow!.id,
+        amount: Number(campaign.budget),
+        currency: campaign.currency.toLowerCase(),
+        title: campaign.title,
+        brandEmail: user.email,
+        portalProjectId: options.portalProjectId
+      });
+
+      await paymentRepository.updatePaymentMeta(campaignId, {
+        stripeSessionId: session.id
+      });
+
       return {
-        mode: "demo" as const,
-        escrow: serializeEscrow(escrow!),
-        message: "Stripe not configured — use POST .../checkout/demo"
+        mode: "stripe" as const,
+        checkoutUrl: session.url,
+        sessionId: session.id,
+        escrow: serializeEscrow(escrow!)
       };
     }
 
-    const session = await stripeCheckoutService.createCampaignCheckout({
-      campaignId,
-      escrowId: escrow!.id,
-      amount: Number(campaign.budget),
-      currency: campaign.currency.toLowerCase(),
-      title: campaign.title,
-      brandEmail: user.email,
-      portalProjectId: options.portalProjectId
-    });
-
-    await paymentRepository.updatePaymentMeta(campaignId, {
-      stripeSessionId: session.id
-    });
+    if (!allowDemoPaymentFallback()) {
+      throw appError("SYSTEM_ERROR", "Stripe checkout is not configured");
+    }
 
     return {
-      mode: "stripe" as const,
-      checkoutUrl: session.url,
-      sessionId: session.id,
-      escrow: serializeEscrow(escrow!)
+      mode: "demo" as const,
+      escrow: serializeEscrow(escrow!),
+      message: shouldBypassExternalCheckout()
+        ? "Payment stub active — use POST .../checkout/demo or pay button"
+        : "Stripe not configured — use POST .../checkout/demo"
     };
   }
 
@@ -456,7 +456,7 @@ export class PaymentService {
     }
 
     try {
-      if (stripeCheckoutService.isConfigured()) {
+      if (!shouldBypassExternalCheckout() && stripeCheckoutService.isConfigured()) {
         const checkout = await this.startCheckout(campaign.id, actor, {
           portalProjectId: input.legacyProjectId
         });

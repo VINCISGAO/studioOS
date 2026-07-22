@@ -1,11 +1,7 @@
 "use client";
 
 import {
-  addEdge,
-  applyEdgeChanges,
   applyNodeChanges,
-  type Connection,
-  type EdgeChange,
   type NodeChange,
   type Viewport
 } from "@xyflow/react";
@@ -34,6 +30,12 @@ import {
   ungroupSelectedNodes
 } from "@/lib/canvas/canvas-node-mutations";
 import { sanitizeLoadedCanvasNodes } from "@/lib/canvas/canvas-node-sanitize";
+import { dedupeUneditedGenerationSlots } from "@/lib/canvas/generation-slot-dedupe";
+import {
+  shouldRecordNodeHistory,
+  snapshotCanvasGraph,
+  type CanvasHistoryEntry
+} from "@/lib/canvas/canvas-history";
 import {
   applyCanvasNodeInteractionFlags,
   applyCanvasNodeInteractionFlagsAll,
@@ -42,7 +44,7 @@ import {
 import { DEFAULT_CANVAS_BACKGROUND, normalizeHexColor } from "@/lib/canvas/color";
 
 type SaveState = "idle" | "dirty" | "saving" | "saved" | "error";
-type HistoryEntry = { nodes: VincisCanvasNode[]; edges: VincisCanvasEdge[] };
+type HistoryEntry = CanvasHistoryEntry;
 export type CanvasInteractionMode = "select" | "move";
 
 type CanvasStore = {
@@ -64,14 +66,13 @@ type CanvasStore = {
   future: HistoryEntry[];
   initialize: (snapshot: CanvasSnapshot) => void;
   onNodesChange: (changes: NodeChange<VincisCanvasNode>[]) => void;
-  onEdgesChange: (changes: EdgeChange<VincisCanvasEdge>[]) => void;
-  connect: (connection: Connection) => void;
   setViewport: (viewport: Viewport, options?: { persist?: boolean }) => void;
   setCanvasBackgroundColor: (color: string) => void;
   setInteractionMode: (mode: CanvasInteractionMode) => void;
   addNode: (node: VincisCanvasNode) => void;
   addNodes: (nodes: VincisCanvasNode[], selectNodeId?: string) => void;
   updateNodeData: (nodeId: string, data: Partial<CanvasNodeData>) => void;
+  patchNodeData: (nodeId: string, data: Partial<CanvasNodeData>) => void;
   setNodeTypeAndData: (
     nodeId: string,
     type: VincisCanvasNode["type"],
@@ -105,7 +106,7 @@ const emptyViewport = { x: 0, y: 0, zoom: 1 };
 
 function recordHistory(state: CanvasStore) {
   return {
-    past: [...state.past.slice(-29), { nodes: state.nodes, edges: state.edges }],
+    past: [...state.past.slice(-29), snapshotCanvasGraph(state.nodes, state.edges)],
     future: []
   };
 }
@@ -145,7 +146,7 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
       mode: snapshot.mode,
       campaignId: snapshot.campaignId,
       nodes: sanitizeLoadedCanvasNodes(snapshot.nodes),
-      edges: snapshot.edges,
+      edges: [],
       viewport: snapshot.viewport,
       canvasBackgroundColor: snapshot.canvasBackgroundColor,
       selectedNodeIds: [],
@@ -162,6 +163,7 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     set((state) => {
       const nodes = applyNodeChanges(changes, state.nodes);
       const dirty = changes.some((change) => change.type !== "select");
+      const record = shouldRecordNodeHistory(changes);
       const selectOnly = changes.every((change) => change.type === "select");
       const nextNodes = selectOnly ? nodes : applyCanvasNodeInteractionFlagsAll(nodes);
       return {
@@ -169,27 +171,9 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
         selectedNodeIds: nextNodes.filter((node) => node.selected).map((node) => node.id),
         revision: dirty ? state.revision + 1 : state.revision,
         saveState: dirty ? "dirty" : state.saveState,
-        ...(dirty ? recordHistory(state) : {})
+        ...(record ? recordHistory(state) : {})
       };
     });
-  },
-
-  onEdgesChange(changes) {
-    set((state) => ({
-      edges: applyEdgeChanges(changes, state.edges),
-      revision: state.revision + 1,
-      saveState: "dirty",
-      ...recordHistory(state)
-    }));
-  },
-
-  connect(connection) {
-    set((state) => ({
-      edges: addEdge({ ...connection, id: `edge_${crypto.randomUUID()}` }, state.edges),
-      revision: state.revision + 1,
-      saveState: "dirty",
-      ...recordHistory(state)
-    }));
   },
 
   setViewport(viewport, options) {
@@ -224,16 +208,22 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
   },
 
   addNode(node) {
-    set((state) => ({
-      nodes: [
+    set((state) => {
+      const merged = [
         ...deselectAllCanvasNodes(state.nodes),
         applyCanvasNodeInteractionFlags({ ...node, selected: true })
-      ],
-      selectedNodeIds: [node.id],
-      revision: state.revision + 1,
-      saveState: "dirty",
-      ...recordHistory(state)
-    }));
+      ];
+      const nodes = dedupeUneditedGenerationSlots(merged).map((item) =>
+        item.id === node.id ? { ...item, selected: true } : item
+      );
+      return {
+        nodes,
+        selectedNodeIds: nodes.some((item) => item.id === node.id) ? [node.id] : [],
+        revision: state.revision + 1,
+        saveState: "dirty" as const,
+        ...recordHistory(state)
+      };
+    });
   },
 
   addNodes(nodes, selectNodeId) {
@@ -261,6 +251,14 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
       revision: state.revision + 1,
       saveState: "dirty",
       ...recordHistory(state)
+    }));
+  },
+
+  patchNodeData(nodeId, data) {
+    set((state) => ({
+      nodes: state.nodes.map((node) =>
+        node.id === nodeId ? { ...node, data: { ...node.data, ...data } } : node
+      )
     }));
   },
 
@@ -467,12 +465,15 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     set((state) => {
       const previous = state.past[state.past.length - 1];
       if (!previous) return state;
+      const nodes = applyCanvasNodeInteractionFlagsAll(
+        previous.nodes.map((node) => ({ ...node, selected: false }))
+      );
       return {
-        nodes: previous.nodes,
-        edges: previous.edges,
+        nodes,
+        edges: [],
         selectedNodeIds: [],
         past: state.past.slice(0, -1),
-        future: [{ nodes: state.nodes, edges: state.edges }, ...state.future].slice(0, 30),
+        future: [snapshotCanvasGraph(state.nodes, state.edges), ...state.future].slice(0, 30),
         revision: state.revision + 1,
         saveState: "dirty"
       };
@@ -483,11 +484,14 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     set((state) => {
       const next = state.future[0];
       if (!next) return state;
+      const nodes = applyCanvasNodeInteractionFlagsAll(
+        next.nodes.map((node) => ({ ...node, selected: false }))
+      );
       return {
-        nodes: next.nodes,
-        edges: next.edges,
+        nodes,
+        edges: [],
         selectedNodeIds: [],
-        past: [...state.past, { nodes: state.nodes, edges: state.edges }].slice(-30),
+        past: [...state.past, snapshotCanvasGraph(state.nodes, state.edges)].slice(-30),
         future: state.future.slice(1),
         revision: state.revision + 1,
         saveState: "dirty"

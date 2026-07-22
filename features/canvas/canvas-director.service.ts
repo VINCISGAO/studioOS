@@ -329,20 +329,6 @@ This is a draft plan that requires explicit creator confirmation.`;
         );
       });
 
-    const knownIds = new Set(nodes.map((node) => node.id));
-    const newEdges = plan.actions
-      .filter(isActionType("CONNECT_NODES"))
-      .filter(
-        (action) =>
-          knownIds.has(action.sourceId) &&
-          knownIds.has(action.targetId)
-      )
-      .map((action) => ({
-        id: `edge_${randomUUID()}`,
-        source: action.sourceId,
-        target: action.targetId
-      }));
-
     await canvasService.saveSnapshot(
       {
         projectId,
@@ -356,7 +342,7 @@ This is a draft plan that requires explicit creator confirmation.`;
           zIndex: node.zIndex,
           data: node.data
         })),
-        edges: [...snapshot.edges, ...newEdges],
+        edges: [],
         viewport: snapshot.viewport
       },
       user

@@ -30,7 +30,7 @@ export type CanvasNodeData = {
   hidden?: boolean;
   text?: string;
   skill?: string;
-  layoutKind?: "VIDEO_GENERATION";
+  layoutKind?: "VIDEO_GENERATION" | "IMAGE_GENERATION" | "MUSIC_GENERATION";
   layoutIndex?: number;
 };
 
@@ -147,4 +147,5 @@ export type GenerationJobEvent = {
   progress: number;
   outputAssetId: string | null;
   errorMessage: string | null;
+  chargedCredits?: number;
 };

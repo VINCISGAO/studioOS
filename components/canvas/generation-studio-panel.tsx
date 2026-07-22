@@ -38,6 +38,7 @@ import {
   buildGenerationSubmitInput,
   type GenerationSubmitInput
 } from "@/lib/canvas/generation-submit";
+import { hasEnoughCanvasCredits } from "@/lib/canvas/generation-credits";
 import type { Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -53,6 +54,7 @@ export function GenerationStudioPanel({
   busy,
   anchor,
   anchorPlacement = "above",
+  tokenBalance,
   onClose,
   onSubmit
 }: {
@@ -62,6 +64,7 @@ export function GenerationStudioPanel({
   busy: boolean;
   anchor: { x: number; y: number };
   anchorPlacement?: "above" | "below";
+  tokenBalance: number;
   onClose: () => void;
   onSubmit: (input: GenerationSubmitInput) => void;
 }) {
@@ -96,8 +99,11 @@ export function GenerationStudioPanel({
       : kind === "image"
         ? formatImageSettingsLabel(imageSettings, locale)
         : formatMusicSettingsLabel(musicSettings, locale);
+  const insufficientCredits = !hasEnoughCanvasCredits(tokenBalance, credits);
   const submitDisabled =
-    busy || (kind === "music" ? !canSubmitMusicSettings(musicSettings) : prompt.trim().length < 3);
+    busy ||
+    insufficientCredits ||
+    (kind === "music" ? !canSubmitMusicSettings(musicSettings) : prompt.trim().length < 3);
 
   useEffect(() => {
     setKind(initialKind);
@@ -237,6 +243,8 @@ export function GenerationStudioPanel({
               kind={kind}
               generating={busy}
               submitDisabled={submitDisabled}
+              insufficientCredits={insufficientCredits}
+              tokenBalance={tokenBalance}
               credits={credits}
               settingsLabel={settingsLabel}
               videoSettings={videoSettings}

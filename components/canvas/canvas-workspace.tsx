@@ -1,9 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Maximize2, Minimize2 } from "lucide-react";
 import { CanvasChatPanel } from "@/components/canvas/canvas-chat-panel";
 import { CanvasCreditsHud } from "@/components/canvas/canvas-credits-hud";
+import { CanvasNodeActionsProvider } from "@/components/canvas/canvas-node-actions-context";
 import { useCanvasStore } from "@/components/canvas/canvas-store";
 import {
   GenerationPanel,
@@ -13,37 +15,16 @@ import { FloatingToolbar } from "@/components/canvas/floating-toolbar";
 import { InfiniteCanvas } from "@/components/canvas/infinite-canvas";
 import { JobStatusPanel } from "@/components/canvas/job-status-panel";
 import { SelectionToolbar } from "@/components/canvas/selection-toolbar";
+import { useCanvasGenerationSlots } from "@/components/canvas/hooks/use-canvas-generation-slots";
 import { useCanvasMediaActions } from "@/components/canvas/hooks/use-canvas-media-actions";
 import type { CanvasSnapshot, VincisCanvasNode } from "@/lib/canvas/types";
 import type { Locale } from "@/lib/i18n";
-import {
-  countVideoGenerationLayouts,
-  createVideoGenerationLayout,
-  isUneditedVideoGenerationSlot
-} from "@/lib/canvas/video-layout";
 import {
   buildChatImageCanvasNode,
   type ChatImageCanvasPayload
 } from "@/lib/canvas/chat-image-canvas";
 import { CANVAS_SEND_TO_CHAT_EVENT } from "@/lib/canvas/canvas-chat-bridge";
-import {
-  defaultPanelAnchor,
-  nextVideoLayoutPosition,
-  panelAnchorBelowNode,
-  viewportCenterFlowPoint,
-  type ViewportRect
-} from "@/lib/canvas/viewport-anchor";
-
-type VideoGenerationSession = {
-  slotNodeId: string;
-};
-
-function readCanvasRect(element: HTMLDivElement | null): ViewportRect {
-  if (!element) {
-    return { width: window.innerWidth, height: window.innerHeight };
-  }
-  return { width: element.clientWidth, height: element.clientHeight };
-}
+import { readViewportRect, viewportCenterFlowPoint } from "@/lib/canvas/viewport-anchor";
 
 function CanvasWorkspaceInner({
   snapshot,
@@ -55,20 +36,40 @@ function CanvasWorkspaceInner({
   initialPanel?: GenerationKind | null;
 }) {
   const [ready, setReady] = useState(false);
-  const [panel, setPanel] = useState<GenerationKind | null>(initialPanel);
-  const [panelAnchor, setPanelAnchor] = useState<{ x: number; y: number } | null>(null);
-  const [videoSession, setVideoSession] = useState<VideoGenerationSession | null>(null);
   const [chatCollapsed, setChatCollapsed] = useState(false);
-  const initialVideoLayoutCreated = useRef(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [fullscreenSupported, setFullscreenSupported] = useState(false);
+  const [tokenBalance, setTokenBalance] = useState(snapshot.projectContext.tokenBalance);
   const initializedProjectId = useRef<string | null>(null);
+  const fullscreenAreaRef = useRef<HTMLDivElement>(null);
   const canvasAreaRef = useRef<HTMLDivElement>(null);
-  const addNode = useCanvasStore((state) => state.addNode);
-  const nodes = useCanvasStore((state) => state.nodes);
   const pasteAt = useCanvasStore((state) => state.pasteAt);
   const viewport = useCanvasStore((state) => state.viewport);
-  const { generate, regenerate, generationPending } = useCanvasMediaActions(
-    snapshot.projectId
+  const { generate, regenerate, extendVideo, generationPending } = useCanvasMediaActions(
+    snapshot.projectId,
+    {
+      onCreditsCharged: (amount) => {
+        setTokenBalance((current) => Math.max(0, current - amount));
+      }
+    }
   );
+  const nodeActions = useMemo(
+    () => ({ regenerate, extendVideo }),
+    [extendVideo, regenerate]
+  );
+  const {
+    panel,
+    panelAnchor,
+    generationSession,
+    openGeneration,
+    closeGenerationPanel,
+    handleGenerationNodeClick
+  } = useCanvasGenerationSlots({
+    locale,
+    canvasAreaRef,
+    initialPanel,
+    ready
+  });
 
   useEffect(() => {
     if (initializedProjectId.current === snapshot.projectId) {
@@ -76,53 +77,11 @@ function CanvasWorkspaceInner({
       return;
     }
     initializedProjectId.current = snapshot.projectId;
-    initialVideoLayoutCreated.current = false;
     useCanvasStore.getState().initialize(snapshot);
     useCanvasStore.getState().setInteractionMode("select");
+    setTokenBalance(snapshot.projectContext.tokenBalance);
     setReady(true);
   }, [snapshot]);
-
-  const openVideoGenerationSlot = useCallback((node: VincisCanvasNode) => {
-    const rect = readCanvasRect(canvasAreaRef.current);
-    const state = useCanvasStore.getState();
-    setVideoSession({ slotNodeId: node.id });
-    setPanelAnchor(panelAnchorBelowNode(node, state.viewport, rect));
-    setPanel("video");
-  }, []);
-
-  const openVideoGeneration = useCallback(() => {
-    const state = useCanvasStore.getState();
-    const existingSlot = state.nodes.find(isUneditedVideoGenerationSlot);
-    if (existingSlot) {
-      openVideoGenerationSlot(existingSlot);
-      return;
-    }
-    const rect = readCanvasRect(canvasAreaRef.current);
-    const layoutIndex = countVideoGenerationLayouts(state.nodes);
-    const position = nextVideoLayoutPosition(state.viewport, rect, layoutIndex);
-    const layout = createVideoGenerationLayout({
-      layoutIndex,
-      position,
-      locale
-    });
-    addNode(layout.node);
-    setVideoSession({ slotNodeId: layout.slotNodeId });
-    setPanelAnchor(panelAnchorBelowNode(layout.node, state.viewport, rect));
-    setPanel("video");
-  }, [addNode, locale, openVideoGenerationSlot]);
-
-  useEffect(() => {
-    if (!panel || panel !== "video" || !videoSession) return;
-    const node = nodes.find((item) => item.id === videoSession.slotNodeId);
-    if (!node) return;
-    setPanelAnchor(panelAnchorBelowNode(node, viewport, readCanvasRect(canvasAreaRef.current)));
-  }, [panel, videoSession, nodes, viewport]);
-
-  useEffect(() => {
-    if (!ready || initialPanel !== "video" || initialVideoLayoutCreated.current) return;
-    initialVideoLayoutCreated.current = true;
-    openVideoGeneration();
-  }, [ready, initialPanel, openVideoGeneration]);
 
   useEffect(() => {
     const onShortcut = (event: KeyboardEvent) => {
@@ -135,37 +94,13 @@ function CanvasWorkspaceInner({
       }
       if (event.metaKey || event.ctrlKey || event.altKey) return;
       const key = event.key.toLowerCase();
-      if (key === "i") {
-        setVideoSession(null);
-        setPanelAnchor(defaultPanelAnchor(readCanvasRect(canvasAreaRef.current)));
-        setPanel("image");
-      }
-      if (key === "s") openVideoGeneration();
-      if (key === "m") {
-        setVideoSession(null);
-        setPanelAnchor(defaultPanelAnchor(readCanvasRect(canvasAreaRef.current)));
-        setPanel("music");
-      }
+      if (key === "i") openGeneration("image");
+      if (key === "s") openGeneration("video");
+      if (key === "m") openGeneration("music");
     };
     window.addEventListener("keydown", onShortcut);
     return () => window.removeEventListener("keydown", onShortcut);
-  }, [openVideoGeneration]);
-
-  function openGenerationPanel(kind: GenerationKind) {
-    if (kind === "video") {
-      openVideoGeneration();
-      return;
-    }
-    setVideoSession(null);
-    setPanelAnchor(defaultPanelAnchor(readCanvasRect(canvasAreaRef.current)));
-    setPanel(kind);
-  }
-
-  function closeGenerationPanel() {
-    setPanel(null);
-    setPanelAnchor(null);
-    setVideoSession(null);
-  }
+  }, [openGeneration]);
 
   useEffect(() => {
     if (!panel) return;
@@ -174,27 +109,13 @@ function CanvasWorkspaceInner({
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [panel]);
-
-  useEffect(() => {
-    const onNodeAction = (event: Event) => {
-      const detail = (event as CustomEvent<{ action: string; nodeId: string }>).detail;
-      if (!detail?.nodeId) return;
-      if (detail.action === "extend-video") {
-        const node = useCanvasStore.getState().nodes.find((item) => item.id === detail.nodeId);
-        if (node?.data.prompt) generate("video", { prompt: `Extend: ${node.data.prompt}` });
-      }
-      if (detail.action === "regenerate") regenerate(detail.nodeId);
-    };
-    window.addEventListener("canvas:node-action", onNodeAction);
-    return () => window.removeEventListener("canvas:node-action", onNodeAction);
-  }, [generate, regenerate]);
+  }, [closeGenerationPanel, panel]);
 
   useEffect(() => {
     const onChatImageAdd = (event: Event) => {
       const detail = (event as CustomEvent<ChatImageCanvasPayload>).detail;
       if (!detail?.assetId || !detail.url) return;
-      const rect = readCanvasRect(canvasAreaRef.current);
+      const rect = readViewportRect(canvasAreaRef.current);
       const center = viewportCenterFlowPoint(useCanvasStore.getState().viewport, rect);
       useCanvasStore.getState().addNode(buildChatImageCanvasNode(detail, center));
     };
@@ -208,81 +129,129 @@ function CanvasWorkspaceInner({
     return () => window.removeEventListener(CANVAS_SEND_TO_CHAT_EVENT, onSendToChat);
   }, []);
 
+  useEffect(() => {
+    setFullscreenSupported(document.fullscreenEnabled);
+    const onFullscreenChange = () => {
+      setIsFullscreen(document.fullscreenElement === fullscreenAreaRef.current);
+    };
+    document.addEventListener("fullscreenchange", onFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", onFullscreenChange);
+  }, []);
+
+  const toggleFullscreen = useCallback(async () => {
+    const fullscreenArea = fullscreenAreaRef.current;
+    if (!fullscreenArea || !document.fullscreenEnabled) return;
+    try {
+      if (document.fullscreenElement === fullscreenArea) {
+        await document.exitFullscreen();
+      } else {
+        await fullscreenArea.requestFullscreen();
+      }
+    } catch {
+      setIsFullscreen(document.fullscreenElement === fullscreenArea);
+    }
+  }, []);
+
   const handleNodeClick = useCallback(
     (node: VincisCanvasNode) => {
-      if (isUneditedVideoGenerationSlot(node)) {
-        openVideoGenerationSlot(node);
-        return;
-      }
-      if (panel) closeGenerationPanel();
+      if (handleGenerationNodeClick(node)) return;
+      closeGenerationPanel();
     },
-    [openVideoGenerationSlot, panel]
+    [closeGenerationPanel, handleGenerationNodeClick]
   );
 
   const pasteSelectionAtCenter = useCallback(() => {
-    const rect = readCanvasRect(canvasAreaRef.current);
+    const rect = readViewportRect(canvasAreaRef.current);
     pasteAt(viewportCenterFlowPoint(viewport, rect));
   }, [pasteAt, viewport]);
 
   if (!ready) return <div className="h-full bg-[#f7f7f6]" />;
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-[#f7f7f6]">
-      <div className="relative flex min-h-0 flex-1 overflow-hidden">
-        <div ref={canvasAreaRef} className="relative min-w-0 flex-1 overflow-hidden">
-          <InfiniteCanvas
-            projectId={snapshot.projectId}
-            locale={locale}
-            onCanvasPointerDown={() => {
-              if (panel) closeGenerationPanel();
-            }}
-            onNodeClick={handleNodeClick}
-          />
-          <CanvasCreditsHud
-            locale={locale}
-            tokenBalance={snapshot.projectContext.tokenBalance}
-          />
-          <SelectionToolbar
-            onPaste={pasteSelectionAtCenter}
-            onRegenerate={regenerate}
-            onImageToVideo={(nodeId) => {
-              const node = useCanvasStore.getState().nodes.find((item) => item.id === nodeId);
-              if (node?.data.prompt) generate("video", { prompt: `Animate: ${node.data.prompt}` });
-            }}
-            onExtendVideo={(nodeId) => {
-              const node = useCanvasStore.getState().nodes.find((item) => item.id === nodeId);
-              if (node?.data.prompt) generate("video", { prompt: `Extend: ${node.data.prompt}` });
-            }}
-          />
-          <FloatingToolbar onGenerate={openGenerationPanel} />
-          <JobStatusPanel />
-          {panel && panelAnchor ? (
-            <GenerationPanel
-              kind={panel}
-              locale={locale}
+    <CanvasNodeActionsProvider value={nodeActions}>
+      <div className="flex h-full min-h-0 flex-col bg-[#f7f7f6]">
+        <div
+          ref={fullscreenAreaRef}
+          className="relative flex min-h-0 flex-1 overflow-hidden bg-[#f7f7f6]"
+        >
+          <div
+            ref={canvasAreaRef}
+            className="relative min-w-0 flex-1 overflow-hidden bg-[#f7f7f6]"
+          >
+            <InfiniteCanvas
               projectId={snapshot.projectId}
-              busy={generationPending}
-              anchor={panelAnchor}
-              anchorPlacement={videoSession ? "below" : "above"}
-              onClose={closeGenerationPanel}
-              onSubmit={(input) => {
-                generate(input.kind, {
-                  ...input,
-                  targetNodeId: input.kind === "video" ? videoSession?.slotNodeId : undefined
-                });
-                closeGenerationPanel();
+              locale={locale}
+              onCanvasPointerDown={() => {
+                if (panel) closeGenerationPanel();
               }}
+              onNodeClick={handleNodeClick}
             />
-          ) : null}
+            <button
+              type="button"
+              onClick={toggleFullscreen}
+              disabled={!fullscreenSupported}
+              aria-label={
+                isFullscreen
+                  ? locale === "zh"
+                    ? "退出全屏"
+                    : "Exit fullscreen"
+                  : locale === "zh"
+                    ? "全屏"
+                    : "Fullscreen"
+              }
+              title={
+                isFullscreen
+                  ? locale === "zh"
+                    ? "退出全屏"
+                    : "Exit fullscreen"
+                  : locale === "zh"
+                    ? "全屏"
+                    : "Fullscreen"
+              }
+              className="absolute left-3 top-3 z-40 flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-200 bg-white/95 text-zinc-600 shadow-sm backdrop-blur transition hover:bg-white hover:text-zinc-950 disabled:hidden"
+            >
+              {isFullscreen ? (
+                <Minimize2 className="h-3.5 w-3.5" />
+              ) : (
+                <Maximize2 className="h-3.5 w-3.5" />
+              )}
+            </button>
+            <CanvasCreditsHud locale={locale} tokenBalance={tokenBalance} />
+            <SelectionToolbar onPaste={pasteSelectionAtCenter} />
+            <FloatingToolbar onGenerate={openGeneration} />
+            <JobStatusPanel />
+            {panel && panelAnchor ? (
+              <GenerationPanel
+                kind={panel}
+                locale={locale}
+                projectId={snapshot.projectId}
+                busy={generationPending}
+                anchor={panelAnchor}
+                anchorPlacement={generationSession ? "below" : "above"}
+                tokenBalance={tokenBalance}
+                onClose={closeGenerationPanel}
+                onSubmit={(input) => {
+                  generate(input.kind, {
+                    ...input,
+                    targetNodeId:
+                      generationSession?.kind === input.kind
+                        ? generationSession.slotNodeId
+                        : undefined
+                  });
+                  closeGenerationPanel();
+                }}
+              />
+            ) : null}
+          </div>
+          <CanvasChatPanel
+            locale={locale}
+            projectId={snapshot.projectId}
+            collapsed={chatCollapsed}
+            onToggle={() => setChatCollapsed((value) => !value)}
+          />
         </div>
-        <CanvasChatPanel
-          locale={locale}
-          projectId={snapshot.projectId}
-          collapsed={chatCollapsed}
-          onToggle={() => setChatCollapsed((value) => !value)}
-        />
       </div>
-    </div>
+    </CanvasNodeActionsProvider>
   );
 }
 

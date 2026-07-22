@@ -19,6 +19,11 @@ export function ImageNode({ data, selected }: NodeProps<VincisCanvasNode>) {
             />
           </div>
         </div>
+      ) : data.status === "idle" && !data.url ? (
+        <div className="flex h-full flex-col items-center justify-center bg-zinc-50 p-5 text-center">
+          <ImageIcon className="mb-3 h-5 w-5 text-zinc-400" />
+          <p className="px-2 text-xs leading-5 text-zinc-400">{data.prompt || "等待生成图片…"}</p>
+        </div>
       ) : data.url ? (
         // Authenticated canvas assets intentionally bypass Next image optimization.
         <img

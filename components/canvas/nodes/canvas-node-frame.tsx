@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Handle, NodeResizer, Position } from "@xyflow/react";
+import { NodeResizer } from "@xyflow/react";
 import { AlertCircle, LoaderCircle } from "lucide-react";
 import type { CanvasNodeData } from "@/lib/canvas/types";
 import { cn } from "@/lib/utils";
@@ -29,16 +29,6 @@ export function CanvasNodeFrame({
       )}
     >
       <NodeResizer isVisible={selected} minWidth={minWidth} minHeight={minHeight} />
-      <Handle
-        type="target"
-        position={Position.Left}
-        className="!h-2.5 !w-2.5 !border-2 !border-white !bg-zinc-800"
-      />
-      <Handle
-        type="source"
-        position={Position.Right}
-        className="!h-2.5 !w-2.5 !border-2 !border-white !bg-zinc-800"
-      />
 
       <div className="flex h-10 items-center justify-between border-b border-zinc-100 px-3">
         <div className="flex min-w-0 items-center gap-2 text-xs font-medium text-zinc-700">

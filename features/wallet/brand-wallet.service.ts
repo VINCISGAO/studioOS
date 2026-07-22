@@ -2,6 +2,7 @@ import { walletRepository } from "@/features/wallet/wallet.repository";
 import { serializeTransaction, serializeWallet } from "@/features/wallet/wallet.serializer";
 import { userRepository } from "@/features/auth/user.repository";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
+import { allowDemoPaymentFallback, isPaymentStubMode } from "@/lib/payment/payment-stub";
 
 function roundMoney(value: number) {
   return Math.round(value * 100) / 100;
@@ -24,11 +25,7 @@ function allowManualWalletRecharge() {
 }
 
 function allowSyntheticInvoicePayment() {
-  return (
-    process.env.VINCIS_ENABLE_DEMO_PAYMENT === "1" ||
-    process.env.STUDIOOS_ENABLE_DEMO_PAYMENT === "1" ||
-    !isProductionRuntime()
-  );
+  return allowDemoPaymentFallback();
 }
 
 export type BrandWalletChargeResult = {
@@ -147,22 +144,23 @@ export async function payBrandWalletCharge(input: {
   invoicePrefix: string;
   payInvoice?: boolean;
 }): Promise<BrandWalletChargeResult> {
-  const wallet = await walletRepository.getOrCreate(input.brandUserId);
-  const amount = roundMoney(input.amount);
+  const chargeInput = isPaymentStubMode() ? { ...input, payInvoice: true } : input;
+  const wallet = await walletRepository.getOrCreate(chargeInput.brandUserId);
+  const amount = roundMoney(chargeInput.amount);
   const availableBefore = roundMoney(Number(wallet.availableBalance));
 
   if (availableBefore >= amount) {
     const balanceAfter = roundMoney(availableBefore - amount);
     await walletRepository.applyLedgerUpdate({
       walletId: wallet.id,
-      campaignId: input.campaignId,
+      campaignId: chargeInput.campaignId,
       availableDelta: -amount,
       entries: [
         {
           type: "CLIENT_SERVICE_FEE",
           amount,
           balanceAfter,
-          description: input.description
+          description: chargeInput.description
         }
       ]
     });
@@ -178,8 +176,8 @@ export async function payBrandWalletCharge(input: {
   }
 
   const shortfallAmount = roundMoney(amount - availableBefore);
-  const invoiceId = createInvoiceId(input.invoicePrefix);
-  if (input.payInvoice) {
+  const invoiceId = createInvoiceId(chargeInput.invoicePrefix);
+  if (chargeInput.payInvoice) {
     if (!allowSyntheticInvoicePayment()) {
       return {
         paymentSource: "invoice",
@@ -193,20 +191,20 @@ export async function payBrandWalletCharge(input: {
 
     await walletRepository.applyLedgerUpdate({
       walletId: wallet.id,
-      campaignId: input.campaignId,
+      campaignId: chargeInput.campaignId,
       availableDelta: roundMoney(shortfallAmount - amount),
       entries: [
         {
           type: "ESCROW_DEPOSIT",
           amount: shortfallAmount,
           balanceAfter: roundMoney(availableBefore + shortfallAmount),
-          description: `Invoice ${invoiceId} paid for ${input.description}`
+          description: `Invoice ${invoiceId} paid for ${chargeInput.description}`
         },
         {
           type: "CLIENT_SERVICE_FEE",
           amount,
           balanceAfter: 0,
-          description: input.description
+          description: chargeInput.description
         }
       ]
     });

@@ -17,7 +17,6 @@ import { useCanvasStore } from "@/components/canvas/canvas-store";
 import { useCanvasAutosave } from "@/components/canvas/hooks/use-canvas-autosave";
 import { useCanvasShortcuts } from "@/components/canvas/hooks/use-canvas-shortcuts";
 import { useCanvasViewportActions } from "@/components/canvas/hooks/use-canvas-viewport-actions";
-import { useCanvasFlowGraph } from "@/components/canvas/hooks/use-canvas-flow-graph";
 import { useCanvasViewportContent } from "@/components/canvas/hooks/use-canvas-viewport-content";
 import { useGenerationEvents } from "@/components/canvas/hooks/use-generation-events";
 import { ImageNode } from "@/components/canvas/nodes/image-node";
@@ -60,16 +59,18 @@ function InfiniteCanvasFlow({
   onCanvasPointerDown?: () => void;
   onNodeClick?: (node: VincisCanvasNode) => void;
 }) {
-  const { nodes, edges, onNodesChange, onEdgesChange } = useCanvasFlowGraph(projectId);
+  const nodes = useCanvasStore((state) => state.nodes);
+  const onNodesChange = useCanvasStore((state) => state.onNodesChange);
   const viewport = useCanvasStore((state) => state.viewport);
   const canvasBackgroundColor = useCanvasStore((state) => state.canvasBackgroundColor);
-  const connect = useCanvasStore((state) => state.connect);
   const setViewport = useCanvasStore((state) => state.setViewport);
   const interactionMode = useCanvasStore((state) => state.interactionMode);
   const pasteAt = useCanvasStore((state) => state.pasteAt);
   const addNode = useCanvasStore((state) => state.addNode);
   const undo = useCanvasStore((state) => state.undo);
   const redo = useCanvasStore((state) => state.redo);
+  const canUndo = useCanvasStore((state) => state.past.length > 0);
+  const canRedo = useCanvasStore((state) => state.future.length > 0);
   const flowRef = useRef<HTMLDivElement>(null);
   const [showMinimap, setShowMinimap] = useState(true);
   const { screenToFlowPosition } = useReactFlow();
@@ -155,11 +156,9 @@ function InfiniteCanvasFlow({
     >
       <ReactFlow
         nodes={nodes}
-        edges={edges}
+        edges={[]}
         nodeTypes={nodeTypes}
         onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={connect}
         onMoveEnd={(_event, nextViewport) => setViewport(nextViewport, { persist: true })}
         onPaneClick={onCanvasPointerDown}
         onNodeClick={handleNodeClick}
@@ -170,6 +169,7 @@ function InfiniteCanvasFlow({
         defaultViewport={viewport}
         minZoom={0.08}
         maxZoom={4}
+        nodesConnectable={false}
         selectionOnDrag={!isMoveMode}
         selectionKeyCode={null}
         panOnDrag={isMoveMode ? true : [1, 2]}
@@ -210,16 +210,18 @@ function InfiniteCanvasFlow({
         <button
           type="button"
           onClick={undo}
+          disabled={!canUndo}
           title="撤销 (⌘Z)"
-          className="border-r border-zinc-100 p-2 text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900"
+          className="border-r border-zinc-100 p-2 text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900 disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-transparent disabled:hover:text-zinc-500"
         >
           <Undo2 className="h-4 w-4" />
         </button>
         <button
           type="button"
           onClick={redo}
+          disabled={!canRedo}
           title="重做 (⇧⌘Z)"
-          className="p-2 text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900"
+          className="p-2 text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900 disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-transparent disabled:hover:text-zinc-500"
         >
           <Redo2 className="h-4 w-4" />
         </button>

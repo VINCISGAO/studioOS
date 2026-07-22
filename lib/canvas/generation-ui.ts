@@ -1,3 +1,9 @@
+import {
+  computeImageGenerationCredits,
+  computeMusicGenerationCredits,
+  computeVideoGenerationCredits
+} from "@/lib/canvas/generation-credits";
+
 export type GenerationKind = "image" | "video" | "music";
 
 export type VideoReferenceMode = "reference" | "edit" | "keyframes";
@@ -148,16 +154,12 @@ export function applyImageAspectRatio(settings: ImageGenerationSettings, ratio: 
 }
 
 export function estimateImageCredits(settings: ImageGenerationSettings) {
-  const qualityMultiplier =
-    settings.quality === "high"
-      ? 1.4
-      : settings.quality === "low"
-        ? 0.8
-        : settings.quality === "auto"
-          ? 1
-          : 1;
-  const sizeMultiplier = Math.max(settings.width, settings.height) >= 2048 ? 1.5 : 1;
-  return Math.round(15 * qualityMultiplier * sizeMultiplier * settings.outputs);
+  return computeImageGenerationCredits({
+    quality: settings.quality,
+    width: settings.width,
+    height: settings.height,
+    outputs: settings.outputs
+  });
 }
 
 export type VideoAspectRatio = "auto" | "16:9" | "4:3" | "1:1" | "3:4" | "9:16" | "21:9";
@@ -275,12 +277,17 @@ export function estimateVideoCredits(
   settings: VideoGenerationSettings,
   modelId: VideoModelId = DEFAULT_VIDEO_MODEL
 ) {
-  const qualityMultiplier =
-    settings.quality === "4k" ? 2 : settings.quality === "1080p" ? 1.4 : 1;
-  const modelMultiplier =
-    modelId.includes("fast") || modelId.includes("mini") || modelId.includes("flash") ? 0.85 : 1;
-  const cameraMultiplier = 1 + settings.cameraMovements.length * 0.05;
-  return Math.round(3 * settings.duration * qualityMultiplier * modelMultiplier * cameraMultiplier);
+  return computeVideoGenerationCredits(
+    {
+      aspectRatio: settings.aspectRatio,
+      duration: settings.duration,
+      quality: settings.quality,
+      audio: settings.audio,
+      webSearch: settings.webSearch,
+      cameraMovements: settings.cameraMovements
+    },
+    modelId
+  );
 }
 
 export type MusicCreationMode = "simple" | "custom" | "soundtrack";
@@ -380,9 +387,11 @@ export function canSubmitMusicSettings(settings: MusicGenerationSettings) {
 }
 
 export function estimateMusicCredits(settings: MusicGenerationSettings) {
-  const modeMultiplier = settings.mode === "soundtrack" ? 1.2 : settings.mode === "custom" ? 1 : 0.9;
-  const vocalMultiplier = settings.instrumental ? 1 : 1.15;
-  return Math.round(8 * modeMultiplier * vocalMultiplier);
+  return computeMusicGenerationCredits({
+    mode: settings.mode,
+    instrumental: settings.instrumental,
+    duration: settings.duration
+  });
 }
 
 export type CanvasLibraryAsset = {

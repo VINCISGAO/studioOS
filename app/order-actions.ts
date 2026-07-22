@@ -30,17 +30,14 @@ import { reviewPortalService } from "@/features/review/review-portal.service";
 import { settlementService } from "@/features/settlement/settlement.service";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { getAppBaseUrl } from "@/lib/app-url";
+import {
+  allowDemoPaymentFallback,
+  shouldBypassExternalCheckout
+} from "@/lib/payment/payment-stub";
 
 async function resolveActionLocale(formData: FormData): Promise<Locale> {
   const raw = String(formData.get("lang") ?? "").trim();
   return resolveServerLocale(raw || null);
-}
-
-function allowLegacyDemoPaymentFallback() {
-  if (process.env.VINCIS_ENABLE_DEMO_PAYMENT === "1" || process.env.STUDIOOS_ENABLE_DEMO_PAYMENT === "1") {
-    return true;
-  }
-  return process.env.NODE_ENV !== "production" && process.env.VERCEL !== "1";
 }
 
 function brandPayReturnPath(order: { id: string; project_id?: string | null }, lang: Locale, query: string) {
@@ -163,7 +160,7 @@ export async function payOrderAction(formData: FormData) {
     redirect(withLocale("/brand", lang));
   }
 
-  if (process.env.STRIPE_SECRET_KEY) {
+  if (process.env.STRIPE_SECRET_KEY && !shouldBypassExternalCheckout()) {
     const stripe = getStripe();
     const appUrl = getAppBaseUrl();
     const successPath = order.project_id
@@ -197,7 +194,7 @@ export async function payOrderAction(formData: FormData) {
     }
   }
 
-  if (!allowLegacyDemoPaymentFallback()) {
+  if (!allowDemoPaymentFallback()) {
     redirect(brandPayReturnPath(order, lang, "?error=stripe-not-configured"));
   }
 
