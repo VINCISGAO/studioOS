@@ -65,12 +65,12 @@ export async function finalizeCanvasGenerationJob(
   jobId: string,
   ownerId: string
 ) {
-  if (!user) return;
-
   const settledJob = await canvasRepository.findGenerationJob(jobId, ownerId);
   if (!settledJob) return;
   if (settledJob.status !== "SUCCEEDED" && settledJob.status !== "FAILED") return;
 
   await creditGenerationBillingService.syncJobBilling(settledJob);
-  await recordCanvasGenerationLucienLearning(user, settledJob);
+  if (user) {
+    await recordCanvasGenerationLucienLearning(user, settledJob);
+  }
 }
