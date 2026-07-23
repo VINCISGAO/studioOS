@@ -1,5 +1,12 @@
 import { z } from "zod";
 import { CANVAS_NODE_TYPES, DIRECTOR_SKILLS } from "@/lib/canvas/types";
+import {
+  MUSIC_LYRICS_MAX,
+  MUSIC_PROMPT_MAX,
+  MUSIC_STYLE_MAX,
+  MUSIC_TITLE_MAX,
+  musicFieldLimitMessage
+} from "@/lib/canvas/music-field-limits";
 import { appError } from "@/lib/core/errors";
 
 export const MAX_CANVAS_NODES = 300;
@@ -137,22 +144,46 @@ export const videoGenerationSchema = generationBaseSchema.extend({
     .max(120)
     .regex(/^[a-zA-Z0-9_-]+$/)
     .optional(),
+  referenceMimeType: z.string().trim().max(120).optional(),
   mode: generationModeSchema
 });
 
-export const musicGenerationSchema = generationBaseSchema.extend({
-  duration: z.number().int().min(10).max(180).default(30),
-  instrumental: z.boolean().default(true),
-  mode: z.enum(["simple", "custom", "soundtrack"]).default("custom"),
-  style: z.string().trim().max(120).optional(),
-  mood: z.string().trim().max(120).optional(),
-  lyrics: z.string().trim().max(5000).optional(),
-  songName: z.string().trim().max(180).optional(),
-  vocalGender: z.enum(["female", "male"]).optional(),
-  referenceEnabled: z.boolean().optional(),
-  remixEnabled: z.boolean().optional(),
-  vocalEnabled: z.boolean().optional()
-});
+export const musicGenerationSchema = generationBaseSchema
+  .extend({
+    prompt: z
+      .string()
+      .trim()
+      .min(3, { message: "至少需要 3 个字符" })
+      .max(MUSIC_PROMPT_MAX, { message: musicFieldLimitMessage(MUSIC_PROMPT_MAX) })
+  })
+  .extend({
+    instrumental: z.boolean().default(false),
+    mode: z.enum(["simple", "custom", "soundtrack"]).default("custom"),
+    style: z
+      .string()
+      .trim()
+      .max(MUSIC_STYLE_MAX, { message: musicFieldLimitMessage(MUSIC_STYLE_MAX) })
+      .optional(),
+    mood: z
+      .string()
+      .trim()
+      .max(MUSIC_STYLE_MAX, { message: musicFieldLimitMessage(MUSIC_STYLE_MAX) })
+      .optional(),
+    lyrics: z
+      .string()
+      .trim()
+      .max(MUSIC_LYRICS_MAX, { message: musicFieldLimitMessage(MUSIC_LYRICS_MAX) })
+      .optional(),
+    songName: z
+      .string()
+      .trim()
+      .max(MUSIC_TITLE_MAX, { message: musicFieldLimitMessage(MUSIC_TITLE_MAX) })
+      .optional(),
+    vocalGender: z.enum(["female", "male"]).optional(),
+    referenceEnabled: z.boolean().optional(),
+    remixEnabled: z.boolean().optional(),
+    vocalEnabled: z.boolean().optional()
+  });
 
 const actionPosition = finiteNumber.min(-100_000).max(100_000);
 const actionSize = finiteNumber.min(80).max(4000);
@@ -229,6 +260,13 @@ export const canvasDirectorRequestSchema = z.object({
 export const canvasDirectorApplySchema = z.object({
   projectId: z.string().uuid(),
   plan: canvasDirectorPlanSchema
+});
+
+export const canvasPromptEnhanceSchema = z.object({
+  projectId: z.string().uuid(),
+  field: z.enum(["music_style"]),
+  text: z.string().trim().min(1).max(MUSIC_STYLE_MAX, { message: musicFieldLimitMessage(MUSIC_STYLE_MAX) }),
+  languageCode: z.string().max(20).optional().nullable()
 });
 
 export function assertCanvasPayloadSize(value: unknown) {

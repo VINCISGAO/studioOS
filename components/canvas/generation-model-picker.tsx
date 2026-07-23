@@ -19,7 +19,7 @@ export function GenerationModelPicker({
   onClose: () => void;
 }) {
   return (
-    <div className="absolute bottom-full right-0 z-[60] mb-2 max-h-[320px] w-[min(92vw,300px)] overflow-y-auto rounded-2xl border border-zinc-200 bg-white py-1 shadow-2xl">
+    <div className="max-h-[320px] overflow-y-auto rounded-2xl border border-zinc-200 bg-white py-1 shadow-2xl">
       <div className="flex items-center justify-between px-3 py-2">
         <span className="text-xs font-medium text-zinc-500">
           {locale === "zh" ? "选择模型" : "Choose model"}

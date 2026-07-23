@@ -1,6 +1,13 @@
 "use client";
 
+import { Shield } from "lucide-react";
+import type { GenerationReferenceSlot } from "@/components/canvas/generation-kind-selector";
 import { GenerationUploadMenu } from "@/components/canvas/generation-upload-menu";
+import {
+  VIDEO_PANEL_HEADER_ROW,
+  VIDEO_PANEL_NOTICE,
+  videoPanelUploadButtonClass
+} from "@/lib/canvas/generation-video-panel-design";
 import type { Locale } from "@/lib/i18n";
 
 const copy = {
@@ -10,6 +17,7 @@ const copy = {
 
 export function GenerationVideoHeader({
   locale,
+  referenceSlot,
   uploadOpen,
   onUploadToggle,
   onLocalUpload,
@@ -17,6 +25,7 @@ export function GenerationVideoHeader({
   onOpenCanvasPicker
 }: {
   locale: Locale;
+  referenceSlot: GenerationReferenceSlot;
   uploadOpen: boolean;
   onUploadToggle: () => void;
   onLocalUpload: () => void;
@@ -26,11 +35,16 @@ export function GenerationVideoHeader({
   const t = copy[locale];
 
   return (
-    <div className="flex items-center justify-between gap-3 px-4 pb-1 pt-3">
-      <p className="min-w-0 flex-1 text-[11px] leading-4 text-zinc-400">{t.hint}</p>
+    <div className={VIDEO_PANEL_HEADER_ROW}>
+      <p className={VIDEO_PANEL_NOTICE}>
+        <Shield className="h-3.5 w-3.5 shrink-0 text-zinc-400" />
+        {t.hint}
+      </p>
       <GenerationUploadMenu
         locale={locale}
+        slot={referenceSlot}
         open={uploadOpen}
+        buttonClassName={videoPanelUploadButtonClass}
         onToggle={onUploadToggle}
         onLocalUpload={onLocalUpload}
         onOpenLibrary={onOpenLibrary}

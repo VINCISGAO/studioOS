@@ -1,5 +1,32 @@
 import type { CreativeProjectMode, GenerationStatus, GenerationType, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/core/database/prisma";
+import type { CanvasLibraryAssetType } from "@/lib/canvas/canvas-library-kind";
+import {
+  CANVAS_LIBRARY_ASSET_KIND,
+  LEGACY_CANVAS_ASSET_KIND
+} from "@/lib/canvas/canvas-asset-metadata";
+
+const libraryAssetMetadataWhere = {
+  OR: [
+    { metadataJson: { path: ["kind"], equals: CANVAS_LIBRARY_ASSET_KIND } },
+    {
+      AND: [
+        { metadataJson: { path: ["kind"], equals: LEGACY_CANVAS_ASSET_KIND } },
+        { metadataJson: { path: ["source"], equals: "creator_upload" } }
+      ]
+    }
+  ]
+} satisfies Prisma.CreativeProjectAssetWhereInput;
+
+const libraryAssetSelect = {
+  id: true,
+  fileName: true,
+  mimeType: true,
+  assetType: true,
+  previewUrl: true,
+  metadataJson: true,
+  createdAt: true
+} as const;
 
 const campaignContextSelect = {
   id: true,
@@ -275,15 +302,61 @@ export const canvasRepository = {
       where: { creativeProjectId: projectId, deletedAt: null },
       orderBy: { createdAt: "desc" },
       take: 48,
-      select: {
-        id: true,
-        fileName: true,
-        mimeType: true,
-        assetType: true,
-        previewUrl: true,
-        metadataJson: true,
-        createdAt: true
-      }
+      select: libraryAssetSelect
+    });
+  },
+
+  listProjectLibraryAssets(projectId: string, assetType: CanvasLibraryAssetType) {
+    return prisma.creativeProjectAsset.findMany({
+      where: {
+        creativeProjectId: projectId,
+        deletedAt: null,
+        assetType,
+        ...libraryAssetMetadataWhere
+      },
+      orderBy: { createdAt: "desc" },
+      take: 48,
+      select: libraryAssetSelect
+    });
+  },
+
+  listCampaignLibraryAssets(campaignId: string, assetType: CanvasLibraryAssetType) {
+    return prisma.campaignAsset.findMany({
+      where: {
+        campaignId,
+        deletedAt: null,
+        assetType,
+        ...libraryAssetMetadataWhere
+      },
+      orderBy: { createdAt: "desc" },
+      take: 48,
+      select: libraryAssetSelect
+    });
+  },
+
+  findProjectLibraryAssetIds(projectId: string, assetIds: string[], assetType: CanvasLibraryAssetType) {
+    return prisma.creativeProjectAsset.findMany({
+      where: {
+        creativeProjectId: projectId,
+        deletedAt: null,
+        id: { in: assetIds },
+        assetType,
+        ...libraryAssetMetadataWhere
+      },
+      select: { id: true }
+    });
+  },
+
+  findCampaignLibraryAssetIds(campaignId: string, assetIds: string[], assetType: CanvasLibraryAssetType) {
+    return prisma.campaignAsset.findMany({
+      where: {
+        campaignId,
+        deletedAt: null,
+        id: { in: assetIds },
+        assetType,
+        ...libraryAssetMetadataWhere
+      },
+      select: { id: true }
     });
   },
 
@@ -292,15 +365,7 @@ export const canvasRepository = {
       where: { campaignId, deletedAt: null },
       orderBy: { createdAt: "desc" },
       take: 48,
-      select: {
-        id: true,
-        fileName: true,
-        mimeType: true,
-        assetType: true,
-        previewUrl: true,
-        metadataJson: true,
-        createdAt: true
-      }
+      select: libraryAssetSelect
     });
   },
 
@@ -421,6 +486,10 @@ export const canvasRepository = {
     return prisma.generationJob.findFirst({ where: { id: jobId, ownerId } });
   },
 
+  findGenerationJobByProviderTaskId(providerTaskId: string) {
+    return prisma.generationJob.findFirst({ where: { providerTaskId } });
+  },
+
   listGenerationJobs(projectId: string, ownerId: string, since: Date) {
     return prisma.generationJob.findMany({
       where: { creativeProjectId: projectId, ownerId, createdAt: { gte: since } },
@@ -444,6 +513,27 @@ export const canvasRepository = {
     }
   ) {
     return prisma.generationJob.update({ where: { id }, data });
+  },
+
+  async claimGenerationJob(
+    jobId: string,
+    ownerId: string,
+    input?: { progress?: number }
+  ) {
+    const result = await prisma.generationJob.updateMany({
+      where: {
+        id: jobId,
+        ownerId,
+        status: { in: ["QUEUED", "SUBMITTING"] }
+      },
+      data: {
+        status: "PROCESSING",
+        progress: input?.progress ?? 10,
+        startedAt: new Date()
+      }
+    });
+    if (result.count === 0) return null;
+    return prisma.generationJob.findFirst({ where: { id: jobId, ownerId } });
   }
 };
 

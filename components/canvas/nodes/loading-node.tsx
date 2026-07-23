@@ -4,8 +4,28 @@ import { LoaderCircle, Sparkles } from "lucide-react";
 import type { NodeProps } from "@xyflow/react";
 import type { VincisCanvasNode } from "@/lib/canvas/types";
 import { CanvasNodeFrame } from "@/components/canvas/nodes/canvas-node-frame";
+import { MusicNodeGeneratingView } from "@/components/canvas/nodes/music-node-generating-view";
+import { MusicNodeShell } from "@/components/canvas/nodes/music-node-shell";
+import { VideoNodeGeneratingView } from "@/components/canvas/nodes/video-node-generating-view";
+import { VideoNodeShell } from "@/components/canvas/nodes/video-node-shell";
 
 export function LoadingNode({ data, selected }: NodeProps<VincisCanvasNode>) {
+  if (data.generationType === "MUSIC") {
+    return (
+      <MusicNodeShell selected={selected}>
+        <MusicNodeGeneratingView data={data} />
+      </MusicNodeShell>
+    );
+  }
+
+  if (data.generationType === "VIDEO") {
+    return (
+      <VideoNodeShell selected={selected}>
+        <VideoNodeGeneratingView data={data} />
+      </VideoNodeShell>
+    );
+  }
+
   return (
     <CanvasNodeFrame data={data} selected={selected} icon={<Sparkles className="h-4 w-4" />}>
       <div className="flex h-full flex-col items-center justify-center bg-zinc-50 p-5 text-center">

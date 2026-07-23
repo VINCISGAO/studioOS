@@ -10,7 +10,6 @@ import {
 
 export type MusicJobPayload = {
   mode?: string;
-  duration?: number;
   style?: string;
   mood?: string;
   instrumental?: boolean;
@@ -24,7 +23,6 @@ function readPayload(raw: unknown): MusicJobPayload {
   const record = raw as Record<string, unknown>;
   return {
     mode: typeof record.mode === "string" ? record.mode : undefined,
-    duration: typeof record.duration === "number" ? record.duration : undefined,
     style: typeof record.style === "string" ? record.style : undefined,
     mood: typeof record.mood === "string" ? record.mood : undefined,
     instrumental: typeof record.instrumental === "boolean" ? record.instrumental : undefined,

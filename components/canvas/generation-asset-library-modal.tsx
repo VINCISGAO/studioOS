@@ -1,32 +1,39 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { GenerationAssetLibraryGrid } from "@/components/canvas/generation-asset-library-grid";
 import { GenerationSeedanceRequirementsDialog } from "@/components/canvas/generation-seedance-requirements-dialog";
+import { useBodyPortalReady } from "@/components/canvas/hooks/use-body-portal-ready";
+import type { GenerationReferenceSlot } from "@/components/canvas/generation-kind-selector";
+import {
+  canvasLibraryKindFromReferenceSlot,
+  libraryCopy,
+  type CanvasAssetLibraryKind
+} from "@/lib/canvas/canvas-library-kind";
 import type { CanvasLibraryAsset, GenerationReference } from "@/lib/canvas/generation-ui";
+import { CANVAS_GENERATION_MODAL_Z_INDEX } from "@/lib/canvas/generation-ui";
 import type { Locale } from "@/lib/i18n";
 
-const copy = {
+const sharedCopy = {
   zh: {
-    title: "素材库",
     requirements: "Seedance 素材要求",
     done: "完成",
-    empty: "暂无素材。请通过上方入口上传，审核通过后可作为参考素材。",
     batchDelete: "批量删除",
     selectMode: "批量管理",
     cancelSelect: "取消",
-    deleteFailed: "删除失败"
+    deleteFailed: "删除失败",
+    uploadFailed: "上传失败"
   },
   en: {
-    title: "Asset library",
     requirements: "Seedance asset requirements",
     done: "Done",
-    empty: "No library assets yet. Upload here and use approved items as references.",
     batchDelete: "Delete selected",
     selectMode: "Manage",
     cancelSelect: "Cancel",
-    deleteFailed: "Delete failed"
+    deleteFailed: "Delete failed",
+    uploadFailed: "Upload failed"
   }
 } as const;
 
@@ -36,9 +43,28 @@ type ApiEnvelope<T> = {
   error?: { message?: string };
 };
 
+function toLibraryAsset(reference: GenerationReference, file: File): CanvasLibraryAsset {
+  const assetType = file.type.startsWith("video/")
+    ? "REFERENCE_VIDEO"
+    : file.type.startsWith("audio/") || file.name.toLowerCase().endsWith(".mp3")
+      ? "MUSIC"
+      : "REFERENCE_IMAGE";
+  return {
+    id: reference.assetId ?? reference.url,
+    fileName: reference.fileName,
+    mimeType: reference.mimeType ?? file.type,
+    url: reference.url,
+    assetType,
+    reviewStatus: reference.reviewStatus ?? "PENDING",
+    reviewReasons: reference.reviewReasons ?? [],
+    selectable: reference.selectable ?? false
+  };
+}
+
 export function GenerationAssetLibraryModal({
   locale,
   projectId,
+  libraryKind,
   open,
   selectedId,
   onClose,
@@ -47,17 +73,21 @@ export function GenerationAssetLibraryModal({
 }: {
   locale: Locale;
   projectId: string;
+  libraryKind: CanvasAssetLibraryKind;
   open: boolean;
   selectedId?: string;
   onClose: () => void;
   onSelect: (reference: GenerationReference) => void;
-  onUpload: (file: File) => Promise<GenerationReference>;
+  onUpload: (file: File, libraryKind: CanvasAssetLibraryKind) => Promise<GenerationReference>;
 }) {
-  const t = copy[locale];
+  const portalReady = useBodyPortalReady();
+  const t = sharedCopy[locale];
+  const kindCopy = useMemo(() => libraryCopy(locale, libraryKind), [locale, libraryKind]);
   const [assets, setAssets] = useState<CanvasLibraryAsset[]>([]);
   const [loading, setLoading] = useState(false);
   const [pendingId, setPendingId] = useState<string | null>(selectedId ?? null);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number } | null>(null);
   const [manageMode, setManageMode] = useState(false);
   const [checkedIds, setCheckedIds] = useState<string[]>([]);
   const [deleting, setDeleting] = useState(false);
@@ -68,13 +98,16 @@ export function GenerationAssetLibraryModal({
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`/api/canvas/assets?projectId=${encodeURIComponent(projectId)}`);
+      const response = await fetch(
+        `/api/canvas/assets?projectId=${encodeURIComponent(projectId)}&kind=${libraryKind}`,
+        { cache: "no-store" }
+      );
       const payload = (await response.json()) as ApiEnvelope<CanvasLibraryAsset[]>;
       if (payload.success && payload.data) setAssets(payload.data);
     } finally {
       setLoading(false);
     }
-  }, [projectId]);
+  }, [libraryKind, projectId]);
 
   useEffect(() => {
     if (!open || !projectId) return;
@@ -82,7 +115,7 @@ export function GenerationAssetLibraryModal({
     setManageMode(false);
     setCheckedIds([]);
     void loadAssets();
-  }, [open, projectId, selectedId, loadAssets]);
+  }, [open, projectId, selectedId, libraryKind, loadAssets]);
 
   async function deleteAssets(assetIds: string[]) {
     if (!assetIds.length) return;
@@ -92,7 +125,7 @@ export function GenerationAssetLibraryModal({
       const response = await fetch("/api/canvas/assets", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ projectId, assetIds })
+        body: JSON.stringify({ projectId, kind: libraryKind, assetIds })
       });
       const payload = (await response.json()) as ApiEnvelope<{ deleted: number; assetIds: string[] }>;
       if (!response.ok || !payload.success || !payload.data) {
@@ -109,36 +142,45 @@ export function GenerationAssetLibraryModal({
     }
   }
 
-  async function handleUpload(file: File) {
+  async function handleUploadFiles(files: File[]) {
+    if (!files.length) return;
     setUploading(true);
+    setUploadProgress({ done: 0, total: files.length });
     setError(null);
+    const uploadedAssets: CanvasLibraryAsset[] = [];
     try {
-      const reference = await onUpload(file);
-      const nextAsset: CanvasLibraryAsset = {
-        id: reference.assetId ?? reference.url,
-        fileName: reference.fileName,
-        mimeType: reference.mimeType ?? file.type,
-        url: reference.url,
-        assetType: file.type.startsWith("video/") ? "REFERENCE_VIDEO" : "REFERENCE_IMAGE",
-        reviewStatus: reference.reviewStatus ?? "PENDING",
-        reviewReasons: reference.reviewReasons ?? [],
-        selectable: reference.selectable ?? false
-      };
-      setPendingId(nextAsset.selectable ? nextAsset.id : null);
-      setAssets((current) => [nextAsset, ...current]);
+      for (const [index, file] of files.entries()) {
+        const reference = await onUpload(file, libraryKind);
+        uploadedAssets.push(toLibraryAsset(reference, file));
+        setUploadProgress({ done: index + 1, total: files.length });
+      }
+      if (uploadedAssets.length) {
+        const firstSelectable = uploadedAssets.find((item) => item.selectable);
+        if (firstSelectable) setPendingId(firstSelectable.id);
+        setAssets((current) => [...uploadedAssets, ...current]);
+      }
+    } catch (uploadError) {
+      setError(uploadError instanceof Error ? uploadError.message : t.uploadFailed);
     } finally {
       setUploading(false);
+      setUploadProgress(null);
     }
   }
 
-  if (!open) return null;
+  if (!open || !portalReady) return null;
 
-  return (
+  return createPortal(
     <>
-      <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/35 p-4">
+      <div
+        className="fixed inset-0 flex items-center justify-center bg-black/35 p-4"
+        style={{ zIndex: CANVAS_GENERATION_MODAL_Z_INDEX }}
+        role="dialog"
+        aria-modal="true"
+        aria-label={kindCopy.title}
+      >
         <div className="flex max-h-[88vh] w-full max-w-[760px] flex-col overflow-hidden rounded-3xl bg-[#f3f3f2] shadow-2xl">
           <div className="flex items-center justify-between border-b border-zinc-200 bg-white px-5 py-4">
-            <h2 className="text-base font-semibold text-zinc-950">{t.title}</h2>
+            <h2 className="text-base font-semibold text-zinc-950">{kindCopy.title}</h2>
             <div className="flex items-center gap-2">
               <button
                 type="button"
@@ -163,14 +205,17 @@ export function GenerationAssetLibraryModal({
           <div className="min-h-0 flex-1 overflow-y-auto p-5">
             <GenerationAssetLibraryGrid
               locale={locale}
+              libraryKind={libraryKind}
               assets={assets}
               loading={loading}
               uploading={uploading}
+              uploadProgress={uploadProgress}
               manageMode={manageMode}
               pendingId={pendingId}
               checkedIds={checkedIds}
               deleting={deleting}
-              onUploadFile={handleUpload}
+              uploadLabel={kindCopy.upload}
+              onUploadFiles={handleUploadFiles}
               onToggleChecked={(assetId) =>
                 setCheckedIds((current) =>
                   current.includes(assetId)
@@ -182,19 +227,23 @@ export function GenerationAssetLibraryModal({
               onDeleteAsset={(assetId) => void deleteAssets([assetId])}
             />
             {!loading && assets.length === 0 ? (
-              <p className="mt-4 text-center text-sm text-zinc-500">{t.empty}</p>
+              <p className="mt-4 text-center text-sm text-zinc-500">{kindCopy.empty}</p>
             ) : null}
             {error ? <p className="mt-3 text-center text-xs text-rose-600">{error}</p> : null}
           </div>
 
           <div className="flex items-center justify-between border-t border-zinc-200 bg-white px-5 py-4">
-            <button
-              type="button"
-              onClick={() => setShowRequirements(true)}
-              className="text-sm text-zinc-500 hover:text-zinc-800"
-            >
-              {t.requirements} &gt;
-            </button>
+            {libraryKind === "video" ? (
+              <button
+                type="button"
+                onClick={() => setShowRequirements(true)}
+                className="text-sm text-zinc-500 hover:text-zinc-800"
+              >
+                {t.requirements} &gt;
+              </button>
+            ) : (
+              <span />
+            )}
             <div className="flex items-center gap-2">
               {manageMode && checkedIds.length ? (
                 <button
@@ -235,6 +284,13 @@ export function GenerationAssetLibraryModal({
         open={showRequirements}
         onClose={() => setShowRequirements(false)}
       />
-    </>
+    </>,
+    document.body
   );
+}
+
+export function generationAssetLibraryKindFromSlot(
+  slot: GenerationReferenceSlot
+): CanvasAssetLibraryKind {
+  return canvasLibraryKindFromReferenceSlot(slot);
 }

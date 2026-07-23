@@ -1,7 +1,10 @@
 "use client";
 
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
+import { useBodyPortalReady } from "@/components/canvas/hooks/use-body-portal-ready";
 import type { GenerationReference } from "@/lib/canvas/generation-ui";
+import { CANVAS_GENERATION_MODAL_Z_INDEX } from "@/lib/canvas/generation-ui";
 import type { VincisCanvasNode } from "@/lib/canvas/types";
 import type { Locale } from "@/lib/i18n";
 
@@ -49,7 +52,8 @@ export function GenerationCanvasPickerModal({
   onClose: () => void;
   onSelect: (reference: GenerationReference) => void;
 }) {
-  if (!open) return null;
+  const portalReady = useBodyPortalReady();
+  if (!open || !portalReady) return null;
   const t = copy[locale];
   const canvasAssets = nodes.filter(
     (node) =>
@@ -59,8 +63,14 @@ export function GenerationCanvasPickerModal({
       matchesReferenceSlot(node, filterSlot)
   );
 
-  return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/35 p-4">
+  return createPortal(
+    <div
+      className="fixed inset-0 flex items-center justify-center bg-black/35 p-4"
+      style={{ zIndex: CANVAS_GENERATION_MODAL_Z_INDEX }}
+      role="dialog"
+      aria-modal="true"
+      aria-label={t.title}
+    >
       <div className="w-full max-w-[640px] rounded-3xl bg-white p-5 shadow-2xl">
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-base font-semibold text-zinc-950">{t.title}</h3>
@@ -111,6 +121,7 @@ export function GenerationCanvasPickerModal({
           <p className="py-8 text-center text-sm text-zinc-500">{t.empty}</p>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

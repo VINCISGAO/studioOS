@@ -1,4 +1,3 @@
-import { after } from "next/server";
 import type { AuthUserDto } from "@/features/auth/auth.service";
 import { authService } from "@/features/auth/auth.service";
 import { canvasAssetService } from "@/features/canvas/canvas-asset.service";
@@ -11,7 +10,8 @@ import {
   murekaTaskProgress
 } from "@/lib/canvas/mureka-client";
 import { submitMurekaMusicTask } from "@/lib/canvas/mureka-music-request";
-import { hasMureka } from "@/lib/core/config/ai";
+import { scheduleCanvasBackgroundWork } from "@/lib/canvas/schedule-background-work";
+import { hasMureka, hasSeedance } from "@/lib/core/config/ai";
 import { logger } from "@/lib/core/logger";
 
 async function failJob(
@@ -29,7 +29,7 @@ async function failJob(
 
 export class CanvasMusicGenerationService {
   scheduleJob(jobId: string, ownerId: string) {
-    const run = () => {
+    scheduleCanvasBackgroundWork("CanvasMusicGenerationService.processJob", () => {
       void this.processJob(jobId, ownerId).catch((error) => {
         logger.error("Canvas music generation failed", {
           service: "CanvasMusicGenerationService",
@@ -38,127 +38,125 @@ export class CanvasMusicGenerationService {
           error: error instanceof Error ? error.message : String(error)
         });
       });
-    };
-
-    try {
-      after(run);
-    } catch {
-      run();
-    }
+    });
   }
 
   async processJob(jobId: string, ownerId: string) {
     let user: AuthUserDto | null = null;
 
     try {
-      let job = await canvasRepository.findGenerationJob(jobId, ownerId);
-      if (!job || job.type !== "MUSIC") return;
-      if (job.status !== "QUEUED" && job.status !== "SUBMITTING") return;
-
       user = await authService.getUserById(ownerId);
-    if (!user) {
-      await failJob(jobId, {
-        errorCode: "OWNER_NOT_FOUND",
-        errorMessage: "Generation owner not found"
-      });
-      return;
-    }
+      if (!user) {
+        await failJob(jobId, {
+          errorCode: "OWNER_NOT_FOUND",
+          errorMessage: "Generation owner not found"
+        });
+        return;
+      }
 
-    if (!hasMureka() || job.provider !== "mureka") {
-      await failJob(jobId, {
-        errorCode: "MUREKA_NOT_CONFIGURED",
-        errorMessage: "MUREKA_API_KEY is not configured"
-      });
-      return;
-    }
+      const job = await canvasRepository.claimGenerationJob(jobId, ownerId, { progress: 15 });
+      if (!job || job.type !== "MUSIC") return;
 
-    await canvasRepository.updateGenerationJob(jobId, {
-      status: "PROCESSING",
-      progress: 15,
-      startedAt: new Date()
-    });
+      if (!hasMureka() || job.provider !== "mureka") {
+        await failJob(jobId, {
+          errorCode: "MUREKA_NOT_CONFIGURED",
+          errorMessage: "MUREKA_API_KEY is not configured"
+        });
+        return;
+      }
 
-    try {
-      const submission = await submitMurekaMusicTask({
-        internalModelId: job.model,
-        prompt: job.prompt,
-        payload: job.input
-      });
-
-      await canvasRepository.updateGenerationJob(jobId, {
-        status: "PROCESSING",
-        progress: 25,
-        providerTaskId: submission.task.id
-      });
-
-      const polled = await murekaPollTask({
-        kind: submission.kind,
-        taskId: submission.task.id,
-        onProgress: async (task) => {
-          await canvasRepository.updateGenerationJob(jobId, {
-            status: "PROCESSING",
-            progress: murekaTaskProgress(task.status)
-          });
-        }
-      });
-
-      await canvasRepository.updateGenerationJob(jobId, {
-        status: "PROCESSING",
-        progress: 88
-      });
-
-      const downloaded = await murekaDownloadAudio(polled.audioUrl);
-      const extension =
-        downloaded.mimeType === "audio/wav"
-          ? "wav"
-          : downloaded.mimeType === "audio/mp4"
-            ? "m4a"
-            : "mp3";
-
-      const asset = await canvasAssetService.saveGeneratedAudioBuffer(job.creativeProjectId, user, {
-        buffer: downloaded.buffer,
-        mimeType: downloaded.mimeType,
-        fileName: `canvas-generated-music.${extension}`,
-        metadata: {
+      try {
+        const submission = await submitMurekaMusicTask({
+          internalModelId: job.model,
           prompt: job.prompt,
-          model: job.model,
-          murekaModel: submission.model,
-          murekaTaskId: submission.task.id,
-          generationJobId: job.id,
-          nodeId: job.nodeId,
-          provider: job.provider,
-          audioUrlExpiresInDays: 30
-        }
-      });
+          payload: job.input
+        });
 
-      job = await canvasRepository.updateGenerationJob(jobId, {
-        status: "SUCCEEDED",
-        progress: 100,
-        outputAssetId: asset.id,
-        actualCredits: job.estimatedCredits,
-        completedAt: new Date()
-      });
-    } catch (error) {
-      const message =
-        error instanceof MurekaApiError
-          ? error.message
-          : error instanceof Error
+        await canvasRepository.updateGenerationJob(jobId, {
+          status: "PROCESSING",
+          progress: 25,
+          providerTaskId: submission.task.id
+        });
+
+        const polled = await murekaPollTask({
+          kind: submission.kind,
+          taskId: submission.task.id,
+          onProgress: async (task) => {
+            await canvasRepository.updateGenerationJob(jobId, {
+              status: "PROCESSING",
+              progress: murekaTaskProgress(task.status)
+            });
+          }
+        });
+
+        await canvasRepository.updateGenerationJob(jobId, {
+          status: "PROCESSING",
+          progress: 88
+        });
+
+        const downloaded = await murekaDownloadAudio(polled.audioUrl);
+        const extension =
+          downloaded.mimeType === "audio/wav"
+            ? "wav"
+            : downloaded.mimeType === "audio/mp4"
+              ? "m4a"
+              : "mp3";
+
+        const asset = await canvasAssetService.saveGeneratedAudioBuffer(job.creativeProjectId, user, {
+          buffer: downloaded.buffer,
+          mimeType: downloaded.mimeType,
+          fileName: `canvas-generated-music.${extension}`,
+          metadata: {
+            prompt: job.prompt,
+            model: job.model,
+            murekaModel: submission.model,
+            murekaTaskId: submission.task.id,
+            generationJobId: job.id,
+            nodeId: job.nodeId,
+            provider: job.provider,
+            audioUrlExpiresInDays: 30
+          }
+        });
+
+        await canvasRepository.updateGenerationJob(jobId, {
+          status: "SUCCEEDED",
+          progress: 100,
+          outputAssetId: asset.id,
+          actualCredits: job.estimatedCredits,
+          completedAt: new Date()
+        });
+      } catch (error) {
+        const message =
+          error instanceof MurekaApiError
             ? error.message
-            : "Failed to generate music";
-      const errorCode = error instanceof MurekaApiError ? error.code : "MUREKA_GENERATION_FAILED";
+            : error instanceof Error
+              ? error.message
+              : "Failed to generate music";
+        const errorCode = error instanceof MurekaApiError ? error.code : "MUREKA_GENERATION_FAILED";
 
-      logger.error("Canvas music generation failed", {
+        logger.error("Canvas music generation failed", {
+          service: "CanvasMusicGenerationService",
+          jobId,
+          ownerId,
+          errorCode,
+          traceId: error instanceof MurekaApiError ? error.traceId : undefined,
+          error: message
+        });
+
+        await failJob(jobId, { errorCode, errorMessage: message });
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to generate music";
+      logger.error("Canvas music generation crashed", {
         service: "CanvasMusicGenerationService",
         jobId,
         ownerId,
-        errorCode,
-        traceId: error instanceof MurekaApiError ? error.traceId : undefined,
         error: message
       });
-
-      await failJob(jobId, { errorCode, errorMessage: message });
-    }
-
+      await failJob(jobId, {
+        errorCode: "MUSIC_GENERATION_CRASHED",
+        errorMessage: message
+      });
     } finally {
       await finalizeCanvasGenerationJob(user, jobId, ownerId);
     }

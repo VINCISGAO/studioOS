@@ -33,7 +33,7 @@ import {
   readChatImageDragData
 } from "@/lib/canvas/chat-image-canvas";
 import { viewportCenterFlowPoint } from "@/lib/canvas/viewport-anchor";
-import type { VincisCanvasNode } from "@/lib/canvas/types";
+import type { GenerationJobEvent, VincisCanvasNode } from "@/lib/canvas/types";
 import type { Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import "@/components/canvas/canvas-flow.css";
@@ -52,12 +52,14 @@ function InfiniteCanvasFlow({
   projectId,
   locale,
   onCanvasPointerDown,
-  onNodeClick
+  onNodeClick,
+  onGenerationTerminalFailure
 }: {
   projectId: string;
   locale: Locale;
   onCanvasPointerDown?: () => void;
   onNodeClick?: (node: VincisCanvasNode) => void;
+  onGenerationTerminalFailure?: (event: GenerationJobEvent) => void;
 }) {
   const nodes = useCanvasStore((state) => state.nodes);
   const onNodesChange = useCanvasStore((state) => state.onNodesChange);
@@ -79,7 +81,7 @@ function InfiniteCanvasFlow({
   const { showEmptyHint } = useCanvasViewportContent(flowRef);
 
   useCanvasAutosave();
-  useGenerationEvents(projectId);
+  useGenerationEvents(projectId, { onTerminalFailure: onGenerationTerminalFailure });
 
   const isMoveMode = interactionMode === "move";
   const dotColor = isDarkCanvasBackground(canvasBackgroundColor) ? "#5a5a58" : "#dededb";
@@ -234,12 +236,14 @@ export function InfiniteCanvas({
   projectId,
   locale,
   onCanvasPointerDown,
-  onNodeClick
+  onNodeClick,
+  onGenerationTerminalFailure
 }: {
   projectId: string;
   locale: Locale;
   onCanvasPointerDown?: () => void;
   onNodeClick?: (node: VincisCanvasNode) => void;
+  onGenerationTerminalFailure?: (event: GenerationJobEvent) => void;
 }) {
   return (
     <ReactFlowProvider>
@@ -249,6 +253,7 @@ export function InfiniteCanvas({
         locale={locale}
         onCanvasPointerDown={onCanvasPointerDown}
         onNodeClick={onNodeClick}
+        onGenerationTerminalFailure={onGenerationTerminalFailure}
       />
     </ReactFlowProvider>
   );

@@ -19,6 +19,7 @@ export interface ImageProvider {
   getStatus(providerTaskId: string): Promise<GenerationResult>;
 }
 
+/** @deprecated Use `VideoProviderAdapter` in `features/video-engine/video-provider.types.ts`. */
 export interface VideoProvider {
   submit(input: {
     prompt: string;

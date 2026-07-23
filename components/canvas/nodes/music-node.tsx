@@ -1,57 +1,78 @@
 "use client";
 
-import { Music2 } from "lucide-react";
+import { useEffect } from "react";
 import type { NodeProps } from "@xyflow/react";
 import type { VincisCanvasNode } from "@/lib/canvas/types";
-import { CanvasNodeFrame } from "@/components/canvas/nodes/canvas-node-frame";
-import { CanvasVideoNodeMenu } from "@/components/canvas/nodes/canvas-video-node-menu";
+import { useCanvasStore } from "@/components/canvas/canvas-store";
+import { MusicNodeGeneratingView } from "@/components/canvas/nodes/music-node-generating-view";
+import {
+  MusicNodeFailedView,
+  MusicNodeIdleView,
+  MusicNodeReadyView
+} from "@/components/canvas/nodes/music-node-ready-view";
+import { MusicNodeShell } from "@/components/canvas/nodes/music-node-shell";
+import {
+  MUSIC_NODE_CARD,
+  MUSIC_NODE_LOADING_CARD,
+  MUSIC_NODE_READY_CARD
+} from "@/lib/canvas/music-node-design";
 
-const WAVEFORM = [18, 32, 44, 28, 52, 38, 24, 46, 56, 34, 20, 42, 50, 30, 16, 36];
+export function MusicNode({ id, data, selected, width, height }: NodeProps<VincisCanvasNode>) {
+  const onNodesChange = useCanvasStore((state) => state.onNodesChange);
+  const loading = data.status === "loading";
+  const ready = data.status === "ready" && Boolean(data.url);
+  const failed = data.status === "failed";
+  const card = loading ? MUSIC_NODE_LOADING_CARD : ready ? MUSIC_NODE_READY_CARD : MUSIC_NODE_CARD;
 
-export function MusicNode({ id, data, selected }: NodeProps<VincisCanvasNode>) {
+  useEffect(() => {
+    if (loading) {
+      if (width === card.width && height === card.height) return;
+      onNodesChange([
+        {
+          id,
+          type: "dimensions",
+          dimensions: { width: card.width, height: card.height },
+          setAttributes: true
+        }
+      ]);
+      return;
+    }
+
+    if (!ready) return;
+    if (width === MUSIC_NODE_READY_CARD.width && height === MUSIC_NODE_READY_CARD.height) {
+      return;
+    }
+    onNodesChange([
+      {
+        id,
+        type: "dimensions",
+        dimensions: {
+          width: MUSIC_NODE_READY_CARD.width,
+          height: MUSIC_NODE_READY_CARD.height
+        },
+        setAttributes: true
+      }
+    ]);
+  }, [card.height, card.width, height, id, loading, onNodesChange, ready, width]);
+
   return (
-    <>
-      <CanvasVideoNodeMenu nodeId={id} data={data} selected={selected} variant="music" />
-      <CanvasNodeFrame
-      data={data}
+    <MusicNodeShell
       selected={selected}
-      icon={<Music2 className="h-4 w-4" />}
-      minWidth={280}
-      minHeight={140}
+      compact={ready}
+      loading={loading}
+      resizable={false}
+      minWidth={card.width}
+      minHeight={card.height}
     >
-      <div className="flex h-full flex-col justify-center bg-zinc-50 px-5">
-        <div className="flex h-14 items-center justify-center gap-1 overflow-hidden rounded-xl bg-white px-3 ring-1 ring-zinc-200">
-          {WAVEFORM.map((height, index) => (
-            <span
-              key={`${height}-${index}`}
-              className="w-1 rounded-full bg-zinc-700"
-              style={{
-                height: `${data.status === "loading" ? Math.max(10, height * 0.55) : height}%`,
-                opacity: data.status === "loading" ? 0.45 : 0.8
-              }}
-            />
-          ))}
-        </div>
-        {data.url ? (
-          <audio
-            src={data.url}
-            controls
-            preload="metadata"
-            className="nodrag nopan mt-3 h-8 w-full"
-          />
-        ) : data.status === "idle" ? (
-          <p className="mt-3 truncate text-center text-xs text-zinc-400">
-            {data.prompt || "等待生成音乐…"}
-          </p>
-        ) : (
-          <p className="mt-3 truncate text-center text-xs text-zinc-500">
-            {data.status === "loading"
-              ? `正在生成音乐… ${data.progress ?? 12}%`
-              : data.prompt || "VINCIS mock music"}
-          </p>
-        )}
-      </div>
-      </CanvasNodeFrame>
-    </>
+      {loading ? (
+        <MusicNodeGeneratingView data={data} />
+      ) : ready ? (
+        <MusicNodeReadyView nodeId={id} data={data} />
+      ) : failed ? (
+        <MusicNodeFailedView data={data} />
+      ) : (
+        <MusicNodeIdleView data={data} />
+      )}
+    </MusicNodeShell>
   );
 }

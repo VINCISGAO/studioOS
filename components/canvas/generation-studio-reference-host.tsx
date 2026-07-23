@@ -2,10 +2,14 @@
 
 import { LoaderCircle } from "lucide-react";
 import type { RefObject } from "react";
-import { GenerationAssetLibraryModal } from "@/components/canvas/generation-asset-library-modal";
+import {
+  GenerationAssetLibraryModal,
+  generationAssetLibraryKindFromSlot
+} from "@/components/canvas/generation-asset-library-modal";
 import { GenerationCanvasPickerModal } from "@/components/canvas/generation-canvas-picker-modal";
 import type { GenerationReferenceSlot } from "@/components/canvas/generation-kind-selector";
 import type { GenerationReference } from "@/lib/canvas/generation-ui";
+import type { CanvasAssetLibraryKind } from "@/lib/canvas/canvas-library-kind";
 import type { Locale } from "@/lib/i18n";
 import type { VincisCanvasNode } from "@/lib/canvas/types";
 
@@ -15,6 +19,7 @@ export function GenerationStudioReferenceHost({
   nodes,
   reference,
   showAssetLibrary,
+  assetLibrarySlot,
   showCanvasPicker,
   canvasPickerSlot,
   uploadingReference,
@@ -30,6 +35,7 @@ export function GenerationStudioReferenceHost({
   nodes: VincisCanvasNode[];
   reference: GenerationReference | null;
   showAssetLibrary: boolean;
+  assetLibrarySlot: GenerationReferenceSlot;
   showCanvasPicker: boolean;
   canvasPickerSlot: GenerationReferenceSlot;
   uploadingReference: boolean;
@@ -38,7 +44,7 @@ export function GenerationStudioReferenceHost({
   onCloseAssetLibrary: () => void;
   onCloseCanvasPicker: () => void;
   onLocalFileSelected: (file: File) => Promise<void>;
-  onUploadReference: (file: File) => Promise<GenerationReference>;
+  onUploadReference: (file: File, libraryKind: CanvasAssetLibraryKind) => Promise<GenerationReference>;
 }) {
   return (
     <>
@@ -58,6 +64,7 @@ export function GenerationStudioReferenceHost({
       <GenerationAssetLibraryModal
         locale={locale}
         projectId={projectId}
+        libraryKind={generationAssetLibraryKindFromSlot(assetLibrarySlot)}
         open={showAssetLibrary}
         selectedId={reference?.assetId}
         onClose={onCloseAssetLibrary}

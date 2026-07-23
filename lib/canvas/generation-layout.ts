@@ -7,7 +7,7 @@ type LayoutKind = "IMAGE_GENERATION" | "VIDEO_GENERATION" | "MUSIC_GENERATION";
 type SlotConfig = {
   layoutKind: LayoutKind;
   nodeType: "image" | "video" | "music";
-  card: { width: number; height: number; gapY: number };
+  card: { width: number; height: number; gapY: number; centerOffsetY?: number };
   title: (index: number, locale: "zh" | "en") => string;
   placeholder: (locale: "zh" | "en") => string;
 };
@@ -30,7 +30,7 @@ const SLOT_CONFIG: Record<GenerationSlotKind, SlotConfig> = {
   music: {
     layoutKind: "MUSIC_GENERATION",
     nodeType: "music",
-    card: { width: 320, height: 180, gapY: 32 },
+    card: { width: 480, height: 168, gapY: 32 },
     title: (index, locale) => (locale === "zh" ? `音乐 ${index}` : `Music ${index}`),
     placeholder: (locale) => (locale === "zh" ? "等待生成音乐…" : "Waiting for music…")
   }

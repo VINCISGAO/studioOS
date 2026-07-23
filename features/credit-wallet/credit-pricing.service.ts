@@ -7,6 +7,10 @@ import type {
 } from "@/features/credit-wallet/credit-pricing.types";
 import { appError } from "@/lib/core/errors";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
+import {
+  isSeedanceVideoModel,
+  seedanceVideoCreditQuote
+} from "@/lib/canvas/seedance-credits-pricing";
 
 function serializeRule(rule: {
   id: string;
@@ -85,7 +89,25 @@ export class CreditPricingService {
     }
 
     const outputCount = Math.max(1, Number(input.parameters.outputs ?? input.parameters.outputCount ?? 1));
-    const credits = Math.max(1, rule.creditPrice * outputCount);
+    let credits = Math.max(1, rule.creditPrice * outputCount);
+    let providerCostMinor = rule.providerCostMinor;
+    let marginPercent = rule.marginPercent;
+    let durationSec = rule.durationSec;
+    let resolution = rule.resolution;
+
+    if (input.type === "VIDEO" && isSeedanceVideoModel(input.model)) {
+      const seedanceQuote = seedanceVideoCreditQuote({
+        modelId: input.model,
+        parameters: input.parameters
+      });
+      if (seedanceQuote) {
+        credits = Math.max(1, seedanceQuote.creditPrice * outputCount);
+        providerCostMinor = seedanceQuote.providerCostMinor * outputCount;
+        marginPercent = seedanceQuote.marginPercent;
+        durationSec = seedanceQuote.outputDurationSec;
+        resolution = seedanceQuote.resolution;
+      }
+    }
 
     return {
       credits,
@@ -95,12 +117,12 @@ export class CreditPricingService {
       model: rule.model,
       mode: rule.mode,
       label: rule.label,
-      durationSec: rule.durationSec,
-      resolution: rule.resolution,
+      durationSec,
+      resolution,
       aspectRatio: rule.aspectRatio,
       outputCount,
-      providerCostMinor: rule.providerCostMinor,
-      marginPercent: rule.marginPercent,
+      providerCostMinor,
+      marginPercent,
       refundOnFailure: rule.refundOnFailure,
       minimumBalance: rule.minimumBalance,
       quotedAt: new Date().toISOString()

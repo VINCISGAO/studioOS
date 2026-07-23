@@ -33,6 +33,7 @@ export type CanvasNodeData = {
   generationModel?: string;
   generationParameters?: Record<string, string | number | boolean>;
   generationMode?: string;
+  chargedCredits?: number;
   layoutKind?: "VIDEO_GENERATION" | "IMAGE_GENERATION" | "MUSIC_GENERATION";
   layoutIndex?: number;
 };
@@ -152,4 +153,5 @@ export type GenerationJobEvent = {
   outputAssetId: string | null;
   errorMessage: string | null;
   chargedCredits?: number;
+  creditsRefunded?: number;
 };

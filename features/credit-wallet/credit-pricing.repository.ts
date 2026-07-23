@@ -133,7 +133,12 @@ export const creditPricingRepository = {
     const matched = candidates
       .filter((rule) => normalizeModel(rule.model) === model)
       .filter((rule) => !rule.mode || rule.mode === mode)
-      .filter((rule) => rule.durationSec == null || rule.durationSec === durationSec)
+      .filter(
+        (rule) =>
+          input.type === "MUSIC" ||
+          rule.durationSec == null ||
+          rule.durationSec === durationSec
+      )
       .filter((rule) => !rule.resolution || normalizeResolution(rule.resolution, input.type) === resolution)
       .filter((rule) => !rule.aspectRatio || rule.aspectRatio === aspectRatio)
       .filter((rule) => rule.outputCount === 1 || rule.outputCount === outputCount)

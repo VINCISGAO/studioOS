@@ -4,6 +4,10 @@ import {
   canvasMusicCreditQuote,
   type MurekaMusicTier
 } from "@/lib/canvas/mureka-credits-pricing";
+import {
+  isSeedanceVideoModel,
+  seedanceVideoCreditQuote
+} from "@/lib/canvas/seedance-credits-pricing";
 
 export type VideoQuality = "480p" | "720p" | "1080p" | "4k";
 
@@ -14,6 +18,8 @@ export type VideoGenerationCreditInput = {
   audio: boolean;
   webSearch: boolean;
   cameraMovements: string[];
+  referenceMimeType?: string;
+  referenceVideoDurationSec?: number;
 };
 
 export type ImageGenerationCreditInput = {
@@ -26,19 +32,18 @@ export type ImageGenerationCreditInput = {
 export type MusicGenerationCreditInput = {
   mode: "simple" | "custom" | "soundtrack";
   instrumental: boolean;
-  duration: number;
 };
 
-const VIDEO_QUALITY_BASE_RATES: Record<VideoQuality, number> = {
+const LEGACY_VIDEO_QUALITY_BASE_RATES: Record<VideoQuality, number> = {
   "480p": 8,
   "720p": 18,
   "1080p": 18,
   "4k": 100
 };
 
-function videoCreditsPerSecond(quality: VideoQuality, durationSeconds: number) {
+function legacyVideoCreditsPerSecond(quality: VideoQuality, durationSeconds: number) {
   if (quality === "1080p" && durationSeconds <= 6) return 50;
-  return VIDEO_QUALITY_BASE_RATES[quality];
+  return LEGACY_VIDEO_QUALITY_BASE_RATES[quality];
 }
 
 function isDiscountVideoModel(modelId: string) {
@@ -49,8 +54,22 @@ export function computeVideoGenerationCredits(
   settings: VideoGenerationCreditInput,
   modelId = "seedance-2.0"
 ) {
+  if (isSeedanceVideoModel(modelId)) {
+    const quote = seedanceVideoCreditQuote({
+      modelId,
+      parameters: {
+        duration: settings.duration,
+        quality: settings.quality,
+        referenceMimeType: settings.referenceMimeType,
+        referenceVideoDurationSec: settings.referenceVideoDurationSec
+      }
+    });
+    if (quote) return quote.creditPrice;
+    return 69;
+  }
+
   const duration = Math.max(1, Math.round(settings.duration));
-  const rate = videoCreditsPerSecond(settings.quality, duration);
+  const rate = legacyVideoCreditsPerSecond(settings.quality, duration);
   let credits = rate * duration;
 
   if (isDiscountVideoModel(modelId)) credits *= 0.85;
@@ -117,7 +136,15 @@ export function computeGenerationCredits(input: {
         cameraMovements: String(input.parameters.cameraMovements ?? "")
           .split(",")
           .map((item) => item.trim())
-          .filter(Boolean)
+          .filter(Boolean),
+        referenceMimeType:
+          typeof input.parameters.referenceMimeType === "string"
+            ? input.parameters.referenceMimeType
+            : undefined,
+        referenceVideoDurationSec:
+          typeof input.parameters.referenceVideoDurationSec === "number"
+            ? input.parameters.referenceVideoDurationSec
+            : undefined
       },
       input.model
     );
@@ -135,8 +162,7 @@ export function computeGenerationCredits(input: {
   return computeMusicGenerationCredits(
     {
       mode: (input.parameters.mode as MusicGenerationCreditInput["mode"]) ?? "custom",
-      instrumental: input.parameters.instrumental !== false,
-      duration: Number(input.parameters.duration ?? 30)
+      instrumental: input.parameters.instrumental === true
     },
     input.model
   );
@@ -164,4 +190,20 @@ export function hasEnoughCanvasCredits(balance: unknown, cost: number) {
   const normalizedCost =
     typeof cost === "number" && Number.isFinite(cost) ? Math.max(0, Math.round(cost)) : 0;
   return normalizedBalance >= normalizedCost;
+}
+
+type WalletApiEnvelope = {
+  success: boolean;
+  data?: {
+    summary?: {
+      availableCredits?: number;
+    };
+  };
+};
+
+export async function fetchCanvasWalletBalance() {
+  const response = await fetch("/api/v1/credits/wallet", { cache: "no-store" });
+  const payload = (await response.json()) as WalletApiEnvelope;
+  if (!response.ok || !payload.success || !payload.data?.summary) return null;
+  return normalizeCanvasTokenBalance(payload.data.summary.availableCredits);
 }

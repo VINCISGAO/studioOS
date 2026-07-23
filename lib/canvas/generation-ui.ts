@@ -1,3 +1,5 @@
+import { musicFieldLimitsExceeded } from "@/lib/canvas/music-field-limits";
+
 export type GenerationKind = "image" | "video" | "music";
 
 export type CanvasModelId = string;
@@ -5,8 +7,14 @@ export type CanvasModelId = string;
 export type VideoReferenceMode = "reference" | "edit" | "keyframes";
 
 export const GENERATION_PANEL_WIDTH = 548;
-export const GENERATION_MUSIC_PANEL_WIDTH = 580;
+export { MUSIC_PANEL_WIDTH as GENERATION_MUSIC_PANEL_WIDTH } from "@/lib/canvas/music-panel-design";
 export const GENERATION_PANEL_HEIGHT = 268;
+/** Music custom panel is taller than video/image — used for slot anchoring. */
+export const GENERATION_MUSIC_PANEL_HEIGHT = 520;
+/** Generation panel sits below canvas nodes; body-portaled modals must render above it. */
+export const CANVAS_GENERATION_PANEL_Z_INDEX = 100;
+/** Above portal shell (z-0), canvas chrome, and generation panel popovers (z-120). */
+export const CANVAS_GENERATION_MODAL_Z_INDEX = 300;
 
 export type GenerationReference = {
   url: string;
@@ -221,7 +229,6 @@ export type MusicGenerationSettings = {
   referenceEnabled: boolean;
   remixEnabled: boolean;
   vocalEnabled: boolean;
-  duration: number;
 };
 
 export const MUSIC_STYLE_TAGS = {
@@ -234,13 +241,12 @@ export const DEFAULT_MUSIC_SETTINGS: MusicGenerationSettings = {
   modelVersion: "",
   lyrics: "",
   style: "",
-  instrumental: true,
+  instrumental: false,
   vocalGender: "female",
   songName: "",
   referenceEnabled: false,
   remixEnabled: false,
-  vocalEnabled: false,
-  duration: 30
+  vocalEnabled: false
 };
 
 export function formatMusicSettingsLabel(settings: MusicGenerationSettings, locale: "zh" | "en") {
@@ -249,13 +255,9 @@ export function formatMusicSettingsLabel(settings: MusicGenerationSettings, loca
       ? locale === "zh"
         ? "简单"
         : "Simple"
-      : settings.mode === "soundtrack"
-        ? locale === "zh"
-          ? "原声带"
-          : "Soundtrack"
-        : locale === "zh"
-          ? "自定义"
-          : "Custom";
+      : locale === "zh"
+        ? "自定义"
+        : "Custom";
   const vocalLabel = settings.instrumental
     ? locale === "zh"
       ? "器乐"
@@ -263,7 +265,7 @@ export function formatMusicSettingsLabel(settings: MusicGenerationSettings, loca
     : locale === "zh"
       ? "人声"
       : "Vocal";
-  return `${modeLabel} · ${settings.duration}s · ${vocalLabel}`;
+  return `${modeLabel} · ${vocalLabel}`;
 }
 
 export function buildMusicPrompt(settings: MusicGenerationSettings) {
@@ -275,11 +277,8 @@ export function buildMusicPrompt(settings: MusicGenerationSettings) {
 }
 
 export function canSubmitMusicSettings(settings: MusicGenerationSettings) {
-  return (
-    settings.style.trim().length >= 2 ||
-    settings.songName.trim().length >= 1 ||
-    (!settings.instrumental && settings.lyrics.trim().length >= 2)
-  );
+  if (musicFieldLimitsExceeded(settings)) return false;
+  return buildMusicPrompt(settings).trim().length >= 3;
 }
 
 export type CanvasLibraryAsset = {

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 import type { AuthUserDto } from "@/features/auth/auth.service";
 import { getSessionUser } from "@/features/auth/session.service";
+import { formatValidationMessage } from "@/lib/canvas/format-validation-message";
 import { appError, isAppError } from "@/lib/core/errors";
 import { enforceApiRateLimit } from "@/lib/core/security/rate-limit.service";
 
@@ -15,7 +16,8 @@ export function apiError(code: string, message: string, status: number, details?
 
 export function handleRouteError(error: unknown) {
   if (error instanceof ZodError) {
-    const message = error.errors[0]?.message ?? "Invalid input";
+    const raw = error.errors[0]?.message ?? "Invalid input";
+    const message = formatValidationMessage(raw);
     return apiError("VALIDATION_ERROR", message, 422);
   }
   if (isAppError(error)) {

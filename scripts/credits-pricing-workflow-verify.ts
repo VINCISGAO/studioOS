@@ -40,7 +40,7 @@ async function main() {
   });
   checks.push({
     name: "pricing.workflow.quote_has_version",
-    ok: quote.credits > 0 && quote.ruleVersion >= 1,
+    ok: quote.credits === 69 && quote.ruleVersion >= 1,
     detail: `${quote.credits}/${quote.ruleId}/v${quote.ruleVersion}`
   });
 

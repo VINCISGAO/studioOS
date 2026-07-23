@@ -7,9 +7,13 @@ import { CanvasNodeFrame } from "@/components/canvas/nodes/canvas-node-frame";
 import { CanvasVideoNodeMenu } from "@/components/canvas/nodes/canvas-video-node-menu";
 
 export function ImageNode({ id, data, selected }: NodeProps<VincisCanvasNode>) {
+  const showMenu = data.status === "ready" && Boolean(data.url || data.assetId);
+
   return (
     <>
-      <CanvasVideoNodeMenu nodeId={id} data={data} selected={selected} variant="image" />
+      {showMenu ? (
+        <CanvasVideoNodeMenu nodeId={id} data={data} selected={selected} variant="image" />
+      ) : null}
       <CanvasNodeFrame data={data} selected={selected} icon={<ImageIcon className="h-4 w-4" />}>
       {data.status === "loading" ? (
         <div className="flex h-full flex-col items-center justify-center bg-zinc-50 p-5 text-center">

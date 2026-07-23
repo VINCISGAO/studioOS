@@ -8,7 +8,9 @@ import {
 } from "@/features/canvas/canvas.repository";
 import { aiModelGenerationGuard } from "@/features/canvas/ai-model-generation.guard";
 import { canvasImageGenerationService } from "@/features/canvas/canvas-image-generation.service";
-import { canvasVideoGenerationService } from "@/features/canvas/canvas-video-generation.service";
+import { canvasMusicGenerationService } from "@/features/canvas/canvas-music-generation.service";
+import { assertCanvasCreator, resolveCanvasProjectForOwner } from "@/features/canvas/canvas-project-access";
+import { videoGenerationService } from "@/features/video-engine/video-generation.service";
 import { appError } from "@/lib/core/errors";
 import { hasMureka, hasOpenAI } from "@/lib/core/config/ai";
 import { isMurekaMusicProvider } from "@/lib/canvas/mureka-client";
@@ -49,9 +51,7 @@ type ParsedEdge = {
 };
 
 function assertCreator(user: AuthUserDto) {
-  if (user.role !== "CREATOR" && !user.hasCreatorProfile) {
-    throw appError("FORBIDDEN", "Creator access required");
-  }
+  assertCanvasCreator(user);
 }
 
 function assertMusicGenerationInfrastructure() {
@@ -75,6 +75,7 @@ function resolveMusicProvider(provider: string) {
   }
   return "vincis-mock";
 }
+
 function assertImageGenerationInfrastructure() {
   if (!hasOpenAI()) {
     throw appError(
@@ -98,16 +99,134 @@ function serializeJob(job: {
   progress: number;
   outputAssetId: string | null;
   errorMessage: string | null;
-}): GenerationJobEvent {
+  estimatedCredits?: number;
+}, billing?: { creditsRefunded?: number; chargedCredits?: number }): GenerationJobEvent {
+  const active =
+    job.status === "QUEUED" || job.status === "SUBMITTING" || job.status === "PROCESSING";
+  const progress = job.progress > 0 ? job.progress : active ? 8 : 0;
+
   return {
     id: job.id,
     nodeId: job.nodeId,
     type: job.type,
     status: job.status,
-    progress: job.progress,
+    progress,
     outputAssetId: job.outputAssetId,
-    errorMessage: job.errorMessage
+    errorMessage: job.errorMessage,
+    chargedCredits: billing?.chargedCredits,
+    creditsRefunded: billing?.creditsRefunded
   };
+}
+
+async function resolveJobBillingEvent(
+  job: {
+    id: string;
+    nodeId: string | null;
+    type: "IMAGE" | "VIDEO" | "MUSIC";
+    status: "QUEUED" | "SUBMITTING" | "PROCESSING" | "SUCCEEDED" | "FAILED" | "CANCELLED";
+    progress: number;
+    outputAssetId: string | null;
+    errorMessage: string | null;
+    estimatedCredits: number;
+    creditReservationId: string | null;
+  }
+) {
+  if (!job.creditReservationId) {
+    return {
+      chargedCredits:
+        job.status !== "FAILED" && job.status !== "CANCELLED" ? job.estimatedCredits : undefined
+    };
+  }
+
+  const reservation = await creditWalletRepository.findReservationById(job.creditReservationId);
+  if (!reservation) return {};
+
+  if (
+    (job.status === "FAILED" || job.status === "CANCELLED") &&
+    reservation.status === "RELEASED"
+  ) {
+    return { creditsRefunded: job.estimatedCredits };
+  }
+
+  if (job.status === "SUCCEEDED" && reservation.status === "CAPTURED") {
+    return { chargedCredits: job.estimatedCredits };
+  }
+
+  if (reservation.status === "ACTIVE") {
+    return { chargedCredits: job.estimatedCredits };
+  }
+
+  return {};
+}
+
+async function abortGenerationJob(input: {
+  jobId: string;
+  reservationId: string;
+  campaignId: string | null;
+  errorCode: string;
+  errorMessage: string;
+}) {
+  await canvasRepository.updateGenerationJob(input.jobId, {
+    status: "FAILED",
+    progress: 100,
+    errorCode: input.errorCode,
+    errorMessage: input.errorMessage,
+    completedAt: new Date()
+  });
+  await creditGenerationBillingService.finalizeFailure(input.reservationId, {
+    campaignId: input.campaignId,
+    generationJobId: input.jobId,
+    reason: input.errorCode
+  });
+}
+
+function scheduleGenerationJob(input: {
+  type: "IMAGE" | "VIDEO" | "MUSIC";
+  provider: string;
+  jobId: string;
+  ownerId: string;
+}) {
+  if (input.type === "IMAGE" && input.provider === "openai") {
+    canvasImageGenerationService.scheduleJob(input.jobId, input.ownerId);
+    return;
+  }
+  if (input.type === "VIDEO") {
+    videoGenerationService.scheduleJob(input.jobId, input.ownerId);
+    return;
+  }
+  if (input.type === "MUSIC") {
+    canvasMusicGenerationService.scheduleJob(input.jobId, input.ownerId);
+  }
+}
+
+async function kickStaleMusicJob(
+  job: {
+    id: string;
+    type: "IMAGE" | "VIDEO" | "MUSIC";
+    provider: string;
+    status: "QUEUED" | "SUBMITTING" | "PROCESSING" | "SUCCEEDED" | "FAILED" | "CANCELLED";
+    createdAt: Date;
+  },
+  ownerId: string
+) {
+  if (job.type !== "MUSIC" || job.provider !== "mureka") return;
+  if (job.status !== "QUEUED" && job.status !== "SUBMITTING") return;
+  if (Date.now() - job.createdAt.getTime() < 1500) return;
+
+  canvasMusicGenerationService.scheduleJob(job.id, ownerId);
+}
+
+async function kickStaleVideoJob(
+  job: {
+    id: string;
+    type: "IMAGE" | "VIDEO" | "MUSIC";
+    provider: string;
+    status: "QUEUED" | "SUBMITTING" | "PROCESSING" | "SUCCEEDED" | "FAILED" | "CANCELLED";
+    createdAt: Date;
+  },
+  ownerId: string
+) {
+  videoGenerationService.kickStaleJob(job, ownerId);
 }
 
 function buildOrderContext(campaign: CanvasCampaignRecord) {
@@ -219,26 +338,7 @@ function buildSnapshot(
 
 export class CanvasService {
   private async resolveProject(projectId: string, user: AuthUserDto): Promise<CanvasProjectRecord> {
-    assertCreator(user);
-    const direct = await canvasRepository.findProjectForOwner(projectId, user.id);
-    if (direct) return direct;
-
-    const campaign = await canvasRepository.findCampaignForCreator(projectId, user.id);
-    if (!campaign) throw appError("NOT_FOUND", "Creative project not found");
-
-    const existing = await canvasRepository.findProjectByCampaignForCreator(projectId, user.id);
-    if (existing) return existing;
-
-    const created = await canvasRepository.createOrderProject({
-      ownerId: user.id,
-      createdBy: user.id,
-      campaignId: campaign.id,
-      title: campaign.title
-    });
-
-    const project = await canvasRepository.findProjectForOwner(created.id, user.id);
-    if (!project) throw appError("SYSTEM_ERROR", "Creative project could not be created");
-    return project;
+    return resolveCanvasProjectForOwner(projectId, user);
   }
 
   async assertAccess(projectId: string, user: AuthUserDto) {
@@ -390,6 +490,13 @@ export class CanvasService {
     if (input.type === "MUSIC") {
       assertMusicGenerationInfrastructure();
     }
+    if (input.type === "VIDEO") {
+      const result = await videoGenerationService.createJob(input, user);
+      return {
+        ...serializeJob(result.job, { chargedCredits: result.chargedCredits }),
+        chargedCredits: result.chargedCredits
+      };
+    }
 
     const project = await this.resolveProject(input.projectId, user);
     const { id: canvasId } = await canvasRepository.ensureCanvas(
@@ -448,19 +555,25 @@ export class CanvasService {
 
     await creditLedgerService.linkReservationToJob(billing.reservation.id, job.id);
 
-    if (input.type === "IMAGE" && provider === "openai" && job.status === "QUEUED") {
-      canvasImageGenerationService.scheduleJob(job.id, user.id);
-    }
-
-    if (input.type === "VIDEO" && job.status === "QUEUED") {
-      canvasVideoGenerationService.scheduleJob(job.id, user.id);
-    }
-
-    if (input.type === "MUSIC" && job.status === "QUEUED") {
-      const { canvasMusicGenerationService } = await import(
-        "@/features/canvas/canvas-music-generation.service"
-      );
-      canvasMusicGenerationService.scheduleJob(job.id, user.id);
+    try {
+      if (job.status === "QUEUED") {
+        scheduleGenerationJob({
+          type: input.type,
+          provider,
+          jobId: job.id,
+          ownerId: user.id
+        });
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to start generation";
+      await abortGenerationJob({
+        jobId: job.id,
+        reservationId: billing.reservation.id,
+        campaignId: project.campaignId,
+        errorCode: "SCHEDULE_FAILED",
+        errorMessage: message
+      });
+      throw appError("SYSTEM_ERROR", message);
     }
 
     if (project.campaignId) {
@@ -469,7 +582,9 @@ export class CanvasService {
           ? "canvas.image_generation_requested"
           : input.type === "MUSIC"
             ? "canvas.music_generation_requested"
-            : "canvas.mock_generation_requested";
+            : provider === "seedance"
+              ? "canvas.video_generation_requested"
+              : "canvas.mock_generation_requested";
       await activityService.write(
         project.campaignId,
         activityType,
@@ -477,7 +592,10 @@ export class CanvasService {
         { job_id: job.id, node_id: input.nodeId, type: input.type }
       );
     }
-    return { ...serializeJob(job), chargedCredits: billing.estimatedCredits };
+    return {
+      ...serializeJob(job, { chargedCredits: billing.estimatedCredits }),
+      chargedCredits: billing.estimatedCredits
+    };
   }
 
   async getJob(jobId: string, user: AuthUserDto) {
@@ -485,8 +603,11 @@ export class CanvasService {
     let job = await canvasRepository.findGenerationJob(jobId, user.id);
     if (!job) throw appError("NOT_FOUND", "Generation job not found");
 
+    await kickStaleMusicJob(job, user.id);
+    await kickStaleVideoJob(job, user.id);
+
     const elapsed = Date.now() - job.createdAt.getTime();
-    if (job.provider === "vincis-mock" && job.type !== "VIDEO") {
+    if (job.provider === "vincis-mock" && job.type !== "VIDEO" && job.type !== "MUSIC") {
       if (job.status === "QUEUED" && elapsed >= 500) {
         job = await canvasRepository.updateGenerationJob(job.id, {
           status: "PROCESSING",
@@ -507,7 +628,8 @@ export class CanvasService {
     job = (await canvasRepository.findGenerationJob(jobId, user.id)) ?? job;
     await creditGenerationBillingService.syncJobBilling(job);
     job = (await canvasRepository.findGenerationJob(jobId, user.id)) ?? job;
-    return serializeJob(job);
+    const billing = await resolveJobBillingEvent(job);
+    return serializeJob(job, billing);
   }
 
   async listJobEvents(projectId: string, user: AuthUserDto) {

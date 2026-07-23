@@ -368,7 +368,7 @@ This is a draft plan that requires explicit creator confirmation.`;
                 ? { aspectRatio: "16:9", resolution: "1024", outputs: 1 }
                 : action.generationType === "VIDEO"
                   ? { aspectRatio: "16:9", duration: 5 }
-                  : { duration: 30, instrumental: true }
+                  : { instrumental: true }
           },
           user
         );

@@ -16,8 +16,11 @@ import { InfiniteCanvas } from "@/components/canvas/infinite-canvas";
 import { JobStatusPanel } from "@/components/canvas/job-status-panel";
 import { SelectionToolbar } from "@/components/canvas/selection-toolbar";
 import { useCanvasGenerationSlots } from "@/components/canvas/hooks/use-canvas-generation-slots";
+import { preloadCanvasAiModelCatalog, seedCanvasAiModelCatalog } from "@/components/canvas/hooks/use-canvas-ai-models";
+import type { PublicAiModelCatalog } from "@/features/canvas/ai-model-catalog.types";
 import { useCanvasMediaActions } from "@/components/canvas/hooks/use-canvas-media-actions";
 import {
+  fetchCanvasWalletBalance,
   normalizeCanvasTokenBalance
 } from "@/lib/canvas/generation-credits";
 import type { CanvasSnapshot, VincisCanvasNode } from "@/lib/canvas/types";
@@ -32,11 +35,13 @@ import { readViewportRect, viewportCenterFlowPoint } from "@/lib/canvas/viewport
 function CanvasWorkspaceInner({
   snapshot,
   locale,
-  initialPanel = null
+  initialPanel = null,
+  initialAiModelCatalog = null
 }: {
   snapshot: CanvasSnapshot;
   locale: Locale;
   initialPanel?: GenerationKind | null;
+  initialAiModelCatalog?: PublicAiModelCatalog | null;
 }) {
   const [ready, setReady] = useState(false);
   const [chatCollapsed, setChatCollapsed] = useState(false);
@@ -50,6 +55,12 @@ function CanvasWorkspaceInner({
   const canvasAreaRef = useRef<HTMLDivElement>(null);
   const pasteAt = useCanvasStore((state) => state.pasteAt);
   const viewport = useCanvasStore((state) => state.viewport);
+  const syncWalletBalance = useCallback(async () => {
+    const balance = await fetchCanvasWalletBalance();
+    if (balance == null) return;
+    setTokenBalance(balance);
+  }, []);
+
   const { generate, regenerate, extendVideo, upscale, removeBackground, generationPending } =
     useCanvasMediaActions(
     snapshot.projectId,
@@ -61,6 +72,9 @@ function CanvasWorkspaceInner({
             : 0;
         if (!charge) return;
         setTokenBalance((current) => Math.max(0, Math.round(current - charge)));
+      },
+      onCreditsSync: () => {
+        void syncWalletBalance();
       }
     }
   );
@@ -93,6 +107,15 @@ function CanvasWorkspaceInner({
     setTokenBalance(normalizeCanvasTokenBalance(snapshot.projectContext.tokenBalance));
     setReady(true);
   }, [snapshot]);
+
+  useEffect(() => {
+    if (!ready) return;
+    if (initialAiModelCatalog) {
+      seedCanvasAiModelCatalog(initialAiModelCatalog);
+      return;
+    }
+    preloadCanvasAiModelCatalog();
+  }, [initialAiModelCatalog, ready]);
 
   useEffect(() => {
     const onShortcut = (event: KeyboardEvent) => {
@@ -196,6 +219,9 @@ function CanvasWorkspaceInner({
                 if (panel) closeGenerationPanel();
               }}
               onNodeClick={handleNodeClick}
+              onGenerationTerminalFailure={() => {
+                void syncWalletBalance();
+              }}
             />
             <button
               type="button"
@@ -242,8 +268,10 @@ function CanvasWorkspaceInner({
                 projectId={snapshot.projectId}
                 busy={generationPending}
                 anchor={panelAnchor}
-                anchorPlacement={generationSession ? "below" : "above"}
+                anchorPlacement="center"
                 tokenBalance={tokenBalance}
+                initialAiModelCatalog={initialAiModelCatalog}
+                onSwitchKind={openGeneration}
                 onClose={closeGenerationPanel}
                 onSubmit={(input) => {
                   generate(input.kind, {
@@ -273,11 +301,13 @@ function CanvasWorkspaceInner({
 export function CanvasWorkspace({
   snapshot,
   locale,
-  initialPanel = null
+  initialPanel = null,
+  initialAiModelCatalog = null
 }: {
   snapshot: CanvasSnapshot;
   locale: Locale;
   initialPanel?: GenerationKind | null;
+  initialAiModelCatalog?: PublicAiModelCatalog | null;
 }) {
   const [queryClient] = useState(() => new QueryClient());
   return (
@@ -286,6 +316,7 @@ export function CanvasWorkspace({
         snapshot={snapshot}
         locale={locale}
         initialPanel={initialPanel}
+        initialAiModelCatalog={initialAiModelCatalog}
       />
     </QueryClientProvider>
   );

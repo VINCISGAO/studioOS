@@ -17,7 +17,7 @@ export async function GET(request: Request, { params }: Params) {
       headers: {
         "Content-Type": asset.mimeType,
         "Content-Length": String(bytes.length),
-        "Cache-Control": "private, max-age=300"
+        "Cache-Control": "private, max-age=3600, stale-while-revalidate=86400"
       }
     });
   } catch (error) {

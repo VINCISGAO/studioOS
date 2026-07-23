@@ -1,6 +1,9 @@
 "use client";
 
 import { LoaderCircle, Plus, Trash2 } from "lucide-react";
+import { GenerationAssetLibraryPreview } from "@/components/canvas/generation-asset-library-preview";
+import type { CanvasAssetLibraryKind } from "@/lib/canvas/canvas-library-kind";
+import { libraryAcceptMime } from "@/lib/canvas/canvas-library-kind";
 import type { CanvasLibraryAsset } from "@/lib/canvas/generation-ui";
 import type { Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -26,27 +29,33 @@ function reviewBadge(locale: Locale, asset: CanvasLibraryAsset) {
 
 export function GenerationAssetLibraryGrid({
   locale,
+  libraryKind,
   assets,
   loading,
   uploading,
+  uploadProgress,
   manageMode,
   pendingId,
   checkedIds,
   deleting,
-  onUploadFile,
+  uploadLabel,
+  onUploadFiles,
   onToggleChecked,
   onSelectAsset,
   onDeleteAsset
 }: {
   locale: Locale;
+  libraryKind: CanvasAssetLibraryKind;
   assets: CanvasLibraryAsset[];
   loading: boolean;
   uploading: boolean;
+  uploadProgress: { done: number; total: number } | null;
   manageMode: boolean;
   pendingId: string | null;
   checkedIds: string[];
   deleting: boolean;
-  onUploadFile: (file: File) => Promise<void>;
+  uploadLabel: string;
+  onUploadFiles: (files: File[]) => Promise<void>;
   onToggleChecked: (assetId: string) => void;
   onSelectAsset: (assetId: string) => void;
   onDeleteAsset: (assetId: string) => void;
@@ -61,24 +70,32 @@ export function GenerationAssetLibraryGrid({
 
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-      <label className="flex aspect-[4/3] cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-300 bg-white text-zinc-500 transition hover:border-zinc-400 hover:text-zinc-700">
+      <label className="flex aspect-[4/3] cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-300 bg-white px-2 text-center text-zinc-500 transition hover:border-zinc-400 hover:text-zinc-700">
         <input
           type="file"
           className="hidden"
-          accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm"
+          multiple
+          accept={libraryAcceptMime(libraryKind)}
           onChange={async (event) => {
-            const file = event.target.files?.[0];
+            const files = [...(event.target.files ?? [])];
             event.currentTarget.value = "";
-            if (!file) return;
-            await onUploadFile(file);
+            if (!files.length) return;
+            await onUploadFiles(files);
           }}
         />
         {uploading ? (
-          <LoaderCircle className="h-5 w-5 animate-spin" />
+          <div className="flex flex-col items-center gap-2">
+            <LoaderCircle className="h-5 w-5 animate-spin" />
+            {uploadProgress ? (
+              <span className="text-[10px] tabular-nums text-zinc-400">
+                {uploadProgress.done}/{uploadProgress.total}
+              </span>
+            ) : null}
+          </div>
         ) : (
           <>
             <Plus className="h-6 w-6" />
-            <span className="mt-2 text-xs">{locale === "zh" ? "上传素材" : "Upload asset"}</span>
+            <span className="mt-2 text-xs">{uploadLabel}</span>
           </>
         )}
       </label>
@@ -112,32 +129,25 @@ export function GenerationAssetLibraryGrid({
                 !manageMode && !asset.selectable && "cursor-not-allowed opacity-70"
               )}
             >
-              <div className="relative aspect-[4/3] bg-zinc-100">
-                {asset.mimeType.startsWith("video/") ? (
-                  <video src={asset.url} className="h-full w-full object-cover" muted playsInline />
-                ) : (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={asset.url} alt={asset.fileName} className="h-full w-full object-cover" />
+              <GenerationAssetLibraryPreview asset={asset} />
+              <span
+                className={cn(
+                  "absolute left-2 top-2 rounded-full px-2 py-0.5 text-[10px] font-medium",
+                  badge.className
                 )}
+              >
+                {badge.label}
+              </span>
+              {manageMode ? (
                 <span
                   className={cn(
-                    "absolute left-2 top-2 rounded-full px-2 py-0.5 text-[10px] font-medium",
-                    badge.className
+                    "absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full border bg-white text-[10px]",
+                    checked && "border-zinc-900 bg-zinc-900 text-white"
                   )}
                 >
-                  {badge.label}
+                  {checked ? "✓" : ""}
                 </span>
-                {manageMode ? (
-                  <span
-                    className={cn(
-                      "absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full border bg-white text-[10px]",
-                      checked && "border-zinc-900 bg-zinc-900 text-white"
-                    )}
-                  >
-                    {checked ? "✓" : ""}
-                  </span>
-                ) : null}
-              </div>
+              ) : null}
               <div className="truncate px-3 py-2 text-xs text-zinc-700">{asset.fileName}</div>
               {asset.reviewStatus === "REJECTED" && asset.reviewReasons[0] ? (
                 <div className="px-3 pb-2 text-[10px] leading-4 text-rose-600">

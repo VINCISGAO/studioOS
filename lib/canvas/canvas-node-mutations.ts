@@ -1,4 +1,5 @@
 import { autoLayoutCanvas } from "@/lib/canvas/layout";
+import { MUSIC_NODE_READY_CARD } from "@/lib/canvas/music-node-design";
 import {
   applyCanvasNodeInteractionFlags,
   applyCanvasNodeInteractionFlagsAll,
@@ -286,6 +287,14 @@ export function applyGenerationJobEvent(nodes: VincisCanvasNode[], event: Genera
         ? {
             ...node,
             type: event.status === "SUCCEEDED" ? resolvedType : node.type,
+            width:
+              event.status === "SUCCEEDED" && resolvedType === "music"
+                ? MUSIC_NODE_READY_CARD.width
+                : node.width,
+            height:
+              event.status === "SUCCEEDED" && resolvedType === "music"
+                ? MUSIC_NODE_READY_CARD.height
+                : node.height,
             data: {
               ...node.data,
               progress: event.progress,

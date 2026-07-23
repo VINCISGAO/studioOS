@@ -1,6 +1,7 @@
 import "server-only";
 import { readMurekaApiKey } from "@/lib/core/config/mureka-key";
 import { readOpenAIApiKey, readOpenAIModel } from "@/lib/core/config/openai-key";
+import { readSeedanceApiKey } from "@/lib/core/config/seedance-key";
 
 /** AI Gateway config — Vol 10 + cost tracking */
 export const aiConfig = {
@@ -39,4 +40,12 @@ export function murekaApiKey() {
 
 export function hasMureka() {
   return Boolean(murekaApiKey());
+}
+
+export function seedanceApiKey() {
+  return readSeedanceApiKey();
+}
+
+export function hasSeedance() {
+  return Boolean(seedanceApiKey());
 }

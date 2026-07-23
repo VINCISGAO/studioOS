@@ -11,6 +11,11 @@ import {
   X
 } from "lucide-react";
 import type { CanvasChatReference } from "@/components/canvas/hooks/use-canvas-chat-reference";
+import {
+  canvasChatInputIconButtonClass,
+  canvasChatInputShellClass,
+  canvasChatSendButtonClass
+} from "@/lib/canvas/canvas-chat-design";
 import type { Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -39,7 +44,7 @@ export function CanvasChatInput({
   const canSubmit = (value.trim().length > 0 || reference) && !busy && !uploadingReference;
 
   return (
-    <div className="border-t border-zinc-100 bg-white p-3">
+    <div className="shrink-0 bg-[#f9fafb] p-4 pt-2">
       <input
         ref={fileInputRef}
         type="file"
@@ -51,19 +56,19 @@ export function CanvasChatInput({
           if (file) onReferenceFileSelected(file);
         }}
       />
-      <div className="rounded-[22px] border border-zinc-200 bg-zinc-50/80 p-3 focus-within:border-zinc-300 focus-within:bg-white">
+      <div className={canvasChatInputShellClass}>
         {reference ? (
           <div className="mb-2 flex items-start gap-2">
             <div className="relative shrink-0">
               <img
                 src={reference.url}
                 alt={reference.fileName}
-                className="h-16 w-16 rounded-xl object-cover ring-1 ring-zinc-200"
+                className="h-16 w-16 rounded-xl object-cover ring-1 ring-violet-100"
               />
               <button
                 type="button"
                 onClick={onClearReference}
-                className="absolute -top-1.5 -right-1.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-zinc-900 text-white"
+                className="absolute -right-1.5 -top-1.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-zinc-900 text-white"
                 aria-label={locale === "zh" ? "移除参考图" : "Remove reference"}
               >
                 <X className="h-3 w-3" />
@@ -74,14 +79,11 @@ export function CanvasChatInput({
                 {locale === "zh" ? "参考图" : "Reference image"}
               </p>
               <p className="truncate text-[10px] text-zinc-400">{reference.fileName}</p>
-              <p className="mt-1 text-[10px] text-zinc-500">
-                {locale === "zh" ? "将用于图生图" : "Used for image-to-image"}
-              </p>
             </div>
           </div>
         ) : null}
         {uploadingReference ? (
-          <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-zinc-100 px-3 py-1.5 text-[11px] text-zinc-600">
+          <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-violet-50 px-3 py-1.5 text-[11px] text-violet-600">
             <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
             {locale === "zh" ? "正在上传参考图…" : "Uploading reference…"}
           </div>
@@ -89,7 +91,7 @@ export function CanvasChatInput({
         <textarea
           value={value}
           onChange={(event) => onChange(event.target.value)}
-          rows={2}
+          rows={3}
           maxLength={4000}
           placeholder={
             reference
@@ -100,7 +102,7 @@ export function CanvasChatInput({
                 ? "从一个想法开始，或输入 @ 提及"
                 : "Start with an idea, or type '@' to mention"
           }
-          className="w-full resize-none bg-transparent text-sm leading-6 text-zinc-900 outline-none placeholder:text-zinc-400"
+          className="min-h-[56px] w-full resize-none bg-transparent text-sm leading-6 text-zinc-900 outline-none placeholder:text-zinc-400"
           onKeyDown={(event) => {
             if (event.key === "Enter" && !event.shiftKey) {
               event.preventDefault();
@@ -109,16 +111,14 @@ export function CanvasChatInput({
           }}
         />
         <div className="mt-2 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5">
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={busy || uploadingReference}
               className={cn(
-                "rounded-lg p-2 transition",
-                reference
-                  ? "bg-zinc-900 text-white hover:bg-black"
-                  : "text-zinc-400 hover:bg-white hover:text-zinc-700",
+                canvasChatInputIconButtonClass,
+                reference && "bg-violet-50 text-violet-600",
                 (busy || uploadingReference) && "opacity-40"
               )}
               aria-label={locale === "zh" ? "上传参考图" : "Upload reference image"}
@@ -127,23 +127,23 @@ export function CanvasChatInput({
             </button>
             <button
               type="button"
-              className="rounded-lg p-2 text-zinc-400 hover:bg-white hover:text-zinc-700"
+              className={canvasChatInputIconButtonClass}
               aria-label={locale === "zh" ? "Skills" : "Skills"}
             >
               <BookOpen className="h-4 w-4" />
             </button>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5">
             <button
               type="button"
-              className="rounded-lg p-2 text-zinc-400 hover:bg-white hover:text-zinc-700"
+              className={canvasChatInputIconButtonClass}
               aria-label={locale === "zh" ? "灵感" : "Ideas"}
             >
               <Lightbulb className="h-4 w-4" />
             </button>
             <button
               type="button"
-              className="rounded-lg p-2 text-zinc-400 hover:bg-white hover:text-zinc-700"
+              className={canvasChatInputIconButtonClass}
               aria-label={locale === "zh" ? "工具" : "Tools"}
             >
               <Sparkles className="h-4 w-4" />
@@ -152,22 +152,18 @@ export function CanvasChatInput({
               type="button"
               disabled={!canSubmit}
               onClick={onSubmit}
-              className={cn(
-                "flex h-9 w-9 items-center justify-center rounded-full transition",
-                canSubmit ? "bg-zinc-900 text-white hover:bg-black" : "bg-zinc-200 text-zinc-400"
-              )}
+              className={canvasChatSendButtonClass}
               aria-label={locale === "zh" ? "发送" : "Send"}
             >
-              <Send className="h-4 w-4" />
+              {busy ? (
+                <LoaderCircle className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
             </button>
           </div>
         </div>
       </div>
-      <p className="mt-2 px-1 text-[10px] text-zinc-400">
-        {locale === "zh"
-          ? "GPT 负责生成回答，卢西恩学习会记录偏好与反馈。上传参考图可进行图生图。"
-          : "GPT generates answers; Lucien learning records preferences. Upload a reference for image-to-image."}
-      </p>
     </div>
   );
 }

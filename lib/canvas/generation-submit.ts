@@ -57,7 +57,6 @@ export function buildGenerationSubmitInput(input: {
               outputs: input.imageSettings.outputs
             }
           : {
-              duration: input.musicSettings.duration,
               style: input.musicSettings.style,
               mood: input.musicSettings.style,
               instrumental: input.musicSettings.instrumental,

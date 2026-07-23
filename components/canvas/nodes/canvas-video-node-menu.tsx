@@ -57,6 +57,12 @@ function MenuItem({
 
 export type CanvasMediaNodeMenuVariant = "video" | "image" | "music" | "upload";
 
+function isNodeMenuReady(data: CanvasNodeData, variant: CanvasMediaNodeMenuVariant) {
+  const hasMedia = Boolean(data.url || data.assetId);
+  if (variant === "upload") return hasMedia;
+  return data.status === "ready" && hasMedia;
+}
+
 export function CanvasVideoNodeMenu({
   nodeId,
   data,
@@ -73,26 +79,22 @@ export function CanvasVideoNodeMenu({
   const canDownload = canDownloadCanvasNode(data);
   const isVideo = variant === "video";
   const isImage = variant === "image";
-  const hasAsset = Boolean(data.assetId);
-  const isReady = data.status === "ready" && hasAsset;
-  const canRegenerate = variant !== "upload" && Boolean(data.prompt) && isReady;
-  const canExtend = isVideo && isReady;
-  const canUpscale = (isImage || isVideo) && isReady;
-  const canRemoveBackground = isImage && isReady;
+  const isReady = isNodeMenuReady(data, variant);
+
+  if (!selected || !isReady) return null;
 
   return (
     <NodeToolbar
-      isVisible={selected}
+      isVisible
       position={Position.Right}
       offset={12}
       className="!border-0 !bg-transparent !p-0 !shadow-none"
     >
       <div className="min-w-[148px] rounded-[20px] border border-zinc-200 bg-white p-1.5 shadow-xl">
-        {canUpscale ? (
+        {isImage || isVideo ? (
           <MenuItem
             label="放大"
             icon={<Scan className="h-4 w-4 shrink-0" />}
-            disabled={!canUpscale}
             onClick={() => actions?.upscale(nodeId)}
           />
         ) : null}
@@ -100,7 +102,6 @@ export function CanvasVideoNodeMenu({
           <MenuItem
             label="去除背景"
             icon={<Eraser className="h-4 w-4 shrink-0" />}
-            disabled={!canRemoveBackground}
             onClick={() => actions?.removeBackground(nodeId)}
           />
         ) : null}
@@ -108,15 +109,14 @@ export function CanvasVideoNodeMenu({
           <MenuItem
             label="视频延长"
             icon={<Clock3 className="h-4 w-4 shrink-0" />}
-            disabled={!canExtend}
             onClick={() => actions?.extendVideo(nodeId)}
           />
         ) : null}
-        {variant !== "upload" ? (
+        {isImage ? (
           <MenuItem
             label="画同款"
             icon={<Sparkles className="h-4 w-4 shrink-0" />}
-            disabled={!canRegenerate}
+            disabled={!data.prompt}
             onClick={() => actions?.regenerate(nodeId)}
           />
         ) : null}

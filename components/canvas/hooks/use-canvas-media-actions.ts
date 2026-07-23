@@ -4,6 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useCanvasStore } from "@/components/canvas/canvas-store";
 import type { GenerationKind } from "@/components/canvas/generation-panel";
 import type { GenerationJobEvent, VincisCanvasNode } from "@/lib/canvas/types";
+import { formatValidationMessage } from "@/lib/canvas/format-validation-message";
 import {
   patchNodeGenerationMetadata,
   readNodeGenerationContext,
@@ -25,7 +26,21 @@ type UploadedAsset = {
   url: string;
 };
 
+import { MUSIC_NODE_LOADING_CARD } from "@/lib/canvas/music-node-design";
+import { VIDEO_NODE_LOADING_CARD } from "@/lib/canvas/video-node-design";
+import {
+  canRegenerateMusicNode,
+  resolveMusicRegeneratePrompt,
+  spawnMusicRegenerateLoadingNode
+} from "@/lib/canvas/music-regenerate";
+
 const LOADING_CARD = { width: 320, height: 220 };
+
+function loadingCardForGenerationType(generationType?: "IMAGE" | "VIDEO" | "MUSIC") {
+  if (generationType === "MUSIC") return MUSIC_NODE_LOADING_CARD;
+  if (generationType === "VIDEO") return VIDEO_NODE_LOADING_CARD;
+  return LOADING_CARD;
+}
 
 function spawnLoadingNode(
   id: string,
@@ -35,12 +50,14 @@ function spawnLoadingNode(
 ): VincisCanvasNode {
   const state = useCanvasStore.getState();
   const rect = readViewportRect(null);
+  const card = loadingCardForGenerationType(generationType);
+  const isMusic = generationType === "MUSIC";
   return {
     id,
-    type: "loading",
-    position: spawnNodeAtViewportCenter(state.viewport, rect, LOADING_CARD),
-    width: LOADING_CARD.width,
-    height: LOADING_CARD.height,
+    type: isMusic ? "music" : "loading",
+    position: spawnNodeAtViewportCenter(state.viewport, rect, card),
+    width: card.width,
+    height: card.height,
     data: { title, prompt, status: "loading", progress: 8, generationType }
   };
 }
@@ -70,7 +87,10 @@ function nodeReference(node: VincisCanvasNode) {
 
 export function useCanvasMediaActions(
   projectId: string,
-  options?: { onCreditsCharged?: (amount: number) => void }
+  options?: {
+    onCreditsCharged?: (amount: number) => void;
+    onCreditsSync?: () => void;
+  }
 ) {
   const addNode = useCanvasStore((state) => state.addNode);
   const updateNodeData = useCanvasStore((state) => state.updateNodeData);
@@ -137,6 +157,7 @@ export function useCanvasMediaActions(
       if (input.reference?.assetId) body.referenceAssetId = input.reference.assetId;
       if (input.reference?.url) body.referenceUrl = input.reference.url;
       if (input.reference?.nodeId) body.referenceNodeId = input.reference.nodeId;
+      if (input.reference?.mimeType) body.referenceMimeType = input.reference.mimeType;
 
       const response = await fetch(`/api/generation/${input.kind}`, {
         method: "POST",
@@ -169,15 +190,20 @@ export function useCanvasMediaActions(
         )
       );
       patchNodeData(variables.nodeId, { jobId: job.id, progress: job.progress });
+      if (typeof job.chargedCredits === "number" && job.chargedCredits > 0) {
+        patchNodeData(variables.nodeId, { chargedCredits: job.chargedCredits });
+      }
       if (job.chargedCredits && job.chargedCredits > 0) {
         options?.onCreditsCharged?.(job.chargedCredits);
       }
     },
     onError: (error, variables) => {
+      const raw = error instanceof Error ? error.message : "Generation request failed";
       updateNodeData(variables.nodeId, {
         status: "failed",
-        error: error instanceof Error ? error.message : "Generation request failed"
+        error: formatValidationMessage(raw)
       });
+      options?.onCreditsSync?.();
     }
   });
 
@@ -214,16 +240,33 @@ export function useCanvasMediaActions(
         ? { aspectRatio: "1:1", resolution: "1024", outputs: 1, quality: "high" }
         : kind === "video"
           ? { aspectRatio: "auto", duration: 5, quality: "720p", audio: true, webSearch: false }
-          : { duration: 30, instrumental: true });
+          : { instrumental: false });
 
     if (input.targetNodeId) {
-      updateNodeData(nodeId, {
-        title,
-        prompt: input.prompt,
-        status: "loading",
-        progress: 8,
-        generationType
-      });
+      const card =
+        kind === "music" ? MUSIC_NODE_LOADING_CARD : loadingCardForGenerationType(generationType);
+      if (kind === "music") {
+        updateNodeData(nodeId, {
+          title,
+          prompt: input.prompt,
+          status: "loading",
+          progress: 8,
+          generationType
+        });
+      } else {
+        setNodeTypeAndData(nodeId, "loading", {
+          title,
+          prompt: input.prompt,
+          status: "loading",
+          progress: 8,
+          generationType
+        });
+      }
+      useCanvasStore.setState((state) => ({
+        nodes: state.nodes.map((node) =>
+          node.id === nodeId ? { ...node, width: card.width, height: card.height } : node
+        )
+      }));
     } else {
       addNode(spawnLoadingNode(nodeId, title, input.prompt, generationType));
     }
@@ -245,7 +288,27 @@ export function useCanvasMediaActions(
 
   function regenerate(nodeId: string) {
     const node = requireNode(nodeId);
-    if (!node?.data.prompt) return;
+    if (!node) return;
+
+    if (node.type === "music") {
+      if (!canRegenerateMusicNode(node.data)) return;
+      const prompt = resolveMusicRegeneratePrompt(node);
+      const ctx = readNodeGenerationContext(node);
+      const newNode = spawnMusicRegenerateLoadingNode(node, prompt);
+      addNode(newNode);
+      generationMutation.mutate({
+        kind: "music",
+        nodeId: newNode.id,
+        prompt,
+        model: ctx.model,
+        mode: "REGENERATE",
+        parameters: ctx.parameters,
+        reference: null
+      });
+      return;
+    }
+
+    if (!node.data.prompt) return;
     const ctx = readNodeGenerationContext(node);
     generate(nodeKindFromType(node.type), {
       prompt: ctx.prompt,

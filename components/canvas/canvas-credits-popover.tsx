@@ -2,10 +2,23 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Zap } from "lucide-react";
+import {
+  ChevronRight,
+  Coins,
+  RefreshCw,
+  ShoppingCart,
+  X,
+  Zap
+} from "lucide-react";
+import {
+  CANVAS_CREDITS_POPOVER,
+  canvasCreditsPopoverCopy
+} from "@/lib/canvas/canvas-credits-popover-design";
+import { normalizeCanvasTokenBalance } from "@/lib/canvas/generation-credits";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
-import { normalizeCanvasTokenBalance } from "@/lib/canvas/generation-credits";
+import { creatorPortalRoutes } from "@/lib/studioos/creator-portal-routes";
+import { cn } from "@/lib/utils";
 
 type WalletSummary = {
   availableCredits: number;
@@ -51,7 +64,16 @@ export function CanvasCreditsPopover({
       .catch(() => undefined);
   }, [open]);
 
-  const zh = locale === "zh";
+  const copy = canvasCreditsPopoverCopy[locale];
+  const creditsHref = withLocale(creatorPortalRoutes.credits, locale);
+  const convertHref = `${creditsHref}#convert`;
+  const detailsHref = `${creditsHref}#history`;
+  const formattedAvailable = summary.availableCredits.toLocaleString(
+    locale === "zh" ? "zh-CN" : "en-US"
+  );
+  const formattedReserved = summary.reservedCredits.toLocaleString(
+    locale === "zh" ? "zh-CN" : "en-US"
+  );
 
   return (
     <div
@@ -63,44 +85,58 @@ export function CanvasCreditsPopover({
         type="button"
         onClick={() => setOpen((value) => !value)}
         className="flex items-center gap-1 rounded-full px-1.5 py-0.5 text-xs font-medium tabular-nums text-zinc-700 hover:bg-zinc-100"
-        aria-label={zh ? "VINCIS Credits" : "VINCIS Credits"}
+        aria-label={copy.title}
+        aria-expanded={open}
       >
         <Zap className="h-3 w-3 text-zinc-400" strokeWidth={2.25} />
-        {summary.availableCredits.toLocaleString(zh ? "zh-CN" : "en-US")}
+        {formattedAvailable}
       </button>
 
       {open ? (
         <div className="absolute right-0 top-full z-50 pt-2">
-          <div className="w-64 rounded-2xl border border-zinc-200 bg-white p-4 shadow-xl">
-            <div className="text-sm font-semibold text-zinc-950">VINCIS Credits</div>
-            <div className="mt-2 text-2xl font-semibold tabular-nums text-zinc-900">
-              {summary.availableCredits.toLocaleString(zh ? "zh-CN" : "en-US")}
+          <div className={cn(CANVAS_CREDITS_POPOVER.width, CANVAS_CREDITS_POPOVER.shell)}>
+            <div className={CANVAS_CREDITS_POPOVER.header}>
+              <div className={CANVAS_CREDITS_POPOVER.headerLead}>
+                <span className={CANVAS_CREDITS_POPOVER.headerIcon}>
+                  <Coins className={CANVAS_CREDITS_POPOVER.headerIconGlyph} strokeWidth={2.25} />
+                </span>
+                <div className={CANVAS_CREDITS_POPOVER.title}>{copy.title}</div>
+              </div>
+              <button
+                type="button"
+                aria-label={locale === "zh" ? "关闭" : "Close"}
+                onClick={() => setOpen(false)}
+                className={CANVAS_CREDITS_POPOVER.closeButton}
+              >
+                <X className="h-3.5 w-3.5" strokeWidth={2.25} />
+              </button>
             </div>
-            <p className="mt-1 text-xs text-zinc-500">
-              {zh ? "可用 Credits" : "Available credits"}
-              {" · "}
-              {zh ? "冻结" : "Reserved"} {summary.reservedCredits.toLocaleString()}
+
+            <div className={CANVAS_CREDITS_POPOVER.balanceRow}>
+              <span className={CANVAS_CREDITS_POPOVER.balanceValue}>{formattedAvailable}</span>
+              <span className={CANVAS_CREDITS_POPOVER.balanceBadge}>
+                <Zap className={CANVAS_CREDITS_POPOVER.balanceBadgeIcon} strokeWidth={2.25} />
+              </span>
+            </div>
+            <p className={CANVAS_CREDITS_POPOVER.balanceMeta}>
+              {copy.available} · {copy.reserved} {formattedReserved}
             </p>
-            <div className="mt-4 grid gap-2">
-              <Link
-                href={withLocale("/studio/credits", locale)}
-                className="rounded-xl bg-zinc-900 px-3 py-2 text-center text-xs font-medium text-white"
-              >
-                {zh ? "购买 Credits" : "Buy credits"}
+
+            <div className={CANVAS_CREDITS_POPOVER.actions}>
+              <Link href={creditsHref} className={CANVAS_CREDITS_POPOVER.buyButton}>
+                <ShoppingCart className="h-4 w-4" strokeWidth={2.25} />
+                {copy.buy}
               </Link>
-              <Link
-                href={withLocale("/studio/credits", locale)}
-                className="rounded-xl border border-zinc-200 px-3 py-2 text-center text-xs font-medium text-zinc-700"
-              >
-                {zh ? "使用收益兑换" : "Convert earnings"}
-              </Link>
-              <Link
-                href={withLocale("/studio/credits", locale)}
-                className="text-center text-xs text-zinc-500 hover:text-zinc-800"
-              >
-                {zh ? "查看明细" : "View details"}
+              <Link href={convertHref} className={CANVAS_CREDITS_POPOVER.convertButton}>
+                <RefreshCw className="h-4 w-4" strokeWidth={2.25} />
+                {copy.convert}
               </Link>
             </div>
+
+            <Link href={detailsHref} className={CANVAS_CREDITS_POPOVER.detailsLink}>
+              {copy.details}
+              <ChevronRight className="h-3.5 w-3.5" strokeWidth={2.25} />
+            </Link>
           </div>
         </div>
       ) : null}

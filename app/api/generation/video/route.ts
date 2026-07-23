@@ -24,6 +24,7 @@ export async function POST(request: Request) {
           referenceAssetId: input.referenceAssetId,
           referenceUrl: input.referenceUrl,
           referenceNodeId: input.referenceNodeId,
+          referenceMimeType: input.referenceMimeType,
           mode: input.mode
         }
       },

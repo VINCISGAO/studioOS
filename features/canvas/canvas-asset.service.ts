@@ -7,10 +7,16 @@ import {
   buildGeneratedAssetMetadata,
   buildLibraryUploadMetadata,
   buildReferenceUploadMetadata,
-  isCanvasLibraryAsset,
+  CANVAS_LIBRARY_ASSET_KIND,
+  LEGACY_CANVAS_ASSET_KIND,
   parseCanvasAssetMetadata,
   type SeedanceReviewStatus
 } from "@/lib/canvas/canvas-asset-metadata";
+import {
+  CANVAS_LIBRARY_ASSET_TYPE,
+  type CanvasAssetLibraryKind,
+  type CanvasLibraryAssetType
+} from "@/lib/canvas/canvas-library-kind";
 import { reviewSeedanceLibraryAsset } from "@/lib/canvas/seedance-asset-review.server";
 import { appError } from "@/lib/core/errors";
 import { asInputJson } from "@/lib/core/prisma-json";
@@ -124,6 +130,25 @@ function safeDisplayName(value: string) {
   return value.replace(/[\u0000-\u001f\u007f/\\]/g, "_").slice(0, 180) || "canvas-asset";
 }
 
+function assertLibraryKindMatch(accepted: AcceptedUpload, libraryKind: CanvasAssetLibraryKind) {
+  const expected = CANVAS_LIBRARY_ASSET_TYPE[libraryKind];
+  if (accepted.assetType !== expected) {
+    const labels: Record<CanvasAssetLibraryKind, string> = {
+      image: "image",
+      video: "video",
+      audio: "audio"
+    };
+    throw appError(
+      "VALIDATION_ERROR",
+      `This library only accepts ${labels[libraryKind]} files`
+    );
+  }
+}
+
+function libraryAssetTypeForKind(kind: CanvasAssetLibraryKind): CanvasLibraryAssetType {
+  return CANVAS_LIBRARY_ASSET_TYPE[kind];
+}
+
 function serializeLibraryAsset(asset: {
   id: string;
   fileName: string;
@@ -150,7 +175,7 @@ export class CanvasAssetService {
     projectId: string,
     file: File,
     user: AuthUserDto,
-    options?: { target?: UploadTarget; locale?: "zh" | "en" }
+    options?: { target?: UploadTarget; locale?: "zh" | "en"; libraryKind?: CanvasAssetLibraryKind }
   ) {
     const target = options?.target ?? "reference";
     const project = await canvasService.assertAccess(projectId, user);
@@ -169,6 +194,12 @@ export class CanvasAssetService {
     }
     if (file.size > accepted.maxBytes) {
       throw appError("VALIDATION_ERROR", `File exceeds the ${accepted.maxBytes / 1024 / 1024}MB limit`);
+    }
+    if (target === "library") {
+      if (!options?.libraryKind) {
+        throw appError("VALIDATION_ERROR", "libraryKind is required for library uploads");
+      }
+      assertLibraryKindMatch(accepted, options.libraryKind);
     }
 
     let metadataJson: Record<string, unknown>;
@@ -466,30 +497,90 @@ export class CanvasAssetService {
     };
   }
 
-  async listProjectAssets(projectId: string, user: AuthUserDto) {
+  async uploadBatch(
+    projectId: string,
+    files: File[],
+    user: AuthUserDto,
+    options: { target: "library"; locale?: "zh" | "en"; libraryKind: CanvasAssetLibraryKind }
+  ) {
+    if (!files.length) throw appError("VALIDATION_ERROR", "At least one file is required");
+    if (files.length > 24) throw appError("VALIDATION_ERROR", "You can upload up to 24 files at once");
+
+    const uploaded = [];
+    for (const file of files) {
+      uploaded.push(
+        await this.upload(projectId, file, user, {
+          target: options.target,
+          locale: options.locale,
+          libraryKind: options.libraryKind
+        })
+      );
+    }
+    return uploaded;
+  }
+
+  async listProjectAssets(
+    projectId: string,
+    user: AuthUserDto,
+    options?: { kind?: CanvasAssetLibraryKind }
+  ) {
     const project = await canvasService.assertAccess(projectId, user);
+    const assetType = options?.kind ? libraryAssetTypeForKind(options.kind) : null;
     const rows = project.campaignId
-      ? await canvasRepository.listCampaignAssets(project.campaignId)
-      : await canvasRepository.listProjectAssets(projectId);
+      ? assetType
+        ? await canvasRepository.listCampaignLibraryAssets(project.campaignId, assetType)
+        : await canvasRepository.listCampaignAssets(project.campaignId)
+      : assetType
+        ? await canvasRepository.listProjectLibraryAssets(projectId, assetType)
+        : await canvasRepository.listProjectAssets(projectId);
+
+    if (assetType) {
+      return rows.map((asset) => serializeLibraryAsset(asset));
+    }
 
     return rows
-      .filter((asset) => isCanvasLibraryAsset(asset.metadataJson))
+      .filter((asset) => {
+        const meta = parseCanvasAssetMetadata(asset.metadataJson);
+        if (meta.kind === CANVAS_LIBRARY_ASSET_KIND) return true;
+        return meta.kind === LEGACY_CANVAS_ASSET_KIND && meta.source === "creator_upload";
+      })
       .map((asset) => serializeLibraryAsset(asset));
   }
 
-  async deleteLibraryAssets(projectId: string, assetIds: string[], user: AuthUserDto) {
+  async deleteLibraryAssets(
+    projectId: string,
+    assetIds: string[],
+    user: AuthUserDto,
+    options?: { kind?: CanvasAssetLibraryKind }
+  ) {
     const project = await canvasService.assertAccess(projectId, user);
     if (!assetIds.length) throw appError("VALIDATION_ERROR", "assetIds is required");
 
     const uniqueIds = [...new Set(assetIds)];
-    const rows = project.campaignId
-      ? await canvasRepository.listCampaignAssets(project.campaignId)
-      : await canvasRepository.listProjectAssets(projectId);
+    const assetType = options?.kind ? libraryAssetTypeForKind(options.kind) : null;
 
-    const libraryIds = new Set(
-      rows.filter((row) => isCanvasLibraryAsset(row.metadataJson)).map((row) => row.id)
-    );
-    const deletable = uniqueIds.filter((id) => libraryIds.has(id));
+    let deletable: string[];
+    if (assetType) {
+      const rows = project.campaignId
+        ? await canvasRepository.findCampaignLibraryAssetIds(project.campaignId, uniqueIds, assetType)
+        : await canvasRepository.findProjectLibraryAssetIds(project.id, uniqueIds, assetType);
+      deletable = rows.map((row) => row.id);
+    } else {
+      const rows = project.campaignId
+        ? await canvasRepository.listCampaignAssets(project.campaignId)
+        : await canvasRepository.listProjectAssets(projectId);
+      const libraryIds = new Set(
+        rows
+          .filter((row) => {
+            const meta = parseCanvasAssetMetadata(row.metadataJson);
+            if (meta.kind === CANVAS_LIBRARY_ASSET_KIND) return true;
+            return meta.kind === LEGACY_CANVAS_ASSET_KIND && meta.source === "creator_upload";
+          })
+          .map((row) => row.id)
+      );
+      deletable = uniqueIds.filter((id) => libraryIds.has(id));
+    }
+
     if (!deletable.length) {
       throw appError("NOT_FOUND", "No deletable library assets found");
     }

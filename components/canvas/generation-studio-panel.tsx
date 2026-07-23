@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Music2, X } from "lucide-react";
 import { useCanvasStore } from "@/components/canvas/canvas-store";
 import {
   GenerationCatalogEmptyBanner,
@@ -10,16 +9,13 @@ import {
   GenerationModelUnavailableBanner,
   GenerationPricingUnavailableBanner
 } from "@/components/canvas/generation-catalog-status";
-import { GenerationImageReferenceSlot } from "@/components/canvas/generation-image-reference-slot";
-import {
-  GenerationKindSelector,
-  type GenerationReferenceSlot
-} from "@/components/canvas/generation-kind-selector";
+import { GenerationVideoStudioSection } from "@/components/canvas/generation-video-studio-section";
+import { GenerationVideoStudioToolbar } from "@/components/canvas/generation-video-studio-toolbar";
+import { GenerationImageStudioSection } from "@/components/canvas/generation-image-studio-section";
 import { GenerationMusicSettingsPanel } from "@/components/canvas/generation-music-settings-panel";
-import { GenerationStudioReferenceHost } from "@/components/canvas/generation-studio-reference-host";
-import { GenerationStudioToolbar } from "@/components/canvas/generation-studio-toolbar";
-import { GenerationVideoHeader } from "@/components/canvas/generation-video-header";
+import { type GenerationReferenceSlot } from "@/components/canvas/generation-kind-selector";
 import { useCanvasAiModels } from "@/components/canvas/hooks/use-canvas-ai-models";
+import type { PublicAiModelCatalog } from "@/features/canvas/ai-model-catalog.types";
 import { useGenerationStudioReferences } from "@/components/canvas/hooks/use-generation-studio-references";
 import { useGenerationCreditQuote } from "@/components/canvas/hooks/use-generation-credit-quote";
 import {
@@ -28,12 +24,20 @@ import {
   clampVideoSettings,
   videoReferenceModesForCapabilities
 } from "@/lib/canvas/ai-model-settings";
+import { GenerationStudioReferenceHost } from "@/components/canvas/generation-studio-reference-host";
+import { GenerationStudioToolbar } from "@/components/canvas/generation-studio-toolbar";
+import {
+  GENERATION_IMAGE_PANEL_WIDTH,
+  GENERATION_PANEL_FOOTER_CLASS,
+  GENERATION_PANEL_SHELL_CLASS
+} from "@/lib/canvas/generation-panel-design";
+import { MUSIC_PANEL_SHELL_CLASS } from "@/lib/canvas/music-panel-design";
+import { GENERATION_VIDEO_PANEL_WIDTH, VIDEO_PANEL_FOOTER_CLASS } from "@/lib/canvas/generation-video-panel-design";
 import {
   DEFAULT_IMAGE_SETTINGS,
   DEFAULT_MUSIC_SETTINGS,
   DEFAULT_VIDEO_SETTINGS,
   GENERATION_MUSIC_PANEL_WIDTH,
-  GENERATION_PANEL_WIDTH,
   canSubmitMusicSettings,
   formatImageSettingsLabel,
   formatMusicSettingsLabel,
@@ -42,24 +46,22 @@ import {
   type ImageGenerationSettings,
   type MusicGenerationSettings,
   type VideoGenerationSettings,
-  type VideoReferenceMode
+  type VideoReferenceMode,
+  CANVAS_GENERATION_PANEL_Z_INDEX
 } from "@/lib/canvas/generation-ui";
 import {
   buildGenerationSubmitInput,
   type GenerationSubmitInput
 } from "@/lib/canvas/generation-submit";
-import { normalizeCanvasTokenBalance } from "@/lib/canvas/generation-credits";
+import { normalizeCanvasTokenBalance, computeGenerationCredits } from "@/lib/canvas/generation-credits";
 import { CanvasInsufficientCreditsBanner } from "@/components/canvas/canvas-insufficient-credits-banner";
 import type { Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
-const copy = {
-  zh: { placeholder: "今天我们要创作什么" },
-  en: { placeholder: "What are we creating today?" }
-} as const;
-
 function panelWidth(kind: GenerationKind) {
-  return kind === "music" ? GENERATION_MUSIC_PANEL_WIDTH : GENERATION_PANEL_WIDTH;
+  if (kind === "music") return GENERATION_MUSIC_PANEL_WIDTH;
+  if (kind === "image") return GENERATION_IMAGE_PANEL_WIDTH;
+  return GENERATION_VIDEO_PANEL_WIDTH;
 }
 
 export function GenerationStudioPanel({
@@ -68,8 +70,10 @@ export function GenerationStudioPanel({
   projectId,
   busy,
   anchor,
-  anchorPlacement = "above",
+  anchorPlacement = "center",
   tokenBalance,
+  initialAiModelCatalog,
+  onSwitchKind,
   onClose,
   onSubmit
 }: {
@@ -78,15 +82,16 @@ export function GenerationStudioPanel({
   projectId: string;
   busy: boolean;
   anchor: { x: number; y: number };
-  anchorPlacement?: "above" | "below";
+  anchorPlacement?: "above" | "below" | "center";
   tokenBalance: number;
+  initialAiModelCatalog?: PublicAiModelCatalog | null;
+  onSwitchKind?: (kind: GenerationKind) => void;
   onClose: () => void;
   onSubmit: (input: GenerationSubmitInput) => void;
 }) {
-  const t = copy[locale];
   const nodes = useCanvasStore((state) => state.nodes);
   const references = useGenerationStudioReferences(projectId);
-  const catalog = useCanvasAiModels();
+  const catalog = useCanvasAiModels(initialAiModelCatalog);
   const [kind, setKind] = useState<GenerationKind>(initialKind);
   const [referenceSlot, setReferenceSlot] = useState<GenerationReferenceSlot>(
     initialKind === "music" ? "audio" : "video"
@@ -157,6 +162,9 @@ export function GenerationStudioPanel({
   if (submitPreview.reference?.assetId) quoteParameters.referenceAssetId = submitPreview.reference.assetId;
   if (submitPreview.reference?.url) quoteParameters.referenceUrl = submitPreview.reference.url;
   if (submitPreview.reference?.nodeId) quoteParameters.referenceNodeId = submitPreview.reference.nodeId;
+  if (submitPreview.reference?.mimeType) {
+    quoteParameters.referenceMimeType = submitPreview.reference.mimeType;
+  }
 
   const quoteEnabled =
     !catalog.loading &&
@@ -177,7 +185,17 @@ export function GenerationStudioPanel({
     enabled: quoteEnabled
   });
 
-  const credits = quote.credits;
+  const localCreditEstimate =
+    quoteEnabled && submitPreview.model
+      ? computeGenerationCredits({
+          type: kind === "video" ? "VIDEO" : kind === "image" ? "IMAGE" : "MUSIC",
+          model: submitPreview.model,
+          parameters: quoteParameters
+        })
+      : 0;
+
+  const credits =
+    quote.credits > 0 ? quote.credits : localCreditEstimate > 0 ? localCreditEstimate : quote.credits;
   const settingsLabel =
     kind === "video"
       ? formatVideoSettingsLabel(videoSettings, locale)
@@ -195,8 +213,9 @@ export function GenerationStudioPanel({
   const catalogEmpty = !catalog.loading && !catalog.error && modelsForKind.length === 0;
   const modelUnavailable =
     quoteEnabled && Boolean(submitPreview.model) && !selectedModelView;
-  const pricingUnavailable = quoteEnabled && !quote.loading && Boolean(quote.error);
-  const insufficientCredits = quote.credits > 0 ? tokenBalance < quote.credits : false;
+  const pricingUnavailable =
+    quoteEnabled && !quote.loading && Boolean(quote.error) && localCreditEstimate <= 0;
+  const insufficientCredits = credits > 0 ? tokenBalance < credits : false;
   const promptTooShort = kind !== "music" && prompt.trim().length < 3;
   const submitDisabled =
     busy ||
@@ -204,9 +223,8 @@ export function GenerationStudioPanel({
     Boolean(catalog.error) ||
     catalogEmpty ||
     modelUnavailable ||
-    quote.loading ||
     pricingUnavailable ||
-    quote.credits <= 0 ||
+    credits <= 0 ||
     insufficientCredits ||
     !submitPreview.model ||
     (kind === "music" ? !canSubmitMusicSettings(musicSettings) : promptTooShort);
@@ -222,133 +240,145 @@ export function GenerationStudioPanel({
     onSubmit(submitPreview);
   }
 
-  function stopCanvasPointer(event: React.PointerEvent) {
+  function stopCanvasPointer(event: React.PointerEvent | React.MouseEvent) {
     event.stopPropagation();
   }
 
   const width = panelWidth(kind);
+  const referenceOverlayOpen = references.showAssetLibrary || references.showCanvasPicker;
+  const panelTransform =
+    anchorPlacement === "center"
+      ? "translate(-50%, -50%)"
+      : anchorPlacement === "below"
+        ? "translate(-50%, 0)"
+        : "translate(-50%, -100%)";
 
   return (
     <>
       <div
-        className="absolute z-[100] max-w-[calc(100vw-24px)]"
+        className={cn(
+          "absolute max-w-[calc(100vw-24px)] nodrag nopan pointer-events-auto transition-[left,top,opacity] duration-200 ease-out will-change-[left,top]",
+          referenceOverlayOpen && "pointer-events-none opacity-40"
+        )}
         style={{
           left: anchor.x,
           top: anchor.y,
           width,
-          transform: anchorPlacement === "below" ? "translate(-50%, 0)" : "translate(-50%, -100%)"
+          zIndex: referenceOverlayOpen ? 1 : CANVAS_GENERATION_PANEL_Z_INDEX,
+          transform: panelTransform
         }}
-        onPointerDown={stopCanvasPointer}
-        onPointerDownCapture={stopCanvasPointer}
+        onPointerDown={referenceOverlayOpen ? undefined : stopCanvasPointer}
+        onPointerDownCapture={referenceOverlayOpen ? undefined : stopCanvasPointer}
+        onMouseDown={referenceOverlayOpen ? undefined : stopCanvasPointer}
+        aria-hidden={referenceOverlayOpen}
       >
-        <div className="overflow-visible rounded-[20px] border border-zinc-200/90 bg-white shadow-[0_12px_40px_rgba(15,23,42,0.08)]">
-          {catalog.loading ? <GenerationCatalogLoadingBanner locale={locale} /> : null}
-          {catalog.error ? (
-            <GenerationCatalogErrorBanner
+        <div className={kind === "music" ? MUSIC_PANEL_SHELL_CLASS : GENERATION_PANEL_SHELL_CLASS}>
+          {kind === "video" ? (
+            <GenerationVideoStudioSection
               locale={locale}
-              message={catalog.error}
-              onRetry={() => void catalog.reload()}
+              prompt={prompt}
+              reference={references.reference}
+              catalogError={catalog.error}
+              catalogEmpty={catalogEmpty}
+              modelUnavailable={modelUnavailable}
+              pricingUnavailable={pricingUnavailable}
+              pricingError={quote.error}
+              insufficientCredits={insufficientCredits}
+              tokenBalance={tokenBalance}
+              credits={credits}
+              referenceSlot={referenceSlot}
+              uploadOpen={showUploadMenu}
+              onPromptChange={setPrompt}
+              onUploadToggle={() => setShowUploadMenu((value) => !value)}
+              onLocalUpload={() => {
+                setShowUploadMenu(false);
+                references.pickLocalReference(referenceSlot);
+              }}
+              onOpenLibrary={() => {
+                setShowUploadMenu(false);
+                references.openReferenceLibrary(referenceSlot);
+              }}
+              onOpenCanvasPicker={() => {
+                setShowUploadMenu(false);
+                references.openReferenceCanvasPicker(referenceSlot);
+              }}
+              onSelectVideo={() => {
+                setReferenceSlot("video");
+                setKind("video");
+              }}
+              onSelectImage={() => {
+                setReferenceSlot("image");
+              }}
+              onSelectAudio={() => {
+                setReferenceSlot("audio");
+              }}
+              onReferenceLocal={(slot) => {
+                setShowUploadMenu(false);
+                references.pickLocalReference(slot);
+              }}
+              onReferenceLibrary={(slot) => {
+                setShowUploadMenu(false);
+                references.openReferenceLibrary(slot);
+              }}
+              onReferenceCanvas={(slot) => {
+                setShowUploadMenu(false);
+                references.openReferenceCanvasPicker(slot);
+              }}
+              onClearReference={() => references.setReference(null)}
+              onCatalogRetry={() => void catalog.reload()}
             />
           ) : null}
-          {catalogEmpty ? <GenerationCatalogEmptyBanner locale={locale} kind={kind} /> : null}
-          {modelUnavailable ? <GenerationModelUnavailableBanner locale={locale} /> : null}
-          {pricingUnavailable ? (
-            <GenerationPricingUnavailableBanner locale={locale} message={quote.error} />
+
+          {kind === "image" ? (
+            <GenerationImageStudioSection
+              locale={locale}
+              prompt={prompt}
+              reference={references.reference}
+              catalogLoading={catalog.loading}
+              catalogError={catalog.error}
+              catalogEmpty={catalogEmpty}
+              modelUnavailable={modelUnavailable}
+              pricingUnavailable={pricingUnavailable}
+              pricingError={quote.error}
+              insufficientCredits={insufficientCredits}
+              tokenBalance={tokenBalance}
+              credits={credits}
+              onPromptChange={setPrompt}
+              onLocalUpload={() => references.pickLocalReference("image")}
+              onCanvasPick={() => references.setShowCanvasPicker(true)}
+              onClearReference={() => references.setReference(null)}
+              onCatalogRetry={() => void catalog.reload()}
+            />
           ) : null}
 
-          {kind === "video" ? (
-            <>
-              <GenerationVideoHeader
-                locale={locale}
-                uploadOpen={showUploadMenu}
-                onUploadToggle={() => setShowUploadMenu((value) => !value)}
-                onLocalUpload={() => {
-                  setShowUploadMenu(false);
-                  references.pickLocalReference(referenceSlot);
-                }}
-                onOpenLibrary={() => {
-                  setShowUploadMenu(false);
-                  references.openReferenceLibrary(referenceSlot);
-                }}
-                onOpenCanvasPicker={() => {
-                  setShowUploadMenu(false);
-                  references.openReferenceCanvasPicker(referenceSlot);
-                }}
-              />
-              <div className="px-3 pb-1 pt-2">
-                <GenerationKindSelector
-                  selectedSlot={referenceSlot}
-                  locale={locale}
-                  onSelectVideo={() => {
-                    setReferenceSlot("video");
-                    setKind("video");
-                  }}
-                  onSelectImage={() => {
-                    setReferenceSlot("image");
-                    setKind("video");
-                  }}
-                  onSelectAudio={() => {
-                    setReferenceSlot("audio");
-                  }}
-                  onReferenceLocal={references.pickLocalReference}
-                  onReferenceLibrary={references.openReferenceLibrary}
-                  onReferenceCanvas={references.openReferenceCanvasPicker}
-                />
-              </div>
-              <div className="px-3 pb-2 pt-1">
-                <textarea
-                  value={prompt}
-                  onChange={(event) => setPrompt(event.target.value)}
-                  rows={2}
-                  maxLength={4000}
-                  placeholder={t.placeholder}
-                  className="min-h-[64px] w-full resize-none bg-transparent text-sm leading-6 text-zinc-900 outline-none placeholder:text-zinc-400"
-                />
-                {references.reference?.mimeType?.startsWith("audio/") ? (
-                  <div className="mt-2 flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2">
-                    <Music2 className="h-4 w-4 shrink-0 text-zinc-500" />
-                    <span className="min-w-0 flex-1 truncate text-xs text-zinc-700">
-                      {references.reference.fileName}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => references.setReference(null)}
-                      className="rounded-full p-1 text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700"
-                      aria-label={locale === "zh" ? "移除参考音频" : "Remove reference audio"}
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
+          <div className={cn(kind === "music" ? "px-4 pb-4 pt-3" : "hidden")}>
+            {kind === "music" ? (
+              <>
+                {catalog.loading ? <GenerationCatalogLoadingBanner locale={locale} /> : null}
+                {catalog.error ? (
+                  <div className="pb-2">
+                    <GenerationCatalogErrorBanner
+                      locale={locale}
+                      message={catalog.error}
+                      onRetry={() => void catalog.reload()}
+                    />
                   </div>
                 ) : null}
-              </div>
-            </>
-          ) : null}
-
-          <div
-            className={cn(
-              kind === "music" ? "px-3 pb-3 pt-3" : kind === "image" ? "px-3 pb-1 pt-3" : "hidden"
-            )}
-          >
-            {kind === "image" ? (
-              <div className="flex items-start gap-2.5">
-                <GenerationImageReferenceSlot
-                  locale={locale}
-                  reference={references.reference}
-                  onLocalUpload={() => references.pickLocalReference("image")}
-                  onCanvasPick={() => references.setShowCanvasPicker(true)}
-                  onClear={() => references.setReference(null)}
-                />
-                <textarea
-                  value={prompt}
-                  onChange={(event) => setPrompt(event.target.value)}
-                  rows={2}
-                  maxLength={4000}
-                  placeholder={t.placeholder}
-                  className="min-h-[64px] flex-1 resize-none bg-transparent text-sm leading-6 text-zinc-900 outline-none placeholder:text-zinc-400"
-                />
-              </div>
-            ) : kind === "music" ? (
-              <>
+                {catalogEmpty ? (
+                  <div className="pb-2">
+                    <GenerationCatalogEmptyBanner locale={locale} kind="music" />
+                  </div>
+                ) : null}
+                {modelUnavailable ? (
+                  <div className="pb-2">
+                    <GenerationModelUnavailableBanner locale={locale} />
+                  </div>
+                ) : null}
+                {pricingUnavailable ? (
+                  <div className="pb-2">
+                    <GenerationPricingUnavailableBanner locale={locale} message={quote.error} />
+                  </div>
+                ) : null}
                 {insufficientCredits ? (
                   <div className="mb-3">
                     <CanvasInsufficientCreditsBanner
@@ -358,71 +388,78 @@ export function GenerationStudioPanel({
                     />
                   </div>
                 ) : null}
-                <GenerationMusicSettingsPanel
-                  locale={locale}
-                  settings={musicSettings}
-                  settingsLabel={settingsLabel}
-                  models={catalog.modelsForKind("music")}
-                  selectedModelId={selectedMusicModel}
-                  capabilities={selectedMusicModelView?.capabilities ?? null}
-                  generating={busy}
-                  submitDisabled={submitDisabled}
-                  credits={credits}
-                  onChange={setMusicSettings}
-                  onModelChange={(modelId) => {
-                    setSelectedMusicModel(modelId);
-                    setMusicSettings((current) => ({ ...current, modelVersion: modelId }));
-                  }}
-                  onClose={onClose}
-                  onSubmit={submit}
-                />
+                {!catalog.loading && !catalog.error ? (
+                  <GenerationMusicSettingsPanel
+                    locale={locale}
+                    projectId={projectId}
+                    settings={musicSettings}
+                    settingsLabel={settingsLabel}
+                    capabilities={selectedMusicModelView?.capabilities ?? null}
+                    generating={busy}
+                    submitDisabled={submitDisabled}
+                    credits={credits}
+                    onChange={setMusicSettings}
+                    onClose={onClose}
+                    onSubmit={submit}
+                  />
+                ) : null}
               </>
             ) : null}
           </div>
 
           {kind !== "music" ? (
-            <>
-              {insufficientCredits ? (
-                <div className="border-t border-amber-100 px-3 py-2">
-                  <CanvasInsufficientCreditsBanner
-                    locale={locale}
-                    tokenBalance={tokenBalance}
-                    credits={credits}
-                  />
-                </div>
-              ) : promptTooShort ? (
-                <p className="border-t border-zinc-100 px-3 py-1.5 text-[11px] text-zinc-400">
-                  {locale === "zh" ? "输入至少 3 个字后可生成" : "Enter at least 3 characters to generate"}
-                </p>
-              ) : null}
-              <GenerationStudioToolbar
-                locale={locale}
-                kind={kind}
-                generating={busy}
-                submitDisabled={submitDisabled}
-                insufficientCredits={insufficientCredits}
-                tokenBalance={normalizeCanvasTokenBalance(tokenBalance)}
-                credits={quote.loading ? 0 : credits}
-                settingsLabel={settingsLabel}
-                videoSettings={videoSettings}
-                imageSettings={imageSettings}
-                musicSettings={musicSettings}
-                videoModels={catalog.modelsForKind("video")}
-                imageModels={catalog.modelsForKind("image")}
-                selectedVideoModel={selectedVideoModel}
-                selectedImageModel={selectedImageModel}
-                selectedVideoModelView={selectedVideoModelView}
-                selectedImageModelView={selectedImageModelView}
-                onVideoModelChange={setSelectedVideoModel}
-                onImageModelChange={setSelectedImageModel}
-                onVideoSettingsChange={setVideoSettings}
-                onImageSettingsChange={setImageSettings}
-                videoReferenceMode={videoReferenceMode}
-                onVideoReferenceModeChange={setVideoReferenceMode}
-                onClose={onClose}
-                onSubmit={submit}
-              />
-            </>
+            <div className={kind === "video" ? VIDEO_PANEL_FOOTER_CLASS : GENERATION_PANEL_FOOTER_CLASS}>
+              {kind === "video" ? (
+                <GenerationVideoStudioToolbar
+                  locale={locale}
+                  generating={busy}
+                  submitDisabled={submitDisabled}
+                  insufficientCredits={insufficientCredits}
+                  tokenBalance={normalizeCanvasTokenBalance(tokenBalance)}
+                  credits={credits}
+                  referenceSlot={referenceSlot}
+                  videoSettings={videoSettings}
+                  videoModels={catalog.modelsForKind("video")}
+                  selectedVideoModel={selectedVideoModel}
+                  selectedVideoModelView={selectedVideoModelView}
+                  onVideoModelChange={setSelectedVideoModel}
+                  onVideoSettingsChange={setVideoSettings}
+                  onLocalUpload={() => references.pickLocalReference(referenceSlot)}
+                  onOpenLibrary={() => references.openReferenceLibrary(referenceSlot)}
+                  onOpenCanvasPicker={() => references.openReferenceCanvasPicker(referenceSlot)}
+                  onClose={onClose}
+                  onSubmit={submit}
+                />
+              ) : (
+                <GenerationStudioToolbar
+                  locale={locale}
+                  kind={kind}
+                  generating={busy}
+                  submitDisabled={submitDisabled}
+                  insufficientCredits={insufficientCredits}
+                  tokenBalance={normalizeCanvasTokenBalance(tokenBalance)}
+                  credits={credits}
+                  settingsLabel={settingsLabel}
+                  videoSettings={videoSettings}
+                  imageSettings={imageSettings}
+                  musicSettings={musicSettings}
+                  videoModels={catalog.modelsForKind("video")}
+                  imageModels={catalog.modelsForKind("image")}
+                  selectedVideoModel={selectedVideoModel}
+                  selectedImageModel={selectedImageModel}
+                  selectedVideoModelView={selectedVideoModelView}
+                  selectedImageModelView={selectedImageModelView}
+                  onVideoModelChange={setSelectedVideoModel}
+                  onImageModelChange={setSelectedImageModel}
+                  onVideoSettingsChange={setVideoSettings}
+                  onImageSettingsChange={setImageSettings}
+                  videoReferenceMode={videoReferenceMode}
+                  onVideoReferenceModeChange={setVideoReferenceMode}
+                  onClose={onClose}
+                  onSubmit={submit}
+                />
+              )}
+            </div>
           ) : null}
         </div>
       </div>
@@ -433,6 +470,7 @@ export function GenerationStudioPanel({
         nodes={nodes}
         reference={references.reference}
         showAssetLibrary={references.showAssetLibrary}
+        assetLibrarySlot={references.assetLibrarySlot}
         showCanvasPicker={references.showCanvasPicker}
         canvasPickerSlot={references.canvasPickerSlot}
         uploadingReference={references.uploadingReference}

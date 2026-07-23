@@ -2,6 +2,7 @@
 
 import { AlertCircle, LoaderCircle, RefreshCw } from "lucide-react";
 import type { GenerationKind } from "@/lib/canvas/generation-ui";
+import { generationPanelLoadingClass } from "@/lib/canvas/generation-panel-design";
 import type { Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -17,7 +18,7 @@ const copy = {
     pricingUnavailable: "当前参数无法获取报价，请调整设置后重试"
   },
   en: {
-    loading: "Loading AI models…",
+    loading: "Loading models…",
     error: "Unable to load AI models",
     retry: "Retry",
     emptyVideo: "No video models are currently available",
@@ -38,9 +39,9 @@ function emptyLabel(kind: GenerationKind, locale: Locale) {
 export function GenerationCatalogLoadingBanner({ locale }: { locale: Locale }) {
   const t = copy[locale];
   return (
-    <div className="flex items-center gap-2 border-t border-zinc-100 px-3 py-2 text-[11px] text-zinc-500">
-      <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
-      {t.loading}
+    <div className={generationPanelLoadingClass}>
+      <LoaderCircle className="h-3.5 w-3.5 shrink-0 animate-spin text-violet-400" />
+      <span className="min-w-0 truncate">{t.loading}</span>
     </div>
   );
 }

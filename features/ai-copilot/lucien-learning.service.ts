@@ -96,6 +96,7 @@ function interactionConfidence(answerMode: string) {
   if (answerMode === "model") return 0.88;
   if (answerMode === "image_generation" || answerMode === "image_to_image") return 0.9;
   if (answerMode === "image_generation_failed") return 0.95;
+  if (answerMode === "music_style_enhance") return 0.88;
   return 0.75;
 }
 

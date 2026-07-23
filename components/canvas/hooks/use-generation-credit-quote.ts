@@ -53,13 +53,13 @@ export function useGenerationCreditQuote(input: {
         })
         .catch((error) => {
           if (controller.signal.aborted) return;
-          setState({
-            credits: 0,
+          setState((current) => ({
+            credits: current.credits,
             loading: false,
             error: error instanceof Error ? error.message : "Quote failed"
-          });
+          }));
         });
-    }, 250);
+    }, 80);
 
     return () => {
       controller.abort();

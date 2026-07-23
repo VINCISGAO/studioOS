@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MessageSquarePlus, PanelRightClose } from "lucide-react";
+import { MessageSquarePlus, PanelRightClose, Plus } from "lucide-react";
 import { LucienAvatar } from "@/components/ai-copilot/lucien-avatar";
 import { CanvasChatFeedback } from "@/components/canvas/canvas-chat-feedback";
 import { CanvasChatInput } from "@/components/canvas/canvas-chat-input";
@@ -10,6 +10,13 @@ import { CanvasChatSkills } from "@/components/canvas/canvas-chat-skills";
 import { useCanvasChatReference } from "@/components/canvas/hooks/use-canvas-chat-reference";
 import { useCanvasChatHistory } from "@/components/canvas/hooks/use-canvas-chat-history";
 import { CANVAS_SEND_TO_CHAT_EVENT } from "@/lib/canvas/canvas-chat-bridge";
+import {
+  CANVAS_CHAT_PANEL_WIDTH,
+  canvasChatHeaderCardClass,
+  canvasChatIconButtonClass,
+  canvasChatNewChatButtonClass,
+  canvasChatPanelAsideClass
+} from "@/lib/canvas/canvas-chat-design";
 import type { Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -129,6 +136,14 @@ export function CanvasChatPanel({
     }
   }
 
+  async function startNewChat() {
+    if (busy) return;
+    setDraft("");
+    setError(null);
+    chatReference.clearReference();
+    await history.resetSession();
+  }
+
   if (collapsed) {
     return (
       <div className="absolute right-3 top-12 z-40" data-canvas-chat-root>
@@ -149,50 +164,64 @@ export function CanvasChatPanel({
   return (
     <aside
       data-canvas-chat-root
-      className="relative z-40 flex h-full w-[390px] max-w-[42vw] shrink-0 flex-col border-l border-zinc-200 bg-white max-md:absolute max-md:inset-y-0 max-md:right-0 max-md:max-w-[88vw]"
+      className={canvasChatPanelAsideClass}
+      style={{ width: CANVAS_CHAT_PANEL_WIDTH, maxWidth: "42vw" }}
     >
-      <div className="border-b border-zinc-100 px-4 py-3">
-        <div className="flex h-8 items-center justify-between">
-          <div className="text-sm font-semibold text-zinc-950">
-            {hasHistory
-              ? locale === "zh"
-                ? "继续对话"
-                : "Continue chat"
-              : locale === "zh"
-                ? "新对话"
-                : "New chat"}
-          </div>
-          <div className="flex items-center gap-1">
+      <div className="shrink-0 px-4 pb-3 pt-4">
+        <div className={canvasChatHeaderCardClass}>
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-3">
+              <button
+                type="button"
+                onClick={() => void startNewChat()}
+                disabled={busy}
+                className={cn(canvasChatNewChatButtonClass, busy && "opacity-40")}
+                aria-label={locale === "zh" ? "新对话" : "New chat"}
+              >
+                <Plus className="h-5 w-5" />
+              </button>
+              <div className="min-w-0">
+                <h2 className="truncate text-sm font-semibold text-zinc-950">
+                  {hasHistory
+                    ? locale === "zh"
+                      ? "继续对话"
+                      : "Continue chat"
+                    : locale === "zh"
+                      ? "新对话"
+                      : "New chat"}
+                </h2>
+                <p className="mt-0.5 text-[11px] text-zinc-400">
+                  {hasHistory
+                    ? locale === "zh"
+                      ? "上次对话已保留，直接继续即可。"
+                      : "Your last chat is kept here — continue anytime."
+                    : locale === "zh"
+                      ? "开始新对话，发送消息即可。"
+                      : "Start a new chat by sending a message."}
+                </p>
+              </div>
+            </div>
             <button
               type="button"
               onClick={onToggle}
-              className="rounded-lg p-2 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
+              className={canvasChatIconButtonClass}
               aria-label={locale === "zh" ? "收起" : "Collapse"}
             >
               <PanelRightClose className="h-4 w-4" />
             </button>
           </div>
         </div>
-        <p className="mt-1 text-[10px] text-zinc-400">
-          {hasHistory
-            ? locale === "zh"
-              ? "上次对话已保留，直接继续即可。"
-              : "Your last chat is kept here — continue anytime."
-            : locale === "zh"
-              ? "开始新对话，发送消息即可。"
-              : "Start a new chat by sending a message."}
-        </p>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="min-h-0 flex-1 overflow-y-auto px-4">
         {history.loading && !hasHistory ? (
-          <div className="px-4 py-6 text-sm text-zinc-500">
+          <div className="py-6 text-sm text-zinc-500">
             {locale === "zh" ? "加载中…" : "Loading…"}
           </div>
         ) : !hasHistory ? (
           <CanvasChatSkills locale={locale} onSelect={(prompt) => setDraft(prompt)} />
         ) : (
-          <div className="space-y-4 px-4 py-4">
+          <div className="space-y-4 py-2">
             {history.messages.map((message) => (
               <div
                 key={message.id}
@@ -206,7 +235,7 @@ export function CanvasChatPanel({
                     "max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-6",
                     message.role === "user"
                       ? "bg-zinc-900 text-white"
-                      : "bg-zinc-50 text-zinc-800 ring-1 ring-zinc-100"
+                      : "bg-white text-zinc-800 ring-1 ring-zinc-200/80"
                   )}
                 >
                   {message.referenceImageUrl ? (
@@ -239,7 +268,7 @@ export function CanvasChatPanel({
             {busy ? (
               <div className="flex justify-start gap-3">
                 <LucienAvatar className="mt-0.5 h-7 w-7 shrink-0" />
-                <div className="rounded-2xl bg-zinc-50 px-3.5 py-2.5 text-sm text-zinc-500 ring-1 ring-zinc-100">
+                <div className="rounded-2xl bg-white px-3.5 py-2.5 text-sm text-zinc-500 ring-1 ring-zinc-200/80">
                   {locale === "zh" ? "卢西恩正在思考" : "Lucien is thinking"}
                 </div>
               </div>
@@ -247,7 +276,7 @@ export function CanvasChatPanel({
           </div>
         )}
         {error || chatReference.error || history.error ? (
-          <p className="px-4 pb-3 text-xs text-rose-600">
+          <p className="pb-3 text-xs text-rose-600">
             {error ?? chatReference.error ?? history.error}
           </p>
         ) : null}

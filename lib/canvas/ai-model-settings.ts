@@ -72,22 +72,15 @@ export function clampMusicSettings(
   settings: MusicGenerationSettings,
   capabilities: PublicAiModelCapabilities
 ): MusicGenerationSettings {
-  const duration = pickClosest(
-    settings.duration,
-    capabilities.supportedDurations,
-    settings.duration
-  );
-  const mode = settings.mode.toUpperCase();
-  const allowedMode = capabilities.supportedModes.find((item) => item === mode);
+  const mode = settings.mode === "soundtrack" ? "custom" : settings.mode;
+  const upperMode = mode.toUpperCase();
+  const allowedMode = capabilities.supportedModes.find((item) => item === upperMode);
   const nextMode =
-    allowedMode === "SIMPLE"
+    allowedMode === "SIMPLE" || (mode === "simple" && capabilities.supportedModes.includes("SIMPLE"))
       ? "simple"
-      : allowedMode === "SOUNDTRACK"
-        ? "soundtrack"
-        : "custom";
+      : "custom";
   return {
     ...settings,
-    duration,
     mode: nextMode,
     instrumental: capabilities.supportsInstrumental ? settings.instrumental : true
   };
@@ -105,12 +98,15 @@ export function videoReferenceModesForCapabilities(capabilities: PublicAiModelCa
 }
 
 export function musicModesForCapabilities(capabilities: PublicAiModelCapabilities) {
-  return capabilities.supportedModes
-    .map((mode) => {
-      if (mode === "SIMPLE") return "simple" as const;
-      if (mode === "SOUNDTRACK") return "soundtrack" as const;
-      if (mode === "CUSTOM") return "custom" as const;
-      return null;
-    })
-    .filter((mode): mode is "simple" | "custom" | "soundtrack" => mode != null);
+  const modes: Array<"simple" | "custom"> = [];
+  if (capabilities.supportedModes.includes("SIMPLE")) {
+    modes.push("simple");
+  }
+  if (
+    capabilities.supportedModes.includes("CUSTOM") ||
+    capabilities.supportedModes.includes("SOUNDTRACK")
+  ) {
+    modes.push("custom");
+  }
+  return modes.length > 0 ? modes : (["simple", "custom"] as const);
 }

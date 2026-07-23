@@ -2,17 +2,23 @@
 
 import { useRef, useState } from "react";
 import type { GenerationReferenceSlot } from "@/components/canvas/generation-kind-selector";
+import type { CanvasAssetLibraryKind } from "@/lib/canvas/canvas-library-kind";
+import { canvasLibraryKindFromReferenceSlot } from "@/lib/canvas/canvas-library-kind";
 import type { GenerationReference } from "@/lib/canvas/generation-ui";
 
 async function uploadReference(
   projectId: string,
   file: File,
-  target: "library" | "reference" = "reference"
+  target: "library" | "reference" = "reference",
+  libraryKind?: CanvasAssetLibraryKind
 ): Promise<GenerationReference> {
   const formData = new FormData();
   formData.set("projectId", projectId);
   formData.set("file", file);
   formData.set("target", target);
+  if (target === "library" && libraryKind) {
+    formData.set("kind", libraryKind);
+  }
   const response = await fetch("/api/canvas/assets", { method: "POST", body: formData });
   const payload = (await response.json()) as {
     success: boolean;
@@ -103,6 +109,12 @@ export function useGenerationStudioReferences(projectId: string) {
     openReferenceCanvasPicker,
     handleLocalFile,
     uploadReference: (file: File) => uploadReference(projectId, file, "reference"),
-    uploadLibraryAsset: (file: File) => uploadReference(projectId, file, "library")
+    uploadLibraryAsset: (file: File, kind?: CanvasAssetLibraryKind) =>
+      uploadReference(
+        projectId,
+        file,
+        "library",
+        kind ?? canvasLibraryKindFromReferenceSlot(assetLibrarySlot)
+      )
   };
 }

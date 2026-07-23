@@ -18,12 +18,13 @@ export function readViewportRect(element: HTMLElement | null): ViewportRect {
 export function spawnNodeAtViewportCenter(
   viewport: Viewport,
   rect: ViewportRect,
-  card: { width: number; height: number }
+  card: { width: number; height: number; centerOffsetY?: number }
 ) {
   const center = viewportCenterFlowPoint(viewport, rect);
+  const offsetY = card.centerOffsetY ?? 0;
   return {
     x: center.x - card.width / 2,
-    y: center.y - card.height / 2
+    y: center.y - card.height / 2 + offsetY
   };
 }
 
@@ -72,6 +73,23 @@ export function clampPanelAnchorBelow(
   };
 }
 
+/** Place generation panel at the visible canvas area center (uses translate(-50%, -50%)). */
+export function panelAnchorViewportCenter(
+  rect: ViewportRect,
+  panelWidth: number,
+  panelHeight: number
+) {
+  const margin = 16;
+  const halfW = panelWidth / 2;
+  const halfH = panelHeight / 2;
+  const maxX = Math.max(margin + halfW, rect.width - margin - halfW);
+  const maxY = Math.max(margin + halfH, rect.height - margin - halfH);
+  return {
+    x: Math.min(Math.max(rect.width / 2, margin + halfW), maxX),
+    y: Math.min(Math.max(rect.height / 2, margin + halfH), maxY)
+  };
+}
+
 function resolveNodeDimensions(node: Pick<VincisCanvasNode, "width" | "height" | "measured">) {
   return {
     width: node.width ?? node.measured?.width ?? VIDEO_CARD.width,
@@ -83,13 +101,14 @@ export function nextSlotLayoutPosition(
   viewport: Viewport,
   rect: ViewportRect,
   layoutIndex: number,
-  card: { width: number; height: number; gapY?: number }
+  card: { width: number; height: number; gapY?: number; centerOffsetY?: number }
 ): { x: number; y: number } {
   const center = viewportCenterFlowPoint(viewport, rect);
   const gapY = card.gapY ?? 32;
+  const centerOffsetY = card.centerOffsetY ?? 0;
   return {
     x: center.x - card.width / 2,
-    y: center.y - card.height / 2 + layoutIndex * (card.height + gapY)
+    y: center.y - card.height / 2 + centerOffsetY + layoutIndex * (card.height + gapY)
   };
 }
 
@@ -123,7 +142,9 @@ export function panelAnchorAboveNode(
 export function panelAnchorBelowNode(
   node: Pick<VincisCanvasNode, "position" | "width" | "height" | "measured">,
   viewport: Viewport,
-  rect: ViewportRect
+  rect: ViewportRect,
+  panelWidth = GENERATION_PANEL_WIDTH,
+  panelHeight = GENERATION_PANEL_HEIGHT + 40
 ) {
   const { width, height } = resolveNodeDimensions(node);
   const flowAnchor = {
@@ -131,12 +152,7 @@ export function panelAnchorBelowNode(
     y: node.position.y + height
   };
   const screen = flowToScreenPoint(flowAnchor, viewport);
-  return clampPanelAnchorBelow(
-    { x: screen.x, y: screen.y + 12 },
-    rect,
-    GENERATION_PANEL_WIDTH,
-    GENERATION_PANEL_HEIGHT + 40
-  );
+  return clampPanelAnchorBelow({ x: screen.x, y: screen.y + 12 }, rect, panelWidth, panelHeight);
 }
 
 export function defaultPanelAnchor(rect: ViewportRect) {

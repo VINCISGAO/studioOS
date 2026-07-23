@@ -10,10 +10,11 @@ import {
   nextLayoutIndex,
   type GenerationSlotKind
 } from "@/lib/canvas/generation-layout";
+import { generationPanelDimensions } from "@/lib/canvas/generation-panel-layout";
 import type { VincisCanvasNode } from "@/lib/canvas/types";
 import {
   nextSlotLayoutPosition,
-  panelAnchorBelowNode,
+  panelAnchorViewportCenter,
   readViewportRect
 } from "@/lib/canvas/viewport-anchor";
 import type { Locale } from "@/lib/i18n";
@@ -54,14 +55,21 @@ export function useCanvasGenerationSlots({
     [canvasAreaRef]
   );
 
-  const anchorPanelToNode = useCallback(
-    (node: VincisCanvasNode, kind: GenerationKind) => {
-      const state = useCanvasStore.getState();
-      setGenerationSession({ kind, slotNodeId: node.id });
-      setPanelAnchor(panelAnchorBelowNode(node, state.viewport, readRect()));
-      setPanel(kind);
+  const centerPanelAnchor = useCallback(
+    (kind: GenerationKind) => {
+      const { width, height } = generationPanelDimensions(kind);
+      return panelAnchorViewportCenter(readRect(), width, height);
     },
     [readRect]
+  );
+
+  const openPanelForNode = useCallback(
+    (node: VincisCanvasNode, kind: GenerationKind) => {
+      setGenerationSession({ kind, slotNodeId: node.id });
+      setPanelAnchor(centerPanelAnchor(kind));
+      setPanel(kind);
+    },
+    [centerPanelAnchor]
   );
 
   const createSlot = useCallback(
@@ -91,11 +99,18 @@ export function useCanvasGenerationSlots({
 
   const openGeneration = useCallback(
     (kind: GenerationKind) => {
+      const existingSlot = useCanvasStore.getState().nodes.find((node) =>
+        isUneditedGenerationSlot(node, kind)
+      );
+      if (existingSlot) {
+        openPanelForNode(existingSlot, kind);
+        return;
+      }
       const layout = createSlot(kind);
       if (!layout) return;
-      anchorPanelToNode(layout.node, kind);
+      openPanelForNode(layout.node, kind);
     },
-    [anchorPanelToNode, createSlot]
+    [createSlot, openPanelForNode]
   );
 
   const closeGenerationPanel = useCallback(() => {
@@ -105,36 +120,39 @@ export function useCanvasGenerationSlots({
   }, []);
 
   useEffect(() => {
-    if (!panel || !generationSession) return;
-    const node = nodes.find((item) => item.id === generationSession.slotNodeId);
-    if (!node) return;
-    setPanelAnchor(panelAnchorBelowNode(node, viewport, readRect()));
-  }, [generationSession, nodes, panel, readRect, viewport]);
+    if (!panel) return;
+    setPanelAnchor(centerPanelAnchor(panel));
+  }, [centerPanelAnchor, panel, viewport]);
+
+  useEffect(() => {
+    if (!panel) return;
+    const element = canvasAreaRef.current;
+    if (!element || typeof ResizeObserver === "undefined") return;
+
+    const observer = new ResizeObserver(() => {
+      setPanelAnchor(centerPanelAnchor(panel));
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [canvasAreaRef, centerPanelAnchor, panel]);
 
   useEffect(() => {
     if (!ready || initialPanel !== "video" || initialLayoutCreated.current) return;
     initialLayoutCreated.current = true;
-    const existingSlot = useCanvasStore.getState().nodes.find((node) =>
-      isUneditedGenerationSlot(node, "video")
-    );
-    if (existingSlot) {
-      anchorPanelToNode(existingSlot, "video");
-      return;
-    }
     openGeneration("video");
-  }, [anchorPanelToNode, initialPanel, openGeneration, ready]);
+  }, [initialPanel, openGeneration, ready]);
 
   const handleGenerationNodeClick = useCallback(
     (node: VincisCanvasNode) => {
       for (const kind of ["video", "image", "music"] as const) {
         if (isUneditedGenerationSlot(node, kind)) {
-          anchorPanelToNode(node, kind);
+          openPanelForNode(node, kind);
           return true;
         }
       }
       return false;
     },
-    [anchorPanelToNode]
+    [openPanelForNode]
   );
 
   return {

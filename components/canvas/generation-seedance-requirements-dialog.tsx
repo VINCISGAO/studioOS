@@ -1,6 +1,8 @@
 "use client";
 
+import { createPortal } from "react-dom";
 import type { Locale } from "@/lib/i18n";
+import { CANVAS_GENERATION_MODAL_Z_INDEX } from "@/lib/canvas/generation-ui";
 import { seedanceAssetRequirementsCopy } from "@/lib/canvas/seedance-asset-requirements";
 
 export function GenerationSeedanceRequirementsDialog({
@@ -15,8 +17,11 @@ export function GenerationSeedanceRequirementsDialog({
   if (!open) return null;
   const lines = seedanceAssetRequirementsCopy[locale];
 
-  return (
-    <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/35 p-4">
+  return createPortal(
+    <div
+      className="fixed inset-0 flex items-center justify-center bg-black/35 p-4"
+      style={{ zIndex: CANVAS_GENERATION_MODAL_Z_INDEX + 1 }}
+    >
       <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl">
         <h3 className="text-base font-semibold text-zinc-950">
           {locale === "zh" ? "Seedance 素材要求" : "Seedance asset requirements"}
@@ -37,6 +42,7 @@ export function GenerationSeedanceRequirementsDialog({
           {locale === "zh" ? "知道了" : "Got it"}
         </button>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

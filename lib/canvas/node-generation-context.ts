@@ -46,7 +46,7 @@ export function defaultParametersForKind(
       webSearch: false
     };
   }
-  return { duration: 30, instrumental: true };
+  return { instrumental: false };
 }
 
 export function readNodeGenerationContext(node: VincisCanvasNode): NodeGenerationContext {

@@ -8,5 +8,19 @@ export function resolveCanvasNodeDownloadHref(data: CanvasNodeData): string | nu
 }
 
 export function canDownloadCanvasNode(data: CanvasNodeData) {
-  return Boolean(resolveCanvasNodeDownloadHref(data));
+  return Boolean(resolveCanvasNodeDownloadHref(data) || data.url);
+}
+
+export function triggerCanvasNodeDownload(data: CanvasNodeData) {
+  const href = resolveCanvasNodeDownloadHref(data);
+  const target = href ?? data.url;
+  if (!target) return;
+
+  const anchor = document.createElement("a");
+  anchor.href = target;
+  anchor.download = data.fileName?.trim() || "download";
+  anchor.rel = "noopener";
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
 }

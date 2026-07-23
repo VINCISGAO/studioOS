@@ -51,7 +51,10 @@ async function main() {
     });
     checks.push({
       name: `pricing.quote.${modelId}`,
-      ok: quote.credits > 0 && Boolean(quote.ruleId),
+      ok:
+        generationType === "VIDEO" && modelId === "seedance-2.0"
+          ? quote.credits === 69 && Boolean(quote.ruleId)
+          : quote.credits > 0 && Boolean(quote.ruleId),
       detail: `${quote.credits}/${quote.ruleId}`
     });
   }

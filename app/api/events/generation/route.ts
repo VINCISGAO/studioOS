@@ -37,7 +37,7 @@ export async function GET(request: Request) {
         timeout = setTimeout(() => {
           if (interval) clearInterval(interval);
           controller.close();
-        }, 25_000);
+        }, 10 * 60_000);
 
         request.signal.addEventListener("abort", () => {
           if (interval) clearInterval(interval);

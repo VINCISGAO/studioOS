@@ -145,6 +145,25 @@ export async function createSignedObjectDownloadUrl(input: {
   );
 }
 
+/** Presigned read URL for external providers (Seedance reference inputs). */
+export async function createSignedObjectReadUrl(input: {
+  key: string;
+  expiresIn?: number;
+}): Promise<string | null> {
+  const client = getS3Client();
+  if (!client) return null;
+
+  const expiresIn = Math.min(Math.max(input.expiresIn ?? 3600, 60), 7 * 24 * 3600);
+  return getSignedUrl(
+    client,
+    new GetObjectCommand({
+      Bucket: videoConfig.r2.bucket,
+      Key: input.key
+    }),
+    { expiresIn }
+  );
+}
+
 export async function getObjectMetadata(
   key: string
 ): Promise<{ contentLength: number | null; contentType: string | null } | null> {

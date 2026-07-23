@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { ImageIcon, MousePointer2, Paperclip, X } from "lucide-react";
+import { ImagePlus, MousePointer2, Paperclip, X } from "lucide-react";
 import type { GenerationReference } from "@/lib/canvas/generation-ui";
+import { generationPanelImageReferenceClass } from "@/lib/canvas/generation-panel-design";
 import type { Locale } from "@/lib/i18n";
 
 export function GenerationImageReferenceSlot({
@@ -23,7 +24,7 @@ export function GenerationImageReferenceSlot({
   if (reference) {
     return (
       <div className="relative shrink-0">
-        <div className="h-14 w-14 overflow-hidden rounded-xl border border-zinc-200 bg-zinc-100">
+        <div className="h-20 w-20 overflow-hidden rounded-xl border border-zinc-200 bg-zinc-100">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={reference.url} alt={reference.fileName} className="h-full w-full object-cover" />
         </div>
@@ -43,10 +44,10 @@ export function GenerationImageReferenceSlot({
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        className="flex h-14 w-14 flex-col items-center justify-center gap-0.5 rounded-xl border border-zinc-200 bg-zinc-50 text-zinc-500 transition hover:border-zinc-300 hover:bg-zinc-100"
+        className={generationPanelImageReferenceClass}
       >
-        <ImageIcon className="h-4 w-4" />
-        <span className="text-[10px]">{locale === "zh" ? "参考图" : "Reference"}</span>
+        <ImagePlus className="h-5 w-5" />
+        <span className="text-[10px] text-zinc-500">{locale === "zh" ? "参考图" : "Reference"}</span>
       </button>
       {open ? (
         <div className="absolute bottom-full left-0 z-50 mb-2 w-44 overflow-hidden rounded-2xl border border-zinc-200 bg-white py-1 shadow-xl">

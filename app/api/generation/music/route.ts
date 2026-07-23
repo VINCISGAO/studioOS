@@ -15,11 +15,16 @@ export async function POST(request: Request) {
         model: input.model,
         idempotencyKey: input.idempotencyKey,
         parameters: {
-          duration: input.duration,
           instrumental: input.instrumental,
           mode: input.mode,
           style: input.style,
-          mood: input.mood
+          mood: input.mood,
+          lyrics: input.lyrics,
+          songName: input.songName,
+          vocalGender: input.vocalGender,
+          referenceEnabled: input.referenceEnabled,
+          remixEnabled: input.remixEnabled,
+          vocalEnabled: input.vocalEnabled
         }
       },
       user

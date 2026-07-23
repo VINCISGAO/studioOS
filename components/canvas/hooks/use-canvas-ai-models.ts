@@ -6,8 +6,11 @@ import type { PublicAiModelCatalog, PublicAiModelView } from "@/features/canvas/
 import type { GenerationKind } from "@/lib/canvas/generation-ui";
 
 const CACHE_TTL_MS = 60_000;
+const FETCH_TIMEOUT_MS = 20_000;
+
 let cachedCatalog: PublicAiModelCatalog | null = null;
 let cachedAt = 0;
+let inFlight: Promise<PublicAiModelCatalog | null> | null = null;
 
 function kindToCategory(kind: GenerationKind): AiModelCategory {
   if (kind === "image") return "IMAGE";
@@ -15,15 +18,95 @@ function kindToCategory(kind: GenerationKind): AiModelCategory {
   return "VIDEO";
 }
 
+type CatalogPayload = {
+  success: boolean;
+  data?: PublicAiModelCatalog;
+  error?: { message?: string };
+};
+
+function readLoadError(error: unknown) {
+  if (error instanceof Error) {
+    if (error.name === "AbortError") {
+      return "模型加载超时，请重试";
+    }
+    return error.message || "Unable to load AI models";
+  }
+  return "Unable to load AI models";
+}
+
+async function fetchCanvasAiModelCatalog(force = false): Promise<PublicAiModelCatalog | null> {
+  if (!force && cachedCatalog && Date.now() - cachedAt < CACHE_TTL_MS) {
+    return cachedCatalog;
+  }
+
+  if (inFlight && !force) {
+    return inFlight;
+  }
+
+  inFlight = (async () => {
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+
+    try {
+      const response = await fetch("/api/v1/credits/ai-models", {
+        cache: "no-store",
+        signal: controller.signal
+      });
+      const payload = (await response.json()) as CatalogPayload;
+      if (!response.ok || !payload.success || !payload.data) {
+        throw new Error(payload.error?.message ?? "Unable to load AI models");
+      }
+      cachedCatalog = payload.data;
+      cachedAt = Date.now();
+      return payload.data;
+    } finally {
+      window.clearTimeout(timeoutId);
+      inFlight = null;
+    }
+  })();
+
+  try {
+    return await inFlight;
+  } catch (error) {
+    inFlight = null;
+    throw error;
+  }
+}
+
 export function invalidateCanvasAiModelCatalog() {
   cachedCatalog = null;
   cachedAt = 0;
+  inFlight = null;
 }
 
-export function useCanvasAiModels() {
-  const [catalog, setCatalog] = useState<PublicAiModelCatalog | null>(cachedCatalog);
-  const [loading, setLoading] = useState(!cachedCatalog);
+export function seedCanvasAiModelCatalog(catalog: PublicAiModelCatalog | null | undefined) {
+  if (!catalog || catalog.models.length === 0) return;
+  cachedCatalog = catalog;
+  cachedAt = Date.now();
+  inFlight = null;
+}
+
+export function preloadCanvasAiModelCatalog() {
+  void fetchCanvasAiModelCatalog(false).catch(() => {
+    // Warm cache best-effort; surfaced errors happen in hook consumers.
+  });
+}
+
+export function useCanvasAiModels(initialCatalog?: PublicAiModelCatalog | null) {
+  const [catalog, setCatalog] = useState<PublicAiModelCatalog | null>(
+    initialCatalog ?? cachedCatalog
+  );
+  const [loading, setLoading] = useState(!(initialCatalog ?? cachedCatalog));
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (initialCatalog) {
+      seedCanvasAiModelCatalog(initialCatalog);
+      setCatalog(initialCatalog);
+      setLoading(false);
+      setError(null);
+    }
+  }, [initialCatalog]);
 
   const load = useCallback(async (force = false) => {
     if (!force && cachedCatalog && Date.now() - cachedAt < CACHE_TTL_MS) {
@@ -36,21 +119,11 @@ export function useCanvasAiModels() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch("/api/v1/credits/ai-models", { cache: "no-store" });
-      const payload = (await response.json()) as {
-        success: boolean;
-        data?: PublicAiModelCatalog;
-        error?: { message?: string };
-      };
-      if (!response.ok || !payload.success || !payload.data) {
-        throw new Error(payload.error?.message ?? "Unable to load AI models");
-      }
-      cachedCatalog = payload.data;
-      cachedAt = Date.now();
-      setCatalog(payload.data);
-      return payload.data;
+      const nextCatalog = await fetchCanvasAiModelCatalog(force);
+      setCatalog(nextCatalog);
+      return nextCatalog;
     } catch (loadError) {
-      const message = loadError instanceof Error ? loadError.message : "Unable to load AI models";
+      const message = readLoadError(loadError);
       setError(message);
       setCatalog(null);
       return null;
