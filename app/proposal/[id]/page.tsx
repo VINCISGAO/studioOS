@@ -9,7 +9,8 @@ import { PageShell } from "@/components/page-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getInquiry, getMessagesForPair, consolidateInquiryThreads } from "@/lib/chat-service";
-import { getCurrentCreator, getCurrentCreatorId } from "@/features/auth/session-context";
+import { getCurrentCreator } from "@/features/auth/session-context";
+import { resolveInquiryViewer } from "@/lib/studioos/proposal-inquiry-access";
 import { getCreatorById } from "@/lib/creator-service";
 import { canAcceptCreatorOrders, countCompletedCreatorOrders } from "@/lib/studioos/deposit-guard";
 import { creatorWorks } from "@/lib/data";
@@ -70,9 +71,13 @@ export default async function ProposalRoomPage({ params, searchParams }: Props) 
   const creator = await getCreatorById(inquiry.creator_id);
   if (!creator) notFound();
 
-  const currentCreatorId = await getCurrentCreatorId();
+  const viewer = await resolveInquiryViewer(inquiry);
+  if (!viewer.isBrand && !viewer.isCreator) {
+    notFound();
+  }
+
   const currentCreator = await getCurrentCreator();
-  const viewerRole = currentCreatorId === inquiry.creator_id ? "studio" : "brand";
+  const viewerRole = viewer.viewerRole;
   const completedOrders =
     currentCreator && viewerRole === "studio"
       ? countCompletedCreatorOrders(await listOrdersForCreator(currentCreator.id))
