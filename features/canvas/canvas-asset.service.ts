@@ -395,6 +395,77 @@ export class CanvasAssetService {
     };
   }
 
+  async saveGeneratedAudioBuffer(
+    projectId: string,
+    user: AuthUserDto,
+    input: {
+      buffer: Buffer;
+      mimeType: string;
+      fileName: string;
+      metadata: Record<string, unknown>;
+    }
+  ) {
+    const project = await canvasService.assertAccess(projectId, user);
+    if (!input.buffer.length) throw appError("VALIDATION_ERROR", "Generated audio is empty");
+    if (input.buffer.length > MAX_AUDIO_BYTES) {
+      throw appError("VALIDATION_ERROR", "Generated audio exceeds the 50MB limit");
+    }
+
+    const extension =
+      input.mimeType === "audio/wav"
+        ? "wav"
+        : input.mimeType === "audio/mp4"
+          ? "m4a"
+          : "mp3";
+    const objectName = `${randomUUID()}.${extension}`;
+    const storagePrefix = project.campaignId
+      ? `campaigns/${project.campaignId}/canvas`
+      : `creative-projects/${project.id}/canvas`;
+    const fileKey = `${storagePrefix}/${objectName}`;
+    const stored = await putObject(fileKey, input.buffer, input.mimeType);
+    const metadataJson = buildGeneratedAssetMetadata(input.metadata);
+
+    const asset = project.campaignId
+      ? await canvasRepository.createCampaignAsset({
+          campaignId: project.campaignId,
+          uploadedBy: user.id,
+          assetType: "MUSIC",
+          fileName: safeDisplayName(input.fileName),
+          fileKey: stored.key,
+          storageProvider: stored.backend,
+          mimeType: input.mimeType,
+          fileSize: input.buffer.length,
+          metadataJson: asInputJson(metadataJson) ?? {}
+        })
+      : await canvasRepository.createProjectAsset({
+          creativeProjectId: project.id,
+          uploadedBy: user.id,
+          assetType: "MUSIC",
+          fileName: safeDisplayName(input.fileName),
+          fileKey: stored.key,
+          storageProvider: stored.backend,
+          mimeType: input.mimeType,
+          fileSize: input.buffer.length,
+          metadataJson: asInputJson(metadataJson) ?? {}
+        });
+
+    if (project.campaignId) {
+      await activityService.write(
+        project.campaignId,
+        "canvas.music_generated",
+        { userId: user.id, email: user.email, role: "creator" },
+        { asset_id: asset.id, mime_type: input.mimeType, size_bytes: input.buffer.length }
+      );
+    }
+
+    return {
+      id: asset.id,
+      fileName: asset.fileName,
+      mimeType: asset.mimeType,
+      url: `/api/canvas/assets/${asset.id}/preview`
+    };
+  }
+
   async listProjectAssets(projectId: string, user: AuthUserDto) {
     const project = await canvasService.assertAccess(projectId, user);
     const rows = project.campaignId

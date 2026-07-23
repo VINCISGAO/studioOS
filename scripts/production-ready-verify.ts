@@ -348,18 +348,31 @@ function checkMarketingFaqKnowledge(): Step {
   };
 }
 
-function main() {
-  console.log("\nProduction readiness verification");
-  console.log("(build alone can take 1–3 minutes — progress prints below)\n");
-  if (existsSync(FAILURE_LOG)) {
-    appendFileSync(FAILURE_LOG, `\n--- New verify run ${new Date().toISOString()} ---\n`, "utf8");
+function addIntegrationSteps(steps: Step[]) {
+  steps.push(runCheck("database.url", checkDatabaseUrl));
+
+  const databaseStep = steps.find((step) => step.name === "database.url");
+  if (!databaseStep?.ok) {
+    return;
   }
 
-  const steps: Step[] = [];
+  steps.push(runCmd("prisma.migrate_deploy", "npm run db:migrate:deploy"));
+  steps.push(runCmd("prisma.migrate_status", "npx prisma migrate status"));
+  steps.push(runDepositVerify("deposit.security.verify", "npm run deposit:security:verify"));
+  steps.push(runDepositVerify("deposit.reconcile.verify", "npm run deposit:reconcile:verify"));
+  steps.push(runCmd("login.preflight", "npm run login:preflight"));
+  steps.push(runCmd("payment.verify", "npm run payment:verify"));
+  steps.push(runCmd("credits:pricing:verify", "npm run credits:pricing:verify"));
+  steps.push(runCmd("credits:pricing:workflow:verify", "npm run credits:pricing:workflow:verify"));
+  steps.push(runCmd("credits:regional-pricing:verify", "npm run credits:regional-pricing:verify"));
+  steps.push(runCmd("canvas:ai-models:verify", "npm run canvas:ai-models:verify"));
+  steps.push(runCmd("credits:verify", "npm run credits:verify"));
+  steps.push(runCmd("sprint1.verify", "npm run sprint1:verify"));
+}
 
+function addStaticSteps(steps: Step[]) {
   steps.push(runCmd("prisma.generate", "npx prisma generate"));
   steps.push(runCmd("prisma.validate", "npx prisma validate"));
-  steps.push(runCheck("database.url", checkDatabaseUrl));
   steps.push(runCmd("typecheck", "npm run typecheck"));
   steps.push(runCmd("marketing.verify_links", "npm run marketing:verify-links"));
   steps.push(runCmd("lint", "npx next lint --no-cache --quiet"));
@@ -370,21 +383,33 @@ function main() {
   steps.push(runCheck("ai_copilot.marketing_faq_knowledge", checkMarketingFaqKnowledge));
   steps.push(runCmd("knowledge.verify", "npm run knowledge:verify"));
   steps.push(runCheck("admin.secrets_config", checkAdminSecrets));
+  steps.push(runDepositVerify("deposit.security.verify", "npm run deposit:security:verify"));
+}
 
-  const databaseStep = steps.find((step) => step.name === "database.url");
-  if (databaseStep?.ok) {
-    steps.push(runCmd("prisma.migrate_deploy", "npm run db:migrate:deploy"));
-    steps.push(runCmd("prisma.migrate_status", "npx prisma migrate status"));
-    steps.push(runDepositVerify("deposit.security.verify", "npm run deposit:security:verify"));
-    steps.push(runDepositVerify("deposit.reconcile.verify", "npm run deposit:reconcile:verify"));
-    steps.push(runCmd("login.preflight", "npm run login:preflight"));
-    steps.push(runCmd("payment.verify", "npm run payment:verify"));
-    steps.push(runCmd("credits:pricing:verify", "npm run credits:pricing:verify"));
-    steps.push(runCmd("credits:pricing:workflow:verify", "npm run credits:pricing:workflow:verify"));
-    steps.push(runCmd("credits:regional-pricing:verify", "npm run credits:regional-pricing:verify"));
-    steps.push(runCmd("canvas:ai-models:verify", "npm run canvas:ai-models:verify"));
-    steps.push(runCmd("credits:verify", "npm run credits:verify"));
-    steps.push(runCmd("sprint1.verify", "npm run sprint1:verify"));
+function main() {
+  const mode = process.argv.includes("--integration-only")
+    ? "integration-only"
+    : process.argv.includes("--static-only")
+      ? "static-only"
+      : "full";
+
+  console.log("\nProduction readiness verification");
+  console.log(`Mode: ${mode}`);
+  console.log("(build alone can take 1–3 minutes — progress prints below)\n");
+  if (existsSync(FAILURE_LOG)) {
+    appendFileSync(FAILURE_LOG, `\n--- New verify run ${new Date().toISOString()} ---\n`, "utf8");
+  }
+
+  const steps: Step[] = [];
+
+  if (mode === "integration-only") {
+    steps.push(runCmd("prisma.generate", "npx prisma generate"));
+    addIntegrationSteps(steps);
+  } else if (mode === "static-only") {
+    addStaticSteps(steps);
+  } else {
+    addStaticSteps(steps);
+    addIntegrationSteps(steps);
   }
 
   console.log("\n--- Summary ---");

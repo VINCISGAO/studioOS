@@ -10,7 +10,8 @@ import { aiModelGenerationGuard } from "@/features/canvas/ai-model-generation.gu
 import { canvasImageGenerationService } from "@/features/canvas/canvas-image-generation.service";
 import { canvasVideoGenerationService } from "@/features/canvas/canvas-video-generation.service";
 import { appError } from "@/lib/core/errors";
-import { hasOpenAI } from "@/lib/core/config/ai";
+import { hasMureka, hasOpenAI } from "@/lib/core/config/ai";
+import { isMurekaMusicProvider } from "@/lib/canvas/mureka-client";
 import { isObjectStorageConfigured } from "@/lib/core/config/video";
 import { canPersistLocalDataStore } from "@/lib/runtime-flags";
 import type {
@@ -53,6 +54,27 @@ function assertCreator(user: AuthUserDto) {
   }
 }
 
+function assertMusicGenerationInfrastructure() {
+  if (!hasMureka()) {
+    throw appError(
+      "SYSTEM_ERROR",
+      "MUREKA_API_KEY is not configured. Add it to .env.local (dev) or Vercel environment variables and redeploy."
+    );
+  }
+  if (!isObjectStorageConfigured() && !canPersistLocalDataStore()) {
+    throw appError(
+      "SYSTEM_ERROR",
+      "Object storage (R2) is not configured. Set R2_ENDPOINT, R2_ACCESS_KEY, R2_SECRET_KEY, and R2_BUCKET in production."
+    );
+  }
+}
+
+function resolveMusicProvider(provider: string) {
+  if (hasMureka() && isMurekaMusicProvider(provider)) {
+    return "mureka";
+  }
+  return "vincis-mock";
+}
 function assertImageGenerationInfrastructure() {
   if (!hasOpenAI()) {
     throw appError(
@@ -365,6 +387,9 @@ export class CanvasService {
     if (input.type === "IMAGE") {
       assertImageGenerationInfrastructure();
     }
+    if (input.type === "MUSIC") {
+      assertMusicGenerationInfrastructure();
+    }
 
     const project = await this.resolveProject(input.projectId, user);
     const { id: canvasId } = await canvasRepository.ensureCanvas(
@@ -391,7 +416,9 @@ export class CanvasService {
     const provider =
       input.type === "IMAGE" && hasOpenAI() && resolved.provider === "openai"
         ? "openai"
-        : resolved.provider || "vincis-mock";
+        : input.type === "MUSIC"
+          ? resolveMusicProvider(resolved.provider)
+          : resolved.provider || "vincis-mock";
     const job = await canvasRepository.createGenerationJob({
       creativeProjectId: project.id,
       campaignId: project.campaignId,
@@ -437,9 +464,15 @@ export class CanvasService {
     }
 
     if (project.campaignId) {
+      const activityType =
+        input.type === "IMAGE"
+          ? "canvas.image_generation_requested"
+          : input.type === "MUSIC"
+            ? "canvas.music_generation_requested"
+            : "canvas.mock_generation_requested";
       await activityService.write(
         project.campaignId,
-        input.type === "IMAGE" ? "canvas.image_generation_requested" : "canvas.mock_generation_requested",
+        activityType,
         { userId: user.id, email: user.email, role: "creator" },
         { job_id: job.id, node_id: input.nodeId, type: input.type }
       );

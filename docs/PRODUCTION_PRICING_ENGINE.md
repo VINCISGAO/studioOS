@@ -239,6 +239,14 @@ npx tsx scripts/seed-production-pricing.ts
 npm run db:seed
 ```
 
+### Canvas AI Tools — Mureka 音乐 Credits（按次）
+
+单次 Canvas 音乐生成扣费独立于上表 Campaign 估价，规则见 **`docs/MUREKA_CREDITS_PRICING.md`**：
+
+- 锚点：**100 Credits = $1 USD**
+- Mureka API 成本 + **10% 服务费** → `credit_pricing_rules.credit_price`
+- 技术实现：**`docs/MUREKA_API_INTEGRATION_SPEC.md`**
+
 ---
 
 ## 报价公式（V1）

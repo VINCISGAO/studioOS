@@ -1,10 +1,11 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { after } from "next/server";
+import type { AuthUserDto } from "@/features/auth/auth.service";
 import { authService } from "@/features/auth/auth.service";
 import { canvasAssetService } from "@/features/canvas/canvas-asset.service";
+import { finalizeCanvasGenerationJob } from "@/features/canvas/canvas-generation-learning";
 import { canvasRepository } from "@/features/canvas/canvas.repository";
-import { creditGenerationBillingService } from "@/features/credit-wallet/credit-generation-billing.service";
 import { logger } from "@/lib/core/logger";
 
 type VideoJobInput = {
@@ -52,11 +53,14 @@ export class CanvasVideoGenerationService {
   }
 
   async processJob(jobId: string, ownerId: string) {
-    const job = await canvasRepository.findGenerationJob(jobId, ownerId);
-    if (!job || job.type !== "VIDEO") return;
-    if (job.status !== "QUEUED" && job.status !== "SUBMITTING") return;
+    let user: AuthUserDto | null = null;
 
-    const user = await authService.getUserById(ownerId);
+    try {
+      const job = await canvasRepository.findGenerationJob(jobId, ownerId);
+      if (!job || job.type !== "VIDEO") return;
+      if (job.status !== "QUEUED" && job.status !== "SUBMITTING") return;
+
+      user = await authService.getUserById(ownerId);
     if (!user) {
       await canvasRepository.updateGenerationJob(jobId, {
         status: "FAILED",
@@ -119,9 +123,8 @@ export class CanvasVideoGenerationService {
       });
     }
 
-    const settledJob = await canvasRepository.findGenerationJob(jobId, ownerId);
-    if (settledJob) {
-      await creditGenerationBillingService.syncJobBilling(settledJob);
+    } finally {
+      await finalizeCanvasGenerationJob(user, jobId, ownerId);
     }
   }
 }

@@ -1,5 +1,10 @@
 export const CANVAS_CREATOR_TOKEN_BUDGET = 3151;
 
+import {
+  canvasMusicCreditQuote,
+  type MurekaMusicTier
+} from "@/lib/canvas/mureka-credits-pricing";
+
 export type VideoQuality = "480p" | "720p" | "1080p" | "4k";
 
 export type VideoGenerationCreditInput = {
@@ -70,12 +75,30 @@ export function computeImageGenerationCredits(settings: ImageGenerationCreditInp
   return Math.max(1, Math.round(15 * qualityMultiplier * sizeMultiplier * settings.outputs));
 }
 
-export function computeMusicGenerationCredits(settings: MusicGenerationCreditInput) {
-  const modeMultiplier =
-    settings.mode === "soundtrack" ? 1.2 : settings.mode === "custom" ? 1 : 0.9;
-  const vocalMultiplier = settings.instrumental ? 1 : 1.15;
-  const durationMultiplier = Math.max(1, Math.round(settings.duration / 30));
-  return Math.max(1, Math.round(8 * modeMultiplier * vocalMultiplier * durationMultiplier));
+function musicModelTier(modelId: string): MurekaMusicTier {
+  const normalized = modelId.trim().toLowerCase();
+  if (normalized.includes("studio") || normalized.includes("mureka-8")) {
+    return "premium";
+  }
+  return "v76";
+}
+
+export function computeMusicGenerationCredits(
+  settings: MusicGenerationCreditInput,
+  modelId = "v7.5-basic"
+) {
+  const mode =
+    settings.mode === "simple"
+      ? "SIMPLE"
+      : settings.mode === "soundtrack"
+        ? "SOUNDTRACK"
+        : "CUSTOM";
+  return canvasMusicCreditQuote({
+    tier: musicModelTier(modelId),
+    mode,
+    instrumental: settings.instrumental,
+    includesLyricsApi: mode === "CUSTOM" && !settings.instrumental
+  }).creditPrice;
 }
 
 export function computeGenerationCredits(input: {
@@ -109,11 +132,14 @@ export function computeGenerationCredits(input: {
     });
   }
 
-  return computeMusicGenerationCredits({
-    mode: (input.parameters.mode as MusicGenerationCreditInput["mode"]) ?? "custom",
-    instrumental: input.parameters.instrumental !== false,
-    duration: Number(input.parameters.duration ?? 30)
-  });
+  return computeMusicGenerationCredits(
+    {
+      mode: (input.parameters.mode as MusicGenerationCreditInput["mode"]) ?? "custom",
+      instrumental: input.parameters.instrumental !== false,
+      duration: Number(input.parameters.duration ?? 30)
+    },
+    input.model
+  );
 }
 
 export function normalizeCanvasCreditsUsed(creditsUsed: unknown): number {

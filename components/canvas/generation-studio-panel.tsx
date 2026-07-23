@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Music2, X } from "lucide-react";
 import { useCanvasStore } from "@/components/canvas/canvas-store";
 import {
   GenerationCatalogEmptyBanner,
@@ -288,7 +289,6 @@ export function GenerationStudioPanel({
                   }}
                   onSelectAudio={() => {
                     setReferenceSlot("audio");
-                    setKind("music");
                   }}
                   onReferenceLocal={references.pickLocalReference}
                   onReferenceLibrary={references.openReferenceLibrary}
@@ -304,6 +304,22 @@ export function GenerationStudioPanel({
                   placeholder={t.placeholder}
                   className="min-h-[64px] w-full resize-none bg-transparent text-sm leading-6 text-zinc-900 outline-none placeholder:text-zinc-400"
                 />
+                {references.reference?.mimeType?.startsWith("audio/") ? (
+                  <div className="mt-2 flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2">
+                    <Music2 className="h-4 w-4 shrink-0 text-zinc-500" />
+                    <span className="min-w-0 flex-1 truncate text-xs text-zinc-700">
+                      {references.reference.fileName}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => references.setReference(null)}
+                      className="rounded-full p-1 text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700"
+                      aria-label={locale === "zh" ? "移除参考音频" : "Remove reference audio"}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ) : null}
               </div>
             </>
           ) : null}

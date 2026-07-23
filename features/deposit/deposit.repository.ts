@@ -4,6 +4,7 @@ import type {
   CreatorDepositPaymentStatus,
   CreatorDepositStatus
 } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { resolveCreatorProfileIdForLegacyId } from "@/features/matching/invitation-creator-bridge";
 import {
   CREATOR_DEPOSIT_AMOUNT_MINOR,
@@ -38,6 +39,40 @@ function mapPaymentStatus(status: CreatorDepositPaymentStatus) {
 
 function mapDepositStatus(status: CreatorDepositStatus) {
   return status === "PAID" ? ("paid" as const) : ("unpaid" as const);
+}
+
+function isUniqueConstraintError(error: unknown) {
+  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002";
+}
+
+type ConfirmPaymentInput = {
+  accountId: string;
+  paymentId: string;
+  amountMinor: number;
+  currency: string;
+  stripeSessionId?: string;
+  stripePaymentIntentId?: string;
+};
+
+async function finalizeDuplicateConfirm(
+  tx: Prisma.TransactionClient,
+  payment: CreatorDepositPayment,
+  input: ConfirmPaymentInput
+) {
+  if (payment.status !== "SUCCEEDED") {
+    await tx.creatorDepositPayment.update({
+      where: { id: payment.id },
+      data: {
+        status: "SUCCEEDED",
+        confirmedAt: payment.confirmedAt ?? new Date(),
+        stripeSessionId: input.stripeSessionId ?? payment.stripeSessionId,
+        stripePaymentIntentId: input.stripePaymentIntentId ?? payment.stripePaymentIntentId
+      }
+    });
+  }
+
+  const synced = await tx.creatorDepositPayment.findUniqueOrThrow({ where: { id: payment.id } });
+  return { duplicate: true as const, payment: synced, accountId: input.accountId };
 }
 
 export function mapDepositPaymentRow(
@@ -213,15 +248,18 @@ export class DepositRepository {
     return result.count > 0;
   }
 
-  async confirmPayment(input: {
-    accountId: string;
-    paymentId: string;
-    amountMinor: number;
-    currency: string;
-    stripeSessionId?: string;
-    stripePaymentIntentId?: string;
-  }) {
+  async confirmPayment(input: ConfirmPaymentInput) {
     return prisma.$transaction(async (tx) => {
+      const locked = await tx.$queryRaw<{ id: string }[]>`
+        SELECT "id"
+        FROM "creator_deposit_payments"
+        WHERE "id" = ${input.paymentId} AND "account_id" = ${input.accountId}
+        FOR UPDATE
+      `;
+      if (!locked[0]) {
+        throw new Error("Deposit payment not found");
+      }
+
       const payment = await tx.creatorDepositPayment.findFirst({
         where: { id: input.paymentId, accountId: input.accountId }
       });
@@ -248,19 +286,7 @@ export class DepositRepository {
       });
 
       if (payment.status === "SUCCEEDED" || existingLedger) {
-        if (payment.status !== "SUCCEEDED") {
-          await tx.creatorDepositPayment.update({
-            where: { id: payment.id },
-            data: {
-              status: "SUCCEEDED",
-              confirmedAt: payment.confirmedAt ?? new Date(),
-              stripeSessionId: input.stripeSessionId ?? payment.stripeSessionId,
-              stripePaymentIntentId: input.stripePaymentIntentId ?? payment.stripePaymentIntentId
-            }
-          });
-        }
-        const synced = await tx.creatorDepositPayment.findUniqueOrThrow({ where: { id: payment.id } });
-        return { duplicate: true as const, payment: synced, accountId: input.accountId };
+        return finalizeDuplicateConfirm(tx, payment, input);
       }
 
       if (payment.amountMinor !== input.amountMinor || payment.currency !== input.currency.toUpperCase()) {
@@ -269,24 +295,34 @@ export class DepositRepository {
 
       const confirmedAt = new Date();
 
-      await tx.creatorDepositLedgerEntry.create({
-        data: {
-          accountId: input.accountId,
-          paymentId: payment.id,
-          provider,
-          externalReferenceId,
-          entryType: "DEPOSIT_CREDIT",
-          direction: "CREDIT",
-          amountMinor: input.amountMinor,
-          currency: input.currency.toUpperCase(),
-          balanceAfterMinor: input.amountMinor,
-          description: `Creator deposit credit (${externalReferenceId})`,
-          metadataJson: {
-            stripePaymentIntentId: input.stripePaymentIntentId ?? payment.stripePaymentIntentId,
-            stripeSessionId: input.stripeSessionId ?? payment.stripeSessionId
+      try {
+        await tx.creatorDepositLedgerEntry.create({
+          data: {
+            accountId: input.accountId,
+            paymentId: payment.id,
+            provider,
+            externalReferenceId,
+            entryType: "DEPOSIT_CREDIT",
+            direction: "CREDIT",
+            amountMinor: input.amountMinor,
+            currency: input.currency.toUpperCase(),
+            balanceAfterMinor: input.amountMinor,
+            description: `Creator deposit credit (${externalReferenceId})`,
+            metadataJson: {
+              stripePaymentIntentId: input.stripePaymentIntentId ?? payment.stripePaymentIntentId,
+              stripeSessionId: input.stripeSessionId ?? payment.stripeSessionId
+            }
           }
+        });
+      } catch (error) {
+        if (isUniqueConstraintError(error)) {
+          const refreshed = await tx.creatorDepositPayment.findUniqueOrThrow({
+            where: { id: payment.id }
+          });
+          return finalizeDuplicateConfirm(tx, refreshed, input);
         }
-      });
+        throw error;
+      }
 
       const updatedPayment = await tx.creatorDepositPayment.update({
         where: { id: payment.id },

@@ -45,7 +45,7 @@ async function uploadReference(
 const acceptBySlot: Record<GenerationReferenceSlot, string> = {
   video: "image/jpeg,image/png,image/webp,image/gif,video/mp4,video/quicktime,video/webm",
   image: "image/jpeg,image/png,image/webp,image/gif",
-  audio: "audio/mpeg,audio/wav,audio/mp4,audio/aac,audio/x-m4a,audio/ogg"
+  audio: "audio/mpeg,audio/wav,.mp3,.wav"
 };
 
 export function useGenerationStudioReferences(projectId: string) {
@@ -73,6 +73,12 @@ export function useGenerationStudioReferences(projectId: string) {
   }
 
   async function handleLocalFile(file: File) {
+    const extension = file.name.toLowerCase().split(".").pop() ?? "";
+    const isAudioReference =
+      file.type.startsWith("audio/") || extension === "mp3" || extension === "wav";
+    if (isAudioReference && extension !== "mp3" && extension !== "wav") {
+      return;
+    }
     setUploadingReference(true);
     try {
       setReference(await uploadReference(projectId, file));

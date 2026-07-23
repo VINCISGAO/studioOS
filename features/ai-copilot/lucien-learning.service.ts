@@ -45,6 +45,31 @@ export type LucienFeedbackLearningInput = {
   knowledgeQaIds?: string[];
 };
 
+export type LucienCanvasGenerationType = "IMAGE" | "VIDEO" | "MUSIC";
+
+export type LucienCanvasGenerationLearningInput = {
+  entityId: string;
+  role?: string | null;
+  projectId: string;
+  canvasId: string;
+  campaignId?: string | null;
+  jobId: string;
+  nodeId?: string | null;
+  generationType: LucienCanvasGenerationType;
+  provider: string;
+  model: string;
+  prompt: string;
+  status: "SUCCEEDED" | "FAILED";
+  answerMode: string;
+  language: string;
+  outputAssetId?: string | null;
+  errorCode?: string | null;
+  errorMessage?: string | null;
+  estimatedCredits?: number;
+  actualCredits?: number | null;
+  inputPayload?: Record<string, unknown>;
+};
+
 function interactionPayload(input: LucienInteractionLearningInput) {
   return {
     surface: input.surface,
@@ -72,6 +97,43 @@ function interactionConfidence(answerMode: string) {
   if (answerMode === "image_generation" || answerMode === "image_to_image") return 0.9;
   if (answerMode === "image_generation_failed") return 0.95;
   return 0.75;
+}
+
+function canvasGenerationPayload(input: LucienCanvasGenerationLearningInput) {
+  return {
+    projectId: input.projectId,
+    canvasId: input.canvasId,
+    campaignId: input.campaignId ?? null,
+    jobId: input.jobId,
+    nodeId: input.nodeId ?? null,
+    generationType: input.generationType,
+    provider: input.provider,
+    model: input.model,
+    prompt: input.prompt.trim(),
+    status: input.status,
+    answerMode: input.answerMode,
+    language: input.language,
+    outputAssetId: input.outputAssetId ?? null,
+    errorCode: input.errorCode ?? null,
+    errorMessage: input.errorMessage ?? null,
+    estimatedCredits: input.estimatedCredits ?? null,
+    actualCredits: input.actualCredits ?? null,
+    inputPayload: input.inputPayload ?? {},
+    recordedAt: new Date().toISOString()
+  };
+}
+
+function canvasGenerationConfidence(status: "SUCCEEDED" | "FAILED", answerMode: string) {
+  if (status === "FAILED") return 0.95;
+  if (answerMode === "image_to_image") return 0.9;
+  if (
+    answerMode === "image_generation" ||
+    answerMode === "video_generation" ||
+    answerMode === "music_generation"
+  ) {
+    return 0.88;
+  }
+  return 0.85;
 }
 
 async function persistLearning(input: {
@@ -132,6 +194,19 @@ export async function recordLucienInteraction(input: LucienInteractionLearningIn
     learningType: "lucien_assistant_interaction",
     payload,
     confidence: interactionConfidence(input.answerMode)
+  });
+}
+
+export async function recordLucienCanvasGeneration(input: LucienCanvasGenerationLearningInput) {
+  const payload = canvasGenerationPayload(input);
+
+  await persistLearning({
+    eventType: "lucien_canvas_generation",
+    entityType: "ai_copilot",
+    entityId: input.entityId,
+    learningType: "lucien_canvas_generation",
+    payload,
+    confidence: canvasGenerationConfidence(input.status, input.answerMode)
   });
 }
 

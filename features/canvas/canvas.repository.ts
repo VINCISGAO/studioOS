@@ -438,6 +438,7 @@ export const canvasRepository = {
       completedAt?: Date;
       actualCredits?: number;
       outputAssetId?: string;
+      providerTaskId?: string;
       errorCode?: string;
       errorMessage?: string;
     }

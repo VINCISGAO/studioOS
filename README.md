@@ -143,6 +143,19 @@ Start from `.env.example`. Common required groups:
 
 Never expose database URLs or server secrets through `NEXT_PUBLIC_*`.
 
+### GitHub Actions secrets (required for CI integration job)
+
+Configure in **Settings → Secrets and variables → Actions**:
+
+| Secret | Required | Purpose |
+|--------|----------|---------|
+| `DATABASE_URL` | Yes | Neon PostgreSQL — deposit reconcile + migration deploy in CI |
+| `DIRECT_DATABASE_URL` | Recommended | Unpooled URL for Prisma migrate on Neon |
+| `AUTH_SECURITY_SECRET` | Production | Auth cookie signing (32+ chars) |
+| `RESEND_API_KEY` | Production | Email OTP / notifications |
+
+Without `DATABASE_URL`, the **Static gates** job still runs (typecheck, lint, build, deposit security scan). The **Database integration** job fails until the secret is set.
+
 ## Verification
 
 Recommended checks before handing off changes:

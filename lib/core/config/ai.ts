@@ -1,4 +1,5 @@
 import "server-only";
+import { readMurekaApiKey } from "@/lib/core/config/mureka-key";
 import { readOpenAIApiKey, readOpenAIModel } from "@/lib/core/config/openai-key";
 
 /** AI Gateway config — Vol 10 + cost tracking */
@@ -30,4 +31,12 @@ export function estimateTokenCost(model: string, tokenInput: number, tokenOutput
 
 export function hasOpenAI() {
   return Boolean(openAIApiKey());
+}
+
+export function murekaApiKey() {
+  return readMurekaApiKey();
+}
+
+export function hasMureka() {
+  return Boolean(murekaApiKey());
 }

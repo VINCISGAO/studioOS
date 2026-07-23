@@ -14,7 +14,7 @@ const copy = {
     audio: "音频",
     localUploadVideo: "从本地上传视频",
     localUploadImage: "从本地上传图片",
-    localUploadAudio: "从本地上传音频",
+    localUploadAudio: "从本地上传 MP3/WAV",
     library: "从素材库选择",
     canvas: "从画布选择"
   },
@@ -24,7 +24,7 @@ const copy = {
     audio: "Audio",
     localUploadVideo: "Upload video from local",
     localUploadImage: "Upload image from local",
-    localUploadAudio: "Upload audio from local",
+    localUploadAudio: "Upload MP3/WAV from local",
     library: "Select from library",
     canvas: "Select from canvas"
   }
@@ -81,10 +81,6 @@ export function GenerationKindSelector({
               type="button"
               onClick={() => {
                 onSelect();
-                if (id === "audio") {
-                  setOpenMenuSlot(null);
-                  return;
-                }
                 setOpenMenuSlot((current) => (current === id ? null : id));
               }}
               className={cn(
@@ -97,7 +93,7 @@ export function GenerationKindSelector({
               <Icon className="h-4 w-4" />
               <span className="text-[10px] font-medium">{label}</span>
             </button>
-            {active && menuOpen && id !== "audio" ? (
+            {active && menuOpen ? (
               <div className="absolute left-0 top-full z-50 mt-2 w-44 overflow-hidden rounded-2xl border border-zinc-200 bg-white py-1 shadow-xl">
                 <button
                   type="button"

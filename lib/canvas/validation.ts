@@ -145,7 +145,13 @@ export const musicGenerationSchema = generationBaseSchema.extend({
   instrumental: z.boolean().default(true),
   mode: z.enum(["simple", "custom", "soundtrack"]).default("custom"),
   style: z.string().trim().max(120).optional(),
-  mood: z.string().trim().max(120).optional()
+  mood: z.string().trim().max(120).optional(),
+  lyrics: z.string().trim().max(5000).optional(),
+  songName: z.string().trim().max(180).optional(),
+  vocalGender: z.enum(["female", "male"]).optional(),
+  referenceEnabled: z.boolean().optional(),
+  remixEnabled: z.boolean().optional(),
+  vocalEnabled: z.boolean().optional()
 });
 
 const actionPosition = finiteNumber.min(-100_000).max(100_000);
