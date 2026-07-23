@@ -107,6 +107,103 @@ function runCmdOnce(label: string, cmd: string): Step {
   return { name: label, ok: false, detail: detail || "command failed" };
 }
 
+function maskDatabaseUrl(url: string | undefined) {
+  if (!url) return "(unset)";
+  try {
+    const parsed = new URL(url);
+    const host = parsed.hostname;
+    const db = parsed.pathname.replace(/^\//, "") || "postgres";
+    return `${parsed.protocol}//***@${host}/${db}`;
+  } catch {
+    return "(invalid DATABASE_URL)";
+  }
+}
+
+function checkDatabaseUrl(): Step {
+  const url = process.env.DATABASE_URL?.trim();
+  if (!url) {
+    return {
+      name: "database.url",
+      ok: false,
+      detail: "DATABASE_URL is required — deposit integration tests cannot be skipped in CI"
+    };
+  }
+  return {
+    name: "database.url",
+    ok: true,
+    detail: maskDatabaseUrl(url)
+  };
+}
+
+function parseDepositVerifySummary(stdout: string) {
+  const match = stdout.match(/\{[\s\S]*"skipped"\s*:\s*\d+[\s\S]*\}/);
+  if (!match) return null;
+  try {
+    return JSON.parse(match[0]) as {
+      total?: number;
+      passed?: number;
+      failed?: number;
+      skipped?: number;
+      database?: string;
+    };
+  } catch {
+    return null;
+  }
+}
+
+function runDepositVerify(label: string, cmd: string): Step {
+  console.log(`\n▶ Running ${label}…`);
+  const started = Date.now();
+  const result = spawnSync(cmd, {
+    cwd: ROOT,
+    shell: true,
+    encoding: "utf8",
+    env: process.env,
+    stdio: ["ignore", "pipe", "pipe"],
+    maxBuffer: MAX_CMD_BUFFER
+  });
+  const elapsedSec = ((Date.now() - started) / 1000).toFixed(1);
+  const output = `${result.stdout ?? ""}\n${result.stderr ?? ""}`;
+  const summary = parseDepositVerifySummary(output);
+
+  if (summary) {
+    console.log(JSON.stringify({ ...summary, suite: label }, null, 2));
+  }
+
+  if (result.status !== 0) {
+    console.log(`❌ ${label} (${elapsedSec}s)`);
+    const detail = formatCmdFailureDetail(label, result);
+    if (detail) {
+      console.log("\n--- Failure output ---");
+      console.log(detail);
+      console.log("--- End failure output ---\n");
+    }
+    return {
+      name: label,
+      ok: false,
+      detail: detail || "deposit verify command failed"
+    };
+  }
+
+  if (summary && ((summary.failed ?? 0) > 0 || (summary.skipped ?? 0) > 0)) {
+    console.log(`❌ ${label} (${elapsedSec}s)`);
+    return {
+      name: label,
+      ok: false,
+      detail: `failed=${summary.failed ?? 0}, skipped=${summary.skipped ?? 0}`
+    };
+  }
+
+  console.log(`✅ ${label} (${elapsedSec}s)`);
+  return {
+    name: label,
+    ok: true,
+    detail: summary
+      ? `passed=${summary.passed ?? 0}/${summary.total ?? 0}, skipped=0`
+      : undefined
+  };
+}
+
 function runCheck(label: string, check: () => Step): Step {
   console.log(`\n▶ Running ${label}…`);
   const step = check();
@@ -261,6 +358,8 @@ function main() {
   const steps: Step[] = [];
 
   steps.push(runCmd("prisma.generate", "npx prisma generate"));
+  steps.push(runCmd("prisma.validate", "npx prisma validate"));
+  steps.push(runCheck("database.url", checkDatabaseUrl));
   steps.push(runCmd("typecheck", "npm run typecheck"));
   steps.push(runCmd("marketing.verify_links", "npm run marketing:verify-links"));
   steps.push(runCmd("lint", "npx next lint --no-cache --quiet"));
@@ -272,8 +371,12 @@ function main() {
   steps.push(runCmd("knowledge.verify", "npm run knowledge:verify"));
   steps.push(runCheck("admin.secrets_config", checkAdminSecrets));
 
-  if (process.env.DATABASE_URL) {
+  const databaseStep = steps.find((step) => step.name === "database.url");
+  if (databaseStep?.ok) {
     steps.push(runCmd("prisma.migrate_deploy", "npm run db:migrate:deploy"));
+    steps.push(runCmd("prisma.migrate_status", "npx prisma migrate status"));
+    steps.push(runDepositVerify("deposit.security.verify", "npm run deposit:security:verify"));
+    steps.push(runDepositVerify("deposit.reconcile.verify", "npm run deposit:reconcile:verify"));
     steps.push(runCmd("login.preflight", "npm run login:preflight"));
     steps.push(runCmd("payment.verify", "npm run payment:verify"));
     steps.push(runCmd("credits:pricing:verify", "npm run credits:pricing:verify"));
@@ -282,13 +385,6 @@ function main() {
     steps.push(runCmd("canvas:ai-models:verify", "npm run canvas:ai-models:verify"));
     steps.push(runCmd("credits:verify", "npm run credits:verify"));
     steps.push(runCmd("sprint1.verify", "npm run sprint1:verify"));
-  } else {
-    console.log("\n▶ Skipping DB checks (DATABASE_URL not set)");
-    steps.push({
-      name: "db.verify_skipped",
-      ok: true,
-      detail: "DATABASE_URL not set — skipped DB integration checks"
-    });
   }
 
   console.log("\n--- Summary ---");

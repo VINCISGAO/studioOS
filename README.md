@@ -137,6 +137,7 @@ Start from `.env.example`. Common required groups:
 - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and Supabase service credentials for Supabase-backed auth paths
 - `RESEND_API_KEY` and sender env vars for email OTP/notifications
 - `STRIPE_SECRET_KEY`, publishable key, and webhook secret for Stripe-oriented payment work
+- `ENABLE_DEMO_PAYMENTS=false` in production — creator deposit demo auto-confirm is opt-in for local dev only
 - OpenAI model keys for AI proposal and creative assistance features
 - Alipay OAuth env vars only when enabling the Alipay skeleton
 

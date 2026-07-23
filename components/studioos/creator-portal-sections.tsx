@@ -12,7 +12,7 @@ import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import { creatorPortalRoutes } from "@/lib/studioos/creator-portal-routes";
 import type { StoredOrder } from "@/lib/order-types";
-import { formatCurrency } from "@/lib/utils";
+import { formatSettlementUsd } from "@/lib/money/display-money";
 
 const copy = {
   en: {
@@ -81,7 +81,7 @@ export function CreatorPortalSections({
                 <div>
                   <p className="font-medium text-zinc-900">{campaign.title}</p>
                   <p className="mt-1 text-sm text-zinc-500">
-                    {campaign.status} · {formatCurrency(campaign.budget, locale)} · R{campaign.reviewRound}
+                    {campaign.status} · {formatSettlementUsd(campaign.budget, locale)} · R{campaign.reviewRound}
                   </p>
                 </div>
                 <Button asChild size="sm" variant="outline" className="rounded-xl">
@@ -107,7 +107,7 @@ export function CreatorPortalSections({
                 <div>
                   <p className="font-medium text-zinc-900">{order.title || order.company_name}</p>
                   <p className="mt-1 text-sm text-zinc-500">
-                    {order.status} · {formatCurrency(order.creator_payout, locale)}
+                    {order.status} · {formatSettlementUsd(order.creator_payout, locale)}
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">

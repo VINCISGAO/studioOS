@@ -4,7 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import type { CreatorMembershipStatusView, MembershipPlanView } from "@/features/membership/membership.types";
 import type { Locale } from "@/lib/i18n";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatSettlementUsd } from "@/lib/money/display-money";
+import { formatDate } from "@/lib/utils";
 
 const copy = {
   en: {
@@ -77,7 +78,7 @@ export function CreatorMembershipPanel({
                 <TrendingUp className="h-3.5 w-3.5" /> {t.revenue}
               </p>
               <p className="mt-2 text-lg font-semibold tabular-nums">
-                {formatCurrency(status.earnings.totalSettledRevenue, locale)}
+                {formatSettlementUsd(status.earnings.totalSettledRevenue, locale)}
               </p>
             </div>
             <div className="rounded-xl border p-4 sm:col-span-2">
@@ -85,7 +86,7 @@ export function CreatorMembershipPanel({
                 <Crown className="h-3.5 w-3.5" /> {t.threshold}
               </p>
               <p className="mt-2 text-lg font-semibold tabular-nums">
-                {formatCurrency(status.earnings.upgradeThreshold, locale)}
+                {formatSettlementUsd(status.earnings.upgradeThreshold, locale)}
               </p>
               {!status.isVerified ? (
                 <div className="mt-3">

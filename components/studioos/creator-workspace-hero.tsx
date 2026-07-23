@@ -9,7 +9,7 @@ import {
 import { BrandWorkspaceStatCard } from "@/components/studioos/brand-workspace/brand-workspace-stat-card";
 import type { Locale } from "@/lib/i18n";
 import type { CreatorHomeStats } from "@/lib/studioos/creator-home-ui";
-import { formatCurrency } from "@/lib/utils";
+import { formatSettlementUsd } from "@/lib/money/display-money";
 
 type DayPart = "morning" | "afternoon" | "evening";
 
@@ -114,7 +114,7 @@ export function CreatorWorkspaceHero({
   const statCards = [
     {
       label: t.totalEarnings,
-      value: formatCurrency(stats.totalEarnings, locale),
+      value: formatSettlementUsd(stats.totalEarnings, locale),
       icon: DollarSign,
       iconTone: "bg-violet-100 text-violet-700",
       waveTone: trendUp(stats.earningsTrend) ? "text-violet-500" : "text-violet-400",

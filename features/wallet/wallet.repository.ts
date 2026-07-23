@@ -28,6 +28,16 @@ export class WalletRepository {
     return prisma.transaction.findUnique({ where: { id } });
   }
 
+  async findEscrowDepositByDescription(walletId: string, description: string) {
+    return prisma.transaction.findFirst({
+      where: {
+        walletId,
+        type: "ESCROW_DEPOSIT",
+        description
+      }
+    });
+  }
+
   async applyLedgerUpdate(input: {
     walletId: string;
     campaignId?: string;

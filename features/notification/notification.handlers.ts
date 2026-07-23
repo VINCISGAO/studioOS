@@ -4,6 +4,8 @@ import type { DomainEvent } from "@/features/shared/types/events";
 import { notificationService } from "@/features/notification/notification.service";
 import { prisma, hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { getAppBaseUrl } from "@/lib/app-url";
+import { readCampaignMemory } from "@/features/campaign/brand-campaign/brand-campaign.utils";
+import type { BrandCampaignMemory } from "@/features/campaign/brand-campaign/brand-campaign.types";
 
 let registered = false;
 
@@ -34,19 +36,23 @@ async function onEscrowFunded(event: DomainEvent) {
   const campaign = await loadCampaign(campaignId);
   if (!campaign?.creatorId) return;
 
-  await notificationService.notify({
-    userId: campaign.creatorId,
-    campaignId,
-    title: "Escrow funded — start production",
-    content: `Payment for "${campaign.title}" is secured. You can begin production and upload review versions.`,
-    actionUrl: `${getAppBaseUrl()}/studio/projects`,
-    type: "payment.escrow_funded",
-    category: "PAYMENT",
-    eventName: event.name,
-    template: "notification.generic",
-    priority: "HIGH",
-    email: false
-  });
+  const memory = readCampaignMemory(campaign.campaignMemoryJson) as BrandCampaignMemory;
+  if (!memory.selection?.legacy_creator_id) return;
+
+    await notificationService.notify({
+      userId: campaign.creatorId,
+      campaignId,
+      title: "Escrow funded — start production",
+      content: `Payment for "${campaign.title}" is secured. You can begin production and upload review versions.`,
+      actionUrl: `${getAppBaseUrl()}/studio/projects`,
+      type: "payment.escrow_funded",
+      category: "PAYMENT",
+      eventName: event.name,
+      template: "payment.escrow_funded",
+      priority: "HIGH",
+      email: false,
+      metadata: { project: campaign.title }
+    });
 }
 
 async function onRevisionRequested(event: DomainEvent) {
@@ -133,7 +139,8 @@ async function onCampaignUpdated(event: DomainEvent) {
       category: "AI",
       eventName: event.name,
       template: "ai.creative_generated",
-      email: false
+      email: false,
+      metadata: { project: campaign.title }
     });
     return;
   }
@@ -149,7 +156,8 @@ async function onCampaignUpdated(event: DomainEvent) {
       category: "MATCHING",
       eventName: event.name,
       template: "ai.matching_started",
-      email: false
+      email: false,
+      metadata: { project: campaign.title }
     });
     return;
   }
@@ -165,7 +173,7 @@ async function onCampaignUpdated(event: DomainEvent) {
       type: "collaboration.started",
       category: "COLLABORATION",
       eventName: event.name,
-      template: "collaboration.selected",
+      template: "collaboration.started",
       priority: "HIGH",
       email: false,
       metadata: {

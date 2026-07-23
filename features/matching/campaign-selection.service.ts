@@ -28,21 +28,38 @@ import { aiLearningWorkerService } from "@/features/ai/ai-learning-worker.servic
 import { isCampaignEscrowStatusActive } from "@/features/payment/escrow-guards";
 import { getProject } from "@/lib/project-service";
 import { setupBrandCheckout } from "@/lib/studioos/brand-checkout-service";
+import { ensureSelectedCreatorOrderBridge } from "@/lib/order-service";
 import { notifyCreatorsInvitationExpired } from "@/lib/studioos/commercial-interaction-notify";
 import type { StoredCreatorInvitation } from "@/lib/studioos/creator-invitation-types";
 import { isInvitationRecruitmentClosed } from "@/lib/studioos/invitation-lifecycle";
+import { isOrderPaymentEscrowed } from "@/lib/order-types";
 
-function selectedCreatorCopy(locale: Locale, brandName: string, projectTitle: string) {
+function selectedCreatorCopy(
+  locale: Locale,
+  brandName: string,
+  projectTitle: string,
+  escrowFunded: boolean
+) {
   if (locale === "zh") {
-    return {
-      title: `🎉 恭喜，你已被品牌选中`,
-      body: `「${projectTitle}」— 品牌已确认与你合作，项目表单已生成。现在可以进入审片中心上传 V1 初稿。`
-    };
+    return escrowFunded
+      ? {
+          title: `🎉 恭喜，你已被品牌选中`,
+          body: `「${projectTitle}」已正式达成合作，项目表单已就绪。现在可以进入审片中心上传 V1 初稿。`
+        }
+      : {
+          title: `🎉 恭喜，你已被品牌选中`,
+          body: `「${projectTitle}」— 品牌已确认与你合作。等待品牌完成托管付款后，项目将正式开启，届时可在审片中心上传 V1。`
+        };
   }
-  return {
-    title: `${brandName} selected you for this project`,
-    body: `"${projectTitle}" — the brand confirmed you as their creator. Your project is ready; open the review center and upload V1.`
-  };
+  return escrowFunded
+    ? {
+        title: `${brandName} selected you for this project`,
+        body: `"${projectTitle}" is now a confirmed collaboration. Your project is ready — open the review center and upload V1.`
+      }
+    : {
+        title: `${brandName} selected you for this project`,
+        body: `"${projectTitle}" — the brand confirmed you as their creator. Once escrow payment is complete, the project opens and you can upload V1 in the review center.`
+      };
 }
 
 const SELECTION_ALLOWED_STATUSES = new Set<string>([
@@ -90,6 +107,10 @@ export class CampaignSelectionService {
           existingSelection
         );
         if (invitation) {
+          await ensureSelectedCreatorOrderBridge({
+            projectId: legacyProjectId,
+            creatorId: input.creatorId
+          }).catch(() => undefined);
           return { ok: true, invitation };
         }
       }
@@ -124,6 +145,11 @@ export class CampaignSelectionService {
 
     if (!SELECTION_ALLOWED_STATUSES.has(campaign.status)) {
       return { ok: false, error: "recruitment-closed" };
+    }
+
+    const escrowBeforeSelection = await paymentRepository.findByCampaignId(campaign.id);
+    if (!escrowBeforeSelection || !isCampaignEscrowStatusActive(escrowBeforeSelection.status)) {
+      return { ok: false, error: "payment-required" };
     }
 
     const selectedAt = new Date().toISOString();
@@ -173,6 +199,10 @@ export class CampaignSelectionService {
           lock.existingSelection
         );
         if (invitation) {
+          await ensureSelectedCreatorOrderBridge({
+            projectId: legacyProjectId,
+            creatorId: input.creatorId
+          }).catch(() => undefined);
           return { ok: true, invitation };
         }
       }
@@ -252,6 +282,10 @@ export class CampaignSelectionService {
       creatorProfileId
     );
     if (existingPrismaOrder) {
+      await ensureSelectedCreatorOrderBridge({
+        projectId: legacyProjectId,
+        creatorId: input.creatorId
+      }).catch(() => undefined);
       const invitation = mapInvitationToStored(
         winnerRow,
         legacyProjectId,
@@ -278,7 +312,12 @@ export class CampaignSelectionService {
     const brandName = input.client.company_name || input.client.client_name || "Brand";
     const projectTitle =
       legacyProject.title || legacyProject.product_name || campaign.title || brandName;
-    const copy = selectedCreatorCopy(input.locale, brandName, projectTitle);
+    const copy = selectedCreatorCopy(
+      input.locale,
+      brandName,
+      projectTitle,
+      isOrderPaymentEscrowed(checkoutOrder.payment_status)
+    );
 
     const { notifyCreatorProjectSelected } = await import("@/lib/studioos/creator-assignment-notify");
     await notifyCreatorProjectSelected({
@@ -297,7 +336,11 @@ export class CampaignSelectionService {
         actionUrl: studioActionUrl,
         template: "collaboration.selected",
         priority: "HIGH",
-        email: false
+        email: false,
+        metadata: {
+          brand: brandName,
+          project: projectTitle
+        }
       })
       .catch(() => undefined);
 

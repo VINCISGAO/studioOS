@@ -4,6 +4,7 @@ export type BrandRecommendedCreator = {
   creatorId: string;
   creatorName: string;
   creatorHeadline: string;
+  creatorAvatarUrl?: string;
   matchPercent: number;
   verified: boolean;
   tags: string[];

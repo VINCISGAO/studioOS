@@ -25,7 +25,8 @@ import type { Creator } from "@/lib/types";
 import type { StoredOrder } from "@/lib/order-types";
 import type { CreatorNotification } from "@/lib/notification-types";
 import type { OrderStatus } from "@/lib/order-types";
-import { cn, formatCurrency } from "@/lib/utils";
+import { formatSettlementUsd } from "@/lib/money/display-money";
+import { cn } from "@/lib/utils";
 
 const copy = {
   en: {
@@ -209,7 +210,7 @@ export function StudioWorkspaceDashboard({
     {
       label: t.revenue,
       sub: t.revenueSub,
-      value: formatCurrency(stats.revenue, locale),
+      value: formatSettlementUsd(stats.revenue, locale),
       icon: CircleDollarSign,
       iconClass: "text-sky-600 bg-sky-50"
     }
@@ -330,7 +331,7 @@ export function StudioWorkspaceDashboard({
                             {t.brand}: {order.company_name || order.client_name}
                           </span>
                           <span>
-                            {t.payout}: {formatCurrency(order.creator_payout, locale)}
+                            {t.payout}: {formatSettlementUsd(order.creator_payout, locale)}
                           </span>
                           <span>
                             {t.assignedDate}: {formatAssignedDate(order.created_at, locale)}

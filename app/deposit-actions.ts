@@ -47,13 +47,16 @@ export async function startDepositStripeCheckoutAction(formData: FormData) {
     redirect(withLocale("/studio/deposit?error=stripe-unavailable", lang));
   }
 
+  let checkoutUrl: string | null = null;
   try {
     const checkout = await platformPaymentService.createCreatorDepositCheckout(creatorId, lang);
-    redirect(checkout.checkoutUrl);
+    checkoutUrl = checkout.checkoutUrl;
   } catch (error) {
     const message = error instanceof Error ? error.message : "checkout-failed";
     redirect(withLocale(`/studio/deposit?error=${encodeURIComponent(message)}`, lang));
   }
+
+  redirect(checkoutUrl!);
 }
 
 export async function submitDepositPaymentAction(formData: FormData) {

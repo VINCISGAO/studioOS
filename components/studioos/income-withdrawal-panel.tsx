@@ -51,7 +51,8 @@ import type {
   WithdrawalRequest,
   WithdrawalStatus
 } from "@/lib/studioos/withdrawal-types";
-import { cn, formatCurrency } from "@/lib/utils";
+import { formatSettlementUsd } from "@/lib/money/display-money";
+import { cn } from "@/lib/utils";
 
 const PAYOUT_METHOD_TYPES: PayoutMethodType[] = ["alipay", "wechat", "paypal", "bank_wire", "crypto"];
 
@@ -160,7 +161,7 @@ const copy = {
     stepReview: "核对信息",
     stepConfirm: "确认提交",
     stepDone: "已提交",
-    amountLabel: "提现金额（USD）",
+    amountLabel: "提现金额（美元）",
     methodLabel: "收款方式",
     minHint: "最低",
     maxHint: "可用",
@@ -547,8 +548,8 @@ export function IncomeWithdrawalPanel({
                   placeholder={`${snapshot.min_withdrawal_usd} - ${snapshot.available_usd}`}
                 />
                 <p className="text-xs text-zinc-500">
-                  {t.minHint} {formatCurrency(snapshot.min_withdrawal_usd, locale)} · {t.maxHint}{" "}
-                  {formatCurrency(snapshot.available_usd, locale)}
+                  {t.minHint} {formatSettlementUsd(snapshot.min_withdrawal_usd, locale)} · {t.maxHint}{" "}
+                  {formatSettlementUsd(snapshot.available_usd, locale)}
                 </p>
               </div>
               <div className="grid gap-2">
@@ -578,10 +579,10 @@ export function IncomeWithdrawalPanel({
 
           {step === "review" && selectedMethod ? (
             <div className="space-y-4">
-              <ReviewRow label={t.amountLabel} value={formatCurrency(parsedAmount, locale)} />
+              <ReviewRow label={t.amountLabel} value={formatSettlementUsd(parsedAmount, locale)} />
               <ReviewRow label={t.methodLabel} value={payoutMethodSummary(selectedMethod, locale)} />
-              <ReviewRow label={t.fee} value={formatCurrency(fee, locale)} />
-              <ReviewRow label={t.net} value={formatCurrency(net, locale)} highlight />
+              <ReviewRow label={t.fee} value={formatSettlementUsd(fee, locale)} />
+              <ReviewRow label={t.net} value={formatSettlementUsd(net, locale)} highlight />
               {cryptoPreview ? (
                 <ReviewRow
                   label={t.cryptoReceive}

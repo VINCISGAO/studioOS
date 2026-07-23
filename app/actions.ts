@@ -131,7 +131,7 @@ export async function createCheckoutAction(formData: FormData) {
   const lang = await resolveActionLocale(formData);
   const orderId = String(formData.get("order_id") ?? "");
   if (orderId) {
-    redirect(withLocale(`/dashboard/orders/${orderId}?pay=1`, lang));
+    redirect(withLocale(`/brand/orders/${orderId}?pay=1`, lang));
   }
   redirect(withLocale("/creators", lang));
 }
@@ -299,7 +299,7 @@ export async function signUpAction(formData: FormData) {
     redirect(loginErrorRedirect({ error: error.message }));
   }
 
-  redirect(appPath("/dashboard?signup=success"));
+  redirect(appPath("/brand?signup=success"));
 }
 
 export async function oauthSignInAction(formData: FormData) {

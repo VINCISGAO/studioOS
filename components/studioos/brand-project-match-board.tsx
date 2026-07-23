@@ -18,8 +18,8 @@ import {
   groupBrandMatchInvitations,
   resolveCreatorForInvitation
 } from "@/lib/studioos/brand-match-display";
+import { BrandCreatorAvatarLink } from "@/components/studioos/brand-creator-avatar-link";
 import type { StoredCreatorInvitation } from "@/lib/studioos/creator-invitation-types";
-import { creatorAvatarTone, creatorInitials } from "@/lib/studioos/creator-display";
 import { cn } from "@/lib/utils";
 
 type MatchTab = "pending" | "accepted" | "declined" | "expired";
@@ -117,6 +117,7 @@ function CreatorReplyRow({
   const t = copy[locale];
   const creator = resolveCreatorForInvitation(invitation.creatorId);
   const name = invitation.creatorName ?? creator?.name ?? invitation.creatorId;
+  const avatarUrl = invitation.creatorAvatarUrl ?? creator?.avatar_url;
   const row = buildAcceptedCreatorRow(invitation, locale, projectBudgetRange);
   const tags = creator ? buildCreatorMatchTags(creator, locale) : row.tags;
   const etaHours = estimatePendingReplyHours(invitation.creatorId, invitation.id);
@@ -124,14 +125,12 @@ function CreatorReplyRow({
 
   return (
     <li className="flex gap-3 border-b border-zinc-100 px-5 py-4 last:border-0 sm:px-6">
-      <span
-        className={cn(
-          "flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
-          creatorAvatarTone(invitation.creatorId)
-        )}
-      >
-        {creatorInitials(name, invitation.creatorId)}
-      </span>
+      <BrandCreatorAvatarLink
+        locale={locale}
+        creatorId={invitation.creatorId}
+        creatorName={name}
+        avatarUrl={avatarUrl}
+      />
 
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-1.5">

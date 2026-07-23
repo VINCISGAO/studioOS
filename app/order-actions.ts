@@ -44,14 +44,14 @@ function brandPayReturnPath(order: { id: string; project_id?: string | null }, l
   if (order.project_id) {
     return withLocale(`/brand/projects/${order.project_id}/checkout${query}`, lang);
   }
-  return withLocale(`/dashboard/orders/${order.id}${query}`, lang);
+  return withLocale(`/brand/orders/${order.id}${query}`, lang);
 }
 
 function brandPaySuccessPath(order: { id: string; project_id?: string | null }, lang: Locale) {
   if (order.project_id) {
     return withLocale(`/brand/projects/${order.project_id}?tab=match&matching=1`, lang);
   }
-  return withLocale(`/dashboard/orders/${order.id}?paid=1`, lang);
+  return withLocale(`/brand/orders/${order.id}?paid=1`, lang);
 }
 
 export async function submitQuoteAction(formData: FormData) {
@@ -139,7 +139,7 @@ export async function acceptQuoteAction(formData: FormData) {
   redirect(
     order.project_id
       ? withLocale(`/brand/projects/${order.project_id}/checkout`, lang)
-      : withLocale(`/dashboard/orders/${order.id}?pay=1`, lang)
+      : withLocale(`/brand/orders/${order.id}?pay=1`, lang)
   );
 }
 
@@ -165,10 +165,10 @@ export async function payOrderAction(formData: FormData) {
     const appUrl = getAppBaseUrl();
     const successPath = order.project_id
       ? appPath(`/brand/projects/${order.project_id}?tab=match&matching=1`)
-      : appPath(`/dashboard/orders/${order.id}?paid=1`);
+      : appPath(`/brand/orders/${order.id}?paid=1`);
     const cancelPath = order.project_id
       ? appPath(`/brand/projects/${order.project_id}/checkout?pay=cancelled`)
-      : appPath(`/dashboard/orders/${order.id}?pay=cancelled`);
+      : appPath(`/brand/orders/${order.id}?pay=cancelled`);
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       line_items: [
@@ -290,7 +290,7 @@ export async function approveDeliveryAction(formData: FormData) {
   const order = await getOrder(orderId);
 
   if (!order) {
-    redirect(withLocale("/dashboard", lang));
+    redirect(withLocale("/brand", lang));
   }
 
   const resolvedProject = resolveSubmittedOrderProject(projectId, order.project_id);
@@ -301,7 +301,7 @@ export async function approveDeliveryAction(formData: FormData) {
 
   const clientEmail = await getCurrentClientEmail();
   if (!clientOwnsOrder(clientEmail, order.client_email)) {
-    redirect(withLocale("/dashboard", lang));
+    redirect(withLocale("/brand", lang));
   }
 
   if (hasDatabaseUrl() && targetProjectId) {
@@ -383,7 +383,7 @@ export async function requestRevisionAction(formData: FormData) {
   const order = await getOrder(orderId);
 
   if (!order) {
-    redirect(withLocale("/dashboard", lang));
+    redirect(withLocale("/brand", lang));
   }
 
   const resolvedProject = resolveSubmittedOrderProject(projectId, order.project_id);
@@ -394,7 +394,7 @@ export async function requestRevisionAction(formData: FormData) {
 
   const clientEmail = await getCurrentClientEmail();
   if (!clientOwnsOrder(clientEmail, order.client_email)) {
-    redirect(withLocale("/dashboard", lang));
+    redirect(withLocale("/brand", lang));
   }
 
   if (hasDatabaseUrl() && targetProjectId) {
@@ -460,7 +460,7 @@ export async function submitOrderRatingAction(formData: FormData) {
 
   const clientEmail = await getCurrentClientEmail();
   if (clientEmail && order.client_email !== clientEmail) {
-    redirect(withLocale("/dashboard", lang));
+    redirect(withLocale("/brand", lang));
   }
 
   const { createOrderReview } = await import("@/lib/order-rating-service");

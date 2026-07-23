@@ -98,10 +98,10 @@ export function brandCampaignHref(input: {
     return `/brand/projects/${input.projectId}/checkout`;
   }
   if (input.status === "waiting_payment") {
-    return `/dashboard/orders/${input.id}?pay=1`;
+    return `/brand/orders/${input.id}?pay=1`;
   }
   if (input.projectId) return `/brand/projects/${input.projectId}/review`;
-  return `/dashboard/orders/${input.id}`;
+  return `/brand/orders/${input.id}`;
 }
 
 export function estimateBudgetRange(budget?: string | null): string {

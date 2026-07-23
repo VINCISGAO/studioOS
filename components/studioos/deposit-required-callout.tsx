@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import { CREATOR_DEPOSIT_USD, depositRequiredMessage, depositRequiredTitle, tCertified } from "@/lib/studioos/deposit-copy";
-import { formatCurrency } from "@/lib/utils";
+import { formatSettlementUsd } from "@/lib/money/display-money";
 
 export function DepositRequiredCallout({
   locale,
@@ -22,7 +22,7 @@ export function DepositRequiredCallout({
       <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
         <p className="font-medium">{title}</p>
         <p className="mt-1 text-xs leading-5 text-amber-900/90">
-          {formatCurrency(CREATOR_DEPOSIT_USD, locale)} {t.paymentLabel}
+          {formatSettlementUsd(CREATOR_DEPOSIT_USD, locale)} {t.paymentLabel}
         </p>
         <Button asChild size="sm" variant="outline" className="mt-3 border-amber-300 bg-white">
           <Link href={withLocale("/studio/deposit", locale)}>{t.ctaShort}</Link>

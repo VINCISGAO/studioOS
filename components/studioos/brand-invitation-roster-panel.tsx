@@ -1,6 +1,6 @@
+import { BrandCreatorAvatarLink } from "@/components/studioos/brand-creator-avatar-link";
 import { creators } from "@/lib/data";
 import type { Locale } from "@/lib/i18n";
-import { creatorAvatarTone, creatorInitials } from "@/lib/studioos/creator-display";
 import { brandInvitationStatusLabel } from "@/lib/studioos/invitation-lifecycle";
 import type { StoredCreatorInvitation } from "@/lib/studioos/creator-invitation-types";
 import { cn } from "@/lib/utils";
@@ -58,18 +58,17 @@ export function BrandInvitationRosterPanel({
           {sorted.map((invitation) => {
             const creator = creators.find((item) => item.id === invitation.creatorId);
             const displayStatus = invitation.status === "not_selected" ? "expired" : invitation.status;
-            const name = creator?.name ?? invitation.creatorId;
+            const name = creator?.name ?? invitation.creatorName ?? invitation.creatorId;
+            const avatarUrl = invitation.creatorAvatarUrl ?? creator?.avatar_url;
 
             return (
               <li key={invitation.id} className="flex items-start gap-3 px-5 py-4 sm:px-6">
-                <span
-                  className={cn(
-                    "flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
-                    creatorAvatarTone(invitation.creatorId)
-                  )}
-                >
-                  {creatorInitials(name, invitation.creatorId)}
-                </span>
+                <BrandCreatorAvatarLink
+                  locale={locale}
+                  creatorId={invitation.creatorId}
+                  creatorName={name}
+                  avatarUrl={avatarUrl}
+                />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">

@@ -180,15 +180,16 @@ export class PaymentCollectionService {
           ? `Checkout for "${campaign.title}" was cancelled. You can retry payment when ready.`
           : `Payment for "${campaign.title}" did not complete. Please try again or contact support.`;
 
-      await notificationService.notify({
-        userId: campaign.brandId,
-        campaignId: campaign.id,
-        title,
-        content,
-        actionUrl: `${getAppBaseUrl()}/brand/projects/${legacyProjectId}/checkout`,
-        template: input.reason === "CANCELLED" ? "payment.cancelled" : "payment.failed",
-        priority: "HIGH"
-      });
+    await notificationService.notify({
+      userId: campaign.brandId,
+      campaignId: campaign.id,
+      title,
+      content,
+      actionUrl: `${getAppBaseUrl()}/brand/projects/${legacyProjectId}/checkout`,
+      template: input.reason === "CANCELLED" ? "payment.cancelled" : "payment.failed",
+      priority: "HIGH",
+      metadata: { project: campaign.title }
+    });
     }
 
     return { campaignId, paymentStatus: input.reason };
@@ -233,7 +234,11 @@ export class PaymentCollectionService {
         content: `Your payout of ${commission.currency} ${Number(commission.creatorPayoutAmount).toFixed(2)} for "${campaign.title}" has been processed.`,
         actionUrl: `${getAppBaseUrl()}/studio/income`,
         template: "payment.creator_payout_paid",
-        priority: "HIGH"
+        priority: "HIGH",
+        metadata: {
+          project: campaign.title,
+          amount: `${commission.currency} ${Number(commission.creatorPayoutAmount).toFixed(2)}`
+        }
       });
     }
 
@@ -280,26 +285,35 @@ export class PaymentCollectionService {
       }
     }
 
-    await notificationService.notify({
-      userId: input.brandId,
-      campaignId: input.campaignId,
-      title: "Payment received",
-      content: `Your payment of ${amountLabel} for "${input.campaignTitle}" is confirmed. AI creator matching can begin.`,
-      actionUrl: `${appUrl}/brand/projects/${legacyProjectId}?tab=match`,
-      template: "payment.brand_success",
-      priority: "HIGH"
-    });
+      await notificationService.notify({
+        userId: input.brandId,
+        campaignId: input.campaignId,
+        title: "Payment received",
+        content: `Your payment of ${amountLabel} for "${input.campaignTitle}" is confirmed. AI creator matching can begin.`,
+        actionUrl: `${appUrl}/brand/projects/${legacyProjectId}?tab=match`,
+        template: "payment.brand_success",
+        priority: "HIGH",
+        metadata: {
+          project: input.campaignTitle,
+          amount: amountLabel
+        }
+      });
 
-    await notificationService.notify({
-      userId: input.creatorId,
-      campaignId: input.campaignId,
-      title: "Escrow funded",
-      content: `"${input.campaignTitle}" is escrow-funded (${amountLabel}). The project becomes upload-ready after formal creator selection. Payable after commission: ${input.currency} ${input.commission.creatorPayoutAmount.toFixed(2)}.`,
-      actionUrl: creatorActionUrl,
-      template: "payment.creator_funded",
-      priority: "HIGH",
-      email: !hasLegacyOrder
-    });
+      await notificationService.notify({
+        userId: input.creatorId,
+        campaignId: input.campaignId,
+        title: "Escrow funded",
+        content: `"${input.campaignTitle}" is escrow-funded (${amountLabel}). The project becomes upload-ready after formal creator selection. Payable after commission: ${input.currency} ${input.commission.creatorPayoutAmount.toFixed(2)}.`,
+        actionUrl: creatorActionUrl,
+        template: "payment.creator_funded",
+        priority: "HIGH",
+        email: !hasLegacyOrder,
+        metadata: {
+          project: input.campaignTitle,
+          amount: amountLabel,
+          payoutAmount: `${input.currency} ${input.commission.creatorPayoutAmount.toFixed(2)}`
+        }
+      });
   }
 }
 

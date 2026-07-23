@@ -35,6 +35,7 @@ import { userRepository } from "@/features/auth/user.repository";
 import { isPrismaEscrowFundedForProject } from "@/lib/studioos/brand-payment-funding";
 import { resolveCreatorProfileIdForLegacyId } from "@/features/matching/invitation-creator-bridge";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
+import { shouldUseLegacyJsonMarketplaceStore } from "@/lib/studioos/marketplace-data-source";
 import { DEMO_REVIEW_VIDEO_URL } from "@/lib/studioos/review-video-url";
 import {
   filterPlayableDeliverables,
@@ -240,7 +241,9 @@ async function readStoreInner(): Promise<OrderStore> {
 const readStore = createSerializedStoreReader(readStoreInner);
 
 async function writeStore(store: OrderStore) {
-  await writeJsonFileAtomic(STORE_PATH, store);
+  if (shouldUseLegacyJsonMarketplaceStore()) {
+    await writeJsonFileAtomic(STORE_PATH, store);
+  }
   readStore.invalidate();
 }
 
@@ -715,10 +718,24 @@ export async function listOrdersForCreator(creatorId: string): Promise<StoredOrd
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
     const seenIds = new Set(prismaOrders.map((item) => item.id));
-    const seenProjects = new Set(prismaOrders.map((item) => item.project_id).filter(Boolean));
     const merged = [
       ...prismaOrders,
-      ...jsonOrders.filter((item) => !seenIds.has(item.id) && !seenProjects.has(item.project_id))
+      ...jsonOrders.filter((item) => {
+        if (seenIds.has(item.id)) {
+          return false;
+        }
+        const prismaForProject = prismaOrders.find((row) => row.project_id === item.project_id);
+        if (!prismaForProject) {
+          return true;
+        }
+        if (
+          prismaForProject.creator_id === CAMPAIGN_PENDING_CREATOR_ID &&
+          item.creator_id === creatorId
+        ) {
+          return true;
+        }
+        return prismaForProject.creator_id !== creatorId;
+      })
     ];
     return merged.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   }
@@ -831,30 +848,10 @@ async function syncPrismaCampaignMatchingAfterLegacyPayment(projectId: string) {
 }
 
 export async function repairSelectedCreatorCampaignOrders(creatorId: string): Promise<void> {
-  if (hasDatabaseUrl()) {
-    const rows = await orderRepository.listForLegacyCreatorId(creatorId);
-    await Promise.all(
-      rows.map(async (row) => {
-        if (row.status !== "PENDING") return;
-
-        const stored = prismaOrderToStored(row);
-        if (stored.creator_id !== creatorId || !stored.project_id) return;
-
-        const project = await getProject(stored.project_id);
-        if (project?.selected_studio_id !== creatorId) return;
-
-        if (!(await isPrismaEscrowFundedForProject(stored.project_id))) return;
-
-        await orderRepository.updateStatus(row.id, "CONFIRMED");
-      })
-    );
-  }
-
   const store = await readStore();
-  let changed = false;
 
   for (const order of store.orders) {
-    if (order.creator_id !== CAMPAIGN_PENDING_CREATOR_ID || !order.project_id) {
+    if (!order.project_id) {
       continue;
     }
 
@@ -863,25 +860,60 @@ export async function repairSelectedCreatorCampaignOrders(creatorId: string): Pr
       continue;
     }
 
-    order.creator_id = creatorId;
+    const escrowFunded = await isPrismaEscrowFundedForProject(order.project_id);
+
+    if (order.creator_id === CAMPAIGN_PENDING_CREATOR_ID) {
+      await assignOrderCreator({
+        orderId: order.id,
+        creatorId,
+        inquiryId: order.inquiry_id,
+        workId: order.work_id
+      });
+    }
+
+    if (hasDatabaseUrl()) {
+      const rows = await orderRepository.listForLegacyProjectId(order.project_id);
+      for (const row of rows) {
+        const stored = prismaOrderToStored(row);
+        if (stored.creator_id === CAMPAIGN_PENDING_CREATOR_ID) {
+          await assignOrderCreator({
+            orderId: row.id,
+            creatorId,
+            inquiryId: order.inquiry_id,
+            workId: order.work_id
+          });
+        } else if (row.status === "PENDING" && stored.creator_id === creatorId && escrowFunded) {
+          await orderRepository.updateStatus(row.id, "CONFIRMED");
+        }
+      }
+    }
+
+    const refreshedStore = await readStore();
+    const refreshed = refreshedStore.orders.find((item) => item.id === order.id) ?? order;
+    let changed = false;
 
     if (
-      order.payment_status === "unpaid" &&
-      (await isPrismaEscrowFundedForProject(order.project_id))
+      refreshed.creator_id === creatorId &&
+      refreshed.payment_status === "unpaid" &&
+      escrowFunded
     ) {
-      order.payment_status = "escrowed";
-      order.paid_at = order.paid_at ?? new Date().toISOString();
+      refreshed.payment_status = "escrowed";
+      refreshed.paid_at = refreshed.paid_at ?? new Date().toISOString();
+      changed = true;
     }
 
-    if (order.payment_status !== "unpaid" && order.status === "waiting_payment") {
-      order.status = "in_production";
+    if (
+      refreshed.creator_id === creatorId &&
+      refreshed.payment_status !== "unpaid" &&
+      refreshed.status === "waiting_payment"
+    ) {
+      refreshed.status = "in_production";
+      changed = true;
     }
 
-    changed = true;
-  }
-
-  if (changed) {
-    await writeStore(store);
+    if (changed) {
+      await writeStore(refreshedStore);
+    }
   }
 }
 
@@ -1257,9 +1289,22 @@ export async function syncOrderToApprovedPhase(orderId: string): Promise<StoredO
 }
 
 export async function syncOrderToInProduction(orderId: string): Promise<StoredOrder | null> {
+  const { jsonOrder, prismaOrderId } = await resolveOrdersForAssignment(orderId);
   const store = await readStore();
-  const order = store.orders.find((item) => item.id === orderId);
-  if (!order) return null;
+  const order = jsonOrder ?? store.orders.find((item) => item.id === orderId);
+  if (!order) {
+    if (hasDatabaseUrl() && prismaOrderId) {
+      const existing = await orderRepository.findById(prismaOrderId);
+      if (existing && existing.status !== "PENDING" && existing.status !== "CANCELLED") {
+        return prismaOrderToStored(existing);
+      }
+      const updated = await orderRepository.updateStatus(prismaOrderId, "CONFIRMED");
+      const hydrated = await orderRepository.findById(updated.id);
+      return hydrated ? prismaOrderToStored(hydrated) : null;
+    }
+    return null;
+  }
+
   if (order.payment_status === "unpaid") {
     return order;
   }
@@ -1269,6 +1314,15 @@ export async function syncOrderToInProduction(orderId: string): Promise<StoredOr
 
   order.status = "in_production";
   await writeStore(store);
+
+  if (hasDatabaseUrl() && prismaOrderId) {
+    await orderRepository.updateStatus(prismaOrderId, "CONFIRMED");
+    const hydrated = await orderRepository.findById(prismaOrderId);
+    if (hydrated) {
+      return prismaOrderToStored(hydrated);
+    }
+  }
+
   return order;
 }
 
@@ -1416,26 +1470,119 @@ export async function createCampaignEscrowOrder(input: {
   return order;
 }
 
+function readPrismaOrderMetadata(metadataJson: unknown): Record<string, unknown> {
+  return typeof metadataJson === "object" && metadataJson !== null && !Array.isArray(metadataJson)
+    ? (metadataJson as Record<string, unknown>)
+    : {};
+}
+
+async function resolveOrdersForAssignment(orderId: string): Promise<{
+  jsonOrder: StoredOrder | null;
+  prismaOrderId: string | null;
+}> {
+  const store = await readStore();
+  let jsonOrder = store.orders.find((item) => item.id === orderId) ?? null;
+  let prismaOrderId: string | null = null;
+
+  if (!hasDatabaseUrl()) {
+    return { jsonOrder, prismaOrderId };
+  }
+
+  const prismaById = await orderRepository.findById(orderId);
+  if (prismaById) {
+    prismaOrderId = prismaById.id;
+    if (!jsonOrder) {
+      const metadata = readPrismaOrderMetadata(prismaById.metadataJson);
+      const legacyOrderId =
+        typeof metadata.legacy_order_id === "string" ? metadata.legacy_order_id : null;
+      if (legacyOrderId) {
+        jsonOrder = store.orders.find((item) => item.id === legacyOrderId) ?? null;
+      }
+      if (!jsonOrder && typeof metadata.project_id === "string") {
+        jsonOrder =
+          store.orders.find(
+            (item) =>
+              item.project_id === metadata.project_id &&
+              item.creator_id === CAMPAIGN_PENDING_CREATOR_ID
+          ) ?? null;
+      }
+    }
+    return { jsonOrder, prismaOrderId };
+  }
+
+  if (jsonOrder?.project_id) {
+    const rows = await orderRepository.listForLegacyProjectId(jsonOrder.project_id);
+    const linked =
+      rows.find((row) => readPrismaOrderMetadata(row.metadataJson).legacy_order_id === jsonOrder!.id) ??
+      rows.find((row) => row.creatorProfileId == null) ??
+      rows[0];
+    prismaOrderId = linked?.id ?? null;
+  }
+
+  return { jsonOrder, prismaOrderId };
+}
+
+export async function ensureSelectedCreatorOrderBridge(input: {
+  projectId: string;
+  creatorId: string;
+}): Promise<StoredOrder | null> {
+  const order = await getOrderForProject(input.projectId);
+  if (!order || order.creator_id === input.creatorId) {
+    return order;
+  }
+
+  return assignOrderCreator({
+    orderId: order.id,
+    creatorId: input.creatorId,
+    inquiryId: order.inquiry_id,
+    workId: order.work_id
+  });
+}
+
 export async function assignOrderCreator(input: {
   orderId: string;
   creatorId: string;
   inquiryId: string;
   workId: string | null;
 }): Promise<StoredOrder | null> {
+  const { jsonOrder, prismaOrderId } = await resolveOrdersForAssignment(input.orderId);
   const store = await readStore();
-  const order = store.orders.find((item) => item.id === input.orderId);
-  if (!order) {
-    return null;
+  const targetJson = jsonOrder ?? store.orders.find((item) => item.id === input.orderId) ?? null;
+
+  if (targetJson) {
+    targetJson.creator_id = input.creatorId;
+    targetJson.inquiry_id = input.inquiryId;
+    targetJson.work_id = input.workId;
+    if (targetJson.payment_status !== "unpaid") {
+      targetJson.status = "in_production";
+    }
+    await writeStore(store);
   }
 
-  order.creator_id = input.creatorId;
-  order.inquiry_id = input.inquiryId;
-  order.work_id = input.workId;
-  if (order.payment_status !== "unpaid") {
-    order.status = "in_production";
+  if (hasDatabaseUrl() && prismaOrderId) {
+    const creatorProfileId = await resolveCreatorProfileIdForLegacyId(input.creatorId);
+    const creatorProfile = creatorProfileId
+      ? await userRepository.findCreatorProfileById(creatorProfileId)
+      : null;
+
+    if (creatorProfileId && creatorProfile?.userId) {
+      const confirmProduction = targetJson ? targetJson.payment_status !== "unpaid" : true;
+      const updated = await orderRepository.assignCreator({
+        orderId: prismaOrderId,
+        creatorProfileId,
+        creatorUserId: creatorProfile.userId,
+        creatorLegacyId: input.creatorId,
+        inquiryId: input.inquiryId,
+        workId: input.workId,
+        confirmProduction
+      });
+      if (updated) {
+        return prismaOrderToStored(updated);
+      }
+    }
   }
-  await writeStore(store);
-  return order;
+
+  return targetJson ?? null;
 }
 
 export async function getOrderForProject(projectId: string): Promise<StoredOrder | null> {

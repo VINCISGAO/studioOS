@@ -4,7 +4,13 @@ import type { AuthUser } from "@/features/auth/permission.service";
 import { appError } from "@/lib/core/errors";
 import { hasDatabaseUrl, prisma } from "@/lib/core/database/prisma";
 import { getAppBaseUrl } from "@/lib/app-url";
+import { resolveNotificationCopy } from "@/features/notification/notification-copy";
+import {
+  notificationActionLabel,
+  resolveNotificationLocale
+} from "@/features/notification/notification-locale";
 import { normalizeInternalActionHref } from "@/lib/studioos/internal-action-href";
+import type { Locale } from "@/lib/i18n";
 import type { NotificationCategory, Prisma } from "@prisma/client";
 
 type NotifyInput = {
@@ -20,6 +26,7 @@ type NotifyInput = {
   email?: boolean;
   template?: string;
   priority?: "LOW" | "NORMAL" | "HIGH" | "URGENT";
+  locale?: Locale;
 };
 
 const categoryRules: Array<{ category: NotificationCategory; patterns: string[] }> = [
@@ -101,7 +108,16 @@ export class NotificationService {
     this.assertDb();
     const type = normalizeNotificationType(input);
     const category = resolveNotificationCategory(input);
-    const actionPath = normalizeInternalActionHref(input.actionUrl, "en", "");
+    const locale = input.locale ?? (await resolveNotificationLocale(input.userId));
+    const localized = resolveNotificationCopy({
+      locale,
+      template: input.template,
+      type,
+      title: input.title,
+      content: input.content,
+      metadata: input.metadata
+    });
+    const actionPath = normalizeInternalActionHref(input.actionUrl, locale, "");
     const actionUrl = actionPath || undefined;
     const emailActionUrl = actionUrl ? `${getAppBaseUrl()}${actionUrl}` : undefined;
 
@@ -112,23 +128,11 @@ export class NotificationService {
       category,
       eventName: input.eventName,
       metadataJson: input.metadata,
-      title: input.title,
-      content: input.content,
+      title: localized.title,
+      content: localized.content,
       actionUrl,
       priority: input.priority
     });
-
-    void import("@/features/communication/platform-localization.service")
-      .then(({ platformLocalizationService }) =>
-        platformLocalizationService.localizeNotification({
-          notificationId: inApp.id,
-          userId: input.userId,
-          title: input.title,
-          content: input.content,
-          campaignId: input.campaignId
-        })
-      )
-      .catch(() => undefined);
 
     if (input.email === false) {
       inApp = await notificationRepository.markSent(inApp.id);
@@ -139,10 +143,10 @@ export class NotificationService {
           "@/features/notification/notification-email.service"
         );
         const email = await buildSimpleNotificationEmail({
-          headline: input.title,
-          body: input.content,
+          headline: localized.title,
+          body: localized.content,
           actionUrl: emailActionUrl,
-          actionLabel: "View in VINCIS",
+          actionLabel: notificationActionLabel(locale),
           template: input.template,
           metadata: input.metadata
         });

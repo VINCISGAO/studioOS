@@ -73,6 +73,7 @@ model User {
   oauthAccounts         UserOAuthAccount[]
   campaignAiUsageLogs   CampaignAiUsageLog[]
   creativeProjects      CreativeProject[]      @relation("CreativeProjectOwner")
+  creatorDepositAccount CreatorDepositAccount?
 
   @@index([role])
   @@index([status])
@@ -515,12 +516,123 @@ model CreatorProfile {
   studio               StudioProfile?         @relation(fields: [studioId], references: [id])
   user                 User                   @relation(fields: [userId], references: [id])
   orders               Order[]
+  depositAccount       CreatorDepositAccount?
 
   @@index([studioId])
   @@index([country])
   @@index([availability])
   @@index([profileCompletedAt])
   @@map("creator_profiles")
+}
+
+model CreatorDepositAccount {
+  id               String                  @id @default(uuid())
+  creatorProfileId String                  @unique @map("creator_profile_id")
+  userId           String                  @unique @map("user_id")
+  legacyCreatorId  String?                 @unique @map("legacy_creator_id")
+  depositStatus    CreatorDepositStatus    @default(UNPAID) @map("deposit_status")
+  depositAmountUsd Decimal                 @default(99) @map("deposit_amount_usd") @db.Decimal(18, 2)
+  paidAt           DateTime?               @map("paid_at")
+  createdAt        DateTime                @default(now()) @map("created_at")
+  updatedAt        DateTime                @updatedAt @map("updated_at")
+  creatorProfile   CreatorProfile          @relation(fields: [creatorProfileId], references: [id], onDelete: Cascade)
+  user             User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payments         CreatorDepositPayment[]
+  ledgerEntries    CreatorDepositLedgerEntry[]
+
+  @@index([depositStatus])
+  @@map("creator_deposit_accounts")
+}
+
+model CreatorDepositLedgerEntry {
+  id                  String                        @id @default(uuid())
+  accountId           String                        @map("account_id")
+  paymentId           String?                       @map("payment_id")
+  provider            String
+  externalReferenceId String                        @map("external_reference_id")
+  entryType           CreatorDepositLedgerEntryType @map("entry_type")
+  direction           CreatorDepositLedgerDirection
+  amountMinor         Int                           @map("amount_minor")
+  currency            String                        @default("USD")
+  balanceAfterMinor   Int                           @map("balance_after_minor")
+  actorUserId         String?                       @map("actor_user_id")
+  reason              String?
+  description         String?
+  metadataJson        Json?                         @map("metadata_json")
+  createdAt           DateTime                      @default(now()) @map("created_at")
+  account             CreatorDepositAccount         @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  payment             CreatorDepositPayment?        @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+
+  @@unique([provider, externalReferenceId, entryType])
+  @@index([accountId, createdAt])
+  @@index([paymentId])
+  @@map("creator_deposit_ledger_entries")
+}
+
+model CreatorDepositPayment {
+  id                    String                      @id @default(uuid())
+  accountId             String                      @map("account_id")
+  userId                String                      @map("user_id")
+  amountMinor           Int                         @map("amount_minor")
+  currency              String                      @default("USD")
+  amountUsd             Decimal                     @map("amount_usd") @db.Decimal(18, 2)
+  paymentMethod         String                      @map("payment_method")
+  paymentReference      String?                     @map("payment_reference")
+  provider              String                      @default("stripe")
+  idempotencyKey        String?                     @unique @map("idempotency_key")
+  status                CreatorDepositPaymentStatus @default(PENDING)
+  statusNote            String?                     @map("status_note")
+  failureCode           String?                     @map("failure_code")
+  failureMessage        String?                     @map("failure_message")
+  metadataJson          Json?                       @map("metadata_json")
+  stripeSessionId       String?                     @unique @map("stripe_session_id")
+  stripePaymentIntentId String?                     @unique @map("stripe_payment_intent_id")
+  createdAt             DateTime                    @default(now()) @map("created_at")
+  confirmedAt           DateTime?                   @map("confirmed_at")
+  canceledAt            DateTime?                   @map("canceled_at")
+  account               CreatorDepositAccount       @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  ledgerEntries         CreatorDepositLedgerEntry[]
+
+  @@index([accountId, createdAt])
+  @@index([userId, status])
+  @@index([status])
+  @@map("creator_deposit_payments")
+}
+
+model ProposalInquiry {
+  id               String                  @id
+  creatorLegacyId  String                  @map("creator_legacy_id")
+  creatorProfileId String?                 @map("creator_profile_id")
+  workId           String?                 @map("work_id")
+  projectLegacyId  String?                 @map("project_legacy_id")
+  clientName       String                  @map("client_name")
+  clientEmail      String                  @map("client_email")
+  companyName      String                  @default("") @map("company_name")
+  budgetRange      String                  @default("") @map("budget_range")
+  message          String
+  status           String                  @default("new")
+  createdAt        DateTime                @default(now()) @map("created_at")
+  updatedAt        DateTime                @updatedAt @map("updated_at")
+  messages         ProposalInquiryMessage[]
+
+  @@index([creatorLegacyId, clientEmail])
+  @@index([creatorProfileId])
+  @@index([projectLegacyId])
+  @@map("proposal_inquiries")
+}
+
+model ProposalInquiryMessage {
+  id            String          @id
+  inquiryId     String          @map("inquiry_id")
+  sender        String
+  body          String
+  kind          String?
+  attachmentUrl String?         @map("attachment_url")
+  createdAt     DateTime        @default(now()) @map("created_at")
+  inquiry       ProposalInquiry @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+
+  @@index([inquiryId, createdAt])
+  @@map("proposal_inquiry_messages")
 }
 
 model CreatorPortfolioWork {
@@ -2209,6 +2321,33 @@ enum WithdrawalRequestStatus {
   PAID
   REJECTED
   CANCELLED
+}
+
+enum CreatorDepositStatus {
+  UNPAID
+  PAID
+  REFUND_REQUESTED
+  REFUNDED
+}
+
+enum CreatorDepositPaymentStatus {
+  PENDING
+  PROCESSING
+  SUCCEEDED
+  FAILED
+  CANCELED
+  REFUNDED
+}
+
+enum CreatorDepositLedgerEntryType {
+  DEPOSIT_CREDIT
+  DEPOSIT_REFUND
+  MANUAL_ADJUSTMENT
+}
+
+enum CreatorDepositLedgerDirection {
+  CREDIT
+  DEBIT
 }
 
 enum ConversationStatus {

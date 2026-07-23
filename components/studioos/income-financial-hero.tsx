@@ -2,7 +2,7 @@
 
 import type { CreatorIncomeSnapshot } from "@/lib/studioos/withdrawal-types";
 import { Button } from "@/components/ui/button";
-import { formatCurrency } from "@/lib/utils";
+import { creatorSettlementFootnote, formatSettlementUsd } from "@/lib/money/display-money";
 import { cn } from "@/lib/utils";
 import type { ComponentType } from "react";
 import { CircleHelp, Clock3, Landmark, Shield, Sparkles, TrendingUp, Wallet } from "lucide-react";
@@ -95,9 +95,9 @@ export function IncomeFinancialHero({
             <CircleHelp className="h-4 w-4 text-zinc-400" />
           </div>
           <p className="mt-2 text-5xl font-semibold tracking-tight text-zinc-950 sm:text-[3.25rem]">
-            {formatCurrency(snapshot.available_usd, locale)}{" "}
-            <span className="text-3xl font-semibold text-zinc-500 sm:text-4xl">USD</span>
+            {formatSettlementUsd(snapshot.available_usd, locale)}
           </p>
+          <p className="mt-2 text-xs text-zinc-400">{creatorSettlementFootnote(locale)}</p>
           <p className="mt-3 max-w-xl text-sm leading-6 text-zinc-500">{t.escrowNote}</p>
           <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50/70 px-3 py-1.5 text-xs font-medium text-emerald-700">
             <Shield className="h-3.5 w-3.5" />
@@ -129,21 +129,21 @@ export function IncomeFinancialHero({
         <MetricTile
           label={t.held}
           hint={t.heldHint}
-          value={formatCurrency(snapshot.held_usd, locale)}
+          value={formatSettlementUsd(snapshot.held_usd, locale)}
           icon={Clock3}
           tone="amber"
         />
         <MetricTile
           label={t.pending}
           hint={t.pendingHint}
-          value={formatCurrency(snapshot.pending_withdrawal_usd, locale)}
+          value={formatSettlementUsd(snapshot.pending_withdrawal_usd, locale)}
           icon={TrendingUp}
           tone="zinc"
         />
         <MetricTile
           label={t.lifetime}
           hint={t.lifetimeHint}
-          value={formatCurrency(snapshot.lifetime_withdrawn_usd, locale)}
+          value={formatSettlementUsd(snapshot.lifetime_withdrawn_usd, locale)}
           icon={Sparkles}
           tone="emerald"
         />

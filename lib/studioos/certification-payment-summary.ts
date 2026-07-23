@@ -2,7 +2,7 @@ import type { ConfirmedBriefField } from "@/lib/studioos/confirmed-brief";
 import { CREATOR_DEPOSIT_USD } from "@/lib/studioos/deposit-copy";
 import { paymentMethodLabel } from "@/lib/studioos/deposit-utils";
 import type { Locale } from "@/lib/i18n";
-import { formatMoneyFromUsd } from "@/lib/money/display-money";
+import { formatSettlementUsd } from "@/lib/money/display-money";
 import type { PayoutMethodType } from "@/lib/studioos/withdrawal-types";
 
 const PAYMENT_SUMMARY_SECTION = {
@@ -29,7 +29,7 @@ function formatPaidAt(iso: string | null, locale: Locale) {
 }
 
 function formatAmount(amountUsd: number, locale: Locale) {
-  return formatMoneyFromUsd(amountUsd, locale);
+  return formatSettlementUsd(amountUsd, locale);
 }
 
 function formatPaymentMethodDisplay(

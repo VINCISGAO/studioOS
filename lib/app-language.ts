@@ -37,3 +37,30 @@ export async function resolveServerLocale(formLang?: string | null): Promise<Loc
   const normalized = normalizeAppLanguage(formLang === "zh" ? "zh-CN" : formLang);
   return toUiLocale(normalized);
 }
+
+const PORTAL_LOCALE_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
+
+/**
+ * Portal layouts — cookie wins when present; otherwise seed from the signed-in user's DB preference.
+ * Keeps internal routes off `?lang=` while preparing future full i18n rollout.
+ */
+export async function resolvePortalLocale(userLanguageCode?: string | null): Promise<Locale> {
+  const cookieStore = await cookies();
+  const cookieValue = cookieStore.get(LOCALE_COOKIE)?.value;
+
+  if (cookieValue) {
+    return toUiLocale(normalizeAppLanguage(cookieValue));
+  }
+
+  if (userLanguageCode) {
+    const normalized = normalizeAppLanguage(userLanguageCode);
+    cookieStore.set(LOCALE_COOKIE, normalized, {
+      path: "/",
+      maxAge: PORTAL_LOCALE_COOKIE_MAX_AGE,
+      sameSite: "lax"
+    });
+    return toUiLocale(normalized);
+  }
+
+  return getAppUiLocale();
+}

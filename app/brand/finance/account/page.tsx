@@ -1,4 +1,4 @@
-import { getAppUiLocale } from "@/lib/app-language";
+import { getAppLanguage, getAppUiLocale } from "@/lib/app-language";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { CalendarDays, FileText, Inbox, PieChart, WalletCards, Zap } from "lucide-react";
@@ -8,15 +8,41 @@ import {
 } from "@/app/brand-account-actions";
 import { BrandWalletRechargeForm } from "@/components/studioos/brand-wallet-recharge-form";
 import { getBrandWalletSnapshot } from "@/features/wallet/brand-wallet.service";
+import { platformPaymentService } from "@/features/payment/platform-payment.service";
 import { getCurrentClientEmail } from "@/features/auth/session-context";
 import { type Locale, type SearchParams, withLocale } from "@/lib/i18n";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
 import { isPaymentStubMode } from "@/lib/payment/payment-stub";
+import { isNextNavigationError } from "@/lib/next-navigation-error";
 
-import { formatMoneyFromUsd } from "@/lib/money/display-money";
+import {
+  formatBrandWalletAmount,
+  settlementUsdNote
+} from "@/lib/money/display-money";
 
-function money(amount: number, locale: Locale = "en") {
-  return formatMoneyFromUsd(amount, locale);
+function money(amount: number, languageCode: Awaited<ReturnType<typeof getAppLanguage>>) {
+  return formatBrandWalletAmount(amount, languageCode);
+}
+
+function walletErrorMessage(code: string | null, locale: Locale) {
+  switch (code) {
+    case "invalid-amount":
+      return locale === "zh" ? "请输入有效的充值金额。" : "Enter a valid top-up amount.";
+    case "checkout-failed":
+      return locale === "zh"
+        ? "无法拉起 Stripe 付款，请确认支付配置后重试。"
+        : "Could not open Stripe checkout. Please verify payment settings and try again.";
+    case "wallet-unavailable":
+      return locale === "zh"
+        ? "钱包账户不可用，请确认已登录品牌账号且数据库已初始化。"
+        : "Wallet account unavailable. Confirm you are signed in as a brand and the database is initialized.";
+    case "production-disabled":
+      return locale === "zh"
+        ? "生产环境需通过 Stripe 完成充值，请联系平台管理员配置支付。"
+        : "Production top-ups require Stripe checkout. Please contact support if payment is not available.";
+    default:
+      return locale === "zh" ? "充值失败，请检查金额后重试。" : "Recharge failed. Please check the amount and try again.";
+  }
 }
 
 function transactionLabel(type: string, locale: "en" | "zh") {
@@ -35,12 +61,29 @@ export default async function BrandFinanceAccountPage({
 }) {
   const query = await searchParams;
   const locale = await getAppUiLocale();
+  const languageCode = await getAppLanguage();
   const clientEmail = await getCurrentClientEmail();
   if (!clientEmail) {
     redirect(withLocale("/login?role=brand", locale));
   }
 
   const snapshot = await getBrandWalletSnapshot(clientEmail, 16);
+  const accountPath = brandPortalRoutes.financeAccount;
+  const stripeSessionId = typeof query.session_id === "string" ? query.session_id.trim() : null;
+
+  if (stripeSessionId && snapshot.enabled && !isPaymentStubMode()) {
+    try {
+      await platformPaymentService.reconcileBrandWalletCheckoutReturn({
+        brandUserId: snapshot.user.id,
+        stripeSessionId
+      });
+    } catch (error) {
+      if (isNextNavigationError(error)) throw error;
+      // Webhook may still credit the wallet; keep checkout success state below.
+    }
+    redirect(withLocale(`${accountPath}?recharged=1`, locale));
+  }
+
   const recharged = query.recharged === "1";
   const checkoutSuccess = query.checkout === "success";
   const checkoutCancelled = query.checkout === "cancelled";
@@ -136,7 +179,7 @@ export default async function BrandFinanceAccountPage({
           ) : null}
           {walletError ? (
             <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
-              {locale === "zh" ? "充值失败，请检查金额后重试。" : "Recharge failed. Please check the amount and try again."}
+              {walletErrorMessage(walletError, locale)}
             </div>
           ) : null}
           {hasPendingInvoice ? (
@@ -146,8 +189,8 @@ export default async function BrandFinanceAccountPage({
               </p>
               <p className="mt-1 text-xs leading-5 text-violet-700">
                 {locale === "zh"
-                  ? `账单 ${invoiceId} 需要支付 ${money(invoiceAmount, locale)}。完成付款后会回到审片页，你可以继续确认加购并解锁第 4 轮。`
-                  : `Invoice ${invoiceId} requires ${money(invoiceAmount, locale)}. After payment you will return to review and can confirm the add-on again to unlock round 4.`}
+                  ? `账单 ${invoiceId} 需要支付 ${money(invoiceAmount, languageCode)}。完成付款后会回到审片页，你可以继续确认加购并解锁第 4 轮。`
+                  : `Invoice ${invoiceId} requires ${money(invoiceAmount, languageCode)}. After payment you will return to review and can confirm the add-on again to unlock round 4.`}
               </p>
             </div>
           ) : null}
@@ -179,8 +222,11 @@ export default async function BrandFinanceAccountPage({
                   {locale === "zh" ? "可用余额" : "Available balance"}
                 </p>
                 <p className="mt-5 text-5xl font-semibold tracking-tight text-zinc-950">
-                  {money(snapshot.wallet.availableBalance, locale)}
+                  {money(snapshot.wallet.availableBalance, languageCode)}
                 </p>
+                {settlementUsdNote(languageCode) ? (
+                  <p className="mt-2 text-xs leading-5 text-zinc-400">{settlementUsdNote(languageCode)}</p>
+                ) : null}
                 {process.env.NODE_ENV !== "production" ? (
                   <form action={resetBrandWalletBalanceForTestingAction} className="mt-4">
                     <input type="hidden" name="lang" value={locale} />
@@ -209,7 +255,7 @@ export default async function BrandFinanceAccountPage({
                       </p>
                     </div>
                     <p className="mt-2 text-base font-semibold text-zinc-950">
-                      {money(totalDeposited, locale)}
+                      {money(totalDeposited, languageCode)}
                     </p>
                   </div>
                   <div className="rounded-xl border border-zinc-100 bg-white/85 p-4 shadow-sm">
@@ -222,7 +268,7 @@ export default async function BrandFinanceAccountPage({
                       </p>
                     </div>
                     <p className="mt-2 text-base font-semibold text-zinc-950">
-                      {money(totalSpent, locale)}
+                      {money(totalSpent, languageCode)}
                     </p>
                   </div>
                 </div>
@@ -244,9 +290,9 @@ export default async function BrandFinanceAccountPage({
             <BrandWalletRechargeForm
               action={rechargeBrandWalletAction}
               locale={locale}
-              currency={snapshot.wallet.currency}
+              languageCode={languageCode}
               hasPendingInvoice={hasPendingInvoice}
-              invoiceAmount={invoiceAmount}
+              invoiceAmountUsd={invoiceAmount}
               returnTo={returnTo}
               stripeCheckoutEnabled={!isPaymentStubMode()}
             />
@@ -284,7 +330,7 @@ export default async function BrandFinanceAccountPage({
                     </div>
                     <div className="shrink-0 text-right">
                       <p className="text-sm font-semibold text-zinc-950">
-                        {money(item.amount, locale)}
+                        {money(item.amount, languageCode)}
                       </p>
                       <p className="mt-1 text-xs text-zinc-400">
                         {new Intl.DateTimeFormat(locale === "zh" ? "zh-CN" : "en-US", {
@@ -302,13 +348,6 @@ export default async function BrandFinanceAccountPage({
           </section>
         </>
       )}
-
-      <Link
-        href={withLocale(brandPortalRoutes.finance, locale)}
-        className="text-sm font-medium text-violet-600 hover:text-violet-700"
-      >
-        ← {locale === "zh" ? "返回财务中心" : "Back to finance center"}
-      </Link>
     </div>
   );
 }

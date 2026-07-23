@@ -21,6 +21,12 @@ export function setAppLanguage(code: SupportedLanguageCode) {
   } catch {
     // Ignore private mode storage failures.
   }
+
+  void fetch("/api/v1/user/locale", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ languageCode: normalized })
+  }).catch(() => undefined);
 }
 
 export function readStoredAppLanguage(): SupportedLanguageCode | null {

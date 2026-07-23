@@ -3,6 +3,7 @@
 import { BrandLogoLockup } from "@/components/brand-logo-mark";
 import { MarketingHomeLink } from "@/components/studioos/marketing-home-link";
 import { NotificationCenterBell } from "@/components/studioos/notification-center-bell";
+import { PortalLanguageSwitcher } from "@/components/studioos/portal-language-switcher";
 import { PortalMobileNav } from "@/components/studioos/portal-mobile-nav";
 import { StudioUserMenu } from "@/components/studioos/studio-user-menu";
 import { brandPortalNavItems, type BrandPortalNavItem } from "@/lib/studioos/brand-portal-nav";
@@ -45,6 +46,7 @@ export function BrandPortalHeader({
         </div>
         <div className="hidden lg:block" />
         <div className="flex items-center gap-2 sm:gap-3">
+          <PortalLanguageSwitcher locale={locale} />
           <NotificationCenterBell locale={locale} />
           <StudioUserMenu
             locale={locale}

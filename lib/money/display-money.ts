@@ -61,7 +61,7 @@ const LANGUAGE_CURRENCY: Partial<Record<SupportedLanguageCode, DisplayCurrencyCo
   ja: "JPY",
   ko: "KRW",
   th: "THB",
-  km: "KHR",
+  km: "USD",
   es: "EUR",
   fr: "EUR",
   vi: "VND",
@@ -97,6 +97,34 @@ export function convertUsdToDisplayAmount(
   return Math.max(0, Math.round(raw));
 }
 
+export function convertDisplayAmountToUsd(
+  displayAmount: number,
+  locale?: Locale | SupportedLanguageCode | null
+): number {
+  if (!Number.isFinite(displayAmount) || displayAmount <= 0) {
+    return 0;
+  }
+
+  const currency = getDisplayCurrency(locale);
+  if (currency === "USD") {
+    return Math.round(displayAmount * 100) / 100;
+  }
+
+  const rate = USD_REFERENCE_RATES[currency];
+  return Math.round((displayAmount / rate) * 100) / 100;
+}
+
+export function formatBrandWalletAmount(
+  amountUsd: number,
+  locale?: Locale | SupportedLanguageCode | null
+): string {
+  return formatMoneyFromUsd(amountUsd, locale);
+}
+
+export function brandWalletCurrencyLabel(locale?: Locale | SupportedLanguageCode | null): string {
+  return budgetCurrencyHint(locale);
+}
+
 export function formatMoneyFromUsd(
   amountUsd: number,
   locale?: Locale | SupportedLanguageCode | null,
@@ -115,6 +143,32 @@ export function formatMoneyFromUsd(
     maximumFractionDigits: fractionDigits,
     minimumFractionDigits: 0
   }).format(converted);
+}
+
+/** Wallet / escrow / withdrawal / certification deposit — always USD settlement. */
+export function formatSettlementUsd(
+  amountUsd: number,
+  locale?: Locale | SupportedLanguageCode | null
+): string {
+  const hasFraction = Math.abs(amountUsd - Math.round(amountUsd)) >= 0.005;
+  return formatMoneyFromUsd(amountUsd, locale, {
+    currency: "USD",
+    fractionDigits: hasFraction ? 2 : 0
+  });
+}
+
+export function settlementUsdAmountLabel(locale?: Locale | SupportedLanguageCode | null): string {
+  const language = normalizeMoneyLanguage(locale);
+  if (language === "zh-CN" || language === "zh-TW") return "金额（美元）";
+  return "Amount (USD)";
+}
+
+export function creatorSettlementFootnote(locale?: Locale | SupportedLanguageCode | null): string {
+  const language = normalizeMoneyLanguage(locale);
+  if (language === "zh-CN" || language === "zh-TW") {
+    return "平台收入与提现均以美元（USD）结算";
+  }
+  return "Earnings and withdrawals settle in USD";
 }
 
 export function formatMoneyRangeFromUsd(
@@ -181,6 +235,13 @@ export function budgetCurrencyHint(locale?: Locale | SupportedLanguageCode | nul
   if (currency === "USD") return "USD";
   if (currency === "CNY") return "人民币";
   if (currency === "TWD") return "新台幣";
+  if (currency === "JPY") return "円";
+  if (currency === "KRW") return "원";
+  if (currency === "THB") return "THB";
+  if (currency === "VND") return "VND";
+  if (currency === "EUR") return "EUR";
+  if (currency === "MYR") return "MYR";
+  if (currency === "IDR") return "IDR";
   return currency;
 }
 

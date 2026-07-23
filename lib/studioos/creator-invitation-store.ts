@@ -191,7 +191,8 @@ export async function enrichStoredCreatorInvitations(
     return {
       ...invitation,
       creatorName: creator.name,
-      creatorHeadline: creator.headline
+      creatorHeadline: creator.headline,
+      creatorAvatarUrl: creator.avatar_url ?? invitation.creatorAvatarUrl
     };
   });
 }

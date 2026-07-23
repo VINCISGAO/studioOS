@@ -1,0 +1,42 @@
+name: Production Verify
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: production-verify-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  production-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DIRECT_DATABASE_URL: ${{ secrets.DIRECT_DATABASE_URL }}
+      AUTH_SECURITY_SECRET: ${{ secrets.AUTH_SECURITY_SECRET }}
+      RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Require DATABASE_URL for deposit integration
+        run: |
+          if [ -z "${DATABASE_URL}" ]; then
+            echo "DATABASE_URL secret is required for production:verify (deposit reconcile integration)."
+            exit 1
+          fi
+
+      - name: Production gates (includes deposit security + reconcile)
+        run: npm run production:verify

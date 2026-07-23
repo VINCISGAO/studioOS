@@ -107,7 +107,7 @@ export class DisputeService {
           template: "arbitration.resolved",
           priority: input.status === "CLOSED" ? "HIGH" : "NORMAL",
           email: false,
-          metadata: { disputeId: id, status: input.status }
+          metadata: { disputeId: id, status: input.status, project: updated.campaign.title }
         }).catch(() => undefined)
       )
     );

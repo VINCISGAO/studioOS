@@ -83,7 +83,13 @@ export class OrderRepository {
       where: {
         OR: [
           { creatorProfile: { legacyCreatorId } },
-          { creatorProfileId: legacyCreatorId }
+          { creatorProfileId: legacyCreatorId },
+          {
+            metadataJson: {
+              path: ["creator_legacy_id"],
+              equals: legacyCreatorId
+            }
+          }
         ]
       },
       include: ORDER_LIST_INCLUDE,
@@ -200,6 +206,53 @@ export class OrderRepository {
         cancelledAt: now,
         ...(metadataJson !== undefined ? { metadataJson: asInputJson(metadataJson) } : {})
       }
+    });
+  }
+
+  async assignCreator(input: {
+    orderId: string;
+    creatorProfileId: string;
+    creatorUserId: string;
+    creatorLegacyId: string;
+    inquiryId?: string;
+    workId?: string | null;
+    confirmProduction?: boolean;
+  }) {
+    const existing = await prisma.order.findUnique({
+      where: { id: input.orderId },
+      select: { metadataJson: true, status: true }
+    });
+    if (!existing) {
+      return null;
+    }
+
+    const metadata =
+      typeof existing.metadataJson === "object" &&
+      existing.metadataJson !== null &&
+      !Array.isArray(existing.metadataJson)
+        ? { ...(existing.metadataJson as Record<string, unknown>) }
+        : {};
+
+    metadata.creator_legacy_id = input.creatorLegacyId;
+    if (input.inquiryId) {
+      metadata.inquiry_id = input.inquiryId;
+    }
+    if (input.workId !== undefined) {
+      metadata.work_id = input.workId;
+    }
+
+    const shouldConfirm = Boolean(input.confirmProduction && existing.status === "PENDING");
+
+    return prisma.order.update({
+      where: { id: input.orderId },
+      data: {
+        creatorProfileId: input.creatorProfileId,
+        creatorId: input.creatorUserId,
+        ...(input.inquiryId ? { conversationId: input.inquiryId } : {}),
+        ...(shouldConfirm ? { status: "CONFIRMED" } : {}),
+        metadataJson: asInputJson(metadata)
+      },
+      include: ORDER_LIST_INCLUDE
     });
   }
 }

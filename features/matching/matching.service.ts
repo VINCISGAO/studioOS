@@ -280,7 +280,11 @@ export class MatchingService {
       actionUrl: `${getAppBaseUrl()}/brand/projects/${legacyProjectId}?tab=match`,
       template: "ai.matching_complete",
       priority: "HIGH",
-      email: false
+      email: false,
+      metadata: {
+        project: campaign.title,
+        matchCount: ranked.length
+      }
     });
     return ranked;
   }

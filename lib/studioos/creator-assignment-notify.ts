@@ -52,7 +52,7 @@ function notificationCopy(
     if (type === "project_funded") {
       return {
         title: `${brandName} 已完成付款`,
-        body: `「${projectTitle}」款项已托管，请查看下方完整需求表单并开始制作。`
+        body: `「${projectTitle}」款项已托管，请查看下方完整需求表单，进入审片中心上传 V1。`
       };
     }
     if (type === "invitation_match") {
@@ -63,14 +63,14 @@ function notificationCopy(
     }
     return {
       title: `🎉 恭喜，你已被品牌选中`,
-      body: `「${projectTitle}」已经正式达成合作，项目表单已生成。现在可以进入审片中心上传 V1 初稿。`
+      body: `「${projectTitle}」— 品牌已确认与你合作。等待品牌完成托管付款后，项目将正式开启，届时可在审片中心上传 V1。`
     };
   }
 
   if (type === "project_funded") {
     return {
       title: `${brandName} funded the project`,
-      body: `"${projectTitle}" is escrow-funded. Review the full brief below and start production.`
+      body: `"${projectTitle}" is escrow-funded. Review the full brief below and upload V1 in the review center.`
     };
   }
 
@@ -82,8 +82,8 @@ function notificationCopy(
   }
 
   return {
-    title: `Selected by ${brandName}`,
-    body: `"${projectTitle}" is now a confirmed collaboration. Your project is ready; open the review center and upload V1.`
+    title: `${brandName} selected you for this project`,
+    body: `"${projectTitle}" — the brand confirmed you as their creator. Once escrow payment is complete, the project opens and you can upload V1 in the review center.`
   };
 }
 

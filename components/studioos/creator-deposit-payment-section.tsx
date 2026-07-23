@@ -15,6 +15,7 @@ import {
   X
 } from "lucide-react";
 import { submitDepositPaymentAction, startDepositStripeCheckoutAction } from "@/app/deposit-actions";
+import { CreatorDepositEmbeddedCheckout } from "@/components/studioos/creator-deposit-embedded-checkout";
 import { CreatorDepositPendingCard } from "@/components/studioos/creator-deposit-pending-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,7 +29,8 @@ import {
   paymentMethodLabel
 } from "@/lib/studioos/deposit-utils";
 import type { PayoutMethodType } from "@/lib/studioos/withdrawal-types";
-import { cn, formatCurrency } from "@/lib/utils";
+import { formatSettlementUsd } from "@/lib/money/display-money";
+import { cn } from "@/lib/utils";
 
 const copyExtra = {
   en: {
@@ -99,7 +101,8 @@ export function CreatorDepositPaymentSection({
   snapshot,
   submitted,
   scrollToPayment,
-  stripeCheckoutEnabled = false
+  stripeCheckoutEnabled = false,
+  embeddedCheckoutEnabled = false
 }: {
   locale: Locale;
   creatorId: string;
@@ -107,6 +110,7 @@ export function CreatorDepositPaymentSection({
   submitted?: boolean;
   scrollToPayment?: boolean;
   stripeCheckoutEnabled?: boolean;
+  embeddedCheckoutEnabled?: boolean;
 }) {
   const t = tCertified(locale);
   const extra = copyExtra[locale];
@@ -149,6 +153,12 @@ export function CreatorDepositPaymentSection({
     );
   }
 
+  if (embeddedCheckoutEnabled) {
+    return (
+      <CreatorDepositEmbeddedCheckout locale={locale} amountUsd={snapshot.amount_usd} />
+    );
+  }
+
   if (stripeCheckoutEnabled) {
     return (
       <section
@@ -168,7 +178,7 @@ export function CreatorDepositPaymentSection({
           <div className="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-5">
             <p className="text-xs font-medium uppercase tracking-wide text-emerald-700">{extra.amountDue}</p>
             <p className="mt-2 text-3xl font-semibold tracking-tight text-zinc-950">
-              {formatCurrency(snapshot.amount_usd, locale)}
+              {formatSettlementUsd(snapshot.amount_usd, locale)}
             </p>
           </div>
           <Button type="submit" size="lg" className="h-12 w-full rounded-xl bg-zinc-900 text-sm font-medium hover:bg-zinc-800">
@@ -188,6 +198,11 @@ export function CreatorDepositPaymentSection({
       <div className="border-b border-zinc-100 px-5 py-4 sm:px-6">
         <h2 className="text-base font-semibold tracking-tight text-zinc-950">{t.paySection}</h2>
         <p className="mt-0.5 text-sm text-zinc-500">{t.secureTransfer}</p>
+        <p className="mt-2 rounded-lg border border-amber-100 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800">
+          {locale === "zh"
+            ? "当前为开发模拟模式：支付宝 / 微信不会真正拉起，仅用于本地测试。生产环境请配置 Stripe 嵌入式收银台。"
+            : "Development stub mode: Alipay / WeChat will not launch real payments. Configure Stripe embedded checkout for production."}
+        </p>
       </div>
 
       <form
@@ -244,7 +259,7 @@ export function CreatorDepositPaymentSection({
                 {t.paymentLabel}
               </span>
               <span className="text-2xl font-semibold tracking-tight text-zinc-950">
-                {formatCurrency(snapshot.amount_usd, locale)}
+                {formatSettlementUsd(snapshot.amount_usd, locale)}
               </span>
             </div>
           </div>
@@ -335,7 +350,7 @@ export function CreatorDepositPaymentSection({
                 <div className="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-4">
                   <p className="text-xs font-medium uppercase tracking-wide text-emerald-700">{extra.amountDue}</p>
                   <p className="mt-1 text-3xl font-semibold tracking-tight text-zinc-950">
-                    {formatCurrency(snapshot.amount_usd, locale)}
+                    {formatSettlementUsd(snapshot.amount_usd, locale)}
                   </p>
                 </div>
 

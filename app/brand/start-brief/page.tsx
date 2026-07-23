@@ -1,6 +1,6 @@
 import { getAppUiLocale } from "@/lib/app-language";
 import { redirect } from "next/navigation";
-import { createFreshEphemeralWizardProject } from "@/lib/brand-start-brief";
+import { getOrCreateEphemeralWizardProject } from "@/lib/brand-start-brief";
 import { requireBrandPortalClientEmail } from "@/features/auth/session-context";
 import { brandWizardStep1Href, type SearchParams, withLocale } from "@/lib/i18n";
 
@@ -22,7 +22,7 @@ export default async function BrandStartBriefPage({
 
   let project;
   try {
-    project = await createFreshEphemeralWizardProject(clientEmail);
+    project = await getOrCreateEphemeralWizardProject(clientEmail);
   } catch {
     redirect(withLocale("/brand?error=start-brief", locale));
   }

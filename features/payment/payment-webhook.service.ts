@@ -42,6 +42,10 @@ export class PaymentWebhookService {
           result = await this.handlePaymentIntentFailed(event.data.object as Stripe.PaymentIntent);
           processed = true;
           break;
+        case "payment_intent.succeeded":
+          result = await this.handlePaymentIntentSucceeded(event.data.object as Stripe.PaymentIntent);
+          processed = true;
+          break;
         case "charge.refunded":
           result = await this.handleChargeRefunded(event.data.object as Stripe.Charge);
           processed = true;
@@ -123,6 +127,18 @@ export class PaymentWebhookService {
       campaignId: campaignId ?? undefined,
       reason: "FAILED"
     });
+  }
+
+  private async handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent) {
+    const { stripePaymentFulfillmentService } = await import(
+      "@/features/payment/stripe-payment-fulfillment.service"
+    );
+    const creatorDeposit =
+      await stripePaymentFulfillmentService.fulfillCreatorDepositFromPaymentIntent(paymentIntent);
+    if (creatorDeposit.handled) {
+      return creatorDeposit;
+    }
+    return { ignored: true, type: paymentIntent.metadata?.type ?? "unknown" };
   }
 
   private async handleChargeRefunded(charge: Stripe.Charge) {

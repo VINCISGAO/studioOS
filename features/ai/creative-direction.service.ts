@@ -176,6 +176,7 @@ async function notifyBrandAiProgress(campaign: Campaign, input: {
   content: string;
   template: string;
   priority?: "LOW" | "NORMAL" | "HIGH" | "URGENT";
+  directionCount?: number;
 }) {
   const brief = campaign.productionBrief as { legacy_project_id?: string } | null;
   const projectId = brief?.legacy_project_id ?? campaign.id;
@@ -186,7 +187,11 @@ async function notifyBrandAiProgress(campaign: Campaign, input: {
     content: input.content,
     actionUrl: `${getAppBaseUrl()}/brand/projects/new?project=${encodeURIComponent(projectId)}&step=2`,
     template: input.template,
-    priority: input.priority ?? "NORMAL"
+    priority: input.priority ?? "NORMAL",
+    metadata: {
+      project: campaign.title,
+      ...(input.directionCount !== undefined ? { directionCount: input.directionCount } : {})
+    }
   });
 }
 
@@ -310,7 +315,8 @@ export class CreativeDirectionService {
         title: "Creative directions are ready",
         content: `VINCIS generated ${directions.length} creative directions for "${finalCampaign.title}".`,
         template: "ai.creative_directions_ready",
-        priority: "HIGH"
+        priority: "HIGH",
+        directionCount: directions.length
       });
     }
     return directions;
@@ -324,9 +330,7 @@ export class CreativeDirectionService {
     const campaign = await this.getCampaignForBrand(campaignId, user);
     PermissionService.assert(user, "campaign.update");
     const wizardPreviewFastPath = options?.wizardFastPath === true;
-    if (!wizardPreviewFastPath) {
-      await this.assertEscrowFundedForAi(campaignId);
-    }
+    await this.assertEscrowFundedForAi(campaignId);
 
     const actor = { id: user.id, role: user.role };
     if (campaign.status === CampaignState.DRAFT) {

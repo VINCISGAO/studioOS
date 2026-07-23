@@ -146,8 +146,9 @@ async function main() {
   let transferId: string | null = null;
   let withdrawId: string | null = null;
   if (priorConnectRequest) {
-    const transferMatch = priorConnectRequest.description.match(/Stripe Connect transfer (tr_[A-Za-z0-9]+)/);
-    const withdrawMatch = priorConnectRequest.description.match(/ref:([A-Za-z0-9-]+)/);
+    const requestDescription = priorConnectRequest.description ?? "";
+    const transferMatch = requestDescription.match(/Stripe Connect transfer (tr_[A-Za-z0-9]+)/);
+    const withdrawMatch = requestDescription.match(/ref:([A-Za-z0-9-]+)/);
     transferId = transferMatch?.[1] ?? null;
     withdrawId = withdrawMatch?.[1] ?? priorConnectRequest.id;
     const priorSuccess = await prisma.transaction.findFirst({

@@ -429,6 +429,13 @@ export class CanvasService {
       canvasVideoGenerationService.scheduleJob(job.id, user.id);
     }
 
+    if (input.type === "MUSIC" && job.status === "QUEUED") {
+      const { canvasMusicGenerationService } = await import(
+        "@/features/canvas/canvas-music-generation.service"
+      );
+      canvasMusicGenerationService.scheduleJob(job.id, user.id);
+    }
+
     if (project.campaignId) {
       await activityService.write(
         project.campaignId,

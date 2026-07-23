@@ -32,7 +32,12 @@ export const brandPortalRoutes = {
   projectReview: (id: string) => `/brand/projects/${id}/review`,
   orderReview: (id: string) => `/brand/orders/${id}/review`,
   projectCheckout: (id: string) => `/brand/projects/${id}/checkout`,
-  projectStudios: (id: string) => `/brand/projects/${id}/studios`
+  projectStudios: (id: string) => `/brand/projects/${id}/studios`,
+  projectCommunication: (id: string) => `/brand/projects/${id}/communication`,
+  startBrief: "/brand/start-brief",
+  analytics: "/brand/analytics",
+  creativeDna: "/brand/creative-dna",
+  assets: "/brand/assets"
 } as const;
 
 export function localizedBrandRoute(path: string, locale: Locale) {

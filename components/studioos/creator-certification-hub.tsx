@@ -10,7 +10,7 @@ import { tCertified } from "@/lib/studioos/deposit-copy";
 import { tCertificationExperience } from "@/lib/studioos/certification-experience-copy";
 import { CertificationBenefitCard } from "@/components/studioos/certification/certified-partner-badge";
 import type { CreatorDepositSnapshot } from "@/lib/studioos/deposit-types";
-import { formatCurrency } from "@/lib/utils";
+import { formatSettlementUsd } from "@/lib/money/display-money";
 
 type Props = {
   locale: Locale;
@@ -23,6 +23,7 @@ type Props = {
   profileComplete?: boolean;
   scrollToPayment?: boolean;
   stripeCheckoutEnabled?: boolean;
+  embeddedCheckoutEnabled?: boolean;
 };
 
 const requiredCopy = {
@@ -46,7 +47,8 @@ export function CreatorCertificationHub({
   error,
   profileComplete = true,
   scrollToPayment = false,
-  stripeCheckoutEnabled = false
+  stripeCheckoutEnabled = false,
+  embeddedCheckoutEnabled = false
 }: Props) {
   const t = tCertified(locale);
 
@@ -68,7 +70,7 @@ export function CreatorCertificationHub({
               </div>
               <p className="mt-3 max-w-2xl text-sm leading-7 text-zinc-600">{t.certifiedBody}</p>
               <p className="mt-3 text-sm text-zinc-500">
-                {formatCurrency(snapshot.amount_usd, locale)} · {t.certifiedSince}{" "}
+                {formatSettlementUsd(snapshot.amount_usd, locale)} · {t.certifiedSince}{" "}
                 {snapshot.paid_at
                   ? new Date(snapshot.paid_at).toLocaleDateString(locale === "zh" ? "zh-CN" : "en-US")
                   : "—"}
@@ -146,6 +148,7 @@ export function CreatorCertificationHub({
           submitted={submitted}
           scrollToPayment={scrollToPayment}
           stripeCheckoutEnabled={stripeCheckoutEnabled}
+          embeddedCheckoutEnabled={embeddedCheckoutEnabled}
         />
         <CreatorDepositSidebar locale={locale} />
       </div>

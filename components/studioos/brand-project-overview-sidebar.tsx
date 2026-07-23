@@ -1,43 +1,152 @@
 "use client";
 
 import Link from "next/link";
+import type { LucideIcon } from "lucide-react";
+import { Clapperboard, MessageSquare, CircleDollarSign, Users } from "lucide-react";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import { brandPortalRoutes } from "@/lib/studioos/brand-portal-routes";
 import {
-  MessageSquare,
-  Upload
-} from "lucide-react";
+  isBrandAwaitingPayment,
+  type BrandCommercialContext,
+  type BrandCommercialStep
+} from "@/lib/studioos/commercial-lifecycle";
+import type { StoredOrder } from "@/lib/order-types";
 
 const copy = {
   en: {
     quickActions: "Quick actions",
-    uploadVersion: "Upload new version",
-    uploadHint: "Submit the latest deliverable",
-    sendMessage: "Send message",
-    sendHint: "Contact accepted creators"
+    viewResponses: "View creator responses",
+    viewResponsesHint: "Review accepted invitations and pick a creator",
+    completePayment: "Complete escrow payment",
+    completePaymentHint: "Fund the campaign before production starts",
+    reviewCenter: "Open review center",
+    reviewCenterHint: "Review deliverables, annotate, and approve",
+    reviewCenterWaitingHint: "Creator is producing — review opens when V1 is submitted",
+    contactCreator: "Message creator",
+    contactCreatorHint: "Chat with your selected creator"
   },
   zh: {
     quickActions: "快速操作",
-    uploadVersion: "上传新版本",
-    uploadHint: "提交最新作品版本",
-    sendMessage: "发送消息",
-    sendHint: "联系已接受的 Creator"
+    viewResponses: "查看创作者回复",
+    viewResponsesHint: "查看已接受邀约并选定合作创作者",
+    completePayment: "完成托管付款",
+    completePaymentHint: "付款成功后创作者才会开始制作",
+    reviewCenter: "前往审片中心",
+    reviewCenterHint: "审片、批注与验收，无需品牌上传成片",
+    reviewCenterWaitingHint: "创作者制作中，提交 V1 后可在此审片",
+    contactCreator: "联系合作创作者",
+    contactCreatorHint: "与已选定的创作者沟通项目细节"
   }
+} as const;
+
+type QuickAction = {
+  href: string;
+  icon: LucideIcon;
+  title: string;
+  hint: string;
 };
+
+function buildBrandQuickActions(input: {
+  locale: Locale;
+  projectId: string;
+  brandCommercialStep: BrandCommercialStep;
+  commercialContext: BrandCommercialContext;
+  hasDeliverables: boolean;
+  acceptedCount: number;
+  selectedCreatorId: string | null;
+  linkedOrder: StoredOrder | null;
+}): QuickAction[] {
+  const t = copy[input.locale];
+  const actions: QuickAction[] = [];
+  const awaitingPayment = isBrandAwaitingPayment(input.commercialContext);
+  const recruitingSteps: BrandCommercialStep[] = [
+    "matching",
+    "invitations_sent",
+    "collecting_candidates",
+    "select_creator"
+  ];
+
+  if (recruitingSteps.includes(input.brandCommercialStep) && input.acceptedCount > 0) {
+    actions.push({
+      href: "#creator-responses",
+      icon: Users,
+      title: t.viewResponses,
+      hint: t.viewResponsesHint
+    });
+  }
+
+  if (input.brandCommercialStep === "creator_selected" && awaitingPayment) {
+    actions.push({
+      href: withLocale(brandPortalRoutes.projectCheckout(input.projectId), input.locale),
+      icon: CircleDollarSign,
+      title: t.completePayment,
+      hint: t.completePaymentHint
+    });
+  }
+
+  if (
+    input.selectedCreatorId &&
+    !awaitingPayment &&
+    (input.hasDeliverables ||
+      ["in_production", "under_review", "approved", "pending_delivery"].includes(
+        input.brandCommercialStep
+      ))
+  ) {
+    actions.push({
+      href: withLocale(brandPortalRoutes.projectReview(input.projectId), input.locale),
+      icon: Clapperboard,
+      title: t.reviewCenter,
+      hint: input.hasDeliverables ? t.reviewCenterHint : t.reviewCenterWaitingHint
+    });
+  }
+
+  if (input.selectedCreatorId && !awaitingPayment && input.linkedOrder) {
+    actions.push({
+      href: withLocale(`${brandPortalRoutes.messages}?tab=project`, input.locale),
+      icon: MessageSquare,
+      title: t.contactCreator,
+      hint: t.contactCreatorHint
+    });
+  }
+
+  return actions;
+}
 
 export function BrandProjectOverviewSidebar({
   locale,
   projectId,
+  brandCommercialStep,
+  commercialContext,
   hasDeliverables,
-  canMessage
+  acceptedCount,
+  selectedCreatorId,
+  linkedOrder
 }: {
   locale: Locale;
   projectId: string;
+  brandCommercialStep: BrandCommercialStep;
+  commercialContext: BrandCommercialContext;
   hasDeliverables: boolean;
-  canMessage: boolean;
+  acceptedCount: number;
+  selectedCreatorId: string | null;
+  linkedOrder: StoredOrder | null;
 }) {
   const t = copy[locale];
+  const actions = buildBrandQuickActions({
+    locale,
+    projectId,
+    brandCommercialStep,
+    commercialContext,
+    hasDeliverables,
+    acceptedCount,
+    selectedCreatorId,
+    linkedOrder
+  });
+
+  if (actions.length === 0) {
+    return null;
+  }
 
   return (
     <aside className="space-y-5">
@@ -46,36 +155,25 @@ export function BrandProjectOverviewSidebar({
           <h3 className="text-sm font-semibold text-zinc-950">{t.quickActions}</h3>
         </div>
         <ul className="divide-y divide-zinc-100">
-          <li>
-            <Link
-              href={withLocale(hasDeliverables ? brandPortalRoutes.projectReview(projectId) : brandPortalRoutes.project(projectId), locale)}
-              className="flex items-start gap-3 px-4 py-3.5 transition hover:bg-zinc-50"
-            >
-              <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-violet-600">
-                <Upload className="h-4 w-4" />
-              </span>
-              <div>
-                <p className="text-sm font-medium text-zinc-900">{t.uploadVersion}</p>
-                <p className="text-xs text-zinc-500">{t.uploadHint}</p>
-              </div>
-            </Link>
-          </li>
-          {canMessage ? (
-            <li>
-              <Link
-                href={withLocale(`${brandPortalRoutes.messages}?tab=project`, locale)}
-                className="flex items-start gap-3 px-4 py-3.5 transition hover:bg-zinc-50"
-              >
-                <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-violet-600">
-                  <MessageSquare className="h-4 w-4" />
-                </span>
-                <div>
-                  <p className="text-sm font-medium text-zinc-900">{t.sendMessage}</p>
-                  <p className="text-xs text-zinc-500">{t.sendHint}</p>
-                </div>
-              </Link>
-            </li>
-          ) : null}
+          {actions.map((action) => {
+            const Icon = action.icon;
+            return (
+              <li key={action.title}>
+                <Link
+                  href={action.href}
+                  className="flex items-start gap-3 px-4 py-3.5 transition hover:bg-zinc-50"
+                >
+                  <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-violet-600">
+                    <Icon className="h-4 w-4" />
+                  </span>
+                  <div>
+                    <p className="text-sm font-medium text-zinc-900">{action.title}</p>
+                    <p className="text-xs text-zinc-500">{action.hint}</p>
+                  </div>
+                </Link>
+              </li>
+            );
+          })}
         </ul>
       </section>
     </aside>

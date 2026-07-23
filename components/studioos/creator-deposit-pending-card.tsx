@@ -6,7 +6,8 @@ import type { Locale } from "@/lib/i18n";
 import { tCertified } from "@/lib/studioos/deposit-copy";
 import type { CreatorDepositSnapshot } from "@/lib/studioos/deposit-types";
 import { paymentMethodLabel } from "@/lib/studioos/deposit-utils";
-import { cn, formatCurrency } from "@/lib/utils";
+import { formatSettlementUsd } from "@/lib/money/display-money";
+import { cn } from "@/lib/utils";
 
 const panelShell =
   "overflow-hidden rounded-2xl border border-zinc-200/90 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.04)]";
@@ -80,7 +81,7 @@ export function CreatorDepositPendingCard({
           {snapshot.pending_payment ? (
             <p className="mt-3 inline-flex rounded-full bg-white px-3 py-1 text-sm font-medium text-zinc-800 ring-1 ring-amber-200/80">
               {paymentMethodLabel(snapshot.pending_payment.payment_method, locale)} ·{" "}
-              {formatCurrency(snapshot.pending_payment.amount_usd, locale)} {t.paymentLabel}
+              {formatSettlementUsd(snapshot.pending_payment.amount_usd, locale)} {t.paymentLabel}
             </p>
           ) : submitted ? (
             <p className="mt-3 text-sm text-zinc-500">

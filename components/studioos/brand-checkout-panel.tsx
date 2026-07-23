@@ -18,7 +18,7 @@ import { PortalFixedFooter } from "@/components/studioos/portal/portal-fixed-foo
 import type { Locale } from "@/lib/i18n";
 import type { StoredOrder } from "@/lib/order-types";
 import { BudgetSettlementCallout, SettlementUsdCallout } from "@/components/studioos/budget-settlement-callout";
-import { budgetCurrencyHint, budgetEscrowVarianceNote } from "@/lib/money/display-money";
+import { budgetEscrowVarianceNote } from "@/lib/money/display-money";
 import { getPlatformCorporateAccount, paymentMethodLabel } from "@/lib/studioos/deposit-utils";
 import type { PayoutMethodType } from "@/lib/studioos/withdrawal-types";
 import { useBrandCheckoutSubmit } from "@/hooks/use-brand-checkout-submit";
@@ -87,7 +87,6 @@ export function BrandCheckoutPanel({
 }) {
   const t = copy[locale];
   const varianceNote = budgetEscrowVarianceNote(order.amount, locale, displayBudgetInput);
-  const currencyHint = budgetCurrencyHint(locale);
   const [method, setMethod] = useState<PayoutMethodType>("alipay");
   const [reference, setReference] = useState("");
   const { pending, onSubmit } = useBrandCheckoutSubmit(paymentSignal);
@@ -153,11 +152,6 @@ export function BrandCheckoutPanel({
               </div>
               <p className="text-4xl font-semibold tracking-tight text-violet-600">
                 {formatCurrency(order.amount, locale)}
-                {currencyHint !== "USD" ? (
-                  <span className="ml-2 align-middle text-sm font-semibold text-zinc-400">{currencyHint}</span>
-                ) : (
-                  <span className="ml-2 align-middle text-sm font-semibold text-zinc-400">USD</span>
-                )}
               </p>
               {varianceNote ? (
                 <BudgetSettlementCallout message={varianceNote} className="mt-2" />

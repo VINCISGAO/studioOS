@@ -84,7 +84,7 @@ export class PlatformPaymentService {
     }
 
     const user = await authService.getUserById(input.brandUserId);
-    if (!user || user.role !== "BRAND") {
+    if (!user || (user.role !== "BRAND" && !user.hasBrandProfile)) {
       throw appError("FORBIDDEN", "Brand account required");
     }
 
@@ -122,6 +122,38 @@ export class PlatformPaymentService {
       sessionId: session.id,
       amountUsd
     };
+  }
+
+  async reconcileBrandWalletCheckoutReturn(input: {
+    brandUserId: string;
+    stripeSessionId: string;
+  }) {
+    if (isPaymentStubMode()) {
+      throw appError("SYSTEM_ERROR", "Stripe reconcile is not available in payment stub mode");
+    }
+
+    const user = await authService.getUserById(input.brandUserId);
+    if (!user || (user.role !== "BRAND" && !user.hasBrandProfile)) {
+      throw appError("FORBIDDEN", "Brand account required");
+    }
+
+    const session = await stripeUnifiedCheckoutService.retrieveSession(input.stripeSessionId);
+    if (session.metadata?.type !== "brand_wallet_recharge") {
+      throw appError("VALIDATION_ERROR", "Not a brand wallet recharge session");
+    }
+    if (session.metadata.user_id !== input.brandUserId) {
+      throw appError("FORBIDDEN", "Stripe checkout session does not belong to this brand");
+    }
+
+    const { stripePaymentFulfillmentService } = await import(
+      "@/features/payment/stripe-payment-fulfillment.service"
+    );
+    const result = await stripePaymentFulfillmentService.fulfillBrandWalletRecharge(session);
+    if (!result.handled) {
+      throw appError("VALIDATION_ERROR", "Brand wallet recharge could not be fulfilled");
+    }
+
+    return result;
   }
 
   async createPaidRevisionCheckout(input: {

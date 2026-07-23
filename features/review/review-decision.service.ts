@@ -10,10 +10,26 @@ import { notificationService } from "@/features/notification/notification.servic
 import { appError } from "@/lib/core/errors";
 import { getAppBaseUrl } from "@/lib/app-url";
 import { prisma, hasDatabaseUrl } from "@/lib/core/database/prisma";
+import { readProductionBrief } from "@/features/campaign/brand-campaign/brand-campaign.utils";
+import { creatorPortalRoutes } from "@/lib/studioos/creator-portal-routes";
 
 export class ReviewDecisionService {
   private assertDb() {
     if (!hasDatabaseUrl()) throw appError("SYSTEM_ERROR", "DATABASE_URL not configured");
+  }
+
+  private async resolveCreatorRevisionActionUrl(campaign: { id: string; productionBrief?: unknown }) {
+    const brief = readProductionBrief(campaign.productionBrief);
+    const legacyProjectId =
+      typeof brief.legacy_project_id === "string" ? brief.legacy_project_id.trim() : "";
+    if (legacyProjectId) {
+      const { getOrderForProject } = await import("@/lib/order-service");
+      const order = await getOrderForProject(legacyProjectId);
+      if (order?.id) {
+        return `${getAppBaseUrl()}${creatorPortalRoutes.review(order.id)}`;
+      }
+    }
+    return `${getAppBaseUrl()}${creatorPortalRoutes.reviewHub}`;
   }
 
   private async getVersionForDecision(versionId: string, user: AuthUser) {
@@ -53,7 +69,8 @@ export class ReviewDecisionService {
         actionUrl: `${getAppBaseUrl()}/studio/income`,
         template: "review.approved",
         priority: "HIGH",
-        email: false
+        email: false,
+        metadata: { project: version.campaign.title }
       });
     }
 
@@ -97,10 +114,14 @@ export class ReviewDecisionService {
         content: note?.trim()
           ? `The brand requested changes on "${version.campaign.title}": ${note.trim()}`
           : `The brand requested changes on "${version.campaign.title}".`,
-        actionUrl: `${getAppBaseUrl()}/studio/delivery`,
+        actionUrl: await this.resolveCreatorRevisionActionUrl(version.campaign),
         template: "review.revision_requested",
         priority: "HIGH",
-        email: false
+        email: false,
+        metadata: {
+          project: version.campaign.title,
+          note: note?.trim() ?? ""
+        }
       });
     }
 

@@ -33,6 +33,7 @@ function invitationPicks(
       creatorId: invitation.creatorId,
       creatorName: name,
       creatorHeadline: invitation.creatorHeadline ?? creator?.headline ?? "",
+      creatorAvatarUrl: invitation.creatorAvatarUrl ?? creator?.avatar_url,
       matchPercent: Math.round(invitation.matchScore),
       verified: Boolean(creator?.profile_completed_at),
       tags: creator ? buildCreatorHighlightTags(creator, locale) : [],
@@ -54,11 +55,14 @@ async function enginePicks(project: StoredProject, locale: Locale): Promise<Bran
   }).slice(0, MAX_PICKS);
 
   return matches.map((match) => {
-    const creator = resolveCreatorForInvitation(match.creator_id);
+    const creator =
+      enrichedCreators.find((item) => item.id === match.creator_id) ??
+      resolveCreatorForInvitation(match.creator_id);
     return {
       creatorId: match.creator_id,
       creatorName: creator?.name ?? match.creator_id,
       creatorHeadline: creator?.headline ?? match.reasons[0]?.[locale] ?? "",
+      creatorAvatarUrl: creator?.avatar_url,
       matchPercent: Math.min(99, Math.round(match.score)),
       verified: Boolean(creator?.profile_completed_at),
       tags: creator ? buildCreatorHighlightTags(creator, locale) : [],

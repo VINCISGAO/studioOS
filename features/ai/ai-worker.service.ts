@@ -173,12 +173,10 @@ export class AiWorkerService {
       briefSnapshot?: WizardBriefSnapshot;
       wizardFastPath?: boolean;
     };
-    if (!input.wizardFastPath) {
-      await assertCampaignEscrowFunded(
-        campaignId,
-        "AI creative generation is available only after escrow payment"
-      );
-    }
+    await assertCampaignEscrowFunded(
+      campaignId,
+      "AI creative generation is available only after escrow payment"
+    );
     const actorUserId = String(input.actorUserId ?? campaign.brandId);
     const language = normalizeLanguageCode(input.language);
     const actor = { id: actorUserId, role: "BRAND" as const };

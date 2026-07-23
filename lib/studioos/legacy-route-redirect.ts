@@ -25,7 +25,7 @@ export type LegacyOrderRedirect =
 export async function resolveLegacyOrderRedirectPath(orderId: string): Promise<LegacyOrderRedirect> {
   const order = await getOrder(orderId);
   if (!order) {
-    return { kind: "destination", path: "/brand/projects" };
+    return { kind: "destination", path: "/brand" };
   }
 
   const [session, clientEmail, creatorId] = await Promise.all([

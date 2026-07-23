@@ -202,25 +202,16 @@ export class PaidRevisionService {
         await notificationService.notify({
           userId: brandUserId,
           campaignId,
-          type: "revision.paid_addon_unlocked",
+          type: "revision.paid_addon_unlocked.brand",
           category: "REVISION",
-          title: input.locale === "zh" ? "第 4-5 轮修订已解锁" : "Paid revision rounds unlocked",
-          content:
-            input.locale === "zh"
-              ? `「${campaign.title}」已解锁第 4-5 轮修订，加购金额 ${currency} ${addOnAmount.toFixed(2)}。`
-              : `"${campaign.title}" now has revision rounds 4-5 unlocked. Add-on: ${currency} ${addOnAmount.toFixed(2)}.`,
+          title: "Paid revision rounds unlocked",
+          content: `"${campaign.title}" now has revision rounds 4-5 unlocked.`,
           actionUrl: `${getAppBaseUrl()}/brand/projects/${legacyProjectId}/review`,
           template: "revision.additional_purchased",
           priority: "HIGH",
           metadata: {
-            orderId: input.orderId,
-            unlockedFromVersion: unlockedVersion,
-            unlockedThroughVersion: MAX_REVISION_ROUNDS,
-            addOnAmount,
-            additionalPayment: "20%",
-            currentStage: `Version ${unlockedVersion}`,
-            currency,
-            paymentSource
+            project: campaign.title,
+            addOnAmount: `${currency} ${addOnAmount.toFixed(2)}`
           }
         });
 
@@ -228,22 +219,15 @@ export class PaidRevisionService {
           await notificationService.notify({
             userId: campaign.creatorId,
             campaignId,
-            type: "revision.paid_addon_unlocked",
+            type: "revision.paid_addon_unlocked.creator",
             category: "REVISION",
-            title: input.locale === "zh" ? "品牌已解锁第 4-5 轮修订" : "Brand unlocked paid revision rounds",
-            content:
-              input.locale === "zh"
-                ? `「${campaign.title}」现在可进入 V4-V5 修订流程。`
-                : `"${campaign.title}" can now continue through V4-V5 revisions.`,
+            title: "Brand unlocked paid revision rounds",
+            content: `"${campaign.title}" can now continue through V4-V5 revisions.`,
             actionUrl: `${getAppBaseUrl()}/studio/review/${input.orderId}`,
             template: "revision.additional_purchased",
             priority: "HIGH",
             metadata: {
-              orderId: input.orderId,
-              unlockedFromVersion: unlockedVersion,
-              unlockedThroughVersion: MAX_REVISION_ROUNDS,
-              additionalPayment: "20%",
-              currentStage: `Version ${unlockedVersion}`
+              project: campaign.title
             }
           });
         }

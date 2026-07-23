@@ -134,7 +134,10 @@ export async function runMatchingProgress(
 
   await emitWizardProgress(projectId, {
     phase: "idle",
-    progressMessage: locale === "zh" ? "匹配完成" : "Matching complete",
+    progressMessage:
+      locale === "zh"
+        ? "Campaign 已发布，完成托管付款后将开始匹配创作者"
+        : "Campaign published — complete escrow payment to start creator matching",
     progressPercent: 100
   });
 }

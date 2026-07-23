@@ -10,6 +10,10 @@ import { creatorPortalRoutes } from "@/lib/studioos/creator-portal-routes";
 import { type SearchParams, withLocale } from "@/lib/i18n";
 import { listOrdersForCreator } from "@/lib/order-service";
 import { isPaymentStubMode } from "@/lib/payment/payment-stub";
+import { isStripeEmbeddedReady } from "@/lib/payment/stripe-publishable";
+import { stripeEmbeddedPaymentService } from "@/features/payment/stripe-embedded-payment.service";
+import { getSessionUser } from "@/features/auth/session.service";
+import { isNextNavigationError } from "@/lib/next-navigation-error";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +24,14 @@ function certificationCelebratePath(locale: "en" | "zh") {
 export default async function StudioDepositPage({
   searchParams
 }: {
-  searchParams: Promise<SearchParams & { submitted?: string; error?: string; scroll?: string; stay?: string }>;
+  searchParams: Promise<SearchParams & {
+    submitted?: string;
+    error?: string;
+    scroll?: string;
+    stay?: string;
+    checkout?: string;
+    payment_intent?: string;
+  }>;
 }) {
   const query = await searchParams;
   const locale = await getAppUiLocale();
@@ -58,6 +69,25 @@ export default async function StudioDepositPage({
       : "optional";
 
   const scrollToPayment = query.scroll === "pay";
+  const paymentIntentId =
+    typeof query.payment_intent === "string" ? query.payment_intent.trim() : null;
+
+  if (query.checkout === "success" && paymentIntentId) {
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      redirect(withLocale("/login?role=creator", locale));
+    }
+    try {
+      await stripeEmbeddedPaymentService.reconcileCreatorDepositIntent(
+        paymentIntentId,
+        sessionUser.id
+      );
+    } catch (error) {
+      if (isNextNavigationError(error)) throw error;
+      redirect(withLocale(`/studio/deposit?error=${encodeURIComponent("payment-verification")}`, locale));
+    }
+    redirect(certificationCelebratePath(locale));
+  }
 
   return (
     <CreatorCertificationHub
@@ -70,7 +100,8 @@ export default async function StudioDepositPage({
       error={depositAlreadyPaidError ? undefined : errorMessage}
       profileComplete={hasCompletedCreatorProfile(creator)}
       scrollToPayment={scrollToPayment}
-      stripeCheckoutEnabled={!isPaymentStubMode()}
+      embeddedCheckoutEnabled={isStripeEmbeddedReady()}
+      stripeCheckoutEnabled={!isStripeEmbeddedReady() && !isPaymentStubMode()}
     />
   );
 }

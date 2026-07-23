@@ -7,6 +7,7 @@ import { getCurrentCreator, getCurrentAuthUser } from "@/features/auth/session-c
 import { resolveCreatorCertificationAccessFromOrders } from "@/lib/studioos/creator-certification-access";
 import { type SearchParams, withLocale } from "@/lib/i18n";
 import { listOrdersForCreator } from "@/lib/order-service";
+import { creatorSettlementFootnote } from "@/lib/money/display-money";
 import {
   getCreatorIncomeSnapshot,
   listPayoutMethods,
@@ -70,6 +71,7 @@ export default async function StudioIncomePage({
             ? "可提现、待结算、历史收入与提现记录。"
             : "Withdrawable balance, pending settlement, history, and withdrawals."}
         </p>
+        <p className="mt-1 text-xs text-zinc-400">{creatorSettlementFootnote(locale)}</p>
       </header>
       {connectStatus ? (
         <IncomeStripeConnectSection

@@ -3,7 +3,7 @@ import { twMerge } from "tailwind-merge";
 
 import type { Locale } from "@/lib/i18n";
 import type { SupportedLanguageCode } from "@/features/i18n/language.constants";
-import { formatMoneyFromUsd } from "@/lib/money/display-money";
+import { formatMoneyFromUsd, formatSettlementUsd } from "@/lib/money/display-money";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -15,6 +15,8 @@ export function formatCurrency(
 ) {
   return formatMoneyFromUsd(amount, locale ?? "en");
 }
+
+export { formatSettlementUsd };
 
 export function formatDate(date: string, locale?: Locale) {
   const intlLocale = locale === "zh" ? "zh-CN" : "en-US";

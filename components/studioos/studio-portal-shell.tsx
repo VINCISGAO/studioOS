@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { usePathname } from "next/navigation";
 import { BrandLogoLockup } from "@/components/brand-logo-mark";
 import { NotificationCenterBell } from "@/components/studioos/notification-center-bell";
+import { PortalLanguageSwitcher } from "@/components/studioos/portal-language-switcher";
 import { PortalMobileNav } from "@/components/studioos/portal-mobile-nav";
 import { StudioUserMenu } from "@/components/studioos/studio-user-menu";
 import { PortalSidebarAccountMenu } from "@/components/studioos/portal-sidebar-account-menu";
@@ -242,6 +243,7 @@ function StudioPortalShellInner({
                 <div className="hidden lg:block" />
 
                 <div className="flex items-center gap-2 sm:gap-3">
+                  <PortalLanguageSwitcher locale={locale} />
                   {canUseBusinessFeatures ? <NotificationCenterBell locale={locale} /> : null}
                   <StudioUserMenu
                     locale={locale}

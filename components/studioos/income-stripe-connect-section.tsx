@@ -4,7 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 import { ExternalLink, Landmark, LoaderCircle, ShieldCheck } from "lucide-react";
 import type { StripeConnectStatusView } from "@/features/payment/stripe-connect.types";
 import type { Locale } from "@/lib/i18n";
-import { formatMoneyFromUsd } from "@/lib/money/display-money";
+import { formatSettlementUsd } from "@/lib/money/display-money";
 import { MIN_WITHDRAWAL_USD } from "@/lib/studioos/withdrawal-utils";
 
 export function IncomeStripeConnectSection({
@@ -79,8 +79,8 @@ export function IncomeStripeConnectSection({
       }
       setSuccess(
         zh
-          ? `已发起 Stripe 提现 ${formatMoneyFromUsd(payload.data?.amountUsd ?? amountNumber, locale)}`
-          : `Stripe withdrawal sent for ${formatMoneyFromUsd(payload.data?.amountUsd ?? amountNumber, locale)}`
+          ? `已发起 Stripe 提现 ${formatSettlementUsd(payload.data?.amountUsd ?? amountNumber, locale)}`
+          : `Stripe withdrawal sent for ${formatSettlementUsd(payload.data?.amountUsd ?? amountNumber, locale)}`
       );
     });
   }
@@ -158,7 +158,7 @@ export function IncomeStripeConnectSection({
       ) : (
         <div className="mt-4 space-y-3">
           <label className="block text-xs font-medium text-zinc-500" htmlFor="stripe-connect-amount">
-            {zh ? "提现金额 (USD)" : "Withdrawal amount (USD)"}
+            {zh ? "提现金额（美元）" : "Withdrawal amount (USD)"}
           </label>
           <input
             id="stripe-connect-amount"
@@ -171,8 +171,8 @@ export function IncomeStripeConnectSection({
           />
           <p className="text-xs text-zinc-400">
             {zh
-              ? `可用 ${formatMoneyFromUsd(availableUsd, locale)} · 最低 ${formatMoneyFromUsd(MIN_WITHDRAWAL_USD, locale)}`
-              : `Available ${formatMoneyFromUsd(availableUsd, locale)} · Min ${formatMoneyFromUsd(MIN_WITHDRAWAL_USD, locale)}`}
+              ? `可用 ${formatSettlementUsd(availableUsd, locale)} · 最低 ${formatSettlementUsd(MIN_WITHDRAWAL_USD, locale)}`
+              : `Available ${formatSettlementUsd(availableUsd, locale)} · Min ${formatSettlementUsd(MIN_WITHDRAWAL_USD, locale)}`}
           </p>
           <button
             type="button"

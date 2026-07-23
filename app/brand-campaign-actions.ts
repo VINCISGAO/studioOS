@@ -201,14 +201,8 @@ async function recordAiCreativeGenerationClick(input: {
 async function assertAiTokensAllowedAfterPayment(
   projectId: string,
   lang: Locale,
-  options?: { wizardFastPath?: boolean }
+  _options?: { wizardFastPath?: boolean }
 ) {
-  if (options?.wizardFastPath) {
-    // Brand wizard step 2 generates text-only preview directions before escrow.
-    // Post-payment AI creative collaboration and matching still use the escrow gate below.
-    return { ok: true as const };
-  }
-
   const order = await getOrderForProject(projectId);
   if (!order || !isOrderPaymentEscrowed(order.payment_status)) {
     return {
@@ -986,7 +980,7 @@ export async function prepareBrandCampaignAction(formData: FormData) {
   const projectId = String(formData.get("project_id") ?? "");
   const ctx = await resolveBrandCampaignContext(projectId, lang);
   if (!ctx.ok) return ctx;
-  const aiGate = await assertAiTokensAllowedAfterPayment(projectId, lang, { wizardFastPath: true });
+  const aiGate = await assertAiTokensAllowedAfterPayment(projectId, lang);
   if (!aiGate.ok) return aiGate;
 
   try {

@@ -8,7 +8,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { AdminWithdrawalItem } from "@/features/admin/withdrawal/admin-withdrawal.service";
 import type { Locale } from "@/lib/i18n";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatSettlementUsd } from "@/lib/money/display-money";
+import { formatDate } from "@/lib/utils";
 
 const copy = {
   en: {
@@ -64,7 +65,7 @@ export function AdminWithdrawalQueue({
                     <div className="font-medium">{row.userName ?? row.userEmail ?? row.userId}</div>
                     <div className="text-xs text-zinc-500">{row.userEmail}</div>
                   </TableCell>
-                  <TableCell>{formatCurrency(row.amount, locale)}</TableCell>
+                  <TableCell>{formatSettlementUsd(row.amount, locale)}</TableCell>
                   <TableCell className="max-w-xs text-xs">
                     {row.paymentMethods.length
                       ? row.paymentMethods.map((pm) => (

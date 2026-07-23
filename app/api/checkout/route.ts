@@ -52,7 +52,7 @@ export async function POST(request: Request) {
   }
 
   if (shouldBypassExternalCheckout()) {
-    return NextResponse.json({ url: `${appUrl}/dashboard?checkout=success&stub=1` });
+    return NextResponse.json({ url: `${appUrl}/brand?checkout=success&stub=1` });
   }
 
   if (!process.env.STRIPE_SECRET_KEY) {
@@ -83,7 +83,7 @@ export async function POST(request: Request) {
       project_id: body.projectId ?? inquiry.project_id ?? "",
       quote_id: quote.id
     },
-    success_url: `${appUrl}/dashboard?checkout=success`,
+    success_url: `${appUrl}/brand?checkout=success`,
     cancel_url: `${appUrl}/creators?checkout=cancelled`
   });
 

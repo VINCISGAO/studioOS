@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Check, ChevronDown, Globe2 } from "lucide-react";
 import {
   SUPPORTED_LANGUAGE_SEEDS,
@@ -9,7 +9,7 @@ import {
   type SupportedLanguageCode
 } from "@/features/i18n/language.constants";
 import { readStoredAppLanguage, setAppLanguage } from "@/lib/app-language-client";
-import { isInternalAppPath, isHomepageLangPath } from "@/lib/app-language.shared";
+import { isInternalAppPath } from "@/lib/app-language.shared";
 import { buildKnowledgeCenterLocaleHref } from "@/lib/knowledge/knowledge-route";
 import { cn } from "@/lib/utils";
 import type { LanguageCode, Locale } from "@/lib/i18n";
@@ -36,6 +36,7 @@ function LanguageSwitcherInner({
   navPill = false
 }: LanguageSwitcherProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const urlLang = searchParams.get("lang");
   const fallbackCode = localeToLanguageCode(locale);
@@ -59,16 +60,17 @@ function LanguageSwitcherInner({
         window.location.assign(knowledgeHref);
         return;
       }
-      if (isHomepageLangPath(pathname) || !isInternalAppPath(pathname)) {
-        const params = new URLSearchParams(searchParams.toString());
-        params.set("lang", next);
-        const query = params.toString();
-        window.location.assign(query ? `${pathname}?${query}` : pathname);
+      if (isInternalAppPath(pathname)) {
+        setStoredLang(next);
+        router.refresh();
         return;
       }
-      window.location.assign(`/?lang=${next}`);
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("lang", next);
+      const query = params.toString();
+      window.location.assign(query ? `${pathname}?${query}` : pathname);
     },
-    [current, pathname, searchParams]
+    [current, pathname, router, searchParams]
   );
 
   useEffect(() => {

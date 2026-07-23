@@ -38,9 +38,9 @@ const copy = {
       "You have reached the platform’s recommended maximum of 3 simultaneous campaigns. To protect creative quality and project management efficiency, please wait until one campaign is completed before starting another.",
     rateTitle: "Creation limit reached",
     rateLead10m:
-      "You are creating projects too quickly. For service quality, the limit is 2 new projects per 10 minutes (including deleted drafts). Please wait and try again.",
+      "You are creating projects too quickly. For service quality, the limit is 5 meaningful new projects per 10 minutes. Please wait and try again.",
     rateLead24h:
-      "You have reached today’s recommended creation limit — up to 5 new projects per 24 hours (including deleted drafts). Try again tomorrow or finish in-progress work first.",
+      "You have reached today’s recommended creation limit — up to 12 meaningful new projects per 24 hours. Try again tomorrow or finish in-progress work first.",
     viewProjects: "View my projects",
     backHome: "Back to workspace",
     gotIt: "Got it"
@@ -61,9 +61,9 @@ const copy = {
       "当前已达到平台建议上限（3 个同时进行项目）。为了保证创意质量和项目管理效率，请等待其中一个项目完成后再创建新的项目。",
     rateTitle: "已达到创建频率建议上限",
     rateLead10m:
-      "创建过于频繁。为保障平台服务质量，10 分钟内最多创建 2 个项目（含已删除项目）。请稍后再试。",
+      "创建过于频繁。为保障平台服务质量，10 分钟内最多创建 5 个有效项目。请稍后再试。",
     rateLead24h:
-      "已达到今日创建建议上限。24 小时内最多创建 5 个项目（含已删除项目），请明天再试或先完成进行中的项目。",
+      "已达到今日创建建议上限。24 小时内最多创建 12 个有效项目，请明天再试或先完成进行中的项目。",
     viewProjects: "查看我的项目",
     backHome: "返回工作台",
     gotIt: "我知道了"

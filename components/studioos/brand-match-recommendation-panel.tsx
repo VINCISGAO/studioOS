@@ -5,8 +5,8 @@ import { BadgeCheck, RefreshCw } from "lucide-react";
 import { selectCreatorFromInvitationsAction } from "@/app/brand-selection-actions";
 import { Button } from "@/components/ui/button";
 import type { Locale } from "@/lib/i18n";
+import { BrandCreatorAvatarLink } from "@/components/studioos/brand-creator-avatar-link";
 import type { StoredCreatorInvitation } from "@/lib/studioos/creator-invitation-types";
-import { creatorAvatarTone, creatorInitials } from "@/lib/studioos/creator-display";
 import type { BrandRecommendedCreator } from "@/lib/studioos/brand-match-recommendation-types";
 import { cn } from "@/lib/utils";
 
@@ -67,14 +67,13 @@ export function BrandMatchRecommendationPanel({
 
       <div className="space-y-4 px-5 py-5 sm:px-6">
         <div className="flex gap-4">
-          <span
-            className={cn(
-              "flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-sm font-semibold",
-              creatorAvatarTone(pick.creatorId)
-            )}
-          >
-            {creatorInitials(pick.creatorName, pick.creatorId)}
-          </span>
+          <BrandCreatorAvatarLink
+            locale={locale}
+            creatorId={pick.creatorId}
+            creatorName={pick.creatorName}
+            avatarUrl={pick.creatorAvatarUrl}
+            size="lg"
+          />
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-1.5">
               <p className="truncate text-base font-semibold text-zinc-950">{pick.creatorName}</p>

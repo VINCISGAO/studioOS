@@ -11,8 +11,9 @@ import { resolveCreatorCertificationAccessFromOrders } from "@/lib/studioos/crea
 import {
   hasSeenCertificationLevelUp
 } from "@/lib/studioos/creator-settings-service";
-import { getAppUiLocale } from "@/lib/app-language";
+import { resolvePortalLocale } from "@/lib/app-language";
 import { appPath } from "@/lib/i18n";
+import { getSessionUser } from "@/features/auth/session.service";
 import { resolveCreatorPortalGuardRedirect } from "@/lib/studioos/creator-portal-guard";
 import { listOrdersForCreator } from "@/lib/order-service";
 import { listNotificationsForCreator } from "@/lib/notification-service";
@@ -31,7 +32,8 @@ export default async function StudioLayout({ children }: { children: React.React
   const headerList = await headers();
   const pathname = headerList.get("x-pathname") ?? "/studio";
   const search = headerList.get("x-search") ?? "";
-  const locale = await getAppUiLocale();
+  const sessionUser = await getSessionUser();
+  const locale = await resolvePortalLocale(sessionUser?.languageCode);
   const guardRedirect = await resolveCreatorPortalGuardRedirect(locale, pathname);
   if (guardRedirect) {
     redirect(guardRedirect);

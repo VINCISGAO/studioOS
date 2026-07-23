@@ -306,5 +306,5 @@ export async function performSignIn(input: SignInInput): Promise<SignInResult> {
     return { ok: true, redirectTo, session };
   }
 
-  return { ok: true, redirectTo: appPath("/dashboard"), session: { email: trimmedEmail, role: "client" } };
+  return { ok: true, redirectTo: appPath("/brand"), session: { email: trimmedEmail, role: "client" } };
 }

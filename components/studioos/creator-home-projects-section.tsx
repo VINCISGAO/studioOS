@@ -7,7 +7,8 @@ import { ChevronRight } from "lucide-react";
 import type { Locale } from "@/lib/i18n";
 import type { CreatorHomeProjectRow, CreatorProjectTab } from "@/lib/studioos/creator-home-ui";
 import { countProjectsForTab, matchesProjectTab, projectStatusToneClass } from "@/lib/studioos/creator-home-ui";
-import { cn, formatCurrency } from "@/lib/utils";
+import { formatSettlementUsd } from "@/lib/money/display-money";
+import { cn } from "@/lib/utils";
 
 function brandInitial(name: string) {
   return name.trim().slice(0, 1).toUpperCase() || "B";
@@ -105,7 +106,7 @@ export function CreatorHomeProjectsSection({
                 </div>
               </div>
               <div className="flex flex-wrap items-center gap-3 sm:justify-end">
-                <span className="text-sm font-semibold text-zinc-900">{formatCurrency(project.budget, locale)}</span>
+                <span className="text-sm font-semibold text-zinc-900">{formatSettlementUsd(project.budget, locale)}</span>
                 <span
                   className={cn(
                     "rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset",

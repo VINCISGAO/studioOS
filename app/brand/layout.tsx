@@ -3,8 +3,9 @@ import { after } from "next/server";
 import { redirect } from "next/navigation";
 import { AiCopilotRoot } from "@/components/ai-copilot/ai-copilot-root";
 import { BrandPortalShell } from "@/components/studioos/brand-portal-shell";
-import { getAppUiLocale } from "@/lib/app-language";
+import { resolvePortalLocale } from "@/lib/app-language";
 import { requireBrandPortalClientEmail } from "@/features/auth/session-context";
+import { getSessionUser } from "@/features/auth/session.service";
 import { withLocale } from "@/lib/i18n";
 import { getBrandPortalProfile, getBrandPortalUnreadCount } from "@/lib/studioos/brand-portal-data";
 import { fallbackBrandDisplayName } from "@/lib/studioos/brand-account-display";
@@ -18,7 +19,8 @@ export default async function BrandLayout({ children }: BrandLayoutProps) {
   const headerList = await headers();
   const pathname = headerList.get("x-pathname") ?? "/brand";
   const search = headerList.get("x-search") ?? "";
-  const locale = await getAppUiLocale();
+  const sessionUser = await getSessionUser();
+  const locale = await resolvePortalLocale(sessionUser?.languageCode);
 
   let brandEmail: string;
   try {

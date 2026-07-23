@@ -1,6 +1,6 @@
 import type Stripe from "stripe";
 import { walletRepository } from "@/features/wallet/wallet.repository";
-import { confirmCreatorDepositFromStripe } from "@/lib/studioos/deposit-service";
+import { depositReconcileService } from "@/features/deposit/deposit-reconcile.service";
 import { paidRevisionService } from "@/features/review/paid-revision.service";
 import { logger } from "@/lib/core/logger";
 
@@ -37,6 +37,18 @@ export class StripePaymentFulfillmentService {
 
     const wallet = await walletRepository.getOrCreate(userId);
     const amount = amountMinor / 100;
+    const description = `Stripe wallet recharge (${session.id})`;
+    const existing = await walletRepository.findEscrowDepositByDescription(wallet.id, description);
+    if (existing) {
+      return {
+        handled: true as const,
+        userId,
+        amount: Number(existing.amount),
+        sessionId: session.id,
+        duplicate: true as const
+      };
+    }
+
     const balanceAfter = Number(wallet.availableBalance) + amount;
     await walletRepository.applyLedgerUpdate({
       walletId: wallet.id,
@@ -46,7 +58,7 @@ export class StripePaymentFulfillmentService {
           type: "ESCROW_DEPOSIT",
           amount,
           balanceAfter,
-          description: `Stripe wallet recharge (${session.id})`
+          description
         }
       ]
     });
@@ -58,37 +70,59 @@ export class StripePaymentFulfillmentService {
       amount
     });
 
-    return { handled: true as const, userId, amount, sessionId: session.id };
+    return { handled: true as const, userId, amount, sessionId: session.id, duplicate: false as const };
   }
 
   async fulfillCreatorDeposit(session: Stripe.Checkout.Session) {
     if (session.metadata?.type !== "creator_deposit") {
       return { handled: false as const };
     }
-    assertPaidSession(session);
-    const creatorId = session.metadata.creator_id;
-    const paymentId = session.metadata.payment_id;
-    if (!creatorId || !paymentId) {
-      throw new Error("Missing creator deposit metadata");
-    }
 
-    const { amountMinor } = readMinor(session);
-    const result = await confirmCreatorDepositFromStripe({
-      creatorId,
-      paymentId,
-      stripeSessionId: session.id,
-      amountUsd: amountMinor / 100
-    });
+    const result = await depositReconcileService.reconcileFromCheckoutSession(session);
+    if (!result.handled) {
+      return { handled: false as const };
+    }
 
     logger.info("Creator deposit confirmed via Stripe", {
       service: "StripePaymentFulfillmentService",
-      creatorId,
-      paymentId,
+      creatorId: result.creatorId,
+      paymentId: result.paymentId,
       sessionId: session.id,
       duplicate: result.duplicate
     });
 
-    return { handled: true as const, ...result };
+    return {
+      handled: true as const,
+      duplicate: result.duplicate,
+      paymentId: result.paymentId,
+      creatorId: result.creatorId
+    };
+  }
+
+  async fulfillCreatorDepositFromPaymentIntent(intent: Stripe.PaymentIntent) {
+    if (intent.metadata?.type !== "creator_deposit") {
+      return { handled: false as const };
+    }
+
+    const result = await depositReconcileService.reconcilePaymentIntent({ intent });
+    if (!result.paid) {
+      throw new Error(`Stripe payment intent is not succeeded: ${intent.status}`);
+    }
+
+    logger.info("Creator deposit confirmed via Stripe PaymentIntent", {
+      service: "StripePaymentFulfillmentService",
+      creatorId: result.creatorId,
+      paymentId: result.paymentId,
+      paymentIntentId: intent.id,
+      duplicate: result.duplicate
+    });
+
+    return {
+      handled: true as const,
+      duplicate: result.duplicate,
+      paymentId: result.paymentId,
+      creatorId: result.creatorId
+    };
   }
 
   async fulfillPaidRevisionAddon(session: Stripe.Checkout.Session) {

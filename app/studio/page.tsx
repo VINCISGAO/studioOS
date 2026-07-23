@@ -12,7 +12,7 @@ import { getCurrentCreator } from "@/features/auth/session-context";
 import { type SearchParams, withLocale } from "@/lib/i18n";
 import { listNotificationsForCreator } from "@/lib/notification-service";
 import { getCurrentSession } from "@/lib/session-user";
-import { getLatestSubmittedDeliverableVersionsForOrders, listOrdersForCreator } from "@/lib/order-service";
+import { getLatestSubmittedDeliverableVersionsForOrders, listOrdersForCreator, repairSelectedCreatorCampaignOrders } from "@/lib/order-service";
 import {
   buildCreatorHomeProjects,
   buildCreatorHomeStats,
@@ -67,7 +67,7 @@ export default async function StudioHomePage({ searchParams }: { searchParams: P
     membership,
     invitations
   ] = await Promise.all([
-    listOrdersForCreator(creator.id),
+    repairSelectedCreatorCampaignOrders(creator.id).then(() => listOrdersForCreator(creator.id)),
     getCreatorIncomeSnapshot(creator.id),
     hasSeenCertificationLevelUp(creator.id),
     hasDismissedCertificationWelcomeBanner(creator.id),

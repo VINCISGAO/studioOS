@@ -219,7 +219,7 @@ export function InquiryQuotePanel({
         <p className="mt-2 text-sm leading-7 text-amber-900/90">{t.waitingQuoteBody}</p>
         <p className="mt-3 rounded-lg bg-white/80 px-3 py-2 text-sm text-amber-950">{t.waitingQuoteTip}</p>
         <Button asChild variant="outline" className="mt-4">
-          <Link href={withLocale("/dashboard", locale)}>{t.backDashboard}</Link>
+          <Link href={withLocale("/brand", locale)}>{t.backDashboard}</Link>
         </Button>
       </CardContent>
     </Card>

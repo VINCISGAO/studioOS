@@ -2,61 +2,74 @@
 
 import { useMemo, useState } from "react";
 import { CheckCircle2, ShieldCheck, X } from "lucide-react";
-
-type Locale = "en" | "zh";
+import type { SupportedLanguageCode } from "@/features/i18n/language.constants";
+import type { Locale } from "@/lib/i18n";
+import {
+  brandWalletCurrencyLabel,
+  convertDisplayAmountToUsd,
+  convertUsdToDisplayAmount,
+  formatBrandWalletAmount,
+  getCurrencySymbol,
+  settlementUsdNote
+} from "@/lib/money/display-money";
 
 type BrandWalletRechargeFormProps = {
   action: (formData: FormData) => void | Promise<void>;
   locale: Locale;
-  currency: string;
+  languageCode: SupportedLanguageCode;
   hasPendingInvoice: boolean;
-  invoiceAmount: number;
+  invoiceAmountUsd: number;
   returnTo: string;
   stripeCheckoutEnabled?: boolean;
 };
 
-const PRESET_AMOUNTS = [200, 500, 1000] as const;
+const PRESET_USD_AMOUNTS = [200, 500, 1000] as const;
 
-import { formatMoneyFromUsd } from "@/lib/money/display-money";
-
-function money(amount: number, locale: Locale = "en") {
-  return formatMoneyFromUsd(amount, locale);
-}
-
-function normalizeAmount(value: string) {
+function normalizeDisplayAmount(value: string) {
   const parsed = Number(value);
   if (!Number.isFinite(parsed) || parsed <= 0) return "";
-  return String(Math.round(parsed));
+  return String(Math.max(1, Math.round(parsed)));
+}
+
+function usdToDisplayInput(amountUsd: number, languageCode: SupportedLanguageCode) {
+  return String(convertUsdToDisplayAmount(amountUsd, languageCode));
 }
 
 export function BrandWalletRechargeForm({
   action,
   locale,
-  currency,
+  languageCode,
   hasPendingInvoice,
-  invoiceAmount,
+  invoiceAmountUsd,
   returnTo,
   stripeCheckoutEnabled = false
 }: BrandWalletRechargeFormProps) {
-  const defaultAmount = hasPendingInvoice && Number.isFinite(invoiceAmount) && invoiceAmount > 0
-    ? String(Math.round(invoiceAmount))
-    : "500";
-  const [amount, setAmount] = useState(defaultAmount);
+  const defaultUsd =
+    hasPendingInvoice && Number.isFinite(invoiceAmountUsd) && invoiceAmountUsd > 0 ? invoiceAmountUsd : 500;
+  const [displayAmount, setDisplayAmount] = useState(usdToDisplayInput(defaultUsd, languageCode));
   const [confirming, setConfirming] = useState(false);
-  const amountNumber = Number(amount);
-  const canSubmit = Number.isFinite(amountNumber) && amountNumber > 0;
-  const selectedPreset = useMemo(
-    () => PRESET_AMOUNTS.find((preset) => preset === amountNumber) ?? null,
-    [amountNumber]
-  );
+  const displayNumber = Number(displayAmount);
+  const amountUsd = convertDisplayAmountToUsd(displayNumber, languageCode);
+  const canSubmit = Number.isFinite(displayNumber) && displayNumber > 0 && amountUsd > 0;
+  const currencySymbol = getCurrencySymbol(languageCode);
+  const currencyLabel = brandWalletCurrencyLabel(languageCode);
+  const settlementNote = settlementUsdNote(languageCode);
+
+  const selectedPresetUsd = useMemo(() => {
+    return (
+      PRESET_USD_AMOUNTS.find(
+        (preset) => convertUsdToDisplayAmount(preset, languageCode) === Math.round(displayNumber)
+      ) ?? null
+    );
+  }, [displayNumber, languageCode]);
 
   const title = hasPendingInvoice
     ? locale === "zh"
       ? "支付账单金额"
       : "Invoice amount"
     : locale === "zh"
-      ? "充值金额"
-      : "Top-up amount";
+      ? `充值金额（${currencyLabel}）`
+      : `Top-up amount (${currencyLabel})`;
   const primaryLabel = hasPendingInvoice
     ? locale === "zh"
       ? "确认支付"
@@ -64,13 +77,8 @@ export function BrandWalletRechargeForm({
     : locale === "zh"
       ? "确认充值"
       : "Confirm top-up";
-  const finalLabel = hasPendingInvoice
-    ? locale === "zh"
-      ? "确认并拉起付款"
-      : "Confirm and open payment"
-    : locale === "zh"
-      ? "确认并拉起付款"
-      : "Confirm and open payment";
+  const finalLabel =
+    locale === "zh" ? "确认并拉起付款" : "Confirm and open payment";
 
   return (
     <form
@@ -78,36 +86,38 @@ export function BrandWalletRechargeForm({
       className="relative rounded-2xl border border-zinc-100 bg-white p-7 shadow-[0_18px_42px_rgba(15,23,42,0.07)]"
     >
       <input type="hidden" name="lang" value={locale} />
-      <input type="hidden" name="amount" value={amount} />
+      <input type="hidden" name="amount" value={canSubmit ? String(amountUsd) : ""} />
       {returnTo ? <input type="hidden" name="return_to" value={returnTo} /> : null}
 
       <label className="text-sm font-semibold text-zinc-900" htmlFor="brand-wallet-amount">
         {title}
       </label>
       <div className="mt-5 flex items-center rounded-xl border border-zinc-200 bg-white px-4 shadow-sm focus-within:border-violet-300 focus-within:ring-2 focus-within:ring-violet-500/10">
-        <span className="text-sm font-semibold text-zinc-500">$</span>
+        <span className="text-sm font-semibold text-zinc-500">{currencySymbol}</span>
         <input
           id="brand-wallet-amount"
           type="number"
           min="1"
           step="1"
           inputMode="numeric"
-          value={amount}
-          onChange={(event) => setAmount(event.target.value)}
-          onBlur={() => setAmount((current) => normalizeAmount(current) || defaultAmount)}
+          value={displayAmount}
+          onChange={(event) => setDisplayAmount(event.target.value)}
+          onBlur={() =>
+            setDisplayAmount((current) => normalizeDisplayAmount(current) || usdToDisplayInput(defaultUsd, languageCode))
+          }
           className="h-14 min-w-0 flex-1 bg-transparent px-3 text-lg font-semibold text-zinc-950 outline-none"
         />
       </div>
 
       {!hasPendingInvoice ? (
         <div className="mt-3 grid grid-cols-3 gap-2">
-          {PRESET_AMOUNTS.map((preset) => {
-            const active = selectedPreset === preset;
+          {PRESET_USD_AMOUNTS.map((presetUsd) => {
+            const active = selectedPresetUsd === presetUsd;
             return (
               <button
-                key={preset}
+                key={presetUsd}
                 type="button"
-                onClick={() => setAmount(String(preset))}
+                onClick={() => setDisplayAmount(usdToDisplayInput(presetUsd, languageCode))}
                 aria-pressed={active}
                 className={
                   active
@@ -115,11 +125,15 @@ export function BrandWalletRechargeForm({
                     : "rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-xs font-semibold text-zinc-700 transition hover:bg-zinc-50 focus:border-violet-300 focus:text-violet-700 focus:outline-none"
                 }
               >
-                {money(preset, locale)}
+                {formatBrandWalletAmount(presetUsd, languageCode)}
               </button>
             );
           })}
         </div>
+      ) : null}
+
+      {settlementNote ? (
+        <p className="mt-3 text-xs leading-5 text-zinc-500">{settlementNote}</p>
       ) : null}
 
       <button
@@ -162,8 +176,8 @@ export function BrandWalletRechargeForm({
             </h2>
             <p className="mt-2 text-sm leading-6 text-zinc-500">
               {locale === "zh"
-                ? `确认后将拉起付款，金额为 ${money(amountNumber, locale)}。`
-                : `After confirmation, payment will open for ${money(amountNumber, locale)}.`}
+                ? `确认后将拉起付款，金额为 ${formatBrandWalletAmount(amountUsd, languageCode)}。`
+                : `After confirmation, payment will open for ${formatBrandWalletAmount(amountUsd, languageCode)}.`}
             </p>
             <div className="mt-5 grid grid-cols-2 gap-2">
               <button

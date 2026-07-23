@@ -22,6 +22,8 @@ export const creatorPortalRoutes = {
   review: (orderId: string) => `/studio/review/${orderId}`,
   reviewHub: "/studio/review",
   profile: "/studio/profile",
+  onboarding: "/studio/onboarding",
+  aiSupport: "/studio/ai-support",
   /** Legacy aliases */
   dashboard: "/studio",
   delivery: "/studio/projects",

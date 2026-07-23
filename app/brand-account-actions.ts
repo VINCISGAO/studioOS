@@ -47,6 +47,7 @@ export async function rechargeBrandWalletAction(formData: FormData) {
       ? `${returnTo}${returnTo.includes("?") ? "&" : "?"}checkout=cancelled`
       : `${accountPath}?checkout=cancelled`;
 
+    let checkoutUrl: string | null = null;
     try {
       const checkout = await platformPaymentService.createBrandWalletRechargeCheckout({
         brandUserId: snapshot.user.id,
@@ -54,10 +55,12 @@ export async function rechargeBrandWalletAction(formData: FormData) {
         successPath,
         cancelPath
       });
-      redirect(checkout.checkoutUrl);
+      checkoutUrl = checkout.checkoutUrl;
     } catch {
       redirect(withLocale(`${accountPath}?wallet_error=checkout-failed`, lang));
     }
+
+    redirect(checkoutUrl!);
   }
 
   const result = await rechargeBrandWallet({

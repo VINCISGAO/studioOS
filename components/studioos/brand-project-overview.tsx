@@ -113,8 +113,12 @@ export function BrandProjectOverview({
         <BrandProjectOverviewSidebar
           locale={locale}
           projectId={project.id}
+          brandCommercialStep={brandCommercialStep}
+          commercialContext={commercialContext}
           hasDeliverables={deliverables.length > 0}
-          canMessage={acceptedCount > 0}
+          acceptedCount={acceptedCount}
+          selectedCreatorId={selectedCreatorId}
+          linkedOrder={linkedOrder}
         />
       </div>
     </div>

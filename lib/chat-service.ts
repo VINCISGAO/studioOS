@@ -1,11 +1,17 @@
 import { inquiries as seedInquiries } from "@/lib/data";
+import { proposalInquiryRepository } from "@/features/proposal-inquiry/proposal-inquiry.repository";
 import type { ChatSender, ChatStore, CreateInquiryInput, MessageKind, StoredInquiry, StoredMessage } from "@/lib/chat-types";
 import { getActiveQuoteForPair, getOrderForPair, reassignQuotesToInquiry } from "@/lib/order-service";
 import { allowOffPlatformContacts, isProposalChatLocked } from "@/lib/studioos/project-contract";
 import { contactFilterNotice, filterContactInfo } from "@/lib/studioos/contact-filter";
+import { shouldUseLegacyJsonMarketplaceStore } from "@/lib/studioos/marketplace-data-source";
 import { dataStorePath, readDataJson, writeDataJson } from "@/lib/serverless-store-core";
 
 const STORE_PATH = dataStorePath("chat-store.json");
+
+function isPrismaProposalInquiryPathEnabled() {
+  return !shouldUseLegacyJsonMarketplaceStore();
+}
 
 function createId(prefix: string) {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -54,6 +60,21 @@ async function writeStore(store: ChatStore) {
 }
 
 export async function createInquiry(input: CreateInquiryInput): Promise<StoredInquiry> {
+  if (isPrismaProposalInquiryPathEnabled()) {
+    const creatorProfileId = await proposalInquiryRepository.resolveCreatorProfileId(input.creator_id);
+    return proposalInquiryRepository.createInquiry({
+      creatorLegacyId: input.creator_id,
+      creatorProfileId,
+      workId: input.work_id ?? null,
+      projectLegacyId: input.project_id ?? null,
+      clientName: input.client_name,
+      clientEmail: input.client_email,
+      companyName: input.company_name,
+      budgetRange: input.budget_range,
+      message: input.message
+    });
+  }
+
   let store: ChatStore;
   try {
     store = await readStore();
@@ -101,6 +122,10 @@ export async function findOpenInquiryForPair(
   clientEmail: string,
   creatorId: string
 ): Promise<StoredInquiry | null> {
+  if (isPrismaProposalInquiryPathEnabled()) {
+    return proposalInquiryRepository.findOpenForPair(clientEmail, creatorId);
+  }
+
   const store = await readStore();
   const normalized = clientEmail.toLowerCase();
 
@@ -121,6 +146,15 @@ export async function getOrCreateOpenInquiry(
 ): Promise<{ inquiry: StoredInquiry; created: boolean }> {
   const existing = await findOpenInquiryForPair(input.client_email, input.creator_id);
   if (existing) {
+    if (isPrismaProposalInquiryPathEnabled()) {
+      const inquiry = await proposalInquiryRepository.appendBrandFollowUp(existing.id, {
+        message: input.message,
+        budgetRange: input.budget_range,
+        workId: input.work_id
+      });
+      return { inquiry, created: false };
+    }
+
     const store = await readStore();
     const inquiry = store.inquiries.find((item) => item.id === existing.id);
     if (!inquiry) {
@@ -161,11 +195,19 @@ export async function getOrCreateOpenInquiry(
 }
 
 export async function getInquiry(id: string): Promise<StoredInquiry | null> {
+  if (isPrismaProposalInquiryPathEnabled()) {
+    return proposalInquiryRepository.findById(id);
+  }
+
   const store = await readStore();
   return store.inquiries.find((item) => item.id === id) ?? null;
 }
 
 export async function listInquiriesForCreator(creatorId: string): Promise<StoredInquiry[]> {
+  if (isPrismaProposalInquiryPathEnabled()) {
+    return proposalInquiryRepository.listForCreator(creatorId);
+  }
+
   const store = await readStore();
   return store.inquiries
     .filter((item) => item.creator_id === creatorId)
@@ -173,6 +215,10 @@ export async function listInquiriesForCreator(creatorId: string): Promise<Stored
 }
 
 export async function listInquiriesForClient(clientEmail: string): Promise<StoredInquiry[]> {
+  if (isPrismaProposalInquiryPathEnabled()) {
+    return proposalInquiryRepository.listForClient(clientEmail);
+  }
+
   const normalized = clientEmail.toLowerCase();
   const store = await readStore();
   return store.inquiries
@@ -184,6 +230,10 @@ export async function listInquiriesForPair(
   clientEmail: string,
   creatorId: string
 ): Promise<StoredInquiry[]> {
+  if (isPrismaProposalInquiryPathEnabled()) {
+    return proposalInquiryRepository.listForPair(clientEmail, creatorId);
+  }
+
   const normalized = clientEmail.toLowerCase();
   const store = await readStore();
   return store.inquiries
@@ -198,6 +248,10 @@ export async function getMessagesForPair(
   clientEmail: string,
   creatorId: string
 ): Promise<StoredMessage[]> {
+  if (isPrismaProposalInquiryPathEnabled()) {
+    return proposalInquiryRepository.listMessagesForPair(clientEmail, creatorId);
+  }
+
   const store = await readStore();
   const inquiryIds = new Set(
     (await listInquiriesForPair(clientEmail, creatorId)).map((item) => item.id)
@@ -225,6 +279,21 @@ export async function resolveCanonicalInquiry(
   const order = await getOrderForPair(clientEmail, creatorId);
   if (order) {
     return threads.find((item) => item.id === order.inquiry_id) ?? threads[0];
+  }
+
+  if (isPrismaProposalInquiryPathEnabled()) {
+    let best = threads[0];
+    let bestTime = 0;
+    for (const thread of threads) {
+      const messages = await proposalInquiryRepository.listMessages(thread.id);
+      const latestAt = messages.at(-1)?.created_at ?? thread.created_at;
+      const time = new Date(latestAt).getTime();
+      if (time >= bestTime) {
+        bestTime = time;
+        best = thread;
+      }
+    }
+    return best;
   }
 
   const store = await readStore();
@@ -255,6 +324,18 @@ export async function consolidateInquiryThreads(
 
   const canonical = (await resolveCanonicalInquiry(clientEmail, creatorId)) ?? threads[0];
   if (threads.length === 1) {
+    return canonical;
+  }
+
+  if (isPrismaProposalInquiryPathEnabled()) {
+    for (const thread of threads) {
+      if (thread.id === canonical.id) continue;
+      await proposalInquiryRepository.reassignMessages(thread.id, canonical.id);
+      if (thread.status !== "converted") {
+        await proposalInquiryRepository.updateStatus(thread.id, "closed");
+      }
+    }
+    await reassignQuotesToInquiry(clientEmail, creatorId, canonical.id);
     return canonical;
   }
 
@@ -401,6 +482,13 @@ export async function groupInquiriesForCreator(
 }
 
 export async function getLatestMessage(inquiryId: string): Promise<StoredMessage | null> {
+  if (isPrismaProposalInquiryPathEnabled()) {
+    const messages = (await proposalInquiryRepository.listMessages(inquiryId)).filter(
+      (item) => item.sender !== "system"
+    );
+    return messages.at(-1) ?? null;
+  }
+
   const store = await readStore();
   const messages = store.messages
     .filter((item) => item.inquiry_id === inquiryId && item.sender !== "system")
@@ -409,6 +497,13 @@ export async function getLatestMessage(inquiryId: string): Promise<StoredMessage
 }
 
 export async function getMessages(inquiryId: string, after?: string): Promise<StoredMessage[]> {
+  if (isPrismaProposalInquiryPathEnabled()) {
+    const rows = await proposalInquiryRepository.listMessages(inquiryId);
+    if (!after) return rows;
+    const afterTime = new Date(after).getTime();
+    return rows.filter((item) => new Date(item.created_at).getTime() > afterTime);
+  }
+
   const store = await readStore();
   const rows = store.messages
     .filter((item) => item.inquiry_id === inquiryId)
@@ -433,8 +528,7 @@ export async function addMessage(
     return null;
   }
 
-  const store = await readStore();
-  const inquiry = store.inquiries.find((item) => item.id === inquiryId);
+  const inquiry = await getInquiry(inquiryId);
   if (!inquiry) {
     return null;
   }
@@ -451,6 +545,26 @@ export async function addMessage(
     finalBody += `\n\n— ${contactFilterNotice("en", filtered.reasons)}`;
   }
 
+  if (isPrismaProposalInquiryPathEnabled()) {
+    const message = await proposalInquiryRepository.addMessage({
+      inquiryId,
+      sender,
+      body: finalBody,
+      kind: options?.kind ?? "text",
+      attachmentUrl: options?.attachment_url ?? null
+    });
+    if (sender === "creator" && inquiry.status === "new") {
+      await proposalInquiryRepository.updateStatus(inquiryId, "quoted");
+    }
+    return message;
+  }
+
+  const store = await readStore();
+  const storeInquiry = store.inquiries.find((item) => item.id === inquiryId);
+  if (!storeInquiry) {
+    return null;
+  }
+
   const message: StoredMessage = {
     id: createId("msg"),
     inquiry_id: inquiryId,
@@ -464,8 +578,8 @@ export async function addMessage(
 
   store.messages.push(message);
 
-  if (sender === "creator" && inquiry.status === "new") {
-    inquiry.status = "quoted";
+  if (sender === "creator" && storeInquiry.status === "new") {
+    storeInquiry.status = "quoted";
   }
 
   await writeStore(store);
@@ -496,6 +610,16 @@ export async function addSystemMessage(inquiryId: string, body: string): Promise
     return null;
   }
 
+  if (isPrismaProposalInquiryPathEnabled()) {
+    const inquiry = await proposalInquiryRepository.findById(inquiryId);
+    if (!inquiry) return null;
+    return proposalInquiryRepository.addMessage({
+      inquiryId,
+      sender: "system",
+      body: trimmed
+    });
+  }
+
   const store = await readStore();
   const inquiry = store.inquiries.find((item) => item.id === inquiryId);
   if (!inquiry) {
@@ -519,6 +643,14 @@ export async function updateInquiryStatus(
   inquiryId: string,
   status: StoredInquiry["status"]
 ): Promise<StoredInquiry | null> {
+  if (isPrismaProposalInquiryPathEnabled()) {
+    try {
+      return await proposalInquiryRepository.updateStatus(inquiryId, status);
+    } catch {
+      return null;
+    }
+  }
+
   const store = await readStore();
   const inquiry = store.inquiries.find((item) => item.id === inquiryId);
   if (!inquiry) {

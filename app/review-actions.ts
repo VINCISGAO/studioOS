@@ -1041,6 +1041,7 @@ export async function startPaidRevisionStripeCheckoutAction(formData: FormData) 
     );
   }
 
+  let checkoutUrl: string | null = null;
   try {
     const checkout = await platformPaymentService.createPaidRevisionCheckout({
       orderId,
@@ -1048,7 +1049,7 @@ export async function startPaidRevisionStripeCheckoutAction(formData: FormData) 
       brandEmail: clientEmail,
       locale: lang
     });
-    redirect(checkout.checkoutUrl);
+    checkoutUrl = checkout.checkoutUrl;
   } catch (error) {
     const message = error instanceof Error ? error.message : "checkout-failed";
     redirect(
@@ -1058,6 +1059,8 @@ export async function startPaidRevisionStripeCheckoutAction(formData: FormData) 
       )
     );
   }
+
+  redirect(checkoutUrl!);
 }
 
 function mapSettlementStatus(

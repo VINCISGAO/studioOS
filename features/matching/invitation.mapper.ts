@@ -83,6 +83,7 @@ export function mapInvitationToStored(
     brandEmail: campaign.brand?.email?.toLowerCase(),
     creatorName: invitation.creator.displayName,
     creatorHeadline: invitation.creator.headline ?? undefined,
+    creatorAvatarUrl: invitation.creator.user?.avatarUrl ?? undefined,
     budget: Number(campaign.budget),
     currency: campaign.currency,
     deadline: campaign.deadline.toISOString(),
