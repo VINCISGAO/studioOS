@@ -107,6 +107,10 @@ export function readReferenceVideoDurationSec(parameters: Record<string, unknown
 }
 
 export function hasSeedanceVideoReferenceInput(parameters: Record<string, unknown>) {
+  const assetId = String(parameters.referenceAssetId ?? "").trim();
+  const referenceUrl = String(parameters.referenceUrl ?? "").trim();
+  if (!assetId && !referenceUrl) return false;
+
   const mime = String(parameters.referenceMimeType ?? parameters.referenceMime ?? "").toLowerCase();
   if (mime.startsWith("video/")) return true;
   const inputType = String(parameters.inputType ?? "").trim().toUpperCase();

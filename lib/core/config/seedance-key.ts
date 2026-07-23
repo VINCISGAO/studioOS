@@ -69,3 +69,7 @@ export function readSeedanceCallbackUrl() {
   if (!appUrl) return null;
   return `${appUrl.replace(/\/+$/, "")}/api/v1/webhooks/seedance`;
 }
+
+export function readSeedanceWebhookSecret() {
+  return (process.env["SEEDANCE_WEBHOOK_SECRET"] ?? "").trim();
+}

@@ -6,6 +6,7 @@ import {
 } from "@/lib/core/config/seedance-key";
 import { normalizeSeedanceModelId } from "@/lib/canvas/seedance-credits-pricing";
 import { logger } from "@/lib/core/logger";
+import { fetchHttpsWithByteLimit } from "@/lib/core/security/outbound-url";
 
 export type SeedanceApiModelId = "seedance-2-0" | "seedance-2-0-fast" | "seedance-2-0-mini";
 
@@ -277,16 +278,7 @@ export async function seedancePollTask(input: {
 }
 
 export async function seedanceDownloadVideo(url: string) {
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new SeedanceApiError({
-      status: response.status,
-      code: "SEEDANCE_DOWNLOAD_FAILED",
-      message: `Failed to download generated video (${response.status})`
-    });
-  }
-
-  const buffer = Buffer.from(await response.arrayBuffer());
+  const { buffer, contentType } = await fetchHttpsWithByteLimit(url);
   if (!buffer.length) {
     throw new SeedanceApiError({
       status: 502,
@@ -295,11 +287,11 @@ export async function seedanceDownloadVideo(url: string) {
     });
   }
 
-  const contentType = response.headers.get("content-type")?.split(";")[0]?.trim().toLowerCase();
+  const normalizedContentType = contentType?.split(";")[0]?.trim().toLowerCase();
   const mimeType =
-    contentType === "video/quicktime"
+    normalizedContentType === "video/quicktime"
       ? "video/quicktime"
-      : contentType === "video/webm"
+      : normalizedContentType === "video/webm"
         ? "video/webm"
         : "video/mp4";
 
