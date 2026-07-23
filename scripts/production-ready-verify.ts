@@ -372,7 +372,7 @@ function addIntegrationSteps(steps: Step[]) {
 
 function addStaticSteps(steps: Step[]) {
   steps.push(runCmd("prisma.generate", "npx prisma generate"));
-  steps.push(runCmd("prisma.validate", "npx prisma validate"));
+  steps.push(runCmd("prisma.validate", "bash scripts/prisma-with-env.sh validate"));
   steps.push(runCmd("typecheck", "npm run typecheck"));
   steps.push(runCmd("marketing.verify_links", "npm run marketing:verify-links"));
   steps.push(runCmd("lint", "npx next lint --no-cache --quiet"));

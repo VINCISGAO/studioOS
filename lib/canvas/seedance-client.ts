@@ -276,8 +276,67 @@ export async function seedancePollTask(input: {
   });
 }
 
+const MAX_SEEDANCE_VIDEO_BYTES = 200 * 1024 * 1024;
+
+function isBlockedDownloadHost(hostname: string) {
+  const host = hostname.toLowerCase();
+  if (
+    host === "localhost" ||
+    host === "127.0.0.1" ||
+    host === "0.0.0.0" ||
+    host === "::1" ||
+    host.endsWith(".local") ||
+    host.endsWith(".internal") ||
+    host === "metadata.google.internal"
+  ) {
+    return true;
+  }
+
+  if (/^\d{1,3}(?:\.\d{1,3}){3}$/.test(host)) {
+    const [a, b] = host.split(".").map((part) => Number(part));
+    if (a === 10) return true;
+    if (a === 127) return true;
+    if (a === 169 && b === 254) return true;
+    if (a === 192 && b === 168) return true;
+    if (a === 172 && b >= 16 && b <= 31) return true;
+  }
+
+  return false;
+}
+
+function assertSafeSeedanceDownloadUrl(url: string) {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    throw new SeedanceApiError({
+      status: 400,
+      code: "SEEDANCE_INVALID_VIDEO_URL",
+      message: "Invalid video download URL"
+    });
+  }
+
+  if (parsed.protocol !== "https:") {
+    throw new SeedanceApiError({
+      status: 400,
+      code: "SEEDANCE_INVALID_VIDEO_URL",
+      message: "Video download URL must use HTTPS"
+    });
+  }
+
+  if (isBlockedDownloadHost(parsed.hostname)) {
+    throw new SeedanceApiError({
+      status: 400,
+      code: "SEEDANCE_INVALID_VIDEO_URL",
+      message: "Video download URL host is not allowed"
+    });
+  }
+}
+
 export async function seedanceDownloadVideo(url: string) {
-  const response = await fetch(url);
+  assertSafeSeedanceDownloadUrl(url);
+
+  const response = await fetch(url, { redirect: "follow" });
   if (!response.ok) {
     throw new SeedanceApiError({
       status: response.status,
@@ -286,7 +345,23 @@ export async function seedanceDownloadVideo(url: string) {
     });
   }
 
+  const contentLength = Number(response.headers.get("content-length") ?? "0");
+  if (Number.isFinite(contentLength) && contentLength > MAX_SEEDANCE_VIDEO_BYTES) {
+    throw new SeedanceApiError({
+      status: 413,
+      code: "SEEDANCE_VIDEO_TOO_LARGE",
+      message: "Downloaded video file exceeds the 200MB limit"
+    });
+  }
+
   const buffer = Buffer.from(await response.arrayBuffer());
+  if (buffer.length > MAX_SEEDANCE_VIDEO_BYTES) {
+    throw new SeedanceApiError({
+      status: 413,
+      code: "SEEDANCE_VIDEO_TOO_LARGE",
+      message: "Downloaded video file exceeds the 200MB limit"
+    });
+  }
   if (!buffer.length) {
     throw new SeedanceApiError({
       status: 502,

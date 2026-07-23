@@ -601,6 +601,19 @@ export class CanvasAssetService {
     return { deleted: result.count, assetIds: deletable };
   }
 
+  assertSeedanceSelectableAsset(asset: Pick<StoredAsset, "metadataJson">) {
+    const meta = parseCanvasAssetMetadata(asset.metadataJson);
+    const status = meta.seedanceReview?.status;
+    if (status && status !== "APPROVED") {
+      throw appError(
+        "VALIDATION_ERROR",
+        status === "REJECTED"
+          ? "This asset was rejected and cannot be used for generation"
+          : "This asset is still under review and cannot be used for generation yet"
+      );
+    }
+  }
+
   async requireAsset(assetId: string, user: AuthUserDto): Promise<StoredAsset> {
     const campaignAsset = await canvasRepository.findAssetById(assetId);
     if (campaignAsset) {
