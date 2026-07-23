@@ -72,6 +72,18 @@ async function finalizeDuplicateConfirm(
   }
 
   const synced = await tx.creatorDepositPayment.findUniqueOrThrow({ where: { id: payment.id } });
+
+  if (synced.status === "SUCCEEDED") {
+    await tx.creatorDepositAccount.updateMany({
+      where: { id: input.accountId, depositStatus: { not: "PAID" } },
+      data: {
+        depositStatus: "PAID",
+        depositAmountUsd: depositAmountUsdFromMinor(synced.amountMinor),
+        paidAt: synced.confirmedAt ?? new Date()
+      }
+    });
+  }
+
   return { duplicate: true as const, payment: synced, accountId: input.accountId };
 }
 

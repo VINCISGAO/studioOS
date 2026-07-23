@@ -289,8 +289,67 @@ export async function murekaPollTask(input: {
   });
 }
 
+const MAX_MUREKA_AUDIO_BYTES = 50 * 1024 * 1024;
+
+function isBlockedDownloadHost(hostname: string) {
+  const host = hostname.toLowerCase();
+  if (
+    host === "localhost" ||
+    host === "127.0.0.1" ||
+    host === "0.0.0.0" ||
+    host === "::1" ||
+    host.endsWith(".local") ||
+    host.endsWith(".internal") ||
+    host === "metadata.google.internal"
+  ) {
+    return true;
+  }
+
+  if (/^\d{1,3}(?:\.\d{1,3}){3}$/.test(host)) {
+    const [a, b] = host.split(".").map((part) => Number(part));
+    if (a === 10) return true;
+    if (a === 127) return true;
+    if (a === 169 && b === 254) return true;
+    if (a === 192 && b === 168) return true;
+    if (a === 172 && b >= 16 && b <= 31) return true;
+  }
+
+  return false;
+}
+
+function assertSafeMurekaDownloadUrl(url: string) {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    throw new MurekaApiError({
+      status: 400,
+      code: "MUREKA_INVALID_AUDIO_URL",
+      message: "Invalid audio download URL"
+    });
+  }
+
+  if (parsed.protocol !== "https:") {
+    throw new MurekaApiError({
+      status: 400,
+      code: "MUREKA_INVALID_AUDIO_URL",
+      message: "Audio download URL must use HTTPS"
+    });
+  }
+
+  if (isBlockedDownloadHost(parsed.hostname)) {
+    throw new MurekaApiError({
+      status: 400,
+      code: "MUREKA_INVALID_AUDIO_URL",
+      message: "Audio download URL host is not allowed"
+    });
+  }
+}
+
 export async function murekaDownloadAudio(url: string) {
-  const response = await fetch(url);
+  assertSafeMurekaDownloadUrl(url);
+
+  const response = await fetch(url, { redirect: "follow" });
   if (!response.ok) {
     throw new MurekaApiError({
       status: response.status,
@@ -299,7 +358,23 @@ export async function murekaDownloadAudio(url: string) {
     });
   }
 
+  const contentLength = Number(response.headers.get("content-length") ?? "0");
+  if (Number.isFinite(contentLength) && contentLength > MAX_MUREKA_AUDIO_BYTES) {
+    throw new MurekaApiError({
+      status: 413,
+      code: "MUREKA_AUDIO_TOO_LARGE",
+      message: "Downloaded audio file exceeds the 50MB limit"
+    });
+  }
+
   const buffer = Buffer.from(await response.arrayBuffer());
+  if (buffer.length > MAX_MUREKA_AUDIO_BYTES) {
+    throw new MurekaApiError({
+      status: 413,
+      code: "MUREKA_AUDIO_TOO_LARGE",
+      message: "Downloaded audio file exceeds the 50MB limit"
+    });
+  }
   if (!buffer.length) {
     throw new MurekaApiError({
       status: 502,
