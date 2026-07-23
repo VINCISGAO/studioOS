@@ -9,7 +9,7 @@ import { PageShell } from "@/components/page-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getInquiry, getMessagesForPair, consolidateInquiryThreads } from "@/lib/chat-service";
-import { getCurrentCreator, getCurrentCreatorId } from "@/features/auth/session-context";
+import { getCurrentCreator, getCurrentCreatorId, getCurrentClientEmail } from "@/features/auth/session-context";
 import { getCreatorById } from "@/lib/creator-service";
 import { canAcceptCreatorOrders, countCompletedCreatorOrders } from "@/lib/studioos/deposit-guard";
 import { creatorWorks } from "@/lib/data";
@@ -70,9 +70,18 @@ export default async function ProposalRoomPage({ params, searchParams }: Props) 
   const creator = await getCreatorById(inquiry.creator_id);
   if (!creator) notFound();
 
-  const currentCreatorId = await getCurrentCreatorId();
+  const [currentCreatorId, clientEmail] = await Promise.all([
+    getCurrentCreatorId(),
+    getCurrentClientEmail()
+  ]);
+  const isStudio = currentCreatorId === inquiry.creator_id;
+  const isBrand = clientEmail?.toLowerCase() === inquiry.client_email.toLowerCase();
+  if (!isStudio && !isBrand) {
+    redirect(withLocale("/login", locale));
+  }
+
   const currentCreator = await getCurrentCreator();
-  const viewerRole = currentCreatorId === inquiry.creator_id ? "studio" : "brand";
+  const viewerRole = isStudio ? "studio" : "brand";
   const completedOrders =
     currentCreator && viewerRole === "studio"
       ? countCompletedCreatorOrders(await listOrdersForCreator(currentCreator.id))

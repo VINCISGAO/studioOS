@@ -193,7 +193,7 @@ export function CreatorDepositEmbeddedCheckout({
     return () => {
       cancelled = true;
     };
-  }, [savePaymentMethod, refreshKey, locale]);
+  }, [refreshKey, locale, t.unavailable]);
 
   const stripePromise = useMemo(
     () => (intent?.publishableKey ? loadStripe(intent.publishableKey) : null),

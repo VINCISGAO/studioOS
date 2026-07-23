@@ -28,6 +28,13 @@ function depositReturnUrl(appUrl: string, locale: Locale) {
   return `${appUrl}/studio/deposit?checkout=success&payment_intent={PAYMENT_INTENT_ID}&lang=${locale}`;
 }
 
+const REUSABLE_DEPOSIT_INTENT_STATUSES = new Set<Stripe.PaymentIntent.Status>([
+  "requires_payment_method",
+  "requires_confirmation",
+  "requires_action",
+  "processing"
+]);
+
 function buildDepositPaymentIntentParams(input: {
   amountMinor: number;
   currency: string;
@@ -100,6 +107,25 @@ export class StripeEmbeddedPaymentService {
       amount_minor: String(amountMinor),
       currency
     };
+    const returnUrl = depositReturnUrl(appUrl, input.locale);
+    const existingIntentId = pending.payment.stripe_payment_intent_id?.trim();
+
+    if (existingIntentId) {
+      const existingIntent = await stripe.paymentIntents.retrieve(existingIntentId);
+      if (
+        existingIntent.client_secret &&
+        REUSABLE_DEPOSIT_INTENT_STATUSES.has(existingIntent.status)
+      ) {
+        return {
+          clientSecret: existingIntent.client_secret,
+          paymentIntentId: existingIntent.id,
+          paymentId: pending.payment.id,
+          amountUsd: depositAmountUsdFromMinor(amountMinor),
+          currency,
+          publishableKey
+        };
+      }
+    }
 
     const intent = await stripe.paymentIntents.create(
       buildDepositPaymentIntentParams({
@@ -109,8 +135,11 @@ export class StripeEmbeddedPaymentService {
         savePaymentMethod: input.savePaymentMethod ?? true,
         locale: input.locale,
         metadata,
-        returnUrl: depositReturnUrl(appUrl, input.locale)
-      })
+        returnUrl
+      }),
+      existingIntentId
+        ? { idempotencyKey: `deposit-pi:${pending.payment.id}:${Date.now()}` }
+        : { idempotencyKey: `deposit-pi:${pending.payment.id}` }
     );
 
     if (!intent.client_secret) {
