@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-import { getCurrentClientEmail } from "@/features/auth/session-context";
-import { getCurrentCreatorId } from "@/features/auth/session-context";
 import { addMessage, getInquiry, getMessagesForPair, resolveCanonicalInquiry } from "@/lib/chat-service";
+import { resolveInquiryViewer } from "@/lib/studioos/proposal-inquiry-access";
 import type { ChatSender } from "@/lib/chat-types";
 import { getOrderForPair } from "@/lib/order-service";
 import { isProposalChatLocked } from "@/lib/studioos/project-contract";
@@ -9,13 +8,6 @@ import { isProposalChatLocked } from "@/lib/studioos/project-contract";
 type RouteContext = {
   params: Promise<{ id: string }>;
 };
-
-async function resolveInquiryViewer(inquiry: { client_email: string; creator_id: string }) {
-  const [clientEmail, creatorId] = await Promise.all([getCurrentClientEmail(), getCurrentCreatorId()]);
-  const isBrand = clientEmail?.toLowerCase() === inquiry.client_email.toLowerCase();
-  const isCreator = creatorId === inquiry.creator_id;
-  return { isBrand, isCreator };
-}
 
 export async function GET(request: Request, context: RouteContext) {
   const { id } = await context.params;

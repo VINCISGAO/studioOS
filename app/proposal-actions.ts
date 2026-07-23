@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { addPitchMessage, getInquiry } from "@/lib/chat-service";
-import { getCurrentCreatorId } from "@/features/auth/session-context";
+import { getCurrentClientEmail, getCurrentCreatorId } from "@/features/auth/session-context";
 import { withLocale, type Locale } from "@/lib/i18n";
 
 function normalizeLang(raw: FormDataEntryValue | null): Locale {
@@ -33,7 +33,13 @@ export async function submitReferenceAction(formData: FormData) {
   const note = String(formData.get("note") ?? "").trim();
 
   const inquiry = await getInquiry(inquiryId);
-  if (!inquiry || !referenceUrl) {
+  const clientEmail = await getCurrentClientEmail();
+  if (
+    !inquiry ||
+    !referenceUrl ||
+    !clientEmail ||
+    clientEmail.toLowerCase() !== inquiry.client_email.toLowerCase()
+  ) {
     redirect(withLocale(`/proposal/${inquiryId}?error=reference`, lang));
   }
 
