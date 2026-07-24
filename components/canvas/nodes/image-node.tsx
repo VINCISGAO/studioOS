@@ -1,12 +1,14 @@
 "use client";
 
+import { memo } from "react";
 import { ImageIcon, Sparkles } from "lucide-react";
 import type { NodeProps } from "@xyflow/react";
 import type { VincisCanvasNode } from "@/lib/canvas/types";
 import { CanvasNodeFrame } from "@/components/canvas/nodes/canvas-node-frame";
 import { CanvasVideoNodeMenu } from "@/components/canvas/nodes/canvas-video-node-menu";
+import { canvasNodePropsAreEqual } from "@/lib/canvas/canvas-node-memo";
 
-export function ImageNode({ id, data, selected }: NodeProps<VincisCanvasNode>) {
+function ImageNodeView({ id, data, selected }: NodeProps<VincisCanvasNode>) {
   const showMenu = data.status === "ready" && Boolean(data.url || data.assetId);
 
   return (
@@ -50,3 +52,5 @@ export function ImageNode({ id, data, selected }: NodeProps<VincisCanvasNode>) {
     </>
   );
 }
+
+export const ImageNode = memo(ImageNodeView, canvasNodePropsAreEqual);

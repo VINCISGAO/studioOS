@@ -1,11 +1,13 @@
 "use client";
 
+import { memo } from "react";
 import { Frame } from "lucide-react";
 import { NodeResizer, type NodeProps } from "@xyflow/react";
 import type { VincisCanvasNode } from "@/lib/canvas/types";
+import { canvasNodePropsAreEqual } from "@/lib/canvas/canvas-node-memo";
 import { cn } from "@/lib/utils";
 
-export function FrameNode({ data, selected }: NodeProps<VincisCanvasNode>) {
+function FrameNodeView({ data, selected }: NodeProps<VincisCanvasNode>) {
   return (
     <div
       className={cn(
@@ -21,3 +23,5 @@ export function FrameNode({ data, selected }: NodeProps<VincisCanvasNode>) {
     </div>
   );
 }
+
+export const FrameNode = memo(FrameNodeView, canvasNodePropsAreEqual);

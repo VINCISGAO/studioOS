@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { Play } from "lucide-react";
 import type { NodeProps } from "@xyflow/react";
 import type { VincisCanvasNode } from "@/lib/canvas/types";
@@ -8,6 +9,7 @@ import { VideoNodeGeneratingView } from "@/components/canvas/nodes/video-node-ge
 import { VideoNodeReadyPlayer } from "@/components/canvas/nodes/video-node-ready-player";
 import { VideoNodeShell } from "@/components/canvas/nodes/video-node-shell";
 import { VIDEO_NODE_READY_UI, videoNodeReadyCopy } from "@/lib/canvas/video-node-ready-design";
+import { canvasNodePropsAreEqual } from "@/lib/canvas/canvas-node-memo";
 import { cn } from "@/lib/utils";
 
 function VideoNodePlaceholder({
@@ -35,7 +37,7 @@ function VideoNodePlaceholder({
   );
 }
 
-export function VideoNode({ id, data, selected }: NodeProps<VincisCanvasNode>) {
+function VideoNodeView({ id, data, selected }: NodeProps<VincisCanvasNode>) {
   const t = videoNodeReadyCopy.zh;
 
   if (data.status === "loading") {
@@ -63,3 +65,5 @@ export function VideoNode({ id, data, selected }: NodeProps<VincisCanvasNode>) {
     </div>
   );
 }
+
+export const VideoNode = memo(VideoNodeView, canvasNodePropsAreEqual);

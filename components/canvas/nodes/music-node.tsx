@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { memo, useEffect } from "react";
 import type { NodeProps } from "@xyflow/react";
 import type { VincisCanvasNode } from "@/lib/canvas/types";
 import { useCanvasStore } from "@/components/canvas/canvas-store";
@@ -16,8 +16,9 @@ import {
   MUSIC_NODE_LOADING_CARD,
   MUSIC_NODE_READY_CARD
 } from "@/lib/canvas/music-node-design";
+import { canvasNodePropsAreEqual } from "@/lib/canvas/canvas-node-memo";
 
-export function MusicNode({ id, data, selected, width, height }: NodeProps<VincisCanvasNode>) {
+function MusicNodeView({ id, data, selected, width, height }: NodeProps<VincisCanvasNode>) {
   const onNodesChange = useCanvasStore((state) => state.onNodesChange);
   const loading = data.status === "loading";
   const ready = data.status === "ready" && Boolean(data.url);
@@ -76,3 +77,5 @@ export function MusicNode({ id, data, selected, width, height }: NodeProps<Vinci
     </MusicNodeShell>
   );
 }
+
+export const MusicNode = memo(MusicNodeView, canvasNodePropsAreEqual);

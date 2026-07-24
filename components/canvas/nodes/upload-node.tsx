@@ -1,12 +1,14 @@
 "use client";
 
+import { memo } from "react";
 import { FileUp } from "lucide-react";
 import type { NodeProps } from "@xyflow/react";
 import type { VincisCanvasNode } from "@/lib/canvas/types";
 import { CanvasNodeFrame } from "@/components/canvas/nodes/canvas-node-frame";
 import { CanvasVideoNodeMenu } from "@/components/canvas/nodes/canvas-video-node-menu";
+import { canvasNodePropsAreEqual } from "@/lib/canvas/canvas-node-memo";
 
-export function UploadNode({ id, data, selected }: NodeProps<VincisCanvasNode>) {
+function UploadNodeView({ id, data, selected }: NodeProps<VincisCanvasNode>) {
   const mime = data.mimeType ?? "";
   const isImage = mime.startsWith("image/");
   const isVideo = mime.startsWith("video/");
@@ -52,3 +54,5 @@ export function UploadNode({ id, data, selected }: NodeProps<VincisCanvasNode>) 
     </>
   );
 }
+
+export const UploadNode = memo(UploadNodeView, canvasNodePropsAreEqual);

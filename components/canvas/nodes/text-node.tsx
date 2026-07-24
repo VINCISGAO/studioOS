@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { memo, useState } from "react";
 import { Type } from "lucide-react";
 import type { NodeProps } from "@xyflow/react";
 import { useCanvasStore } from "@/components/canvas/canvas-store";
 import { CanvasNodeFrame } from "@/components/canvas/nodes/canvas-node-frame";
 import type { VincisCanvasNode } from "@/lib/canvas/types";
+import { canvasNodePropsAreEqual } from "@/lib/canvas/canvas-node-memo";
 
-export function TextNode({ id, data, selected }: NodeProps<VincisCanvasNode>) {
+function TextNodeView({ id, data, selected }: NodeProps<VincisCanvasNode>) {
   const [value, setValue] = useState(data.text ?? "");
   const updateNodeData = useCanvasStore((state) => state.updateNodeData);
 
@@ -30,3 +31,5 @@ export function TextNode({ id, data, selected }: NodeProps<VincisCanvasNode>) {
     </CanvasNodeFrame>
   );
 }
+
+export const TextNode = memo(TextNodeView, canvasNodePropsAreEqual);

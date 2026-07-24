@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { LoaderCircle, Sparkles } from "lucide-react";
 import type { NodeProps } from "@xyflow/react";
 import type { VincisCanvasNode } from "@/lib/canvas/types";
@@ -8,8 +9,9 @@ import { MusicNodeGeneratingView } from "@/components/canvas/nodes/music-node-ge
 import { MusicNodeShell } from "@/components/canvas/nodes/music-node-shell";
 import { VideoNodeGeneratingView } from "@/components/canvas/nodes/video-node-generating-view";
 import { VideoNodeShell } from "@/components/canvas/nodes/video-node-shell";
+import { canvasNodePropsAreEqual } from "@/lib/canvas/canvas-node-memo";
 
-export function LoadingNode({ data, selected }: NodeProps<VincisCanvasNode>) {
+function LoadingNodeView({ data, selected }: NodeProps<VincisCanvasNode>) {
   if (data.generationType === "MUSIC") {
     return (
       <MusicNodeShell selected={selected}>
@@ -44,3 +46,5 @@ export function LoadingNode({ data, selected }: NodeProps<VincisCanvasNode>) {
     </CanvasNodeFrame>
   );
 }
+
+export const LoadingNode = memo(LoadingNodeView, canvasNodePropsAreEqual);
