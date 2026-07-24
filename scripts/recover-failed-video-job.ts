@@ -213,6 +213,9 @@ async function settleRecoveredJobBilling(job: GenerationJob) {
   const actualCredits = job.estimatedCredits;
   if (job.creditReservationId) {
     const existing = await creditWalletRepository.findReservationById(job.creditReservationId);
+    if (existing?.status === "CAPTURED") {
+      return;
+    }
     if (existing?.status === "ACTIVE") {
       await creditGenerationBillingService.finalizeSuccess(job.creditReservationId, actualCredits, {
         campaignId: job.campaignId,
@@ -220,6 +223,20 @@ async function settleRecoveredJobBilling(job: GenerationJob) {
       });
       return;
     }
+  }
+
+  const existingRecover = await creditWalletRepository.findReservationByIdempotency(
+    `recover:${job.id}`
+  );
+  if (existingRecover?.status === "CAPTURED") {
+    return;
+  }
+  if (existingRecover?.status === "ACTIVE") {
+    await creditGenerationBillingService.finalizeSuccess(existingRecover.id, actualCredits, {
+      campaignId: job.campaignId,
+      generationJobId: job.id
+    });
+    return;
   }
 
   const parameters = isRecord(job.input) ? job.input : {};
@@ -319,6 +336,9 @@ async function recoverJob(job: GenerationJob, options: CliOptions) {
     }
   });
 
+  console.log("Settling billing…");
+  await settleRecoveredJobBilling(job);
+
   await prisma.generationJob.update({
     where: { id: job.id },
     data: {
@@ -353,8 +373,6 @@ async function recoverJob(job: GenerationJob, options: CliOptions) {
     });
   }
 
-  console.log("Settling billing…");
-  await settleRecoveredJobBilling(job);
   await finalizeCanvasGenerationJob(owner, job.id, job.ownerId);
 
   console.log("\nRecovery complete.");
