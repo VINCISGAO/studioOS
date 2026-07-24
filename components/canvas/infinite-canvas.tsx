@@ -184,6 +184,7 @@ function InfiniteCanvasFlow({
         panOnDrag={isMoveMode ? true : [1, 2]}
         panActivationKeyCode={isMoveMode ? null : "Space"}
         panOnScroll
+        onlyRenderVisibleElements
         multiSelectionKeyCode={["Meta", "Control", "Shift"]}
         nodesDraggable={!isMoveMode}
         elementsSelectable

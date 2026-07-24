@@ -34,6 +34,9 @@ export function VideoNodeReadyPlayer({
 
   useEffect(() => {
     setDurationSec(0);
+    return () => {
+      videoRef.current?.pause();
+    };
   }, [url]);
 
   function onLoadedMetadata() {
