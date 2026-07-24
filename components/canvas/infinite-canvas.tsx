@@ -19,6 +19,7 @@ import { useCanvasShortcuts } from "@/components/canvas/hooks/use-canvas-shortcu
 import { useCanvasViewportActions } from "@/components/canvas/hooks/use-canvas-viewport-actions";
 import { useCanvasViewportContent } from "@/components/canvas/hooks/use-canvas-viewport-content";
 import { useGenerationEvents } from "@/components/canvas/hooks/use-generation-events";
+import { useCanvasJobReconcile } from "@/components/canvas/hooks/use-canvas-job-reconcile";
 import { ImageNode } from "@/components/canvas/nodes/image-node";
 import { FrameNode } from "@/components/canvas/nodes/frame-node";
 import { LoadingNode } from "@/components/canvas/nodes/loading-node";
@@ -81,6 +82,7 @@ function InfiniteCanvasFlow({
   const { showEmptyHint } = useCanvasViewportContent(flowRef);
 
   useCanvasAutosave();
+  useCanvasJobReconcile(projectId);
   useGenerationEvents(projectId, { onTerminalFailure: onGenerationTerminalFailure });
 
   const isMoveMode = interactionMode === "move";

@@ -638,6 +638,22 @@ export class CanvasService {
     const jobs = await canvasRepository.listGenerationJobs(project.id, user.id, since);
     return Promise.all(jobs.map((job) => this.getJob(job.id, user)));
   }
+
+  async listReconcileJobEvents(projectId: string, user: AuthUserDto) {
+    const project = await this.resolveProject(projectId, user);
+    const since = new Date(Date.now() - 6 * 60 * 60 * 1000);
+    const [activeJobs, recentJobs] = await Promise.all([
+      canvasRepository.listActiveGenerationJobs(project.id, user.id),
+      canvasRepository.listGenerationJobs(project.id, user.id, since)
+    ]);
+    const seen = new Set<string>();
+    const merged = [...activeJobs, ...recentJobs].filter((job) => {
+      if (seen.has(job.id)) return false;
+      seen.add(job.id);
+      return true;
+    });
+    return Promise.all(merged.map((job) => this.getJob(job.id, user)));
+  }
 }
 
 export const canvasService = new CanvasService();

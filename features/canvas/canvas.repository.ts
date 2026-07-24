@@ -498,6 +498,18 @@ export const canvasRepository = {
     });
   },
 
+  listActiveGenerationJobs(projectId: string, ownerId: string) {
+    return prisma.generationJob.findMany({
+      where: {
+        creativeProjectId: projectId,
+        ownerId,
+        status: { in: ["QUEUED", "SUBMITTING", "PROCESSING"] }
+      },
+      orderBy: { createdAt: "asc" },
+      take: 50
+    });
+  },
+
   updateGenerationJob(
     id: string,
     data: {
