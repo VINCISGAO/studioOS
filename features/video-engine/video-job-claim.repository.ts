@@ -28,43 +28,68 @@ export type ClaimedVideoGenerationJob = {
   };
 };
 
+/**
+ * Claim a queued video job and create its worker attempt.
+ *
+ * IMPORTANT: No interactive Prisma transaction here. Long-running provider calls
+ * (Seedance submit/poll) happen later in VideoOrchestrator, outside any tx.
+ * Interactive transactions on pooled/serverless Postgres (Neon) can expire with
+ * "Transaction not found" even for short callbacks.
+ */
 export async function claimVideoGenerationJobWithAttempt(input: {
   jobId: string;
   ownerId: string;
   progress?: number;
 }): Promise<ClaimedVideoGenerationJob | null> {
-  return prisma.$transaction(async (tx) => {
-    const existing = await tx.generationJob.findFirst({
-      where: {
-        id: input.jobId,
-        ownerId: input.ownerId,
-        status: { in: ["QUEUED", "SUBMITTING"] }
-      }
-    });
-    if (!existing) return null;
+  const progress = input.progress ?? 10;
 
-    const updatedCount = await tx.generationJob.updateMany({
+  const existing = await prisma.generationJob.findFirst({
+    where: {
+      id: input.jobId,
+      ownerId: input.ownerId,
+      status: { in: ["QUEUED", "SUBMITTING"] }
+    }
+  });
+  if (!existing) return null;
+
+  const claimed = await prisma.generationJob.updateMany({
+    where: {
+      id: input.jobId,
+      ownerId: input.ownerId,
+      status: { in: ["QUEUED", "SUBMITTING"] }
+    },
+    data: {
+      status: "PROCESSING",
+      progress,
+      startedAt: new Date()
+    }
+  });
+  if (claimed.count === 0) return null;
+
+  async function rollbackClaim() {
+    await prisma.generationJob.updateMany({
       where: {
         id: input.jobId,
         ownerId: input.ownerId,
-        status: { in: ["QUEUED", "SUBMITTING"] }
+        status: "PROCESSING",
+        providerTaskId: null
       },
       data: {
-        status: "PROCESSING",
-        progress: input.progress ?? 10,
-        startedAt: new Date()
+        status: "QUEUED",
+        progress: 0,
+        startedAt: null
       }
     });
-    if (updatedCount.count === 0) return null;
+  }
 
-    const lastAttempt = await tx.generationJobAttempt.findFirst({
+  try {
+    const lastAttemptNumber = await prisma.generationJobAttempt.aggregate({
       where: { generationJobId: input.jobId },
-      orderBy: { attemptNumber: "desc" },
-      select: { attemptNumber: true }
+      _max: { attemptNumber: true }
     });
-    const attemptNumber = (lastAttempt?.attemptNumber ?? 0) + 1;
+    const attemptNumber = (lastAttemptNumber._max.attemptNumber ?? 0) + 1;
 
-    const attempt = await tx.generationJobAttempt.create({
+    const attempt = await prisma.generationJobAttempt.create({
       data: {
         generationJobId: input.jobId,
         attemptNumber,
@@ -73,13 +98,13 @@ export async function claimVideoGenerationJobWithAttempt(input: {
       }
     });
 
-    await tx.generationJobEvent.create({
+    await prisma.generationJobEvent.create({
       data: {
         generationJobId: input.jobId,
         eventType: VIDEO_JOB_EVENT_TYPES.JOB_CLAIMED,
         fromStatus: existing.status,
         toStatus: "PROCESSING",
-        progress: input.progress ?? 10,
+        progress,
         payload: {
           attemptId: attempt.id,
           attemptNumber
@@ -87,7 +112,7 @@ export async function claimVideoGenerationJobWithAttempt(input: {
       }
     });
 
-    const job = await tx.generationJob.findFirstOrThrow({
+    const job = await prisma.generationJob.findFirstOrThrow({
       where: { id: input.jobId, ownerId: input.ownerId }
     });
 
@@ -114,5 +139,8 @@ export async function claimVideoGenerationJobWithAttempt(input: {
         status: attempt.status
       }
     };
-  });
+  } catch (error) {
+    await rollbackClaim().catch(() => undefined);
+    throw error;
+  }
 }

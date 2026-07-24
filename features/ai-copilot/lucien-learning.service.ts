@@ -31,6 +31,10 @@ export type LucienInteractionLearningInput = {
   blockCategory?: LucienQueryBlockCategory | null;
   knowledgeMatches?: LucienKnowledgeMatchSnapshot[];
   toolCalls?: string[];
+  promptAuthor?: "gpt" | "lucien" | null;
+  lucienRole?: "learning_only" | "responder" | null;
+  gptModel?: string | null;
+  gptProvider?: string | null;
 };
 
 export type LucienFeedbackLearningInput = {
@@ -86,6 +90,10 @@ function interactionPayload(input: LucienInteractionLearningInput) {
     blockCategory: input.blockCategory ?? null,
     knowledgeMatches: input.knowledgeMatches ?? [],
     toolCalls: input.toolCalls ?? [],
+    promptAuthor: input.promptAuthor ?? null,
+    lucienRole: input.lucienRole ?? null,
+    gptModel: input.gptModel ?? null,
+    gptProvider: input.gptProvider ?? null,
     recordedAt: new Date().toISOString()
   };
 }
@@ -96,8 +104,10 @@ function interactionConfidence(answerMode: string) {
   if (answerMode === "model") return 0.88;
   if (answerMode === "image_generation" || answerMode === "image_to_image") return 0.9;
   if (answerMode === "image_generation_failed") return 0.95;
-  if (answerMode === "music_style_enhance") return 0.88;
-  if (answerMode === "video_prompt_inspire") return 0.88;
+  if (answerMode === "music_style_enhance" || answerMode === "gpt_music_style_enhance") return 0.88;
+  if (answerMode === "video_prompt_inspire" || answerMode === "gpt_video_prompt_enhance") return 0.88;
+  if (answerMode === "gpt_image_prompt_enhance") return 0.88;
+  if (answerMode === "video_generation" || answerMode === "image_generation") return 0.92;
   return 0.75;
 }
 
@@ -126,15 +136,18 @@ function canvasGenerationPayload(input: LucienCanvasGenerationLearningInput) {
 }
 
 function canvasGenerationConfidence(status: "SUCCEEDED" | "FAILED", answerMode: string) {
+  if (status === "SUCCEEDED") {
+    if (
+      answerMode === "video_generation" ||
+      answerMode === "image_generation" ||
+      answerMode === "music_generation"
+    ) {
+      return 0.94;
+    }
+    return 0.9;
+  }
   if (status === "FAILED") return 0.95;
   if (answerMode === "image_to_image") return 0.9;
-  if (
-    answerMode === "image_generation" ||
-    answerMode === "video_generation" ||
-    answerMode === "music_generation"
-  ) {
-    return 0.88;
-  }
   return 0.85;
 }
 

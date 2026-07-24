@@ -5,6 +5,7 @@ import { useCanvasStore } from "@/components/canvas/canvas-store";
 import type { GenerationKind } from "@/components/canvas/generation-panel";
 import type { GenerationJobEvent, VincisCanvasNode } from "@/lib/canvas/types";
 import { formatValidationMessage } from "@/lib/canvas/format-validation-message";
+import { computeGenerationCredits } from "@/lib/canvas/generation-credits";
 import {
   patchNodeGenerationMetadata,
   readNodeGenerationContext,
@@ -85,10 +86,31 @@ function nodeReference(node: VincisCanvasNode) {
   };
 }
 
+function estimateGenerationCredits(
+  kind: GenerationKind,
+  model: string,
+  parameters: Record<string, string | number | boolean>
+) {
+  const type = kind === "image" ? "IMAGE" : kind === "video" ? "VIDEO" : "MUSIC";
+  return computeGenerationCredits({ type, model, parameters });
+}
+
+function reserveCreditsOptimistically(
+  kind: GenerationKind,
+  model: string,
+  parameters: Record<string, string | number | boolean>,
+  onCreditsReserved?: (amount: number) => void
+) {
+  const estimatedCredits = estimateGenerationCredits(kind, model, parameters);
+  if (estimatedCredits > 0) {
+    onCreditsReserved?.(estimatedCredits);
+  }
+}
+
 export function useCanvasMediaActions(
   projectId: string,
   options?: {
-    onCreditsCharged?: (amount: number) => void;
+    onCreditsReserved?: (amount: number) => void;
     onCreditsSync?: () => void;
   }
 ) {
@@ -210,9 +232,7 @@ export function useCanvasMediaActions(
       if (typeof job.chargedCredits === "number" && job.chargedCredits > 0) {
         patchNodeData(variables.nodeId, { chargedCredits: job.chargedCredits });
       }
-      if (job.chargedCredits && job.chargedCredits > 0) {
-        options?.onCreditsCharged?.(job.chargedCredits);
-      }
+      options?.onCreditsSync?.();
     },
     onError: (error, variables) => {
       const raw = error instanceof Error ? error.message : "Generation request failed";
@@ -295,6 +315,13 @@ export function useCanvasMediaActions(
       addNode(spawnLoadingNode(nodeId, title, input.prompt, generationType));
     }
 
+    reserveCreditsOptimistically(
+      kind,
+      input.model ?? "vincis-mock-v1",
+      parameters,
+      options?.onCreditsReserved
+    );
+
     generationMutation.mutate({
       kind,
       nodeId,
@@ -321,6 +348,7 @@ export function useCanvasMediaActions(
       const ctx = readNodeGenerationContext(node);
       const newNode = spawnMusicRegenerateLoadingNode(node, prompt);
       addNode(newNode);
+      reserveCreditsOptimistically("music", ctx.model, ctx.parameters, options?.onCreditsReserved);
       generationMutation.mutate({
         kind: "music",
         nodeId: newNode.id,
@@ -340,24 +368,6 @@ export function useCanvasMediaActions(
       model: ctx.model,
       mode: "REGENERATE",
       parameters: ctx.parameters,
-      reference: nodeReference(node),
-      targetNodeId: nodeId
-    });
-  }
-
-  function extendVideo(nodeId: string) {
-    const node = requireNode(nodeId);
-    if (!node || node.type !== "video") return;
-    const ctx = readNodeGenerationContext(node);
-    const currentDuration = Number(ctx.parameters.duration ?? 5);
-    generate("video", {
-      prompt: ctx.prompt || "Extend video",
-      model: ctx.model,
-      mode: "EXTEND",
-      parameters: {
-        ...ctx.parameters,
-        duration: Math.min(15, currentDuration + 5)
-      },
       reference: nodeReference(node),
       targetNodeId: nodeId
     });
@@ -414,7 +424,6 @@ export function useCanvasMediaActions(
     upload,
     generate,
     regenerate,
-    extendVideo,
     upscale,
     removeBackground,
     generationPending: generationMutation.isPending

@@ -4,7 +4,6 @@ import { createContext, useContext, type ReactNode } from "react";
 
 type CanvasNodeActions = {
   regenerate: (nodeId: string) => void;
-  extendVideo: (nodeId: string) => void;
   upscale: (nodeId: string) => void;
   removeBackground: (nodeId: string) => void;
 };

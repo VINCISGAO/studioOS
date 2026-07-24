@@ -109,23 +109,21 @@ function resolveGenerationType(input: {
   videoUrls: string[];
   audioUrls: string[];
   videoReferenceMode?: string;
-  mode?: string;
 }): SeedanceGenerationType {
+  const hasMedia =
+    input.imageUrls.length > 0 || input.videoUrls.length > 0 || input.audioUrls.length > 0;
+  if (!hasMedia) return "text-to-video";
+
   if (input.videoUrls.length > 0 || input.audioUrls.length > 0) {
     return "reference-to-video";
   }
-  if (input.imageUrls.length >= 2) {
+
+  const refMode = (input.videoReferenceMode ?? "reference").trim();
+  if (refMode === "keyframes" || refMode === "edit") {
     return "image-to-video";
   }
-  if (input.imageUrls.length === 1) {
-    const refMode = (input.videoReferenceMode ?? "").trim();
-    if (refMode === "edit" || refMode === "keyframes") {
-      return "image-to-video";
-    }
-    const mode = (input.mode ?? "").trim().toUpperCase();
-    return mode === "IMAGE_TO_VIDEO" ? "image-to-video" : "reference-to-video";
-  }
-  return "text-to-video";
+
+  return "reference-to-video";
 }
 
 export async function submitSeedanceVideoTask(input: {
@@ -224,9 +222,15 @@ export async function submitSeedanceVideoTask(input: {
     imageUrls,
     videoUrls,
     audioUrls,
-    videoReferenceMode: payload.videoReferenceMode,
-    mode: payload.mode
+    videoReferenceMode: payload.videoReferenceMode
   });
+
+  if (generation_type === "image-to-video" && imageUrls.length > 2) {
+    throw appError(
+      "VALIDATION_ERROR",
+      "Image-to-video supports at most 2 frame images; use reference mode for multiple assets"
+    );
+  }
 
   if (generation_type === "image-to-video" && imageUrls.length === 0) {
     throw appError("VALIDATION_ERROR", "Image-to-video requires an image reference URL");

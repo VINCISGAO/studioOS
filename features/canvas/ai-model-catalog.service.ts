@@ -6,6 +6,7 @@ import type {
 } from "@/features/canvas/ai-model-catalog.types";
 import { buildFallbackAiModelCatalog } from "@/lib/canvas/ai-model-catalog-fallback";
 import { isRunnableCanvasAiModel, isRunnableFallbackModelId } from "@/lib/canvas/canvas-runnable-models";
+import { normalizeVideoModelCapabilities } from "@/lib/canvas/video-duration-policy";
 import { logger } from "@/lib/core/logger";
 import { hasMureka, hasOpenAI, hasSeedance } from "@/lib/core/config/ai";
 import { prisma, hasDatabaseUrl } from "@/lib/core/database/prisma";
@@ -17,7 +18,7 @@ let serverCachedCatalog: PublicAiModelCatalog | null = null;
 let serverCachedAt = 0;
 
 function serializeCapabilities(row: AiModel): PublicAiModelCapabilities {
-  return {
+  const capabilities: PublicAiModelCapabilities = {
     supportedModes: row.supportedModes,
     supportedAspectRatios: row.supportedAspectRatios,
     supportedDurations: row.supportedDurations,
@@ -37,6 +38,7 @@ function serializeCapabilities(row: AiModel): PublicAiModelCapabilities {
     minDurationSec: row.minDurationSec,
     maxDurationSec: row.maxDurationSec
   };
+  return row.category === "VIDEO" ? normalizeVideoModelCapabilities(capabilities) : capabilities;
 }
 
 function serializePublicModel(row: AiModel): PublicAiModelView {

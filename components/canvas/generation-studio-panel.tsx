@@ -371,7 +371,6 @@ export function GenerationStudioPanel({
                 setShowUploadMenu(false);
                 references.openReferenceCanvasPicker(slot);
               }}
-              onToggleLibrarySelection={references.toggleLibrarySelection}
               onActivateLibrarySelection={references.activateLibrarySelection}
               onRemoveLibrarySelection={references.removeLibrarySelection}
               onPickFirstFrameLocal={() => {

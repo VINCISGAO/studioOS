@@ -3,7 +3,7 @@ import type { AuthUserDto } from "@/features/auth/auth.service";
 import { canvasAssetService } from "@/features/canvas/canvas-asset.service";
 import { appError } from "@/lib/core/errors";
 import { isObjectStorageConfigured } from "@/lib/core/config/video";
-import { createSignedObjectReadUrl } from "@/lib/studioos/object-storage";
+import { createSignedObjectReadUrl, getObject, getObjectMetadata, putObject } from "@/lib/studioos/object-storage";
 
 function isPublicHttpsUrl(value: string) {
   try {
@@ -12,6 +12,18 @@ function isPublicHttpsUrl(value: string) {
   } catch {
     return false;
   }
+}
+
+async function ensureCanvasAssetReadableFromR2(fileKey: string, mimeType: string) {
+  const existing = await getObjectMetadata(fileKey);
+  if (existing?.contentLength && existing.contentLength > 0) return;
+
+  const bytes = await getObject(fileKey);
+  if (!bytes) {
+    throw appError("NOT_FOUND", "Reference asset file not found in object storage");
+  }
+
+  await putObject(fileKey, bytes, mimeType);
 }
 
 export async function resolveSeedancePublicAssetUrl(input: {
@@ -35,6 +47,7 @@ export async function resolveSeedancePublicAssetUrl(input: {
   }
 
   const asset = await canvasAssetService.requireAsset(assetId, input.user);
+  await ensureCanvasAssetReadableFromR2(asset.fileKey, asset.mimeType);
   const signed = await createSignedObjectReadUrl({ key: asset.fileKey, expiresIn: 3600 });
   if (!signed) {
     throw appError("SYSTEM_ERROR", "Failed to create a public read URL for the reference asset.");

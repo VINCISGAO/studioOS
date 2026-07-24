@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Clock3,
   Download,
   Eraser,
   Scan,
@@ -103,13 +102,6 @@ export function CanvasVideoNodeMenu({
             label="去除背景"
             icon={<Eraser className="h-4 w-4 shrink-0" />}
             onClick={() => actions?.removeBackground(nodeId)}
-          />
-        ) : null}
-        {isVideo ? (
-          <MenuItem
-            label="视频延长"
-            icon={<Clock3 className="h-4 w-4 shrink-0" />}
-            onClick={() => actions?.extendVideo(nodeId)}
           />
         ) : null}
         {isImage ? (

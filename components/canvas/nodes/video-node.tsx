@@ -1,16 +1,26 @@
 "use client";
 
-import { memo } from "react";
+import { memo, useEffect, useState } from "react";
 import { Play } from "lucide-react";
 import type { NodeProps } from "@xyflow/react";
 import type { VincisCanvasNode } from "@/lib/canvas/types";
+import { useCanvasStore } from "@/components/canvas/canvas-store";
 import { CanvasVideoNodeMenu } from "@/components/canvas/nodes/canvas-video-node-menu";
 import { VideoNodeGeneratingView } from "@/components/canvas/nodes/video-node-generating-view";
 import { VideoNodeReadyPlayer } from "@/components/canvas/nodes/video-node-ready-player";
 import { VideoNodeShell } from "@/components/canvas/nodes/video-node-shell";
-import { VIDEO_NODE_READY_UI, videoNodeReadyCopy } from "@/lib/canvas/video-node-ready-design";
+import {
+  VIDEO_NODE_READY_UI,
+  resolveVideoNodeReadyDimensions,
+  videoNodeReadyCopy
+} from "@/lib/canvas/video-node-ready-design";
 import { canvasNodePropsAreEqual } from "@/lib/canvas/canvas-node-memo";
 import { cn } from "@/lib/utils";
+
+function readStoredVideoAspectRatio(data: VincisCanvasNode["data"]) {
+  const aspectRatio = data.generationParameters?.aspectRatio;
+  return typeof aspectRatio === "string" && aspectRatio.trim() ? aspectRatio.trim() : undefined;
+}
 
 function VideoNodePlaceholder({
   prompt,
@@ -37,8 +47,46 @@ function VideoNodePlaceholder({
   );
 }
 
-function VideoNodeView({ id, data, selected }: NodeProps<VincisCanvasNode>) {
+function VideoNodeView({ id, data, selected, width, height }: NodeProps<VincisCanvasNode>) {
   const t = videoNodeReadyCopy.zh;
+  const onNodesChange = useCanvasStore((state) => state.onNodesChange);
+  const ready = data.status === "ready" && Boolean(data.url);
+  const [probedVideoSize, setProbedVideoSize] = useState<{ width: number; height: number } | null>(
+    null
+  );
+
+  useEffect(() => {
+    if (!ready) {
+      setProbedVideoSize(null);
+      return;
+    }
+    const aspectRatio = readStoredVideoAspectRatio(data);
+    const shouldProbe =
+      !aspectRatio || aspectRatio.toLowerCase() === "auto" ? probedVideoSize : null;
+    const dimensions = resolveVideoNodeReadyDimensions({
+      aspectRatio,
+      videoWidth: shouldProbe?.width,
+      videoHeight: shouldProbe?.height
+    });
+    if (width === dimensions.width && height === dimensions.height) return;
+    onNodesChange([
+      {
+        id,
+        type: "dimensions",
+        dimensions,
+        setAttributes: true
+      }
+    ]);
+  }, [
+    data.generationParameters,
+    data.url,
+    height,
+    id,
+    onNodesChange,
+    probedVideoSize,
+    ready,
+    width
+  ]);
 
   if (data.status === "loading") {
     return (
@@ -54,7 +102,17 @@ function VideoNodeView({ id, data, selected }: NodeProps<VincisCanvasNode>) {
         <CanvasVideoNodeMenu nodeId={id} data={data} selected={selected} />
       ) : null}
       {data.url ? (
-        <VideoNodeReadyPlayer data={data} selected={selected} />
+        <VideoNodeReadyPlayer
+          data={data}
+          selected={selected}
+          onVideoDimensions={(videoWidth, videoHeight) => {
+            setProbedVideoSize((current) =>
+              current?.width === videoWidth && current?.height === videoHeight
+                ? current
+                : { width: videoWidth, height: videoHeight }
+            );
+          }}
+        />
       ) : data.status === "idle" ? (
         <VideoNodePlaceholder prompt={data.prompt} message={t.idlePrompt} />
       ) : data.status === "failed" ? (

@@ -8,13 +8,12 @@ import {
   GenerationModelUnavailableBanner,
   GenerationPricingUnavailableBanner
 } from "@/components/canvas/generation-catalog-status";
-import { GenerationVideoHeader } from "@/components/canvas/generation-video-header";
-import { GenerationVideoLibraryPicker } from "@/components/canvas/generation-video-library-picker";
-import { GenerationVideoReferenceStrip } from "@/components/canvas/generation-video-reference-strip";
 import type { GenerationReferenceSlot } from "@/components/canvas/generation-kind-selector";
-import { GenerationVideoKeyframeSlots } from "@/components/canvas/generation-video-keyframe-slots";
 import { GenerationModelPicker } from "@/components/canvas/generation-model-picker";
 import { GenerationToolbarMenuPortal } from "@/components/canvas/generation-toolbar-menu-portal";
+import { GenerationVideoHeader } from "@/components/canvas/generation-video-header";
+import { GenerationVideoKeyframeSlots } from "@/components/canvas/generation-video-keyframe-slots";
+import { GenerationVideoReferenceStrip } from "@/components/canvas/generation-video-reference-strip";
 import { useCanvasPromptEnhance } from "@/components/canvas/hooks/use-canvas-prompt-enhance";
 import type { PublicAiModelView } from "@/features/canvas/ai-model-catalog.types";
 import {
@@ -79,7 +78,6 @@ export function GenerationVideoStudioSection({
   onReferenceLocal,
   onReferenceLibrary,
   onReferenceCanvas,
-  onToggleLibrarySelection,
   onActivateLibrarySelection,
   onRemoveLibrarySelection,
   onPickFirstFrameLocal,
@@ -122,7 +120,6 @@ export function GenerationVideoStudioSection({
   onReferenceLocal: (slot: GenerationReferenceSlot) => void;
   onReferenceLibrary: (slot: GenerationReferenceSlot) => void;
   onReferenceCanvas: (slot: GenerationReferenceSlot) => void;
-  onToggleLibrarySelection: (reference: GenerationReference) => void;
   onActivateLibrarySelection: (reference: GenerationReference) => void;
   onRemoveLibrarySelection: (assetId: string) => void;
   onPickFirstFrameLocal: () => void;
@@ -207,35 +204,23 @@ export function GenerationVideoStudioSection({
           onClearLast={onClearLastFrame}
         />
       ) : (
-        <>
-          {videoReferenceMode === "reference" ? (
-            <GenerationVideoLibraryPicker
-              locale={locale}
-              projectId={projectId}
-              selectedIds={librarySelections
-                .map((item) => item.assetId)
-                .filter((id): id is string => Boolean(id))}
-              onToggleSelection={onToggleLibrarySelection}
-            />
-          ) : null}
-          <GenerationVideoReferenceStrip
-            locale={locale}
-            selectedSlot={referenceSlot}
-            librarySelections={librarySelections}
-            activeReferenceId={activeReferenceId}
-            visibleSlots={
-              videoReferenceMode === "edit" ? (["image"] as const) : (["video", "image", "audio"] as const)
-            }
-            onSelectVideo={onSelectVideo}
-            onSelectImage={onSelectImage}
-            onSelectAudio={onSelectAudio}
-            onReferenceLocal={onReferenceLocal}
-            onReferenceLibrary={onReferenceLibrary}
-            onReferenceCanvas={onReferenceCanvas}
-            onActivateSelection={onActivateLibrarySelection}
-            onRemoveSelection={onRemoveLibrarySelection}
-          />
-        </>
+        <GenerationVideoReferenceStrip
+          locale={locale}
+          selectedSlot={referenceSlot}
+          librarySelections={librarySelections}
+          activeReferenceId={activeReferenceId}
+          visibleSlots={
+            videoReferenceMode === "edit" ? (["image"] as const) : (["video", "image", "audio"] as const)
+          }
+          onSelectVideo={onSelectVideo}
+          onSelectImage={onSelectImage}
+          onSelectAudio={onSelectAudio}
+          onReferenceLocal={onReferenceLocal}
+          onReferenceLibrary={onReferenceLibrary}
+          onReferenceCanvas={onReferenceCanvas}
+          onActivateSelection={onActivateLibrarySelection}
+          onRemoveSelection={onRemoveLibrarySelection}
+        />
       )}
 
       <div className={VIDEO_PANEL_PROMPT_BLOCK}>

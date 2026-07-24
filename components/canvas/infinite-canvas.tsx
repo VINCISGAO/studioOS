@@ -54,13 +54,15 @@ function InfiniteCanvasFlow({
   locale,
   onCanvasPointerDown,
   onNodeClick,
-  onGenerationTerminalFailure
+  onGenerationTerminalFailure,
+  onGenerationTerminalJob
 }: {
   projectId: string;
   locale: Locale;
   onCanvasPointerDown?: () => void;
   onNodeClick?: (node: VincisCanvasNode) => void;
   onGenerationTerminalFailure?: (event: GenerationJobEvent) => void;
+  onGenerationTerminalJob?: (event: GenerationJobEvent) => void;
 }) {
   const nodes = useCanvasStore((state) => state.nodes);
   const onNodesChange = useCanvasStore((state) => state.onNodesChange);
@@ -88,7 +90,10 @@ function InfiniteCanvasFlow({
 
   useCanvasAutosave();
   useCanvasJobReconcile(projectId);
-  useGenerationEvents(projectId, { onTerminalFailure: onGenerationTerminalFailure });
+  useGenerationEvents(projectId, {
+    onTerminalFailure: onGenerationTerminalFailure,
+    onTerminalJob: onGenerationTerminalJob
+  });
 
   const isMoveMode = interactionMode === "move";
   const dotColor = isDarkCanvasBackground(canvasBackgroundColor) ? "#5a5a58" : "#dededb";
@@ -245,13 +250,15 @@ export function InfiniteCanvas({
   locale,
   onCanvasPointerDown,
   onNodeClick,
-  onGenerationTerminalFailure
+  onGenerationTerminalFailure,
+  onGenerationTerminalJob
 }: {
   projectId: string;
   locale: Locale;
   onCanvasPointerDown?: () => void;
   onNodeClick?: (node: VincisCanvasNode) => void;
   onGenerationTerminalFailure?: (event: GenerationJobEvent) => void;
+  onGenerationTerminalJob?: (event: GenerationJobEvent) => void;
 }) {
   return (
     <ReactFlowProvider>
@@ -262,6 +269,7 @@ export function InfiniteCanvas({
         onCanvasPointerDown={onCanvasPointerDown}
         onNodeClick={onNodeClick}
         onGenerationTerminalFailure={onGenerationTerminalFailure}
+        onGenerationTerminalJob={onGenerationTerminalJob}
       />
     </ReactFlowProvider>
   );

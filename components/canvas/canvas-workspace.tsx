@@ -13,14 +13,13 @@ import {
 } from "@/components/canvas/generation-panel";
 import { FloatingToolbar } from "@/components/canvas/floating-toolbar";
 import { InfiniteCanvas } from "@/components/canvas/infinite-canvas";
-import { JobStatusPanel } from "@/components/canvas/job-status-panel";
 import { SelectionToolbar } from "@/components/canvas/selection-toolbar";
 import { useCanvasGenerationSlots } from "@/components/canvas/hooks/use-canvas-generation-slots";
 import { preloadCanvasAiModelCatalog, seedCanvasAiModelCatalog } from "@/components/canvas/hooks/use-canvas-ai-models";
 import type { PublicAiModelCatalog } from "@/features/canvas/ai-model-catalog.types";
 import { useCanvasMediaActions } from "@/components/canvas/hooks/use-canvas-media-actions";
 import {
-  fetchCanvasWalletBalance,
+  fetchCanvasWalletSummary,
   normalizeCanvasTokenBalance
 } from "@/lib/canvas/generation-credits";
 import type { CanvasSnapshot, VincisCanvasNode } from "@/lib/canvas/types";
@@ -50,28 +49,33 @@ function CanvasWorkspaceInner({
   const [tokenBalance, setTokenBalance] = useState(() =>
     normalizeCanvasTokenBalance(snapshot.projectContext.tokenBalance)
   );
+  const [reservedCredits, setReservedCredits] = useState(() =>
+    normalizeCanvasTokenBalance(snapshot.projectContext.reservedCredits ?? 0)
+  );
   const initializedProjectId = useRef<string | null>(null);
   const fullscreenAreaRef = useRef<HTMLDivElement>(null);
   const canvasAreaRef = useRef<HTMLDivElement>(null);
   const pasteAt = useCanvasStore((state) => state.pasteAt);
   const viewport = useCanvasStore((state) => state.viewport);
   const syncWalletBalance = useCallback(async () => {
-    const balance = await fetchCanvasWalletBalance();
-    if (balance == null) return;
-    setTokenBalance(balance);
+    const summary = await fetchCanvasWalletSummary();
+    if (!summary) return;
+    setTokenBalance(summary.availableCredits);
+    setReservedCredits(summary.reservedCredits);
   }, []);
 
-  const { generate, regenerate, extendVideo, upscale, removeBackground, generationPending } =
+  const { generate, regenerate, upscale, removeBackground, generationPending } =
     useCanvasMediaActions(
     snapshot.projectId,
     {
-      onCreditsCharged: (amount) => {
-        const charge =
+      onCreditsReserved: (amount) => {
+        const reserve =
           typeof amount === "number" && Number.isFinite(amount) && amount > 0
             ? Math.round(amount)
             : 0;
-        if (!charge) return;
-        setTokenBalance((current) => Math.max(0, Math.round(current - charge)));
+        if (!reserve) return;
+        setTokenBalance((current) => Math.max(0, Math.round(current - reserve)));
+        setReservedCredits((current) => Math.max(0, Math.round(current + reserve)));
       },
       onCreditsSync: () => {
         void syncWalletBalance();
@@ -79,8 +83,8 @@ function CanvasWorkspaceInner({
     }
   );
   const nodeActions = useMemo(
-    () => ({ regenerate, extendVideo, upscale, removeBackground }),
-    [extendVideo, regenerate, removeBackground, upscale]
+    () => ({ regenerate, upscale, removeBackground }),
+    [regenerate, removeBackground, upscale]
   );
   const {
     panel,
@@ -105,6 +109,7 @@ function CanvasWorkspaceInner({
     useCanvasStore.getState().initialize(snapshot);
     useCanvasStore.getState().setInteractionMode("select");
     setTokenBalance(normalizeCanvasTokenBalance(snapshot.projectContext.tokenBalance));
+    setReservedCredits(normalizeCanvasTokenBalance(snapshot.projectContext.reservedCredits ?? 0));
     setReady(true);
   }, [snapshot]);
 
@@ -219,7 +224,7 @@ function CanvasWorkspaceInner({
                 if (panel) closeGenerationPanel();
               }}
               onNodeClick={handleNodeClick}
-              onGenerationTerminalFailure={() => {
+              onGenerationTerminalJob={() => {
                 void syncWalletBalance();
               }}
             />
@@ -256,11 +261,10 @@ function CanvasWorkspaceInner({
             <CanvasCreditsHud
               locale={locale}
               tokenBalance={tokenBalance}
-              reservedCredits={snapshot.projectContext.reservedCredits ?? 0}
+              reservedCredits={reservedCredits}
             />
             <SelectionToolbar onPaste={pasteSelectionAtCenter} />
             <FloatingToolbar onGenerate={openGeneration} />
-            <JobStatusPanel />
             {panel && panelAnchor ? (
               <GenerationPanel
                 kind={panel}

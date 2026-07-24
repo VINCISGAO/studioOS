@@ -23,16 +23,19 @@ export function useGenerationEvents(
   projectId: string,
   options?: {
     onTerminalFailure?: (event: GenerationJobEvent) => void;
+    onTerminalJob?: (event: GenerationJobEvent) => void;
   }
 ) {
   const applyJobEvent = useCanvasStore((state) => state.applyJobEvent);
   const handledTerminalRef = useRef(new Set<string>());
   const handledFailuresRef = useRef(new Set<string>());
   const onTerminalFailureRef = useRef(options?.onTerminalFailure);
+  const onTerminalJobRef = useRef(options?.onTerminalJob);
 
   useEffect(() => {
     onTerminalFailureRef.current = options?.onTerminalFailure;
-  }, [options?.onTerminalFailure]);
+    onTerminalJobRef.current = options?.onTerminalJob;
+  }, [options?.onTerminalFailure, options?.onTerminalJob]);
 
   useEffect(() => {
     handledTerminalRef.current.clear();
@@ -72,6 +75,10 @@ export function useGenerationEvents(
             }
 
             applyJobEvent(item);
+
+            if (isTerminalGenerationJobStatus(item.status)) {
+              onTerminalJobRef.current?.(item);
+            }
 
             if (!isTerminalFailure(item.status)) continue;
             if (handledFailuresRef.current.has(item.id)) continue;

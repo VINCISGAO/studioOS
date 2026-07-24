@@ -10,6 +10,20 @@ export const VIDEO_PANEL_NOTICE =
 
 export const VIDEO_PANEL_KIND_GRID = "mt-3 grid grid-cols-3 gap-2";
 
+/** Shared square tile for video / image / audio type pickers and library thumbs. */
+export const VIDEO_PANEL_KIND_TILE = "h-16 w-16 shrink-0 rounded-2xl";
+
+export const VIDEO_PANEL_REFERENCE_ROW = "relative mt-3";
+
+export const VIDEO_PANEL_REFERENCE_SCROLLER =
+  "flex items-center gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden";
+
+export const VIDEO_PANEL_REFERENCE_FADE =
+  "pointer-events-none absolute inset-y-0 right-0 w-14 bg-gradient-to-l from-white via-white/90 to-transparent";
+
+export const VIDEO_PANEL_REFERENCE_SCROLL_BUTTON =
+  "absolute right-0 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-700 shadow-sm transition hover:bg-zinc-50 nodrag nopan pointer-events-auto";
+
 export function videoPanelKindCardClass(active: boolean) {
   return active
     ? "flex w-full flex-col items-center justify-center gap-1 rounded-xl border-[0.5px] border-[#8B5CF6] bg-[#FBFAFF] px-2 py-2.5 text-center transition"

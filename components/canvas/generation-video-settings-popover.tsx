@@ -4,21 +4,26 @@ import type { PublicAiModelCapabilities } from "@/features/canvas/ai-model-catal
 import {
   DEFAULT_VIDEO_SETTINGS,
   VIDEO_ASPECT_RATIOS,
+  VIDEO_QUALITIES,
   type VideoAspectRatio,
-  type VideoGenerationSettings
+  type VideoGenerationSettings,
+  type VideoQuality
 } from "@/lib/canvas/generation-ui";
 import type { Locale } from "@/lib/i18n";
+import { videoDurationBounds } from "@/lib/canvas/video-duration-policy";
 import { cn } from "@/lib/utils";
 
 const copy = {
   zh: {
     aspectRatio: "画面比例",
     duration: "时长",
+    quality: "质量",
     auto: "Auto"
   },
   en: {
     aspectRatio: "Aspect ratio",
     duration: "Duration",
+    quality: "Quality",
     auto: "Auto"
   }
 } as const;
@@ -125,20 +130,15 @@ function allowedAspectRatios(capabilities: PublicAiModelCapabilities) {
   return VIDEO_ASPECT_RATIOS.filter((ratio) => allowed.includes(ratio));
 }
 
+function allowedQualities(capabilities: PublicAiModelCapabilities): VideoQuality[] {
+  if (capabilities.supportedResolutions.length === 0) return VIDEO_QUALITIES;
+  return VIDEO_QUALITIES.filter((quality) =>
+    capabilities.supportedResolutions.some((item) => item.toLowerCase() === quality.toLowerCase())
+  );
+}
+
 function durationBounds(capabilities: PublicAiModelCapabilities) {
-  if (capabilities.supportedDurations.length > 0) {
-    const sorted = [...capabilities.supportedDurations].sort((a, b) => a - b);
-    return {
-      min: sorted[0] ?? 3,
-      max: sorted[sorted.length - 1] ?? 15,
-      discrete: sorted
-    };
-  }
-  return {
-    min: capabilities.minDurationSec ?? 3,
-    max: capabilities.maxDurationSec ?? 15,
-    discrete: null as number[] | null
-  };
+  return videoDurationBounds(capabilities);
 }
 
 export function GenerationVideoSettingsPanel({
@@ -155,6 +155,7 @@ export function GenerationVideoSettingsPanel({
   const t = copy[locale];
   const aspectRatios = allowedAspectRatios(capabilities);
   const durationConfig = durationBounds(capabilities);
+  const qualities = allowedQualities(capabilities);
 
   function ratioLabel(ratio: string) {
     return ratio === "auto" ? t.auto : ratio;
@@ -205,6 +206,29 @@ export function GenerationVideoSettingsPanel({
             onChange={setDuration}
           />
         </div>
+
+        {qualities.length > 0 ? (
+          <div>
+            <div className="mb-2 text-sm font-medium text-zinc-800">{t.quality}</div>
+            <div className="flex flex-wrap gap-2">
+              {qualities.map((quality) => (
+                <button
+                  key={quality}
+                  type="button"
+                  onClick={() => onChange({ ...settings, quality })}
+                  className={cn(
+                    "rounded-full border px-4 py-1.5 text-xs font-medium transition",
+                    settings.quality === quality
+                      ? "border-2 border-zinc-900 bg-white text-zinc-900"
+                      : "border border-zinc-200 text-zinc-600 hover:border-zinc-300"
+                  )}
+                >
+                  {quality}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   );

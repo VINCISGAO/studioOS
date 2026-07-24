@@ -1,16 +1,23 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Check, ImageIcon, Music2, Video, X } from "lucide-react";
+import { ChevronRight, ImageIcon, Music2, Video, X } from "lucide-react";
 import type { GenerationReferenceSlot } from "@/components/canvas/generation-kind-selector";
 import { GenerationReferenceSourcePopover } from "@/components/canvas/generation-reference-source-popover";
 import type { GenerationReference } from "@/lib/canvas/generation-ui";
+import {
+  VIDEO_PANEL_KIND_TILE,
+  VIDEO_PANEL_REFERENCE_FADE,
+  VIDEO_PANEL_REFERENCE_ROW,
+  VIDEO_PANEL_REFERENCE_SCROLL_BUTTON,
+  VIDEO_PANEL_REFERENCE_SCROLLER
+} from "@/lib/canvas/generation-video-panel-design";
 import type { Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 const copy = {
-  zh: { video: "视频", image: "图片", audio: "音频" },
-  en: { video: "Video", image: "Image", audio: "Audio" }
+  zh: { video: "视频", image: "图片", audio: "音频", scrollNext: "查看更多素材" },
+  en: { video: "Video", image: "Image", audio: "Audio", scrollNext: "Scroll for more assets" }
 } as const;
 
 const menuAlignBySlot = {
@@ -33,11 +40,14 @@ function ReferenceThumb({
     reference.mimeType?.startsWith("audio/") || reference.fileName.toLowerCase().endsWith(".mp3");
 
   return (
-    <div className="relative shrink-0">
+    <div className="group relative shrink-0">
       <div
         className={cn(
-          "h-14 w-14 overflow-hidden rounded-xl border bg-zinc-100",
-          selected ? "border-zinc-900 ring-2 ring-zinc-900/10" : "border-zinc-200"
+          VIDEO_PANEL_KIND_TILE,
+          "overflow-hidden border bg-zinc-100 transition",
+          selected
+            ? "border-zinc-900 bg-white ring-2 ring-zinc-900/10 shadow-sm"
+            : "border-zinc-200 hover:border-zinc-300"
         )}
         title={reference.fileName}
       >
@@ -58,19 +68,17 @@ function ReferenceThumb({
           <img src={reference.url} alt={reference.fileName} className="h-full w-full object-cover" />
         )}
       </div>
-      {selected ? (
-        <span className="pointer-events-none absolute right-0.5 top-0.5 flex h-4 w-4 items-center justify-center rounded-sm bg-zinc-900 text-white">
-          <Check className="h-2.5 w-2.5" strokeWidth={3} />
-        </span>
-      ) : null}
       <button
         type="button"
         onClick={(event) => {
           event.stopPropagation();
           onRemove();
         }}
-        className="absolute -right-1 -top-1 rounded-full bg-zinc-900 p-0.5 text-white"
-        aria-label="Remove"
+        className={cn(
+          "absolute left-1 top-1 z-10 rounded-full bg-zinc-900/90 p-0.5 text-white shadow-sm transition-opacity",
+          "opacity-100 focus-visible:opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
+        )}
+        aria-label="Remove reference"
       >
         <X className="h-2.5 w-2.5" />
       </button>
@@ -109,6 +117,9 @@ export function GenerationVideoReferenceStrip({
 }) {
   const t = copy[locale];
   const [openMenuSlot, setOpenMenuSlot] = useState<GenerationReferenceSlot | null>(null);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+  const canScrollRightRef = useRef(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const videoButtonRef = useRef<HTMLButtonElement>(null);
   const imageButtonRef = useRef<HTMLButtonElement>(null);
   const audioButtonRef = useRef<HTMLButtonElement>(null);
@@ -122,6 +133,28 @@ export function GenerationVideoReferenceStrip({
     if (openMenuSlot && openMenuSlot !== selectedSlot) setOpenMenuSlot(null);
   }, [openMenuSlot, selectedSlot]);
 
+  useEffect(() => {
+    const node = scrollRef.current;
+    if (!node) return;
+
+    const syncScrollState = () => {
+      const next = node.scrollLeft + node.clientWidth < node.scrollWidth - 4;
+      if (next === canScrollRightRef.current) return;
+      canScrollRightRef.current = next;
+      setCanScrollRight(next);
+    };
+
+    syncScrollState();
+    node.addEventListener("scroll", syncScrollState, { passive: true });
+    const observer = new ResizeObserver(syncScrollState);
+    observer.observe(node);
+
+    return () => {
+      node.removeEventListener("scroll", syncScrollState);
+      observer.disconnect();
+    };
+  }, [librarySelections.length, visibleSlots.length]);
+
   const items = [
     { id: "video" as const, label: t.video, Icon: Video, onSelect: onSelectVideo },
     { id: "image" as const, label: t.image, Icon: ImageIcon, onSelect: onSelectImage },
@@ -130,57 +163,75 @@ export function GenerationVideoReferenceStrip({
 
   return (
     <>
-      <div className="mt-4 flex flex-wrap items-center gap-1.5">
-        {items.map(({ id, label, Icon, onSelect }) => {
-          const active = selectedSlot === id;
-          return (
-            <button
-              key={id}
-              ref={buttonRefs[id]}
-              type="button"
-              onClick={() => {
-                onSelect();
-                setOpenMenuSlot((current) => (current === id ? null : id));
-              }}
-              onPointerDown={(event) => event.stopPropagation()}
-              className={cn(
-                "flex h-14 w-14 shrink-0 flex-col items-center justify-center gap-1 rounded-xl border transition nodrag nopan pointer-events-auto",
-                active
-                  ? "border-zinc-300 bg-white text-zinc-900 shadow-sm"
-                  : "border-zinc-200/80 bg-zinc-50 text-zinc-500 hover:border-zinc-300 hover:bg-white"
-              )}
-            >
-              <Icon className="h-4 w-4" />
-              <span className="text-[10px] font-medium">{label}</span>
-            </button>
-          );
-        })}
+      <div className={VIDEO_PANEL_REFERENCE_ROW}>
+        <div ref={scrollRef} className={VIDEO_PANEL_REFERENCE_SCROLLER}>
+          {items.map(({ id, label, Icon, onSelect }) => {
+            const active = selectedSlot === id;
+            return (
+              <button
+                key={id}
+                ref={buttonRefs[id]}
+                type="button"
+                onClick={() => {
+                  onSelect();
+                  setOpenMenuSlot((current) => (current === id ? null : id));
+                }}
+                onPointerDown={(event) => event.stopPropagation()}
+                className={cn(
+                  VIDEO_PANEL_KIND_TILE,
+                  "flex flex-col items-center justify-center gap-1 border transition nodrag nopan pointer-events-auto",
+                  active
+                    ? "border-zinc-300 bg-white text-zinc-900 shadow-sm"
+                    : "border-zinc-200/80 bg-zinc-50 text-zinc-500 hover:border-zinc-300 hover:bg-white"
+                )}
+              >
+                <Icon className="h-4 w-4" />
+                <span className="text-[10px] font-medium">{label}</span>
+              </button>
+            );
+          })}
 
-        {librarySelections.map((reference) => {
-          const assetId = reference.assetId ?? reference.url;
-          return (
-            <div
-              key={assetId}
-              role="button"
-              tabIndex={0}
-              onClick={() => onActivateSelection(reference)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" || event.key === " ") {
-                  event.preventDefault();
-                  onActivateSelection(reference);
-                }
-              }}
+          {librarySelections.map((reference) => {
+            const assetId = reference.assetId ?? reference.url;
+            return (
+              <div
+                key={assetId}
+                role="button"
+                tabIndex={0}
+                onClick={() => onActivateSelection(reference)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    onActivateSelection(reference);
+                  }
+                }}
+                onPointerDown={(event) => event.stopPropagation()}
+                className="nodrag nopan pointer-events-auto shrink-0 cursor-pointer"
+              >
+                <ReferenceThumb
+                  reference={reference}
+                  selected={activeReferenceId === assetId}
+                  onRemove={() => onRemoveSelection(assetId)}
+                />
+              </div>
+            );
+          })}
+        </div>
+
+        {canScrollRight ? (
+          <>
+            <div className={VIDEO_PANEL_REFERENCE_FADE} aria-hidden />
+            <button
+              type="button"
+              aria-label={t.scrollNext}
+              onClick={() => scrollRef.current?.scrollBy({ left: 180, behavior: "smooth" })}
               onPointerDown={(event) => event.stopPropagation()}
-              className="nodrag nopan pointer-events-auto cursor-pointer"
+              className={VIDEO_PANEL_REFERENCE_SCROLL_BUTTON}
             >
-              <ReferenceThumb
-                reference={reference}
-                selected={activeReferenceId === assetId}
-                onRemove={() => onRemoveSelection(assetId)}
-              />
-            </div>
-          );
-        })}
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </>
+        ) : null}
       </div>
 
       {openMenuSlot ? (

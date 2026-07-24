@@ -21,6 +21,8 @@ export function isRetryableTransactionError(error: unknown) {
   const message = error instanceof Error ? error.message : String(error);
   return (
     message.includes("Unable to start a transaction") ||
+    message.includes("Transaction not found") ||
+    message.includes("Transaction API error") ||
     message.includes("P2034") ||
     message.includes("deadlock") ||
     message.includes("advisory lock")

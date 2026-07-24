@@ -2,6 +2,7 @@ import type { GenerationJob } from "@prisma/client";
 import type { AuthUserDto } from "@/features/auth/auth.service";
 import { normalizeCopilotRole } from "@/features/ai-copilot/ai-copilot.types";
 import { recordLucienCanvasGeneration } from "@/features/ai-copilot/lucien-learning.service";
+import { canvasPromptKnowledgeService } from "@/features/ai-copilot/canvas-prompt-knowledge.service";
 import { canvasRepository } from "@/features/canvas/canvas.repository";
 import { creditGenerationBillingService } from "@/features/credit-wallet/credit-generation-billing.service";
 import { normalizeLanguageCode } from "@/features/i18n/language.constants";
@@ -73,4 +74,16 @@ export async function finalizeCanvasGenerationJob(
 
   await creditGenerationBillingService.syncJobBilling(settledJob);
   await recordCanvasGenerationLucienLearning(user, settledJob);
+
+  if (settledJob.status === "SUCCEEDED" && settledJob.prompt.trim()) {
+    await canvasPromptKnowledgeService.upsertFromGeneration({
+      jobId: settledJob.id,
+      campaignId: settledJob.campaignId,
+      languageCode: user.languageCode ?? "en",
+      generationType: settledJob.type,
+      prompt: settledJob.prompt,
+      model: settledJob.model,
+      inputPayload: isRecord(settledJob.input) ? settledJob.input : undefined
+    });
+  }
 }

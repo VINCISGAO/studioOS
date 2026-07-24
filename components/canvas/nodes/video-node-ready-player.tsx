@@ -13,17 +13,23 @@ import {
   VIDEO_NODE_READY_UI,
   videoNodeReadyCopy
 } from "@/lib/canvas/video-node-ready-design";
+import {
+  attachVideoFirstFramePreview,
+  resolveVideoFirstFrameSeekSec
+} from "@/lib/canvas/video-first-frame-preview";
 import type { Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 export function VideoNodeReadyPlayer({
   data,
   selected,
-  locale = "zh"
+  locale = "zh",
+  onVideoDimensions
 }: {
   data: CanvasNodeData;
   selected: boolean;
   locale?: Locale;
+  onVideoDimensions?: (width: number, height: number) => void;
 }) {
   const t = videoNodeReadyCopy[locale];
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -35,13 +41,30 @@ export function VideoNodeReadyPlayer({
 
   useEffect(() => {
     setDurationSec(0);
+    const video = videoRef.current;
+    if (!video || !url) return;
+
+    video.muted = true;
+    const detach = attachVideoFirstFramePreview(video, () => {
+      const seconds = video.duration ?? 0;
+      if (Number.isFinite(seconds) && seconds > 0) {
+        setDurationSec(seconds);
+      }
+      if (video.videoWidth > 0 && video.videoHeight > 0) {
+        onVideoDimensions?.(video.videoWidth, video.videoHeight);
+      }
+    });
+
     return () => {
-      videoRef.current?.pause();
+      detach();
+      video.pause();
     };
-  }, [url]);
+  }, [url, onVideoDimensions]);
 
   function onLoadedMetadata() {
-    const seconds = videoRef.current?.duration ?? 0;
+    const video = videoRef.current;
+    if (!video) return;
+    const seconds = video.duration ?? 0;
     if (Number.isFinite(seconds) && seconds > 0) {
       setDurationSec(seconds);
     }
@@ -51,6 +74,10 @@ export function VideoNodeReadyPlayer({
     const video = videoRef.current;
     if (!video) return;
     if (video.paused) {
+      if (video.currentTime <= resolveVideoFirstFrameSeekSec(video.duration)) {
+        video.currentTime = 0;
+      }
+      video.muted = false;
       void video.play().catch(() => undefined);
       return;
     }
@@ -110,10 +137,12 @@ export function VideoNodeReadyPlayer({
         />
 
         <video
+          key={url}
           ref={videoRef}
           src={url}
+          muted
           playsInline
-          preload="metadata"
+          preload="auto"
           draggable={false}
           className={VIDEO_NODE_READY_UI.video}
           onLoadedMetadata={onLoadedMetadata}

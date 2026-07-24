@@ -8,7 +8,7 @@ import type {
 const VIDEO_CAPABILITIES: PublicAiModelCapabilities = {
   supportedModes: ["TEXT_TO_VIDEO", "IMAGE_TO_VIDEO"],
   supportedAspectRatios: ["auto", "16:9", "4:3", "1:1", "3:4", "9:16", "21:9"],
-  supportedDurations: [5, 10, 15, 20],
+  supportedDurations: [5, 10, 15],
   supportedResolutions: ["480p", "720p", "1080p", "4k"],
   maxOutputCount: 1,
   maxReferenceImages: 4,
@@ -23,7 +23,7 @@ const VIDEO_CAPABILITIES: PublicAiModelCapabilities = {
   supportsLyrics: false,
   supportsStyleTags: false,
   minDurationSec: 3,
-  maxDurationSec: 20
+  maxDurationSec: 15
 };
 
 const IMAGE_CAPABILITIES: PublicAiModelCapabilities = {

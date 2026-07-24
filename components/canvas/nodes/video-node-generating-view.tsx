@@ -1,6 +1,5 @@
 "use client";
 
-import { Square } from "lucide-react";
 import type { CanvasNodeData } from "@/lib/canvas/types";
 import { VideoNodeCenterArt } from "@/components/canvas/nodes/video-node-center-art";
 import { VideoNodeProgressRing } from "@/components/canvas/nodes/video-node-progress-ring";
@@ -23,12 +22,6 @@ export function VideoNodeGeneratingView({ data }: { data: CanvasNodeData }) {
           <VideoNodeSparkIcon className={VIDEO_NODE_LOADING_UI.headerIcon} size={16} />
           <span className={VIDEO_NODE_LOADING_UI.headerTitle}>{t.title}</span>
         </div>
-        <button type="button" className={VIDEO_NODE_LOADING_UI.stopButton} aria-label={t.stop}>
-          <span className={VIDEO_NODE_LOADING_UI.stopIconWrap}>
-            <Square className="h-2 w-2 fill-[#8B5CF6] text-[#8B5CF6]" />
-          </span>
-          {t.stop}
-        </button>
       </div>
 
       <div className={VIDEO_NODE_LOADING_UI.body}>

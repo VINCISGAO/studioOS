@@ -197,13 +197,27 @@ type WalletApiEnvelope = {
   data?: {
     summary?: {
       availableCredits?: number;
+      reservedCredits?: number;
     };
   };
 };
 
-export async function fetchCanvasWalletBalance() {
+export type CanvasWalletSummary = {
+  availableCredits: number;
+  reservedCredits: number;
+};
+
+export async function fetchCanvasWalletSummary(): Promise<CanvasWalletSummary | null> {
   const response = await fetch("/api/v1/credits/wallet", { cache: "no-store" });
   const payload = (await response.json()) as WalletApiEnvelope;
   if (!response.ok || !payload.success || !payload.data?.summary) return null;
-  return normalizeCanvasTokenBalance(payload.data.summary.availableCredits);
+  return {
+    availableCredits: normalizeCanvasTokenBalance(payload.data.summary.availableCredits),
+    reservedCredits: normalizeCanvasTokenBalance(payload.data.summary.reservedCredits)
+  };
+}
+
+export async function fetchCanvasWalletBalance() {
+  const summary = await fetchCanvasWalletSummary();
+  return summary?.availableCredits ?? null;
 }

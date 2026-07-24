@@ -203,90 +203,90 @@ export const canvasRepository = {
     const nodeIds = input.nodes.map((node) => node.id);
     const edgeIds = input.edges.map((edge) => edge.id);
 
-    return prisma.$transaction(async (tx) => {
-      await Promise.all(
-        input.nodes.map((node) =>
-          tx.canvasNode.upsert({
-            where: { id: node.id },
-            create: {
-              id: node.id,
-              type: node.type,
-              positionX: node.positionX,
-              positionY: node.positionY,
-              width: node.width,
-              height: node.height,
-              parentId: node.parentId,
-              data: node.data,
-              zIndex: node.zIndex,
-              creativeProjectId: input.creativeProjectId,
-              campaignId: input.campaignId ?? null,
-              canvasId: input.canvasId
-            },
-            update: {
-              type: node.type,
-              positionX: node.positionX,
-              positionY: node.positionY,
-              width: node.width,
-              height: node.height,
-              parentId: node.parentId,
-              data: node.data,
-              zIndex: node.zIndex,
-              creativeProjectId: input.creativeProjectId,
-              campaignId: input.campaignId ?? null,
-              canvasId: input.canvasId
-            }
-          })
-        )
-      );
+    // No interactive Prisma transaction — Neon pooler + long parallel upserts exceed
+    // the 5s interactive tx window and fail with "Transaction not found" / P2028.
+    await Promise.all(
+      input.nodes.map((node) =>
+        prisma.canvasNode.upsert({
+          where: { id: node.id },
+          create: {
+            id: node.id,
+            type: node.type,
+            positionX: node.positionX,
+            positionY: node.positionY,
+            width: node.width,
+            height: node.height,
+            parentId: node.parentId,
+            data: node.data,
+            zIndex: node.zIndex,
+            creativeProjectId: input.creativeProjectId,
+            campaignId: input.campaignId ?? null,
+            canvasId: input.canvasId
+          },
+          update: {
+            type: node.type,
+            positionX: node.positionX,
+            positionY: node.positionY,
+            width: node.width,
+            height: node.height,
+            parentId: node.parentId,
+            data: node.data,
+            zIndex: node.zIndex,
+            creativeProjectId: input.creativeProjectId,
+            campaignId: input.campaignId ?? null,
+            canvasId: input.canvasId
+          }
+        })
+      )
+    );
 
-      await tx.canvasNode.deleteMany({
-        where: {
-          canvasId: input.canvasId,
-          ...(nodeIds.length > 0 ? { id: { notIn: nodeIds } } : {})
-        }
-      });
+    await prisma.canvasNode.deleteMany({
+      where: {
+        canvasId: input.canvasId,
+        ...(nodeIds.length > 0 ? { id: { notIn: nodeIds } } : {})
+      }
+    });
 
-      await Promise.all(
-        input.edges.map((edge) =>
-          tx.canvasEdge.upsert({
-            where: { id: edge.id },
-            create: {
-              id: edge.id,
-              source: edge.source,
-              target: edge.target,
-              sourceHandle: edge.sourceHandle ?? null,
-              targetHandle: edge.targetHandle ?? null,
-              data: edge.data,
-              creativeProjectId: input.creativeProjectId,
-              campaignId: input.campaignId ?? null,
-              canvasId: input.canvasId
-            },
-            update: {
-              source: edge.source,
-              target: edge.target,
-              sourceHandle: edge.sourceHandle ?? null,
-              targetHandle: edge.targetHandle ?? null,
-              data: edge.data,
-              creativeProjectId: input.creativeProjectId,
-              campaignId: input.campaignId ?? null,
-              canvasId: input.canvasId
-            }
-          })
-        )
-      );
+    await Promise.all(
+      input.edges.map((edge) =>
+        prisma.canvasEdge.upsert({
+          where: { id: edge.id },
+          create: {
+            id: edge.id,
+            source: edge.source,
+            target: edge.target,
+            sourceHandle: edge.sourceHandle ?? null,
+            targetHandle: edge.targetHandle ?? null,
+            data: edge.data,
+            creativeProjectId: input.creativeProjectId,
+            campaignId: input.campaignId ?? null,
+            canvasId: input.canvasId
+          },
+          update: {
+            source: edge.source,
+            target: edge.target,
+            sourceHandle: edge.sourceHandle ?? null,
+            targetHandle: edge.targetHandle ?? null,
+            data: edge.data,
+            creativeProjectId: input.creativeProjectId,
+            campaignId: input.campaignId ?? null,
+            canvasId: input.canvasId
+          }
+        })
+      )
+    );
 
-      await tx.canvasEdge.deleteMany({
-        where: {
-          canvasId: input.canvasId,
-          ...(edgeIds.length > 0 ? { id: { notIn: edgeIds } } : {})
-        }
-      });
+    await prisma.canvasEdge.deleteMany({
+      where: {
+        canvasId: input.canvasId,
+        ...(edgeIds.length > 0 ? { id: { notIn: edgeIds } } : {})
+      }
+    });
 
-      return tx.creativeCanvas.update({
-        where: { id: input.canvasId },
-        data: { viewport: input.viewport, version: { increment: 1 } },
-        select: { version: true, updatedAt: true }
-      });
+    return prisma.creativeCanvas.update({
+      where: { id: input.canvasId },
+      data: { viewport: input.viewport, version: { increment: 1 } },
+      select: { version: true, updatedAt: true }
     });
   },
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { BarChart3, Copy, X } from "lucide-react";
 import {
@@ -8,6 +8,7 @@ import {
   videoNodeReadyCopy
 } from "@/lib/canvas/video-node-ready-design";
 import type { VideoNodeMetadata } from "@/lib/canvas/video-node-metadata";
+import { attachVideoFirstFramePreview } from "@/lib/canvas/video-first-frame-preview";
 import { CANVAS_GENERATION_MODAL_Z_INDEX } from "@/lib/canvas/generation-ui";
 import type { Locale } from "@/lib/i18n";
 
@@ -26,10 +27,18 @@ export function VideoNodeInfoDialog({
 }) {
   const t = videoNodeReadyCopy[locale];
   const [copied, setCopied] = useState(false);
+  const thumbRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     if (!open) setCopied(false);
   }, [open]);
+
+  useEffect(() => {
+    if (!open || !previewUrl) return;
+    const video = thumbRef.current;
+    if (!video) return;
+    return attachVideoFirstFramePreview(video);
+  }, [open, previewUrl]);
 
   if (!open) return null;
 
@@ -58,10 +67,12 @@ export function VideoNodeInfoDialog({
           <div className={VIDEO_NODE_INFO_DIALOG.headerMain}>
             {previewUrl ? (
               <video
+                ref={thumbRef}
+                key={previewUrl}
                 src={previewUrl}
                 muted
                 playsInline
-                preload="metadata"
+                preload="auto"
                 className={VIDEO_NODE_INFO_DIALOG.thumb}
               />
             ) : (

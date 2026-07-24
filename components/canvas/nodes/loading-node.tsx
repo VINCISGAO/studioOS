@@ -7,6 +7,7 @@ import type { VincisCanvasNode } from "@/lib/canvas/types";
 import { CanvasNodeFrame } from "@/components/canvas/nodes/canvas-node-frame";
 import { MusicNodeGeneratingView } from "@/components/canvas/nodes/music-node-generating-view";
 import { MusicNodeShell } from "@/components/canvas/nodes/music-node-shell";
+import { VideoNodeFailedView } from "@/components/canvas/nodes/video-node-failed-view";
 import { VideoNodeGeneratingView } from "@/components/canvas/nodes/video-node-generating-view";
 import { VideoNodeShell } from "@/components/canvas/nodes/video-node-shell";
 import { canvasNodePropsAreEqual } from "@/lib/canvas/canvas-node-memo";
@@ -23,7 +24,11 @@ function LoadingNodeView({ data, selected }: NodeProps<VincisCanvasNode>) {
   if (data.generationType === "VIDEO") {
     return (
       <VideoNodeShell selected={selected}>
-        <VideoNodeGeneratingView data={data} />
+        {data.status === "failed" ? (
+          <VideoNodeFailedView data={data} />
+        ) : (
+          <VideoNodeGeneratingView data={data} />
+        )}
       </VideoNodeShell>
     );
   }

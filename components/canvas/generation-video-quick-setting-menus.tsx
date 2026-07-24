@@ -8,6 +8,7 @@ import {
   type VideoQuality
 } from "@/lib/canvas/generation-ui";
 import { formatVideoQualityLabel } from "@/lib/canvas/generation-video-labels";
+import { videoDurationBounds } from "@/lib/canvas/video-duration-policy";
 import type { Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -26,12 +27,9 @@ function allowedQualities(capabilities: PublicAiModelCapabilities): VideoQuality
 }
 
 function durationOptions(capabilities: PublicAiModelCapabilities) {
-  if (capabilities.supportedDurations.length > 0) {
-    return [...capabilities.supportedDurations].sort((a, b) => a - b);
-  }
-  const min = capabilities.minDurationSec ?? 3;
-  const max = capabilities.maxDurationSec ?? 15;
-  return Array.from({ length: max - min + 1 }, (_, index) => min + index);
+  const bounds = videoDurationBounds(capabilities);
+  if (bounds.discrete?.length) return bounds.discrete;
+  return Array.from({ length: bounds.max - bounds.min + 1 }, (_, index) => bounds.min + index);
 }
 
 function menuShellClassName() {

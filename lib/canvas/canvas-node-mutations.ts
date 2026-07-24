@@ -1,6 +1,9 @@
 import { autoLayoutCanvas } from "@/lib/canvas/layout";
 import { MUSIC_NODE_READY_CARD } from "@/lib/canvas/music-node-design";
 import {
+  resolveVideoNodeReadyDimensions
+} from "@/lib/canvas/video-node-ready-design";
+import {
   applyCanvasNodeInteractionFlags,
   applyCanvasNodeInteractionFlagsAll,
   isCanvasMediaNode,
@@ -314,37 +317,46 @@ export function applyGenerationJobEvent(nodes: VincisCanvasNode[], event: Genera
     event.type === "IMAGE" ? "image" : event.type === "VIDEO" ? "video" : "music";
   return {
     terminal,
-    nodes: nodes.map((node) =>
-      node.id === event.nodeId
-        ? {
-            ...node,
-            type: event.status === "SUCCEEDED" ? resolvedType : node.type,
-            width:
-              event.status === "SUCCEEDED" && resolvedType === "music"
-                ? MUSIC_NODE_READY_CARD.width
-                : node.width,
-            height:
-              event.status === "SUCCEEDED" && resolvedType === "music"
-                ? MUSIC_NODE_READY_CARD.height
-                : node.height,
-            data: {
-              ...node.data,
-              progress: event.progress,
-              status:
-                event.status === "FAILED" || event.status === "CANCELLED"
-                  ? "failed"
-                  : event.status === "SUCCEEDED"
-                    ? "ready"
-                    : "loading",
-              assetId: event.outputAssetId ?? node.data.assetId,
-              url: event.outputAssetId
-                ? `/api/canvas/assets/${event.outputAssetId}/preview`
-                : node.data.url,
-              error: event.errorMessage ?? undefined
-            }
-          }
-        : node
-    ) as VincisCanvasNode[]
+    nodes: nodes.map((node) => {
+      if (node.id !== event.nodeId) return node;
+
+      const aspectRatio =
+        typeof node.data.generationParameters?.aspectRatio === "string"
+          ? node.data.generationParameters.aspectRatio
+          : undefined;
+      const readyVideoDimensions =
+        event.status === "SUCCEEDED" && resolvedType === "video"
+          ? resolveVideoNodeReadyDimensions({ aspectRatio })
+          : null;
+
+      return {
+        ...node,
+        type: event.status === "SUCCEEDED" ? resolvedType : node.type,
+        width:
+          event.status === "SUCCEEDED" && resolvedType === "music"
+            ? MUSIC_NODE_READY_CARD.width
+            : readyVideoDimensions?.width ?? node.width,
+        height:
+          event.status === "SUCCEEDED" && resolvedType === "music"
+            ? MUSIC_NODE_READY_CARD.height
+            : readyVideoDimensions?.height ?? node.height,
+        data: {
+          ...node.data,
+          progress: event.progress,
+          status:
+            event.status === "FAILED" || event.status === "CANCELLED"
+              ? "failed"
+              : event.status === "SUCCEEDED"
+                ? "ready"
+                : "loading",
+          assetId: event.outputAssetId ?? node.data.assetId,
+          url: event.outputAssetId
+            ? `/api/canvas/assets/${event.outputAssetId}/preview`
+            : node.data.url,
+          error: event.errorMessage ?? undefined
+        }
+      };
+    }) as VincisCanvasNode[]
   };
 }
 

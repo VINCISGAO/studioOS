@@ -2,7 +2,8 @@
 
 **Date:** 2026-07-24  
 **Baseline commit (pre-optimization):** `1857b5d`  
-**Optimized commit range:** `97257a1` … `6f8f938`
+**Optimized commit range:** `97257a1` … `732234c`  
+**Acceptance tracker:** [`INFINITE_CANVAS_V1_ACCEPTANCE.md`](./INFINITE_CANVAS_V1_ACCEPTANCE.md)
 
 ---
 
@@ -69,20 +70,27 @@
 
 ---
 
-## Automated verification (this session)
+## Automated verification (2026-07-24 session)
 
 | Check | Result |
 |-------|--------|
 | `npm run typecheck` | ✅ Pass |
-| `npm run build` | ✅ Pass |
-| `npm run production:verify` | ⚠️ Lint fixed post-run; DB steps need live Neon (sandbox unreachable) |
+| `npm run build` | ✅ Pass (inside production:verify) |
+| `npm run lint` | ✅ Pass |
+| `npm run production:verify` | ⚠️ **29/30 steps pass** — see below |
 
-Re-run locally with DB up:
+### production:verify detail (Neon connected)
 
-```bash
-npm run lint
-npm run production:verify
-```
+- ✅ Database: `DATABASE_URL` → Neon pooler OK  
+- ✅ `prisma migrate deploy` / `migrate status` OK  
+- ✅ `canvas:ai-models:verify` OK  
+- ✅ `login.preflight` OK  
+- ✅ All credits pricing / workflow verifies OK  
+- ❌ `deposit.reconcile.verify` — `reconcile.concurrent-single-ledger` (deposit module, not canvas)
+
+Canvas v1.0 automated gate: **PASS**. Full suite exit code 1 due to deposit reconcile only.
+
+Perf FPS / commits / autosave counts: **owner manual** — fill results table above; do not estimate.
 
 ---
 
@@ -97,4 +105,13 @@ Static visual parity required. Compare screenshots at Desktop / iPad widths befo
 
 ## v1.0 status
 
-**Architecture-level canvas optimization: COMPLETE.** Further work → v1.1 only (P3 frozen).
+| Scope | Status |
+|-------|--------|
+| **Infinite Canvas v1.0 automated gate** | **PASS** |
+| **Global `production:verify`** | **BLOCKED** — `deposit.reconcile.verify` (Global RC blocker — Deposit reconciliation concurrency) |
+| **Canvas-related verify failure** | **NONE** |
+| **Manual perf / visual / business** | Owner checklist — [`INFINITE_CANVAS_V1_ACCEPTANCE.md`](./INFINITE_CANVAS_V1_ACCEPTANCE.md) |
+| **Architecture optimization** | COMPLETE — **FROZEN** after Canvas RC approval |
+| **Further canvas work** | v1.1 only (P3 frozen) |
+
+Canvas RC approval ≠ Global VINCIS v1.0 RC approval.

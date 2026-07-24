@@ -64,17 +64,24 @@ function checkIdempotentCreatePattern(): Check {
   };
 }
 
-function checkClaimTransaction(): Check {
+function checkClaimFlow(): Check {
   const claim = read("features/video-engine/video-job-claim.repository.ts");
+  const orchestrator = read("features/video-engine/video-orchestrator.ts");
   const ok =
-    claim.includes("prisma.$transaction") &&
+    !claim.includes("prisma.$transaction") &&
+    claim.includes("generationJobAttempt.aggregate") &&
     claim.includes("generationJobAttempt.create") &&
     claim.includes("generationJobEvent.create") &&
-    claim.includes("JOB_CLAIMED");
+    claim.includes("JOB_CLAIMED") &&
+    claim.includes("rollbackClaim") &&
+    !orchestrator.includes("$transaction") &&
+    !orchestrator.includes("TransactionClient");
   return {
-    name: "claim.atomic_attempt",
+    name: "claim.no_interactive_transaction",
     ok,
-    detail: ok ? "Claim + attempt + JOB_CLAIMED in one transaction" : "Missing atomic claim flow"
+    detail: ok
+      ? "Claim uses short DB writes only; provider I/O stays outside transactions"
+      : "Claim must not use interactive transactions or hold tx across provider calls"
   };
 }
 
@@ -164,7 +171,7 @@ function main() {
     checkSchemaModels(),
     checkMigrationFile(),
     checkIdempotentCreatePattern(),
-    checkClaimTransaction(),
+    checkClaimFlow(),
     checkAuditFailureSignal(),
     checkMockProductionLock(),
     checkRoutingNoMockFallbackLabel(),

@@ -121,6 +121,7 @@
     "credits:regional-pricing:verify": "node --require ./scripts/helpers/register-verify-runtime.cjs --import tsx scripts/credits-regional-package-pricing-verify.ts",
     "canvas:ai-models:verify": "node --require ./scripts/helpers/register-verify-runtime.cjs --import tsx scripts/canvas-ai-model-catalog-verify.ts",
     "video-engine:sprint-c:verify": "node --import tsx scripts/video-engine-sprint-c-verify.ts",
+    "video-engine:transaction:verify": "node --import tsx scripts/video-engine-transaction-verify.ts",
     "creator-lifecycle:verify": "node --import tsx scripts/creator-lifecycle-verify.ts",
     "creator-lifecycle:analyze": "node --require ./scripts/helpers/load-env.cjs --import tsx scripts/analyze-creator-lifecycle-impact.ts",
     "creator-lifecycle:backfill": "node --require ./scripts/helpers/load-env.cjs --import tsx scripts/backfill-creator-verification.ts",

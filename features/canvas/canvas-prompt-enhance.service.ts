@@ -2,8 +2,11 @@ import "server-only";
 
 import { aiUsageQuotaService } from "@/features/abuse/ai-usage-quota.service";
 import { aiGatewayService } from "@/features/ai/ai-gateway.service";
-import { recordLucienInteraction } from "@/features/ai-copilot/lucien-learning.service";
-import { normalizeCopilotRole } from "@/features/ai-copilot/ai-copilot.types";
+import { canvasPromptKnowledgeService } from "@/features/ai-copilot/canvas-prompt-knowledge.service";
+import {
+  gptPromptAnswerMode,
+  recordGptPromptLucienLearning
+} from "@/features/ai-copilot/gpt-prompt-lucien-learning.service";
 import { canvasService } from "@/features/canvas/canvas.service";
 import type { AuthUserDto } from "@/features/auth/auth.service";
 import {
@@ -25,6 +28,9 @@ function emptyPromptMessage(field: CanvasPromptEnhanceField, locale: "en" | "zh"
   if (field === "video_prompt") {
     return locale === "zh" ? "暂时无法生成灵感，请稍后重试。" : "Inspiration is unavailable right now. Please try again.";
   }
+  if (field === "image_prompt") {
+    return locale === "zh" ? "暂时无法生成图片提示词，请稍后重试。" : "Image prompt inspiration is unavailable right now. Please try again.";
+  }
   return locale === "zh" ? "请先输入风格描述，再进行优化。" : "Enter a style description before enhancing.";
 }
 
@@ -34,8 +40,16 @@ function fallbackVideoInspirationPrompt(locale: "en" | "zh") {
     : "Suggest an original short-form video concept with scene, subject, mood, camera movement, and pacing.";
 }
 
-function lucienAnswerMode(field: CanvasPromptEnhanceField) {
-  return field === "video_prompt" ? "video_prompt_inspire" : "music_style_enhance";
+function fallbackImageInspirationPrompt(locale: "en" | "zh") {
+  return locale === "zh"
+    ? "请给出一个原创的 AI 图片生成描述，包含主体、场景、构图、光线、风格与细节。"
+    : "Suggest an original AI image prompt with subject, scene, composition, lighting, style, and detail.";
+}
+
+function fallbackInspirationPrompt(field: CanvasPromptEnhanceField, locale: "en" | "zh") {
+  if (field === "image_prompt") return fallbackImageInspirationPrompt(locale);
+  if (field === "video_prompt") return fallbackVideoInspirationPrompt(locale);
+  return "";
 }
 
 function unconfiguredMessage(locale: "en" | "zh") {
@@ -52,6 +66,12 @@ export class CanvasPromptEnhanceService {
       field: CanvasPromptEnhanceField;
       text: string;
       languageCode?: string | null;
+      learningContext?: {
+        sessionId?: string | null;
+        messageId?: string | null;
+        pagePath?: string | null;
+        recordLearning?: boolean;
+      };
     }
   ) {
     const locale = localeFromLanguageCode(input.languageCode ?? user.languageCode);
@@ -76,12 +96,25 @@ export class CanvasPromptEnhanceService {
     }
 
     const maxLength = CANVAS_PROMPT_ENHANCE_MAX_LENGTH[input.field];
-    const userPrompt =
-      source || (input.field === "video_prompt" ? fallbackVideoInspirationPrompt(locale) : source);
+    const userPrompt = source || fallbackInspirationPrompt(input.field, locale);
+
+    let systemPrompt = canvasPromptEnhanceSystemPrompt(input.field);
+    if (input.field === "video_prompt") {
+      const examples = await canvasPromptKnowledgeService.listVideoPromptExamples({
+        languageCode: normalizeLanguageCode(input.languageCode ?? user.languageCode ?? "en"),
+        query: userPrompt,
+        limit: 3
+      });
+      const referenceBlock = canvasPromptKnowledgeService.buildEnhanceReferenceBlock(examples, locale);
+      if (referenceBlock) {
+        systemPrompt = `${systemPrompt}\n\n${referenceBlock}`;
+      }
+    }
+
     const result = await aiGatewayService.chatCompletion({
-      system: canvasPromptEnhanceSystemPrompt(input.field),
+      system: systemPrompt,
       user: userPrompt,
-      temperature: input.field === "video_prompt" ? 0.65 : 0.45,
+      temperature: input.field === "music_style" ? 0.45 : 0.65,
       language: locale === "zh" ? "Chinese" : "English"
     });
 
@@ -103,27 +136,35 @@ export class CanvasPromptEnhanceService {
       cost: result.cost,
       metadata: {
         projectId: input.projectId,
-        field: input.field
+        field: input.field,
+        promptAuthor: "gpt"
       }
     });
 
-    await recordLucienInteraction({
-      surface: "authenticated",
-      entityId: user.id,
-      role: normalizeCopilotRole(user),
-      pagePath: `/studio/canvas/${input.projectId}`,
-      language: normalizeLanguageCode(input.languageCode ?? user.languageCode ?? "en"),
-      userMessage: source || userPrompt,
-      assistantAnswer: enhanced,
-      answerMode: lucienAnswerMode(input.field),
-      knowledgeScope: "authenticated_business",
-      queryCategory: "business"
-    });
+    if (input.learningContext?.recordLearning !== false) {
+      await recordGptPromptLucienLearning({
+        user,
+        projectId: input.projectId,
+        campaignId: project.campaignId,
+        field: input.field,
+        sourceText: source,
+        gptPrompt: enhanced,
+        model: result.model,
+        provider: result.provider,
+        languageCode: normalizeLanguageCode(input.languageCode ?? user.languageCode ?? "en"),
+        pagePath: input.learningContext?.pagePath ?? `/studio/canvas/${input.projectId}`,
+        sessionId: input.learningContext?.sessionId ?? null,
+        messageId: input.learningContext?.messageId ?? null
+      });
+    }
 
     return {
       text: enhanced,
       model: result.model,
-      provider: result.provider
+      provider: result.provider,
+      answerMode: gptPromptAnswerMode(input.field),
+      promptAuthor: "gpt" as const,
+      campaignId: project.campaignId
     };
   }
 }

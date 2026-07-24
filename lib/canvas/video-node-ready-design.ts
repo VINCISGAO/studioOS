@@ -1,4 +1,49 @@
 /** Ready video node — Lovart-style preview card. */
+export const VIDEO_NODE_READY_LONG_EDGE = 480;
+
+const VIDEO_NODE_ASPECT_UNITS: Record<string, { w: number; h: number }> = {
+  auto: { w: 16, h: 9 },
+  "16:9": { w: 16, h: 9 },
+  "4:3": { w: 4, h: 3 },
+  "1:1": { w: 1, h: 1 },
+  "3:4": { w: 3, h: 4 },
+  "9:16": { w: 9, h: 16 },
+  "21:9": { w: 21, h: 9 }
+};
+
+export function resolveVideoNodeAspectUnits(input: {
+  aspectRatio?: string | null;
+  videoWidth?: number;
+  videoHeight?: number;
+}) {
+  if (
+    typeof input.videoWidth === "number" &&
+    typeof input.videoHeight === "number" &&
+    input.videoWidth > 0 &&
+    input.videoHeight > 0
+  ) {
+    return { w: input.videoWidth, h: input.videoHeight };
+  }
+  const key = (input.aspectRatio ?? "auto").trim().toLowerCase();
+  return VIDEO_NODE_ASPECT_UNITS[key] ?? VIDEO_NODE_ASPECT_UNITS["16:9"];
+}
+
+/** Fit ready-state node box to video aspect ratio (long edge = 480px). */
+export function resolveVideoNodeReadyDimensions(input: {
+  aspectRatio?: string | null;
+  videoWidth?: number;
+  videoHeight?: number;
+}) {
+  const { w, h } = resolveVideoNodeAspectUnits(input);
+  const longEdge = VIDEO_NODE_READY_LONG_EDGE;
+  if (w >= h) {
+    const width = longEdge;
+    return { width, height: Math.max(1, Math.round((width * h) / w)) };
+  }
+  const height = longEdge;
+  return { width: Math.max(1, Math.round((height * w) / h)), height };
+}
+
 export const VIDEO_NODE_READY_UI = {
   shell:
     "relative h-full w-full overflow-hidden rounded-2xl border bg-black shadow-sm transition-[border-color,box-shadow]",

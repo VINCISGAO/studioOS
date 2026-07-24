@@ -4,18 +4,15 @@ import type {
   MusicGenerationSettings,
   VideoGenerationSettings
 } from "@/lib/canvas/generation-ui";
-
-function pickClosest(value: number, allowed: number[], fallback: number) {
-  if (!allowed.length) return value;
-  if (allowed.includes(value)) return value;
-  return allowed.reduce((best, current) =>
-    Math.abs(current - value) < Math.abs(best - value) ? current : best
-  , allowed[0] ?? fallback);
-}
+import { clampVideoDurationSec } from "@/lib/canvas/video-duration-policy";
 
 function pickString(value: string, allowed: string[], fallback: string) {
   if (!allowed.length) return value;
-  return allowed.includes(value) ? value : allowed.includes(fallback) ? fallback : allowed[0] ?? value;
+  const normalized = value.toLowerCase();
+  const match = allowed.find((item) => item.toLowerCase() === normalized);
+  if (match) return match;
+  const fallbackMatch = allowed.find((item) => item.toLowerCase() === fallback.toLowerCase());
+  return fallbackMatch ?? allowed[0] ?? value;
 }
 
 export function defaultModelForCategory(
@@ -30,11 +27,7 @@ export function clampVideoSettings(
   settings: VideoGenerationSettings,
   capabilities: PublicAiModelCapabilities
 ): VideoGenerationSettings {
-  const duration = pickClosest(
-    settings.duration,
-    capabilities.supportedDurations,
-    settings.duration
-  );
+  const duration = clampVideoDurationSec(settings.duration, capabilities);
   return {
     ...settings,
     aspectRatio: pickString(

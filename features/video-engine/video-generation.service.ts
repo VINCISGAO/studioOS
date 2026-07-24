@@ -12,7 +12,7 @@ import { resolveCanvasProjectForOwner } from "@/features/canvas/canvas-project-a
 import { canvasRepository } from "@/features/canvas/canvas.repository";
 import { creditGenerationBillingService } from "@/features/credit-wallet/credit-generation-billing.service";
 import { creditLedgerService } from "@/features/credit-wallet/credit-ledger.service";
-import { assertVideoGenerationInfrastructure } from "@/features/video-engine/video-infrastructure";
+import { assertVideoGenerationInfrastructure, assertVideoReferenceInfrastructure } from "@/features/video-engine/video-infrastructure";
 import { claimVideoGenerationJobWithAttempt } from "@/features/video-engine/video-job-claim.repository";
 import { videoJobAuditService } from "@/features/video-engine/video-job-audit.service";
 import { videoOrchestrator } from "@/features/video-engine/video-orchestrator";
@@ -22,6 +22,10 @@ import type {
   VideoOrchestratorJob
 } from "@/features/video-engine/video-generation.types";
 import { resolveVideoProviderRouting } from "@/features/video-engine/video-provider.registry";
+import {
+  sanitizeVideoGenerationJobError,
+  userFacingGenerationErrorMessage
+} from "@/features/video-engine/video-generation.errors";
 import { scheduleCanvasBackgroundWork } from "@/lib/canvas/schedule-background-work";
 import { appError } from "@/lib/core/errors";
 import { logger } from "@/lib/core/logger";
@@ -94,6 +98,8 @@ export class VideoGenerationService {
         project.id,
         input.parameters
       );
+
+    assertVideoReferenceInfrastructure(normalizedParameters);
 
     const resolved = await aiModelGenerationGuard.resolveForGeneration({
       type: "VIDEO",
@@ -319,25 +325,27 @@ export class VideoGenerationService {
         }
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to generate video";
+      const sanitized = sanitizeVideoGenerationJobError(error, "VIDEO_GENERATION_CRASHED");
       logger.error("Video generation crashed", {
         service: "VideoGenerationService",
         jobId,
         ownerId,
-        error: message
+        attemptId,
+        errorCode: sanitized.errorCode,
+        error: sanitized.logMessage
       });
       await canvasRepository.updateGenerationJob(jobId, {
         status: "FAILED",
         progress: 100,
-        errorCode: "VIDEO_GENERATION_CRASHED",
-        errorMessage: message,
+        errorCode: sanitized.errorCode,
+        errorMessage: userFacingGenerationErrorMessage(sanitized, "zh"),
         completedAt: new Date()
       });
       if (attemptId) {
         await videoJobAuditService.markAttemptFailed({
           generationJobId: jobId,
           attemptId,
-          errorCode: "VIDEO_GENERATION_CRASHED"
+          errorCode: sanitized.errorCode
         });
       }
     } finally {

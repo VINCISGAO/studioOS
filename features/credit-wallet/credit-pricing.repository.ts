@@ -1,5 +1,6 @@
 import type { CreditPricingRuleStatus, GenerationType } from "@prisma/client";
 import { prisma } from "@/lib/core/database/prisma";
+import { isSeedanceVideoModel } from "@/lib/canvas/seedance-credits-pricing";
 
 function normalizeModel(model: string) {
   return model.trim().toLowerCase().replace(/\s+/g, "-");
@@ -93,6 +94,26 @@ function ruleSpecificity(rule: {
   );
 }
 
+type PricingRuleCandidate = Awaited<ReturnType<typeof prisma.creditPricingRule.findMany>>[number];
+
+function findSeedanceAnchorRule(candidates: PricingRuleCandidate[], model: string, mode: string) {
+  const modelRules = candidates.filter((rule) => normalizeModel(rule.model) === model);
+  if (!modelRules.length) return null;
+
+  const modeDefaults = modelRules
+    .filter((rule) => !rule.mode || rule.mode === mode)
+    .filter((rule) => rule.durationSec == null && !rule.resolution)
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+  if (modeDefaults[0]) return modeDefaults[0];
+
+  const modeRules = modelRules
+    .filter((rule) => !rule.mode || rule.mode === mode)
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+  if (modeRules[0]) return modeRules[0];
+
+  return modelRules.sort((a, b) => a.sortOrder - b.sortOrder)[0] ?? null;
+}
+
 export const creditPricingRepository = {
   listRules(includeDisabled = false, statuses?: CreditPricingRuleStatus[]) {
     const where =
@@ -161,6 +182,12 @@ export const creditPricingRepository = {
         return a.sortOrder - b.sortOrder;
       });
 
-    return matched[0] ?? null;
+    if (matched[0]) return matched[0];
+
+    if (input.type === "VIDEO" && isSeedanceVideoModel(model)) {
+      return findSeedanceAnchorRule(candidates, model, mode);
+    }
+
+    return null;
   }
 };

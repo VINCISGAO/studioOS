@@ -9,8 +9,7 @@ import {
 } from "@/lib/canvas/music-field-limits";
 import {
   CANVAS_PROMPT_ENHANCE_MAX_LENGTH,
-  type CanvasPromptEnhanceField,
-  VIDEO_PROMPT_ENHANCE_MAX
+  type CanvasPromptEnhanceField
 } from "@/lib/canvas/prompt-enhance";
 import { appError } from "@/lib/core/errors";
 
@@ -280,7 +279,7 @@ export const canvasDirectorApplySchema = z.object({
 export const canvasPromptEnhanceSchema = z
   .object({
     projectId: z.string().uuid(),
-    field: z.enum(["music_style", "video_prompt"]),
+    field: z.enum(["music_style", "video_prompt", "image_prompt"]),
     text: z.string(),
     languageCode: z.string().max(20).optional().nullable()
   })
@@ -308,13 +307,13 @@ export const canvasPromptEnhanceSchema = z
       return;
     }
 
-    if (trimmed.length > VIDEO_PROMPT_ENHANCE_MAX) {
+    if (trimmed.length > maxLength) {
       ctx.addIssue({
         code: z.ZodIssueCode.too_big,
-        maximum: VIDEO_PROMPT_ENHANCE_MAX,
+        maximum: maxLength,
         type: "string",
         inclusive: true,
-        message: `Prompt must be at most ${VIDEO_PROMPT_ENHANCE_MAX} characters`
+        message: `Prompt must be at most ${maxLength} characters`
       });
     }
   });

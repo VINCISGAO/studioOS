@@ -25,5 +25,21 @@ export function formatValidationMessage(message: string, locale: Locale = "zh"):
     return locale === "zh" ? "输入无效，请检查后重试" : "Invalid input, please check and retry";
   }
 
+  if (/^No pricing rule configured for /i.test(message)) {
+    return locale === "zh"
+      ? "该模型的 Credits 定价规则尚未配置，请联系管理员或稍后再试"
+      : "Credits pricing is not configured for this model yet. Please contact an admin or try again later.";
+  }
+
+  if (
+    /Transaction API error|Transaction not found|Transaction ID is invalid|Invalid `prisma\./i.test(
+      message
+    )
+  ) {
+    return locale === "zh"
+      ? "视频生成暂时失败，请稍后重试。相关 Credits 已自动退回。"
+      : "Video generation failed temporarily. Your Credits have been refunded automatically.";
+  }
+
   return message;
 }
