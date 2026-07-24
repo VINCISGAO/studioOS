@@ -8,7 +8,7 @@ const PUBLIC_HERO_2X_PATH = "/images/background@2x.png";
 const HERO_ASSET_VERSION =
   process.env.NEXT_PUBLIC_HERO_ASSET_VERSION?.trim() ||
   process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 8) ||
-  "4";
+  "9";
 
 let hero2xAvailable: boolean | null = null;
 
