@@ -27,6 +27,10 @@ async function cleanupPricingWorkflowVerifyArtifacts() {
 
 /** CI hygiene: seedance-2.0 video drafts must not block runtime_ignores_drafts when published rules exist. */
 async function cleanupStraySeedanceVideoDrafts() {
+  if (process.env.CI !== "true" && process.env.PRICING_VERIFY_ALLOW_CLEANUP !== "1") {
+    return;
+  }
+
   const publishedSeedanceVideo = await prisma.creditPricingRule.count({
     where: {
       status: "PUBLISHED",
