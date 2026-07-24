@@ -289,13 +289,85 @@ export async function murekaPollTask(input: {
   });
 }
 
+const MUREKA_AUDIO_MAX_BYTES = 50 * 1024 * 1024;
+const MUREKA_AUDIO_DOWNLOAD_TIMEOUT_MS = 120_000;
+
+function isBlockedDownloadHostname(hostname: string) {
+  const normalized = hostname.trim().toLowerCase();
+  if (!normalized) return true;
+  if (normalized === "localhost" || normalized.endsWith(".localhost")) return true;
+  if (normalized === "127.0.0.1" || normalized === "::1") return true;
+
+  const ipv4Match = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/u.exec(normalized);
+  if (ipv4Match) {
+    const octets = ipv4Match.slice(1).map((value) => Number(value));
+    if (octets.some((value) => value > 255)) return true;
+    const [a, b] = octets;
+    if (a === 10) return true;
+    if (a === 127) return true;
+    if (a === 169 && b === 254) return true;
+    if (a === 172 && b >= 16 && b <= 31) return true;
+    if (a === 192 && b === 168) return true;
+    if (a === 0) return true;
+    return true;
+  }
+
+  return normalized.endsWith(".local") || normalized.endsWith(".internal");
+}
+
+function assertAllowedMurekaAudioUrl(url: string) {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    throw new MurekaApiError({
+      status: 400,
+      code: "MUREKA_INVALID_AUDIO_URL",
+      message: "Invalid Mureka audio download URL"
+    });
+  }
+
+  if (parsed.protocol !== "https:") {
+    throw new MurekaApiError({
+      status: 400,
+      code: "MUREKA_INVALID_AUDIO_URL",
+      message: "Mureka audio downloads must use HTTPS"
+    });
+  }
+
+  const hostname = parsed.hostname.toLowerCase();
+  if (
+    isBlockedDownloadHostname(hostname) ||
+    (!hostname.endsWith(".mureka.ai") && hostname !== "mureka.ai")
+  ) {
+    throw new MurekaApiError({
+      status: 400,
+      code: "MUREKA_INVALID_AUDIO_URL",
+      message: "Mureka audio download host is not allowed"
+    });
+  }
+
+  return parsed;
+}
+
 export async function murekaDownloadAudio(url: string) {
-  const response = await fetch(url);
+  assertAllowedMurekaAudioUrl(url);
+
+  const response = await fetch(url, { signal: AbortSignal.timeout(MUREKA_AUDIO_DOWNLOAD_TIMEOUT_MS) });
   if (!response.ok) {
     throw new MurekaApiError({
       status: response.status,
       code: "MUREKA_DOWNLOAD_FAILED",
       message: `Failed to download generated audio (${response.status})`
+    });
+  }
+
+  const contentLength = Number(response.headers.get("content-length") ?? "0");
+  if (Number.isFinite(contentLength) && contentLength > MUREKA_AUDIO_MAX_BYTES) {
+    throw new MurekaApiError({
+      status: 413,
+      code: "MUREKA_AUDIO_TOO_LARGE",
+      message: "Downloaded audio file exceeds the 50MB limit"
     });
   }
 
@@ -305,6 +377,13 @@ export async function murekaDownloadAudio(url: string) {
       status: 502,
       code: "MUREKA_EMPTY_AUDIO",
       message: "Downloaded audio file is empty"
+    });
+  }
+  if (buffer.length > MUREKA_AUDIO_MAX_BYTES) {
+    throw new MurekaApiError({
+      status: 413,
+      code: "MUREKA_AUDIO_TOO_LARGE",
+      message: "Downloaded audio file exceeds the 50MB limit"
     });
   }
 
