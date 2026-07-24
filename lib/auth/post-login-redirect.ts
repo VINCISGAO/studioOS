@@ -9,8 +9,21 @@ function safeUserRole(role: DemoRole): DemoRole {
   return role === "creator" ? "creator" : "client";
 }
 
+function hasUnsafePathPrefix(pathname: string) {
+  if (pathname.startsWith("//") || pathname.includes("\\")) {
+    return true;
+  }
+
+  try {
+    const decoded = decodeURIComponent(pathname);
+    return decoded.startsWith("//") || decoded.includes("\\");
+  } catch {
+    return true;
+  }
+}
+
 export function isSafeInternalPostLoginPath(path: string) {
-  return path.startsWith("/") && !path.startsWith("//") && !path.includes("\\");
+  return path.startsWith("/") && !hasUnsafePathPrefix(path);
 }
 
 function sanitizePathname(pathname: string) {
