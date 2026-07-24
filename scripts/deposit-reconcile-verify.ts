@@ -347,7 +347,7 @@ async function main() {
       concurrentLedgerCount === 1 &&
       concurrentA.paid === true &&
       concurrentB.paid === true &&
-      (concurrentA.duplicate === false || concurrentB.duplicate === true),
+      concurrentA.duplicate !== concurrentB.duplicate,
     detail: `ledger=${concurrentLedgerCount}, dupA=${concurrentA.duplicate}, dupB=${concurrentB.duplicate}`
   });
 
