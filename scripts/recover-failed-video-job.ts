@@ -209,16 +209,28 @@ async function patchCanvasNodeForRecoveredVideo(input: {
   });
 }
 
-async function settleRecoveredJobBilling(job: GenerationJob) {
-  const actualCredits = job.estimatedCredits;
+type RecoveryBillingPlan = {
+  reservationId: string;
+  shouldCapture: boolean;
+  createdNewReservation: boolean;
+};
+
+async function planRecoveredJobBilling(job: GenerationJob): Promise<RecoveryBillingPlan> {
   if (job.creditReservationId) {
     const existing = await creditWalletRepository.findReservationById(job.creditReservationId);
     if (existing?.status === "ACTIVE") {
-      await creditGenerationBillingService.finalizeSuccess(job.creditReservationId, actualCredits, {
-        campaignId: job.campaignId,
-        generationJobId: job.id
-      });
-      return;
+      return {
+        reservationId: existing.id,
+        shouldCapture: true,
+        createdNewReservation: false
+      };
+    }
+    if (existing?.status === "CAPTURED") {
+      return {
+        reservationId: existing.id,
+        shouldCapture: false,
+        createdNewReservation: false
+      };
     }
   }
 
@@ -233,7 +245,17 @@ async function settleRecoveredJobBilling(job: GenerationJob) {
     campaignId: job.campaignId
   });
 
-  await creditGenerationBillingService.finalizeSuccess(reservation.id, actualCredits, {
+  return {
+    reservationId: reservation.id,
+    shouldCapture: true,
+    createdNewReservation: true
+  };
+}
+
+async function captureRecoveredJobBilling(job: GenerationJob, plan: RecoveryBillingPlan) {
+  if (!plan.shouldCapture) return;
+
+  await creditGenerationBillingService.finalizeSuccess(plan.reservationId, job.estimatedCredits, {
     campaignId: job.campaignId,
     generationJobId: job.id
   });
@@ -298,73 +320,95 @@ async function recoverJob(job: GenerationJob, options: CliOptions) {
     throw new Error(`Owner ${job.ownerId} not found`);
   }
 
-  console.log("Downloading video from Seedance…");
-  const downloaded = await seedanceDownloadVideo(videoUrl);
-  console.log(`Downloaded ${downloaded.buffer.length} bytes (${downloaded.mimeType})`);
-
-  console.log("Uploading to object storage…");
-  const asset = await canvasAssetService.saveGeneratedVideoBuffer(job.creativeProjectId, owner, {
-    buffer: downloaded.buffer,
-    mimeType: downloaded.mimeType,
-    fileName: "canvas-recovered-video.mp4",
-    metadata: {
-      prompt: job.prompt,
-      model: job.model,
-      seedanceTaskId: providerTaskId,
-      generationJobId: job.id,
-      nodeId: job.nodeId,
-      provider: job.provider,
-      recoveredAt: new Date().toISOString(),
-      videoExpiresAt: expiresAt ?? null
-    }
-  });
-
-  await prisma.generationJob.update({
-    where: { id: job.id },
-    data: {
-      status: "SUCCEEDED",
-      progress: 100,
-      outputAssetId: asset.id,
-      actualCredits: job.estimatedCredits,
-      errorCode: null,
-      errorMessage: null,
-      completedAt: new Date()
-    }
-  });
-
-  await videoJobAuditService.writeEvent({
-    generationJobId: job.id,
-    eventType: VIDEO_JOB_EVENT_TYPES.STORAGE_SAVED,
-    toStatus: "SUCCEEDED",
-    progress: 100,
-    payload: {
-      outputAssetId: asset.id,
-      recovered: true,
-      providerTaskId
-    }
-  });
-
-  if (job.nodeId) {
-    console.log(`Patching canvas node ${job.nodeId}…`);
-    await patchCanvasNodeForRecoveredVideo({
-      nodeId: job.nodeId,
-      assetId: asset.id,
-      jobId: job.id
+  console.log("Preflighting billing…");
+  const billingPlan = await planRecoveredJobBilling(job);
+  if (billingPlan.createdNewReservation) {
+    await prisma.generationJob.update({
+      where: { id: job.id },
+      data: { creditReservationId: billingPlan.reservationId }
     });
   }
 
-  console.log("Settling billing…");
-  await settleRecoveredJobBilling(job);
-  await finalizeCanvasGenerationJob(owner, job.id, job.ownerId);
+  let recovered = false;
+  try {
+    console.log("Downloading video from Seedance…");
+    const downloaded = await seedanceDownloadVideo(videoUrl);
+    console.log(`Downloaded ${downloaded.buffer.length} bytes (${downloaded.mimeType})`);
 
-  console.log("\nRecovery complete.");
-  console.log(`  jobId:   ${job.id}`);
-  console.log(`  assetId: ${asset.id}`);
-  console.log(`  preview: ${asset.url}`);
-  if (job.nodeId) {
-    console.log(`  nodeId:  ${job.nodeId}`);
+    console.log("Uploading to object storage…");
+    const asset = await canvasAssetService.saveGeneratedVideoBuffer(job.creativeProjectId, owner, {
+      buffer: downloaded.buffer,
+      mimeType: downloaded.mimeType,
+      fileName: "canvas-recovered-video.mp4",
+      metadata: {
+        prompt: job.prompt,
+        model: job.model,
+        seedanceTaskId: providerTaskId,
+        generationJobId: job.id,
+        nodeId: job.nodeId,
+        provider: job.provider,
+        recoveredAt: new Date().toISOString(),
+        videoExpiresAt: expiresAt ?? null
+      }
+    });
+
+    await prisma.generationJob.update({
+      where: { id: job.id },
+      data: {
+        status: "SUCCEEDED",
+        progress: 100,
+        outputAssetId: asset.id,
+        actualCredits: job.estimatedCredits,
+        errorCode: null,
+        errorMessage: null,
+        completedAt: new Date()
+      }
+    });
+
+    await videoJobAuditService.writeEvent({
+      generationJobId: job.id,
+      eventType: VIDEO_JOB_EVENT_TYPES.STORAGE_SAVED,
+      toStatus: "SUCCEEDED",
+      progress: 100,
+      payload: {
+        outputAssetId: asset.id,
+        recovered: true,
+        providerTaskId
+      }
+    });
+
+    if (job.nodeId) {
+      console.log(`Patching canvas node ${job.nodeId}…`);
+      await patchCanvasNodeForRecoveredVideo({
+        nodeId: job.nodeId,
+        assetId: asset.id,
+        jobId: job.id
+      });
+    }
+
+    recovered = true;
+    console.log("Settling billing…");
+    await captureRecoveredJobBilling(job, billingPlan);
+    await finalizeCanvasGenerationJob(owner, job.id, job.ownerId);
+
+    console.log("\nRecovery complete.");
+    console.log(`  jobId:   ${job.id}`);
+    console.log(`  assetId: ${asset.id}`);
+    console.log(`  preview: ${asset.url}`);
+    if (job.nodeId) {
+      console.log(`  nodeId:  ${job.nodeId}`);
+    }
+    console.log("\nRefresh the Canvas page to see the recovered video.");
+  } catch (error) {
+    if (!recovered && billingPlan.createdNewReservation) {
+      await creditGenerationBillingService.finalizeFailure(billingPlan.reservationId, {
+        campaignId: job.campaignId,
+        generationJobId: job.id,
+        reason: "RECOVERY_ABORTED"
+      });
+    }
+    throw error;
   }
-  console.log("\nRefresh the Canvas page to see the recovered video.");
 }
 
 async function main() {

@@ -3,6 +3,7 @@ import {
   DEFAULT_IMAGE_SETTINGS,
   DEFAULT_MUSIC_SETTINGS,
   DEFAULT_VIDEO_SETTINGS,
+  IMAGE_ASPECT_RATIOS,
   type GenerationKind,
   type GenerationReference,
   type ImageGenerationSettings,
@@ -128,7 +129,8 @@ function parseImageSettings(value: unknown): ImageGenerationSettings {
         ? value.quality
         : DEFAULT_IMAGE_SETTINGS.quality,
     aspectRatio:
-      typeof value.aspectRatio === "string"
+      typeof value.aspectRatio === "string" &&
+      IMAGE_ASPECT_RATIOS.includes(value.aspectRatio as (typeof IMAGE_ASPECT_RATIOS)[number])
         ? (value.aspectRatio as ImageGenerationSettings["aspectRatio"])
         : DEFAULT_IMAGE_SETTINGS.aspectRatio,
     width:
