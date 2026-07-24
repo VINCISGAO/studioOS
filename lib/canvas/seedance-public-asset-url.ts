@@ -35,6 +35,7 @@ export async function resolveSeedancePublicAssetUrl(input: {
   }
 
   const asset = await canvasAssetService.requireAsset(assetId, input.user);
+  canvasAssetService.assertSeedanceSelectableAsset(asset);
   const signed = await createSignedObjectReadUrl({ key: asset.fileKey, expiresIn: 3600 });
   if (!signed) {
     throw appError("SYSTEM_ERROR", "Failed to create a public read URL for the reference asset.");

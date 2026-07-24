@@ -113,6 +113,7 @@ export async function submitSeedanceVideoTask(input: {
   let referenceMimeType = payload.referenceMimeType;
   if (payload.referenceAssetId?.trim() && !referenceMimeType) {
     const asset = await canvasAssetService.requireAsset(payload.referenceAssetId, input.user);
+    canvasAssetService.assertSeedanceSelectableAsset(asset);
     referenceMimeType = asset.mimeType;
   }
 
