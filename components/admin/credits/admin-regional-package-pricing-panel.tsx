@@ -134,7 +134,7 @@ export function AdminRegionalPackagePricingPanel({
     setBusy(null);
     if (result.ok && result.payload.data) {
       setPreview(
-        `${regionCode}: ${result.payload.data.displayAmount} · ${result.payload.data.totalCredits} Credits · ${result.payload.data.pricingSource}`
+        `${regionCode}: ${result.payload.data.displayAmount} · ${result.payload.data.totalCredits} Token · ${result.payload.data.pricingSource}`
       );
     } else {
       setError(result.errorMessage);
@@ -163,7 +163,7 @@ export function AdminRegionalPackagePricingPanel({
           <CardContent className="grid gap-2 p-5 text-sm">
             <div className="text-lg font-semibold text-zinc-950">{pkg.name}</div>
             <div className="text-zinc-500">
-              {pkg.credits} Credits · v{pkg.version} · {pkg.enabled ? "Enabled" : "Disabled"}
+              {pkg.credits} Token · v{pkg.version} · {pkg.enabled ? "Enabled" : "Disabled"}
             </div>
           </CardContent>
         </Card>

@@ -366,6 +366,8 @@ function addIntegrationSteps(steps: Step[]) {
   steps.push(runCmd("credits:pricing:workflow:verify", "npm run credits:pricing:workflow:verify"));
   steps.push(runCmd("credits:regional-pricing:verify", "npm run credits:regional-pricing:verify"));
   steps.push(runCmd("canvas:ai-models:verify", "npm run canvas:ai-models:verify"));
+  steps.push(runCmd("video-engine:sprint-c:verify", "npm run video-engine:sprint-c:verify"));
+  steps.push(runCmd("creator-lifecycle:verify", "npm run creator-lifecycle:verify"));
   steps.push(runCmd("credits:verify", "npm run credits:verify"));
   steps.push(runCmd("sprint1.verify", "npm run sprint1:verify"));
 }
@@ -382,6 +384,8 @@ function addStaticSteps(steps: Step[]) {
   steps.push(runCheck("payment.mvp_files", checkPaymentService));
   steps.push(runCheck("ai_copilot.marketing_faq_knowledge", checkMarketingFaqKnowledge));
   steps.push(runCmd("knowledge.verify", "npm run knowledge:verify"));
+  steps.push(runCmd("video-engine:sprint-c:verify", "npm run video-engine:sprint-c:verify"));
+  steps.push(runCmd("creator-lifecycle:verify", "npm run creator-lifecycle:verify"));
   steps.push(runCheck("admin.secrets_config", checkAdminSecrets));
   steps.push(runDepositVerify("deposit.security.verify", "npm run deposit:security:verify"));
 }

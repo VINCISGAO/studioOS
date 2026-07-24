@@ -53,8 +53,8 @@ export function GenerationReferenceSourceMenu({
   const t = copy[locale];
 
   function run(action: () => void) {
-    onActionComplete?.();
     action();
+    onActionComplete?.();
   }
 
   return (

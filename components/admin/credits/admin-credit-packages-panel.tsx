@@ -90,7 +90,7 @@ export function AdminCreditPackagesPanel({ locale }: { locale: "zh" | "en" }) {
     const payload = (await response.json()) as { success: boolean; data?: { totalCredits: number; displayPrice: string } };
     if (response.ok && payload.success && payload.data) {
       setPreview(
-        `${pkg.name}: ${payload.data.totalCredits} Credits · ${payload.data.displayPrice}${
+        `${pkg.name}: ${payload.data.totalCredits} Token · ${payload.data.displayPrice}${
           pkg.regionCodes.length ? ` · ${pkg.regionCodes.join(", ")}` : ""
         }`
       );
@@ -154,7 +154,7 @@ export function AdminCreditPackagesPanel({ locale }: { locale: "zh" | "en" }) {
             <TableHeader>
               <TableRow>
                 <TableHead>{zh ? "套餐" : "Package"}</TableHead>
-                <TableHead>{zh ? "Credits" : "Credits"}</TableHead>
+                <TableHead>{zh ? "Token" : "Token"}</TableHead>
                 <TableHead>{zh ? "价格" : "Price"}</TableHead>
                 <TableHead>{zh ? "区域" : "Regions"}</TableHead>
                 <TableHead>{zh ? "状态" : "Status"}</TableHead>

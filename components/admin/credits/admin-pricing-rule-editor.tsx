@@ -143,7 +143,7 @@ export function AdminPricingRuleEditor({ locale, ruleId }: { locale: "zh" | "en"
       const draft = data.draft?.credits ?? current;
       setSimulation(
         zh
-          ? `当前 ${current} Credits · 草稿 ${draft} Credits · 变化 ${data.deltaCredits} (${data.deltaPercent ?? 0}%)`
+          ? `当前 ${current} Token · 草稿 ${draft} Token · 变化 ${data.deltaCredits} (${data.deltaPercent ?? 0}%)`
           : `Current ${current} · Draft ${draft} · Delta ${data.deltaCredits} (${data.deltaPercent ?? 0}%)`
       );
     } else {

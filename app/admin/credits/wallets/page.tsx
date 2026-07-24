@@ -13,14 +13,14 @@ import { adminUserRoleLabel } from "@/lib/studioos/admin-enum-labels";
 
 const copy = {
   en: {
-    title: "Credit wallets",
-    subtitle: "Search users and inspect VINCIS Credits balances.",
+    title: "Token wallets",
+    subtitle: "Search users and inspect VINCIS Token balances.",
     search: "Search user",
     submit: "Search"
   },
   zh: {
-    title: "Credits 用户钱包",
-    subtitle: "搜索用户并查看 VINCIS Credits 余额与累计数据。",
+    title: "Token 用户钱包",
+    subtitle: "搜索用户并查看 VINCIS Token 余额与累计数据。",
     search: "搜索用户",
     submit: "搜索"
   }
@@ -83,7 +83,7 @@ export default async function AdminCreditWalletsPage({
       </Card>
       <p className="mt-4 text-xs text-zinc-500">
         <Link href={withLocale(adminPortalRoutes.credits, locale)} className="underline">
-          Back to credits overview
+          Back to Token overview
         </Link>
       </p>
     </AdminPageShell>

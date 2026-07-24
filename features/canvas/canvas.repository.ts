@@ -1,5 +1,6 @@
 import type { CreativeProjectMode, GenerationStatus, GenerationType, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/core/database/prisma";
+import { isUniqueConstraintError } from "@/lib/core/prisma-errors";
 import type { CanvasLibraryAssetType } from "@/lib/canvas/canvas-library-kind";
 import {
   CANVAS_LIBRARY_ASSET_KIND,
@@ -199,30 +200,87 @@ export const canvasRepository = {
       data?: Prisma.InputJsonValue;
     }[];
   }) {
-    return prisma.$transaction(async (tx) => {
-      await tx.canvasEdge.deleteMany({ where: { canvasId: input.canvasId } });
-      await tx.canvasNode.deleteMany({ where: { canvasId: input.canvasId } });
+    const nodeIds = input.nodes.map((node) => node.id);
+    const edgeIds = input.edges.map((edge) => edge.id);
 
-      if (input.nodes.length) {
-        await tx.canvasNode.createMany({
-          data: input.nodes.map((node) => ({
-            ...node,
-            creativeProjectId: input.creativeProjectId,
-            campaignId: input.campaignId ?? null,
-            canvasId: input.canvasId
-          }))
-        });
-      }
-      if (input.edges.length) {
-        await tx.canvasEdge.createMany({
-          data: input.edges.map((edge) => ({
-            ...edge,
-            creativeProjectId: input.creativeProjectId,
-            campaignId: input.campaignId ?? null,
-            canvasId: input.canvasId
-          }))
-        });
-      }
+    return prisma.$transaction(async (tx) => {
+      await Promise.all(
+        input.nodes.map((node) =>
+          tx.canvasNode.upsert({
+            where: { id: node.id },
+            create: {
+              id: node.id,
+              type: node.type,
+              positionX: node.positionX,
+              positionY: node.positionY,
+              width: node.width,
+              height: node.height,
+              parentId: node.parentId,
+              data: node.data,
+              zIndex: node.zIndex,
+              creativeProjectId: input.creativeProjectId,
+              campaignId: input.campaignId ?? null,
+              canvasId: input.canvasId
+            },
+            update: {
+              type: node.type,
+              positionX: node.positionX,
+              positionY: node.positionY,
+              width: node.width,
+              height: node.height,
+              parentId: node.parentId,
+              data: node.data,
+              zIndex: node.zIndex,
+              creativeProjectId: input.creativeProjectId,
+              campaignId: input.campaignId ?? null,
+              canvasId: input.canvasId
+            }
+          })
+        )
+      );
+
+      await tx.canvasNode.deleteMany({
+        where: {
+          canvasId: input.canvasId,
+          ...(nodeIds.length > 0 ? { id: { notIn: nodeIds } } : {})
+        }
+      });
+
+      await Promise.all(
+        input.edges.map((edge) =>
+          tx.canvasEdge.upsert({
+            where: { id: edge.id },
+            create: {
+              id: edge.id,
+              source: edge.source,
+              target: edge.target,
+              sourceHandle: edge.sourceHandle ?? null,
+              targetHandle: edge.targetHandle ?? null,
+              data: edge.data,
+              creativeProjectId: input.creativeProjectId,
+              campaignId: input.campaignId ?? null,
+              canvasId: input.canvasId
+            },
+            update: {
+              source: edge.source,
+              target: edge.target,
+              sourceHandle: edge.sourceHandle ?? null,
+              targetHandle: edge.targetHandle ?? null,
+              data: edge.data,
+              creativeProjectId: input.creativeProjectId,
+              campaignId: input.campaignId ?? null,
+              canvasId: input.canvasId
+            }
+          })
+        )
+      );
+
+      await tx.canvasEdge.deleteMany({
+        where: {
+          canvasId: input.canvasId,
+          ...(edgeIds.length > 0 ? { id: { notIn: edgeIds } } : {})
+        }
+      });
 
       return tx.creativeCanvas.update({
         where: { id: input.canvasId },
@@ -425,7 +483,7 @@ export const canvasRepository = {
     });
   },
 
-  createGenerationJob(input: {
+  async createGenerationJob(input: {
     creativeProjectId: string;
     campaignId?: string | null;
     canvasId: string;
@@ -448,38 +506,47 @@ export const canvasRepository = {
     pricingSnapshot?: Prisma.InputJsonValue;
     quotedAt?: Date | null;
   }) {
-    return prisma.generationJob.upsert({
-      where: {
-        ownerId_idempotencyKey: {
-          ownerId: input.ownerId,
-          idempotencyKey: input.idempotencyKey
+    const data = {
+      creativeProjectId: input.creativeProjectId,
+      campaignId: input.campaignId ?? null,
+      canvasId: input.canvasId,
+      ownerId: input.ownerId,
+      nodeId: input.nodeId,
+      type: input.type,
+      provider: input.provider,
+      model: input.model,
+      aiModelId: input.aiModelId ?? null,
+      modelDisplayName: input.modelDisplayName ?? null,
+      prompt: input.prompt,
+      input: input.payload,
+      idempotencyKey: input.idempotencyKey,
+      estimatedCredits: input.estimatedCredits,
+      creditReservationId: input.creditReservationId ?? null,
+      pricingRuleId: input.pricingRuleId ?? null,
+      pricingRuleVersion: input.pricingRuleVersion ?? null,
+      creditsQuoted: input.creditsQuoted ?? input.estimatedCredits,
+      providerCostSnapshot: input.providerCostSnapshot,
+      pricingSnapshot: input.pricingSnapshot,
+      quotedAt: input.quotedAt ?? null
+    };
+
+    try {
+      const job = await prisma.generationJob.create({ data });
+      return { job, created: true as const };
+    } catch (error) {
+      if (!isUniqueConstraintError(error)) {
+        throw error;
+      }
+      const job = await prisma.generationJob.findUniqueOrThrow({
+        where: {
+          ownerId_idempotencyKey: {
+            ownerId: input.ownerId,
+            idempotencyKey: input.idempotencyKey
+          }
         }
-      },
-      create: {
-        creativeProjectId: input.creativeProjectId,
-        campaignId: input.campaignId ?? null,
-        canvasId: input.canvasId,
-        ownerId: input.ownerId,
-        nodeId: input.nodeId,
-        type: input.type,
-        provider: input.provider,
-        model: input.model,
-        aiModelId: input.aiModelId ?? null,
-        modelDisplayName: input.modelDisplayName ?? null,
-        prompt: input.prompt,
-        input: input.payload,
-        idempotencyKey: input.idempotencyKey,
-        estimatedCredits: input.estimatedCredits,
-        creditReservationId: input.creditReservationId ?? null,
-        pricingRuleId: input.pricingRuleId ?? null,
-        pricingRuleVersion: input.pricingRuleVersion ?? null,
-        creditsQuoted: input.creditsQuoted ?? input.estimatedCredits,
-        providerCostSnapshot: input.providerCostSnapshot,
-        pricingSnapshot: input.pricingSnapshot,
-        quotedAt: input.quotedAt ?? null
-      },
-      update: {}
-    });
+      });
+      return { job, created: false as const };
+    }
   },
 
   findGenerationJob(jobId: string, ownerId: string) {

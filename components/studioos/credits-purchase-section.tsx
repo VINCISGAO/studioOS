@@ -75,7 +75,7 @@ export function CreditsPurchaseSection({
       setNotice(zh ? "支付已取消。" : "Checkout cancelled.");
       return;
     }
-    setNotice(zh ? "支付成功，正在确认入账…" : "Payment received. Confirming credits…");
+    setNotice(zh ? "支付成功，正在确认入账…" : "Payment received. Confirming Token…");
     void pollOrder(checkoutNotice.orderId);
   }, [checkoutNotice, zh]);
 

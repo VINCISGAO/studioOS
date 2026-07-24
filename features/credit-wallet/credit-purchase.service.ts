@@ -195,7 +195,7 @@ export class CreditPurchaseService {
     const unitAmount = stripeUnitAmount(checkoutCurrency, checkoutAmountMinor);
     const productName = isCustomPurchase
       ? `${quoteView.totalCredits.toLocaleString()} VINCIS Token`
-      : `${resolved!.package.name} — ${quoteView.totalCredits} VINCIS Credits`;
+      : `${resolved!.package.name} — ${quoteView.totalCredits} VINCIS Token`;
     const productDescription = isCustomPurchase
       ? `Custom purchase · ${formatAmountMinor(checkoutCurrency, checkoutAmountMinor)}`
       : `Region ${quoteView.regionCode} · ${formatAmountMinor(checkoutCurrency, checkoutAmountMinor)}`;

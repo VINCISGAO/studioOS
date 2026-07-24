@@ -139,7 +139,7 @@ export function AdminPricingRulesPanel({ locale }: { locale: "zh" | "en" }) {
                 <TableHead>{zh ? "模型" : "Model"}</TableHead>
                 <TableHead>{zh ? "类型" : "Type"}</TableHead>
                 <TableHead>{zh ? "模式" : "Mode"}</TableHead>
-                <TableHead>Credits</TableHead>
+                <TableHead>Token</TableHead>
                 <TableHead>{zh ? "毛利率" : "Margin"}</TableHead>
                 <TableHead>{zh ? "状态" : "Status"}</TableHead>
                 <TableHead>{zh ? "版本" : "Version"}</TableHead>

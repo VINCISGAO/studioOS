@@ -12,12 +12,14 @@ type ApiEnvelope<T> = {
 
 const copy = {
   zh: {
-    empty: "请先输入风格描述，再进行优化。",
-    failed: "优化失败，请稍后重试。"
+    emptyStyle: "请先输入风格描述，再进行优化。",
+    failed: "优化失败，请稍后重试。",
+    inspireFailed: "AI 灵感生成失败，请稍后重试。"
   },
   en: {
-    empty: "Enter a style description before enhancing.",
-    failed: "Enhancement failed. Please try again."
+    emptyStyle: "Enter a style description before enhancing.",
+    failed: "Enhancement failed. Please try again.",
+    inspireFailed: "AI inspiration failed. Please try again."
   }
 } as const;
 
@@ -29,8 +31,8 @@ export function useCanvasPromptEnhance(projectId: string, locale: Locale) {
   const enhance = useCallback(
     async (field: CanvasPromptEnhanceField, text: string) => {
       const source = text.trim();
-      if (!source) {
-        setError(t.empty);
+      if (field === "music_style" && !source) {
+        setError(t.emptyStyle);
         return null;
       }
 
@@ -50,19 +52,22 @@ export function useCanvasPromptEnhance(projectId: string, locale: Locale) {
         });
 
         const payload = (await response.json()) as ApiEnvelope<{ text: string }>;
+        const failedMessage = field === "video_prompt" ? t.inspireFailed : t.failed;
         if (!response.ok || !payload.success || !payload.data?.text) {
-          throw new Error(payload.error?.message ?? t.failed);
+          throw new Error(payload.error?.message ?? failedMessage);
         }
 
         return payload.data.text;
       } catch (requestError) {
-        setError(requestError instanceof Error ? requestError.message : t.failed);
+        const failedMessage =
+          field === "video_prompt" ? t.inspireFailed : t.failed;
+        setError(requestError instanceof Error ? requestError.message : failedMessage);
         return null;
       } finally {
         setEnhancing(false);
       }
     },
-    [locale, projectId, t.empty, t.failed]
+    [locale, projectId, t.emptyStyle, t.failed, t.inspireFailed]
   );
 
   return { enhance, enhancing, error, clearError: () => setError(null) };

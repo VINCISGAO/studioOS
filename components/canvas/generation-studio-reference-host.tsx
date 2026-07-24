@@ -7,17 +7,39 @@ import {
   generationAssetLibraryKindFromSlot
 } from "@/components/canvas/generation-asset-library-modal";
 import { GenerationCanvasPickerModal } from "@/components/canvas/generation-canvas-picker-modal";
+import type { GenerationReferenceTarget } from "@/components/canvas/hooks/use-generation-studio-references";
 import type { GenerationReferenceSlot } from "@/components/canvas/generation-kind-selector";
 import type { GenerationReference } from "@/lib/canvas/generation-ui";
 import type { CanvasAssetLibraryKind } from "@/lib/canvas/canvas-library-kind";
 import type { Locale } from "@/lib/i18n";
 import type { VincisCanvasNode } from "@/lib/canvas/types";
 
+const acceptBySlot: Record<GenerationReferenceSlot, string> = {
+  video: "image/jpeg,image/png,image/webp,image/gif,video/mp4,video/quicktime,video/webm",
+  image: "image/jpeg,image/png,image/webp,image/gif",
+  audio: "audio/mpeg,audio/wav,.mp3,.wav"
+};
+
+const uploadCopy = {
+  zh: {
+    video: "正在上传参考视频…",
+    image: "正在上传参考图…",
+    audio: "正在上传参考音频…"
+  },
+  en: {
+    video: "Uploading reference video…",
+    image: "Uploading reference image…",
+    audio: "Uploading reference audio…"
+  }
+} as const;
+
 export function GenerationStudioReferenceHost({
   locale,
   projectId,
   nodes,
   reference,
+  lastFrameReference,
+  referenceTarget,
   showAssetLibrary,
   assetLibrarySlot,
   showCanvasPicker,
@@ -34,6 +56,8 @@ export function GenerationStudioReferenceHost({
   projectId: string;
   nodes: VincisCanvasNode[];
   reference: GenerationReference | null;
+  lastFrameReference: GenerationReference | null;
+  referenceTarget: GenerationReferenceTarget;
   showAssetLibrary: boolean;
   assetLibrarySlot: GenerationReferenceSlot;
   showCanvasPicker: boolean;
@@ -46,13 +70,17 @@ export function GenerationStudioReferenceHost({
   onLocalFileSelected: (file: File) => Promise<void>;
   onUploadReference: (file: File, libraryKind: CanvasAssetLibraryKind) => Promise<GenerationReference>;
 }) {
+  const selectedReference =
+    referenceTarget === "lastFrame" ? lastFrameReference : reference;
+  const uploadSlot = referenceTarget === "lastFrame" ? "image" : assetLibrarySlot;
+
   return (
     <>
       <input
         ref={localInputRef}
         type="file"
-        className="hidden"
-        accept="image/jpeg,image/png,image/webp,image/gif"
+        className="sr-only"
+        accept={acceptBySlot[uploadSlot]}
         onChange={async (event) => {
           const file = event.target.files?.[0];
           event.currentTarget.value = "";
@@ -66,7 +94,7 @@ export function GenerationStudioReferenceHost({
         projectId={projectId}
         libraryKind={generationAssetLibraryKindFromSlot(assetLibrarySlot)}
         open={showAssetLibrary}
-        selectedId={reference?.assetId}
+        selectedId={selectedReference?.assetId}
         onClose={onCloseAssetLibrary}
         onSelect={onReferenceChange}
         onUpload={onUploadReference}
@@ -85,7 +113,7 @@ export function GenerationStudioReferenceHost({
         <div className="pointer-events-none absolute inset-x-0 bottom-40 z-50 flex justify-center">
           <div className="inline-flex items-center gap-2 rounded-full bg-zinc-900 px-4 py-2 text-xs text-white">
             <LoaderCircle className="h-4 w-4 animate-spin" />
-            {locale === "zh" ? "正在上传参考图…" : "Uploading reference…"}
+            {uploadCopy[locale][uploadSlot]}
           </div>
         </div>
       ) : null}

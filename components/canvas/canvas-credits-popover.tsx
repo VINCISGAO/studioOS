@@ -108,7 +108,7 @@ export function CanvasCreditsPopover({
                 onClick={() => setOpen(false)}
                 className={CANVAS_CREDITS_POPOVER.closeButton}
               >
-                <X className="h-3.5 w-3.5" strokeWidth={2.25} />
+                <X className="h-3 w-3" strokeWidth={2.25} />
               </button>
             </div>
 
@@ -124,18 +124,18 @@ export function CanvasCreditsPopover({
 
             <div className={CANVAS_CREDITS_POPOVER.actions}>
               <Link href={creditsHref} className={CANVAS_CREDITS_POPOVER.buyButton}>
-                <ShoppingCart className="h-4 w-4" strokeWidth={2.25} />
+                <ShoppingCart className="h-3 w-3" strokeWidth={2.25} />
                 {copy.buy}
               </Link>
               <Link href={convertHref} className={CANVAS_CREDITS_POPOVER.convertButton}>
-                <RefreshCw className="h-4 w-4" strokeWidth={2.25} />
+                <RefreshCw className="h-3 w-3" strokeWidth={2.25} />
                 {copy.convert}
               </Link>
             </div>
 
             <Link href={detailsHref} className={CANVAS_CREDITS_POPOVER.detailsLink}>
               {copy.details}
-              <ChevronRight className="h-3.5 w-3.5" strokeWidth={2.25} />
+              <ChevronRight className="h-3 w-3" strokeWidth={2.25} />
             </Link>
           </div>
         </div>

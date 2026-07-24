@@ -63,15 +63,19 @@ export function MarketingShowcaseVideoModal({
   }
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/85 p-4 sm:p-8" role="dialog" aria-modal="true">
+    <div
+      className="fixed inset-0 z-[120] flex bg-black lg:items-center lg:justify-center lg:bg-black/85 lg:p-8"
+      role="dialog"
+      aria-modal="true"
+    >
       <button
         type="button"
-        className="absolute inset-0 cursor-default"
+        className="absolute inset-0 cursor-default lg:block"
         aria-label={isZh ? "关闭" : "Close"}
         onClick={onClose}
       />
-      <div className="relative z-[1] w-full max-w-5xl overflow-hidden rounded-2xl bg-zinc-950 shadow-2xl">
-        <div className="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-3 sm:px-5">
+      <div className="relative z-[1] flex h-full w-full min-h-0 flex-col overflow-hidden bg-zinc-950 lg:h-auto lg:max-w-5xl lg:rounded-2xl lg:shadow-2xl">
+        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-white/10 px-4 py-3 sm:px-5">
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold text-white sm:text-base">{work.title}</p>
             <p className="truncate text-xs text-zinc-400">
@@ -88,17 +92,19 @@ export function MarketingShowcaseVideoModal({
           </button>
         </div>
 
-        <div className="relative aspect-video w-full bg-black">
+        <div className="relative min-h-0 w-full flex-1 bg-black lg:aspect-video lg:flex-none">
           {embed.kind === "video" && directVideoSrc && !videoFailed ? (
             <video
               ref={videoRef}
               src={directVideoSrc}
               className={cn(
-                "h-full w-full object-contain transition-opacity duration-200",
+                "h-full w-full object-cover transition-opacity duration-200 lg:object-contain",
                 videoReady ? "opacity-100" : "opacity-0"
               )}
               playsInline
               autoPlay
+              muted
+              onLoadedData={() => setVideoReady(true)}
               onPlay={() => setIsPlaying(true)}
               onPause={() => setIsPlaying(false)}
               onPlaying={() => setVideoReady(true)}
@@ -147,7 +153,9 @@ export function MarketingShowcaseVideoModal({
         </div>
 
         {work.description ? (
-          <div className="border-t border-white/10 px-4 py-3 text-sm leading-6 text-zinc-300 sm:px-5">{work.description}</div>
+          <div className="hidden shrink-0 border-t border-white/10 px-4 py-3 text-sm leading-6 text-zinc-300 sm:px-5 lg:block">
+            {work.description}
+          </div>
         ) : null}
       </div>
     </div>

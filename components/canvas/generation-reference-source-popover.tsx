@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { GenerationReferenceSlot } from "@/components/canvas/generation-kind-selector";
 import { GenerationReferenceSourceMenu } from "@/components/canvas/generation-reference-source-menu";
@@ -50,6 +50,7 @@ export function GenerationReferenceSourcePopover({
   onClose: () => void;
 }) {
   const portalReady = useBodyPortalReady();
+  const menuRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState<{ left: number; top: number } | null>(null);
 
   const updatePosition = useCallback(() => {
@@ -73,6 +74,7 @@ export function GenerationReferenceSourcePopover({
       const target = event.target;
       if (!(target instanceof Node)) return;
       if (anchorRef.current?.contains(target)) return;
+      if (menuRef.current?.contains(target)) return;
       onClose();
     }
 
@@ -97,6 +99,7 @@ export function GenerationReferenceSourcePopover({
 
   return createPortal(
     <div
+      ref={menuRef}
       className="fixed w-56"
       style={{
         left: position.left,

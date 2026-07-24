@@ -138,7 +138,7 @@ export function AiDirectorPanel({
         <div className="rounded-2xl bg-zinc-50 p-4 ring-1 ring-zinc-100">
           <div className="text-xs font-medium text-zinc-800">让 Director 操作画布</div>
           <p className="mt-1 text-[11px] leading-5 text-zinc-500">
-            它会先创建 Brief、镜头和生成计划。确认 Credits 后才执行。
+            它会先创建 Brief、镜头和生成计划。确认 Token 后才执行。
           </p>
         </div>
 
@@ -185,7 +185,7 @@ export function AiDirectorPanel({
               <div className="rounded-xl bg-zinc-50 p-3">
                 <div className="text-[10px] text-zinc-400">预计消耗</div>
                 <div className="mt-1 text-sm font-semibold text-zinc-900">
-                  {plan.estimatedCredits} Credits
+                  {plan.estimatedCredits} Token
                 </div>
               </div>
               <div className="rounded-xl bg-zinc-50 p-3">

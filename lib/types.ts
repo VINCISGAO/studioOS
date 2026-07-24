@@ -111,6 +111,13 @@ export type Creator = {
   /** Soft-deleted studio account timestamp. */
   account_deleted_at?: string | null;
   created_at: string;
+  verification_status?: "NOT_APPLIED" | "PENDING" | "APPROVED" | "REJECTED" | "SUSPENDED";
+  can_accept_projects?: boolean;
+  marketplace_visible?: boolean;
+  creator_level?: "NEW" | "ESTABLISHED" | "PROFESSIONAL" | "PARTNER" | "FEATURED";
+  identity_type?: "INDIVIDUAL" | "STUDIO" | "COMPANY" | "OFFICIAL";
+  availability_status?: "AVAILABLE" | "LIMITED" | "BUSY" | "VACATION" | "UNAVAILABLE" | "OFFLINE";
+  platform_verified?: boolean;
 };
 
 export type CreatorWork = {

@@ -3,6 +3,7 @@
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { useBodyPortalReady } from "@/components/canvas/hooks/use-body-portal-ready";
+import { enrichCanvasGenerationReference } from "@/lib/canvas/canvas-preview-asset-id";
 import type { GenerationReference } from "@/lib/canvas/generation-ui";
 import { CANVAS_GENERATION_MODAL_Z_INDEX } from "@/lib/canvas/generation-ui";
 import type { VincisCanvasNode } from "@/lib/canvas/types";
@@ -29,13 +30,24 @@ function matchesReferenceSlot(node: VincisCanvasNode, slot: ReferenceSlot) {
 const copy = {
   zh: {
     title: "选择画布素材",
-    empty: "画布上还没有可用的图片或视频节点。"
+    emptyVideo: "画布上还没有可用的图片或视频节点。",
+    emptyImage: "画布上还没有可用的图片节点。",
+    emptyAudio: "画布上还没有可用的音频节点。"
   },
   en: {
     title: "Pick canvas asset",
-    empty: "No image or video nodes on the canvas yet."
+    emptyVideo: "No image or video nodes on the canvas yet.",
+    emptyImage: "No image nodes on the canvas yet.",
+    emptyAudio: "No audio nodes on the canvas yet."
   }
 } as const;
+
+function emptyMessage(locale: Locale, slot: ReferenceSlot) {
+  const t = copy[locale];
+  if (slot === "audio") return t.emptyAudio;
+  if (slot === "image") return t.emptyImage;
+  return t.emptyVideo;
+}
 
 export function GenerationCanvasPickerModal({
   locale,
@@ -89,14 +101,16 @@ export function GenerationCanvasPickerModal({
                 key={node.id}
                 type="button"
                 onClick={() => {
-                  onSelect({
-                    url: node.data.url!,
-                    assetId: node.data.assetId,
-                    fileName: node.data.fileName ?? node.data.title,
-                    mimeType: node.data.mimeType,
-                    source: "canvas",
-                    nodeId: node.id
-                  });
+                  onSelect(
+                    enrichCanvasGenerationReference({
+                      url: node.data.url!,
+                      assetId: node.data.assetId,
+                      fileName: node.data.fileName ?? node.data.title,
+                      mimeType: node.data.mimeType,
+                      source: "canvas",
+                      nodeId: node.id
+                    })
+                  );
                   onClose();
                 }}
                 className="overflow-hidden rounded-2xl border border-zinc-200 text-left hover:border-zinc-400"
@@ -118,7 +132,9 @@ export function GenerationCanvasPickerModal({
             ))}
           </div>
         ) : (
-          <p className="py-8 text-center text-sm text-zinc-500">{t.empty}</p>
+          <p className="py-8 text-center text-sm text-zinc-500">
+            {emptyMessage(locale, filterSlot)}
+          </p>
         )}
       </div>
     </div>,

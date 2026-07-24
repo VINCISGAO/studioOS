@@ -385,7 +385,7 @@ export const creditWalletRepository = {
         source: "CASH_PAYMENT",
         referenceType: "CreditPurchaseOrder",
         referenceId: order.id,
-        description: "Credit package purchase",
+        description: "Token package purchase",
         metadata: {
           providerPaymentId: input.providerPaymentId,
           providerSessionId: input.providerSessionId ?? order.providerSessionId,
@@ -404,7 +404,7 @@ export const creditWalletRepository = {
           source: "PROMOTION",
           referenceType: "CreditPurchaseOrder",
           referenceId: order.id,
-          description: "Purchase bonus credits",
+          description: "Purchase bonus Token",
           metadata: {
             providerPaymentId: input.providerPaymentId
           }
@@ -602,7 +602,7 @@ export const creditWalletRepository = {
           source: "CASH_PAYMENT",
           referenceType: "CreditPurchaseOrder",
           referenceId: order.id,
-          description: "Credits held for payment dispute",
+          description: "Token held for payment dispute",
           metadata: {
             stripeDisputeId: input.stripeDisputeId,
             disputeStatus: input.disputeStatus,
@@ -678,7 +678,7 @@ export const creditWalletRepository = {
             source: "CASH_PAYMENT",
             referenceType: "CreditPurchaseOrder",
             referenceId: order.id,
-            description: "Dispute won — credits released",
+            description: "Dispute won — Token released",
             metadata: {
               stripeDisputeId: input.stripeDisputeId,
               disputeStatus: input.disputeStatus,
@@ -707,7 +707,7 @@ export const creditWalletRepository = {
             source: "CASH_PAYMENT",
             referenceType: "CreditPurchaseOrder",
             referenceId: order.id,
-            description: "Dispute lost — credits forfeited",
+            description: "Dispute lost — Token forfeited",
             metadata: {
               stripeDisputeId: input.stripeDisputeId,
               disputeStatus: input.disputeStatus,
@@ -766,7 +766,7 @@ export const creditWalletRepository = {
       });
 
       if (wallet.availableCredits < input.amount) {
-        throw appError("VALIDATION_ERROR", "Insufficient credits");
+        throw appError("VALIDATION_ERROR", "Insufficient Token");
       }
 
       const balanceBefore = wallet.availableCredits;
@@ -811,7 +811,7 @@ export const creditWalletRepository = {
         source: "GENERATION_JOB",
         referenceType: "CreditReservation",
         referenceId: reservation.id,
-        description: input.description ?? "Generation credit reservation"
+        description: input.description ?? "Generation Token reservation"
       });
 
       return reservation;
@@ -858,7 +858,7 @@ export const creditWalletRepository = {
           source: "GENERATION_JOB",
           referenceType: "CreditReservation",
           referenceId: reservation.id,
-          description: "Generation credit capture"
+          description: "Generation Token capture"
         });
       }
 
@@ -923,7 +923,7 @@ export const creditWalletRepository = {
         source: "GENERATION_JOB",
         referenceType: "CreditReservation",
         referenceId: reservation.id,
-        description: "Generation failed — credits released"
+        description: "Generation failed — Token released"
       });
 
       return tx.creditReservation.update({
@@ -945,7 +945,7 @@ export const creditWalletRepository = {
     idempotencyKey: string;
   }) {
     assertPositiveInt(input.earningAmountMinor, "Conversion amount");
-    assertPositiveInt(input.creditsGranted, "Credits granted");
+    assertPositiveInt(input.creditsGranted, "Token granted");
 
     const existing = await this.findConversionByIdempotency(input.idempotencyKey);
     if (existing?.status === "COMPLETED") return existing;
@@ -1007,7 +1007,7 @@ export const creditWalletRepository = {
             balanceAfterMinor: earningBalanceAfter,
             referenceType: "EarningToCreditConversion",
             referenceId: conversionRow.id,
-            description: "Converted earnings to VINCIS Credits"
+            description: "Converted earnings to VINCIS Token"
           }
         });
 
@@ -1035,7 +1035,7 @@ export const creditWalletRepository = {
           source: "CREATOR_EARNINGS",
           referenceType: "EarningToCreditConversion",
           referenceId: conversionRow.id,
-          description: "Converted creator earnings to Credits",
+          description: "Converted creator earnings to Token",
           metadata: {
             earningAmountMinor: input.earningAmountMinor,
             exchangeRateSnapshot: input.exchangeRateSnapshot
@@ -1069,7 +1069,7 @@ export const creditWalletRepository = {
           type: "PENALTY",
           amount: input.earningAmountMinor / 100,
           balanceAfter: nextAvailable,
-          description: "Converted earnings to VINCIS Credits"
+          description: "Converted earnings to VINCIS Token"
         }
       });
     }

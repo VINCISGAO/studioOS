@@ -121,7 +121,10 @@ export const aiModelGenerationGuard = {
     const referenceCount = [
       parameters.referenceAssetId,
       parameters.referenceUrl,
-      parameters.referenceNodeId
+      parameters.referenceNodeId,
+      parameters.lastFrameReferenceAssetId,
+      parameters.lastFrameReferenceUrl,
+      parameters.lastFrameReferenceNodeId
     ].filter(Boolean).length;
     if (referenceCount > row.maxReferenceImages) {
       throw appError("VALIDATION_ERROR", "Too many reference assets for this model");

@@ -24,16 +24,18 @@ export const VIDEO_PANEL_KIND_SUBTITLE = "text-[10px] leading-3.5 text-zinc-400"
 
 export const VIDEO_PANEL_PROMPT_BLOCK = "mt-4";
 
-export const VIDEO_PANEL_PROMPT_TITLE = "mb-2 text-[13px] font-semibold text-zinc-900";
+export const VIDEO_PANEL_PROMPT_TITLE = "text-[13px] font-semibold text-zinc-900";
+
+export const VIDEO_PANEL_MODEL_ROW = "mb-2 mt-2 flex items-center";
 
 export const VIDEO_PANEL_PROMPT_BOX =
-  "relative rounded-xl border border-zinc-200 bg-white";
+  "relative rounded-xl border border-zinc-200/90 bg-white";
 
 export const VIDEO_PANEL_PROMPT_INPUT =
-  "min-h-[96px] w-full resize-none bg-transparent px-3 pb-7 pt-3 text-sm leading-6 text-zinc-900 outline-none placeholder:text-zinc-400";
+  "min-h-[112px] w-full resize-none bg-transparent px-3 pb-7 pt-3 text-sm leading-6 text-zinc-900 outline-none placeholder:text-zinc-400";
 
 export const VIDEO_PANEL_PROMPT_COUNTER =
-  "pointer-events-none absolute bottom-2 right-3 text-[11px] tabular-nums text-zinc-400";
+  "pointer-events-none absolute bottom-2.5 right-3 text-[11px] tabular-nums text-zinc-400";
 
 export const VIDEO_PANEL_PROMPT_FOOTER = "mt-2 flex items-center justify-between gap-3";
 
@@ -43,9 +45,19 @@ export const VIDEO_PANEL_HINT =
 export const VIDEO_PANEL_AI_INSPIRATION_BUTTON =
   "inline-flex shrink-0 items-center gap-1 rounded-full border border-[#8B5CF6] bg-white px-3 py-1.5 text-[11px] text-[#8B5CF6] transition hover:bg-[#FBFAFF]";
 
-export const VIDEO_PANEL_FOOTER_CLASS = "border-t border-zinc-100 px-4 py-2.5";
+export const VIDEO_PANEL_FOOTER_CLASS = "border-t border-zinc-100 px-4 py-3";
 
-export const VIDEO_PANEL_FOOTER_ROW = "flex items-center gap-2 overflow-x-auto";
+export const VIDEO_PANEL_FOOTER_ROW =
+  "flex items-center justify-between gap-3";
+
+export const VIDEO_PANEL_FOOTER_LEFT = "flex min-w-0 flex-1 items-center gap-2";
+
+export const VIDEO_PANEL_FOOTER_CONTROLS = "flex shrink-0 items-center gap-2";
+
+export const VIDEO_PANEL_FOOTER_RIGHT = "flex shrink-0 items-center gap-2";
+
+export const videoPanelToolbarIconButtonClass =
+  "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-500 transition hover:bg-zinc-50";
 
 export const videoPanelUploadButtonClass =
   "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border border-[#8B5CF6] bg-white px-3 text-[12px] text-[#8B5CF6] hover:bg-[#FBFAFF]";

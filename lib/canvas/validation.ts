@@ -7,6 +7,11 @@ import {
   MUSIC_TITLE_MAX,
   musicFieldLimitMessage
 } from "@/lib/canvas/music-field-limits";
+import {
+  CANVAS_PROMPT_ENHANCE_MAX_LENGTH,
+  type CanvasPromptEnhanceField,
+  VIDEO_PROMPT_ENHANCE_MAX
+} from "@/lib/canvas/prompt-enhance";
 import { appError } from "@/lib/core/errors";
 
 export const MAX_CANVAS_NODES = 300;
@@ -77,7 +82,7 @@ export const canvasAutosaveSchema = z.object({
 const generationBaseSchema = z.object({
   projectId: z.string().uuid(),
   nodeId,
-  prompt: z.string().trim().min(3).max(4000),
+  prompt: z.string().trim().min(3).max(5000),
   model: z.string().trim().min(1).max(120),
   idempotencyKey: z.string().min(8).max(120)
 });
@@ -145,7 +150,16 @@ export const videoGenerationSchema = generationBaseSchema.extend({
     .regex(/^[a-zA-Z0-9_-]+$/)
     .optional(),
   referenceMimeType: z.string().trim().max(120).optional(),
-  mode: generationModeSchema
+  lastFrameReferenceAssetId: z.string().uuid().optional(),
+  lastFrameReferenceUrl: z.string().max(2000).optional(),
+  lastFrameReferenceNodeId: z
+    .string()
+    .max(120)
+    .regex(/^[a-zA-Z0-9_-]+$/)
+    .optional(),
+  lastFrameReferenceMimeType: z.string().trim().max(120).optional(),
+  videoReferenceMode: z.enum(["reference", "edit", "keyframes"]).default("reference"),
+  mode: z.enum(["TEXT_TO_VIDEO", "IMAGE_TO_VIDEO"]).optional()
 });
 
 export const musicGenerationSchema = generationBaseSchema
@@ -262,12 +276,47 @@ export const canvasDirectorApplySchema = z.object({
   plan: canvasDirectorPlanSchema
 });
 
-export const canvasPromptEnhanceSchema = z.object({
-  projectId: z.string().uuid(),
-  field: z.enum(["music_style"]),
-  text: z.string().trim().min(1).max(MUSIC_STYLE_MAX, { message: musicFieldLimitMessage(MUSIC_STYLE_MAX) }),
-  languageCode: z.string().max(20).optional().nullable()
-});
+export const canvasPromptEnhanceSchema = z
+  .object({
+    projectId: z.string().uuid(),
+    field: z.enum(["music_style", "video_prompt"]),
+    text: z.string(),
+    languageCode: z.string().max(20).optional().nullable()
+  })
+  .superRefine((value, ctx) => {
+    const trimmed = value.text.trim();
+    const maxLength = CANVAS_PROMPT_ENHANCE_MAX_LENGTH[value.field as CanvasPromptEnhanceField];
+
+    if (value.field === "music_style") {
+      if (!trimmed) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Style description is required"
+        });
+        return;
+      }
+      if (trimmed.length > maxLength) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.too_big,
+          maximum: maxLength,
+          type: "string",
+          inclusive: true,
+          message: musicFieldLimitMessage(maxLength)
+        });
+      }
+      return;
+    }
+
+    if (trimmed.length > VIDEO_PROMPT_ENHANCE_MAX) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.too_big,
+        maximum: VIDEO_PROMPT_ENHANCE_MAX,
+        type: "string",
+        inclusive: true,
+        message: `Prompt must be at most ${VIDEO_PROMPT_ENHANCE_MAX} characters`
+      });
+    }
+  });
 
 export function assertCanvasPayloadSize(value: unknown) {
   const size = new TextEncoder().encode(JSON.stringify(value)).byteLength;

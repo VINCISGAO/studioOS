@@ -21,15 +21,15 @@ export function CanvasInsufficientCreditsBanner({
     <div className="rounded-xl border border-amber-100 bg-amber-50/80 px-3 py-2.5 text-[11px] leading-5 text-amber-900">
       <p>
         {zh
-          ? `本次需要 ${credits} Credits，当前可用 ${tokenBalance} Credits。`
-          : `This generation needs ${credits} credits. You have ${tokenBalance} available.`}
+          ? `本次需要 ${credits} Token，当前可用 ${tokenBalance} Token。`
+          : `This generation needs ${credits} Token. You have ${tokenBalance} available.`}
       </p>
       <div className="mt-2 flex flex-wrap gap-2">
         <Link
           href={creditsHref}
           className="rounded-lg bg-zinc-900 px-2.5 py-1 text-[11px] font-medium text-white"
         >
-          {zh ? "立即购买" : "Buy credits"}
+          {zh ? "立即购买" : "Buy Token"}
         </Link>
         <Link
           href={`${creditsHref}#convert`}

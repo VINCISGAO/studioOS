@@ -245,6 +245,16 @@ async function seedFeatureFlags() {
       key: "review.watermark_overlay",
       enabled: true,
       metadata: {}
+    },
+    {
+      key: "creator.lifecycle.enforcement",
+      enabled: false,
+      metadata: {
+        description:
+          "When true, matching/invitation/proposal use CreatorEligibilityService (verificationStatus + canAcceptProjects + marketplaceVisible)",
+        rolloutPhase: "off",
+        allowLegacyDepositFallback: true
+      }
     }
   ];
 

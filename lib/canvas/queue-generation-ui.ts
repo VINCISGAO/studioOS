@@ -73,7 +73,7 @@ export function queueGenerationCopy(locale: Locale) {
     ? {
         title: "无限低速生成",
         fastTitle: "快速生成",
-        fastHint: "使用积分跳过排队，立即处理您的请求。",
+        fastHint: "使用 Token 跳过排队，立即处理您的请求。",
         queueAria: "排队生成",
         fastAria: "快速生成"
       }

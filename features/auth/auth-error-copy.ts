@@ -5,10 +5,10 @@ export function authDatabaseSetupErrorMessage(
   prismaCode: string,
   locale: Locale
 ): string | null {
-  if (prismaCode === "P2021") {
+  if (prismaCode === "P2021" || prismaCode === "P2022") {
     return locale === "zh"
-      ? "认证数据表尚未创建，请在项目目录运行：npm run db:migrate:deploy"
-      : "Auth database tables are missing. Run: npm run db:migrate:deploy";
+      ? "认证数据表尚未同步，请在项目目录运行：npm run db:migrate:deploy"
+      : "Auth database schema is out of date. Run: npm run db:migrate:deploy";
   }
   return null;
 }

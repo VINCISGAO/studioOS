@@ -5,6 +5,7 @@ import { getCurrentClientEmail } from "@/features/auth/session-context";
 import { getCurrentCreator } from "@/features/auth/session-context";
 import { withLocale, type Locale } from "@/lib/i18n";
 import { canAcceptCreatorOrders, countCompletedCreatorOrders } from "@/lib/studioos/deposit-guard";
+import { assertCreatorProposalEligibilityForLegacyCreatorId } from "@/features/creator/creator-eligibility.service";
 import { createProjectApplication, getProject } from "@/lib/project-service";
 import { listOrdersForCreator } from "@/lib/order-service";
 import { normalizeCampaignStatus } from "@/lib/studioos/project-status";
@@ -58,7 +59,14 @@ export async function applyToProjectAction(formData: FormData) {
     redirect(withLocale(`/projects/${projectId}?error=unauthorized`, lang));
   }
   const creatorId = creator.id;
-  if (!canAcceptCreatorOrders(creator, countCompletedCreatorOrders(await listOrdersForCreator(creatorId)))) {
+  const completedOrders = countCompletedCreatorOrders(await listOrdersForCreator(creatorId));
+  try {
+    await assertCreatorProposalEligibilityForLegacyCreatorId(creatorId, completedOrders);
+  } catch {
+    redirect(withLocale("/studio/deposit?error=verification-required", lang));
+  }
+
+  if (!canAcceptCreatorOrders(creator, completedOrders)) {
     redirect(withLocale("/studio/deposit?error=deposit-required", lang));
   }
 

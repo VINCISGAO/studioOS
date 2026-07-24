@@ -7,8 +7,17 @@ export function hasPaidCreatorDeposit(creator: Creator | null | undefined): bool
   return creator?.deposit_status === "paid";
 }
 
+/** @deprecated Use hasPaidCreatorDeposit() for deposit checks or resolveCreatorEligibility().platform verification when enforcement is ON. */
 export function isCreatorVerified(creator: Creator | null | undefined): boolean {
   return hasPaidCreatorDeposit(creator);
+}
+
+export function canAcceptCreatorOrdersLegacy(input: {
+  depositPaid: boolean;
+  profileCompleted: boolean;
+  completedOrders: number;
+}): boolean {
+  return input.completedOrders === 0 || input.depositPaid;
 }
 
 export function hasCompletedCreatorProfile(creator: Creator | null | undefined): boolean {

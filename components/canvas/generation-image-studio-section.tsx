@@ -37,6 +37,7 @@ export function GenerationImageStudioSection({
   credits,
   onPromptChange,
   onLocalUpload,
+  onOpenLibrary,
   onCanvasPick,
   onClearReference,
   onCatalogRetry
@@ -55,6 +56,7 @@ export function GenerationImageStudioSection({
   credits: number;
   onPromptChange: (value: string) => void;
   onLocalUpload: () => void;
+  onOpenLibrary: () => void;
   onCanvasPick: () => void;
   onClearReference: () => void;
   onCatalogRetry: () => void;
@@ -94,6 +96,7 @@ export function GenerationImageStudioSection({
           locale={locale}
           reference={reference}
           onLocalUpload={onLocalUpload}
+          onOpenLibrary={onOpenLibrary}
           onCanvasPick={onCanvasPick}
           onClear={onClearReference}
         />

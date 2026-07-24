@@ -25,6 +25,11 @@ export async function POST(request: Request) {
           referenceUrl: input.referenceUrl,
           referenceNodeId: input.referenceNodeId,
           referenceMimeType: input.referenceMimeType,
+          lastFrameReferenceAssetId: input.lastFrameReferenceAssetId,
+          lastFrameReferenceUrl: input.lastFrameReferenceUrl,
+          lastFrameReferenceNodeId: input.lastFrameReferenceNodeId,
+          lastFrameReferenceMimeType: input.lastFrameReferenceMimeType,
+          videoReferenceMode: input.videoReferenceMode,
           mode: input.mode
         }
       },
