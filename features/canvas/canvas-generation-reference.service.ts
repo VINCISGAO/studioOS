@@ -70,12 +70,10 @@ async function resolveReferenceFields(
     assetId = parseCanvasPreviewAssetId(url);
   }
 
-  if (assetId && !mimeType) {
-    try {
-      const asset = await canvasAssetService.requireAsset(assetId, user);
+  if (assetId) {
+    const asset = await canvasAssetService.requireAsset(assetId, user);
+    if (!mimeType) {
       mimeType = asset.mimeType;
-    } catch {
-      // Keep caller-provided mimeType when asset lookup fails.
     }
   }
 

@@ -206,8 +206,16 @@ export const canvasRepository = {
     // No interactive Prisma transaction — Neon pooler + long parallel upserts exceed
     // the 5s interactive tx window and fail with "Transaction not found" / P2028.
     await Promise.all(
-      input.nodes.map((node) =>
-        prisma.canvasNode.upsert({
+      input.nodes.map(async (node) => {
+        const existing = await prisma.canvasNode.findUnique({
+          where: { id: node.id },
+          select: { canvasId: true }
+        });
+        if (existing && existing.canvasId !== input.canvasId) {
+          throw new Error(`Canvas node ${node.id} does not belong to canvas ${input.canvasId}`);
+        }
+
+        return prisma.canvasNode.upsert({
           where: { id: node.id },
           create: {
             id: node.id,
@@ -236,8 +244,8 @@ export const canvasRepository = {
             campaignId: input.campaignId ?? null,
             canvasId: input.canvasId
           }
-        })
-      )
+        });
+      })
     );
 
     await prisma.canvasNode.deleteMany({
