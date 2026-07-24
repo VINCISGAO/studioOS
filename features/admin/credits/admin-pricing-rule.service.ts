@@ -431,7 +431,13 @@ export class AdminPricingRuleService {
       throw appError("VALIDATION_ERROR", "Only draft or validated rules can be deleted");
     }
 
-    await prisma.creditPricingRule.delete({ where: { id: ruleId } });
+    const deleted = await prisma.creditPricingRule.deleteMany({
+      where: { id: ruleId, status: { in: ["DRAFT", "VALIDATED"] } }
+    });
+    if (deleted.count === 0) {
+      throw appError("VALIDATION_ERROR", "Only draft or validated rules can be deleted");
+    }
+
     creditPricingService.invalidateQuoteCache();
 
     await creditPlatformAuditService.write({
