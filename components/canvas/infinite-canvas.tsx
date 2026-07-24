@@ -33,7 +33,7 @@ import {
   isChatImageDragEvent,
   readChatImageDragData
 } from "@/lib/canvas/chat-image-canvas";
-import { viewportCenterFlowPoint, registerFlowViewportReader } from "@/lib/canvas/viewport-anchor";
+import { readCanvasViewport, registerFlowViewportReader, viewportCenterFlowPoint } from "@/lib/canvas/viewport-anchor";
 import type { GenerationJobEvent, VincisCanvasNode } from "@/lib/canvas/types";
 import type { Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
