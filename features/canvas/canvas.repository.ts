@@ -1,5 +1,6 @@
 import type { CreativeProjectMode, GenerationStatus, GenerationType, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/core/database/prisma";
+import { appError } from "@/lib/core/errors";
 import { isUniqueConstraintError } from "@/lib/core/prisma-errors";
 import type { CanvasLibraryAssetType } from "@/lib/canvas/canvas-library-kind";
 import {
@@ -203,85 +204,62 @@ export const canvasRepository = {
     const nodeIds = input.nodes.map((node) => node.id);
     const edgeIds = input.edges.map((edge) => edge.id);
 
-    // No interactive Prisma transaction — Neon pooler + long parallel upserts exceed
-    // the 5s interactive tx window and fail with "Transaction not found" / P2028.
-    await Promise.all(
-      input.nodes.map((node) =>
-        prisma.canvasNode.upsert({
-          where: { id: node.id },
-          create: {
-            id: node.id,
-            type: node.type,
-            positionX: node.positionX,
-            positionY: node.positionY,
-            width: node.width,
-            height: node.height,
-            parentId: node.parentId,
-            data: node.data,
-            zIndex: node.zIndex,
-            creativeProjectId: input.creativeProjectId,
-            campaignId: input.campaignId ?? null,
-            canvasId: input.canvasId
-          },
-          update: {
-            type: node.type,
-            positionX: node.positionX,
-            positionY: node.positionY,
-            width: node.width,
-            height: node.height,
-            parentId: node.parentId,
-            data: node.data,
-            zIndex: node.zIndex,
-            creativeProjectId: input.creativeProjectId,
-            campaignId: input.campaignId ?? null,
-            canvasId: input.canvasId
-          }
-        })
-      )
-    );
-
-    await prisma.canvasNode.deleteMany({
-      where: {
-        canvasId: input.canvasId,
-        ...(nodeIds.length > 0 ? { id: { notIn: nodeIds } } : {})
+    // No interactive Prisma transaction — Neon pooler exceeds the 5s tx window (P2028).
+    // Replace-by-canvas delete/create only; never upsert by global node id (IDOR risk).
+    if (nodeIds.length > 0) {
+      const foreignNodes = await prisma.canvasNode.count({
+        where: { id: { in: nodeIds }, canvasId: { not: input.canvasId } }
+      });
+      if (foreignNodes > 0) {
+        throw appError("FORBIDDEN", "Canvas node ids must belong to this project");
       }
-    });
-
-    await Promise.all(
-      input.edges.map((edge) =>
-        prisma.canvasEdge.upsert({
-          where: { id: edge.id },
-          create: {
-            id: edge.id,
-            source: edge.source,
-            target: edge.target,
-            sourceHandle: edge.sourceHandle ?? null,
-            targetHandle: edge.targetHandle ?? null,
-            data: edge.data,
-            creativeProjectId: input.creativeProjectId,
-            campaignId: input.campaignId ?? null,
-            canvasId: input.canvasId
-          },
-          update: {
-            source: edge.source,
-            target: edge.target,
-            sourceHandle: edge.sourceHandle ?? null,
-            targetHandle: edge.targetHandle ?? null,
-            data: edge.data,
-            creativeProjectId: input.creativeProjectId,
-            campaignId: input.campaignId ?? null,
-            canvasId: input.canvasId
-          }
-        })
-      )
-    );
-
-    await prisma.canvasEdge.deleteMany({
-      where: {
-        canvasId: input.canvasId,
-        ...(edgeIds.length > 0 ? { id: { notIn: edgeIds } } : {})
+    }
+    if (edgeIds.length > 0) {
+      const foreignEdges = await prisma.canvasEdge.count({
+        where: { id: { in: edgeIds }, canvasId: { not: input.canvasId } }
+      });
+      if (foreignEdges > 0) {
+        throw appError("FORBIDDEN", "Canvas edge ids must belong to this project");
       }
-    });
+    }
+
+    await prisma.canvasEdge.deleteMany({ where: { canvasId: input.canvasId } });
+    await prisma.canvasNode.deleteMany({ where: { canvasId: input.canvasId } });
+
+    if (input.nodes.length > 0) {
+      await prisma.canvasNode.createMany({
+        data: input.nodes.map((node) => ({
+          id: node.id,
+          type: node.type,
+          positionX: node.positionX,
+          positionY: node.positionY,
+          width: node.width,
+          height: node.height,
+          parentId: node.parentId,
+          data: node.data,
+          zIndex: node.zIndex,
+          creativeProjectId: input.creativeProjectId,
+          campaignId: input.campaignId ?? null,
+          canvasId: input.canvasId
+        }))
+      });
+    }
+
+    if (input.edges.length > 0) {
+      await prisma.canvasEdge.createMany({
+        data: input.edges.map((edge) => ({
+          id: edge.id,
+          source: edge.source,
+          target: edge.target,
+          sourceHandle: edge.sourceHandle ?? null,
+          targetHandle: edge.targetHandle ?? null,
+          data: edge.data,
+          creativeProjectId: input.creativeProjectId,
+          campaignId: input.campaignId ?? null,
+          canvasId: input.canvasId
+        }))
+      });
+    }
 
     return prisma.creativeCanvas.update({
       where: { id: input.canvasId },
