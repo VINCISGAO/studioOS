@@ -12,21 +12,25 @@ type AutosaveResponse = {
 
 export function useCanvasAutosave() {
   const projectId = useCanvasStore((state) => state.projectId);
-  const nodes = useCanvasStore((state) => state.nodes);
-  const edges = useCanvasStore((state) => state.edges);
-  const viewport = useCanvasStore((state) => state.viewport);
-  const canvasBackgroundColor = useCanvasStore((state) => state.canvasBackgroundColor);
   const revision = useCanvasStore((state) => state.revision);
   const setSaveState = useCanvasStore((state) => state.setSaveState);
   const lastSavedRevision = useRef(0);
 
   const mutation = useMutation({
     mutationFn: async (_revision: number) => {
+      const {
+        projectId: currentProjectId,
+        nodes,
+        edges,
+        viewport,
+        canvasBackgroundColor
+      } = useCanvasStore.getState();
+
       const response = await fetch("/api/canvas/autosave", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          projectId,
+          projectId: currentProjectId,
           nodes: nodes.map((node) => ({
             id: node.id,
             type: node.type,
@@ -69,5 +73,5 @@ export function useCanvasAutosave() {
     if (!projectId || revision === 0 || revision <= lastSavedRevision.current) return;
     const timer = window.setTimeout(() => mutation.mutate(revision), 1000);
     return () => window.clearTimeout(timer);
-  }, [projectId, revision, nodes, edges, viewport, canvasBackgroundColor, mutation]);
+  }, [projectId, revision, mutation]);
 }

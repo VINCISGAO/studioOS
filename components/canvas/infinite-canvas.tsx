@@ -163,7 +163,7 @@ function InfiniteCanvasFlow({
         edges={[]}
         nodeTypes={nodeTypes}
         onNodesChange={onNodesChange}
-        onMoveEnd={(_event, nextViewport) => setViewport(nextViewport, { persist: true })}
+        onMoveEnd={(_event, nextViewport) => setViewport(nextViewport)}
         onPaneClick={onCanvasPointerDown}
         onNodeClick={handleNodeClick}
         onPaneContextMenu={blockContextMenu}

@@ -11,7 +11,7 @@ export function useCanvasViewportActions() {
   const applyViewport = useCallback(
     (next: { x: number; y: number; zoom: number }) => {
       setViewport(next);
-      syncViewport(next, { persist: true });
+      syncViewport(next);
     },
     [setViewport, syncViewport]
   );

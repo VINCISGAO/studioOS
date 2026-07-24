@@ -66,7 +66,7 @@ type CanvasStore = {
   future: HistoryEntry[];
   initialize: (snapshot: CanvasSnapshot) => void;
   onNodesChange: (changes: NodeChange<VincisCanvasNode>[]) => void;
-  setViewport: (viewport: Viewport, options?: { persist?: boolean }) => void;
+  setViewport: (viewport: Viewport) => void;
   setCanvasBackgroundColor: (color: string) => void;
   setInteractionMode: (mode: CanvasInteractionMode) => void;
   addNode: (node: VincisCanvasNode) => void;
@@ -103,6 +103,12 @@ type CanvasStore = {
 };
 
 const emptyViewport = { x: 0, y: 0, zoom: 1 };
+
+function isPersistableNodeChange(change: NodeChange<VincisCanvasNode>) {
+  if (change.type === "select") return false;
+  if (change.type === "position" && change.dragging === true) return false;
+  return true;
+}
 
 function recordHistory(state: CanvasStore) {
   return {
@@ -162,7 +168,7 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
   onNodesChange(changes) {
     set((state) => {
       const nodes = applyNodeChanges(changes, state.nodes);
-      const dirty = changes.some((change) => change.type !== "select");
+      const dirty = changes.some(isPersistableNodeChange);
       const record = shouldRecordNodeHistory(changes);
       const selectOnly = changes.every((change) => change.type === "select");
       const nextNodes = selectOnly ? nodes : applyCanvasNodeInteractionFlagsAll(nodes);
@@ -176,7 +182,7 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     });
   },
 
-  setViewport(viewport, options) {
+  setViewport(viewport) {
     const previous = get().viewport;
     if (
       previous.x === viewport.x &&
@@ -185,11 +191,7 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     ) {
       return;
     }
-    set((state) => ({
-      viewport,
-      revision: options?.persist ? state.revision + 1 : state.revision,
-      saveState: options?.persist ? "dirty" : state.saveState
-    }));
+    set({ viewport });
   },
 
   setCanvasBackgroundColor(color) {
