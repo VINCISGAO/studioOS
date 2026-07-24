@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useCanvasStore } from "@/components/canvas/canvas-store";
+import { isTerminalGenerationJobStatus } from "@/lib/canvas/canvas-node-mutations";
 import type { GenerationJobEvent } from "@/lib/canvas/types";
 
 function isJobEvent(value: unknown): value is GenerationJobEvent {
@@ -14,6 +15,10 @@ function isTerminalFailure(status: GenerationJobEvent["status"]) {
   return status === "FAILED" || status === "CANCELLED";
 }
 
+function terminalEventKey(event: GenerationJobEvent) {
+  return `${event.id}:${event.status}`;
+}
+
 export function useGenerationEvents(
   projectId: string,
   options?: {
@@ -21,6 +26,7 @@ export function useGenerationEvents(
   }
 ) {
   const applyJobEvent = useCanvasStore((state) => state.applyJobEvent);
+  const handledTerminalRef = useRef(new Set<string>());
   const handledFailuresRef = useRef(new Set<string>());
   const onTerminalFailureRef = useRef(options?.onTerminalFailure);
 
@@ -29,6 +35,7 @@ export function useGenerationEvents(
   }, [options?.onTerminalFailure]);
 
   useEffect(() => {
+    handledTerminalRef.current.clear();
     handledFailuresRef.current.clear();
   }, [projectId]);
 
@@ -52,6 +59,12 @@ export function useGenerationEvents(
           if (!Array.isArray(payload)) return;
 
           for (const item of payload.filter(isJobEvent)) {
+            if (isTerminalGenerationJobStatus(item.status)) {
+              const key = terminalEventKey(item);
+              if (handledTerminalRef.current.has(key)) continue;
+              handledTerminalRef.current.add(key);
+            }
+
             applyJobEvent(item);
 
             if (!isTerminalFailure(item.status)) continue;

@@ -275,9 +275,41 @@ export function groupSelectedInFrame(nodes: VincisCanvasNode[], selectedNodeIds:
   };
 }
 
+export function isTerminalGenerationJobStatus(status: GenerationJobEvent["status"]) {
+  return status === "SUCCEEDED" || status === "FAILED" || status === "CANCELLED";
+}
+
+export function shouldApplyGenerationJobEvent(
+  nodes: VincisCanvasNode[],
+  event: GenerationJobEvent
+) {
+  if (!event.nodeId) return false;
+  const node = nodes.find((item) => item.id === event.nodeId);
+  if (!node) return false;
+
+  if (!isTerminalGenerationJobStatus(event.status)) {
+    if (node.data.status === "ready" || node.data.status === "failed") return false;
+    return true;
+  }
+
+  if (event.status === "SUCCEEDED") {
+    if (node.data.status === "ready") {
+      if (event.outputAssetId && node.data.assetId === event.outputAssetId) return false;
+      if (!event.outputAssetId && node.data.url) return false;
+    }
+  }
+
+  if (event.status === "FAILED" || event.status === "CANCELLED") {
+    if (node.data.status === "failed") return false;
+  }
+
+  return true;
+}
+
 export function applyGenerationJobEvent(nodes: VincisCanvasNode[], event: GenerationJobEvent) {
   if (!event.nodeId) return null;
-  const terminal = event.status === "SUCCEEDED" || event.status === "FAILED";
+  if (!shouldApplyGenerationJobEvent(nodes, event)) return null;
+  const terminal = isTerminalGenerationJobStatus(event.status);
   const resolvedType =
     event.type === "IMAGE" ? "image" : event.type === "VIDEO" ? "video" : "music";
   return {
@@ -299,7 +331,7 @@ export function applyGenerationJobEvent(nodes: VincisCanvasNode[], event: Genera
               ...node.data,
               progress: event.progress,
               status:
-                event.status === "FAILED"
+                event.status === "FAILED" || event.status === "CANCELLED"
                   ? "failed"
                   : event.status === "SUCCEEDED"
                     ? "ready"
