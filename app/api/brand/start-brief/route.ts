@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { DEMO_SESSION_COOKIE, VISITOR_COOKIE } from "@/lib/auth-config";
+import { SESSION_COOKIE_NAME, VISITOR_COOKIE } from "@/lib/auth-config";
 import { resolveBrandBriefStartFromRequestCookies } from "@/lib/brand-brief-session";
 import { getOrCreateEphemeralWizardProject } from "@/lib/brand-start-brief";
 import { assertBrandCampaignCreationAllowed } from "@/lib/studioos/brand-active-campaign.server";
@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
   const lang = langParam === "zh" ? "zh" : "en";
 
   const { email: clientEmail, visitorId } = resolveBrandBriefStartFromRequestCookies(
-    request.cookies.get(DEMO_SESSION_COOKIE)?.value,
+    request.cookies.get(SESSION_COOKIE_NAME)?.value,
     request.cookies.get(VISITOR_COOKIE)?.value
   );
 

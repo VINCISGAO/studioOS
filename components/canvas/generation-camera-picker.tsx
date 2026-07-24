@@ -4,7 +4,10 @@ import { CAMERA_MOVEMENTS, type CameraMovementId } from "@/lib/canvas/generation
 import type { Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
-export function GenerationCameraPicker({
+const CAMERA_PANEL_SHELL_CLASS =
+  "rounded-2xl border border-zinc-200 bg-white p-4 shadow-2xl";
+
+export function GenerationCameraPickerPanel({
   locale,
   selected,
   onChange,
@@ -20,7 +23,7 @@ export function GenerationCameraPicker({
   }
 
   return (
-    <div className="absolute bottom-full left-0 z-50 mb-2 w-[min(92vw,360px)] rounded-2xl border border-zinc-200 bg-white p-4 shadow-2xl">
+    <div className={CAMERA_PANEL_SHELL_CLASS}>
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-sm font-semibold text-zinc-950">
           {locale === "zh" ? "基础镜头" : "Camera moves"}
@@ -49,6 +52,29 @@ export function GenerationCameraPicker({
           );
         })}
       </div>
+    </div>
+  );
+}
+
+export function GenerationCameraPicker({
+  locale,
+  selected,
+  onChange,
+  onClose
+}: {
+  locale: Locale;
+  selected: CameraMovementId[];
+  onChange: (movements: CameraMovementId[]) => void;
+  onClose: () => void;
+}) {
+  return (
+    <div className="absolute bottom-full left-0 z-50 mb-2 w-[min(92vw,360px)]">
+      <GenerationCameraPickerPanel
+        locale={locale}
+        selected={selected}
+        onChange={onChange}
+        onClose={onClose}
+      />
     </div>
   );
 }

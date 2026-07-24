@@ -1,6 +1,7 @@
 "use client";
 
-import { Music2, Sparkles, X } from "lucide-react";
+import { useRef, useState } from "react";
+import { BarChart3, ChevronDown, ChevronUp, LoaderCircle, Sparkles } from "lucide-react";
 import {
   GenerationCatalogEmptyBanner,
   GenerationCatalogErrorBanner,
@@ -8,24 +9,31 @@ import {
   GenerationPricingUnavailableBanner
 } from "@/components/canvas/generation-catalog-status";
 import { GenerationVideoHeader } from "@/components/canvas/generation-video-header";
+import { GenerationVideoLibraryPicker } from "@/components/canvas/generation-video-library-picker";
+import { GenerationVideoReferenceStrip } from "@/components/canvas/generation-video-reference-strip";
 import type { GenerationReferenceSlot } from "@/components/canvas/generation-kind-selector";
-import {
-  GenerationVideoKindCards
-} from "@/components/canvas/generation-video-kind-cards";
-import { CanvasInsufficientCreditsBanner } from "@/components/canvas/canvas-insufficient-credits-banner";
+import { GenerationVideoKeyframeSlots } from "@/components/canvas/generation-video-keyframe-slots";
+import { GenerationModelPicker } from "@/components/canvas/generation-model-picker";
+import { GenerationToolbarMenuPortal } from "@/components/canvas/generation-toolbar-menu-portal";
+import { useCanvasPromptEnhance } from "@/components/canvas/hooks/use-canvas-prompt-enhance";
+import type { PublicAiModelView } from "@/features/canvas/ai-model-catalog.types";
 import {
   VIDEO_PANEL_CONTENT_CLASS,
   VIDEO_PANEL_AI_INSPIRATION_BUTTON,
   VIDEO_PANEL_HINT,
+  VIDEO_PANEL_MODEL_ROW,
   VIDEO_PANEL_PROMPT_BLOCK,
   VIDEO_PANEL_PROMPT_BOX,
   VIDEO_PANEL_PROMPT_COUNTER,
   VIDEO_PANEL_PROMPT_FOOTER,
   VIDEO_PANEL_PROMPT_INPUT,
-  VIDEO_PANEL_PROMPT_TITLE
+  VIDEO_PANEL_PROMPT_TITLE,
+  videoPanelToolbarPillClass
 } from "@/lib/canvas/generation-video-panel-design";
-import type { GenerationReference } from "@/lib/canvas/generation-ui";
+import { truncateModelDisplayLabel } from "@/lib/canvas/generation-ui";
+import type { GenerationReference, VideoReferenceMode } from "@/lib/canvas/generation-ui";
 import type { Locale } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
 
 const copy = {
   zh: {
@@ -42,21 +50,23 @@ const copy = {
   }
 } as const;
 
-const PROMPT_MAX = 500;
+const PROMPT_MAX = 5000;
 
 export function GenerationVideoStudioSection({
   locale,
+  projectId,
   prompt,
-  reference,
   catalogError,
   catalogEmpty,
   modelUnavailable,
   pricingUnavailable,
   pricingError,
-  insufficientCredits,
-  tokenBalance,
-  credits,
   referenceSlot,
+  videoReferenceMode,
+  firstFrameReference,
+  lastFrameReference,
+  librarySelections,
+  activeReferenceId,
   uploadOpen,
   onPromptChange,
   onUploadToggle,
@@ -69,21 +79,37 @@ export function GenerationVideoStudioSection({
   onReferenceLocal,
   onReferenceLibrary,
   onReferenceCanvas,
-  onClearReference,
-  onCatalogRetry
+  onToggleLibrarySelection,
+  onActivateLibrarySelection,
+  onRemoveLibrarySelection,
+  onPickFirstFrameLocal,
+  onPickFirstFrameLibrary,
+  onPickFirstFrameCanvas,
+  onPickLastFrameLocal,
+  onPickLastFrameLibrary,
+  onPickLastFrameCanvas,
+  onClearFirstFrame,
+  onClearLastFrame,
+  onCatalogRetry,
+  videoModels,
+  selectedVideoModel,
+  selectedVideoModelView,
+  onVideoModelChange
 }: {
   locale: Locale;
+  projectId: string;
   prompt: string;
-  reference: GenerationReference | null;
   catalogError: string | null;
   catalogEmpty: boolean;
   modelUnavailable: boolean;
   pricingUnavailable: boolean;
   pricingError: string | null;
-  insufficientCredits: boolean;
-  tokenBalance: number;
-  credits: number;
   referenceSlot: GenerationReferenceSlot;
+  videoReferenceMode: VideoReferenceMode;
+  firstFrameReference: GenerationReference | null;
+  lastFrameReference: GenerationReference | null;
+  librarySelections: GenerationReference[];
+  activeReferenceId?: string;
   uploadOpen: boolean;
   onPromptChange: (value: string) => void;
   onUploadToggle: () => void;
@@ -96,10 +122,38 @@ export function GenerationVideoStudioSection({
   onReferenceLocal: (slot: GenerationReferenceSlot) => void;
   onReferenceLibrary: (slot: GenerationReferenceSlot) => void;
   onReferenceCanvas: (slot: GenerationReferenceSlot) => void;
-  onClearReference: () => void;
+  onToggleLibrarySelection: (reference: GenerationReference) => void;
+  onActivateLibrarySelection: (reference: GenerationReference) => void;
+  onRemoveLibrarySelection: (assetId: string) => void;
+  onPickFirstFrameLocal: () => void;
+  onPickFirstFrameLibrary: () => void;
+  onPickFirstFrameCanvas: () => void;
+  onPickLastFrameLocal: () => void;
+  onPickLastFrameLibrary: () => void;
+  onPickLastFrameCanvas: () => void;
+  onClearFirstFrame: () => void;
+  onClearLastFrame: () => void;
   onCatalogRetry: () => void;
+  videoModels: PublicAiModelView[];
+  selectedVideoModel: string;
+  selectedVideoModelView: PublicAiModelView | null;
+  onVideoModelChange: (modelId: string) => void;
 }) {
   const t = copy[locale];
+  const { enhance, enhancing, clearError } = useCanvasPromptEnhance(projectId, locale);
+  const [modelMenuOpen, setModelMenuOpen] = useState(false);
+  const modelRef = useRef<HTMLButtonElement>(null);
+  const videoModelLabel = truncateModelDisplayLabel(
+    selectedVideoModelView?.displayName ?? selectedVideoModel
+  );
+
+  async function handleAiInspiration() {
+    clearError();
+    const inspired = await enhance("video_prompt", prompt);
+    if (inspired) {
+      onPromptChange(inspired);
+    }
+  }
 
   return (
     <div className={VIDEO_PANEL_CONTENT_CLASS}>
@@ -138,19 +192,85 @@ export function GenerationVideoStudioSection({
         </div>
       ) : null}
 
-      <GenerationVideoKindCards
-        selectedSlot={referenceSlot}
-        locale={locale}
-        onSelectVideo={onSelectVideo}
-        onSelectImage={onSelectImage}
-        onSelectAudio={onSelectAudio}
-        onReferenceLocal={onReferenceLocal}
-        onReferenceLibrary={onReferenceLibrary}
-        onReferenceCanvas={onReferenceCanvas}
-      />
+      {videoReferenceMode === "keyframes" ? (
+        <GenerationVideoKeyframeSlots
+          locale={locale}
+          firstFrame={firstFrameReference}
+          lastFrame={lastFrameReference}
+          onPickFirstLocal={onPickFirstFrameLocal}
+          onPickFirstLibrary={onPickFirstFrameLibrary}
+          onPickFirstCanvas={onPickFirstFrameCanvas}
+          onPickLastLocal={onPickLastFrameLocal}
+          onPickLastLibrary={onPickLastFrameLibrary}
+          onPickLastCanvas={onPickLastFrameCanvas}
+          onClearFirst={onClearFirstFrame}
+          onClearLast={onClearLastFrame}
+        />
+      ) : (
+        <>
+          {videoReferenceMode === "reference" ? (
+            <GenerationVideoLibraryPicker
+              locale={locale}
+              projectId={projectId}
+              selectedIds={librarySelections
+                .map((item) => item.assetId)
+                .filter((id): id is string => Boolean(id))}
+              onToggleSelection={onToggleLibrarySelection}
+            />
+          ) : null}
+          <GenerationVideoReferenceStrip
+            locale={locale}
+            selectedSlot={referenceSlot}
+            librarySelections={librarySelections}
+            activeReferenceId={activeReferenceId}
+            visibleSlots={
+              videoReferenceMode === "edit" ? (["image"] as const) : (["video", "image", "audio"] as const)
+            }
+            onSelectVideo={onSelectVideo}
+            onSelectImage={onSelectImage}
+            onSelectAudio={onSelectAudio}
+            onReferenceLocal={onReferenceLocal}
+            onReferenceLibrary={onReferenceLibrary}
+            onReferenceCanvas={onReferenceCanvas}
+            onActivateSelection={onActivateLibrarySelection}
+            onRemoveSelection={onRemoveLibrarySelection}
+          />
+        </>
+      )}
 
       <div className={VIDEO_PANEL_PROMPT_BLOCK}>
         <h3 className={VIDEO_PANEL_PROMPT_TITLE}>{t.promptTitle}</h3>
+        <div className={VIDEO_PANEL_MODEL_ROW}>
+          <button
+            ref={modelRef}
+            type="button"
+            onClick={() => setModelMenuOpen((open) => !open)}
+            onPointerDown={(event) => event.stopPropagation()}
+            className={cn(videoPanelToolbarPillClass, "nodrag nopan pointer-events-auto")}
+          >
+            <BarChart3 className="h-3.5 w-3.5 shrink-0 text-zinc-700" />
+            <span className="max-w-[140px] truncate">{videoModelLabel}</span>
+            {modelMenuOpen ? (
+              <ChevronUp className="h-3.5 w-3.5 shrink-0 text-zinc-400" />
+            ) : (
+              <ChevronDown className="h-3.5 w-3.5 shrink-0 text-zinc-400" />
+            )}
+          </button>
+          <GenerationToolbarMenuPortal
+            open={modelMenuOpen}
+            anchorRef={modelRef}
+            menuWidth={300}
+            onClose={() => setModelMenuOpen(false)}
+          >
+            <GenerationModelPicker
+              locale={locale}
+              models={videoModels}
+              selectedModel={selectedVideoModel}
+              onSelect={onVideoModelChange}
+              onClose={() => setModelMenuOpen(false)}
+            />
+          </GenerationToolbarMenuPortal>
+        </div>
         <div className={VIDEO_PANEL_PROMPT_BOX}>
           <textarea
             value={prompt}
@@ -164,43 +284,25 @@ export function GenerationVideoStudioSection({
           </span>
         </div>
 
-        {reference?.mimeType?.startsWith("audio/") ? (
-          <div className="mt-2 flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2">
-            <Music2 className="h-4 w-4 shrink-0 text-zinc-500" />
-            <span className="min-w-0 flex-1 truncate text-xs text-zinc-700">
-              {reference.fileName}
-            </span>
-            <button
-              type="button"
-              onClick={onClearReference}
-              className="rounded-full p-1 text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700"
-              aria-label={locale === "zh" ? "移除参考音频" : "Remove reference audio"}
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        ) : null}
-
         <div className={VIDEO_PANEL_PROMPT_FOOTER}>
           <div className={VIDEO_PANEL_HINT}>
             <Sparkles className="h-3.5 w-3.5 shrink-0" />
             {t.promptHint}
           </div>
-          <button type="button" className={VIDEO_PANEL_AI_INSPIRATION_BUTTON}>
-            <Sparkles className="h-3.5 w-3.5 shrink-0" />
+          <button
+            type="button"
+            disabled={enhancing}
+            onClick={() => void handleAiInspiration()}
+            className={VIDEO_PANEL_AI_INSPIRATION_BUTTON}
+          >
+            {enhancing ? (
+              <LoaderCircle className="h-3.5 w-3.5 shrink-0 animate-spin" />
+            ) : (
+              <Sparkles className="h-3.5 w-3.5 shrink-0" />
+            )}
             {t.aiInspiration}
           </button>
         </div>
-
-        {insufficientCredits ? (
-          <div className="mt-2">
-            <CanvasInsufficientCreditsBanner
-              locale={locale}
-              tokenBalance={tokenBalance}
-              credits={credits}
-            />
-          </div>
-        ) : null}
       </div>
     </div>
   );

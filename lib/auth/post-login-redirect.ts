@@ -1,6 +1,7 @@
 import { demoRedirectForRole, type DemoRole } from "@/lib/demo-auth";
 import { appPath } from "@/lib/i18n";
 
+const CREATOR_ONBOARDING_PATH = "/creator/onboarding";
 const BRAND_WIZARD_ENTRY_PATH = "/brand/projects/new";
 const ALLOWED_WIZARD_NEXT_QUERY_KEYS = new Set(["project", "step"]);
 
@@ -90,4 +91,24 @@ export function resolvePostLoginDestination(
   }
 
   return appPath(safeNext);
+}
+
+/** Single source of truth for post-login redirects across OTP, OAuth, middleware, and SSR login. */
+export function resolveSafePostLoginDestination(input: {
+  session: { role: DemoRole };
+  requestedPath?: string;
+  locale?: unknown;
+  /** When false, creators are routed to onboarding instead of studio. */
+  creatorPortalReady?: boolean;
+}) {
+  const role = safeUserRole(input.session.role);
+  if (role === "creator" && input.creatorPortalReady === false) {
+    return appPath(CREATOR_ONBOARDING_PATH);
+  }
+
+  return resolvePostLoginDestination(
+    { role },
+    input.requestedPath ?? "",
+    input.locale
+  );
 }

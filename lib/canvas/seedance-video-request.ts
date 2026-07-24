@@ -20,6 +20,12 @@ export type VideoJobPayload = {
   referenceUrl?: string;
   referenceNodeId?: string;
   referenceMimeType?: string;
+  lastFrameReferenceAssetId?: string;
+  lastFrameReferenceUrl?: string;
+  lastFrameReferenceNodeId?: string;
+  lastFrameReferenceMimeType?: string;
+  libraryReferenceAssetIds?: string;
+  videoReferenceMode?: string;
   mode?: string;
 };
 
@@ -39,6 +45,26 @@ function readPayload(raw: unknown): VideoJobPayload {
       typeof record.referenceNodeId === "string" ? record.referenceNodeId : undefined,
     referenceMimeType:
       typeof record.referenceMimeType === "string" ? record.referenceMimeType : undefined,
+    lastFrameReferenceAssetId:
+      typeof record.lastFrameReferenceAssetId === "string"
+        ? record.lastFrameReferenceAssetId
+        : undefined,
+    lastFrameReferenceUrl:
+      typeof record.lastFrameReferenceUrl === "string" ? record.lastFrameReferenceUrl : undefined,
+    lastFrameReferenceNodeId:
+      typeof record.lastFrameReferenceNodeId === "string"
+        ? record.lastFrameReferenceNodeId
+        : undefined,
+    lastFrameReferenceMimeType:
+      typeof record.lastFrameReferenceMimeType === "string"
+        ? record.lastFrameReferenceMimeType
+        : undefined,
+    libraryReferenceAssetIds:
+      typeof record.libraryReferenceAssetIds === "string"
+        ? record.libraryReferenceAssetIds
+        : undefined,
+    videoReferenceMode:
+      typeof record.videoReferenceMode === "string" ? record.videoReferenceMode : undefined,
     mode: typeof record.mode === "string" ? record.mode : undefined
   };
 }
@@ -82,6 +108,7 @@ function resolveGenerationType(input: {
   imageUrls: string[];
   videoUrls: string[];
   audioUrls: string[];
+  videoReferenceMode?: string;
   mode?: string;
 }): SeedanceGenerationType {
   if (input.videoUrls.length > 0 || input.audioUrls.length > 0) {
@@ -91,8 +118,12 @@ function resolveGenerationType(input: {
     return "image-to-video";
   }
   if (input.imageUrls.length === 1) {
+    const refMode = (input.videoReferenceMode ?? "").trim();
+    if (refMode === "edit" || refMode === "keyframes") {
+      return "image-to-video";
+    }
     const mode = (input.mode ?? "").trim().toUpperCase();
-    return mode === "IMAGE_TO_VIDEO" || mode === "KEYFRAMES" ? "image-to-video" : "reference-to-video";
+    return mode === "IMAGE_TO_VIDEO" ? "image-to-video" : "reference-to-video";
   }
   return "text-to-video";
 }
@@ -116,10 +147,25 @@ export async function submitSeedanceVideoTask(input: {
     referenceMimeType = asset.mimeType;
   }
 
+  let lastFrameMimeType = payload.lastFrameReferenceMimeType;
+  if (payload.lastFrameReferenceAssetId?.trim() && !lastFrameMimeType) {
+    const asset = await canvasAssetService.requireAsset(
+      payload.lastFrameReferenceAssetId,
+      input.user
+    );
+    lastFrameMimeType = asset.mimeType;
+  }
+
   const referenceUrl = await resolveSeedancePublicAssetUrl({
     user: input.user,
     assetId: payload.referenceAssetId,
     referenceUrl: payload.referenceUrl
+  });
+
+  const lastFrameReferenceUrl = await resolveSeedancePublicAssetUrl({
+    user: input.user,
+    assetId: payload.lastFrameReferenceAssetId,
+    referenceUrl: payload.lastFrameReferenceUrl
   });
 
   const imageUrls: string[] = [];
@@ -138,15 +184,60 @@ export async function submitSeedanceVideoTask(input: {
     }
   }
 
+  if (lastFrameReferenceUrl) {
+    if (isImageMime(lastFrameMimeType) || !lastFrameMimeType) {
+      imageUrls.push(lastFrameReferenceUrl);
+    }
+  }
+
+  const extraAssetIds = (payload.libraryReferenceAssetIds ?? "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  for (const assetId of extraAssetIds) {
+    if (assetId === payload.referenceAssetId?.trim()) continue;
+    if (assetId === payload.lastFrameReferenceAssetId?.trim()) continue;
+    const extraUrl = await resolveSeedancePublicAssetUrl({
+      user: input.user,
+      assetId
+    });
+    if (!extraUrl) continue;
+    if (imageUrls.includes(extraUrl) || videoUrls.includes(extraUrl) || audioUrls.includes(extraUrl)) {
+      continue;
+    }
+    try {
+      const asset = await canvasAssetService.requireAsset(assetId, input.user);
+      if (isVideoMime(asset.mimeType)) {
+        videoUrls.push(extraUrl);
+      } else if (isAudioMime(asset.mimeType)) {
+        audioUrls.push(extraUrl);
+      } else {
+        imageUrls.push(extraUrl);
+      }
+    } catch {
+      imageUrls.push(extraUrl);
+    }
+  }
+
   const generation_type = resolveGenerationType({
     imageUrls,
     videoUrls,
     audioUrls,
+    videoReferenceMode: payload.videoReferenceMode,
     mode: payload.mode
   });
 
   if (generation_type === "image-to-video" && imageUrls.length === 0) {
     throw appError("VALIDATION_ERROR", "Image-to-video requires an image reference URL");
+  }
+
+  if (payload.videoReferenceMode === "keyframes" && imageUrls.length < 2) {
+    throw appError("VALIDATION_ERROR", "Start/end frame mode requires first and last frame images");
+  }
+
+  if (payload.videoReferenceMode === "edit" && imageUrls.length === 0) {
+    throw appError("VALIDATION_ERROR", "Video edit mode requires an image reference URL");
   }
 
   if (

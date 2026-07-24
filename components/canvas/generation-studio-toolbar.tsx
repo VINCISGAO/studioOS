@@ -179,11 +179,11 @@ export function GenerationStudioToolbar({
             title={
               insufficientCredits
                 ? locale === "zh"
-                  ? `积分不足（需要 ${credits}，当前 ${tokenBalance}）`
-                  : `Insufficient credits (need ${credits}, have ${tokenBalance})`
+                  ? `Token 不足（需要 ${credits}，当前 ${tokenBalance}）`
+                  : `Insufficient Token (need ${credits}, have ${tokenBalance})`
                 : locale === "zh"
-                  ? `生成并扣除 ${credits} 积分`
-                  : `Generate for ${credits} credits`
+                  ? `生成并扣除 ${credits} Token`
+                  : `Generate for ${credits} Token`
             }
             className={generationPanelSubmitButtonClass}
           >
@@ -336,11 +336,11 @@ export function GenerationStudioToolbar({
           title={
             insufficientCredits
               ? locale === "zh"
-                ? `积分不足（需要 ${credits}，当前 ${tokenBalance}）`
-                : `Insufficient credits (need ${credits}, have ${tokenBalance})`
+                ? `Token 不足（需要 ${credits}，当前 ${tokenBalance}）`
+                : `Insufficient Token (need ${credits}, have ${tokenBalance})`
               : locale === "zh"
-                ? `生成并扣除 ${credits} 积分`
-                : `Generate for ${credits} credits`
+                ? `生成并扣除 ${credits} Token`
+                : `Generate for ${credits} Token`
           }
           className={generationPanelSubmitButtonClass}
         >

@@ -40,7 +40,8 @@ export function GenerationVideoKindCards({
   onSelectAudio,
   onReferenceLocal,
   onReferenceLibrary,
-  onReferenceCanvas
+  onReferenceCanvas,
+  visibleSlots = ["video", "image", "audio"]
 }: {
   selectedSlot: GenerationReferenceSlot;
   locale: Locale;
@@ -50,6 +51,7 @@ export function GenerationVideoKindCards({
   onReferenceLocal: (slot: GenerationReferenceSlot) => void;
   onReferenceLibrary: (slot: GenerationReferenceSlot) => void;
   onReferenceCanvas: (slot: GenerationReferenceSlot) => void;
+  visibleSlots?: readonly GenerationReferenceSlot[];
 }) {
   const t = copy[locale];
   const [openMenuSlot, setOpenMenuSlot] = useState<GenerationReferenceSlot | null>(null);
@@ -85,11 +87,11 @@ export function GenerationVideoKindCards({
       Icon: Music2,
       onSelect: onSelectAudio
     }
-  ];
+  ].filter((item) => visibleSlots.includes(item.id));
 
   return (
     <>
-      <div className={VIDEO_PANEL_KIND_GRID}>
+      <div className={cn(VIDEO_PANEL_KIND_GRID, visibleSlots.length < 3 && "grid-cols-1")}>
         {items.map(({ id, label, Icon, onSelect }) => {
           const active = selectedSlot === id;
 

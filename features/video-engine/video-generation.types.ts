@@ -36,6 +36,8 @@ export type VideoOrchestratorJob = {
   nodeId: string | null;
   creativeProjectId: string;
   estimatedCredits: number;
+  attemptId: string;
+  attemptNumber: number;
 };
 
 export type VideoOrchestratorProgressWriter = {

@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { resolveBrandBriefEmailFromCookieValues } from "@/lib/brand-brief-session";
-import { DEMO_SESSION_COOKIE, VISITOR_COOKIE, hasSupabaseConfig } from "@/lib/auth-config";
+import { SESSION_COOKIE_NAME, VISITOR_COOKIE, hasSupabaseConfig } from "@/lib/auth-config";
 import { parseServerDemoSession } from "@/lib/demo-session-server";
 import { getCurrentAuthUser, getCurrentSession } from "@/lib/session-user";
 
@@ -8,7 +8,7 @@ export { brandDraftEmailForSession } from "@/lib/brand-brief-session";
 
 export async function getCurrentClientEmail(): Promise<string | null> {
   const cookieStore = await cookies();
-  const session = parseServerDemoSession(cookieStore.get(DEMO_SESSION_COOKIE)?.value);
+  const session = parseServerDemoSession(cookieStore.get(SESSION_COOKIE_NAME)?.value);
   if (session?.role === "client") {
     const authUser = await getCurrentAuthUser();
     if (authUser && authUser.role !== "BRAND") {
@@ -45,7 +45,7 @@ export async function resolveBrandBriefClientEmail(): Promise<string | null> {
 
   const cookieStore = await cookies();
   return resolveBrandBriefEmailFromCookieValues(
-    cookieStore.get(DEMO_SESSION_COOKIE)?.value,
+    cookieStore.get(SESSION_COOKIE_NAME)?.value,
     cookieStore.get(VISITOR_COOKIE)?.value
   );
 }

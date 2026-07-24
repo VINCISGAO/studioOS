@@ -18,6 +18,7 @@ import { InvitationEvent } from "@/features/shared/state-machines/invitation.sta
 import { invitationRepository } from "@/features/matching/invitation.repository";
 import { notificationService } from "@/features/notification/notification.service";
 import { userRepository } from "@/features/auth/user.repository";
+import { assertCreatorEligibility } from "@/features/creator/creator-eligibility.service";
 import { listCreatorsForMatching } from "@/lib/creator-service";
 import { creators } from "@/lib/data";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
@@ -484,6 +485,12 @@ export class InvitationPortalService {
     const siblings = await mapRowsForCampaign(row.campaignId);
     if (isInvitationRecruitmentClosed(siblings, legacyProjectId, project)) {
       return { ok: false, error: "recruitment-closed" };
+    }
+
+    try {
+      await assertCreatorEligibility(creatorProfileId, "canAcceptProject");
+    } catch {
+      return { ok: false, error: "not-eligible" };
     }
 
     await invitationRepository.transitionInvitation(invitationId, InvitationEvent.ACCEPT);

@@ -194,7 +194,7 @@ export function AdminAiModelsPanel({ locale }: { locale: "zh" | "en" }) {
                       <div className="font-medium text-zinc-900">{rule.label ?? rule.mode ?? rule.id}</div>
                       <div className="mt-1 text-xs text-zinc-500">
                         {rule.durationSec ? `${rule.durationSec}s · ` : ""}
-                        {rule.resolution ?? "—"} · {rule.creditPrice} Credits
+                        {rule.resolution ?? "—"} · {rule.creditPrice} Token
                         {rule.marginPercent != null ? ` · ${rule.marginPercent}% margin` : ""}
                       </div>
                     </div>

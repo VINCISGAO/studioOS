@@ -11,7 +11,8 @@ import type { DemoSession } from "@/lib/demo-session";
 import { hashPassword } from "@/lib/core/password";
 import { authService } from "@/features/auth/auth.service";
 import { buildSessionPayload } from "@/features/auth/session.service";
-import { resolvePostLoginDestination } from "@/lib/auth/post-login-redirect";
+import { resolveSafePostLoginDestination } from "@/lib/auth/post-login-redirect";
+import { resolveCreatorIdByEmail } from "@/lib/studioos/creator-settings-service";
 import { appPath } from "@/lib/i18n";
 import { userRepository } from "@/features/auth/user.repository";
 import type { UserRole } from "@prisma/client";
@@ -131,6 +132,28 @@ export async function recordCreatorSignIn(email: string) {
   });
 }
 
+async function resolvePasswordSignInRedirect(input: {
+  role: DemoSession["role"];
+  email: string;
+  nextPath: string;
+  lang: Locale;
+}) {
+  let creatorPortalReady = true;
+  if (input.role === "creator") {
+    const creatorId = hasDatabaseUrl()
+      ? await resolveCreatorIdByEmail(input.email)
+      : getCreatorIdForDemoEmail(input.email);
+    creatorPortalReady = Boolean(creatorId);
+  }
+
+  return resolveSafePostLoginDestination({
+    session: { role: input.role },
+    requestedPath: input.nextPath,
+    locale: input.lang,
+    creatorPortalReady
+  });
+}
+
 export async function performSignIn(input: SignInInput): Promise<SignInResult> {
   const { email, password, lang, expectedRole, nextPath = "" } = input;
   const trimmedEmail = correctEmailDomain(email).email;
@@ -183,7 +206,12 @@ export async function performSignIn(input: SignInInput): Promise<SignInResult> {
       }
     }
 
-    const redirectTo = resolvePostLoginDestination({ role: demoRole }, nextPath, lang);
+    const redirectTo = await resolvePasswordSignInRedirect({
+      role: demoRole,
+      email: prismaUser.email,
+      nextPath,
+      lang
+    });
 
     return { ok: true, redirectTo, session };
   }
@@ -243,7 +271,12 @@ export async function performSignIn(input: SignInInput): Promise<SignInResult> {
       await recordCreatorSignIn(demoUser.email);
     }
 
-    const redirectTo = resolvePostLoginDestination({ role: demoUser.role }, nextPath, lang);
+    const redirectTo = await resolvePasswordSignInRedirect({
+      role: demoUser.role,
+      email: demoUser.email,
+      nextPath,
+      lang
+    });
 
     return { ok: true, redirectTo, session };
   }
@@ -301,7 +334,12 @@ export async function performSignIn(input: SignInInput): Promise<SignInResult> {
       userId: user.id
     };
 
-    const redirectTo = resolvePostLoginDestination({ role: demoRole }, nextPath, lang);
+    const redirectTo = await resolvePasswordSignInRedirect({
+      role: demoRole,
+      email: user.email,
+      nextPath,
+      lang
+    });
 
     return { ok: true, redirectTo, session };
   }

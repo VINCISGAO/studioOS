@@ -1,11 +1,14 @@
 import {
   buildMusicPrompt,
   formatImageAspectRatioLabel,
+  hasGenerationReference,
+  resolveVideoPricingMode,
   type GenerationKind,
   type GenerationReference,
   type ImageGenerationSettings,
   type MusicGenerationSettings,
-  type VideoGenerationSettings
+  type VideoGenerationSettings,
+  type VideoReferenceMode
 } from "@/lib/canvas/generation-ui";
 
 export type GenerationSubmitInput = {
@@ -14,12 +17,16 @@ export type GenerationSubmitInput = {
   model: string;
   parameters: Record<string, string | number | boolean>;
   reference?: GenerationReference | null;
+  lastFrameReference?: GenerationReference | null;
 };
 
 export function buildGenerationSubmitInput(input: {
   kind: GenerationKind;
   prompt: string;
   reference: GenerationReference | null;
+  lastFrameReference?: GenerationReference | null;
+  librarySelections?: GenerationReference[];
+  videoReferenceMode?: VideoReferenceMode;
   videoSettings: VideoGenerationSettings;
   imageSettings: ImageGenerationSettings;
   musicSettings: MusicGenerationSettings;
@@ -27,6 +34,19 @@ export function buildGenerationSubmitInput(input: {
   selectedImageModel: string;
   selectedMusicModel: string;
 }): GenerationSubmitInput {
+  const libraryAssetIds = [
+    ...new Set(
+      (input.librarySelections ?? [])
+        .map((item) => item.assetId?.trim())
+        .filter((id): id is string => Boolean(id))
+    )
+  ];
+  const hasLibraryReferences = libraryAssetIds.length > 0;
+  const effectiveReference =
+    input.reference ?? (hasLibraryReferences ? (input.librarySelections?.[0] ?? null) : null);
+  const hasPrimaryReference = hasGenerationReference(effectiveReference);
+  const hasLastFrameReference = hasGenerationReference(input.lastFrameReference);
+
   return {
     kind: input.kind,
     prompt: input.kind === "music" ? buildMusicPrompt(input.musicSettings) : input.prompt.trim(),
@@ -36,7 +56,8 @@ export function buildGenerationSubmitInput(input: {
         : input.kind === "image"
           ? input.selectedImageModel
           : input.selectedMusicModel,
-    reference: input.reference,
+    reference: effectiveReference,
+    lastFrameReference: input.lastFrameReference ?? null,
     parameters:
       input.kind === "video"
         ? {
@@ -45,7 +66,34 @@ export function buildGenerationSubmitInput(input: {
             quality: input.videoSettings.quality,
             audio: input.videoSettings.audio,
             webSearch: input.videoSettings.webSearch,
-            cameraMovements: input.videoSettings.cameraMovements.join(",")
+            cameraMovements: input.videoSettings.cameraMovements.join(","),
+            videoReferenceMode: input.videoReferenceMode ?? "reference",
+            mode: resolveVideoPricingMode({
+              videoReferenceMode: input.videoReferenceMode ?? "reference",
+              hasPrimaryReference:
+                hasPrimaryReference || hasLastFrameReference || hasLibraryReferences
+            }),
+            ...(effectiveReference?.assetId
+              ? { referenceAssetId: effectiveReference.assetId }
+              : {}),
+            ...(effectiveReference?.url ? { referenceUrl: effectiveReference.url } : {}),
+            ...(effectiveReference?.nodeId ? { referenceNodeId: effectiveReference.nodeId } : {}),
+            ...(effectiveReference?.mimeType ? { referenceMimeType: effectiveReference.mimeType } : {}),
+            ...(input.lastFrameReference?.assetId
+              ? { lastFrameReferenceAssetId: input.lastFrameReference.assetId }
+              : {}),
+            ...(input.lastFrameReference?.url
+              ? { lastFrameReferenceUrl: input.lastFrameReference.url }
+              : {}),
+            ...(input.lastFrameReference?.nodeId
+              ? { lastFrameReferenceNodeId: input.lastFrameReference.nodeId }
+              : {}),
+            ...(input.lastFrameReference?.mimeType
+              ? { lastFrameReferenceMimeType: input.lastFrameReference.mimeType }
+              : {}),
+            ...(libraryAssetIds.length
+              ? { libraryReferenceAssetIds: libraryAssetIds.join(",") }
+              : {})
           }
         : input.kind === "image"
           ? {

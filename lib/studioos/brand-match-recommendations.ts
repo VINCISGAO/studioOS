@@ -1,6 +1,6 @@
 import "server-only";
 
-import { listCreatorsForMatching } from "@/lib/creator-service";
+import { listCreatorsForMatching, filterCreatorsForMarketplaceDisplay } from "@/lib/creator-service";
 import type { Locale } from "@/lib/i18n";
 import { matchCreatorsForProject } from "@/lib/matching-engine";
 import type { StoredProject } from "@/lib/project-types";
@@ -35,7 +35,7 @@ function invitationPicks(
       creatorHeadline: invitation.creatorHeadline ?? creator?.headline ?? "",
       creatorAvatarUrl: invitation.creatorAvatarUrl ?? creator?.avatar_url,
       matchPercent: Math.round(invitation.matchScore),
-      verified: Boolean(creator?.profile_completed_at),
+      verified: Boolean(creator?.platform_verified ?? creator?.profile_completed_at),
       tags: creator ? buildCreatorHighlightTags(creator, locale) : [],
       pastBrands: creator ? buildCreatorCollaborationBrands(creator, locale) : [],
       workStyle: creator ? buildCreatorWorkStyle(creator, locale) : "",
@@ -46,7 +46,7 @@ function invitationPicks(
 }
 
 async function enginePicks(project: StoredProject, locale: Locale): Promise<BrandRecommendedCreator[]> {
-  const enrichedCreators = await listCreatorsForMatching();
+  const enrichedCreators = await filterCreatorsForMarketplaceDisplay(await listCreatorsForMatching());
   const allWorks = (
     await Promise.all(enrichedCreators.map((creator) => getWorksForCreator(creator.id)))
   ).flat();
@@ -64,7 +64,7 @@ async function enginePicks(project: StoredProject, locale: Locale): Promise<Bran
       creatorHeadline: creator?.headline ?? match.reasons[0]?.[locale] ?? "",
       creatorAvatarUrl: creator?.avatar_url,
       matchPercent: Math.min(99, Math.round(match.score)),
-      verified: Boolean(creator?.profile_completed_at),
+      verified: Boolean(creator?.platform_verified ?? creator?.profile_completed_at),
       tags: creator ? buildCreatorHighlightTags(creator, locale) : [],
       pastBrands: creator ? buildCreatorCollaborationBrands(creator, locale) : [],
       workStyle: creator ? buildCreatorWorkStyle(creator, locale) : "",

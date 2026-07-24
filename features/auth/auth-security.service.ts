@@ -2,11 +2,10 @@ import "server-only";
 
 import { createHash, randomInt, timingSafeEqual, createHmac } from "node:crypto";
 import { prisma, hasDatabaseUrl } from "@/lib/core/database/prisma";
-import { hashPassword } from "@/lib/core/password-crypto";
 import { userRepository } from "@/features/auth/user.repository";
-import { setDemoSession } from "@/lib/demo-auth-server";
 import { buildSessionPayload } from "@/features/auth/session.service";
-import { resolvePostLoginDestination } from "@/lib/auth/post-login-redirect";
+import { resolveSafePostLoginDestination } from "@/lib/auth/post-login-redirect";
+import { resolveCreatorIdByEmail } from "@/lib/studioos/creator-settings-service";
 import type { Locale } from "@/lib/i18n";
 import type { Prisma, UserRole } from "@prisma/client";
 import { AUTH_ERROR_COPY } from "@/features/auth/auth-error-copy";
@@ -21,16 +20,6 @@ export { AUTH_ERROR_COPY } from "@/features/auth/auth-error-copy";
 const VERIFICATION_TTL_MS = 5 * 60 * 1000;
 const RESEND_COOLDOWN_MS = 60 * 1000;
 const LOCK_15_MIN_MS = 15 * 60 * 1000;
-const WEAK_PASSWORDS = new Set([
-  "12345678",
-  "123456789",
-  "password",
-  "password1",
-  "qwerty123",
-  "qwertyui",
-  "abc12345",
-  "11111111"
-]);
 
 type RequestContext = {
   ip: string;
@@ -150,14 +139,6 @@ function parseSignedToken(token: string) {
 
 function randomCode() {
   return String(randomInt(0, 1_000_000)).padStart(6, "0");
-}
-
-function isWeakPassword(password: string) {
-  const normalized = password.trim().toLowerCase();
-  if (password.length < 8) return true;
-  if (/^\d+$/.test(password)) return true;
-  if (!/[a-z]/i.test(password) || !/\d/.test(password)) return true;
-  return WEAK_PASSWORDS.has(normalized);
 }
 
 function sessionRoleForUserProfiles(user: { role: UserRole }, requestedRole: UserRole) {
@@ -680,82 +661,22 @@ export class AuthSecurityService {
       },
       demoRole
     );
-    await setDemoSession(session);
+
+    let creatorPortalReady = true;
+    if (demoRole === "creator") {
+      const creatorId = await resolveCreatorIdByEmail(user.email);
+      creatorPortalReady = Boolean(creatorId);
+    }
 
     return {
       ok: true as const,
-      redirectTo: resolvePostLoginDestination({ role: demoRole }, input.nextPath ?? "", input.locale),
+      redirectTo: resolveSafePostLoginDestination({
+        session: { role: demoRole },
+        requestedPath: input.nextPath ?? "",
+        locale: input.locale,
+        creatorPortalReady
+      }),
       session
-    };
-  }
-
-  async completeSignupWithPassword(input: {
-    request: Request;
-    verificationToken: string;
-    password: string;
-    role: UserRole;
-    fullName: string;
-    companyName?: string;
-    displayName?: string;
-    locale: Locale;
-    nextPath?: string;
-  }) {
-    const ctx = requestContext(input.request);
-    const payload = parseSignedToken(input.verificationToken);
-    if (!payload?.email || !payload.codeId || !payload.exp || payload.exp < Date.now()) {
-      return { ok: false as const, error: AUTH_ERROR_COPY.securityFailed };
-    }
-    if (isWeakPassword(input.password)) {
-      return { ok: false as const, error: AUTH_ERROR_COPY.credentialsInvalid };
-    }
-
-    const verified = await prisma.emailVerificationCode.findFirst({
-      where: { id: payload.codeId, email: payload.email, consumedAt: { not: null } }
-    });
-    if (!verified) {
-      return { ok: false as const, error: AUTH_ERROR_COPY.securityFailed };
-    }
-
-    const existing = await userRepository.findByEmail(payload.email);
-    if (existing) {
-      return { ok: false as const, error: AUTH_ERROR_COPY.credentialsInvalid };
-    }
-
-    if (input.role === "ADMIN" || input.role === "SUPPORT" || input.role === "SYSTEM") {
-      return { ok: false as const, error: AUTH_ERROR_COPY.credentialsInvalid };
-    }
-
-    const user = await userRepository.createWithPassword({
-      email: payload.email,
-      role: input.role,
-      fullName: input.fullName,
-      passwordHash: hashPassword(input.password),
-      companyName: input.companyName,
-      displayName: input.displayName,
-      emailVerifiedAt: now()
-    });
-
-    await audit({ userId: user.id, email: payload.email, event: "SIGNUP_COMPLETED", ctx });
-    const demoRole = user.role === "CREATOR" ? "creator" : "client";
-    await setDemoSession(
-      buildSessionPayload(
-        {
-          id: user.id,
-          email: user.email,
-          role: user.role,
-          fullName: user.fullName,
-          languageCode: user.languageCode ?? user.language ?? "en",
-          companyName: user.brandProfile?.companyName,
-          displayName: user.creatorProfile?.displayName ?? undefined,
-          hasBrandProfile: user.role === "BRAND" || Boolean(user.brandProfile),
-          hasCreatorProfile: user.role === "CREATOR" || Boolean(user.creatorProfile)
-        },
-        demoRole
-      )
-    );
-    return {
-      ok: true as const,
-      redirectTo: resolvePostLoginDestination({ role: demoRole }, input.nextPath ?? "", input.locale)
     };
   }
 

@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { DEMO_SESSION_COOKIE, hasSupabaseConfig } from "@/lib/auth-config";
+import { SESSION_COOKIE_NAME, hasSupabaseConfig } from "@/lib/auth-config";
 import { DEMO_USERS } from "@/lib/demo-auth";
 import { parseDemoSession } from "@/lib/demo-session";
 import { getSessionMvpProfile } from "@/features/auth/session.service";
@@ -63,7 +63,7 @@ export async function getMvpProfile(): Promise<MvpProfile | null> {
   }
 
   const cookieStore = await cookies();
-  const session = parseDemoSession(cookieStore.get(DEMO_SESSION_COOKIE)?.value);
+  const session = parseDemoSession(cookieStore.get(SESSION_COOKIE_NAME)?.value);
   if (!session) return null;
 
   const profileId = DEMO_EMAIL_TO_PROFILE[session.email.toLowerCase()];

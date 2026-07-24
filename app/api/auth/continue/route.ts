@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { AUTH_ERROR_COPY } from "@/features/auth/auth-error-copy";
+import { AUTH_ERROR_COPY, authDatabaseSetupErrorMessage } from "@/features/auth/auth-error-copy";
 import { authSecurityService } from "@/features/auth/auth-security.service";
 import { attachDemoSessionCookie } from "@/lib/demo-auth-server";
 import type { Locale } from "@/lib/i18n";
@@ -47,14 +47,10 @@ export async function POST(request: Request) {
     } catch (error) {
       const prismaCode =
         error && typeof error === "object" && "code" in error ? String((error as { code: string }).code) : "";
+      const setupMessage = authDatabaseSetupErrorMessage(prismaCode, locale);
       const message =
-        prismaCode === "P2021"
-          ? locale === "zh"
-            ? "认证数据表尚未创建，请在项目目录运行：npm run db:migrate:deploy"
-            : "Auth database tables are missing. Run: npm run db:migrate:deploy"
-          : locale === "zh"
-            ? "认证服务暂不可用，请稍后再试。"
-            : "Authentication service unavailable.";
+        setupMessage ??
+        (locale === "zh" ? "认证服务暂不可用，请稍后再试。" : "Authentication service unavailable.");
       return NextResponse.json({ ok: false, error: message }, { status: 503 });
     }
   }

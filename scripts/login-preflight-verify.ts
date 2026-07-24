@@ -11,8 +11,9 @@ import {
   probeDatabaseTable
 } from "./helpers/database-probe";
 import { demoRedirectForRole } from "../lib/demo-auth";
-import { toSafeNextPath, resolvePostLoginDestination } from "../lib/auth/post-login-redirect";
-import { hasSupabaseConfig } from "../lib/auth-config";
+import { toSafeNextPath, resolvePostLoginDestination, resolveSafePostLoginDestination } from "../lib/auth/post-login-redirect";
+import { sanitizeEmailStartResult } from "../features/auth/email-start.route-handler";
+import { SESSION_COOKIE_NAME, hasSupabaseConfig } from "../lib/auth-config";
 import { hasAlipayOAuthConfig } from "../lib/alipay/alipay-oauth-config";
 
 const ROOT = join(fileURLToPath(new URL(".", import.meta.url)), "..");
@@ -114,6 +115,64 @@ async function main() {
   checks.push({
     name: "redirect.blocks_external_next",
     ok: toSafeNextPath("https://evil.example") === ""
+  });
+  checks.push({
+    name: "redirect.brand_blocks_studio_next",
+    ok: resolveSafePostLoginDestination({ session: { role: "client" }, requestedPath: "/studio" }).includes(
+      "/brand"
+    ),
+    detail: resolveSafePostLoginDestination({ session: { role: "client" }, requestedPath: "/studio" })
+  });
+  checks.push({
+    name: "redirect.creator_blocks_brand_next",
+    ok: resolveSafePostLoginDestination({ session: { role: "creator" }, requestedPath: "/brand" }).includes(
+      "/studio"
+    ),
+    detail: resolveSafePostLoginDestination({ session: { role: "creator" }, requestedPath: "/brand" })
+  });
+  checks.push({
+    name: "redirect.creator_onboarding_fallback",
+    ok: resolveSafePostLoginDestination({
+      session: { role: "creator" },
+      requestedPath: "/studio",
+      creatorPortalReady: false
+    }).includes("/creator/onboarding"),
+    detail: resolveSafePostLoginDestination({
+      session: { role: "creator" },
+      requestedPath: "/studio",
+      creatorPortalReady: false
+    })
+  });
+  checks.push({
+    name: "redirect.allows_same_role_next",
+    ok: resolveSafePostLoginDestination({
+      session: { role: "client" },
+      requestedPath: "/brand/projects"
+    }).includes("/brand/projects"),
+    detail: resolveSafePostLoginDestination({
+      session: { role: "client" },
+      requestedPath: "/brand/projects"
+    })
+  });
+  checks.push({
+    name: "files.email_send_code_deprecated",
+    ok: existsSync(join(ROOT, "app", "api", "auth", "email", "send-code", "route.ts")),
+    detail: "legacy POST /api/auth/email/send-code delegates to /start"
+  });
+  checks.push({
+    name: "files.demo_social_deprecated",
+    ok: existsSync(join(ROOT, "app", "api", "auth", "demo-social", "route.ts")),
+    detail: "POST /api/auth/demo-social returns 410"
+  });
+  checks.push({
+    name: "cookie.session_name_legacy",
+    ok: SESSION_COOKIE_NAME === "studioos_demo_session",
+    detail: "SESSION_COOKIE_NAME keeps legacy value"
+  });
+  checks.push({
+    name: "email_start.production_no_debug_code",
+    ok: !("debugCode" in sanitizeEmailStartResult({ ok: true, message: "x", debugCode: "123456" }, { production: true })),
+    detail: "production strips debugCode from email start responses"
   });
 
   if (!process.env.DATABASE_URL?.trim()) {

@@ -4,6 +4,12 @@ import {
   getStoredCreatorProfile
 } from "@/lib/creator-profile-service";
 import { resolveCreatorProfileIdForLegacyId } from "@/features/matching/invitation-creator-bridge";
+import {
+  legacyInputFromCreatorDto,
+  profileInputFromPrismaRow,
+  resolveCreatorEligibilityFromDto,
+  isCreatorLifecycleEnforcementEnabled
+} from "@/features/creator/creator-eligibility.service";
 import { hasDatabaseUrl, prisma } from "@/lib/core/database/prisma";
 import { getCreatorDepositSnapshot } from "@/lib/studioos/deposit-service";
 import { normalizeCountryCode } from "@/lib/geo/country";
@@ -32,7 +38,13 @@ async function creatorBaseFromProfile(
     minBudget: { toString(): string } | null;
     profileCompletedAt: Date | null;
     createdAt: Date;
-    user: { email: string; avatarUrl: string | null; createdAt: Date };
+    availability: "AVAILABLE" | "LIMITED" | "BUSY" | "VACATION" | "UNAVAILABLE" | "OFFLINE";
+    verificationStatus: "NOT_APPLIED" | "PENDING" | "APPROVED" | "REJECTED" | "SUSPENDED";
+    canAcceptProjects: boolean;
+    marketplaceVisible: boolean;
+    creatorLevel: "NEW" | "ESTABLISHED" | "PROFESSIONAL" | "PARTNER" | "FEATURED";
+    identityType: "INDIVIDUAL" | "STUDIO" | "COMPANY" | "OFFICIAL";
+    user: { email: string; avatarUrl: string | null; createdAt: Date; status: string; deletedAt: Date | null; role: string };
   }
 ): Promise<Creator> {
   const canonicalId = profile.legacyCreatorId ?? profile.id;
@@ -59,7 +71,14 @@ async function creatorBaseFromProfile(
     deposit_status: "unpaid",
     deposit_amount: 99,
     profile_completed_at: profile.profileCompletedAt?.toISOString() ?? null,
-    created_at: profile.createdAt.toISOString()
+    created_at: profile.createdAt.toISOString(),
+    verification_status: profile.verificationStatus,
+    can_accept_projects: profile.canAcceptProjects,
+    marketplace_visible: profile.marketplaceVisible,
+    creator_level: profile.creatorLevel,
+    identity_type: profile.identityType,
+    availability_status: profile.availability,
+    platform_verified: profile.verificationStatus === "APPROVED"
   };
 }
 
@@ -71,10 +90,10 @@ async function listRegisteredDatabaseCreators(seedKeys: Set<string>): Promise<Cr
   const profiles = await prisma.creatorProfile.findMany({
     where: {
       user: { role: "CREATOR", deletedAt: null, status: "ACTIVE" },
-      availability: { in: ["AVAILABLE", "BUSY"] }
+      availability: { in: ["AVAILABLE", "LIMITED", "BUSY"] }
     },
     include: {
-      user: { select: { email: true, avatarUrl: true, createdAt: true } }
+      user: { select: { email: true, avatarUrl: true, createdAt: true, status: true, deletedAt: true, role: true } }
     }
   });
 
@@ -107,7 +126,7 @@ async function getDatabaseCreatorBase(creatorId: string): Promise<Creator | null
       ]
     },
     include: {
-      user: { select: { email: true, avatarUrl: true, createdAt: true } }
+      user: { select: { email: true, avatarUrl: true, createdAt: true, status: true, deletedAt: true, role: true } }
     }
   });
 
@@ -159,6 +178,86 @@ async function enrichCreator(base: Creator): Promise<Creator> {
   return creator;
 }
 
+async function filterCreatorsForMatchingPool(creators: Creator[]): Promise<Creator[]> {
+  if (!(await isCreatorLifecycleEnforcementEnabled())) {
+    return creators;
+  }
+
+  const filtered: Creator[] = [];
+  for (const creator of creators) {
+    const profileId = await resolveCreatorProfileIdForLegacyId(creator.id);
+    if (!profileId) {
+      filtered.push(creator);
+      continue;
+    }
+
+    const profile = await prisma.creatorProfile.findUnique({
+      where: { id: profileId },
+      include: { user: { select: { status: true, deletedAt: true, role: true } } }
+    });
+    if (!profile) continue;
+
+    const eligibility = await resolveCreatorEligibilityFromDto(
+      profileInputFromPrismaRow({
+        ...profile,
+        user: profile.user
+      }),
+      legacyInputFromCreatorDto({
+        deposit_status: creator.deposit_status,
+        profile_completed_at: creator.profile_completed_at,
+        orders_paused: creator.orders_paused,
+        account_deleted_at: creator.account_deleted_at
+      })
+    );
+
+    if (eligibility.canReceiveInvitations) {
+      filtered.push(creator);
+    }
+  }
+
+  return filtered;
+}
+
+export async function filterCreatorsForMarketplaceDisplay(creators: Creator[]): Promise<Creator[]> {
+  if (!(await isCreatorLifecycleEnforcementEnabled())) {
+    return creators;
+  }
+
+  const filtered: Creator[] = [];
+  for (const creator of creators) {
+    const profileId = await resolveCreatorProfileIdForLegacyId(creator.id);
+    if (!profileId) {
+      if (creator.profile_completed_at) filtered.push(creator);
+      continue;
+    }
+
+    const profile = await prisma.creatorProfile.findUnique({
+      where: { id: profileId },
+      include: { user: { select: { status: true, deletedAt: true, role: true } } }
+    });
+    if (!profile) continue;
+
+    const eligibility = await resolveCreatorEligibilityFromDto(
+      profileInputFromPrismaRow({
+        ...profile,
+        user: profile.user
+      }),
+      legacyInputFromCreatorDto({
+        deposit_status: creator.deposit_status,
+        profile_completed_at: creator.profile_completed_at,
+        orders_paused: creator.orders_paused,
+        account_deleted_at: creator.account_deleted_at
+      })
+    );
+
+    if (eligibility.canAppearInMarketplace) {
+      filtered.push(creator);
+    }
+  }
+
+  return filtered;
+}
+
 export async function getCreatorById(id: string): Promise<Creator | null> {
   const base = creators.find((creator) => creator.id === id) ?? (await getDatabaseCreatorBase(id));
   if (!base) {
@@ -187,7 +286,7 @@ export async function listCreatorsForMatching(): Promise<Creator[]> {
     merged.set(creator.id, creator);
   }
 
-  return [...merged.values()];
+  return filterCreatorsForMatchingPool([...merged.values()]);
 }
 
 export function getCreatorByIdSync(id: string): Creator | null {

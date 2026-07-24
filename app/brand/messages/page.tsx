@@ -8,7 +8,7 @@ import {
 } from "@/app/brand-notification-actions";
 import { StudioMessageCenter } from "@/components/studioos/studio-message-center";
 import type { MessageDetailPayload, MessageListItem } from "@/components/studioos/studio-message-center.types";
-import { DEMO_SESSION_COOKIE } from "@/lib/auth-config";
+import { SESSION_COOKIE_NAME } from "@/lib/auth-config";
 import { getCurrentClientEmail } from "@/features/auth/session-context";
 import { DEMO_USERS, parseDemoSession } from "@/lib/demo-auth";
 import { type SearchParams, withLocale } from "@/lib/i18n";
@@ -138,7 +138,7 @@ export default async function BrandMessagesPage({ searchParams }: { searchParams
   const locale = await getAppUiLocale();
   const clientEmail = await getCurrentClientEmail();
   const cookieStore = await cookies();
-  const session = parseDemoSession(cookieStore.get(DEMO_SESSION_COOKIE)?.value);
+  const session = parseDemoSession(cookieStore.get(SESSION_COOKIE_NAME)?.value);
   const brandName = resolveBrandName(session?.email ?? clientEmail);
   const notifications = clientEmail ? await listNotificationsForBrand(clientEmail) : [];
   const payload = await buildBrandMessageCenterPayload(notifications, brandName, locale);

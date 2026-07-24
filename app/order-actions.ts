@@ -6,6 +6,7 @@ import { addSystemMessage, consolidateInquiryThreads, getInquiry, resolveCanonic
 import { getCurrentClientEmail } from "@/features/auth/session-context";
 import { getCurrentCreator, getCurrentCreatorId } from "@/features/auth/session-context";
 import { canAcceptCreatorOrders, countCompletedCreatorOrders } from "@/lib/studioos/deposit-guard";
+import { assertCreatorProposalEligibilityForLegacyCreatorId } from "@/features/creator/creator-eligibility.service";
 import { withLocale, appPath, type Locale } from "@/lib/i18n";
 import { resolveServerLocale } from "@/lib/app-language";
 import {
@@ -68,7 +69,14 @@ export async function submitQuoteAction(formData: FormData) {
     redirect(withLocale(`/proposal/${inquiryId}?error=quote`, lang));
   }
 
-  if (!canAcceptCreatorOrders(creator, countCompletedCreatorOrders(await listOrdersForCreator(creatorId)))) {
+  const completedOrders = countCompletedCreatorOrders(await listOrdersForCreator(creatorId));
+  try {
+    await assertCreatorProposalEligibilityForLegacyCreatorId(creatorId, completedOrders);
+  } catch {
+    redirect(withLocale("/studio/deposit?error=verification-required", lang));
+  }
+
+  if (!canAcceptCreatorOrders(creator, completedOrders)) {
     redirect(withLocale("/studio/deposit?error=deposit-required", lang));
   }
 

@@ -1,6 +1,6 @@
 import { cache } from "react";
 import { cookies } from "next/headers";
-import { DEMO_SESSION_COOKIE, hasSupabaseConfig } from "@/lib/auth-config";
+import { SESSION_COOKIE_NAME, hasSupabaseConfig } from "@/lib/auth-config";
 import { type DemoRole, type DemoSession } from "@/lib/demo-session";
 import { parseServerDemoSession } from "@/lib/demo-session-server";
 import { getSessionUser } from "@/features/auth/session.service";
@@ -41,7 +41,7 @@ async function getSupabaseSession(): Promise<DemoSession | null> {
 
 export const getCurrentSession = cache(async (): Promise<DemoSession | null> => {
   const cookieStore = await cookies();
-  const demoSession = parseServerDemoSession(cookieStore.get(DEMO_SESSION_COOKIE)?.value);
+  const demoSession = parseServerDemoSession(cookieStore.get(SESSION_COOKIE_NAME)?.value);
   if (demoSession) {
     return demoSession;
   }

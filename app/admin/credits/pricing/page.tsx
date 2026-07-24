@@ -25,7 +25,7 @@ export default async function AdminCreditPricingPage() {
     <AdminPageShell locale={locale} title={t.title} subtitle={t.subtitle}>
       <div className="mb-4 flex flex-wrap gap-2">
         <Link href={withLocale(adminPortalRoutes.credits, locale)} className="text-sm text-zinc-500 underline">
-          {locale === "zh" ? "返回 Credits 总览" : "Back to credits overview"}
+          {locale === "zh" ? "返回 Token 总览" : "Back to Token overview"}
         </Link>
         <Link
           href={withLocale(adminPortalRoutes.creditsAiModels, locale)}

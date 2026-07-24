@@ -49,10 +49,19 @@ export function inferGenerationMode(
   parameters: Record<string, unknown>
 ) {
   if (type === "VIDEO") {
+    const videoReferenceMode = String(parameters.videoReferenceMode ?? "").trim();
+    if (videoReferenceMode === "edit" || videoReferenceMode === "keyframes") {
+      return "IMAGE_TO_VIDEO";
+    }
     const hasReference =
       Boolean(parameters.referenceAssetId) ||
       Boolean(parameters.referenceUrl) ||
-      Boolean(parameters.referenceNodeId);
+      Boolean(parameters.referenceNodeId) ||
+      Boolean(parameters.lastFrameReferenceAssetId) ||
+      Boolean(parameters.lastFrameReferenceUrl) ||
+      Boolean(parameters.lastFrameReferenceNodeId) ||
+      (typeof parameters.libraryReferenceAssetIds === "string" &&
+        parameters.libraryReferenceAssetIds.trim().length > 0);
     return hasReference ? "IMAGE_TO_VIDEO" : "TEXT_TO_VIDEO";
   }
 

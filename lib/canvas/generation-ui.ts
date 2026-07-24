@@ -214,6 +214,37 @@ export function formatVideoSettingsLabel(settings: VideoGenerationSettings, loca
   return `${ratio} · ${settings.duration}s · ${settings.quality}`;
 }
 
+export function hasGenerationReference(reference: GenerationReference | null | undefined) {
+  return Boolean(reference?.assetId || reference?.url || reference?.nodeId);
+}
+
+export function parseLibraryReferenceAssetIds(value: unknown): string[] {
+  if (typeof value !== "string" || !value.trim()) return [];
+  return [...new Set(value.split(",").map((item) => item.trim()).filter(Boolean))];
+}
+
+export function hasLibraryReferenceAssetIds(parameters: Record<string, unknown>) {
+  return parseLibraryReferenceAssetIds(parameters.libraryReferenceAssetIds).length > 0;
+}
+
+export function resolveVideoPricingMode(input: {
+  videoReferenceMode: VideoReferenceMode;
+  hasPrimaryReference: boolean;
+}): "TEXT_TO_VIDEO" | "IMAGE_TO_VIDEO" {
+  if (input.videoReferenceMode === "edit" || input.videoReferenceMode === "keyframes") {
+    return "IMAGE_TO_VIDEO";
+  }
+  return input.hasPrimaryReference ? "IMAGE_TO_VIDEO" : "TEXT_TO_VIDEO";
+}
+
+export function isImageGenerationReference(reference: GenerationReference | null | undefined) {
+  if (!reference) return false;
+  const mime = reference.mimeType?.trim().toLowerCase() ?? "";
+  if (mime.startsWith("image/")) return true;
+  if (mime.startsWith("video/") || mime.startsWith("audio/")) return false;
+  return true;
+}
+
 export type MusicCreationMode = "simple" | "custom" | "soundtrack";
 export type MusicModelVersion = CanvasModelId;
 export type VocalGender = "female" | "male";

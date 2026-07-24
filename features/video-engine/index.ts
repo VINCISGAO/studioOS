@@ -6,8 +6,14 @@ export { videoOrchestrator, VideoOrchestrator } from "@/features/video-engine/vi
 export {
   getVideoProviderAdapter,
   listVideoProviderAdapters,
-  resolveVideoProviderId
+  resolveVideoProviderId,
+  resolveVideoProviderRouting,
+  resetVideoProviderAdaptersForTests,
+  setVideoProviderAdapterForTests
 } from "@/features/video-engine/video-provider.registry";
+export { VIDEO_ENGINE_AUDIT_WRITE_FAILED } from "@/features/video-engine/video-job-audit.types";
+export { videoJobAuditService } from "@/features/video-engine/video-job-audit.service";
+export { isMockVideoProviderEnabled } from "@/features/video-engine/mock-provider-env";
 export type {
   VideoGenerationCreateInput,
   VideoGenerationCreateResult,

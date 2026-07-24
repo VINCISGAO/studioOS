@@ -7,6 +7,7 @@ import {
   type CanvasProjectRecord
 } from "@/features/canvas/canvas.repository";
 import { aiModelGenerationGuard } from "@/features/canvas/ai-model-generation.guard";
+import { canvasGenerationReferenceService } from "@/features/canvas/canvas-generation-reference.service";
 import { canvasImageGenerationService } from "@/features/canvas/canvas-image-generation.service";
 import { canvasMusicGenerationService } from "@/features/canvas/canvas-music-generation.service";
 import { assertCanvasCreator, resolveCanvasProjectForOwner } from "@/features/canvas/canvas-project-access";
@@ -505,17 +506,26 @@ export class CanvasService {
       project.campaignId
     );
 
+    const normalizedParameters =
+      input.type === "IMAGE"
+        ? await canvasGenerationReferenceService.normalizeGenerationReferenceParameters(
+            user,
+            project.id,
+            input.parameters
+          )
+        : input.parameters;
+
     const resolved = await aiModelGenerationGuard.resolveForGeneration({
       type: input.type,
       model: input.model,
-      parameters: input.parameters
+      parameters: normalizedParameters
     });
 
     const billing = await creditGenerationBillingService.reserveForGeneration({
       userId: user.id,
       type: input.type,
       model: resolved.internalModelId,
-      parameters: input.parameters,
+      parameters: normalizedParameters,
       idempotencyKey: input.idempotencyKey,
       campaignId: project.campaignId
     });
@@ -526,7 +536,7 @@ export class CanvasService {
         : input.type === "MUSIC"
           ? resolveMusicProvider(resolved.provider)
           : resolved.provider || "vincis-mock";
-    const job = await canvasRepository.createGenerationJob({
+    const { job, created } = await canvasRepository.createGenerationJob({
       creativeProjectId: project.id,
       campaignId: project.campaignId,
       canvasId,
@@ -538,7 +548,7 @@ export class CanvasService {
       aiModelId: resolved.recordId,
       modelDisplayName: resolved.displayName,
       prompt: input.prompt,
-      payload: input.parameters as Prisma.InputJsonValue,
+      payload: normalizedParameters as Prisma.InputJsonValue,
       idempotencyKey: input.idempotencyKey,
       estimatedCredits: billing.estimatedCredits,
       creditReservationId: billing.reservation.id,
@@ -556,7 +566,7 @@ export class CanvasService {
     await creditLedgerService.linkReservationToJob(billing.reservation.id, job.id);
 
     try {
-      if (job.status === "QUEUED") {
+      if (created && job.status === "QUEUED") {
         scheduleGenerationJob({
           type: input.type,
           provider,

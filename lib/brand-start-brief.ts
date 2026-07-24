@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import {
   resolveBrandBriefEmailFromCookieValues
 } from "@/lib/brand-brief-session";
-import { DEMO_SESSION_COOKIE, VISITOR_COOKIE } from "@/lib/auth-config";
+import { SESSION_COOKIE_NAME, VISITOR_COOKIE } from "@/lib/auth-config";
 import { DEMO_USERS } from "@/lib/demo-auth";
 import { createProjectDraft, deleteProjectForClient, listProjectsForClient } from "@/lib/project-service";
 import type { StoredProject } from "@/lib/project-types";
@@ -19,7 +19,7 @@ export {
 export async function resolveBrandBriefClientEmailForStart() {
   const cookieStore = await cookies();
   return resolveBrandBriefEmailFromCookieValues(
-    cookieStore.get(DEMO_SESSION_COOKIE)?.value,
+    cookieStore.get(SESSION_COOKIE_NAME)?.value,
     cookieStore.get(VISITOR_COOKIE)?.value
   );
 }

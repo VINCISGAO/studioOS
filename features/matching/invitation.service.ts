@@ -2,6 +2,7 @@ import { invitationPortalService } from "@/features/matching/invitation-portal.s
 import { campaignSelectionService } from "@/features/matching/campaign-selection.service";
 import { invitationRepository } from "@/features/matching/invitation.repository";
 import { InvitationEvent } from "@/features/shared/state-machines/invitation.state-machine";
+import { assertCreatorEligibility } from "@/features/creator/creator-eligibility.service";
 import { matchingService } from "@/features/matching/matching.service";
 import { activityService } from "@/features/campaign/activity.service";
 import { campaignRepository } from "@/features/campaign/campaign.repository";
@@ -114,6 +115,8 @@ export class InvitationService {
 
       const profile = await prisma.creatorProfile.findUnique({ where: { id: creatorProfileId } });
       if (!profile) throw appError("NOT_FOUND", `Creator ${creatorProfileId} not found`);
+
+      await assertCreatorEligibility(creatorProfileId, "canReceiveInvitations");
 
       const created = await invitationRepository.create({
         campaignId,

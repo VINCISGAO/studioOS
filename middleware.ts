@@ -6,9 +6,9 @@ import { applyBaselineSecurityHeaders } from "@/lib/auth/baseline-security-heade
 import { applyLoginSecurityHeaders } from "@/lib/auth/login-security-headers";
 import { isHomepageLangPath, isInternalAppPath, normalizeAppLanguage } from "@/lib/app-language.shared";
 import { demoRedirectForRole } from "@/lib/demo-auth";
-import { DEMO_SESSION_COOKIE, ADMIN_SESSION_COOKIE, LOCALE_COOKIE } from "@/lib/auth-config";
+import { SESSION_COOKIE_NAME, ADMIN_SESSION_COOKIE, LOCALE_COOKIE } from "@/lib/auth-config";
 import { parseDemoSessionCookieAsync } from "@/lib/demo-session-cookie";
-import { toSafeNextPath, toSafeNextPathname } from "@/lib/auth/post-login-redirect";
+import { toSafeNextPath, toSafeNextPathname, resolveSafePostLoginDestination } from "@/lib/auth/post-login-redirect";
 import { resolveStaticLegacyRedirect } from "@/lib/studioos/legacy-route-redirect.shared";
 
 function persistLanguageCookie(response: NextResponse, language: string) {
@@ -54,11 +54,8 @@ function isAuthMutationPath(pathname: string) {
   }
   return (
     pathname.startsWith("/api/auth/") ||
-    pathname === "/api/register" ||
     pathname === "/api/login" ||
-    pathname === "/api/continue" ||
-    pathname === "/api/user/create" ||
-    pathname.startsWith("/api/account/")
+    pathname === "/api/continue"
   );
 }
 
@@ -409,7 +406,7 @@ export async function middleware(request: NextRequest) {
   if (pathname === "/login") {
     const safeNext = resolveSafeLoginNext(request);
     const demoSession = await parseDemoSessionCookieAsync(
-      request.cookies.get(DEMO_SESSION_COOKIE)?.value
+      request.cookies.get(SESSION_COOKIE_NAME)?.value
     );
 
     if (demoSession?.role === "client" || demoSession?.role === "creator") {
@@ -432,7 +429,7 @@ export async function middleware(request: NextRequest) {
   }
 
   const demoSession = await parseDemoSessionCookieAsync(
-    request.cookies.get(DEMO_SESSION_COOKIE)?.value
+    request.cookies.get(SESSION_COOKIE_NAME)?.value
   );
 
   function redirectToRoleHome(request: NextRequest, role: ReturnType<typeof normalizeRouteRole>) {
@@ -537,10 +534,11 @@ function resolveSafeLoginNext(request: NextRequest) {
 }
 
 function redirectToRoleDefault(request: NextRequest, role: "client" | "creator", safeNext?: string) {
-  if (safeNext) {
-    return redirectToSafeRelativePath(request, safeNext);
-  }
-  return redirectToPath(request, demoRedirectForRole(role));
+  const destination = resolveSafePostLoginDestination({
+    session: { role },
+    requestedPath: safeNext ?? ""
+  });
+  return redirectToSafeRelativePath(request, destination);
 }
 
 function redirectToAdminLogin(request: NextRequest) {
@@ -566,11 +564,8 @@ export const config = {
     "/api/auth/:path*",
     "/api/admin/:path*",
     "/api/v1/admin/:path*",
-    "/api/register",
     "/api/login",
     "/api/continue",
-    "/api/user/create",
-    "/api/account/:path*",
     "/((?!_next/static|_next/image|favicon.ico|api/|videos/|images/|demo/).*)"
   ]
 };

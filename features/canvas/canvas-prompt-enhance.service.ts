@@ -21,8 +21,21 @@ function localeFromLanguageCode(languageCode?: string | null): "en" | "zh" {
   return normalized.startsWith("zh") ? "zh" : "en";
 }
 
-function emptyPromptMessage(locale: "en" | "zh") {
+function emptyPromptMessage(field: CanvasPromptEnhanceField, locale: "en" | "zh") {
+  if (field === "video_prompt") {
+    return locale === "zh" ? "暂时无法生成灵感，请稍后重试。" : "Inspiration is unavailable right now. Please try again.";
+  }
   return locale === "zh" ? "请先输入风格描述，再进行优化。" : "Enter a style description before enhancing.";
+}
+
+function fallbackVideoInspirationPrompt(locale: "en" | "zh") {
+  return locale === "zh"
+    ? "请给出一个原创的短视频创意描述，包含场景、主体、氛围、镜头运动与节奏。"
+    : "Suggest an original short-form video concept with scene, subject, mood, camera movement, and pacing.";
+}
+
+function lucienAnswerMode(field: CanvasPromptEnhanceField) {
+  return field === "video_prompt" ? "video_prompt_inspire" : "music_style_enhance";
 }
 
 function unconfiguredMessage(locale: "en" | "zh") {
@@ -43,8 +56,8 @@ export class CanvasPromptEnhanceService {
   ) {
     const locale = localeFromLanguageCode(input.languageCode ?? user.languageCode);
     const source = input.text.trim();
-    if (!source) {
-      throw appError("VALIDATION_ERROR", emptyPromptMessage(locale));
+    if (!source && input.field === "music_style") {
+      throw appError("VALIDATION_ERROR", emptyPromptMessage(input.field, locale));
     }
 
     const project = await canvasService.assertAccess(input.projectId, user);
@@ -63,10 +76,12 @@ export class CanvasPromptEnhanceService {
     }
 
     const maxLength = CANVAS_PROMPT_ENHANCE_MAX_LENGTH[input.field];
+    const userPrompt =
+      source || (input.field === "video_prompt" ? fallbackVideoInspirationPrompt(locale) : source);
     const result = await aiGatewayService.chatCompletion({
       system: canvasPromptEnhanceSystemPrompt(input.field),
-      user: source,
-      temperature: 0.45,
+      user: userPrompt,
+      temperature: input.field === "video_prompt" ? 0.65 : 0.45,
       language: locale === "zh" ? "Chinese" : "English"
     });
 
@@ -98,9 +113,9 @@ export class CanvasPromptEnhanceService {
       role: normalizeCopilotRole(user),
       pagePath: `/studio/canvas/${input.projectId}`,
       language: normalizeLanguageCode(input.languageCode ?? user.languageCode ?? "en"),
-      userMessage: source,
+      userMessage: source || userPrompt,
       assistantAnswer: enhanced,
-      answerMode: "music_style_enhance",
+      answerMode: lucienAnswerMode(input.field),
       knowledgeScope: "authenticated_business",
       queryCategory: "business"
     });

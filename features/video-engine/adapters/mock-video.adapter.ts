@@ -8,12 +8,13 @@ import type {
   VideoProviderAdapter,
   VideoProviderError
 } from "@/features/video-engine/video-provider.types";
+import { isMockVideoProviderEnabled } from "@/features/video-engine/mock-provider-env";
 
 export const mockVideoAdapter: VideoProviderAdapter = {
   id: "vincis-mock",
 
   isAvailable() {
-    return false;
+    return isMockVideoProviderEnabled();
   },
 
   async submit(_input: VideoGenerationSubmitInput): Promise<VideoGenerationSubmitResult> {

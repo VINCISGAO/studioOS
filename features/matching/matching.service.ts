@@ -9,6 +9,7 @@ import type { BrandProductionBrief } from "@/features/campaign/brand-campaign/br
 import type { AuthUser } from "@/features/auth/permission.service";
 import { PermissionService } from "@/features/auth/permission.service";
 import { notificationService } from "@/features/notification/notification.service";
+import { filterEligibleCreatorProfilesForMatching } from "@/features/creator/creator-eligibility.service";
 import { getAppBaseUrl } from "@/lib/app-url";
 import { appError } from "@/lib/core/errors";
 import { hasDatabaseUrl, prisma } from "@/lib/core/database/prisma";
@@ -118,7 +119,9 @@ function baseScore(
 
   if (minBudget && budget < minBudget) return null;
   if (maxBudget && budget > maxBudget * 1.5) return null;
-  if (profile.availability === "OFFLINE" || profile.availability === "VACATION") return null;
+  if (profile.availability === "OFFLINE" || profile.availability === "UNAVAILABLE" || profile.availability === "VACATION") {
+    return null;
+  }
 
   const dna = (profile.creatorDnaJson ?? {}) as {
     style?: string[];
@@ -198,13 +201,33 @@ export class MatchingService {
       throw appError("VALIDATION_ERROR", "Frozen Production Brief is required before matching");
     }
 
-    const profiles = await prisma.creatorProfile.findMany({
+    const profilesRaw = await prisma.creatorProfile.findMany({
       where: {
-        availability: { in: ["AVAILABLE", "BUSY"] },
+        availability: { in: ["AVAILABLE", "LIMITED", "BUSY"] },
         user: { role: "CREATOR", deletedAt: null, status: "ACTIVE" }
       },
       include: { user: true }
     });
+
+    const eligibleProfiles = await filterEligibleCreatorProfilesForMatching(
+      profilesRaw.map((profile) => ({
+        id: profile.id,
+        userId: profile.userId,
+        verificationStatus: profile.verificationStatus,
+        canAcceptProjects: profile.canAcceptProjects,
+        marketplaceVisible: profile.marketplaceVisible,
+        availability: profile.availability,
+        identityType: profile.identityType,
+        profileCompletedAt: profile.profileCompletedAt,
+        user: {
+          status: profile.user.status,
+          deletedAt: profile.user.deletedAt,
+          role: profile.user.role
+        }
+      }))
+    );
+    const eligibleIds = new Set(eligibleProfiles.map((profile) => profile.id));
+    const profiles = profilesRaw.filter((profile) => eligibleIds.has(profile.id));
 
     const creatorUserIds = profiles.map((profile) => profile.userId);
     const [matchingFacts, relationshipBoosts] = await Promise.all([

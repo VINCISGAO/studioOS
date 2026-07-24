@@ -200,6 +200,8 @@ model AdminUser {
   auditLogs           AdminAuthAuditLog[]
   webAuthnCredentials AdminWebAuthnCredential[]
   totpConsumptions    AdminTotpConsumption[]
+  creatorVerificationReviewLogs CreatorVerificationReviewLog[]
+  creatorProfilesVerificationReviewed CreatorProfile[] @relation("CreatorVerificationReviewedBy")
 
   @@index([status, totpEnabled])
   @@index([isMaster])
@@ -502,6 +504,16 @@ model CreatorProfile {
   aiEnabled            Boolean                @default(true) @map("ai_enabled")
   profileCompletedAt   DateTime?              @map("profile_completed_at")
   legacyCreatorId      String?                @unique @map("legacy_creator_id")
+  verificationStatus            CreatorVerificationStatus @default(NOT_APPLIED) @map("verification_status")
+  verificationAppliedAt         DateTime?                 @map("verification_applied_at")
+  verificationReviewedAt        DateTime?                 @map("verification_reviewed_at")
+  verificationReviewedByAdminId String?                   @map("verification_reviewed_by_admin_id")
+  verificationNotes             String?                   @map("verification_notes")
+  verificationRejectReason      String?                   @map("verification_reject_reason")
+  canAcceptProjects             Boolean                   @default(false) @map("can_accept_projects")
+  marketplaceVisible            Boolean                   @default(false) @map("marketplace_visible")
+  creatorLevel                  CreatorLevel              @default(NEW) @map("creator_level")
+  identityType                  CreatorIdentityType       @default(INDIVIDUAL) @map("identity_type")
   stripeConnectAccountId       String?          @unique @map("stripe_connect_account_id")
   stripeConnectDetailsSubmitted Boolean         @default(false) @map("stripe_connect_details_submitted")
   stripeConnectPayoutsEnabled   Boolean         @default(false) @map("stripe_connect_payouts_enabled")
@@ -517,12 +529,43 @@ model CreatorProfile {
   user                 User                   @relation(fields: [userId], references: [id])
   orders               Order[]
   depositAccount       CreatorDepositAccount?
+  verificationReviewedByAdmin   AdminUser? @relation("CreatorVerificationReviewedBy", fields: [verificationReviewedByAdminId], references: [id])
+  verificationReviewLogs        CreatorVerificationReviewLog[]
 
   @@index([studioId])
   @@index([country])
   @@index([availability])
   @@index([profileCompletedAt])
+  @@index([verificationStatus])
+  @@index([canAcceptProjects])
+  @@index([marketplaceVisible])
+  @@index([creatorLevel])
+  @@index([identityType])
   @@map("creator_profiles")
+}
+
+model CreatorVerificationReviewLog {
+  id                           String                          @id @default(uuid())
+  creatorProfileId             String                          @map("creator_profile_id")
+  action                       CreatorVerificationReviewAction
+  previousVerificationStatus   CreatorVerificationStatus?      @map("previous_verification_status")
+  newVerificationStatus        CreatorVerificationStatus?      @map("new_verification_status")
+  previousCanAcceptProjects    Boolean?                        @map("previous_can_accept_projects")
+  newCanAcceptProjects         Boolean?                        @map("new_can_accept_projects")
+  previousMarketplaceVisible   Boolean?                        @map("previous_marketplace_visible")
+  newMarketplaceVisible        Boolean?                        @map("new_marketplace_visible")
+  adminId                      String?                         @map("admin_id")
+  reason                       String?
+  internalNotes                String?                         @map("internal_notes")
+  snapshotJson                 Json                            @map("snapshot_json")
+  createdAt                    DateTime                        @default(now()) @map("created_at")
+
+  creatorProfile CreatorProfile @relation(fields: [creatorProfileId], references: [id], onDelete: Cascade)
+  admin          AdminUser?     @relation(fields: [adminId], references: [id])
+
+  @@index([creatorProfileId, createdAt])
+  @@index([adminId])
+  @@map("creator_verification_review_logs")
 }
 
 model CreatorDepositAccount {
@@ -1110,6 +1153,10 @@ model GenerationJob {
   canvas            CreativeCanvas   @relation(fields: [canvasId], references: [id], onDelete: Cascade)
   creditReservation CreditReservation? @relation(fields: [creditReservationId], references: [id], onDelete: SetNull)
   aiModel           AiModel?           @relation(fields: [aiModelId], references: [id], onDelete: SetNull)
+  generationJobEvents     GenerationJobEvent[]
+  generationJobAttempts   GenerationJobAttempt[]
+  videoRoutingDecision    VideoRoutingDecision?
+  videoPromptVersions     VideoPromptVersion[]
 
   @@unique([ownerId, idempotencyKey])
   @@index([creativeProjectId])
@@ -1117,7 +1164,68 @@ model GenerationJob {
   @@index([canvasId])
   @@index([ownerId, status])
   @@index([status, createdAt])
+  @@index([providerTaskId])
   @@map("generation_jobs")
+}
+
+model GenerationJobEvent {
+  id              String            @id @default(uuid())
+  generationJobId String            @map("generation_job_id")
+  eventType       String            @map("event_type")
+  fromStatus      GenerationStatus? @map("from_status")
+  toStatus        GenerationStatus? @map("to_status")
+  progress        Int?
+  payload         Json?
+  createdAt       DateTime          @default(now()) @map("created_at")
+  generationJob   GenerationJob     @relation(fields: [generationJobId], references: [id], onDelete: Cascade)
+
+  @@index([generationJobId, createdAt])
+  @@map("generation_job_events")
+}
+
+model GenerationJobAttempt {
+  id              String        @id @default(uuid())
+  generationJobId String        @map("generation_job_id")
+  attemptNumber   Int           @map("attempt_number")
+  provider        String
+  providerTaskId  String?       @map("provider_task_id")
+  status          String
+  errorCode       String?       @map("error_code")
+  startedAt       DateTime      @default(now()) @map("started_at")
+  finishedAt      DateTime?     @map("finished_at")
+  generationJob   GenerationJob @relation(fields: [generationJobId], references: [id], onDelete: Cascade)
+
+  @@unique([generationJobId, attemptNumber])
+  @@index([providerTaskId])
+  @@map("generation_job_attempts")
+}
+
+model VideoRoutingDecision {
+  id               String        @id @default(uuid())
+  generationJobId  String        @unique @map("generation_job_id")
+  requestedModel   String        @map("requested_model")
+  resolvedProvider String?       @map("resolved_provider")
+  resolvedModel    String?       @map("resolved_model")
+  reason           String
+  metadata         Json?
+  createdAt        DateTime      @default(now()) @map("created_at")
+  generationJob    GenerationJob @relation(fields: [generationJobId], references: [id], onDelete: Cascade)
+
+  @@map("video_routing_decisions")
+}
+
+model VideoPromptVersion {
+  id              String        @id @default(uuid())
+  generationJobId String        @map("generation_job_id")
+  version         Int
+  source          String
+  prompt          String
+  providerPrompt  String?       @map("provider_prompt")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  generationJob   GenerationJob @relation(fields: [generationJobId], references: [id], onDelete: Cascade)
+
+  @@unique([generationJobId, version])
+  @@map("video_prompt_versions")
 }
 
 model PerformanceSource {
@@ -2276,9 +2384,47 @@ enum AuthAuditEvent {
 
 enum CreatorAvailability {
   AVAILABLE
+  LIMITED
   BUSY
   VACATION
+  UNAVAILABLE
   OFFLINE
+}
+
+enum CreatorVerificationStatus {
+  NOT_APPLIED
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum CreatorLevel {
+  NEW
+  ESTABLISHED
+  PROFESSIONAL
+  PARTNER
+  FEATURED
+}
+
+enum CreatorIdentityType {
+  INDIVIDUAL
+  STUDIO
+  COMPANY
+  OFFICIAL
+}
+
+enum CreatorVerificationReviewAction {
+  SUBMIT
+  APPROVE
+  REJECT
+  SUSPEND
+  REINSTATE
+  TOGGLE_CAN_ACCEPT
+  TOGGLE_MARKETPLACE_VISIBLE
+  SET_LEVEL
+  SET_IDENTITY
+  SET_AVAILABILITY
 }
 
 enum CampaignStatus {

@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { DEMO_SESSION_COOKIE } from "@/lib/auth-config";
+import { SESSION_COOKIE_NAME } from "@/lib/auth-config";
 import { type DemoSession } from "@/lib/demo-session";
 import { parseServerDemoSession } from "@/lib/demo-session-server";
 import { authService, type AuthUserDto } from "@/features/auth/auth.service";
@@ -33,7 +33,7 @@ function authUserFromDemoSession(session: DemoSession): AuthUserDto {
 
 export async function getSessionUser(): Promise<AuthUserDto | null> {
   const cookieStore = await cookies();
-  const session = parseServerDemoSession(cookieStore.get(DEMO_SESSION_COOKIE)?.value);
+  const session = parseServerDemoSession(cookieStore.get(SESSION_COOKIE_NAME)?.value);
   if (!session || session.role === "admin") return null;
 
   try {

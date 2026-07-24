@@ -42,6 +42,7 @@ import {
   formatImageSettingsLabel,
   formatMusicSettingsLabel,
   formatVideoSettingsLabel,
+  isImageGenerationReference,
   type GenerationKind,
   type ImageGenerationSettings,
   type MusicGenerationSettings,
@@ -135,6 +136,15 @@ export function GenerationStudioPanel({
   }, [selectedVideoModelView?.id]);
 
   useEffect(() => {
+    if (videoReferenceMode === "edit" || videoReferenceMode === "keyframes") {
+      setReferenceSlot("image");
+    }
+    if (videoReferenceMode !== "keyframes") {
+      references.setLastFrameReference(null);
+    }
+  }, [videoReferenceMode]);
+
+  useEffect(() => {
     if (!selectedImageModelView) return;
     setImageSettings((current) => clampImageSettings(current, selectedImageModelView.capabilities));
   }, [selectedImageModelView?.id]);
@@ -148,6 +158,9 @@ export function GenerationStudioPanel({
     kind,
     prompt,
     reference: references.reference,
+    lastFrameReference: references.lastFrameReference,
+    librarySelections: references.librarySelections,
+    videoReferenceMode,
     videoSettings,
     imageSettings,
     musicSettings,
@@ -160,10 +173,28 @@ export function GenerationStudioPanel({
     ...submitPreview.parameters
   };
   if (submitPreview.reference?.assetId) quoteParameters.referenceAssetId = submitPreview.reference.assetId;
+  if (typeof submitPreview.parameters.libraryReferenceAssetIds === "string") {
+    quoteParameters.libraryReferenceAssetIds = submitPreview.parameters.libraryReferenceAssetIds;
+  }
   if (submitPreview.reference?.url) quoteParameters.referenceUrl = submitPreview.reference.url;
   if (submitPreview.reference?.nodeId) quoteParameters.referenceNodeId = submitPreview.reference.nodeId;
   if (submitPreview.reference?.mimeType) {
     quoteParameters.referenceMimeType = submitPreview.reference.mimeType;
+  }
+  if (submitPreview.lastFrameReference?.assetId) {
+    quoteParameters.lastFrameReferenceAssetId = submitPreview.lastFrameReference.assetId;
+  }
+  if (submitPreview.lastFrameReference?.url) {
+    quoteParameters.lastFrameReferenceUrl = submitPreview.lastFrameReference.url;
+  }
+  if (submitPreview.lastFrameReference?.nodeId) {
+    quoteParameters.lastFrameReferenceNodeId = submitPreview.lastFrameReference.nodeId;
+  }
+  if (submitPreview.lastFrameReference?.mimeType) {
+    quoteParameters.lastFrameReferenceMimeType = submitPreview.lastFrameReference.mimeType;
+  }
+  if (kind === "video") {
+    quoteParameters.videoReferenceMode = videoReferenceMode;
   }
 
   const quoteEnabled =
@@ -217,6 +248,17 @@ export function GenerationStudioPanel({
     quoteEnabled && !quote.loading && Boolean(quote.error) && localCreditEstimate <= 0;
   const insufficientCredits = credits > 0 ? tokenBalance < credits : false;
   const promptTooShort = kind !== "music" && prompt.trim().length < 3;
+  const videoReferenceInvalid =
+    kind === "video" &&
+    (videoReferenceMode === "edit"
+      ? !isImageGenerationReference(references.reference)
+      : videoReferenceMode === "keyframes"
+        ? !isImageGenerationReference(references.reference) ||
+          !isImageGenerationReference(references.lastFrameReference)
+        : false);
+  const allowedVideoReferenceModes = selectedVideoModelView
+    ? videoReferenceModesForCapabilities(selectedVideoModelView.capabilities)
+    : (["reference"] as VideoReferenceMode[]);
   const submitDisabled =
     busy ||
     catalog.loading ||
@@ -227,6 +269,7 @@ export function GenerationStudioPanel({
     credits <= 0 ||
     insufficientCredits ||
     !submitPreview.model ||
+    videoReferenceInvalid ||
     (kind === "music" ? !canSubmitMusicSettings(musicSettings) : promptTooShort);
 
   useEffect(() => {
@@ -276,17 +319,21 @@ export function GenerationStudioPanel({
           {kind === "video" ? (
             <GenerationVideoStudioSection
               locale={locale}
+              projectId={projectId}
               prompt={prompt}
-              reference={references.reference}
               catalogError={catalog.error}
               catalogEmpty={catalogEmpty}
               modelUnavailable={modelUnavailable}
               pricingUnavailable={pricingUnavailable}
               pricingError={quote.error}
-              insufficientCredits={insufficientCredits}
-              tokenBalance={tokenBalance}
-              credits={credits}
               referenceSlot={referenceSlot}
+              videoReferenceMode={videoReferenceMode}
+              firstFrameReference={references.reference}
+              lastFrameReference={references.lastFrameReference}
+              librarySelections={references.librarySelections}
+              activeReferenceId={
+                references.reference?.assetId ?? references.reference?.url ?? undefined
+              }
               uploadOpen={showUploadMenu}
               onPromptChange={setPrompt}
               onUploadToggle={() => setShowUploadMenu((value) => !value)}
@@ -324,8 +371,40 @@ export function GenerationStudioPanel({
                 setShowUploadMenu(false);
                 references.openReferenceCanvasPicker(slot);
               }}
-              onClearReference={() => references.setReference(null)}
+              onToggleLibrarySelection={references.toggleLibrarySelection}
+              onActivateLibrarySelection={references.activateLibrarySelection}
+              onRemoveLibrarySelection={references.removeLibrarySelection}
+              onPickFirstFrameLocal={() => {
+                setShowUploadMenu(false);
+                references.pickLocalReference("image", "primary");
+              }}
+              onPickFirstFrameCanvas={() => {
+                setShowUploadMenu(false);
+                references.openReferenceCanvasPicker("image", "primary");
+              }}
+              onPickFirstFrameLibrary={() => {
+                setShowUploadMenu(false);
+                references.openReferenceLibrary("image", "primary");
+              }}
+              onPickLastFrameLocal={() => {
+                setShowUploadMenu(false);
+                references.pickLocalReference("image", "lastFrame");
+              }}
+              onPickLastFrameCanvas={() => {
+                setShowUploadMenu(false);
+                references.openReferenceCanvasPicker("image", "lastFrame");
+              }}
+              onPickLastFrameLibrary={() => {
+                setShowUploadMenu(false);
+                references.openReferenceLibrary("image", "lastFrame");
+              }}
+              onClearFirstFrame={() => references.setReference(null)}
+              onClearLastFrame={() => references.setLastFrameReference(null)}
               onCatalogRetry={() => void catalog.reload()}
+              videoModels={catalog.modelsForKind("video")}
+              selectedVideoModel={selectedVideoModel}
+              selectedVideoModelView={selectedVideoModelView}
+              onVideoModelChange={setSelectedVideoModel}
             />
           ) : null}
 
@@ -345,7 +424,8 @@ export function GenerationStudioPanel({
               credits={credits}
               onPromptChange={setPrompt}
               onLocalUpload={() => references.pickLocalReference("image")}
-              onCanvasPick={() => references.setShowCanvasPicker(true)}
+              onOpenLibrary={() => references.openReferenceLibrary("image")}
+              onCanvasPick={() => references.openReferenceCanvasPicker("image")}
               onClearReference={() => references.setReference(null)}
               onCatalogRetry={() => void catalog.reload()}
             />
@@ -417,16 +497,13 @@ export function GenerationStudioPanel({
                   insufficientCredits={insufficientCredits}
                   tokenBalance={normalizeCanvasTokenBalance(tokenBalance)}
                   credits={credits}
-                  referenceSlot={referenceSlot}
+                  settingsLabel={settingsLabel}
+                  videoReferenceMode={videoReferenceMode}
+                  allowedReferenceModes={allowedVideoReferenceModes}
                   videoSettings={videoSettings}
-                  videoModels={catalog.modelsForKind("video")}
-                  selectedVideoModel={selectedVideoModel}
                   selectedVideoModelView={selectedVideoModelView}
-                  onVideoModelChange={setSelectedVideoModel}
+                  onVideoReferenceModeChange={setVideoReferenceMode}
                   onVideoSettingsChange={setVideoSettings}
-                  onLocalUpload={() => references.pickLocalReference(referenceSlot)}
-                  onOpenLibrary={() => references.openReferenceLibrary(referenceSlot)}
-                  onOpenCanvasPicker={() => references.openReferenceCanvasPicker(referenceSlot)}
                   onClose={onClose}
                   onSubmit={submit}
                 />
@@ -469,13 +546,21 @@ export function GenerationStudioPanel({
         projectId={projectId}
         nodes={nodes}
         reference={references.reference}
+        lastFrameReference={references.lastFrameReference}
+        referenceTarget={references.referenceTarget}
         showAssetLibrary={references.showAssetLibrary}
         assetLibrarySlot={references.assetLibrarySlot}
         showCanvasPicker={references.showCanvasPicker}
         canvasPickerSlot={references.canvasPickerSlot}
         uploadingReference={references.uploadingReference}
         localInputRef={references.localInputRef}
-        onReferenceChange={references.setReference}
+        onReferenceChange={(ref) => {
+          if (ref?.source === "library" && references.referenceTarget === "primary") {
+            references.upsertLibrarySelection(ref);
+            return;
+          }
+          references.assignReference(ref);
+        }}
         onCloseAssetLibrary={() => references.setShowAssetLibrary(false)}
         onCloseCanvasPicker={() => references.setShowCanvasPicker(false)}
         onLocalFileSelected={references.handleLocalFile}

@@ -116,7 +116,7 @@ export const musicNodeCopy = {
     download: "下载",
     regenerateConfirmTitle: "重新生成音乐？",
     regenerateConfirmLead: "将按首次生成的 Token 费用（",
-    regenerateConfirmCredits: (credits: number) => `${credits} 积分`,
+    regenerateConfirmCredits: (credits: number) => `${credits} Token`,
     regenerateConfirmTail:
       "）再次扣费，并使用相同设置重新生成。当前这条结果会保留在画布上，不会被覆盖。",
     regenerateConfirm: "确定生成",
@@ -136,7 +136,7 @@ export const musicNodeCopy = {
     download: "Download",
     regenerateConfirmTitle: "Regenerate music?",
     regenerateConfirmLead: "You will be charged the same Token cost as the first generation (",
-    regenerateConfirmCredits: (credits: number) => `${credits} credits`,
+    regenerateConfirmCredits: (credits: number) => `${credits} Token`,
     regenerateConfirmTail:
       ") using the same settings. The current result stays on the canvas and will not be overwritten.",
     regenerateConfirm: "Confirm",

@@ -22,13 +22,13 @@ const copy = {
     reservations: "Reservations"
   },
   zh: {
-    title: "Credits 钱包详情",
-    subtitle: "查看余额、冻结与不可篡改的积分流水。",
+    title: "Token 钱包详情",
+    subtitle: "查看余额、冻结与不可篡改的 Token 流水。",
     available: "可用",
     reserved: "冻结",
     purchased: "累计购买",
     spent: "累计消耗",
-    transactions: "积分流水",
+    transactions: "Token 流水",
     reservations: "冻结记录"
   }
 } as const;

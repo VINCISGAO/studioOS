@@ -11,34 +11,34 @@ import { formatCurrency } from "@/lib/utils";
 
 const copy = {
   en: {
-    title: "Credits overview",
+    title: "Token overview",
     subtitle: "Platform liability, recharge volume, and consumption.",
     liability: "Total liability",
     todayPurchase: "Today purchase",
-    todaySold: "Today credits sold",
+    todaySold: "Today Token sold",
     todayCaptured: "Today captured",
     bonus: "Lifetime bonus",
     refunded: "Lifetime refunded",
     conversion: "Today earning conversion",
     wallets: "Active wallets",
     recentOrders: "Recent purchase orders",
-    recentTransactions: "Recent credit transactions",
+    recentTransactions: "Recent Token transactions",
     packages: "Manage packages",
     userWallets: "User wallets"
   },
   zh: {
-    title: "Credits 总览",
-    subtitle: "平台积分负债、充值与消耗概览。",
+    title: "Token 总览",
+    subtitle: "平台 Token 负债、充值与消耗概览。",
     liability: "平台总负债",
     todayPurchase: "今日充值金额",
-    todaySold: "今日售出 Credits",
-    todayCaptured: "今日消耗 Credits",
+    todaySold: "今日售出 Token",
+    todayCaptured: "今日消耗 Token",
     bonus: "累计赠送",
     refunded: "累计退款",
     conversion: "今日收益兑换",
     wallets: "活跃钱包数",
     recentOrders: "最近充值订单",
-    recentTransactions: "最近积分流水",
+    recentTransactions: "最近 Token 流水",
     packages: "套餐管理",
     userWallets: "用户钱包"
   }
@@ -131,7 +131,7 @@ export default async function AdminCreditsOverviewPage() {
                 <TableRow>
                   <TableHead>User</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Credits</TableHead>
+                  <TableHead>Token</TableHead>
                   <TableHead>Amount</TableHead>
                 </TableRow>
               </TableHeader>

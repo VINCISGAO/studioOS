@@ -6,19 +6,22 @@ import { authService } from "@/features/auth/auth.service";
 import { activityService } from "@/features/campaign/activity.service";
 import { aiModelGenerationGuard } from "@/features/canvas/ai-model-generation.guard";
 import { canvasAssetService } from "@/features/canvas/canvas-asset.service";
+import { canvasGenerationReferenceService } from "@/features/canvas/canvas-generation-reference.service";
 import { finalizeCanvasGenerationJob } from "@/features/canvas/canvas-generation-learning";
 import { resolveCanvasProjectForOwner } from "@/features/canvas/canvas-project-access";
 import { canvasRepository } from "@/features/canvas/canvas.repository";
 import { creditGenerationBillingService } from "@/features/credit-wallet/credit-generation-billing.service";
 import { creditLedgerService } from "@/features/credit-wallet/credit-ledger.service";
 import { assertVideoGenerationInfrastructure } from "@/features/video-engine/video-infrastructure";
+import { claimVideoGenerationJobWithAttempt } from "@/features/video-engine/video-job-claim.repository";
+import { videoJobAuditService } from "@/features/video-engine/video-job-audit.service";
 import { videoOrchestrator } from "@/features/video-engine/video-orchestrator";
 import type {
   VideoGenerationCreateInput,
   VideoGenerationCreateResult,
   VideoOrchestratorJob
 } from "@/features/video-engine/video-generation.types";
-import { resolveVideoProviderId } from "@/features/video-engine/video-provider.registry";
+import { resolveVideoProviderRouting } from "@/features/video-engine/video-provider.registry";
 import { scheduleCanvasBackgroundWork } from "@/lib/canvas/schedule-background-work";
 import { appError } from "@/lib/core/errors";
 import { logger } from "@/lib/core/logger";
@@ -85,35 +88,51 @@ export class VideoGenerationService {
       project.campaignId
     );
 
+    const normalizedParameters =
+      await canvasGenerationReferenceService.normalizeGenerationReferenceParameters(
+        user,
+        project.id,
+        input.parameters
+      );
+
     const resolved = await aiModelGenerationGuard.resolveForGeneration({
       type: "VIDEO",
       model: input.model,
-      parameters: input.parameters
+      parameters: normalizedParameters
     });
+
+    const routing = resolveVideoProviderRouting(resolved.provider, resolved.internalModelId);
+    if (!routing.providerId) {
+      throw appError(
+        "SYSTEM_ERROR",
+        routing.reason === "SEEDANCE_NOT_CONFIGURED"
+          ? "SEEDANCE_API_KEY is not configured. Add it to .env.local (dev) or Vercel environment variables and redeploy."
+          : "No video provider is available for this model."
+      );
+    }
 
     const billing = await creditGenerationBillingService.reserveForGeneration({
       userId: user.id,
       type: "VIDEO",
       model: resolved.internalModelId,
-      parameters: input.parameters,
+      parameters: normalizedParameters,
       idempotencyKey: input.idempotencyKey,
       campaignId: project.campaignId
     });
 
-    const provider = resolveVideoProviderId(resolved.provider, resolved.internalModelId);
-    const job = await canvasRepository.createGenerationJob({
+    const { job, created } = await canvasRepository.createGenerationJob({
       creativeProjectId: project.id,
       campaignId: project.campaignId,
       canvasId,
       ownerId: user.id,
       nodeId: input.nodeId,
       type: "VIDEO",
-      provider,
+      provider: routing.providerId,
       model: resolved.internalModelId,
       aiModelId: resolved.recordId,
       modelDisplayName: resolved.displayName,
       prompt: input.prompt,
-      payload: input.parameters as Prisma.InputJsonValue,
+      payload: normalizedParameters as Prisma.InputJsonValue,
       idempotencyKey: input.idempotencyKey,
       estimatedCredits: billing.estimatedCredits,
       creditReservationId: billing.reservation.id,
@@ -130,8 +149,26 @@ export class VideoGenerationService {
 
     await creditLedgerService.linkReservationToJob(billing.reservation.id, job.id);
 
+    if (created) {
+      await videoJobAuditService.recordJobCreated({
+        generationJobId: job.id,
+        prompt: input.prompt,
+        routing: {
+          generationJobId: job.id,
+          requestedModel: resolved.internalModelId,
+          resolvedProvider: routing.providerId,
+          resolvedModel: routing.resolvedModel,
+          reason: routing.reason,
+          metadata: {
+            displayName: resolved.displayName,
+            provider: resolved.provider
+          }
+        }
+      });
+    }
+
     try {
-      if (job.status === "QUEUED") {
+      if (created && job.status === "QUEUED") {
         this.scheduleJob(job.id, user.id);
       }
     } catch (error) {
@@ -146,9 +183,9 @@ export class VideoGenerationService {
       throw appError("SYSTEM_ERROR", message);
     }
 
-    if (project.campaignId) {
+    if (created && project.campaignId) {
       const activityType =
-        provider === "seedance"
+        routing.providerId === "seedance"
           ? "canvas.video_generation_requested"
           : "canvas.mock_generation_requested";
       await activityService.write(
@@ -196,6 +233,7 @@ export class VideoGenerationService {
 
   async processJob(jobId: string, ownerId: string) {
     let user: AuthUserDto | null = null;
+    let attemptId: string | null = null;
 
     try {
       user = await authService.getUserById(ownerId);
@@ -211,19 +249,27 @@ export class VideoGenerationService {
       }
 
       const owner: AuthUserDto = user;
-      const claimed = await canvasRepository.claimGenerationJob(jobId, ownerId, { progress: 15 });
-      if (!claimed || claimed.type !== "VIDEO") return;
+      const claimed = await claimVideoGenerationJobWithAttempt({
+        jobId,
+        ownerId,
+        progress: 15
+      });
+      if (!claimed || claimed.job.type !== "VIDEO") return;
+
+      attemptId = claimed.attempt.id;
 
       const orchestratorJob: VideoOrchestratorJob = {
-        id: claimed.id,
+        id: claimed.job.id,
         type: "VIDEO",
-        provider: claimed.provider,
-        model: claimed.model,
-        prompt: claimed.prompt,
-        input: claimed.input,
-        nodeId: claimed.nodeId,
-        creativeProjectId: claimed.creativeProjectId,
-        estimatedCredits: claimed.estimatedCredits
+        provider: claimed.job.provider,
+        model: claimed.job.model,
+        prompt: claimed.job.prompt,
+        input: claimed.job.input,
+        nodeId: claimed.job.nodeId,
+        creativeProjectId: claimed.job.creativeProjectId,
+        estimatedCredits: claimed.job.estimatedCredits,
+        attemptId: claimed.attempt.id,
+        attemptNumber: claimed.attempt.attemptNumber
       };
 
       await videoOrchestrator.runJob(owner, orchestratorJob, {
@@ -287,6 +333,13 @@ export class VideoGenerationService {
         errorMessage: message,
         completedAt: new Date()
       });
+      if (attemptId) {
+        await videoJobAuditService.markAttemptFailed({
+          generationJobId: jobId,
+          attemptId,
+          errorCode: "VIDEO_GENERATION_CRASHED"
+        });
+      }
     } finally {
       await finalizeCanvasGenerationJob(user, jobId, ownerId);
     }

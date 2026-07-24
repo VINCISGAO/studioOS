@@ -16,17 +16,33 @@ export async function GET(request: Request) {
     let interval: ReturnType<typeof setInterval> | undefined;
     let timeout: ReturnType<typeof setTimeout> | undefined;
     let busy = false;
+    let closed = false;
 
     const stream = new ReadableStream<Uint8Array>({
       start(controller) {
+        const safeEnqueue = (payload: string) => {
+          if (closed || request.signal.aborted) return;
+          try {
+            controller.enqueue(encoder.encode(payload));
+          } catch {
+            closed = true;
+          }
+        };
+
+        const stop = () => {
+          closed = true;
+          if (interval) clearInterval(interval);
+          if (timeout) clearTimeout(timeout);
+        };
+
         const send = async () => {
-          if (busy) return;
+          if (busy || closed) return;
           busy = true;
           try {
             const jobs = await canvasService.listJobEvents(projectId, user);
-            controller.enqueue(encoder.encode(`event: jobs\ndata: ${JSON.stringify(jobs)}\n\n`));
+            safeEnqueue(`event: jobs\ndata: ${JSON.stringify(jobs)}\n\n`);
           } catch {
-            controller.enqueue(encoder.encode("event: heartbeat\ndata: {}\n\n"));
+            safeEnqueue("event: heartbeat\ndata: {}\n\n");
           } finally {
             busy = false;
           }
@@ -35,16 +51,18 @@ export async function GET(request: Request) {
         void send();
         interval = setInterval(() => void send(), 1000);
         timeout = setTimeout(() => {
-          if (interval) clearInterval(interval);
-          controller.close();
+          stop();
+          try {
+            controller.close();
+          } catch {
+            // already closed
+          }
         }, 10 * 60_000);
 
-        request.signal.addEventListener("abort", () => {
-          if (interval) clearInterval(interval);
-          if (timeout) clearTimeout(timeout);
-        });
+        request.signal.addEventListener("abort", stop);
       },
       cancel() {
+        closed = true;
         if (interval) clearInterval(interval);
         if (timeout) clearTimeout(timeout);
       }

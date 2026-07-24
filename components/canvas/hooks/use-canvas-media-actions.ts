@@ -144,6 +144,13 @@ export function useCanvasMediaActions(
         mimeType?: string;
         nodeId?: string;
       } | null;
+      lastFrameReference?: {
+        url?: string;
+        assetId?: string;
+        fileName?: string;
+        mimeType?: string;
+        nodeId?: string;
+      } | null;
     }) => {
       const body: Record<string, unknown> = {
         projectId,
@@ -158,6 +165,16 @@ export function useCanvasMediaActions(
       if (input.reference?.url) body.referenceUrl = input.reference.url;
       if (input.reference?.nodeId) body.referenceNodeId = input.reference.nodeId;
       if (input.reference?.mimeType) body.referenceMimeType = input.reference.mimeType;
+      if (input.lastFrameReference?.assetId) {
+        body.lastFrameReferenceAssetId = input.lastFrameReference.assetId;
+      }
+      if (input.lastFrameReference?.url) body.lastFrameReferenceUrl = input.lastFrameReference.url;
+      if (input.lastFrameReference?.nodeId) {
+        body.lastFrameReferenceNodeId = input.lastFrameReference.nodeId;
+      }
+      if (input.lastFrameReference?.mimeType) {
+        body.lastFrameReferenceMimeType = input.lastFrameReference.mimeType;
+      }
 
       const response = await fetch(`/api/generation/${input.kind}`, {
         method: "POST",
@@ -227,6 +244,13 @@ export function useCanvasMediaActions(
         mimeType?: string;
         nodeId?: string;
       } | null;
+      lastFrameReference?: {
+        url?: string;
+        assetId?: string;
+        fileName?: string;
+        mimeType?: string;
+        nodeId?: string;
+      } | null;
       targetNodeId?: string;
     }
   ) {
@@ -278,7 +302,8 @@ export function useCanvasMediaActions(
       model: input.model ?? "vincis-mock-v1",
       mode,
       parameters,
-      reference: input.reference ?? null
+      reference: input.reference ?? null,
+      lastFrameReference: input.lastFrameReference ?? null
     });
   }
 

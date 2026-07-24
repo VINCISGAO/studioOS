@@ -8,7 +8,8 @@ import { buildSessionPayload } from "@/features/auth/session.service";
 import { userRepository, type UserWithProfiles } from "@/features/auth/user.repository";
 import { userOAuthRepository } from "@/features/auth/user-oauth.repository";
 import { hasSupabaseConfig } from "@/lib/auth-config";
-import { resolvePostLoginDestination } from "@/lib/auth/post-login-redirect";
+import { resolveSafePostLoginDestination } from "@/lib/auth/post-login-redirect";
+import { resolveCreatorIdByEmail } from "@/lib/studioos/creator-settings-service";
 import { recordCreatorSignIn } from "@/lib/auth/sign-in-service";
 import { isPlatformAdminUserRole } from "@/lib/auth/platform-admin-guard";
 import { hasDatabaseUrl } from "@/lib/core/database/prisma";
@@ -138,6 +139,26 @@ async function upsertSupabaseProfile(input: {
   });
 }
 
+async function resolveOAuthRedirect(input: {
+  sessionRole: DemoSession["role"];
+  email: string;
+  nextPath: string;
+  lang: Locale;
+}) {
+  let creatorPortalReady = true;
+  if (input.sessionRole === "creator" && hasDatabaseUrl()) {
+    const creatorId = await resolveCreatorIdByEmail(input.email);
+    creatorPortalReady = Boolean(creatorId);
+  }
+
+  return resolveSafePostLoginDestination({
+    session: { role: input.sessionRole },
+    requestedPath: input.nextPath,
+    locale: input.lang,
+    creatorPortalReady
+  });
+}
+
 export async function completeOAuthSignIn(input: {
   email: string;
   fullName: string;
@@ -220,7 +241,12 @@ export async function completeOAuthSignIn(input: {
     }
 
     return {
-      redirectTo: resolvePostLoginDestination({ role: sessionRole }, nextPath, input.lang),
+      redirectTo: await resolveOAuthRedirect({
+        sessionRole,
+        email: normalizedEmail,
+        nextPath,
+        lang: input.lang
+      }),
       demoSession
     };
   }
@@ -255,7 +281,12 @@ export async function completeOAuthSignIn(input: {
     }
 
     return {
-      redirectTo: resolvePostLoginDestination({ role: sessionRole }, nextPath, input.lang),
+      redirectTo: await resolveOAuthRedirect({
+        sessionRole,
+        email: normalizedEmail,
+        nextPath,
+        lang: input.lang
+      }),
       demoSession
     };
   }
@@ -281,7 +312,12 @@ export async function completeOAuthSignIn(input: {
   }
 
   return {
-    redirectTo: resolvePostLoginDestination({ role: sessionRole }, nextPath, input.lang),
+    redirectTo: await resolveOAuthRedirect({
+      sessionRole,
+      email: normalizedEmail,
+      nextPath,
+      lang: input.lang
+    }),
     demoSession
   };
 }
@@ -383,7 +419,12 @@ export async function completeAlipaySignIn(input: {
   }
 
   return {
-    redirectTo: resolvePostLoginDestination({ role: sessionRole }, nextPath, input.lang),
+    redirectTo: await resolveOAuthRedirect({
+      sessionRole,
+      email: user.email,
+      nextPath,
+      lang: input.lang
+    }),
     userId: user.id,
     email: user.email,
     demoSession

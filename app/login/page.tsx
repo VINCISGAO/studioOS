@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { LoginPageShell } from "@/components/studioos/login-page-shell";
 import { isDemoLoginUiEnabled } from "@/lib/can-persist-local-store";
-import { resolvePostLoginDestination, toSafeNextPath } from "@/lib/auth/post-login-redirect";
+import { resolveSafePostLoginDestination, toSafeNextPath } from "@/lib/auth/post-login-redirect";
 import { hasSupabaseConfig } from "@/lib/auth-config";
 import { getAppLanguage } from "@/lib/app-language";
 import { toUiLocale } from "@/lib/app-language.shared";
@@ -82,14 +82,15 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const googleOneTapClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID?.trim() ?? "";
 
   if (session && (session.role === "client" || session.role === "creator") && !rawError) {
-    if (session.role === "creator") {
-      const creatorId = await getCurrentCreatorId();
-      if (!creatorId) {
-        redirect(withLocale("/creator/onboarding", locale));
-      }
-      redirect(resolvePostLoginDestination(session, nextPath, locale));
-    }
-    redirect(resolvePostLoginDestination(session, nextPath, locale));
+    const creatorId = session.role === "creator" ? await getCurrentCreatorId() : null;
+    redirect(
+      resolveSafePostLoginDestination({
+        session,
+        requestedPath: nextPath,
+        locale,
+        creatorPortalReady: session.role !== "creator" || Boolean(creatorId)
+      })
+    );
   }
 
   const initialEmail = typeof params.email === "string" ? params.email : "";

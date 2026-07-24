@@ -1,14 +1,13 @@
 "use client";
 
 import { Fragment, useEffect, useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
 import { useAcknowledgeAlert } from "@/components/studioos/acknowledge-alert-provider";
-import { ArrowRight, Check, Mail, RefreshCw, Rocket, ShieldCheck, Sparkles, Users } from "lucide-react";
+import { ArrowRight, Check, Mail, RefreshCw, ShieldCheck } from "lucide-react";
 import { LoginSubmitSpinner } from "@/components/studioos/login-demo-accounts";
 import { useLoginEmailResend } from "@/components/studioos/use-login-email-resend";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { appPath, type Locale } from "@/lib/i18n";
+import { type Locale } from "@/lib/i18n";
 import { getLoginVisual, type LoginRole, type LoginVisual } from "@/lib/studioos/login-theme";
 import { correctEmailDomain, emailDomainCorrectionHint, emailDomainSuggestion } from "@/lib/auth/email-domain-correction";
 import { cn } from "@/lib/utils";
@@ -43,8 +42,7 @@ export function LoginWorkspace({
   const { alert } = useAcknowledgeAlert();
   const [email, setEmail] = useState(initialEmail);
   const [code, setCode] = useState("");
-  const [step, setStep] = useState<"email" | "code" | "success">("email");
-  const [redirectTo, setRedirectTo] = useState("");
+  const [step, setStep] = useState<"email" | "code">("email");
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | undefined>(error);
   const [sentHint, setSentHint] = useState<string | undefined>();
@@ -52,7 +50,6 @@ export function LoginWorkspace({
   const [clientErrorCode, setClientErrorCode] = useState<string | undefined>();
   const [emailSuggestion, setEmailSuggestion] = useState<string | null>(null);
   const { resend, resending, secondsLeft, canResend, markSent } = useLoginEmailResend(locale, role);
-  const router = useRouter();
 
   const isWrongRole = errorCode === "wrong-role" || clientErrorCode === "wrong-role";
   const displayError = formError ?? error;
@@ -117,6 +114,12 @@ export function LoginWorkspace({
         next: nextPath || undefined
       })
     });
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => null)) as
+        | { ok: false; error?: string; errorCode?: string }
+        | null;
+      return payload ?? { ok: false as const, error: undefined };
+    }
     return response.json().catch(() => null) as Promise<
       | { ok: true; redirectTo: string }
       | { ok: false; error?: string; errorCode?: string }
@@ -188,13 +191,12 @@ export function LoginWorkspace({
   return (
     <div className="w-full">
       <div className="mb-8">
-        <div className="grid grid-cols-[1fr_auto_1fr_auto_1fr] items-start gap-2 sm:gap-4">
+        <div className="grid grid-cols-[1fr_auto_1fr] items-start gap-2 sm:gap-4">
           {[
             { id: "email", label: locale === "zh" ? "验证邮箱" : "Email" },
-            { id: "code", label: locale === "zh" ? "输入验证码" : "Code" },
-            { id: "success", label: locale === "zh" ? "登录成功" : "Success" }
+            { id: "code", label: locale === "zh" ? "输入验证码" : "Code" }
           ].map((item, index) => {
-            const currentIndex = step === "email" ? 0 : step === "code" ? 1 : 2;
+            const currentIndex = step === "email" ? 0 : 1;
             const done = index < currentIndex;
             const active = index === currentIndex;
             return (
@@ -246,72 +248,6 @@ export function LoginWorkspace({
         </div>
       </div>
 
-      {step === "success" ? (
-        <div className="space-y-6 text-center">
-          <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-violet-100 shadow-[0_18px_60px_rgba(124,58,237,0.28)]">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-violet-600 text-white">
-              <Check className="h-8 w-8" strokeWidth={3} />
-            </div>
-          </div>
-          <div>
-            <h3
-              className={cn(
-                "text-2xl font-semibold tracking-tight",
-                darkPanel ? "text-white" : "text-zinc-950"
-              )}
-            >
-              {locale === "zh" ? "登录成功！" : "You're in!"}
-            </h3>
-            <p className={cn("mt-2 text-sm", darkPanel ? "text-zinc-200" : "text-zinc-600")}>
-              {locale === "zh" ? "欢迎回到 VINCIS，你的工作台已准备好" : "Welcome back to VINCIS. Your workspace is ready."}
-            </p>
-          </div>
-          <div
-            className={cn(
-              "mx-auto max-w-sm rounded-2xl border p-4 text-left",
-              darkPanel
-                ? "border-white/15 bg-white/[0.1]"
-                : "border-violet-100 bg-violet-50/80"
-            )}
-          >
-            {[
-              { icon: Rocket, title: locale === "zh" ? "开始你的创作" : "Start creating", body: locale === "zh" ? "创建项目，邀请团队，开启高效协作" : "Create projects and collaborate with your team" },
-              { icon: Sparkles, title: locale === "zh" ? "探索强大功能" : "Explore AI tools", body: locale === "zh" ? "体验 AI 工具、项目管理与数据分析" : "Use AI, project management, and analytics" },
-              { icon: Users, title: locale === "zh" ? "连接全球创作者" : "Connect globally", body: locale === "zh" ? "与优秀创作者和品牌建立合作" : "Work with top creators and brands" }
-            ].map(({ icon: Icon, title, body }) => (
-              <div key={title} className="flex gap-3 py-2">
-                <span
-                  className={cn(
-                    "flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
-                    darkPanel ? "bg-violet-500/20 text-violet-200" : "bg-white text-violet-600"
-                  )}
-                >
-                  <Icon className="h-4 w-4" />
-                </span>
-                <div>
-                  <p className={cn("text-sm font-semibold", darkPanel ? "text-white" : "text-zinc-900")}>{title}</p>
-                  <p className={cn("mt-0.5 text-xs leading-relaxed", darkPanel ? "text-zinc-300" : "text-zinc-600")}>
-                    {body}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-          <Button
-            type="button"
-            className={cn("gap-2", visual.btn)}
-            onClick={() => {
-              router.push(redirectTo || appPath(role === "creator" ? "/studio" : "/brand"));
-            }}
-          >
-            {locale === "zh" ? "进入 VINCIS" : "Enter VINCIS"}
-            <ArrowRight className="h-4 w-4" />
-          </Button>
-          <p className={cn("text-xs", darkPanel ? "text-zinc-400" : "text-zinc-500")}>
-            {locale === "zh" ? "我们重视你的数据安全，所有信息均加密保护" : "Your data is protected with encrypted security controls."}
-          </p>
-        </div>
-      ) : (
       <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
         <input type="hidden" name="lang" value={locale} />
         <input type="hidden" name="expected_role" value={role} />
@@ -495,7 +431,6 @@ export function LoginWorkspace({
           </button>
         ) : null}
       </form>
-      )}
     </div>
   );
 }

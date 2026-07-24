@@ -2,7 +2,7 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { DEMO_SESSION_COOKIE, VISITOR_COOKIE } from "@/lib/auth-config";
+import { SESSION_COOKIE_NAME, VISITOR_COOKIE } from "@/lib/auth-config";
 import { resolveBrandBriefStartFromRequestCookies } from "@/lib/brand-brief-session";
 import { getOrCreateEphemeralWizardProject } from "@/lib/brand-start-brief";
 import { appPath } from "@/lib/i18n";
@@ -11,7 +11,7 @@ import { appPath } from "@/lib/i18n";
 export async function startBrandBriefAction(_formData: FormData) {
   const cookieStore = await cookies();
   const { email: clientEmail, visitorId } = resolveBrandBriefStartFromRequestCookies(
-    cookieStore.get(DEMO_SESSION_COOKIE)?.value,
+    cookieStore.get(SESSION_COOKIE_NAME)?.value,
     cookieStore.get(VISITOR_COOKIE)?.value
   );
 

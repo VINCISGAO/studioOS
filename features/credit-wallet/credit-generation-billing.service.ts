@@ -47,10 +47,10 @@ export class CreditGenerationBillingService {
 
     const wallet = await creditWalletRepository.getOrCreateWallet(input.userId);
     if (wallet.availableCredits < quote.minimumBalance) {
-      throw appError("VALIDATION_ERROR", "Insufficient credits for this model");
+      throw appError("VALIDATION_ERROR", "Insufficient Token for this model");
     }
     if (wallet.availableCredits < quote.credits) {
-      throw appError("VALIDATION_ERROR", "Insufficient credits");
+      throw appError("VALIDATION_ERROR", "Insufficient Token");
     }
 
     const pricingSnapshot: Prisma.InputJsonValue = {
