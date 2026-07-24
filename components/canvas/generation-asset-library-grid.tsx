@@ -1,6 +1,6 @@
 "use client";
 
-import { LoaderCircle, Plus, Trash2 } from "lucide-react";
+import { Check, LoaderCircle, Plus, Trash2 } from "lucide-react";
 import { GenerationAssetLibraryPreview } from "@/components/canvas/generation-asset-library-preview";
 import type { CanvasAssetLibraryKind } from "@/lib/canvas/canvas-library-kind";
 import { libraryAcceptMime } from "@/lib/canvas/canvas-library-kind";
@@ -35,12 +35,15 @@ export function GenerationAssetLibraryGrid({
   uploading,
   uploadProgress,
   manageMode,
+  multiSelect,
   pendingId,
+  selectedIds,
   checkedIds,
   deleting,
   uploadLabel,
   onUploadFiles,
   onToggleChecked,
+  onToggleSelected,
   onSelectAsset,
   onDeleteAsset
 }: {
@@ -51,12 +54,15 @@ export function GenerationAssetLibraryGrid({
   uploading: boolean;
   uploadProgress: { done: number; total: number } | null;
   manageMode: boolean;
+  multiSelect: boolean;
   pendingId: string | null;
+  selectedIds: string[];
   checkedIds: string[];
   deleting: boolean;
   uploadLabel: string;
   onUploadFiles: (files: File[]) => Promise<void>;
   onToggleChecked: (assetId: string) => void;
+  onToggleSelected: (assetId: string) => void;
   onSelectAsset: (assetId: string) => void;
   onDeleteAsset: (assetId: string) => void;
 }) {
@@ -102,23 +108,35 @@ export function GenerationAssetLibraryGrid({
 
       {assets.map((asset) => {
         const badge = reviewBadge(locale, asset);
-        const checked = checkedIds.includes(asset.id);
+        const deleteChecked = checkedIds.includes(asset.id);
+        const pickSelected = selectedIds.includes(asset.id);
+        const showPickCheckbox = multiSelect && !manageMode && asset.selectable;
+        const showDeleteCheckbox = manageMode;
         return (
           <div
             key={asset.id}
             className={cn(
               "overflow-hidden rounded-2xl border bg-white text-left transition",
-              !manageMode && pendingId === asset.id
-                ? "border-zinc-900 ring-2 ring-zinc-900/10"
-                : "border-zinc-200"
+              manageMode
+                ? "border-zinc-200"
+                : multiSelect && pickSelected
+                  ? "border-violet-500 ring-2 ring-violet-500/15"
+                  : !multiSelect && pendingId === asset.id
+                    ? "border-zinc-900 ring-2 ring-zinc-900/10"
+                    : "border-zinc-200"
             )}
           >
             <button
               type="button"
-              disabled={manageMode ? false : !asset.selectable}
+              disabled={manageMode ? false : multiSelect ? !asset.selectable : !asset.selectable}
               onClick={() => {
                 if (manageMode) {
                   onToggleChecked(asset.id);
+                  return;
+                }
+                if (multiSelect) {
+                  if (!asset.selectable) return;
+                  onToggleSelected(asset.id);
                   return;
                 }
                 if (!asset.selectable) return;
@@ -126,7 +144,8 @@ export function GenerationAssetLibraryGrid({
               }}
               className={cn(
                 "relative block w-full",
-                !manageMode && !asset.selectable && "cursor-not-allowed opacity-70"
+                !manageMode && !multiSelect && !asset.selectable && "cursor-not-allowed opacity-70",
+                !manageMode && multiSelect && !asset.selectable && "cursor-not-allowed opacity-70"
               )}
             >
               <GenerationAssetLibraryPreview asset={asset} />
@@ -138,14 +157,27 @@ export function GenerationAssetLibraryGrid({
               >
                 {badge.label}
               </span>
-              {manageMode ? (
+              {showPickCheckbox ? (
+                <span
+                  className={cn(
+                    "absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded border-2 shadow-sm transition",
+                    pickSelected
+                      ? "border-violet-600 bg-violet-600 text-white"
+                      : "border-zinc-300 bg-white/95 text-transparent"
+                  )}
+                  aria-hidden
+                >
+                  <Check className="h-3 w-3" strokeWidth={3} />
+                </span>
+              ) : null}
+              {showDeleteCheckbox ? (
                 <span
                   className={cn(
                     "absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full border bg-white text-[10px]",
-                    checked && "border-zinc-900 bg-zinc-900 text-white"
+                    deleteChecked && "border-zinc-900 bg-zinc-900 text-white"
                   )}
                 >
-                  {checked ? "✓" : ""}
+                  {deleteChecked ? "✓" : ""}
                 </span>
               ) : null}
               <div className="truncate px-3 py-2 text-xs text-zinc-700">{asset.fileName}</div>

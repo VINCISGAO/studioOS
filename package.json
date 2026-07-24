@@ -120,6 +120,7 @@
     "credits:pricing:workflow:verify": "node --require ./scripts/helpers/register-verify-runtime.cjs --import tsx scripts/credits-pricing-workflow-verify.ts",
     "credits:regional-pricing:verify": "node --require ./scripts/helpers/register-verify-runtime.cjs --import tsx scripts/credits-regional-package-pricing-verify.ts",
     "canvas:ai-models:verify": "node --require ./scripts/helpers/register-verify-runtime.cjs --import tsx scripts/canvas-ai-model-catalog-verify.ts",
+    "canvas:recover-failed-video": "node --require ./scripts/helpers/register-verify-runtime.cjs --import tsx scripts/recover-failed-video-job.ts",
     "video-engine:sprint-c:verify": "node --import tsx scripts/video-engine-sprint-c-verify.ts",
     "video-engine:transaction:verify": "node --import tsx scripts/video-engine-transaction-verify.ts",
     "creator-lifecycle:verify": "node --import tsx scripts/creator-lifecycle-verify.ts",

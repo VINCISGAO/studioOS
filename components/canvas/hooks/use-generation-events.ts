@@ -2,7 +2,11 @@
 
 import { useEffect, useRef } from "react";
 import { useCanvasStore } from "@/components/canvas/canvas-store";
-import { isTerminalGenerationJobStatus } from "@/lib/canvas/canvas-node-mutations";
+import {
+  isTerminalGenerationJobStatus,
+  shouldApplyGenerationJobEvent
+} from "@/lib/canvas/canvas-node-mutations";
+import { playGenerationSuccessSound } from "@/lib/canvas/generation-success-sound";
 import type { GenerationJobEvent } from "@/lib/canvas/types";
 
 function isJobEvent(value: unknown): value is GenerationJobEvent {
@@ -74,7 +78,15 @@ export function useGenerationEvents(
               handledTerminalRef.current.add(key);
             }
 
+            const shouldPlaySuccessSound =
+              item.status === "SUCCEEDED" &&
+              shouldApplyGenerationJobEvent(useCanvasStore.getState().nodes, item);
+
             applyJobEvent(item);
+
+            if (shouldPlaySuccessSound) {
+              playGenerationSuccessSound(item.type);
+            }
 
             if (isTerminalGenerationJobStatus(item.status)) {
               onTerminalJobRef.current?.(item);

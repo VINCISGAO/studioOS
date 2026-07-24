@@ -61,12 +61,27 @@ function toLibraryAsset(reference: GenerationReference, file: File): CanvasLibra
   };
 }
 
+function toGenerationReference(asset: CanvasLibraryAsset): GenerationReference {
+  return {
+    url: asset.url,
+    assetId: asset.id,
+    fileName: asset.fileName,
+    mimeType: asset.mimeType,
+    source: "library",
+    reviewStatus: asset.reviewStatus,
+    reviewReasons: asset.reviewReasons,
+    selectable: asset.selectable
+  };
+}
+
 export function GenerationAssetLibraryModal({
   locale,
   projectId,
   libraryKind,
   open,
   selectedId,
+  selectedIds: initialSelectedIds,
+  multiSelect = false,
   onClose,
   onSelect,
   onUpload
@@ -76,8 +91,10 @@ export function GenerationAssetLibraryModal({
   libraryKind: CanvasAssetLibraryKind;
   open: boolean;
   selectedId?: string;
+  selectedIds?: string[];
+  multiSelect?: boolean;
   onClose: () => void;
-  onSelect: (reference: GenerationReference) => void;
+  onSelect: (references: GenerationReference[]) => void;
   onUpload: (file: File, libraryKind: CanvasAssetLibraryKind) => Promise<GenerationReference>;
 }) {
   const portalReady = useBodyPortalReady();
@@ -86,6 +103,7 @@ export function GenerationAssetLibraryModal({
   const [assets, setAssets] = useState<CanvasLibraryAsset[]>([]);
   const [loading, setLoading] = useState(false);
   const [pendingId, setPendingId] = useState<string | null>(selectedId ?? null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number } | null>(null);
   const [manageMode, setManageMode] = useState(false);
@@ -111,11 +129,15 @@ export function GenerationAssetLibraryModal({
 
   useEffect(() => {
     if (!open || !projectId) return;
-    setPendingId(selectedId ?? null);
+    const seededIds = multiSelect
+      ? [...new Set((initialSelectedIds ?? (selectedId ? [selectedId] : [])).filter(Boolean))]
+      : [];
+    setPendingId(selectedId ?? seededIds[0] ?? null);
+    setSelectedIds(seededIds);
     setManageMode(false);
     setCheckedIds([]);
     void loadAssets();
-  }, [open, projectId, selectedId, libraryKind, loadAssets]);
+  }, [open, projectId, selectedId, initialSelectedIds, multiSelect, libraryKind, loadAssets]);
 
   async function deleteAssets(assetIds: string[]) {
     if (!assetIds.length) return;
@@ -134,6 +156,7 @@ export function GenerationAssetLibraryModal({
       const removed = new Set(payload.data.assetIds);
       setAssets((current) => current.filter((item) => !removed.has(item.id)));
       setCheckedIds((current) => current.filter((id) => !removed.has(id)));
+      setSelectedIds((current) => current.filter((id) => !removed.has(id)));
       if (pendingId && removed.has(pendingId)) setPendingId(null);
     } catch (deleteError) {
       setError(deleteError instanceof Error ? deleteError.message : t.deleteFailed);
@@ -156,7 +179,15 @@ export function GenerationAssetLibraryModal({
       }
       if (uploadedAssets.length) {
         const firstSelectable = uploadedAssets.find((item) => item.selectable);
-        if (firstSelectable) setPendingId(firstSelectable.id);
+        if (firstSelectable) {
+          if (multiSelect) {
+            setSelectedIds((current) =>
+              current.includes(firstSelectable.id) ? current : [...current, firstSelectable.id]
+            );
+          } else {
+            setPendingId(firstSelectable.id);
+          }
+        }
         setAssets((current) => [...uploadedAssets, ...current]);
       }
     } catch (uploadError) {
@@ -211,13 +242,22 @@ export function GenerationAssetLibraryModal({
               uploading={uploading}
               uploadProgress={uploadProgress}
               manageMode={manageMode}
+              multiSelect={multiSelect}
               pendingId={pendingId}
+              selectedIds={selectedIds}
               checkedIds={checkedIds}
               deleting={deleting}
               uploadLabel={kindCopy.upload}
               onUploadFiles={handleUploadFiles}
               onToggleChecked={(assetId) =>
                 setCheckedIds((current) =>
+                  current.includes(assetId)
+                    ? current.filter((id) => id !== assetId)
+                    : [...current, assetId]
+                )
+              }
+              onToggleSelected={(assetId) =>
+                setSelectedIds((current) =>
                   current.includes(assetId)
                     ? current.filter((id) => id !== assetId)
                     : [...current, assetId]
@@ -257,22 +297,23 @@ export function GenerationAssetLibraryModal({
               ) : null}
               <button
                 type="button"
-                disabled={!pendingId || manageMode}
+                disabled={
+                  manageMode ||
+                  (multiSelect ? selectedIds.length === 0 : !pendingId)
+                }
                 onClick={() => {
-                  const asset = assets.find((item) => item.id === pendingId);
-                  if (!asset?.selectable) return;
-                  onSelect({
-                    url: asset.url,
-                    assetId: asset.id,
-                    fileName: asset.fileName,
-                    mimeType: asset.mimeType,
-                    source: "library"
-                  });
+                  const picked = multiSelect
+                    ? assets.filter((item) => selectedIds.includes(item.id) && item.selectable)
+                    : assets.filter((item) => item.id === pendingId && item.selectable);
+                  if (!picked.length) return;
+                  onSelect(picked.map(toGenerationReference));
                   onClose();
                 }}
                 className="rounded-xl bg-zinc-900 px-8 py-2.5 text-sm font-medium text-white disabled:opacity-40"
               >
-                {t.done}
+                {multiSelect && selectedIds.length > 0
+                  ? `${t.done} (${selectedIds.length})`
+                  : t.done}
               </button>
             </div>
           </div>

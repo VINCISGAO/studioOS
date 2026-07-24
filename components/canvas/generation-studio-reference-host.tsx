@@ -39,6 +39,7 @@ export function GenerationStudioReferenceHost({
   nodes,
   reference,
   lastFrameReference,
+  librarySelections,
   referenceTarget,
   showAssetLibrary,
   assetLibrarySlot,
@@ -47,6 +48,7 @@ export function GenerationStudioReferenceHost({
   uploadingReference,
   localInputRef,
   onReferenceChange,
+  onLibrarySelectionsChange,
   onCloseAssetLibrary,
   onCloseCanvasPicker,
   onLocalFileSelected,
@@ -57,6 +59,7 @@ export function GenerationStudioReferenceHost({
   nodes: VincisCanvasNode[];
   reference: GenerationReference | null;
   lastFrameReference: GenerationReference | null;
+  librarySelections: GenerationReference[];
   referenceTarget: GenerationReferenceTarget;
   showAssetLibrary: boolean;
   assetLibrarySlot: GenerationReferenceSlot;
@@ -65,6 +68,7 @@ export function GenerationStudioReferenceHost({
   uploadingReference: boolean;
   localInputRef: RefObject<HTMLInputElement | null>;
   onReferenceChange: (reference: GenerationReference | null) => void;
+  onLibrarySelectionsChange: (references: GenerationReference[]) => void;
   onCloseAssetLibrary: () => void;
   onCloseCanvasPicker: () => void;
   onLocalFileSelected: (file: File) => Promise<void>;
@@ -73,6 +77,15 @@ export function GenerationStudioReferenceHost({
   const selectedReference =
     referenceTarget === "lastFrame" ? lastFrameReference : reference;
   const uploadSlot = referenceTarget === "lastFrame" ? "image" : assetLibrarySlot;
+  const multiSelect = referenceTarget === "primary";
+  const selectedLibraryAssetIds = [
+    ...new Set(
+      [
+        ...librarySelections.map((item) => item.assetId),
+        selectedReference?.source === "library" ? selectedReference.assetId : null
+      ].filter((id): id is string => Boolean(id))
+    )
+  ];
 
   return (
     <>
@@ -95,8 +108,16 @@ export function GenerationStudioReferenceHost({
         libraryKind={generationAssetLibraryKindFromSlot(assetLibrarySlot)}
         open={showAssetLibrary}
         selectedId={selectedReference?.assetId}
+        selectedIds={selectedLibraryAssetIds}
+        multiSelect={multiSelect}
         onClose={onCloseAssetLibrary}
-        onSelect={onReferenceChange}
+        onSelect={(picked) => {
+          if (multiSelect) {
+            onLibrarySelectionsChange(picked);
+            return;
+          }
+          onReferenceChange(picked[0] ?? null);
+        }}
         onUpload={onUploadReference}
       />
 

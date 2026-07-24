@@ -59,17 +59,28 @@ const acceptBySlot: Record<GenerationReferenceSlot, string> = {
 
 const keyframeAccept = acceptBySlot.image;
 
-export function useGenerationStudioReferences(projectId: string) {
+export function useGenerationStudioReferences(
+  projectId: string,
+  initial?: {
+    reference?: GenerationReference | null;
+    lastFrameReference?: GenerationReference | null;
+    librarySelections?: GenerationReference[];
+  }
+) {
   const localInputRef = useRef<HTMLInputElement>(null);
-  const [reference, setReference] = useState<GenerationReference | null>(null);
-  const [lastFrameReference, setLastFrameReference] = useState<GenerationReference | null>(null);
+  const [reference, setReference] = useState<GenerationReference | null>(initial?.reference ?? null);
+  const [lastFrameReference, setLastFrameReference] = useState<GenerationReference | null>(
+    initial?.lastFrameReference ?? null
+  );
   const [referenceTarget, setReferenceTarget] = useState<GenerationReferenceTarget>("primary");
   const [showAssetLibrary, setShowAssetLibrary] = useState(false);
   const [showCanvasPicker, setShowCanvasPicker] = useState(false);
   const [assetLibrarySlot, setAssetLibrarySlot] = useState<GenerationReferenceSlot>("video");
   const [canvasPickerSlot, setCanvasPickerSlot] = useState<GenerationReferenceSlot>("video");
   const [uploadingReference, setUploadingReference] = useState(false);
-  const [librarySelections, setLibrarySelections] = useState<GenerationReference[]>([]);
+  const [librarySelections, setLibrarySelections] = useState<GenerationReference[]>(
+    initial?.librarySelections ?? []
+  );
 
   function referenceKey(entry: GenerationReference) {
     return entry.assetId ?? entry.url;
@@ -166,6 +177,12 @@ export function useGenerationStudioReferences(projectId: string) {
     }
   }
 
+  function syncLibrarySelections(next: GenerationReference[]) {
+    const enriched = next.map((item) => enrichCanvasGenerationReference(item));
+    setLibrarySelections(enriched);
+    assignReference(enriched[enriched.length - 1] ?? null);
+  }
+
   return {
     localInputRef,
     reference,
@@ -180,6 +197,7 @@ export function useGenerationStudioReferences(projectId: string) {
     toggleLibrarySelection,
     removeLibrarySelection,
     activateLibrarySelection,
+    syncLibrarySelections,
     showAssetLibrary,
     setShowAssetLibrary,
     showCanvasPicker,

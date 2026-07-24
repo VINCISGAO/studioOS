@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useCanvasStore } from "@/components/canvas/canvas-store";
 import {
   GenerationCatalogEmptyBanner,
@@ -16,7 +16,7 @@ import { GenerationMusicSettingsPanel } from "@/components/canvas/generation-mus
 import { type GenerationReferenceSlot } from "@/components/canvas/generation-kind-selector";
 import { useCanvasAiModels } from "@/components/canvas/hooks/use-canvas-ai-models";
 import type { PublicAiModelCatalog } from "@/features/canvas/ai-model-catalog.types";
-import { useGenerationStudioReferences } from "@/components/canvas/hooks/use-generation-studio-references";
+import { useGenerationStudioDraft } from "@/components/canvas/hooks/use-generation-studio-draft";
 import { useGenerationCreditQuote } from "@/components/canvas/hooks/use-generation-credit-quote";
 import {
   clampImageSettings,
@@ -34,9 +34,6 @@ import {
 import { MUSIC_PANEL_SHELL_CLASS } from "@/lib/canvas/music-panel-design";
 import { GENERATION_VIDEO_PANEL_WIDTH, VIDEO_PANEL_FOOTER_CLASS } from "@/lib/canvas/generation-video-panel-design";
 import {
-  DEFAULT_IMAGE_SETTINGS,
-  DEFAULT_MUSIC_SETTINGS,
-  DEFAULT_VIDEO_SETTINGS,
   GENERATION_MUSIC_PANEL_WIDTH,
   canSubmitMusicSettings,
   formatImageSettingsLabel,
@@ -91,21 +88,32 @@ export function GenerationStudioPanel({
   onSubmit: (input: GenerationSubmitInput) => void;
 }) {
   const nodes = useCanvasStore((state) => state.nodes);
-  const references = useGenerationStudioReferences(projectId);
   const catalog = useCanvasAiModels(initialAiModelCatalog);
-  const [kind, setKind] = useState<GenerationKind>(initialKind);
-  const [referenceSlot, setReferenceSlot] = useState<GenerationReferenceSlot>(
-    initialKind === "music" ? "audio" : "video"
-  );
-  const [prompt, setPrompt] = useState("");
-  const [videoSettings, setVideoSettings] = useState<VideoGenerationSettings>(DEFAULT_VIDEO_SETTINGS);
-  const [imageSettings, setImageSettings] = useState<ImageGenerationSettings>(DEFAULT_IMAGE_SETTINGS);
-  const [selectedVideoModel, setSelectedVideoModel] = useState("");
-  const [selectedImageModel, setSelectedImageModel] = useState("");
-  const [musicSettings, setMusicSettings] = useState<MusicGenerationSettings>(DEFAULT_MUSIC_SETTINGS);
-  const [selectedMusicModel, setSelectedMusicModel] = useState("");
-  const [videoReferenceMode, setVideoReferenceMode] = useState<VideoReferenceMode>("reference");
-  const [showUploadMenu, setShowUploadMenu] = useState(false);
+  const {
+    kind,
+    setKind,
+    referenceSlot,
+    setReferenceSlot,
+    prompt,
+    setPrompt,
+    videoSettings,
+    setVideoSettings,
+    imageSettings,
+    setImageSettings,
+    selectedVideoModel,
+    setSelectedVideoModel,
+    selectedImageModel,
+    setSelectedImageModel,
+    musicSettings,
+    setMusicSettings,
+    selectedMusicModel,
+    setSelectedMusicModel,
+    videoReferenceMode,
+    setVideoReferenceMode,
+    showUploadMenu,
+    setShowUploadMenu,
+    references
+  } = useGenerationStudioDraft(projectId, initialKind);
 
   useEffect(() => {
     if (!catalog.catalog || catalog.loading) return;
@@ -276,7 +284,8 @@ export function GenerationStudioPanel({
     setKind(initialKind);
     if (initialKind === "video") setReferenceSlot("video");
     if (initialKind === "music") setReferenceSlot("audio");
-  }, [initialKind]);
+    if (initialKind === "image") setReferenceSlot("image");
+  }, [initialKind, setKind, setReferenceSlot]);
 
   function submit() {
     if (submitDisabled) return;
@@ -546,6 +555,7 @@ export function GenerationStudioPanel({
         nodes={nodes}
         reference={references.reference}
         lastFrameReference={references.lastFrameReference}
+        librarySelections={references.librarySelections}
         referenceTarget={references.referenceTarget}
         showAssetLibrary={references.showAssetLibrary}
         assetLibrarySlot={references.assetLibrarySlot}
@@ -554,11 +564,10 @@ export function GenerationStudioPanel({
         uploadingReference={references.uploadingReference}
         localInputRef={references.localInputRef}
         onReferenceChange={(ref) => {
-          if (ref?.source === "library" && references.referenceTarget === "primary") {
-            references.upsertLibrarySelection(ref);
-            return;
-          }
           references.assignReference(ref);
+        }}
+        onLibrarySelectionsChange={(picked) => {
+          references.syncLibrarySelections(picked);
         }}
         onCloseAssetLibrary={() => references.setShowAssetLibrary(false)}
         onCloseCanvasPicker={() => references.setShowCanvasPicker(false)}

@@ -6,6 +6,7 @@ import type { GenerationKind } from "@/components/canvas/generation-panel";
 import type { GenerationJobEvent, VincisCanvasNode } from "@/lib/canvas/types";
 import { formatValidationMessage } from "@/lib/canvas/format-validation-message";
 import { computeGenerationCredits } from "@/lib/canvas/generation-credits";
+import { primeGenerationSuccessSound } from "@/lib/canvas/generation-success-sound";
 import {
   patchNodeGenerationMetadata,
   readNodeGenerationContext,
@@ -174,6 +175,8 @@ export function useCanvasMediaActions(
         nodeId?: string;
       } | null;
     }) => {
+      primeGenerationSuccessSound();
+
       const body: Record<string, unknown> = {
         projectId,
         nodeId: input.nodeId,

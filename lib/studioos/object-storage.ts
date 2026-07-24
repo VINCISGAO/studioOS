@@ -19,14 +19,25 @@ import { canPersistLocalDataStore } from "@/lib/runtime-flags";
 
 const LOCAL_ROOT = path.join(process.cwd(), ".data", "object-storage");
 const LOCAL_MULTIPART_ROOT = path.join(process.cwd(), ".data", "object-storage-multipart");
-const PUT_OBJECT_TIMEOUT_MS = 30_000;
+const PUT_OBJECT_MIN_TIMEOUT_MS = 30_000;
+const PUT_OBJECT_MAX_TIMEOUT_MS = 300_000;
 
-async function withPutObjectTimeout<T>(promise: Promise<T>, label: string): Promise<T> {
+function resolvePutObjectTimeoutMs(bodySize: number) {
+  const sizeMb = Math.max(1, Math.ceil(bodySize / (1024 * 1024)));
+  const timeoutMs = PUT_OBJECT_MIN_TIMEOUT_MS + (sizeMb - 1) * 20_000;
+  return Math.min(PUT_OBJECT_MAX_TIMEOUT_MS, timeoutMs);
+}
+
+async function withPutObjectTimeout<T>(
+  promise: Promise<T>,
+  label: string,
+  timeoutMs: number
+): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   const timeoutPromise = new Promise<never>((_, reject) => {
     timer = setTimeout(
-      () => reject(new Error(`${label} timed out after ${Math.round(PUT_OBJECT_TIMEOUT_MS / 1000)}s`)),
-      PUT_OBJECT_TIMEOUT_MS
+      () => reject(new Error(`${label} timed out after ${Math.round(timeoutMs / 1000)}s`)),
+      timeoutMs
     );
   });
   try {
@@ -77,6 +88,7 @@ function localPathForKey(key: string) {
 export async function putObject(key: string, body: Buffer, contentType: string) {
   const client = getS3Client();
   if (client) {
+    const uploadTimeoutMs = resolvePutObjectTimeoutMs(body.length);
     try {
       await withPutObjectTimeout(
         client.send(
@@ -87,7 +99,8 @@ export async function putObject(key: string, body: Buffer, contentType: string) 
             ContentType: contentType
           })
         ),
-        "R2 upload"
+        "R2 upload",
+        uploadTimeoutMs
       );
     } catch (error) {
       throw new Error(`R2 upload failed (${objectStorageErrorMessage(error)})`);
