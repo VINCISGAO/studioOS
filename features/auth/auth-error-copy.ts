@@ -1,3 +1,18 @@
+import type { Locale } from "@/lib/i18n";
+
+/** Maps Prisma setup/migration errors to user-facing copy; null = use generic fallback. */
+export function authDatabaseSetupErrorMessage(
+  prismaCode: string,
+  locale: Locale
+): string | null {
+  if (prismaCode === "P2021") {
+    return locale === "zh"
+      ? "认证数据表尚未创建，请在项目目录运行：npm run db:migrate:deploy"
+      : "Auth database tables are missing. Run: npm run db:migrate:deploy";
+  }
+  return null;
+}
+
 export const AUTH_ERROR_COPY = {
   rateLimited: "请求过于频繁，请稍后再试。",
   codeInvalid: "验证码不正确或已过期。",
