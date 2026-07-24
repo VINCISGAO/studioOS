@@ -8,7 +8,7 @@ import { isHomepageLangPath, isInternalAppPath, normalizeAppLanguage } from "@/l
 import { demoRedirectForRole } from "@/lib/demo-auth";
 import { DEMO_SESSION_COOKIE, ADMIN_SESSION_COOKIE, LOCALE_COOKIE } from "@/lib/auth-config";
 import { parseDemoSessionCookieAsync } from "@/lib/demo-session-cookie";
-import { toSafeNextPath, toSafeNextPathname } from "@/lib/auth/post-login-redirect";
+import { toSafeNextPath, toSafeNextPathname, resolveSafePostLoginDestination } from "@/lib/auth/post-login-redirect";
 import { resolveStaticLegacyRedirect } from "@/lib/studioos/legacy-route-redirect.shared";
 
 function persistLanguageCookie(response: NextResponse, language: string) {
@@ -537,10 +537,11 @@ function resolveSafeLoginNext(request: NextRequest) {
 }
 
 function redirectToRoleDefault(request: NextRequest, role: "client" | "creator", safeNext?: string) {
-  if (safeNext) {
-    return redirectToSafeRelativePath(request, safeNext);
-  }
-  return redirectToPath(request, demoRedirectForRole(role));
+  const destination = resolveSafePostLoginDestination({
+    session: { role },
+    requestedPath: safeNext ?? ""
+  });
+  return redirectToSafeRelativePath(request, destination);
 }
 
 function redirectToAdminLogin(request: NextRequest) {

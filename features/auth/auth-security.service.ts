@@ -4,7 +4,8 @@ import { createHash, randomInt, timingSafeEqual, createHmac } from "node:crypto"
 import { prisma, hasDatabaseUrl } from "@/lib/core/database/prisma";
 import { userRepository } from "@/features/auth/user.repository";
 import { buildSessionPayload } from "@/features/auth/session.service";
-import { resolvePostLoginDestination } from "@/lib/auth/post-login-redirect";
+import { resolveSafePostLoginDestination } from "@/lib/auth/post-login-redirect";
+import { resolveCreatorIdByEmail } from "@/lib/studioos/creator-settings-service";
 import type { Locale } from "@/lib/i18n";
 import type { Prisma, UserRole } from "@prisma/client";
 import { AUTH_ERROR_COPY } from "@/features/auth/auth-error-copy";
@@ -661,9 +662,20 @@ export class AuthSecurityService {
       demoRole
     );
 
+    let creatorPortalReady = true;
+    if (demoRole === "creator") {
+      const creatorId = await resolveCreatorIdByEmail(user.email);
+      creatorPortalReady = Boolean(creatorId);
+    }
+
     return {
       ok: true as const,
-      redirectTo: resolvePostLoginDestination({ role: demoRole }, input.nextPath ?? "", input.locale),
+      redirectTo: resolveSafePostLoginDestination({
+        session: { role: demoRole },
+        requestedPath: input.nextPath ?? "",
+        locale: input.locale,
+        creatorPortalReady
+      }),
       session
     };
   }
