@@ -1,16 +1,16 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { DEMO_SESSION_COOKIE } from "@/lib/auth-config";
+import { SESSION_COOKIE_NAME } from "@/lib/auth-config";
 import type { DemoSession } from "@/lib/demo-session";
 import { serializeDemoSessionCookie } from "@/lib/demo-session-server";
 
 export async function setDemoSession(session: DemoSession) {
   const cookieStore = await cookies();
-  cookieStore.set(DEMO_SESSION_COOKIE, serializeDemoSessionCookie(session), demoSessionCookieOptions());
+  cookieStore.set(SESSION_COOKIE_NAME, serializeDemoSessionCookie(session), demoSessionCookieOptions());
 }
 
 export function attachDemoSessionCookie(response: NextResponse, session: DemoSession) {
-  response.cookies.set(DEMO_SESSION_COOKIE, serializeDemoSessionCookie(session), demoSessionCookieOptions());
+  response.cookies.set(SESSION_COOKIE_NAME, serializeDemoSessionCookie(session), demoSessionCookieOptions());
 }
 
 function demoSessionCookieOptions() {
@@ -25,5 +25,5 @@ function demoSessionCookieOptions() {
 
 export async function clearDemoSession() {
   const cookieStore = await cookies();
-  cookieStore.delete(DEMO_SESSION_COOKIE);
+  cookieStore.delete(SESSION_COOKIE_NAME);
 }

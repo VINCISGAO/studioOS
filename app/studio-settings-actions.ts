@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
-import { DEMO_SESSION_COOKIE } from "@/lib/auth-config";
+import { SESSION_COOKIE_NAME } from "@/lib/auth-config";
 import { setDemoSession } from "@/lib/demo-auth-server";
 import { parseDemoSession } from "@/lib/demo-auth";
 import { getCurrentCreatorId } from "@/features/auth/session-context";
@@ -39,7 +39,7 @@ async function requireCreatorContext(lang: Locale) {
   }
 
   const cookieStore = await cookies();
-  const session = parseDemoSession(cookieStore.get(DEMO_SESSION_COOKIE)?.value);
+  const session = parseDemoSession(cookieStore.get(SESSION_COOKIE_NAME)?.value);
   return {
     ok: true as const,
     creatorId,

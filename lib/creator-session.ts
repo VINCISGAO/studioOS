@@ -1,6 +1,6 @@
 import { cache } from "react";
 import { cookies } from "next/headers";
-import { DEMO_SESSION_COOKIE } from "@/lib/auth-config";
+import { SESSION_COOKIE_NAME } from "@/lib/auth-config";
 import { parseServerDemoSession } from "@/lib/demo-session-server";
 import { getCreatorById } from "@/lib/creator-service";
 import {
@@ -26,7 +26,7 @@ export async function resolveCurrentCreatorIdFromEmail(email: string) {
 
 export const getCurrentCreatorId = cache(async (): Promise<string | null> => {
   const cookieStore = await cookies();
-  const session = parseServerDemoSession(cookieStore.get(DEMO_SESSION_COOKIE)?.value);
+  const session = parseServerDemoSession(cookieStore.get(SESSION_COOKIE_NAME)?.value);
 
   const currentSession = session?.role === "creator" ? session : await getCurrentSession();
   if (!currentSession || currentSession.role !== "creator") {

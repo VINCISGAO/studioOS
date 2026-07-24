@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
-import { DEMO_SESSION_COOKIE, hasSupabaseConfig } from "@/lib/auth-config";
+import { SESSION_COOKIE_NAME, hasSupabaseConfig } from "@/lib/auth-config";
 import { clearDemoSession } from "@/lib/demo-auth-server";
 import { parseDemoSession, DEMO_USERS } from "@/lib/demo-auth";
 import { withLocale, appPath, type Locale } from "@/lib/i18n";
@@ -24,7 +24,7 @@ async function resolveActionLocale(formData: FormData): Promise<Locale> {
 async function resolveInquiryClient(lang: Locale) {
   if (!hasSupabaseConfig()) {
     const cookieStore = await cookies();
-    const session = parseDemoSession(cookieStore.get(DEMO_SESSION_COOKIE)?.value);
+    const session = parseDemoSession(cookieStore.get(SESSION_COOKIE_NAME)?.value);
     if (session) {
       const demoUser = DEMO_USERS.find((user) => user.email === session.email.toLowerCase());
       return {
