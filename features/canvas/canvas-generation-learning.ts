@@ -60,17 +60,20 @@ export async function recordCanvasGenerationLucienLearning(
   });
 }
 
+function isTerminalGenerationStatus(status: GenerationJob["status"]) {
+  return status === "SUCCEEDED" || status === "FAILED" || status === "CANCELLED";
+}
+
 export async function finalizeCanvasGenerationJob(
   user: AuthUserDto | null,
   jobId: string,
   ownerId: string
 ) {
-  if (!user) return;
-
   const settledJob = await canvasRepository.findGenerationJob(jobId, ownerId);
-  if (!settledJob) return;
-  if (settledJob.status !== "SUCCEEDED" && settledJob.status !== "FAILED") return;
+  if (!settledJob || !isTerminalGenerationStatus(settledJob.status)) return;
 
   await creditGenerationBillingService.syncJobBilling(settledJob);
+  if (!user) return;
+
   await recordCanvasGenerationLucienLearning(user, settledJob);
 }
