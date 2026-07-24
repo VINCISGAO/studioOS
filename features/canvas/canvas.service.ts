@@ -8,10 +8,10 @@ import {
 } from "@/features/canvas/canvas.repository";
 import { aiModelGenerationGuard } from "@/features/canvas/ai-model-generation.guard";
 import { canvasGenerationReferenceService } from "@/features/canvas/canvas-generation-reference.service";
-import { canvasImageGenerationService } from "@/features/canvas/canvas-image-generation.service";
-import { canvasMusicGenerationService } from "@/features/canvas/canvas-music-generation.service";
 import { assertCanvasCreator, resolveCanvasProjectForOwner } from "@/features/canvas/canvas-project-access";
 import { videoGenerationService } from "@/features/video-engine/video-generation.service";
+import { generationConcurrencyService } from "@/features/generation/concurrency/generation-concurrency.service";
+import { generationStaleJobService } from "@/features/generation/concurrency/generation-stale-job.service";
 import { appError } from "@/lib/core/errors";
 import { hasMureka, hasOpenAI } from "@/lib/core/config/ai";
 import { isMurekaMusicProvider } from "@/lib/canvas/mureka-client";
@@ -29,6 +29,7 @@ import { creditLedgerService } from "@/features/credit-wallet/credit-ledger.serv
 import { creditWalletRepository } from "@/features/credit-wallet/credit-wallet.repository";
 import { creditWalletService } from "@/features/credit-wallet/credit-wallet.service";
 import { DEFAULT_CANVAS_BACKGROUND, normalizeHexColor } from "@/lib/canvas/color";
+import { maybeScheduleGenerationJob } from "@/lib/canvas/schedule-generation-job";
 import { assertCanvasPayloadSize } from "@/lib/canvas/validation";
 
 type ParsedNode = {
@@ -181,28 +182,10 @@ async function abortGenerationJob(input: {
   });
 }
 
-function scheduleGenerationJob(input: {
-  type: "IMAGE" | "VIDEO" | "MUSIC";
-  provider: string;
-  jobId: string;
-  ownerId: string;
-}) {
-  if (input.type === "IMAGE" && input.provider === "openai") {
-    canvasImageGenerationService.scheduleJob(input.jobId, input.ownerId);
-    return;
-  }
-  if (input.type === "VIDEO") {
-    videoGenerationService.scheduleJob(input.jobId, input.ownerId);
-    return;
-  }
-  if (input.type === "MUSIC") {
-    canvasMusicGenerationService.scheduleJob(input.jobId, input.ownerId);
-  }
-}
-
 async function kickStaleMusicJob(
   job: {
     id: string;
+    creativeProjectId: string;
     type: "IMAGE" | "VIDEO" | "MUSIC";
     provider: string;
     status: "QUEUED" | "SUBMITTING" | "PROCESSING" | "SUCCEEDED" | "FAILED" | "CANCELLED";
@@ -214,12 +197,19 @@ async function kickStaleMusicJob(
   if (job.status !== "QUEUED" && job.status !== "SUBMITTING") return;
   if (Date.now() - job.createdAt.getTime() < 1500) return;
 
-  canvasMusicGenerationService.scheduleJob(job.id, ownerId);
+  await maybeScheduleGenerationJob({
+    type: "MUSIC",
+    provider: job.provider,
+    jobId: job.id,
+    ownerId,
+    projectId: job.creativeProjectId
+  });
 }
 
 async function kickStaleVideoJob(
   job: {
     id: string;
+    creativeProjectId: string;
     type: "IMAGE" | "VIDEO" | "MUSIC";
     provider: string;
     status: "QUEUED" | "SUBMITTING" | "PROCESSING" | "SUCCEEDED" | "FAILED" | "CANCELLED";
@@ -227,7 +217,17 @@ async function kickStaleVideoJob(
   },
   ownerId: string
 ) {
-  videoGenerationService.kickStaleJob(job, ownerId);
+  if (job.type !== "VIDEO" || job.provider !== "seedance") return;
+  if (job.status !== "QUEUED" && job.status !== "SUBMITTING") return;
+  if (Date.now() - job.createdAt.getTime() < 1500) return;
+
+  await maybeScheduleGenerationJob({
+    type: "VIDEO",
+    provider: job.provider,
+    jobId: job.id,
+    ownerId,
+    projectId: job.creativeProjectId
+  });
 }
 
 function buildOrderContext(campaign: CanvasCampaignRecord) {
@@ -521,6 +521,20 @@ export class CanvasService {
       parameters: normalizedParameters
     });
 
+    const provider =
+      input.type === "IMAGE" && hasOpenAI() && resolved.provider === "openai"
+        ? "openai"
+        : input.type === "MUSIC"
+          ? resolveMusicProvider(resolved.provider)
+          : resolved.provider || "vincis-mock";
+
+    await generationConcurrencyService.assertCanCreateJob({
+      userId: user.id,
+      projectId: project.id,
+      type: input.type,
+      provider
+    });
+
     const billing = await creditGenerationBillingService.reserveForGeneration({
       userId: user.id,
       type: input.type,
@@ -530,12 +544,6 @@ export class CanvasService {
       campaignId: project.campaignId
     });
 
-    const provider =
-      input.type === "IMAGE" && hasOpenAI() && resolved.provider === "openai"
-        ? "openai"
-        : input.type === "MUSIC"
-          ? resolveMusicProvider(resolved.provider)
-          : resolved.provider || "vincis-mock";
     const { job, created } = await canvasRepository.createGenerationJob({
       creativeProjectId: project.id,
       campaignId: project.campaignId,
@@ -567,11 +575,12 @@ export class CanvasService {
 
     try {
       if (created && job.status === "QUEUED") {
-        scheduleGenerationJob({
+        await maybeScheduleGenerationJob({
           type: input.type,
           provider,
           jobId: job.id,
-          ownerId: user.id
+          ownerId: user.id,
+          projectId: project.id
         });
       }
     } catch (error) {
@@ -612,6 +621,9 @@ export class CanvasService {
     assertCreator(user);
     let job = await canvasRepository.findGenerationJob(jobId, user.id);
     if (!job) throw appError("NOT_FOUND", "Generation job not found");
+
+    await generationStaleJobService.reconcileJobIfStale(job.id);
+    job = (await canvasRepository.findGenerationJob(jobId, user.id)) ?? job;
 
     await kickStaleMusicJob(job, user.id);
     await kickStaleVideoJob(job, user.id);

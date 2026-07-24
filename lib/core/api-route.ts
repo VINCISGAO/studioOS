@@ -21,7 +21,10 @@ export function handleRouteError(error: unknown) {
     return apiError("VALIDATION_ERROR", message, 422);
   }
   if (isAppError(error)) {
-    const status = error.code === "RATE_LIMIT" ? 429 : error.status;
+    const status =
+      error.code === "RATE_LIMIT" || error.code === "AI_USER_QUEUE_LIMIT_REACHED"
+        ? 429
+        : error.status;
     return apiError(error.code, error.message, status, error.details);
   }
   console.error("[api]", error);

@@ -5,6 +5,8 @@ import { recordLucienCanvasGeneration } from "@/features/ai-copilot/lucien-learn
 import { canvasPromptKnowledgeService } from "@/features/ai-copilot/canvas-prompt-knowledge.service";
 import { canvasRepository } from "@/features/canvas/canvas.repository";
 import { creditGenerationBillingService } from "@/features/credit-wallet/credit-generation-billing.service";
+import { generationDispatcherService } from "@/features/generation/concurrency/generation-dispatcher.service";
+import { scheduleGenerationJob } from "@/lib/canvas/schedule-generation-job";
 import { normalizeLanguageCode } from "@/features/i18n/language.constants";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -86,4 +88,10 @@ export async function finalizeCanvasGenerationJob(
       inputPayload: isRecord(settledJob.input) ? settledJob.input : undefined
     });
   }
+
+  await generationDispatcherService.dispatchAfterTerminal({
+    ownerId,
+    projectId: settledJob.creativeProjectId,
+    scheduleJob: scheduleGenerationJob
+  });
 }

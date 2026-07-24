@@ -9,8 +9,49 @@ import { creditPricingRepository } from "../features/credit-wallet/credit-pricin
 
 const prisma = new PrismaClient();
 const actor = { id: "pricing-workflow-verify", role: "ADMIN" as const, email: "verify@vincis.local" };
+const VERIFY_DRAFT_REASON = "workflow verify draft";
 
 type Check = { name: string; ok: boolean; detail?: string };
+
+async function cleanupPricingWorkflowVerifyArtifacts() {
+  const removed = await prisma.creditPricingRule.deleteMany({
+    where: {
+      status: { in: ["DRAFT", "VALIDATED"] },
+      changeReason: { contains: VERIFY_DRAFT_REASON, mode: "insensitive" }
+    }
+  });
+  if (removed.count > 0) {
+    console.log(`Cleaned ${removed.count} pricing verify draft artifact(s)`);
+  }
+}
+
+/** CI hygiene: seedance-2.0 video drafts must not block runtime_ignores_drafts when published rules exist. */
+async function cleanupStraySeedanceVideoDrafts() {
+  const publishedSeedanceVideo = await prisma.creditPricingRule.count({
+    where: {
+      status: "PUBLISHED",
+      generationType: "VIDEO",
+      model: "seedance-2.0"
+    }
+  });
+  if (publishedSeedanceVideo === 0) return;
+
+  const removed = await prisma.creditPricingRule.deleteMany({
+    where: {
+      status: { in: ["DRAFT", "VALIDATED"] },
+      generationType: "VIDEO",
+      model: "seedance-2.0"
+    }
+  });
+  if (removed.count > 0) {
+    console.log(`Cleaned ${removed.count} stray seedance-2.0 video draft(s)`);
+  }
+}
+
+async function preparePricingWorkflowDatabase() {
+  await cleanupPricingWorkflowVerifyArtifacts();
+  await cleanupStraySeedanceVideoDrafts();
+}
 
 function report(checks: Check[]) {
   for (const check of checks) {
@@ -27,6 +68,8 @@ async function main() {
     report(checks);
     return;
   }
+
+  await preparePricingWorkflowDatabase();
 
   const publishedCount = await prisma.creditPricingRule.count({
     where: { status: "PUBLISHED", enabled: true }
@@ -62,35 +105,42 @@ async function main() {
   });
 
   if (source) {
-    const draft = await adminPricingRuleService.duplicate(actor, source.id, {
-      changeReason: "workflow verify draft"
-    });
-    checks.push({
-      name: "pricing.workflow.duplicate_creates_draft",
-      ok: draft.status === "DRAFT" && draft.version > source.version,
-      detail: `${draft.id}/v${draft.version}`
-    });
-
-    let immutableBlocked = false;
+    let draftId: string | null = null;
     try {
-      await adminPricingRuleService.update(actor, source.id, { creditPrice: source.creditPrice + 1 });
-    } catch (error) {
-      immutableBlocked = error instanceof Error && error.message.includes("immutable");
+      const draft = await adminPricingRuleService.duplicate(actor, source.id, {
+        changeReason: VERIFY_DRAFT_REASON
+      });
+      draftId = draft.id;
+      checks.push({
+        name: "pricing.workflow.duplicate_creates_draft",
+        ok: draft.status === "DRAFT" && draft.version > source.version,
+        detail: `${draft.id}/v${draft.version}`
+      });
+
+      let immutableBlocked = false;
+      try {
+        await adminPricingRuleService.update(actor, source.id, { creditPrice: source.creditPrice + 1 });
+      } catch (error) {
+        immutableBlocked = error instanceof Error && error.message.includes("immutable");
+      }
+      checks.push({
+        name: "pricing.workflow.published_immutable",
+        ok: immutableBlocked,
+        detail: source.id
+      });
+
+      const validation = await adminPricingRuleService.validate(actor, draft.id);
+      checks.push({
+        name: "pricing.workflow.validate_returns_result",
+        ok: Array.isArray(validation.issues),
+        detail: validation.ok ? "ok" : validation.issues.map((issue) => issue.code).join(", ")
+      });
+    } finally {
+      if (draftId) {
+        await prisma.creditPricingRule.delete({ where: { id: draftId } }).catch(() => undefined);
+      }
+      await preparePricingWorkflowDatabase();
     }
-    checks.push({
-      name: "pricing.workflow.published_immutable",
-      ok: immutableBlocked,
-      detail: source.id
-    });
-
-    const validation = await adminPricingRuleService.validate(actor, draft.id);
-    checks.push({
-      name: "pricing.workflow.validate_returns_result",
-      ok: Array.isArray(validation.issues),
-      detail: validation.ok ? "ok" : validation.issues.map((issue) => issue.code).join(", ")
-    });
-
-    await prisma.creditPricingRule.delete({ where: { id: draft.id } }).catch(() => undefined);
   }
 
   const publishedWithVersion = await prisma.creditPricingRule.count({
@@ -111,5 +161,6 @@ main()
     process.exit(1);
   })
   .finally(async () => {
+    await preparePricingWorkflowDatabase().catch(() => undefined);
     await prisma.$disconnect();
   });

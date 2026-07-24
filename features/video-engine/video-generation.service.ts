@@ -12,6 +12,7 @@ import { resolveCanvasProjectForOwner } from "@/features/canvas/canvas-project-a
 import { canvasRepository } from "@/features/canvas/canvas.repository";
 import { creditGenerationBillingService } from "@/features/credit-wallet/credit-generation-billing.service";
 import { creditLedgerService } from "@/features/credit-wallet/credit-ledger.service";
+import { generationConcurrencyService } from "@/features/generation/concurrency/generation-concurrency.service";
 import { assertVideoGenerationInfrastructure, assertVideoReferenceInfrastructure } from "@/features/video-engine/video-infrastructure";
 import { claimVideoGenerationJobWithAttempt } from "@/features/video-engine/video-job-claim.repository";
 import { videoJobAuditService } from "@/features/video-engine/video-job-audit.service";
@@ -27,6 +28,7 @@ import {
   userFacingGenerationErrorMessage
 } from "@/features/video-engine/video-generation.errors";
 import { scheduleCanvasBackgroundWork } from "@/lib/canvas/schedule-background-work";
+import { maybeScheduleGenerationJob } from "@/lib/canvas/schedule-generation-job";
 import { appError } from "@/lib/core/errors";
 import { logger } from "@/lib/core/logger";
 
@@ -117,6 +119,13 @@ export class VideoGenerationService {
       );
     }
 
+    await generationConcurrencyService.assertCanCreateJob({
+      userId: user.id,
+      projectId: project.id,
+      type: "VIDEO",
+      provider: routing.providerId
+    });
+
     const billing = await creditGenerationBillingService.reserveForGeneration({
       userId: user.id,
       type: "VIDEO",
@@ -175,7 +184,13 @@ export class VideoGenerationService {
 
     try {
       if (created && job.status === "QUEUED") {
-        this.scheduleJob(job.id, user.id);
+        await maybeScheduleGenerationJob({
+          type: "VIDEO",
+          provider: routing.providerId,
+          jobId: job.id,
+          ownerId: user.id,
+          projectId: project.id
+        });
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to start generation";
@@ -219,22 +234,6 @@ export class VideoGenerationService {
         });
       });
     });
-  }
-
-  kickStaleJob(
-    job: {
-      id: string;
-      type: "IMAGE" | "VIDEO" | "MUSIC";
-      provider: string;
-      status: "QUEUED" | "SUBMITTING" | "PROCESSING" | "SUCCEEDED" | "FAILED" | "CANCELLED";
-      createdAt: Date;
-    },
-    ownerId: string
-  ) {
-    if (job.type !== "VIDEO" || job.provider !== "seedance") return;
-    if (job.status !== "QUEUED" && job.status !== "SUBMITTING") return;
-    if (Date.now() - job.createdAt.getTime() < 1500) return;
-    this.scheduleJob(job.id, ownerId);
   }
 
   async processJob(jobId: string, ownerId: string) {

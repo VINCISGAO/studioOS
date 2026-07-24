@@ -29,6 +29,8 @@ export const ErrorCodes = {
   PAYMENT_REQUIRED: { code: "PAYMENT_REQUIRED", status: 402 },
   PACKAGE_PRICE_UNAVAILABLE: { code: "PACKAGE_PRICE_UNAVAILABLE", status: 422 },
   RATE_LIMIT: { code: "RATE_LIMIT", status: 429 },
+  AI_USER_QUEUE_LIMIT_REACHED: { code: "AI_USER_QUEUE_LIMIT_REACHED", status: 429 },
+  AI_PROVIDER_QUEUE_BUSY: { code: "AI_PROVIDER_QUEUE_BUSY", status: 503 },
   PAYLOAD_TOO_LARGE: { code: "PAYLOAD_TOO_LARGE", status: 413 },
   SYSTEM_ERROR: { code: "SYSTEM_ERROR", status: 500 }
 } as const;
