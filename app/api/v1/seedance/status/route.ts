@@ -1,13 +1,12 @@
-import { apiSuccess, handleRouteError } from "@/lib/core/api-route";
+import { apiSuccess, enforcePublicApiRateLimit, handleRouteError } from "@/lib/core/api-route";
 import { hasSeedance } from "@/lib/core/config/ai";
-import { readSeedanceCallbackUrl } from "@/lib/core/config/seedance-key";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    await enforcePublicApiRateLimit(request);
     return apiSuccess({
       configured: hasSeedance(),
       provider: "seedance",
-      callbackUrl: readSeedanceCallbackUrl(),
       docs: "https://seedance2.ai/zh/api-docs"
     });
   } catch (error) {

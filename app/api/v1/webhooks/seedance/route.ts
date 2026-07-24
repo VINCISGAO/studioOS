@@ -1,8 +1,30 @@
 import { canvasRepository } from "@/features/canvas/canvas.repository";
 import { logger } from "@/lib/core/logger";
 import type { SeedanceTask } from "@/lib/canvas/seedance-client";
+import { readSeedanceWebhookSecret } from "@/lib/core/config/seedance-key";
+
+function readBearerToken(request: Request) {
+  const header = request.headers.get("authorization")?.trim() ?? "";
+  if (!header.toLowerCase().startsWith("bearer ")) return null;
+  return header.slice(7).trim();
+}
+
+function assertSeedanceWebhookAuthorized(request: Request) {
+  const secret = readSeedanceWebhookSecret();
+  if (!secret) return;
+
+  const token = readBearerToken(request);
+  if (!token || token !== secret) {
+    return new Response(null, { status: 401 });
+  }
+
+  return null;
+}
 
 export async function POST(request: Request) {
+  const unauthorized = assertSeedanceWebhookAuthorized(request);
+  if (unauthorized) return unauthorized;
+
   let payload: SeedanceTask;
   try {
     payload = (await request.json()) as SeedanceTask;
