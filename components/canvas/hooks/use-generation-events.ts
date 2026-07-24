@@ -44,7 +44,14 @@ export function useGenerationEvents(
 
     let source: EventSource | null = null;
     let reconnectTimer: ReturnType<typeof setTimeout> | undefined;
+    let watchTimer: ReturnType<typeof setInterval> | undefined;
     let closed = false;
+
+    const scheduleReconnect = () => {
+      if (closed) return;
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      reconnectTimer = setTimeout(connect, 1200);
+    };
 
     const connect = () => {
       if (closed) return;
@@ -80,17 +87,22 @@ export function useGenerationEvents(
       source.addEventListener("jobs", onJobs as EventListener);
       source.onerror = () => {
         source?.close();
-        if (!closed) {
-          reconnectTimer = setTimeout(connect, 1200);
-        }
+        scheduleReconnect();
       };
     };
 
     connect();
+    watchTimer = setInterval(() => {
+      if (closed) return;
+      if (source?.readyState === EventSource.CLOSED) {
+        scheduleReconnect();
+      }
+    }, 5000);
 
     return () => {
       closed = true;
       if (reconnectTimer) clearTimeout(reconnectTimer);
+      if (watchTimer) clearInterval(watchTimer);
       source?.close();
     };
   }, [applyJobEvent, projectId]);
