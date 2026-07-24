@@ -27,6 +27,7 @@ export function VideoNodeReadyPlayer({
 }) {
   const t = videoNodeReadyCopy[locale];
   const videoRef = useRef<HTMLVideoElement>(null);
+  const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
   const [durationSec, setDurationSec] = useState(0);
   const [infoOpen, setInfoOpen] = useState(false);
   const metadata = readVideoNodeMetadata(data);
@@ -54,6 +55,21 @@ export function VideoNodeReadyPlayer({
       return;
     }
     video.pause();
+  }
+
+  function handleVideoPointerDown(event: React.PointerEvent<HTMLVideoElement>) {
+    pointerStartRef.current = { x: event.clientX, y: event.clientY };
+  }
+
+  function handleVideoClick(event: React.MouseEvent<HTMLVideoElement>) {
+    const start = pointerStartRef.current;
+    pointerStartRef.current = null;
+    if (start) {
+      const dx = event.clientX - start.x;
+      const dy = event.clientY - start.y;
+      if (dx * dx + dy * dy > 64) return;
+    }
+    togglePlay();
   }
 
   function openFullscreen() {
@@ -98,9 +114,11 @@ export function VideoNodeReadyPlayer({
           src={url}
           playsInline
           preload="metadata"
+          draggable={false}
           className={VIDEO_NODE_READY_UI.video}
           onLoadedMetadata={onLoadedMetadata}
-          onClick={togglePlay}
+          onPointerDown={handleVideoPointerDown}
+          onClick={handleVideoClick}
         />
 
         <button

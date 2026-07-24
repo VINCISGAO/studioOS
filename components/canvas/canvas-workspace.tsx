@@ -196,7 +196,7 @@ function CanvasWorkspaceInner({
 
   const pasteSelectionAtCenter = useCallback(() => {
     const rect = readViewportRect(canvasAreaRef.current);
-    pasteAt(viewportCenterFlowPoint(viewport, rect));
+    pasteAt(viewportCenterFlowPoint(readCanvasViewport(viewport), rect));
   }, [pasteAt, viewport]);
 
   if (!ready) return <div className="h-full bg-[#f7f7f6]" />;

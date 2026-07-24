@@ -4,7 +4,7 @@ export const VIDEO_NODE_READY_UI = {
     "relative h-full w-full overflow-hidden rounded-2xl border bg-black shadow-sm transition-[border-color,box-shadow]",
   shellDefault: "border-[#93C5FD]",
   shellSelected: "border-blue-500 shadow-[0_0_0_1px_rgba(59,130,246,0.35)]",
-  video: "nodrag nopan h-full w-full cursor-pointer object-cover",
+  video: "nopan h-full w-full cursor-pointer object-cover",
   overlayButton:
     "nodrag nopan inline-flex items-center justify-center bg-black/50 text-white backdrop-blur-[1px] transition hover:bg-black/60",
   infoButton: "absolute right-2.5 top-2.5 h-7 w-7 rounded-full",
