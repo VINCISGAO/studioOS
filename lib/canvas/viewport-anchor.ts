@@ -130,6 +130,35 @@ export function nextVideoLayoutPosition(
   return nextSlotLayoutPosition(viewport, rect, layoutIndex, VIDEO_CARD);
 }
 
+type Bounds = { x: number; y: number; w: number; h: number };
+
+function nodeBounds(node: Pick<VincisCanvasNode, "position" | "width" | "height" | "measured">, pad = 16): Bounds {
+  const { width, height } = resolveNodeDimensions(node);
+  return { x: node.position.x - pad, y: node.position.y - pad, w: width + pad * 2, h: height + pad * 2 };
+}
+
+function boundsOverlap(a: Bounds, b: Bounds) {
+  return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+}
+
+export function spawnNodeAvoidingOverlap(
+  viewport: Viewport,
+  rect: ViewportRect,
+  card: { width: number; height: number; gapY?: number; centerOffsetY?: number },
+  nodes: VincisCanvasNode[],
+  layoutIndex = 0
+) {
+  const stepY = card.height + (card.gapY ?? 32);
+  const base = nextSlotLayoutPosition(viewport, rect, layoutIndex, card);
+  for (let attempt = 0; attempt < 16; attempt += 1) {
+    const position = { x: base.x, y: base.y + attempt * stepY };
+    const candidate: Bounds = { x: position.x, y: position.y, w: card.width, h: card.height };
+    const overlaps = nodes.some((node) => boundsOverlap(candidate, nodeBounds(node)));
+    if (!overlaps) return position;
+  }
+  return base;
+}
+
 export function panelAnchorAboveNode(
   node: Pick<VincisCanvasNode, "position" | "width" | "height" | "measured">,
   viewport: Viewport,

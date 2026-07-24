@@ -13,10 +13,10 @@ import {
 import { generationPanelDimensions } from "@/lib/canvas/generation-panel-layout";
 import type { VincisCanvasNode } from "@/lib/canvas/types";
 import {
-  nextSlotLayoutPosition,
   panelAnchorViewportCenter,
   readCanvasViewport,
-  readViewportRect
+  readViewportRect,
+  spawnNodeAvoidingOverlap
 } from "@/lib/canvas/viewport-anchor";
 import type { Locale } from "@/lib/i18n";
 
@@ -87,7 +87,7 @@ export function useCanvasGenerationSlots({
         const layout = createGenerationSlot({
           kind: slotKind,
           layoutIndex,
-          position: nextSlotLayoutPosition(viewport, rect, layoutIndex, card),
+          position: spawnNodeAvoidingOverlap(viewport, rect, card, state.nodes, layoutIndex),
           locale
         });
         addNode(layout.node);
