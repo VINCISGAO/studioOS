@@ -44,7 +44,6 @@ export function useGenerationEvents(
 
     let source: EventSource | null = null;
     let reconnectTimer: ReturnType<typeof setTimeout> | undefined;
-    let watchTimer: ReturnType<typeof setInterval> | undefined;
     let closed = false;
 
     const scheduleReconnect = () => {
@@ -92,7 +91,7 @@ export function useGenerationEvents(
     };
 
     connect();
-    watchTimer = setInterval(() => {
+    const watchTimer = setInterval(() => {
       if (closed) return;
       if (source?.readyState === EventSource.CLOSED) {
         scheduleReconnect();
@@ -102,7 +101,7 @@ export function useGenerationEvents(
     return () => {
       closed = true;
       if (reconnectTimer) clearTimeout(reconnectTimer);
-      if (watchTimer) clearInterval(watchTimer);
+      clearInterval(watchTimer);
       source?.close();
     };
   }, [applyJobEvent, projectId]);
