@@ -1,4 +1,4 @@
-import type { GenerationJob } from "@prisma/client";
+import type { GenerationJob, GenerationStatus } from "@prisma/client";
 import { creditGenerationBillingService } from "@/features/credit-wallet/credit-generation-billing.service";
 import { generationDispatcherService } from "@/features/generation/concurrency/generation-dispatcher.service";
 import { generationStaleJobPolicy } from "@/features/generation/concurrency/generation-stale-job-policy";
@@ -17,10 +17,15 @@ export type GenerationStaleSweepResult = {
   processingTimedOut: number;
 };
 
+const staleFailableStatuses: GenerationStatus[] = ["QUEUED", "SUBMITTING", "PROCESSING"];
+
 export class GenerationStaleJobService {
-  private async failStaleJob(job: GenerationJob, errorCode: string, errorMessage: string) {
-    const updated = await prisma.generationJob.update({
-      where: { id: job.id },
+  private async failStaleJob(job: GenerationJob, errorCode: string, errorMessage: string): Promise<boolean> {
+    const failed = await prisma.generationJob.updateMany({
+      where: {
+        id: job.id,
+        status: { in: staleFailableStatuses }
+      },
       data: {
         status: "FAILED",
         progress: 100,
@@ -29,6 +34,10 @@ export class GenerationStaleJobService {
         completedAt: new Date()
       }
     });
+    if (failed.count === 0) return false;
+
+    const updated = await prisma.generationJob.findUnique({ where: { id: job.id } });
+    if (!updated) return false;
 
     await creditGenerationBillingService.syncJobBilling(updated);
 
@@ -44,9 +53,13 @@ export class GenerationStaleJobService {
       errorCode,
       status: job.status
     });
+
+    return true;
   }
 
-  private async requeueStaleDispatchJob(job: GenerationJob): Promise<"requeued" | "failed"> {
+  private async requeueStaleDispatchJob(
+    job: GenerationJob
+  ): Promise<"requeued" | "failed" | "skipped"> {
     const input = isRecord(job.input) ? job.input : {};
     const priorRequeues =
       typeof input.staleRequeueCount === "number" && Number.isInteger(input.staleRequeueCount)
@@ -54,16 +67,19 @@ export class GenerationStaleJobService {
         : 0;
 
     if (priorRequeues >= generationStaleJobPolicy.maxDispatchRequeues) {
-      await this.failStaleJob(
+      const failed = await this.failStaleJob(
         job,
         "DISPATCH_TIMEOUT",
         "任务调度超时，已自动取消并释放 Token。"
       );
-      return "failed";
+      return failed ? "failed" : "skipped";
     }
 
-    const updated = await prisma.generationJob.update({
-      where: { id: job.id },
+    const requeued = await prisma.generationJob.updateMany({
+      where: {
+        id: job.id,
+        status: "SUBMITTING"
+      },
       data: {
         status: "QUEUED",
         progress: 0,
@@ -77,6 +93,10 @@ export class GenerationStaleJobService {
         }
       }
     });
+    if (requeued.count === 0) return "skipped";
+
+    const updated = await prisma.generationJob.findUnique({ where: { id: job.id } });
+    if (!updated) return "skipped";
 
     await generationDispatcherService.dispatchAfterTerminal({
       ownerId: updated.ownerId,
@@ -103,30 +123,28 @@ export class GenerationStaleJobService {
     const now = Date.now();
 
     if (job.status === "QUEUED" && now - job.createdAt.getTime() >= generationStaleJobPolicy.queueTimeoutMs) {
-      await this.failStaleJob(
+      return this.failStaleJob(
         job,
         "QUEUE_TIMEOUT",
         "任务在队列中等待过久，已自动取消并释放 Token。"
       );
-      return true;
     }
 
     if (
       job.status === "SUBMITTING" &&
       now - job.createdAt.getTime() >= generationStaleJobPolicy.dispatchTimeoutMs
     ) {
-      await this.requeueStaleDispatchJob(job);
-      return true;
+      const outcome = await this.requeueStaleDispatchJob(job);
+      return outcome !== "skipped";
     }
 
     if (job.status === "PROCESSING" && job.startedAt) {
       if (now - job.startedAt.getTime() >= generationStaleJobPolicy.processingTimeoutMs) {
-        await this.failStaleJob(
+        return this.failStaleJob(
           job,
           "PROCESSING_TIMEOUT",
           "生成任务超时，已自动取消并释放 Token。"
         );
-        return true;
       }
     }
 
@@ -168,30 +186,30 @@ export class GenerationStaleJobService {
     ]);
 
     for (const job of queuedStale) {
-      await this.failStaleJob(
+      const failed = await this.failStaleJob(
         job,
         "QUEUE_TIMEOUT",
         "任务在队列中等待过久，已自动取消并释放 Token。"
       );
-      result.queueTimedOut += 1;
+      if (failed) result.queueTimedOut += 1;
     }
 
     for (const job of submittingStale) {
       const outcome = await this.requeueStaleDispatchJob(job);
       if (outcome === "requeued") {
         result.dispatchRequeued += 1;
-      } else {
+      } else if (outcome === "failed") {
         result.dispatchFailed += 1;
       }
     }
 
     for (const job of processingStale) {
-      await this.failStaleJob(
+      const failed = await this.failStaleJob(
         job,
         "PROCESSING_TIMEOUT",
         "生成任务超时，已自动取消并释放 Token。"
       );
-      result.processingTimedOut += 1;
+      if (failed) result.processingTimedOut += 1;
     }
 
     return result;
