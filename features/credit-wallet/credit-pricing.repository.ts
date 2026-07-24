@@ -59,7 +59,9 @@ export function inferGenerationMode(
       Boolean(parameters.referenceNodeId) ||
       Boolean(parameters.lastFrameReferenceAssetId) ||
       Boolean(parameters.lastFrameReferenceUrl) ||
-      Boolean(parameters.lastFrameReferenceNodeId);
+      Boolean(parameters.lastFrameReferenceNodeId) ||
+      (typeof parameters.libraryReferenceAssetIds === "string" &&
+        parameters.libraryReferenceAssetIds.trim().length > 0);
     return hasReference ? "IMAGE_TO_VIDEO" : "TEXT_TO_VIDEO";
   }
 

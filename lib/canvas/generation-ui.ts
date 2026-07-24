@@ -218,6 +218,15 @@ export function hasGenerationReference(reference: GenerationReference | null | u
   return Boolean(reference?.assetId || reference?.url || reference?.nodeId);
 }
 
+export function parseLibraryReferenceAssetIds(value: unknown): string[] {
+  if (typeof value !== "string" || !value.trim()) return [];
+  return [...new Set(value.split(",").map((item) => item.trim()).filter(Boolean))];
+}
+
+export function hasLibraryReferenceAssetIds(parameters: Record<string, unknown>) {
+  return parseLibraryReferenceAssetIds(parameters.libraryReferenceAssetIds).length > 0;
+}
+
 export function resolveVideoPricingMode(input: {
   videoReferenceMode: VideoReferenceMode;
   hasPrimaryReference: boolean;

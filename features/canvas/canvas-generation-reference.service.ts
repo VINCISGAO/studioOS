@@ -121,6 +121,15 @@ export async function normalizeGenerationReferenceParameters(
   });
   applyResolvedReference(next, "lastFrameReference", lastFrame);
 
+  const libraryIds = (readString(parameters.libraryReferenceAssetIds) ?? "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+  if (!readString(next.referenceAssetId) && libraryIds[0]) {
+    const promoted = await resolveReferenceFields(user, projectId, { assetId: libraryIds[0] });
+    applyResolvedReference(next, "", promoted);
+  }
+
   return next;
 }
 

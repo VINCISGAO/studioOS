@@ -118,14 +118,20 @@ export const aiModelGenerationGuard = {
       throw appError("VALIDATION_ERROR", "Output count exceeds model limit");
     }
 
-    const referenceCount = [
-      parameters.referenceAssetId,
-      parameters.referenceUrl,
-      parameters.referenceNodeId,
-      parameters.lastFrameReferenceAssetId,
-      parameters.lastFrameReferenceUrl,
-      parameters.lastFrameReferenceNodeId
-    ].filter(Boolean).length;
+    const libraryReferenceCount =
+      typeof parameters.libraryReferenceAssetIds === "string"
+        ? parameters.libraryReferenceAssetIds.split(",").map((item) => item.trim()).filter(Boolean)
+            .length
+        : 0;
+    const referenceCount =
+      [
+        parameters.referenceAssetId,
+        parameters.referenceUrl,
+        parameters.referenceNodeId,
+        parameters.lastFrameReferenceAssetId,
+        parameters.lastFrameReferenceUrl,
+        parameters.lastFrameReferenceNodeId
+      ].filter(Boolean).length + libraryReferenceCount;
     if (referenceCount > row.maxReferenceImages) {
       throw appError("VALIDATION_ERROR", "Too many reference assets for this model");
     }

@@ -158,6 +158,7 @@ export const videoGenerationSchema = generationBaseSchema.extend({
     .regex(/^[a-zA-Z0-9_-]+$/)
     .optional(),
   lastFrameReferenceMimeType: z.string().trim().max(120).optional(),
+  libraryReferenceAssetIds: z.string().trim().max(4000).optional(),
   videoReferenceMode: z.enum(["reference", "edit", "keyframes"]).default("reference"),
   mode: z.enum(["TEXT_TO_VIDEO", "IMAGE_TO_VIDEO"]).optional()
 });

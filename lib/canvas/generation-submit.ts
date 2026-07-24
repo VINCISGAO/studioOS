@@ -34,8 +34,6 @@ export function buildGenerationSubmitInput(input: {
   selectedImageModel: string;
   selectedMusicModel: string;
 }): GenerationSubmitInput {
-  const hasPrimaryReference = hasGenerationReference(input.reference);
-  const hasLastFrameReference = hasGenerationReference(input.lastFrameReference);
   const libraryAssetIds = [
     ...new Set(
       (input.librarySelections ?? [])
@@ -43,6 +41,11 @@ export function buildGenerationSubmitInput(input: {
         .filter((id): id is string => Boolean(id))
     )
   ];
+  const hasLibraryReferences = libraryAssetIds.length > 0;
+  const effectiveReference =
+    input.reference ?? (hasLibraryReferences ? (input.librarySelections?.[0] ?? null) : null);
+  const hasPrimaryReference = hasGenerationReference(effectiveReference);
+  const hasLastFrameReference = hasGenerationReference(input.lastFrameReference);
 
   return {
     kind: input.kind,
@@ -53,7 +56,7 @@ export function buildGenerationSubmitInput(input: {
         : input.kind === "image"
           ? input.selectedImageModel
           : input.selectedMusicModel,
-    reference: input.reference,
+    reference: effectiveReference,
     lastFrameReference: input.lastFrameReference ?? null,
     parameters:
       input.kind === "video"
@@ -67,9 +70,15 @@ export function buildGenerationSubmitInput(input: {
             videoReferenceMode: input.videoReferenceMode ?? "reference",
             mode: resolveVideoPricingMode({
               videoReferenceMode: input.videoReferenceMode ?? "reference",
-              hasPrimaryReference: hasPrimaryReference || hasLastFrameReference
+              hasPrimaryReference:
+                hasPrimaryReference || hasLastFrameReference || hasLibraryReferences
             }),
-            ...(input.reference?.mimeType ? { referenceMimeType: input.reference.mimeType } : {}),
+            ...(effectiveReference?.assetId
+              ? { referenceAssetId: effectiveReference.assetId }
+              : {}),
+            ...(effectiveReference?.url ? { referenceUrl: effectiveReference.url } : {}),
+            ...(effectiveReference?.nodeId ? { referenceNodeId: effectiveReference.nodeId } : {}),
+            ...(effectiveReference?.mimeType ? { referenceMimeType: effectiveReference.mimeType } : {}),
             ...(input.lastFrameReference?.assetId
               ? { lastFrameReferenceAssetId: input.lastFrameReference.assetId }
               : {}),
