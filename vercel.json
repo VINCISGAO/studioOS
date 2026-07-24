@@ -17,7 +17,7 @@
       "maxDuration": 60
     },
     "app/api/cron/generation-stale-reaper/route.ts": {
-      "maxDuration": 60
+      "maxDuration": 120
     }
   }
 }
