@@ -3,6 +3,16 @@ import type { VincisCanvasNode } from "@/lib/canvas/types";
 import { GENERATION_PANEL_HEIGHT, GENERATION_PANEL_WIDTH } from "@/lib/canvas/generation-ui";
 import { VIDEO_CARD } from "@/lib/canvas/generation-layout";
 
+let flowViewportReader: (() => Viewport) | null = null;
+
+export function registerFlowViewportReader(reader: (() => Viewport) | null) {
+  flowViewportReader = reader;
+}
+
+export function readCanvasViewport(fallback: Viewport): Viewport {
+  return flowViewportReader?.() ?? fallback;
+}
+
 export type ViewportRect = {
   width: number;
   height: number;

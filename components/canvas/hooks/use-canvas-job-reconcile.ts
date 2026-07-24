@@ -6,7 +6,7 @@ import { isTerminalGenerationJobStatus } from "@/lib/canvas/canvas-node-mutation
 import { MUSIC_NODE_LOADING_CARD } from "@/lib/canvas/music-node-design";
 import { VIDEO_NODE_LOADING_CARD } from "@/lib/canvas/video-node-design";
 import type { GenerationJobEvent, VincisCanvasNode } from "@/lib/canvas/types";
-import { readViewportRect, spawnNodeAtViewportCenter } from "@/lib/canvas/viewport-anchor";
+import { readCanvasViewport, readViewportRect, spawnNodeAtViewportCenter } from "@/lib/canvas/viewport-anchor";
 
 type ApiEnvelope = {
   success: boolean;
@@ -32,7 +32,7 @@ function buildMissingLoadingNode(job: GenerationJobEvent): VincisCanvasNode | nu
   if (!job.nodeId || isTerminalGenerationJobStatus(job.status)) return null;
   const state = useCanvasStore.getState();
   const card = loadingCardForJob(job.type);
-  const viewport = state.viewport;
+  const viewport = readCanvasViewport(state.viewport);
   const position = spawnNodeAtViewportCenter(viewport, readViewportRect(null), card);
   const isMusic = job.type === "MUSIC";
 

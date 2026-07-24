@@ -10,7 +10,7 @@ import {
   readNodeGenerationContext,
   type CanvasGenerationMode
 } from "@/lib/canvas/node-generation-context";
-import { readViewportRect, spawnNodeAtViewportCenter } from "@/lib/canvas/viewport-anchor";
+import { readCanvasViewport, readViewportRect, spawnNodeAtViewportCenter } from "@/lib/canvas/viewport-anchor";
 
 type ApiEnvelope<T> = {
   success: boolean;
@@ -55,7 +55,7 @@ function spawnLoadingNode(
   return {
     id,
     type: isMusic ? "music" : "loading",
-    position: spawnNodeAtViewportCenter(state.viewport, rect, card),
+    position: spawnNodeAtViewportCenter(readCanvasViewport(state.viewport), rect, card),
     width: card.width,
     height: card.height,
     data: { title, prompt, status: "loading", progress: 8, generationType }

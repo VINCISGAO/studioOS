@@ -30,7 +30,7 @@ import {
   type ChatImageCanvasPayload
 } from "@/lib/canvas/chat-image-canvas";
 import { CANVAS_SEND_TO_CHAT_EVENT } from "@/lib/canvas/canvas-chat-bridge";
-import { readViewportRect, viewportCenterFlowPoint } from "@/lib/canvas/viewport-anchor";
+import { readCanvasViewport, readViewportRect, viewportCenterFlowPoint } from "@/lib/canvas/viewport-anchor";
 
 function CanvasWorkspaceInner({
   snapshot,
@@ -150,7 +150,7 @@ function CanvasWorkspaceInner({
       const detail = (event as CustomEvent<ChatImageCanvasPayload>).detail;
       if (!detail?.assetId || !detail.url) return;
       const rect = readViewportRect(canvasAreaRef.current);
-      const center = viewportCenterFlowPoint(useCanvasStore.getState().viewport, rect);
+      const center = viewportCenterFlowPoint(readCanvasViewport(useCanvasStore.getState().viewport), rect);
       useCanvasStore.getState().addNode(buildChatImageCanvasNode(detail, center));
     };
     window.addEventListener("canvas:chat-image-add", onChatImageAdd);

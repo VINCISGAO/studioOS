@@ -33,7 +33,7 @@ import {
   isChatImageDragEvent,
   readChatImageDragData
 } from "@/lib/canvas/chat-image-canvas";
-import { viewportCenterFlowPoint } from "@/lib/canvas/viewport-anchor";
+import { viewportCenterFlowPoint, registerFlowViewportReader } from "@/lib/canvas/viewport-anchor";
 import type { GenerationJobEvent, VincisCanvasNode } from "@/lib/canvas/types";
 import type { Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -76,10 +76,15 @@ function InfiniteCanvasFlow({
   const canRedo = useCanvasStore((state) => state.future.length > 0);
   const flowRef = useRef<HTMLDivElement>(null);
   const [showMinimap, setShowMinimap] = useState(true);
-  const { screenToFlowPosition } = useReactFlow();
+  const { screenToFlowPosition, getViewport } = useReactFlow();
   const { handleZoomIn, handleZoomOut, handleFitView, handleZoom100 } =
     useCanvasViewportActions();
   const { showEmptyHint } = useCanvasViewportContent(flowRef);
+
+  useEffect(() => {
+    registerFlowViewportReader(getViewport);
+    return () => registerFlowViewportReader(null);
+  }, [getViewport]);
 
   useCanvasAutosave();
   useCanvasJobReconcile(projectId);
@@ -100,7 +105,7 @@ function InfiniteCanvasFlow({
     const rect = flowRef.current?.getBoundingClientRect();
     if (!rect) return;
     pasteAt(
-      viewportCenterFlowPoint(useCanvasStore.getState().viewport, {
+      viewportCenterFlowPoint(readCanvasViewport(useCanvasStore.getState().viewport), {
         width: rect.width,
         height: rect.height
       })

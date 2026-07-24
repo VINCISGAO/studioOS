@@ -15,6 +15,7 @@ import type { VincisCanvasNode } from "@/lib/canvas/types";
 import {
   nextSlotLayoutPosition,
   panelAnchorViewportCenter,
+  readCanvasViewport,
   readViewportRect
 } from "@/lib/canvas/viewport-anchor";
 import type { Locale } from "@/lib/i18n";
@@ -80,12 +81,13 @@ export function useCanvasGenerationSlots({
         const slotKind = KIND_MAP[kind];
         const state = useCanvasStore.getState();
         const rect = readRect();
+        const viewport = readCanvasViewport(state.viewport);
         const layoutIndex = nextLayoutIndex(state.nodes, slotKind);
         const card = getGenerationCard(slotKind);
         const layout = createGenerationSlot({
           kind: slotKind,
           layoutIndex,
-          position: nextSlotLayoutPosition(state.viewport, rect, layoutIndex, card),
+          position: nextSlotLayoutPosition(viewport, rect, layoutIndex, card),
           locale
         });
         addNode(layout.node);
