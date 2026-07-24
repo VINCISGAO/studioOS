@@ -57,3 +57,17 @@ export async function PATCH(
     return handleRouteError(error);
   }
 }
+
+export async function DELETE(
+  request: Request,
+  context: { params: Promise<{ ruleId: string }> }
+) {
+  try {
+    const user = await requireAdminMutationUser(request);
+    const { ruleId } = await context.params;
+    const deleted = await adminPricingRuleService.deleteDraft(user, ruleId);
+    return apiSuccess(deleted);
+  } catch (error) {
+    return handleRouteError(error);
+  }
+}

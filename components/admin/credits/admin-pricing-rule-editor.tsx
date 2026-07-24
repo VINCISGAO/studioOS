@@ -89,6 +89,27 @@ export function AdminPricingRuleEditor({ locale, ruleId }: { locale: "zh" | "en"
     await load();
   }
 
+  async function deleteDraft() {
+    if (!rule) return;
+    const confirmed = window.confirm(
+      zh
+        ? `确认删除 v${rule.version} 定价草稿？此操作不可恢复。`
+        : `Delete pricing draft v${rule.version}? This cannot be undone.`
+    );
+    if (!confirmed) return;
+    setBusy("delete");
+    setError(null);
+    const result = await adminApiJson(`/api/admin/credits/pricing-rules/${ruleId}`, {
+      method: "DELETE"
+    });
+    setBusy(null);
+    if (!result.ok) {
+      setError(result.errorMessage);
+      return;
+    }
+    window.location.href = withLocale(adminPortalRoutes.creditsPricing, locale);
+  }
+
   async function publishRule() {
     if (!rule) return;
     const confirmed = window.confirm(
@@ -292,6 +313,17 @@ export function AdminPricingRuleEditor({ locale, ruleId }: { locale: "zh" | "en"
           <Button type="button" onClick={() => void publishRule()} disabled={busy === "publish"}>
             <Zap className="h-4 w-4" />
             {zh ? "发布" : "Publish"}
+          </Button>
+        ) : null}
+        {!readOnly ? (
+          <Button
+            type="button"
+            variant="destructive"
+            onClick={() => void deleteDraft()}
+            disabled={busy === "delete"}
+          >
+            {busy === "delete" ? <LoaderCircle className="h-4 w-4 animate-spin" /> : null}
+            {zh ? "删除草稿" : "Delete draft"}
           </Button>
         ) : null}
         <Button type="button" variant="secondary" onClick={() => void simulate()} disabled={busy === "simulate"}>

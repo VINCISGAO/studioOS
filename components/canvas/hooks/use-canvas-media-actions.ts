@@ -378,23 +378,8 @@ export function useCanvasMediaActions(
 
   function upscale(nodeId: string) {
     const node = requireNode(nodeId);
-    if (!node || !node.data.assetId) return;
+    if (!node || !node.data.assetId || node.type !== "image") return;
     const ctx = readNodeGenerationContext(node);
-    if (node.type === "video") {
-      generate("video", {
-        prompt: ctx.prompt || "Upscale video",
-        model: ctx.model,
-        mode: "UPSCALE",
-        parameters: {
-          ...ctx.parameters,
-          quality: "1080p"
-        },
-        reference: nodeReference(node),
-        targetNodeId: nodeId
-      });
-      return;
-    }
-    if (node.type !== "image") return;
     generate("image", {
       prompt: ctx.prompt || "Upscale image",
       model: ctx.model,

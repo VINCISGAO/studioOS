@@ -423,6 +423,33 @@ export class AdminPricingRuleService {
     return serializeAdminPricingRule(published);
   }
 
+  async deleteDraft(user: AuthUser, ruleId: string) {
+    if (!this.assertAccess(user)) throw appError("SYSTEM_ERROR", "Database unavailable");
+    const existing = await prisma.creditPricingRule.findUnique({ where: { id: ruleId } });
+    if (!existing) throw appError("NOT_FOUND", "Pricing rule not found");
+    if (existing.status === "PUBLISHED" || existing.status === "ARCHIVED") {
+      throw appError("VALIDATION_ERROR", "Only draft or validated rules can be deleted");
+    }
+
+    await prisma.creditPricingRule.delete({ where: { id: ruleId } });
+    creditPricingService.invalidateQuoteCache();
+
+    await creditPlatformAuditService.write({
+      actorUserId: user.id,
+      action: "pricing_rule.deleted",
+      entityType: "PRICING_RULE",
+      entityId: ruleId,
+      metadata: {
+        status: existing.status,
+        model: existing.model,
+        version: existing.version,
+        changeReason: existing.changeReason
+      }
+    });
+
+    return { id: ruleId };
+  }
+
   async archive(user: AuthUser, ruleId: string, input?: { reason?: string }) {
     if (!this.assertAccess(user)) throw appError("SYSTEM_ERROR", "Database unavailable");
     const row = await prisma.creditPricingRule.update({

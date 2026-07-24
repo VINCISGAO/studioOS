@@ -76,7 +76,6 @@ export function CanvasVideoNodeMenu({
   const actions = useCanvasNodeActions();
   const downloadHref = resolveCanvasNodeDownloadHref(data);
   const canDownload = canDownloadCanvasNode(data);
-  const isVideo = variant === "video";
   const isImage = variant === "image";
   const isReady = isNodeMenuReady(data, variant);
 
@@ -90,7 +89,7 @@ export function CanvasVideoNodeMenu({
       className="!border-0 !bg-transparent !p-0 !shadow-none"
     >
       <div className="min-w-[148px] rounded-[20px] border border-zinc-200 bg-white p-1.5 shadow-xl">
-        {isImage || isVideo ? (
+        {isImage ? (
           <MenuItem
             label="放大"
             icon={<Scan className="h-4 w-4 shrink-0" />}
