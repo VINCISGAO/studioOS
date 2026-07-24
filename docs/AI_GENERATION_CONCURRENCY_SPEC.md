@@ -66,6 +66,7 @@ UI unchanged; existing「快速 / 排队」mapping is server-driven by dispatch 
 | Processing timeout | 30m (`AI_GENERATION_PROCESSING_TIMEOUT_MS`) | `PROCESSING` → `FAILED` + credits release |
 
 - Cron: `npm run generation:stale:reaper` (hourly recommended)
+- Vercel Cron: `GET /api/cron/generation-stale-reaper` with `Authorization: Bearer $CRON_SECRET` (`7 * * * *`)
 - Opportunistic: `canvasService.getJob` calls `reconcileJobIfStale`
 - Code: `features/generation/concurrency/generation-stale-job.service.ts`
 

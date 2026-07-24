@@ -42,11 +42,12 @@ function main() {
   checks.push({
     name: "stale.service.sweep_and_reconcile",
     ok:
-      service.includes("sweepStaleJobs") &&
+      service.includes("runStaleJobReaper") &&
       service.includes("reconcileJobIfStale") &&
       service.includes("QUEUE_TIMEOUT") &&
       service.includes("DISPATCH_TIMEOUT") &&
-      service.includes("syncJobBilling")
+      service.includes("syncJobBilling") &&
+      service.includes("pg_try_advisory_xact_lock")
   });
   checks.push({
     name: "stale.service.dispatch_requeue",
@@ -62,7 +63,15 @@ function main() {
   });
   checks.push({
     name: "stale.reaper.script",
-    ok: read("scripts/generation-stale-job-reaper.ts").includes("sweepStaleJobs")
+    ok: read("scripts/generation-stale-job-reaper.ts").includes("runStaleJobReaper")
+  });
+  checks.push({
+    name: "stale.cron.route",
+    ok: read("app/api/cron/generation-stale-reaper/route.ts").includes("verifyCronBearer")
+  });
+  checks.push({
+    name: "stale.vercel.cron",
+    ok: read("vercel.json").includes("/api/cron/generation-stale-reaper")
   });
 
   report(checks);

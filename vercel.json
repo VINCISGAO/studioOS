@@ -3,11 +3,20 @@
   "framework": "nextjs",
   "buildCommand": "npx prisma generate && npm run build",
   "installCommand": "npm install",
+  "crons": [
+    {
+      "path": "/api/cron/generation-stale-reaper",
+      "schedule": "7 */3 * * *"
+    }
+  ],
   "functions": {
     "app/api/admin/knowledge/route.ts": {
       "maxDuration": 60
     },
     "app/api/admin/knowledge/[id]/route.ts": {
+      "maxDuration": 60
+    },
+    "app/api/cron/generation-stale-reaper/route.ts": {
       "maxDuration": 60
     }
   }

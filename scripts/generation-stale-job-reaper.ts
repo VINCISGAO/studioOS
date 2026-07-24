@@ -11,8 +11,8 @@ async function main() {
     return;
   }
 
-  const result = await generationStaleJobService.sweepStaleJobs();
-  console.log(JSON.stringify({ ok: true, ...result }, null, 2));
+  const result = await generationStaleJobService.runStaleJobReaper();
+  console.log(JSON.stringify(result, null, 2));
 }
 
 main().catch((error) => {
