@@ -19,8 +19,11 @@ export type GenerationStaleSweepResult = {
 
 export class GenerationStaleJobService {
   private async failStaleJob(job: GenerationJob, errorCode: string, errorMessage: string) {
-    const updated = await prisma.generationJob.update({
-      where: { id: job.id },
+    const updated = await prisma.generationJob.updateMany({
+      where: {
+        id: job.id,
+        status: { in: ["QUEUED", "SUBMITTING", "PROCESSING"] }
+      },
       data: {
         status: "FAILED",
         progress: 100,
@@ -29,18 +32,22 @@ export class GenerationStaleJobService {
         completedAt: new Date()
       }
     });
+    if (updated.count === 0) return;
 
-    await creditGenerationBillingService.syncJobBilling(updated);
+    const settled = await prisma.generationJob.findUnique({ where: { id: job.id } });
+    if (!settled) return;
+
+    await creditGenerationBillingService.syncJobBilling(settled);
 
     await generationDispatcherService.dispatchAfterTerminal({
-      ownerId: updated.ownerId,
-      projectId: updated.creativeProjectId,
+      ownerId: settled.ownerId,
+      projectId: settled.creativeProjectId,
       scheduleJob: scheduleGenerationJob
     });
 
     logger.warn("Generation job failed by stale reaper", {
       service: "GenerationStaleJobService",
-      jobId: updated.id,
+      jobId: settled.id,
       errorCode,
       status: job.status
     });
@@ -62,8 +69,8 @@ export class GenerationStaleJobService {
       return "failed";
     }
 
-    const updated = await prisma.generationJob.update({
-      where: { id: job.id },
+    const updated = await prisma.generationJob.updateMany({
+      where: { id: job.id, status: "SUBMITTING" },
       data: {
         status: "QUEUED",
         progress: 0,
@@ -77,16 +84,20 @@ export class GenerationStaleJobService {
         }
       }
     });
+    if (updated.count === 0) return "failed";
+
+    const requeued = await prisma.generationJob.findUnique({ where: { id: job.id } });
+    if (!requeued) return "failed";
 
     await generationDispatcherService.dispatchAfterTerminal({
-      ownerId: updated.ownerId,
-      projectId: updated.creativeProjectId,
+      ownerId: requeued.ownerId,
+      projectId: requeued.creativeProjectId,
       scheduleJob: scheduleGenerationJob
     });
 
     logger.warn("Generation job re-queued after dispatch timeout", {
       service: "GenerationStaleJobService",
-      jobId: updated.id,
+      jobId: requeued.id,
       staleRequeueCount: priorRequeues + 1
     });
 
